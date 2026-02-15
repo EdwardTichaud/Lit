@@ -8822,7 +8822,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8181587, y: 0.8181587, z: 0.8181587}
+  m_LocalScale: {x: 0.70529807, y: 0.70529807, z: 0.70529807}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -20481,7 +20481,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3003856, y: 1.3003856, z: 1.3003856}
+  m_LocalScale: {x: 1.4991086, y: 1.4991086, z: 1.4991086}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -20928,6 +20928,7 @@ GameObject:
   - component: {fileID: 679013649}
   - component: {fileID: 679013648}
   - component: {fileID: 679013651}
+  - component: {fileID: 679013652}
   m_Layer: 5
   m_Name: SquadPanel
   m_TagString: Untagged
@@ -21022,6 +21023,18 @@ MonoBehaviour:
   squadPanelAddCanvasGroupIfMissing: 1
   squadPanelDisableRaycastsWhenHidden: 1
   squadUnitsUI: []
+--- !u!225 &679013652
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 679013645}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &686182583
 GameObject:
   m_ObjectHideFlags: 0
@@ -26919,12 +26932,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 679013646}
-  - {fileID: 1323397345}
   - {fileID: 1133611984}
   - {fileID: 126687596}
   - {fileID: 804954932}
   - {fileID: 2074735048}
   - {fileID: 582666717}
+  - {fileID: 1323397345}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -35271,8 +35284,6 @@ MonoBehaviour:
   lootItemPrefab: {fileID: 3371615080175422078, guid: 81fbb70ccdb0141419fc26651609c788, type: 3}
   slotCursor: {fileID: 459111344}
   lootDescriptionText: {fileID: 1215732144}
-  lootItemNameText: {fileID: 1041516144}
-  lootItemIconImage: {fileID: 1391673482}
   containerNameText: {fileID: 1041516144}
   cursorPadding: {x: 10, y: 10}
   createCursorIfMissing: 1
@@ -37685,6 +37696,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1323397345}
+  - component: {fileID: 1323397346}
   m_Layer: 5
   m_Name: ConfirmationBoxes
   m_TagString: Untagged
@@ -37706,11 +37718,23 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 769647871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &1323397346
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323397344}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1326657556
 GameObject:
   m_ObjectHideFlags: 0
@@ -78639,7 +78663,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5884019, y: 1.5884019, z: 1.5884019}
+  m_LocalScale: {x: 1.8311381, y: 1.8311381, z: 1.8311381}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}
@@ -119274,9 +119298,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ReturnHomeTrigger
   interactionBox: {fileID: 320819308015763433, guid: bfa88639767bbe44c82b243f221e928b, type: 3}
   interactionOffset: {x: 0, y: 3, z: 0}
-  confirmPanel: {fileID: 4151098751637033772, guid: b01ab9303218e6a46bcfda229a575030, type: 3}
+  confirmationPanel: {fileID: 1323397344}
+  confirmationBox: {fileID: 4151098751637033772, guid: b01ab9303218e6a46bcfda229a575030, type: 3}
   forceConfirmOnTop: 1
   confirmSortingOrder: 100
+  confirmationYesIndex: 0
+  confirmationNoIndex: 1
+  confirmationFadeDuration: 0.5
+  confirmationAddCanvasGroupIfMissing: 1
+  confirmationDisableRaycastsWhenHidden: 1
+  confirmationSetAlphaToZeroOnStart: 1
   storageFullPanel: {fileID: 0}
   storageFullPanelParent: {fileID: 0}
   autoOpenInventoryOnStorageFull: 0

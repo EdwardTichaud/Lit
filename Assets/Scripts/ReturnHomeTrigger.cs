@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 // Zone d'interaction pour renvoyer un personnage a la maison et vider l'inventaire.
 [RequireComponent(typeof(Collider))]
@@ -13,12 +15,29 @@ public class ReturnHomeTrigger : MonoBehaviour
     public Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
 
     [Header("UI - Confirmation")]
-    [Tooltip("Panel de confirmation.")]
-    public GameObject confirmPanel;
+    [Tooltip("Panel parent de la confirmation.")]
+    [FormerlySerializedAs("confirmPanel")]
+    public GameObject confirmationPanel;
+    [Tooltip("Prefab de la confirmation (Oui/Non).")]
+    public GameObject confirmationBox;
     [Tooltip("Force un sorting order elevé.")]
     public bool forceConfirmOnTop = true;
     [Tooltip("Sorting order pour le panel de confirmation.")]
     public int confirmSortingOrder = 100;
+    [Tooltip("Index de l'option Oui dans la confirmationBox.")]
+    public int confirmationYesIndex = 0;
+    [Tooltip("Index de l'option Non dans la confirmationBox.")]
+    public int confirmationNoIndex = 1;
+
+    [Header("UI - Confirmation Fade")]
+    [Tooltip("Duree du fade de la confirmation.")]
+    public float confirmationFadeDuration = 0.5f;
+    [Tooltip("Ajoute un CanvasGroup si manquant.")]
+    public bool confirmationAddCanvasGroupIfMissing = true;
+    [Tooltip("Desactive les raycasts quand cache.")]
+    public bool confirmationDisableRaycastsWhenHidden = true;
+    [Tooltip("Met l'alpha a 0 au demarrage.")]
+    public bool confirmationSetAlphaToZeroOnStart = true;
 
     [Header("UI - Stockage plein")]
     [Tooltip("Panel d'alerte stockage plein.")]
@@ -50,12 +69,23 @@ public class ReturnHomeTrigger : MonoBehaviour
     private Transform interactionTarget;
 
     private GameObject interactionBoxInstance;
-    private GameObject confirmPanelInstance;
+    private GameObject confirmationBoxInstance;
     private GameObject storageFullPanelInstance;
     private bool confirmVisible;
     private Canvas interactionCanvas;
     private bool isTriggerZone;
     private PlayerInputs playerInputs;
+    private CursorController confirmationCursor;
+    private CanvasGroup confirmationCanvasGroup;
+    private Coroutine confirmationFadeRoutine;
+    private bool confirmationInputLocked;
+
+    private enum ConfirmationChoice
+    {
+        Unknown,
+        Yes,
+        No
+    }
 
     void Awake()
     {
@@ -67,6 +97,7 @@ public class ReturnHomeTrigger : MonoBehaviour
         }
 
         playerInputs = new PlayerInputs();
+        InitializeConfirmationFade();
     }
 
     void OnEnable()
@@ -234,7 +265,7 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     private void HandleInteract()
     {
-        if (InputFocusStack.HasAnyFocus())
+        if (InputFocusStack.HasAnyFocus() && !InputFocusStack.HasFocus(this))
         {
             return;
         }
@@ -250,6 +281,20 @@ public class ReturnHomeTrigger : MonoBehaviour
         if (!confirmVisible)
         {
             ShowConfirm(true);
+            return;
+        }
+
+        ConfirmationChoice choice = GetConfirmationChoice();
+        if (choice == ConfirmationChoice.No)
+        {
+            ShowConfirm(false);
+            ShowInteraction(true);
+            return;
+        }
+
+        if (choice == ConfirmationChoice.Unknown)
+        {
+            Debug.LogWarning("ReturnHomeTrigger: confirmationBox ou CursorController non configure.");
             return;
         }
 
@@ -388,6 +433,8 @@ public class ReturnHomeTrigger : MonoBehaviour
     {
         if (!show)
         {
+            FadeConfirmationPanelTo(0f, confirmationFadeDuration);
+            SetConfirmationInputLock(false);
             DestroyConfirmInstance();
             confirmVisible = false;
             RefreshCurrentCharacter();
@@ -396,33 +443,55 @@ public class ReturnHomeTrigger : MonoBehaviour
 
         DestroyInteractionInstance();
 
-        if (confirmPanelInstance == null)
+        if (confirmationPanel == null)
         {
-            confirmPanelInstance = CreateInstance(confirmPanel, confirmationBoxes);
-        }
-
-        if (confirmPanelInstance == null)
-        {
-            Debug.LogWarning("ReturnHomeTrigger: confirmPanel non assigne.");
+            Debug.LogWarning("ReturnHomeTrigger: confirmationPanel non assigne.");
+            SetConfirmationInputLock(false);
             confirmVisible = false;
             return;
         }
 
-        confirmPanelInstance.SetActive(true);
+        if (!confirmationPanel.activeSelf)
+        {
+            confirmationPanel.SetActive(true);
+        }
+
+        if (confirmationBoxInstance == null)
+        {
+            confirmationBoxInstance = CreateInstance(confirmationBox, confirmationPanel.transform);
+        }
+
+        if (confirmationBoxInstance == null)
+        {
+            Debug.LogWarning("ReturnHomeTrigger: confirmationBox non assignee.");
+            SetConfirmationInputLock(false);
+            confirmVisible = false;
+            return;
+        }
+
+        confirmationBoxInstance.SetActive(true);
+        confirmationCursor = confirmationBoxInstance.GetComponentInChildren<CursorController>(true);
+        if (confirmationCursor != null)
+        {
+            confirmationCursor.Refresh();
+        }
+
+        SetConfirmationInputLock(true);
+        FadeConfirmationPanelTo(1f, confirmationFadeDuration);
         BringConfirmToFront();
         confirmVisible = true;
     }
 
     private void BringConfirmToFront()
     {
-        if (confirmPanelInstance == null)
+        if (confirmationBoxInstance == null && confirmationPanel == null)
         {
             return;
         }
 
-        if (confirmPanelInstance.transform.parent != null)
+        if (confirmationBoxInstance != null && confirmationBoxInstance.transform.parent != null)
         {
-            confirmPanelInstance.transform.SetAsLastSibling();
+            confirmationBoxInstance.transform.SetAsLastSibling();
         }
 
         if (!forceConfirmOnTop)
@@ -430,7 +499,17 @@ public class ReturnHomeTrigger : MonoBehaviour
             return;
         }
 
-        Canvas canvas = confirmPanelInstance.GetComponent<Canvas>();
+        Canvas canvas = null;
+        if (confirmationPanel != null)
+        {
+            canvas = confirmationPanel.GetComponent<Canvas>();
+        }
+
+        if (canvas == null && confirmationBoxInstance != null)
+        {
+            canvas = confirmationBoxInstance.GetComponentInParent<Canvas>();
+        }
+
         if (canvas != null)
         {
             canvas.overrideSorting = true;
@@ -450,10 +529,11 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     private void DestroyConfirmInstance()
     {
-        if (confirmPanelInstance != null)
+        if (confirmationBoxInstance != null)
         {
-            Destroy(confirmPanelInstance);
-            confirmPanelInstance = null;
+            Destroy(confirmationBoxInstance);
+            confirmationBoxInstance = null;
+            confirmationCursor = null;
         }
     }
 
@@ -467,7 +547,13 @@ public class ReturnHomeTrigger : MonoBehaviour
 
         if (storageFullPanelInstance == null)
         {
-            Transform parent = storageFullPanelParent != null ? storageFullPanelParent : confirmationBoxes;
+            Transform parent = storageFullPanelParent != null
+                ? storageFullPanelParent
+                : confirmationBoxes != null
+                    ? confirmationBoxes
+                    : confirmationPanel != null
+                        ? confirmationPanel.transform
+                        : null;
             storageFullPanelInstance = CreateInstance(storageFullPanel, parent);
         }
 
@@ -491,6 +577,8 @@ public class ReturnHomeTrigger : MonoBehaviour
         DestroyInteractionInstance();
         DestroyConfirmInstance();
         DestroyStorageFullInstance();
+        FadeConfirmationPanelTo(0f, 0f);
+        SetConfirmationInputLock(false);
         confirmVisible = false;
         charactersInRange.Clear();
         characterColliderCounts.Clear();
@@ -511,6 +599,181 @@ public class ReturnHomeTrigger : MonoBehaviour
         }
 
         return Instantiate(source);
+    }
+
+    private void InitializeConfirmationFade()
+    {
+        confirmationCanvasGroup = GetConfirmationCanvasGroup();
+        if (confirmationCanvasGroup != null && confirmationSetAlphaToZeroOnStart)
+        {
+            confirmationCanvasGroup.alpha = 0f;
+            if (confirmationDisableRaycastsWhenHidden)
+            {
+                confirmationCanvasGroup.interactable = false;
+                confirmationCanvasGroup.blocksRaycasts = false;
+            }
+        }
+    }
+
+    private CanvasGroup GetConfirmationCanvasGroup()
+    {
+        if (confirmationPanel == null)
+        {
+            return null;
+        }
+
+        if (confirmationCanvasGroup != null)
+        {
+            return confirmationCanvasGroup;
+        }
+
+        confirmationCanvasGroup = confirmationPanel.GetComponent<CanvasGroup>();
+        if (confirmationCanvasGroup == null && confirmationAddCanvasGroupIfMissing)
+        {
+            confirmationCanvasGroup = confirmationPanel.AddComponent<CanvasGroup>();
+        }
+
+        return confirmationCanvasGroup;
+    }
+
+    private void FadeConfirmationPanelTo(float targetAlpha, float duration)
+    {
+        CanvasGroup canvasGroup = GetConfirmationCanvasGroup();
+        if (canvasGroup == null)
+        {
+            return;
+        }
+
+        if (!CanRunCoroutines())
+        {
+            canvasGroup.alpha = targetAlpha;
+            if (confirmationDisableRaycastsWhenHidden)
+            {
+                bool visible = targetAlpha > 0.001f;
+                canvasGroup.interactable = visible;
+                canvasGroup.blocksRaycasts = visible;
+            }
+            return;
+        }
+
+        if (confirmationFadeRoutine != null)
+        {
+            StopCoroutine(confirmationFadeRoutine);
+        }
+
+        float startAlpha = canvasGroup.alpha;
+        if (duration <= 0f)
+        {
+            canvasGroup.alpha = targetAlpha;
+            if (confirmationDisableRaycastsWhenHidden)
+            {
+                bool visible = targetAlpha > 0.001f;
+                canvasGroup.interactable = visible;
+                canvasGroup.blocksRaycasts = visible;
+            }
+            return;
+        }
+
+        confirmationFadeRoutine = StartCoroutine(FadeConfirmationRoutine(canvasGroup, startAlpha, targetAlpha, duration));
+    }
+
+    private IEnumerator FadeConfirmationRoutine(CanvasGroup canvasGroup, float startAlpha, float targetAlpha, float duration)
+    {
+        if (canvasGroup == null)
+        {
+            yield break;
+        }
+
+        float time = 0f;
+        if (confirmationDisableRaycastsWhenHidden)
+        {
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+        }
+
+        while (time < duration)
+        {
+            time += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(time / duration);
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+            yield return null;
+        }
+
+        canvasGroup.alpha = targetAlpha;
+        if (confirmationDisableRaycastsWhenHidden)
+        {
+            bool visible = targetAlpha > 0.001f;
+            canvasGroup.interactable = visible;
+            canvasGroup.blocksRaycasts = visible;
+        }
+    }
+
+    private bool CanRunCoroutines()
+    {
+        return isActiveAndEnabled && gameObject.activeInHierarchy;
+    }
+
+    private void SetConfirmationInputLock(bool locked)
+    {
+        if (locked)
+        {
+            if (confirmationInputLocked)
+            {
+                return;
+            }
+
+            confirmationInputLocked = true;
+            InputFocusStack.Push(this);
+            if (SquadManager.Instance != null)
+            {
+                SquadManager.Instance.SetInputLocked(true);
+            }
+            return;
+        }
+
+        if (!confirmationInputLocked)
+        {
+            InputFocusStack.Pop(this);
+            return;
+        }
+
+        confirmationInputLocked = false;
+        InputFocusStack.Pop(this);
+        if (SquadManager.Instance != null)
+        {
+            SquadManager.Instance.SetInputLocked(false);
+        }
+    }
+
+    private ConfirmationChoice GetConfirmationChoice()
+    {
+        if (confirmationBoxInstance == null)
+        {
+            return ConfirmationChoice.Unknown;
+        }
+
+        if (confirmationCursor == null)
+        {
+            confirmationCursor = confirmationBoxInstance.GetComponentInChildren<CursorController>(true);
+        }
+
+        if (confirmationCursor == null)
+        {
+            return ConfirmationChoice.Unknown;
+        }
+
+        int index = confirmationCursor.CurrentIndex;
+        if (index == confirmationYesIndex)
+        {
+            return ConfirmationChoice.Yes;
+        }
+
+        if (index == confirmationNoIndex)
+        {
+            return ConfirmationChoice.No;
+        }
+
+        return ConfirmationChoice.Unknown;
     }
 
     private GameObject GetSquadCharacter(Collider other)
