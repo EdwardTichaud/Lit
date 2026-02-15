@@ -1055,9 +1055,11 @@ MonoBehaviour:
   itemsParent: {fileID: 7933109251684172872}
   itemPrefab: {fileID: 3371615080175422078, guid: 21c488b1dd142b846ace7f683d7375ee, type: 3}
   slotCursor: {fileID: 2035309054}
+  cursorController: {fileID: 2035309058}
   descriptionText: {fileID: 214968285}
   cursorPadding: {x: 10, y: 10}
   createCursorIfMissing: 1
+  syncCursorControllerSettings: 1
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
   repeatInterval: 0.12
@@ -6750,8 +6752,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 533.6427, y: -620.8978}
-  m_SizeDelta: {x: -1274.3257, y: -1451.8557}
+  m_AnchoredPosition: {x: 533, y: -476}
+  m_SizeDelta: {x: -1185.4, y: -1047.8693}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &266438919
 MonoBehaviour:
@@ -8131,6 +8133,7 @@ GameObject:
   - component: {fileID: 415645526}
   - component: {fileID: 415645528}
   - component: {fileID: 415645527}
+  - component: {fileID: 415645529}
   m_Layer: 5
   m_Name: ExpeditionPanel_Cursor
   m_TagString: Untagged
@@ -8195,6 +8198,39 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 415645525}
   m_CullTransparentMesh: 1
+--- !u!114 &415645529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415645525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3ea2fd6885d9de429b3b207aa5d79fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorController
+  layoutGroup: {fileID: 19296317}
+  itemsParent: {fileID: 19296315}
+  autoCollectItems: 1
+  includeInactive: 0
+  cursor: {fileID: 415645526}
+  cursorParentOverride: {fileID: 0}
+  cursorPadding: {x: 10, y: 10}
+  createCursorIfMissing: 1
+  moveDeadzone: 0.5
+  initialRepeatDelay: 0.35
+  repeatInterval: 0.12
+  wrap: 0
+  moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
+  allowInput: 1
+  disableExternalActionOnDisable: 0
+  useUnscaledTime: 1
+  startIndex: 0
+  resetToFirstOnEnable: 1
+  smoothCursor: 1
+  cursorPositionLerpSpeed: 18
+  cursorSizeLerpSpeed: 18
 --- !u!1001 &422346912
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8806,6 +8842,7 @@ GameObject:
   - component: {fileID: 459111346}
   - component: {fileID: 459111345}
   - component: {fileID: 459111347}
+  - component: {fileID: 459111348}
   m_Layer: 5
   m_Name: LootPanel_Cursor
   m_TagString: Untagged
@@ -8822,7 +8859,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.70529807, y: 0.70529807, z: 0.70529807}
+  m_LocalScale: {x: 0.76712066, y: 0.76712066, z: 0.76712066}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -8886,6 +8923,39 @@ MonoBehaviour:
   amplitude: 0.03
   useUnscaledTime: 0
   useInitialScale: 1
+--- !u!114 &459111348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 459111343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3ea2fd6885d9de429b3b207aa5d79fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorController
+  layoutGroup: {fileID: 1593816375}
+  itemsParent: {fileID: 0}
+  autoCollectItems: 1
+  includeInactive: 0
+  cursor: {fileID: 459111344}
+  cursorParentOverride: {fileID: 0}
+  cursorPadding: {x: 0, y: 0}
+  createCursorIfMissing: 1
+  moveDeadzone: 0.5
+  initialRepeatDelay: 0.35
+  repeatInterval: 0.12
+  wrap: 0
+  moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
+  allowInput: 1
+  disableExternalActionOnDisable: 0
+  useUnscaledTime: 1
+  startIndex: 0
+  resetToFirstOnEnable: 1
+  smoothCursor: 1
+  cursorPositionLerpSpeed: 18
+  cursorSizeLerpSpeed: 18
 --- !u!1001 &479268261
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20465,6 +20535,7 @@ GameObject:
   - component: {fileID: 663038340}
   - component: {fileID: 663038339}
   - component: {fileID: 663038341}
+  - component: {fileID: 663038342}
   m_Layer: 5
   m_Name: BuildingPanel_Cursor
   m_TagString: Untagged
@@ -20481,7 +20552,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4991086, y: 1.4991086, z: 1.4991086}
+  m_LocalScale: {x: 1.3659256, y: 1.3659256, z: 1.3659256}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -20545,6 +20616,39 @@ MonoBehaviour:
   amplitude: 0.03
   useUnscaledTime: 1
   useInitialScale: 1
+--- !u!114 &663038342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 663038337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3ea2fd6885d9de429b3b207aa5d79fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorController
+  layoutGroup: {fileID: 2115076317}
+  itemsParent: {fileID: 0}
+  autoCollectItems: 1
+  includeInactive: 0
+  cursor: {fileID: 663038338}
+  cursorParentOverride: {fileID: 0}
+  cursorPadding: {x: 0, y: 0}
+  createCursorIfMissing: 1
+  moveDeadzone: 0.5
+  initialRepeatDelay: 0.35
+  repeatInterval: 0.12
+  wrap: 0
+  moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
+  allowInput: 1
+  disableExternalActionOnDisable: 0
+  useUnscaledTime: 1
+  startIndex: 0
+  resetToFirstOnEnable: 1
+  smoothCursor: 1
+  cursorPositionLerpSpeed: 18
+  cursorSizeLerpSpeed: 18
 --- !u!1001 &670574662
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26554,8 +26658,8 @@ MonoBehaviour:
     Description Description Description Description Description Description Description
     Description '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
+  m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -26579,12 +26683,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 38.55
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 10
+  m_fontSizeMax: 50
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
@@ -26617,7 +26721,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 100, y: 100, z: 100, w: 100}
+  m_margin: {x: 75, y: 50, z: 50, w: 50}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -27220,6 +27324,9 @@ MonoBehaviour:
   expeditionItemsParent: {fileID: 19296315}
   expeditionItemPrefab: {fileID: 4699699029047819439, guid: 555186f23e07b9f4498b7d9256890287, type: 3}
   expeditionCursor: {fileID: 415645526}
+  cursorController: {fileID: 415645529}
+  useCursorControllerIfAssigned: 1
+  syncCursorControllerSettings: 1
   cursorPadding: {x: 10, y: 10}
   createCursorIfMissing: 1
   descriptionText: {fileID: 0}
@@ -35263,7 +35370,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1133611983}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -39468,7 +39575,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1283, y: 300}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &1505579932
@@ -55949,7 +56056,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1728577749}
   - component: {fileID: 1728577752}
-  - component: {fileID: 1728577751}
   - component: {fileID: 1728577750}
   m_Layer: 5
   m_Name: Scroll View
@@ -56009,36 +56115,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1728577751
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1728577748}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!222 &1728577752
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -78647,8 +78723,9 @@ GameObject:
   - component: {fileID: 2035309056}
   - component: {fileID: 2035309055}
   - component: {fileID: 2035309057}
+  - component: {fileID: 2035309058}
   m_Layer: 5
-  m_Name: Iventory_Cursor
+  m_Name: Inventory_Cursor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -78663,7 +78740,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.8311381, y: 1.8311381, z: 1.8311381}
+  m_LocalScale: {x: 1.7075565, y: 1.7075565, z: 1.7075565}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}
@@ -78727,6 +78804,39 @@ MonoBehaviour:
   amplitude: 0.03
   useUnscaledTime: 1
   useInitialScale: 1
+--- !u!114 &2035309058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035309053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3ea2fd6885d9de429b3b207aa5d79fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CursorController
+  layoutGroup: {fileID: 7933109251684172874}
+  itemsParent: {fileID: 7933109251684172872}
+  autoCollectItems: 1
+  includeInactive: 0
+  cursor: {fileID: 2035309054}
+  cursorParentOverride: {fileID: 0}
+  cursorPadding: {x: 10, y: 10}
+  createCursorIfMissing: 1
+  moveDeadzone: 0.5
+  initialRepeatDelay: 0.35
+  repeatInterval: 0.12
+  wrap: 0
+  moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
+  allowInput: 1
+  disableExternalActionOnDisable: 0
+  useUnscaledTime: 1
+  startIndex: 0
+  resetToFirstOnEnable: 1
+  smoothCursor: 1
+  cursorPositionLerpSpeed: 18
+  cursorSizeLerpSpeed: 18
 --- !u!1001 &2052759083
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -78916,7 +79026,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2067346603
 Transform:
   m_ObjectHideFlags: 0
@@ -79093,6 +79203,7 @@ GameObject:
   - component: {fileID: 2074735052}
   - component: {fileID: 2074735050}
   - component: {fileID: 2074735051}
+  - component: {fileID: 2074735053}
   m_Layer: 5
   m_Name: BuildingPanel
   m_TagString: Untagged
@@ -79121,8 +79232,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 592, y: -353}
+  m_SizeDelta: {x: -1269.2554, y: -792.951}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &2074735050
 CanvasGroup:
@@ -79174,6 +79285,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2074735047}
   m_CullTransparentMesh: 1
+--- !u!114 &2074735053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074735047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba7d5509d27cd684288aa2827a774bb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingPanelController
+  buildingPanel: {fileID: 2074735047}
+  deactivatePanelOnClose: 1
+  panelFadeDuration: 0.15
+  setAlphaToZeroOnStart: 1
+  addCanvasGroupIfMissing: 1
+  disableRaycastsWhenHidden: 1
+  slotsParent: {fileID: 2115076316}
+  slotPrefab: {fileID: 2941617688268288188, guid: 0fbb7f62ff0973f45b9b91ba781656a3, type: 3}
+  slotCursor: {fileID: 663038338}
+  cursorController: {fileID: 663038342}
+  useCursorControllerIfAssigned: 1
+  syncCursorControllerSettings: 1
+  cursorPadding: {x: 10, y: 10}
+  createCursorIfMissing: 0
+  moveDeadzone: 0.5
+  initialRepeatDelay: 0.35
+  repeatInterval: 0.12
+  wrapCursor: 0
+  descriptionText: {fileID: 753216287}
+  requirementsParent: {fileID: 1134087020}
+  requirementSlotPrefab: {fileID: 271610681411786035, guid: ad4e399a18c3fb54db3efd8c26aaa154, type: 3}
+  requirementAvailableColor: {r: 1, g: 1, b: 1, a: 1}
+  requirementMissingColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  hideRequirementsWhenEmpty: 1
+  useHomeResources: 1
+  missingResourcesMessage: Ressources insuffisantes.
+  actionBox: {fileID: 1505579930}
+  actionBoxCursor: {fileID: 1608035220}
+  actionBoxCursorPadding: {x: 8, y: 8}
+  actionBoxCreateCursorIfMissing: 1
+  actionBoxFadeDuration: 0.15
+  actionBoxSetAlphaToZeroOnStart: 1
+  actionBoxAddCanvasGroupIfMissing: 1
+  actionBoxDisableRaycastsWhenHidden: 1
+  actionBoxWrap: 1
+  actionBoxSelectedFrameAlpha: 1
+  actionBoxUnselectedFrameAlpha: 0.25
+  actionBoxSelectedTextAlpha: 1
+  actionBoxUnselectedTextAlpha: 0.6
+  actionBoxDisabledAlpha: 0.4
+  actionBoxInvalidFlashColor: {r: 1, g: 0.2, b: 0.2, a: 0.9}
+  actionBoxInvalidFlashDuration: 0.12
+  actionBoxInvalidFlashCount: 2
+  buildSpawnAnchor: {fileID: 0}
+  buildSpawnOffset: {x: 0, y: 0, z: 2}
 --- !u!1 &2115076315
 GameObject:
   m_ObjectHideFlags: 0
@@ -84357,6 +84525,63 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1001 &1350625794473198435
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1368317527524287094, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_Name
+      value: Item_Orbe bleu_Model
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5278634499623910732, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
 --- !u!23 &1436319267978109423
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -94457,7 +94682,7 @@ PrefabInstance:
     - target: {fileID: 3401394444433067668, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
       propertyPath: buildingPanel
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 2074735053}
     - target: {fileID: 3401394444433067668, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
       propertyPath: interactionTrigger
       value: 
@@ -94480,12 +94705,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3401394444433067668, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
       propertyPath: availableBuildings.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3401394444433067668, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
       propertyPath: 'availableBuildings.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: 5f7f961b779522740bdd1ea6e35a76ee, type: 2}
+    - target: {fileID: 3401394444433067668, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
+      propertyPath: 'availableBuildings.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 5c2b0ae4807c829479ba75a820a9e2fd, type: 2}
     - target: {fileID: 3401394444433067668, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
       propertyPath: builtBuildings.Array.data[0].info
       value: 
@@ -149368,3 +149597,4 @@ SceneRoots:
   - {fileID: 424322995}
   - {fileID: 527109780}
   - {fileID: 653537125556471508}
+  - {fileID: 1350625794473198435}

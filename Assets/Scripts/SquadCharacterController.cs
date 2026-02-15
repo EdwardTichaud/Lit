@@ -475,18 +475,22 @@ public class SquadCharacterController : MonoBehaviour
 
     public bool TryUseItem(Item item)
     {
-        if (item == null || !item.canUse)
+        if (item == null)
         {
             return false;
         }
+        return item.TryUse(this);
+    }
 
-        Effect effect = item.itemEffect;
-        if (effect == null)
+    public bool TryUseItem(Item item, out string reason)
+    {
+        if (item == null)
         {
+            reason = "Impossible d'utiliser cet objet.";
             return false;
         }
 
-        return effect.Apply(this, item);
+        return item.TryUse(this, out reason);
     }
 
     public bool TryBreakItem(Item item)

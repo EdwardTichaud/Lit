@@ -48,6 +48,8 @@ public class CursorController : MonoBehaviour
     [Header("Input")]
     [Tooltip("InputAction de mouvement (optionnel).")]
     public InputActionReference moveActionReference;
+    [Tooltip("Autorise la navigation via input.")]
+    public bool allowInput = true;
     [Tooltip("Desactive l'InputAction externe a la desactivation.")]
     public bool disableExternalActionOnDisable = false;
     [Tooltip("Utilise Time.unscaledTime.")]
@@ -139,7 +141,10 @@ public class CursorController : MonoBehaviour
             return;
         }
 
-        HandleNavigation();
+        if (allowInput)
+        {
+            HandleNavigation();
+        }
     }
 
     private void LateUpdate()

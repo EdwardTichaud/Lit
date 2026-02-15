@@ -42,6 +42,14 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     [Tooltip("Duree d'affichage des messages de casse.")]
     public float breakFeedbackDuration = 1.2f;
 
+    [Header("Feedback")]
+    [Tooltip("Message si l'objet ne peut pas etre pris.")]
+    public string takeNotAllowedMessage = "Impossible de prendre cet objet.";
+    [Tooltip("Message si le container est plein.")]
+    public string depositNoSpaceMessage = "Pas assez de place dans le coffre.";
+    [Tooltip("Duree d'affichage des messages d'action.")]
+    public float actionFeedbackDuration = 1.2f;
+
     [Header("Action Box")]
     [Tooltip("ActionBox utilisee par le loot. Laisse vide pour auto-detecter.")]
     public GameObject actionBox;
@@ -961,6 +969,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     {
         if (!collectable)
         {
+            ShowActionFeedback(takeNotAllowedMessage);
             return false;
         }
 
@@ -1703,6 +1712,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
+        if (!item.CanDepositToContainer(this, out string reason))
+        {
+            ShowActionFeedback(reason);
+            return false;
+        }
+
         SquadCharacterController controller = GetCurrentCharacterController();
         if (controller == null)
         {
@@ -1712,11 +1727,13 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         int remainingCapacity = GetRemainingCapacity();
         if (remainingCapacity <= 0)
         {
+            ShowActionFeedback(depositNoSpaceMessage);
             return false;
         }
 
         if (quantity > remainingCapacity)
         {
+            ShowActionFeedback(depositNoSpaceMessage);
             return false;
         }
 
@@ -1905,6 +1922,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     {
         if (!collectable)
         {
+            ShowActionFeedback(takeNotAllowedMessage);
             return;
         }
 
@@ -1913,13 +1931,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        SquadCharacterController controller = GetCurrentCharacterController();
-        if (controller == null)
-        {
-            Debug.LogWarning("LootContainer: aucun personnage valide pour recevoir les items.");
-            return;
-        }
-
+        bool showedFeedback = false;
         for (int i = lootItems.Count - 1; i >= 0; i--)
         {
             LootItemEntry entry = lootItems[i];
@@ -1936,8 +1948,14 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
                 continue;
             }
 
-            controller.AddItem(entry.item, quantity);
-            lootItems.RemoveAt(i);
+            if (TryAddItemToCurrentCharacter(entry.item, quantity, !showedFeedback))
+            {
+                lootItems.RemoveAt(i);
+            }
+            else
+            {
+                showedFeedback = true;
+            }
         }
 
         RebuildLootSlots(null, currentSlotIndex);
@@ -2239,8 +2257,22 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         public Color LabelBaseColor { get; }
     }
 
-    private bool TryAddItemToCurrentCharacter(Item item, int quantity)
+    private bool TryAddItemToCurrentCharacter(Item item, int quantity, bool showFeedback = true)
     {
+        if (item == null)
+        {
+            return false;
+        }
+
+        if (!item.CanTakeFromContainer(this, out string reason))
+        {
+            if (showFeedback)
+            {
+                ShowActionFeedback(reason);
+            }
+            return false;
+        }
+
         SquadCharacterController controller = GetCurrentCharacterController();
         if (controller == null)
         {
@@ -2250,6 +2282,16 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
 
         controller.AddItem(item, quantity);
         return true;
+    }
+
+    private void ShowActionFeedback(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message, actionFeedbackDuration);
     }
 
     private SquadCharacterController GetCurrentCharacterController()

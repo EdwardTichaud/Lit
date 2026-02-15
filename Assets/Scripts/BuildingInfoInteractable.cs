@@ -144,12 +144,30 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        EnsureBuildingData();
         if (openOnProximity)
         {
+            if (InputFocusStack.HasAnyFocus())
+            {
+                return;
+            }
+
+            RefreshCurrentCharacter();
+            if (currentCharacter == null)
+            {
+                return;
+            }
+
+            if (!HasBuildingData())
+            {
+                Debug.LogWarning("BuildingInfoInteractable: aucune donnee de construction.", this);
+                return;
+            }
+
+            TryApplyInteractEffects();
             return;
         }
 
-        EnsureBuildingData();
         EnsureLocalPanel();
         HandleInteract();
     }
@@ -174,6 +192,8 @@ public class BuildingInfoInteractable : MonoBehaviour
             return;
         }
 
+        TryApplyInteractEffects();
+
         EnsureLocalPanel();
         if (localPanelInstance != null)
         {
@@ -186,6 +206,50 @@ public class BuildingInfoInteractable : MonoBehaviour
             localPanelInstance.OpenPanel(this);
             return;
         }
+    }
+
+    private bool TryApplyInteractEffects()
+    {
+        if (buildingItem == null || !buildingItem.isBuilding)
+        {
+            return false;
+        }
+
+        if (buildingItem.buildingEffects == null || buildingItem.buildingEffects.Count == 0)
+        {
+            return false;
+        }
+
+        if (currentCharacter == null)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
+        if (controller == null)
+        {
+            return false;
+        }
+
+        bool applied = false;
+        for (int i = 0; i < buildingItem.buildingEffects.Count; i++)
+        {
+            Effect effect = buildingItem.buildingEffects[i];
+            if (effect == null)
+            {
+                continue;
+            }
+
+            if (effect is IBuildingInteractEffect interactEffect)
+            {
+                if (interactEffect.ApplyOnInteract(controller, buildingItem, level))
+                {
+                    applied = true;
+                }
+            }
+        }
+
+        return applied;
     }
 
     private bool CanProcessInteract()

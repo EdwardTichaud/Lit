@@ -15,7 +15,7 @@ public class BuildingPanelController : MonoBehaviour
     [Tooltip("Desactive le panel a la fermeture.")]
     public bool deactivatePanelOnClose = true;
     [Tooltip("Duree du fade d'ouverture/fermeture.")]
-    public float panelFadeDuration = 0.15f;
+    public float panelFadeDuration = 0.5f;
     [Tooltip("Met l'alpha a 0 au demarrage.")]
     public bool setAlphaToZeroOnStart = true;
     [Tooltip("Ajoute un CanvasGroup si manquant.")]
@@ -30,6 +30,12 @@ public class BuildingPanelController : MonoBehaviour
     public GameObject slotPrefab;
     [Tooltip("Curseur de selection des slots.")]
     public RectTransform slotCursor;
+    [Tooltip("Controleur de curseur (optionnel).")]
+    public CursorController cursorController;
+    [Tooltip("Utilise le CursorController si assigne.")]
+    public bool useCursorControllerIfAssigned = true;
+    [Tooltip("Synchronise les parametres vers le CursorController.")]
+    public bool syncCursorControllerSettings = true;
     [Tooltip("Padding ajoute au curseur.")]
     public Vector2 cursorPadding = new Vector2(10f, 10f);
     [Tooltip("Cree un curseur si manquant.")]
@@ -114,6 +120,7 @@ public class BuildingPanelController : MonoBehaviour
     private BuilderController currentBuilder;
     private readonly List<BuildingSlotUI> buildingSlots = new List<BuildingSlotUI>();
     private BuildingSlotUI currentFocusedSlot;
+    private int lastCursorIndex = -1;
     private int lastMoveDirection;
     private float nextMoveTime;
     private bool cursorDirty;
@@ -143,6 +150,141 @@ public class BuildingPanelController : MonoBehaviour
         InitializePanel();
         InitializeActionBox();
     }
+
+    private bool ShouldUseCursorController()
+    {
+        if (!useCursorControllerIfAssigned)
+        {
+            return false;
+        }
+
+        ResolveCursorController();
+        return cursorController != null;
+    }
+
+    private void ResolveCursorController()
+    {
+        if (cursorController == null)
+        {
+            if (slotCursor != null)
+            {
+                cursorController = slotCursor.GetComponent<CursorController>();
+            }
+
+            if (cursorController == null && buildingPanel != null)
+            {
+                cursorController = buildingPanel.GetComponentInChildren<CursorController>(true);
+            }
+
+            if (cursorController == null && slotsParent != null)
+            {
+                cursorController = slotsParent.GetComponentInChildren<CursorController>(true);
+            }
+        }
+
+        if (slotCursor == null && cursorController != null)
+        {
+            if (cursorController.cursor != null)
+            {
+                slotCursor = cursorController.cursor;
+            }
+            else
+            {
+                slotCursor = cursorController.GetComponent<RectTransform>();
+                if (slotCursor != null)
+                {
+                    cursorController.cursor = slotCursor;
+                }
+            }
+        }
+        else if (cursorController != null && cursorController.cursor == null && slotCursor != null)
+        {
+            cursorController.cursor = slotCursor;
+        }
+
+        if (cursorController != null)
+        {
+            if (cursorController.itemsParent == null && slotsParent != null)
+            {
+                cursorController.itemsParent = slotsParent as RectTransform;
+            }
+
+            if (cursorController.layoutGroup == null && slotsParent != null)
+            {
+                cursorController.layoutGroup = slotsParent.GetComponent<LayoutGroup>();
+            }
+
+            if (syncCursorControllerSettings)
+            {
+                cursorController.cursorPadding = cursorPadding;
+                cursorController.moveDeadzone = moveDeadzone;
+                cursorController.initialRepeatDelay = initialRepeatDelay;
+                cursorController.repeatInterval = repeatInterval;
+                cursorController.wrap = wrapCursor;
+            }
+        }
+    }
+
+    private void SetCursorControllerInputEnabled(bool enabled)
+    {
+        ResolveCursorController();
+        if (cursorController != null)
+        {
+            cursorController.allowInput = enabled;
+        }
+    }
+
+    private void RefreshCursorController()
+    {
+        ResolveCursorController();
+        if (cursorController != null)
+        {
+            if (!cursorController.gameObject.activeSelf)
+            {
+                cursorController.gameObject.SetActive(true);
+            }
+            cursorController.Refresh();
+        }
+    }
+
+    private void SyncSelectionWithCursorController()
+    {
+        if (buildingSlots.Count == 0)
+        {
+            UpdateDescription(null);
+            UpdateRequirements(null);
+            currentFocusedSlot = null;
+            lastCursorIndex = -1;
+            return;
+        }
+
+        ResolveCursorController();
+        if (cursorController == null)
+        {
+            if (currentFocusedSlot == null)
+            {
+                FocusSlot(buildingSlots[0], false);
+            }
+            return;
+        }
+
+        int index = cursorController.CurrentIndex;
+        if (index < 0)
+        {
+            index = 0;
+        }
+        if (index >= buildingSlots.Count)
+        {
+            index = buildingSlots.Count - 1;
+        }
+
+        if (index != lastCursorIndex || currentFocusedSlot != buildingSlots[index])
+        {
+            FocusSlot(buildingSlots[index], false);
+            lastCursorIndex = index;
+        }
+    }
+
 
     private void OnEnable()
     {
@@ -175,6 +317,45 @@ public class BuildingPanelController : MonoBehaviour
     {
         if (!panelOpen)
         {
+            SetCursorControllerInputEnabled(false);
+            return;
+        }
+
+        if (!HasInputFocus())
+        {
+            SetCursorControllerInputEnabled(false);
+            return;
+        }
+
+        if (actionBoxVisible)
+        {
+            SetCursorControllerInputEnabled(false);
+            HandleActionBoxNavigation();
+        }
+        else
+        {
+            if (ShouldUseCursorController())
+            {
+                SetCursorControllerInputEnabled(true);
+            }
+            else
+            {
+                SetCursorControllerInputEnabled(false);
+                HandleNavigation();
+            }
+        }
+
+        if (!ShouldUseCursorController())
+        {
+            UpdateCursorVisual();
+        }
+
+        UpdateActionBoxCursor();
+    }
+    private void LateUpdate()
+    {
+        if (!panelOpen)
+        {
             return;
         }
 
@@ -183,18 +364,12 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
-        if (actionBoxVisible)
+        if (ShouldUseCursorController() && !actionBoxVisible)
         {
-            HandleActionBoxNavigation();
+            SyncSelectionWithCursorController();
         }
-        else
-        {
-            HandleNavigation();
-        }
-
-        UpdateCursorVisual();
-        UpdateActionBoxCursor();
     }
+
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -286,6 +461,7 @@ public class BuildingPanelController : MonoBehaviour
         }
 
         currentFocusedSlot = null;
+        lastCursorIndex = -1;
         lastMoveDirection = 0;
         nextMoveTime = 0f;
         cursorDirty = false;
@@ -293,7 +469,11 @@ public class BuildingPanelController : MonoBehaviour
 
         ClearSlots();
         ClearRequirements();
-        HideCursor();
+        SetCursorControllerInputEnabled(false);
+        if (!ShouldUseCursorController())
+        {
+            HideCursor();
+        }
         HideActionBoxImmediate();
 
         if (descriptionText != null)
@@ -794,7 +974,7 @@ public class BuildingPanelController : MonoBehaviour
         return Mathf.Max(0f, maxY - minY);
     }
 
-    public void FocusSlot(BuildingSlotUI slot)
+    public void FocusSlot(BuildingSlotUI slot, bool syncCursor = true)
     {
         if (slot == null || slot.SlotRect == null)
         {
@@ -803,6 +983,11 @@ public class BuildingPanelController : MonoBehaviour
 
         currentFocusedSlot = slot;
         restoreSelectedItem = slot.Item;
+        int index = buildingSlots.IndexOf(slot);
+        if (index >= 0)
+        {
+            lastCursorIndex = index;
+        }
         cursorDirty = true;
         UpdateDescription(slot.Item);
         UpdateRequirements(slot.Item);
@@ -845,7 +1030,10 @@ public class BuildingPanelController : MonoBehaviour
     {
         if (slotCursor != null)
         {
-            slotCursor.gameObject.SetActive(false);
+            if (slotCursor.GetComponent<CursorController>() == null)
+            {
+                slotCursor.gameObject.SetActive(false);
+            }
         }
     }
 
@@ -1084,7 +1272,12 @@ public class BuildingPanelController : MonoBehaviour
             }
         }
 
-        if (preferredSlot != null)
+        if (ShouldUseCursorController())
+        {
+            RefreshCursorController();
+            SyncSelectionWithCursorController();
+        }
+        else if (preferredSlot != null)
         {
             FocusSlot(preferredSlot);
         }
@@ -1145,7 +1338,11 @@ public class BuildingPanelController : MonoBehaviour
 
         buildingSlots.Clear();
         currentFocusedSlot = null;
-        HideCursor();
+        lastCursorIndex = -1;
+        if (!ShouldUseCursorController())
+        {
+            HideCursor();
+        }
     }
 
     private void UpdateSlotVisual(GameObject slotObj, Item item, int level)
@@ -2437,6 +2634,19 @@ public class BuildingPanelController : MonoBehaviour
             if (found != null)
             {
                 slotCursor = found as RectTransform;
+            }
+        }
+
+        if (cursorController == null)
+        {
+            if (slotCursor != null)
+            {
+                cursorController = slotCursor.GetComponent<CursorController>();
+            }
+
+            if (cursorController == null)
+            {
+                cursorController = GetComponentInChildren<CursorController>(true);
             }
         }
 

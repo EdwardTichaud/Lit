@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
-  m_Name: Clou
+  m_Name: Item_Clou
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemId: clou
   itemName: Clou
@@ -22,6 +22,5 @@ MonoBehaviour:
   isContainer: 0
   worldPrefab: {fileID: 0}
   isTorch: 0
-  itemEffect: {fileID: 0}
   canBreak: 0
   breakResults: []

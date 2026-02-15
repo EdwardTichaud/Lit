@@ -10,26 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
-  m_Name: Brasier de l'Espoir
+  m_Name: Item_Building_Catalyseur
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  itemId: brasierdelespoir
-  itemName: Brasier de l'Espoir
-  itemSprite: {fileID: 21300000, guid: 83e594f3f178634449a0662a99ba8147, type: 3}
-  description: Un brasier flamboyant d'origine inconnue mais qui semble vous maintenir
-    en vie.
+  itemId: catalyseur
+  itemName: Catalyseur
+  itemSprite: {fileID: 21300000, guid: 7cc81977b07efdb40b47ed8e9bb49337, type: 3}
+  description: "Une construction permettant de canaliser l'energie lumineuse ambiante
+    et de la contr\xF4ler un peu mieux."
   canUse: 0
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 0}
   isTorch: 0
-  itemEffect: {fileID: 0}
   isBuilding: 1
-  buildingPrefab: {fileID: 6904748207930431409, guid: ce6a87dd56a58964ba8b2ea39bb52f6c, type: 3}
-  buildingMaxLevel: 5
-  buildingCurrentLevel: 1
+  buildingPrefab: {fileID: 2445665193700235283, guid: 84a7b0407ab5a4649b4ff0e8400142f2, type: 3}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
   buildingRequirements: []
   buildingEffects:
-  - {fileID: 11400000, guid: 92d8ad6ede62ad9409ae24b8e3cac8a9, type: 2}
+  - {fileID: 0}
   isHomeChest: 0
   canBreak: 0
   breakResults: []

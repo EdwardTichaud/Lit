@@ -30,6 +30,12 @@ public class ExpeditionPanelController : MonoBehaviour
     public GameObject expeditionItemPrefab;
     [Tooltip("Curseur UI de selection.")]
     public RectTransform expeditionCursor;
+    [Tooltip("Controleur de curseur (optionnel).")]
+    public CursorController cursorController;
+    [Tooltip("Utilise le CursorController si assigne.")]
+    public bool useCursorControllerIfAssigned = true;
+    [Tooltip("Synchronise les parametres vers le CursorController.")]
+    public bool syncCursorControllerSettings = true;
     [Tooltip("Padding applique autour du slot selectionne.")]
     public Vector2 cursorPadding = new Vector2(10f, 10f);
     [Tooltip("Cree un curseur si manquant.")]
@@ -123,6 +129,7 @@ public class ExpeditionPanelController : MonoBehaviour
     private readonly List<ExpeditionSlotUI> slots = new List<ExpeditionSlotUI>();
     private ExpeditionSlotUI currentFocusedSlot;
     private int currentSlotIndex;
+    private int lastCursorIndex = -1;
     private int lastMoveDirection;
     private float nextMoveTime;
     private bool cursorDirty;
@@ -153,7 +160,147 @@ public class ExpeditionPanelController : MonoBehaviour
         }
 
         InitializePanelFade();
+        ResolveCursorController();
     }
+
+    private bool ShouldUseCursorController()
+    {
+        if (!useCursorControllerIfAssigned)
+        {
+            return false;
+        }
+
+        ResolveCursorController();
+        return cursorController != null;
+    }
+
+    private void ResolveCursorController()
+    {
+        if (cursorController == null)
+        {
+            if (expeditionCursor != null)
+            {
+                cursorController = expeditionCursor.GetComponent<CursorController>();
+            }
+
+            if (cursorController == null && expeditionPanel != null)
+            {
+                cursorController = expeditionPanel.GetComponentInChildren<CursorController>(true);
+            }
+
+            if (cursorController == null && expeditionItemsParent != null)
+            {
+                cursorController = expeditionItemsParent.GetComponentInChildren<CursorController>(true);
+            }
+        }
+
+        if (expeditionCursor == null && cursorController != null)
+        {
+            if (cursorController.cursor != null)
+            {
+                expeditionCursor = cursorController.cursor;
+            }
+            else
+            {
+                expeditionCursor = cursorController.GetComponent<RectTransform>();
+                if (expeditionCursor != null)
+                {
+                    cursorController.cursor = expeditionCursor;
+                }
+            }
+        }
+        else if (cursorController != null && cursorController.cursor == null && expeditionCursor != null)
+        {
+            cursorController.cursor = expeditionCursor;
+        }
+
+        if (cursorController != null)
+        {
+            Transform itemsParent = GetItemsParent();
+            if (cursorController.itemsParent == null && itemsParent != null)
+            {
+                cursorController.itemsParent = itemsParent as RectTransform;
+            }
+
+            if (cursorController.layoutGroup == null && itemsParent != null)
+            {
+                cursorController.layoutGroup = itemsParent.GetComponent<LayoutGroup>();
+            }
+
+            if (syncCursorControllerSettings)
+            {
+                cursorController.cursorPadding = cursorPadding;
+                cursorController.moveDeadzone = moveDeadzone;
+                cursorController.initialRepeatDelay = initialRepeatDelay;
+                cursorController.repeatInterval = repeatInterval;
+                cursorController.wrap = wrapCursor;
+            }
+        }
+    }
+
+    private void SetCursorControllerInputEnabled(bool enabled)
+    {
+        ResolveCursorController();
+        if (cursorController != null)
+        {
+            cursorController.allowInput = enabled;
+        }
+    }
+
+    private void RefreshCursorController()
+    {
+        ResolveCursorController();
+        if (cursorController != null)
+        {
+            if (!cursorController.gameObject.activeSelf)
+            {
+                cursorController.gameObject.SetActive(true);
+            }
+            cursorController.Refresh();
+        }
+    }
+
+
+
+    private void SyncSelectionWithCursorController()
+    {
+        if (slots.Count == 0)
+        {
+            UpdateDescription(null);
+            currentFocusedSlot = null;
+            lastCursorIndex = -1;
+            return;
+        }
+
+        ResolveCursorController();
+        if (cursorController == null)
+        {
+            if (currentFocusedSlot == null)
+            {
+                FocusSlot(slots[0], false);
+            }
+            return;
+        }
+
+        int index = cursorController.CurrentIndex;
+        if (index < 0)
+        {
+            index = 0;
+        }
+        if (index >= slots.Count)
+        {
+            index = slots.Count - 1;
+        }
+
+        if (index != lastCursorIndex || currentFocusedSlot != slots[index])
+        {
+            FocusSlot(slots[index], false);
+            lastCursorIndex = index;
+            currentSlotIndex = index;
+            EnsureSlotVisible(slots[index]);
+        }
+    }
+
 
     private void OnEnable()
     {
@@ -184,16 +331,26 @@ public class ExpeditionPanelController : MonoBehaviour
     {
         if (!panelOpen)
         {
+            SetCursorControllerInputEnabled(false);
             return;
         }
 
         if (!HasInputFocus())
         {
+            SetCursorControllerInputEnabled(false);
             return;
         }
 
-        // Navigation dans la liste d'expeditions.
-        HandleNavigation();
+        if (ShouldUseCursorController())
+        {
+            SetCursorControllerInputEnabled(true);
+        }
+        else
+        {
+            SetCursorControllerInputEnabled(false);
+            // Navigation dans la liste d'expeditions.
+            HandleNavigation();
+        }
     }
 
     private void LateUpdate()
@@ -208,9 +365,17 @@ public class ExpeditionPanelController : MonoBehaviour
             return;
         }
 
+        if (ShouldUseCursorController())
+        {
+            SyncSelectionWithCursorController();
+        }
+        else
+        {
+            UpdateCursorVisual();
+        }
+
         // Mise a jour scroll/cursor apres layout.
         UpdateScroll();
-        UpdateCursorVisual();
     }
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
@@ -313,11 +478,13 @@ public class ExpeditionPanelController : MonoBehaviour
         }
         currentFocusedSlot = null;
         currentSlotIndex = 0;
+        lastCursorIndex = -1;
         lastMoveDirection = 0;
         nextMoveTime = 0f;
         cursorDirty = false;
         scrollDirty = false;
         slots.Clear();
+        SetCursorControllerInputEnabled(false);
         resolvedItemsParent = null;
         resolvedScrollRect = null;
         scrollVelocity = Vector2.zero;
@@ -328,7 +495,7 @@ public class ExpeditionPanelController : MonoBehaviour
             descriptionText.gameObject.SetActive(false);
         }
 
-        if (expeditionCursor != null)
+        if (expeditionCursor != null && !ShouldUseCursorController())
         {
             expeditionCursor.gameObject.SetActive(false);
         }
@@ -417,7 +584,12 @@ public class ExpeditionPanelController : MonoBehaviour
             }
         }
 
-        if (slots.Count > 0)
+        if (ShouldUseCursorController())
+        {
+            RefreshCursorController();
+            SyncSelectionWithCursorController();
+        }
+        else if (slots.Count > 0)
         {
             FocusSlot(slots[0]);
         }
@@ -682,7 +854,7 @@ public class ExpeditionPanelController : MonoBehaviour
         return isActiveAndEnabled && gameObject.activeInHierarchy;
     }
 
-    public void FocusSlot(ExpeditionSlotUI slot)
+    public void FocusSlot(ExpeditionSlotUI slot, bool syncCursor = true)
     {
         if (slot == null || slot.SlotRect == null)
         {
@@ -698,10 +870,15 @@ public class ExpeditionPanelController : MonoBehaviour
             if (index >= 0)
             {
                 currentSlotIndex = index;
+                lastCursorIndex = index;
             }
         }
 
         UpdateDescription(slot.Expedition);
+        if (syncCursor && ShouldUseCursorController())
+        {
+            EnsureSlotVisible(slot);
+        }
     }
 
     private void UpdateDescription(Expedition expedition)
@@ -740,7 +917,7 @@ public class ExpeditionPanelController : MonoBehaviour
         ExpeditionSlotUI slot = currentFocusedSlot;
         if (slot == null || slot.SlotRect == null)
         {
-            if (expeditionCursor != null)
+            if (expeditionCursor != null && !ShouldUseCursorController())
             {
                 expeditionCursor.gameObject.SetActive(false);
             }
@@ -1963,6 +2140,13 @@ public class ExpeditionPanelController : MonoBehaviour
         return panel;
     }
 
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        ResolveCursorController();
+    }
+#endif
     private readonly struct SlotInfo
     {
         public SlotInfo(ExpeditionSlotUI slot, Vector2 position)
@@ -1994,7 +2178,7 @@ public class ExpeditionSlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHand
     {
         if (Owner != null)
         {
-            Owner.FocusSlot(this);
+            Owner.FocusSlot(this, true);
         }
     }
 
@@ -2002,7 +2186,7 @@ public class ExpeditionSlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHand
     {
         if (Owner != null)
         {
-            Owner.FocusSlot(this);
+            Owner.FocusSlot(this, true);
         }
     }
 }

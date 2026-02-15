@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
+  m_Name: Item_Lapis-Lazuli
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemId: lapislazuli
+  itemName: Lapis-Lazuli
+  itemSprite: {fileID: 0}
+  description: "Mat\xE9riau somme toute commun mais assez joli."
+  canUse: 0
+  canPlace: 0
+  isContainer: 0
+  worldPrefab: {fileID: 0}
+  isTorch: 0
+  isBuilding: 0
+  buildingPrefab: {fileID: 0}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
+  buildingRequirements: []
+  buildingEffects: []
+  isHomeChest: 0
+  canBreak: 0
+  breakResults: []

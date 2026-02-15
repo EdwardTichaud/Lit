@@ -18,12 +18,16 @@ public class InventoryUISettings : MonoBehaviour
     public GameObject itemPrefab;
     [Tooltip("Curseur UI de selection.")]
     public RectTransform slotCursor;
+    [Tooltip("Controleur de curseur (optionnel).")]
+    public CursorController cursorController;
     [Tooltip("Texte de description de l'item selectionne.")]
     public TextMeshProUGUI descriptionText;
     [Tooltip("Padding ajoute autour du slot selectionne.")]
     public Vector2 cursorPadding = new Vector2(10f, 10f);
     [Tooltip("Cree un curseur si aucun n'est assigne.")]
     public bool createCursorIfMissing = true;
+    [Tooltip("Synchronise les parametres vers le CursorController.")]
+    public bool syncCursorControllerSettings = true;
 
     [Header("Inventory Navigation")]
     [Tooltip("Deadzone du stick pour naviguer dans l'inventaire.")]
@@ -55,11 +59,71 @@ public class InventoryUISettings : MonoBehaviour
         }
 
         Instance = this;
+        ResolveCursorController();
         InitializePanel();
     }
+    private void ResolveCursorController()
+    {
+        if (cursorController == null)
+        {
+            if (slotCursor != null)
+            {
+                cursorController = slotCursor.GetComponent<CursorController>();
+            }
+
+            if (cursorController == null && inventoryPanel != null)
+            {
+                cursorController = inventoryPanel.GetComponentInChildren<CursorController>(true);
+            }
+        }
+
+        if (slotCursor == null && cursorController != null)
+        {
+            if (cursorController.cursor != null)
+            {
+                slotCursor = cursorController.cursor;
+            }
+            else
+            {
+                slotCursor = cursorController.GetComponent<RectTransform>();
+                if (slotCursor != null)
+                {
+                    cursorController.cursor = slotCursor;
+                }
+            }
+        }
+        else if (cursorController != null && cursorController.cursor == null && slotCursor != null)
+        {
+            cursorController.cursor = slotCursor;
+        }
+
+        if (cursorController != null)
+        {
+            if (cursorController.itemsParent == null && itemsParent != null)
+            {
+                cursorController.itemsParent = itemsParent as RectTransform;
+            }
+
+            if (cursorController.layoutGroup == null && itemsParent != null)
+            {
+                cursorController.layoutGroup = itemsParent.GetComponent<LayoutGroup>();
+            }
+
+            if (syncCursorControllerSettings)
+            {
+                cursorController.cursorPadding = cursorPadding;
+                cursorController.moveDeadzone = moveDeadzone;
+                cursorController.initialRepeatDelay = initialRepeatDelay;
+                cursorController.repeatInterval = repeatInterval;
+                cursorController.wrap = wrapCursor;
+            }
+        }
+    }
+
 
     public void InitializePanel()
     {
+        ResolveCursorController();
         if (inventoryPanel == null)
         {
             return;
@@ -79,6 +143,7 @@ public class InventoryUISettings : MonoBehaviour
 
     public void OpenPanel()
     {
+        ResolveCursorController();
         if (inventoryPanel == null)
         {
             return;
@@ -149,12 +214,16 @@ public class InventoryUISettings : MonoBehaviour
     {
         if (slotCursor != null)
         {
-            slotCursor.gameObject.SetActive(false);
+            if (slotCursor.GetComponent<CursorController>() == null)
+            {
+                slotCursor.gameObject.SetActive(false);
+            }
         }
     }
 
     public RectTransform EnsureSlotCursor(Transform parent)
     {
+        ResolveCursorController();
         if (slotCursor != null)
         {
             return slotCursor;
@@ -272,4 +341,11 @@ public class InventoryUISettings : MonoBehaviour
     {
         return isActiveAndEnabled && gameObject.activeInHierarchy;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        ResolveCursorController();
+    }
+#endif
 }

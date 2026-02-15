@@ -139,6 +139,9 @@ public class InventoryPanelController : MonoBehaviour
     public float dropForwardOffset = 0.6f;
     [Tooltip("Offset vertical lors du drop.")]
     public float dropHeightOffset = 0.1f;
+    [Header("Action Feedback")]
+    [Tooltip("Duree d'affichage des messages d'action.")]
+    public float actionFeedbackDuration = 1.2f;
 
     private CanvasGroup actionBoxCanvasGroup;
     private Coroutine actionBoxFadeRoutine;
@@ -1462,7 +1465,13 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
-        return controller.TryUseItem(currentFocusedSlot.Item);
+        if (controller.TryUseItem(currentFocusedSlot.Item, out string reason))
+        {
+            return true;
+        }
+
+        ShowActionFeedback(reason);
+        return false;
     }
 
     private void TryDepositSelectedItem()
@@ -1944,18 +1953,29 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         Item item = currentFocusedSlot.Item;
-        if (!item.HasBreakResults())
-        {
-            return false;
-        }
-
         SquadCharacterController controller = GetCurrentCharacterController();
         if (controller == null)
         {
             return false;
         }
 
-        return controller.TryBreakItem(item);
+        if (item.TryBreak(controller, out string reason))
+        {
+            return true;
+        }
+
+        ShowActionFeedback(reason);
+        return false;
+    }
+
+    private void ShowActionFeedback(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message, actionFeedbackDuration);
     }
 
     private void EnsureBreakActionBoxEntry(Transform container)
@@ -2328,11 +2348,10 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         Item item = currentFocusedSlot.Item;
+        SquadCharacterController controller = GetCurrentCharacterController();
         if (allowDropWithoutWorldPrefab
             && item != null
-            && !item.isTorch
-            && !item.isBuilding
-            && (item.worldPrefab == null || !item.canPlace))
+            && item.ShouldInstantDropInsteadOfPlacement(controller, allowDropWithoutWorldPrefab))
         {
             if (TryInstantDropItem(item, 1))
             {
@@ -2370,11 +2389,11 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
-        GameObject prefab = ResolvePlacementPrefab(item);
-        if (!item.canPlace || prefab == null)
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (!item.CanPlaceFromInventory(controller, out string reason))
         {
             Debug.LogWarning($"InventoryPanelController: l'item {item.name} ne peut pas etre place ou n'a pas de prefab.");
-            ShowPlacementFeedback(placementCannotPlaceMessage);
+            ShowPlacementFeedback(string.IsNullOrWhiteSpace(reason) ? placementCannotPlaceMessage : reason);
             FlashActionBoxInvalid();
             return false;
         }
@@ -2384,7 +2403,6 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
-        SquadCharacterController controller = GetCurrentCharacterController();
         if (controller == null)
         {
             return false;
@@ -2400,16 +2418,9 @@ public class InventoryPanelController : MonoBehaviour
             }
         }
 
-        if (item.isTorch && controller.IsTorchEquipped)
-        {
-            Debug.LogWarning("InventoryPanelController: la torche ne peut pas etre posee pendant qu'elle est equipee.");
-            ShowPlacementFeedback(placementCannotPlaceMessage);
-            FlashActionBoxInvalid();
-            return false;
-        }
-
         placementAnchor = controller.transform;
-        placementInstance = Instantiate(prefab);
+        GameObject prefab = ResolvePlacementPrefab(item);
+        placementInstance = prefab != null ? Instantiate(prefab) : null;
         if (placementInstance == null)
         {
             return false;
@@ -2456,17 +2467,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private GameObject ResolvePlacementPrefab(Item item)
     {
-        if (item == null)
-        {
-            return null;
-        }
-
-        if (item.isBuilding && item.buildingPrefab != null)
-        {
-            return item.buildingPrefab;
-        }
-
-        return item.worldPrefab;
+        return item != null ? item.ResolveWorldPrefab() : null;
     }
 
     private bool HasBuildingResources(Item building, SquadCharacterController controller, out string reason)
@@ -2749,8 +2750,9 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
-        if (item.isTorch)
+        if (!item.CanInstantDropFromInventory(controller, allowDropWithoutWorldPrefab, out string reason))
         {
+            ShowPlacementFeedback(reason);
             return false;
         }
 
@@ -2765,17 +2767,7 @@ public class InventoryPanelController : MonoBehaviour
         position += forward * Mathf.Max(0f, dropForwardOffset);
         position += Vector3.up * dropHeightOffset;
 
-        GameObject instance = null;
-        if (item.worldPrefab != null)
-        {
-            instance = Instantiate(item.worldPrefab, position, Quaternion.identity);
-        }
-        else
-        {
-            instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            instance.transform.SetPositionAndRotation(position, Quaternion.identity);
-            instance.transform.localScale = Vector3.one * 0.4f;
-        }
+        GameObject instance = item.CreateWorldInstance(position, Quaternion.identity);
 
         if (instance == null)
         {
@@ -3328,120 +3320,12 @@ public class InventoryPanelController : MonoBehaviour
 
     private void CreateDroppedLootContainer(GameObject instance, Item item, int quantity)
     {
-        if (instance == null || item == null)
+        if (item == null)
         {
             return;
         }
 
-        int clampedQuantity = Mathf.Max(1, quantity);
-        LootContainer existing = instance.GetComponentInChildren<LootContainer>();
-        if (existing != null)
-        {
-            existing.lootItems = new List<LootContainer.LootItemEntry>
-            {
-                new LootContainer.LootItemEntry { item = item, quantity = clampedQuantity }
-            };
-            existing.containerItem = item;
-            existing.destroyWhenEmpty = placementDestroyWhenEmpty;
-            return;
-        }
-
-        string baseName = !string.IsNullOrWhiteSpace(item.itemName) ? item.itemName : item.name;
-        GameObject root = new GameObject($"Dropped_{baseName}");
-        root.transform.SetPositionAndRotation(instance.transform.position, Quaternion.identity);
-        root.transform.localScale = Vector3.one;
-        instance.transform.SetParent(root.transform, true);
-
-        if (!TryCalculatePlacementBounds(instance, out Bounds bounds))
-        {
-            bounds = new Bounds(root.transform.position, Vector3.one);
-        }
-
-        BoxCollider trigger = root.AddComponent<BoxCollider>();
-        trigger.isTrigger = true;
-        trigger.center = root.transform.InverseTransformPoint(bounds.center);
-        trigger.size = bounds.size;
-
-        LootContainer loot = root.AddComponent<LootContainer>();
-        loot.lootItems = new List<LootContainer.LootItemEntry>
-        {
-            new LootContainer.LootItemEntry { item = item, quantity = clampedQuantity }
-        };
-        loot.containerItem = item;
-        loot.interactionTrigger = trigger;
-        loot.destroyWhenEmpty = placementDestroyWhenEmpty;
-    }
-
-    private bool TryCalculatePlacementBounds(GameObject instance, out Bounds bounds)
-    {
-        bounds = new Bounds(Vector3.zero, Vector3.zero);
-        if (instance == null)
-        {
-            return false;
-        }
-
-        bool hasBounds = false;
-        Collider[] colliders = instance.GetComponentsInChildren<Collider>(true);
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider col = colliders[i];
-            if (col == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = col.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(col.bounds);
-            }
-        }
-
-        if (hasBounds)
-        {
-            if (bounds.size == Vector3.zero)
-            {
-                bounds.size = Vector3.one;
-            }
-            return true;
-        }
-
-        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
-        }
-
-        if (!hasBounds)
-        {
-            bounds = new Bounds(instance.transform.position, Vector3.one);
-            return false;
-        }
-
-        if (bounds.size == Vector3.zero)
-        {
-            bounds.size = Vector3.one;
-        }
-
-        return true;
+        item.CreateDroppedLootContainer(instance, quantity, placementDestroyWhenEmpty);
     }
 
     private void UpdateActionBoxCursor()

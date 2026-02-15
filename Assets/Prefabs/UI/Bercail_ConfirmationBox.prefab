@@ -373,10 +373,14 @@ MonoBehaviour:
   repeatInterval: 0.12
   wrap: 0
   moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
+  allowInput: 1
   disableExternalActionOnDisable: 0
   useUnscaledTime: 1
   startIndex: 0
   resetToFirstOnEnable: 1
+  smoothCursor: 1
+  cursorPositionLerpSpeed: 18
+  cursorSizeLerpSpeed: 18
 --- !u!1 &4151098751637033772
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,7 +421,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 2003.7727, y: 1205.0896}
+  m_SizeDelta: {x: 2000, y: 1200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6736245412955715315
 CanvasRenderer:

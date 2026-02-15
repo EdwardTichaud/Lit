@@ -29,6 +29,10 @@ public class BuilderController : MonoBehaviour
     [Header("Interaction - Voice Lines")]
     [Tooltip("Joue une voice line lors de l'interaction.")]
     public bool playVoiceLineOnInteract = true;
+    [Tooltip("Ouvre le panel de construction lors de l'interaction.")]
+    public bool openPanelOnInteract = true;
+    [Tooltip("Panel de construction (optionnel, sinon auto-detecte).")]
+    public BuildingPanelController buildingPanel;
     [Tooltip("Interaction disponible uniquement a proximite.")]
     public bool requireProximity = true;
     [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
@@ -123,7 +127,7 @@ public class BuilderController : MonoBehaviour
 
     private void HandleInteract()
     {
-        if (!playVoiceLineOnInteract || !CanProcessInteract())
+        if (!CanProcessInteract())
         {
             return;
         }
@@ -138,6 +142,16 @@ public class BuilderController : MonoBehaviour
             }
 
             currentCharacter = controlled;
+        }
+
+        if (openPanelOnInteract)
+        {
+            OpenBuildingPanel();
+        }
+
+        if (!playVoiceLineOnInteract)
+        {
+            return;
         }
 
         if (Time.time < nextVoiceLineTime)
@@ -159,6 +173,27 @@ public class BuilderController : MonoBehaviour
     private bool CanProcessInteract()
     {
         return !InputFocusStack.HasAnyFocus();
+    }
+
+    private void OpenBuildingPanel()
+    {
+        BuildingPanelController panel = buildingPanel;
+        if (panel == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            panel = FindFirstObjectByType<BuildingPanelController>();
+#else
+            panel = FindObjectOfType<BuildingPanelController>();
+#endif
+        }
+
+        if (panel == null)
+        {
+            Debug.LogWarning("BuilderController: BuildingPanelController introuvable.");
+            return;
+        }
+
+        panel.OpenPanel(this);
     }
 
     private void HandleCharacterEnter(Collider other)
