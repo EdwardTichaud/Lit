@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
+  m_Name: Luna
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  uniqueId: b98f0eec9408fc04193d3bfa674c682b
+  characterId: luna
+  characterName: Luna
+  portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
+  model: {fileID: 2784444758471557209, guid: ec40bcd1a60509644bb44c721cd362aa, type: 3}
+  skills:
+  - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
+  - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
+  stats:
+    strength: 10
+    dexterity: 10
+    constitution: 10
+    intelligence: 10
+    wisdom: 10
+    charisma: 10
+  starterItems:
+  - {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
+  hp: 10
+  maisonWaitingPoint: 3
+  inventoryItems: []
+  torchSecondsRemaining: 0
+  torchEquipped: 0
+  inventoryInitialized: 0
