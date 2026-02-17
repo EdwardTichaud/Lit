@@ -19,6 +19,22 @@ public class EchoPassiveEffect : Effect, IItemPassiveEffect
 
     private readonly Dictionary<int, float> nextPlayTimeBySource = new Dictionary<int, float>();
 
+    public override bool Apply(SquadCharacterController controller, Item item)
+    {
+        if (controller == null || audioClip == null)
+        {
+            return false;
+        }
+
+        PlayAt(controller.transform.position);
+        if (AudioManager.Instance != null)
+        {
+            return true;
+        }
+
+        return audioClip.audioClip != null;
+    }
+
     public void Tick(ItemPassiveContext context)
     {
         if (audioClip == null || context.Source == null)

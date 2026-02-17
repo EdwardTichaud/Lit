@@ -26,6 +26,9 @@ public class LootUISettings : MonoBehaviour
     [Tooltip("Texte affichant le nom du container (coffre, cadavre, etc.). Si null, tentative d'auto-detection dans le panel.")]
     public TextMeshProUGUI containerNameText;
 
+    [Tooltip("Image affichant l'icone du container (sprite). Si null, tentative d'auto-detection dans le panel.")]
+    public Image containerIconImage;
+
     [Tooltip("Padding ajoute autour du slot selectionne.")]
     public Vector2 cursorPadding = new Vector2(10f, 10f);
     [Tooltip("Cree un curseur si aucun n'est assigne.")]
@@ -261,7 +264,9 @@ public class LootUISettings : MonoBehaviour
 
         if (cachedContainerIconImage == null)
         {
-            cachedContainerIconImage = FindContainerIcon(lootPanel.transform, lootItemsParent);
+            cachedContainerIconImage = containerIconImage != null
+                ? containerIconImage
+                : FindContainerIcon(lootPanel.transform, lootItemsParent);
         }
 
         if (cachedContainerNameText == null)
@@ -310,7 +315,26 @@ public class LootUISettings : MonoBehaviour
         {
             string name = candidates[i].name;
             if (name.IndexOf("container", System.StringComparison.OrdinalIgnoreCase) >= 0
+                && name.IndexOf("sprite", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return candidates[i];
+            }
+        }
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            string name = candidates[i].name;
+            if (name.IndexOf("sprite", System.StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("icon", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return candidates[i];
+            }
+        }
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            string name = candidates[i].name;
+            if (name.IndexOf("container", System.StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return candidates[i];
             }

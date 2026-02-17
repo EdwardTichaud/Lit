@@ -64,6 +64,11 @@ public class InfoBoxUI : MonoBehaviour
         InitializeCanvasGroup();
     }
 
+    public static bool TryShow(string message)
+    {
+        return TryShow(message, 0f);
+    }
+
     public static bool TryShow(string message, float duration)
     {
         if (string.IsNullOrWhiteSpace(message))
@@ -88,6 +93,26 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         return ui.ShowMessage(message, duration);
+    }
+
+    public static float GetDefaultDuration()
+    {
+        InfoBoxUI ui = Instance;
+        if (ui == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            ui = FindFirstObjectByType<InfoBoxUI>();
+#else
+            ui = FindObjectOfType<InfoBoxUI>();
+#endif
+        }
+
+        if (ui == null)
+        {
+            return 1.2f;
+        }
+
+        return ui.defaultDuration;
     }
 
     public bool ShowMessage(string message, float duration)

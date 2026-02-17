@@ -751,6 +751,124 @@ public class CharacterStateStore : MonoBehaviour
         List<BuiltConstructionData> results = new List<BuiltConstructionData>();
 
 #if UNITY_2023_1_OR_NEWER
+        BuilderController[] builders = FindObjectsByType<BuilderController>(FindObjectsSortMode.None);
+#else
+        BuilderController[] builders = FindObjectsOfType<BuilderController>();
+#endif
+        bool usedBuilder = false;
+        if (builders != null && builders.Length > 0)
+        {
+            for (int i = 0; i < builders.Length; i++)
+            {
+                BuilderController builder = builders[i];
+                if (builder == null)
+                {
+                    continue;
+                }
+
+                usedBuilder = true;
+                builder.EnsureBuiltBuildings();
+                List<BuilderController.BuiltBuildingEntry> entries = builder.builtBuildings;
+                if (entries == null || entries.Count == 0)
+                {
+                    continue;
+                }
+
+                for (int j = 0; j < entries.Count; j++)
+                {
+                    BuilderController.BuiltBuildingEntry entry = entries[j];
+                    if (entry == null || entry.info == null)
+                    {
+                        if (entry == null || entry.building == null)
+                        {
+                            continue;
+                        }
+                    }
+
+                    BuildingInfoInteractable info = entry.info;
+                    Item buildingItem = info != null && info.BuildingItem != null ? info.BuildingItem : entry.building;
+                    if (buildingItem == null)
+                    {
+                        continue;
+                    }
+
+                    string buildId = info != null ? info.BuildId : GetBuildingItemId(buildingItem);
+                    string buildingItemId = GetBuildingItemId(buildingItem);
+                    string itemId = buildingItemId;
+                    if (string.IsNullOrWhiteSpace(itemId))
+                    {
+                        LootContainer container = info != null ? info.GetComponentInChildren<LootContainer>() : null;
+                        if (container != null && container.containerItem != null)
+                        {
+                            itemId = GetItemId(container.containerItem);
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(buildId))
+                    {
+                        buildId = itemId;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(buildingItemId))
+                    {
+                        buildingItemId = buildId;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(buildId) && string.IsNullOrWhiteSpace(itemId) && string.IsNullOrWhiteSpace(buildingItemId))
+                    {
+                        continue;
+                    }
+
+                    bool isHomeChest = buildingItem != null && buildingItem.isHomeChest;
+                    string maisonTag = GetMaisonChestTag();
+                    if (info != null && !isHomeChest && !string.IsNullOrWhiteSpace(maisonTag))
+                    {
+                        try
+                        {
+                            if (info.gameObject.CompareTag(maisonTag))
+                            {
+                                isHomeChest = true;
+                            }
+                        }
+                        catch (UnityException)
+                        {
+                            // Tag not defined, ignore.
+                        }
+                    }
+
+                    Transform t = info != null ? info.transform : null;
+                    Vector3 position = t != null ? t.position : entry.position;
+                    Quaternion rotation = t != null ? t.rotation : Quaternion.identity;
+                    Vector3 scale = t != null ? t.localScale : Vector3.one;
+                    if (info != null)
+                    {
+                        entry.position = position;
+                        entry.level = Mathf.Max(1, info.Level);
+                    }
+
+                    BuiltConstructionData data = new BuiltConstructionData
+                    {
+                        buildId = buildId,
+                        itemId = itemId,
+                        buildingDataId = buildingItemId,
+                        level = Mathf.Max(1, info != null ? info.Level : entry.level),
+                        isHomeChest = isHomeChest,
+                        position = position,
+                        rotation = rotation,
+                        scale = scale
+                    };
+
+                    results.Add(data);
+                }
+            }
+        }
+
+        if (usedBuilder)
+        {
+            return results;
+        }
+
+#if UNITY_2023_1_OR_NEWER
         BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
 #else
         BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
@@ -839,12 +957,26 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
+        BuilderController builder = GetBuilderController();
+        if (builder != null)
+        {
+            builder.ClearBuiltBuildings(true);
+        }
+
+        ResetBuildingLevels(buildingLookup);
+
         // Instancie les constructions sauvegardees si elles n'existent pas deja.
+        BuildingInfoInteractable[] existingInfos = null;
+        if (builder == null)
+        {
 #if UNITY_2023_1_OR_NEWER
-        BuildingInfoInteractable[] existingInfos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+            existingInfos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
 #else
-        BuildingInfoInteractable[] existingInfos = FindObjectsOfType<BuildingInfoInteractable>();
+            existingInfos = FindObjectsOfType<BuildingInfoInteractable>();
 #endif
+        }
+
+        Transform parent = ResolveBuiltParent(builder);
 
         for (int i = 0; i < data.builtConstructions.Count; i++)
         {
@@ -854,7 +986,7 @@ public class CharacterStateStore : MonoBehaviour
                 continue;
             }
 
-            if (IsAlreadyBuilt(entry, existingInfos))
+            if (builder == null && IsAlreadyBuilt(entry, existingInfos))
             {
                 continue;
             }
@@ -901,7 +1033,9 @@ public class CharacterStateStore : MonoBehaviour
                 continue;
             }
 
-            GameObject instance = Instantiate(prefab, entry.position, entry.rotation, builtParent);
+            GameObject instance = parent != null
+                ? Instantiate(prefab, entry.position, entry.rotation, parent)
+                : Instantiate(prefab, entry.position, entry.rotation);
             if (instance == null)
             {
                 continue;
@@ -920,7 +1054,11 @@ public class CharacterStateStore : MonoBehaviour
                 : (!string.IsNullOrWhiteSpace(entry.buildingDataId) ? entry.buildingDataId : entry.itemId);
 
             info.Initialize(buildId, buildingItem, Mathf.Max(1, entry.level));
-            if (buildingItem != null && buildingItem.isBuilding)
+            if (builder != null && buildingItem != null && buildingItem.isBuilding)
+            {
+                builder.RegisterBuiltBuilding(buildingItem, Mathf.Max(1, entry.level), info);
+            }
+            else if (buildingItem != null && buildingItem.isBuilding)
             {
                 buildingItem.buildingCurrentLevel = Mathf.Max(buildingItem.buildingCurrentLevel, Mathf.Max(1, entry.level));
             }
@@ -985,6 +1123,57 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         return false;
+    }
+
+    private BuilderController GetBuilderController()
+    {
+#if UNITY_2023_1_OR_NEWER
+        return FindFirstObjectByType<BuilderController>();
+#else
+        return FindObjectOfType<BuilderController>();
+#endif
+    }
+
+    private Transform ResolveBuiltParent(BuilderController builder)
+    {
+        if (builder != null)
+        {
+            Transform root = builder.GetBuildingsRoot();
+            if (root != null)
+            {
+                return root;
+            }
+        }
+
+        if (builtParent != null)
+        {
+            return builtParent;
+        }
+
+        GameObject found = GameObject.Find("Buildings");
+        if (found != null)
+        {
+            return found.transform;
+        }
+
+        return builtParent;
+    }
+
+    private void ResetBuildingLevels(Dictionary<string, Item> buildingLookup)
+    {
+        if (buildingLookup == null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<string, Item> entry in buildingLookup)
+        {
+            Item item = entry.Value;
+            if (item != null && item.isBuilding)
+            {
+                item.buildingCurrentLevel = 0;
+            }
+        }
     }
 
     private void TryAssignMaisonChestTag(GameObject instance)

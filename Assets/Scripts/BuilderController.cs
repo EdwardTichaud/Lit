@@ -14,6 +14,8 @@ public class BuilderController : MonoBehaviour
         public Item building;
         [Tooltip("Niveau de cette instance.")]
         public int level = 1;
+        [Tooltip("Position sauvegardee de l'instance.")]
+        public Vector3 position;
     }
 
     [Header("Available Buildings")]
@@ -25,6 +27,16 @@ public class BuilderController : MonoBehaviour
     public List<BuiltBuildingEntry> builtBuildings = new List<BuiltBuildingEntry>();
     [Tooltip("Applique les effets aux membres de la squad au lieu du personnage controle.")]
     public bool applyEffectsToAllSquad = false;
+
+    [Header("Buildings Root")]
+    [Tooltip("Parent des constructions instanciees.")]
+    public Transform buildingsRoot;
+    [Tooltip("Nom du GameObject racine (fallback si root non assigne).")]
+    public string buildingsRootName = "Buildings";
+    [Tooltip("Cherche automatiquement le root par nom si manquant.")]
+    public bool autoFindBuildingsRoot = true;
+    [Tooltip("Cree le root si introuvable.")]
+    public bool autoCreateBuildingsRoot = false;
 
     [Header("Interaction - Voice Lines")]
     [Tooltip("Joue une voice line lors de l'interaction.")]
@@ -55,9 +67,15 @@ public class BuilderController : MonoBehaviour
 
     private void Awake()
     {
+        ResolveBuildingsRoot();
         InitializeInteractionTrigger();
         playerInputs = new PlayerInputs();
         voiceLineController = GetComponent<LocalVoiceLineController>();
+    }
+
+    private void Start()
+    {
+        InitializeBuiltBuildingsFromList();
     }
 
     private void OnEnable()
@@ -367,6 +385,12 @@ public class BuilderController : MonoBehaviour
         {
             RefreshBuiltBuildings();
         }
+        else
+        {
+            SyncBuiltBuildingEntries();
+        }
+
+        SyncBuildingCurrentLevelsFromBuiltList();
     }
 
     public void RefreshBuiltBuildings()
@@ -388,6 +412,7 @@ public class BuilderController : MonoBehaviour
         BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
 #endif
         int added = 0;
+        Transform root = ResolveBuildingsRoot();
         if (infos != null)
         {
             for (int i = 0; i < infos.Length; i++)
@@ -409,36 +434,24 @@ public class BuilderController : MonoBehaviour
                     continue;
                 }
 
+                if (root != null && !info.transform.IsChildOf(root))
+                {
+                    info.transform.SetParent(root, true);
+                }
+
                 builtBuildings.Add(new BuiltBuildingEntry
                 {
                     info = info,
                     building = item,
-                    level = Mathf.Max(1, info.Level)
+                    level = Mathf.Max(1, info.Level),
+                    position = info.transform.position
                 });
                 UpdateBuildingCurrentLevel(item, info.Level);
                 added++;
             }
         }
 
-        if (added == 0 && existingBuildings != null)
-        {
-            for (int i = 0; i < existingBuildings.Count; i++)
-            {
-                Item item = existingBuildings[i];
-                if (item == null || !item.isBuilding)
-                {
-                    continue;
-                }
-
-                builtBuildings.Add(new BuiltBuildingEntry
-                {
-                    info = null,
-                    building = item,
-                    level = 1
-                });
-                UpdateBuildingCurrentLevel(item, 1);
-            }
-        }
+        SyncBuildingCurrentLevelsFromBuiltList();
     }
 
     public void RegisterBuiltBuilding(Item building, int levelValue = 1, BuildingInfoInteractable info = null)
@@ -457,6 +470,7 @@ public class BuilderController : MonoBehaviour
 
         if (info != null)
         {
+            EnsureBuildingParent(info.transform);
             for (int i = 0; i < builtBuildings.Count; i++)
             {
                 BuiltBuildingEntry entry = builtBuildings[i];
@@ -464,6 +478,7 @@ public class BuilderController : MonoBehaviour
                 {
                     entry.building = building;
                     entry.level = Mathf.Max(1, levelValue);
+                    entry.position = info.transform.position;
                     AddAvailableBuilding(building);
                     return;
                 }
@@ -474,10 +489,279 @@ public class BuilderController : MonoBehaviour
         {
             info = info,
             building = building,
-            level = Mathf.Max(1, levelValue)
+            level = Mathf.Max(1, levelValue),
+            position = info != null ? info.transform.position : Vector3.zero
         });
 
         AddAvailableBuilding(building);
+    }
+
+    public Transform GetBuildingsRoot()
+    {
+        return ResolveBuildingsRoot();
+    }
+
+    public void EnsureBuildingParent(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Transform root = ResolveBuildingsRoot();
+        if (root == null || target == root)
+        {
+            return;
+        }
+
+        if (!target.IsChildOf(root))
+        {
+            target.SetParent(root, true);
+        }
+    }
+
+    public void ClearBuiltBuildings(bool destroyInstances)
+    {
+        if (builtBuildings == null)
+        {
+            builtBuildings = new List<BuiltBuildingEntry>();
+        }
+
+        if (destroyInstances)
+        {
+            Transform root = ResolveBuildingsRoot();
+            if (root != null)
+            {
+                for (int i = root.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = root.GetChild(i);
+                    if (child != null && child.GetComponentInChildren<BuildingInfoInteractable>(true) != null)
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < builtBuildings.Count; i++)
+                {
+                    BuiltBuildingEntry entry = builtBuildings[i];
+                    if (entry != null && entry.info != null)
+                    {
+                        Destroy(entry.info.gameObject);
+                    }
+                }
+            }
+        }
+
+        builtBuildings.Clear();
+        SyncBuildingCurrentLevelsFromBuiltList();
+    }
+
+    private void InitializeBuiltBuildingsFromList()
+    {
+        if (builtBuildings == null || builtBuildings.Count == 0)
+        {
+            return;
+        }
+
+        EnsureAvailableBuildings();
+        Transform root = ResolveBuildingsRoot();
+
+        for (int i = 0; i < builtBuildings.Count; i++)
+        {
+            BuiltBuildingEntry entry = builtBuildings[i];
+            if (entry == null)
+            {
+                continue;
+            }
+
+            if (entry.info != null)
+            {
+                if (entry.building == null)
+                {
+                    entry.building = entry.info.BuildingItem;
+                }
+
+                entry.level = Mathf.Max(1, entry.info.Level);
+                entry.position = entry.info.transform.position;
+                EnsureBuildingParent(entry.info.transform);
+                if (entry.building != null)
+                {
+                    UpdateBuildingCurrentLevel(entry.building, entry.level);
+                    AddAvailableBuilding(entry.building);
+                }
+                continue;
+            }
+
+            if (entry.building == null || !entry.building.isBuilding)
+            {
+                continue;
+            }
+
+            GameObject prefab = entry.building.buildingPrefab != null ? entry.building.buildingPrefab : entry.building.worldPrefab;
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            Vector3 position = entry.position;
+            Quaternion rotation = Quaternion.identity;
+            GameObject instance = root != null
+                ? Instantiate(prefab, position, rotation, root)
+                : Instantiate(prefab, position, rotation);
+            if (instance == null)
+            {
+                continue;
+            }
+
+            BuildingInfoInteractable info = instance.GetComponent<BuildingInfoInteractable>();
+            if (info == null)
+            {
+                info = instance.AddComponent<BuildingInfoInteractable>();
+            }
+
+            info.Initialize(GetBuildingItemId(entry.building), entry.building, Mathf.Max(1, entry.level));
+            entry.info = info;
+            entry.position = instance.transform.position;
+            entry.level = info.Level;
+            UpdateBuildingCurrentLevel(entry.building, entry.level);
+            AddAvailableBuilding(entry.building);
+
+            LootContainer container = instance.GetComponentInChildren<LootContainer>();
+            if (container != null)
+            {
+                container.containerItem = entry.building;
+            }
+        }
+    }
+
+    private void SyncBuildingCurrentLevelsFromBuiltList()
+    {
+        EnsureAvailableBuildings();
+
+        Dictionary<Item, int> builtLevels = new Dictionary<Item, int>();
+        if (builtBuildings != null)
+        {
+            for (int i = 0; i < builtBuildings.Count; i++)
+            {
+                BuiltBuildingEntry entry = builtBuildings[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                Item item = entry.building;
+                if (item == null && entry.info != null)
+                {
+                    item = entry.info.BuildingItem;
+                }
+
+                if (item == null && entry.info != null && !string.IsNullOrWhiteSpace(entry.info.BuildingItemId))
+                {
+                    item = ResolveBuildingItem(entry.info.BuildingItemId);
+                }
+
+                if (item == null || !item.isBuilding)
+                {
+                    continue;
+                }
+
+                int level = entry.info != null ? entry.info.Level : entry.level;
+                level = Mathf.Max(1, level);
+                if (builtLevels.TryGetValue(item, out int current))
+                {
+                    if (level > current)
+                    {
+                        builtLevels[item] = level;
+                    }
+                }
+                else
+                {
+                    builtLevels[item] = level;
+                }
+            }
+        }
+
+        HashSet<Item> candidates = new HashSet<Item>();
+        if (availableBuildings != null)
+        {
+            for (int i = 0; i < availableBuildings.Count; i++)
+            {
+                Item item = availableBuildings[i];
+                if (item != null && item.isBuilding)
+                {
+                    candidates.Add(item);
+                }
+            }
+        }
+
+        if (existingBuildings != null)
+        {
+            for (int i = 0; i < existingBuildings.Count; i++)
+            {
+                Item item = existingBuildings[i];
+                if (item != null && item.isBuilding)
+                {
+                    candidates.Add(item);
+                }
+            }
+        }
+
+        foreach (KeyValuePair<Item, int> built in builtLevels)
+        {
+            if (built.Key != null && built.Key.isBuilding)
+            {
+                candidates.Add(built.Key);
+            }
+        }
+
+        foreach (Item item in candidates)
+        {
+            if (item == null || !item.isBuilding)
+            {
+                continue;
+            }
+
+            if (builtLevels.TryGetValue(item, out int level))
+            {
+                int maxLevel = Mathf.Max(1, item.buildingMaxLevel);
+                item.buildingCurrentLevel = Mathf.Clamp(level, 1, maxLevel);
+            }
+            else
+            {
+                item.buildingCurrentLevel = 0;
+            }
+        }
+    }
+
+    private void SyncBuiltBuildingEntries()
+    {
+        if (builtBuildings == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < builtBuildings.Count; i++)
+        {
+            BuiltBuildingEntry entry = builtBuildings[i];
+            if (entry == null)
+            {
+                continue;
+            }
+
+            if (entry.info != null)
+            {
+                if (entry.building == null)
+                {
+                    entry.building = entry.info.BuildingItem;
+                }
+
+                entry.level = Mathf.Max(1, entry.info.Level);
+                entry.position = entry.info.transform.position;
+                EnsureBuildingParent(entry.info.transform);
+            }
+        }
     }
 
     public int GetCurrentLevel(Item building)
@@ -510,6 +794,35 @@ public class BuilderController : MonoBehaviour
             return false;
         }
 
+        EnsureBuiltBuildings();
+        if (builtBuildings != null && builtBuildings.Count > 0)
+        {
+            float bestSqr = float.MaxValue;
+            for (int i = 0; i < builtBuildings.Count; i++)
+            {
+                BuiltBuildingEntry entry = builtBuildings[i];
+                if (entry == null || entry.info == null)
+                {
+                    continue;
+                }
+
+                BuildingInfoInteractable candidate = entry.info;
+                if (!IsInfoForBuilding(candidate, building))
+                {
+                    continue;
+                }
+
+                float sqr = (candidate.transform.position - origin).sqrMagnitude;
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    info = candidate;
+                }
+            }
+
+            return info != null;
+        }
+
 #if UNITY_2023_1_OR_NEWER
         BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
 #else
@@ -520,7 +833,7 @@ public class BuilderController : MonoBehaviour
             return false;
         }
 
-        float bestSqr = float.MaxValue;
+        float bestFallback = float.MaxValue;
         for (int i = 0; i < infos.Length; i++)
         {
             BuildingInfoInteractable candidate = infos[i];
@@ -535,14 +848,41 @@ public class BuilderController : MonoBehaviour
             }
 
             float sqr = (candidate.transform.position - origin).sqrMagnitude;
-            if (sqr < bestSqr)
+            if (sqr < bestFallback)
             {
-                bestSqr = sqr;
+                bestFallback = sqr;
                 info = candidate;
             }
         }
 
         return info != null;
+    }
+
+    private Transform ResolveBuildingsRoot()
+    {
+        if (buildingsRoot != null)
+        {
+            return buildingsRoot;
+        }
+
+        if (autoFindBuildingsRoot && !string.IsNullOrWhiteSpace(buildingsRootName))
+        {
+            GameObject found = GameObject.Find(buildingsRootName);
+            if (found != null)
+            {
+                buildingsRoot = found.transform;
+                return buildingsRoot;
+            }
+        }
+
+        if (autoCreateBuildingsRoot && !string.IsNullOrWhiteSpace(buildingsRootName))
+        {
+            GameObject root = new GameObject(buildingsRootName);
+            buildingsRoot = root.transform;
+            return buildingsRoot;
+        }
+
+        return null;
     }
 
     public bool TryUpgradeBuildingInstance(BuildingInfoInteractable info, int targetLevel)
@@ -608,9 +948,9 @@ public class BuilderController : MonoBehaviour
         }
     }
 
-    public void ApplyBuildingEffects(Item building, int levelDelta = 1)
+    public void ApplyBuildingEffects(Item building, int currentLevel, int levelDelta = 1)
     {
-        if (building == null || !building.isBuilding || building.buildingEffects == null || levelDelta <= 0)
+        if (building == null || !building.isBuilding || levelDelta <= 0)
         {
             return;
         }
@@ -621,29 +961,68 @@ public class BuilderController : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < building.buildingEffects.Count; i++)
+        int startLevel = Mathf.Max(0, currentLevel);
+        int targetLevel = startLevel + levelDelta;
+        for (int level = startLevel + 1; level <= targetLevel; level++)
         {
-            Effect effect = building.buildingEffects[i];
+            ApplyBuildingEffectsForLevel(building, level, targets);
+        }
+    }
+
+    private void ApplyBuildingEffectsForLevel(Item building, int level, List<SquadCharacterController> targets)
+    {
+        if (building == null || targets == null || targets.Count == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<Effect> effects = building.GetBuildingEffectsForLevel(level);
+        if (effects == null || effects.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < effects.Count; i++)
+        {
+            Effect effect = effects[i];
             if (effect == null)
             {
                 continue;
             }
 
-            if (effect is ISquadEffect squadEffect)
+            // Les effets declenches a l'interaction ne doivent pas s'appliquer a la construction/amelioration.
+            if (effect is IBuildingInteractEffect)
             {
-                squadEffect.ApplyToSquad(levelDelta);
                 continue;
             }
 
-            for (int stack = 0; stack < levelDelta; stack++)
+            if (effect is IBuildingLevelSquadEffect levelSquadEffect)
             {
-                for (int t = 0; t < targets.Count; t++)
+                levelSquadEffect.ApplyToSquadForLevel(level, 1);
+                continue;
+            }
+
+            if (effect is ISquadEffect squadEffect)
+            {
+                squadEffect.ApplyToSquad(1);
+                continue;
+            }
+
+            for (int t = 0; t < targets.Count; t++)
+            {
+                SquadCharacterController controller = targets[t];
+                if (controller == null)
                 {
-                    SquadCharacterController controller = targets[t];
-                    if (controller != null)
-                    {
-                        effect.Apply(controller);
-                    }
+                    continue;
+                }
+
+                if (effect is IBuildingLevelEffect levelEffect)
+                {
+                    levelEffect.ApplyForBuildingLevel(controller, building, level, 1);
+                }
+                else
+                {
+                    effect.Apply(controller);
                 }
             }
         }

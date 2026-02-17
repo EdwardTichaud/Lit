@@ -22,13 +22,105 @@ MonoBehaviour:
   isContainer: 0
   worldPrefab: {fileID: 0}
   isTorch: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
+  useEffects: []
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: 
+  cannotPlaceWhileEquippedMessage: 
+  cannotDropMessage: 
+  cannotUseMessage: 
+  useFailedMessage: 
+  cannotPickupMessage: 
+  cannotDepositMessage: 
+  cannotTakeMessage: 
+  cannotBreakMessage: 
+  breakFailedMessage: 
+  useSuccessMessage: 
+  placeSuccessMessage: 
+  dropSuccessMessage: 
+  depositSuccessMessage: 
+  takeSuccessMessage: 
+  breakSuccessMessage: 
   isBuilding: 1
+  isCraftingBuilding: 1
+  availableCrafts:
+  - {fileID: 11400000, guid: a763255ec4969994fb6662ac56fa33d1, type: 2}
+  - {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
   buildingPrefab: {fileID: 2445665193700235283, guid: 84a7b0407ab5a4649b4ff0e8400142f2, type: 3}
   buildingMaxLevel: 10
-  buildingCurrentLevel: 0
+  buildingCurrentLevel: 1
   buildingRequirements: []
-  buildingEffects:
-  - {fileID: 0}
+  buildingEffects: []
+  buildingLevelConfigs:
+  - level: 1
+    craftSlots: 1
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts:
+    - {fileID: 11400000, guid: a763255ec4969994fb6662ac56fa33d1, type: 2}
+  - level: 2
+    craftSlots: 2
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts:
+    - {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
+  - level: 3
+    craftSlots: 3
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 4
+    craftSlots: 4
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 5
+    craftSlots: 5
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 6
+    craftSlots: 6
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 7
+    craftSlots: 7
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 8
+    craftSlots: 8
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 9
+    craftSlots: 9
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
+  - level: 10
+    craftSlots: 10
+    effectDescription: 
+    bonusDescription: 
+    effects: []
+    unlockedCrafts: []
   isHomeChest: 0
   canBreak: 0
   breakResults: []

@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 // Interaction sur un batiment pour ouvrir le panel d'informations.
 [RequireComponent(typeof(Collider))]
@@ -22,11 +25,19 @@ public class BuildingInfoInteractable : MonoBehaviour
     [Tooltip("Point d'ancrage du panel local.")]
     public Transform informationAnchor;
     [Tooltip("Offset du panel local.")]
-    public Vector3 informationOffset = new Vector3(0f, 2f, 0f);
+    public Vector3 informationOffset = new Vector3(1.75f, 1.6f, 0f);
     [Tooltip("Camera utilisee pour placer le panel local en screen space.")]
     public Camera targetCamera;
     [Tooltip("Detruit le panel local a la sortie.")]
     public bool destroyPanelOnExit = false;
+
+    [Header("Crafting Construction Panel")]
+    [Tooltip("Panel de craft (optionnel).")]
+    public CraftingConstructionPanel craftingPanel;
+    [Tooltip("Ouvre le panel de craft quand l'interaction est faite sur un building de craft.")]
+    public bool openCraftingPanelOnInteract = true;
+    [Tooltip("Tag du panel de craft.")]
+    public string craftingPanelTag = "CraftingConstructionPanel";
 
     [Header("Interaction")]
     [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
@@ -43,6 +54,12 @@ public class BuildingInfoInteractable : MonoBehaviour
     private PlayerInputs playerInputs;
     private LocalBuildingInformationsPanelController localPanelInstance;
     private bool warnedMissingPrefab;
+    private bool runtimeReferencesResolved;
+
+    private const string DefaultLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
+    private const string DefaultLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
+    private const string DefaultLocalPanelResourceName = "LocalBuildingInformationsPanel";
+    private const string DefaultLocalPanelParentName = "LocalsBuildingInformationsPanels";
 
     public string BuildId => buildId;
     public Item BuildingItem => buildingItem;
@@ -56,6 +73,7 @@ public class BuildingInfoInteractable : MonoBehaviour
 
         InitializeInteractionTrigger();
         playerInputs = new PlayerInputs();
+        ResolveRuntimeReferences();
     }
 
     private void OnEnable()
@@ -87,6 +105,7 @@ public class BuildingInfoInteractable : MonoBehaviour
             return;
         }
 
+        ResolveRuntimeReferences();
         RefreshCurrentCharacter();
         EnsureBuildingData();
         EnsureLocalPanel();
@@ -144,6 +163,7 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        ResolveRuntimeReferences();
         EnsureBuildingData();
         if (openOnProximity)
         {
@@ -161,6 +181,11 @@ public class BuildingInfoInteractable : MonoBehaviour
             if (!HasBuildingData())
             {
                 Debug.LogWarning("BuildingInfoInteractable: aucune donnee de construction.", this);
+                return;
+            }
+
+            if (TryOpenCraftingPanel())
+            {
                 return;
             }
 
@@ -192,6 +217,11 @@ public class BuildingInfoInteractable : MonoBehaviour
             return;
         }
 
+        if (TryOpenCraftingPanel())
+        {
+            return;
+        }
+
         TryApplyInteractEffects();
 
         EnsureLocalPanel();
@@ -215,11 +245,6 @@ public class BuildingInfoInteractable : MonoBehaviour
             return false;
         }
 
-        if (buildingItem.buildingEffects == null || buildingItem.buildingEffects.Count == 0)
-        {
-            return false;
-        }
-
         if (currentCharacter == null)
         {
             return false;
@@ -231,10 +256,16 @@ public class BuildingInfoInteractable : MonoBehaviour
             return false;
         }
 
-        bool applied = false;
-        for (int i = 0; i < buildingItem.buildingEffects.Count; i++)
+        IReadOnlyList<Effect> effects = buildingItem.GetBuildingEffectsForLevel(level);
+        if (effects == null || effects.Count == 0)
         {
-            Effect effect = buildingItem.buildingEffects[i];
+            return false;
+        }
+
+        bool applied = false;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            Effect effect = effects[i];
             if (effect == null)
             {
                 continue;
@@ -250,6 +281,72 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         return applied;
+    }
+
+    private bool TryOpenCraftingPanel()
+    {
+        if (!openCraftingPanelOnInteract)
+        {
+            return false;
+        }
+
+        if (buildingItem == null || !buildingItem.isBuilding || !buildingItem.isCraftingBuilding)
+        {
+            return false;
+        }
+
+        if (currentCharacter == null)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
+        if (controller == null)
+        {
+            return false;
+        }
+
+        CraftingConstructionPanel panel = craftingPanel != null ? craftingPanel : ResolveCraftingPanel();
+        craftingPanel = panel;
+
+        if (panel == null)
+        {
+            return false;
+        }
+
+        panel.OpenPanel(this, controller);
+        return true;
+    }
+
+    private CraftingConstructionPanel ResolveCraftingPanel()
+    {
+        CraftingConstructionPanel panel = null;
+        if (!string.IsNullOrWhiteSpace(craftingPanelTag))
+        {
+            try
+            {
+                GameObject tagged = GameObject.FindGameObjectWithTag(craftingPanelTag);
+                if (tagged != null)
+                {
+                    panel = tagged.GetComponentInChildren<CraftingConstructionPanel>(true);
+                }
+            }
+            catch (UnityException)
+            {
+                // Tag not defined, ignore.
+            }
+        }
+
+        if (panel == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            panel = FindFirstObjectByType<CraftingConstructionPanel>();
+#else
+            panel = FindObjectOfType<CraftingConstructionPanel>();
+#endif
+        }
+
+        return panel;
     }
 
     private bool CanProcessInteract()
@@ -362,8 +459,58 @@ public class BuildingInfoInteractable : MonoBehaviour
         return buildingItem != null || !string.IsNullOrWhiteSpace(buildId);
     }
 
+    private void ResolveRuntimeReferences()
+    {
+        if (runtimeReferencesResolved)
+        {
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
+            return;
+        }
+
+        if (targetCamera == null)
+        {
+            targetCamera = Camera.main;
+        }
+
+        if (localPanelParent == null)
+        {
+            GameObject parentObject = GameObject.Find(DefaultLocalPanelParentName);
+            if (parentObject != null)
+            {
+                localPanelParent = parentObject.transform;
+            }
+        }
+
+        if (localInformationPanelPrefab == null)
+        {
+#if UNITY_EDITOR
+            localInformationPanelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DefaultLocalPanelPrefabPath);
+#endif
+            if (localInformationPanelPrefab == null)
+            {
+                localInformationPanelPrefab = Resources.Load<GameObject>(DefaultLocalPanelResourceName);
+            }
+
+            if (localInformationPanelPrefab == null)
+            {
+                localInformationPanelPrefab = Resources.Load<GameObject>(DefaultLocalPanelResourcePath);
+            }
+        }
+
+        if (craftingPanel == null)
+        {
+            craftingPanel = ResolveCraftingPanel();
+        }
+
+        runtimeReferencesResolved = true;
+    }
+
     private void EnsureLocalPanel()
     {
+        ResolveRuntimeReferences();
         if (localInformationPanelPrefab == null)
         {
             if (!warnedMissingPrefab)

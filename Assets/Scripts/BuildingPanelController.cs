@@ -111,11 +111,52 @@ public class BuildingPanelController : MonoBehaviour
     [Tooltip("Offset local applique a l'ancrage.")]
     public Vector3 buildSpawnOffset = new Vector3(0f, 0f, 2f);
 
+    [Header("Placement")]
+    [Tooltip("Rayon de placement autour du joueur.")]
+    public float placementRadius = 5f;
+    [Tooltip("Vitesse de deplacement du batiment.")]
+    public float placementMoveSpeed = 3f;
+    [Tooltip("Distance initiale devant le joueur.")]
+    public float placementStartDistance = 1.5f;
+    [Tooltip("Deplacement relatif a la camera.")]
+    public bool placementUseCameraRelative = true;
+    [Tooltip("Camera utilisee pour le placement.")]
+    public Camera placementCamera;
+    [Tooltip("Snap sur le sol.")]
+    public bool placementSnapToGround = true;
+    [Tooltip("Layer du sol.")]
+    public LayerMask placementGroundMask = ~0;
+    [Tooltip("Hauteur de depart du raycast sol.")]
+    public float placementGroundRaycastHeight = 2f;
+    [Tooltip("Distance du raycast sol.")]
+    public float placementGroundRaycastDistance = 6f;
+    [Tooltip("Offset vertical applique apres snap.")]
+    public float placementGroundOffset = 0f;
+    [Tooltip("Layers qui bloquent le placement.")]
+    public LayerMask placementCollisionMask = ~0;
+    [Tooltip("Layers ignores pour le placement.")]
+    public LayerMask placementIgnoreMask = 0;
+    [Tooltip("Prend en compte les triggers dans le test.")]
+    public bool placementBlockTriggers = false;
+    [Tooltip("Padding ajoute aux bounds pour le test de collision.")]
+    public float placementBoundsPadding = 0.02f;
+    [Tooltip("Affiche un feedback visuel de validite.")]
+    public bool placementShowValidity = true;
+    [Tooltip("Couleur de placement valide.")]
+    public Color placementValidColor = new Color(0.2f, 1f, 0.2f, 0.65f);
+    [Tooltip("Couleur de placement invalide.")]
+    public Color placementInvalidColor = new Color(1f, 0.2f, 0.2f, 0.65f);
+    [Tooltip("Message si la position est invalide.")]
+    public string placementInvalidMessage = "Position invalide.";
+    [Tooltip("Reouvre le panel si la pose est annulee.")]
+    public bool placementReopenPanelOnCancel = true;
+
     private PlayerInputs playerInputs;
     private bool panelOpen;
     private bool squadInputLocked;
     private CanvasGroup panelCanvasGroup;
     private Coroutine panelFadeRoutine;
+    private bool suppressPanelDeactivate;
 
     private BuilderController currentBuilder;
     private readonly List<BuildingSlotUI> buildingSlots = new List<BuildingSlotUI>();
@@ -132,6 +173,7 @@ public class BuildingPanelController : MonoBehaviour
     private Coroutine actionBoxFadeRoutine;
     private Coroutine actionBoxFlashRoutine;
     private bool actionBoxVisible;
+    private int actionBoxSuppressFrame = -1;
     private readonly List<ActionBoxEntry> actionBoxEntries = new List<ActionBoxEntry>();
     private int actionBoxIndex = -1;
     private int actionBoxLastDirection;
@@ -139,6 +181,19 @@ public class BuildingPanelController : MonoBehaviour
     private bool actionBoxCursorDirty;
 
     private Maison cachedMaison;
+
+    private bool placementActive;
+    private Item placementItem;
+    private GameObject placementInstance;
+    private readonly List<PlacementRigidbodyState> placementRigidbodies = new List<PlacementRigidbodyState>();
+    private Collider[] placementColliders;
+    private Transform placementAnchor;
+    private Collider placementGroundCollider;
+    private readonly List<PlacementRendererState> placementRenderers = new List<PlacementRendererState>();
+    private MaterialPropertyBlock placementPropertyBlock;
+    private bool placementLastValid;
+    private Item placementRestoreItem;
+    private CameraController placementCameraController;
 
     public bool IsOpen => panelOpen;
 
@@ -307,21 +362,32 @@ public class BuildingPanelController : MonoBehaviour
             playerInputs.Disable();
         }
 
+        if (placementActive)
+        {
+            CancelPlacement(false);
+        }
+
         if (panelOpen)
         {
-            ClosePanel(true);
+            ClosePanel(true, true);
         }
     }
 
     private void Update()
     {
-        if (!panelOpen)
+        if (!HasInputFocus())
         {
             SetCursorControllerInputEnabled(false);
             return;
         }
 
-        if (!HasInputFocus())
+        if (placementActive)
+        {
+            UpdatePlacement();
+            return;
+        }
+
+        if (!panelOpen)
         {
             SetCursorControllerInputEnabled(false);
             return;
@@ -407,6 +473,7 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
+        suppressPanelDeactivate = false;
         currentBuilder = builder != null ? builder : currentBuilder;
 
         if (buildingPanel == null)
@@ -432,16 +499,23 @@ public class BuildingPanelController : MonoBehaviour
         panelOpen = true;
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
+        actionBoxSuppressFrame = Time.frameCount;
+        HideActionBoxImmediate();
         RebuildSlots();
         FadePanelTo(1f, panelFadeDuration);
     }
 
     public void ClosePanel()
     {
-        ClosePanel(false);
+        ClosePanel(false, false);
     }
 
     public void ClosePanel(bool keepInputLock)
+    {
+        ClosePanel(keepInputLock, false);
+    }
+
+    public void ClosePanel(bool keepInputLock, bool keepPanelActive)
     {
         if (!panelOpen)
         {
@@ -450,9 +524,15 @@ public class BuildingPanelController : MonoBehaviour
                 SetSquadInputLock(false);
             }
 
+            if (!keepPanelActive)
+            {
+                suppressPanelDeactivate = false;
+            }
+
             return;
         }
 
+        suppressPanelDeactivate = keepPanelActive;
         panelOpen = false;
         InputFocusStack.Pop(this);
         if (!keepInputLock)
@@ -466,6 +546,7 @@ public class BuildingPanelController : MonoBehaviour
         nextMoveTime = 0f;
         cursorDirty = false;
         restoreSelectedItem = null;
+        actionBoxSuppressFrame = -1;
 
         ClearSlots();
         ClearRequirements();
@@ -586,7 +667,7 @@ public class BuildingPanelController : MonoBehaviour
                 canvasGroup.blocksRaycasts = visible;
             }
 
-            if (deactivatePanelOnClose && targetAlpha <= 0.001f && buildingPanel != null)
+            if (!suppressPanelDeactivate && deactivatePanelOnClose && targetAlpha <= 0.001f && buildingPanel != null)
             {
                 buildingPanel.SetActive(false);
             }
@@ -617,7 +698,7 @@ public class BuildingPanelController : MonoBehaviour
             canvasGroup.blocksRaycasts = visible;
         }
 
-        if (deactivatePanelOnClose && targetAlpha <= 0.001f && buildingPanel != null)
+        if (!suppressPanelDeactivate && deactivatePanelOnClose && targetAlpha <= 0.001f && buildingPanel != null)
         {
             buildingPanel.SetActive(false);
         }
@@ -695,8 +776,20 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
+        if (placementActive)
+        {
+            TryConfirmPlacement();
+            return;
+        }
+
         if (!panelOpen)
         {
+            return;
+        }
+
+        if (Time.frameCount == actionBoxSuppressFrame)
+        {
+            actionBoxSuppressFrame = -1;
             return;
         }
 
@@ -714,6 +807,12 @@ public class BuildingPanelController : MonoBehaviour
     {
         if (!HasInputFocus())
         {
+            return;
+        }
+
+        if (placementActive)
+        {
+            CancelPlacement(placementReopenPanelOnCancel);
             return;
         }
 
@@ -1843,30 +1942,22 @@ public class BuildingPanelController : MonoBehaviour
             return false;
         }
 
-        if (!TryConsumeBuildingResources(building, controller, out string reason))
+        if (!HasBuildingResources(building, controller, out string reason))
         {
             Debug.LogWarning($"BuildingPanelController: {reason}");
+            ShowPlacementFeedback(reason);
             return false;
         }
 
-        BuildingInfoInteractable targetInfo = info != null ? info : SpawnBuildingInstance(building, 1);
-        if (targetInfo == null)
+        if (!TryBeginPlacement(building, controller))
         {
             return false;
         }
 
-        if (currentBuilder != null)
-        {
-            currentBuilder.RegisterBuiltBuilding(building, 1, targetInfo);
-            currentBuilder.ApplyBuildingEffects(building, 1);
-        }
-        else
-        {
-            building.buildingCurrentLevel = Mathf.Max(building.buildingCurrentLevel, 1);
-        }
-
-        restoreSelectedItem = building;
-        RebuildSlots();
+        placementRestoreItem = building;
+        ClosePanel(true, true);
+        InputFocusStack.Push(this);
+        SetSquadInputLock(true);
         return true;
     }
 
@@ -1910,7 +2001,7 @@ public class BuildingPanelController : MonoBehaviour
         if (currentBuilder != null)
         {
             currentBuilder.TryUpgradeBuildingInstance(targetInfo, targetLevel);
-            currentBuilder.ApplyBuildingEffects(building, targetLevel - currentLevel);
+            currentBuilder.ApplyBuildingEffects(building, currentLevel, targetLevel - currentLevel);
         }
         else
         {
@@ -1946,6 +2037,653 @@ public class BuildingPanelController : MonoBehaviour
         return true;
     }
 
+    private bool TryBeginPlacement(Item building, SquadCharacterController controller)
+    {
+        if (placementActive)
+        {
+            return false;
+        }
+
+        if (building == null || !building.isBuilding)
+        {
+            return false;
+        }
+
+        if (controller == null)
+        {
+            return false;
+        }
+
+        GameObject prefab = building.buildingPrefab != null ? building.buildingPrefab : building.worldPrefab;
+        if (prefab == null)
+        {
+            Debug.LogWarning("BuildingPanelController: prefab de construction manquant.");
+            return false;
+        }
+
+        placementAnchor = controller.transform;
+        placementInstance = Instantiate(prefab);
+        if (placementInstance == null)
+        {
+            return false;
+        }
+
+        if (currentBuilder != null)
+        {
+            currentBuilder.EnsureBuildingParent(placementInstance.transform);
+        }
+
+        placementInstance.transform.rotation = placementAnchor.rotation;
+        placementItem = building;
+        placementActive = true;
+        CachePlacementPhysics(placementInstance);
+        SetPlacementCameraOverride(placementInstance.transform);
+
+        Vector3 startPos = placementAnchor.position;
+        Vector3 forward = placementAnchor.forward;
+        if (placementUseCameraRelative)
+        {
+            Camera cam = placementCamera != null ? placementCamera : Camera.main;
+            if (cam != null)
+            {
+                forward = cam.transform.forward;
+            }
+        }
+
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            forward = placementAnchor.forward;
+            forward.y = 0f;
+        }
+
+        forward = forward.sqrMagnitude > 0f ? forward.normalized : Vector3.forward;
+        startPos += forward * Mathf.Max(0f, placementStartDistance);
+        Vector3 startOffset = startPos - placementAnchor.position;
+        startOffset.y = 0f;
+        if (building != null && !building.isBuilding)
+        {
+            float radius = Mathf.Max(0f, placementRadius);
+            if (startOffset.magnitude > radius)
+            {
+                startOffset = startOffset.normalized * radius;
+                startPos = new Vector3(placementAnchor.position.x + startOffset.x, startPos.y, placementAnchor.position.z + startOffset.z);
+            }
+        }
+
+        startPos = SnapPlacementToGround(startPos);
+        placementInstance.transform.position = startPos;
+        CachePlacementVisuals(placementInstance);
+        UpdatePlacementVisuals(IsPlacementValid());
+        return true;
+    }
+
+    private void UpdatePlacement()
+    {
+        if (!placementActive)
+        {
+            return;
+        }
+
+        if (placementInstance == null || placementAnchor == null)
+        {
+            CancelPlacement(false);
+            return;
+        }
+
+        Vector2 moveInput = playerInputs != null ? playerInputs.Player.Move.ReadValue<Vector2>() : Vector2.zero;
+        Vector3 moveDir = GetPlacementMoveDirection(moveInput);
+        Vector3 position = placementInstance.transform.position;
+        if (moveDir.sqrMagnitude > 0f)
+        {
+            position += moveDir * placementMoveSpeed * Time.unscaledDeltaTime;
+        }
+
+        Vector3 anchorPos = placementAnchor.position;
+        Vector3 offset = position - anchorPos;
+        offset.y = 0f;
+        if (placementItem == null || !placementItem.isBuilding)
+        {
+            float radius = Mathf.Max(0f, placementRadius);
+            if (offset.magnitude > radius)
+            {
+                offset = offset.normalized * radius;
+            }
+        }
+
+        position = new Vector3(anchorPos.x + offset.x, position.y, anchorPos.z + offset.z);
+        position = SnapPlacementToGround(position);
+        placementInstance.transform.position = position;
+
+        bool valid = IsPlacementValid();
+        UpdatePlacementVisuals(valid);
+    }
+
+    private Vector3 GetPlacementMoveDirection(Vector2 input)
+    {
+        if (input.sqrMagnitude <= 0.0001f)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 forward = Vector3.forward;
+        Vector3 right = Vector3.right;
+        if (placementUseCameraRelative)
+        {
+            Camera cam = placementCamera != null ? placementCamera : Camera.main;
+            if (cam != null)
+            {
+                forward = cam.transform.forward;
+                right = cam.transform.right;
+            }
+        }
+
+        forward.y = 0f;
+        right.y = 0f;
+        forward = forward.sqrMagnitude > 0f ? forward.normalized : Vector3.forward;
+        right = right.sqrMagnitude > 0f ? right.normalized : Vector3.right;
+
+        Vector3 move = forward * input.y + right * input.x;
+        if (move.sqrMagnitude > 1f)
+        {
+            move.Normalize();
+        }
+
+        return move;
+    }
+
+    private Vector3 SnapPlacementToGround(Vector3 position)
+    {
+        if (!placementSnapToGround)
+        {
+            return position;
+        }
+
+        float height = Mathf.Max(0f, placementGroundRaycastHeight);
+        float distance = Mathf.Max(0f, placementGroundRaycastDistance);
+        Vector3 origin = position + Vector3.up * height;
+        float maxDistance = height + distance;
+        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, maxDistance, placementGroundMask, QueryTriggerInteraction.Ignore);
+        if (hits != null && hits.Length > 0)
+        {
+            bool hasHit = false;
+            float bestDistance = float.MaxValue;
+            RaycastHit bestHit = default;
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                RaycastHit hit = hits[i];
+                Collider col = hit.collider;
+                if (col == null || IsIgnoredPlacementCollider(col))
+                {
+                    continue;
+                }
+
+                if (hit.distance < bestDistance)
+                {
+                    bestDistance = hit.distance;
+                    bestHit = hit;
+                    hasHit = true;
+                }
+            }
+
+            if (hasHit)
+            {
+                position.y = bestHit.point.y + placementGroundOffset;
+                placementGroundCollider = bestHit.collider;
+            }
+            else
+            {
+                placementGroundCollider = null;
+            }
+        }
+        else
+        {
+            placementGroundCollider = null;
+        }
+
+        return position;
+    }
+
+    private bool IsIgnoredPlacementCollider(Collider col)
+    {
+        if (col == null)
+        {
+            return true;
+        }
+
+        if (placementInstance != null && col.transform.IsChildOf(placementInstance.transform))
+        {
+            return true;
+        }
+
+        if (placementAnchor != null && col.transform.IsChildOf(placementAnchor))
+        {
+            return true;
+        }
+
+        if ((placementIgnoreMask.value & (1 << col.gameObject.layer)) != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPlacementGroundCollider(Collider col)
+    {
+        if (col == null || placementGroundCollider == null)
+        {
+            return false;
+        }
+
+        if (col == placementGroundCollider)
+        {
+            return true;
+        }
+
+        Transform root = placementGroundCollider.transform;
+        return root != null && col.transform.IsChildOf(root);
+    }
+
+    private CameraController ResolvePlacementCamera()
+    {
+        if (placementCameraController != null)
+        {
+            return placementCameraController;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        placementCameraController = FindFirstObjectByType<CameraController>();
+#else
+        placementCameraController = FindObjectOfType<CameraController>();
+#endif
+        return placementCameraController;
+    }
+
+    private void SetPlacementCameraOverride(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        CameraController controller = ResolvePlacementCamera();
+        if (controller != null)
+        {
+            controller.SetFollowOverride(target);
+        }
+    }
+
+    private void ClearPlacementCameraOverride(Transform target)
+    {
+        CameraController controller = ResolvePlacementCamera();
+        if (controller != null)
+        {
+            controller.ClearFollowOverride(target);
+        }
+    }
+
+    private void TryConfirmPlacement()
+    {
+        if (!placementActive || placementInstance == null || placementItem == null)
+        {
+            CancelPlacement(false);
+            return;
+        }
+
+        if (!IsPlacementValid())
+        {
+            ShowPlacementFeedback(placementInvalidMessage);
+            return;
+        }
+
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (controller == null)
+        {
+            CancelPlacement(false);
+            return;
+        }
+
+        if (!TryConsumeBuildingResources(placementItem, controller, out string resourceReason))
+        {
+            ShowPlacementFeedback(resourceReason);
+            CancelPlacement(false);
+            return;
+        }
+
+        Item placedItem = placementItem;
+        RestorePlacementPhysics();
+        ClearPlacementVisuals();
+        ClearPlacementCameraOverride(placementInstance != null ? placementInstance.transform : null);
+
+        BuildingInfoInteractable info = ConfigurePlacedBuilding(placementInstance, placementItem, 1);
+        if (currentBuilder != null)
+        {
+            currentBuilder.RegisterBuiltBuilding(placementItem, 1, info);
+            currentBuilder.ApplyBuildingEffects(placementItem, 0, 1);
+        }
+        else if (placementItem != null)
+        {
+            placementItem.buildingCurrentLevel = Mathf.Max(placementItem.buildingCurrentLevel, 1);
+        }
+
+        placementActive = false;
+        placementItem = null;
+        placementInstance = null;
+        placementAnchor = null;
+        placementGroundCollider = null;
+        placementRestoreItem = null;
+        SetSquadInputLock(false);
+        InputFocusStack.Pop(this);
+        if (placedItem != null)
+        {
+            ShowPlacementFeedback(placedItem.GetPlaceSuccessMessage());
+        }
+    }
+
+    private void CancelPlacement(bool reopenPanel)
+    {
+        if (!placementActive)
+        {
+            return;
+        }
+
+        RestorePlacementPhysics();
+        ClearPlacementVisuals();
+        ClearPlacementCameraOverride(placementInstance != null ? placementInstance.transform : null);
+        if (placementInstance != null)
+        {
+            Destroy(placementInstance);
+        }
+
+        placementActive = false;
+        placementItem = null;
+        placementInstance = null;
+        placementAnchor = null;
+        placementGroundCollider = null;
+        InputFocusStack.Pop(this);
+        SetSquadInputLock(false);
+
+        Item restore = placementRestoreItem;
+        placementRestoreItem = null;
+        if (reopenPanel)
+        {
+            restoreSelectedItem = restore;
+            OpenPanel(currentBuilder);
+        }
+    }
+
+    private BuildingInfoInteractable ConfigurePlacedBuilding(GameObject instance, Item building, int level)
+    {
+        if (instance == null || building == null || !building.isBuilding)
+        {
+            return null;
+        }
+
+        if (currentBuilder != null)
+        {
+            currentBuilder.EnsureBuildingParent(instance.transform);
+        }
+        else
+        {
+#if UNITY_2023_1_OR_NEWER
+            BuilderController builder = FindFirstObjectByType<BuilderController>();
+#else
+            BuilderController builder = FindObjectOfType<BuilderController>();
+#endif
+            if (builder != null)
+            {
+                builder.EnsureBuildingParent(instance.transform);
+            }
+        }
+
+        BuildingInfoInteractable info = instance.GetComponent<BuildingInfoInteractable>();
+        if (info == null)
+        {
+            info = instance.AddComponent<BuildingInfoInteractable>();
+        }
+
+        info.Initialize(GetBuildingItemId(building), building, Mathf.Max(1, level));
+
+        LootContainer container = instance.GetComponentInChildren<LootContainer>();
+        if (container != null)
+        {
+            container.containerItem = building;
+        }
+
+        if (building.isHomeChest)
+        {
+            TryAssignMaisonChestTag(instance);
+            if (container != null)
+            {
+                EnsureHomeChestDefaults(container);
+            }
+        }
+
+        return info;
+    }
+
+    private void CachePlacementPhysics(GameObject instance)
+    {
+        placementRigidbodies.Clear();
+        if (instance == null)
+        {
+            placementColliders = null;
+            return;
+        }
+
+        Rigidbody[] bodies = instance.GetComponentsInChildren<Rigidbody>(true);
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            Rigidbody body = bodies[i];
+            if (body == null)
+            {
+                continue;
+            }
+
+            placementRigidbodies.Add(new PlacementRigidbodyState(body, body.isKinematic, body.useGravity));
+            body.isKinematic = true;
+            body.useGravity = false;
+        }
+
+        placementColliders = instance.GetComponentsInChildren<Collider>(true);
+    }
+
+    private void RestorePlacementPhysics()
+    {
+        for (int i = 0; i < placementRigidbodies.Count; i++)
+        {
+            PlacementRigidbodyState state = placementRigidbodies[i];
+            if (state.Body == null)
+            {
+                continue;
+            }
+
+            state.Body.isKinematic = state.WasKinematic;
+            state.Body.useGravity = state.UsedGravity;
+        }
+
+        placementRigidbodies.Clear();
+        placementColliders = null;
+    }
+
+    private bool IsPlacementValid()
+    {
+        if (placementInstance == null)
+        {
+            return false;
+        }
+
+        if (placementColliders == null || placementColliders.Length == 0)
+        {
+            return true;
+        }
+
+        Collider seed = null;
+        for (int i = 0; i < placementColliders.Length; i++)
+        {
+            Collider col = placementColliders[i];
+            if (col != null && !col.isTrigger)
+            {
+                seed = col;
+                break;
+            }
+        }
+
+        if (seed == null)
+        {
+            return true;
+        }
+
+        Bounds bounds = seed.bounds;
+        for (int i = 0; i < placementColliders.Length; i++)
+        {
+            Collider col = placementColliders[i];
+            if (col == null || col.isTrigger)
+            {
+                continue;
+            }
+
+            bounds.Encapsulate(col.bounds);
+        }
+
+        Vector3 extents = bounds.extents + Vector3.one * Mathf.Max(0f, placementBoundsPadding);
+        QueryTriggerInteraction triggerInteraction = placementBlockTriggers ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore;
+        Collider[] overlaps = Physics.OverlapBox(bounds.center, extents, Quaternion.identity, placementCollisionMask, triggerInteraction);
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Collider hit = overlaps[i];
+            if (hit == null || IsIgnoredPlacementCollider(hit))
+            {
+                continue;
+            }
+            if (IsPlacementGroundCollider(hit))
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private void CachePlacementVisuals(GameObject instance)
+    {
+        placementRenderers.Clear();
+        placementPropertyBlock = null;
+        placementLastValid = false;
+
+        if (instance == null || !placementShowValidity)
+        {
+            return;
+        }
+
+        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+        if (renderers == null || renderers.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || renderer.sharedMaterial == null)
+            {
+                continue;
+            }
+
+            string property = null;
+            if (renderer.sharedMaterial.HasProperty("_BaseColor"))
+            {
+                property = "_BaseColor";
+            }
+            else if (renderer.sharedMaterial.HasProperty("_Color"))
+            {
+                property = "_Color";
+            }
+
+            if (string.IsNullOrEmpty(property))
+            {
+                continue;
+            }
+
+            placementRenderers.Add(new PlacementRendererState(renderer, property));
+        }
+
+        if (placementRenderers.Count > 0)
+        {
+            placementPropertyBlock = new MaterialPropertyBlock();
+        }
+    }
+
+    private void UpdatePlacementVisuals(bool isValid)
+    {
+        if (!placementShowValidity || placementRenderers.Count == 0)
+        {
+            return;
+        }
+
+        if (placementLastValid == isValid && placementPropertyBlock != null)
+        {
+            return;
+        }
+
+        Color color = isValid ? placementValidColor : placementInvalidColor;
+        if (placementPropertyBlock == null)
+        {
+            placementPropertyBlock = new MaterialPropertyBlock();
+        }
+
+        for (int i = 0; i < placementRenderers.Count; i++)
+        {
+            PlacementRendererState state = placementRenderers[i];
+            if (state.Renderer == null)
+            {
+                continue;
+            }
+
+            placementPropertyBlock.Clear();
+            placementPropertyBlock.SetColor(state.ColorProperty, color);
+            state.Renderer.SetPropertyBlock(placementPropertyBlock);
+        }
+
+        placementLastValid = isValid;
+    }
+
+    private void ClearPlacementVisuals()
+    {
+        if (placementRenderers.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < placementRenderers.Count; i++)
+        {
+            PlacementRendererState state = placementRenderers[i];
+            if (state.Renderer == null)
+            {
+                continue;
+            }
+
+            state.Renderer.SetPropertyBlock(null);
+        }
+
+        placementRenderers.Clear();
+        placementPropertyBlock = null;
+    }
+
+    private void ShowPlacementFeedback(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
+    }
+
     private BuildingInfoInteractable SpawnBuildingInstance(Item building, int level)
     {
         if (building == null)
@@ -1968,6 +2706,23 @@ public class BuildingPanelController : MonoBehaviour
         if (instance == null)
         {
             return null;
+        }
+
+        if (currentBuilder != null)
+        {
+            currentBuilder.EnsureBuildingParent(instance.transform);
+        }
+        else
+        {
+#if UNITY_2023_1_OR_NEWER
+            BuilderController builder = FindFirstObjectByType<BuilderController>();
+#else
+            BuilderController builder = FindObjectOfType<BuilderController>();
+#endif
+            if (builder != null)
+            {
+                builder.EnsureBuildingParent(instance.transform);
+            }
         }
 
         BuildingInfoInteractable info = instance.GetComponent<BuildingInfoInteractable>();
@@ -2245,6 +3000,53 @@ public class BuildingPanelController : MonoBehaviour
         }
 
         return quantity - remaining;
+    }
+
+    private bool HasBuildingResources(Item building, SquadCharacterController controller, out string reason)
+    {
+        reason = missingResourcesMessage;
+        if (building == null || !building.isBuilding)
+        {
+            return true;
+        }
+
+        if (building.buildingRequirements == null || building.buildingRequirements.Count == 0)
+        {
+            return true;
+        }
+
+        if (controller == null)
+        {
+            return false;
+        }
+
+        Dictionary<Item, int> requiredCounts = BuildRequirementCounts(building);
+        Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
+        List<LootContainer> homeContainers = ResolveHomeContainers();
+
+        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
+        {
+            Item requiredItem = requirement.Key;
+            int requiredQuantity = requirement.Value;
+
+            int available = 0;
+            if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
+            {
+                available += invCount;
+            }
+
+            if (homeContainers != null)
+            {
+                available += GetHomeItemCount(requiredItem, homeContainers);
+            }
+
+            if (available < requiredQuantity)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool TryConsumeBuildingResources(Item building, SquadCharacterController controller, out string reason)
@@ -2682,6 +3484,32 @@ public class BuildingPanelController : MonoBehaviour
             requirementSlotPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/NecessaryResourcesSlot.prefab");
         }
 #endif
+    }
+
+    private readonly struct PlacementRigidbodyState
+    {
+        public PlacementRigidbodyState(Rigidbody body, bool wasKinematic, bool usedGravity)
+        {
+            Body = body;
+            WasKinematic = wasKinematic;
+            UsedGravity = usedGravity;
+        }
+
+        public Rigidbody Body { get; }
+        public bool WasKinematic { get; }
+        public bool UsedGravity { get; }
+    }
+
+    private readonly struct PlacementRendererState
+    {
+        public PlacementRendererState(Renderer renderer, string colorProperty)
+        {
+            Renderer = renderer;
+            ColorProperty = colorProperty;
+        }
+
+        public Renderer Renderer { get; }
+        public string ColorProperty { get; }
     }
 
     private readonly struct SlotInfo

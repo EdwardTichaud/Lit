@@ -136,7 +136,7 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
             level = Mathf.Clamp(level, 1, Mathf.Max(1, item.buildingMaxLevel));
         }
 
-        string effectDescription = BuildEffectDescription(item);
+        string effectDescription = ResolveItemDescription(item, level);
         string bonusDescription = BuildBonusDescription(item, level);
 
         SetText(buildingNameText, ResolveBuildingName(building, item));
@@ -145,17 +145,23 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         SetText(currentBonusText, FormatValue(currentBonusFormat, bonusDescription));
     }
 
-    private string BuildEffectDescription(Item building)
+    private string BuildEffectDescription(Item building, int level)
     {
-        if (building == null || !building.isBuilding || building.buildingEffects == null || building.buildingEffects.Count == 0)
+        if (building == null || !building.isBuilding)
+        {
+            return "Aucun effet";
+        }
+
+        IReadOnlyList<Effect> effects = building.GetBuildingEffectsForLevel(level);
+        if (effects == null || effects.Count == 0)
         {
             return "Aucun effet";
         }
 
         List<string> lines = new List<string>();
-        for (int i = 0; i < building.buildingEffects.Count; i++)
+        for (int i = 0; i < effects.Count; i++)
         {
-            Effect effect = building.buildingEffects[i];
+            Effect effect = effects[i];
             if (effect == null)
             {
                 continue;
@@ -181,17 +187,75 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         return string.Join("\n", lines);
     }
 
+    private string ResolveItemDescription(Item building, int level)
+    {
+        if (building != null && !string.IsNullOrWhiteSpace(building.description))
+        {
+            return building.description;
+        }
+
+        Item.BuildingLevelConfig config = building != null ? building.GetBuildingLevelConfig(level) : null;
+        if (config != null && !string.IsNullOrWhiteSpace(config.effectDescription))
+        {
+            return config.effectDescription;
+        }
+
+        return BuildEffectDescription(building, level);
+    }
+
     private string BuildBonusDescription(Item building, int level)
     {
-        if (building == null || !building.isBuilding || building.buildingEffects == null || building.buildingEffects.Count == 0)
+        if (building == null || !building.isBuilding)
+        {
+            return "Aucun bonus";
+        }
+
+        if (building.HasBuildingLevelConfigs())
+        {
+            Item.BuildingLevelConfig config = building.GetBuildingLevelConfig(level);
+            if (config != null && !string.IsNullOrWhiteSpace(config.bonusDescription))
+            {
+                return config.bonusDescription;
+            }
+
+            if (building.isCraftingBuilding)
+            {
+                if (building.HasCraftUnlocks())
+                {
+                    int total = building.availableCrafts != null ? building.availableCrafts.Count : 0;
+                    int unlocked = building.GetUnlockedCraftsForLevel(level).Count;
+                    if (total > 0)
+                    {
+                        return $"Crafts debloques: {unlocked}/{total}";
+                    }
+                }
+                else if (config != null)
+                {
+                    int craftSlots = config.craftSlots > 0 ? config.craftSlots : building.GetCraftSlotsForLevel(level);
+                    if (craftSlots > 0)
+                    {
+                        return $"Slots de craft: {craftSlots}";
+                    }
+                }
+            }
+
+            return BuildBonusDescriptionFromEffects(building.GetBuildingEffectsForLevel(level), level);
+        }
+
+        return BuildBonusDescriptionFromEffects(building.buildingEffects, level);
+    }
+
+    private string BuildBonusDescriptionFromEffects(IReadOnlyList<Effect> effects, int level)
+    {
+        if (effects == null || effects.Count == 0)
         {
             return "Aucun bonus";
         }
 
         List<string> lines = new List<string>();
-        for (int i = 0; i < building.buildingEffects.Count; i++)
+        for (int i = 0; i < effects.Count; i++)
         {
-            Effect effect = building.buildingEffects[i];
+            Effect effect = effects[i];
             if (effect == null)
             {
                 continue;

@@ -10,10 +10,16 @@ public class CameraController : MonoBehaviour
     public Camera mainCam;
     [Tooltip("Cible actuelle de la camera.")]
     public Transform mainCamCurrentTarget;
+    [Tooltip("Cible temporaire a suivre (placement, cutscene, etc.).")]
+    public Transform followOverrideTarget;
     [Tooltip("Offset initial par rapport a la cible.")]
     public Vector3 mainCamOffset;
     [Tooltip("Offset applique au pivot de la cible.")]
     public Vector3 targetOffset = new Vector3(0f, 1.5f, 0f);
+    [Tooltip("Offset applique quand un override est actif.")]
+    public Vector3 overrideTargetOffset = Vector3.zero;
+    [Tooltip("Utilise le targetOffset meme en override.")]
+    public bool useTargetOffsetForOverride = false;
     [Tooltip("Vitesse de lerp de position.")]
     public float positionLerpSpeed = 5f;
     [Tooltip("Vitesse de lerp de rotation.")]
@@ -32,6 +38,18 @@ public class CameraController : MonoBehaviour
     public bool allowMouseOrbit = true;
     [Tooltip("Sensibilite d'orbite souris.")]
     public float mouseOrbitSensitivity = 0.15f;
+
+    [Header("Placement Override")]
+    [Tooltip("Duree du lerp du regard avant de suivre la cible.")]
+    public float placementLookLerpDuration = 0.5f;
+    [Tooltip("Rayon d'orbite autour de la cible (0 = conserver la distance initiale).")]
+    public float placementOrbitRadius = 5f;
+    [Tooltip("Autorise l'orbite pendant l'override.")]
+    public bool placementAllowOrbit = true;
+    [Tooltip("Autorise l'orbite a la souris pendant l'override.")]
+    public bool placementAllowMouseOrbit = true;
+    [Tooltip("Vitesse d'orbite pendant l'override (0 = utiliser orbitSpeed).")]
+    public float placementOrbitSpeed = 0f;
 
     [Header("Zoom")]
     [Tooltip("Autorise le zoom.")]
@@ -101,6 +119,14 @@ public class CameraController : MonoBehaviour
     private Renderer[] cachedTargetRenderers;
     private bool[] cachedTargetRendererStates;
     private bool targetHidden;
+    private bool lastUsingOverride;
+    private bool overrideInitialized;
+    private float overrideStartTime;
+    private Vector3 overrideStartCamPosition;
+    private Quaternion overrideStartCamRotation;
+    private float overrideHeightOffset;
+    private float overrideBaseRadius;
+    private float overrideOrbitYaw;
 
     private void Start()
     {
@@ -119,10 +145,29 @@ public class CameraController : MonoBehaviour
             return;
         }
 
+        Transform desiredTarget = followOverrideTarget;
+        bool usingOverride = desiredTarget != null;
+        if (usingOverride)
+        {
+            mainCamCurrentTarget = desiredTarget;
+            UpdatePlacementOverride(desiredTarget);
+            if (!lastUsingOverride)
+            {
+                ClearTargetVisibility();
+            }
+            lastUsingOverride = true;
+            return;
+        }
+
         if (SquadManager.Instance != null && SquadManager.Instance.currentCharacter != null)
         {
+            desiredTarget = SquadManager.Instance.currentCharacter.transform;
+        }
+
+        if (desiredTarget != null)
+        {
             // Suivi de la cible courante.
-            mainCamCurrentTarget = SquadManager.Instance.currentCharacter.transform;
+            mainCamCurrentTarget = desiredTarget;
             bool inputLocked = InputFocusStack.HasAnyFocus();
             if (!inputLocked)
             {
@@ -170,10 +215,33 @@ public class CameraController : MonoBehaviour
             }
 
             UpdateTargetVisibility(pivot);
+            lastUsingOverride = false;
         }
         else
         {
+            mainCamCurrentTarget = null;
             ClearTargetVisibility();
+            lastUsingOverride = false;
+        }
+    }
+
+    public void SetFollowOverride(Transform target)
+    {
+        if (followOverrideTarget == target)
+        {
+            return;
+        }
+
+        followOverrideTarget = target;
+        overrideInitialized = false;
+    }
+
+    public void ClearFollowOverride(Transform target)
+    {
+        if (followOverrideTarget == target)
+        {
+            followOverrideTarget = null;
+            overrideInitialized = false;
         }
     }
 
@@ -215,6 +283,122 @@ public class CameraController : MonoBehaviour
         if (Mathf.Abs(orbitDelta) > 0.0001f)
         {
             orbitYaw += orbitDelta;
+        }
+    }
+
+    private void UpdatePlacementOverride(Transform target)
+    {
+        if (mainCam == null || target == null)
+        {
+            return;
+        }
+
+        if (!overrideInitialized)
+        {
+            InitializePlacementOverrideState(target);
+        }
+
+        float deltaTime = Time.unscaledDeltaTime;
+        float elapsed = Time.unscaledTime - overrideStartTime;
+        Vector3 pivotOffset = useTargetOffsetForOverride ? targetOffset : overrideTargetOffset;
+        Vector3 pivot = target.position + pivotOffset;
+
+        UpdatePlacementOrbitYaw(deltaTime);
+
+        float lookDuration = Mathf.Max(0f, placementLookLerpDuration);
+        if (elapsed < lookDuration)
+        {
+            mainCam.transform.position = overrideStartCamPosition;
+            Vector3 lookDirection = pivot - overrideStartCamPosition;
+            if (lookDirection.sqrMagnitude > 0.0001f)
+            {
+                Quaternion desiredRotation = Quaternion.LookRotation(lookDirection);
+                float t = lookDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / lookDuration);
+                mainCam.transform.rotation = Quaternion.Slerp(overrideStartCamRotation, desiredRotation, t);
+            }
+            return;
+        }
+
+        float radius = placementOrbitRadius > 0f ? placementOrbitRadius : overrideBaseRadius;
+        Vector3 flatDir = Quaternion.Euler(0f, overrideOrbitYaw, 0f) * Vector3.forward;
+        Vector3 desiredOffset = new Vector3(flatDir.x * radius, overrideHeightOffset, flatDir.z * radius);
+        Vector3 desiredPosition = pivot + desiredOffset;
+        mainCam.transform.position = desiredPosition;
+
+        Vector3 lookDir = pivot - desiredPosition;
+        if (lookDir.sqrMagnitude > 0.0001f)
+        {
+            Quaternion desiredRotation = Quaternion.LookRotation(lookDir);
+            mainCam.transform.rotation = Quaternion.Slerp(
+                mainCam.transform.rotation,
+                desiredRotation,
+                rotationLerpSpeed * deltaTime);
+        }
+    }
+
+    private void InitializePlacementOverrideState(Transform target)
+    {
+        if (mainCam == null || target == null)
+        {
+            overrideInitialized = false;
+            return;
+        }
+
+        overrideInitialized = true;
+        overrideStartTime = Time.unscaledTime;
+        overrideStartCamPosition = mainCam.transform.position;
+        overrideStartCamRotation = mainCam.transform.rotation;
+        Vector3 offset = overrideStartCamPosition - target.position;
+        overrideHeightOffset = offset.y;
+        Vector3 flatOffset = new Vector3(offset.x, 0f, offset.z);
+        overrideBaseRadius = flatOffset.magnitude;
+        if (overrideBaseRadius < 0.01f)
+        {
+            overrideBaseRadius = placementOrbitRadius > 0f ? placementOrbitRadius : 5f;
+        }
+
+        overrideOrbitYaw = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg;
+    }
+
+    private void UpdatePlacementOrbitYaw(float deltaTime)
+    {
+        if (!placementAllowOrbit)
+        {
+            return;
+        }
+
+        float orbitDelta = 0f;
+        float speed = placementOrbitSpeed > 0f ? placementOrbitSpeed : orbitSpeed;
+
+        if (Gamepad.current != null)
+        {
+            float stickX = Gamepad.current.rightStick.ReadValue().x;
+            if (Mathf.Abs(stickX) > orbitDeadzone)
+            {
+                orbitDelta += stickX * speed * deltaTime;
+            }
+        }
+
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.qKey.isPressed)
+            {
+                orbitDelta -= speed * deltaTime;
+            }
+            if (Keyboard.current.eKey.isPressed)
+            {
+                orbitDelta += speed * deltaTime;
+            }
+        }
+
+        if (placementAllowMouseOrbit && Mouse.current != null)
+        {
+            orbitDelta += Mouse.current.delta.ReadValue().x * mouseOrbitSensitivity;
+        }
+
+        if (Mathf.Abs(orbitDelta) > 0.0001f)
+        {
+            overrideOrbitYaw += orbitDelta;
         }
     }
 
@@ -409,6 +593,9 @@ public class CameraController : MonoBehaviour
         rightStickHorizontalDominance = Mathf.Max(0.01f, rightStickHorizontalDominance);
         hideCharacterDistance = Mathf.Max(0.05f, hideCharacterDistance);
         showCharacterDistance = Mathf.Max(hideCharacterDistance, showCharacterDistance);
+        placementLookLerpDuration = Mathf.Max(0f, placementLookLerpDuration);
+        placementOrbitRadius = Mathf.Max(0f, placementOrbitRadius);
+        placementOrbitSpeed = Mathf.Max(0f, placementOrbitSpeed);
     }
 
     private void UpdateTargetVisibility(Vector3 pivot)

@@ -15,13 +15,41 @@ MonoBehaviour:
   itemId: orbebleu
   itemName: Orbe bleue
   itemSprite: {fileID: 21300000, guid: 106c5173fcd93cb4aadb281a0cb194ab, type: 3}
-  description: 
+  description: "Cet orbe emet une lumi\xE8re bleue."
   canUse: 0
   canPlace: 1
   isContainer: 0
   worldPrefab: {fileID: 1368317527524287094, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
   isTorch: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
+  useEffects: []
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: 
+  cannotPlaceWhileEquippedMessage: 
+  cannotDropMessage: 
+  cannotUseMessage: 
+  useFailedMessage: 
+  cannotPickupMessage: 
+  cannotDepositMessage: 
+  cannotTakeMessage: 
+  cannotBreakMessage: 
+  breakFailedMessage: 
+  useSuccessMessage: 
+  placeSuccessMessage: 
+  dropSuccessMessage: 
+  depositSuccessMessage: 
+  takeSuccessMessage: 
+  breakSuccessMessage: 
   isBuilding: 0
+  isCraftingBuilding: 0
+  availableCrafts: []
   buildingPrefab: {fileID: 0}
   buildingMaxLevel: 10
   buildingCurrentLevel: 0
@@ -31,6 +59,7 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: b6f049c8b4df32b46988eedc08553261, type: 2}
     quantity: 2
   buildingEffects: []
+  buildingLevelConfigs: []
   isHomeChest: 0
   canBreak: 0
   breakResults: []

@@ -39,16 +39,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     public string breakInvalidMessage = "Cet objet ne peut pas etre casse.";
     [Tooltip("Message si le conteneur est plein apres casse.")]
     public string breakNoSpaceMessage = "Pas assez de place dans le coffre.";
-    [Tooltip("Duree d'affichage des messages de casse.")]
-    public float breakFeedbackDuration = 1.2f;
 
     [Header("Feedback")]
     [Tooltip("Message si l'objet ne peut pas etre pris.")]
     public string takeNotAllowedMessage = "Impossible de prendre cet objet.";
     [Tooltip("Message si le container est plein.")]
     public string depositNoSpaceMessage = "Pas assez de place dans le coffre.";
-    [Tooltip("Duree d'affichage des messages d'action.")]
-    public float actionFeedbackDuration = 1.2f;
 
     [Header("Action Box")]
     [Tooltip("ActionBox utilisee par le loot. Laisse vide pour auto-detecter.")]
@@ -980,7 +976,8 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         }
 
         LootItemEntry entry = focusedSlot.Entry;
-        if (entry.item == null)
+        Item item = entry.item;
+        if (item == null)
         {
             return false;
         }
@@ -991,7 +988,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
-        if (!TryAddItemToCurrentCharacter(entry.item, quantity))
+        if (!TryAddItemToCurrentCharacter(item, quantity))
         {
             return false;
         }
@@ -999,6 +996,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         lootItems.Remove(entry);
         RebuildLootSlots(null, currentSlotIndex);
         HandleEmptyContainer();
+        ShowActionFeedback(item.GetTakeSuccessMessage());
         return true;
     }
 
@@ -1044,6 +1042,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         ApplyBreakResults(item);
         RebuildLootSlots(null, currentSlotIndex);
         HandleEmptyContainer();
+        ShowBreakFeedback(item.GetBreakSuccessMessage());
         return true;
     }
 
@@ -1135,7 +1134,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        InfoBoxUI.TryShow(message, breakFeedbackDuration);
+        InfoBoxUI.TryShow(message);
     }
 
     private void InitializeActionBox()
@@ -1772,6 +1771,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             RebuildLootSlots(item, currentSlotIndex);
         }
 
+        ShowActionFeedback(item.GetDepositSuccessMessage());
         return true;
     }
 
@@ -2291,7 +2291,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        InfoBoxUI.TryShow(message, actionFeedbackDuration);
+        InfoBoxUI.TryShow(message);
     }
 
     private SquadCharacterController GetCurrentCharacterController()

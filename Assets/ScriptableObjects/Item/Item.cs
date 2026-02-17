@@ -23,6 +23,27 @@ public class Item : ScriptableObject
         public int quantity = 1;
     }
 
+    [System.Serializable]
+    public class BuildingLevelConfig
+    {
+        [Min(1)]
+        [Tooltip("Niveau concerne par cette configuration.")]
+        public int level = 1;
+        [Min(0)]
+        [Tooltip("Nombre de slots de craft disponibles a ce niveau (0 = utilise tous les crafts).")]
+        public int craftSlots = 0;
+        [TextArea]
+        [Tooltip("Description d'effet specifique au niveau (optionnel).")]
+        public string effectDescription;
+        [TextArea]
+        [Tooltip("Description du bonus au niveau (optionnel).")]
+        public string bonusDescription;
+        [Tooltip("Effets declenches a l'obtention de ce niveau.")]
+        public List<Effect> effects = new List<Effect>();
+        [Tooltip("Crafts debloques a ce niveau (optionnel).")]
+        public List<Item> unlockedCrafts = new List<Item>();
+    }
+
     [Header("Identity")]
     [Tooltip("Identifiant unique (optionnel).")]
     public string itemId;
@@ -93,10 +114,26 @@ public class Item : ScriptableObject
     public string cannotBreakMessage;
     [Tooltip("Message si la casse echoue.")]
     public string breakFailedMessage;
+    [Tooltip("Message si l'utilisation reussit.")]
+    public string useSuccessMessage;
+    [Tooltip("Message si la pose reussit.")]
+    public string placeSuccessMessage;
+    [Tooltip("Message si le drop reussit.")]
+    public string dropSuccessMessage;
+    [Tooltip("Message si le depot reussit.")]
+    public string depositSuccessMessage;
+    [Tooltip("Message si la prise reussit.")]
+    public string takeSuccessMessage;
+    [Tooltip("Message si la casse reussit.")]
+    public string breakSuccessMessage;
 
     [Header("Building")]
     [Tooltip("Si true, l'item est traite comme un building.")]
     public bool isBuilding = false;
+    [Tooltip("Si true, le building ouvre un panel de craft.")]
+    public bool isCraftingBuilding = false;
+    [Tooltip("Liste des crafts possibles")]
+    public List<Item> availableCrafts;
     [Tooltip("Prefab instancie lors de la construction (fallback: worldPrefab).")]
     public GameObject buildingPrefab;
     [Min(1)]
@@ -109,6 +146,8 @@ public class Item : ScriptableObject
     public List<BuildingRequirement> buildingRequirements = new List<BuildingRequirement>();
     [Tooltip("Effets appliques a chaque niveau gagne.")]
     public List<Effect> buildingEffects = new List<Effect>();
+    [Tooltip("Configuration par niveau (prioritaire sur les effets globaux).")]
+    public List<BuildingLevelConfig> buildingLevelConfigs = new List<BuildingLevelConfig>();
     [Tooltip("Si true, la construction est un coffre maison.")]
     public bool isHomeChest = false;
 
@@ -135,6 +174,187 @@ public class Item : ScriptableObject
         }
 
         return false;
+    }
+
+    public bool HasBuildingLevelConfigs()
+    {
+        if (buildingLevelConfigs == null || buildingLevelConfigs.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < buildingLevelConfigs.Count; i++)
+        {
+            if (buildingLevelConfigs[i] != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool HasCraftUnlocks()
+    {
+        if (!HasBuildingLevelConfigs())
+        {
+            return false;
+        }
+
+        for (int i = 0; i < buildingLevelConfigs.Count; i++)
+        {
+            BuildingLevelConfig config = buildingLevelConfigs[i];
+            if (config != null && config.unlockedCrafts != null && config.unlockedCrafts.Count > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public BuildingLevelConfig GetBuildingLevelConfig(int level)
+    {
+        if (!HasBuildingLevelConfigs())
+        {
+            return null;
+        }
+
+        int targetLevel = Mathf.Max(1, level);
+        BuildingLevelConfig bestBelow = null;
+        int bestBelowLevel = int.MinValue;
+        BuildingLevelConfig lowest = null;
+        int lowestLevel = int.MaxValue;
+
+        for (int i = 0; i < buildingLevelConfigs.Count; i++)
+        {
+            BuildingLevelConfig config = buildingLevelConfigs[i];
+            if (config == null)
+            {
+                continue;
+            }
+
+            int configLevel = Mathf.Max(1, config.level);
+            if (configLevel == targetLevel)
+            {
+                return config;
+            }
+
+            if (configLevel < targetLevel && configLevel > bestBelowLevel)
+            {
+                bestBelow = config;
+                bestBelowLevel = configLevel;
+            }
+
+            if (configLevel < lowestLevel)
+            {
+                lowest = config;
+                lowestLevel = configLevel;
+            }
+        }
+
+        return bestBelow != null ? bestBelow : lowest;
+    }
+
+    public int GetCraftSlotsForLevel(int level)
+    {
+        int total = availableCrafts != null ? availableCrafts.Count : 0;
+        BuildingLevelConfig config = GetBuildingLevelConfig(level);
+        if (config != null && config.craftSlots > 0)
+        {
+            return Mathf.Clamp(config.craftSlots, 0, total);
+        }
+
+        return total;
+    }
+
+    public List<Item> GetUnlockedCraftsForLevel(int level)
+    {
+        List<Item> result = new List<Item>();
+        if (availableCrafts == null || availableCrafts.Count == 0)
+        {
+            return result;
+        }
+
+        if (!HasBuildingLevelConfigs())
+        {
+            result.AddRange(availableCrafts);
+            return result;
+        }
+
+        if (!HasCraftUnlocks())
+        {
+            int count = GetCraftSlotsForLevel(level);
+            int limit = Mathf.Clamp(count, 0, availableCrafts.Count);
+            for (int i = 0; i < limit; i++)
+            {
+                Item craft = availableCrafts[i];
+                if (craft != null)
+                {
+                    result.Add(craft);
+                }
+            }
+
+            return result;
+        }
+
+        int targetLevel = Mathf.Max(1, level);
+        HashSet<Item> unlockedSet = new HashSet<Item>();
+        for (int i = 0; i < buildingLevelConfigs.Count; i++)
+        {
+            BuildingLevelConfig config = buildingLevelConfigs[i];
+            if (config == null)
+            {
+                continue;
+            }
+
+            int configLevel = Mathf.Max(1, config.level);
+            if (configLevel > targetLevel)
+            {
+                continue;
+            }
+
+            if (config.unlockedCrafts == null || config.unlockedCrafts.Count == 0)
+            {
+                continue;
+            }
+
+            for (int c = 0; c < config.unlockedCrafts.Count; c++)
+            {
+                Item craft = config.unlockedCrafts[c];
+                if (craft != null)
+                {
+                    unlockedSet.Add(craft);
+                }
+            }
+        }
+
+        if (unlockedSet.Count == 0)
+        {
+            return result;
+        }
+
+        for (int i = 0; i < availableCrafts.Count; i++)
+        {
+            Item craft = availableCrafts[i];
+            if (craft != null && unlockedSet.Contains(craft))
+            {
+                result.Add(craft);
+            }
+        }
+
+        return result;
+    }
+
+    public IReadOnlyList<Effect> GetBuildingEffectsForLevel(int level)
+    {
+        if (!HasBuildingLevelConfigs())
+        {
+            return buildingEffects;
+        }
+
+        BuildingLevelConfig config = GetBuildingLevelConfig(level);
+        return config != null ? config.effects : null;
     }
 
     public bool CanUse()
@@ -232,6 +452,36 @@ public class Item : ScriptableObject
 
         reason = ResolveMessage(breakFailedMessage, "Impossible de casser cet objet.");
         return false;
+    }
+
+    public string GetUseSuccessMessage()
+    {
+        return ResolveMessage(useSuccessMessage, "Utilisation reussie.");
+    }
+
+    public string GetPlaceSuccessMessage()
+    {
+        return ResolveMessage(placeSuccessMessage, "Objet pose.");
+    }
+
+    public string GetDropSuccessMessage()
+    {
+        return ResolveMessage(dropSuccessMessage, "Objet jete.");
+    }
+
+    public string GetDepositSuccessMessage()
+    {
+        return ResolveMessage(depositSuccessMessage, "Objet depose.");
+    }
+
+    public string GetTakeSuccessMessage()
+    {
+        return ResolveMessage(takeSuccessMessage, "Objet recupere.");
+    }
+
+    public string GetBreakSuccessMessage()
+    {
+        return ResolveMessage(breakSuccessMessage, "Casse reussie.");
     }
 
     public bool CanDepositToContainer(LootContainer container)

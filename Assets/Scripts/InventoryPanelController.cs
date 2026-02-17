@@ -123,8 +123,6 @@ public class InventoryPanelController : MonoBehaviour
     public string placementCannotPlaceMessage = "Cet objet ne peut pas etre pose.";
     [Tooltip("Message si la position est invalide.")]
     public string placementInvalidMessage = "Position invalide.";
-    [Tooltip("Duree d'affichage des messages de placement.")]
-    public float placementFeedbackDuration = 1.2f;
 
     [Header("Building Placement")]
     [Tooltip("Utilise les ressources des coffres maison pour les buildings.")]
@@ -139,13 +137,11 @@ public class InventoryPanelController : MonoBehaviour
     public float dropForwardOffset = 0.6f;
     [Tooltip("Offset vertical lors du drop.")]
     public float dropHeightOffset = 0.1f;
-    [Header("Action Feedback")]
-    [Tooltip("Duree d'affichage des messages d'action.")]
-    public float actionFeedbackDuration = 1.2f;
 
     private CanvasGroup actionBoxCanvasGroup;
     private Coroutine actionBoxFadeRoutine;
     private bool actionBoxVisible;
+    private int actionBoxSuppressFrame = -1;
     private readonly List<ActionBoxEntry> actionBoxEntries = new List<ActionBoxEntry>();
     private int actionBoxIndex = -1;
     private int actionBoxLastDirection;
@@ -169,9 +165,11 @@ public class InventoryPanelController : MonoBehaviour
     private readonly List<PlacementRigidbodyState> placementRigidbodies = new List<PlacementRigidbodyState>();
     private Collider[] placementColliders;
     private Transform placementAnchor;
+    private Collider placementGroundCollider;
     private readonly List<PlacementRendererState> placementRenderers = new List<PlacementRendererState>();
     private MaterialPropertyBlock placementPropertyBlock;
     private bool placementLastValid;
+    private CameraController placementCameraController;
     private bool restoreSelectionOnNextOpen;
     private Item restoreSelectedItem;
     private bool restoreActionBoxOnNextOpen;
@@ -371,6 +369,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (Time.frameCount == actionBoxSuppressFrame)
+        {
+            actionBoxSuppressFrame = -1;
+            return;
+        }
+
         if (depositMode)
         {
             TryDepositSelectedItem();
@@ -479,6 +483,7 @@ public class InventoryPanelController : MonoBehaviour
         inventoryOpen = true;
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
+        actionBoxSuppressFrame = Time.frameCount;
         RebuildInventorySlots();
         RestorePendingSelection();
     }
@@ -496,6 +501,7 @@ public class InventoryPanelController : MonoBehaviour
         HideActionBoxImmediate();
         HideDepositQuantityPanelImmediate();
         inventoryOpen = false;
+        actionBoxSuppressFrame = -1;
         if (!placementActive)
         {
             InputFocusStack.Pop(this);
@@ -1459,14 +1465,16 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        Item item = currentFocusedSlot.Item;
         SquadCharacterController controller = GetCurrentCharacterController();
         if (controller == null)
         {
             return false;
         }
 
-        if (controller.TryUseItem(currentFocusedSlot.Item, out string reason))
+        if (controller.TryUseItem(item, out string reason))
         {
+            ShowActionFeedback(item.GetUseSuccessMessage());
             return true;
         }
 
@@ -1961,6 +1969,7 @@ public class InventoryPanelController : MonoBehaviour
 
         if (item.TryBreak(controller, out string reason))
         {
+            ShowActionFeedback(item.GetBreakSuccessMessage());
             return true;
         }
 
@@ -1975,7 +1984,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        InfoBoxUI.TryShow(message, actionFeedbackDuration);
+        InfoBoxUI.TryShow(message);
     }
 
     private void EnsureBreakActionBoxEntry(Transform container)
@@ -2270,10 +2279,13 @@ public class InventoryPanelController : MonoBehaviour
         Vector3 anchorPos = placementAnchor.position;
         Vector3 offset = position - anchorPos;
         offset.y = 0f;
-        float radius = Mathf.Max(0f, placementRadius);
-        if (offset.magnitude > radius)
+        if (placementItem == null || !placementItem.isBuilding)
         {
-            offset = offset.normalized * radius;
+            float radius = Mathf.Max(0f, placementRadius);
+            if (offset.magnitude > radius)
+            {
+                offset = offset.normalized * radius;
+            }
         }
 
         position = new Vector3(anchorPos.x + offset.x, position.y, anchorPos.z + offset.z);
@@ -2327,12 +2339,126 @@ public class InventoryPanelController : MonoBehaviour
         float height = Mathf.Max(0f, placementGroundRaycastHeight);
         float distance = Mathf.Max(0f, placementGroundRaycastDistance);
         Vector3 origin = position + Vector3.up * height;
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, height + distance, placementGroundMask, QueryTriggerInteraction.Ignore))
+        float maxDistance = height + distance;
+        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, maxDistance, placementGroundMask, QueryTriggerInteraction.Ignore);
+        if (hits != null && hits.Length > 0)
         {
-            position.y = hit.point.y + placementGroundOffset;
+            bool hasHit = false;
+            float bestDistance = float.MaxValue;
+            RaycastHit bestHit = default;
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                RaycastHit hit = hits[i];
+                Collider col = hit.collider;
+                if (col == null || IsIgnoredPlacementCollider(col))
+                {
+                    continue;
+                }
+
+                if (hit.distance < bestDistance)
+                {
+                    bestDistance = hit.distance;
+                    bestHit = hit;
+                    hasHit = true;
+                }
+            }
+
+            if (hasHit)
+            {
+                position.y = bestHit.point.y + placementGroundOffset;
+                placementGroundCollider = bestHit.collider;
+            }
+            else
+            {
+                placementGroundCollider = null;
+            }
+        }
+        else
+        {
+            placementGroundCollider = null;
         }
 
         return position;
+    }
+
+    private bool IsIgnoredPlacementCollider(Collider col)
+    {
+        if (col == null)
+        {
+            return true;
+        }
+
+        if (placementInstance != null && col.transform.IsChildOf(placementInstance.transform))
+        {
+            return true;
+        }
+
+        if (placementAnchor != null && col.transform.IsChildOf(placementAnchor))
+        {
+            return true;
+        }
+
+        if ((placementIgnoreMask.value & (1 << col.gameObject.layer)) != 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPlacementGroundCollider(Collider col)
+    {
+        if (col == null || placementGroundCollider == null)
+        {
+            return false;
+        }
+
+        if (col == placementGroundCollider)
+        {
+            return true;
+        }
+
+        Transform root = placementGroundCollider.transform;
+        return root != null && col.transform.IsChildOf(root);
+    }
+
+    private CameraController ResolvePlacementCamera()
+    {
+        if (placementCameraController != null)
+        {
+            return placementCameraController;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        placementCameraController = FindFirstObjectByType<CameraController>();
+#else
+        placementCameraController = FindObjectOfType<CameraController>();
+#endif
+        return placementCameraController;
+    }
+
+    private void SetPlacementCameraOverride(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        CameraController controller = ResolvePlacementCamera();
+        if (controller != null)
+        {
+            controller.SetFollowOverride(target);
+        }
+    }
+
+    private void ClearPlacementCameraOverride(Transform target)
+    {
+        CameraController controller = ResolvePlacementCamera();
+        if (controller != null)
+        {
+            controller.ClearFollowOverride(target);
+        }
     }
 
     private bool TryStartPlacementFromSelectedItem()
@@ -2426,9 +2552,22 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        if (item.isBuilding)
+        {
+            BuilderController builder = GetBuilderController();
+            if (builder != null)
+            {
+                builder.EnsureBuildingParent(placementInstance.transform);
+            }
+        }
+
         placementItem = item;
         placementActive = true;
         CachePlacementPhysics(placementInstance);
+        if (placementItem != null && placementItem.isBuilding)
+        {
+            SetPlacementCameraOverride(placementInstance.transform);
+        }
 
         Vector3 startPos = placementAnchor.position;
         Vector3 forward = placementAnchor.forward;
@@ -2452,11 +2591,14 @@ public class InventoryPanelController : MonoBehaviour
         startPos += forward * Mathf.Max(0f, placementStartDistance);
         Vector3 startOffset = startPos - placementAnchor.position;
         startOffset.y = 0f;
-        float radius = Mathf.Max(0f, placementRadius);
-        if (startOffset.magnitude > radius)
+        if (item != null && !item.isBuilding)
         {
-            startOffset = startOffset.normalized * radius;
-            startPos = new Vector3(placementAnchor.position.x + startOffset.x, startPos.y, placementAnchor.position.z + startOffset.z);
+            float radius = Mathf.Max(0f, placementRadius);
+            if (startOffset.magnitude > radius)
+            {
+                startOffset = startOffset.normalized * radius;
+                startPos = new Vector3(placementAnchor.position.x + startOffset.x, startPos.y, placementAnchor.position.z + startOffset.z);
+            }
         }
         startPos = SnapPlacementToGround(startPos);
         placementInstance.transform.position = startPos;
@@ -2781,6 +2923,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         CreateDroppedLootContainer(instance, item, quantity);
+        ShowActionFeedback(item.GetDropSuccessMessage());
         return true;
     }
 
@@ -2869,8 +3012,10 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        Item placedItem = placementItem;
         RestorePlacementPhysics();
         ClearPlacementVisuals();
+        ClearPlacementCameraOverride(placementInstance != null ? placementInstance.transform : null);
         if (placementItem.isBuilding)
         {
             ConfigurePlacedBuilding(placementInstance, placementItem);
@@ -2884,8 +3029,13 @@ public class InventoryPanelController : MonoBehaviour
         placementItem = null;
         placementInstance = null;
         placementAnchor = null;
+        placementGroundCollider = null;
         SetSquadInputLock(false);
         ReleasePlacementFocus();
+        if (placedItem != null)
+        {
+            ShowPlacementFeedback(placedItem.GetPlaceSuccessMessage());
+        }
     }
 
     private void ConfigurePlacedBuilding(GameObject instance, Item building)
@@ -2907,8 +3057,9 @@ public class InventoryPanelController : MonoBehaviour
         BuilderController builder = GetBuilderController();
         if (builder != null)
         {
+            builder.EnsureBuildingParent(instance.transform);
             builder.RegisterBuiltBuilding(building, 1, info);
-            builder.ApplyBuildingEffects(building, 1);
+            builder.ApplyBuildingEffects(building, 0, 1);
         }
 
         LootContainer container = instance.GetComponentInChildren<LootContainer>();
@@ -3007,6 +3158,7 @@ public class InventoryPanelController : MonoBehaviour
     {
         RestorePlacementPhysics();
         ClearPlacementVisuals();
+        ClearPlacementCameraOverride(placementInstance != null ? placementInstance.transform : null);
         if (placementInstance != null)
         {
             Destroy(placementInstance);
@@ -3016,6 +3168,7 @@ public class InventoryPanelController : MonoBehaviour
         placementItem = null;
         placementInstance = null;
         placementAnchor = null;
+        placementGroundCollider = null;
         if (!preserveRestore)
         {
             ClearPlacementRestore();
@@ -3103,7 +3256,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        if (InfoBoxUI.TryShow(message, placementFeedbackDuration))
+        if (InfoBoxUI.TryShow(message))
         {
             return;
         }
@@ -3120,7 +3273,8 @@ public class InventoryPanelController : MonoBehaviour
             StopCoroutine(placementFeedbackRoutine);
         }
 
-        placementFeedbackRoutine = StartCoroutine(PlacementFeedbackRoutine(settings, message, placementFeedbackDuration));
+        float duration = InfoBoxUI.GetDefaultDuration();
+        placementFeedbackRoutine = StartCoroutine(PlacementFeedbackRoutine(settings, message, duration));
     }
 
     private IEnumerator PlacementFeedbackRoutine(InventoryUISettings settings, string message, float duration)
@@ -3169,11 +3323,27 @@ public class InventoryPanelController : MonoBehaviour
             return true;
         }
 
-        Bounds bounds = placementColliders[0].bounds;
-        for (int i = 1; i < placementColliders.Length; i++)
+        Collider seed = null;
+        for (int i = 0; i < placementColliders.Length; i++)
         {
             Collider col = placementColliders[i];
-            if (col == null)
+            if (col != null && !col.isTrigger)
+            {
+                seed = col;
+                break;
+            }
+        }
+
+        if (seed == null)
+        {
+            return true;
+        }
+
+        Bounds bounds = seed.bounds;
+        for (int i = 0; i < placementColliders.Length; i++)
+        {
+            Collider col = placementColliders[i];
+            if (col == null || col.isTrigger)
             {
                 continue;
             }
@@ -3187,17 +3357,11 @@ public class InventoryPanelController : MonoBehaviour
         for (int i = 0; i < overlaps.Length; i++)
         {
             Collider hit = overlaps[i];
-            if (hit == null)
+            if (hit == null || IsIgnoredPlacementCollider(hit))
             {
                 continue;
             }
-
-            if (hit.transform.IsChildOf(placementInstance.transform))
-            {
-                continue;
-            }
-
-            if ((placementIgnoreMask.value & (1 << hit.gameObject.layer)) != 0)
+            if (IsPlacementGroundCollider(hit))
             {
                 continue;
             }

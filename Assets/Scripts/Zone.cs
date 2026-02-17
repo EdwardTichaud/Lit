@@ -297,7 +297,7 @@ public class Zone : MonoBehaviour
                         continue;
                     }
 
-                    TorchEffect effect = FindTorchEffect(entry.building);
+                    TorchEffect effect = FindTorchEffect(entry.building, entry.level);
                     if (effect == null)
                     {
                         continue;
@@ -325,7 +325,7 @@ public class Zone : MonoBehaviour
                         continue;
                     }
 
-                    TorchEffect effect = FindTorchEffect(info.BuildingItem);
+                    TorchEffect effect = FindTorchEffect(info.BuildingItem, info.Level);
                     if (effect == null)
                     {
                         continue;
@@ -349,16 +349,22 @@ public class Zone : MonoBehaviour
 #endif
     }
 
-    private TorchEffect FindTorchEffect(Item building)
+    private TorchEffect FindTorchEffect(Item building, int level)
     {
-        if (building == null || !building.isBuilding || building.buildingEffects == null)
+        if (building == null || !building.isBuilding)
         {
             return null;
         }
 
-        for (int i = 0; i < building.buildingEffects.Count; i++)
+        IReadOnlyList<Effect> effects = building.GetBuildingEffectsForLevel(level);
+        if (effects == null || effects.Count == 0)
         {
-            TorchEffect effect = building.buildingEffects[i] as TorchEffect;
+            return null;
+        }
+
+        for (int i = 0; i < effects.Count; i++)
+        {
+            TorchEffect effect = effects[i] as TorchEffect;
             if (effect != null)
             {
                 return effect;
