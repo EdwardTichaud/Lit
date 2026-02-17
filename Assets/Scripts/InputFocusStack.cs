@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 
 // Pile statique pour gerer le focus d'input (UI vs gameplay).
+public interface ICameraInputPassthrough
+{
+    bool AllowCameraInput { get; }
+}
+
 public static class InputFocusStack
 {
     private static readonly List<object> stack = new List<object>();
@@ -8,6 +13,22 @@ public static class InputFocusStack
     public static bool HasAnyFocus()
     {
         return stack.Count > 0;
+    }
+
+    public static bool HasAnyFocusBlockingCamera()
+    {
+        if (stack.Count == 0)
+        {
+            return false;
+        }
+
+        object top = stack[stack.Count - 1];
+        if (top is ICameraInputPassthrough passthrough && passthrough.AllowCameraInput)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public static bool HasFocus(object owner)

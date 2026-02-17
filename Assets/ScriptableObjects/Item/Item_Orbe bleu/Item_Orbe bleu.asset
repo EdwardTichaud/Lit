@@ -16,7 +16,7 @@ MonoBehaviour:
   itemName: Orbe bleue
   itemSprite: {fileID: 21300000, guid: 106c5173fcd93cb4aadb281a0cb194ab, type: 3}
   description: "Cet orbe emet une lumi\xE8re bleue."
-  canUse: 0
+  canUse: 1
   canPlace: 1
   isContainer: 0
   worldPrefab: {fileID: 1368317527524287094, guid: 238dbde76eeffbf499b62c8e2231b29c, type: 3}
@@ -24,9 +24,10 @@ MonoBehaviour:
   allowDropFromInventory: 1
   allowPlaceFromInventory: 1
   allowInstantDropWithoutPrefab: 1
-  useEffects: []
+  useEffects:
+  - {fileID: 11400000, guid: 8b0531cffd30c564b979e209d4b1dd76, type: 2}
   requireAllUseEffects: 0
-  consumeOnUse: 0
+  consumeOnUse: 1
   consumeQuantity: 1
   itemPassiveEffect: {fileID: 0}
   allowDepositToContainers: 1

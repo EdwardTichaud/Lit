@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e719b3166832fd847ada8ee2aaed0097, type: 3}
   m_Name: Labyrinth_1
   m_EditorClassIdentifier: Assembly-CSharp::Expedition
-  expeditionName: Labyrinth_1
+  expeditionName: "Chateau du cr\xE9ateur"
   expeditionSprite: {fileID: 21300000, guid: d659f7396cd57754eba78763cf986c51, type: 3}
   description: C'est dur...
   unlocked: 1

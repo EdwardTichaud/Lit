@@ -14,6 +14,7 @@ TagManager:
   - MaisonChest
   - LocalVoiceLines
   - CraftingConstructionPanel
+  - ExpeditionPanel
   layers:
   - Default
   - TransparentFX

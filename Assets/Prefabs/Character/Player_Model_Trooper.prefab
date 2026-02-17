@@ -15909,11 +15909,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08b329bae7eedab4b9964a7a02f4169b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalVoiceLineController
-  characterData: {fileID: 0}
-  voiceLines: []
   autoBuildLookup: 1
   autoResolveCharacterData: 1
-  preferCharacterVoiceLines: 1
   textAnchor: {fileID: 6863993285466569495}
   textOffset: {x: 0, y: 0, z: 0}
   textPrefab: {fileID: 5948826745277676634, guid: 7b9a7ee676881344784b44f6d6cfdbba, type: 3}
@@ -37157,6 +37154,7 @@ GameObject:
   - component: {fileID: 2260804176078962443}
   - component: {fileID: 3963548041879623861}
   - component: {fileID: 6789773155723881949}
+  - component: {fileID: 3467765921086081616}
   m_Layer: 0
   m_Name: Light
   m_TagString: Untagged
@@ -37386,6 +37384,21 @@ MonoBehaviour:
   m_ObsoleteUseShadowQualitySettings: 0
   m_ObsoleteCustomShadowResolution: 512
   m_ObsoleteContactShadows: 0
+--- !u!114 &3467765921086081616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8810761898853042437}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aaf3f8ddc407ec4da32ec6a5b12e395, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TorchLightReceiver
+  targetLight: {fileID: 3963548041879623861}
+  searchInChildren: 1
+  disableColorTemperatureWhenColored: 1
 --- !u!1 &8873776209652233995
 GameObject:
   m_ObjectHideFlags: 0

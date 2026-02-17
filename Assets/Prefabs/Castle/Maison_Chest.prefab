@@ -78,6 +78,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1040901325205510312}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8384270561318101996}
   m_SourcePrefab: {fileID: 100100000, guid: 366893e57486b7047b941d0d967b9603, type: 3}
 --- !u!1 &4904099126078092212 stripped
 GameObject:
@@ -101,6 +104,10 @@ MonoBehaviour:
     quantity: 1
   - item: {fileID: 11400000, guid: 845afa1e4c271764cbf03d62c8752b96, type: 2}
     quantity: 5
+  - item: {fileID: 11400000, guid: 6f3d7907a16bcc34fa2428da170052ee, type: 2}
+    quantity: 5
+  - item: {fileID: 11400000, guid: b6f049c8b4df32b46988eedc08553261, type: 2}
+    quantity: 5
   containerItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
   destroyWhenEmpty: 0
   collectable: 0
@@ -108,7 +115,8 @@ MonoBehaviour:
   allowBreakWhenNotCollectable: 1
   breakInvalidMessage: "Cet objet ne peut pas etre cass\xE9."
   breakNoSpaceMessage: Pas assez de place dans le coffre.
-  breakFeedbackDuration: 1.2
+  takeNotAllowedMessage: Impossible de prendre cet objet.
+  depositNoSpaceMessage: Pas assez de place dans le coffre.
   actionBox: {fileID: 0}
   actionBoxOffset: {x: 0, y: 0}
   actionBoxFadeDuration: 0.15
@@ -141,6 +149,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.2, y: 1.5, z: 1.5}
   m_Center: {x: -0.000000029802322, y: 0.50000006, z: -0.00000005960464}
+--- !u!114 &8384270561318101996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4904099126078092212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d56adc7cfa92ef0488a12e6a60a76764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingInfoInteractable
+  buildId: 
+  buildingItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
+  level: 1
+  localInformationPanelPrefab: {fileID: 4865652701375795038, guid: 8693d19c8191d354cad67928ac3d13e3, type: 3}
+  localPanelParent: {fileID: 0}
+  informationAnchor: {fileID: 0}
+  informationOffset: {x: 0, y: 2, z: 0}
+  targetCamera: {fileID: 0}
+  destroyPanelOnExit: 0
+  craftingPanel: {fileID: 0}
+  openCraftingPanelOnInteract: 1
+  craftingPanelTag: CraftingConstructionPanel
+  interactionTrigger: {fileID: 1040901325205510312}
+  closePanelOnExit: 1
+  openOnProximity: 1
 --- !u!64 &7434141378917972205 stripped
 MeshCollider:
   m_CorrespondingSourceObject: {fileID: 3451118302482216456, guid: 366893e57486b7047b941d0d967b9603, type: 3}

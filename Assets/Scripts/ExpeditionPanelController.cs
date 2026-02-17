@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // UI de selection des expeditions (navigation + lancement + transition).
-public class ExpeditionPanelController : MonoBehaviour
+public class ExpeditionPanelController : MonoBehaviour, ICameraInputPassthrough
 {
     [Header("Expeditions")]
     [Tooltip("Liste d'expeditions disponibles dans ce panel.")]
@@ -70,6 +70,8 @@ public class ExpeditionPanelController : MonoBehaviour
     public bool launchOnInteract = true;
     [Tooltip("Ferme le panel apres le lancement.")]
     public bool closeOnLaunch = true;
+    [Tooltip("Autorise le controle de la camera meme quand le panel est ouvert.")]
+    public bool allowCameraControlWhenOpen = true;
 
     [Header("Labyrinths")]
     [Tooltip("Desactive les labyrinthes non selectionnes.")]
@@ -148,6 +150,8 @@ public class ExpeditionPanelController : MonoBehaviour
     private static Sprite cursorFallbackSprite;
 
     public bool IsOpen => panelOpen;
+
+    public bool AllowCameraInput => allowCameraControlWhenOpen;
 
     public Expedition SelectedExpedition => currentFocusedSlot != null ? currentFocusedSlot.Expedition : null;
 

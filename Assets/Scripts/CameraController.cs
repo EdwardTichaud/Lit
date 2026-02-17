@@ -168,7 +168,7 @@ public class CameraController : MonoBehaviour
         {
             // Suivi de la cible courante.
             mainCamCurrentTarget = desiredTarget;
-            bool inputLocked = InputFocusStack.HasAnyFocus();
+            bool inputLocked = InputFocusStack.HasAnyFocusBlockingCamera();
             if (!inputLocked)
             {
                 UpdateOrbitYaw();

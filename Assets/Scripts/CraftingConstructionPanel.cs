@@ -241,24 +241,13 @@ public class CraftingConstructionPanel : MonoBehaviour
             return;
         }
 
-        List<LootContainer> homeContainers;
-        if (!CanAddToHomeContainers(slot.CraftItem, 1, out homeContainers))
-        {
-            InfoBoxUI.TryShow(craftFailedMessage);
-            return;
-        }
-
         if (!TryConsumeCraftResources(slot.CraftItem, currentController))
         {
             InfoBoxUI.TryShow(craftFailedMessage);
             return;
         }
 
-        if (!AddToHomeContainers(slot.CraftItem, 1, homeContainers))
-        {
-            InfoBoxUI.TryShow(craftFailedMessage);
-            return;
-        }
+        currentController.AddItem(slot.CraftItem, 1);
 
         InfoBoxUI.TryShow(craftSuccessMessage);
         UpdateRequirements(slot.CraftItem);
