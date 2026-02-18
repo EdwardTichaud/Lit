@@ -26,7 +26,7 @@ public class ApplyTorchVisionEffect : Effect
             return false;
         }
 
-        TorchVisionSystem.SetVision(vision, durationSeconds);
+        TorchVisionSystem.SetVisionFor(controller, vision, durationSeconds);
         return true;
     }
 

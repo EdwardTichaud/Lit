@@ -8,6 +8,10 @@ public class TorchLightReceiver : MonoBehaviour
     [SerializeField] private bool searchInChildren = true;
     [SerializeField] private bool disableColorTemperatureWhenColored = true;
 
+    [Header("Owner")]
+    [SerializeField] private SquadCharacterController owner;
+    [SerializeField] private bool searchOwnerInParents = true;
+
     private Color defaultColor;
     private bool defaultUseColorTemperature;
     private float defaultColorTemperature;
@@ -16,14 +20,16 @@ public class TorchLightReceiver : MonoBehaviour
     private void Awake()
     {
         CacheLight();
+        CacheOwner();
     }
 
     private void OnEnable()
     {
         CacheLight();
+        CacheOwner();
         TorchVisionSystem.GetOrCreate();
         TorchVisionSystem.VisionChanged += OnVisionChanged;
-        ApplyVision(TorchVisionSystem.CurrentVision);
+        ApplyVision(GetOwnerVision());
     }
 
     private void OnDisable()
@@ -49,8 +55,36 @@ public class TorchLightReceiver : MonoBehaviour
         hasDefault = true;
     }
 
-    private void OnVisionChanged(TorchVisionDefinition previous, TorchVisionDefinition current)
+    private void CacheOwner()
     {
+        if (owner != null)
+        {
+            return;
+        }
+
+        if (searchOwnerInParents)
+        {
+            owner = GetComponentInParent<SquadCharacterController>(true);
+        }
+    }
+
+    private TorchVisionDefinition GetOwnerVision()
+    {
+        if (owner == null)
+        {
+            return null;
+        }
+
+        return TorchVisionSystem.GetVisionFor(owner);
+    }
+
+    private void OnVisionChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)
+    {
+        if (controller != owner)
+        {
+            return;
+        }
+
         ApplyVision(current);
     }
 

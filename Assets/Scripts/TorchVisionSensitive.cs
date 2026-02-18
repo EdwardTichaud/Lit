@@ -62,7 +62,7 @@ public class TorchVisionSensitive : MonoBehaviour
         TorchVisionSystem.GetOrCreate();
         TorchVisionSystem.VisionChanged += OnVisionChanged;
         TorchVisionSystem.TorchStateChanged += OnTorchStateChanged;
-        ApplyVision(TorchVisionSystem.CurrentVision);
+        ApplyVision();
     }
 
     private void OnDisable()
@@ -177,25 +177,20 @@ public class TorchVisionSensitive : MonoBehaviour
         }
     }
 
-    private void OnVisionChanged(TorchVisionDefinition previous, TorchVisionDefinition current)
+    private void OnVisionChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)
     {
-        ApplyVision(current);
+        ApplyVision();
     }
 
-    private void OnTorchStateChanged(bool equipped)
+    private void OnTorchStateChanged(SquadCharacterController controller, bool equipped)
     {
-        ApplyVision(TorchVisionSystem.CurrentVision);
+        ApplyVision();
     }
 
-    private void ApplyVision(TorchVisionDefinition current)
+    private void ApplyVision()
     {
-        TorchVisionDefinition effectiveVision = current;
-        if (requireTorchEquipped && !TorchVisionSystem.IsTorchEquipped())
-        {
-            effectiveVision = null;
-        }
-
-        bool visible = IsVisibleFor(effectiveVision);
+        TorchVisionSystem.GetVisionActivity(vision, requireTorchEquipped, out bool hasAnyVision, out bool hasMatchingVision);
+        bool visible = IsVisibleFor(hasAnyVision, hasMatchingVision);
         ApplyRenderers(visible);
 
         if (affectColliders && colliders != null)
@@ -358,7 +353,7 @@ public class TorchVisionSensitive : MonoBehaviour
         }
     }
 
-    private bool IsVisibleFor(TorchVisionDefinition current)
+    private bool IsVisibleFor(bool hasAnyVision, bool hasMatchingVision)
     {
         switch (visibilityMode)
         {
@@ -367,15 +362,15 @@ public class TorchVisionSensitive : MonoBehaviour
             case VisibilityMode.HiddenWhenVisionMatches:
                 if (vision == null)
                 {
-                    return current != null;
+                    return hasAnyVision;
                 }
-                return current != vision;
+                return !hasMatchingVision;
             default:
                 if (vision == null)
                 {
-                    return current == null;
+                    return !hasAnyVision;
                 }
-                return current == vision;
+                return hasMatchingVision;
         }
     }
 }

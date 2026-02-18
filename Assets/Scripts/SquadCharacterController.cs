@@ -123,6 +123,7 @@ public class SquadCharacterController : MonoBehaviour
     private readonly List<Collider> cachedColliders = new List<Collider>();
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
+    private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
 
     public CharacterData CharacterData => characterData;
 
@@ -393,6 +394,8 @@ public class SquadCharacterController : MonoBehaviour
     public bool HasTorchItem => TorchItem != null;
 
     public bool IsTorchEquipped => torchEquipped;
+
+    public static IReadOnlyList<SquadCharacterController> ActiveCharacters => registeredCharacters;
 
     public void ResetTorchToMax(int maxSeconds, bool ensureTorchItem = true)
     {
@@ -1364,6 +1367,11 @@ public class SquadCharacterController : MonoBehaviour
 
     private void RegisterCharacter()
     {
+        if (!registeredCharacters.Contains(this))
+        {
+            registeredCharacters.Add(this);
+        }
+
         if (!ignoreCharacterCollisions)
         {
             return;
@@ -1391,6 +1399,8 @@ public class SquadCharacterController : MonoBehaviour
 
     private void UnregisterCharacter()
     {
+        registeredCharacters.Remove(this);
+
         if (!ignoreCharacterCollisions)
         {
             activeCharacters.Remove(this);
