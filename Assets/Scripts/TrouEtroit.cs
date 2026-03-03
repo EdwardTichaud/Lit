@@ -63,7 +63,6 @@ public class TrouEtroit : MonoBehaviour
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
-    private PlayerInputs playerInputs;
     private bool isTriggerZone;
     private bool detected;
     private Renderer[] cachedRenderers;
@@ -77,7 +76,6 @@ public class TrouEtroit : MonoBehaviour
         Collider trigger = EnsureTriggerCollider();
         isTriggerZone = trigger != null;
 
-        playerInputs = new PlayerInputs();
         detected = startDetected;
         CacheRenderers();
         UpdateGlow();
@@ -86,22 +84,13 @@ public class TrouEtroit : MonoBehaviour
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
 
         ResetUIState();
     }
@@ -386,7 +375,7 @@ public class TrouEtroit : MonoBehaviour
 
     private static GameObject GetControlledCharacter()
     {
-        return SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        return LocalPlayerUtils.GetControlledCharacter();
     }
 
     private static bool IsControlledCharacter(GameObject character)

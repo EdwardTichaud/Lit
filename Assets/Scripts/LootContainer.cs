@@ -4,12 +4,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 // Conteneur de loot avec interaction, UI et ActionBox (prendre/deposer/casser).
 [RequireComponent(typeof(Collider))]
-public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
+[RequireComponent(typeof(NetworkObject))]
+public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 {
     [System.Serializable]
     public class LootItemEntry
@@ -43,6 +45,8 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     [Header("Feedback")]
     [Tooltip("Message si l'objet ne peut pas etre pris.")]
     public string takeNotAllowedMessage = "Impossible de prendre cet objet.";
+    [Tooltip("Message quand tout le contenu est pris.")]
+    public string takeAllSuccessMessage = "Objets recuperes.";
     [Tooltip("Message si le container est plein.")]
     public string depositNoSpaceMessage = "Pas assez de place dans le coffre.";
 
@@ -64,6 +68,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     [Tooltip("Alpha des actions indisponibles.")]
     public float actionBoxDisabledAlpha = 0.25f;
 
+    [Header("Take Quantity")]
+    [Tooltip("Offset en UI par rapport au slot selectionne.")]
+    public Vector2 takeQuantityPanelOffset = Vector2.zero;
+    [Tooltip("Format d'affichage (quantite/total).")]
+    public string takeQuantityFormat = "{0}/{1}";
+
     [Header("Interaction")]
     [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
     public Collider interactionTrigger;
@@ -74,9 +84,14 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
     private bool lootOpen;
-    private PlayerInputs playerInputs;
     private bool useSelfTriggerEvents;
     private bool depositInventoryOpen;
+    private int suppressReturnFrame = -1;
+    private bool takeQuantityActive;
+    private int takeQuantityMax;
+    private Item takeQuantityItem;
+    private LootItemEntry takeQuantityEntry;
+    private QuantityBox quantityBox;
     private LootSlotUI currentFocusedSlot;
     private bool squadInputLocked;
     private readonly List<LootSlotUI> lootSlots = new List<LootSlotUI>();
@@ -91,11 +106,14 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     [SerializeField, HideInInspector, FormerlySerializedAs("items")]
     private List<Item> legacyItems = new List<Item>();
 
+    private readonly NetworkList<NetItemStack> netLootItems = new NetworkList<NetItemStack>(
+        null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private bool applyingNetLoot;
+
     private void Awake()
     {
         InitializeInteractionTrigger();
 
-        playerInputs = new PlayerInputs();
         LootUISettings settings = GetSettings();
         if (settings != null)
         {
@@ -107,28 +125,19 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
-        playerInputs.Player.TakeAll.performed += OnTakeAllPerformed;
-        playerInputs.Player.Return.performed += OnReturnPerformed;
-        playerInputs.Player.ToggleTorch.performed += OnToggleTorchPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        LocalInputRouter.TakeAll += OnTakeAllPerformed;
+        LocalInputRouter.Return += OnReturnPerformed;
+        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Player.TakeAll.performed -= OnTakeAllPerformed;
-            playerInputs.Player.Return.performed -= OnReturnPerformed;
-            playerInputs.Player.ToggleTorch.performed -= OnToggleTorchPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        LocalInputRouter.TakeAll -= OnTakeAllPerformed;
+        LocalInputRouter.Return -= OnReturnPerformed;
+        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
 
         InputFocusStack.Pop(this);
         CloseLoot();
@@ -137,6 +146,24 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         characterColliderCounts.Clear();
         currentCharacter = null;
         depositInventoryOpen = false;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        netLootItems.OnListChanged += OnNetLootChanged;
+        if (IsServer)
+        {
+            SyncNetFromLootItems();
+        }
+        else
+        {
+            ApplyLootFromNet();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        netLootItems.OnListChanged -= OnNetLootChanged;
     }
 
     private void LateUpdate()
@@ -168,6 +195,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
 
         if (depositInventoryOpen)
         {
+            return;
+        }
+
+        if (takeQuantityActive)
+        {
+            HandleTakeQuantityInput();
             return;
         }
 
@@ -213,6 +246,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
+        if (takeQuantityActive)
+        {
+            ConfirmTakeQuantity();
+            return;
+        }
+
         HandleInteract();
     }
 
@@ -240,6 +279,17 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
 
         if (depositInventoryOpen)
         {
+            return;
+        }
+
+        if (Time.frameCount == suppressReturnFrame)
+        {
+            return;
+        }
+
+        if (takeQuantityActive)
+        {
+            CancelTakeQuantity();
             return;
         }
 
@@ -370,10 +420,10 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (SquadManager.Instance != null && SquadManager.Instance.currentCharacter != null)
+        GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
+        if (controlled != null)
         {
-            GameObject selected = SquadManager.Instance.currentCharacter;
-            currentCharacter = charactersInRange.Contains(selected) ? selected : null;
+            currentCharacter = charactersInRange.Contains(controlled) ? controlled : null;
             return;
         }
 
@@ -593,6 +643,8 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     private void CloseLoot()
     {
         HideActionBoxImmediate();
+        CloseQuantityBox();
+        ResetTakeQuantityState();
         if (depositInventoryOpen)
         {
             InventoryPanelController inventory = GetInventoryPanelController();
@@ -982,22 +1034,144 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
+        if (!item.CanTakeFromContainer(this, out string reason))
+        {
+            ShowActionFeedback(reason);
+            return false;
+        }
+
         int quantity = Mathf.Max(0, entry.quantity);
         if (quantity <= 0)
         {
             return false;
         }
 
+        if (quantity > 1)
+        {
+            BeginTakeQuantity(entry, quantity);
+            return true;
+        }
+
+        return PerformTake(entry, 1);
+    }
+
+    private void BeginTakeQuantity(LootItemEntry entry, int maxQuantity)
+    {
+        if (entry == null || entry.item == null)
+        {
+            return;
+        }
+
+        QuantityBox box = GetQuantityBox();
+        if (box == null)
+        {
+            PerformTake(entry, maxQuantity);
+            return;
+        }
+
+        takeQuantityEntry = entry;
+        takeQuantityItem = entry.item;
+        takeQuantityMax = Mathf.Max(1, maxQuantity);
+        int startQuantity = Mathf.Clamp(entry.quantity, 1, takeQuantityMax);
+        takeQuantityActive = true;
+        box.Open(currentFocusedSlot != null ? currentFocusedSlot.SlotRect : null,
+            takeQuantityPanelOffset,
+            startQuantity,
+            takeQuantityMax,
+            "{0}/{1}");
+    }
+
+    private void CancelTakeQuantity()
+    {
+        if (!takeQuantityActive)
+        {
+            return;
+        }
+
+        takeQuantityActive = false;
+        CloseQuantityBox();
+        ResetTakeQuantityState();
+    }
+
+    private void ConfirmTakeQuantity()
+    {
+        if (!takeQuantityActive)
+        {
+            return;
+        }
+
+        QuantityBox box = GetQuantityBox();
+        int quantity = box != null ? box.CurrentQuantity : 1;
+        quantity = Mathf.Clamp(quantity, 1, takeQuantityMax);
+        LootItemEntry entry = takeQuantityEntry;
+        takeQuantityActive = false;
+        CloseQuantityBox();
+        ResetTakeQuantityState();
+        PerformTake(entry, quantity);
+    }
+
+    private bool PerformTake(LootItemEntry entry, int quantity)
+    {
+        if (entry == null || entry.item == null || quantity <= 0)
+        {
+            return false;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            RequestTakeServerRpc(ItemIdUtils.GetItemId(entry.item), quantity);
+            return true;
+        }
+
+        Item item = entry.item;
         if (!TryAddItemToCurrentCharacter(item, quantity))
         {
             return false;
         }
 
-        lootItems.Remove(entry);
-        RebuildLootSlots(null, currentSlotIndex);
+        entry.quantity = Mathf.Max(0, entry.quantity - quantity);
+        if (entry.quantity <= 0)
+        {
+            lootItems.Remove(entry);
+        }
+
+        RebuildLootSlots(item, currentSlotIndex);
         HandleEmptyContainer();
+        SyncNetFromLootItems();
+        SyncNetworkInventoryForCurrentCharacter();
         ShowActionFeedback(item.GetTakeSuccessMessage());
         return true;
+    }
+
+    private void HandleTakeQuantityInput()
+    {
+        if (!takeQuantityActive)
+        {
+            return;
+        }
+
+        LootUISettings settings = GetSettings();
+        if (settings == null)
+        {
+            return;
+        }
+
+        Vector2 moveInput = LocalInputRouter.MoveValue;
+        QuantityBox box = GetQuantityBox();
+        if (box == null)
+        {
+            return;
+        }
+
+        box.HandleInput(moveInput, settings.moveDeadzone, settings.initialRepeatDelay, settings.repeatInterval);
+    }
+
+    private void ResetTakeQuantityState()
+    {
+        takeQuantityActive = false;
+        takeQuantityMax = 1;
+        takeQuantityItem = null;
+        takeQuantityEntry = null;
     }
 
     private bool TryBreakFocusedItem()
@@ -1013,6 +1187,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         if (item == null)
         {
             return false;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            RequestBreakServerRpc(ItemIdUtils.GetItemId(item));
+            return true;
         }
 
         if (!item.HasBreakResults())
@@ -1042,6 +1222,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         ApplyBreakResults(item);
         RebuildLootSlots(null, currentSlotIndex);
         HandleEmptyContainer();
+        SyncNetFromLootItems();
         ShowBreakFeedback(item.GetBreakSuccessMessage());
         return true;
     }
@@ -1166,6 +1347,25 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         BuildActionBoxEntries();
         HideActionBoxCursor();
         actionBoxVisible = false;
+    }
+
+    private QuantityBox GetQuantityBox()
+    {
+        if (quantityBox == null)
+        {
+            quantityBox = QuantityBox.Resolve();
+        }
+
+        return quantityBox;
+    }
+
+    private void CloseQuantityBox()
+    {
+        QuantityBox box = GetQuantityBox();
+        if (box != null)
+        {
+            box.Close();
+        }
     }
 
     private void EnsureActionBox()
@@ -1711,6 +1911,12 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
+        if (IsNetworked() && !IsServer)
+        {
+            RequestDepositServerRpc(ItemIdUtils.GetItemId(item), quantity);
+            return true;
+        }
+
         if (!item.CanDepositToContainer(this, out string reason))
         {
             ShowActionFeedback(reason);
@@ -1771,6 +1977,8 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             RebuildLootSlots(item, currentSlotIndex);
         }
 
+        SyncNetFromLootItems();
+        SyncNetworkInventoryForCurrentCharacter();
         ShowActionFeedback(item.GetDepositSuccessMessage());
         return true;
     }
@@ -1787,6 +1995,8 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         {
             RebuildLootSlots(item, currentSlotIndex);
         }
+
+        SyncNetFromLootItems();
     }
 
     public int AddItemsWithCapacity(Item item, int quantity)
@@ -1906,6 +2116,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             RebuildLootSlots(item, currentSlotIndex);
         }
 
+        SyncNetFromLootItems();
         return quantity - remaining;
     }
 
@@ -1916,10 +2127,104 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         {
             RebuildLootSlots(null, currentSlotIndex);
         }
+
+        SyncNetFromLootItems();
+    }
+
+    private void OnNetLootChanged(NetworkListEvent<NetItemStack> change)
+    {
+        if (applyingNetLoot)
+        {
+            return;
+        }
+
+        ApplyLootFromNet();
+    }
+
+    private void ApplyLootFromNet()
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        applyingNetLoot = true;
+        lootItems = new List<LootItemEntry>();
+        for (int i = 0; i < netLootItems.Count; i++)
+        {
+            NetItemStack stack = netLootItems[i];
+            if (stack.Quantity <= 0)
+            {
+                continue;
+            }
+
+            Item item = ItemRegistry.Resolve(stack.ItemId.ToString());
+            if (item == null)
+            {
+                continue;
+            }
+
+            lootItems.Add(new LootItemEntry { item = item, quantity = stack.Quantity });
+        }
+
+        applyingNetLoot = false;
+
+        if (lootOpen)
+        {
+            RebuildLootSlots(null, currentSlotIndex);
+        }
+    }
+
+    private void SyncNetFromLootItems()
+    {
+        if (!IsServer || applyingNetLoot)
+        {
+            return;
+        }
+
+        applyingNetLoot = true;
+        netLootItems.Clear();
+        if (lootItems != null)
+        {
+            for (int i = 0; i < lootItems.Count; i++)
+            {
+                LootItemEntry entry = lootItems[i];
+                if (entry == null || entry.item == null)
+                {
+                    continue;
+                }
+
+                string id = ItemIdUtils.GetItemId(entry.item);
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    continue;
+                }
+
+                int quantity = Mathf.Max(0, entry.quantity);
+                if (quantity <= 0)
+                {
+                    continue;
+                }
+
+                netLootItems.Add(new NetItemStack(id, quantity));
+            }
+        }
+        applyingNetLoot = false;
+    }
+
+    private bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 
     private void TakeAllItems()
     {
+        if (IsNetworked() && !IsServer)
+        {
+            RequestTakeAllServerRpc();
+            return;
+        }
+
         if (!collectable)
         {
             ShowActionFeedback(takeNotAllowedMessage);
@@ -1960,6 +2265,8 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
 
         RebuildLootSlots(null, currentSlotIndex);
         HandleEmptyContainer();
+        SyncNetFromLootItems();
+        SyncNetworkInventoryForCurrentCharacter();
     }
 
     private void HandleEmptyContainer()
@@ -1975,12 +2282,22 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         }
 
         CloseLoot();
+        if (IsNetworked() && IsServer)
+        {
+            NetworkObject networkObject = GetComponent<NetworkObject>();
+            if (networkObject != null)
+            {
+                networkObject.Despawn(true);
+                return;
+            }
+        }
+
         Destroy(gameObject);
     }
 
     private void HandleLootNavigation()
     {
-        if (playerInputs == null || lootSlots.Count == 0)
+        if (lootSlots.Count == 0)
         {
             return;
         }
@@ -1991,7 +2308,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetMoveDirection(moveInput, settings.moveDeadzone);
         if (direction == 0)
         {
@@ -2304,6 +2621,376 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
         return currentCharacter.GetComponent<SquadCharacterController>();
     }
 
+    private void SyncNetworkInventoryForCurrentCharacter()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (controller == null)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null)
+        {
+            inventory.SyncFromController();
+        }
+    }
+
+    private NetworkInventory GetNetworkInventoryForCharacter(Transform playerRoot)
+    {
+        if (playerRoot == null)
+        {
+            return null;
+        }
+
+        NetworkInventory inventory = playerRoot.GetComponent<NetworkInventory>();
+        if (inventory != null)
+        {
+            return inventory;
+        }
+
+        return playerRoot.GetComponentInChildren<NetworkInventory>(true);
+    }
+
+    private SquadCharacterController GetControllerFromRoot(Transform playerRoot)
+    {
+        if (playerRoot == null)
+        {
+            return null;
+        }
+
+        SquadCharacterController controller = playerRoot.GetComponent<SquadCharacterController>();
+        if (controller != null)
+        {
+            return controller;
+        }
+
+        return playerRoot.GetComponentInChildren<SquadCharacterController>(true);
+    }
+
+    private bool IsCharacterInRange(Transform characterRoot)
+    {
+        if (characterRoot == null)
+        {
+            return false;
+        }
+
+        Collider col = interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
+        if (col == null)
+        {
+            return true;
+        }
+
+        Vector3 closest = col.ClosestPoint(characterRoot.position);
+        float distanceSqr = (closest - characterRoot.position).sqrMagnitude;
+        return distanceSqr <= 0.25f;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestTakeServerRpc(string itemId, int quantity, ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0)
+        {
+            return;
+        }
+
+        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        if (!IsCharacterInRange(playerRoot))
+        {
+            return;
+        }
+
+        Item item = ItemRegistry.Resolve(itemId);
+        if (item == null)
+        {
+            return;
+        }
+
+        LootItemEntry entry = null;
+        if (lootItems != null)
+        {
+            for (int i = 0; i < lootItems.Count; i++)
+            {
+                LootItemEntry candidate = lootItems[i];
+                if (candidate != null && candidate.item == item)
+                {
+                    entry = candidate;
+                    break;
+                }
+            }
+        }
+
+        if (entry == null)
+        {
+            return;
+        }
+
+        if (!item.CanTakeFromContainer(this, out string reason))
+        {
+            ShowFeedbackClientRpc(reason, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
+        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
+        if (inventory == null || controller == null)
+        {
+            return;
+        }
+
+        int available = Mathf.Max(0, entry.quantity);
+        int toTake = Mathf.Min(available, quantity);
+        if (toTake <= 0)
+        {
+            return;
+        }
+
+        controller.AddItem(item, toTake);
+        inventory.SyncFromController();
+
+        entry.quantity = Mathf.Max(0, entry.quantity - toTake);
+        if (entry.quantity <= 0)
+        {
+            lootItems.Remove(entry);
+        }
+
+        SyncNetFromLootItems();
+        HandleEmptyContainer();
+        ShowFeedbackClientRpc(item.GetTakeSuccessMessage(), false, BuildClientRpcParams(rpcParams));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestTakeAllServerRpc(ServerRpcParams rpcParams = default)
+    {
+        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        if (!IsCharacterInRange(playerRoot))
+        {
+            return;
+        }
+
+        if (!collectable)
+        {
+            ShowFeedbackClientRpc(takeNotAllowedMessage, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (lootItems == null || lootItems.Count == 0)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
+        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
+        if (inventory == null || controller == null)
+        {
+            return;
+        }
+
+        for (int i = lootItems.Count - 1; i >= 0; i--)
+        {
+            LootItemEntry entry = lootItems[i];
+            if (entry == null || entry.item == null)
+            {
+                lootItems.RemoveAt(i);
+                continue;
+            }
+
+            int quantity = Mathf.Max(0, entry.quantity);
+            if (quantity <= 0)
+            {
+                lootItems.RemoveAt(i);
+                continue;
+            }
+
+            controller.AddItem(entry.item, quantity);
+            entry.quantity = 0;
+            lootItems.RemoveAt(i);
+        }
+
+        inventory.SyncFromController();
+        SyncNetFromLootItems();
+        HandleEmptyContainer();
+        ShowFeedbackClientRpc(takeAllSuccessMessage, false, BuildClientRpcParams(rpcParams));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestDepositServerRpc(string itemId, int quantity, ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0)
+        {
+            return;
+        }
+
+        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        if (!IsCharacterInRange(playerRoot))
+        {
+            return;
+        }
+
+        Item item = ItemRegistry.Resolve(itemId);
+        if (item == null)
+        {
+            return;
+        }
+
+        if (!item.CanDepositToContainer(this, out string reason))
+        {
+            ShowFeedbackClientRpc(reason, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
+        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
+        if (controller == null || inventory == null)
+        {
+            return;
+        }
+
+        int remainingCapacity = GetRemainingCapacity();
+        if (remainingCapacity <= 0 || quantity > remainingCapacity)
+        {
+            ShowFeedbackClientRpc(depositNoSpaceMessage, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!controller.TryRemoveItemQuantity(item, quantity))
+        {
+            return;
+        }
+
+        if (lootItems == null)
+        {
+            lootItems = new List<LootItemEntry>();
+        }
+
+        LootItemEntry existing = null;
+        for (int i = 0; i < lootItems.Count; i++)
+        {
+            LootItemEntry entry = lootItems[i];
+            if (entry != null && entry.item == item)
+            {
+                existing = entry;
+                break;
+            }
+        }
+
+        if (existing != null)
+        {
+            existing.quantity = Mathf.Max(0, existing.quantity + quantity);
+        }
+        else
+        {
+            lootItems.Add(new LootItemEntry { item = item, quantity = quantity });
+        }
+
+        inventory.SyncFromController();
+        SyncNetFromLootItems();
+        ShowFeedbackClientRpc(item.GetDepositSuccessMessage(), false, BuildClientRpcParams(rpcParams));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestBreakServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return;
+        }
+
+        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        if (!IsCharacterInRange(playerRoot))
+        {
+            return;
+        }
+
+        Item item = ItemRegistry.Resolve(itemId);
+        if (item == null)
+        {
+            return;
+        }
+
+        LootItemEntry entry = null;
+        if (lootItems != null)
+        {
+            for (int i = 0; i < lootItems.Count; i++)
+            {
+                LootItemEntry candidate = lootItems[i];
+                if (candidate != null && candidate.item == item)
+                {
+                    entry = candidate;
+                    break;
+                }
+            }
+        }
+
+        if (entry == null)
+        {
+            return;
+        }
+
+        if (!item.HasBreakResults())
+        {
+            ShowFeedbackClientRpc(breakInvalidMessage, true, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        int totalResults = GetBreakResultTotal(item);
+        if (maxTotalQuantity > 0)
+        {
+            int remaining = GetRemainingCapacity();
+            int effectiveRemaining = remaining + 1;
+            if (totalResults > effectiveRemaining)
+            {
+                ShowFeedbackClientRpc(breakNoSpaceMessage, true, BuildClientRpcParams(rpcParams));
+                return;
+            }
+        }
+
+        entry.quantity = Mathf.Max(0, entry.quantity - 1);
+        if (entry.quantity <= 0)
+        {
+            lootItems.Remove(entry);
+        }
+
+        ApplyBreakResults(item);
+        SyncNetFromLootItems();
+        HandleEmptyContainer();
+        ShowFeedbackClientRpc(item.GetBreakSuccessMessage(), true, BuildClientRpcParams(rpcParams));
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackClientRpc(string message, bool isBreak, ClientRpcParams rpcParams = default)
+    {
+        if (isBreak)
+        {
+            ShowBreakFeedback(message);
+        }
+        else
+        {
+            ShowActionFeedback(message);
+        }
+    }
+
+    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    {
+        return new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
+            }
+        };
+    }
+
     private InventoryPanelController GetInventoryPanelController()
     {
         if (inventoryPanelController != null)
@@ -2322,6 +3009,7 @@ public class LootContainer : MonoBehaviour, ISerializationCallbackReceiver
     public void NotifyDepositInventoryClosed()
     {
         depositInventoryOpen = false;
+        suppressReturnFrame = Time.frameCount;
     }
 
     private void SetSquadInputLock(bool locked)

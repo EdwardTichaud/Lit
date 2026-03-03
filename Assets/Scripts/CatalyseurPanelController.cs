@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using UnityEngine.UI;
 
 // Controle le panel de craft du catalyseur (selection d'orbes).
@@ -52,7 +53,6 @@ public class CatalyseurPanelController : MonoBehaviour
     [Tooltip("Message si le craft reussit.")]
     public string craftSuccessMessage = "Orbe fabriquee.";
 
-    private PlayerInputs playerInputs;
     private CanvasGroup panelCanvasGroup;
     private Coroutine panelFadeRoutine;
     private bool panelOpen;
@@ -90,29 +90,19 @@ public class CatalyseurPanelController : MonoBehaviour
             catalyseurPanel.SetActive(false);
         }
 
-        playerInputs = new PlayerInputs();
     }
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
-        playerInputs.Player.Return.performed += OnReturnPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        LocalInputRouter.Return += OnReturnPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Player.Return.performed -= OnReturnPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        LocalInputRouter.Return -= OnReturnPerformed;
 
         InputFocusStack.Pop(this);
         SetSquadInputLock(false);
@@ -255,7 +245,7 @@ public class CatalyseurPanelController : MonoBehaviour
                 continue;
             }
 
-            CreateOption(effect);
+            CreateOption(effect, i);
             created++;
         }
 
@@ -268,7 +258,7 @@ public class CatalyseurPanelController : MonoBehaviour
         SelectFirstOption();
     }
 
-    private void CreateOption(CatalyseurOrbCraftEffect effect)
+    private void CreateOption(CatalyseurOrbCraftEffect effect, int effectIndex)
     {
         if (effect == null)
         {
@@ -300,8 +290,9 @@ public class CatalyseurPanelController : MonoBehaviour
 
         button.interactable = true;
         CatalyseurOrbCraftEffect captured = effect;
+        int capturedIndex = effectIndex;
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => TryCraft(captured));
+        button.onClick.AddListener(() => TryCraft(captured, capturedIndex));
 
         optionEntries.Add(new OptionEntry(optionObj, button));
     }
@@ -429,12 +420,12 @@ public class CatalyseurPanelController : MonoBehaviour
 
     private void HandleNavigation()
     {
-        if (playerInputs == null || optionEntries.Count == 0)
+        if (optionEntries.Count == 0)
         {
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetMoveDirection(moveInput, moveDeadzone);
         if (direction == 0)
         {
@@ -555,16 +546,27 @@ public class CatalyseurPanelController : MonoBehaviour
         }
     }
 
-    private void TryCraft(CatalyseurOrbCraftEffect effect)
+    private void TryCraft(CatalyseurOrbCraftEffect effect, int effectIndex)
     {
         if (effect == null || currentController == null || currentBuilding == null)
         {
             return;
         }
 
+        if (IsNetworked() && !IsServer())
+        {
+            BuilderController builder = ResolveBuilder();
+            if (builder != null)
+            {
+                builder.RequestCatalyseurCraft(currentBuilding, effectIndex, craftSuccessMessage, craftFailedMessage);
+            }
+            return;
+        }
+
         bool success = effect.ApplyOnInteract(currentController, currentBuilding.BuildingItem, currentBuilding.Level);
         if (success)
         {
+            SyncNetworkInventory(currentController);
             if (!string.IsNullOrWhiteSpace(craftSuccessMessage))
             {
                 InfoBoxUI.TryShow(craftSuccessMessage);
@@ -683,6 +685,53 @@ public class CatalyseurPanelController : MonoBehaviour
 
         SquadManager.Instance.SetInputLocked(false);
         squadInputLocked = false;
+    }
+
+    private BuilderController ResolveBuilder()
+    {
+        if (currentBuilding != null)
+        {
+            BuilderController builder = currentBuilding.GetComponentInParent<BuilderController>();
+            if (builder != null)
+            {
+                return builder;
+            }
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        return FindFirstObjectByType<BuilderController>();
+#else
+        return FindObjectOfType<BuilderController>();
+#endif
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    private static bool IsServer()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+    }
+
+    private void SyncNetworkInventory(SquadCharacterController controller)
+    {
+        if (!IsNetworked() || !IsServer() || controller == null)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null)
+        {
+            inventory.SyncFromController();
+        }
     }
 
     private sealed class OptionEntry

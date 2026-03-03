@@ -4,17 +4,11 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - Expedition_1
-  - Expedition_2
-  - Expedition_3
-  - Expedition_4
-  - Expedition_5
-  - Expedition_6
   - SpawnPoint
   - MaisonChest
   - LocalVoiceLines
   - CraftingConstructionPanel
-  - ExpeditionPanel
+  - QuantityBox
   layers:
   - Default
   - TransparentFX
@@ -23,7 +17,7 @@ TagManager:
   - Water
   - UI
   - Character
-  - 
+  - Stairs
   - 
   - 
   - 

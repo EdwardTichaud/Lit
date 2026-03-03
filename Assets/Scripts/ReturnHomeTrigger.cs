@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
+using Unity.Netcode;
 
 // Zone d'interaction pour renvoyer un personnage a la maison et vider l'inventaire.
 [RequireComponent(typeof(Collider))]
@@ -74,11 +75,13 @@ public class ReturnHomeTrigger : MonoBehaviour
     private bool confirmVisible;
     private Canvas interactionCanvas;
     private bool isTriggerZone;
-    private PlayerInputs playerInputs;
+    private Collider triggerCollider;
     private CursorController confirmationCursor;
     private CanvasGroup confirmationCanvasGroup;
     private Coroutine confirmationFadeRoutine;
     private bool confirmationInputLocked;
+    private bool awaitingServerResponse;
+    private uint netcodeId;
 
     private enum ConfirmationChoice
     {
@@ -89,35 +92,28 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     void Awake()
     {
-        Collider trigger = GetComponent<Collider>();
-        isTriggerZone = trigger != null && trigger.isTrigger;
-        if (trigger != null && !trigger.isTrigger)
+        triggerCollider = GetComponent<Collider>();
+        isTriggerZone = triggerCollider != null && triggerCollider.isTrigger;
+        if (triggerCollider != null && !triggerCollider.isTrigger)
         {
             Debug.LogWarning("ReturnHomeTrigger: le collider n'est pas en mode Trigger.");
         }
 
-        playerInputs = new PlayerInputs();
+        netcodeId = NetcodeSceneIdUtility.GetStableId(transform);
         InitializeConfirmationFade();
     }
 
     void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        NetcodeTriggerRegistry.Register(this, netcodeId);
     }
 
     void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        NetcodeTriggerRegistry.Unregister(this, netcodeId);
 
         ResetUIState();
     }
@@ -298,6 +294,26 @@ public class ReturnHomeTrigger : MonoBehaviour
             return;
         }
 
+        if (IsNetworked())
+        {
+            if (awaitingServerResponse)
+            {
+                return;
+            }
+
+            awaitingServerResponse = true;
+            WorldInteractionService service = WorldInteractionService.Instance;
+            if (service != null)
+            {
+                service.RequestReturnHomeServerRpc(netcodeId);
+            }
+            else
+            {
+                awaitingServerResponse = false;
+            }
+            return;
+        }
+
         if (SquadManager.Instance != null)
         {
             SquadManager.SendHomeResult result = SquadManager.Instance.TrySendCharacterHome(currentCharacter, maisonLootContainer);
@@ -393,7 +409,7 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     private static GameObject GetControlledCharacter()
     {
-        return SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        return LocalPlayerUtils.GetControlledCharacter();
     }
 
     private static bool IsControlledCharacter(GameObject character)
@@ -584,6 +600,92 @@ public class ReturnHomeTrigger : MonoBehaviour
         characterColliderCounts.Clear();
         currentCharacter = null;
         interactionTarget = null;
+        awaitingServerResponse = false;
+    }
+
+    public void HandleReturnHomeResult(SquadManager.SendHomeResult result)
+    {
+        awaitingServerResponse = false;
+
+        if (result == SquadManager.SendHomeResult.StorageFull)
+        {
+            ShowConfirm(false);
+            ShowInteraction(true);
+            ShowStorageFull(true);
+            if (autoOpenInventoryOnStorageFull)
+            {
+                InventoryPanelController inventory = inventoryPanelController;
+                if (inventory == null)
+                {
+#if UNITY_2023_1_OR_NEWER
+                    inventory = FindFirstObjectByType<InventoryPanelController>();
+#else
+                    inventory = FindObjectOfType<InventoryPanelController>();
+#endif
+                }
+                if (inventory != null)
+                {
+                    inventory.TryOpenInventory();
+                }
+            }
+            return;
+        }
+
+        if (result == SquadManager.SendHomeResult.Success)
+        {
+            charactersInRange.Remove(currentCharacter);
+            characterColliderCounts.Remove(currentCharacter);
+            currentCharacter = null;
+            interactionTarget = null;
+            ShowConfirm(false);
+            ShowInteraction(false);
+
+            if (charactersInRange.Count > 0)
+            {
+                RefreshCurrentCharacter();
+            }
+            return;
+        }
+
+        ShowConfirm(false);
+        ShowInteraction(true);
+    }
+
+    public SquadManager.SendHomeResult ServerTrySendHome(GameObject character)
+    {
+        if (character == null || SquadManager.Instance == null)
+        {
+            return SquadManager.SendHomeResult.InvalidCharacter;
+        }
+
+        if (!IsServerCharacterAllowed(character))
+        {
+            return SquadManager.SendHomeResult.InvalidCharacter;
+        }
+
+        return SquadManager.Instance.TrySendCharacterHome(character, maisonLootContainer);
+    }
+
+    public bool IsServerCharacterAllowed(GameObject character)
+    {
+        if (character == null)
+        {
+            return false;
+        }
+
+        if (triggerCollider == null)
+        {
+            return true;
+        }
+
+        Vector3 position = character.transform.position;
+        float distance = triggerCollider.bounds.SqrDistance(position);
+        return distance <= 0.25f;
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 
     private GameObject CreateInstance(GameObject source, Transform parent)

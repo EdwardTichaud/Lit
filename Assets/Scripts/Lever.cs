@@ -1,9 +1,11 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 // Levier interactif avec timer de desactivation.
-public class Lever : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class Lever : NetworkBehaviour
 {
     [Header("Interact")]
     [Tooltip("Ecoute l'input Interact pour activer le levier.")]
@@ -45,24 +47,18 @@ public class Lever : MonoBehaviour
 
     public event Action<Lever, bool> StateChanged;
 
-    private PlayerInputs playerInputs;
     private Collider leverCollider;
     private Coroutine deactivateRoutine;
+    private NetworkVariable<bool> netIsActive = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private void Awake()
     {
-        if (!useInteractInput)
-        {
-            return;
-        }
-
         if (leverAnimator == null)
         {
             leverAnimator = GetComponent<Animator>();
         }
 
         leverCollider = GetComponent<Collider>();
-        playerInputs = new PlayerInputs();
     }
 
     private void OnEnable()
@@ -72,13 +68,8 @@ public class Lever : MonoBehaviour
             return;
         }
 
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
     }
 
     private void OnDisable()
@@ -88,44 +79,49 @@ public class Lever : MonoBehaviour
             return;
         }
 
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
 
         StopDeactivateTimer();
     }
 
-    public void SetActive(bool active)
+    public override void OnNetworkSpawn()
     {
-        if (isActive == active)
+        netIsActive.OnValueChanged += OnNetStateChanged;
+        if (IsServer)
         {
-            if (active)
-            {
-                RestartDeactivateTimer();
-            }
-
-            return;
-        }
-
-        isActive = active;
-        if (setAnimatorBoolOnInteract)
-        {
-            SetLeverAnimatorBool(isActive);
-        }
-
-        StateChanged?.Invoke(this, isActive);
-        PlaySfx(isActive ? activateSfx : deactivateSfx);
-
-        if (isActive)
-        {
-            RestartDeactivateTimer();
+            netIsActive.Value = isActive;
         }
         else
         {
-            StopDeactivateTimer();
+            ApplyState(netIsActive.Value, false);
         }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        netIsActive.OnValueChanged -= OnNetStateChanged;
+    }
+
+    public void SetActive(bool active)
+    {
+        if (IsNetworked())
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            SetActiveServer(active);
+            return;
+        }
+
+        SetActiveInternal(active, true);
+    }
+
+    private void SetActiveServer(bool active)
+    {
+        SetActiveInternal(active, true);
+        netIsActive.Value = active;
     }
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
@@ -140,13 +136,19 @@ public class Lever : MonoBehaviour
             return;
         }
 
-        // Active le levier uniquement si un personnage est a portee.
-        if (!IsCharacterInRange())
+        // Active le levier uniquement si un personnage local est a portee.
+        if (!IsLocalCharacterInRange())
         {
             return;
         }
 
-        SetActive(true);
+        if (IsNetworked())
+        {
+            RequestInteractServerRpc();
+            return;
+        }
+
+        SetActiveInternal(true, true);
     }
 
     public void SetLeverAnimatorActive()
@@ -174,7 +176,40 @@ public class Lever : MonoBehaviour
         leverAnimator.SetBool(leverBoolParam, value);
     }
 
-    private bool IsCharacterInRange()
+    private bool IsLocalCharacterInRange()
+    {
+        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (localRoot == null)
+        {
+            return FindClosestCharacter() != null;
+        }
+
+        return IsCharacterInRange(localRoot);
+    }
+
+    private bool IsCharacterInRange(Transform characterRoot)
+    {
+        if (characterRoot == null)
+        {
+            return false;
+        }
+
+        Vector3 center = transform.position;
+        float radius = interactionRadius;
+
+        if (leverCollider != null && useColliderBounds)
+        {
+            Bounds bounds = leverCollider.bounds;
+            center = bounds.center;
+            Vector3 extents = bounds.extents;
+            radius = Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z)) + colliderRadiusPadding;
+        }
+
+        float distanceSqr = (characterRoot.position - center).sqrMagnitude;
+        return distanceSqr <= radius * radius;
+    }
+
+    private bool IsAnyCharacterInRange()
     {
         return FindClosestCharacter() != null;
     }
@@ -217,6 +252,69 @@ public class Lever : MonoBehaviour
         }
 
         return bestCharacter;
+    }
+
+    private void OnNetStateChanged(bool previous, bool current)
+    {
+        ApplyState(current, false);
+    }
+
+    private void SetActiveInternal(bool active, bool updateTimer)
+    {
+        ApplyState(active, updateTimer);
+    }
+
+    private void ApplyState(bool active, bool updateTimer)
+    {
+        if (isActive == active)
+        {
+            if (updateTimer && active)
+            {
+                RestartDeactivateTimer();
+            }
+
+            return;
+        }
+
+        isActive = active;
+        if (setAnimatorBoolOnInteract)
+        {
+            SetLeverAnimatorBool(isActive);
+        }
+
+        StateChanged?.Invoke(this, isActive);
+        PlaySfx(isActive ? activateSfx : deactivateSfx);
+
+        if (!updateTimer)
+        {
+            return;
+        }
+
+        if (isActive)
+        {
+            RestartDeactivateTimer();
+        }
+        else
+        {
+            StopDeactivateTimer();
+        }
+    }
+
+    private bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestInteractServerRpc(ServerRpcParams rpcParams = default)
+    {
+        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        if (!IsCharacterInRange(playerRoot))
+        {
+            return;
+        }
+
+        SetActiveServer(true);
     }
 
     private GameObject GetSquadCharacter(Collider other)
@@ -304,7 +402,7 @@ public class Lever : MonoBehaviour
         // Attend que la zone soit vide, puis lance le timer avant extinction.
         while (isActive)
         {
-            while (isActive && IsCharacterInRange())
+            while (isActive && IsAnyCharacterInRange())
             {
                 yield return null;
             }
@@ -323,7 +421,7 @@ public class Lever : MonoBehaviour
             float elapsed = 0f;
             while (isActive && elapsed < activeDuration)
             {
-                if (IsCharacterInRange())
+                if (IsAnyCharacterInRange())
                 {
                     break;
                 }
@@ -337,7 +435,7 @@ public class Lever : MonoBehaviour
                 yield break;
             }
 
-            if (elapsed >= activeDuration && !IsCharacterInRange())
+            if (elapsed >= activeDuration && !IsAnyCharacterInRange())
             {
                 SetActive(false);
                 yield break;

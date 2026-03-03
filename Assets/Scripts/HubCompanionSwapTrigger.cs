@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Collider))]
 // Interaction pour ajouter/retirer un compagnon dans la squad depuis le hub.
@@ -46,9 +47,10 @@ public class HubCompanionSwapTrigger : MonoBehaviour
     private GameObject interactionBoxInstance;
     private Canvas interactionCanvas;
     private bool isTriggerZone;
-    private PlayerInputs playerInputs;
     private bool available = true;
     private Collider triggerCollider;
+    private bool awaitingServerResponse;
+    private uint netcodeId;
     private Vector3 hubHomePosition;
     private Quaternion hubHomeRotation;
     private Transform hubHomeParent;
@@ -67,18 +69,13 @@ public class HubCompanionSwapTrigger : MonoBehaviour
             Debug.LogWarning("HubCompanionSwapTrigger: le collider n'est pas en mode Trigger.");
         }
 
+        netcodeId = NetcodeSceneIdUtility.GetStableId(transform);
         CacheVisuals();
         CacheHubHome();
-        playerInputs = new PlayerInputs();
     }
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
         if (SquadManager.Instance != null)
         {
             CharacterData runtime = SquadManager.Instance.GetRuntimeCharacter(characterData);
@@ -88,8 +85,9 @@ public class HubCompanionSwapTrigger : MonoBehaviour
             }
         }
 
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        NetcodeTriggerRegistry.Register(this, netcodeId);
 
         HubRosterManager manager = hubManager != null ? hubManager : HubRosterManager.Instance;
         if (manager != null)
@@ -103,11 +101,8 @@ public class HubCompanionSwapTrigger : MonoBehaviour
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        NetcodeTriggerRegistry.Unregister(this, netcodeId);
 
         HubRosterManager manager = hubManager != null ? hubManager : HubRosterManager.Instance;
         if (manager != null)
@@ -289,10 +284,91 @@ public class HubCompanionSwapTrigger : MonoBehaviour
             return;
         }
 
+        if (IsNetworked())
+        {
+            if (awaitingServerResponse)
+            {
+                return;
+            }
+
+            awaitingServerResponse = true;
+            WorldInteractionService service = WorldInteractionService.Instance;
+            if (service != null)
+            {
+                service.RequestHubSwapServerRpc(netcodeId);
+            }
+            else
+            {
+                awaitingServerResponse = false;
+            }
+            return;
+        }
+
         if (SquadManager.Instance.TrySwapWithHubCharacter(characterData))
         {
             ResetUIState();
         }
+    }
+
+    public void HandleSwapResult(bool success)
+    {
+        awaitingServerResponse = false;
+        if (success)
+        {
+            ResetUIState();
+        }
+    }
+
+    public bool ServerTrySwap(GameObject character)
+    {
+        if (!available)
+        {
+            return false;
+        }
+
+        if (!IsServerCharacterAllowed(character))
+        {
+            return false;
+        }
+
+        HubRosterManager manager = hubManager != null ? hubManager : HubRosterManager.Instance;
+        if (requireHubZone && manager != null && !manager.CanSwap())
+        {
+            return false;
+        }
+
+        if (characterData == null || SquadManager.Instance == null)
+        {
+            return false;
+        }
+
+        if (SquadManager.Instance.IsInputLocked())
+        {
+            return false;
+        }
+
+        return SquadManager.Instance.TrySwapWithHubCharacter(characterData);
+    }
+
+    public bool IsServerCharacterAllowed(GameObject character)
+    {
+        if (character == null)
+        {
+            return false;
+        }
+
+        if (triggerCollider == null)
+        {
+            return true;
+        }
+
+        float distance = triggerCollider.bounds.SqrDistance(character.transform.position);
+        return distance <= 0.25f;
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 
     public void SetInSquad(bool inSquad)
@@ -357,7 +433,7 @@ public class HubCompanionSwapTrigger : MonoBehaviour
 
     private static GameObject GetControlledCharacter()
     {
-        return SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        return LocalPlayerUtils.GetControlledCharacter();
     }
 
     private static bool IsControlledCharacter(GameObject character)
@@ -405,6 +481,7 @@ public class HubCompanionSwapTrigger : MonoBehaviour
         characterColliderCounts.Clear();
         currentCharacter = null;
         interactionTarget = null;
+        awaitingServerResponse = false;
     }
 
     private GameObject CreateInstance(GameObject source, Transform parent)

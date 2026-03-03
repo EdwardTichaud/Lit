@@ -30,6 +30,7 @@ MonoBehaviour:
   starterItems:
   - {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
   hp: 10
+  voiceLines: []
   maisonWaitingPoint: 1
   inventoryItems: []
   torchSecondsRemaining: 0

@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 // Gere la squad: selection, groupes, spawn et synchronisation des personnages.
 public class SquadManager : MonoBehaviour
 {
     public static SquadManager Instance { get; private set; }
-    private PlayerInputs playerInputs;
 
     public enum SendHomeResult
     {
@@ -98,6 +99,8 @@ public class SquadManager : MonoBehaviour
     private int lastMoveDirection;
     private float nextMoveTime;
     private int inputLockCount;
+    private bool toggleTorchRequested;
+    private bool takeAllRequested;
     private bool warnedMissingSquadUI;
     private bool warnedMissingMaison;
     private readonly Dictionary<CharacterData, CompanionRecord> companionRegistry = new Dictionary<CharacterData, CompanionRecord>();
@@ -124,27 +127,23 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
-        playerInputs = new PlayerInputs();
         EnsureRuntimeSquad();
         InitializeSquadPanel();
     }
 
     void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
+        LocalInputRouter.TakeAll += OnTakeAllPerformed;
+        LocalInputRouter.LeftShoulder += OnLeftShoulderPerformed;
     }
 
     void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Disable();
-        }
+        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
+        LocalInputRouter.TakeAll -= OnTakeAllPerformed;
+        LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
 
         InputFocusStack.Pop(this);
     }
@@ -181,6 +180,13 @@ public class SquadManager : MonoBehaviour
             squadCharacters.Clear();
         }
 
+        if (IsMultiplayerActive())
+        {
+            ApplyPendingCharacterStates();
+            StartCoroutine(RefreshNetworkCharactersRoutine());
+            yield break;
+        }
+
         for (int i = 0; i < currentSquad.Count; i++)
         {
             CharacterData character = currentSquad[i];
@@ -209,6 +215,97 @@ public class SquadManager : MonoBehaviour
         ApplyPendingCharacterStates();
         UpdateLeaderGroupFromCurrent();
         yield return null;
+    }
+
+    private IEnumerator RefreshNetworkCharactersRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(0.5f);
+        while (IsMultiplayerActive())
+        {
+            RefreshNetworkCharacters();
+            yield return wait;
+        }
+    }
+
+    private void RefreshNetworkCharacters()
+    {
+        if (squadCharacters == null)
+        {
+            squadCharacters = new List<GameObject>();
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>(FindObjectsSortMode.None);
+#else
+        SquadCharacterController[] controllers = FindObjectsOfType<SquadCharacterController>();
+#endif
+        if (controllers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            SquadCharacterController controller = controllers[i];
+            if (controller == null)
+            {
+                continue;
+            }
+
+            CharacterData data = controller.CharacterData;
+            int index = currentSquad != null && data != null ? currentSquad.IndexOf(data) : -1;
+            if (index >= 0)
+            {
+                while (squadCharacters.Count <= index)
+                {
+                    squadCharacters.Add(null);
+                }
+
+                squadCharacters[index] = controller.gameObject;
+            }
+            else if (!squadCharacters.Contains(controller.gameObject))
+            {
+                squadCharacters.Add(controller.gameObject);
+            }
+        }
+
+        GameObject local = LocalPlayerUtils.GetControlledCharacter();
+        if (local != null)
+        {
+            currentCharacter = local;
+        }
+    }
+
+    public void RegisterNetworkCharacter(CharacterData character, GameObject instance)
+    {
+        if (character == null || instance == null)
+        {
+            return;
+        }
+
+        CharacterData runtimeCharacter = GetRuntimeCharacter(character);
+        if (squadCharacters == null)
+        {
+            squadCharacters = new List<GameObject>();
+        }
+
+        int index = currentSquad != null ? currentSquad.IndexOf(runtimeCharacter) : -1;
+        if (index < 0)
+        {
+            if (!squadCharacters.Contains(instance))
+            {
+                squadCharacters.Add(instance);
+            }
+        }
+        else
+        {
+            while (squadCharacters.Count <= index)
+            {
+                squadCharacters.Add(null);
+            }
+
+            squadCharacters[index] = instance;
+        }
     }
 
     public void RegisterHubCompanion(CharacterData character, GameObject instance, Vector3 hubPosition, Quaternion hubRotation, Transform hubParent)
@@ -442,6 +539,7 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
+        bool networked = IsMultiplayerActive();
         for (int i = 0; i < pendingLoadData.characters.Count; i++)
         {
             CharacterSaveEntry entry = pendingLoadData.characters[i];
@@ -462,6 +560,11 @@ public class SquadManager : MonoBehaviour
             {
                 List<Skill> skills = BuildSkillsFromEntry(entry);
                 runtimeCharacter.SetSkills(skills);
+            }
+
+            if (networked)
+            {
+                continue;
             }
 
             GameObject instance = GetCharacterInstance(runtimeCharacter);
@@ -625,13 +728,18 @@ public class SquadManager : MonoBehaviour
 
     void Update()
     {
+        if (IsMultiplayerActive())
+        {
+            return;
+        }
+
         if (IsInputLocked())
         {
             StopAllSquadCharacters();
             return;
         }
 
-        moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        moveInput = LocalInputRouter.MoveValue;
 
         if (charactersSelectionOn)
         {
@@ -865,15 +973,16 @@ public class SquadManager : MonoBehaviour
 
     private void HandleTorchToggle()
     {
-        if (currentCharacter == null || playerInputs == null)
+        if (currentCharacter == null)
         {
             return;
         }
 
-        if (!playerInputs.Player.ToggleTorch.triggered)
+        if (!toggleTorchRequested)
         {
             return;
         }
+        toggleTorchRequested = false;
 
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
@@ -886,7 +995,7 @@ public class SquadManager : MonoBehaviour
 
     private void HandleGroupingInputs()
     {
-        if (!charactersSelectionOn || playerInputs == null)
+        if (!charactersSelectionOn)
         {
             return;
         }
@@ -896,15 +1005,33 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
-        if (playerInputs.Player.TakeAll.triggered)
+        if (takeAllRequested)
         {
             SetGrouped(currentCursorIndex, false);
         }
 
-        if (playerInputs.Player.ToggleTorch.triggered)
+        if (toggleTorchRequested)
         {
             SetGrouped(currentCursorIndex, true);
         }
+
+        takeAllRequested = false;
+        toggleTorchRequested = false;
+    }
+
+    private void OnToggleTorchPerformed(InputAction.CallbackContext context)
+    {
+        toggleTorchRequested = true;
+    }
+
+    private void OnTakeAllPerformed(InputAction.CallbackContext context)
+    {
+        takeAllRequested = true;
+    }
+
+    private static bool IsMultiplayerActive()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 
     private void UpdateLeaderGroupFromCurrent()
@@ -1649,6 +1776,14 @@ public class SquadManager : MonoBehaviour
     void OnSouthButton()
     {
         OnInteract();
+    }
+
+    private void OnLeftShoulderPerformed(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            OnLeftShoulder();
+        }
     }
 
     void OnLeftShoulder()

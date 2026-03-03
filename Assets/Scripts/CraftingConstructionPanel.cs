@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using UnityEngine.UI;
 
 // Panel de craft pour les buildings de type "crafting".
@@ -77,7 +78,6 @@ public class CraftingConstructionPanel : MonoBehaviour
     [Tooltip("Message si le craft echoue.")]
     public string craftFailedMessage = "Ressources insuffisantes.";
 
-    private PlayerInputs playerInputs;
     private bool panelOpen;
     private bool squadInputLocked;
     private CanvasGroup panelCanvasGroup;
@@ -85,6 +85,8 @@ public class CraftingConstructionPanel : MonoBehaviour
 
     private BuildingInfoInteractable currentBuilding;
     private SquadCharacterController currentController;
+    private BuilderController subscribedBuilder;
+    private NetworkInventory subscribedInventory;
     private readonly List<CraftingSlotUI> craftingSlots = new List<CraftingSlotUI>();
     private CraftingSlotUI currentFocusedSlot;
     private int lastCursorIndex = -1;
@@ -120,29 +122,19 @@ public class CraftingConstructionPanel : MonoBehaviour
             craftingPanel.SetActive(false);
         }
 
-        playerInputs = new PlayerInputs();
     }
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
-        playerInputs.Player.Return.performed += OnReturnPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        LocalInputRouter.Return += OnReturnPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Player.Return.performed -= OnReturnPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        LocalInputRouter.Return -= OnReturnPerformed;
 
         if (panelOpen)
         {
@@ -170,6 +162,8 @@ public class CraftingConstructionPanel : MonoBehaviour
 
         currentBuilding = building;
         currentController = controller;
+        SubscribeBuilder(ResolveBuilder());
+        SubscribeInventory(currentController);
 
         if (craftingPanel == null)
         {
@@ -209,6 +203,8 @@ public class CraftingConstructionPanel : MonoBehaviour
         panelOpen = false;
         InputFocusStack.Pop(this);
         SetSquadInputLock(false);
+        UnsubscribeBuilder();
+        UnsubscribeInventory();
         currentBuilding = null;
         currentController = null;
         currentFocusedSlot = null;
@@ -235,6 +231,16 @@ public class CraftingConstructionPanel : MonoBehaviour
             return;
         }
 
+        if (IsNetworked() && !IsServer())
+        {
+            BuilderController builder = ResolveBuilder();
+            if (builder != null)
+            {
+                builder.RequestCraft(currentBuilding, slot.CraftItem, craftSuccessMessage, craftFailedMessage);
+            }
+            return;
+        }
+
         if (!HasResources(slot.CraftItem, currentController, out _))
         {
             InfoBoxUI.TryShow(craftFailedMessage);
@@ -248,6 +254,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         currentController.AddItem(slot.CraftItem, 1);
+        SyncNetworkInventory(currentController);
 
         InfoBoxUI.TryShow(craftSuccessMessage);
         UpdateRequirements(slot.CraftItem);
@@ -270,12 +277,12 @@ public class CraftingConstructionPanel : MonoBehaviour
 
     private void HandleNavigation()
     {
-        if (playerInputs == null || craftingSlots.Count == 0)
+        if (craftingSlots.Count == 0)
         {
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetMoveDirection(moveInput, moveDeadzone);
         if (direction == 0)
         {
@@ -1222,6 +1229,154 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         return counts;
+    }
+
+    private void SubscribeBuilder(BuilderController builder)
+    {
+        if (subscribedBuilder == builder)
+        {
+            return;
+        }
+
+        if (subscribedBuilder != null)
+        {
+            subscribedBuilder.BuildingsChanged -= OnBuildingsChanged;
+        }
+
+        subscribedBuilder = builder;
+        if (subscribedBuilder != null)
+        {
+            subscribedBuilder.BuildingsChanged += OnBuildingsChanged;
+        }
+    }
+
+    private void SubscribeInventory(SquadCharacterController controller)
+    {
+        if (!IsNetworked())
+        {
+            return;
+        }
+
+        NetworkInventory inventory = null;
+        if (controller != null)
+        {
+            inventory = controller.GetComponent<NetworkInventory>();
+            if (inventory == null)
+            {
+                inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+            }
+        }
+
+        if (subscribedInventory == inventory)
+        {
+            return;
+        }
+
+        if (subscribedInventory != null)
+        {
+            subscribedInventory.InventoryChanged -= OnInventoryChanged;
+        }
+
+        subscribedInventory = inventory;
+        if (subscribedInventory != null)
+        {
+            subscribedInventory.InventoryChanged += OnInventoryChanged;
+        }
+    }
+
+    private void UnsubscribeBuilder()
+    {
+        if (subscribedBuilder != null)
+        {
+            subscribedBuilder.BuildingsChanged -= OnBuildingsChanged;
+            subscribedBuilder = null;
+        }
+    }
+
+    private void UnsubscribeInventory()
+    {
+        if (subscribedInventory != null)
+        {
+            subscribedInventory.InventoryChanged -= OnInventoryChanged;
+            subscribedInventory = null;
+        }
+    }
+
+    private void OnBuildingsChanged()
+    {
+        if (!panelOpen)
+        {
+            return;
+        }
+
+        UpdateBuildingInfo();
+        RebuildSlots();
+        CraftingSlotUI slot = currentFocusedSlot;
+        if (slot != null && slot.CraftItem != null)
+        {
+            UpdateRequirements(slot.CraftItem);
+        }
+    }
+
+    private void OnInventoryChanged()
+    {
+        if (!panelOpen)
+        {
+            return;
+        }
+
+        CraftingSlotUI slot = currentFocusedSlot;
+        if (slot != null && slot.CraftItem != null)
+        {
+            UpdateRequirements(slot.CraftItem);
+        }
+    }
+
+    private BuilderController ResolveBuilder()
+    {
+        if (currentBuilding != null)
+        {
+            BuilderController builder = currentBuilding.GetComponentInParent<BuilderController>();
+            if (builder != null)
+            {
+                return builder;
+            }
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        return FindFirstObjectByType<BuilderController>();
+#else
+        return FindObjectOfType<BuilderController>();
+#endif
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    private static bool IsServer()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+    }
+
+    private void SyncNetworkInventory(SquadCharacterController controller)
+    {
+        if (!IsNetworked() || !IsServer() || controller == null)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null)
+        {
+            inventory.SyncFromController();
+        }
     }
 }
 

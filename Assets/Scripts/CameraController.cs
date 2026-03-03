@@ -159,7 +159,12 @@ public class CameraController : MonoBehaviour
             return;
         }
 
-        if (SquadManager.Instance != null && SquadManager.Instance.currentCharacter != null)
+        Transform localTarget = LocalPlayerContext.LocalCharacterRoot;
+        if (localTarget != null)
+        {
+            desiredTarget = localTarget;
+        }
+        else if (SquadManager.Instance != null && SquadManager.Instance.currentCharacter != null)
         {
             desiredTarget = SquadManager.Instance.currentCharacter.transform;
         }

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Angel of Justice
+* source:	https://sketchfab.com/3d-models/angel-of-justice-0c6ea584860a42a2aa25015a86dab881
+* author:	João Lacerda (https://sketchfab.com/panc0)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Angel of Justice" (https://sketchfab.com/3d-models/angel-of-justice-0c6ea584860a42a2aa25015a86dab881) by João Lacerda (https://sketchfab.com/panc0) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

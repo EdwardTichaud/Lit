@@ -1,13 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
+using Unity.Collections;
 
 // Gere la liste des constructions (par instance) pour la progression et les effets.
-public class BuilderController : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class BuilderController : NetworkBehaviour
 {
     [System.Serializable]
     public class BuiltBuildingEntry
     {
+        [Tooltip("Identifiant reseau unique.")]
+        public ulong networkId;
         [Tooltip("Instance liee a cette entree.")]
         public BuildingInfoInteractable info;
         [Tooltip("Type de batiment.")]
@@ -16,6 +21,38 @@ public class BuilderController : MonoBehaviour
         public int level = 1;
         [Tooltip("Position sauvegardee de l'instance.")]
         public Vector3 position;
+    }
+
+    public struct NetBuiltBuilding : INetworkSerializable, System.IEquatable<NetBuiltBuilding>
+    {
+        public ulong Id;
+        public FixedString128Bytes ItemId;
+        public int Level;
+        public Vector3 Position;
+        public Quaternion Rotation;
+
+        public NetBuiltBuilding(ulong id, string itemId, int level, Vector3 position, Quaternion rotation)
+        {
+            Id = id;
+            ItemId = new FixedString128Bytes(itemId ?? string.Empty);
+            Level = level;
+            Position = position;
+            Rotation = rotation;
+        }
+
+        public bool Equals(NetBuiltBuilding other)
+        {
+            return Id == other.Id;
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref Id);
+            serializer.SerializeValue(ref ItemId);
+            serializer.SerializeValue(ref Level);
+            serializer.SerializeValue(ref Position);
+            serializer.SerializeValue(ref Rotation);
+        }
     }
 
     [Header("Available Buildings")]
@@ -27,6 +64,24 @@ public class BuilderController : MonoBehaviour
     public List<BuiltBuildingEntry> builtBuildings = new List<BuiltBuildingEntry>();
     [Tooltip("Applique les effets aux membres de la squad au lieu du personnage controle.")]
     public bool applyEffectsToAllSquad = false;
+
+    [Header("Network Resources")]
+    [Tooltip("Autorise l'utilisation des coffres maison pour les constructions.")]
+    public bool useHomeResourcesForBuild = true;
+    [Tooltip("Autorise l'utilisation des coffres maison pour le craft.")]
+    public bool useHomeResourcesForCraft = true;
+    [Tooltip("Distance max autorisee entre le joueur et la position de construction.")]
+    public float networkBuildMaxDistance = 6f;
+    [Tooltip("Distance max autorisee pour interagir/crafter sur un batiment.")]
+    public float networkInteractDistance = 2.5f;
+
+    public event System.Action BuildingsChanged;
+
+    private readonly NetworkList<NetBuiltBuilding> netBuiltBuildings = new NetworkList<NetBuiltBuilding>(
+        null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    [SerializeField, HideInInspector]
+    private ulong nextNetBuildingId = 1;
+    private readonly Dictionary<ulong, BuildingInfoInteractable> netBuildingLookup = new Dictionary<ulong, BuildingInfoInteractable>();
 
     [Header("Buildings Root")]
     [Tooltip("Parent des constructions instanciees.")]
@@ -61,51 +116,228 @@ public class BuilderController : MonoBehaviour
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
     private bool useSelfTriggerEvents;
-    private PlayerInputs playerInputs;
     private LocalVoiceLineController voiceLineController;
     private float nextVoiceLineTime;
+    private Maison cachedMaison;
 
     private void Awake()
     {
         ResolveBuildingsRoot();
         InitializeInteractionTrigger();
-        playerInputs = new PlayerInputs();
         voiceLineController = GetComponent<LocalVoiceLineController>();
     }
 
     private void Start()
     {
+        if (IsNetworked() && !IsServer)
+        {
+            return;
+        }
+
         InitializeBuiltBuildingsFromList();
     }
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
 
         charactersInRange.Clear();
         characterColliderCounts.Clear();
         currentCharacter = null;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        netBuiltBuildings.OnListChanged += OnNetBuiltBuildingsChanged;
+        if (IsServer)
+        {
+            SyncNetBuiltBuildingsFromLocal();
+        }
+        else
+        {
+            ApplyNetBuiltBuildings();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        netBuiltBuildings.OnListChanged -= OnNetBuiltBuildingsChanged;
+    }
+
 
     private static GameObject GetControlledCharacter()
     {
-        return SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        return LocalPlayerUtils.GetControlledCharacter();
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    private void OnNetBuiltBuildingsChanged(NetworkListEvent<NetBuiltBuilding> change)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        ApplyNetBuiltBuildings();
+    }
+
+    private void SyncNetBuiltBuildingsFromLocal()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        netBuiltBuildings.Clear();
+        netBuildingLookup.Clear();
+
+        ulong maxId = 0;
+        if (builtBuildings != null)
+        {
+            for (int i = 0; i < builtBuildings.Count; i++)
+            {
+                BuiltBuildingEntry entry = builtBuildings[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                if (entry.networkId == 0)
+                {
+                    entry.networkId = ++maxId;
+                }
+                else
+                {
+                    maxId = System.Math.Max(maxId, entry.networkId);
+                }
+
+                Item building = entry.building;
+                if (building == null && entry.info != null)
+                {
+                    building = entry.info.BuildingItem;
+                }
+
+                if (building == null || !building.isBuilding)
+                {
+                    continue;
+                }
+
+                int level = entry.info != null ? entry.info.Level : entry.level;
+                Vector3 position = entry.info != null ? entry.info.transform.position : entry.position;
+                Quaternion rotation = entry.info != null ? entry.info.transform.rotation : Quaternion.identity;
+
+                if (entry.info != null)
+                {
+                    entry.info.SetNetworkBuildingId(entry.networkId);
+                    netBuildingLookup[entry.networkId] = entry.info;
+                }
+
+                netBuiltBuildings.Add(new NetBuiltBuilding(entry.networkId, GetBuildingItemId(building), Mathf.Max(1, level), position, rotation));
+            }
+        }
+
+        if (maxId >= nextNetBuildingId)
+        {
+            nextNetBuildingId = maxId + 1;
+        }
+
+        NotifyBuildingsChanged();
+    }
+
+    private void ApplyNetBuiltBuildings()
+    {
+        HashSet<ulong> seen = new HashSet<ulong>();
+        if (netBuiltBuildings != null)
+        {
+            for (int i = 0; i < netBuiltBuildings.Count; i++)
+            {
+                NetBuiltBuilding entry = netBuiltBuildings[i];
+                seen.Add(entry.Id);
+
+                Item building = ResolveBuildingItem(entry.ItemId.ToString());
+                if (building == null || !building.isBuilding)
+                {
+                    continue;
+                }
+
+                if (!netBuildingLookup.TryGetValue(entry.Id, out BuildingInfoInteractable info) || info == null)
+                {
+                    info = SpawnNetBuildingInstance(building, entry.Position, entry.Rotation, entry.Level, entry.Id);
+                }
+                else
+                {
+                    UpdateNetBuildingInfo(info, building, entry);
+                }
+            }
+        }
+
+        if (netBuildingLookup.Count > 0)
+        {
+            List<ulong> toRemove = new List<ulong>();
+            foreach (KeyValuePair<ulong, BuildingInfoInteractable> pair in netBuildingLookup)
+            {
+                if (!seen.Contains(pair.Key))
+                {
+                    if (pair.Value != null)
+                    {
+                        Destroy(pair.Value.gameObject);
+                    }
+                    toRemove.Add(pair.Key);
+                }
+            }
+
+            for (int i = 0; i < toRemove.Count; i++)
+            {
+                netBuildingLookup.Remove(toRemove[i]);
+            }
+        }
+
+        if (builtBuildings == null)
+        {
+            builtBuildings = new List<BuiltBuildingEntry>();
+        }
+        else
+        {
+            builtBuildings.Clear();
+        }
+
+        for (int i = 0; i < netBuiltBuildings.Count; i++)
+        {
+            NetBuiltBuilding entry = netBuiltBuildings[i];
+            Item building = ResolveBuildingItem(entry.ItemId.ToString());
+            if (building == null)
+            {
+                continue;
+            }
+
+            netBuildingLookup.TryGetValue(entry.Id, out BuildingInfoInteractable info);
+            builtBuildings.Add(new BuiltBuildingEntry
+            {
+                networkId = entry.Id,
+                info = info,
+                building = building,
+                level = Mathf.Max(1, entry.Level),
+                position = entry.Position
+            });
+        }
+
+        SyncBuildingCurrentLevelsFromBuiltList();
+        NotifyBuildingsChanged();
+    }
+
+    private void NotifyBuildingsChanged()
+    {
+        BuildingsChanged?.Invoke();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -391,6 +623,10 @@ public class BuilderController : MonoBehaviour
         }
 
         SyncBuildingCurrentLevelsFromBuiltList();
+        if (IsNetworked() && IsServer)
+        {
+            SyncNetBuiltBuildingsFromLocal();
+        }
     }
 
     public void RefreshBuiltBuildings()
@@ -471,6 +707,10 @@ public class BuilderController : MonoBehaviour
         if (info != null)
         {
             EnsureBuildingParent(info.transform);
+            if (IsNetworked() && IsServer && info.NetworkBuildingId == 0)
+            {
+                info.SetNetworkBuildingId(nextNetBuildingId++);
+            }
             for (int i = 0; i < builtBuildings.Count; i++)
             {
                 BuiltBuildingEntry entry = builtBuildings[i];
@@ -479,21 +719,153 @@ public class BuilderController : MonoBehaviour
                     entry.building = building;
                     entry.level = Mathf.Max(1, levelValue);
                     entry.position = info.transform.position;
+                    entry.networkId = info.NetworkBuildingId;
                     AddAvailableBuilding(building);
+                    UpsertNetBuiltBuilding(entry);
+                    NotifyBuildingsChanged();
                     return;
                 }
             }
         }
 
-        builtBuildings.Add(new BuiltBuildingEntry
+        BuiltBuildingEntry newEntry = new BuiltBuildingEntry
         {
             info = info,
             building = building,
             level = Mathf.Max(1, levelValue),
-            position = info != null ? info.transform.position : Vector3.zero
-        });
+            position = info != null ? info.transform.position : Vector3.zero,
+            networkId = info != null ? info.NetworkBuildingId : 0
+        };
+        if (IsNetworked() && IsServer && newEntry.networkId == 0)
+        {
+            newEntry.networkId = nextNetBuildingId++;
+            if (info != null)
+            {
+                info.SetNetworkBuildingId(newEntry.networkId);
+            }
+        }
+
+        builtBuildings.Add(newEntry);
 
         AddAvailableBuilding(building);
+        UpsertNetBuiltBuilding(newEntry);
+        NotifyBuildingsChanged();
+    }
+
+    private BuildingInfoInteractable SpawnNetBuildingInstance(Item building, Vector3 position, Quaternion rotation, int level, ulong networkId)
+    {
+        if (building == null || !building.isBuilding)
+        {
+            return null;
+        }
+
+        GameObject prefab = building.buildingPrefab != null ? building.buildingPrefab : building.worldPrefab;
+        if (prefab == null)
+        {
+            return null;
+        }
+
+        Transform root = ResolveBuildingsRoot();
+        GameObject instance = root != null
+            ? Instantiate(prefab, position, rotation, root)
+            : Instantiate(prefab, position, rotation);
+        if (instance == null)
+        {
+            return null;
+        }
+
+        BuildingInfoInteractable info = instance.GetComponent<BuildingInfoInteractable>();
+        if (info == null)
+        {
+            info = instance.AddComponent<BuildingInfoInteractable>();
+        }
+
+        info.Initialize(GetBuildingItemId(building), building, Mathf.Max(1, level));
+        info.SetNetworkBuildingId(networkId);
+        EnsureBuildingParent(instance.transform);
+        netBuildingLookup[networkId] = info;
+
+        LootContainer container = instance.GetComponentInChildren<LootContainer>();
+        if (container != null)
+        {
+            container.containerItem = building;
+        }
+
+        if (building.isHomeChest)
+        {
+            TryAssignMaisonChestTag(instance);
+            if (container != null)
+            {
+                EnsureHomeChestDefaults(container);
+            }
+        }
+
+        return info;
+    }
+
+    private void UpdateNetBuildingInfo(BuildingInfoInteractable info, Item building, NetBuiltBuilding entry)
+    {
+        if (info == null || building == null)
+        {
+            return;
+        }
+
+        info.SetNetworkBuildingId(entry.Id);
+        if (info.BuildingItem != building)
+        {
+            info.Initialize(GetBuildingItemId(building), building, Mathf.Max(1, entry.Level));
+        }
+        else
+        {
+            info.SetLevel(Mathf.Max(1, entry.Level));
+        }
+
+        info.transform.SetPositionAndRotation(entry.Position, entry.Rotation);
+    }
+
+    private void UpsertNetBuiltBuilding(BuiltBuildingEntry entry)
+    {
+        if (!IsNetworked() || !IsServer || entry == null)
+        {
+            return;
+        }
+
+        if (entry.building == null || !entry.building.isBuilding)
+        {
+            return;
+        }
+
+        if (entry.networkId == 0)
+        {
+            return;
+        }
+
+        Vector3 position = entry.info != null ? entry.info.transform.position : entry.position;
+        Quaternion rotation = entry.info != null ? entry.info.transform.rotation : Quaternion.identity;
+        NetBuiltBuilding netEntry = new NetBuiltBuilding(entry.networkId, GetBuildingItemId(entry.building), Mathf.Max(1, entry.level), position, rotation);
+
+        int index = FindNetBuiltIndex(entry.networkId);
+        if (index >= 0)
+        {
+            netBuiltBuildings[index] = netEntry;
+        }
+        else
+        {
+            netBuiltBuildings.Add(netEntry);
+        }
+    }
+
+    private int FindNetBuiltIndex(ulong id)
+    {
+        for (int i = 0; i < netBuiltBuildings.Count; i++)
+        {
+            if (netBuiltBuildings[i].Id == id)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public Transform GetBuildingsRoot()
@@ -556,6 +928,14 @@ public class BuilderController : MonoBehaviour
 
         builtBuildings.Clear();
         SyncBuildingCurrentLevelsFromBuiltList();
+
+        if (IsNetworked() && IsServer)
+        {
+            netBuiltBuildings.Clear();
+            netBuildingLookup.Clear();
+            nextNetBuildingId = 1;
+            NotifyBuildingsChanged();
+        }
     }
 
     private void InitializeBuiltBuildingsFromList()
@@ -586,6 +966,17 @@ public class BuilderController : MonoBehaviour
                 entry.level = Mathf.Max(1, entry.info.Level);
                 entry.position = entry.info.transform.position;
                 EnsureBuildingParent(entry.info.transform);
+                if (IsNetworked() && IsServer)
+                {
+                    if (entry.networkId == 0)
+                    {
+                        entry.networkId = nextNetBuildingId++;
+                    }
+
+                    entry.info.SetNetworkBuildingId(entry.networkId);
+                    netBuildingLookup[entry.networkId] = entry.info;
+                    UpsertNetBuiltBuilding(entry);
+                }
                 if (entry.building != null)
                 {
                     UpdateBuildingCurrentLevel(entry.building, entry.level);
@@ -625,6 +1016,17 @@ public class BuilderController : MonoBehaviour
             entry.info = info;
             entry.position = instance.transform.position;
             entry.level = info.Level;
+            if (IsNetworked() && IsServer)
+            {
+                if (entry.networkId == 0)
+                {
+                    entry.networkId = nextNetBuildingId++;
+                }
+
+                info.SetNetworkBuildingId(entry.networkId);
+                netBuildingLookup[entry.networkId] = info;
+                UpsertNetBuiltBuilding(entry);
+            }
             UpdateBuildingCurrentLevel(entry.building, entry.level);
             AddAvailableBuilding(entry.building);
 
@@ -892,6 +1294,11 @@ public class BuilderController : MonoBehaviour
             return false;
         }
 
+        if (IsNetworked() && IsServer && info.NetworkBuildingId == 0)
+        {
+            info.SetNetworkBuildingId(nextNetBuildingId++);
+        }
+
         Item item = info.BuildingItem;
         int maxLevel = item != null && item.isBuilding
             ? Mathf.Max(1, item.buildingMaxLevel)
@@ -916,21 +1323,27 @@ public class BuilderController : MonoBehaviour
             {
                 entry.building = item != null ? item : entry.building;
                 entry.level = clampedLevel;
+                entry.networkId = info.NetworkBuildingId;
                 updatedList = true;
+                UpsertNetBuiltBuilding(entry);
                 break;
             }
         }
 
         if (!updatedList)
         {
-            builtBuildings.Add(new BuiltBuildingEntry
+            BuiltBuildingEntry entry = new BuiltBuildingEntry
             {
                 info = info,
                 building = item,
-                level = clampedLevel
-            });
+                level = clampedLevel,
+                networkId = info.NetworkBuildingId
+            };
+            builtBuildings.Add(entry);
+            UpsertNetBuiltBuilding(entry);
         }
 
+        NotifyBuildingsChanged();
         return true;
     }
 
@@ -1473,6 +1886,853 @@ public class BuilderController : MonoBehaviour
         }
 
         return null;
+    }
+
+    public void RequestBuild(Item building, Vector3 position, Quaternion rotation)
+    {
+        if (building == null || !building.isBuilding)
+        {
+            return;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            RequestBuildServerRpc(GetBuildingItemId(building), position, rotation);
+            return;
+        }
+
+        if (!ExecuteBuild(building, position, rotation, null, out string feedback) && !string.IsNullOrWhiteSpace(feedback))
+        {
+            InfoBoxUI.TryShow(feedback);
+        }
+    }
+
+    public void RequestUpgrade(BuildingInfoInteractable info, int targetLevel)
+    {
+        if (info == null)
+        {
+            return;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            RequestUpgradeServerRpc(info.NetworkBuildingId, info.BuildingItemId, targetLevel);
+            return;
+        }
+
+        if (!ExecuteUpgrade(info, targetLevel, null, out string feedback) && !string.IsNullOrWhiteSpace(feedback))
+        {
+            InfoBoxUI.TryShow(feedback);
+        }
+    }
+
+    public void RequestCraft(BuildingInfoInteractable info, Item craftItem, string successMessage, string failedMessage)
+    {
+        if (info == null || craftItem == null)
+        {
+            return;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            string craftId = ItemIdUtils.GetItemId(craftItem);
+            if (!string.IsNullOrWhiteSpace(craftId))
+            {
+                RequestCraftServerRpc(info.NetworkBuildingId, info.BuildingItemId, craftId, successMessage, failedMessage);
+            }
+            return;
+        }
+
+        if (!ExecuteCraft(info, craftItem, null, out string feedback))
+        {
+            if (!string.IsNullOrWhiteSpace(feedback))
+            {
+                InfoBoxUI.TryShow(feedback);
+            }
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            InfoBoxUI.TryShow(successMessage);
+        }
+    }
+
+    public void RequestCatalyseurCraft(BuildingInfoInteractable info, int effectIndex, string successMessage, string failedMessage)
+    {
+        if (info == null)
+        {
+            return;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            RequestCatalyseurCraftServerRpc(info.NetworkBuildingId, info.BuildingItemId, effectIndex, successMessage, failedMessage);
+            return;
+        }
+
+        if (!ExecuteCatalyseurCraft(info, effectIndex, null, out string feedback))
+        {
+            if (!string.IsNullOrWhiteSpace(feedback))
+            {
+                InfoBoxUI.TryShow(feedback);
+            }
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            InfoBoxUI.TryShow(successMessage);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestBuildServerRpc(string buildingId, Vector3 position, Quaternion rotation, ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer || string.IsNullOrWhiteSpace(buildingId))
+        {
+            return;
+        }
+
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        {
+            return;
+        }
+
+        Item building = ResolveBuildingItem(buildingId);
+        if (building == null || !building.isBuilding)
+        {
+            SendFeedback("Construction invalide.", rpcParams);
+            return;
+        }
+
+        if (!IsWithinBuildRange(playerRoot, position))
+        {
+            SendFeedback("Trop loin pour construire.", rpcParams);
+            return;
+        }
+
+        if (!TryConsumeRequirements(building, controller, useHomeResourcesForBuild, out string reason))
+        {
+            SendFeedback(string.IsNullOrWhiteSpace(reason) ? "Ressources insuffisantes." : reason, rpcParams);
+            return;
+        }
+
+        BuildingInfoInteractable info = SpawnNetBuildingInstance(building, position, rotation, 1, nextNetBuildingId++);
+        if (info == null)
+        {
+            SendFeedback("Construction impossible.", rpcParams);
+            return;
+        }
+
+        RegisterBuiltBuilding(building, 1, info);
+        ApplyBuildingEffects(building, 0, 1);
+        inventory.SyncFromController();
+        SendFeedback(building.GetPlaceSuccessMessage(), rpcParams);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestUpgradeServerRpc(ulong buildingNetworkId, string buildingItemId, int targetLevel, ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        {
+            return;
+        }
+
+        BuildingInfoInteractable info = ResolveBuildingInfo(buildingNetworkId, buildingItemId, playerRoot);
+        if (info == null)
+        {
+            SendFeedback("Batiment introuvable.", rpcParams);
+            return;
+        }
+
+        if (!IsWithinInteractRange(playerRoot, info))
+        {
+            SendFeedback("Trop loin pour ameliorer.", rpcParams);
+            return;
+        }
+
+        Item building = info.BuildingItem;
+        if (building == null || !building.isBuilding)
+        {
+            SendFeedback("Batiment invalide.", rpcParams);
+            return;
+        }
+
+        int currentLevel = Mathf.Max(1, info.Level);
+        int maxLevel = Mathf.Max(1, building.buildingMaxLevel);
+        if (currentLevel >= maxLevel)
+        {
+            SendFeedback("Niveau maximal atteint.", rpcParams);
+            return;
+        }
+
+        if (!TryConsumeRequirements(building, controller, useHomeResourcesForBuild, out string reason))
+        {
+            SendFeedback(string.IsNullOrWhiteSpace(reason) ? "Ressources insuffisantes." : reason, rpcParams);
+            return;
+        }
+
+        int finalLevel = Mathf.Clamp(targetLevel, currentLevel + 1, maxLevel);
+        if (!TryUpgradeBuildingInstance(info, finalLevel))
+        {
+            SendFeedback("Amelioration impossible.", rpcParams);
+            return;
+        }
+
+        ApplyBuildingEffects(building, currentLevel, finalLevel - currentLevel);
+        inventory.SyncFromController();
+        SendFeedback("Amelioration terminee.", rpcParams);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCraftServerRpc(ulong buildingNetworkId, string buildingItemId, string craftItemId, string successMessage, string failedMessage, ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        {
+            return;
+        }
+
+        BuildingInfoInteractable info = ResolveBuildingInfo(buildingNetworkId, buildingItemId, playerRoot);
+        if (info == null)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        if (!IsWithinInteractRange(playerRoot, info))
+        {
+            SendFeedback("Trop loin pour crafter.", rpcParams);
+            return;
+        }
+
+        Item craftItem = ItemRegistry.Resolve(craftItemId);
+        if (craftItem == null)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        Item building = info.BuildingItem;
+        if (building == null || !building.isBuilding)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        List<Item> unlocked = building.GetUnlockedCraftsForLevel(info.Level);
+        if (unlocked == null || !unlocked.Contains(craftItem))
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        if (!TryConsumeRequirements(craftItem, controller, useHomeResourcesForCraft, out string reason))
+        {
+            SendFeedback(string.IsNullOrWhiteSpace(failedMessage) ? reason : failedMessage, rpcParams);
+            return;
+        }
+
+        controller.AddItem(craftItem, 1);
+        inventory.SyncFromController();
+        SendFeedback(string.IsNullOrWhiteSpace(successMessage) ? "Craft reussi." : successMessage, rpcParams);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCatalyseurCraftServerRpc(ulong buildingNetworkId, string buildingItemId, int effectIndex, string successMessage, string failedMessage, ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        {
+            return;
+        }
+
+        BuildingInfoInteractable info = ResolveBuildingInfo(buildingNetworkId, buildingItemId, playerRoot);
+        if (info == null)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        if (!IsWithinInteractRange(playerRoot, info))
+        {
+            SendFeedback("Trop loin pour crafter.", rpcParams);
+            return;
+        }
+
+        Item building = info.BuildingItem;
+        if (building == null || building.buildingEffects == null)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        if (effectIndex < 0 || effectIndex >= building.buildingEffects.Count)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        CatalyseurOrbCraftEffect effect = building.buildingEffects[effectIndex] as CatalyseurOrbCraftEffect;
+        if (effect == null)
+        {
+            SendFeedback(failedMessage, rpcParams);
+            return;
+        }
+
+        bool success = effect.ApplyOnInteract(controller, building, info.Level);
+        if (!success)
+        {
+            SendFeedback(string.IsNullOrWhiteSpace(failedMessage) ? "Craft impossible." : failedMessage, rpcParams);
+            return;
+        }
+
+        inventory.SyncFromController();
+        SendFeedback(string.IsNullOrWhiteSpace(successMessage) ? "Craft reussi." : successMessage, rpcParams);
+    }
+
+    private bool ExecuteBuild(Item building, Vector3 position, Quaternion rotation, SquadCharacterController controller, out string feedback)
+    {
+        feedback = string.Empty;
+        if (building == null || !building.isBuilding)
+        {
+            return false;
+        }
+
+        if (controller != null && !TryConsumeRequirements(building, controller, useHomeResourcesForBuild, out feedback))
+        {
+            return false;
+        }
+
+        BuildingInfoInteractable info = SpawnNetBuildingInstance(building, position, rotation, 1, nextNetBuildingId++);
+        if (info == null)
+        {
+            feedback = "Construction impossible.";
+            return false;
+        }
+
+        RegisterBuiltBuilding(building, 1, info);
+        ApplyBuildingEffects(building, 0, 1);
+        return true;
+    }
+
+    private bool ExecuteUpgrade(BuildingInfoInteractable info, int targetLevel, SquadCharacterController controller, out string feedback)
+    {
+        feedback = string.Empty;
+        if (info == null)
+        {
+            return false;
+        }
+
+        Item building = info.BuildingItem;
+        if (building == null || !building.isBuilding)
+        {
+            feedback = "Batiment invalide.";
+            return false;
+        }
+
+        int currentLevel = Mathf.Max(1, info.Level);
+        int maxLevel = Mathf.Max(1, building.buildingMaxLevel);
+        if (currentLevel >= maxLevel)
+        {
+            feedback = "Niveau maximal atteint.";
+            return false;
+        }
+
+        if (controller != null && !TryConsumeRequirements(building, controller, useHomeResourcesForBuild, out feedback))
+        {
+            return false;
+        }
+
+        int finalLevel = Mathf.Clamp(targetLevel, currentLevel + 1, maxLevel);
+        if (!TryUpgradeBuildingInstance(info, finalLevel))
+        {
+            feedback = "Amelioration impossible.";
+            return false;
+        }
+
+        ApplyBuildingEffects(building, currentLevel, finalLevel - currentLevel);
+        return true;
+    }
+
+    private bool ExecuteCraft(BuildingInfoInteractable info, Item craftItem, SquadCharacterController controller, out string feedback)
+    {
+        feedback = string.Empty;
+        if (info == null || craftItem == null)
+        {
+            return false;
+        }
+
+        Item building = info.BuildingItem;
+        if (building == null)
+        {
+            feedback = "Batiment invalide.";
+            return false;
+        }
+
+        List<Item> unlocked = building.GetUnlockedCraftsForLevel(info.Level);
+        if (unlocked == null || !unlocked.Contains(craftItem))
+        {
+            feedback = "Craft indisponible.";
+            return false;
+        }
+
+        if (controller != null && !TryConsumeRequirements(craftItem, controller, useHomeResourcesForCraft, out feedback))
+        {
+            return false;
+        }
+
+        if (controller != null)
+        {
+            controller.AddItem(craftItem, 1);
+        }
+
+        return true;
+    }
+
+    private bool ExecuteCatalyseurCraft(BuildingInfoInteractable info, int effectIndex, SquadCharacterController controller, out string feedback)
+    {
+        feedback = string.Empty;
+        if (info == null)
+        {
+            return false;
+        }
+
+        Item building = info.BuildingItem;
+        if (building == null || building.buildingEffects == null)
+        {
+            feedback = "Craft indisponible.";
+            return false;
+        }
+
+        if (effectIndex < 0 || effectIndex >= building.buildingEffects.Count)
+        {
+            feedback = "Craft indisponible.";
+            return false;
+        }
+
+        CatalyseurOrbCraftEffect effect = building.buildingEffects[effectIndex] as CatalyseurOrbCraftEffect;
+        if (effect == null)
+        {
+            feedback = "Craft indisponible.";
+            return false;
+        }
+
+        if (controller == null)
+        {
+            feedback = "Aucun personnage.";
+            return false;
+        }
+
+        if (!effect.ApplyOnInteract(controller, building, info.Level))
+        {
+            feedback = "Craft impossible.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryResolveSender(ServerRpcParams rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory)
+    {
+        playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        controller = null;
+        inventory = null;
+
+        if (playerRoot == null)
+        {
+            return false;
+        }
+
+        controller = playerRoot.GetComponent<SquadCharacterController>();
+        if (controller == null)
+        {
+            controller = playerRoot.GetComponentInChildren<SquadCharacterController>(true);
+        }
+
+        inventory = playerRoot.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = playerRoot.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null && inventory.OwnerClientId != rpcParams.Receive.SenderClientId)
+        {
+            inventory = null;
+        }
+
+        return controller != null && inventory != null;
+    }
+
+    private BuildingInfoInteractable ResolveBuildingInfo(ulong networkId, string buildingItemId, Transform playerRoot)
+    {
+        if (networkId != 0 && netBuildingLookup.TryGetValue(networkId, out BuildingInfoInteractable found) && found != null)
+        {
+            return found;
+        }
+
+        if (string.IsNullOrWhiteSpace(buildingItemId))
+        {
+            return null;
+        }
+
+        Item building = ResolveBuildingItem(buildingItemId);
+        if (building == null)
+        {
+            return null;
+        }
+
+        Vector3 origin = playerRoot != null ? playerRoot.position : Vector3.zero;
+        if (TryFindNearestBuilt(building, origin, out BuildingInfoInteractable info))
+        {
+            return info;
+        }
+
+        return null;
+    }
+
+    private bool IsWithinBuildRange(Transform playerRoot, Vector3 position)
+    {
+        if (!requireProximity)
+        {
+            return true;
+        }
+
+        if (playerRoot == null)
+        {
+            return false;
+        }
+
+        float maxDistance = Mathf.Max(0.1f, networkBuildMaxDistance);
+        return (playerRoot.position - position).sqrMagnitude <= maxDistance * maxDistance;
+    }
+
+    private bool IsWithinInteractRange(Transform playerRoot, BuildingInfoInteractable info)
+    {
+        if (!requireProximity)
+        {
+            return true;
+        }
+
+        if (playerRoot == null || info == null)
+        {
+            return false;
+        }
+
+        float maxDistance = Mathf.Max(0.1f, networkInteractDistance);
+        Collider trigger = info.interactionTrigger != null ? info.interactionTrigger : info.GetComponent<Collider>();
+        if (trigger != null)
+        {
+            Vector3 closest = trigger.ClosestPoint(playerRoot.position);
+            return (closest - playerRoot.position).sqrMagnitude <= maxDistance * maxDistance;
+        }
+
+        return (info.transform.position - playerRoot.position).sqrMagnitude <= maxDistance * maxDistance;
+    }
+
+    private bool TryConsumeRequirements(Item targetItem, SquadCharacterController controller, bool useHomeResources, out string reason)
+    {
+        reason = string.Empty;
+        if (targetItem == null || controller == null)
+        {
+            return false;
+        }
+
+        Dictionary<Item, int> requiredCounts = BuildRequirementCounts(targetItem);
+        if (requiredCounts.Count == 0)
+        {
+            return true;
+        }
+
+        Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
+        List<LootContainer> homeContainers = ResolveHomeContainers();
+
+        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
+        {
+            Item requiredItem = requirement.Key;
+            int requiredQuantity = requirement.Value;
+
+            int available = 0;
+            if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
+            {
+                available += invCount;
+            }
+
+            if (useHomeResources && homeContainers != null)
+            {
+                available += GetHomeItemCount(requiredItem, homeContainers);
+            }
+
+            if (available < requiredQuantity)
+            {
+                reason = "Ressources insuffisantes.";
+                return false;
+            }
+        }
+
+        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
+        {
+            Item requiredItem = requirement.Key;
+            int remaining = requirement.Value;
+            if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
+            {
+                int fromInventory = Mathf.Min(invCount, remaining);
+                if (fromInventory > 0)
+                {
+                    controller.TryRemoveItemQuantity(requiredItem, fromInventory);
+                    remaining -= fromInventory;
+                }
+            }
+
+            if (remaining > 0 && useHomeResources && homeContainers != null)
+            {
+                remaining -= RemoveFromHomeContainers(requiredItem, remaining, homeContainers);
+            }
+
+            if (remaining > 0)
+            {
+                reason = "Ressources insuffisantes.";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private Dictionary<Item, int> BuildRequirementCounts(Item targetItem)
+    {
+        Dictionary<Item, int> counts = new Dictionary<Item, int>();
+        if (targetItem == null || targetItem.buildingRequirements == null)
+        {
+            return counts;
+        }
+
+        for (int i = 0; i < targetItem.buildingRequirements.Count; i++)
+        {
+            Item.BuildingRequirement requirement = targetItem.buildingRequirements[i];
+            if (requirement == null || requirement.item == null || requirement.quantity <= 0)
+            {
+                continue;
+            }
+
+            if (!counts.TryGetValue(requirement.item, out int current))
+            {
+                counts[requirement.item] = requirement.quantity;
+            }
+            else
+            {
+                counts[requirement.item] = current + requirement.quantity;
+            }
+        }
+
+        return counts;
+    }
+
+    private Dictionary<Item, int> BuildInventoryCounts(SquadCharacterController controller)
+    {
+        Dictionary<Item, int> counts = new Dictionary<Item, int>();
+        if (controller == null)
+        {
+            return counts;
+        }
+
+        IReadOnlyList<Item> items = controller.Items;
+        if (items == null)
+        {
+            return counts;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Item item = items[i];
+            if (item == null)
+            {
+                continue;
+            }
+
+            if (!counts.TryGetValue(item, out int current))
+            {
+                counts[item] = 1;
+            }
+            else
+            {
+                counts[item] = current + 1;
+            }
+        }
+
+        return counts;
+    }
+
+    private List<LootContainer> ResolveHomeContainers()
+    {
+        Maison maison = GetMaison();
+        if (maison == null)
+        {
+            return null;
+        }
+
+        return maison.ResolveMaisonLootContainers(null);
+    }
+
+    private int GetHomeItemCount(Item item, List<LootContainer> containers)
+    {
+        if (item == null || containers == null)
+        {
+            return 0;
+        }
+
+        int total = 0;
+        for (int i = 0; i < containers.Count; i++)
+        {
+            LootContainer container = containers[i];
+            if (container == null)
+            {
+                continue;
+            }
+
+            total += container.GetItemCount(item);
+        }
+
+        return total;
+    }
+
+    private int RemoveFromHomeContainers(Item item, int quantity, List<LootContainer> containers)
+    {
+        if (item == null || quantity <= 0 || containers == null)
+        {
+            return 0;
+        }
+
+        int remaining = quantity;
+        for (int i = 0; i < containers.Count && remaining > 0; i++)
+        {
+            LootContainer container = containers[i];
+            if (container == null)
+            {
+                continue;
+            }
+
+            int removed = container.RemoveItems(item, remaining);
+            remaining -= removed;
+        }
+
+        return quantity - remaining;
+    }
+
+    private Maison GetMaison()
+    {
+        if (cachedMaison != null)
+        {
+            return cachedMaison;
+        }
+
+        cachedMaison = Maison.Instance;
+        if (cachedMaison != null)
+        {
+            return cachedMaison;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        cachedMaison = FindFirstObjectByType<Maison>();
+#else
+        cachedMaison = FindObjectOfType<Maison>();
+#endif
+
+        return cachedMaison;
+    }
+
+    private void TryAssignMaisonChestTag(GameObject instance)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        string tag = GetMaisonChestTag();
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            return;
+        }
+
+        try
+        {
+            instance.tag = tag;
+        }
+        catch (UnityException)
+        {
+            // Tag not defined.
+        }
+    }
+
+    private string GetMaisonChestTag()
+    {
+        Maison maison = GetMaison();
+        if (maison != null && !string.IsNullOrWhiteSpace(maison.maisonChestTag))
+        {
+            return maison.maisonChestTag;
+        }
+
+        return "MaisonChest";
+    }
+
+    private void EnsureHomeChestDefaults(LootContainer container)
+    {
+        if (container == null)
+        {
+            return;
+        }
+
+        Maison maison = GetMaison();
+        if (maison != null)
+        {
+            maison.EnsureHomeChestDefaults(container);
+        }
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackClientRpc(string message, ClientRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
+    }
+
+    private void SendFeedback(string message, ServerRpcParams rpcParams)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        ShowFeedbackClientRpc(message, BuildClientRpcParams(rpcParams));
+    }
+
+    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
+    {
+        return new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
+            }
+        };
     }
 
     private static string GetBuildingItemId(Item data)

@@ -15704,10 +15704,11 @@ GameObject:
   - component: {fileID: 963045829911085934}
   - component: {fileID: 6586986545804758769}
   - component: {fileID: 6731850666202294345}
+  - component: {fileID: 9211136743502433845}
   - component: {fileID: -8769395688154957966}
   - component: {fileID: 880945654765737532}
   - component: {fileID: 2272791694640596917}
-  - component: {fileID: 9211136743502433845}
+  - component: {fileID: 3281333903003229964}
   m_Layer: 0
   m_Name: Player_Model_Trooper
   m_TagString: Player
@@ -15815,6 +15816,47 @@ MonoBehaviour:
   referenceCamera: {fileID: 0}
   preferRigidbody: 1
   animatePhysics: 0
+  enableVoidDetection: 1
+  voidCheckDistance: 0.35
+  voidCheckDepth: 4
+  voidGroundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  voidUseCollisionMatrixMask: 1
+  enableStepAssist: 1
+  stepHeight: 1
+  stepCheckDistance: 0.25
+  stepUpSpeed: 4
+  stepDownHeight: 0
+  stepDownSpeed: 0
+  stepHeightTolerance: 0.15
+  stepMinHeight: 0.05
+  stepMaxUpVelocity: 0
+  requireGroundForStep: 0
+  stepUpperRadius: 0
+  stepUpperHeightOffset: 0.02
+  stepForwardBoost: 0.03
+  stepRadiusPadding: 0.02
+  stepGroundCheckDistance: 0.15
+  stepLayerMask:
+    serializedVersion: 2
+    m_Bits: 136
+  stepUseCollisionMatrixMask: 1
+  stepDebugLogs: 1
+  stepDebugCooldown: 0.5
+  enableFootIk: 1
+  footIkWeight: 1
+  footIkPositionWeight: 1
+  footIkRotationWeight: 1
+  footIkSpeedThreshold: 0.15
+  footIkBlendSpeed: 10
+  footIkHeightOffset: 0.02
+  footIkRaycastUp: 0.25
+  footIkRaycastDown: 0.6
+  footIkLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  footIkUseCollisionMatrixMask: 1
   allowTorchToggle: 1
   torchParentName: Stuff
   torchChildName: Torch
@@ -15826,6 +15868,42 @@ MonoBehaviour:
   ignoreCharacterCollisions: 1
   ignoreCharacterTriggerColliders: 1
   collisionRefreshInterval: 0.5
+--- !u!114 &9211136743502433845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08b329bae7eedab4b9964a7a02f4169b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocalVoiceLineController
+  autoBuildLookup: 1
+  autoResolveCharacterData: 1
+  voiceLines: []
+  knowledgeSelectionMode: 1
+  useInteractInput: 0
+  requirePlayerTag: 1
+  useColliderBounds: 1
+  interactionRadius: 1.25
+  colliderRadiusPadding: 0.1
+  interactCooldown: 0
+  textAnchor: {fileID: 6863993285466569495}
+  textOffset: {x: 0, y: 0, z: 0}
+  textPrefab: {fileID: 5948826745277676634, guid: 7b9a7ee676881344784b44f6d6cfdbba, type: 3}
+  textTarget: {fileID: 0}
+  textRoot: {fileID: 0}
+  faceCamera: 1
+  fallbackTextDuration: 1.5
+  extraTextDuration: 0.1
+  hideWhenDone: 1
+  useUnscaledTime: 0
+  useAudioManager: 1
+  fallbackSpatialBlend: 1
+  fallbackMinDistance: 1
+  fallbackMaxDistance: 20
 --- !u!54 &-8769395688154957966
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -15897,34 +15975,14 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &9211136743502433845
-MonoBehaviour:
+--- !u!81 &3281333903003229964
+AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2784444758471557209}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08b329bae7eedab4b9964a7a02f4169b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LocalVoiceLineController
-  autoBuildLookup: 1
-  autoResolveCharacterData: 1
-  textAnchor: {fileID: 6863993285466569495}
-  textOffset: {x: 0, y: 0, z: 0}
-  textPrefab: {fileID: 5948826745277676634, guid: 7b9a7ee676881344784b44f6d6cfdbba, type: 3}
-  textTarget: {fileID: 0}
-  textRoot: {fileID: 0}
-  faceCamera: 1
-  fallbackTextDuration: 1.5
-  extraTextDuration: 0.1
-  hideWhenDone: 1
-  useUnscaledTime: 0
-  useAudioManager: 1
-  fallbackSpatialBlend: 1
-  fallbackMinDistance: 1
-  fallbackMaxDistance: 20
 --- !u!1 &3041327079635033929
 GameObject:
   m_ObjectHideFlags: 0
@@ -37399,6 +37457,8 @@ MonoBehaviour:
   targetLight: {fileID: 3963548041879623861}
   searchInChildren: 1
   disableColorTemperatureWhenColored: 1
+  owner: {fileID: 0}
+  searchOwnerInParents: 1
 --- !u!1 &8873776209652233995
 GameObject:
   m_ObjectHideFlags: 0

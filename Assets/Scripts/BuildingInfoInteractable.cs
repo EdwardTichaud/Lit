@@ -16,6 +16,8 @@ public class BuildingInfoInteractable : MonoBehaviour
     private Item buildingItem;
     [SerializeField, Tooltip("Niveau actuel de cette instance.")]
     private int level = 1;
+    [SerializeField, HideInInspector]
+    private ulong networkBuildingId;
 
     [Header("Info")]
     [Tooltip("Prefab du panel d'informations local.")]
@@ -51,7 +53,6 @@ public class BuildingInfoInteractable : MonoBehaviour
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
     private bool useSelfTriggerEvents;
-    private PlayerInputs playerInputs;
     private LocalBuildingInformationsPanelController localPanelInstance;
     private bool warnedMissingPrefab;
     private bool runtimeReferencesResolved;
@@ -66,34 +67,30 @@ public class BuildingInfoInteractable : MonoBehaviour
     public int Level => level;
     public string BuildingItemId => ResolveBuildingItemId(buildingItem, buildId);
     public bool IsHomeChest => buildingItem != null && buildingItem.isHomeChest;
+    public ulong NetworkBuildingId => networkBuildingId;
 
     private void Awake()
     {
         EnsureBuildingData();
 
         InitializeInteractionTrigger();
-        playerInputs = new PlayerInputs();
         ResolveRuntimeReferences();
+    }
+
+    public void SetNetworkBuildingId(ulong id)
+    {
+        networkBuildingId = id;
     }
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
 
         ResetState();
     }
@@ -431,7 +428,7 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private static GameObject GetControlledCharacter()
     {
-        return SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        return LocalPlayerUtils.GetControlledCharacter();
     }
 
     private void ResetState()

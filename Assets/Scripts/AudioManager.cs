@@ -30,6 +30,8 @@ public class AudioManager : MonoBehaviour
     private AudioClipSO activeClip;
     private Coroutine fadeRoutine;
     private readonly List<Zone> zoneStack = new List<Zone>();
+    private int musicDuckCount;
+    private float musicDuckMultiplier = 1f;
 
     private void Awake()
     {
@@ -87,6 +89,38 @@ public class AudioManager : MonoBehaviour
         }
 
         fadeRoutine = StartCoroutine(FadeToClip(clip));
+    }
+
+    public void BeginMusicDucking(float multiplier)
+    {
+        multiplier = Mathf.Clamp01(multiplier);
+        musicDuckCount++;
+        if (musicDuckCount == 1)
+        {
+            musicDuckMultiplier = multiplier;
+        }
+        else
+        {
+            musicDuckMultiplier = Mathf.Min(musicDuckMultiplier, multiplier);
+        }
+
+        RefreshMusicVolume();
+    }
+
+    public void EndMusicDucking()
+    {
+        if (musicDuckCount <= 0)
+        {
+            return;
+        }
+
+        musicDuckCount = Mathf.Max(0, musicDuckCount - 1);
+        if (musicDuckCount == 0)
+        {
+            musicDuckMultiplier = 1f;
+        }
+
+        RefreshMusicVolume();
     }
 
     public AudioSource PlayClip(AudioClipSO clip, Vector3 position)
@@ -164,11 +198,14 @@ public class AudioManager : MonoBehaviour
             if (from != null && from.isPlaying)
             {
                 float startVolume = from.volume;
+                float startMultiplierFadeOut = GetMusicMultiplier();
+                float baseFromVolume = startMultiplierFadeOut > 0f ? startVolume / startMultiplierFadeOut : startVolume;
                 float elapsed = 0f;
                 while (elapsed < duration)
                 {
                     float t = elapsed / duration;
-                    from.volume = Mathf.Lerp(startVolume, 0f, t);
+                    float multiplier = GetMusicMultiplier();
+                    from.volume = Mathf.Lerp(baseFromVolume * multiplier, 0f, t);
                     elapsed += Time.unscaledDeltaTime;
                     yield return null;
                 }
@@ -195,20 +232,25 @@ public class AudioManager : MonoBehaviour
             to.Play();
         }
 
-        float targetVolume = Mathf.Clamp01(clip.volume) * Mathf.Clamp01(masterVolume);
+        float baseTargetVolume = Mathf.Clamp01(clip.volume) * Mathf.Clamp01(masterVolume);
+        float startMultiplier = GetMusicMultiplier();
         float fromStartVolume = from != null ? from.volume : 0f;
+        float fromBaseVolume = startMultiplier > 0f ? fromStartVolume / startMultiplier : fromStartVolume;
         float time = 0f;
         while (time < duration)
         {
             float t = time / duration;
             if (to != null)
             {
+                float multiplier = GetMusicMultiplier();
+                float targetVolume = baseTargetVolume * multiplier;
                 to.volume = Mathf.Lerp(0f, targetVolume, t);
             }
 
             if (from != null)
             {
-                from.volume = Mathf.Lerp(fromStartVolume, 0f, t);
+                float multiplier = GetMusicMultiplier();
+                from.volume = Mathf.Lerp(fromBaseVolume * multiplier, 0f, t);
             }
 
             time += Time.unscaledDeltaTime;
@@ -217,7 +259,7 @@ public class AudioManager : MonoBehaviour
 
         if (to != null)
         {
-            to.volume = targetVolume;
+            to.volume = baseTargetVolume * GetMusicMultiplier();
         }
 
         if (from != null)
@@ -232,6 +274,22 @@ public class AudioManager : MonoBehaviour
         activeSource = to;
         inactiveSource = from;
         activeClip = clip;
+    }
+
+    private float GetMusicMultiplier()
+    {
+        return musicDuckCount > 0 ? Mathf.Clamp01(musicDuckMultiplier) : 1f;
+    }
+
+    private void RefreshMusicVolume()
+    {
+        if (activeSource == null || activeClip == null || activeClip.audioClip == null)
+        {
+            return;
+        }
+
+        float baseVolume = Mathf.Clamp01(activeClip.volume) * Mathf.Clamp01(masterVolume);
+        activeSource.volume = baseVolume * GetMusicMultiplier();
     }
 
     private IEnumerator DestroyAfterPlay(AudioSource source, float duration)

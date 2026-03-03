@@ -10,6 +10,15 @@ public class CharacterSaveData
     public List<CharacterSaveEntry> characters = new List<CharacterSaveEntry>();
     public List<ItemStackData> homeItems = new List<ItemStackData>();
     public List<BuiltConstructionData> builtConstructions = new List<BuiltConstructionData>();
+    public List<PlayerCharacterBinding> playerBindings = new List<PlayerCharacterBinding>();
+}
+
+// Association playerId -> characterId (continuite multijoueur).
+[System.Serializable]
+public class PlayerCharacterBinding
+{
+    public string playerId;
+    public string characterId;
 }
 
 // Sauvegarde d'un personnage et de son inventaire.

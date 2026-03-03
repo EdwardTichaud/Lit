@@ -154,6 +154,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Multi"",
+                    ""type"": ""Button"",
+                    ""id"": ""a1c88c79-ca89-4e10-936a-440568738263"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -233,6 +242,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""action"": ""Inventory"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""183a41b0-ee92-4e8f-964f-1201c43aa30f"",
+                    ""path"": ""<Gamepad>/select"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Multi"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -309,6 +329,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_TakeAll = m_Player.FindAction("TakeAll", throwIfNotFound: true);
         m_Player_Return = m_Player.FindAction("Return", throwIfNotFound: true);
         m_Player_Inventory = m_Player.FindAction("Inventory", throwIfNotFound: true);
+        m_Player_Multi = m_Player.FindAction("Multi", throwIfNotFound: true);
     }
 
     ~@PlayerInputs()
@@ -396,6 +417,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_TakeAll;
     private readonly InputAction m_Player_Return;
     private readonly InputAction m_Player_Inventory;
+    private readonly InputAction m_Player_Multi;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -435,6 +457,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Inventory".
         /// </summary>
         public InputAction @Inventory => m_Wrapper.m_Player_Inventory;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Multi".
+        /// </summary>
+        public InputAction @Multi => m_Wrapper.m_Player_Multi;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -482,6 +508,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Inventory.started += instance.OnInventory;
             @Inventory.performed += instance.OnInventory;
             @Inventory.canceled += instance.OnInventory;
+            @Multi.started += instance.OnMulti;
+            @Multi.performed += instance.OnMulti;
+            @Multi.canceled += instance.OnMulti;
         }
 
         /// <summary>
@@ -514,6 +543,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Inventory.started -= instance.OnInventory;
             @Inventory.performed -= instance.OnInventory;
             @Inventory.canceled -= instance.OnInventory;
+            @Multi.started -= instance.OnMulti;
+            @Multi.performed -= instance.OnMulti;
+            @Multi.canceled -= instance.OnMulti;
         }
 
         /// <summary>
@@ -668,5 +700,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnInventory(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Multi" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMulti(InputAction.CallbackContext context);
     }
 }

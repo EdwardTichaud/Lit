@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33830734393831c4da92754792125df2, type: 3}
+  m_Name: VoiceLine_HistoricStone_AuCommencement
+  m_EditorClassIdentifier: Assembly-CSharp::VoiceLineData
+  voiceLineIndex: 1
+  voiceLineAudioClip: {fileID: 11400000, guid: fc17d5aacc3630a458bdfef641e75a9c, type: 2}
+  voiceLineText: 
+  voiceLineCues:
+  - time: 0
+    text: "Au Commencement, au plus profond de son infinie torpeur, l'Univers se
+      mit \xE0 briller et \xE0 r\xEAver."
+  - time: 11
+    text: "De ses r\xEAves naquirent des mondes. De ces mondes, germa la vie."
+  - time: 19
+    text: "Intenses \xE9taient ses r\xEAves. Eclatante, \xE9tait sa lumi\xE8re."
+  - time: 24
+    text: "Mais cette lumi\xE8re \xE9tait si puissante qu'elle finit par se morceler."
+  - time: 30
+    text: "Donnant naissance aux s\xE9raphins."
+  - time: 35
+    text: "Durant des millions d'ann\xE9es, les s\xE9raphins se chargairent d'accomplir
+      les pens\xE9es de son cr\xE9ateur."
+  - time: 35
+    text: "Mais pour l'un d'entre eux, le plus jeune, ex\xE9cuter les desseins d'autrui
+      n'\xE9tait plus suffisant."
+  - time: 43
+    text: "Mais pour l'un d'entre eux, le plus jeune, ex\xE9cuter les desseins d'autrui
+      n'\xE9tait plus suffisant."
+  - time: 52
+    text: "Il se r\xE9volta, et s'enfuit."
+  - time: 57
+    text: "Cet \xE9v\xEAnement sera plus tard nommer: Dissonance."
+  - time: 61
+    text: "Pour y mettre fin, l'Univers cessa de r\xEAver et laissa une partie de
+      sa lumi\xE8re briller, en formulant ces mots avant de disparaitre:"
+  - time: 74
+    text: '"RETROUVEZ VOTRE FRERE, CAR SI JE CESSE DE REVER, TOUT NE SERA QUE VIDE"'
+  - time: 82
+    text: "Les s\xE9raphins s'harmonisairent alors pour partir \xE0 travers le temps
+      et l'espace \xE0 la recherche du dernier n\xE9."
+  - time: 91
+    text: "Et c'est ainsi que d\xE9buta \"La Symphonie\"."

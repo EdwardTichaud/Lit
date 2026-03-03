@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using UnityEngine.UI;
 
 // Controle l'UI d'inventaire: navigation, ActionBox, depot et placement d'objets.
@@ -15,7 +16,6 @@ public class InventoryPanelController : MonoBehaviour
         public int quantity;
     }
 
-    private PlayerInputs playerInputs;
     private bool inventoryOpen;
     private bool squadInputLocked;
     [Header("Action Box")]
@@ -61,24 +61,10 @@ public class InventoryPanelController : MonoBehaviour
     public bool actionBoxCreateCursorIfMissing = true;
 
     [Header("Deposit Quantity")]
-    [Tooltip("Panel pour choisir une quantite a deposer.")]
-    public GameObject depositQuantityPanel;
-    [Tooltip("Texte affiche dans le panel de quantite.")]
-    public TextMeshProUGUI depositQuantityText;
     [Tooltip("Offset en UI par rapport au slot selectionne.")]
     public Vector2 depositQuantityPanelOffset = new Vector2(0f, 0f);
-    [Tooltip("Duree du fade du panel de quantite.")]
-    public float depositQuantityFadeDuration = 0.15f;
-    [Tooltip("Met l'alpha a 0 au demarrage.")]
-    public bool depositQuantitySetAlphaToZeroOnStart = true;
-    [Tooltip("Ajoute un CanvasGroup si manquant.")]
-    public bool depositQuantityAddCanvasGroupIfMissing = true;
-    [Tooltip("Desactive les raycasts quand cache.")]
-    public bool depositQuantityDisableRaycastsWhenHidden = true;
-    [Tooltip("Cree le panel si manquant.")]
-    public bool depositQuantityCreateIfMissing = true;
     [Tooltip("Format d'affichage (quantite/total).")]
-    public string depositQuantityFormat = "Deposer {0}/{1}";
+    public string depositQuantityFormat = "{0}/{1}";
 
     [Header("Item Placement")]
     [Tooltip("Rayon de placement autour du joueur.")]
@@ -151,14 +137,9 @@ public class InventoryPanelController : MonoBehaviour
     private bool depositMode;
     private LootContainer depositContainer;
     private bool depositQuantityActive;
-    private int depositQuantity;
     private int depositQuantityMax;
     private Item depositQuantityItem;
-    private int depositQuantityLastDirection;
-    private float depositQuantityNextMoveTime;
-    private CanvasGroup depositQuantityCanvasGroup;
-    private Coroutine depositQuantityFadeRoutine;
-    private bool depositQuantityVisible;
+    private QuantityBox quantityBox;
     private bool placementActive;
     private Item placementItem;
     private GameObject placementInstance;
@@ -176,8 +157,9 @@ public class InventoryPanelController : MonoBehaviour
     private int restoreActionBoxIndex = -1;
     private Coroutine placementFeedbackRoutine;
     private Maison cachedMaison;
-    private static Sprite depositQuantityFallbackSprite;
-    private static Texture2D depositQuantityFallbackTexture;
+    private CursorController disabledCursorController;
+    private bool disabledCursorControllerWasEnabled;
+    private bool disabledCursorControllerAllowInput;
 
     private readonly List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
     private readonly List<InventoryEntry> entries = new List<InventoryEntry>();
@@ -185,10 +167,10 @@ public class InventoryPanelController : MonoBehaviour
     private int lastMoveDirection;
     private float nextMoveTime;
     private bool cursorDirty;
+    private NetworkInventory currentNetworkInventory;
 
     private void Awake()
     {
-        playerInputs = new PlayerInputs();
         InventoryUISettings settings = GetSettings();
         if (settings != null)
         {
@@ -196,32 +178,23 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         InitializeActionBox();
-        InitializeDepositQuantityPanel();
     }
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Inventory.performed += OnInventoryPerformed;
-        playerInputs.Player.Return.performed += OnReturnPerformed;
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Inventory += OnInventoryPerformed;
+        LocalInputRouter.Return += OnReturnPerformed;
+        LocalInputRouter.Interact += OnInteractPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Inventory.performed -= OnInventoryPerformed;
-            playerInputs.Player.Return.performed -= OnReturnPerformed;
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Inventory -= OnInventoryPerformed;
+        LocalInputRouter.Return -= OnReturnPerformed;
+        LocalInputRouter.Interact -= OnInteractPerformed;
 
+        UnregisterNetworkInventory();
         InputFocusStack.Pop(this);
         if (placementActive)
         {
@@ -229,6 +202,88 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         CloseInventory();
+    }
+
+    private void RegisterNetworkInventory()
+    {
+        UnregisterNetworkInventory();
+
+        if (!IsNetworked())
+        {
+            return;
+        }
+
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (controller == null)
+        {
+            return;
+        }
+
+        currentNetworkInventory = ResolveNetworkInventory(controller);
+        if (currentNetworkInventory != null)
+        {
+            currentNetworkInventory.InventoryChanged += OnNetworkInventoryChanged;
+        }
+    }
+
+    private void UnregisterNetworkInventory()
+    {
+        if (currentNetworkInventory != null)
+        {
+            currentNetworkInventory.InventoryChanged -= OnNetworkInventoryChanged;
+        }
+
+        currentNetworkInventory = null;
+    }
+
+    private NetworkInventory ResolveNetworkInventory(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return null;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        return inventory;
+    }
+
+    private void OnNetworkInventoryChanged()
+    {
+        if (!inventoryOpen)
+        {
+            return;
+        }
+
+        RebuildInventorySlots();
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    private void SyncNetworkInventory(SquadCharacterController controller)
+    {
+        if (!IsNetworked() || NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || controller == null)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null)
+        {
+            inventory.SyncFromController();
+        }
     }
 
     private void LateUpdate()
@@ -247,11 +302,6 @@ public class InventoryPanelController : MonoBehaviour
         if (actionBoxVisible)
         {
             UpdateActionBoxCursor();
-        }
-
-        if (depositQuantityVisible)
-        {
-            PositionDepositQuantityPanel();
         }
     }
 
@@ -414,7 +464,7 @@ public class InventoryPanelController : MonoBehaviour
         depositContainer = container;
         depositMode = true;
         HideActionBoxImmediate();
-        HideDepositQuantityPanelImmediate();
+        CloseQuantityBox();
         ResetDepositQuantityState();
 
         if (inventoryOpen)
@@ -481,8 +531,10 @@ public class InventoryPanelController : MonoBehaviour
 
         settings.OpenPanel();
         inventoryOpen = true;
+        RegisterNetworkInventory();
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
+        DisableInventoryCursorController();
         actionBoxSuppressFrame = Time.frameCount;
         RebuildInventorySlots();
         RestorePendingSelection();
@@ -499,9 +551,10 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         HideActionBoxImmediate();
-        HideDepositQuantityPanelImmediate();
+        CloseQuantityBox();
         inventoryOpen = false;
         actionBoxSuppressFrame = -1;
+        UnregisterNetworkInventory();
         if (!placementActive)
         {
             InputFocusStack.Pop(this);
@@ -524,6 +577,8 @@ public class InventoryPanelController : MonoBehaviour
         {
             previousDeposit.NotifyDepositInventoryClosed();
         }
+
+        RestoreInventoryCursorController();
     }
 
     private bool HasInputFocus()
@@ -534,6 +589,34 @@ public class InventoryPanelController : MonoBehaviour
     private bool CanReceiveInventoryInput()
     {
         return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this);
+    }
+
+    private void DisableInventoryCursorController()
+    {
+        InventoryUISettings settings = GetSettings();
+        CursorController controller = settings != null ? settings.cursorController : null;
+        if (controller == null)
+        {
+            return;
+        }
+
+        disabledCursorController = controller;
+        disabledCursorControllerWasEnabled = controller.enabled;
+        disabledCursorControllerAllowInput = controller.allowInput;
+        controller.allowInput = false;
+        controller.enabled = false;
+    }
+
+    private void RestoreInventoryCursorController()
+    {
+        if (disabledCursorController == null)
+        {
+            return;
+        }
+
+        disabledCursorController.allowInput = disabledCursorControllerAllowInput;
+        disabledCursorController.enabled = disabledCursorControllerWasEnabled;
+        disabledCursorController = null;
     }
 
     private void RebuildInventorySlots()
@@ -752,7 +835,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private void HandleNavigation()
     {
-        if (playerInputs == null || inventorySlots.Count == 0)
+        if (inventorySlots.Count == 0)
         {
             return;
         }
@@ -763,7 +846,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetMoveDirection(moveInput, settings.moveDeadzone);
         if (direction == 0)
         {
@@ -999,12 +1082,13 @@ public class InventoryPanelController : MonoBehaviour
 
     private SquadCharacterController GetCurrentCharacterController()
     {
-        if (SquadManager.Instance == null || SquadManager.Instance.currentCharacter == null)
+        GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
+        if (controlled == null)
         {
             return null;
         }
 
-        return SquadManager.Instance.currentCharacter.GetComponent<SquadCharacterController>();
+        return controlled.GetComponent<SquadCharacterController>();
     }
 
     private void SetSquadInputLock(bool locked)
@@ -1208,45 +1292,23 @@ public class InventoryPanelController : MonoBehaviour
         ResetActionBoxNavigation();
     }
 
-    private void InitializeDepositQuantityPanel()
+    private QuantityBox GetQuantityBox()
     {
-        if (depositQuantityPanel == null)
+        if (quantityBox == null)
         {
-            Transform found = transform.Find("DepositQuantityPanel");
-            if (found != null)
-            {
-                depositQuantityPanel = found.gameObject;
-            }
+            quantityBox = QuantityBox.Resolve();
         }
 
-        if (depositQuantityPanel == null && depositQuantityCreateIfMissing)
-        {
-            depositQuantityPanel = CreateDepositQuantityPanel();
-        }
+        return quantityBox;
+    }
 
-        if (depositQuantityPanel == null)
+    private void CloseQuantityBox()
+    {
+        QuantityBox box = GetQuantityBox();
+        if (box != null)
         {
-            return;
+            box.Close();
         }
-
-        if (depositQuantityText == null)
-        {
-            depositQuantityText = depositQuantityPanel.GetComponentInChildren<TextMeshProUGUI>(true);
-        }
-
-        depositQuantityCanvasGroup = GetDepositQuantityCanvasGroup();
-        if (depositQuantityCanvasGroup != null && depositQuantitySetAlphaToZeroOnStart)
-        {
-            depositQuantityCanvasGroup.alpha = 0f;
-            if (depositQuantityDisableRaycastsWhenHidden)
-            {
-                depositQuantityCanvasGroup.interactable = false;
-                depositQuantityCanvasGroup.blocksRaycasts = false;
-            }
-        }
-
-        depositQuantityVisible = false;
-        ResetDepositQuantityState();
     }
 
     private void ShowActionBox()
@@ -1334,94 +1396,6 @@ public class InventoryPanelController : MonoBehaviour
         HideActionBoxCursor();
     }
 
-    private void ShowDepositQuantityPanel()
-    {
-        if (depositQuantityPanel == null)
-        {
-            return;
-        }
-
-        depositQuantityVisible = true;
-        depositQuantityPanel.SetActive(true);
-        PositionDepositQuantityPanel();
-        FadeDepositQuantityTo(1f, depositQuantityFadeDuration);
-    }
-
-    private void HideDepositQuantityPanel()
-    {
-        if (depositQuantityPanel == null)
-        {
-            return;
-        }
-
-        depositQuantityVisible = false;
-        FadeDepositQuantityTo(0f, depositQuantityFadeDuration);
-    }
-
-    private void HideDepositQuantityPanelImmediate()
-    {
-        if (depositQuantityPanel == null)
-        {
-            return;
-        }
-
-        depositQuantityVisible = false;
-        if (depositQuantityFadeRoutine != null)
-        {
-            StopCoroutine(depositQuantityFadeRoutine);
-            depositQuantityFadeRoutine = null;
-        }
-
-        depositQuantityCanvasGroup = GetDepositQuantityCanvasGroup();
-        if (depositQuantityCanvasGroup != null)
-        {
-            depositQuantityCanvasGroup.alpha = 0f;
-            if (depositQuantityDisableRaycastsWhenHidden)
-            {
-                depositQuantityCanvasGroup.interactable = false;
-                depositQuantityCanvasGroup.blocksRaycasts = false;
-            }
-        }
-    }
-
-    private void PositionDepositQuantityPanel()
-    {
-        if (depositQuantityPanel == null)
-        {
-            return;
-        }
-
-        RectTransform panelRect = depositQuantityPanel.GetComponent<RectTransform>();
-        if (panelRect == null)
-        {
-            return;
-        }
-
-        RectTransform slotRect = currentFocusedSlot != null ? currentFocusedSlot.SlotRect : null;
-        Transform parent = panelRect.parent;
-        RectTransform parentRect = parent as RectTransform;
-
-        if (slotRect == null || parentRect == null)
-        {
-            panelRect.anchoredPosition = depositQuantityPanelOffset;
-            return;
-        }
-
-        Canvas canvas = depositQuantityPanel.GetComponentInParent<Canvas>();
-        Camera uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? canvas.worldCamera
-            : null;
-
-        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, slotRect.position);
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
-        {
-            panelRect.anchoredPosition = localPoint + depositQuantityPanelOffset;
-            return;
-        }
-
-        panelRect.position = slotRect.position + (Vector3)depositQuantityPanelOffset;
-    }
-
     private void PositionActionBox()
     {
         if (actionBox == null || currentFocusedSlot == null || currentFocusedSlot.SlotRect == null)
@@ -1470,6 +1444,12 @@ public class InventoryPanelController : MonoBehaviour
         if (controller == null)
         {
             return false;
+        }
+
+        NetworkInventory inventory = ResolveNetworkInventory(controller);
+        if (IsNetworked() && inventory != null)
+        {
+            return inventory.RequestUseItem(item);
         }
 
         if (controller.TryUseItem(item, out string reason))
@@ -1528,14 +1508,23 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        QuantityBox box = GetQuantityBox();
+        if (box == null)
+        {
+            PerformDeposit(item, maxQuantity);
+            return;
+        }
+
         depositQuantityItem = item;
         depositQuantityMax = Mathf.Max(1, maxQuantity);
-        depositQuantity = 1;
+        int baseQuantity = currentFocusedSlot != null ? currentFocusedSlot.Quantity : 1;
+        int startQuantity = Mathf.Clamp(baseQuantity, 1, depositQuantityMax);
         depositQuantityActive = true;
-        depositQuantityLastDirection = 0;
-        depositQuantityNextMoveTime = 0f;
-        UpdateDepositQuantityText();
-        ShowDepositQuantityPanel();
+        box.Open(currentFocusedSlot != null ? currentFocusedSlot.SlotRect : null,
+            depositQuantityPanelOffset,
+            startQuantity,
+            depositQuantityMax,
+            "{0}/{1}");
     }
 
     private void CancelDepositQuantity()
@@ -1546,7 +1535,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         depositQuantityActive = false;
-        HideDepositQuantityPanel();
+        CloseQuantityBox();
         ResetDepositQuantityState();
     }
 
@@ -1557,10 +1546,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        int quantity = Mathf.Clamp(depositQuantity, 1, depositQuantityMax);
+        QuantityBox box = GetQuantityBox();
+        int quantity = box != null ? box.CurrentQuantity : 1;
+        quantity = Mathf.Clamp(quantity, 1, depositQuantityMax);
         Item item = depositQuantityItem;
         depositQuantityActive = false;
-        HideDepositQuantityPanel();
+        CloseQuantityBox();
         ResetDepositQuantityState();
         PerformDeposit(item, quantity);
     }
@@ -1599,7 +1590,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private void HandleDepositQuantityInput()
     {
-        if (playerInputs == null || !depositQuantityActive)
+        if (!depositQuantityActive)
         {
             return;
         }
@@ -1610,93 +1601,21 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
-        int direction = GetMoveDirection(moveInput, settings.moveDeadzone);
-        if (direction != -1 && direction != 1)
-        {
-            depositQuantityLastDirection = 0;
-            depositQuantityNextMoveTime = 0f;
-            return;
-        }
-
-        float now = Time.unscaledTime;
-        if (direction != depositQuantityLastDirection)
-        {
-            AdjustDepositQuantity(direction);
-            depositQuantityLastDirection = direction;
-            depositQuantityNextMoveTime = now + settings.initialRepeatDelay;
-            return;
-        }
-
-        if (now >= depositQuantityNextMoveTime)
-        {
-            AdjustDepositQuantity(direction);
-            depositQuantityNextMoveTime = now + settings.repeatInterval;
-        }
-    }
-
-    private void AdjustDepositQuantity(int direction)
-    {
-        if (direction == -1)
-        {
-            depositQuantity = Mathf.Min(depositQuantity + 1, depositQuantityMax);
-        }
-        else if (direction == 1)
-        {
-            depositQuantity = Mathf.Max(1, depositQuantity - 1);
-        }
-
-        UpdateDepositQuantityText();
-    }
-
-    private void UpdateDepositQuantityText()
-    {
-        if (depositQuantityText == null)
+        Vector2 moveInput = LocalInputRouter.MoveValue;
+        QuantityBox box = GetQuantityBox();
+        if (box == null)
         {
             return;
         }
 
-        int current = Mathf.Clamp(depositQuantity, 1, depositQuantityMax);
-        int max = Mathf.Max(1, depositQuantityMax);
-        string itemName = GetItemDisplayName(depositQuantityItem);
-        string text = $"{current}/{max}";
-        if (!string.IsNullOrWhiteSpace(depositQuantityFormat) && depositQuantityFormat.Contains("{0"))
-        {
-            text = string.Format(depositQuantityFormat, current, max);
-        }
-
-        if (!string.IsNullOrEmpty(itemName))
-        {
-            text = $"{itemName}\n{text}";
-        }
-
-        depositQuantityText.text = text;
-        depositQuantityText.gameObject.SetActive(true);
-    }
-
-    private string GetItemDisplayName(Item item)
-    {
-        if (item == null)
-        {
-            return string.Empty;
-        }
-
-        if (!string.IsNullOrWhiteSpace(item.itemName))
-        {
-            return item.itemName;
-        }
-
-        return item.name;
+        box.HandleInput(moveInput, settings.moveDeadzone, settings.initialRepeatDelay, settings.repeatInterval);
     }
 
     private void ResetDepositQuantityState()
     {
         depositQuantityActive = false;
-        depositQuantity = 1;
         depositQuantityMax = 1;
         depositQuantityItem = null;
-        depositQuantityLastDirection = 0;
-        depositQuantityNextMoveTime = 0f;
     }
 
     private void HandleActionBoxSelection()
@@ -1750,7 +1669,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private void HandleActionBoxNavigation()
     {
-        if (playerInputs == null || actionBoxEntries.Count == 0)
+        if (actionBoxEntries.Count == 0)
         {
             return;
         }
@@ -1761,7 +1680,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetActionBoxMoveDirection(moveInput, settings.moveDeadzone);
         if (direction == 0)
         {
@@ -1965,6 +1884,12 @@ public class InventoryPanelController : MonoBehaviour
         if (controller == null)
         {
             return false;
+        }
+
+        NetworkInventory inventory = ResolveNetworkInventory(controller);
+        if (IsNetworked() && inventory != null)
+        {
+            return inventory.RequestBreakItem(item);
         }
 
         if (item.TryBreak(controller, out string reason))
@@ -2268,7 +2193,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = playerInputs != null ? playerInputs.Player.Move.ReadValue<Vector2>() : Vector2.zero;
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         Vector3 moveDir = GetPlacementMoveDirection(moveInput);
         Vector3 position = placementInstance.transform.position;
         if (moveDir.sqrMagnitude > 0f)
@@ -2909,6 +2834,12 @@ public class InventoryPanelController : MonoBehaviour
         position += forward * Mathf.Max(0f, dropForwardOffset);
         position += Vector3.up * dropHeightOffset;
 
+        NetworkInventory inventory = ResolveNetworkInventory(controller);
+        if (IsNetworked() && inventory != null)
+        {
+            return inventory.RequestDropItem(item, quantity, position, Quaternion.identity, allowDropWithoutWorldPrefab, placementDestroyWhenEmpty);
+        }
+
         GameObject instance = item.CreateWorldInstance(position, Quaternion.identity);
 
         if (instance == null)
@@ -2995,6 +2926,46 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        NetworkInventory inventory = ResolveNetworkInventory(controller);
+        if (IsNetworked() && inventory != null && !inventory.IsServer)
+        {
+            if (placementItem.isBuilding)
+            {
+                ShowPlacementFeedback(placementCannotPlaceMessage);
+                CancelPlacement(false);
+                return;
+            }
+
+            Vector3 targetPosition = placementInstance.transform.position;
+            Quaternion targetRotation = placementInstance.transform.rotation;
+            bool requested = inventory.RequestPlaceItem(
+                placementItem,
+                targetPosition,
+                targetRotation,
+                placementCreateLootContainer,
+                placementDestroyWhenEmpty,
+                allowDropWithoutWorldPrefab);
+
+            RestorePlacementPhysics();
+            ClearPlacementVisuals();
+            ClearPlacementCameraOverride(placementInstance.transform);
+            ClearPlacementRestore();
+            placementActive = false;
+            placementItem = null;
+            placementInstance = null;
+            placementAnchor = null;
+            placementGroundCollider = null;
+            SetSquadInputLock(false);
+            ReleasePlacementFocus();
+            if (requested)
+            {
+                // Feedback géré par le serveur via RPC.
+                return;
+            }
+
+            return;
+        }
+
         if (placementItem.isBuilding)
         {
             if (!TryConsumeBuildingResources(placementItem, controller, out string resourceReason))
@@ -3012,6 +2983,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        SyncNetworkInventory(controller);
         Item placedItem = placementItem;
         RestorePlacementPhysics();
         ClearPlacementVisuals();
@@ -3697,165 +3669,6 @@ public class InventoryPanelController : MonoBehaviour
             canvasGroup.interactable = visible;
             canvasGroup.blocksRaycasts = visible;
         }
-    }
-
-    private CanvasGroup GetDepositQuantityCanvasGroup()
-    {
-        if (depositQuantityPanel == null)
-        {
-            return null;
-        }
-
-        CanvasGroup canvasGroup = depositQuantityPanel.GetComponent<CanvasGroup>();
-        if (canvasGroup == null && depositQuantityAddCanvasGroupIfMissing)
-        {
-            canvasGroup = depositQuantityPanel.AddComponent<CanvasGroup>();
-        }
-
-        return canvasGroup;
-    }
-
-    private void FadeDepositQuantityTo(float targetAlpha, float duration)
-    {
-        depositQuantityCanvasGroup = GetDepositQuantityCanvasGroup();
-        if (depositQuantityCanvasGroup == null)
-        {
-            return;
-        }
-
-        if (!CanRunCoroutines() || !depositQuantityPanel.activeInHierarchy)
-        {
-            depositQuantityCanvasGroup.alpha = targetAlpha;
-            if (depositQuantityDisableRaycastsWhenHidden)
-            {
-                bool visible = targetAlpha > 0.001f;
-                depositQuantityCanvasGroup.interactable = visible;
-                depositQuantityCanvasGroup.blocksRaycasts = visible;
-            }
-            return;
-        }
-
-        if (depositQuantityFadeRoutine != null)
-        {
-            StopCoroutine(depositQuantityFadeRoutine);
-        }
-
-        float startAlpha = depositQuantityCanvasGroup.alpha;
-        if (duration <= 0f)
-        {
-            depositQuantityCanvasGroup.alpha = targetAlpha;
-            if (depositQuantityDisableRaycastsWhenHidden)
-            {
-                bool visible = targetAlpha > 0.001f;
-                depositQuantityCanvasGroup.interactable = visible;
-                depositQuantityCanvasGroup.blocksRaycasts = visible;
-            }
-            return;
-        }
-
-        depositQuantityFadeRoutine = StartCoroutine(FadeDepositQuantityRoutine(depositQuantityCanvasGroup, startAlpha, targetAlpha, duration));
-    }
-
-    private IEnumerator FadeDepositQuantityRoutine(CanvasGroup canvasGroup, float startAlpha, float targetAlpha, float duration)
-    {
-        if (canvasGroup == null)
-        {
-            yield break;
-        }
-
-        float time = 0f;
-        if (depositQuantityDisableRaycastsWhenHidden)
-        {
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
-
-        while (time < duration)
-        {
-            time += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(time / duration);
-            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            yield return null;
-        }
-
-        canvasGroup.alpha = targetAlpha;
-        if (depositQuantityDisableRaycastsWhenHidden)
-        {
-            bool visible = targetAlpha > 0.001f;
-            canvasGroup.interactable = visible;
-            canvasGroup.blocksRaycasts = visible;
-        }
-    }
-
-    private GameObject CreateDepositQuantityPanel()
-    {
-        InventoryUISettings settings = GetSettings();
-        Transform parent = settings != null && settings.inventoryPanel != null ? settings.inventoryPanel.transform : transform;
-
-        GameObject panel = new GameObject("DepositQuantityPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-        RectTransform rect = panel.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(260f, 110f);
-        rect.anchoredPosition = depositQuantityPanelOffset;
-
-        Image image = panel.GetComponent<Image>();
-        image.color = new Color(0f, 0f, 0f, 0.75f);
-        image.raycastTarget = false;
-        image.sprite = GetDepositQuantitySprite();
-        image.type = Image.Type.Simple;
-
-        GameObject textObject = new GameObject("DepositQuantity_Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.SetParent(rect, false);
-        textRect.anchorMin = new Vector2(0f, 0f);
-        textRect.anchorMax = new Vector2(1f, 1f);
-        textRect.offsetMin = new Vector2(8f, 8f);
-        textRect.offsetMax = new Vector2(-8f, -8f);
-
-        TextMeshProUGUI tmp = textObject.GetComponent<TextMeshProUGUI>();
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 28f;
-        tmp.text = string.Empty;
-        tmp.raycastTarget = false;
-
-        if (settings != null && settings.descriptionText != null)
-        {
-            tmp.font = settings.descriptionText.font;
-            tmp.fontSharedMaterial = settings.descriptionText.fontSharedMaterial;
-            tmp.color = settings.descriptionText.color;
-            tmp.fontSize = Mathf.Max(16f, settings.descriptionText.fontSize);
-        }
-
-        depositQuantityText = tmp;
-        return panel;
-    }
-
-    private static Sprite GetDepositQuantitySprite()
-    {
-        if (depositQuantityFallbackSprite != null)
-        {
-            return depositQuantityFallbackSprite;
-        }
-
-        if (depositQuantityFallbackTexture == null)
-        {
-            depositQuantityFallbackTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            depositQuantityFallbackTexture.SetPixel(0, 0, Color.white);
-            depositQuantityFallbackTexture.Apply();
-        }
-
-        depositQuantityFallbackSprite = Sprite.Create(
-            depositQuantityFallbackTexture,
-            new Rect(0f, 0f, 1f, 1f),
-            new Vector2(0.5f, 0.5f),
-            100f,
-            0,
-            SpriteMeshType.FullRect);
-
-        return depositQuantityFallbackSprite;
     }
 
     private bool CanRunCoroutines()

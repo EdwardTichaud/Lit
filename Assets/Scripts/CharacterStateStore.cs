@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Unity.Netcode;
 
 // Gere la sauvegarde/chargement des personnages, inventaires, coffres maison et constructions.
 public class CharacterStateStore : MonoBehaviour
 {
+    public static CharacterStateStore Instance { get; private set; }
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -40,9 +42,22 @@ public class CharacterStateStore : MonoBehaviour
     public bool saveOnApplicationQuit = true;
 
     private CharacterSaveData loadedData;
+    private readonly Dictionary<string, string> playerBindings = new Dictionary<string, string>();
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            return;
+        }
+
+        Instance = this;
+
+        if (IsNetworked() && !IsServer())
+        {
+            return;
+        }
+
         if (loadOnAwake)
         {
             Load();
@@ -52,6 +67,11 @@ public class CharacterStateStore : MonoBehaviour
 
     private void OnDisable()
     {
+        if (IsNetworked() && !IsServer())
+        {
+            return;
+        }
+
         if (saveOnDisable)
         {
             Save();
@@ -60,6 +80,11 @@ public class CharacterStateStore : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        if (IsNetworked() && !IsServer())
+        {
+            return;
+        }
+
         if (saveOnApplicationQuit)
         {
             Save();
@@ -68,6 +93,11 @@ public class CharacterStateStore : MonoBehaviour
 
     public void Save()
     {
+        if (IsNetworked() && !IsServer())
+        {
+            return;
+        }
+
         SquadManager manager = GetSquadManager();
         if (manager == null)
         {
@@ -99,6 +129,11 @@ public class CharacterStateStore : MonoBehaviour
 
     public void Load()
     {
+        if (IsNetworked() && !IsServer())
+        {
+            return;
+        }
+
         string path = GetPath();
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
@@ -120,10 +155,17 @@ public class CharacterStateStore : MonoBehaviour
 
     private void ApplyLoadedData()
     {
+        if (IsNetworked() && !IsServer())
+        {
+            return;
+        }
+
         if (loadedData == null)
         {
             return;
         }
+
+        ApplyLoadedPlayerBindings(loadedData);
 
         // Construit les lookups, puis applique les donnees sauvegardees.
         SquadManager manager = GetSquadManager();
@@ -140,6 +182,57 @@ public class CharacterStateStore : MonoBehaviour
         manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
         ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
         ApplyHomeItems(loadedData, itemLookup);
+    }
+
+    private void ApplyLoadedPlayerBindings(CharacterSaveData data)
+    {
+        playerBindings.Clear();
+        if (data == null || data.playerBindings == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < data.playerBindings.Count; i++)
+        {
+            PlayerCharacterBinding binding = data.playerBindings[i];
+            if (binding == null || string.IsNullOrWhiteSpace(binding.playerId) || string.IsNullOrWhiteSpace(binding.characterId))
+            {
+                continue;
+            }
+
+            playerBindings[binding.playerId] = binding.characterId;
+        }
+    }
+
+    public bool TryGetBoundCharacterId(string playerId, out string characterId)
+    {
+        if (string.IsNullOrWhiteSpace(playerId))
+        {
+            characterId = string.Empty;
+            return false;
+        }
+
+        return playerBindings.TryGetValue(playerId, out characterId);
+    }
+
+    public void SetPlayerBinding(string playerId, string characterId)
+    {
+        if (string.IsNullOrWhiteSpace(playerId) || string.IsNullOrWhiteSpace(characterId))
+        {
+            return;
+        }
+
+        playerBindings[playerId] = characterId;
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    private static bool IsServer()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
     }
 
     private CharacterSaveData BuildSaveData(SquadManager manager)
@@ -260,7 +353,31 @@ public class CharacterStateStore : MonoBehaviour
 
         data.homeItems = BuildHomeItems();
         data.builtConstructions = BuildBuiltConstructions();
+        AppendPlayerBindings(data);
         return data;
+    }
+
+    private void AppendPlayerBindings(CharacterSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        data.playerBindings = new List<PlayerCharacterBinding>();
+        foreach (KeyValuePair<string, string> entry in playerBindings)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Key) || string.IsNullOrWhiteSpace(entry.Value))
+            {
+                continue;
+            }
+
+            data.playerBindings.Add(new PlayerCharacterBinding
+            {
+                playerId = entry.Key,
+                characterId = entry.Value
+            });
+        }
     }
 
     private List<CharacterData> BuildKnownCharacters(SquadManager manager)

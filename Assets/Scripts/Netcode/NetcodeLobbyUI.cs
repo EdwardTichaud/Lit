@@ -1,0 +1,581 @@
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
+
+// UI runtime simple pour host/join via un code de session.
+public class NetcodeLobbyUI : MonoBehaviour
+{
+    public static NetcodeLobbyUI Instance { get; private set; }
+
+    [Header("Auto UI")]
+    [SerializeField] private bool autoCreateUI = true;
+    [SerializeField] private bool dontDestroyOnLoad = true;
+
+    [Header("Session Code")]
+    [SerializeField] private int codeLength = 6;
+    [SerializeField] private ushort basePort = 7000;
+    [SerializeField] private ushort portRange = 1000;
+
+    [Header("Address")]
+    [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
+    [SerializeField] private string clientAddressDefault = "127.0.0.1";
+    [SerializeField] private string listenAddress = "0.0.0.0";
+
+    [Header("Layout")]
+    [SerializeField] private Vector2 panelSize = new Vector2(420f, 520f);
+    [SerializeField] private Color panelColor = new Color(0f, 0f, 0f, 0.75f);
+    [SerializeField] private Color fieldColor = new Color(1f, 1f, 1f, 0.12f);
+    [SerializeField] private Color buttonColor = new Color(1f, 1f, 1f, 0.18f);
+
+    private InputField hostCodeInput;
+    private InputField joinCodeInput;
+    private InputField addressInput;
+    private Text statusText;
+    private Text portText;
+    private GameObject panelRoot;
+    private Font defaultFont;
+    private NetcodeLauncher launcher;
+    private string currentHostCode;
+    private string lastStatus;
+    private bool uiVisible = true;
+    private bool inputLocked;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        if (dontDestroyOnLoad)
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+
+        launcher = GetComponent<NetcodeLauncher>();
+        if (autoCreateUI)
+        {
+            BuildUI();
+        }
+    }
+
+    private void OnEnable()
+    {
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Multi += OnMultiPerformed;
+    }
+
+    private void OnDisable()
+    {
+        LocalInputRouter.Multi -= OnMultiPerformed;
+    }
+
+    private void Update()
+    {
+        UpdateStatus();
+        EnsureInputLock();
+    }
+
+    private void BuildUI()
+    {
+        defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        EnsureEventSystem();
+
+        GameObject canvasObject = new GameObject("LobbyCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasObject.transform.SetParent(transform, false);
+
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        panelRoot = new GameObject("LobbyPanel", typeof(RectTransform), typeof(Image));
+        panelRoot.transform.SetParent(canvasObject.transform, false);
+        Image panelImage = panelRoot.GetComponent<Image>();
+        panelImage.color = panelColor;
+
+        RectTransform panelRect = panelRoot.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.sizeDelta = panelSize;
+
+        VerticalLayoutGroup vertical = panelRoot.AddComponent<VerticalLayoutGroup>();
+        vertical.childControlHeight = true;
+        vertical.childControlWidth = true;
+        vertical.childForceExpandHeight = false;
+        vertical.childForceExpandWidth = true;
+        vertical.spacing = 10f;
+        vertical.padding = new RectOffset(16, 16, 16, 16);
+
+        ContentSizeFitter fitter = panelRoot.AddComponent<ContentSizeFitter>();
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        CreateLabel(panelRoot.transform, "Multijoueur", 20, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+        GameObject hostRow = CreateRow(panelRoot.transform);
+        CreateLabel(hostRow.transform, "Code host", 14, FontStyle.Normal, TextAnchor.MiddleLeft, 110f);
+        hostCodeInput = CreateInputField(hostRow.transform, "CODE", codeLength, InputField.ContentType.Alphanumeric);
+        CreateButton(hostRow.transform, "Generer", OnGenerateClicked, 90f);
+        CreateButton(hostRow.transform, "Copier", OnCopyClicked, 70f);
+        SetupCodeField(hostCodeInput);
+        hostCodeInput.text = NetcodeSessionCode.Generate(codeLength);
+
+        GameObject joinRow = CreateRow(panelRoot.transform);
+        CreateLabel(joinRow.transform, "Code rejoindre", 14, FontStyle.Normal, TextAnchor.MiddleLeft, 110f);
+        joinCodeInput = CreateInputField(joinRow.transform, "CODE", codeLength, InputField.ContentType.Alphanumeric);
+        SetupCodeField(joinCodeInput);
+
+        GameObject addressRow = CreateRow(panelRoot.transform);
+        CreateLabel(addressRow.transform, "Adresse", 14, FontStyle.Normal, TextAnchor.MiddleLeft, 110f);
+        addressInput = CreateInputField(addressRow.transform, clientAddressDefault, 64, InputField.ContentType.Standard);
+        if (addressInput != null)
+        {
+            addressInput.text = clientAddressDefault;
+        }
+
+        GameObject buttonsRow = CreateRow(panelRoot.transform);
+        CreateButton(buttonsRow.transform, "Host", OnHostClicked, 100f);
+        CreateButton(buttonsRow.transform, "Rejoindre", OnJoinClicked, 120f);
+        CreateButton(buttonsRow.transform, "Stop", OnStopClicked, 80f);
+
+        portText = CreateLabel(panelRoot.transform, "Port: -", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
+        statusText = CreateLabel(panelRoot.transform, "Etat: offline", 12, FontStyle.Normal, TextAnchor.MiddleLeft);
+
+        SetUIVisible(true);
+    }
+
+    private void OnGenerateClicked()
+    {
+        string code = NetcodeSessionCode.Generate(codeLength);
+        if (hostCodeInput != null)
+        {
+            hostCodeInput.SetTextWithoutNotify(code);
+        }
+
+        currentHostCode = code;
+        UpdatePortDisplay(code);
+    }
+
+    private void OnCopyClicked()
+    {
+        string code = ResolveCodeFromField(hostCodeInput);
+        if (string.IsNullOrEmpty(code))
+        {
+            code = NetcodeSessionCode.Generate(codeLength);
+            if (hostCodeInput != null)
+            {
+                hostCodeInput.SetTextWithoutNotify(code);
+            }
+        }
+
+        GUIUtility.systemCopyBuffer = code;
+        currentHostCode = code;
+        UpdatePortDisplay(code);
+        SetStatus($"Code copie: {code}");
+    }
+
+    private void OnHostClicked()
+    {
+        if (!TryResolvePort(hostCodeInput, out string code, out ushort port))
+        {
+            SetStatus("Code host invalide.");
+            return;
+        }
+
+        NetcodeLauncher resolved = ResolveLauncher();
+        if (resolved == null)
+        {
+            SetStatus("NetcodeLauncher manquant.");
+            return;
+        }
+
+        currentHostCode = code;
+        UpdatePortDisplay(code);
+        bool started = resolved.StartHostWithConnection(hostLoopbackAddress, port, listenAddress);
+        SetStatus(started ? $"Host lance (code {code})." : "Host deja actif.");
+        if (started)
+        {
+            SetUIVisible(false);
+        }
+    }
+
+    private void OnJoinClicked()
+    {
+        if (!TryResolvePort(joinCodeInput, out string code, out ushort port))
+        {
+            SetStatus("Code rejoindre invalide.");
+            return;
+        }
+
+        string address = ResolveClientAddress();
+        NetcodeLauncher resolved = ResolveLauncher();
+        if (resolved == null)
+        {
+            SetStatus("NetcodeLauncher manquant.");
+            return;
+        }
+
+        UpdatePortDisplay(code);
+        bool started = resolved.StartClientWithConnection(address, port);
+        SetStatus(started ? $"Connexion a {address}:{port}." : "Client deja actif.");
+        if (started)
+        {
+            SetUIVisible(false);
+        }
+    }
+
+    private void OnStopClicked()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+            SetStatus("Connexion arretee.");
+            SetUIVisible(true);
+        }
+        else
+        {
+            SetStatus("Aucune connexion active.");
+        }
+    }
+
+    private void OnMultiPerformed(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+        {
+            return;
+        }
+
+        ToggleUI();
+    }
+
+    private void ToggleUI()
+    {
+        SetUIVisible(!uiVisible);
+    }
+
+    private void SetupCodeField(InputField field)
+    {
+        if (field == null)
+        {
+            return;
+        }
+
+        field.onValueChanged.AddListener(value =>
+        {
+            string normalized = NetcodeSessionCode.Normalize(value);
+            field.SetTextWithoutNotify(normalized);
+        });
+    }
+
+    private bool TryResolvePort(InputField field, out string code, out ushort port)
+    {
+        port = 0;
+        code = ResolveCodeFromField(field);
+        if (string.IsNullOrEmpty(code))
+        {
+            return false;
+        }
+
+        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort resolvedPort, out string normalized))
+        {
+            return false;
+        }
+
+        code = normalized;
+        port = resolvedPort;
+        return true;
+    }
+
+    private string ResolveCodeFromField(InputField field)
+    {
+        if (field == null)
+        {
+            return string.Empty;
+        }
+
+        return NetcodeSessionCode.Normalize(field.text);
+    }
+
+    private string ResolveClientAddress()
+    {
+        string address = addressInput != null ? addressInput.text : clientAddressDefault;
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            address = clientAddressDefault;
+        }
+
+        return address.Trim();
+    }
+
+    private NetcodeLauncher ResolveLauncher()
+    {
+        if (launcher != null)
+        {
+            return launcher;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        launcher = FindFirstObjectByType<NetcodeLauncher>();
+#else
+        launcher = FindObjectOfType<NetcodeLauncher>();
+#endif
+        return launcher;
+    }
+
+    private void UpdatePortDisplay(string code)
+    {
+        if (portText == null)
+        {
+            return;
+        }
+
+        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort port, out _))
+        {
+            portText.text = "Port: -";
+            return;
+        }
+
+        portText.text = $"Port: {port}";
+    }
+
+    private void UpdateStatus()
+    {
+        if (statusText == null)
+        {
+            return;
+        }
+
+        string status;
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsListening)
+        {
+            status = "offline";
+            if (!uiVisible)
+            {
+                SetUIVisible(true);
+            }
+        }
+        else if (manager.IsHost)
+        {
+            status = "host";
+        }
+        else if (manager.IsServer)
+        {
+            status = "serveur";
+        }
+        else
+        {
+            status = "client";
+        }
+
+        if (status != lastStatus)
+        {
+            lastStatus = status;
+            statusText.text = $"Etat: {status}";
+        }
+    }
+
+    private void SetStatus(string message)
+    {
+        if (statusText == null)
+        {
+            return;
+        }
+
+        statusText.text = $"Etat: {message}";
+        lastStatus = message;
+    }
+
+    private void SetUIVisible(bool visible)
+    {
+        uiVisible = visible;
+        if (panelRoot != null)
+        {
+            panelRoot.SetActive(visible);
+        }
+
+        if (visible)
+        {
+            InputFocusStack.Push(this);
+            LocalInputRouter.ResetMove();
+            EnsureInputLock();
+        }
+        else
+        {
+            InputFocusStack.Pop(this);
+            if (inputLocked && SquadManager.Instance != null)
+            {
+                SquadManager.Instance.SetInputLocked(false);
+                inputLocked = false;
+            }
+        }
+    }
+
+    private void EnsureInputLock()
+    {
+        if (!uiVisible || inputLocked)
+        {
+            return;
+        }
+
+        if (SquadManager.Instance != null)
+        {
+            SquadManager.Instance.SetInputLocked(true);
+            inputLocked = true;
+        }
+    }
+
+    private void EnsureEventSystem()
+    {
+#if UNITY_2023_1_OR_NEWER
+        if (FindFirstObjectByType<EventSystem>() != null)
+#else
+        if (FindObjectOfType<EventSystem>() != null)
+#endif
+        {
+            return;
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        GameObject eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+#else
+        GameObject eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+#endif
+        eventSystem.transform.SetParent(transform, false);
+    }
+
+    private GameObject CreateRow(Transform parent)
+    {
+        GameObject row = new GameObject("Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+        row.transform.SetParent(parent, false);
+
+        HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
+        layout.childControlHeight = true;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.spacing = 8f;
+
+        LayoutElement element = row.AddComponent<LayoutElement>();
+        element.minHeight = 36f;
+
+        return row;
+    }
+
+    private Text CreateLabel(Transform parent, string text, int fontSize, FontStyle style, TextAnchor alignment, float preferredWidth = -1f)
+    {
+        GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
+        labelObject.transform.SetParent(parent, false);
+
+        Text label = labelObject.GetComponent<Text>();
+        label.text = text;
+        label.font = defaultFont;
+        label.fontSize = fontSize;
+        label.fontStyle = style;
+        label.color = Color.white;
+        label.alignment = alignment;
+
+        LayoutElement element = labelObject.AddComponent<LayoutElement>();
+        if (preferredWidth > 0f)
+        {
+            element.preferredWidth = preferredWidth;
+            element.minWidth = preferredWidth;
+        }
+
+        element.minHeight = Mathf.Max(24f, fontSize + 6f);
+
+        return label;
+    }
+
+    private InputField CreateInputField(Transform parent, string placeholderText, int characterLimit, InputField.ContentType contentType)
+    {
+        GameObject fieldObject = new GameObject("InputField", typeof(RectTransform), typeof(Image), typeof(InputField));
+        fieldObject.transform.SetParent(parent, false);
+
+        Image background = fieldObject.GetComponent<Image>();
+        background.color = fieldColor;
+
+        InputField field = fieldObject.GetComponent<InputField>();
+        field.contentType = contentType;
+        field.lineType = InputField.LineType.SingleLine;
+        field.characterLimit = characterLimit;
+
+        GameObject textObject = new GameObject("Text", typeof(RectTransform), typeof(Text));
+        textObject.transform.SetParent(fieldObject.transform, false);
+        Text text = textObject.GetComponent<Text>();
+        text.font = defaultFont;
+        text.fontSize = 14;
+        text.color = Color.white;
+        text.alignment = TextAnchor.MiddleLeft;
+
+        GameObject placeholderObject = new GameObject("Placeholder", typeof(RectTransform), typeof(Text));
+        placeholderObject.transform.SetParent(fieldObject.transform, false);
+        Text placeholder = placeholderObject.GetComponent<Text>();
+        placeholder.font = defaultFont;
+        placeholder.fontSize = 14;
+        placeholder.color = new Color(1f, 1f, 1f, 0.4f);
+        placeholder.alignment = TextAnchor.MiddleLeft;
+        placeholder.text = placeholderText;
+
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(10f, 6f);
+        textRect.offsetMax = new Vector2(-10f, -6f);
+
+        RectTransform placeholderRect = placeholderObject.GetComponent<RectTransform>();
+        placeholderRect.anchorMin = Vector2.zero;
+        placeholderRect.anchorMax = Vector2.one;
+        placeholderRect.offsetMin = new Vector2(10f, 6f);
+        placeholderRect.offsetMax = new Vector2(-10f, -6f);
+
+        field.textComponent = text;
+        field.placeholder = placeholder;
+
+        LayoutElement element = fieldObject.AddComponent<LayoutElement>();
+        element.minHeight = 32f;
+        element.preferredHeight = 32f;
+        element.flexibleWidth = 1f;
+
+        return field;
+    }
+
+    private Button CreateButton(Transform parent, string label, UnityEngine.Events.UnityAction callback, float preferredWidth)
+    {
+        GameObject buttonObject = new GameObject(label, typeof(RectTransform), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+
+        Image image = buttonObject.GetComponent<Image>();
+        image.color = buttonColor;
+
+        Button button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = image;
+        if (callback != null)
+        {
+            button.onClick.AddListener(callback);
+        }
+
+        Text text = CreateLabel(buttonObject.transform, label, 14, FontStyle.Bold, TextAnchor.MiddleCenter);
+        text.raycastTarget = false;
+
+        LayoutElement element = buttonObject.AddComponent<LayoutElement>();
+        if (preferredWidth > 0f)
+        {
+            element.preferredWidth = preferredWidth;
+            element.minWidth = preferredWidth;
+        }
+        element.minHeight = 32f;
+
+        return button;
+    }
+}

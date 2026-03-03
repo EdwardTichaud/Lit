@@ -24,6 +24,8 @@ public class TorchVisionSensitive : MonoBehaviour
     [Header("Targets")]
     [SerializeField] private bool includeChildren = true;
     [SerializeField] private bool affectRenderers = true;
+    [SerializeField] private bool enableRendererWhenVisible = true;
+    [SerializeField] private bool enableRendererWhenHidden = false;
     [SerializeField] private bool affectColliders = true;
     [SerializeField] private bool enableColliderWhenVisible = true;
     [SerializeField] private bool enableColliderWhenHidden = false;
@@ -233,7 +235,7 @@ public class TorchVisionSensitive : MonoBehaviour
         if (fadeDuration <= 0f || !HasFadeableRenderers())
         {
             currentFade = visible ? 1f : 0f;
-            SetRenderersEnabled(visible);
+            SetRenderersEnabledForVisibility(visible);
             ApplyFadeToRenderers(currentFade);
             return;
         }
@@ -272,14 +274,18 @@ public class TorchVisionSensitive : MonoBehaviour
         {
             currentFade = target;
             ApplyFadeToRenderers(currentFade);
-            SetRenderersEnabled(target > 0f);
+            SetRenderersEnabledForVisibility(target > 0f);
             fadeRoutine = null;
             yield break;
         }
 
         if (target > 0f)
         {
-            SetRenderersEnabled(true);
+            SetRenderersEnabledForVisibility(true);
+        }
+        else if (enableRendererWhenHidden)
+        {
+            SetRenderersEnabledForVisibility(false);
         }
 
         float duration = Mathf.Max(0.001f, fadeDuration);
@@ -295,10 +301,7 @@ public class TorchVisionSensitive : MonoBehaviour
 
         currentFade = target;
         ApplyFadeToRenderers(currentFade);
-        if (target <= 0f)
-        {
-            SetRenderersEnabled(false);
-        }
+        SetRenderersEnabledForVisibility(target > 0f);
 
         fadeRoutine = null;
     }
@@ -336,13 +339,14 @@ public class TorchVisionSensitive : MonoBehaviour
         }
     }
 
-    private void SetRenderersEnabled(bool enabled)
+    private void SetRenderersEnabledForVisibility(bool visible)
     {
         if (renderers == null)
         {
             return;
         }
 
+        bool enabled = visible ? enableRendererWhenVisible : enableRendererWhenHidden;
         for (int i = 0; i < renderers.Length; i++)
         {
             Renderer renderer = renderers[i];

@@ -2,10 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
-// Joue des lignes de voix et affiche le texte au dessus du personnage.
+// Joue des lignes de voix et affiche le texte en world space, avec support des connaissances.
 public class LocalVoiceLineController : MonoBehaviour
 {
+    [System.Serializable]
+    public class LocalVoiceLineEntry
+    {
+        [Tooltip("VoiceLineData declenchee par cette entree.")]
+        public VoiceLineData voiceLine;
+        [Tooltip("Connaissances requises pour declencher la ligne.")]
+        public List<KnowledgeSO> requiredKnowledge = new List<KnowledgeSO>();
+        [Tooltip("Connaissances debloquees lorsque la ligne est declenchee.")]
+        public List<KnowledgeSO> unlockKnowledge = new List<KnowledgeSO>();
+    }
+
+    public enum KnowledgeSelectionMode
+    {
+        FirstMatch,
+        MostSpecific
+    }
+
     [Header("Voice Lines")]
     [Tooltip("CharacterData qui contient les voice lines.")]
     private CharacterData characterData;
@@ -13,6 +32,27 @@ public class LocalVoiceLineController : MonoBehaviour
     public bool autoBuildLookup = true;
     [Tooltip("Auto-resout le CharacterData si manquant.")]
     public bool autoResolveCharacterData = true;
+
+    [Header("Voice Lines")]
+    [Tooltip("Liste locale de voice lines (avec conditions de connaissances).")]
+    [FormerlySerializedAs("entries")]
+    public List<LocalVoiceLineEntry> voiceLines = new List<LocalVoiceLineEntry>();
+    [Tooltip("Mode de selection quand plusieurs lignes sont valides.")]
+    public KnowledgeSelectionMode knowledgeSelectionMode = KnowledgeSelectionMode.MostSpecific;
+
+    [Header("Interaction")]
+    [Tooltip("Ecoute l'input Interact pour declencher une ligne.")]
+    public bool useInteractInput = false;
+    [Tooltip("Exige un tag Player si aucun personnage de squad n'est trouve.")]
+    public bool requirePlayerTag = true;
+    [Tooltip("Utilise le bounds du collider pour estimer le rayon.")]
+    public bool useColliderBounds = true;
+    [Tooltip("Rayon manuel d'interaction.")]
+    public float interactionRadius = 1.25f;
+    [Tooltip("Padding ajoute au rayon du collider.")]
+    public float colliderRadiusPadding = 0.1f;
+    [Tooltip("Cooldown entre deux interactions (secondes).")]
+    public float interactCooldown = 0f;
 
     [Header("Display")]
     [Tooltip("Point d'ancrage du texte (tete). Laisse vide pour utiliser ce transform.")]
@@ -46,12 +86,21 @@ public class LocalVoiceLineController : MonoBehaviour
     [Tooltip("Distance max si AudioManager absent.")]
     public float fallbackMaxDistance = 20f;
 
+    [Header("Music Ducking")]
+    [Tooltip("Reduit la musique pendant une voiceline.")]
+    public bool duckMusicDuringVoiceLine = true;
+    [Range(0f, 1f), Tooltip("Multiplicateur applique a la musique pendant une voiceline.")]
+    public float musicDuckMultiplier = 0.5f;
+
     private readonly Dictionary<int, VoiceLineData> lookup = new Dictionary<int, VoiceLineData>();
     private Coroutine displayRoutine;
     private AudioSource activeSource;
     private AudioSource localSource;
     private Transform textInstanceRoot;
     private bool warnedMissingTextRoot;
+    private Collider interactionCollider;
+    private float nextInteractTime;
+    private bool isMusicDucked;
 
     private const string TextRootTag = "LocalVoiceLines";
 
@@ -63,6 +112,11 @@ public class LocalVoiceLineController : MonoBehaviour
         {
             RebuildLookup();
         }
+
+        if (useInteractInput)
+        {
+            interactionCollider = GetComponent<Collider>();
+        }
     }
 
     private void OnEnable()
@@ -72,12 +126,73 @@ public class LocalVoiceLineController : MonoBehaviour
         {
             RebuildLookup();
         }
+
+        if (useInteractInput)
+        {
+            if (interactionCollider == null)
+            {
+                interactionCollider = GetComponent<Collider>();
+            }
+
+            LocalInputRouter.EnsureInitialized();
+            LocalInputRouter.Interact += OnInteractPerformed;
+        }
+    }
+
+    private void OnDisable()
+    {
+        EndMusicDucking();
+        if (!useInteractInput)
+        {
+            return;
+        }
+
+        LocalInputRouter.Interact -= OnInteractPerformed;
     }
 
     private void LateUpdate()
     {
         UpdateTextTransform();
         UpdateAudioTransform();
+    }
+
+    private void OnInteractPerformed(InputAction.CallbackContext context)
+    {
+        if (!useInteractInput)
+        {
+            return;
+        }
+
+        if (InputFocusStack.HasAnyFocus())
+        {
+            return;
+        }
+
+        if (interactCooldown > 0f && Time.time < nextInteractTime)
+        {
+            return;
+        }
+
+        if (!IsCharacterInRange())
+        {
+            return;
+        }
+
+        TriggerInteraction();
+    }
+
+    public void TriggerInteraction()
+    {
+        if (interactCooldown > 0f)
+        {
+            nextInteractTime = Time.time + interactCooldown;
+        }
+
+        bool played = PlayBestEntry();
+        if (!played)
+        {
+            PlayRandomVoiceLine();
+        }
     }
 
     public void RebuildLookup()
@@ -125,6 +240,58 @@ public class LocalVoiceLineController : MonoBehaviour
             return false;
         }
 
+        if (HasCues(data))
+        {
+            return PlayVoiceLineSequence(data);
+        }
+
+        return PlayLine(data.voiceLineText, data.voiceLineAudioClip);
+    }
+
+    public bool PlayEntry(LocalVoiceLineEntry entry)
+    {
+        if (entry == null)
+        {
+            return false;
+        }
+
+        if (entry.voiceLine == null)
+        {
+            return false;
+        }
+
+        bool played = PlayVoiceLine(entry.voiceLine);
+        if (played)
+        {
+            UnlockEntryKnowledge(entry);
+        }
+
+        return played;
+    }
+
+    public bool PlayEntry(int index)
+    {
+        if (voiceLines == null || index < 0 || index >= voiceLines.Count)
+        {
+            return false;
+        }
+
+        return PlayEntry(voiceLines[index]);
+    }
+
+    public bool PlayBestEntry()
+    {
+        LocalVoiceLineEntry entry = SelectEntryForKnowledge();
+        if (entry == null)
+        {
+            return false;
+        }
+
+        return PlayEntry(entry);
+    }
+
+    public bool PlayLine(string text, AudioClipSO clip)
+    {
         EnsureTextTarget();
         if (textTarget == null)
         {
@@ -133,22 +300,275 @@ public class LocalVoiceLineController : MonoBehaviour
 
         StopCurrentPlayback();
 
-        textTarget.text = data.voiceLineText ?? string.Empty;
+        textTarget.text = text ?? string.Empty;
+        SetTextVisible(true);
+
+        float duration = ResolveTextDuration(clip);
+        displayRoutine = StartCoroutine(HideAfterDelay(duration));
+
+        BeginMusicDucking();
+        PlayAudio(clip);
+        return true;
+    }
+
+    private bool PlayVoiceLineSequence(VoiceLineData data)
+    {
+        EnsureTextTarget();
+        if (textTarget == null)
+        {
+            return false;
+        }
+
+        StopCurrentPlayback();
+        SetTextVisible(false);
+
+        List<VoiceLineData.VoiceLineTextCue> cues = BuildSortedCues(data);
+        if (cues == null || cues.Count == 0)
+        {
+            return PlayLine(data.voiceLineText, data.voiceLineAudioClip);
+        }
+
+        BeginMusicDucking();
+        PlayAudio(data.voiceLineAudioClip);
+        displayRoutine = StartCoroutine(PlayCuesRoutine(cues, data.voiceLineAudioClip));
+        return true;
+    }
+
+    private bool HasCues(VoiceLineData data)
+    {
+        return data != null && data.voiceLineCues != null && data.voiceLineCues.Count > 0;
+    }
+
+    private List<VoiceLineData.VoiceLineTextCue> BuildSortedCues(VoiceLineData data)
+    {
+        if (data == null || data.voiceLineCues == null || data.voiceLineCues.Count == 0)
+        {
+            return null;
+        }
+
+        List<VoiceLineData.VoiceLineTextCue> cues = new List<VoiceLineData.VoiceLineTextCue>(data.voiceLineCues.Count);
+        for (int i = 0; i < data.voiceLineCues.Count; i++)
+        {
+            VoiceLineData.VoiceLineTextCue cue = data.voiceLineCues[i];
+            if (cue == null)
+            {
+                continue;
+            }
+
+            cues.Add(cue);
+        }
+
+        if (cues.Count == 0)
+        {
+            return null;
+        }
+
+        cues.Sort((a, b) => a.time.CompareTo(b.time));
+        return cues;
+    }
+
+    private IEnumerator PlayCuesRoutine(List<VoiceLineData.VoiceLineTextCue> cues, AudioClipSO clip)
+    {
+        float startTime = useUnscaledTime ? Time.unscaledTime : Time.time;
+        bool shownAny = false;
+
+        for (int i = 0; i < cues.Count; i++)
+        {
+            VoiceLineData.VoiceLineTextCue cue = cues[i];
+            if (cue == null)
+            {
+                continue;
+            }
+
+            float targetTime = Mathf.Max(0f, cue.time);
+            while (GetPlaybackTime(startTime, clip) < targetTime)
+            {
+                yield return null;
+            }
+
+            if (textTarget != null)
+            {
+                textTarget.text = cue.text ?? string.Empty;
+            }
+
+            SetTextVisible(true);
+            shownAny = true;
+        }
+
+        if (!shownAny)
+        {
+            EndMusicDucking();
+            displayRoutine = null;
+            yield break;
+        }
+
+        float duration = ResolveSequenceDuration(clip, cues);
+        while (GetPlaybackTime(startTime, clip) < duration)
+        {
+            yield return null;
+        }
+
+        if (hideWhenDone)
+        {
+            SetTextVisible(false);
+        }
+
+        EndMusicDucking();
+        displayRoutine = null;
+    }
+
+    private float GetPlaybackTime(float startTime, AudioClipSO clip)
+    {
+        if (activeSource != null && clip != null && clip.audioClip != null && !clip.loop && activeSource.clip == clip.audioClip)
+        {
+            return activeSource.time;
+        }
+
+        float now = useUnscaledTime ? Time.unscaledTime : Time.time;
+        return Mathf.Max(0f, now - startTime);
+    }
+
+    private float ResolveSequenceDuration(AudioClipSO clip, List<VoiceLineData.VoiceLineTextCue> cues)
+    {
+        float duration = Mathf.Max(0.1f, fallbackTextDuration);
+
+        if (clip != null && clip.audioClip != null && !clip.loop)
+        {
+            duration = Mathf.Max(duration, clip.audioClip.length + Mathf.Max(0f, extraTextDuration));
+        }
+
+        if (cues != null && cues.Count > 0)
+        {
+            float lastTime = cues[cues.Count - 1].time;
+            duration = Mathf.Max(duration, lastTime + Mathf.Max(0.05f, fallbackTextDuration));
+        }
+
+        return duration;
+    }
+
+    private void SetTextVisible(bool visible)
+    {
         Transform root = GetTextInstanceRoot();
         if (root != null && root.gameObject != null)
         {
-            root.gameObject.SetActive(true);
+            root.gameObject.SetActive(visible);
+            return;
         }
-        else if (textTarget.gameObject != null)
+
+        if (textTarget != null && textTarget.gameObject != null)
         {
-            textTarget.gameObject.SetActive(true);
+            textTarget.gameObject.SetActive(visible);
+        }
+    }
+
+    private bool IsCharacterInRange()
+    {
+        return FindClosestCharacter() != null;
+    }
+
+    private GameObject FindClosestCharacter()
+    {
+        Vector3 center = transform.position;
+        float radius = interactionRadius;
+
+        if (interactionCollider != null && useColliderBounds)
+        {
+            Bounds bounds = interactionCollider.bounds;
+            center = bounds.center;
+            Vector3 extents = bounds.extents;
+            radius = Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z)) + colliderRadiusPadding;
         }
 
-        float duration = ResolveTextDuration(data.voiceLineAudioClip);
-        displayRoutine = StartCoroutine(HideAfterDelay(duration));
+        Collider[] hits = Physics.OverlapSphere(center, radius, ~0, QueryTriggerInteraction.Ignore);
+        if (hits == null || hits.Length == 0)
+        {
+            return null;
+        }
 
-        PlayAudio(data.voiceLineAudioClip);
-        return true;
+        float bestDistance = float.MaxValue;
+        GameObject bestCharacter = null;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            GameObject character = GetSquadCharacter(hits[i]);
+            if (character == null)
+            {
+                continue;
+            }
+
+            float distance = (character.transform.position - center).sqrMagnitude;
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestCharacter = character;
+            }
+        }
+
+        return bestCharacter;
+    }
+
+    private GameObject GetSquadCharacter(Collider other)
+    {
+        if (other == null)
+        {
+            return null;
+        }
+
+        SquadManager manager = SquadManager.Instance;
+        Transform current = other.transform;
+        bool hasPlayerTag = false;
+        GameObject taggedRoot = null;
+        GameObject squadRoot = null;
+
+        while (current != null)
+        {
+            if (current.CompareTag("Player"))
+            {
+                hasPlayerTag = true;
+                taggedRoot = current.gameObject;
+            }
+
+            if (manager != null && manager.squadCharacters != null && manager.squadCharacters.Contains(current.gameObject))
+            {
+                squadRoot = current.gameObject;
+            }
+
+            current = current.parent;
+        }
+
+        if (squadRoot == null && manager != null && manager.squadCharacters != null)
+        {
+            Transform root = other.transform.root;
+            if (root != null)
+            {
+                if (root.CompareTag("Player"))
+                {
+                    hasPlayerTag = true;
+                    taggedRoot = root.gameObject;
+                }
+
+                for (int i = 0; i < manager.squadCharacters.Count; i++)
+                {
+                    GameObject candidate = manager.squadCharacters[i];
+                    if (candidate != null && candidate.transform.IsChildOf(root))
+                    {
+                        squadRoot = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (squadRoot != null)
+        {
+            return squadRoot;
+        }
+
+        if (requirePlayerTag && hasPlayerTag)
+        {
+            return taggedRoot;
+        }
+
+        return null;
     }
 
     private void StopCurrentPlayback()
@@ -166,6 +586,8 @@ public class LocalVoiceLineController : MonoBehaviour
                 activeSource.Stop();
             }
         }
+
+        EndMusicDucking();
     }
 
     private float ResolveTextDuration(AudioClipSO clip)
@@ -201,6 +623,7 @@ public class LocalVoiceLineController : MonoBehaviour
             }
         }
 
+        EndMusicDucking();
         displayRoutine = null;
     }
 
@@ -226,6 +649,39 @@ public class LocalVoiceLineController : MonoBehaviour
         source.volume = Mathf.Clamp01(clip.volume);
         source.Play();
         activeSource = source;
+    }
+
+    private void BeginMusicDucking()
+    {
+        if (!duckMusicDuringVoiceLine || isMusicDucked)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.Instance;
+        if (manager == null)
+        {
+            return;
+        }
+
+        manager.BeginMusicDucking(musicDuckMultiplier);
+        isMusicDucked = true;
+    }
+
+    private void EndMusicDucking()
+    {
+        if (!isMusicDucked)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.Instance;
+        if (manager != null)
+        {
+            manager.EndMusicDucking();
+        }
+
+        isMusicDucked = false;
     }
 
     private AudioSource EnsureLocalSource()
@@ -360,6 +816,102 @@ public class LocalVoiceLineController : MonoBehaviour
 
         int index = Random.Range(0, valid.Count);
         return PlayVoiceLine(valid[index]);
+    }
+
+    private LocalVoiceLineEntry SelectEntryForKnowledge()
+    {
+        if (voiceLines == null || voiceLines.Count == 0)
+        {
+            return null;
+        }
+
+        LocalVoiceLineEntry best = null;
+        int bestScore = -1;
+
+        for (int i = 0; i < voiceLines.Count; i++)
+        {
+            LocalVoiceLineEntry entry = voiceLines[i];
+            if (entry == null || entry.voiceLine == null)
+            {
+                continue;
+            }
+
+            if (!IsEntryUnlocked(entry))
+            {
+                continue;
+            }
+
+            if (knowledgeSelectionMode == KnowledgeSelectionMode.FirstMatch)
+            {
+                return entry;
+            }
+
+            int score = entry != null && entry.requiredKnowledge != null ? entry.requiredKnowledge.Count : 0;
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = entry;
+            }
+        }
+
+        return best;
+    }
+
+    private bool IsEntryUnlocked(LocalVoiceLineEntry entry)
+    {
+        if (entry == null)
+        {
+            return false;
+        }
+
+        if (entry.requiredKnowledge == null || entry.requiredKnowledge.Count == 0)
+        {
+            return true;
+        }
+
+        if (KnowledgeManager.Instance == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < entry.requiredKnowledge.Count; i++)
+        {
+            KnowledgeSO knowledge = entry.requiredKnowledge[i];
+            if (knowledge == null)
+            {
+                continue;
+            }
+
+            if (!KnowledgeManager.Instance.HasKnowledge(knowledge))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void UnlockEntryKnowledge(LocalVoiceLineEntry entry)
+    {
+        if (entry == null || entry.unlockKnowledge == null || entry.unlockKnowledge.Count == 0)
+        {
+            return;
+        }
+
+        KnowledgeManager manager = KnowledgeManager.Instance;
+        if (manager == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < entry.unlockKnowledge.Count; i++)
+        {
+            KnowledgeSO knowledge = entry.unlockKnowledge[i];
+            if (knowledge != null)
+            {
+                manager.UnlockKnowledge(knowledge);
+            }
+        }
     }
 
     private void ResolveCharacterData()

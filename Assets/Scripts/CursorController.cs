@@ -69,9 +69,9 @@ public class CursorController : MonoBehaviour
     [Tooltip("Vitesse de lerp de taille.")]
     public float cursorSizeLerpSpeed = 18f;
 
-    private PlayerInputs playerInputs;
     private InputAction moveAction;
     private bool usingExternalAction;
+    private Vector2 cachedMoveInput;
     private readonly List<RectTransform> items = new List<RectTransform>();
     private int currentIndex = -1;
     private int lastMoveDirection;
@@ -117,15 +117,15 @@ public class CursorController : MonoBehaviour
                 moveAction.Disable();
             }
         }
-        else if (playerInputs != null)
+        else
         {
-            playerInputs.Disable();
+            LocalInputRouter.Move -= OnMoveChanged;
         }
     }
 
     private void Update()
     {
-        if (moveAction == null)
+        if (usingExternalAction && moveAction == null)
         {
             return;
         }
@@ -217,12 +217,9 @@ public class CursorController : MonoBehaviour
         }
 
         usingExternalAction = false;
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-        playerInputs.Enable();
-        moveAction = playerInputs.Player.Move;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Move += OnMoveChanged;
+        moveAction = null;
     }
 
     private RectTransform GetItemsParent()
@@ -326,7 +323,7 @@ public class CursorController : MonoBehaviour
 
     private void HandleNavigation()
     {
-        Vector2 moveInput = moveAction.ReadValue<Vector2>();
+        Vector2 moveInput = usingExternalAction && moveAction != null ? moveAction.ReadValue<Vector2>() : cachedMoveInput;
         int direction = GetMoveDirection(moveInput, moveDeadzone);
         if (direction == 0)
         {
@@ -356,6 +353,11 @@ public class CursorController : MonoBehaviour
             MoveSelection(direction);
             nextMoveTime = now + repeatInterval;
         }
+    }
+
+    private void OnMoveChanged(Vector2 value)
+    {
+        cachedMoveInput = value;
     }
 
     private bool AllowsDirection(int direction)

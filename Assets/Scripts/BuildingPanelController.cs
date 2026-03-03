@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 using UnityEngine.UI;
 
 // Controle le panel de construction/amelioration des batiments.
@@ -151,7 +152,6 @@ public class BuildingPanelController : MonoBehaviour
     [Tooltip("Reouvre le panel si la pose est annulee.")]
     public bool placementReopenPanelOnCancel = true;
 
-    private PlayerInputs playerInputs;
     private bool panelOpen;
     private bool squadInputLocked;
     private CanvasGroup panelCanvasGroup;
@@ -159,6 +159,7 @@ public class BuildingPanelController : MonoBehaviour
     private bool suppressPanelDeactivate;
 
     private BuilderController currentBuilder;
+    private BuilderController subscribedBuilder;
     private readonly List<BuildingSlotUI> buildingSlots = new List<BuildingSlotUI>();
     private BuildingSlotUI currentFocusedSlot;
     private int lastCursorIndex = -1;
@@ -199,7 +200,6 @@ public class BuildingPanelController : MonoBehaviour
 
     private void Awake()
     {
-        playerInputs = new PlayerInputs();
         ResolveSceneReferences();
         ResolvePrefabReferences();
         InitializePanel();
@@ -343,24 +343,15 @@ public class BuildingPanelController : MonoBehaviour
 
     private void OnEnable()
     {
-        if (playerInputs == null)
-        {
-            playerInputs = new PlayerInputs();
-        }
-
-        playerInputs.Enable();
-        playerInputs.Player.Interact.performed += OnInteractPerformed;
-        playerInputs.Player.Return.performed += OnReturnPerformed;
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        LocalInputRouter.Return += OnReturnPerformed;
     }
 
     private void OnDisable()
     {
-        if (playerInputs != null)
-        {
-            playerInputs.Player.Interact.performed -= OnInteractPerformed;
-            playerInputs.Player.Return.performed -= OnReturnPerformed;
-            playerInputs.Disable();
-        }
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        LocalInputRouter.Return -= OnReturnPerformed;
 
         if (placementActive)
         {
@@ -468,6 +459,7 @@ public class BuildingPanelController : MonoBehaviour
         if (panelOpen)
         {
             currentBuilder = builder != null ? builder : currentBuilder;
+            SubscribeBuilder(currentBuilder);
             InputFocusStack.Push(this);
             SetSquadInputLock(true);
             return;
@@ -475,6 +467,7 @@ public class BuildingPanelController : MonoBehaviour
 
         suppressPanelDeactivate = false;
         currentBuilder = builder != null ? builder : currentBuilder;
+        SubscribeBuilder(currentBuilder);
 
         if (buildingPanel == null)
         {
@@ -534,6 +527,7 @@ public class BuildingPanelController : MonoBehaviour
 
         suppressPanelDeactivate = keepPanelActive;
         panelOpen = false;
+        UnsubscribeBuilder();
         InputFocusStack.Pop(this);
         if (!keepInputLock)
         {
@@ -837,12 +831,12 @@ public class BuildingPanelController : MonoBehaviour
 
     private void HandleNavigation()
     {
-        if (playerInputs == null || buildingSlots.Count == 0)
+        if (buildingSlots.Count == 0)
         {
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetMoveDirection(moveInput, moveDeadzone);
         if (direction == 0)
         {
@@ -1578,12 +1572,12 @@ public class BuildingPanelController : MonoBehaviour
 
     private void HandleActionBoxNavigation()
     {
-        if (playerInputs == null || actionBoxEntries.Count == 0)
+        if (actionBoxEntries.Count == 0)
         {
             return;
         }
 
-        Vector2 moveInput = playerInputs.Player.Move.ReadValue<Vector2>();
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         int direction = GetActionBoxMoveDirection(moveInput, moveDeadzone);
         if (direction == 0)
         {
@@ -1985,7 +1979,27 @@ public class BuildingPanelController : MonoBehaviour
             return false;
         }
 
-        if (!TryConsumeBuildingResources(building, controller, out string reason))
+        string reason;
+        if (IsNetworked() && !IsServer())
+        {
+            if (!HasBuildingResources(building, controller, out reason))
+            {
+                Debug.LogWarning($"BuildingPanelController: {reason}");
+                ShowPlacementFeedback(reason);
+                return false;
+            }
+
+            if (currentBuilder != null)
+            {
+                currentBuilder.RequestUpgrade(info, currentLevel + 1);
+            }
+
+            restoreSelectedItem = building;
+            RebuildSlots();
+            return true;
+        }
+
+        if (!TryConsumeBuildingResources(building, controller, out reason))
         {
             Debug.LogWarning($"BuildingPanelController: {reason}");
             return false;
@@ -2009,6 +2023,7 @@ public class BuildingPanelController : MonoBehaviour
             building.buildingCurrentLevel = Mathf.Max(building.buildingCurrentLevel, targetLevel);
         }
 
+        SyncNetworkInventory(controller);
         restoreSelectedItem = building;
         RebuildSlots();
         return true;
@@ -2131,7 +2146,7 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
-        Vector2 moveInput = playerInputs != null ? playerInputs.Player.Move.ReadValue<Vector2>() : Vector2.zero;
+        Vector2 moveInput = LocalInputRouter.MoveValue;
         Vector3 moveDir = GetPlacementMoveDirection(moveInput);
         Vector3 position = placementInstance.transform.position;
         if (moveDir.sqrMagnitude > 0f)
@@ -2345,7 +2360,36 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
-        if (!TryConsumeBuildingResources(placementItem, controller, out string resourceReason))
+        string resourceReason;
+        if (IsNetworked() && !IsServer())
+        {
+            if (!HasBuildingResources(placementItem, controller, out resourceReason))
+            {
+                ShowPlacementFeedback(resourceReason);
+                CancelPlacement(false);
+                return;
+            }
+
+            if (currentBuilder != null)
+            {
+                currentBuilder.RequestBuild(placementItem, placementInstance.transform.position, placementInstance.transform.rotation);
+            }
+
+            RestorePlacementPhysics();
+            ClearPlacementVisuals();
+            ClearPlacementCameraOverride(placementInstance.transform);
+            placementActive = false;
+            placementItem = null;
+            placementInstance = null;
+            placementAnchor = null;
+            placementGroundCollider = null;
+            placementRestoreItem = null;
+            SetSquadInputLock(false);
+            InputFocusStack.Pop(this);
+            return;
+        }
+
+        if (!TryConsumeBuildingResources(placementItem, controller, out resourceReason))
         {
             ShowPlacementFeedback(resourceReason);
             CancelPlacement(false);
@@ -2368,6 +2412,7 @@ public class BuildingPanelController : MonoBehaviour
             placementItem.buildingCurrentLevel = Mathf.Max(placementItem.buildingCurrentLevel, 1);
         }
 
+        SyncNetworkInventory(controller);
         placementActive = false;
         placementItem = null;
         placementInstance = null;
@@ -2840,12 +2885,80 @@ public class BuildingPanelController : MonoBehaviour
 
     private SquadCharacterController GetCurrentCharacterController()
     {
-        if (SquadManager.Instance == null || SquadManager.Instance.currentCharacter == null)
+        GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
+        if (controlled == null)
         {
             return null;
         }
 
-        return SquadManager.Instance.currentCharacter.GetComponent<SquadCharacterController>();
+        return controlled.GetComponent<SquadCharacterController>();
+    }
+
+    private void SubscribeBuilder(BuilderController builder)
+    {
+        if (subscribedBuilder == builder)
+        {
+            return;
+        }
+
+        if (subscribedBuilder != null)
+        {
+            subscribedBuilder.BuildingsChanged -= OnBuildingsChanged;
+        }
+
+        subscribedBuilder = builder;
+        if (subscribedBuilder != null)
+        {
+            subscribedBuilder.BuildingsChanged += OnBuildingsChanged;
+        }
+    }
+
+    private void UnsubscribeBuilder()
+    {
+        if (subscribedBuilder != null)
+        {
+            subscribedBuilder.BuildingsChanged -= OnBuildingsChanged;
+            subscribedBuilder = null;
+        }
+    }
+
+    private void OnBuildingsChanged()
+    {
+        if (!panelOpen)
+        {
+            return;
+        }
+
+        RebuildSlots();
+    }
+
+    private static bool IsNetworked()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    }
+
+    private static bool IsServer()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+    }
+
+    private void SyncNetworkInventory(SquadCharacterController controller)
+    {
+        if (!IsNetworked() || !IsServer() || controller == null)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null)
+        {
+            inventory.SyncFromController();
+        }
     }
 
     private void SetSquadInputLock(bool locked)

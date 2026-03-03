@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 // Controle le mouvement et l'inventaire runtime d'un personnage de la squad.
@@ -82,6 +83,82 @@ public class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Anime les RB en physics.")]
     private bool animatePhysics = true;
 
+    [Header("Void Detection")]
+    [SerializeField, Tooltip("Active la detection du vide pour eviter les chutes hors du monde.")]
+    private bool enableVoidDetection = true;
+    [SerializeField, Tooltip("Distance horizontale de controle devant le personnage (m).")]
+    private float voidCheckDistance = 0.35f;
+    [SerializeField, Tooltip("Profondeur du raycast vers le sol (m).")]
+    private float voidCheckDepth = 4f;
+    [SerializeField, Tooltip("LayerMask utilise pour detecter le sol.")]
+    private LayerMask voidGroundMask = ~0;
+    [SerializeField, Tooltip("Utilise la matrice de collision du layer pour la detection du sol.")]
+    private bool voidUseCollisionMatrixMask = true;
+
+    [Header("Step Assist")]
+    [SerializeField, Tooltip("Permet de monter/descendre les marches et reliefs avec un Rigidbody.")]
+    private bool enableStepAssist = true;
+    [SerializeField, Tooltip("Hauteur max des marches (m).")]
+    private float stepHeight = 0.35f;
+    [SerializeField, Tooltip("Distance de detection des marches (m).")]
+    private float stepCheckDistance = 0.25f;
+    [SerializeField, Tooltip("Vitesse verticale appliquee pour monter une marche.")]
+    private float stepUpSpeed = 4f;
+    [SerializeField, Tooltip("Hauteur max pour descendre une marche (0 = utilise stepHeight).")]
+    private float stepDownHeight = 0f;
+    [SerializeField, Tooltip("Vitesse verticale appliquee pour descendre une marche (0 = utilise stepUpSpeed).")]
+    private float stepDownSpeed = 0f;
+    [SerializeField, Tooltip("Marge ajoutee a la hauteur max pour etre plus permissif (m).")]
+    private float stepHeightTolerance = 0.15f;
+    [SerializeField, Tooltip("Seuil minimal de relief pour declencher un step (m).")]
+    private float stepMinHeight = 0.05f;
+    [SerializeField, Tooltip("Vitesse verticale max autorisee pour declencher un step (0 = ignore).")]
+    private float stepMaxUpVelocity = 1.5f;
+    [SerializeField, Tooltip("Necessite d'etre au sol pour declencher un step.")]
+    private bool requireGroundForStep = false;
+    [SerializeField, Tooltip("Rayon du test haut (0 = meme que bas).")]
+    private float stepUpperRadius = 0.0f;
+    [SerializeField, Tooltip("Hauteur ajoutee au test haut (m).")]
+    private float stepUpperHeightOffset = 0.02f;
+    [SerializeField, Tooltip("Petit boost avant applique lors d'un step (m).")]
+    private float stepForwardBoost = 0.03f;
+    [SerializeField, Tooltip("Marge retiree au rayon pour les tests.")]
+    private float stepRadiusPadding = 0.02f;
+    [SerializeField, Tooltip("Distance de verification du sol (m).")]
+    private float stepGroundCheckDistance = 0.15f;
+    [SerializeField, Tooltip("LayerMask utilise pour les marches.")]
+    private LayerMask stepLayerMask = ~0;
+    [SerializeField, Tooltip("Utilise la matrice de collision du layer pour detecter les marches.")]
+    private bool stepUseCollisionMatrixMask = true;
+    [SerializeField, Tooltip("Active les logs de debug pour le step assist.")]
+    private bool stepDebugLogs = false;
+    [SerializeField, Tooltip("Cooldown des logs (secondes).")]
+    private float stepDebugCooldown = 0.5f;
+
+    [Header("Foot IK")]
+    [SerializeField, Tooltip("Active l'IK des pieds pour stabiliser l'ancrage au sol.")]
+    private bool enableFootIk = true;
+    [SerializeField, Tooltip("Poids max de l'IK (0-1).")]
+    private float footIkWeight = 1f;
+    [SerializeField, Tooltip("Poids position IK (0-1).")]
+    private float footIkPositionWeight = 1f;
+    [SerializeField, Tooltip("Poids rotation IK (0-1).")]
+    private float footIkRotationWeight = 1f;
+    [SerializeField, Tooltip("Vitesse max pour activer l'IK (m/s).")]
+    private float footIkSpeedThreshold = 0.15f;
+    [SerializeField, Tooltip("Vitesse de blend du poids IK.")]
+    private float footIkBlendSpeed = 10f;
+    [SerializeField, Tooltip("Offset vertical des pieds (m).")]
+    private float footIkHeightOffset = 0.02f;
+    [SerializeField, Tooltip("Raycast vers le haut pour trouver le sol (m).")]
+    private float footIkRaycastUp = 0.25f;
+    [SerializeField, Tooltip("Raycast vers le bas pour trouver le sol (m).")]
+    private float footIkRaycastDown = 0.6f;
+    [SerializeField, Tooltip("LayerMask utilise pour l'IK des pieds.")]
+    private LayerMask footIkLayerMask = ~0;
+    [SerializeField, Tooltip("Utilise la matrice de collision du layer pour l'IK.")]
+    private bool footIkUseCollisionMatrixMask = true;
+
     [Header("Torch")]
     [SerializeField, Tooltip("Autorise ToggleTorch via input.")]
     private bool allowTorchToggle = true;
@@ -121,6 +198,16 @@ public class SquadCharacterController : MonoBehaviour
     private float nextCollisionRefreshTime;
     private bool collidersDirty = true;
     private readonly List<Collider> cachedColliders = new List<Collider>();
+    private CapsuleCollider stepCapsule;
+    [Header("Audio")]
+    [SerializeField] private AudioListener audioListener;
+    [SerializeField] private bool searchAudioListenerInChildren = true;
+    private bool audioListenerActive;
+    private NetworkObject cachedNetworkObject;
+    private readonly RaycastHit[] stepCastHits = new RaycastHit[8];
+    private readonly Collider[] stepOverlapHits = new Collider[8];
+    private float nextStepDebugTime;
+    private float footIkWeightCurrent;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -140,6 +227,7 @@ public class SquadCharacterController : MonoBehaviour
         animator = GetComponent<Animator>();
         characterController = GetComponent<CharacterController>();
         rigidbodyTarget = GetComponent<Rigidbody>();
+        stepCapsule = GetComponent<CapsuleCollider>();
         motionRoot = transform;
         ApplyAnimatorSettings();
         InitializeTorchState();
@@ -150,6 +238,7 @@ public class SquadCharacterController : MonoBehaviour
         // Torche + collisions en runtime.
         UpdateTorchLifetime(Time.deltaTime);
         RefreshCharacterCollisionsIfNeeded();
+        UpdateAudioListenerState(false);
     }
 
     private void Awake()
@@ -169,11 +258,18 @@ public class SquadCharacterController : MonoBehaviour
             rigidbodyTarget = GetComponent<Rigidbody>();
         }
 
+        if (stepCapsule == null)
+        {
+            stepCapsule = GetComponent<CapsuleCollider>();
+        }
+
         if (motionRoot == null)
         {
             motionRoot = transform;
         }
 
+        CacheAudioListener();
+        CacheNetworkObject();
         EnsureDynamicMeshCollidersSafe();
 
         EnsureInventoryList();
@@ -194,10 +290,14 @@ public class SquadCharacterController : MonoBehaviour
     private void OnEnable()
     {
         RegisterCharacter();
+        CacheAudioListener();
+        CacheNetworkObject();
+        UpdateAudioListenerState(true);
     }
 
     private void OnDisable()
     {
+        SetAudioListenerActive(false);
         UnregisterCharacter();
     }
 
@@ -209,6 +309,78 @@ public class SquadCharacterController : MonoBehaviour
     private void OnTransformParentChanged()
     {
         MarkCollidersDirty();
+    }
+
+    private void CacheAudioListener()
+    {
+        if (audioListener != null)
+        {
+            return;
+        }
+
+        if (searchAudioListenerInChildren)
+        {
+            audioListener = GetComponentInChildren<AudioListener>(true);
+        }
+        else
+        {
+            audioListener = GetComponent<AudioListener>();
+        }
+    }
+
+    private void CacheNetworkObject()
+    {
+        if (cachedNetworkObject != null)
+        {
+            return;
+        }
+
+        cachedNetworkObject = GetComponentInParent<NetworkObject>();
+    }
+
+    private void UpdateAudioListenerState(bool force)
+    {
+        if (audioListener == null)
+        {
+            return;
+        }
+
+        if (cachedNetworkObject == null)
+        {
+            CacheNetworkObject();
+        }
+
+        bool shouldBeActive = false;
+        if (cachedNetworkObject != null)
+        {
+            shouldBeActive = cachedNetworkObject.IsSpawned && cachedNetworkObject.IsOwner;
+        }
+        else
+        {
+            SquadManager manager = SquadManager.Instance;
+            if (manager != null && manager.currentCharacter != null)
+            {
+                shouldBeActive = transform.IsChildOf(manager.currentCharacter.transform);
+            }
+        }
+
+        if (!force && shouldBeActive == audioListenerActive)
+        {
+            return;
+        }
+
+        SetAudioListenerActive(shouldBeActive);
+    }
+
+    private void SetAudioListenerActive(bool active)
+    {
+        if (audioListener == null)
+        {
+            return;
+        }
+
+        audioListener.enabled = active;
+        audioListenerActive = active;
     }
 
     public void BindCharacterData(CharacterData data, bool initializeInventory = true)
@@ -779,6 +951,11 @@ public class SquadCharacterController : MonoBehaviour
             rigidbodyTarget = GetComponent<Rigidbody>();
         }
 
+        if (stepCapsule == null)
+        {
+            stepCapsule = GetComponent<CapsuleCollider>();
+        }
+
         if (motionRoot == null)
         {
             motionRoot = transform;
@@ -790,6 +967,29 @@ public class SquadCharacterController : MonoBehaviour
         walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
         runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
         speedDampTime = Mathf.Max(0f, speedDampTime);
+        stepHeight = Mathf.Max(0f, stepHeight);
+        stepCheckDistance = Mathf.Max(0f, stepCheckDistance);
+        stepUpSpeed = Mathf.Max(0f, stepUpSpeed);
+        stepDownHeight = Mathf.Max(0f, stepDownHeight);
+        stepDownSpeed = Mathf.Max(0f, stepDownSpeed);
+        stepHeightTolerance = Mathf.Max(0f, stepHeightTolerance);
+        stepMinHeight = Mathf.Max(0f, stepMinHeight);
+        stepMaxUpVelocity = Mathf.Max(0f, stepMaxUpVelocity);
+        stepUpperRadius = Mathf.Max(0f, stepUpperRadius);
+        stepUpperHeightOffset = Mathf.Max(0f, stepUpperHeightOffset);
+        stepForwardBoost = Mathf.Max(0f, stepForwardBoost);
+        stepRadiusPadding = Mathf.Max(0f, stepRadiusPadding);
+        stepGroundCheckDistance = Mathf.Max(0f, stepGroundCheckDistance);
+        footIkWeight = Mathf.Clamp01(footIkWeight);
+        footIkPositionWeight = Mathf.Clamp01(footIkPositionWeight);
+        footIkRotationWeight = Mathf.Clamp01(footIkRotationWeight);
+        footIkSpeedThreshold = Mathf.Max(0f, footIkSpeedThreshold);
+        footIkBlendSpeed = Mathf.Max(0f, footIkBlendSpeed);
+        footIkHeightOffset = Mathf.Max(0f, footIkHeightOffset);
+        footIkRaycastUp = Mathf.Max(0.02f, footIkRaycastUp);
+        footIkRaycastDown = Mathf.Max(0.02f, footIkRaycastDown);
+        voidCheckDistance = Mathf.Max(0f, voidCheckDistance);
+        voidCheckDepth = Mathf.Max(0.02f, voidCheckDepth);
 
         ApplyAnimatorSettings();
     }
@@ -820,6 +1020,20 @@ public class SquadCharacterController : MonoBehaviour
         SetTorchEquipped(!torchEquipped);
     }
 
+    public void ApplyTorchState(int torchSeconds, bool equipTorch)
+    {
+        torchSecondsRemaining = Mathf.Max(0, torchSeconds);
+
+        if (HasTorchItem && torchSecondsRemaining > 0)
+        {
+            SetTorchEquipped(equipTorch);
+        }
+        else
+        {
+            SetTorchEquipped(false);
+        }
+    }
+
     public void Move(Vector2 input)
     {
         moveInput = input;
@@ -841,6 +1055,94 @@ public class SquadCharacterController : MonoBehaviour
         UpdateAnimationSpeed();
     }
 
+    private bool IsGroundAhead(Vector3 direction)
+    {
+        if (direction.sqrMagnitude < 0.01f)
+        {
+            return true;
+        }
+
+        Vector3 up = transform.up;
+        Vector3 origin = GetWorldPosition();
+        float radius = 0.2f;
+
+        if (characterController != null)
+        {
+            Bounds bounds = characterController.bounds;
+            radius = Mathf.Max(0.01f, characterController.radius);
+            origin = new Vector3(bounds.center.x, bounds.min.y + radius, bounds.center.z);
+        }
+        else if (TryGetStepCapsule(out Vector3 center, out float capRadius, out float height))
+        {
+            radius = Mathf.Max(0.01f, capRadius);
+            float halfHeight = height * 0.5f;
+            float bottomOffset = Mathf.Max(0f, halfHeight - radius);
+            origin = center - up * bottomOffset;
+        }
+
+        float checkDistance = radius + Mathf.Max(0f, voidCheckDistance);
+        Vector3 checkPos = origin + up * 0.05f + direction.normalized * checkDistance;
+
+        int mask = GetVoidGroundMask();
+        float depth = Mathf.Max(0.02f, voidCheckDepth);
+        return Physics.Raycast(checkPos, -up, depth, mask, QueryTriggerInteraction.Ignore);
+    }
+
+    private int GetVoidGroundMask()
+    {
+        if (!voidUseCollisionMatrixMask)
+        {
+            return voidGroundMask;
+        }
+
+        int mask = 0;
+        int layer = gameObject.layer;
+        for (int i = 0; i < 32; i++)
+        {
+            if (!Physics.GetIgnoreLayerCollision(layer, i))
+            {
+                mask |= 1 << i;
+            }
+        }
+
+        return mask;
+    }
+
+    private void OnAnimatorIK(int layerIndex)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        if (!enableFootIk)
+        {
+            SetFootIkWeights(0f, 0f);
+            return;
+        }
+
+        float speed = GetCurrentHorizontalVelocity().magnitude;
+        float targetWeight = speed <= footIkSpeedThreshold ? footIkWeight : 0f;
+        if (footIkBlendSpeed > 0f)
+        {
+            footIkWeightCurrent = Mathf.MoveTowards(footIkWeightCurrent, targetWeight, footIkBlendSpeed * Time.deltaTime);
+        }
+        else
+        {
+            footIkWeightCurrent = targetWeight;
+        }
+
+        if (footIkWeightCurrent <= 0.0001f)
+        {
+            SetFootIkWeights(0f, 0f);
+            return;
+        }
+
+        int mask = GetFootIkMask();
+        ApplyFootIk(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot, mask, footIkWeightCurrent);
+        ApplyFootIk(AvatarIKGoal.RightFoot, HumanBodyBones.RightFoot, mask, footIkWeightCurrent);
+    }
+
     private void UpdateInputLock(float deltaTime)
     {
         if (inputLockTimer <= 0f)
@@ -853,17 +1155,26 @@ public class SquadCharacterController : MonoBehaviour
 
     private void ApplyMovement(float deltaTime)
     {
-        bool hasInput = smoothedInput.sqrMagnitude > 0.0001f;
+        Vector2 effectiveInput = smoothedInput;
+        bool hasInput = effectiveInput.sqrMagnitude > 0.0001f;
         Vector3 desiredVelocity = Vector3.zero;
+        Vector3 desiredDirection = Vector3.zero;
         if (hasInput)
         {
-            Vector3 direction = GetMoveDirection(smoothedInput);
-            if (direction.sqrMagnitude > 0.0001f)
+            desiredDirection = GetMoveDirection(effectiveInput);
+            if (desiredDirection.sqrMagnitude > 0.0001f)
             {
-                direction = direction.normalized;
+                desiredDirection = desiredDirection.normalized;
             }
 
-            desiredVelocity = direction * (Mathf.Clamp01(smoothedInput.magnitude) * moveSpeed);
+            desiredVelocity = desiredDirection * (Mathf.Clamp01(effectiveInput.magnitude) * moveSpeed);
+        }
+
+        if (enableVoidDetection && hasInput && !IsGroundAhead(desiredDirection))
+        {
+            hasInput = false;
+            desiredVelocity = Vector3.zero;
+            StopHorizontalVelocity();
         }
 
         if (inputLockTimer > 0f)
@@ -881,6 +1192,11 @@ public class SquadCharacterController : MonoBehaviour
                 : Vector3.Lerp(currentHorizontal, Vector3.zero, 1f - Mathf.Exp(-deceleration * deltaTime));
             rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, currentVelocity.y, newHorizontal.z);
             currentHorizontalVelocity = newHorizontal;
+
+            if (hasInput)
+            {
+                TryStepAssistRigidbody(newHorizontal, deltaTime);
+            }
 
             if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
             {
@@ -916,6 +1232,479 @@ public class SquadCharacterController : MonoBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(desiredVelocity);
             root.rotation = Quaternion.Slerp(root.rotation, targetRotation, rotationSpeed * deltaTime);
         }
+    }
+
+    private void StopHorizontalVelocity()
+    {
+        currentHorizontalVelocity = Vector3.zero;
+
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        {
+            Vector3 velocity = rigidbodyTarget.linearVelocity;
+            rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
+        }
+    }
+
+    private struct StepGroundSample
+    {
+        public Vector3 point;
+        public Vector3 normal;
+        public Collider collider;
+    }
+
+    private void TryStepAssistRigidbody(Vector3 horizontalVelocity, float deltaTime)
+    {
+        if (!enableStepAssist || rigidbodyTarget == null)
+        {
+            LogStepDebug("StepAssist: desactive ou Rigidbody manquant.");
+            return;
+        }
+
+        if (stepHeight <= 0f || stepCheckDistance <= 0f)
+        {
+            LogStepDebug("StepAssist: parametres invalides (stepHeight/stepCheckDistance).");
+            return;
+        }
+
+        if (stepUpSpeed <= 0f)
+        {
+            LogStepDebug("StepAssist: stepUpSpeed <= 0.");
+            return;
+        }
+
+        if (stepMaxUpVelocity > 0f && rigidbodyTarget.linearVelocity.y > stepMaxUpVelocity)
+        {
+            LogStepDebug($"StepAssist: vitesse verticale > {stepMaxUpVelocity:F2} (en saut/chute).");
+            return;
+        }
+
+        if (!TryGetStepCapsule(out Vector3 center, out float radius, out float height))
+        {
+            LogStepDebug("StepAssist: CapsuleCollider manquant ou direction != Y.");
+            return;
+        }
+
+        Vector3 moveDir = new Vector3(horizontalVelocity.x, 0f, horizontalVelocity.z);
+        float speed = moveDir.magnitude;
+        if (speed < 0.0001f)
+        {
+            LogStepDebug("StepAssist: pas de mouvement horizontal.");
+            return;
+        }
+
+        moveDir /= speed;
+        Vector3 up = transform.up;
+        float halfHeight = height * 0.5f;
+        float bottomOffset = Mathf.Max(0f, halfHeight - radius);
+        Vector3 bottomCenter = center - up * bottomOffset;
+        Vector3 foot = bottomCenter - up * radius;
+
+        int stepMask = GetStepMask();
+        if (requireGroundForStep && !IsGroundedForStep(bottomCenter, radius, up, stepMask))
+        {
+            LogStepDebug("StepAssist: pas au sol (ground check).");
+            return;
+        }
+
+        float maxUp = stepHeight + stepHeightTolerance;
+        float maxDown = (stepDownHeight > 0f ? stepDownHeight : stepHeight) + stepHeightTolerance;
+        float minHeight = Mathf.Max(0.001f, stepMinHeight);
+        float castDistance = Mathf.Max(0.02f, stepCheckDistance);
+        float probeUp = maxUp + stepGroundCheckDistance;
+        float probeDown = maxDown + stepGroundCheckDistance;
+
+        if (!TrySampleGround(foot, up, probeUp, probeDown, stepMask, out StepGroundSample currentGround))
+        {
+            LogStepDebug("StepAssist: sol courant introuvable.");
+            return;
+        }
+
+        Vector3 ahead = foot + moveDir * (radius + castDistance);
+        if (!TrySampleGround(ahead, up, probeUp, probeDown, stepMask, out StepGroundSample aheadGround))
+        {
+            LogStepDebug("StepAssist: sol devant introuvable.");
+            return;
+        }
+
+        float heightDelta = Vector3.Dot(aheadGround.point - currentGround.point, up);
+
+        if (heightDelta > minHeight)
+        {
+            if (heightDelta > maxUp + 0.01f)
+            {
+                LogStepDebug($"StepAssist: relief trop haut ({heightDelta:F3}m).");
+                return;
+            }
+
+            if (!HasStepClearance(bottomCenter, radius, height, up, moveDir, heightDelta, castDistance, stepMask))
+            {
+                LogStepDebug("StepAssist: obstacle detecte en haut (pas de passage).");
+                return;
+            }
+
+            float stepAmount = Mathf.Min(heightDelta, stepUpSpeed * deltaTime);
+            ApplyStepOffset(up, moveDir, stepAmount, true);
+            LogStepDebug($"StepAssist: step-up applique ({stepAmount:F3}m).");
+            return;
+        }
+
+        if (heightDelta < -minHeight)
+        {
+            float drop = -heightDelta;
+            if (drop > maxDown + 0.01f)
+            {
+                LogStepDebug($"StepAssist: drop trop haut ({drop:F3}m).");
+                return;
+            }
+
+            float downSpeed = stepDownSpeed > 0f ? stepDownSpeed : stepUpSpeed;
+            float stepAmount = downSpeed > 0f ? Mathf.Min(drop, downSpeed * deltaTime) : drop;
+            ApplyStepOffset(up, moveDir, stepAmount, false);
+            LogStepDebug($"StepAssist: step-down applique ({stepAmount:F3}m).");
+        }
+    }
+
+    private bool TrySampleGround(Vector3 origin, Vector3 up, float maxUp, float maxDown, int mask, out StepGroundSample sample)
+    {
+        sample = default;
+        float upRange = Mathf.Max(0.02f, maxUp);
+        float downRange = Mathf.Max(0.02f, maxDown);
+        float rayStart = upRange + 0.05f;
+        float rayDistance = upRange + downRange + 0.1f;
+        Vector3 rayOrigin = origin + up * rayStart;
+
+        int hitCount = Physics.RaycastNonAlloc(rayOrigin, -up, stepCastHits, rayDistance, mask, QueryTriggerInteraction.Ignore);
+        float bestDistance = float.PositiveInfinity;
+        int bestIndex = -1;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = stepCastHits[i].collider;
+            if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            float heightOffset = Vector3.Dot(stepCastHits[i].point - origin, up);
+            if (heightOffset > upRange || heightOffset < -downRange)
+            {
+                continue;
+            }
+
+            if (Vector3.Dot(stepCastHits[i].normal, up) <= 0.1f)
+            {
+                continue;
+            }
+
+            float d = stepCastHits[i].distance;
+            if (d < bestDistance)
+            {
+                bestDistance = d;
+                bestIndex = i;
+            }
+        }
+
+        if (bestIndex >= 0)
+        {
+            RaycastHit bestHit = stepCastHits[bestIndex];
+            sample.point = bestHit.point;
+            sample.normal = bestHit.normal;
+            sample.collider = bestHit.collider;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool HasStepClearance(Vector3 bottomCenter, float radius, float height, Vector3 up, Vector3 moveDir, float stepUp, float castDistance, int mask)
+    {
+        float castRadius = Mathf.Max(0.01f, radius - stepRadiusPadding);
+        float upperRadius = stepUpperRadius > 0f ? stepUpperRadius : castRadius;
+        float capsuleSegment = Mathf.Max(0f, height - (radius * 2f));
+        Vector3 upperBottom = bottomCenter + up * (stepUp + upperRadius + stepUpperHeightOffset);
+        Vector3 upperTop = upperBottom + up * capsuleSegment;
+
+        bool upperHit = CapsuleCastForStep(upperBottom, upperTop, upperRadius, moveDir, castDistance, mask, out _);
+        if (!upperHit && OverlapCapsuleForStep(upperBottom, upperTop, upperRadius, mask))
+        {
+            upperHit = true;
+        }
+
+        return !upperHit;
+    }
+
+    private void ApplyStepOffset(Vector3 up, Vector3 moveDir, float amount, bool stepUp)
+    {
+        if (amount <= 0f || rigidbodyTarget == null)
+        {
+            return;
+        }
+
+        Vector3 targetPosition = rigidbodyTarget.position + (stepUp ? up : -up) * amount;
+        if (stepForwardBoost > 0f)
+        {
+            targetPosition += moveDir * stepForwardBoost;
+        }
+
+        rigidbodyTarget.MovePosition(targetPosition);
+
+        Vector3 velocity = rigidbodyTarget.linearVelocity;
+        if (stepUp)
+        {
+            if (velocity.y < 0f)
+            {
+                velocity.y = 0f;
+                rigidbodyTarget.linearVelocity = velocity;
+            }
+        }
+        else
+        {
+            if (velocity.y > 0f)
+            {
+                velocity.y = 0f;
+                rigidbodyTarget.linearVelocity = velocity;
+            }
+        }
+    }
+
+    private void LogStepDebug(string message)
+    {
+        if (!stepDebugLogs)
+        {
+            return;
+        }
+
+        float now = Time.time;
+        if (now < nextStepDebugTime)
+        {
+            return;
+        }
+
+        nextStepDebugTime = now + Mathf.Max(0.05f, stepDebugCooldown);
+        Debug.Log($"{name} | {message}", this);
+    }
+
+    private void SetFootIkWeights(float positionWeight, float rotationWeight)
+    {
+        animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, positionWeight);
+        animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, rotationWeight);
+        animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, positionWeight);
+        animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, rotationWeight);
+    }
+
+    private void ApplyFootIk(AvatarIKGoal goal, HumanBodyBones bone, int mask, float baseWeight)
+    {
+        Transform boneTransform = animator.GetBoneTransform(bone);
+        if (boneTransform == null)
+        {
+            animator.SetIKPositionWeight(goal, 0f);
+            animator.SetIKRotationWeight(goal, 0f);
+            return;
+        }
+
+        Vector3 up = transform.up;
+        Vector3 origin = boneTransform.position + up * footIkRaycastUp;
+        float maxDistance = footIkRaycastUp + footIkRaycastDown;
+
+        if (!Physics.Raycast(origin, -up, out RaycastHit hit, maxDistance, mask, QueryTriggerInteraction.Ignore))
+        {
+            animator.SetIKPositionWeight(goal, 0f);
+            animator.SetIKRotationWeight(goal, 0f);
+            return;
+        }
+
+        if (Vector3.Dot(hit.normal, up) <= 0.1f)
+        {
+            animator.SetIKPositionWeight(goal, 0f);
+            animator.SetIKRotationWeight(goal, 0f);
+            return;
+        }
+
+        float positionWeight = baseWeight * footIkPositionWeight;
+        float rotationWeight = baseWeight * footIkRotationWeight;
+        Vector3 footPosition = hit.point + up * footIkHeightOffset;
+
+        Vector3 forward = Vector3.ProjectOnPlane(boneTransform.forward, hit.normal);
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            forward = Vector3.ProjectOnPlane(transform.forward, hit.normal);
+        }
+        forward.Normalize();
+
+        Quaternion footRotation = Quaternion.LookRotation(forward, hit.normal);
+
+        animator.SetIKPositionWeight(goal, positionWeight);
+        animator.SetIKRotationWeight(goal, rotationWeight);
+        animator.SetIKPosition(goal, footPosition);
+        animator.SetIKRotation(goal, footRotation);
+    }
+
+    private int GetFootIkMask()
+    {
+        if (!footIkUseCollisionMatrixMask)
+        {
+            return footIkLayerMask;
+        }
+
+        int mask = 0;
+        int layer = gameObject.layer;
+        for (int i = 0; i < 32; i++)
+        {
+            if (!Physics.GetIgnoreLayerCollision(layer, i))
+            {
+                mask |= 1 << i;
+            }
+        }
+
+        return mask;
+    }
+
+    private bool TryGetStepCapsule(out Vector3 center, out float radius, out float height)
+    {
+        CapsuleCollider capsule = stepCapsule;
+        if (capsule == null)
+        {
+            capsule = GetComponent<CapsuleCollider>();
+            stepCapsule = capsule;
+        }
+
+        if (capsule == null || capsule.direction != 1)
+        {
+            center = Vector3.zero;
+            radius = 0f;
+            height = 0f;
+            return false;
+        }
+
+        Vector3 scale = transform.lossyScale;
+        float maxXZ = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+        float absY = Mathf.Abs(scale.y);
+        radius = capsule.radius * maxXZ;
+        height = Mathf.Max(capsule.height * absY, radius * 2f);
+        center = transform.TransformPoint(capsule.center);
+        return true;
+    }
+
+    private int GetStepMask()
+    {
+        if (!stepUseCollisionMatrixMask)
+        {
+            return stepLayerMask;
+        }
+
+        int mask = 0;
+        int layer = gameObject.layer;
+        for (int i = 0; i < 32; i++)
+        {
+            if (!Physics.GetIgnoreLayerCollision(layer, i))
+            {
+                mask |= 1 << i;
+            }
+        }
+
+        return mask;
+    }
+
+    private bool IsGroundedForStep(Vector3 bottom, float radius, Vector3 up, int mask)
+    {
+        float checkDistance = Mathf.Max(0.02f, stepGroundCheckDistance);
+        Vector3 origin = bottom + up * 0.02f;
+
+        if (OverlapForStep(origin, radius * 0.9f, mask))
+        {
+            return true;
+        }
+
+        int hitCount = Physics.SphereCastNonAlloc(origin, radius * 0.9f, -up, stepCastHits, checkDistance, mask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = stepCastHits[i].collider;
+            if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool OverlapForStep(Vector3 origin, float radius, int mask)
+    {
+        int hitCount = Physics.OverlapSphereNonAlloc(origin, radius, stepOverlapHits, mask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = stepOverlapHits[i];
+            if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool OverlapCapsuleForStep(Vector3 point1, Vector3 point2, float radius, int mask)
+    {
+        int hitCount = Physics.OverlapCapsuleNonAlloc(point1, point2, radius, stepOverlapHits, mask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = stepOverlapHits[i];
+            if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool CapsuleCastForStep(Vector3 point1, Vector3 point2, float radius, Vector3 direction, float distance, int mask, out RaycastHit hit)
+    {
+        int hitCount = Physics.CapsuleCastNonAlloc(point1, point2, radius, direction, stepCastHits, distance, mask, QueryTriggerInteraction.Ignore);
+        float bestDistance = float.PositiveInfinity;
+        int bestIndex = -1;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = stepCastHits[i].collider;
+            if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            float d = stepCastHits[i].distance;
+            if (d < bestDistance)
+            {
+                bestDistance = d;
+                bestIndex = i;
+            }
+        }
+
+        if (bestIndex >= 0)
+        {
+            hit = stepCastHits[bestIndex];
+            return true;
+        }
+
+        hit = default;
+        return false;
+    }
+
+    private bool IsSelfCollider(Collider collider)
+    {
+        if (collider == null)
+        {
+            return false;
+        }
+
+        Transform t = collider.transform;
+        return t == transform || t.IsChildOf(transform);
     }
 
     private void SetSpeed(float speed)
@@ -1274,6 +2063,17 @@ public class SquadCharacterController : MonoBehaviour
         }
 
         return currentHorizontalVelocity;
+    }
+
+    private Vector3 GetWorldPosition()
+    {
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        {
+            return rigidbodyTarget.position;
+        }
+
+        Transform root = motionRoot != null ? motionRoot : transform;
+        return root.position;
     }
 
     private Vector3 GetMoveDirection(Vector2 input)
