@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -19,10 +20,15 @@ public class SquadUISettings : MonoBehaviour
     public GameObject squadPanelCursor;
     [Tooltip("Offset applique au curseur.")]
     public Vector3 squadPanelCursorOffset;
-    [Tooltip("Couronne UI du membre controle.")]
-    public GameObject squadPanelCrown;
-    [Tooltip("Offset applique a la couronne.")]
-    public Vector3 squadPanelCrownOffset;
+    [Tooltip("Croix UI du membre controle par un joueur.")]
+    public GameObject squadPanelCross;
+    [Tooltip("Offset applique a la croix.")]
+    public Vector3 squadPanelCrossOffset;
+
+    [Header("Player Crowns")]
+    [SerializeField] private Color localPlayerCrownColor = new Color(0.25f, 0.6f, 1f, 1f);
+    [SerializeField] private Color otherPlayerCrownColor = Color.white;
+    [SerializeField] private bool overrideOtherPlayerCrownColor = false;
 
     [Header("Cursor Navigation")]
     [Tooltip("Deadzone du stick.")]
@@ -44,6 +50,20 @@ public class SquadUISettings : MonoBehaviour
     [Tooltip("Desactive les raycasts quand cache.")]
     public bool squadPanelDisableRaycastsWhenHidden = true;
 
+    [Header("Squad Panel Visibility")]
+    [Tooltip("Garde le panel visible meme quand inactif.")]
+    public bool keepPanelVisibleWhenInactive = true;
+    [Tooltip("Alpha applique quand le panel est actif.")]
+    public float squadPanelActiveAlpha = 1f;
+    [Tooltip("Alpha applique quand le panel est inactif.")]
+    public float squadPanelInactiveAlpha = 1f;
+
+    [Header("Squad Panel Scale")]
+    [Tooltip("Agrandit le panel quand le squad panel est actif.")]
+    public bool scalePanelWhenActive = true;
+    [Tooltip("Multiplicateur d'echelle applique quand actif.")]
+    public float squadPanelActiveScale = 1.2f;
+
     [Header("Runtime")]
     [Tooltip("Slots UI instancies pour chaque membre.")]
     public List<GameObject> squadUnitsUI = new List<GameObject>();
@@ -51,6 +71,15 @@ public class SquadUISettings : MonoBehaviour
     private CanvasGroup squadPanelCanvasGroup;
     private Coroutine squadPanelFadeRoutine;
     private Coroutine crownRefreshRoutine;
+    private Vector3 basePanelScale = Vector3.one;
+    private bool baseScaleCached;
+    private GameObject crownPrefab;
+    private bool panelActiveState;
+    private readonly Dictionary<ulong, GameObject> playerCrowns = new Dictionary<ulong, GameObject>();
+    private WorldInteractionService subscribedService;
+    private bool assignmentsDirty;
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
     public IReadOnlyList<GameObject> SquadUnitsUI => squadUnitsUI;
     private const int PortraitChildIndex = 1;
@@ -64,6 +93,29 @@ public class SquadUISettings : MonoBehaviour
         }
 
         Instance = this;
+        ResolvePlayerMarkerPrefab();
+    }
+
+    private void OnEnable()
+    {
+        ResolvePlayerMarkerPrefab();
+        LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
+        assignmentsDirty = true;
+    }
+
+    private void OnDisable()
+    {
+        LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
+        UnsubscribeAssignments();
+    }
+
+    private void ResolvePlayerMarkerPrefab()
+    {
+        crownPrefab = squadPanelCross;
+        if (crownPrefab != null && crownPrefab.scene.IsValid())
+        {
+            crownPrefab.SetActive(false);
+        }
     }
 
     public void InitializePanel(bool visibleOnStart)
@@ -73,15 +125,23 @@ public class SquadUISettings : MonoBehaviour
             return;
         }
 
+        if (keepPanelVisibleWhenInactive && !squadPanel.activeSelf)
+        {
+            squadPanel.SetActive(true);
+        }
+
+        CacheBasePanelScale();
+
         squadPanelCanvasGroup = GetSquadPanelCanvasGroup();
         if (squadPanelCanvasGroup == null)
         {
             return;
         }
 
-        if (squadPanelSetAlphaToZeroOnStart)
+        panelActiveState = visibleOnStart;
+        if (squadPanelSetAlphaToZeroOnStart || keepPanelVisibleWhenInactive || visibleOnStart)
         {
-            float targetAlpha = visibleOnStart ? 1f : 0f;
+            float targetAlpha = GetTargetAlpha(visibleOnStart);
             SetSquadPanelAlpha(squadPanelCanvasGroup, targetAlpha);
         }
     }
@@ -109,6 +169,8 @@ public class SquadUISettings : MonoBehaviour
 
             squadUnitsUI.Add(squadUnitUI);
         }
+
+        assignmentsDirty = true;
     }
 
     public void ClearSquadUnits()
@@ -128,6 +190,7 @@ public class SquadUISettings : MonoBehaviour
         }
 
         squadUnitsUI.Clear();
+        assignmentsDirty = true;
     }
 
     public int GetUnitCount()
@@ -200,30 +263,13 @@ public class SquadUISettings : MonoBehaviour
 
     public void UpdateCrownPosition(int index)
     {
-        if (squadPanelCrown == null)
+        if (IsMultiplayerActive())
         {
+            assignmentsDirty = true;
             return;
         }
 
-        squadPanelCrown.SetActive(true);
-
-        if (squadUnitsUI == null || squadUnitsUI.Count == 0)
-        {
-            return;
-        }
-
-        if (index < 0 || index >= squadUnitsUI.Count)
-        {
-            index = 0;
-        }
-
-        GameObject unit = squadUnitsUI[index];
-        if (unit == null)
-        {
-            return;
-        }
-
-        squadPanelCrown.transform.position = unit.transform.position + (Vector3)squadPanelCrownOffset;
+        EnsureSinglePlayerCrown(index);
     }
 
     public void RequestCrownReposition(int index)
@@ -242,6 +288,23 @@ public class SquadUISettings : MonoBehaviour
         crownRefreshRoutine = StartCoroutine(CrownRepositionRoutine(index));
     }
 
+    private void LateUpdate()
+    {
+        if (!IsMultiplayerActive())
+        {
+            return;
+        }
+
+        EnsureAssignmentsSubscription();
+        if (assignmentsDirty)
+        {
+            RebuildPlayerCrowns();
+            assignmentsDirty = false;
+        }
+
+        UpdatePlayerCrownPositions();
+    }
+
     public void SetCursorVisible(bool visible)
     {
         if (squadPanelCursor == null)
@@ -254,6 +317,7 @@ public class SquadUISettings : MonoBehaviour
 
     public void ApplyPanelVisibility(bool visible, bool immediate)
     {
+        panelActiveState = visible;
         if (visible)
         {
             ShowSquadPanel(immediate);
@@ -262,6 +326,8 @@ public class SquadUISettings : MonoBehaviour
         {
             HideSquadPanel(immediate);
         }
+
+        SetPanelActiveScale(visible);
     }
 
     private void ShowSquadPanel(bool immediate)
@@ -286,18 +352,14 @@ public class SquadUISettings : MonoBehaviour
             return;
         }
 
+        float targetAlpha = GetTargetAlpha(true);
         if (immediate)
         {
-            SetSquadPanelAlpha(squadPanelCanvasGroup, 1f);
+            SetSquadPanelAlpha(squadPanelCanvasGroup, targetAlpha);
             return;
         }
 
-        if (squadPanelCanvasGroup.alpha <= 0.001f)
-        {
-            SetSquadPanelAlpha(squadPanelCanvasGroup, 0f);
-        }
-
-        FadeSquadPanelTo(1f, squadPanelFadeDuration);
+        FadeSquadPanelTo(targetAlpha, squadPanelFadeDuration);
     }
 
     private void HideSquadPanel(bool immediate)
@@ -313,13 +375,34 @@ public class SquadUISettings : MonoBehaviour
             return;
         }
 
+        float targetAlpha = GetTargetAlpha(false);
         if (immediate)
         {
-            SetSquadPanelAlpha(squadPanelCanvasGroup, 0f);
+            SetSquadPanelAlpha(squadPanelCanvasGroup, targetAlpha);
             return;
         }
 
-        FadeSquadPanelTo(0f, squadPanelFadeDuration);
+        FadeSquadPanelTo(targetAlpha, squadPanelFadeDuration);
+    }
+
+    public void SetPanelActiveScale(bool active)
+    {
+        if (!scalePanelWhenActive || squadPanel == null)
+        {
+            return;
+        }
+
+        CacheBasePanelScale();
+        float multiplier = active ? Mathf.Max(0.01f, squadPanelActiveScale) : 1f;
+        squadPanel.transform.localScale = basePanelScale * multiplier;
+    }
+
+    private float GetTargetAlpha(bool active)
+    {
+        float alpha = active
+            ? squadPanelActiveAlpha
+            : (keepPanelVisibleWhenInactive ? squadPanelInactiveAlpha : 0f);
+        return Mathf.Clamp01(alpha);
     }
 
     private CanvasGroup GetSquadPanelCanvasGroup()
@@ -336,6 +419,17 @@ public class SquadUISettings : MonoBehaviour
         }
 
         return canvasGroup;
+    }
+
+    private void CacheBasePanelScale()
+    {
+        if (baseScaleCached || squadPanel == null)
+        {
+            return;
+        }
+
+        basePanelScale = squadPanel.transform.localScale;
+        baseScaleCached = true;
     }
 
     private void FadeSquadPanelTo(float targetAlpha, float duration)
@@ -377,8 +471,9 @@ public class SquadUISettings : MonoBehaviour
         float time = 0f;
         if (squadPanelDisableRaycastsWhenHidden)
         {
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
+            bool interactable = panelActiveState;
+            canvasGroup.interactable = interactable;
+            canvasGroup.blocksRaycasts = interactable;
         }
 
         while (time < duration)
@@ -402,9 +497,9 @@ public class SquadUISettings : MonoBehaviour
         canvasGroup.alpha = alpha;
         if (squadPanelDisableRaycastsWhenHidden)
         {
-            bool visible = alpha > 0.001f;
-            canvasGroup.interactable = visible;
-            canvasGroup.blocksRaycasts = visible;
+            bool interactable = panelActiveState && alpha > 0.001f;
+            canvasGroup.interactable = interactable;
+            canvasGroup.blocksRaycasts = interactable;
         }
     }
 
@@ -429,6 +524,295 @@ public class SquadUISettings : MonoBehaviour
 
         UpdateCrownPosition(index);
         crownRefreshRoutine = null;
+    }
+
+    private void EnsureSinglePlayerCrown(int index)
+    {
+        GameObject crown = GetOrCreateCrown(ulong.MaxValue, true);
+        if (crown == null)
+        {
+            return;
+        }
+
+        if (squadUnitsUI == null || squadUnitsUI.Count == 0)
+        {
+            crown.SetActive(false);
+            return;
+        }
+
+        if (index < 0 || index >= squadUnitsUI.Count)
+        {
+            index = 0;
+        }
+
+        GameObject unit = squadUnitsUI[index];
+        if (unit == null)
+        {
+            crown.SetActive(false);
+            return;
+        }
+
+        crown.SetActive(true);
+        crown.transform.position = unit.transform.position + (Vector3)squadPanelCrossOffset;
+    }
+
+    private void EnsureAssignmentsSubscription()
+    {
+        WorldInteractionService service = WorldInteractionService.Instance;
+        if (ReferenceEquals(subscribedService, service))
+        {
+            return;
+        }
+
+        UnsubscribeAssignments();
+        subscribedService = service;
+        if (subscribedService != null)
+        {
+            subscribedService.AssignmentsChanged += OnAssignmentsChanged;
+        }
+
+        assignmentsDirty = true;
+    }
+
+    private void UnsubscribeAssignments()
+    {
+        if (subscribedService != null)
+        {
+            subscribedService.AssignmentsChanged -= OnAssignmentsChanged;
+        }
+
+        subscribedService = null;
+    }
+
+    private void OnAssignmentsChanged()
+    {
+        assignmentsDirty = true;
+    }
+
+    private void OnLocalCharacterChanged(Transform _)
+    {
+        assignmentsDirty = true;
+    }
+
+    private void RebuildPlayerCrowns()
+    {
+        if (subscribedService == null || crownPrefab == null)
+        {
+            ClearCrowns();
+            return;
+        }
+
+        HashSet<ulong> desired = new HashSet<ulong>();
+        int count = subscribedService.AssignmentCount;
+        bool hasLocal = TryGetLocalClientId(out ulong localClientId);
+        for (int i = 0; i < count; i++)
+        {
+            NetPlayerAssignment entry = subscribedService.GetAssignment(i);
+            desired.Add(entry.ClientId);
+            GetOrCreateCrown(entry.ClientId, hasLocal && entry.ClientId == localClientId);
+        }
+
+        List<ulong> toRemove = new List<ulong>();
+        foreach (KeyValuePair<ulong, GameObject> pair in playerCrowns)
+        {
+            if (!desired.Contains(pair.Key))
+            {
+                toRemove.Add(pair.Key);
+            }
+        }
+
+        for (int i = 0; i < toRemove.Count; i++)
+        {
+            ulong clientId = toRemove[i];
+            if (playerCrowns.TryGetValue(clientId, out GameObject crown) && crown != null)
+            {
+                Destroy(crown);
+            }
+
+            playerCrowns.Remove(clientId);
+        }
+    }
+
+    private void ClearCrowns()
+    {
+        foreach (KeyValuePair<ulong, GameObject> pair in playerCrowns)
+        {
+            if (pair.Value != null)
+            {
+                Destroy(pair.Value);
+            }
+        }
+
+        playerCrowns.Clear();
+    }
+
+    private void UpdatePlayerCrownPositions()
+    {
+        if (subscribedService == null)
+        {
+            return;
+        }
+
+        if (squadUnitsUI == null || squadUnitsUI.Count == 0)
+        {
+            return;
+        }
+
+        int count = subscribedService.AssignmentCount;
+        for (int i = 0; i < count; i++)
+        {
+            NetPlayerAssignment entry = subscribedService.GetAssignment(i);
+            if (!playerCrowns.TryGetValue(entry.ClientId, out GameObject crown) || crown == null)
+            {
+                continue;
+            }
+
+            int index = ResolveSquadIndex(entry.CharacterId.ToString());
+            if (index < 0 || index >= squadUnitsUI.Count)
+            {
+                crown.SetActive(false);
+                continue;
+            }
+
+            GameObject unit = squadUnitsUI[index];
+            if (unit == null)
+            {
+                crown.SetActive(false);
+                continue;
+            }
+
+            crown.SetActive(true);
+            crown.transform.position = unit.transform.position + (Vector3)squadPanelCrossOffset;
+        }
+    }
+
+    private GameObject GetOrCreateCrown(ulong clientId, bool isLocal)
+    {
+        if (crownPrefab == null)
+        {
+            return null;
+        }
+
+        if (playerCrowns.TryGetValue(clientId, out GameObject existing) && existing != null)
+        {
+            ApplyCrownColor(existing, isLocal);
+            return existing;
+        }
+
+        Transform parent = squadPanel != null ? squadPanel.transform : transform;
+        GameObject instance = Instantiate(crownPrefab, parent);
+        instance.name = $"SquadPanel_PlayerMarker_{clientId}";
+        playerCrowns[clientId] = instance;
+        ApplyCrownColor(instance, isLocal);
+        return instance;
+    }
+
+    private void ApplyCrownColor(GameObject crown, bool isLocal)
+    {
+        if (crown == null)
+        {
+            return;
+        }
+
+        if (!isLocal && !overrideOtherPlayerCrownColor)
+        {
+            return;
+        }
+
+        Color color = isLocal ? localPlayerCrownColor : otherPlayerCrownColor;
+        Graphic graphic = crown.GetComponentInChildren<Graphic>(true);
+        if (graphic != null)
+        {
+            graphic.color = color;
+        }
+
+        Renderer renderer = crown.GetComponentInChildren<Renderer>(true);
+        if (renderer != null)
+        {
+            MaterialPropertyBlock block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            if (renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty(ColorId))
+            {
+                block.SetColor(ColorId, color);
+            }
+            else if (renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty(BaseColorId))
+            {
+                block.SetColor(BaseColorId, color);
+            }
+            renderer.SetPropertyBlock(block);
+        }
+    }
+
+    private static bool TryGetLocalClientId(out ulong clientId)
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            clientId = 0;
+            return false;
+        }
+
+        clientId = NetworkManager.Singleton.LocalClientId;
+        return true;
+    }
+
+    private int ResolveSquadIndex(string characterId)
+    {
+        if (string.IsNullOrWhiteSpace(characterId))
+        {
+            return -1;
+        }
+
+        SquadManager manager = SquadManager.Instance;
+        if (manager == null || manager.currentSquad == null)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < manager.currentSquad.Count; i++)
+        {
+            CharacterData character = manager.currentSquad[i];
+            if (character == null)
+            {
+                continue;
+            }
+
+            if (GetCharacterId(character) == characterId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static string GetCharacterId(CharacterData character)
+    {
+        if (character == null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(character.UniqueId))
+        {
+            return character.UniqueId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(character.characterId))
+        {
+            return character.characterId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(character.characterName))
+        {
+            return character.characterName;
+        }
+
+        return character.name;
+    }
+
+    private static bool IsMultiplayerActive()
+    {
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     }
 
     private void SetPortraitForUnit(GameObject unit, Sprite portrait)

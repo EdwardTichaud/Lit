@@ -167,6 +167,12 @@ public static class NetcodePrefabRegistry
         return CreateCharacterInstance(info, position, rotation, parent);
     }
 
+    public static uint GetCharacterPrefabHash(CharacterData character)
+    {
+        CharacterSpawnInfo info = GetCharacterInfo(character);
+        return info != null ? info.hash : 0u;
+    }
+
     public static GameObject SpawnWorldInteractionServiceInstance()
     {
         EnsureInitialized();

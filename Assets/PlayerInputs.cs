@@ -179,6 +179,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""213cafd7-2050-47f0-9e4d-cf57ff086ef7"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LeftShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""9083101d-6214-4968-899f-901be7a30560"",
                     ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",

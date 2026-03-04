@@ -57,7 +57,7 @@ public class NetcodeBootstrap : MonoBehaviour
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeConnectionApproval>(gameObject);
         }
 
-        if (autoCreateLobbyUI)
+        if (autoCreateLobbyUI && !IsMenuScene(SceneManager.GetActiveScene().name))
         {
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeLobbyUI>(gameObject);
         }
@@ -74,6 +74,16 @@ public class NetcodeBootstrap : MonoBehaviour
     {
         NetcodeSceneObjectInstaller.PrepareScene(scene);
         NetcodePrefabRegistry.Refresh();
+
+        if (autoCreateLobbyUI && !IsMenuScene(scene.name))
+        {
+            NetcodeRuntimeUtilities.GetOrAdd<NetcodeLobbyUI>(gameObject);
+        }
+    }
+
+    private static bool IsMenuScene(string sceneName)
+    {
+        return string.Equals(sceneName, MainMenuController.DefaultMenuSceneName, System.StringComparison.OrdinalIgnoreCase);
     }
 
     private void EnsureNetworkManager()
@@ -124,5 +134,16 @@ public class NetcodeBootstrap : MonoBehaviour
         manager.NetworkConfig.EnableSceneManagement = enableSceneManagement;
         manager.NetworkConfig.AutoSpawnPlayerPrefabClientSide = false;
         manager.NetworkConfig.ConnectionApproval = autoCreateConnectionApproval;
+
+        if (manager.NetworkConfig.NetworkTransport == null)
+        {
+            NetworkTransport transport = manager.GetComponent<NetworkTransport>();
+            if (transport == null)
+            {
+                transport = manager.gameObject.AddComponent<UnityTransport>();
+            }
+
+            manager.NetworkConfig.NetworkTransport = transport;
+        }
     }
 }

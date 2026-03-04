@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -68,6 +69,50 @@ public static class NetcodeSceneObjectInstaller
 
                     networkObject = host.AddComponent<NetworkObject>();
                 }
+
+                uint hash = NetcodeSceneIdUtility.GetStableId(networkObject.transform);
+                NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, hash);
+            }
+        }
+
+        PrepareSquadCharacters(roots);
+    }
+
+    private static void PrepareSquadCharacters(GameObject[] roots)
+    {
+        if (roots == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < roots.Length; i++)
+        {
+            GameObject root = roots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            SquadCharacterController[] controllers = root.GetComponentsInChildren<SquadCharacterController>(true);
+            if (controllers == null)
+            {
+                continue;
+            }
+
+            for (int j = 0; j < controllers.Length; j++)
+            {
+                SquadCharacterController controller = controllers[j];
+                if (controller == null)
+                {
+                    continue;
+                }
+
+                GameObject host = controller.gameObject;
+                NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(host);
+                NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(host);
+                NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(host);
+                NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(host);
+                NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(host);
 
                 uint hash = NetcodeSceneIdUtility.GetStableId(networkObject.transform);
                 NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, hash);

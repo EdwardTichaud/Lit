@@ -32,6 +32,7 @@ public class CharacterSaveEntry
     public int torchSeconds;
     public bool torchEquipped;
     public List<ItemStackData> items = new List<ItemStackData>();
+    public bool itemsInitialized;
     public List<string> skillIds = new List<string>();
     public bool skillsInitialized;
 }

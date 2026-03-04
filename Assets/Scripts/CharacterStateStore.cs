@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
 // Gere la sauvegarde/chargement des personnages, inventaires, coffres maison et constructions.
 public class CharacterStateStore : MonoBehaviour
@@ -120,6 +121,10 @@ public class CharacterStateStore : MonoBehaviour
         try
         {
             File.WriteAllText(path, json);
+            if (SaveSessionManager.Instance != null)
+            {
+                SaveSessionManager.Instance.RecordSaveMetadata(SceneManager.GetActiveScene().name);
+            }
         }
         catch (IOException ex)
         {
@@ -273,7 +278,8 @@ public class CharacterStateStore : MonoBehaviour
                 rotation = instance != null ? instance.transform.rotation : Quaternion.identity,
                 torchSeconds = 0,
                 torchEquipped = false,
-                items = new List<ItemStackData>()
+                items = new List<ItemStackData>(),
+                itemsInitialized = true
             };
 
             SquadCharacterController controller = instance != null ? instance.GetComponent<SquadCharacterController>() : null;
@@ -1448,6 +1454,15 @@ public class CharacterStateStore : MonoBehaviour
         if (string.IsNullOrWhiteSpace(saveFileName))
         {
             return null;
+        }
+
+        if (SaveSessionManager.Instance != null && SaveSessionManager.Instance.HasActiveSave)
+        {
+            string managedPath = SaveSessionManager.Instance.GetActiveSaveFilePath(saveFileName);
+            if (!string.IsNullOrWhiteSpace(managedPath))
+            {
+                return managedPath;
+            }
         }
 
         return Path.Combine(Application.persistentDataPath, saveFileName);

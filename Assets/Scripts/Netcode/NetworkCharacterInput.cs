@@ -23,38 +23,53 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner)
+        if (IsOwner)
         {
-            return;
+            RegisterInput();
         }
-
-        LocalInputRouter.EnsureInitialized();
-        LocalInputRouter.Move += OnMoveChanged;
-        LocalInputRouter.ToggleTorch += OnToggleTorch;
     }
 
     public override void OnNetworkDespawn()
     {
-        if (!IsOwner)
-        {
-            return;
-        }
+        UnregisterInput();
+    }
 
-        LocalInputRouter.Move -= OnMoveChanged;
-        LocalInputRouter.ToggleTorch -= OnToggleTorch;
+    public override void OnGainedOwnership()
+    {
+        RegisterInput();
+    }
+
+    public override void OnLostOwnership()
+    {
+        UnregisterInput();
     }
 
     private void OnDisable()
     {
-        if (IsOwner)
+        if (IsOwner && IsAssignedToLocalClient())
         {
             SubmitMove(Vector2.zero);
         }
     }
 
+    private void RegisterInput()
+    {
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Move += OnMoveChanged;
+        LocalInputRouter.ToggleTorch += OnToggleTorch;
+    }
+
+    private void UnregisterInput()
+    {
+        LocalInputRouter.Move -= OnMoveChanged;
+        LocalInputRouter.ToggleTorch -= OnToggleTorch;
+        pendingMove = Vector2.zero;
+        lastSentMove = Vector2.zero;
+    }
+
     private void Update()
     {
-        if (!IsOwner || !IsSpawned)
+        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
             return;
         }
@@ -79,7 +94,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void OnMoveChanged(Vector2 value)
     {
-        if (IsGameplayInputBlocked())
+        if (!IsOwner || !IsAssignedToLocalClient() || IsGameplayInputBlocked())
         {
             pendingMove = Vector2.zero;
             return;
@@ -90,7 +105,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void OnToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
-        if (!IsOwner || !IsSpawned)
+        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
             return;
         }
@@ -110,7 +125,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void SubmitMove(Vector2 value)
     {
-        if (!IsOwner || !IsSpawned)
+        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
             return;
         }
@@ -167,5 +182,63 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         controller.ApplyTorchState(torchSeconds, equipped);
+    }
+
+    private bool IsAssignedToLocalClient()
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            return true;
+        }
+
+        WorldInteractionService service = WorldInteractionService.Instance;
+        if (service == null)
+        {
+            return !NetworkManager.Singleton.IsHost;
+        }
+
+        if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
+        {
+            return !NetworkManager.Singleton.IsHost;
+        }
+
+        string localId = ResolveCharacterId();
+        if (string.IsNullOrWhiteSpace(localId))
+        {
+            return false;
+        }
+
+        return string.Equals(characterId, localId, System.StringComparison.Ordinal);
+    }
+
+    private string ResolveCharacterId()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        CharacterData data = controller != null ? controller.CharacterData : null;
+        if (data == null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(data.UniqueId))
+        {
+            return data.UniqueId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(data.characterId))
+        {
+            return data.characterId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(data.characterName))
+        {
+            return data.characterName;
+        }
+
+        return data.name;
     }
 }

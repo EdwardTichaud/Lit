@@ -1,15 +1,37 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 // Spawner serveur pour attribuer un personnage a chaque client.
 public class NetcodePlayerSpawner : MonoBehaviour
 {
+    public static NetcodePlayerSpawner Instance { get; private set; }
+
     [SerializeField] private int maxPlayers = 4;
     [SerializeField] private bool spawnWorldInteractionService = true;
 
     private readonly Dictionary<ulong, CharacterData> assignments = new Dictionary<ulong, CharacterData>();
     private readonly HashSet<int> usedRosterIndices = new HashSet<int>();
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            return;
+        }
+
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
 
     private void OnEnable()
     {
@@ -42,10 +64,18 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
+        assignments.Clear();
+        usedRosterIndices.Clear();
+
         NetcodePrefabRegistry.EnsureInitialized();
         if (spawnWorldInteractionService)
         {
             SpawnWorldInteractionService();
+        }
+
+        if (WorldInteractionService.Instance != null)
+        {
+            WorldInteractionService.Instance.ClearAllAssignments();
         }
 
         SpawnForClient(NetworkManager.Singleton.LocalClientId);
@@ -70,11 +100,13 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         NetcodePlayerSessionRegistry.Unregister(clientId);
+        UpdateAssignmentRegistry(clientId, null);
     }
 
     private void SpawnForClient(ulong clientId)
     {
         NetcodePrefabRegistry.EnsureInitialized();
+        PruneAssignments();
         if (assignments.ContainsKey(clientId))
         {
             return;
@@ -87,22 +119,33 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        Transform parent = SquadManager.Instance != null ? SquadManager.Instance.squadCharactersParent : null;
-        Vector3 position = ResolveSpawnPosition(character);
-        Quaternion rotation = ResolveSpawnRotation(character);
-
-        GameObject instance = NetcodePrefabRegistry.SpawnCharacterInstance(character, position, rotation, parent);
-        if (instance == null)
+        GameObject instance = TryResolveExistingInstance(character);
+        if (instance != null)
         {
-            Debug.LogWarning($"NetcodePlayerSpawner: prefab reseau manquant pour {character.name}.");
-            return;
+            PrepareExistingInstanceForNetwork(instance, character);
+        }
+        else
+        {
+            Transform parent = SquadManager.Instance != null ? SquadManager.Instance.squadCharactersParent : null;
+            Vector3 position = ResolveSpawnPosition(character);
+            Quaternion rotation = ResolveSpawnRotation(character);
+
+            instance = NetcodePrefabRegistry.SpawnCharacterInstance(character, position, rotation, parent);
+            if (instance == null)
+            {
+                Debug.LogWarning($"NetcodePlayerSpawner: prefab reseau manquant pour {character.name}.");
+                return;
+            }
         }
 
         NetworkObject networkObject = instance.GetComponent<NetworkObject>();
         if (networkObject == null)
         {
             Debug.LogWarning("NetcodePlayerSpawner: NetworkObject manquant sur le prefab reseau.");
-            Destroy(instance);
+            if (instance != null)
+            {
+                Destroy(instance);
+            }
             return;
         }
 
@@ -113,7 +156,15 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         assignments[clientId] = character;
-        networkObject.SpawnAsPlayerObject(clientId, true);
+        if (!networkObject.IsSpawned)
+        {
+            networkObject.Spawn(true);
+        }
+
+        if (networkObject.OwnerClientId != clientId)
+        {
+            networkObject.ChangeOwnership(clientId);
+        }
 
         NetworkInventory inventory = instance.GetComponent<NetworkInventory>();
         if (inventory != null && inventory.IsServer)
@@ -123,6 +174,185 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
         RegisterWithSquadManager(character, instance);
         RegisterPlayerBinding(clientId, character);
+        UpdateAssignmentRegistry(clientId, character);
+    }
+
+    public bool TrySwitchCharacter(ulong clientId, string targetCharacterId, out string reason)
+    {
+        reason = string.Empty;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        {
+            reason = "Serveur requis.";
+            return false;
+        }
+
+        PruneAssignments();
+
+        if (string.IsNullOrWhiteSpace(targetCharacterId))
+        {
+            reason = "Personnage invalide.";
+            return false;
+        }
+
+        CharacterData target = ResolveCharacterById(targetCharacterId);
+        if (target == null)
+        {
+            reason = "Personnage introuvable.";
+            return false;
+        }
+
+        if (assignments.TryGetValue(clientId, out CharacterData current) && current == target)
+        {
+            reason = "Deja controle.";
+            return false;
+        }
+
+        if (IsCharacterAssigned(target))
+        {
+            reason = "Personnage deja controle.";
+            return false;
+        }
+
+        GameObject targetInstance = TryResolveExistingInstance(target);
+        if (targetInstance == null)
+        {
+            reason = "Instance introuvable.";
+            return false;
+        }
+
+        PrepareExistingInstanceForNetwork(targetInstance, target);
+        NetworkObject targetNetwork = targetInstance.GetComponent<NetworkObject>();
+        if (targetNetwork == null)
+        {
+            reason = "Objet reseau manquant.";
+            return false;
+        }
+
+        if (!targetNetwork.IsSpawned)
+        {
+            targetNetwork.Spawn(true);
+        }
+
+        if (assignments.TryGetValue(clientId, out CharacterData previous))
+        {
+            GameObject previousInstance = TryResolveExistingInstance(previous);
+            if (previousInstance != null)
+            {
+                NetworkObject previousNetwork = previousInstance.GetComponent<NetworkObject>();
+                if (previousNetwork != null && previousNetwork.IsSpawned)
+                {
+                    previousNetwork.RemoveOwnership();
+                }
+            }
+
+            ReleaseRosterIndex(previous);
+        }
+
+        assignments[clientId] = target;
+        int index = GetRosterIndex(target, GetRoster());
+        if (index >= 0)
+        {
+            usedRosterIndices.Add(index);
+        }
+
+        UpdateAssignmentRegistry(clientId, target);
+        targetNetwork.ChangeOwnership(clientId);
+        RegisterWithSquadManager(target, targetInstance);
+        RegisterPlayerBinding(clientId, target);
+        return true;
+    }
+
+    private static GameObject TryResolveExistingInstance(CharacterData character)
+    {
+        if (character == null)
+        {
+            return null;
+        }
+
+        SquadManager manager = SquadManager.Instance;
+        if (manager != null)
+        {
+            GameObject found = manager.GetCharacterInstance(character);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>(FindObjectsSortMode.None);
+#else
+        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsOfType<SquadCharacterController>();
+#endif
+        if (controllers == null)
+        {
+            return null;
+        }
+
+        string targetId = GetCharacterId(character);
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            SquadCharacterController controller = controllers[i];
+            if (controller == null)
+            {
+                continue;
+            }
+
+            CharacterData candidate = controller.CharacterData;
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            if (candidate == character)
+            {
+                return controller.gameObject;
+            }
+
+            string candidateId = GetCharacterId(candidate);
+            if (!string.IsNullOrWhiteSpace(targetId)
+                && string.Equals(targetId, candidateId, StringComparison.Ordinal))
+            {
+                return controller.gameObject;
+            }
+        }
+
+        return null;
+    }
+
+    private static void PrepareExistingInstanceForNetwork(GameObject instance, CharacterData character)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(instance);
+
+        NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
+        if (networkObject.IsSpawned)
+        {
+            return;
+        }
+
+        if (instance.scene.IsValid())
+        {
+            uint sceneHash = NetcodeSceneIdUtility.GetStableId(instance.transform);
+            NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, sceneHash);
+        }
+        else
+        {
+            uint hash = NetcodePrefabRegistry.GetCharacterPrefabHash(character);
+            if (hash == 0u)
+            {
+                hash = NetcodeStableHash.Hash32($"character:{GetCharacterId(character)}");
+            }
+
+            NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
+        }
     }
 
     private void SpawnWorldInteractionService()
@@ -375,6 +605,23 @@ public class NetcodePlayerSpawner : MonoBehaviour
         manager.RegisterNetworkCharacter(character, instance);
     }
 
+    private static void UpdateAssignmentRegistry(ulong clientId, CharacterData character)
+    {
+        if (WorldInteractionService.Instance == null || !WorldInteractionService.Instance.IsServer)
+        {
+            return;
+        }
+
+        if (character == null)
+        {
+            WorldInteractionService.Instance.ClearAssignment(clientId);
+        }
+        else
+        {
+            WorldInteractionService.Instance.SetAssignment(clientId, GetCharacterId(character));
+        }
+    }
+
     private static CharacterStateStore ResolveCharacterStateStore()
     {
         if (CharacterStateStore.Instance != null)
@@ -385,7 +632,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
 #if UNITY_2023_1_OR_NEWER
         return FindFirstObjectByType<CharacterStateStore>();
 #else
-        return Object.FindObjectOfType<CharacterStateStore>();
+        return UnityEngine.Object.FindObjectOfType<CharacterStateStore>();
 #endif
     }
 
@@ -412,5 +659,135 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         return character.name;
+    }
+
+    private CharacterData ResolveCharacterById(string characterId)
+    {
+        if (string.IsNullOrWhiteSpace(characterId))
+        {
+            return null;
+        }
+
+        List<CharacterData> roster = GetRoster();
+        if (roster == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < roster.Count; i++)
+        {
+            CharacterData candidate = roster[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            if (GetCharacterId(candidate) == characterId)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsCharacterAssigned(CharacterData character)
+    {
+        if (character == null)
+        {
+            return false;
+        }
+
+        string targetId = GetCharacterId(character);
+        if (!string.IsNullOrWhiteSpace(targetId))
+        {
+            WorldInteractionService service = WorldInteractionService.Instance;
+            if (service != null && service.IsSpawned && service.TryGetAssignedClientId(targetId, out ulong assignedClientId))
+            {
+                if (NetworkManager.Singleton != null)
+                {
+                    IReadOnlyList<ulong> connected = NetworkManager.Singleton.ConnectedClientsIds;
+                    if (connected != null)
+                    {
+                        for (int i = 0; i < connected.Count; i++)
+                        {
+                            if (connected[i] == assignedClientId)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                // Assignment stale: clear it on server and locally.
+                service.ClearAssignment(assignedClientId);
+                if (assignments.TryGetValue(assignedClientId, out CharacterData assignedCharacter))
+                {
+                    ReleaseRosterIndex(assignedCharacter);
+                    assignments.Remove(assignedClientId);
+                }
+                UpdateAssignmentRegistry(assignedClientId, null);
+            }
+        }
+
+        foreach (KeyValuePair<ulong, CharacterData> pair in assignments)
+        {
+            if (pair.Value == null)
+            {
+                continue;
+            }
+
+            if (GetCharacterId(pair.Value) == targetId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void PruneAssignments()
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        IReadOnlyList<ulong> connected = NetworkManager.Singleton.ConnectedClientsIds;
+        if (connected == null || connected.Count == 0)
+        {
+            return;
+        }
+
+        HashSet<ulong> connectedSet = new HashSet<ulong>(connected);
+        List<ulong> toRemove = null;
+
+        foreach (KeyValuePair<ulong, CharacterData> pair in assignments)
+        {
+            if (connectedSet.Contains(pair.Key))
+            {
+                continue;
+            }
+
+            if (toRemove == null)
+            {
+                toRemove = new List<ulong>();
+            }
+
+            toRemove.Add(pair.Key);
+            ReleaseRosterIndex(pair.Value);
+        }
+
+        if (toRemove == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < toRemove.Count; i++)
+        {
+            ulong clientId = toRemove[i];
+            assignments.Remove(clientId);
+            UpdateAssignmentRegistry(clientId, null);
+        }
     }
 }

@@ -54,6 +54,7 @@ public class NetcodeLauncher : MonoBehaviour
         NetcodePrefabRegistry.EnsureInitialized();
         NetcodeSceneObjectInstaller.PrepareActiveScene();
         ApplyConnectionPayload(manager);
+        EnsureTransport(manager);
         ConfigureTransport(manager, connectAddress, connectPort, listenAddress);
         manager.StartHost();
     }
@@ -69,6 +70,7 @@ public class NetcodeLauncher : MonoBehaviour
         NetcodePrefabRegistry.EnsureInitialized();
         NetcodeSceneObjectInstaller.PrepareActiveScene();
         ApplyConnectionPayload(manager);
+        EnsureTransport(manager);
         ConfigureTransport(manager, connectAddress, connectPort, null);
         manager.StartClient();
     }
@@ -92,6 +94,7 @@ public class NetcodeLauncher : MonoBehaviour
         NetcodePrefabRegistry.EnsureInitialized();
         NetcodeSceneObjectInstaller.PrepareActiveScene();
         ApplyConnectionPayload(manager);
+        EnsureTransport(manager);
         ConfigureTransport(manager, address, port, listenOverride ?? listenAddress);
         return manager.StartHost();
     }
@@ -107,6 +110,7 @@ public class NetcodeLauncher : MonoBehaviour
         NetcodePrefabRegistry.EnsureInitialized();
         NetcodeSceneObjectInstaller.PrepareActiveScene();
         ApplyConnectionPayload(manager);
+        EnsureTransport(manager);
         ConfigureTransport(manager, address, port, null);
         return manager.StartClient();
     }
@@ -119,6 +123,32 @@ public class NetcodeLauncher : MonoBehaviour
         }
 
         manager.NetworkConfig.ConnectionData = NetcodeClientIdentity.BuildPayload();
+    }
+
+    private static void EnsureTransport(NetworkManager manager)
+    {
+        if (manager == null)
+        {
+            return;
+        }
+
+        if (manager.NetworkConfig == null)
+        {
+            manager.NetworkConfig = new NetworkConfig();
+        }
+
+        if (manager.NetworkConfig.NetworkTransport != null)
+        {
+            return;
+        }
+
+        NetworkTransport transport = manager.GetComponent<NetworkTransport>();
+        if (transport == null)
+        {
+            transport = manager.gameObject.AddComponent<UnityTransport>();
+        }
+
+        manager.NetworkConfig.NetworkTransport = transport;
     }
 
     private void ConfigureTransport(NetworkManager manager, string address, ushort port, string listenOverride)
