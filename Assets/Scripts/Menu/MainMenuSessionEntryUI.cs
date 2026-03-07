@@ -8,16 +8,15 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
 {
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private GameObject cursor;
-    [SerializeField] private Transform savesRoot;
     [SerializeField] private MenuCursorLink cursorLink;
 
     private MainMenuController owner;
-    private bool expanded;
+    private SaveSessionInfo session;
     private bool hovered;
     private RectTransform rectTransform;
+    private bool useLocalCursor = true;
 
-    public Transform SavesRoot => savesRoot;
-    public bool IsExpanded => expanded;
+    public SaveSessionInfo Session => session;
 
     private void Awake()
     {
@@ -27,35 +26,34 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
         {
             cursorLink = GetComponentInParent<MenuCursorLink>();
         }
+        useLocalCursor = cursorLink == null;
         SetCursorVisible(false);
     }
 
     public void Initialize(MainMenuController menu, string sessionName, bool expandedByDefault = false)
     {
+        Initialize(menu, new SaveSessionInfo { sessionName = sessionName }, expandedByDefault);
+    }
+
+    public void Initialize(MainMenuController menu, SaveSessionInfo sessionData, bool selectedByDefault = false)
+    {
         owner = menu;
+        session = sessionData;
+
         if (titleText != null)
         {
-            titleText.text = sessionName;
+            titleText.text = session != null && !string.IsNullOrWhiteSpace(session.sessionName)
+                ? session.sessionName
+                : "Session";
         }
 
         ResolveCursor();
-        SetCursorVisible(false);
-        SetExpanded(expandedByDefault);
-    }
-
-    public void SetExpanded(bool value)
-    {
-        expanded = value;
-
-        if (savesRoot != null)
+        if (cursorLink == null)
         {
-            savesRoot.gameObject.SetActive(expanded);
+            cursorLink = GetComponentInParent<MenuCursorLink>();
         }
-    }
-
-    public void Toggle()
-    {
-        SetExpanded(!expanded);
+        useLocalCursor = cursorLink == null;
+        SetCursorVisible(false);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -112,10 +110,6 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
         {
             owner.OnSessionInteract(this);
         }
-        else
-        {
-            Toggle();
-        }
     }
 
     private void OnDisable()
@@ -164,6 +158,15 @@ public class MainMenuSessionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoin
 
     private void SetCursorVisible(bool visible)
     {
+        if (!useLocalCursor)
+        {
+            if (cursor != null)
+            {
+                cursor.SetActive(false);
+            }
+            return;
+        }
+
         if (cursor != null)
         {
             cursor.SetActive(visible);

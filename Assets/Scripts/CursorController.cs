@@ -7,6 +7,18 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class CursorController : MonoBehaviour
 {
+    public enum CursorPlacement
+    {
+        Overlay = 0,
+        RightOfTarget = 1
+    }
+    public enum LayoutFallback
+    {
+        None = 0,
+        Vertical = 1,
+        Horizontal = 2,
+        Grid = 3
+    }
     private enum LayoutKind
     {
         Grid,
@@ -20,6 +32,8 @@ public class CursorController : MonoBehaviour
     public LayoutGroup layoutGroup;
     [Tooltip("Parent des elements a naviguer (utilise si layoutGroup est nul).")]
     public RectTransform itemsParent;
+    [Tooltip("Layout a utiliser si aucun LayoutGroup n'est present.")]
+    public LayoutFallback fallbackLayout = LayoutFallback.None;
     [Tooltip("Reconstruit la liste si les enfants changent.")]
     public bool autoCollectItems = true;
     [Tooltip("Inclut les objets inactifs dans la navigation.")]
@@ -32,6 +46,12 @@ public class CursorController : MonoBehaviour
     public RectTransform cursorParentOverride;
     [Tooltip("Padding ajoute autour de l'element selectionne.")]
     public Vector2 cursorPadding = new Vector2(0f, 0f);
+    [Tooltip("Positionnement du curseur par rapport a la cible.")]
+    public CursorPlacement placement = CursorPlacement.Overlay;
+    [Tooltip("Decalage ajoute quand le curseur est a droite de la cible.")]
+    public Vector2 rightOffset = new Vector2(20f, 0f);
+    [Tooltip("Ajuste la taille du curseur a celle de la cible.")]
+    public bool matchTargetSize = true;
     [Tooltip("Cree un curseur si manquant.")]
     public bool createCursorIfMissing = true;
 
@@ -201,6 +221,22 @@ public class CursorController : MonoBehaviour
         return true;
     }
 
+    public bool SelectFirst()
+    {
+        ResolveLayout();
+        RebuildItems();
+        if (items.Count == 0)
+        {
+            currentIndex = -1;
+            HideCursor();
+            return false;
+        }
+
+        currentIndex = 0;
+        cursorDirty = true;
+        return true;
+    }
+
     private void ResolveLayout()
     {
         if (layoutGroup == null && itemsParent != null)
@@ -210,7 +246,7 @@ public class CursorController : MonoBehaviour
 
         if (layoutGroup == null)
         {
-            layoutKind = LayoutKind.Unknown;
+            layoutKind = ResolveFallbackLayout();
             return;
         }
 
@@ -229,6 +265,21 @@ public class CursorController : MonoBehaviour
         else
         {
             layoutKind = LayoutKind.Unknown;
+        }
+    }
+
+    private LayoutKind ResolveFallbackLayout()
+    {
+        switch (fallbackLayout)
+        {
+            case LayoutFallback.Vertical:
+                return LayoutKind.Vertical;
+            case LayoutFallback.Horizontal:
+                return LayoutKind.Horizontal;
+            case LayoutFallback.Grid:
+                return LayoutKind.Grid;
+            default:
+                return LayoutKind.Unknown;
         }
     }
 
@@ -607,9 +658,23 @@ public class CursorController : MonoBehaviour
 
         ForceLayoutRebuild();
         rect.gameObject.SetActive(true);
-        Vector2 size = target.rect.size;
-        cursorTargetPosition = target.position;
-        cursorTargetSize = size + cursorPadding;
+        Vector2 targetSize = target.rect.size;
+        Vector2 baseSize = matchTargetSize ? targetSize : rect.rect.size;
+        cursorTargetSize = baseSize + cursorPadding;
+
+        if (placement == CursorPlacement.RightOfTarget)
+        {
+            Vector3 right = target.right;
+            Vector3 up = target.up;
+            float halfTarget = targetSize.x * 0.5f;
+            float halfCursor = cursorTargetSize.x * 0.5f;
+            float offset = halfTarget + halfCursor + rightOffset.x;
+            cursorTargetPosition = target.position + right * offset + up * rightOffset.y;
+        }
+        else
+        {
+            cursorTargetPosition = target.position;
+        }
         cursorHasTarget = true;
         rect.pivot = new Vector2(0.5f, 0.5f);
 

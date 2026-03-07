@@ -30,6 +30,7 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Save List")]
     [SerializeField] private Transform sessionsRoot;
+    [SerializeField] private Transform savesRoot;
     [SerializeField] private MainMenuSessionEntryUI sessionEntryPrefab;
     [SerializeField] private MainMenuSaveEntryUI saveEntryPrefab;
     [SerializeField] private GameObject emptySessionsPlaceholder;
@@ -82,12 +83,15 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Color entrySelectedColor = new Color(0.6f, 0.8f, 1f, 0.32f);
 
     private MainMenuSessionEntryUI hoveredSessionEntry;
+    private SaveSessionInfo selectedSession;
     private SaveSlotInfo selectedSave;
     private MainMenuSaveEntryUI selectedSaveView;
     private SaveSlotInfo pendingDelete;
     private Texture2D previewTexture;
     private bool waitingForInput;
     private MenuState currentMenu = MenuState.TitleCard;
+    private Coroutine cursorSnapRoutine;
+    private RectTransform currentCursorRoot;
 
     private void Awake()
     {
@@ -266,16 +270,126 @@ public class MainMenuController : MonoBehaviour
         RectTransform targetRoot = null;
         if (currentMenu == MenuState.GameOptions)
         {
-            targetRoot = gameOptionsCursorRoot;
+            targetRoot = ResolveCursorRoot(gameOptionsCursorRoot, gameOptionsGroup);
         }
         else if (currentMenu == MenuState.LoadMenu)
         {
-            targetRoot = loadMenuCursorRoot;
+            targetRoot = ResolveCursorRoot(loadMenuCursorRoot, ResolveLoadMenuGroup());
         }
 
+        currentCursorRoot = targetRoot;
         sharedCursor.itemsParent = targetRoot;
         sharedCursor.layoutGroup = targetRoot != null ? targetRoot.GetComponent<LayoutGroup>() : null;
         sharedCursor.Refresh();
+        StartCursorSnap();
+    }
+
+    private void StartCursorSnap()
+    {
+        if (cursorSnapRoutine != null)
+        {
+            StopCoroutine(cursorSnapRoutine);
+        }
+        cursorSnapRoutine = StartCoroutine(SnapCursorNextFrame());
+    }
+
+    private System.Collections.IEnumerator SnapCursorNextFrame()
+    {
+        yield return null;
+        if (sharedCursor == null)
+        {
+            cursorSnapRoutine = null;
+            yield break;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        sharedCursor.Refresh();
+        if (!sharedCursor.SelectFirst())
+        {
+            RectTransform fallback = FindFirstCursorItem(currentCursorRoot);
+            if (fallback != null)
+            {
+                sharedCursor.TrySetCurrentItem(fallback, true);
+            }
+        }
+        cursorSnapRoutine = null;
+    }
+
+    private RectTransform ResolveCursorRoot(RectTransform explicitRoot, CanvasGroup group)
+    {
+        RectTransform root = explicitRoot;
+        if (root == null && group != null)
+        {
+            root = group.transform as RectTransform;
+        }
+
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (HasDirectActiveChildren(root))
+        {
+            return root;
+        }
+
+        RectTransform fallback = FindFirstCursorItem(root);
+        if (fallback != null && fallback.parent is RectTransform parent)
+        {
+            return parent;
+        }
+
+        return root;
+    }
+
+    private static bool HasDirectActiveChildren(RectTransform root)
+    {
+        if (root == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child != null && child.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static RectTransform FindFirstCursorItem(Transform root)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        MenuCursorAction action = root.GetComponentInChildren<MenuCursorAction>(true);
+        if (action != null)
+        {
+            return action.transform as RectTransform;
+        }
+
+        MenuCursorItem item = root.GetComponentInChildren<MenuCursorItem>(true);
+        if (item != null)
+        {
+            return item.transform as RectTransform;
+        }
+
+        MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IMenuCursorHandler)
+            {
+                return behaviours[i].transform as RectTransform;
+            }
+        }
+
+        return null;
     }
 
     private void ShowTitleCard(CanvasGroup group)
@@ -472,6 +586,7 @@ public class MainMenuController : MonoBehaviour
             {
                 emptySessionsPlaceholder.SetActive(true);
             }
+            selectedSession = null;
             return;
         }
 
@@ -480,12 +595,15 @@ public class MainMenuController : MonoBehaviour
             emptySessionsPlaceholder.SetActive(false);
         }
 
-        if (sessionsRoot == null || sessionEntryPrefab == null || saveEntryPrefab == null)
+        if (sessionsRoot == null || sessionEntryPrefab == null)
         {
             SetStatus("References UI manquantes.");
             return;
         }
 
+        MainMenuSessionEntryUI firstEntry = null;
+        MainMenuSessionEntryUI matchedEntry = null;
+        string selectedSessionId = selectedSession != null ? selectedSession.sessionId : null;
         for (int i = 0; i < sessions.Count; i++)
         {
             SaveSessionInfo session = sessions[i];
@@ -495,32 +613,25 @@ public class MainMenuController : MonoBehaviour
             }
 
             MainMenuSessionEntryUI sessionEntry = Instantiate(sessionEntryPrefab, sessionsRoot);
-            sessionEntry.Initialize(this, session.sessionName, false);
-
-            Transform savesRoot = sessionEntry.SavesRoot;
-            if (savesRoot == null)
+            sessionEntry.Initialize(this, session, false);
+            if (firstEntry == null)
             {
-                Debug.LogWarning($"MainMenuController: savesRoot manquant pour la session '{session.sessionName}'.");
-                continue;
+                firstEntry = sessionEntry;
             }
-
-            if (session.saves == null || session.saves.Count == 0)
+            if (!string.IsNullOrEmpty(selectedSessionId) && session.sessionId == selectedSessionId)
             {
-                sessionEntry.SetExpanded(false);
-                continue;
+                matchedEntry = sessionEntry;
             }
+        }
 
-            for (int j = 0; j < session.saves.Count; j++)
-            {
-                SaveSlotInfo save = session.saves[j];
-                if (save == null)
-                {
-                    continue;
-                }
-
-                MainMenuSaveEntryUI saveEntry = Instantiate(saveEntryPrefab, savesRoot);
-                saveEntry.Initialize(this, save, entryColor, entryHoverColor, entrySelectedColor);
-            }
+        MainMenuSessionEntryUI entryToSelect = matchedEntry != null ? matchedEntry : firstEntry;
+        if (entryToSelect != null)
+        {
+            SelectSession(entryToSelect);
+        }
+        else
+        {
+            ClearSavesUI();
         }
     }
 
@@ -531,19 +642,12 @@ public class MainMenuController : MonoBehaviour
         pendingDelete = null;
         hoveredSessionEntry = null;
 
-        ClearPreviewTexture();
-        if (detailsTitle != null)
-        {
-            detailsTitle.text = "Details";
-        }
-        if (detailsBody != null)
-        {
-            detailsBody.text = "Selectionne une sauvegarde.";
-        }
         if (confirmRoot != null)
         {
             confirmRoot.SetActive(false);
         }
+
+        ClearSavesUI();
 
         if (sessionsRoot == null)
         {
@@ -576,7 +680,79 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        entry.Toggle();
+        SelectSession(entry);
+    }
+
+    private void SelectSession(MainMenuSessionEntryUI entry)
+    {
+        if (entry == null)
+        {
+            return;
+        }
+
+        SaveSessionInfo session = entry.Session;
+        if (session == null)
+        {
+            return;
+        }
+
+        selectedSession = session;
+        RebuildSavesList(session);
+    }
+
+    private void RebuildSavesList(SaveSessionInfo session)
+    {
+        ClearSavesUI();
+
+        if (savesRoot == null || saveEntryPrefab == null)
+        {
+            SetStatus("References UI manquantes.");
+            return;
+        }
+
+        if (session == null || session.saves == null || session.saves.Count == 0)
+        {
+            return;
+        }
+
+        for (int j = 0; j < session.saves.Count; j++)
+        {
+            SaveSlotInfo save = session.saves[j];
+            if (save == null)
+            {
+                continue;
+            }
+
+            MainMenuSaveEntryUI saveEntry = Instantiate(saveEntryPrefab, savesRoot);
+            saveEntry.Initialize(this, save, entryColor, entryHoverColor, entrySelectedColor);
+        }
+    }
+
+    private void ClearSavesUI()
+    {
+        selectedSave = null;
+        selectedSaveView = null;
+        pendingDelete = null;
+
+        ClearPreviewTexture();
+        if (detailsTitle != null)
+        {
+            detailsTitle.text = "Details";
+        }
+        if (detailsBody != null)
+        {
+            detailsBody.text = "Selectionne une sauvegarde.";
+        }
+
+        if (savesRoot == null)
+        {
+            return;
+        }
+
+        for (int i = savesRoot.childCount - 1; i >= 0; i--)
+        {
+            Destroy(savesRoot.GetChild(i).gameObject);
+        }
     }
 
     internal void OnSaveHovered(SaveSlotInfo save)
