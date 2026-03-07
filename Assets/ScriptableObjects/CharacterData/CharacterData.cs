@@ -4,6 +4,16 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "CharacterData", menuName = "Scriptable Objects/CharacterData")]
 public class CharacterData : ScriptableObject
 {
+    [System.Serializable]
+    public class StarterItemStack
+    {
+        [Tooltip("Item de depart.")]
+        public Item item;
+        [Min(1)]
+        [Tooltip("Quantite initiale (pour la torche: secondes).")]
+        public int quantity = 1;
+    }
+
     [SerializeField, HideInInspector] private string uniqueId;
     public string characterId;
     public string characterName;
@@ -11,7 +21,7 @@ public class CharacterData : ScriptableObject
     public GameObject model;
     public List<Skill> skills;
     public CharacterStats stats = new CharacterStats();
-    public List<Item> starterItems;
+    public List<StarterItemStack> starterItemsWithQuantity = new List<StarterItemStack>();
     public int hp = 10;
 
     [Header("Voice Lines")]

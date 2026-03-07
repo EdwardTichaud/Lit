@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
+    private const int SaveDataVersion = 1;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -44,6 +45,15 @@ public class CharacterStateStore : MonoBehaviour
 
     private CharacterSaveData loadedData;
     private readonly Dictionary<string, string> playerBindings = new Dictionary<string, string>();
+
+    public bool HasSaveFile
+    {
+        get
+        {
+            string path = GetPath();
+            return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        }
+    }
 
     private void Awake()
     {
@@ -242,7 +252,10 @@ public class CharacterStateStore : MonoBehaviour
 
     private CharacterSaveData BuildSaveData(SquadManager manager)
     {
-        CharacterSaveData data = new CharacterSaveData();
+        CharacterSaveData data = new CharacterSaveData
+        {
+            dataVersion = SaveDataVersion
+        };
         List<CharacterData> knownCharacters = BuildKnownCharacters(manager);
 
         // Construit la liste de squad + l'etat de chaque personnage.
@@ -279,7 +292,7 @@ public class CharacterStateStore : MonoBehaviour
                 torchSeconds = 0,
                 torchEquipped = false,
                 items = new List<ItemStackData>(),
-                itemsInitialized = true
+                itemsInitialized = character != null && character.inventoryInitialized
             };
 
             SquadCharacterController controller = instance != null ? instance.GetComponent<SquadCharacterController>() : null;

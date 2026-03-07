@@ -27,9 +27,11 @@ MonoBehaviour:
     intelligence: 10
     wisdom: 10
     charisma: 10
-  starterItems:
-  - {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
+  starterItemsWithQuantity:
+  - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
+    quantity: 300
   hp: 10
+  voiceLines: []
   maisonWaitingPoint: 2
   inventoryItems: []
   torchSecondsRemaining: 0

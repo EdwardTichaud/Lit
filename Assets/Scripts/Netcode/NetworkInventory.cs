@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ public class NetworkInventory : NetworkBehaviour
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     public event System.Action InventoryChanged;
+    [SerializeField] private bool logInventoryDebug = true;
 
     private void Awake()
     {
@@ -29,12 +31,21 @@ public class NetworkInventory : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (logInventoryDebug)
+        {
+            Debug.Log($"NetworkInventory: OnNetworkSpawn (IsServer={IsServer}, IsClient={IsClient}, IsOwner={IsOwner}) on {name}", this);
+        }
         netItems.OnListChanged += OnNetItemsChanged;
         torchSeconds.OnValueChanged += OnTorchChanged;
         torchEquipped.OnValueChanged += OnTorchChanged;
 
         if (IsServer)
         {
+            EnsureStarterInventoryIfEmpty();
+            if (logInventoryDebug)
+            {
+                Debug.Log($"NetworkInventory: After EnsureStarterInventoryIfEmpty -> items={controller?.Items?.Count ?? -1}, torchSeconds={controller?.TorchSecondsRemaining ?? -1}", this);
+            }
             SyncFromController();
         }
 
@@ -84,14 +95,19 @@ public class NetworkInventory : NetworkBehaviour
             }
         }
 
+        torchSeconds.Value = controller.TorchSecondsRemaining;
+        torchEquipped.Value = controller.IsTorchEquipped;
+
         netItems.Clear();
         foreach (KeyValuePair<string, int> pair in counts)
         {
             netItems.Add(new NetItemStack(pair.Key, pair.Value));
         }
 
-        torchSeconds.Value = controller.TorchSecondsRemaining;
-        torchEquipped.Value = controller.IsTorchEquipped;
+        if (logInventoryDebug)
+        {
+            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, torchSeconds={torchSeconds.Value}, torchEquipped={torchEquipped.Value}", this);
+        }
     }
 
     public bool TryAddItem(Item item, int quantity)
@@ -617,6 +633,7 @@ public class NetworkInventory : NetworkBehaviour
         }
 
         List<Item> resolved = new List<Item>();
+        int unresolvedCount = 0;
         for (int i = 0; i < netItems.Count; i++)
         {
             NetItemStack stack = netItems[i];
@@ -628,6 +645,7 @@ public class NetworkInventory : NetworkBehaviour
             Item item = ItemRegistry.Resolve(stack.ItemId.ToString());
             if (item == null)
             {
+                unresolvedCount++;
                 continue;
             }
 
@@ -639,6 +657,64 @@ public class NetworkInventory : NetworkBehaviour
         }
 
         controller.ApplyInventoryState(resolved, torchSeconds.Value, torchEquipped.Value);
+        if (logInventoryDebug)
+        {
+            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, torchSeconds={torchSeconds.Value}", this);
+        }
         InventoryChanged?.Invoke();
+    }
+
+    private void EnsureStarterInventoryIfEmpty()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller == null || HasSaveFile())
+        {
+            return;
+        }
+
+        CharacterData data = controller.CharacterData;
+        if (data == null || data.starterItemsWithQuantity == null || data.starterItemsWithQuantity.Count == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<Item> items = controller.Items;
+        if (items != null && items.Count > 0)
+        {
+            return;
+        }
+
+        if (controller.TorchSecondsRemaining > 0 || controller.IsTorchEquipped)
+        {
+            return;
+        }
+
+        controller.ApplyStarterItems(data, true);
+        if (logInventoryDebug)
+        {
+            Debug.Log($"NetworkInventory: EnsureStarterInventoryIfEmpty applied for {data.name} -> items={controller.Items?.Count ?? -1}, torchSeconds={controller.TorchSecondsRemaining}", this);
+        }
+    }
+
+    private static bool HasSaveFile()
+    {
+        CharacterStateStore store = CharacterStateStore.Instance;
+        if (store != null)
+        {
+            return store.HasSaveFile;
+        }
+
+        SaveSessionManager session = SaveSessionManager.Instance;
+        if (session != null && session.HasActiveSave)
+        {
+            string path = session.GetActiveSaveFilePath("CharacterState.json");
+            return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        }
+
+        return false;
     }
 }

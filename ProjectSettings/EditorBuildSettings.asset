@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/MainMenu.unity
     guid: 13acc6ec46654592a2baa355baa57b6c
   - enabled: 1
-    path: Assets/OutdoorsScene.unity
+    path: Assets/Scenes/Maison.unity
     guid: 8124e5870f4fd4c779e7a5f994e84ad1
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

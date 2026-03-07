@@ -5,6 +5,7 @@ using UnityEngine;
 public class NetcodeLocalPlayer : NetworkBehaviour
 {
     [SerializeField] private Transform localCharacterRoot;
+    private WorldInteractionService subscribedService;
 
     private void Awake()
     {
@@ -16,14 +17,17 @@ public class NetcodeLocalPlayer : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (IsOwner && IsAssignedToLocalClient())
+        if (IsOwner)
         {
-            LocalPlayerContext.SetLocalCharacter(localCharacterRoot);
+            EvaluateLocalAssignment();
         }
+
+        TrySubscribeAssignments();
     }
 
     public override void OnNetworkDespawn()
     {
+        UnsubscribeAssignments();
         if (IsOwner)
         {
             LocalPlayerContext.ClearIfMatch(localCharacterRoot);
@@ -32,15 +36,83 @@ public class NetcodeLocalPlayer : NetworkBehaviour
 
     public override void OnGainedOwnership()
     {
-        if (IsAssignedToLocalClient())
-        {
-            LocalPlayerContext.SetLocalCharacter(localCharacterRoot);
-        }
+        EvaluateLocalAssignment();
     }
 
     public override void OnLostOwnership()
     {
         LocalPlayerContext.ClearIfMatch(localCharacterRoot);
+    }
+
+    private void OnEnable()
+    {
+        TrySubscribeAssignments();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeAssignments();
+    }
+
+    private void Update()
+    {
+        if (subscribedService == null)
+        {
+            TrySubscribeAssignments();
+        }
+    }
+
+    private void TrySubscribeAssignments()
+    {
+        WorldInteractionService service = WorldInteractionService.Instance;
+        if (ReferenceEquals(subscribedService, service))
+        {
+            return;
+        }
+
+        UnsubscribeAssignments();
+        subscribedService = service;
+        if (subscribedService != null)
+        {
+            subscribedService.AssignmentsChanged += OnAssignmentsChanged;
+        }
+    }
+
+    private void UnsubscribeAssignments()
+    {
+        if (subscribedService != null)
+        {
+            subscribedService.AssignmentsChanged -= OnAssignmentsChanged;
+        }
+
+        subscribedService = null;
+    }
+
+    private void OnAssignmentsChanged()
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        EvaluateLocalAssignment();
+    }
+
+    private void EvaluateLocalAssignment()
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        if (IsAssignedToLocalClient())
+        {
+            LocalPlayerContext.SetLocalCharacter(localCharacterRoot);
+        }
+        else
+        {
+            LocalPlayerContext.ClearIfMatch(localCharacterRoot);
+        }
     }
 
     private bool IsAssignedToLocalClient()

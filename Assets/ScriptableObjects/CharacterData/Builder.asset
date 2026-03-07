@@ -25,7 +25,7 @@ MonoBehaviour:
     intelligence: 10
     wisdom: 10
     charisma: 10
-  starterItems: []
+  starterItemsWithQuantity: []
   hp: 10
   voiceLines:
   - {fileID: 11400000, guid: fb8c7324859d38b4bbef408ecb7b381a, type: 2}

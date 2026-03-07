@@ -65,6 +65,23 @@ public class ItemRegistry : MonoBehaviour
             }
         }
 
+        if (items == null || items.Count == 0)
+        {
+            Item[] found = Resources.FindObjectsOfTypeAll<Item>();
+            if (found != null && found.Length > 0)
+            {
+                items = new List<Item>(found.Length);
+                for (int i = 0; i < found.Length; i++)
+                {
+                    Item item = found[i];
+                    if (item != null && !items.Contains(item))
+                    {
+                        items.Add(item);
+                    }
+                }
+            }
+        }
+
         if (items == null)
         {
             return;

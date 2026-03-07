@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
@@ -153,6 +154,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         if (controller != null)
         {
             controller.BindCharacterData(character, true);
+            EnsureStarterInventoryIfEmpty(controller, character);
         }
 
         assignments[clientId] = character;
@@ -175,6 +177,55 @@ public class NetcodePlayerSpawner : MonoBehaviour
         RegisterWithSquadManager(character, instance);
         RegisterPlayerBinding(clientId, character);
         UpdateAssignmentRegistry(clientId, character);
+    }
+
+    private static void EnsureStarterInventoryIfEmpty(SquadCharacterController controller, CharacterData character)
+    {
+        if (controller == null || character == null)
+        {
+            return;
+        }
+
+        if (character.starterItemsWithQuantity == null || character.starterItemsWithQuantity.Count == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<Item> items = controller.Items;
+        if (items != null && items.Count > 0)
+        {
+            return;
+        }
+
+        if (controller.TorchSecondsRemaining > 0 || controller.IsTorchEquipped)
+        {
+            return;
+        }
+
+        if (HasSaveFile())
+        {
+            return;
+        }
+
+        controller.ApplyStarterItems(character, true);
+    }
+
+    private static bool HasSaveFile()
+    {
+        CharacterStateStore store = ResolveCharacterStateStore();
+        if (store != null)
+        {
+            return store.HasSaveFile;
+        }
+
+        SaveSessionManager session = SaveSessionManager.Instance;
+        if (session != null && session.HasActiveSave)
+        {
+            string path = session.GetActiveSaveFilePath("CharacterState.json");
+            return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        }
+
+        return false;
     }
 
     public bool TrySwitchCharacter(ulong clientId, string targetCharacterId, out string reason)

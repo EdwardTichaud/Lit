@@ -137,6 +137,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
+        LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.LeftShoulder += OnLeftShoulderPerformed;
         LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
     }
@@ -146,6 +147,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
+        LocalInputRouter.Return -= OnReturnPerformed;
         LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
@@ -650,6 +652,15 @@ public class SquadManager : MonoBehaviour
             bool hasSavedInventory = entry.items != null && entry.items.Count > 0;
             bool hasSavedTorchState = entry.torchSeconds > 0 || entry.torchEquipped;
             bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedTorchState;
+
+            bool isLegacySave = pendingLoadData != null && pendingLoadData.dataVersion <= 0;
+            bool hasStarterItems = runtimeCharacter != null
+                && runtimeCharacter.starterItemsWithQuantity != null
+                && runtimeCharacter.starterItemsWithQuantity.Count > 0;
+            if (isLegacySave && hasStarterItems && !hasSavedInventory && !hasSavedTorchState)
+            {
+                shouldApplyInventory = false;
+            }
 
             if (shouldApplyInventory)
             {
@@ -1908,9 +1919,26 @@ public class SquadManager : MonoBehaviour
             clone.skills = new List<Skill>(clone.skills);
         }
 
-        if (clone.starterItems != null)
+        if (clone.starterItemsWithQuantity != null)
         {
-            clone.starterItems = new List<Item>(clone.starterItems);
+            List<CharacterData.StarterItemStack> starterStacks = new List<CharacterData.StarterItemStack>(clone.starterItemsWithQuantity.Count);
+            for (int i = 0; i < clone.starterItemsWithQuantity.Count; i++)
+            {
+                CharacterData.StarterItemStack entry = clone.starterItemsWithQuantity[i];
+                if (entry == null)
+                {
+                    starterStacks.Add(null);
+                    continue;
+                }
+
+                starterStacks.Add(new CharacterData.StarterItemStack
+                {
+                    item = entry.item,
+                    quantity = entry.quantity
+                });
+            }
+
+            clone.starterItemsWithQuantity = starterStacks;
         }
 
         clone.inventoryItems = new List<Item>();
@@ -2035,11 +2063,6 @@ public class SquadManager : MonoBehaviour
         UpdateCurrentCharacter();
     }
 
-    void OnSouthButton()
-    {
-        HandleInteractInput();
-    }
-
     private void RequestCharacterSwitchFromCursor()
     {
         if (currentSquad == null || currentSquad.Count == 0)
@@ -2086,10 +2109,45 @@ public class SquadManager : MonoBehaviour
         }
     }
 
+    private void OnReturnPerformed(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+        {
+            return;
+        }
+
+        if (!charactersSelectionOn)
+        {
+            return;
+        }
+
+        if (!InputFocusStack.HasFocus(this))
+        {
+            return;
+        }
+
+        CloseSquadPanel();
+    }
+
     private void OnLocalCharacterChanged(Transform _)
     {
+        if (LocalPlayerContext.LocalCharacterRoot != null)
+        {
+            currentCharacter = LocalPlayerContext.LocalCharacterRoot.gameObject;
+        }
+
         UpdateLeaderGroupFromCurrent();
         UpdateAllGroupIndicators();
+
+        if (charactersSelectionOn)
+        {
+            int index = GetCurrentCharacterIndex();
+            if (index >= 0)
+            {
+                currentCursorIndex = index;
+                UpdateCursorPosition();
+            }
+        }
     }
 
     private void HandleLeftShoulderInput()

@@ -402,7 +402,8 @@ public class SquadCharacterController : MonoBehaviour
 
         if (initializeInventory)
         {
-            if (!characterData.inventoryInitialized)
+            bool forceStarterItems = ShouldForceStarterItems(characterData);
+            if (!characterData.inventoryInitialized || forceStarterItems)
             {
                 ApplyStarterItems(characterData, true);
                 characterData.inventoryInitialized = true;
@@ -417,6 +418,32 @@ public class SquadCharacterController : MonoBehaviour
         {
             LoadInventoryFromCharacterData();
         }
+    }
+
+    private bool ShouldForceStarterItems(CharacterData data)
+    {
+        if (data == null || data.starterItemsWithQuantity == null || data.starterItemsWithQuantity.Count == 0)
+        {
+            return false;
+        }
+
+        if (data.inventoryItems != null && data.inventoryItems.Count > 0)
+        {
+            return false;
+        }
+
+        if (data.torchSecondsRemaining > 0 || data.torchEquipped)
+        {
+            return false;
+        }
+
+        CharacterStateStore store = CharacterStateStore.Instance;
+        if (store != null && store.HasSaveFile)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void SyncCharacterInfo(CharacterData data)
@@ -600,14 +627,20 @@ public class SquadCharacterController : MonoBehaviour
 
     private Item FindTorchItemInCharacterData()
     {
-        if (characterData == null || characterData.starterItems == null)
+        if (characterData == null)
         {
             return null;
         }
 
-        for (int i = 0; i < characterData.starterItems.Count; i++)
+        if (characterData.starterItemsWithQuantity == null)
         {
-            Item item = characterData.starterItems[i];
+            return null;
+        }
+
+        for (int i = 0; i < characterData.starterItemsWithQuantity.Count; i++)
+        {
+            CharacterData.StarterItemStack entry = characterData.starterItemsWithQuantity[i];
+            Item item = entry != null ? entry.item : null;
             if (IsTorchItem(item))
             {
                 return item;
@@ -812,7 +845,7 @@ public class SquadCharacterController : MonoBehaviour
             torchSecondsRemaining = 0;
         }
 
-        if (data == null || data.starterItems == null)
+        if (data == null)
         {
             torchSecondsRemaining = 0;
             SetTorchEquipped(false);
@@ -821,35 +854,44 @@ public class SquadCharacterController : MonoBehaviour
         }
 
         bool hasTorch = false;
-        for (int i = 0; i < data.starterItems.Count; i++)
+        int torchSecondsTarget = 0;
+        if (data.starterItemsWithQuantity != null)
         {
-            Item item = data.starterItems[i];
-            if (item == null)
+            for (int i = 0; i < data.starterItemsWithQuantity.Count; i++)
             {
-                continue;
-            }
-
-            if (IsTorchItem(item))
-            {
-                hasTorch = true;
-                if (items == null)
+                CharacterData.StarterItemStack entry = data.starterItemsWithQuantity[i];
+                Item item = entry != null ? entry.item : null;
+                int quantity = entry != null ? Mathf.Max(0, entry.quantity) : 0;
+                if (item == null || quantity <= 0)
                 {
-                    items = new List<Item>();
+                    continue;
                 }
 
-                if (!items.Contains(item))
+                if (IsTorchItem(item))
                 {
-                    items.Add(item);
-                }
-                continue;
-            }
+                    hasTorch = true;
+                    if (items == null)
+                    {
+                        items = new List<Item>();
+                    }
 
-            AddItem(item, 1);
+                    if (!items.Contains(item))
+                    {
+                        items.Add(item);
+                    }
+
+                    torchSecondsTarget += quantity;
+                    continue;
+                }
+
+                AddItem(item, quantity);
+            }
         }
 
         if (hasTorch)
         {
-            torchSecondsRemaining = Mathf.Max(torchSecondsRemaining, startingTorchSeconds);
+            int target = torchSecondsTarget > 0 ? torchSecondsTarget : startingTorchSeconds;
+            torchSecondsRemaining = Mathf.Max(torchSecondsRemaining, target);
             InitializeTorchState();
         }
         else

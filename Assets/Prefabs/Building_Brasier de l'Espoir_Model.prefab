@@ -64,6 +64,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 4294967295
       objectReference: {fileID: 0}
+    - target: {fileID: 3451118302482216456, guid: a527cb5ed18dbcb45a62b3bdec715867, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -119,6 +123,7 @@ MonoBehaviour:
   buildId: brasierdelespoir
   buildingItem: {fileID: 11400000, guid: 5f7f961b779522740bdd1ea6e35a76ee, type: 2}
   level: 1
+  networkBuildingId: 0
   localInformationPanelPrefab: {fileID: 4865652701375795038, guid: 8693d19c8191d354cad67928ac3d13e3, type: 3}
   localPanelParent: {fileID: 0}
   informationAnchor: {fileID: 0}
