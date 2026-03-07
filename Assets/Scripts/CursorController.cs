@@ -172,6 +172,35 @@ public class CursorController : MonoBehaviour
 
     public RectTransform CurrentItem => currentIndex >= 0 && currentIndex < items.Count ? items[currentIndex] : null;
 
+    public bool TrySetCurrentItem(RectTransform target, bool rebuildItems = true)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        if (rebuildItems)
+        {
+            ResolveLayout();
+            RebuildItems();
+            EnsureSelection();
+        }
+
+        int index = items.IndexOf(target);
+        if (index < 0)
+        {
+            return false;
+        }
+
+        if (currentIndex != index)
+        {
+            currentIndex = index;
+            cursorDirty = true;
+        }
+
+        return true;
+    }
+
     private void ResolveLayout()
     {
         if (layoutGroup == null && itemsParent != null)

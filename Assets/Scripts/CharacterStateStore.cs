@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -42,9 +43,14 @@ public class CharacterStateStore : MonoBehaviour
     public bool saveOnDisable = true;
     [Tooltip("Sauvegarde lors du quit.")]
     public bool saveOnApplicationQuit = true;
+    [Tooltip("Capture un screenshot lors d'une sauvegarde.")]
+    public bool captureScreenshotOnSave = true;
+    [Tooltip("Nom du fichier screenshot ecrit a cote de la sauvegarde.")]
+    public string screenshotFileName = "screenshot.png";
 
     private CharacterSaveData loadedData;
     private readonly Dictionary<string, string> playerBindings = new Dictionary<string, string>();
+    private Coroutine screenshotRoutine;
 
     public bool HasSaveFile
     {
@@ -135,6 +141,7 @@ public class CharacterStateStore : MonoBehaviour
             {
                 SaveSessionManager.Instance.RecordSaveMetadata(SceneManager.GetActiveScene().name);
             }
+            RequestScreenshotCapture();
         }
         catch (IOException ex)
         {
@@ -197,6 +204,92 @@ public class CharacterStateStore : MonoBehaviour
         manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
         ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
         ApplyHomeItems(loadedData, itemLookup);
+    }
+
+    private void RequestScreenshotCapture()
+    {
+        if (!captureScreenshotOnSave || !Application.isPlaying || !isActiveAndEnabled)
+        {
+            return;
+        }
+
+        if (screenshotRoutine != null)
+        {
+            StopCoroutine(screenshotRoutine);
+        }
+
+        screenshotRoutine = StartCoroutine(CaptureScreenshotRoutine());
+    }
+
+    private System.Collections.IEnumerator CaptureScreenshotRoutine()
+    {
+        yield return new WaitForEndOfFrame();
+
+        string screenshotPath = GetScreenshotPath();
+        if (string.IsNullOrWhiteSpace(screenshotPath))
+        {
+            screenshotRoutine = null;
+            yield break;
+        }
+
+        Texture2D texture = ScreenCapture.CaptureScreenshotAsTexture();
+        if (texture == null)
+        {
+            screenshotRoutine = null;
+            yield break;
+        }
+
+        try
+        {
+            string directory = Path.GetDirectoryName(screenshotPath);
+            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            byte[] png = texture.EncodeToPNG();
+            if (png != null && png.Length > 0)
+            {
+                File.WriteAllBytes(screenshotPath, png);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"CharacterStateStore: echec screenshot {screenshotPath}. {ex.Message}");
+        }
+        finally
+        {
+            Destroy(texture);
+            screenshotRoutine = null;
+        }
+    }
+
+    private string GetScreenshotPath()
+    {
+        if (string.IsNullOrWhiteSpace(screenshotFileName))
+        {
+            return null;
+        }
+
+        SaveSessionManager session = SaveSessionManager.Instance;
+        if (session != null && session.HasActiveSave)
+        {
+            return session.GetActiveSaveFilePath(screenshotFileName);
+        }
+
+        string basePath = GetPath();
+        if (string.IsNullOrWhiteSpace(basePath))
+        {
+            return null;
+        }
+
+        string directory = Path.GetDirectoryName(basePath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return null;
+        }
+
+        return Path.Combine(directory, screenshotFileName);
     }
 
     private void ApplyLoadedPlayerBindings(CharacterSaveData data)

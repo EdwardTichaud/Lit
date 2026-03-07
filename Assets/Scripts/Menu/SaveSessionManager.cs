@@ -88,6 +88,56 @@ public class SaveSessionManager : MonoBehaviour
         sessionsCache = LoadSessions();
     }
 
+    public bool DeleteSave(string sessionId, string saveId, bool deleteSessionIfEmpty = true)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(saveId))
+        {
+            return false;
+        }
+
+        string savePath = GetSavePath(sessionId, saveId);
+        if (string.IsNullOrWhiteSpace(savePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (Directory.Exists(savePath))
+            {
+                Directory.Delete(savePath, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"SaveSessionManager: echec suppression sauvegarde {savePath}. {ex.Message}");
+            return false;
+        }
+
+        SaveSessionInfo session = GetSession(sessionId);
+        if (session != null && session.saves != null)
+        {
+            session.saves.RemoveAll(s => s != null && s.saveId == saveId);
+        }
+
+        if (deleteSessionIfEmpty && session != null && (session.saves == null || session.saves.Count == 0))
+        {
+            DeleteSessionInternal(sessionId);
+        }
+
+        if (CurrentSessionId == sessionId && CurrentSaveId == saveId)
+        {
+            ClearActiveSave();
+        }
+
+        return true;
+    }
+
+    public bool DeleteSession(string sessionId)
+    {
+        return DeleteSessionInternal(sessionId);
+    }
+
     public SaveSessionInfo CreateSession(string sessionName)
     {
         string name = string.IsNullOrWhiteSpace(sessionName) ? "Nouvelle partie" : sessionName.Trim();
@@ -247,6 +297,54 @@ public class SaveSessionManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    private bool DeleteSessionInternal(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return false;
+        }
+
+        string sessionPath = GetSessionPath(sessionId);
+        if (string.IsNullOrWhiteSpace(sessionPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (Directory.Exists(sessionPath))
+            {
+                Directory.Delete(sessionPath, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"SaveSessionManager: echec suppression session {sessionPath}. {ex.Message}");
+            return false;
+        }
+
+        if (sessionsCache != null)
+        {
+            sessionsCache.RemoveAll(s => s != null && s.sessionId == sessionId);
+        }
+
+        if (CurrentSessionId == sessionId)
+        {
+            ClearActiveSave();
+        }
+
+        return true;
+    }
+
+    private void ClearActiveSave()
+    {
+        CurrentSessionId = null;
+        CurrentSessionName = null;
+        CurrentSaveId = null;
+        CurrentSaveName = null;
+        CurrentPlaytimeSeconds = 0f;
     }
 
     private string ResolveSessionName(string sessionId)

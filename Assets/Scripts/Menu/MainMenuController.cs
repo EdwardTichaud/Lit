@@ -1,268 +1,458 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem.UI;
-#endif
+using UnityEngine.InputSystem;
+using TMPro;
 
-// Menu principal (BG3-style) : liste des parties/sauvegardes + details.
+// Controleur du menu principal base sur une UI creee dans la scene.
 public class MainMenuController : MonoBehaviour
 {
     public const string DefaultMenuSceneName = "MainMenu";
 
-    [Header("Scenes")]
-    [SerializeField] private string menuSceneName = DefaultMenuSceneName;
-    [SerializeField] private string gameplaySceneName = "OutdoorsScene";
+    private enum MenuState
+    {
+        TitleCard,
+        GameOptions,
+        LoadMenu
+    }
 
-    [Header("Session Codes")]
+    [Header("Scene")]
+    [SerializeField] private CanvasGroup titleCardGroup;
+    [SerializeField] private CanvasGroup gameOptionsGroup;
+    [SerializeField] private CanvasGroup loadMenuGroup;
+    [SerializeField] private CanvasGroup mainMenuGroup;
+    [SerializeField] private bool hideTitleCardOnProceed = true;
+    [SerializeField] private bool waitForAnyInput = true;
+
+    [Header("Save List")]
+    [SerializeField] private Transform sessionsRoot;
+    [SerializeField] private MainMenuSessionEntryUI sessionEntryPrefab;
+    [SerializeField] private MainMenuSaveEntryUI saveEntryPrefab;
+    [SerializeField] private GameObject emptySessionsPlaceholder;
+
+    [Header("Details")]
+    [SerializeField] private TMP_Text detailsTitle;
+    [SerializeField] private TMP_Text detailsBody;
+    [SerializeField] private RawImage previewImage;
+    [SerializeField] private AspectRatioFitter previewAspect;
+    [SerializeField] private string screenshotFileName = "screenshot.png";
+
+    [Header("Actions")]
+    [SerializeField] private TMP_InputField sessionNameInput;
+    [SerializeField] private Button newButton;
+    [SerializeField] private Button loadButton;
+    [SerializeField] private Button deleteButton;
+    [SerializeField] private Button refreshButton;
+    [SerializeField] private Button quitButton;
+    [SerializeField] private TMP_Text statusText;
+
+    [Header("Game Options")]
+    [SerializeField] private Button newGameOptionButton;
+    [SerializeField] private Button loadMenuButton;
+    [SerializeField] private Button multiplayerButton;
+    [SerializeField] private Button optionsButton;
+    [SerializeField] private Button quitOptionButton;
+
+    [Header("Shared Cursor")]
+    [SerializeField] private CursorController sharedCursor;
+    [SerializeField] private RectTransform gameOptionsCursorRoot;
+    [SerializeField] private RectTransform loadMenuCursorRoot;
+
+    [Header("Confirm Delete")]
+    [SerializeField] private GameObject confirmRoot;
+    [SerializeField] private TMP_Text confirmText;
+    [SerializeField] private Button confirmYesButton;
+    [SerializeField] private Button confirmNoButton;
+
+    [Header("Netcode")]
+    [SerializeField] private string gameplaySceneName = "OutdoorsScene";
     [SerializeField] private int codeLength = 6;
     [SerializeField] private ushort basePort = 7000;
     [SerializeField] private ushort portRange = 1000;
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
     [SerializeField] private string listenAddress = "0.0.0.0";
-    [SerializeField] private string clientAddressDefault = "127.0.0.1";
 
-    [Header("Layout")]
-    [SerializeField] private Vector2 leftPanelSize = new Vector2(520f, 860f);
-    [SerializeField] private Color backgroundColor = new Color(0.08f, 0.08f, 0.1f, 0.98f);
-    [SerializeField] private Color panelColor = new Color(0.12f, 0.12f, 0.16f, 0.95f);
+    [Header("Entry Colors")]
     [SerializeField] private Color entryColor = new Color(1f, 1f, 1f, 0.08f);
     [SerializeField] private Color entryHoverColor = new Color(0.6f, 0.8f, 1f, 0.18f);
     [SerializeField] private Color entrySelectedColor = new Color(0.6f, 0.8f, 1f, 0.32f);
 
-    private Canvas canvas;
-    private GameObject root;
-    private RectTransform leftContentRoot;
-    private Text detailsTitle;
-    private Text detailsBody;
-    private Text statusText;
-    private InputField sessionNameInput;
-    private InputField hostCodeInput;
-    private InputField joinCodeInput;
-    private InputField addressInput;
-    private Font defaultFont;
-
-    private SaveSlotInfo hoveredSave;
+    private MainMenuSessionEntryUI hoveredSessionEntry;
     private SaveSlotInfo selectedSave;
-    private SaveEntryView selectedSaveView;
-    private bool menuVisible;
+    private MainMenuSaveEntryUI selectedSaveView;
+    private SaveSlotInfo pendingDelete;
+    private Texture2D previewTexture;
+    private bool waitingForInput;
+    private MenuState currentMenu = MenuState.TitleCard;
 
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
         EnsureSaveManager();
-        BuildUI();
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        SetMenuVisible(IsMenuScene(SceneManager.GetActiveScene().name));
+        InitializeState();
+        BindButtons();
+    }
+
+    private void OnEnable()
+    {
+        BindButtons();
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+        RefreshSessions();
+
+        if (currentMenu == MenuState.GameOptions || currentMenu == MenuState.LoadMenu)
+        {
+            InputFocusStack.Push(this);
+        }
+    }
+
+    private void OnDisable()
+    {
+        UnbindButtons();
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        InputFocusStack.Pop(this);
     }
 
     private void OnDestroy()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        ClearPreviewTexture();
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void Update()
     {
-        bool isMenu = IsMenuScene(scene.name);
-        SetMenuVisible(isMenu);
-        if (isMenu)
+        if (!waitForAnyInput || !waitingForInput || currentMenu != MenuState.TitleCard)
         {
-            RefreshSessions();
-        }
-    }
-
-    private bool IsMenuScene(string sceneName)
-    {
-        return string.Equals(sceneName, menuSceneName, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void EnsureSaveManager()
-    {
-        if (SaveSessionManager.Instance != null)
-        {
-            SaveSessionManager.Instance.SetMenuSceneName(menuSceneName);
             return;
         }
 
-        GameObject host = new GameObject("SaveSessionManager");
-        SaveSessionManager manager = host.AddComponent<SaveSessionManager>();
-        manager.SetMenuSceneName(menuSceneName);
-    }
-
-    private void BuildUI()
-    {
-        defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        EnsureEventSystem();
-
-        root = new GameObject("MainMenuUI", typeof(RectTransform));
-        root.transform.SetParent(transform, false);
-
-        GameObject canvasObject = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvasObject.transform.SetParent(root.transform, false);
-        canvas = canvasObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        GameObject background = new GameObject("Background", typeof(RectTransform), typeof(Image));
-        background.transform.SetParent(canvasObject.transform, false);
-        Image backgroundImage = background.GetComponent<Image>();
-        backgroundImage.color = backgroundColor;
-        RectTransform backgroundRect = background.GetComponent<RectTransform>();
-        backgroundRect.anchorMin = Vector2.zero;
-        backgroundRect.anchorMax = Vector2.one;
-        backgroundRect.offsetMin = Vector2.zero;
-        backgroundRect.offsetMax = Vector2.zero;
-
-        GameObject layoutRoot = new GameObject("LayoutRoot", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        layoutRoot.transform.SetParent(canvasObject.transform, false);
-        RectTransform layoutRect = layoutRoot.GetComponent<RectTransform>();
-        layoutRect.anchorMin = new Vector2(0.5f, 0.5f);
-        layoutRect.anchorMax = new Vector2(0.5f, 0.5f);
-        layoutRect.pivot = new Vector2(0.5f, 0.5f);
-        layoutRect.sizeDelta = new Vector2(1400f, 860f);
-
-        HorizontalLayoutGroup hLayout = layoutRoot.GetComponent<HorizontalLayoutGroup>();
-        hLayout.spacing = 24f;
-        hLayout.childForceExpandHeight = true;
-        hLayout.childForceExpandWidth = true;
-        hLayout.childControlHeight = true;
-        hLayout.childControlWidth = true;
-
-        GameObject leftPanel = CreatePanel(layoutRoot.transform, "SessionsPanel", leftPanelSize);
-        leftContentRoot = BuildSessionsPanel(leftPanel.transform);
-
-        GameObject rightPanel = CreatePanel(layoutRoot.transform, "DetailsPanel", new Vector2(0f, 860f));
-        BuildDetailsPanel(rightPanel.transform);
-
-        RefreshSessions();
-    }
-
-    private GameObject CreatePanel(Transform parent, string name, Vector2 fixedSize)
-    {
-        GameObject panel = new GameObject(name, typeof(RectTransform), typeof(Image));
-        panel.transform.SetParent(parent, false);
-        Image image = panel.GetComponent<Image>();
-        image.color = panelColor;
-
-        RectTransform rect = panel.GetComponent<RectTransform>();
-        if (fixedSize.x > 0f)
+        if (AnyInputPressedThisFrame())
         {
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, fixedSize.x);
+            ShowGameOptionsMenu();
+        }
+    }
+
+    private void OnInteractPerformed(InputAction.CallbackContext context)
+    {
+        if (!CanProcessInteract())
+        {
+            return;
         }
 
-        if (fixedSize.y > 0f)
+        if (hoveredSessionEntry != null)
         {
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, fixedSize.y);
+            OnSessionInteract(hoveredSessionEntry);
         }
-
-        VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(20, 20, 20, 20);
-        layout.spacing = 12f;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
-
-        return panel;
     }
 
-    private RectTransform BuildSessionsPanel(Transform parent)
+    private bool HasInputFocus()
     {
-        CreateLabel(parent, "Parties", 22, FontStyle.Bold, TextAnchor.MiddleLeft);
-
-        GameObject scrollRoot = new GameObject("ScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
-        scrollRoot.transform.SetParent(parent, false);
-        Image scrollImage = scrollRoot.GetComponent<Image>();
-        scrollImage.color = new Color(0f, 0f, 0f, 0.2f);
-
-        ScrollRect scrollRect = scrollRoot.GetComponent<ScrollRect>();
-        scrollRect.horizontal = false;
-        scrollRect.vertical = true;
-        scrollRect.movementType = ScrollRect.MovementType.Clamped;
-
-        GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
-        viewport.transform.SetParent(scrollRoot.transform, false);
-        Image viewportImage = viewport.GetComponent<Image>();
-        viewportImage.color = new Color(0f, 0f, 0f, 0.05f);
-        Mask mask = viewport.GetComponent<Mask>();
-        mask.showMaskGraphic = false;
-
-        RectTransform viewportRect = viewport.GetComponent<RectTransform>();
-        viewportRect.anchorMin = Vector2.zero;
-        viewportRect.anchorMax = Vector2.one;
-        viewportRect.offsetMin = new Vector2(0f, 0f);
-        viewportRect.offsetMax = new Vector2(0f, 0f);
-
-        GameObject content = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-        content.transform.SetParent(viewport.transform, false);
-        RectTransform contentRect = content.GetComponent<RectTransform>();
-        contentRect.anchorMin = new Vector2(0f, 1f);
-        contentRect.anchorMax = new Vector2(1f, 1f);
-        contentRect.pivot = new Vector2(0.5f, 1f);
-        contentRect.anchoredPosition = Vector2.zero;
-
-        VerticalLayoutGroup vLayout = content.GetComponent<VerticalLayoutGroup>();
-        vLayout.spacing = 6f;
-        vLayout.childControlWidth = true;
-        vLayout.childControlHeight = true;
-        vLayout.childForceExpandWidth = true;
-        vLayout.childForceExpandHeight = false;
-
-        ContentSizeFitter fitter = content.GetComponent<ContentSizeFitter>();
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scrollRect.viewport = viewportRect;
-        scrollRect.content = contentRect;
-
-        LayoutElement scrollLayout = scrollRoot.AddComponent<LayoutElement>();
-        scrollLayout.flexibleHeight = 1f;
-
-        return contentRect;
+        return InputFocusStack.HasFocus(this);
     }
 
-    private void BuildDetailsPanel(Transform parent)
+    private bool CanProcessInteract()
     {
-        detailsTitle = CreateLabel(parent, "Details", 22, FontStyle.Bold, TextAnchor.MiddleLeft);
-        detailsBody = CreateLabel(parent, "Survole une sauvegarde pour voir les details.", 14, FontStyle.Normal, TextAnchor.UpperLeft);
-        detailsBody.horizontalOverflow = HorizontalWrapMode.Wrap;
-        detailsBody.verticalOverflow = VerticalWrapMode.Overflow;
-
-        CreateLabel(parent, "Nom de partie", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
-        sessionNameInput = CreateInputField(parent, "Nouvelle partie", 32);
-
-        CreateLabel(parent, "Code Host", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
-        GameObject hostRow = CreateRow(parent);
-        hostCodeInput = CreateInputField(hostRow.transform, "CODE", codeLength);
-        CreateButton(hostRow.transform, "Generer", OnGenerateCode, 100f);
-
-        CreateLabel(parent, "Code rejoindre", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
-        joinCodeInput = CreateInputField(parent, "CODE", codeLength);
-
-        CreateLabel(parent, "Adresse", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
-        addressInput = CreateInputField(parent, clientAddressDefault, 64);
-        if (addressInput != null)
+        CanvasGroup loadGroup = ResolveLoadMenuGroup();
+        if (currentMenu != MenuState.LoadMenu || loadGroup == null || !loadGroup.gameObject.activeInHierarchy)
         {
-            addressInput.text = clientAddressDefault;
+            return false;
         }
 
-        GameObject actionsRow = CreateRow(parent);
-        CreateButton(actionsRow.transform, "Host nouvelle", OnHostNew, 140f);
-        CreateButton(actionsRow.transform, "Host selection", OnHostSelected, 160f);
-        CreateButton(actionsRow.transform, "Rejoindre", OnJoin, 120f);
+        if (HasInputFocus())
+        {
+            return true;
+        }
 
-        GameObject bottomRow = CreateRow(parent);
-        CreateButton(bottomRow.transform, "Rafraichir", OnRefresh, 120f);
-        CreateButton(bottomRow.transform, "Quitter", OnQuit, 100f);
+        return !InputFocusStack.HasAnyFocus();
+    }
 
-        statusText = CreateLabel(parent, "Etat: menu", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
+    private void InitializeState()
+    {
+        if (waitForAnyInput && titleCardGroup != null)
+        {
+            SetMenuState(MenuState.TitleCard);
+        }
+        else
+        {
+            ShowGameOptionsMenu();
+        }
+    }
+
+    private CanvasGroup ResolveLoadMenuGroup()
+    {
+        return loadMenuGroup != null ? loadMenuGroup : mainMenuGroup;
+    }
+
+    private void ShowGameOptionsMenu()
+    {
+        if (gameOptionsGroup == null && ResolveLoadMenuGroup() != null)
+        {
+            SetMenuState(MenuState.LoadMenu);
+            return;
+        }
+
+        SetMenuState(MenuState.GameOptions);
+    }
+
+    private void ShowLoadMenu()
+    {
+        SetMenuState(MenuState.LoadMenu);
+    }
+
+    private void SetMenuState(MenuState state)
+    {
+        currentMenu = state;
+
+        if (titleCardGroup != null)
+        {
+            if (state == MenuState.TitleCard)
+            {
+                ShowTitleCard(titleCardGroup);
+            }
+            else
+            {
+                HidePanel(titleCardGroup);
+            }
+        }
+
+        if (gameOptionsGroup != null)
+        {
+            if (state == MenuState.GameOptions)
+            {
+                ShowPanel(gameOptionsGroup);
+            }
+            else
+            {
+                HidePanel(gameOptionsGroup);
+            }
+        }
+
+        CanvasGroup loadGroup = ResolveLoadMenuGroup();
+        if (loadGroup != null)
+        {
+            if (state == MenuState.LoadMenu)
+            {
+                ShowPanel(loadGroup);
+            }
+            else
+            {
+                HidePanel(loadGroup);
+            }
+        }
+
+        waitingForInput = waitForAnyInput && state == MenuState.TitleCard;
+
+        if (state == MenuState.GameOptions || state == MenuState.LoadMenu)
+        {
+            InputFocusStack.Push(this);
+        }
+        else
+        {
+            InputFocusStack.Pop(this);
+        }
+
+        UpdateCursorTarget();
+    }
+
+    private void UpdateCursorTarget()
+    {
+        if (sharedCursor == null)
+        {
+            return;
+        }
+
+        RectTransform targetRoot = null;
+        if (currentMenu == MenuState.GameOptions)
+        {
+            targetRoot = gameOptionsCursorRoot;
+        }
+        else if (currentMenu == MenuState.LoadMenu)
+        {
+            targetRoot = loadMenuCursorRoot;
+        }
+
+        sharedCursor.itemsParent = targetRoot;
+        sharedCursor.layoutGroup = targetRoot != null ? targetRoot.GetComponent<LayoutGroup>() : null;
+        sharedCursor.Refresh();
+    }
+
+    private void ShowTitleCard(CanvasGroup group)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        group.gameObject.SetActive(true);
+        group.alpha = 1f;
+        group.interactable = false;
+        group.blocksRaycasts = false;
+    }
+
+    private void ShowPanel(CanvasGroup group)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        group.gameObject.SetActive(true);
+        group.alpha = 1f;
+        group.interactable = true;
+        group.blocksRaycasts = true;
+    }
+
+    private void HidePanel(CanvasGroup group)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        group.alpha = 0f;
+        group.interactable = false;
+        group.blocksRaycasts = false;
+        group.gameObject.SetActive(false);
+    }
+
+    private void BindButtons()
+    {
+        if (newGameOptionButton != null)
+        {
+            newGameOptionButton.onClick.RemoveListener(OnNewGame);
+            newGameOptionButton.onClick.AddListener(OnNewGame);
+        }
+
+        if (loadMenuButton != null)
+        {
+            loadMenuButton.onClick.RemoveListener(OnLoadMenuRequested);
+            loadMenuButton.onClick.AddListener(OnLoadMenuRequested);
+        }
+
+        if (multiplayerButton != null)
+        {
+            multiplayerButton.onClick.RemoveListener(OnMultiplayerRequested);
+            multiplayerButton.onClick.AddListener(OnMultiplayerRequested);
+        }
+
+        if (optionsButton != null)
+        {
+            optionsButton.onClick.RemoveListener(OnOptionsRequested);
+            optionsButton.onClick.AddListener(OnOptionsRequested);
+        }
+
+        if (quitOptionButton != null)
+        {
+            quitOptionButton.onClick.RemoveListener(OnQuit);
+            quitOptionButton.onClick.AddListener(OnQuit);
+        }
+
+        if (newButton != null)
+        {
+            newButton.onClick.RemoveListener(OnNewGame);
+            newButton.onClick.AddListener(OnNewGame);
+        }
+
+        if (loadButton != null)
+        {
+            loadButton.onClick.RemoveListener(OnLoadSelected);
+            loadButton.onClick.AddListener(OnLoadSelected);
+        }
+
+        if (deleteButton != null)
+        {
+            deleteButton.onClick.RemoveListener(OnDeleteRequested);
+            deleteButton.onClick.AddListener(OnDeleteRequested);
+        }
+
+        if (refreshButton != null)
+        {
+            refreshButton.onClick.RemoveListener(OnRefresh);
+            refreshButton.onClick.AddListener(OnRefresh);
+        }
+
+        if (quitButton != null)
+        {
+            quitButton.onClick.RemoveListener(OnQuit);
+            quitButton.onClick.AddListener(OnQuit);
+        }
+
+        if (confirmYesButton != null)
+        {
+            confirmYesButton.onClick.RemoveListener(ConfirmDelete);
+            confirmYesButton.onClick.AddListener(ConfirmDelete);
+        }
+
+        if (confirmNoButton != null)
+        {
+            confirmNoButton.onClick.RemoveListener(CancelDelete);
+            confirmNoButton.onClick.AddListener(CancelDelete);
+        }
+    }
+
+    private void UnbindButtons()
+    {
+        if (newGameOptionButton != null)
+        {
+            newGameOptionButton.onClick.RemoveListener(OnNewGame);
+        }
+
+        if (loadMenuButton != null)
+        {
+            loadMenuButton.onClick.RemoveListener(OnLoadMenuRequested);
+        }
+
+        if (multiplayerButton != null)
+        {
+            multiplayerButton.onClick.RemoveListener(OnMultiplayerRequested);
+        }
+
+        if (optionsButton != null)
+        {
+            optionsButton.onClick.RemoveListener(OnOptionsRequested);
+        }
+
+        if (quitOptionButton != null)
+        {
+            quitOptionButton.onClick.RemoveListener(OnQuit);
+        }
+
+        if (newButton != null)
+        {
+            newButton.onClick.RemoveListener(OnNewGame);
+        }
+
+        if (loadButton != null)
+        {
+            loadButton.onClick.RemoveListener(OnLoadSelected);
+        }
+
+        if (deleteButton != null)
+        {
+            deleteButton.onClick.RemoveListener(OnDeleteRequested);
+        }
+
+        if (refreshButton != null)
+        {
+            refreshButton.onClick.RemoveListener(OnRefresh);
+        }
+
+        if (quitButton != null)
+        {
+            quitButton.onClick.RemoveListener(OnQuit);
+        }
+
+        if (confirmYesButton != null)
+        {
+            confirmYesButton.onClick.RemoveListener(ConfirmDelete);
+        }
+
+        if (confirmNoButton != null)
+        {
+            confirmNoButton.onClick.RemoveListener(CancelDelete);
+        }
     }
 
     private void RefreshSessions()
@@ -273,20 +463,26 @@ public class MainMenuController : MonoBehaviour
         }
 
         SaveSessionManager.Instance.ReloadSessions();
-        if (leftContentRoot == null)
-        {
-            return;
-        }
-
-        for (int i = leftContentRoot.childCount - 1; i >= 0; i--)
-        {
-            Destroy(leftContentRoot.GetChild(i).gameObject);
-        }
+        ClearSessionsUI();
 
         IReadOnlyList<SaveSessionInfo> sessions = SaveSessionManager.Instance.Sessions;
         if (sessions == null || sessions.Count == 0)
         {
-            CreateLabel(leftContentRoot, "Aucune partie pour le moment.", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
+            if (emptySessionsPlaceholder != null)
+            {
+                emptySessionsPlaceholder.SetActive(true);
+            }
+            return;
+        }
+
+        if (emptySessionsPlaceholder != null)
+        {
+            emptySessionsPlaceholder.SetActive(false);
+        }
+
+        if (sessionsRoot == null || sessionEntryPrefab == null || saveEntryPrefab == null)
+        {
+            SetStatus("References UI manquantes.");
             return;
         }
 
@@ -298,34 +494,19 @@ public class MainMenuController : MonoBehaviour
                 continue;
             }
 
-            GameObject sessionGroup = new GameObject("SessionGroup", typeof(RectTransform), typeof(VerticalLayoutGroup));
-            sessionGroup.transform.SetParent(leftContentRoot, false);
-            VerticalLayoutGroup sessionLayout = sessionGroup.GetComponent<VerticalLayoutGroup>();
-            sessionLayout.spacing = 2f;
-            sessionLayout.childControlWidth = true;
-            sessionLayout.childControlHeight = true;
-            sessionLayout.childForceExpandWidth = true;
-            sessionLayout.childForceExpandHeight = false;
+            MainMenuSessionEntryUI sessionEntry = Instantiate(sessionEntryPrefab, sessionsRoot);
+            sessionEntry.Initialize(this, session.sessionName, false);
 
-            GameObject header = CreateEntry(sessionGroup.transform, session.sessionName, 16, FontStyle.Bold);
-            SessionEntryView headerView = header.AddComponent<SessionEntryView>();
-            headerView.Initialize(this, session);
-
-            GameObject savesRoot = new GameObject("SavesRoot", typeof(RectTransform), typeof(VerticalLayoutGroup));
-            savesRoot.transform.SetParent(sessionGroup.transform, false);
-            VerticalLayoutGroup savesLayout = savesRoot.GetComponent<VerticalLayoutGroup>();
-            savesLayout.spacing = 2f;
-            savesLayout.padding = new RectOffset(18, 0, 0, 0);
-            savesLayout.childControlWidth = true;
-            savesLayout.childControlHeight = true;
-            savesLayout.childForceExpandWidth = true;
-            savesLayout.childForceExpandHeight = false;
-
-            headerView.SetSavesRoot(savesRoot);
+            Transform savesRoot = sessionEntry.SavesRoot;
+            if (savesRoot == null)
+            {
+                Debug.LogWarning($"MainMenuController: savesRoot manquant pour la session '{session.sessionName}'.");
+                continue;
+            }
 
             if (session.saves == null || session.saves.Count == 0)
             {
-                CreateLabel(savesRoot.transform, "Aucune sauvegarde.", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
+                sessionEntry.SetExpanded(false);
                 continue;
             }
 
@@ -337,30 +518,190 @@ public class MainMenuController : MonoBehaviour
                     continue;
                 }
 
-                GameObject entry = CreateEntry(savesRoot.transform, save.saveName, 13, FontStyle.Normal);
-                SaveEntryView entryView = entry.AddComponent<SaveEntryView>();
-                entryView.Initialize(this, save);
+                MainMenuSaveEntryUI saveEntry = Instantiate(saveEntryPrefab, savesRoot);
+                saveEntry.Initialize(this, save, entryColor, entryHoverColor, entrySelectedColor);
             }
         }
     }
 
-    private void OnGenerateCode()
+    private void ClearSessionsUI()
     {
-        string code = NetcodeSessionCode.Generate(codeLength);
-        if (hostCodeInput != null)
+        selectedSave = null;
+        selectedSaveView = null;
+        pendingDelete = null;
+        hoveredSessionEntry = null;
+
+        ClearPreviewTexture();
+        if (detailsTitle != null)
         {
-            hostCodeInput.text = code;
+            detailsTitle.text = "Details";
+        }
+        if (detailsBody != null)
+        {
+            detailsBody.text = "Selectionne une sauvegarde.";
+        }
+        if (confirmRoot != null)
+        {
+            confirmRoot.SetActive(false);
         }
 
-        if (joinCodeInput != null)
+        if (sessionsRoot == null)
         {
-            joinCodeInput.text = code;
+            return;
         }
 
-        SetStatus($"Code genere: {code}");
+        for (int i = sessionsRoot.childCount - 1; i >= 0; i--)
+        {
+            Destroy(sessionsRoot.GetChild(i).gameObject);
+        }
     }
 
-    private void OnHostNew()
+    internal void OnSessionHovered(MainMenuSessionEntryUI entry)
+    {
+        hoveredSessionEntry = entry;
+    }
+
+    internal void OnSessionUnhovered(MainMenuSessionEntryUI entry)
+    {
+        if (hoveredSessionEntry == entry)
+        {
+            hoveredSessionEntry = null;
+        }
+    }
+
+    internal void OnSessionInteract(MainMenuSessionEntryUI entry)
+    {
+        if (entry == null)
+        {
+            return;
+        }
+
+        entry.Toggle();
+    }
+
+    internal void OnSaveHovered(SaveSlotInfo save)
+    {
+        ShowSaveDetails(save);
+    }
+
+    internal void OnSaveSelected(SaveSlotInfo save, MainMenuSaveEntryUI view)
+    {
+        if (selectedSaveView != null)
+        {
+            selectedSaveView.SetSelected(false);
+        }
+
+        selectedSave = save;
+        selectedSaveView = view;
+        if (selectedSaveView != null)
+        {
+            selectedSaveView.SetSelected(true);
+        }
+
+        ShowSaveDetails(save);
+    }
+
+    private void ShowSaveDetails(SaveSlotInfo save)
+    {
+        if (detailsBody == null || save == null)
+        {
+            return;
+        }
+
+        DateTime savedAt = save.savedAtUtcTicks > 0
+            ? new DateTime(save.savedAtUtcTicks, DateTimeKind.Utc).ToLocalTime()
+            : DateTime.MinValue;
+
+        TimeSpan playtime = TimeSpan.FromSeconds(Mathf.Max(0f, save.playTimeSeconds));
+        string playtimeText = $"{(int)playtime.TotalHours:00}:{playtime.Minutes:00}:{playtime.Seconds:00}";
+
+        if (detailsTitle != null)
+        {
+            detailsTitle.text = save.sessionName;
+        }
+
+        detailsBody.text =
+            $"Sauvegarde: {save.saveName}\n" +
+            $"Date: {(savedAt == DateTime.MinValue ? "Inconnue" : savedAt.ToString("dd/MM/yyyy HH:mm"))}\n" +
+            $"Temps de jeu: {playtimeText}\n" +
+            $"Scene: {save.sceneName}";
+
+        UpdatePreview(save);
+    }
+
+    private void UpdatePreview(SaveSlotInfo save)
+    {
+        ClearPreviewTexture();
+
+        if (previewImage == null || save == null)
+        {
+            return;
+        }
+
+        string path = GetScreenshotPath(save);
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            previewImage.texture = null;
+            return;
+        }
+
+        try
+        {
+            byte[] data = File.ReadAllBytes(path);
+            if (data == null || data.Length == 0)
+            {
+                previewImage.texture = null;
+                return;
+            }
+
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!texture.LoadImage(data))
+            {
+                Destroy(texture);
+                previewImage.texture = null;
+                return;
+            }
+
+            previewTexture = texture;
+            previewImage.texture = previewTexture;
+
+            if (previewAspect != null && previewTexture.height > 0)
+            {
+                previewAspect.aspectRatio = (float)previewTexture.width / previewTexture.height;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"MainMenuController: echec chargement screenshot {path}. {ex.Message}");
+            previewImage.texture = null;
+        }
+    }
+
+    private void ClearPreviewTexture()
+    {
+        if (previewImage != null)
+        {
+            previewImage.texture = null;
+        }
+
+        if (previewTexture != null)
+        {
+            Destroy(previewTexture);
+            previewTexture = null;
+        }
+    }
+
+    private string GetScreenshotPath(SaveSlotInfo save)
+    {
+        if (save == null || string.IsNullOrWhiteSpace(save.directoryPath) || string.IsNullOrWhiteSpace(screenshotFileName))
+        {
+            return null;
+        }
+
+        return Path.Combine(save.directoryPath, screenshotFileName);
+    }
+
+    private void OnNewGame()
     {
         if (SaveSessionManager.Instance == null)
         {
@@ -380,7 +721,68 @@ public class MainMenuController : MonoBehaviour
         StartHostFlow();
     }
 
-    private void OnHostSelected()
+    private void OnLoadMenuRequested()
+    {
+        ShowLoadMenu();
+        RefreshSessions();
+    }
+
+    private void OnMultiplayerRequested()
+    {
+        SetStatus("Multijoueur non configure.");
+    }
+
+    private void OnOptionsRequested()
+    {
+        SetStatus("Options non configurees.");
+    }
+
+    public void UI_NewGame()
+    {
+        OnNewGame();
+    }
+
+    public void UI_ShowLoadMenu()
+    {
+        OnLoadMenuRequested();
+    }
+
+    public void UI_LoadSelected()
+    {
+        OnLoadSelected();
+    }
+
+    public void UI_DeleteSelected()
+    {
+        OnDeleteRequested();
+    }
+
+    public void UI_Refresh()
+    {
+        OnRefresh();
+    }
+
+    public void UI_ShowGameOptions()
+    {
+        ShowGameOptionsMenu();
+    }
+
+    public void UI_Multiplayer()
+    {
+        OnMultiplayerRequested();
+    }
+
+    public void UI_Options()
+    {
+        OnOptionsRequested();
+    }
+
+    public void UI_Quit()
+    {
+        OnQuit();
+    }
+
+    private void OnLoadSelected()
     {
         if (SaveSessionManager.Instance == null)
         {
@@ -397,66 +799,56 @@ public class MainMenuController : MonoBehaviour
         StartHostFlow();
     }
 
-    private void StartHostFlow()
+    private void OnDeleteRequested()
     {
-        if (!TryResolvePort(hostCodeInput, out string code, out ushort port))
+        if (selectedSave == null)
         {
-            SetStatus("Code host invalide.");
+            SetStatus("Selectionne une sauvegarde.");
             return;
         }
 
-        NetcodeLauncher launcher = ResolveLauncher();
-        if (launcher == null)
+        pendingDelete = selectedSave;
+        if (confirmText != null)
         {
-            SetStatus("NetcodeLauncher manquant.");
-            return;
+            confirmText.text = $"Supprimer '{selectedSave.saveName}' ?";
         }
 
-        bool started = launcher.StartHostWithConnection(hostLoopbackAddress, port, listenAddress);
-        if (!started)
+        if (confirmRoot != null)
         {
-            SetStatus("Host deja actif.");
-            return;
-        }
-
-        SetMenuVisible(false);
-        SetStatus($"Host lance (code {code}).");
-
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
-        {
-            NetworkManager.Singleton.SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
+            confirmRoot.SetActive(true);
         }
         else
         {
-            SceneManager.LoadScene(gameplaySceneName);
+            ConfirmDelete();
         }
     }
 
-    private void OnJoin()
+    private void ConfirmDelete()
     {
-        if (!TryResolvePort(joinCodeInput, out _, out ushort port))
+        if (confirmRoot != null)
         {
-            SetStatus("Code rejoindre invalide.");
+            confirmRoot.SetActive(false);
+        }
+
+        if (pendingDelete == null || SaveSessionManager.Instance == null)
+        {
+            pendingDelete = null;
             return;
         }
 
-        string address = ResolveAddress();
-        NetcodeLauncher launcher = ResolveLauncher();
-        if (launcher == null)
-        {
-            SetStatus("NetcodeLauncher manquant.");
-            return;
-        }
+        bool deleted = SaveSessionManager.Instance.DeleteSave(pendingDelete.sessionId, pendingDelete.saveId, true);
+        SetStatus(deleted ? "Sauvegarde supprimee." : "Echec suppression.");
+        pendingDelete = null;
+        RefreshSessions();
+    }
 
-        bool started = launcher.StartClientWithConnection(address, port);
-        if (!started)
+    private void CancelDelete()
+    {
+        pendingDelete = null;
+        if (confirmRoot != null)
         {
-            SetStatus("Client deja actif.");
-            return;
+            confirmRoot.SetActive(false);
         }
-
-        SetMenuVisible(false);
-        SetStatus($"Connexion a {address}:{port}.");
     }
 
     private void OnRefresh()
@@ -474,62 +866,42 @@ public class MainMenuController : MonoBehaviour
 #endif
     }
 
-    private void SelectSave(SaveSlotInfo save, SaveEntryView view)
+    private void StartHostFlow()
     {
-        selectedSave = save;
-        if (selectedSaveView != null)
+        ushort port = ResolvePort();
+        NetcodeLauncher launcher = ResolveLauncher();
+        if (launcher == null)
         {
-            selectedSaveView.SetSelected(false);
-        }
-
-        selectedSaveView = view;
-        if (selectedSaveView != null)
-        {
-            selectedSaveView.SetSelected(true);
-        }
-
-        ShowSaveDetails(save);
-    }
-
-    public void ShowSaveDetails(SaveSlotInfo save)
-    {
-        hoveredSave = save;
-        if (detailsBody == null || save == null)
-        {
+            SetStatus("NetcodeLauncher manquant.");
             return;
         }
 
-        DateTime savedAt = save.savedAtUtcTicks > 0
-            ? new DateTime(save.savedAtUtcTicks, DateTimeKind.Utc).ToLocalTime()
-            : DateTime.MinValue;
-
-        TimeSpan playtime = TimeSpan.FromSeconds(Mathf.Max(0f, save.playTimeSeconds));
-        string playtimeText = $"{(int)playtime.TotalHours:00}:{playtime.Minutes:00}:{playtime.Seconds:00}";
-
-        detailsTitle.text = save.sessionName;
-        detailsBody.text =
-            $"Sauvegarde: {save.saveName}\n" +
-            $"Date: {(savedAt == DateTime.MinValue ? "Inconnue" : savedAt.ToString("dd/MM/yyyy HH:mm"))}\n" +
-            $"Temps de jeu: {playtimeText}\n" +
-            $"Scene: {save.sceneName}";
-    }
-
-    private void SetMenuVisible(bool visible)
-    {
-        menuVisible = visible;
-        if (root != null)
+        bool started = launcher.StartHostWithConnection(hostLoopbackAddress, port, listenAddress);
+        if (!started)
         {
-            root.SetActive(visible);
+            SetStatus("Host deja actif.");
+            return;
         }
 
-        if (visible)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
         {
-            InputFocusStack.Push(this);
+            NetworkManager.Singleton.SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
         }
         else
         {
-            InputFocusStack.Pop(this);
+            SceneManager.LoadScene(gameplaySceneName);
         }
+    }
+
+    private ushort ResolvePort()
+    {
+        string code = NetcodeSessionCode.Generate(codeLength);
+        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort port, out _))
+        {
+            return basePort;
+        }
+
+        return port;
     }
 
     private NetcodeLauncher ResolveLauncher()
@@ -540,41 +912,7 @@ public class MainMenuController : MonoBehaviour
 #else
         launcher = FindObjectOfType<NetcodeLauncher>();
 #endif
-
         return launcher;
-    }
-
-    private bool TryResolvePort(InputField field, out string code, out ushort port)
-    {
-        port = 0;
-        code = field != null ? NetcodeSessionCode.Normalize(field.text) : string.Empty;
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            code = NetcodeSessionCode.Generate(codeLength);
-            if (field != null)
-            {
-                field.text = code;
-            }
-        }
-
-        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort resolvedPort, out _))
-        {
-            return false;
-        }
-
-        port = resolvedPort;
-        return true;
-    }
-
-    private string ResolveAddress()
-    {
-        string address = addressInput != null ? addressInput.text : clientAddressDefault;
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            return clientAddressDefault;
-        }
-
-        return address.Trim();
     }
 
     private void SetStatus(string message)
@@ -587,268 +925,76 @@ public class MainMenuController : MonoBehaviour
         statusText.text = $"Etat: {message}";
     }
 
-    private void EnsureEventSystem()
+    private static void EnsureSaveManager()
     {
-#if UNITY_2023_1_OR_NEWER
-        if (FindFirstObjectByType<EventSystem>() != null)
-#else
-        if (FindObjectOfType<EventSystem>() != null)
-#endif
+        if (SaveSessionManager.Instance != null)
         {
+            SaveSessionManager.Instance.SetMenuSceneName(DefaultMenuSceneName);
             return;
         }
 
+        GameObject host = new GameObject("SaveSessionManager");
+        SaveSessionManager manager = host.AddComponent<SaveSessionManager>();
+        manager.SetMenuSceneName(DefaultMenuSceneName);
+    }
+
+    private static bool AnyInputPressedThisFrame()
+    {
 #if ENABLE_INPUT_SYSTEM
-        GameObject eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+        if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
+        {
+            return true;
+        }
+
+        if (Mouse.current != null)
+        {
+            if (Mouse.current.leftButton.wasPressedThisFrame ||
+                Mouse.current.rightButton.wasPressedThisFrame ||
+                Mouse.current.middleButton.wasPressedThisFrame)
+            {
+                return true;
+            }
+        }
+
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+        {
+            return true;
+        }
+
+        foreach (Gamepad pad in Gamepad.all)
+        {
+            if (pad == null)
+            {
+                continue;
+            }
+
+            if (pad.buttonSouth.wasPressedThisFrame ||
+                pad.buttonNorth.wasPressedThisFrame ||
+                pad.buttonWest.wasPressedThisFrame ||
+                pad.buttonEast.wasPressedThisFrame ||
+                pad.startButton.wasPressedThisFrame ||
+                pad.selectButton.wasPressedThisFrame ||
+                pad.leftShoulder.wasPressedThisFrame ||
+                pad.rightShoulder.wasPressedThisFrame ||
+                pad.leftStickButton.wasPressedThisFrame ||
+                pad.rightStickButton.wasPressedThisFrame ||
+                pad.dpad.up.wasPressedThisFrame ||
+                pad.dpad.down.wasPressedThisFrame ||
+                pad.dpad.left.wasPressedThisFrame ||
+                pad.dpad.right.wasPressedThisFrame ||
+                pad.leftTrigger.wasPressedThisFrame ||
+                pad.rightTrigger.wasPressedThisFrame)
+            {
+                return true;
+            }
+        }
+
+        return false;
 #else
-        GameObject eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+        return Input.anyKeyDown ||
+               Input.GetMouseButtonDown(0) ||
+               Input.GetMouseButtonDown(1) ||
+               Input.GetMouseButtonDown(2);
 #endif
-        eventSystem.transform.SetParent(transform, false);
-    }
-
-    private GameObject CreateEntry(Transform parent, string text, int size, FontStyle style)
-    {
-        GameObject entry = new GameObject("Entry", typeof(RectTransform), typeof(Image), typeof(Button));
-        entry.transform.SetParent(parent, false);
-        Image image = entry.GetComponent<Image>();
-        image.color = entryColor;
-
-        Button button = entry.GetComponent<Button>();
-        button.transition = Selectable.Transition.None;
-
-        Text label = CreateLabel(entry.transform, text, size, style, TextAnchor.MiddleLeft);
-        label.raycastTarget = false;
-
-        LayoutElement element = entry.AddComponent<LayoutElement>();
-        element.minHeight = 34f;
-
-        return entry;
-    }
-
-    private GameObject CreateRow(Transform parent)
-    {
-        GameObject row = new GameObject("Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-        row.transform.SetParent(parent, false);
-        HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
-        layout.spacing = 8f;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = false;
-        layout.childForceExpandHeight = false;
-
-        return row;
-    }
-
-    private Text CreateLabel(Transform parent, string text, int fontSize, FontStyle style, TextAnchor alignment)
-    {
-        GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
-        labelObject.transform.SetParent(parent, false);
-
-        Text label = labelObject.GetComponent<Text>();
-        label.font = defaultFont;
-        label.text = text;
-        label.fontSize = fontSize;
-        label.fontStyle = style;
-        label.color = Color.white;
-        label.alignment = alignment;
-
-        LayoutElement element = labelObject.AddComponent<LayoutElement>();
-        element.minHeight = Mathf.Max(24f, fontSize + 6f);
-        element.flexibleWidth = 1f;
-
-        return label;
-    }
-
-    private InputField CreateInputField(Transform parent, string placeholderText, int characterLimit)
-    {
-        GameObject fieldObject = new GameObject("InputField", typeof(RectTransform), typeof(Image), typeof(InputField));
-        fieldObject.transform.SetParent(parent, false);
-
-        Image background = fieldObject.GetComponent<Image>();
-        background.color = new Color(1f, 1f, 1f, 0.08f);
-
-        InputField field = fieldObject.GetComponent<InputField>();
-        field.contentType = InputField.ContentType.Standard;
-        field.lineType = InputField.LineType.SingleLine;
-        field.characterLimit = characterLimit;
-
-        GameObject textObject = new GameObject("Text", typeof(RectTransform), typeof(Text));
-        textObject.transform.SetParent(fieldObject.transform, false);
-        Text text = textObject.GetComponent<Text>();
-        text.font = defaultFont;
-        text.fontSize = 14;
-        text.color = Color.white;
-        text.alignment = TextAnchor.MiddleLeft;
-
-        GameObject placeholderObject = new GameObject("Placeholder", typeof(RectTransform), typeof(Text));
-        placeholderObject.transform.SetParent(fieldObject.transform, false);
-        Text placeholder = placeholderObject.GetComponent<Text>();
-        placeholder.font = defaultFont;
-        placeholder.fontSize = 14;
-        placeholder.color = new Color(1f, 1f, 1f, 0.4f);
-        placeholder.alignment = TextAnchor.MiddleLeft;
-        placeholder.text = placeholderText;
-
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(10f, 6f);
-        textRect.offsetMax = new Vector2(-10f, -6f);
-
-        RectTransform placeholderRect = placeholderObject.GetComponent<RectTransform>();
-        placeholderRect.anchorMin = Vector2.zero;
-        placeholderRect.anchorMax = Vector2.one;
-        placeholderRect.offsetMin = new Vector2(10f, 6f);
-        placeholderRect.offsetMax = new Vector2(-10f, -6f);
-
-        field.textComponent = text;
-        field.placeholder = placeholder;
-
-        LayoutElement element = fieldObject.AddComponent<LayoutElement>();
-        element.minHeight = 32f;
-        element.flexibleWidth = 1f;
-
-        return field;
-    }
-
-    private Button CreateButton(Transform parent, string label, UnityEngine.Events.UnityAction callback, float preferredWidth)
-    {
-        GameObject buttonObject = new GameObject(label, typeof(RectTransform), typeof(Image), typeof(Button));
-        buttonObject.transform.SetParent(parent, false);
-
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.12f);
-
-        Button button = buttonObject.GetComponent<Button>();
-        button.targetGraphic = image;
-        if (callback != null)
-        {
-            button.onClick.AddListener(callback);
-        }
-
-        Text text = CreateLabel(buttonObject.transform, label, 14, FontStyle.Bold, TextAnchor.MiddleCenter);
-        text.raycastTarget = false;
-
-        LayoutElement element = buttonObject.AddComponent<LayoutElement>();
-        if (preferredWidth > 0f)
-        {
-            element.preferredWidth = preferredWidth;
-            element.minWidth = preferredWidth;
-        }
-        element.minHeight = 32f;
-
-        return button;
-    }
-
-    private class SessionEntryView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler
-    {
-        private MainMenuController owner;
-        private SaveSessionInfo session;
-        private GameObject savesRoot;
-        private Image background;
-        private bool expanded = true;
-
-        public void Initialize(MainMenuController menu, SaveSessionInfo data)
-        {
-            owner = menu;
-            session = data;
-            background = GetComponent<Image>();
-        }
-
-        public void SetSavesRoot(GameObject root)
-        {
-            savesRoot = root;
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            Toggle();
-        }
-
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            if (owner != null && owner.detailsTitle != null)
-            {
-                owner.detailsTitle.text = session != null ? session.sessionName : "Details";
-            }
-        }
-
-        private void Toggle()
-        {
-            expanded = !expanded;
-            if (savesRoot != null)
-            {
-                savesRoot.SetActive(expanded);
-            }
-        }
-    }
-
-    private class SaveEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
-    {
-        private MainMenuController owner;
-        private SaveSlotInfo save;
-        private Image background;
-
-        public void Initialize(MainMenuController menu, SaveSlotInfo data)
-        {
-            owner = menu;
-            save = data;
-            background = GetComponent<Image>();
-        }
-
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            if (owner != null && save != null)
-            {
-                owner.ShowSaveDetails(save);
-            }
-
-            SetHover(true);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            SetHover(false);
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (owner != null)
-            {
-                owner.SelectSave(save, this);
-            }
-        }
-
-        public void SetSelected(bool selected)
-        {
-            if (background == null)
-            {
-                return;
-            }
-
-            background.color = selected ? owner.entrySelectedColor : owner.entryColor;
-        }
-
-        private void SetHover(bool hover)
-        {
-            if (background == null)
-            {
-                return;
-            }
-
-            if (owner != null && owner.selectedSaveView == this)
-            {
-                background.color = owner.entrySelectedColor;
-            }
-            else
-            {
-                background.color = hover ? owner.entryHoverColor : owner.entryColor;
-            }
-        }
-
-        private void OnDisable()
-        {
-            SetHover(false);
-        }
     }
 }
