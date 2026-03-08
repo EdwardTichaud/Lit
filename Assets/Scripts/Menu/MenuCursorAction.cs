@@ -15,7 +15,10 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         BackToGameOptions = 6,
         LoadSelected = 7,
         DeleteSelected = 8,
-        Refresh = 9
+        Refresh = 9,
+        ConfirmNewGame = 10,
+        CancelNewGame = 11,
+        [InspectorName("vk - Input (Nom GO)")] Vk_Input = 99
     }
 
     [SerializeField] private MainMenuController controller;
@@ -68,9 +71,25 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         Execute();
     }
 
+    public void Configure(MainMenuController menuController, MenuAction menuAction)
+    {
+        controller = menuController;
+        action = menuAction;
+    }
+
     private void Execute()
     {
+        if (!isActiveAndEnabled)
+        {
+            return;
+        }
+
         if (controller == null)
+        {
+            return;
+        }
+
+        if (TryHandleVirtualKeyboardAction())
         {
             return;
         }
@@ -104,8 +123,108 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             case MenuAction.Refresh:
                 controller.UI_Refresh();
                 break;
+            case MenuAction.ConfirmNewGame:
+                controller.UI_ConfirmNewGame();
+                break;
+            case MenuAction.CancelNewGame:
+                controller.UI_CancelNewGame();
+                break;
         }
     }
+
+    private bool TryHandleVirtualKeyboardAction()
+    {
+        if (action == MenuAction.Vk_Input)
+        {
+            return HandleVirtualKeyboardInputFromName();
+        }
+
+        return false;
+    }
+
+    private bool HandleVirtualKeyboardInputFromName()
+    {
+        string label = NormalizeVirtualKeyLabel(gameObject != null ? gameObject.name : null);
+        if (string.IsNullOrEmpty(label))
+        {
+            return false;
+        }
+
+        if (IsValidateLabel(label))
+        {
+            controller.UI_VirtualValidate();
+            return true;
+        }
+
+        if (IsBackspaceLabel(label))
+        {
+            controller.UI_VirtualKey('\b');
+            return true;
+        }
+
+        if (IsSpaceLabel(label))
+        {
+            controller.UI_VirtualKey(' ');
+            return true;
+        }
+
+        if (label.Length == 1)
+        {
+            controller.UI_VirtualKey(label[0]);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string NormalizeVirtualKeyLabel(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return string.Empty;
+        }
+
+        string trimmed = label.Trim();
+        if (trimmed.StartsWith("vk - ", System.StringComparison.OrdinalIgnoreCase))
+        {
+            trimmed = trimmed.Substring(5);
+        }
+        else if (trimmed.StartsWith("vk_", System.StringComparison.OrdinalIgnoreCase))
+        {
+            trimmed = trimmed.Substring(3);
+        }
+        else if (trimmed.StartsWith("key_", System.StringComparison.OrdinalIgnoreCase))
+        {
+            trimmed = trimmed.Substring(4);
+        }
+
+        return trimmed.Trim();
+    }
+
+    private static bool IsSpaceLabel(string label)
+    {
+        return string.Equals(label, "Space", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Espace", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Blank", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsBackspaceLabel(string label)
+    {
+        return string.Equals(label, "Backspace", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Retour", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Delete", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Del", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsValidateLabel(string label)
+    {
+        return string.Equals(label, "Validate", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Valider", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Enter", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "OK", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Confirm", System.StringComparison.OrdinalIgnoreCase);
+    }
+
 
     private void SyncSharedCursor()
     {

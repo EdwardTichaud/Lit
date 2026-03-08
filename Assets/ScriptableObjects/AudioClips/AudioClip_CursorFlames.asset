@@ -15,5 +15,5 @@ MonoBehaviour:
   title: CursorFlames
   composer: 
   audioClip: {fileID: 8300000, guid: 33f6d96fa50940e44bb2f38ff3b22f31, type: 3}
-  volume: 0.7
+  volume: 0.4
   loop: 0

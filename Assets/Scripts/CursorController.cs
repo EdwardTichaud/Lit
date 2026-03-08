@@ -20,6 +20,12 @@ public class CursorController : MonoBehaviour
         Horizontal = 2,
         Grid = 3
     }
+    public enum ItemFilter
+    {
+        All = 0,
+        MenuCursorActionOnly = 1,
+        MenuCursorHandlerOnly = 2
+    }
     private enum LayoutKind
     {
         Grid,
@@ -39,6 +45,8 @@ public class CursorController : MonoBehaviour
     public bool autoCollectItems = true;
     [Tooltip("Inclut les objets inactifs dans la navigation.")]
     public bool includeInactive = false;
+    [Tooltip("Filtre les elements navigables.")]
+    public ItemFilter itemFilter = ItemFilter.All;
 
     [Header("Cursor")]
     [Tooltip("Curseur UI de selection.")]
@@ -387,8 +395,56 @@ public class CursorController : MonoBehaviour
                 continue;
             }
 
+            if (!PassesItemFilter(rect))
+            {
+                continue;
+            }
+
             items.Add(rect);
         }
+    }
+
+    private bool PassesItemFilter(RectTransform rect)
+    {
+        if (rect == null)
+        {
+            return false;
+        }
+
+        switch (itemFilter)
+        {
+            case ItemFilter.MenuCursorActionOnly:
+                return rect.GetComponent<MenuCursorAction>() != null;
+            case ItemFilter.MenuCursorHandlerOnly:
+                return HasMenuCursorHandler(rect);
+            default:
+                return true;
+        }
+    }
+
+    private static bool HasMenuCursorHandler(RectTransform rect)
+    {
+        if (rect == null)
+        {
+            return false;
+        }
+
+        MenuCursorAction action = rect.GetComponent<MenuCursorAction>();
+        if (action != null)
+        {
+            return action.isActiveAndEnabled;
+        }
+
+        MonoBehaviour[] behaviours = rect.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] != null && behaviours[i].isActiveAndEnabled && behaviours[i] is IMenuCursorHandler)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void EnsureSelection()
