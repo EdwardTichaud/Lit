@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using TMPro;
 
 // Controle un curseur UI dans un layout (Grid/Vertical/Horizontal) avec l'input.
 [DisallowMultipleComponent]
@@ -50,10 +51,18 @@ public class CursorController : MonoBehaviour
     public CursorPlacement placement = CursorPlacement.Overlay;
     [Tooltip("Decalage ajoute quand le curseur est a droite de la cible.")]
     public Vector2 rightOffset = new Vector2(20f, 0f);
+    [Tooltip("Utilise la largeur du texte (TMP) pour placer le curseur a droite.")]
+    public bool useTextBoundsForRightOffset = false;
     [Tooltip("Ajuste la taille du curseur a celle de la cible.")]
     public bool matchTargetSize = true;
     [Tooltip("Cree un curseur si manquant.")]
     public bool createCursorIfMissing = true;
+
+    [Header("Audio")]
+    [Tooltip("SFX joue quand le curseur se deplace.")]
+    public AudioClipSO moveSfx;
+    [Tooltip("Temps minimum entre deux sons de deplacement.")]
+    public float moveSfxCooldown = 0.05f;
 
     [Header("Navigation")]
     [Tooltip("Deadzone du stick pour naviguer.")]
@@ -105,6 +114,7 @@ public class CursorController : MonoBehaviour
     private Vector2 cursorTargetSize;
     private bool cursorHasTarget;
     private bool cursorInitialized;
+    private float lastMoveSfxTime = -999f;
 
     private void Awake()
     {
@@ -491,6 +501,32 @@ public class CursorController : MonoBehaviour
 
         currentIndex = nextIndex;
         cursorDirty = true;
+        PlayMoveSfx();
+    }
+
+    private void PlayMoveSfx()
+    {
+        if (moveSfx == null || moveSfx.audioClip == null)
+        {
+            return;
+        }
+
+        float now = useUnscaledTime ? Time.unscaledTime : Time.time;
+        if (now - lastMoveSfxTime < Mathf.Max(0f, moveSfxCooldown))
+        {
+            return;
+        }
+
+        lastMoveSfxTime = now;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayClip(moveSfx, Vector3.zero);
+        }
+        else
+        {
+            AudioSource.PlayClipAtPoint(moveSfx.audioClip, Vector3.zero, Mathf.Clamp01(moveSfx.volume));
+        }
     }
 
     private int GetNextIndex(int direction)
@@ -658,18 +694,28 @@ public class CursorController : MonoBehaviour
 
         ForceLayoutRebuild();
         rect.gameObject.SetActive(true);
+        SetCursorGraphicsActive(true);
         Vector2 targetSize = target.rect.size;
         Vector2 baseSize = matchTargetSize ? targetSize : rect.rect.size;
         cursorTargetSize = baseSize + cursorPadding;
 
         if (placement == CursorPlacement.RightOfTarget)
         {
-            Vector3 right = target.right;
-            Vector3 up = target.up;
-            float halfTarget = targetSize.x * 0.5f;
-            float halfCursor = cursorTargetSize.x * 0.5f;
-            float offset = halfTarget + halfCursor + rightOffset.x;
-            cursorTargetPosition = target.position + right * offset + up * rightOffset.y;
+            if (useTextBoundsForRightOffset && TryGetTextBounds(target, out Vector3 textCenter, out float textHalfWidth, out Vector3 textRight, out Vector3 textUp))
+            {
+                float halfCursor = cursorTargetSize.x * 0.5f;
+                float offset = textHalfWidth + halfCursor + rightOffset.x;
+                cursorTargetPosition = textCenter + textRight * offset + textUp * rightOffset.y;
+            }
+            else
+            {
+                Vector3 right = target.right;
+                Vector3 up = target.up;
+                float halfTarget = targetSize.x * 0.5f;
+                float halfCursor = cursorTargetSize.x * 0.5f;
+                float offset = halfTarget + halfCursor + rightOffset.x;
+                cursorTargetPosition = target.position + right * offset + up * rightOffset.y;
+            }
         }
         else
         {
@@ -691,8 +737,75 @@ public class CursorController : MonoBehaviour
     {
         if (cursor != null)
         {
+            if (cursor == transform as RectTransform)
+            {
+                SetCursorGraphicsActive(false);
+                return;
+            }
+
             cursor.gameObject.SetActive(false);
         }
+    }
+
+    private void SetCursorGraphicsActive(bool visible)
+    {
+        if (cursor == null)
+        {
+            return;
+        }
+
+        Graphic[] graphics = cursor.GetComponentsInChildren<Graphic>(true);
+        if (graphics == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            if (graphics[i] == null)
+            {
+                continue;
+            }
+
+            graphics[i].enabled = visible;
+        }
+    }
+
+    private bool TryGetTextBounds(RectTransform target, out Vector3 centerWorld, out float halfWidth, out Vector3 right, out Vector3 up)
+    {
+        centerWorld = Vector3.zero;
+        halfWidth = 0f;
+        right = Vector3.right;
+        up = Vector3.up;
+
+        if (target == null)
+        {
+            return false;
+        }
+
+        TMP_Text tmp = target.GetComponent<TMP_Text>();
+        if (tmp == null)
+        {
+            tmp = target.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (tmp == null)
+        {
+            return false;
+        }
+
+        tmp.ForceMeshUpdate();
+        Bounds bounds = tmp.textBounds;
+        if (bounds.size == Vector3.zero)
+        {
+            return false;
+        }
+
+        centerWorld = tmp.transform.TransformPoint(bounds.center);
+        halfWidth = Mathf.Abs(bounds.extents.x);
+        right = tmp.transform.right;
+        up = tmp.transform.up;
+        return true;
     }
 
     private RectTransform EnsureCursor()

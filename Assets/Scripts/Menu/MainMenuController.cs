@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Unity.Netcode;
@@ -27,6 +28,14 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private CanvasGroup mainMenuGroup;
     [SerializeField] private bool hideTitleCardOnProceed = true;
     [SerializeField] private bool waitForAnyInput = true;
+    [SerializeField] private float panelFadeDuration = 1.5f;
+    [SerializeField] private bool fadeUseUnscaledTime = true;
+
+    [Header("Title Card FX")]
+    [SerializeField] private AudioClipSO titleCardProceedSfx;
+    [SerializeField] private GameObject titleCardFlamesPrefab;
+    [SerializeField] private Transform titleCardFlamesParent;
+    [SerializeField] private bool spawnFlamesOnce = true;
 
     [Header("Save List")]
     [SerializeField] private Transform sessionsRoot;
@@ -92,6 +101,10 @@ public class MainMenuController : MonoBehaviour
     private MenuState currentMenu = MenuState.TitleCard;
     private Coroutine cursorSnapRoutine;
     private RectTransform currentCursorRoot;
+    private bool hasInitializedState;
+    private bool titleCardProceedTriggered;
+    private GameObject titleCardFlamesInstance;
+    private readonly Dictionary<CanvasGroup, Coroutine> fadeRoutines = new Dictionary<CanvasGroup, Coroutine>();
 
     private void Awake()
     {
@@ -134,7 +147,7 @@ public class MainMenuController : MonoBehaviour
 
         if (AnyInputPressedThisFrame())
         {
-            ShowGameOptionsMenu();
+            HandleTitleCardProceed();
         }
     }
 
@@ -258,6 +271,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         UpdateCursorTarget();
+        hasInitializedState = true;
     }
 
     private void UpdateCursorTarget()
@@ -399,10 +413,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        group.gameObject.SetActive(true);
-        group.alpha = 1f;
-        group.interactable = false;
-        group.blocksRaycasts = false;
+        StartFade(group, 1f, true);
     }
 
     private void ShowPanel(CanvasGroup group)
@@ -412,10 +423,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        group.gameObject.SetActive(true);
-        group.alpha = 1f;
-        group.interactable = true;
-        group.blocksRaycasts = true;
+        StartFade(group, 1f, true);
     }
 
     private void HidePanel(CanvasGroup group)
@@ -425,10 +433,147 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        group.alpha = 0f;
+        StartFade(group, 0f, false);
+    }
+
+    private void StartFade(CanvasGroup group, float targetAlpha, bool show)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        if (!hasInitializedState)
+        {
+            ApplyFadeImmediate(group, targetAlpha, show);
+            return;
+        }
+
+        if (fadeRoutines.TryGetValue(group, out Coroutine routine) && routine != null)
+        {
+            StopCoroutine(routine);
+        }
+
+        fadeRoutines[group] = StartCoroutine(FadeRoutine(group, targetAlpha, show));
+    }
+
+    private void ApplyFadeImmediate(CanvasGroup group, float targetAlpha, bool show)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        if (show)
+        {
+            group.gameObject.SetActive(true);
+        }
+
+        group.alpha = targetAlpha;
+        bool visible = targetAlpha > 0.001f;
+        group.interactable = visible;
+        group.blocksRaycasts = visible;
+
+        if (!visible)
+        {
+            group.gameObject.SetActive(false);
+        }
+    }
+
+    private IEnumerator FadeRoutine(CanvasGroup group, float targetAlpha, bool show)
+    {
+        if (group == null)
+        {
+            yield break;
+        }
+
+        if (show)
+        {
+            group.gameObject.SetActive(true);
+        }
+
         group.interactable = false;
         group.blocksRaycasts = false;
-        group.gameObject.SetActive(false);
+
+        float duration = Mathf.Max(0.01f, panelFadeDuration);
+        float startAlpha = group.alpha;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+            group.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+            elapsed += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            yield return null;
+        }
+
+        group.alpha = targetAlpha;
+        bool visible = targetAlpha > 0.001f;
+        group.interactable = visible;
+        group.blocksRaycasts = visible;
+        if (!visible)
+        {
+            group.gameObject.SetActive(false);
+        }
+    }
+
+    private void HandleTitleCardProceed()
+    {
+        if (titleCardProceedTriggered)
+        {
+            return;
+        }
+
+        titleCardProceedTriggered = true;
+        PlayTitleCardSfx();
+        SpawnTitleCardFlames();
+        ShowGameOptionsMenu();
+    }
+
+    private void PlayTitleCardSfx()
+    {
+        if (titleCardProceedSfx == null)
+        {
+            return;
+        }
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayClip(titleCardProceedSfx, Vector3.zero);
+        }
+        else if (titleCardProceedSfx.audioClip != null)
+        {
+            AudioSource.PlayClipAtPoint(titleCardProceedSfx.audioClip, Vector3.zero, Mathf.Clamp01(titleCardProceedSfx.volume));
+        }
+    }
+
+    private void SpawnTitleCardFlames()
+    {
+        if (titleCardFlamesPrefab == null)
+        {
+            return;
+        }
+
+        if (spawnFlamesOnce && titleCardFlamesInstance != null)
+        {
+            return;
+        }
+
+        Transform parent = titleCardFlamesParent;
+        if (parent == null && mainMenuGroup != null)
+        {
+            parent = mainMenuGroup.transform;
+        }
+        if (parent == null && titleCardGroup != null)
+        {
+            parent = titleCardGroup.transform;
+        }
+        if (parent == null)
+        {
+            parent = transform;
+        }
+
+        titleCardFlamesInstance = Instantiate(titleCardFlamesPrefab, parent);
     }
 
     private void BindButtons()
