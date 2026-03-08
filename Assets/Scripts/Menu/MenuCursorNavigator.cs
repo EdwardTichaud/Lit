@@ -16,6 +16,7 @@ public class MenuCursorNavigator : MonoBehaviour
     [SerializeField] private CursorController cursor;
     [SerializeField] private MonoBehaviour focusOwner;
     [SerializeField] private bool requireFocus = true;
+    [SerializeField] private bool pushFocusOnEnable = true;
     [SerializeField] private bool useInteractInput = true;
     [SerializeField] private bool useReturnInput = false;
     [SerializeField] private bool allowButtonFallback = false;
@@ -24,6 +25,7 @@ public class MenuCursorNavigator : MonoBehaviour
     private RectTransform currentItem;
     private MenuCursorItem currentCursorItem;
     private IMenuCursorHandler currentHandler;
+    private object focusTarget;
 
     private void Awake()
     {
@@ -36,6 +38,11 @@ public class MenuCursorNavigator : MonoBehaviour
     private void OnEnable()
     {
         LocalInputRouter.EnsureInitialized();
+        ResolveFocusTarget();
+        if (pushFocusOnEnable)
+        {
+            InputFocusStack.Push(focusTarget);
+        }
         if (useInteractInput)
         {
             LocalInputRouter.Interact += OnInteractPerformed;
@@ -55,6 +62,11 @@ public class MenuCursorNavigator : MonoBehaviour
         if (useReturnInput)
         {
             LocalInputRouter.Return -= OnReturnPerformed;
+        }
+
+        if (pushFocusOnEnable)
+        {
+            InputFocusStack.Pop(focusTarget);
         }
 
         ClearCurrent();
@@ -132,12 +144,18 @@ public class MenuCursorNavigator : MonoBehaviour
             return true;
         }
 
-        if (focusOwner != null)
+        ResolveFocusTarget();
+        return InputFocusStack.HasFocus(focusTarget);
+    }
+
+    private void ResolveFocusTarget()
+    {
+        if (focusTarget != null)
         {
-            return InputFocusStack.HasFocus(focusOwner);
+            return;
         }
 
-        return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this);
+        focusTarget = focusOwner != null ? focusOwner : this;
     }
 
     private void SetCurrent(RectTransform item)

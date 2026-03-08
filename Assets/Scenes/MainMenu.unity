@@ -315,8 +315,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Game
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
+  m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1327,6 +1327,7 @@ MonoBehaviour:
   cursor: {fileID: 503309056}
   focusOwner: {fileID: 793692854}
   requireFocus: 1
+  pushFocusOnEnable: 1
   useInteractInput: 1
   useReturnInput: 0
   allowButtonFallback: 0
@@ -1373,7 +1374,7 @@ RectTransform:
   m_GameObject: {fileID: 535243508}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.2293925, y: 1.2293925, z: 1.2293925}
+  m_LocalScale: {x: 1.273061, y: 1.273061, z: 1.273061}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2115927368}
@@ -1619,8 +1620,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Load Game
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
+  m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1772,8 +1773,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Options
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
+  m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1898,7 +1899,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0010220719}
+  m_AnchoredPosition: {x: 0, y: 0.0010086537}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &785104526
@@ -2055,7 +2056,8 @@ MonoBehaviour:
   mainMenuGroup: {fileID: 793692855}
   hideTitleCardOnProceed: 1
   waitForAnyInput: 1
-  panelFadeDuration: 1.5
+  panelFadeDuration: 0.4
+  panelHideDuration: 0.4
   fadeUseUnscaledTime: 1
   titleCardProceedSfx: {fileID: 11400000, guid: ab316721e18d8f94c942fb58e32d0131, type: 2}
   titleCardFlamesPrefab: {fileID: 0}
@@ -2072,24 +2074,12 @@ MonoBehaviour:
   previewAspect: {fileID: 0}
   screenshotFileName: screenshot.png
   sessionNameInput: {fileID: 0}
-  newButton: {fileID: 0}
-  loadButton: {fileID: 0}
-  deleteButton: {fileID: 0}
-  refreshButton: {fileID: 0}
-  quitButton: {fileID: 0}
   statusText: {fileID: 0}
-  newGameOptionButton: {fileID: 0}
-  loadMenuButton: {fileID: 0}
-  multiplayerButton: {fileID: 0}
-  optionsButton: {fileID: 0}
-  quitOptionButton: {fileID: 0}
   sharedCursor: {fileID: 503309056}
   gameOptionsCursorRoot: {fileID: 168004280}
   loadMenuCursorRoot: {fileID: 1286724594}
   confirmRoot: {fileID: 0}
   confirmText: {fileID: 0}
-  confirmYesButton: {fileID: 0}
-  confirmNoButton: {fileID: 0}
   newGamePanelGroup: {fileID: 547465089}
   newGameNameInput: {fileID: 286768994}
   newGameConfirmAction: {fileID: 1518605368}
@@ -2100,6 +2090,8 @@ MonoBehaviour:
   autoFocusNewGameInput: 1
   newGameConfirmDisabledAlpha: 0.4
   useManualTextInputFallback: 1
+  virtualKeyboardGroup: {fileID: 0}
+  virtualKeyboardRoot: {fileID: 0}
   loadingGroup: {fileID: 0}
   loadingText: {fileID: 0}
   loadingMessage: Chargement...
@@ -2321,8 +2313,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Quit
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
+  m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4082,7 +4074,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2063844794}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999986
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4153,8 +4145,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 310384722}
   - {fileID: 1405600903}
+  - {fileID: 310384722}
   m_Father: {fileID: 1285741257}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -4604,8 +4596,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Multiplayer
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
+  m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -13919,7 +13911,7 @@ RectTransform:
   m_GameObject: {fileID: 170974880744051482}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9975581, y: 0.9975581, z: 0.9975581}
+  m_LocalScale: {x: 1.0329915, y: 1.0329915, z: 1.0329915}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4010461551893436198}
@@ -14133,14 +14125,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d0eef0b35892bf4e86c392eee9203a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VirtualKeyboardCursorController
-  cursor: {fileID: 503309056}
+  cursor: {fileID: 9145761755319033148}
   keysRoot: {fileID: 6890292431696087528}
   keysLayout: {fileID: 0}
   controller: {fileID: 793692854}
   autoAssignVkActions: 1
   requireFocus: 1
   pushFocus: 1
-  sharedCursor: {fileID: 0}
+  sharedCursor: {fileID: 503309056}
   disableSharedCursorInput: 1
   hideSharedCursorVisual: 1
   useInteractInput: 1
@@ -14161,13 +14153,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CursorController
   layoutGroup: {fileID: 0}
-  itemsParent: {fileID: 0}
+  itemsParent: {fileID: 6890292431696087528}
   fallbackLayout: 0
   autoCollectItems: 1
   includeInactive: 0
   itemFilter: 0
-  cursor: {fileID: 0}
-  cursorParentOverride: {fileID: 0}
+  cursor: {fileID: 8760625928436864998}
+  cursorParentOverride: {fileID: 2837177119136936306}
   cursorPadding: {x: 0, y: 0}
   placement: 0
   rightOffset: {x: 20, y: 0}

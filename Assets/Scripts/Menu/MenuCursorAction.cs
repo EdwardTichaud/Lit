@@ -86,7 +86,15 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
         if (controller == null)
         {
-            return;
+            controller = GetComponentInParent<MainMenuController>();
+            if (controller == null)
+            {
+                controller = FindObjectOfType<MainMenuController>(true);
+            }
+            if (controller == null)
+            {
+                return;
+            }
         }
 
         if (TryHandleVirtualKeyboardAction())

@@ -29,6 +29,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private bool hideTitleCardOnProceed = true;
     [SerializeField] private bool waitForAnyInput = true;
     [SerializeField] private float panelFadeDuration = 1.5f;
+    [SerializeField] private float panelHideDuration = 1f;
     [SerializeField] private bool fadeUseUnscaledTime = true;
 
     [Header("Title Card FX")]
@@ -53,20 +54,9 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Actions")]
     [SerializeField] private TMP_InputField sessionNameInput;
-    [SerializeField] private Button newButton;
-    [SerializeField] private Button loadButton;
-    [SerializeField] private Button deleteButton;
-    [SerializeField] private Button refreshButton;
-    [SerializeField] private Button quitButton;
     [SerializeField] private TMP_Text statusText;
 
     [Header("Game Options")]
-    [SerializeField] private Button newGameOptionButton;
-    [SerializeField] private Button loadMenuButton;
-    [SerializeField] private Button multiplayerButton;
-    [SerializeField] private Button optionsButton;
-    [SerializeField] private Button quitOptionButton;
-
     [Header("Shared Cursor")]
     [SerializeField] private CursorController sharedCursor;
     [SerializeField] private RectTransform gameOptionsCursorRoot;
@@ -75,8 +65,6 @@ public class MainMenuController : MonoBehaviour
     [Header("Confirm Delete")]
     [SerializeField] private GameObject confirmRoot;
     [SerializeField] private TMP_Text confirmText;
-    [SerializeField] private Button confirmYesButton;
-    [SerializeField] private Button confirmNoButton;
 
     [Header("New Game Prompt")]
     [SerializeField] private CanvasGroup newGamePanelGroup;
@@ -140,12 +128,10 @@ public class MainMenuController : MonoBehaviour
         ConfigureNewGameActions();
         InitializeState();
         InitializeOverlays();
-        BindButtons();
     }
 
     private void OnEnable()
     {
-        BindButtons();
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
@@ -159,7 +145,6 @@ public class MainMenuController : MonoBehaviour
 
     private void OnDisable()
     {
-        UnbindButtons();
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         InputFocusStack.Pop(this);
@@ -186,6 +171,11 @@ public class MainMenuController : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
+        {
+            return;
+        }
+
         if (!CanProcessInteract())
         {
             return;
@@ -199,6 +189,11 @@ public class MainMenuController : MonoBehaviour
 
     private void OnReturnPerformed(InputAction.CallbackContext context)
     {
+        if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
+        {
+            return;
+        }
+
         HandleBackAction();
     }
 
@@ -210,6 +205,11 @@ public class MainMenuController : MonoBehaviour
     private bool CanProcessInteract()
     {
         if (newGamePromptOpen || isLoading)
+        {
+            return false;
+        }
+
+        if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
         {
             return false;
         }
@@ -498,7 +498,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        StartFade(group, 0f, false);
+        StartFade(group, 0f, false, panelHideDuration);
     }
 
     private void ShowVirtualKeyboard()
@@ -506,7 +506,6 @@ public class MainMenuController : MonoBehaviour
         if (virtualKeyboardGroup != null)
         {
             StartFade(virtualKeyboardGroup, 1f, true);
-            virtualKeyboardGroup.transform.SetAsLastSibling();
             return;
         }
 
@@ -544,7 +543,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void StartFade(CanvasGroup group, float targetAlpha, bool show)
+    private void StartFade(CanvasGroup group, float targetAlpha, bool show, float durationOverride = -1f)
     {
         if (group == null)
         {
@@ -562,7 +561,8 @@ public class MainMenuController : MonoBehaviour
             StopCoroutine(routine);
         }
 
-        fadeRoutines[group] = StartCoroutine(FadeRoutine(group, targetAlpha, show));
+        float duration = durationOverride >= 0f ? durationOverride : panelFadeDuration;
+        fadeRoutines[group] = StartCoroutine(FadeRoutine(group, targetAlpha, show, duration));
     }
 
     private void ApplyFadeImmediate(CanvasGroup group, float targetAlpha, bool show)
@@ -588,7 +588,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private IEnumerator FadeRoutine(CanvasGroup group, float targetAlpha, bool show)
+    private IEnumerator FadeRoutine(CanvasGroup group, float targetAlpha, bool show, float durationOverride)
     {
         if (group == null)
         {
@@ -603,7 +603,7 @@ public class MainMenuController : MonoBehaviour
         group.interactable = false;
         group.blocksRaycasts = false;
 
-        float duration = Mathf.Max(0.01f, panelFadeDuration);
+        float duration = Mathf.Max(0.01f, durationOverride);
         float startAlpha = group.alpha;
         float elapsed = 0f;
 
@@ -659,6 +659,12 @@ public class MainMenuController : MonoBehaviour
 
         if (currentMenu == MenuState.LoadMenu)
         {
+            if (IsCursorOnSavesRoot())
+            {
+                FocusSessionsRoot();
+                return;
+            }
+
             ShowGameOptionsMenu();
             return;
         }
@@ -717,144 +723,6 @@ public class MainMenuController : MonoBehaviour
         }
 
         titleCardFlamesInstance = Instantiate(titleCardFlamesPrefab, parent);
-    }
-
-    private void BindButtons()
-    {
-        if (newGameOptionButton != null)
-        {
-            newGameOptionButton.onClick.RemoveListener(OnNewGame);
-            newGameOptionButton.onClick.AddListener(OnNewGame);
-        }
-
-        if (loadMenuButton != null)
-        {
-            loadMenuButton.onClick.RemoveListener(OnLoadMenuRequested);
-            loadMenuButton.onClick.AddListener(OnLoadMenuRequested);
-        }
-
-        if (multiplayerButton != null)
-        {
-            multiplayerButton.onClick.RemoveListener(OnMultiplayerRequested);
-            multiplayerButton.onClick.AddListener(OnMultiplayerRequested);
-        }
-
-        if (optionsButton != null)
-        {
-            optionsButton.onClick.RemoveListener(OnOptionsRequested);
-            optionsButton.onClick.AddListener(OnOptionsRequested);
-        }
-
-        if (quitOptionButton != null)
-        {
-            quitOptionButton.onClick.RemoveListener(OnQuit);
-            quitOptionButton.onClick.AddListener(OnQuit);
-        }
-
-        if (newButton != null)
-        {
-            newButton.onClick.RemoveListener(OnNewGame);
-            newButton.onClick.AddListener(OnNewGame);
-        }
-
-        if (loadButton != null)
-        {
-            loadButton.onClick.RemoveListener(OnLoadSelected);
-            loadButton.onClick.AddListener(OnLoadSelected);
-        }
-
-        if (deleteButton != null)
-        {
-            deleteButton.onClick.RemoveListener(OnDeleteRequested);
-            deleteButton.onClick.AddListener(OnDeleteRequested);
-        }
-
-        if (refreshButton != null)
-        {
-            refreshButton.onClick.RemoveListener(OnRefresh);
-            refreshButton.onClick.AddListener(OnRefresh);
-        }
-
-        if (quitButton != null)
-        {
-            quitButton.onClick.RemoveListener(OnQuit);
-            quitButton.onClick.AddListener(OnQuit);
-        }
-
-        if (confirmYesButton != null)
-        {
-            confirmYesButton.onClick.RemoveListener(ConfirmDelete);
-            confirmYesButton.onClick.AddListener(ConfirmDelete);
-        }
-
-        if (confirmNoButton != null)
-        {
-            confirmNoButton.onClick.RemoveListener(CancelDelete);
-            confirmNoButton.onClick.AddListener(CancelDelete);
-        }
-    }
-
-    private void UnbindButtons()
-    {
-        if (newGameOptionButton != null)
-        {
-            newGameOptionButton.onClick.RemoveListener(OnNewGame);
-        }
-
-        if (loadMenuButton != null)
-        {
-            loadMenuButton.onClick.RemoveListener(OnLoadMenuRequested);
-        }
-
-        if (multiplayerButton != null)
-        {
-            multiplayerButton.onClick.RemoveListener(OnMultiplayerRequested);
-        }
-
-        if (optionsButton != null)
-        {
-            optionsButton.onClick.RemoveListener(OnOptionsRequested);
-        }
-
-        if (quitOptionButton != null)
-        {
-            quitOptionButton.onClick.RemoveListener(OnQuit);
-        }
-
-        if (newButton != null)
-        {
-            newButton.onClick.RemoveListener(OnNewGame);
-        }
-
-        if (loadButton != null)
-        {
-            loadButton.onClick.RemoveListener(OnLoadSelected);
-        }
-
-        if (deleteButton != null)
-        {
-            deleteButton.onClick.RemoveListener(OnDeleteRequested);
-        }
-
-        if (refreshButton != null)
-        {
-            refreshButton.onClick.RemoveListener(OnRefresh);
-        }
-
-        if (quitButton != null)
-        {
-            quitButton.onClick.RemoveListener(OnQuit);
-        }
-
-        if (confirmYesButton != null)
-        {
-            confirmYesButton.onClick.RemoveListener(ConfirmDelete);
-        }
-
-        if (confirmNoButton != null)
-        {
-            confirmNoButton.onClick.RemoveListener(CancelDelete);
-        }
     }
 
     private void InitializeOverlays()
@@ -1000,18 +868,24 @@ public class MainMenuController : MonoBehaviour
         }
 
         SaveSessionManager.Instance.ReloadSessions();
-        ClearSessionsUI();
-
         IReadOnlyList<SaveSessionInfo> sessions = SaveSessionManager.Instance.Sessions;
         if (sessions == null || sessions.Count == 0)
         {
+            bool hasExistingEntries = sessionsRoot != null && sessionsRoot.childCount > 0;
             if (emptySessionsPlaceholder != null)
             {
-                emptySessionsPlaceholder.SetActive(true);
+                emptySessionsPlaceholder.SetActive(!hasExistingEntries);
             }
             selectedSession = null;
+            ClearSavesUI();
+            if (!hasExistingEntries)
+            {
+                ClearSessionsUI();
+            }
             return;
         }
+
+        ClearSessionsUI();
 
         if (emptySessionsPlaceholder != null)
         {
@@ -1050,7 +924,7 @@ public class MainMenuController : MonoBehaviour
         MainMenuSessionEntryUI entryToSelect = matchedEntry != null ? matchedEntry : firstEntry;
         if (entryToSelect != null)
         {
-            SelectSession(entryToSelect);
+            SelectSession(entryToSelect, false);
         }
         else
         {
@@ -1103,10 +977,10 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        SelectSession(entry);
+        SelectSession(entry, true);
     }
 
-    private void SelectSession(MainMenuSessionEntryUI entry)
+    private void SelectSession(MainMenuSessionEntryUI entry, bool focusSaves)
     {
         if (entry == null)
         {
@@ -1121,6 +995,89 @@ public class MainMenuController : MonoBehaviour
 
         selectedSession = session;
         RebuildSavesList(session);
+        if (focusSaves)
+        {
+            FocusSavesRoot();
+        }
+    }
+
+    private void FocusSavesRoot()
+    {
+        if (sharedCursor == null || savesRoot == null)
+        {
+            return;
+        }
+
+        RectTransform targetRoot = savesRoot as RectTransform;
+        if (targetRoot == null)
+        {
+            return;
+        }
+
+        if (!HasDirectActiveChildren(targetRoot))
+        {
+            RectTransform fallback = FindFirstCursorItem(targetRoot);
+            if (fallback == null)
+            {
+                return;
+            }
+        }
+
+        currentCursorRoot = targetRoot;
+        sharedCursor.itemsParent = targetRoot;
+        sharedCursor.layoutGroup = targetRoot.GetComponent<LayoutGroup>();
+        sharedCursor.Refresh();
+        StartCursorSnap();
+    }
+
+    private void FocusSessionsRoot()
+    {
+        if (sharedCursor == null || sessionsRoot == null)
+        {
+            return;
+        }
+
+        RectTransform targetRoot = sessionsRoot as RectTransform;
+        if (targetRoot == null)
+        {
+            return;
+        }
+
+        if (!HasDirectActiveChildren(targetRoot))
+        {
+            RectTransform fallback = FindFirstCursorItem(targetRoot);
+            if (fallback == null)
+            {
+                return;
+            }
+        }
+
+        currentCursorRoot = targetRoot;
+        sharedCursor.itemsParent = targetRoot;
+        sharedCursor.layoutGroup = targetRoot.GetComponent<LayoutGroup>();
+        sharedCursor.Refresh();
+        StartCursorSnap();
+    }
+
+    private bool IsCursorOnSavesRoot()
+    {
+        if (savesRoot == null)
+        {
+            return false;
+        }
+
+        if (currentCursorRoot == savesRoot)
+        {
+            return true;
+        }
+
+        RectTransform current = sharedCursor != null ? sharedCursor.itemsParent : null;
+        if (current == null)
+        {
+            return false;
+        }
+
+        return current == savesRoot;
     }
 
     private void RebuildSavesList(SaveSessionInfo session)
@@ -1348,10 +1305,13 @@ public class MainMenuController : MonoBehaviour
         if (newGamePanelGroup != null)
         {
             StartFade(newGamePanelGroup, 1f, true);
-            newGamePanelGroup.transform.SetAsLastSibling();
         }
 
         ShowVirtualKeyboard();
+        if (newGamePanelGroup != null)
+        {
+            newGamePanelGroup.transform.SetAsLastSibling();
+        }
 
         SetActiveMenuInteractable(false);
 

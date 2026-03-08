@@ -9,9 +9,6 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
     [SerializeField] private bool dontDestroyOnLoad = true;
 
     private PlayerInputs playerInputs;
-    private float lastLeftShoulderTime = -10f;
-    private const float LeftShoulderDebounce = 0.15f;
-
     public static void EnsureInstance()
     {
         if (Instance != null)
@@ -79,19 +76,10 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
 
     public void OnLeftShoulder(InputAction.CallbackContext context)
     {
-        if (!context.started && !context.performed)
+        if (context.performed)
         {
-            return;
+            LocalInputRouter.RaiseLeftShoulder(context);
         }
-
-        float now = Time.unscaledTime;
-        if (now - lastLeftShoulderTime < LeftShoulderDebounce)
-        {
-            return;
-        }
-
-        lastLeftShoulderTime = now;
-        LocalInputRouter.RaiseLeftShoulder(context);
     }
 
     public void OnToggleTorch(InputAction.CallbackContext context)

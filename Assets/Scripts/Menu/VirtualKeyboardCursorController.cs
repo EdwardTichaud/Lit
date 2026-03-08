@@ -44,10 +44,7 @@ public class VirtualKeyboardCursorController : MonoBehaviour
             cursor = GetComponent<CursorController>();
         }
 
-        if (controller == null)
-        {
-            controller = GetComponentInParent<MainMenuController>();
-        }
+        ResolveController();
 
         if (keysRoot == null)
         {
@@ -163,6 +160,16 @@ public class VirtualKeyboardCursorController : MonoBehaviour
         if (currentCursorItem != null)
         {
             currentCursorItem.Submit();
+            return;
+        }
+
+        if (currentItem != null)
+        {
+            MenuCursorAction fallbackAction = currentItem.GetComponentInChildren<MenuCursorAction>(true);
+            if (fallbackAction != null && fallbackAction.isActiveAndEnabled)
+            {
+                fallbackAction.OnCursorSubmit();
+            }
         }
     }
 
@@ -266,7 +273,13 @@ public class VirtualKeyboardCursorController : MonoBehaviour
 
     private void AssignActions()
     {
-        if (!autoAssignVkActions || controller == null || keysRoot == null)
+        if (!autoAssignVkActions || keysRoot == null)
+        {
+            return;
+        }
+
+        ResolveController();
+        if (controller == null)
         {
             return;
         }
@@ -280,7 +293,27 @@ public class VirtualKeyboardCursorController : MonoBehaviour
             }
 
             actions[i].Configure(controller, MenuCursorAction.MenuAction.Vk_Input);
+            if (!actions[i].enabled)
+            {
+                actions[i].enabled = true;
+            }
         }
+    }
+
+    private void ResolveController()
+    {
+        if (controller != null)
+        {
+            return;
+        }
+
+        controller = GetComponentInParent<MainMenuController>();
+        if (controller != null)
+        {
+            return;
+        }
+
+        controller = FindObjectOfType<MainMenuController>(true);
     }
 
     private RectTransform FindKeysRoot()
