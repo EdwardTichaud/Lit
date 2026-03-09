@@ -2346,7 +2346,7 @@ public class SquadCharacterController : MonoBehaviour
         for (int i = 0; i < mine.Count; i++)
         {
             Collider a = mine[i];
-            if (a == null)
+            if (!IsSceneCollider(a))
             {
                 continue;
             }
@@ -2354,7 +2354,7 @@ public class SquadCharacterController : MonoBehaviour
             for (int j = 0; j < theirs.Count; j++)
             {
                 Collider b = theirs[j];
-                if (b == null)
+                if (!IsSceneCollider(b))
                 {
                     continue;
                 }
@@ -2362,5 +2362,15 @@ public class SquadCharacterController : MonoBehaviour
                 Physics.IgnoreCollision(a, b, ignore);
             }
         }
+    }
+
+    private static bool IsSceneCollider(Collider collider)
+    {
+        if (collider == null)
+        {
+            return false;
+        }
+
+        return collider.gameObject.scene.IsValid() && collider.gameObject.scene.isLoaded;
     }
 }

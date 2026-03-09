@@ -65,6 +65,8 @@ public class CursorController : MonoBehaviour
     public bool matchTargetSize = true;
     [Tooltip("Cree un curseur si manquant.")]
     public bool createCursorIfMissing = true;
+    [Tooltip("Sprite utilise pour le curseur cree automatiquement (optionnel).")]
+    public Sprite cursorSprite;
 
     [Header("Audio")]
     [Tooltip("SFX joue quand le curseur se deplace.")]
@@ -123,6 +125,7 @@ public class CursorController : MonoBehaviour
     private bool cursorHasTarget;
     private bool cursorInitialized;
     private float lastMoveSfxTime = -999f;
+    private static Sprite runtimeCursorSprite;
 
     private void Awake()
     {
@@ -892,8 +895,8 @@ public class CursorController : MonoBehaviour
         Image image = cursorObject.GetComponent<Image>();
         image.color = new Color(1f, 1f, 1f, 0.25f);
         image.raycastTarget = false;
-        image.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Background.psd");
-        image.type = Image.Type.Sliced;
+        image.sprite = ResolveCursorSprite();
+        image.type = image.sprite != null && image.sprite.border.sqrMagnitude > 0f ? Image.Type.Sliced : Image.Type.Simple;
 
         LayoutElement layoutElement = cursorObject.GetComponent<LayoutElement>();
         layoutElement.ignoreLayout = true;
@@ -904,6 +907,24 @@ public class CursorController : MonoBehaviour
             SnapCursorImmediate();
         }
         return rect;
+    }
+
+    private Sprite ResolveCursorSprite()
+    {
+        if (cursorSprite != null)
+        {
+            return cursorSprite;
+        }
+
+        if (runtimeCursorSprite != null)
+        {
+            return runtimeCursorSprite;
+        }
+
+        Texture2D texture = Texture2D.whiteTexture;
+        runtimeCursorSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        runtimeCursorSprite.name = "RuntimeCursorSprite";
+        return runtimeCursorSprite;
     }
 
     private void SnapCursorImmediate()
