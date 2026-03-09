@@ -25,6 +25,7 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         Join = 16,
         ConfirmJoin = 17,
         CancelJoin = 18,
+        PasteJoinCode = 19,
         [InspectorName("vk - Input (Nom GO)")] Vk_Input = 99
     }
 
@@ -158,6 +159,9 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
                 break;
             case MenuAction.CancelJoin:
                 controller.UI_CancelJoin();
+                break;
+            case MenuAction.PasteJoinCode:
+                controller.UI_PasteJoinCode();
                 break;
         }
     }
