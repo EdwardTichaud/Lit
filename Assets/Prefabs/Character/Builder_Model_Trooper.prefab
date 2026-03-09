@@ -37132,6 +37132,7 @@ GameObject:
   - component: {fileID: 5037328828316066316}
   - component: {fileID: 7518781315620424039}
   - component: {fileID: 3401394444433067668}
+  - component: {fileID: 7873429373115918911}
   m_Layer: 0
   m_Name: Builder_Model_Trooper
   m_TagString: Untagged
@@ -37243,13 +37244,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e15e3eb5ad025e44b3bfbd699e11d61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuilderController
+  ShowTopMostFoldoutHeaderGroup: 1
+  availableBuildings: []
+  builtBuildings: []
+  applyEffectsToAllSquad: 0
+  useHomeResourcesForBuild: 1
+  useHomeResourcesForCraft: 1
+  networkBuildMaxDistance: 6
+  networkInteractDistance: 2.5
+  nextNetBuildingId: 1
+  buildingsRoot: {fileID: 0}
+  buildingsRootName: Buildings
+  autoFindBuildingsRoot: 1
+  autoCreateBuildingsRoot: 0
+  playVoiceLineOnInteract: 1
+  openPanelOnInteract: 1
   buildingPanel: {fileID: 0}
-  interactClip: {fileID: 0}
-  closePanelOnExit: 1
-  interactionBox: {fileID: 320819308015763433, guid: bfa88639767bbe44c82b243f221e928b, type: 3}
-  interactionOffset: {x: 0, y: 2, z: 0}
-  boxesPanel: {fileID: 0}
-  targetCamera: {fileID: 0}
+  requireProximity: 1
+  interactionTrigger: {fileID: 0}
+  voiceLineCooldown: 0.2
+  existingBuildings: []
+  isRefreshingAvailableBuildings: 0
+--- !u!114 &7873429373115918911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154674378261969996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 4119987568
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &9160714705984996306
 GameObject:
   m_ObjectHideFlags: 0

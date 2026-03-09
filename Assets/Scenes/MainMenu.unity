@@ -1296,7 +1296,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Game
+  m_text: Solo
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   m_sharedMaterial: {fileID: 6443797670920734344, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
@@ -1449,6 +1449,7 @@ MonoBehaviour:
   useTextBoundsForRightOffset: 1
   matchTargetSize: 0
   createCursorIfMissing: 0
+  cursorSprite: {fileID: 0}
   moveSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
@@ -1526,7 +1527,7 @@ RectTransform:
   m_GameObject: {fileID: 535243508}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3018008, y: 1.3018008, z: 1.3018008}
+  m_LocalScale: {x: 1.3023486, y: 1.3023486, z: 1.3023486}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2115927368}
@@ -2051,7 +2052,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0010478408}
+  m_AnchoredPosition: {x: 0, y: 0.0010399485}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &785104526
@@ -2242,6 +2243,8 @@ MonoBehaviour:
   loadMenuCursorRoot: {fileID: 1286724594}
   confirmRoot: {fileID: 0}
   confirmText: {fileID: 0}
+  deleteSaveConfirmFormat: Supprimer '{0}' ?
+  deleteSessionConfirmFormat: Supprimer la session '{0}' ?
   loadConfirmGroup: {fileID: 0}
   loadConfirmText: {fileID: 0}
   loadConfirmYesAction: {fileID: 0}
@@ -2258,8 +2261,22 @@ MonoBehaviour:
   autoFocusNewGameInput: 1
   newGameConfirmDisabledAlpha: 0.4
   useManualTextInputFallback: 1
+  joinPanelGroup: {fileID: 0}
+  joinCodeInput: {fileID: 0}
+  joinAddressInput: {fileID: 0}
+  joinConfirmAction: {fileID: 0}
+  joinCancelAction: {fileID: 0}
+  joinCursorRoot: {fileID: 0}
+  autoFocusJoinInput: 1
+  joinConfirmDisabledAlpha: 0.4
+  joinInvalidMessage: Code invalide.
+  joinNoSessionMessage: Aucune session pour ce code.
+  joinTimeoutSeconds: 6
+  joinStatusText: {fileID: 0}
+  joinConnectingMessage: Connexion...
   virtualKeyboardGroup: {fileID: 0}
   virtualKeyboardRoot: {fileID: 0}
+  virtualKeyboardCursor: {fileID: 0}
   loadingGroup: {fileID: 0}
   loadingText: {fileID: 0}
   loadingMessage: Chargement...
@@ -2268,6 +2285,7 @@ MonoBehaviour:
   basePort: 7000
   portRange: 1000
   hostLoopbackAddress: 127.0.0.1
+  joinAddress: 127.0.0.1
   listenAddress: 0.0.0.0
   entryColor: {r: 1, g: 1, b: 1, a: 0.08}
   entryHoverColor: {r: 0.6, g: 0.8, b: 1, a: 0.18}
@@ -4788,7 +4806,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2063844794}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999986
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -14865,7 +14883,7 @@ RectTransform:
   m_GameObject: {fileID: 170974880744051482}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.0563118, y: 1.0563118, z: 1.0563118}
+  m_LocalScale: {x: 1.0567563, y: 1.0567563, z: 1.0567563}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4010461551893436198}
@@ -15120,6 +15138,7 @@ MonoBehaviour:
   useTextBoundsForRightOffset: 0
   matchTargetSize: 1
   createCursorIfMissing: 1
+  cursorSprite: {fileID: 0}
   moveSfx: {fileID: 0}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
