@@ -9530,7 +9530,7 @@ GameObject:
   m_Component:
   - component: {fileID: 357981359}
   m_Layer: 0
-  m_Name: Laby_01
+  m_Name: Laby
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11883,7 +11883,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8787551, y: 0.8787551, z: 0.8787551}
+  m_LocalScale: {x: 0.9370741, y: 0.9370741, z: 0.9370741}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -18534,6 +18534,7 @@ MonoBehaviour:
   setInactiveOnHide: 1
   autoFindOnAwake: 1
   dontDestroyOnLoad: 0
+  topLeftOffset: {x: 30, y: 30}
 --- !u!1 &587116400
 GameObject:
   m_ObjectHideFlags: 0
@@ -24500,7 +24501,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6808457, y: 1.6808457, z: 1.6808457}
+  m_LocalScale: {x: 1.6733819, y: 1.6733819, z: 1.6733819}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -24931,7 +24932,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 675553555}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
@@ -44152,6 +44153,83 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3093796872826920830, guid: 81fbb70ccdb0141419fc26651609c788, type: 3}
   m_PrefabInstance: {fileID: 1255452911}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1261508231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1261508233}
+  - component: {fileID: 1261508232}
+  - component: {fileID: 1261508234}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1261508232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1261508231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 178b939cc49b744418bbd87b3250765c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterStateStore
+  squadManager: {fileID: 675553556}
+  maison: {fileID: 336291306}
+  allCharacters: []
+  allItems: []
+  allSkills: []
+  maisonLootContainer: {fileID: 2469654545826805365}
+  maisonChestTag: MaisonChest
+  maisonChestCapacity: 100
+  builtParent: {fileID: 1334646112}
+  saveFileName: CharacterState.json
+  loadOnAwake: 1
+  saveOnDisable: 1
+  saveOnApplicationQuit: 1
+  captureScreenshotOnSave: 1
+  screenshotFileName: screenshot.png
+  forceScreenshotOnSave: 1
+--- !u!4 &1261508233
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1261508231}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1261508234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1261508231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad3058800b484d82937766454672d59c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SaveSessionManager
+  menuSceneName: MainMenu
+  savesRootFolder: Saves
+  sessionMetaFileName: session.json
+  saveMetaFileName: meta.json
 --- !u!1001 &1263930525
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -47474,13 +47552,17 @@ MonoBehaviour:
   onQuit:
     m_PersistentCalls:
       m_Calls: []
+  manualSaveNamePrefix: Sauvegarde
+  includeTimestampInSaveName: 1
   mainMenuSceneName: MainMenu
   shutdownNetworkOnQuit: 1
   cursorController: {fileID: 0}
   cursorNavigator: {fileID: 0}
   enableCursorWhenOpen: 1
+  forceCursorFixedSize: 1
   toggleOnStart: 1
   closeOnReturn: 1
+  lockGameplayInput: 1
 --- !u!1001 &1415978998
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -49359,6 +49441,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Brasero
   ShowTopMostFoldoutHeaderGroup: 1
   isLit: 0
+  braseroId: 056e7577b0234e50a60c5420cc1d003b
   litRoot: {fileID: 0}
   unlitRoot: {fileID: 0}
   flameLight: {fileID: 0}
@@ -90502,7 +90585,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.101241, y: 2.101241, z: 2.101241}
+  m_LocalScale: {x: 2.0919106, y: 2.0919106, z: 2.0919106}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}
@@ -162589,3 +162672,4 @@ SceneRoots:
   - {fileID: 684536715}
   - {fileID: 231835643}
   - {fileID: 1728577749}
+  - {fileID: 1261508233}

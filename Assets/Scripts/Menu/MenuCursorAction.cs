@@ -22,6 +22,9 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         CancelLoad = 13,
         Save = 14,
         Solo = 15,
+        Join = 16,
+        ConfirmJoin = 17,
+        CancelJoin = 18,
         [InspectorName("vk - Input (Nom GO)")] Vk_Input = 99
     }
 
@@ -146,6 +149,15 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
                 break;
             case MenuAction.CancelLoad:
                 controller.UI_CancelLoad();
+                break;
+            case MenuAction.Join:
+                controller.UI_Join();
+                break;
+            case MenuAction.ConfirmJoin:
+                controller.UI_ConfirmJoin();
+                break;
+            case MenuAction.CancelJoin:
+                controller.UI_CancelJoin();
                 break;
         }
     }

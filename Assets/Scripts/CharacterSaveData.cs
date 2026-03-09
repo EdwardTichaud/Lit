@@ -12,6 +12,7 @@ public class CharacterSaveData
     public List<ItemStackData> homeItems = new List<ItemStackData>();
     public List<BuiltConstructionData> builtConstructions = new List<BuiltConstructionData>();
     public List<PlayerCharacterBinding> playerBindings = new List<PlayerCharacterBinding>();
+    public List<BraseroSaveEntry> braseros = new List<BraseroSaveEntry>();
 }
 
 // Association playerId -> characterId (continuite multijoueur).
@@ -58,4 +59,12 @@ public class BuiltConstructionData
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
+}
+
+// Sauvegarde de l'etat d'un brasero.
+[System.Serializable]
+public class BraseroSaveEntry
+{
+    public string braseroId;
+    public bool isLit;
 }

@@ -107,7 +107,18 @@ public class NetcodeBootstrap : MonoBehaviour
             return false;
         }
 
-        return SaveSessionManager.Instance.CurrentSessionType == SaveSessionType.Multiplayer;
+        if (SaveSessionManager.Instance.CurrentSessionType != SaveSessionType.Multiplayer)
+        {
+            return false;
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager != null && manager.IsListening && !manager.IsHost)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void EnsureNetworkManager()

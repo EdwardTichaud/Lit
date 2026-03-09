@@ -15,8 +15,11 @@ public class Brasero : NetworkBehaviour
     [Header("State")]
     [SerializeField, Tooltip("Etat du brasero au demarrage.")]
     private bool isLit = false;
+    [SerializeField, Tooltip("Identifiant unique utilise pour la sauvegarde.")]
+    private string braseroId;
 
     public bool IsLit => isLit;
+    public string BraseroId => braseroId;
 
     public event Action<Brasero, bool> StateChanged;
 
@@ -79,12 +82,24 @@ public class Brasero : NetworkBehaviour
         interactionRadius = 2f;
         interactionCenter = Vector3.zero;
         EnsureInteractionTrigger();
+        EnsureId();
     }
 
     private void Awake()
     {
         EnsureInteractionTrigger();
+        EnsureId();
 
+    }
+
+    private void EnsureId()
+    {
+        if (!string.IsNullOrWhiteSpace(braseroId))
+        {
+            return;
+        }
+
+        braseroId = Guid.NewGuid().ToString("N");
     }
 
     private void OnEnable()
@@ -965,6 +980,7 @@ public class Brasero : NetworkBehaviour
 
     private void OnValidate()
     {
+        EnsureId();
         EnsureInteractionTrigger();
         if (!Application.isPlaying)
         {

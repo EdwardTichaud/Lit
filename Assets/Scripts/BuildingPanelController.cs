@@ -1567,7 +1567,7 @@ public class BuildingPanelController : MonoBehaviour
             return currentBuilder.GetCurrentLevel(building, currentBuilder.GetUpgradeOriginPosition(), out info);
         }
 
-        return Mathf.Max(0, building.buildingCurrentLevel);
+        return BuildingRuntimeState.GetLevel(building);
     }
 
     private void HandleActionBoxNavigation()
@@ -2020,7 +2020,7 @@ public class BuildingPanelController : MonoBehaviour
         else
         {
             targetInfo.SetLevel(targetLevel);
-            building.buildingCurrentLevel = Mathf.Max(building.buildingCurrentLevel, targetLevel);
+            BuildingRuntimeState.SetLevel(building, targetLevel, true);
         }
 
         SyncNetworkInventory(controller);
@@ -2409,7 +2409,7 @@ public class BuildingPanelController : MonoBehaviour
         }
         else if (placementItem != null)
         {
-            placementItem.buildingCurrentLevel = Mathf.Max(placementItem.buildingCurrentLevel, 1);
+            BuildingRuntimeState.SetLevel(placementItem, 1, true);
         }
 
         SyncNetworkInventory(controller);

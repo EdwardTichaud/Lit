@@ -20,6 +20,7 @@ public class MainMenuController : MonoBehaviour
         GameOptions,
         SoloOptions,
         MultiOptions,
+        Join,
         LoadMenu
     }
 
@@ -75,6 +76,8 @@ public class MainMenuController : MonoBehaviour
     [Header("Confirm Delete")]
     [SerializeField] private GameObject confirmRoot;
     [SerializeField] private TMP_Text confirmText;
+    [SerializeField] private string deleteSaveConfirmFormat = "Supprimer '{0}' ?";
+    [SerializeField] private string deleteSessionConfirmFormat = "Supprimer la session '{0}' ?";
 
     [Header("Confirm Load")]
     [SerializeField] private CanvasGroup loadConfirmGroup;
@@ -96,9 +99,25 @@ public class MainMenuController : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float newGameConfirmDisabledAlpha = 0.4f;
     [SerializeField] private bool useManualTextInputFallback = true;
 
+    [Header("Join Prompt")]
+    [SerializeField] private CanvasGroup joinPanelGroup;
+    [SerializeField] private TMP_InputField joinCodeInput;
+    [SerializeField] private TMP_InputField joinAddressInput;
+    [SerializeField] private MenuCursorAction joinConfirmAction;
+    [SerializeField] private MenuCursorAction joinCancelAction;
+    [SerializeField] private RectTransform joinCursorRoot;
+    [SerializeField] private bool autoFocusJoinInput = true;
+    [SerializeField, Range(0.1f, 1f)] private float joinConfirmDisabledAlpha = 0.4f;
+    [SerializeField] private string joinInvalidMessage = "Code invalide.";
+    [SerializeField] private string joinNoSessionMessage = "Aucune session pour ce code.";
+    [SerializeField] private float joinTimeoutSeconds = 6f;
+    [SerializeField] private TMP_Text joinStatusText;
+    [SerializeField] private string joinConnectingMessage = "Connexion...";
+
     [Header("Virtual Keyboard")]
     [SerializeField] private CanvasGroup virtualKeyboardGroup;
     [SerializeField] private RectTransform virtualKeyboardRoot;
+    [SerializeField] private VirtualKeyboardCursorController virtualKeyboardCursor;
 
     [Header("Loading Screen")]
     [SerializeField] private CanvasGroup loadingGroup;
@@ -111,6 +130,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private ushort basePort = 7000;
     [SerializeField] private ushort portRange = 1000;
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
+    [SerializeField] private string joinAddress = "127.0.0.1";
     [SerializeField] private string listenAddress = "0.0.0.0";
 
     [Header("Entry Colors")]
@@ -123,6 +143,8 @@ public class MainMenuController : MonoBehaviour
     private SaveSlotInfo selectedSave;
     private MainMenuSaveEntryUI selectedSaveView;
     private SaveSlotInfo pendingDelete;
+    private SaveSessionInfo pendingDeleteSession;
+    private SaveSlotInfo hoveredSave;
     private Texture2D previewTexture;
     private bool waitingForInput;
     private MenuState currentMenu = MenuState.TitleCard;
@@ -135,19 +157,30 @@ public class MainMenuController : MonoBehaviour
     private bool newGamePromptOpen;
     private bool isLoading;
     private readonly Dictionary<Graphic, float> newGameConfirmGraphicAlphas = new Dictionary<Graphic, float>();
+    private readonly Dictionary<Graphic, float> joinConfirmGraphicAlphas = new Dictionary<Graphic, float>();
     private bool textInputSubscribed;
     private Keyboard subscribedKeyboard;
     private bool warnedMissingNewGameInputText;
+    private bool warnedMissingJoinInputText;
+    private bool warnedMissingJoinAddressInputText;
     private bool loadConfirmOpen;
+    private bool deleteConfirmOpen;
     private SaveSlotInfo pendingLoad;
     private MenuState loadMenuReturnState = MenuState.GameOptions;
     private SaveSessionType currentSessionType = SaveSessionType.Solo;
+    private MenuCursorNavigator sharedCursorNavigator;
+    private bool cachedSharedCursorAllowInput;
+    private bool cachedSharedCursorNavigatorEnabled;
+    private bool cachedSharedCursorState;
+    private bool joinInProgress;
+    private Coroutine joinTimeoutRoutine;
 
     private void Awake()
     {
         EnsureSaveManager();
         ResolveOptionalReferences();
         ConfigureNewGameActions();
+        ConfigureJoinActions();
         ConfigureLoadConfirmActions();
         InitializeState();
         InitializeOverlays();
@@ -158,6 +191,7 @@ public class MainMenuController : MonoBehaviour
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
+        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
         RefreshSessions();
 
         if (currentMenu == MenuState.GameOptions || currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions || currentMenu == MenuState.LoadMenu)
@@ -170,8 +204,15 @@ public class MainMenuController : MonoBehaviour
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
+        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
         InputFocusStack.Pop(this);
         RegisterTextInput(false);
+        RegisterJoinCallbacks(false);
+        if (joinTimeoutRoutine != null)
+        {
+            StopCoroutine(joinTimeoutRoutine);
+            joinTimeoutRoutine = null;
+        }
     }
 
     private void OnDestroy()
@@ -199,6 +240,12 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (deleteConfirmOpen)
+        {
+            ConfirmDelete();
+            return;
+        }
+
         if (!CanProcessInteract())
         {
             return;
@@ -218,6 +265,35 @@ public class MainMenuController : MonoBehaviour
         }
 
         HandleBackAction();
+    }
+
+    private void OnToggleTorchPerformed(InputAction.CallbackContext context)
+    {
+        if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
+        {
+            return;
+        }
+
+        if (!IsLoadMenuActive())
+        {
+            return;
+        }
+
+        if (newGamePromptOpen || loadConfirmOpen || isLoading || deleteConfirmOpen)
+        {
+            return;
+        }
+
+        if (IsCursorOnSavesRoot())
+        {
+            RequestDeleteSave();
+            return;
+        }
+
+        if (IsCursorOnSessionsRoot())
+        {
+            RequestDeleteSession();
+        }
     }
 
     private bool HasInputFocus()
@@ -249,6 +325,17 @@ public class MainMenuController : MonoBehaviour
         }
 
         return !InputFocusStack.HasAnyFocus();
+    }
+
+    private bool IsLoadMenuActive()
+    {
+        CanvasGroup loadGroup = ResolveLoadMenuGroup();
+        if (loadGroup == null)
+        {
+            return false;
+        }
+
+        return loadGroup.gameObject.activeInHierarchy && loadGroup.interactable;
     }
 
     private void InitializeState()
@@ -305,6 +392,58 @@ public class MainMenuController : MonoBehaviour
         SetMenuState(MenuState.MultiOptions);
     }
 
+    private void ShowJoinMenu()
+    {
+        if (joinPanelGroup == null)
+        {
+            SetStatus("Menu rejoindre manquant.");
+            return;
+        }
+
+        currentSessionType = SaveSessionType.Multiplayer;
+        if (SaveSessionManager.Instance != null)
+        {
+            SaveSessionManager.Instance.SetCurrentSessionType(SaveSessionType.Multiplayer);
+        }
+
+        SetMenuState(MenuState.Join);
+
+        if (joinPanelGroup != null)
+        {
+            joinPanelGroup.transform.SetAsLastSibling();
+        }
+
+        if (joinStatusText != null)
+        {
+            joinStatusText.text = string.Empty;
+        }
+
+        if (joinCodeInput != null)
+        {
+            joinCodeInput.interactable = true;
+            joinCodeInput.text = string.Empty;
+            RegisterJoinCodeListener(true);
+            UpdateJoinConfirmState();
+            if (autoFocusJoinInput)
+            {
+                joinCodeInput.Select();
+                joinCodeInput.ActivateInputField();
+            }
+        }
+
+        if (joinAddressInput != null)
+        {
+            joinAddressInput.interactable = true;
+            if (string.IsNullOrWhiteSpace(joinAddressInput.text))
+            {
+                joinAddressInput.text = string.IsNullOrWhiteSpace(joinAddress) ? hostLoopbackAddress : joinAddress;
+            }
+        }
+
+        RegisterTextInput(true);
+        UpdateCursorTarget();
+    }
+
     private void ShowLoadMenu()
     {
         SetMenuState(MenuState.LoadMenu);
@@ -313,6 +452,13 @@ public class MainMenuController : MonoBehaviour
     private void EnsureSessionTypeFromMenu()
     {
         if (currentMenu == MenuState.MultiOptions)
+        {
+            currentSessionType = SaveSessionType.Multiplayer;
+            loadMenuReturnState = MenuState.MultiOptions;
+            return;
+        }
+
+        if (currentMenu == MenuState.Join)
         {
             currentSessionType = SaveSessionType.Multiplayer;
             loadMenuReturnState = MenuState.MultiOptions;
@@ -383,6 +529,18 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
+        if (joinPanelGroup != null)
+        {
+            if (state == MenuState.Join)
+            {
+                ShowPanel(joinPanelGroup);
+            }
+            else
+            {
+                HidePanel(joinPanelGroup);
+            }
+        }
+
         CanvasGroup loadGroup = ResolveLoadMenuGroup();
         if (loadGroup != null)
         {
@@ -398,7 +556,7 @@ public class MainMenuController : MonoBehaviour
 
         waitingForInput = waitForAnyInput && state == MenuState.TitleCard;
 
-        if (state == MenuState.GameOptions || state == MenuState.SoloOptions || state == MenuState.MultiOptions || state == MenuState.LoadMenu)
+        if (state == MenuState.GameOptions || state == MenuState.SoloOptions || state == MenuState.MultiOptions || state == MenuState.Join || state == MenuState.LoadMenu)
         {
             InputFocusStack.Push(this);
         }
@@ -442,6 +600,10 @@ public class MainMenuController : MonoBehaviour
         else if (currentMenu == MenuState.MultiOptions)
         {
             targetRoot = ResolveCursorRoot(multiOptionsCursorRoot, multiOptionsGroup);
+        }
+        else if (currentMenu == MenuState.Join)
+        {
+            targetRoot = ResolveCursorRoot(joinCursorRoot, joinPanelGroup);
         }
         else if (currentMenu == MenuState.LoadMenu)
         {
@@ -628,17 +790,26 @@ public class MainMenuController : MonoBehaviour
         if (virtualKeyboardGroup != null)
         {
             StartFade(virtualKeyboardGroup, 1f, true);
-            return;
         }
 
         if (virtualKeyboardRoot != null)
         {
             virtualKeyboardRoot.gameObject.SetActive(true);
         }
+
+        if (virtualKeyboardCursor != null)
+        {
+            virtualKeyboardCursor.Activate();
+        }
     }
 
     private void HideVirtualKeyboard()
     {
+        if (virtualKeyboardCursor != null)
+        {
+            virtualKeyboardCursor.Deactivate();
+        }
+
         if (virtualKeyboardGroup != null)
         {
             StartFade(virtualKeyboardGroup, 0f, false);
@@ -656,12 +827,34 @@ public class MainMenuController : MonoBehaviour
         if (virtualKeyboardGroup != null)
         {
             ApplyFadeImmediate(virtualKeyboardGroup, show ? 1f : 0f, show);
+            if (virtualKeyboardCursor != null)
+            {
+                if (show)
+                {
+                    virtualKeyboardCursor.Activate();
+                }
+                else
+                {
+                    virtualKeyboardCursor.Deactivate();
+                }
+            }
             return;
         }
 
         if (virtualKeyboardRoot != null)
         {
             virtualKeyboardRoot.gameObject.SetActive(show);
+            if (virtualKeyboardCursor != null)
+            {
+                if (show)
+                {
+                    virtualKeyboardCursor.Activate();
+                }
+                else
+                {
+                    virtualKeyboardCursor.Deactivate();
+                }
+            }
         }
     }
 
@@ -767,6 +960,12 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (deleteConfirmOpen)
+        {
+            CancelDelete();
+            return;
+        }
+
         if (newGamePromptOpen)
         {
             CancelNewGame();
@@ -782,6 +981,12 @@ public class MainMenuController : MonoBehaviour
         if (confirmRoot != null && confirmRoot.activeSelf)
         {
             CancelDelete();
+            return;
+        }
+
+        if (currentMenu == MenuState.Join)
+        {
+            CancelJoin();
             return;
         }
 
@@ -877,6 +1082,11 @@ public class MainMenuController : MonoBehaviour
             ApplyFadeImmediate(newGamePanelGroup, 0f, false);
         }
 
+        if (joinPanelGroup != null)
+        {
+            ApplyFadeImmediate(joinPanelGroup, 0f, false);
+        }
+
         if (loadConfirmGroup != null)
         {
             ApplyFadeImmediate(loadConfirmGroup, 0f, false);
@@ -925,6 +1135,19 @@ public class MainMenuController : MonoBehaviour
             multiOptionsCursorRoot = multiOptionsGroup.transform as RectTransform;
         }
 
+        if (multiOptionsGroup != null)
+        {
+            MenuCursorAction joinAction = FindMenuCursorActionByName(multiOptionsGroup.transform, "Join");
+            if (joinAction == null)
+            {
+                joinAction = FindMenuCursorActionByName(multiOptionsGroup.transform, "Multi_Join");
+            }
+            if (joinAction != null)
+            {
+                joinAction.Configure(this, MenuCursorAction.MenuAction.Join);
+            }
+        }
+
         if (loadMenuGroup == null)
         {
             loadMenuGroup = FindCanvasGroup("MainMenu_Load");
@@ -961,6 +1184,143 @@ public class MainMenuController : MonoBehaviour
             else
             {
                 newGameCursorRoot = newGamePanelGroup.transform as RectTransform;
+            }
+        }
+
+        if (joinPanelGroup == null)
+        {
+            joinPanelGroup = FindCanvasGroup("MainMenu_Join");
+            if (joinPanelGroup == null)
+            {
+                joinPanelGroup = FindCanvasGroup("MainMenu_Multi_Join");
+            }
+        }
+
+        if (joinPanelGroup != null)
+        {
+            if (joinCodeInput == null)
+            {
+                joinCodeInput = FindInputByExactNames(joinPanelGroup.transform,
+                    "MainMenu_Multi_Join_SessionField_Input",
+                    "MainMenu_Join_SessionField_Input",
+                    "JoinCodeInput",
+                    "Join_Code_Input",
+                    "JoinCode",
+                    "SessionCodeInput");
+            }
+
+            if (joinAddressInput == null)
+            {
+                joinAddressInput = FindInputByExactNames(joinPanelGroup.transform,
+                    "MainMenu_Multi_Join_AddressField_Input",
+                    "MainMenu_Join_AddressField_Input",
+                    "JoinAddressInput",
+                    "Join_Address_Input",
+                    "JoinAddress",
+                    "AddressInput",
+                    "JoinIPInput",
+                    "IPInput");
+            }
+
+            TMP_InputField[] joinInputs = joinPanelGroup.GetComponentsInChildren<TMP_InputField>(true);
+            if (joinCodeInput == null)
+            {
+                joinCodeInput = FindInputByName(joinInputs, "Code", "Session");
+            }
+
+            if (joinAddressInput == null)
+            {
+                joinAddressInput = FindInputByName(joinInputs, "Address", "Adresse", "IP");
+            }
+
+            if (joinCodeInput == null && joinInputs.Length > 0)
+            {
+                joinCodeInput = joinInputs[0];
+            }
+
+            if (joinAddressInput == null && joinInputs.Length > 0)
+            {
+                for (int i = 0; i < joinInputs.Length; i++)
+                {
+                    TMP_InputField input = joinInputs[i];
+                    if (input != null && input != joinCodeInput)
+                    {
+                        joinAddressInput = input;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (joinConfirmAction == null && joinPanelGroup != null)
+        {
+            joinConfirmAction = FindMenuCursorActionByName(joinPanelGroup.transform, "Confirm");
+            if (joinConfirmAction == null)
+            {
+                joinConfirmAction = FindMenuCursorActionByName(joinPanelGroup.transform, "Join");
+            }
+        }
+
+        if (joinConfirmAction == null && joinPanelGroup != null)
+        {
+            Transform joinButton = FindInHierarchy(joinPanelGroup.transform, "Join");
+            if (joinButton != null)
+            {
+                MenuCursorAction action = joinButton.GetComponent<MenuCursorAction>();
+                if (action == null)
+                {
+                    action = joinButton.gameObject.AddComponent<MenuCursorAction>();
+                }
+                joinConfirmAction = action;
+            }
+        }
+
+        if (joinCancelAction == null && joinPanelGroup != null)
+        {
+            joinCancelAction = FindMenuCursorActionByName(joinPanelGroup.transform, "Cancel");
+            if (joinCancelAction == null)
+            {
+                joinCancelAction = FindMenuCursorActionByName(joinPanelGroup.transform, "Back");
+            }
+        }
+
+        if (joinPanelGroup != null && joinCursorRoot == null)
+        {
+            Transform confirm = FindInHierarchy(joinPanelGroup.transform, "Confirm");
+            Transform cancel = FindInHierarchy(joinPanelGroup.transform, "Cancel");
+            if (confirm != null && cancel != null && confirm.parent == cancel.parent)
+            {
+                joinCursorRoot = confirm.parent as RectTransform;
+            }
+            else
+            {
+                Transform background = FindInHierarchy(joinPanelGroup.transform, "Background");
+                if (background != null)
+                {
+                    joinCursorRoot = background as RectTransform;
+                }
+                else
+                {
+                    joinCursorRoot = joinPanelGroup.transform as RectTransform;
+                }
+            }
+        }
+
+        if (joinStatusText == null && joinPanelGroup != null)
+        {
+            joinStatusText = FindTextByExactNames(joinPanelGroup.transform,
+                "JoinStatusText",
+                "Join_Status",
+                "MainMenu_Join_Status",
+                "MainMenu_Multi_Join_Status",
+                "JoinStatus",
+                "JoinMessage",
+                "JoinMessageText",
+                "Join_Status_Text");
+
+            if (joinStatusText == null)
+            {
+                joinStatusText = FindTextByName(joinPanelGroup.transform, "Status", "Etat", "Message");
             }
         }
 
@@ -1027,6 +1387,51 @@ public class MainMenuController : MonoBehaviour
             virtualKeyboardGroup = virtualKeyboardRoot.gameObject.AddComponent<CanvasGroup>();
         }
 
+        if (confirmRoot == null)
+        {
+            Transform confirm = FindInHierarchy(transform, "MainMenu_DeleteConfirm");
+            if (confirm == null)
+            {
+                confirm = FindInHierarchy(transform, "DeleteConfirm");
+            }
+            if (confirm == null)
+            {
+                confirm = FindInHierarchy(transform, "ConfirmDelete");
+            }
+            if (confirm != null)
+            {
+                confirmRoot = confirm.gameObject;
+            }
+        }
+
+        if (confirmText == null && confirmRoot != null)
+        {
+            confirmText = confirmRoot.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (virtualKeyboardCursor == null)
+        {
+            Transform vkRoot = virtualKeyboardRoot != null
+                ? virtualKeyboardRoot
+                : virtualKeyboardGroup != null
+                    ? virtualKeyboardGroup.transform
+                    : null;
+
+            if (vkRoot != null)
+            {
+                virtualKeyboardCursor = vkRoot.GetComponentInChildren<VirtualKeyboardCursorController>(true);
+            }
+        }
+
+        if (sharedCursorNavigator == null && sharedCursor != null)
+        {
+            sharedCursorNavigator = sharedCursor.GetComponent<MenuCursorNavigator>();
+            if (sharedCursorNavigator == null)
+            {
+                sharedCursorNavigator = sharedCursor.GetComponentInParent<MenuCursorNavigator>();
+            }
+        }
+
 
         if (loadingGroup == null)
         {
@@ -1080,6 +1485,152 @@ public class MainMenuController : MonoBehaviour
             if (match != null)
             {
                 return match;
+            }
+        }
+
+        return null;
+    }
+
+    private static TMP_InputField FindInputByName(TMP_InputField[] inputs, params string[] tokens)
+    {
+        if (inputs == null || tokens == null || tokens.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            TMP_InputField input = inputs[i];
+            if (input == null)
+            {
+                continue;
+            }
+
+            string name = input.name;
+            for (int t = 0; t < tokens.Length; t++)
+            {
+                string token = tokens[t];
+                if (string.IsNullOrEmpty(token))
+                {
+                    continue;
+                }
+
+                if (name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return input;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static TMP_InputField FindInputByExactNames(Transform root, params string[] names)
+    {
+        if (root == null || names == null || names.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            string name = names[i];
+            if (string.IsNullOrEmpty(name))
+            {
+                continue;
+            }
+
+            Transform found = FindInHierarchy(root, name);
+            if (found == null)
+            {
+                continue;
+            }
+
+            TMP_InputField input = found.GetComponent<TMP_InputField>();
+            if (input == null)
+            {
+                input = found.GetComponentInChildren<TMP_InputField>(true);
+            }
+
+            if (input != null)
+            {
+                return input;
+            }
+        }
+
+        return null;
+    }
+
+    private static TMP_Text FindTextByName(Transform root, params string[] tokens)
+    {
+        if (root == null || tokens == null || tokens.Length == 0)
+        {
+            return null;
+        }
+
+        TMP_Text[] texts = root.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TMP_Text text = texts[i];
+            if (text == null)
+            {
+                continue;
+            }
+
+            if (text.GetComponentInParent<TMP_InputField>() != null)
+            {
+                continue;
+            }
+
+            string name = text.name;
+            for (int t = 0; t < tokens.Length; t++)
+            {
+                string token = tokens[t];
+                if (string.IsNullOrEmpty(token))
+                {
+                    continue;
+                }
+
+                if (name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return text;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static TMP_Text FindTextByExactNames(Transform root, params string[] names)
+    {
+        if (root == null || names == null || names.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            string name = names[i];
+            if (string.IsNullOrEmpty(name))
+            {
+                continue;
+            }
+
+            Transform found = FindInHierarchy(root, name);
+            if (found == null)
+            {
+                continue;
+            }
+
+            TMP_Text text = found.GetComponent<TMP_Text>();
+            if (text == null)
+            {
+                text = found.GetComponentInChildren<TMP_Text>(true);
+            }
+
+            if (text != null)
+            {
+                return text;
             }
         }
 
@@ -1160,13 +1711,12 @@ public class MainMenuController : MonoBehaviour
         selectedSave = null;
         selectedSaveView = null;
         pendingDelete = null;
+        pendingDeleteSession = null;
+        hoveredSave = null;
         pendingLoad = null;
         hoveredSessionEntry = null;
 
-        if (confirmRoot != null)
-        {
-            confirmRoot.SetActive(false);
-        }
+        CloseDeleteConfirm();
 
         ClearSavesUI();
 
@@ -1388,6 +1938,7 @@ public class MainMenuController : MonoBehaviour
         selectedSave = null;
         selectedSaveView = null;
         pendingDelete = null;
+        hoveredSave = null;
 
         ClearPreviewTexture();
         if (detailsTitle != null)
@@ -1412,6 +1963,7 @@ public class MainMenuController : MonoBehaviour
 
     internal void OnSaveHovered(SaveSlotInfo save)
     {
+        hoveredSave = save;
         ShowSaveDetails(save);
     }
 
@@ -1711,6 +2263,22 @@ public class MainMenuController : MonoBehaviour
         UpdateCursorTarget();
     }
 
+    private void HideJoinMenu()
+    {
+        if (currentMenu != MenuState.Join)
+        {
+            return;
+        }
+
+        RegisterJoinCodeListener(false);
+        RegisterTextInput(false);
+        if (joinStatusText != null)
+        {
+            joinStatusText.text = string.Empty;
+        }
+        ShowMultiOptionsMenu();
+    }
+
     private void ConfirmNewGame()
     {
         if (requireNewGameName && !IsNewGameNameValid())
@@ -1731,6 +2299,41 @@ public class MainMenuController : MonoBehaviour
     private void CancelNewGame()
     {
         HideNewGamePrompt();
+    }
+
+    private void ConfirmJoin()
+    {
+        if (!IsJoinCodeValid())
+        {
+            SetStatus(joinInvalidMessage);
+            SetJoinStatus(joinInvalidMessage);
+            if (joinCodeInput != null)
+            {
+                joinCodeInput.ActivateInputField();
+            }
+            return;
+        }
+
+        string code = NetcodeSessionCode.Normalize(joinCodeInput != null ? joinCodeInput.text : string.Empty);
+        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort port, out string normalized))
+        {
+            SetStatus(joinInvalidMessage);
+            SetJoinStatus(joinInvalidMessage);
+            return;
+        }
+
+        code = normalized;
+        StartJoinFlow(code, port);
+    }
+
+    private void CancelJoin()
+    {
+        if (joinInProgress)
+        {
+            return;
+        }
+
+        HideJoinMenu();
     }
 
     private void CreateNewGameAndStart(string sessionName)
@@ -1764,6 +2367,20 @@ public class MainMenuController : MonoBehaviour
         if (enabled)
         {
             newGameNameInput.onValueChanged.AddListener(OnNewGameNameChanged);
+        }
+    }
+
+    private void RegisterJoinCodeListener(bool enabled)
+    {
+        if (joinCodeInput == null)
+        {
+            return;
+        }
+
+        joinCodeInput.onValueChanged.RemoveListener(OnJoinCodeChanged);
+        if (enabled)
+        {
+            joinCodeInput.onValueChanged.AddListener(OnJoinCodeChanged);
         }
     }
 
@@ -1808,22 +2425,63 @@ public class MainMenuController : MonoBehaviour
 
     private void OnTextInput(char character)
     {
-        if (!newGamePromptOpen || newGameNameInput == null || !newGameNameInput.interactable)
+        TMP_InputField field = null;
+        bool isNewGame = false;
+        bool isJoinCode = false;
+        if (newGamePromptOpen)
         {
-            return;
+            field = newGameNameInput;
+            isNewGame = true;
         }
-
-        if (!EnsureNewGameInputFieldReady())
+        else if (currentMenu == MenuState.Join)
         {
-            return;
-        }
-
-        if (!newGameNameInput.isFocused)
-        {
-            if (autoFocusNewGameInput)
+            if (joinAddressInput != null && joinAddressInput.isFocused)
             {
-                newGameNameInput.Select();
-                newGameNameInput.ActivateInputField();
+                field = joinAddressInput;
+            }
+            else
+            {
+                field = joinCodeInput;
+                isJoinCode = true;
+            }
+        }
+
+        if (field == null || !field.interactable)
+        {
+            return;
+        }
+
+        if (isNewGame)
+        {
+            if (!EnsureNewGameInputFieldReady())
+            {
+                return;
+            }
+        }
+        else
+        {
+            if (isJoinCode)
+            {
+                if (!EnsureJoinInputFieldReady())
+                {
+                    return;
+                }
+            }
+            else
+            {
+                if (!EnsureJoinAddressInputFieldReady())
+                {
+                    return;
+                }
+            }
+        }
+
+        if (!field.isFocused)
+        {
+            if (isNewGame ? autoFocusNewGameInput : autoFocusJoinInput)
+            {
+                field.Select();
+                field.ActivateInputField();
             }
             else
             {
@@ -1831,9 +2489,9 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
-        string text = newGameNameInput.text ?? string.Empty;
-        int anchor = newGameNameInput.selectionAnchorPosition;
-        int focus = newGameNameInput.selectionFocusPosition;
+        string text = field.text ?? string.Empty;
+        int anchor = field.selectionAnchorPosition;
+        int focus = field.selectionFocusPosition;
         if (anchor < 0 || anchor > text.Length)
         {
             anchor = text.Length;
@@ -1866,7 +2524,7 @@ public class MainMenuController : MonoBehaviour
         }
         else
         {
-            if (newGameNameInput.characterLimit > 0 && text.Length >= newGameNameInput.characterLimit)
+            if (field.characterLimit > 0 && text.Length >= field.characterLimit)
             {
                 return;
             }
@@ -1881,12 +2539,26 @@ public class MainMenuController : MonoBehaviour
             caret += 1;
         }
 
-        newGameNameInput.SetTextWithoutNotify(text);
-        newGameNameInput.caretPosition = caret;
-        newGameNameInput.selectionAnchorPosition = caret;
-        newGameNameInput.selectionFocusPosition = caret;
-        newGameNameInput.ForceLabelUpdate();
-        UpdateNewGameConfirmState();
+        if (!isNewGame && isJoinCode)
+        {
+            text = NetcodeSessionCode.Normalize(text);
+            caret = Mathf.Min(caret, text.Length);
+        }
+
+        field.SetTextWithoutNotify(text);
+        field.caretPosition = caret;
+        field.selectionAnchorPosition = caret;
+        field.selectionFocusPosition = caret;
+        field.ForceLabelUpdate();
+
+        if (isNewGame)
+        {
+            UpdateNewGameConfirmState();
+        }
+        else if (isJoinCode)
+        {
+            UpdateJoinConfirmState();
+        }
     }
 
     private bool EnsureNewGameInputFieldReady()
@@ -1911,6 +2583,64 @@ public class MainMenuController : MonoBehaviour
             {
                 warnedMissingNewGameInputText = true;
                 Debug.LogWarning("MainMenuController: TMP_InputField textComponent manquant sur le champ de nom. Assigne un TextMeshProUGUI dans l'inspecteur.");
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool EnsureJoinInputFieldReady()
+    {
+        if (joinCodeInput == null)
+        {
+            return false;
+        }
+
+        if (joinCodeInput.textComponent == null)
+        {
+            TMP_Text text = FindPreferredInputText(joinCodeInput);
+            if (text != null)
+            {
+                joinCodeInput.textComponent = text;
+            }
+        }
+
+        if (joinCodeInput.textComponent == null)
+        {
+            if (!warnedMissingJoinInputText)
+            {
+                warnedMissingJoinInputText = true;
+                Debug.LogWarning("MainMenuController: TMP_InputField textComponent manquant sur le champ de code multijoueur. Assigne un TextMeshProUGUI dans l'inspecteur.");
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool EnsureJoinAddressInputFieldReady()
+    {
+        if (joinAddressInput == null)
+        {
+            return false;
+        }
+
+        if (joinAddressInput.textComponent == null)
+        {
+            TMP_Text text = FindPreferredInputText(joinAddressInput);
+            if (text != null)
+            {
+                joinAddressInput.textComponent = text;
+            }
+        }
+
+        if (joinAddressInput.textComponent == null)
+        {
+            if (!warnedMissingJoinAddressInputText)
+            {
+                warnedMissingJoinAddressInputText = true;
+                Debug.LogWarning("MainMenuController: TMP_InputField textComponent manquant sur le champ d'adresse multijoueur. Assigne un TextMeshProUGUI dans l'inspecteur.");
             }
             return false;
         }
@@ -1956,6 +2686,22 @@ public class MainMenuController : MonoBehaviour
         UpdateNewGameConfirmState();
     }
 
+    private void OnJoinCodeChanged(string value)
+    {
+        if (joinCodeInput == null)
+        {
+            return;
+        }
+
+        string normalized = NetcodeSessionCode.Normalize(value);
+        if (!string.Equals(joinCodeInput.text, normalized, StringComparison.Ordinal))
+        {
+            joinCodeInput.SetTextWithoutNotify(normalized);
+        }
+
+        UpdateJoinConfirmState();
+    }
+
     private bool IsNewGameNameValid()
     {
         if (newGameNameInput == null)
@@ -1970,6 +2716,83 @@ public class MainMenuController : MonoBehaviour
     {
         bool valid = !requireNewGameName || IsNewGameNameValid();
         SetNewGameConfirmEnabled(valid);
+    }
+
+    private bool IsJoinCodeValid()
+    {
+        if (joinCodeInput == null)
+        {
+            return false;
+        }
+
+        string text = NetcodeSessionCode.Normalize(joinCodeInput.text);
+        return !string.IsNullOrWhiteSpace(text);
+    }
+
+    private void UpdateJoinConfirmState()
+    {
+        SetJoinConfirmEnabled(IsJoinCodeValid());
+    }
+
+    private void SetJoinConfirmEnabled(bool enabled)
+    {
+        if (joinConfirmAction == null)
+        {
+            return;
+        }
+
+        joinConfirmAction.enabled = enabled;
+
+        CanvasGroup group = joinConfirmAction.GetComponent<CanvasGroup>();
+        if (group != null)
+        {
+            group.alpha = enabled ? 1f : Mathf.Clamp01(joinConfirmDisabledAlpha);
+            group.interactable = enabled;
+            group.blocksRaycasts = enabled;
+        }
+        else
+        {
+            ApplyJoinConfirmGraphicsAlpha(enabled);
+        }
+
+        if (currentMenu == MenuState.Join && sharedCursor != null)
+        {
+            sharedCursor.Refresh();
+            StartCursorSnap();
+        }
+    }
+
+    private void ApplyJoinConfirmGraphicsAlpha(bool enabled)
+    {
+        if (joinConfirmAction == null)
+        {
+            return;
+        }
+
+        Graphic[] graphics = joinConfirmAction.GetComponentsInChildren<Graphic>(true);
+        if (graphics == null || graphics.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            Graphic graphic = graphics[i];
+            if (graphic == null)
+            {
+                continue;
+            }
+
+            if (!joinConfirmGraphicAlphas.ContainsKey(graphic))
+            {
+                joinConfirmGraphicAlphas[graphic] = graphic.color.a;
+            }
+
+            float baseAlpha = joinConfirmGraphicAlphas[graphic];
+            Color color = graphic.color;
+            color.a = enabled ? baseAlpha : baseAlpha * Mathf.Clamp01(joinConfirmDisabledAlpha);
+            graphic.color = color;
+        }
     }
 
     private void SetNewGameConfirmEnabled(bool enabled)
@@ -2046,6 +2869,19 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    private void ConfigureJoinActions()
+    {
+        if (joinConfirmAction != null)
+        {
+            joinConfirmAction.Configure(this, MenuCursorAction.MenuAction.ConfirmJoin);
+        }
+
+        if (joinCancelAction != null)
+        {
+            joinCancelAction.Configure(this, MenuCursorAction.MenuAction.CancelJoin);
+        }
+    }
+
     private void ConfigureLoadConfirmActions()
     {
         if (loadConfirmYesAction != null)
@@ -2113,12 +2949,16 @@ public class MainMenuController : MonoBehaviour
 
     public void UI_VirtualValidate()
     {
-        if (!newGamePromptOpen)
+        if (newGamePromptOpen)
         {
+            ConfirmNewGame();
             return;
         }
 
-        ConfirmNewGame();
+        if (currentMenu == MenuState.Join)
+        {
+            ConfirmJoin();
+        }
     }
 
     public void UI_ShowLoadMenu()
@@ -2150,6 +2990,21 @@ public class MainMenuController : MonoBehaviour
     public void UI_Multiplayer()
     {
         OnMultiplayerRequested();
+    }
+
+    public void UI_Join()
+    {
+        ShowJoinMenu();
+    }
+
+    public void UI_ConfirmJoin()
+    {
+        ConfirmJoin();
+    }
+
+    public void UI_CancelJoin()
+    {
+        CancelJoin();
     }
 
     public void UI_Options()
@@ -2252,16 +3107,65 @@ public class MainMenuController : MonoBehaviour
 
     private void OnDeleteRequested()
     {
-        if (selectedSave == null)
+        if (!IsLoadMenuActive())
+        {
+            return;
+        }
+
+        if (IsCursorOnSavesRoot())
+        {
+            RequestDeleteSave();
+            return;
+        }
+
+        if (IsCursorOnSessionsRoot())
+        {
+            RequestDeleteSession();
+        }
+    }
+
+    private void RequestDeleteSave()
+    {
+        SaveSlotInfo save = hoveredSave ?? selectedSave;
+        if (save == null)
         {
             SetStatus("Selectionne une sauvegarde.");
             return;
         }
 
-        pendingDelete = selectedSave;
+        pendingDelete = save;
+        pendingDeleteSession = null;
+        string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
+        OpenDeleteConfirm(string.Format(deleteSaveConfirmFormat, label));
+    }
+
+    private void RequestDeleteSession()
+    {
+        SaveSessionInfo session = hoveredSessionEntry != null ? hoveredSessionEntry.Session : null;
+        if (session == null)
+        {
+            session = selectedSession;
+        }
+
+        if (session == null)
+        {
+            SetStatus("Selectionne une session.");
+            return;
+        }
+
+        pendingDeleteSession = session;
+        pendingDelete = null;
+        string label = string.IsNullOrWhiteSpace(session.sessionName) ? "session" : session.sessionName;
+        OpenDeleteConfirm(string.Format(deleteSessionConfirmFormat, label));
+    }
+
+    private void OpenDeleteConfirm(string message)
+    {
+        deleteConfirmOpen = true;
+
         if (confirmText != null)
         {
-            confirmText.text = $"Supprimer '{selectedSave.saveName}' ?";
+            confirmText.text = message;
         }
 
         if (confirmRoot != null)
@@ -2270,36 +3174,113 @@ public class MainMenuController : MonoBehaviour
         }
         else
         {
-            ConfirmDelete();
+            InfoBoxUI.TryShowTopLeft($"{message} (Interact = confirmer / Retour = annuler)");
         }
+
+        SetActiveMenuInteractable(false);
+        SetSharedCursorInputEnabled(false);
     }
 
     private void ConfirmDelete()
     {
-        if (confirmRoot != null)
+        if (!deleteConfirmOpen)
         {
-            confirmRoot.SetActive(false);
-        }
-
-        if (pendingDelete == null || SaveSessionManager.Instance == null)
-        {
-            pendingDelete = null;
             return;
         }
 
-        bool deleted = SaveSessionManager.Instance.DeleteSave(pendingDelete.sessionId, pendingDelete.saveId, true);
-        SetStatus(deleted ? "Sauvegarde supprimee." : "Echec suppression.");
+        CloseDeleteConfirm();
+
+        if (SaveSessionManager.Instance == null)
+        {
+            pendingDelete = null;
+            pendingDeleteSession = null;
+            return;
+        }
+
+        bool deleted = false;
+        if (pendingDeleteSession != null)
+        {
+            deleted = SaveSessionManager.Instance.DeleteSession(pendingDeleteSession.sessionId);
+            SetStatus(deleted ? "Session supprimee." : "Echec suppression session.");
+        }
+        else if (pendingDelete != null)
+        {
+            deleted = SaveSessionManager.Instance.DeleteSave(pendingDelete.sessionId, pendingDelete.saveId, true);
+            SetStatus(deleted ? "Sauvegarde supprimee." : "Echec suppression.");
+        }
+
         pendingDelete = null;
+        pendingDeleteSession = null;
         RefreshSessions();
     }
 
     private void CancelDelete()
     {
         pendingDelete = null;
+        pendingDeleteSession = null;
+        CloseDeleteConfirm();
+    }
+
+    private void CloseDeleteConfirm()
+    {
+        if (!deleteConfirmOpen)
+        {
+            return;
+        }
+
+        deleteConfirmOpen = false;
         if (confirmRoot != null)
         {
             confirmRoot.SetActive(false);
         }
+        SetActiveMenuInteractable(true);
+        SetSharedCursorInputEnabled(true);
+    }
+
+    private void SetSharedCursorInputEnabled(bool enabled)
+    {
+        if (sharedCursor == null && sharedCursorNavigator == null)
+        {
+            return;
+        }
+
+        if (!enabled)
+        {
+            if (!cachedSharedCursorState)
+            {
+                cachedSharedCursorAllowInput = sharedCursor != null && sharedCursor.allowInput;
+                cachedSharedCursorNavigatorEnabled = sharedCursorNavigator != null && sharedCursorNavigator.enabled;
+                cachedSharedCursorState = true;
+            }
+
+            if (sharedCursor != null)
+            {
+                sharedCursor.allowInput = false;
+            }
+
+            if (sharedCursorNavigator != null)
+            {
+                sharedCursorNavigator.enabled = false;
+            }
+            return;
+        }
+
+        if (!cachedSharedCursorState)
+        {
+            return;
+        }
+
+        if (sharedCursor != null)
+        {
+            sharedCursor.allowInput = cachedSharedCursorAllowInput;
+        }
+
+        if (sharedCursorNavigator != null)
+        {
+            sharedCursorNavigator.enabled = cachedSharedCursorNavigatorEnabled;
+        }
+
+        cachedSharedCursorState = false;
     }
 
     private void OnRefresh()
@@ -2366,19 +3347,164 @@ public class MainMenuController : MonoBehaviour
         SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
     }
 
+    private void StartJoinFlow(string code, ushort port)
+    {
+        if (isLoading)
+        {
+            return;
+        }
+
+        NetcodeLauncher launcher = ResolveLauncher();
+        if (launcher == null)
+        {
+            SetStatus("NetcodeLauncher manquant.");
+            return;
+        }
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            SetStatus("Connexion deja active.");
+            return;
+        }
+
+        if (SaveSessionManager.Instance != null)
+        {
+            SaveSessionManager.Instance.SetCurrentSessionType(SaveSessionType.Multiplayer);
+        }
+
+        string address = ResolveJoinAddress();
+        bool started = launcher.StartClientWithConnection(address, port);
+        if (!started)
+        {
+            SetStatus("Client deja actif.");
+            return;
+        }
+
+        joinInProgress = true;
+        RegisterJoinCallbacks(true);
+        SetJoinStatus(joinConnectingMessage);
+        ShowLoadingScreen(joinConnectingMessage);
+        SetStatus($"Connexion au code {code}...");
+
+        if (joinTimeoutRoutine != null)
+        {
+            StopCoroutine(joinTimeoutRoutine);
+        }
+        joinTimeoutRoutine = StartCoroutine(JoinTimeoutRoutine());
+    }
+
     private void StartGameFlow()
     {
-        if (currentSessionType == SaveSessionType.Multiplayer)
+        if (SaveSessionManager.Instance != null)
         {
-            StartHostFlow();
+            SaveSessionManager.Instance.SetCurrentSessionType(currentSessionType);
         }
-        else
+
+        StartOfflineFlow();
+    }
+
+    private System.Collections.IEnumerator JoinTimeoutRoutine()
+    {
+        float timeout = Mathf.Max(1f, joinTimeoutSeconds);
+        float endTime = Time.unscaledTime + timeout;
+        while (Time.unscaledTime < endTime)
         {
-            StartOfflineFlow();
+            if (!joinInProgress)
+            {
+                yield break;
+            }
+
+            NetworkManager manager = NetworkManager.Singleton;
+            if (manager != null && manager.IsConnectedClient)
+            {
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        if (joinInProgress)
+        {
+            HandleJoinFailure(joinNoSessionMessage);
         }
     }
 
-    private void ShowLoadingScreen()
+    private void RegisterJoinCallbacks(bool enabled)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null)
+        {
+            return;
+        }
+
+        manager.OnClientConnectedCallback -= OnJoinClientConnected;
+        manager.OnClientDisconnectCallback -= OnJoinClientDisconnected;
+        if (enabled)
+        {
+            manager.OnClientConnectedCallback += OnJoinClientConnected;
+            manager.OnClientDisconnectCallback += OnJoinClientDisconnected;
+        }
+    }
+
+    private void OnJoinClientConnected(ulong clientId)
+    {
+        if (!joinInProgress)
+        {
+            return;
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || clientId != manager.LocalClientId)
+        {
+            return;
+        }
+
+        joinInProgress = false;
+        RegisterJoinCallbacks(false);
+        if (joinTimeoutRoutine != null)
+        {
+            StopCoroutine(joinTimeoutRoutine);
+            joinTimeoutRoutine = null;
+        }
+    }
+
+    private void OnJoinClientDisconnected(ulong clientId)
+    {
+        if (!joinInProgress)
+        {
+            return;
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || clientId != manager.LocalClientId)
+        {
+            return;
+        }
+
+        HandleJoinFailure(joinNoSessionMessage);
+    }
+
+    private void HandleJoinFailure(string message)
+    {
+        joinInProgress = false;
+        RegisterJoinCallbacks(false);
+        if (joinTimeoutRoutine != null)
+        {
+            StopCoroutine(joinTimeoutRoutine);
+            joinTimeoutRoutine = null;
+        }
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        HideLoadingScreen();
+        SetJoinStatus(message);
+        SetStatus(message);
+    }
+
+    private void ShowLoadingScreen(string overrideMessage = null)
     {
         if (loadingGroup == null)
         {
@@ -2386,9 +3512,13 @@ public class MainMenuController : MonoBehaviour
         }
 
         isLoading = true;
-        if (loadingText != null && !string.IsNullOrWhiteSpace(loadingMessage))
+        if (loadingText != null)
         {
-            loadingText.text = loadingMessage;
+            string message = string.IsNullOrWhiteSpace(overrideMessage) ? loadingMessage : overrideMessage;
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                loadingText.text = message;
+            }
         }
 
         loadingGroup.gameObject.SetActive(true);
@@ -2415,6 +3545,32 @@ public class MainMenuController : MonoBehaviour
         SetActiveMenuInteractable(true);
     }
 
+    private void SetJoinStatus(string message)
+    {
+        if (joinStatusText == null)
+        {
+            return;
+        }
+
+        joinStatusText.text = message ?? string.Empty;
+    }
+
+    private string ResolveJoinAddress()
+    {
+        string address = joinAddressInput != null ? joinAddressInput.text : string.Empty;
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            address = joinAddress;
+        }
+
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            address = hostLoopbackAddress;
+        }
+
+        return address.Trim();
+    }
+
     private void SetActiveMenuInteractable(bool enabled)
     {
         if (currentMenu == MenuState.GameOptions && gameOptionsGroup != null)
@@ -2435,6 +3591,13 @@ public class MainMenuController : MonoBehaviour
         {
             multiOptionsGroup.interactable = enabled;
             multiOptionsGroup.blocksRaycasts = enabled;
+            return;
+        }
+
+        if (currentMenu == MenuState.Join && joinPanelGroup != null)
+        {
+            joinPanelGroup.interactable = enabled;
+            joinPanelGroup.blocksRaycasts = enabled;
             return;
         }
 

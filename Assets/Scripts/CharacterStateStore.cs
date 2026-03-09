@@ -206,6 +206,7 @@ public class CharacterStateStore : MonoBehaviour
         manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
         ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
         ApplyHomeItems(loadedData, itemLookup);
+        ApplyBraseroStates(loadedData);
     }
 
     private void RequestScreenshotCapture()
@@ -467,6 +468,7 @@ public class CharacterStateStore : MonoBehaviour
 
         data.homeItems = BuildHomeItems();
         data.builtConstructions = BuildBuiltConstructions();
+        data.braseros = BuildBraseroStates();
         AppendPlayerBindings(data);
         return data;
     }
@@ -977,6 +979,106 @@ public class CharacterStateStore : MonoBehaviour
         }
     }
 
+    private List<BraseroSaveEntry> BuildBraseroStates()
+    {
+        List<BraseroSaveEntry> results = new List<BraseroSaveEntry>();
+#if UNITY_2023_1_OR_NEWER
+        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+        Brasero[] braseros = FindObjectsOfType<Brasero>(true);
+#endif
+        if (braseros == null || braseros.Length == 0)
+        {
+            return results;
+        }
+
+        HashSet<string> usedIds = new HashSet<string>();
+        for (int i = 0; i < braseros.Length; i++)
+        {
+            Brasero brasero = braseros[i];
+            if (brasero == null)
+            {
+                continue;
+            }
+
+            string id = brasero.BraseroId;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                Debug.LogWarning("CharacterStateStore: brasero sans ID, ignore pour la sauvegarde.", brasero);
+                continue;
+            }
+
+            if (!usedIds.Add(id))
+            {
+                Debug.LogWarning($"CharacterStateStore: braseroId duplique '{id}', ignore.", brasero);
+                continue;
+            }
+
+            results.Add(new BraseroSaveEntry
+            {
+                braseroId = id,
+                isLit = brasero.IsLit
+            });
+        }
+
+        return results;
+    }
+
+    private void ApplyBraseroStates(CharacterSaveData data)
+    {
+        if (data == null || data.braseros == null || data.braseros.Count == 0)
+        {
+            return;
+        }
+
+        Dictionary<string, bool> states = new Dictionary<string, bool>();
+        for (int i = 0; i < data.braseros.Count; i++)
+        {
+            BraseroSaveEntry entry = data.braseros[i];
+            if (entry == null || string.IsNullOrWhiteSpace(entry.braseroId))
+            {
+                continue;
+            }
+
+            states[entry.braseroId] = entry.isLit;
+        }
+
+        if (states.Count == 0)
+        {
+            return;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+        Brasero[] braseros = FindObjectsOfType<Brasero>(true);
+#endif
+        if (braseros == null || braseros.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < braseros.Length; i++)
+        {
+            Brasero brasero = braseros[i];
+            if (brasero == null)
+            {
+                continue;
+            }
+
+            string id = brasero.BraseroId;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+
+            if (states.TryGetValue(id, out bool lit))
+            {
+                brasero.SetLit(lit);
+            }
+        }
+    }
+
     private List<BuiltConstructionData> BuildBuiltConstructions()
     {
         List<BuiltConstructionData> results = new List<BuiltConstructionData>();
@@ -1291,7 +1393,7 @@ public class CharacterStateStore : MonoBehaviour
             }
             else if (buildingItem != null && buildingItem.isBuilding)
             {
-                buildingItem.buildingCurrentLevel = Mathf.Max(buildingItem.buildingCurrentLevel, Mathf.Max(1, entry.level));
+                BuildingRuntimeState.SetLevel(buildingItem, Mathf.Max(1, entry.level), true);
             }
 
             if (entry.isHomeChest)
@@ -1392,19 +1494,7 @@ public class CharacterStateStore : MonoBehaviour
 
     private void ResetBuildingLevels(Dictionary<string, Item> buildingLookup)
     {
-        if (buildingLookup == null)
-        {
-            return;
-        }
-
-        foreach (KeyValuePair<string, Item> entry in buildingLookup)
-        {
-            Item item = entry.Value;
-            if (item != null && item.isBuilding)
-            {
-                item.buildingCurrentLevel = 0;
-            }
-        }
+        BuildingRuntimeState.Clear();
     }
 
     private void TryAssignMaisonChestTag(GameObject instance)

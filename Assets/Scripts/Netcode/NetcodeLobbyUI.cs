@@ -22,7 +22,6 @@ public class NetcodeLobbyUI : MonoBehaviour
 
     [Header("Address")]
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
-    [SerializeField] private string clientAddressDefault = "127.0.0.1";
     [SerializeField] private string listenAddress = "0.0.0.0";
 
     [Header("Layout")]
@@ -32,8 +31,6 @@ public class NetcodeLobbyUI : MonoBehaviour
     [SerializeField] private Color buttonColor = new Color(1f, 1f, 1f, 0.18f);
 
     private InputField hostCodeInput;
-    private InputField joinCodeInput;
-    private InputField addressInput;
     private Text statusText;
     private Text portText;
     private GameObject panelRoot;
@@ -152,24 +149,10 @@ public class NetcodeLobbyUI : MonoBehaviour
         CreateButton(hostRow.transform, "Copier", OnCopyClicked, 70f);
         SetupCodeField(hostCodeInput);
         hostCodeInput.text = NetcodeSessionCode.Generate(codeLength);
-
-        GameObject joinRow = CreateRow(panelRoot.transform);
-        CreateLabel(joinRow.transform, "Code rejoindre", 14, FontStyle.Normal, TextAnchor.MiddleLeft, 110f);
-        joinCodeInput = CreateInputField(joinRow.transform, "CODE", codeLength, InputField.ContentType.Alphanumeric);
-        SetupCodeField(joinCodeInput);
-
-        GameObject addressRow = CreateRow(panelRoot.transform);
-        CreateLabel(addressRow.transform, "Adresse", 14, FontStyle.Normal, TextAnchor.MiddleLeft, 110f);
-        addressInput = CreateInputField(addressRow.transform, clientAddressDefault, 64, InputField.ContentType.Standard);
-        if (addressInput != null)
-        {
-            addressInput.text = clientAddressDefault;
-        }
+        UpdatePortDisplay(hostCodeInput.text);
 
         GameObject buttonsRow = CreateRow(panelRoot.transform);
         CreateButton(buttonsRow.transform, "Host", OnHostClicked, 100f);
-        CreateButton(buttonsRow.transform, "Rejoindre", OnJoinClicked, 120f);
-        CreateButton(buttonsRow.transform, "Stop", OnStopClicked, 80f);
 
         portText = CreateLabel(panelRoot.transform, "Port: -", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
         statusText = CreateLabel(panelRoot.transform, "Etat: offline", 12, FontStyle.Normal, TextAnchor.MiddleLeft);
@@ -232,45 +215,6 @@ public class NetcodeLobbyUI : MonoBehaviour
         }
     }
 
-    private void OnJoinClicked()
-    {
-        if (!TryResolvePort(joinCodeInput, out string code, out ushort port))
-        {
-            SetStatus("Code rejoindre invalide.");
-            return;
-        }
-
-        string address = ResolveClientAddress();
-        NetcodeLauncher resolved = ResolveLauncher();
-        if (resolved == null)
-        {
-            SetStatus("NetcodeLauncher manquant.");
-            return;
-        }
-
-        UpdatePortDisplay(code);
-        bool started = resolved.StartClientWithConnection(address, port);
-        SetStatus(started ? $"Connexion a {address}:{port}." : "Client deja actif.");
-        if (started)
-        {
-            SetUIVisible(false);
-        }
-    }
-
-    private void OnStopClicked()
-    {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
-        {
-            NetworkManager.Singleton.Shutdown();
-            SetStatus("Connexion arretee.");
-            SetUIVisible(true);
-        }
-        else
-        {
-            SetStatus("Aucune connexion active.");
-        }
-    }
-
     private void OnMultiPerformed(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (!context.performed)
@@ -297,6 +241,7 @@ public class NetcodeLobbyUI : MonoBehaviour
         {
             string normalized = NetcodeSessionCode.Normalize(value);
             field.SetTextWithoutNotify(normalized);
+            UpdatePortDisplay(normalized);
         });
     }
 
@@ -327,17 +272,6 @@ public class NetcodeLobbyUI : MonoBehaviour
         }
 
         return NetcodeSessionCode.Normalize(field.text);
-    }
-
-    private string ResolveClientAddress()
-    {
-        string address = addressInput != null ? addressInput.text : clientAddressDefault;
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            address = clientAddressDefault;
-        }
-
-        return address.Trim();
     }
 
     private NetcodeLauncher ResolveLauncher()

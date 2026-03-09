@@ -22,6 +22,10 @@ public class PausePanelController : MonoBehaviour
     public Button quitButton;
     public UnityEvent onQuit;
 
+    [Header("Save")]
+    public string manualSaveNamePrefix = "Sauvegarde";
+    public bool includeTimestampInSaveName = true;
+
     [Header("Quit")]
     public string mainMenuSceneName = MainMenuController.DefaultMenuSceneName;
     public bool shutdownNetworkOnQuit = true;
@@ -30,15 +34,20 @@ public class PausePanelController : MonoBehaviour
     public CursorController cursorController;
     public MenuCursorNavigator cursorNavigator;
     public bool enableCursorWhenOpen = true;
+    public bool forceCursorFixedSize = true;
 
     [Header("Input")]
     public bool toggleOnStart = true;
     public bool closeOnReturn = true;
+    public bool lockGameplayInput = true;
 
     private CanvasGroup panelCanvasGroup;
     private Coroutine fadeRoutine;
     private bool isOpen;
     private bool hasInitialized;
+    private bool gameplayInputLocked;
+    private bool cachedMatchTargetSize;
+    private bool cursorSizeCached;
 
     private void Awake()
     {
@@ -72,6 +81,8 @@ public class PausePanelController : MonoBehaviour
             ApplyPanelImmediate(1f, true);
             isOpen = true;
             InputFocusStack.Push(this);
+            LockGameplayInput(true);
+            ApplyCursorSizing(true);
             SetCursorState(true);
         }
 
@@ -92,6 +103,8 @@ public class PausePanelController : MonoBehaviour
         LocalInputRouter.Return -= OnReturnPerformed;
         BindButtons(false);
         InputFocusStack.Pop(this);
+        LockGameplayInput(false);
+        ApplyCursorSizing(false);
     }
 
     private void OnStartPerformed(InputAction.CallbackContext context)
@@ -150,6 +163,8 @@ public class PausePanelController : MonoBehaviour
 
         isOpen = true;
         InputFocusStack.Push(this);
+        LockGameplayInput(true);
+        ApplyCursorSizing(true);
 
         pausePanel.SetActive(true);
         StartFade(1f, true);
@@ -170,6 +185,8 @@ public class PausePanelController : MonoBehaviour
 
         isOpen = false;
         InputFocusStack.Pop(this);
+        LockGameplayInput(false);
+        ApplyCursorSizing(false);
 
         SetCursorState(false);
         StartFade(0f, false);
@@ -275,6 +292,12 @@ public class PausePanelController : MonoBehaviour
 
     private void HandleSaveClicked()
     {
+        if (!EnsureSaveSlot())
+        {
+            InfoBoxUI.TryShowTopLeft("Sauvegarde impossible.");
+            return;
+        }
+
         CharacterStateStore store = CharacterStateStore.Instance;
         if (store == null)
         {
@@ -288,10 +311,12 @@ public class PausePanelController : MonoBehaviour
         if (store != null)
         {
             store.Save();
+            InfoBoxUI.TryShowTopLeft("Sauvegarde creee.");
         }
         else
         {
             Debug.LogWarning("PausePanelController: CharacterStateStore introuvable, sauvegarde impossible.");
+            InfoBoxUI.TryShowTopLeft("Sauvegarde impossible.");
         }
     }
 
@@ -329,6 +354,86 @@ public class PausePanelController : MonoBehaviour
         }
 
         SceneManager.LoadScene(mainMenuSceneName, LoadSceneMode.Single);
+    }
+
+    private bool EnsureSaveSlot()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogWarning("PausePanelController: sauvegarde refusee (client uniquement).");
+            return false;
+        }
+
+        SaveSessionManager session = EnsureSaveSessionManager();
+        if (session == null)
+        {
+            return true;
+        }
+
+        if (!session.HasActiveSave)
+        {
+            SaveSessionType sessionType = ResolveSessionType();
+            string sessionName = string.IsNullOrWhiteSpace(session.CurrentSessionName) ? "Nouvelle partie" : session.CurrentSessionName;
+            SaveSessionInfo info = session.CreateSession(sessionName, sessionType);
+            if (info == null)
+            {
+                Debug.LogWarning("PausePanelController: creation de session impossible.");
+                return false;
+            }
+
+            SaveSlotInfo save = session.CreateSave(info.sessionId, BuildManualSaveName());
+            if (save == null)
+            {
+                Debug.LogWarning("PausePanelController: creation de sauvegarde impossible.");
+                return false;
+            }
+
+            session.SetActiveSave(info.sessionId, save.saveId);
+            return true;
+        }
+
+        SaveSlotInfo newSave = session.CreateSave(session.CurrentSessionId, BuildManualSaveName());
+        if (newSave != null)
+        {
+            session.SetActiveSave(session.CurrentSessionId, newSave.saveId);
+        }
+
+        return true;
+    }
+
+    private SaveSessionManager EnsureSaveSessionManager()
+    {
+        if (SaveSessionManager.Instance != null)
+        {
+            return SaveSessionManager.Instance;
+        }
+
+        GameObject host = new GameObject("SaveSessionManager");
+        SaveSessionManager manager = host.AddComponent<SaveSessionManager>();
+        manager.SetMenuSceneName(MainMenuController.DefaultMenuSceneName);
+        return manager;
+    }
+
+    private SaveSessionType ResolveSessionType()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            return SaveSessionType.Multiplayer;
+        }
+
+        return SaveSessionType.Solo;
+    }
+
+    private string BuildManualSaveName()
+    {
+        string prefix = string.IsNullOrWhiteSpace(manualSaveNamePrefix) ? "Sauvegarde" : manualSaveNamePrefix.Trim();
+        if (!includeTimestampInSaveName)
+        {
+            return prefix;
+        }
+
+        string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        return $"{prefix} {timestamp}";
     }
 
     private void ResolveButtons()
@@ -373,6 +478,15 @@ public class PausePanelController : MonoBehaviour
         {
             cursorNavigator = pausePanel.GetComponentInChildren<MenuCursorNavigator>(true);
         }
+
+        if (cursorNavigator == null && cursorController != null)
+        {
+            cursorNavigator = cursorController.GetComponent<MenuCursorNavigator>();
+            if (cursorNavigator == null)
+            {
+                cursorNavigator = cursorController.gameObject.AddComponent<MenuCursorNavigator>();
+            }
+        }
     }
 
     private void SetCursorState(bool enabled)
@@ -391,6 +505,95 @@ public class PausePanelController : MonoBehaviour
         {
             cursorNavigator.enabled = enabled;
         }
+    }
+
+    private void LockGameplayInput(bool locked)
+    {
+        if (!lockGameplayInput)
+        {
+            return;
+        }
+
+        if (locked)
+        {
+            if (gameplayInputLocked)
+            {
+                return;
+            }
+
+            SquadManager manager = SquadManager.Instance;
+            if (manager == null)
+            {
+                manager = FindObjectOfType<SquadManager>();
+            }
+
+            if (manager != null)
+            {
+                manager.SetInputLocked(true);
+                gameplayInputLocked = true;
+            }
+        }
+        else
+        {
+            if (!gameplayInputLocked)
+            {
+                return;
+            }
+
+            SquadManager manager = SquadManager.Instance;
+            if (manager == null)
+            {
+                manager = FindObjectOfType<SquadManager>();
+            }
+
+            if (manager != null)
+            {
+                manager.SetInputLocked(false);
+            }
+
+            gameplayInputLocked = false;
+        }
+    }
+
+    private void ApplyCursorSizing(bool opened)
+    {
+        if (!forceCursorFixedSize || cursorController == null)
+        {
+            return;
+        }
+
+        if (opened)
+        {
+            EnsureCursorLayout();
+            if (!cursorSizeCached)
+            {
+                cachedMatchTargetSize = cursorController.matchTargetSize;
+                cursorSizeCached = true;
+            }
+
+            cursorController.matchTargetSize = false;
+        }
+        else if (cursorSizeCached)
+        {
+            cursorController.matchTargetSize = cachedMatchTargetSize;
+            cursorSizeCached = false;
+        }
+    }
+
+    private void EnsureCursorLayout()
+    {
+        if (cursorController == null || cursorController.cursor == null)
+        {
+            return;
+        }
+
+        LayoutElement layout = cursorController.cursor.GetComponent<LayoutElement>();
+        if (layout == null)
+        {
+            layout = cursorController.cursor.gameObject.AddComponent<LayoutElement>();
+        }
+
+        layout.ignoreLayout = true;
     }
 
     private bool CanDeactivatePanel()

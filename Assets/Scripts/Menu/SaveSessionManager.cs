@@ -109,6 +109,11 @@ public class SaveSessionManager : MonoBehaviour
         sessionsCache = LoadSessions();
     }
 
+    public void SetCurrentSessionType(SaveSessionType sessionType)
+    {
+        CurrentSessionType = sessionType;
+    }
+
     public bool DeleteSave(string sessionId, string saveId, bool deleteSessionIfEmpty = true)
     {
         if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(saveId))

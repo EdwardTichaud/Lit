@@ -71,6 +71,7 @@ public class VirtualKeyboardCursorController : MonoBehaviour
 
     private void OnEnable()
     {
+        ResolveController();
         ConfigureCursor();
         AssignActions();
         RegisterInput(true);
@@ -102,6 +103,23 @@ public class VirtualKeyboardCursorController : MonoBehaviour
         ClearCurrent();
     }
 
+    public void Activate()
+    {
+        ResolveController();
+        if (cursor != null)
+        {
+            cursor.Refresh();
+            cursor.SelectFirst();
+        }
+
+        InputFocusStack.Push(this);
+    }
+
+    public void Deactivate()
+    {
+        InputFocusStack.Pop(this);
+    }
+
     private void Update()
     {
         if (!CanProcessInput())
@@ -121,13 +139,14 @@ public class VirtualKeyboardCursorController : MonoBehaviour
     private void RegisterInput(bool enabled)
     {
         LocalInputRouter.EnsureInitialized();
+        bool allowReturn = useReturnInput || controller != null || onCancel != null;
         if (enabled)
         {
             if (useInteractInput)
             {
                 LocalInputRouter.Interact += OnInteractPerformed;
             }
-            if (useReturnInput)
+            if (allowReturn)
             {
                 LocalInputRouter.Return += OnReturnPerformed;
             }
@@ -138,7 +157,7 @@ public class VirtualKeyboardCursorController : MonoBehaviour
         {
             LocalInputRouter.Interact -= OnInteractPerformed;
         }
-        if (useReturnInput)
+        if (allowReturn)
         {
             LocalInputRouter.Return -= OnReturnPerformed;
         }
@@ -183,6 +202,12 @@ public class VirtualKeyboardCursorController : MonoBehaviour
         if (onCancel != null)
         {
             onCancel.Invoke();
+            return;
+        }
+
+        if (controller != null)
+        {
+            controller.UI_CancelNewGame();
         }
     }
 

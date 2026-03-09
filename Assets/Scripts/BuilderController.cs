@@ -1127,12 +1127,11 @@ public class BuilderController : NetworkBehaviour
 
             if (builtLevels.TryGetValue(item, out int level))
             {
-                int maxLevel = Mathf.Max(1, item.buildingMaxLevel);
-                item.buildingCurrentLevel = Mathf.Clamp(level, 1, maxLevel);
+                BuildingRuntimeState.SetLevel(item, level, false);
             }
             else
             {
-                item.buildingCurrentLevel = 0;
+                BuildingRuntimeState.SetLevel(item, 0, false);
             }
         }
     }
@@ -1182,7 +1181,7 @@ public class BuilderController : NetworkBehaviour
 
         if (!TryFindNearestBuilt(building, origin, out info))
         {
-            return Mathf.Max(0, building.buildingCurrentLevel);
+            return BuildingRuntimeState.GetLevel(building);
         }
 
         return info != null ? Mathf.Max(1, info.Level) : 0;
@@ -1354,11 +1353,7 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        int clampedLevel = Mathf.Clamp(levelValue, 0, Mathf.Max(1, building.buildingMaxLevel));
-        if (clampedLevel > building.buildingCurrentLevel)
-        {
-            building.buildingCurrentLevel = clampedLevel;
-        }
+        BuildingRuntimeState.SetLevel(building, levelValue, true);
     }
 
     public void ApplyBuildingEffects(Item building, int currentLevel, int levelDelta = 1)

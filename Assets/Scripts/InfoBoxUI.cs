@@ -29,8 +29,27 @@ public class InfoBoxUI : MonoBehaviour
     [Tooltip("Ne pas detruire au changement de scene.")]
     public bool dontDestroyOnLoad = false;
 
+    [Header("Layout")]
+    [Tooltip("Offset pour l'affichage en haut a gauche.")]
+    public Vector2 topLeftOffset = new Vector2(30f, 30f);
+
     private Coroutine hideRoutine;
     private CanvasGroup canvasGroup;
+    private RectTransform layoutTarget;
+    private LayoutSnapshot savedLayout;
+    private bool layoutSaved;
+    private bool restoreLayoutAfterHide;
+
+    private struct LayoutSnapshot
+    {
+        public Vector2 anchorMin;
+        public Vector2 anchorMax;
+        public Vector2 pivot;
+        public Vector2 anchoredPosition;
+        public Vector2 sizeDelta;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+    }
 
     private void Awake()
     {
@@ -95,6 +114,38 @@ public class InfoBoxUI : MonoBehaviour
         return ui.ShowMessage(message, duration);
     }
 
+    public static bool TryShowTopLeft(string message, float duration = 0f)
+    {
+        return TryShowTopLeft(message, duration, default);
+    }
+
+    public static bool TryShowTopLeft(string message, float duration, Vector2 offset)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        InfoBoxUI ui = Instance;
+        if (ui == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            ui = FindFirstObjectByType<InfoBoxUI>();
+#else
+            ui = FindObjectOfType<InfoBoxUI>();
+#endif
+        }
+
+        if (ui == null)
+        {
+            GameObject runner = new GameObject("InfoBoxUI_Runtime");
+            ui = runner.AddComponent<InfoBoxUI>();
+        }
+
+        Vector2 resolvedOffset = offset == default ? ui.topLeftOffset : offset;
+        return ui.ShowMessageTopLeft(message, duration, resolvedOffset);
+    }
+
     public static float GetDefaultDuration()
     {
         InfoBoxUI ui = Instance;
@@ -134,6 +185,7 @@ public class InfoBoxUI : MonoBehaviour
             StopCoroutine(hideRoutine);
         }
 
+        RestoreLayoutIfNeeded();
         SetVisible(true);
         infoText.text = message;
         infoText.gameObject.SetActive(true);
@@ -143,6 +195,17 @@ public class InfoBoxUI : MonoBehaviour
         float wait = duration > 0f ? duration : defaultDuration;
         hideRoutine = StartCoroutine(ShowAndHideRoutine(wait));
 
+        return true;
+    }
+
+    public bool ShowMessageTopLeft(string message, float duration, Vector2 offset)
+    {
+        if (!ShowMessage(message, duration))
+        {
+            return false;
+        }
+
+        ApplyTopLeftLayout(offset);
         return true;
     }
 
@@ -181,6 +244,8 @@ public class InfoBoxUI : MonoBehaviour
         {
             infoText.text = string.Empty;
         }
+
+        RestoreLayoutIfNeeded();
 
         if (setInactiveOnHide)
         {
@@ -225,6 +290,85 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         InitializeCanvasGroup();
+    }
+
+    private RectTransform ResolveLayoutTarget()
+    {
+        if (layoutTarget != null)
+        {
+            return layoutTarget;
+        }
+
+        if (infoBoxFrame != null)
+        {
+            layoutTarget = infoBoxFrame.GetComponent<RectTransform>();
+        }
+        else if (infoText != null)
+        {
+            layoutTarget = infoText.rectTransform;
+        }
+        else if (infoBoxRoot != null)
+        {
+            layoutTarget = infoBoxRoot.GetComponent<RectTransform>();
+        }
+
+        return layoutTarget;
+    }
+
+    private void ApplyTopLeftLayout(Vector2 offset)
+    {
+        RectTransform target = ResolveLayoutTarget();
+        if (target == null)
+        {
+            return;
+        }
+
+        if (!layoutSaved)
+        {
+            savedLayout = new LayoutSnapshot
+            {
+                anchorMin = target.anchorMin,
+                anchorMax = target.anchorMax,
+                pivot = target.pivot,
+                anchoredPosition = target.anchoredPosition,
+                sizeDelta = target.sizeDelta,
+                localRotation = target.localRotation,
+                localScale = target.localScale
+            };
+            layoutSaved = true;
+        }
+
+        restoreLayoutAfterHide = true;
+        target.anchorMin = new Vector2(0f, 1f);
+        target.anchorMax = new Vector2(0f, 1f);
+        target.pivot = new Vector2(0f, 1f);
+        float y = offset.y >= 0f ? -offset.y : offset.y;
+        target.anchoredPosition = new Vector2(offset.x, y);
+        target.localRotation = Quaternion.identity;
+        target.localScale = Vector3.one;
+    }
+
+    private void RestoreLayoutIfNeeded()
+    {
+        if (!restoreLayoutAfterHide || !layoutSaved)
+        {
+            return;
+        }
+
+        RectTransform target = ResolveLayoutTarget();
+        if (target == null)
+        {
+            return;
+        }
+
+        target.anchorMin = savedLayout.anchorMin;
+        target.anchorMax = savedLayout.anchorMax;
+        target.pivot = savedLayout.pivot;
+        target.anchoredPosition = savedLayout.anchoredPosition;
+        target.sizeDelta = savedLayout.sizeDelta;
+        target.localRotation = savedLayout.localRotation;
+        target.localScale = savedLayout.localScale;
+        restoreLayoutAfterHide = false;
     }
 
     private TextMeshProUGUI FindText(string name)
