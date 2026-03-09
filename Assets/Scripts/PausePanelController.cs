@@ -298,26 +298,63 @@ public class PausePanelController : MonoBehaviour
             return;
         }
 
-        CharacterStateStore store = CharacterStateStore.Instance;
-        if (store == null)
-        {
-            store = FindFirstObjectByType<CharacterStateStore>();
-        }
-        if (store == null)
-        {
-            store = FindObjectOfType<CharacterStateStore>();
-        }
+        CharacterStateStore store = ResolveCharacterStateStore();
 
         if (store != null)
         {
             store.Save();
-            InfoBoxUI.TryShowTopLeft("Sauvegarde creee.");
+            InfoBoxUI.TryShowTopLeft("Sauvegarde créée.");
         }
         else
         {
             Debug.LogWarning("PausePanelController: CharacterStateStore introuvable, sauvegarde impossible.");
             InfoBoxUI.TryShowTopLeft("Sauvegarde impossible.");
         }
+    }
+
+    private CharacterStateStore ResolveCharacterStateStore()
+    {
+        if (CharacterStateStore.Instance != null)
+        {
+            return CharacterStateStore.Instance;
+        }
+
+        CharacterStateStore store = FindFirstObjectByType<CharacterStateStore>();
+        if (store != null)
+        {
+            return store;
+        }
+
+        store = FindObjectOfType<CharacterStateStore>();
+        if (store != null)
+        {
+            return store;
+        }
+
+        CharacterStateStore[] candidates = Resources.FindObjectsOfTypeAll<CharacterStateStore>();
+        if (candidates == null || candidates.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            CharacterStateStore candidate = candidates[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            Scene scene = candidate.gameObject.scene;
+            if (!scene.IsValid() || !scene.isLoaded)
+            {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return null;
     }
 
     public void UI_Save()
@@ -349,8 +386,7 @@ public class PausePanelController : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(mainMenuSceneName))
         {
-            Debug.LogWarning("PausePanelController: mainMenuSceneName vide, retour menu annule.");
-            return;
+            mainMenuSceneName = MainMenuController.DefaultMenuSceneName;
         }
 
         SceneManager.LoadScene(mainMenuSceneName, LoadSceneMode.Single);

@@ -11883,7 +11883,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9370741, y: 0.9370741, z: 0.9370741}
+  m_LocalScale: {x: 0.95079386, y: 0.95079386, z: 0.95079386}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -24501,7 +24501,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6733819, y: 1.6733819, z: 1.6733819}
+  m_LocalScale: {x: 1.7089145, y: 1.7089145, z: 1.7089145}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -44163,7 +44163,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1261508233}
   - component: {fileID: 1261508232}
-  - component: {fileID: 1261508234}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -44214,22 +44213,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1261508234
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1261508231}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad3058800b484d82937766454672d59c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SaveSessionManager
-  menuSceneName: MainMenu
-  savesRootFolder: Saves
-  sessionMetaFileName: session.json
-  saveMetaFileName: meta.json
 --- !u!1001 &1263930525
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -90585,7 +90568,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.0919106, y: 2.0919106, z: 2.0919106}
+  m_LocalScale: {x: 2.1363304, y: 2.1363304, z: 2.1363304}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}

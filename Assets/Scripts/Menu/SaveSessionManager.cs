@@ -28,6 +28,12 @@ public class SaveSessionManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            // Evite de detruire un GameObject qui porte d'autres managers (ex: GameManager).
+            if (TryDestroySelfOnly())
+            {
+                return;
+            }
+
             Destroy(gameObject);
             return;
         }
@@ -46,6 +52,18 @@ public class SaveSessionManager : MonoBehaviour
         }
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private bool TryDestroySelfOnly()
+    {
+        MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+        if (behaviours != null && behaviours.Length > 1)
+        {
+            Destroy(this);
+            return true;
+        }
+
+        return false;
     }
 
     private void Update()

@@ -172,6 +172,8 @@ public class MainMenuController : MonoBehaviour
     private bool cachedSharedCursorAllowInput;
     private bool cachedSharedCursorNavigatorEnabled;
     private bool cachedSharedCursorState;
+    private CursorController.LayoutFallback sharedCursorFallbackDefault = CursorController.LayoutFallback.None;
+    private bool sharedCursorFallbackInitialized;
     private bool joinInProgress;
     private Coroutine joinTimeoutRoutine;
 
@@ -575,6 +577,16 @@ public class MainMenuController : MonoBehaviour
         {
             return;
         }
+
+        if (!sharedCursorFallbackInitialized)
+        {
+            sharedCursorFallbackDefault = sharedCursor.fallbackLayout;
+            sharedCursorFallbackInitialized = true;
+        }
+
+        sharedCursor.fallbackLayout = currentMenu == MenuState.Join
+            ? CursorController.LayoutFallback.Vertical
+            : sharedCursorFallbackDefault;
 
         if (newGamePromptOpen)
         {
@@ -1408,8 +1420,6 @@ public class MainMenuController : MonoBehaviour
         {
             confirmText = confirmRoot.GetComponentInChildren<TMP_Text>(true);
         }
-
-        EnsureDeleteConfirmRuntime();
 
         if (virtualKeyboardCursor == null)
         {
@@ -2338,6 +2348,41 @@ public class MainMenuController : MonoBehaviour
         HideJoinMenu();
     }
 
+    private void PasteJoinCodeFromClipboard()
+    {
+        if (currentMenu != MenuState.Join)
+        {
+            return;
+        }
+
+        if (joinCodeInput == null)
+        {
+            return;
+        }
+
+        string clipboard = GUIUtility.systemCopyBuffer;
+        if (string.IsNullOrWhiteSpace(clipboard))
+        {
+            return;
+        }
+
+        string normalized = NetcodeSessionCode.Normalize(clipboard);
+        if (!EnsureJoinInputFieldReady())
+        {
+            return;
+        }
+
+        joinCodeInput.SetTextWithoutNotify(normalized);
+        joinCodeInput.Select();
+        joinCodeInput.ActivateInputField();
+        int caret = normalized.Length;
+        joinCodeInput.caretPosition = caret;
+        joinCodeInput.selectionAnchorPosition = caret;
+        joinCodeInput.selectionFocusPosition = caret;
+        joinCodeInput.ForceLabelUpdate();
+        UpdateJoinConfirmState();
+    }
+
     private void CreateNewGameAndStart(string sessionName)
     {
         if (SaveSessionManager.Instance == null)
@@ -3009,6 +3054,11 @@ public class MainMenuController : MonoBehaviour
         CancelJoin();
     }
 
+    public void UI_PasteJoinCode()
+    {
+        PasteJoinCodeFromClipboard();
+    }
+
     public void UI_Options()
     {
         OnOptionsRequested();
@@ -3238,73 +3288,6 @@ public class MainMenuController : MonoBehaviour
         }
         SetActiveMenuInteractable(true);
         SetSharedCursorInputEnabled(true);
-    }
-
-    private void EnsureDeleteConfirmRuntime()
-    {
-        if (confirmRoot != null)
-        {
-            return;
-        }
-
-        Transform parent = mainMenuGroup != null ? mainMenuGroup.transform : transform;
-        if (parent == null)
-        {
-            return;
-        }
-
-        GameObject panel = new GameObject("MainMenu_DeleteConfirm_Runtime", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
-        panel.transform.SetParent(parent, false);
-
-        RectTransform panelRect = panel.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRect.pivot = new Vector2(0.5f, 0.5f);
-        panelRect.sizeDelta = new Vector2(900f, 240f);
-        panelRect.anchoredPosition = Vector2.zero;
-
-        Image panelImage = panel.GetComponent<Image>();
-        panelImage.color = new Color(0f, 0f, 0f, 0.75f);
-
-        GameObject textObject = new GameObject("Message", typeof(RectTransform), typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(panel.transform, false);
-
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(40f, 40f);
-        textRect.offsetMax = new Vector2(-40f, -40f);
-
-        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.text = string.Empty;
-        text.alignment = TextAlignmentOptions.Center;
-        text.enableWordWrapping = true;
-        text.fontSize = 36f;
-        text.color = Color.white;
-
-        TMP_Text sample = FindAnyMenuText();
-        if (sample != null)
-        {
-            text.font = sample.font;
-            text.fontSharedMaterial = sample.fontSharedMaterial;
-            text.color = sample.color;
-            text.fontSize = Mathf.Max(28f, sample.fontSize);
-        }
-
-        confirmRoot = panel;
-        confirmText = text;
-        panel.SetActive(false);
-    }
-
-    private TMP_Text FindAnyMenuText()
-    {
-        Transform root = mainMenuGroup != null ? mainMenuGroup.transform : transform;
-        if (root == null)
-        {
-            return null;
-        }
-
-        return root.GetComponentInChildren<TMP_Text>(true);
     }
 
     private void SetSharedCursorInputEnabled(bool enabled)
