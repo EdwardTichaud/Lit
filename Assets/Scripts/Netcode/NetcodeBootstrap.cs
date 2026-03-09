@@ -57,10 +57,7 @@ public class NetcodeBootstrap : MonoBehaviour
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeConnectionApproval>(gameObject);
         }
 
-        if (autoCreateLobbyUI && !IsMenuScene(SceneManager.GetActiveScene().name))
-        {
-            NetcodeRuntimeUtilities.GetOrAdd<NetcodeLobbyUI>(gameObject);
-        }
+        SyncLobbyUI(SceneManager.GetActiveScene());
 
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -75,15 +72,42 @@ public class NetcodeBootstrap : MonoBehaviour
         NetcodeSceneObjectInstaller.PrepareScene(scene);
         NetcodePrefabRegistry.Refresh();
 
-        if (autoCreateLobbyUI && !IsMenuScene(scene.name))
-        {
-            NetcodeRuntimeUtilities.GetOrAdd<NetcodeLobbyUI>(gameObject);
-        }
+        SyncLobbyUI(scene);
     }
 
     private static bool IsMenuScene(string sceneName)
     {
         return string.Equals(sceneName, MainMenuController.DefaultMenuSceneName, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void SyncLobbyUI(Scene scene)
+    {
+        if (ShouldCreateLobbyUI(scene))
+        {
+            NetcodeRuntimeUtilities.GetOrAdd<NetcodeLobbyUI>(gameObject);
+            return;
+        }
+
+        NetcodeLobbyUI lobby = GetComponent<NetcodeLobbyUI>();
+        if (lobby != null)
+        {
+            Destroy(lobby);
+        }
+    }
+
+    private bool ShouldCreateLobbyUI(Scene scene)
+    {
+        if (!autoCreateLobbyUI || IsMenuScene(scene.name))
+        {
+            return false;
+        }
+
+        if (SaveSessionManager.Instance == null)
+        {
+            return false;
+        }
+
+        return SaveSessionManager.Instance.CurrentSessionType == SaveSessionType.Multiplayer;
     }
 
     private void EnsureNetworkManager()

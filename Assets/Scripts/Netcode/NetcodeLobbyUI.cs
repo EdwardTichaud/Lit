@@ -37,6 +37,7 @@ public class NetcodeLobbyUI : MonoBehaviour
     private Text statusText;
     private Text portText;
     private GameObject panelRoot;
+    private GameObject canvasRoot;
     private Font defaultFont;
     private NetcodeLauncher launcher;
     private string currentHostCode;
@@ -65,6 +66,28 @@ public class NetcodeLobbyUI : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        if (uiVisible)
+        {
+            SetUIVisible(false);
+        }
+
+        if (canvasRoot != null)
+        {
+            Destroy(canvasRoot);
+        }
+        else if (panelRoot != null)
+        {
+            Destroy(panelRoot);
+        }
+    }
+
     private void OnEnable()
     {
         LocalInputRouter.EnsureInitialized();
@@ -87,19 +110,19 @@ public class NetcodeLobbyUI : MonoBehaviour
         defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         EnsureEventSystem();
 
-        GameObject canvasObject = new GameObject("LobbyCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvasObject.transform.SetParent(transform, false);
+        canvasRoot = new GameObject("LobbyCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasRoot.transform.SetParent(transform, false);
 
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        Canvas canvas = canvasRoot.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        CanvasScaler scaler = canvasRoot.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
 
         panelRoot = new GameObject("LobbyPanel", typeof(RectTransform), typeof(Image));
-        panelRoot.transform.SetParent(canvasObject.transform, false);
+        panelRoot.transform.SetParent(canvasRoot.transform, false);
         Image panelImage = panelRoot.GetComponent<Image>();
         panelImage.color = panelColor;
 

@@ -19,6 +19,7 @@ public class SaveSessionManager : MonoBehaviour
     public string CurrentSaveId { get; private set; }
     public string CurrentSaveName { get; private set; }
     public float CurrentPlaytimeSeconds { get; private set; }
+    public SaveSessionType CurrentSessionType { get; private set; }
 
     private bool trackingPlaytime;
     private List<SaveSessionInfo> sessionsCache = new List<SaveSessionInfo>();
@@ -83,6 +84,26 @@ public class SaveSessionManager : MonoBehaviour
 
     public IReadOnlyList<SaveSessionInfo> Sessions => sessionsCache;
 
+    public IReadOnlyList<SaveSessionInfo> GetSessionsByType(SaveSessionType sessionType)
+    {
+        if (sessionsCache == null || sessionsCache.Count == 0)
+        {
+            return Array.Empty<SaveSessionInfo>();
+        }
+
+        List<SaveSessionInfo> results = new List<SaveSessionInfo>(sessionsCache.Count);
+        for (int i = 0; i < sessionsCache.Count; i++)
+        {
+            SaveSessionInfo session = sessionsCache[i];
+            if (session != null && session.sessionType == sessionType)
+            {
+                results.Add(session);
+            }
+        }
+
+        return results;
+    }
+
     public void ReloadSessions()
     {
         sessionsCache = LoadSessions();
@@ -138,7 +159,7 @@ public class SaveSessionManager : MonoBehaviour
         return DeleteSessionInternal(sessionId);
     }
 
-    public SaveSessionInfo CreateSession(string sessionName)
+    public SaveSessionInfo CreateSession(string sessionName, SaveSessionType sessionType)
     {
         string name = string.IsNullOrWhiteSpace(sessionName) ? "Nouvelle partie" : sessionName.Trim();
         string sessionId = GenerateId();
@@ -149,7 +170,8 @@ public class SaveSessionManager : MonoBehaviour
         {
             sessionId = sessionId,
             sessionName = name,
-            createdAtUtcTicks = DateTime.UtcNow.Ticks
+            createdAtUtcTicks = DateTime.UtcNow.Ticks,
+            sessionType = sessionType
         };
         WriteJson(GetSessionMetaPath(sessionId), meta);
 
@@ -158,6 +180,7 @@ public class SaveSessionManager : MonoBehaviour
             sessionId = sessionId,
             sessionName = name,
             createdAtUtcTicks = meta.createdAtUtcTicks,
+            sessionType = sessionType,
             saves = new List<SaveSlotInfo>()
         };
 
@@ -177,10 +200,12 @@ public class SaveSessionManager : MonoBehaviour
         string savePath = GetSavePath(sessionId, saveId);
         Directory.CreateDirectory(savePath);
 
+        SaveSessionType sessionType = ResolveSessionType(sessionId);
         SaveMeta meta = new SaveMeta
         {
             sessionId = sessionId,
             sessionName = ResolveSessionName(sessionId),
+            sessionType = sessionType,
             saveId = saveId,
             saveName = name,
             savedAtUtcTicks = DateTime.UtcNow.Ticks,
@@ -193,6 +218,7 @@ public class SaveSessionManager : MonoBehaviour
         {
             sessionId = sessionId,
             sessionName = meta.sessionName,
+            sessionType = sessionType,
             saveId = saveId,
             saveName = name,
             savedAtUtcTicks = meta.savedAtUtcTicks,
@@ -224,6 +250,7 @@ public class SaveSessionManager : MonoBehaviour
 
         SaveMeta meta = ReadJson<SaveMeta>(GetSaveMetaPath(sessionId, saveId));
         CurrentPlaytimeSeconds = meta != null ? meta.playTimeSeconds : 0f;
+        CurrentSessionType = meta != null ? meta.sessionType : ResolveSessionType(sessionId);
     }
 
     public string GetActiveSaveFilePath(string fileName)
@@ -253,6 +280,7 @@ public class SaveSessionManager : MonoBehaviour
         SaveMeta meta = ReadJson<SaveMeta>(metaPath) ?? new SaveMeta();
         meta.sessionId = CurrentSessionId;
         meta.sessionName = ResolveSessionName(CurrentSessionId);
+        meta.sessionType = ResolveSessionType(CurrentSessionId);
         meta.saveId = CurrentSaveId;
         meta.saveName = ResolveSaveName(CurrentSessionId, CurrentSaveId);
         meta.savedAtUtcTicks = DateTime.UtcNow.Ticks;
@@ -345,6 +373,7 @@ public class SaveSessionManager : MonoBehaviour
         CurrentSaveId = null;
         CurrentSaveName = null;
         CurrentPlaytimeSeconds = 0f;
+        CurrentSessionType = SaveSessionType.Solo;
     }
 
     private string ResolveSessionName(string sessionId)
@@ -362,6 +391,23 @@ public class SaveSessionManager : MonoBehaviour
         }
 
         return sessionId;
+    }
+
+    private SaveSessionType ResolveSessionType(string sessionId)
+    {
+        SessionMeta meta = ReadJson<SessionMeta>(GetSessionMetaPath(sessionId));
+        if (meta != null)
+        {
+            return meta.sessionType;
+        }
+
+        SaveSessionInfo session = GetSession(sessionId);
+        if (session != null)
+        {
+            return session.sessionType;
+        }
+
+        return SaveSessionType.Solo;
     }
 
     private string ResolveSaveName(string sessionId, string saveId)
@@ -395,11 +441,13 @@ public class SaveSessionManager : MonoBehaviour
 
             string sessionId = Path.GetFileName(sessionPath);
             SessionMeta sessionMeta = ReadJson<SessionMeta>(GetSessionMetaPath(sessionId));
+            SaveSessionType sessionType = sessionMeta != null ? sessionMeta.sessionType : SaveSessionType.Solo;
             SaveSessionInfo session = new SaveSessionInfo
             {
                 sessionId = sessionId,
                 sessionName = sessionMeta != null && !string.IsNullOrWhiteSpace(sessionMeta.sessionName) ? sessionMeta.sessionName : sessionId,
                 createdAtUtcTicks = sessionMeta != null ? sessionMeta.createdAtUtcTicks : 0,
+                sessionType = sessionType,
                 saves = new List<SaveSlotInfo>()
             };
 
@@ -416,6 +464,7 @@ public class SaveSessionManager : MonoBehaviour
                     {
                         sessionId = sessionId,
                         sessionName = session.sessionName,
+                        sessionType = sessionType,
                         saveId = saveId,
                         saveName = saveId,
                         savedAtUtcTicks = fallbackTime.Ticks,
@@ -428,6 +477,7 @@ public class SaveSessionManager : MonoBehaviour
                 {
                     sessionId = sessionId,
                     sessionName = session.sessionName,
+                    sessionType = session.sessionType,
                     saveId = saveId,
                     saveName = saveMeta.saveName,
                     savedAtUtcTicks = saveMeta.savedAtUtcTicks,
@@ -527,11 +577,19 @@ public class SaveSessionManager : MonoBehaviour
 }
 
 [System.Serializable]
+public enum SaveSessionType
+{
+    Solo = 0,
+    Multiplayer = 1
+}
+
+[System.Serializable]
 public class SaveSessionInfo
 {
     public string sessionId;
     public string sessionName;
     public long createdAtUtcTicks;
+    public SaveSessionType sessionType;
     public List<SaveSlotInfo> saves = new List<SaveSlotInfo>();
 }
 
@@ -540,6 +598,7 @@ public class SaveSlotInfo
 {
     public string sessionId;
     public string sessionName;
+    public SaveSessionType sessionType;
     public string saveId;
     public string saveName;
     public long savedAtUtcTicks;
@@ -554,6 +613,7 @@ public class SessionMeta
     public string sessionId;
     public string sessionName;
     public long createdAtUtcTicks;
+    public SaveSessionType sessionType;
 }
 
 [System.Serializable]
@@ -561,6 +621,7 @@ public class SaveMeta
 {
     public string sessionId;
     public string sessionName;
+    public SaveSessionType sessionType;
     public string saveId;
     public string saveName;
     public long savedAtUtcTicks;

@@ -121,4 +121,12 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
             LocalInputRouter.RaiseMulti(context);
         }
     }
+
+    public void OnStart(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            LocalInputRouter.RaiseStart(context);
+        }
+    }
 }

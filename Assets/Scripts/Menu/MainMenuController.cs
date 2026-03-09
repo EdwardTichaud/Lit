@@ -18,12 +18,16 @@ public class MainMenuController : MonoBehaviour
     {
         TitleCard,
         GameOptions,
+        SoloOptions,
+        MultiOptions,
         LoadMenu
     }
 
     [Header("Scene")]
     [SerializeField] private CanvasGroup titleCardGroup;
     [SerializeField] private CanvasGroup gameOptionsGroup;
+    [SerializeField] private CanvasGroup soloOptionsGroup;
+    [SerializeField] private CanvasGroup multiOptionsGroup;
     [SerializeField] private CanvasGroup loadMenuGroup;
     [SerializeField] private CanvasGroup mainMenuGroup;
     [SerializeField] private bool hideTitleCardOnProceed = true;
@@ -51,20 +55,34 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private RawImage previewImage;
     [SerializeField] private AspectRatioFitter previewAspect;
     [SerializeField] private string screenshotFileName = "screenshot.png";
+    [SerializeField] private Texture2D previewMissingTexture;
+    [SerializeField] private TMP_Text previewMissingLabel;
+    [SerializeField] private string previewMissingLabelText = "Aucun aperçu";
+    [SerializeField] private Color previewMissingLabelColor = new Color(1f, 1f, 1f, 0.7f);
+    [SerializeField] private int previewMissingLabelFontSize = 36;
 
     [Header("Actions")]
-    [SerializeField] private TMP_InputField sessionNameInput;
     [SerializeField] private TMP_Text statusText;
 
     [Header("Game Options")]
     [Header("Shared Cursor")]
     [SerializeField] private CursorController sharedCursor;
     [SerializeField] private RectTransform gameOptionsCursorRoot;
+    [SerializeField] private RectTransform soloOptionsCursorRoot;
+    [SerializeField] private RectTransform multiOptionsCursorRoot;
     [SerializeField] private RectTransform loadMenuCursorRoot;
 
     [Header("Confirm Delete")]
     [SerializeField] private GameObject confirmRoot;
     [SerializeField] private TMP_Text confirmText;
+
+    [Header("Confirm Load")]
+    [SerializeField] private CanvasGroup loadConfirmGroup;
+    [SerializeField] private TMP_Text loadConfirmText;
+    [SerializeField] private MenuCursorAction loadConfirmYesAction;
+    [SerializeField] private MenuCursorAction loadConfirmNoAction;
+    [SerializeField] private RectTransform loadConfirmCursorRoot;
+    [SerializeField] private string loadConfirmMessageFormat = "Charger '{0}' ?";
 
     [Header("New Game Prompt")]
     [SerializeField] private CanvasGroup newGamePanelGroup;
@@ -120,12 +138,17 @@ public class MainMenuController : MonoBehaviour
     private bool textInputSubscribed;
     private Keyboard subscribedKeyboard;
     private bool warnedMissingNewGameInputText;
+    private bool loadConfirmOpen;
+    private SaveSlotInfo pendingLoad;
+    private MenuState loadMenuReturnState = MenuState.GameOptions;
+    private SaveSessionType currentSessionType = SaveSessionType.Solo;
 
     private void Awake()
     {
         EnsureSaveManager();
         ResolveOptionalReferences();
         ConfigureNewGameActions();
+        ConfigureLoadConfirmActions();
         InitializeState();
         InitializeOverlays();
     }
@@ -137,7 +160,7 @@ public class MainMenuController : MonoBehaviour
         LocalInputRouter.Return += OnReturnPerformed;
         RefreshSessions();
 
-        if (currentMenu == MenuState.GameOptions || currentMenu == MenuState.LoadMenu)
+        if (currentMenu == MenuState.GameOptions || currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions || currentMenu == MenuState.LoadMenu)
         {
             InputFocusStack.Push(this);
         }
@@ -181,7 +204,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (hoveredSessionEntry != null)
+        if (hoveredSessionEntry != null && IsCursorOnSessionsRoot())
         {
             OnSessionInteract(hoveredSessionEntry);
         }
@@ -204,7 +227,7 @@ public class MainMenuController : MonoBehaviour
 
     private bool CanProcessInteract()
     {
-        if (newGamePromptOpen || isLoading)
+        if (newGamePromptOpen || loadConfirmOpen || isLoading)
         {
             return false;
         }
@@ -256,9 +279,55 @@ public class MainMenuController : MonoBehaviour
         SetMenuState(MenuState.GameOptions);
     }
 
+    private void ShowSoloOptionsMenu()
+    {
+        if (soloOptionsGroup == null)
+        {
+            SetStatus("Menu solo manquant.");
+            return;
+        }
+
+        currentSessionType = SaveSessionType.Solo;
+        loadMenuReturnState = MenuState.SoloOptions;
+        SetMenuState(MenuState.SoloOptions);
+    }
+
+    private void ShowMultiOptionsMenu()
+    {
+        if (multiOptionsGroup == null)
+        {
+            SetStatus("Menu multijoueur manquant.");
+            return;
+        }
+
+        currentSessionType = SaveSessionType.Multiplayer;
+        loadMenuReturnState = MenuState.MultiOptions;
+        SetMenuState(MenuState.MultiOptions);
+    }
+
     private void ShowLoadMenu()
     {
         SetMenuState(MenuState.LoadMenu);
+    }
+
+    private void EnsureSessionTypeFromMenu()
+    {
+        if (currentMenu == MenuState.MultiOptions)
+        {
+            currentSessionType = SaveSessionType.Multiplayer;
+            loadMenuReturnState = MenuState.MultiOptions;
+            return;
+        }
+
+        if (currentMenu == MenuState.SoloOptions)
+        {
+            currentSessionType = SaveSessionType.Solo;
+            loadMenuReturnState = MenuState.SoloOptions;
+            return;
+        }
+
+        currentSessionType = SaveSessionType.Solo;
+        loadMenuReturnState = MenuState.GameOptions;
     }
 
     private void SetMenuState(MenuState state)
@@ -290,6 +359,30 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
+        if (soloOptionsGroup != null)
+        {
+            if (state == MenuState.SoloOptions)
+            {
+                ShowPanel(soloOptionsGroup);
+            }
+            else
+            {
+                HidePanel(soloOptionsGroup);
+            }
+        }
+
+        if (multiOptionsGroup != null)
+        {
+            if (state == MenuState.MultiOptions)
+            {
+                ShowPanel(multiOptionsGroup);
+            }
+            else
+            {
+                HidePanel(multiOptionsGroup);
+            }
+        }
+
         CanvasGroup loadGroup = ResolveLoadMenuGroup();
         if (loadGroup != null)
         {
@@ -305,7 +398,7 @@ public class MainMenuController : MonoBehaviour
 
         waitingForInput = waitForAnyInput && state == MenuState.TitleCard;
 
-        if (state == MenuState.GameOptions || state == MenuState.LoadMenu)
+        if (state == MenuState.GameOptions || state == MenuState.SoloOptions || state == MenuState.MultiOptions || state == MenuState.LoadMenu)
         {
             InputFocusStack.Push(this);
         }
@@ -331,10 +424,24 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (loadConfirmOpen)
+        {
+            UpdateCursorTargetForLoadConfirm();
+            return;
+        }
+
         RectTransform targetRoot = null;
         if (currentMenu == MenuState.GameOptions)
         {
             targetRoot = ResolveCursorRoot(gameOptionsCursorRoot, gameOptionsGroup);
+        }
+        else if (currentMenu == MenuState.SoloOptions)
+        {
+            targetRoot = ResolveCursorRoot(soloOptionsCursorRoot, soloOptionsGroup);
+        }
+        else if (currentMenu == MenuState.MultiOptions)
+        {
+            targetRoot = ResolveCursorRoot(multiOptionsCursorRoot, multiOptionsGroup);
         }
         else if (currentMenu == MenuState.LoadMenu)
         {
@@ -356,6 +463,21 @@ public class MainMenuController : MonoBehaviour
         }
 
         RectTransform targetRoot = ResolveCursorRoot(newGameCursorRoot, newGamePanelGroup);
+        currentCursorRoot = targetRoot;
+        sharedCursor.itemsParent = targetRoot;
+        sharedCursor.layoutGroup = targetRoot != null ? targetRoot.GetComponent<LayoutGroup>() : null;
+        sharedCursor.Refresh();
+        StartCursorSnap();
+    }
+
+    private void UpdateCursorTargetForLoadConfirm()
+    {
+        if (sharedCursor == null)
+        {
+            return;
+        }
+
+        RectTransform targetRoot = ResolveCursorRoot(loadConfirmCursorRoot, loadConfirmGroup);
         currentCursorRoot = targetRoot;
         sharedCursor.itemsParent = targetRoot;
         sharedCursor.layoutGroup = targetRoot != null ? targetRoot.GetComponent<LayoutGroup>() : null;
@@ -651,6 +773,12 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (loadConfirmOpen)
+        {
+            CancelLoadConfirm();
+            return;
+        }
+
         if (confirmRoot != null && confirmRoot.activeSelf)
         {
             CancelDelete();
@@ -665,6 +793,23 @@ public class MainMenuController : MonoBehaviour
                 return;
             }
 
+            switch (loadMenuReturnState)
+            {
+                case MenuState.SoloOptions:
+                    ShowSoloOptionsMenu();
+                    break;
+                case MenuState.MultiOptions:
+                    ShowMultiOptionsMenu();
+                    break;
+                default:
+                    ShowGameOptionsMenu();
+                    break;
+            }
+            return;
+        }
+
+        if (currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions)
+        {
             ShowGameOptionsMenu();
             return;
         }
@@ -732,6 +877,11 @@ public class MainMenuController : MonoBehaviour
             ApplyFadeImmediate(newGamePanelGroup, 0f, false);
         }
 
+        if (loadConfirmGroup != null)
+        {
+            ApplyFadeImmediate(loadConfirmGroup, 0f, false);
+        }
+
         ApplyVirtualKeyboardImmediate(false);
 
         if (loadingGroup != null)
@@ -742,6 +892,44 @@ public class MainMenuController : MonoBehaviour
 
     private void ResolveOptionalReferences()
     {
+        if (gameOptionsGroup == null)
+        {
+            gameOptionsGroup = FindCanvasGroup("MainMenu_GameOptions");
+        }
+
+        if (soloOptionsGroup == null)
+        {
+            soloOptionsGroup = FindCanvasGroup("MainMenu_Solo_GameOptions");
+            if (soloOptionsGroup == null)
+            {
+                soloOptionsGroup = FindCanvasGroup("MainMenu_Solo");
+            }
+        }
+
+        if (multiOptionsGroup == null)
+        {
+            multiOptionsGroup = FindCanvasGroup("MainMenu_Multi_GameOptions");
+            if (multiOptionsGroup == null)
+            {
+                multiOptionsGroup = FindCanvasGroup("MainMenu_Multi");
+            }
+        }
+
+        if (soloOptionsCursorRoot == null && soloOptionsGroup != null)
+        {
+            soloOptionsCursorRoot = soloOptionsGroup.transform as RectTransform;
+        }
+
+        if (multiOptionsCursorRoot == null && multiOptionsGroup != null)
+        {
+            multiOptionsCursorRoot = multiOptionsGroup.transform as RectTransform;
+        }
+
+        if (loadMenuGroup == null)
+        {
+            loadMenuGroup = FindCanvasGroup("MainMenu_Load");
+        }
+
         if (newGamePanelGroup == null)
         {
             newGamePanelGroup = FindCanvasGroup("MainMenu_NewGame");
@@ -773,6 +961,44 @@ public class MainMenuController : MonoBehaviour
             else
             {
                 newGameCursorRoot = newGamePanelGroup.transform as RectTransform;
+            }
+        }
+
+        if (loadConfirmGroup == null)
+        {
+            loadConfirmGroup = FindCanvasGroup("MainMenu_LoadConfirm");
+            if (loadConfirmGroup == null)
+            {
+                loadConfirmGroup = FindCanvasGroup("LoadConfirm");
+            }
+        }
+
+        if (loadConfirmText == null && loadConfirmGroup != null)
+        {
+            loadConfirmText = loadConfirmGroup.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (loadConfirmYesAction == null && loadConfirmGroup != null)
+        {
+            loadConfirmYesAction = FindMenuCursorActionByName(loadConfirmGroup.transform, "Confirm");
+        }
+
+        if (loadConfirmNoAction == null && loadConfirmGroup != null)
+        {
+            loadConfirmNoAction = FindMenuCursorActionByName(loadConfirmGroup.transform, "Cancel");
+        }
+
+        if (loadConfirmCursorRoot == null && loadConfirmGroup != null)
+        {
+            Transform confirm = FindInHierarchy(loadConfirmGroup.transform, "Confirm");
+            Transform cancel = FindInHierarchy(loadConfirmGroup.transform, "Cancel");
+            if (confirm != null && cancel != null && confirm.parent == cancel.parent)
+            {
+                loadConfirmCursorRoot = confirm.parent as RectTransform;
+            }
+            else
+            {
+                loadConfirmCursorRoot = loadConfirmGroup.transform as RectTransform;
             }
         }
 
@@ -868,20 +1094,16 @@ public class MainMenuController : MonoBehaviour
         }
 
         SaveSessionManager.Instance.ReloadSessions();
-        IReadOnlyList<SaveSessionInfo> sessions = SaveSessionManager.Instance.Sessions;
+        IReadOnlyList<SaveSessionInfo> sessions = SaveSessionManager.Instance.GetSessionsByType(currentSessionType);
         if (sessions == null || sessions.Count == 0)
         {
-            bool hasExistingEntries = sessionsRoot != null && sessionsRoot.childCount > 0;
             if (emptySessionsPlaceholder != null)
             {
-                emptySessionsPlaceholder.SetActive(!hasExistingEntries);
+                emptySessionsPlaceholder.SetActive(true);
             }
             selectedSession = null;
             ClearSavesUI();
-            if (!hasExistingEntries)
-            {
-                ClearSessionsUI();
-            }
+            ClearSessionsUI();
             return;
         }
 
@@ -934,9 +1156,11 @@ public class MainMenuController : MonoBehaviour
 
     private void ClearSessionsUI()
     {
+        selectedSession = null;
         selectedSave = null;
         selectedSaveView = null;
         pendingDelete = null;
+        pendingLoad = null;
         hoveredSessionEntry = null;
 
         if (confirmRoot != null)
@@ -960,6 +1184,14 @@ public class MainMenuController : MonoBehaviour
     internal void OnSessionHovered(MainMenuSessionEntryUI entry)
     {
         hoveredSessionEntry = entry;
+        if (loadConfirmOpen)
+        {
+            return;
+        }
+        if (entry != null && entry.Session != null)
+        {
+            RebuildSavesList(entry.Session, false);
+        }
     }
 
     internal void OnSessionUnhovered(MainMenuSessionEntryUI entry)
@@ -994,7 +1226,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         selectedSession = session;
-        RebuildSavesList(session);
+        RebuildSavesList(session, true);
         if (focusSaves)
         {
             FocusSavesRoot();
@@ -1080,7 +1312,28 @@ public class MainMenuController : MonoBehaviour
         return current == savesRoot;
     }
 
-    private void RebuildSavesList(SaveSessionInfo session)
+    private bool IsCursorOnSessionsRoot()
+    {
+        if (sessionsRoot == null)
+        {
+            return false;
+        }
+
+        if (currentCursorRoot == sessionsRoot)
+        {
+            return true;
+        }
+
+        RectTransform current = sharedCursor != null ? sharedCursor.itemsParent : null;
+        if (current == null)
+        {
+            return false;
+        }
+
+        return current == sessionsRoot;
+    }
+
+    private void RebuildSavesList(SaveSessionInfo session, bool autoSelectSave)
     {
         ClearSavesUI();
 
@@ -1124,9 +1377,9 @@ public class MainMenuController : MonoBehaviour
 
         MainMenuSaveEntryUI entryToSelect = matchedEntry != null ? matchedEntry : firstEntry;
         SaveSlotInfo saveToSelect = matchedSave != null ? matchedSave : firstSave;
-        if (entryToSelect != null && saveToSelect != null)
+        if (autoSelectSave && entryToSelect != null && saveToSelect != null)
         {
-            OnSaveSelected(saveToSelect, entryToSelect);
+            OnSaveSelected(saveToSelect, entryToSelect, false);
         }
     }
 
@@ -1162,7 +1415,7 @@ public class MainMenuController : MonoBehaviour
         ShowSaveDetails(save);
     }
 
-    internal void OnSaveSelected(SaveSlotInfo save, MainMenuSaveEntryUI view)
+    internal void OnSaveSelected(SaveSlotInfo save, MainMenuSaveEntryUI view, bool requestLoad)
     {
         if (selectedSaveView != null)
         {
@@ -1177,6 +1430,11 @@ public class MainMenuController : MonoBehaviour
         }
 
         ShowSaveDetails(save);
+
+        if (requestLoad)
+        {
+            RequestLoadConfirm(save);
+        }
     }
 
     private void ShowSaveDetails(SaveSlotInfo save)
@@ -1185,6 +1443,8 @@ public class MainMenuController : MonoBehaviour
         {
             return;
         }
+
+        EnsurePreviewReferences();
 
         DateTime savedAt = save.savedAtUtcTicks > 0
             ? new DateTime(save.savedAtUtcTicks, DateTimeKind.Utc).ToLocalTime()
@@ -1212,6 +1472,7 @@ public class MainMenuController : MonoBehaviour
 
     private void UpdatePreview(SaveSlotInfo save)
     {
+        EnsurePreviewReferences();
         ClearPreviewTexture();
 
         if (previewImage == null || save == null)
@@ -1222,7 +1483,7 @@ public class MainMenuController : MonoBehaviour
         string path = GetScreenshotPath(save);
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
-            previewImage.texture = null;
+            ApplyMissingPreview();
             return;
         }
 
@@ -1231,7 +1492,7 @@ public class MainMenuController : MonoBehaviour
             byte[] data = File.ReadAllBytes(path);
             if (data == null || data.Length == 0)
             {
-                previewImage.texture = null;
+                ApplyMissingPreview();
                 return;
             }
 
@@ -1239,12 +1500,14 @@ public class MainMenuController : MonoBehaviour
             if (!texture.LoadImage(data))
             {
                 Destroy(texture);
-                previewImage.texture = null;
+                ApplyMissingPreview();
                 return;
             }
 
             previewTexture = texture;
             previewImage.texture = previewTexture;
+            previewImage.enabled = true;
+            SetPreviewPlaceholderVisible(false);
 
             if (previewAspect != null && previewTexture.height > 0)
             {
@@ -1254,7 +1517,60 @@ public class MainMenuController : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning($"MainMenuController: echec chargement screenshot {path}. {ex.Message}");
-            previewImage.texture = null;
+            ApplyMissingPreview();
+        }
+    }
+
+    private void EnsurePreviewReferences()
+    {
+        if (previewImage == null)
+        {
+            Transform root = ResolveLoadMenuGroup() != null ? ResolveLoadMenuGroup().transform : transform;
+            if (root != null)
+            {
+                Transform found = FindInHierarchy(root, "ScreenView");
+                if (found != null)
+                {
+                    previewImage = found.GetComponent<RawImage>();
+                }
+            }
+        }
+
+        if (previewAspect == null && previewImage != null)
+        {
+            previewAspect = previewImage.GetComponent<AspectRatioFitter>();
+        }
+
+        if (previewMissingLabel == null && previewImage != null)
+        {
+            Transform found = previewImage.transform.Find("PreviewPlaceholder");
+            if (found != null)
+            {
+                previewMissingLabel = found.GetComponent<TMP_Text>();
+            }
+        }
+
+        if (previewMissingLabel == null && previewImage != null)
+        {
+            GameObject labelObject = new GameObject("PreviewPlaceholder", typeof(RectTransform));
+            RectTransform rect = labelObject.GetComponent<RectTransform>();
+            rect.SetParent(previewImage.transform, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            previewMissingLabel = labelObject.AddComponent<TextMeshProUGUI>();
+            previewMissingLabel.alignment = TextAlignmentOptions.Center;
+            previewMissingLabel.fontSize = previewMissingLabelFontSize;
+            previewMissingLabel.color = previewMissingLabelColor;
+            previewMissingLabel.text = previewMissingLabelText;
+            previewMissingLabel.raycastTarget = false;
+            if (previewMissingLabel.font == null && TMP_Settings.defaultFontAsset != null)
+            {
+                previewMissingLabel.font = TMP_Settings.defaultFontAsset;
+            }
+            previewMissingLabel.gameObject.SetActive(false);
         }
     }
 
@@ -1270,6 +1586,47 @@ public class MainMenuController : MonoBehaviour
             Destroy(previewTexture);
             previewTexture = null;
         }
+    }
+
+    private void ApplyMissingPreview()
+    {
+        if (previewImage == null)
+        {
+            return;
+        }
+
+        if (previewMissingTexture == null)
+        {
+            previewMissingTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            previewMissingTexture.SetPixel(0, 0, new Color(0.08f, 0.08f, 0.08f, 1f));
+            previewMissingTexture.Apply();
+        }
+
+        previewImage.texture = previewMissingTexture;
+        previewImage.enabled = true;
+        if (previewAspect != null)
+        {
+            previewAspect.aspectRatio = 16f / 9f;
+        }
+
+        SetPreviewPlaceholderVisible(true);
+    }
+
+    private void SetPreviewPlaceholderVisible(bool visible)
+    {
+        if (previewMissingLabel == null)
+        {
+            return;
+        }
+
+        previewMissingLabel.text = previewMissingLabelText;
+        previewMissingLabel.color = previewMissingLabelColor;
+        previewMissingLabel.fontSize = previewMissingLabelFontSize;
+        if (previewMissingLabel.font == null && TMP_Settings.defaultFontAsset != null)
+        {
+            previewMissingLabel.font = TMP_Settings.defaultFontAsset;
+        }
+        previewMissingLabel.gameObject.SetActive(visible);
     }
 
     private string GetScreenshotPath(SaveSlotInfo save)
@@ -1383,7 +1740,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        SaveSessionInfo session = SaveSessionManager.Instance.CreateSession(sessionName);
+        SaveSessionInfo session = SaveSessionManager.Instance.CreateSession(sessionName, currentSessionType);
         string initialSaveName = string.IsNullOrWhiteSpace(defaultNewGameSaveName) ? "Depart" : defaultNewGameSaveName;
         SaveSlotInfo save = SaveSessionManager.Instance.CreateSave(session.sessionId, initialSaveName);
         if (save == null)
@@ -1393,7 +1750,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         SaveSessionManager.Instance.SetActiveSave(session.sessionId, save.saveId);
-        StartHostFlow();
+        StartGameFlow();
     }
 
     private void RegisterNewGameNameListener(bool enabled)
@@ -1689,6 +2046,19 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    private void ConfigureLoadConfirmActions()
+    {
+        if (loadConfirmYesAction != null)
+        {
+            loadConfirmYesAction.Configure(this, MenuCursorAction.MenuAction.ConfirmLoad);
+        }
+
+        if (loadConfirmNoAction != null)
+        {
+            loadConfirmNoAction.Configure(this, MenuCursorAction.MenuAction.CancelLoad);
+        }
+    }
+
     private void OnLoadMenuRequested()
     {
         ShowLoadMenu();
@@ -1697,7 +2067,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OnMultiplayerRequested()
     {
-        SetStatus("Multijoueur non configure.");
+        ShowMultiOptionsMenu();
     }
 
     private void OnOptionsRequested()
@@ -1707,7 +2077,13 @@ public class MainMenuController : MonoBehaviour
 
     public void UI_NewGame()
     {
+        EnsureSessionTypeFromMenu();
         OnNewGame();
+    }
+
+    public void UI_Solo()
+    {
+        ShowSoloOptionsMenu();
     }
 
     public void UI_ConfirmNewGame()
@@ -1718,6 +2094,16 @@ public class MainMenuController : MonoBehaviour
     public void UI_CancelNewGame()
     {
         CancelNewGame();
+    }
+
+    public void UI_ConfirmLoad()
+    {
+        ConfirmLoad();
+    }
+
+    public void UI_CancelLoad()
+    {
+        CancelLoadConfirm();
     }
 
     public void UI_VirtualKey(char character)
@@ -1737,6 +2123,7 @@ public class MainMenuController : MonoBehaviour
 
     public void UI_ShowLoadMenu()
     {
+        EnsureSessionTypeFromMenu();
         OnLoadMenuRequested();
     }
 
@@ -1788,8 +2175,79 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        currentSessionType = selectedSave.sessionType;
         SaveSessionManager.Instance.SetActiveSave(selectedSave.sessionId, selectedSave.saveId);
-        StartHostFlow();
+        StartGameFlow();
+    }
+
+    private void RequestLoadConfirm(SaveSlotInfo save)
+    {
+        if (save == null)
+        {
+            return;
+        }
+
+        if (loadConfirmOpen)
+        {
+            pendingLoad = save;
+            if (loadConfirmText != null)
+            {
+                string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
+                loadConfirmText.text = string.Format(loadConfirmMessageFormat, label);
+            }
+            return;
+        }
+
+        pendingLoad = save;
+
+        if (loadConfirmText != null)
+        {
+            string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
+            loadConfirmText.text = string.Format(loadConfirmMessageFormat, label);
+        }
+
+        if (loadConfirmGroup == null)
+        {
+            OnLoadSelected();
+            return;
+        }
+
+        loadConfirmOpen = true;
+        StartFade(loadConfirmGroup, 1f, true);
+        SetActiveMenuInteractable(false);
+        UpdateCursorTargetForLoadConfirm();
+    }
+
+    private void ConfirmLoad()
+    {
+        if (pendingLoad == null)
+        {
+            CancelLoadConfirm();
+            return;
+        }
+
+        selectedSave = pendingLoad;
+        pendingLoad = null;
+        loadConfirmOpen = false;
+
+        if (loadConfirmGroup != null)
+        {
+            StartFade(loadConfirmGroup, 0f, false);
+        }
+
+        OnLoadSelected();
+    }
+
+    private void CancelLoadConfirm()
+    {
+        pendingLoad = null;
+        loadConfirmOpen = false;
+        if (loadConfirmGroup != null)
+        {
+            StartFade(loadConfirmGroup, 0f, false);
+        }
+        SetActiveMenuInteractable(true);
+        FocusSavesRoot();
     }
 
     private void OnDeleteRequested()
@@ -1892,6 +2350,34 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    private void StartOfflineFlow()
+    {
+        if (isLoading)
+        {
+            return;
+        }
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        ShowLoadingScreen();
+        SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
+    }
+
+    private void StartGameFlow()
+    {
+        if (currentSessionType == SaveSessionType.Multiplayer)
+        {
+            StartHostFlow();
+        }
+        else
+        {
+            StartOfflineFlow();
+        }
+    }
+
     private void ShowLoadingScreen()
     {
         if (loadingGroup == null)
@@ -1935,6 +2421,20 @@ public class MainMenuController : MonoBehaviour
         {
             gameOptionsGroup.interactable = enabled;
             gameOptionsGroup.blocksRaycasts = enabled;
+            return;
+        }
+
+        if (currentMenu == MenuState.SoloOptions && soloOptionsGroup != null)
+        {
+            soloOptionsGroup.interactable = enabled;
+            soloOptionsGroup.blocksRaycasts = enabled;
+            return;
+        }
+
+        if (currentMenu == MenuState.MultiOptions && multiOptionsGroup != null)
+        {
+            multiOptionsGroup.interactable = enabled;
+            multiOptionsGroup.blocksRaycasts = enabled;
             return;
         }
 

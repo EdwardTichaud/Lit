@@ -103,7 +103,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
     {
         if (owner != null && save != null)
         {
-            owner.OnSaveSelected(save, this);
+            owner.OnSaveSelected(save, this, true);
         }
     }
 

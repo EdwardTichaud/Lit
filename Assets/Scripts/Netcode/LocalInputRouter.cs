@@ -13,7 +13,8 @@ public static class LocalInputRouter
         Return,
         Inventory,
         LeftShoulder,
-        Multi
+        Multi,
+        Start
     }
 
     public static event Action<Vector2> Move;
@@ -24,6 +25,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> Inventory;
     public static event Action<InputAction.CallbackContext> LeftShoulder;
     public static event Action<InputAction.CallbackContext> Multi;
+    public static event Action<InputAction.CallbackContext> Start;
 
     private static Vector2 moveValue;
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
@@ -109,6 +111,15 @@ public static class LocalInputRouter
             return;
         }
         Multi?.Invoke(context);
+    }
+
+    internal static void RaiseStart(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.Start))
+        {
+            return;
+        }
+        Start?.Invoke(context);
     }
 
     internal static void ResetMove()

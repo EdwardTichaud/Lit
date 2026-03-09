@@ -47,6 +47,8 @@ public class CharacterStateStore : MonoBehaviour
     public bool captureScreenshotOnSave = true;
     [Tooltip("Nom du fichier screenshot ecrit a cote de la sauvegarde.")]
     public string screenshotFileName = "screenshot.png";
+    [Tooltip("Force la capture meme si captureScreenshotOnSave est desactive.")]
+    public bool forceScreenshotOnSave = true;
 
     private CharacterSaveData loadedData;
     private readonly Dictionary<string, string> playerBindings = new Dictionary<string, string>();
@@ -208,7 +210,7 @@ public class CharacterStateStore : MonoBehaviour
 
     private void RequestScreenshotCapture()
     {
-        if (!captureScreenshotOnSave || !Application.isPlaying || !isActiveAndEnabled)
+        if ((!captureScreenshotOnSave && !forceScreenshotOnSave) || !Application.isPlaying || !isActiveAndEnabled)
         {
             return;
         }

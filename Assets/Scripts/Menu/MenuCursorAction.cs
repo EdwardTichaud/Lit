@@ -18,6 +18,10 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         Refresh = 9,
         ConfirmNewGame = 10,
         CancelNewGame = 11,
+        ConfirmLoad = 12,
+        CancelLoad = 13,
+        Save = 14,
+        Solo = 15,
         [InspectorName("vk - Input (Nom GO)")] Vk_Input = 99
     }
 
@@ -84,20 +88,17 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             return;
         }
 
-        if (controller == null)
+        if (TryHandleVirtualKeyboardAction())
         {
-            controller = GetComponentInParent<MainMenuController>();
-            if (controller == null)
-            {
-                controller = FindObjectOfType<MainMenuController>(true);
-            }
-            if (controller == null)
-            {
-                return;
-            }
+            return;
         }
 
-        if (TryHandleVirtualKeyboardAction())
+        if (TryHandlePauseAction())
+        {
+            return;
+        }
+
+        if (!EnsureMainMenuController())
         {
             return;
         }
@@ -112,6 +113,9 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
                 break;
             case MenuAction.Multiplayer:
                 controller.UI_Multiplayer();
+                break;
+            case MenuAction.Solo:
+                controller.UI_Solo();
                 break;
             case MenuAction.Options:
                 controller.UI_Options();
@@ -137,6 +141,12 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             case MenuAction.CancelNewGame:
                 controller.UI_CancelNewGame();
                 break;
+            case MenuAction.ConfirmLoad:
+                controller.UI_ConfirmLoad();
+                break;
+            case MenuAction.CancelLoad:
+                controller.UI_CancelLoad();
+                break;
         }
     }
 
@@ -144,6 +154,11 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
     {
         if (action == MenuAction.Vk_Input)
         {
+            if (!EnsureMainMenuController())
+            {
+                return false;
+            }
+
             return HandleVirtualKeyboardInputFromName();
         }
 
@@ -233,6 +248,54 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             || string.Equals(label, "Confirm", System.StringComparison.OrdinalIgnoreCase);
     }
 
+    private bool TryHandlePauseAction()
+    {
+        if (action != MenuAction.Save && action != MenuAction.Quit)
+        {
+            return false;
+        }
+
+        PausePanelController pausePanel = GetComponentInParent<PausePanelController>(true);
+        if (pausePanel == null)
+        {
+            pausePanel = FindObjectOfType<PausePanelController>(true);
+        }
+
+        if (pausePanel == null)
+        {
+            return false;
+        }
+
+        if (action == MenuAction.Save)
+        {
+            pausePanel.UI_Save();
+            return true;
+        }
+
+        if (action == MenuAction.Quit)
+        {
+            pausePanel.UI_Quit();
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool EnsureMainMenuController()
+    {
+        if (controller != null)
+        {
+            return true;
+        }
+
+        controller = GetComponentInParent<MainMenuController>();
+        if (controller == null)
+        {
+            controller = FindObjectOfType<MainMenuController>(true);
+        }
+
+        return controller != null;
+    }
 
     private void SyncSharedCursor()
     {
