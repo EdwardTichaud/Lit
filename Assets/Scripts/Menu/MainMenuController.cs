@@ -2383,6 +2383,40 @@ public class MainMenuController : MonoBehaviour
         UpdateJoinConfirmState();
     }
 
+    private void PasteJoinAddressFromClipboard()
+    {
+        if (currentMenu != MenuState.Join)
+        {
+            return;
+        }
+
+        if (joinAddressInput == null)
+        {
+            return;
+        }
+
+        string clipboard = GUIUtility.systemCopyBuffer;
+        if (string.IsNullOrWhiteSpace(clipboard))
+        {
+            return;
+        }
+
+        string trimmed = clipboard.Trim();
+        if (!EnsureJoinAddressInputFieldReady())
+        {
+            return;
+        }
+
+        joinAddressInput.SetTextWithoutNotify(trimmed);
+        joinAddressInput.Select();
+        joinAddressInput.ActivateInputField();
+        int caret = trimmed.Length;
+        joinAddressInput.caretPosition = caret;
+        joinAddressInput.selectionAnchorPosition = caret;
+        joinAddressInput.selectionFocusPosition = caret;
+        joinAddressInput.ForceLabelUpdate();
+    }
+
     private void CreateNewGameAndStart(string sessionName)
     {
         if (SaveSessionManager.Instance == null)
@@ -3057,6 +3091,11 @@ public class MainMenuController : MonoBehaviour
     public void UI_PasteJoinCode()
     {
         PasteJoinCodeFromClipboard();
+    }
+
+    public void UI_PasteJoinAddress()
+    {
+        PasteJoinAddressFromClipboard();
     }
 
     public void UI_Options()

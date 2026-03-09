@@ -2,6 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem.UI;
 #endif
@@ -23,6 +24,9 @@ public class NetcodeLobbyUI : MonoBehaviour
     [Header("Address")]
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
     [SerializeField] private string listenAddress = "0.0.0.0";
+    [SerializeField] private bool fetchPublicIp = true;
+    [SerializeField] private string publicIpServiceUrl = "https://api.ipify.org";
+    [SerializeField] private string publicIpLabelFormat = "IP publique: {0}";
 
     [Header("Layout")]
     [SerializeField] private Vector2 panelSize = new Vector2(420f, 520f);
@@ -33,6 +37,8 @@ public class NetcodeLobbyUI : MonoBehaviour
     private InputField hostCodeInput;
     private Text statusText;
     private Text portText;
+    private Text publicIpText;
+    private string publicIpValue;
     private GameObject panelRoot;
     private GameObject canvasRoot;
     private Font defaultFont;
@@ -41,6 +47,7 @@ public class NetcodeLobbyUI : MonoBehaviour
     private string lastStatus;
     private bool uiVisible = true;
     private bool inputLocked;
+    private bool publicIpRequested;
 
     private void Awake()
     {
@@ -155,9 +162,66 @@ public class NetcodeLobbyUI : MonoBehaviour
         CreateButton(buttonsRow.transform, "Host", OnHostClicked, 100f);
 
         portText = CreateLabel(panelRoot.transform, "Port: -", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
+
+        GameObject ipRow = CreateRow(panelRoot.transform);
+        publicIpText = CreateLabel(ipRow.transform, string.Format(publicIpLabelFormat, "..."), 12, FontStyle.Normal, TextAnchor.MiddleLeft);
+        LayoutElement ipLayout = publicIpText.GetComponent<LayoutElement>();
+        if (ipLayout != null)
+        {
+            ipLayout.flexibleWidth = 1f;
+        }
+        CreateButton(ipRow.transform, "Copier", OnCopyPublicIpClicked, 70f);
+
         statusText = CreateLabel(panelRoot.transform, "Etat: offline", 12, FontStyle.Normal, TextAnchor.MiddleLeft);
 
+        StartPublicIpFetch();
         SetUIVisible(true);
+    }
+
+    private void StartPublicIpFetch()
+    {
+        if (!fetchPublicIp || publicIpRequested)
+        {
+            return;
+        }
+
+        publicIpRequested = true;
+        StartCoroutine(FetchPublicIp());
+    }
+
+    private System.Collections.IEnumerator FetchPublicIp()
+    {
+        if (string.IsNullOrWhiteSpace(publicIpServiceUrl))
+        {
+            SetPublicIpLabel("indisponible");
+            yield break;
+        }
+
+        using (UnityWebRequest request = UnityWebRequest.Get(publicIpServiceUrl))
+        {
+            yield return request.SendWebRequest();
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string ip = request.downloadHandler.text != null ? request.downloadHandler.text.Trim() : string.Empty;
+                SetPublicIpLabel(ip);
+            }
+            else
+            {
+                SetPublicIpLabel("indisponible");
+            }
+        }
+    }
+
+    private void SetPublicIpLabel(string ip)
+    {
+        if (publicIpText == null)
+        {
+            return;
+        }
+
+        string value = string.IsNullOrWhiteSpace(ip) ? "indisponible" : ip;
+        publicIpValue = value == "indisponible" ? string.Empty : value;
+        publicIpText.text = string.Format(publicIpLabelFormat, value);
     }
 
     private void OnGenerateClicked()
@@ -213,6 +277,18 @@ public class NetcodeLobbyUI : MonoBehaviour
         {
             SetUIVisible(false);
         }
+    }
+
+    private void OnCopyPublicIpClicked()
+    {
+        if (string.IsNullOrWhiteSpace(publicIpValue))
+        {
+            SetStatus("IP publique indisponible.");
+            return;
+        }
+
+        GUIUtility.systemCopyBuffer = publicIpValue;
+        SetStatus($"IP copiee: {publicIpValue}");
     }
 
     private void OnMultiPerformed(UnityEngine.InputSystem.InputAction.CallbackContext context)
