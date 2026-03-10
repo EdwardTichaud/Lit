@@ -361,6 +361,7 @@ public static class NetcodePrefabRegistry
             : Object.Instantiate(info.sourcePrefab, position, rotation);
 
         NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(instance);

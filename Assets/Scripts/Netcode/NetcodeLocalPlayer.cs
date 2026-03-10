@@ -60,6 +60,11 @@ public class NetcodeLocalPlayer : NetworkBehaviour
         {
             TrySubscribeAssignments();
         }
+
+        if (IsOwner)
+        {
+            EvaluateLocalAssignment();
+        }
     }
 
     private void TrySubscribeAssignments()
@@ -125,12 +130,12 @@ public class NetcodeLocalPlayer : NetworkBehaviour
         WorldInteractionService service = WorldInteractionService.Instance;
         if (service == null)
         {
-            return !NetworkManager.Singleton.IsHost;
+            return true;
         }
 
         if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
         {
-            return !NetworkManager.Singleton.IsHost;
+            return false;
         }
 
         string localId = ResolveCharacterId();
@@ -144,6 +149,14 @@ public class NetcodeLocalPlayer : NetworkBehaviour
 
     private string ResolveCharacterId()
     {
+        NetcodeCharacterIdentity identity = localCharacterRoot != null
+            ? localCharacterRoot.GetComponent<NetcodeCharacterIdentity>()
+            : null;
+        if (identity != null && !string.IsNullOrWhiteSpace(identity.CharacterId))
+        {
+            return identity.CharacterId;
+        }
+
         SquadCharacterController controller = localCharacterRoot != null
             ? localCharacterRoot.GetComponent<SquadCharacterController>()
             : null;

@@ -2,6 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Service reseau pour router les interactions serveur (triggers non-networked).
 public class WorldInteractionService : NetworkBehaviour
@@ -9,7 +10,12 @@ public class WorldInteractionService : NetworkBehaviour
     public static WorldInteractionService Instance { get; private set; }
 
     private readonly NetworkList<NetPlayerAssignment> assignments = new NetworkList<NetPlayerAssignment>();
+    private readonly NetworkVariable<FixedString128Bytes> activeSceneName = new NetworkVariable<FixedString128Bytes>(
+        default,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     public event Action AssignmentsChanged;
+    public event Action ActiveSceneChanged;
 
     private void Awake()
     {
@@ -25,12 +31,24 @@ public class WorldInteractionService : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         assignments.OnListChanged += OnAssignmentsChanged;
+        activeSceneName.OnValueChanged += OnActiveSceneNameChanged;
+        if (IsServer)
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            UpdateActiveSceneName(SceneManager.GetActiveScene().name);
+        }
         AssignmentsChanged?.Invoke();
+        ActiveSceneChanged?.Invoke();
     }
 
     public override void OnNetworkDespawn()
     {
         assignments.OnListChanged -= OnAssignmentsChanged;
+        activeSceneName.OnValueChanged -= OnActiveSceneNameChanged;
+        if (IsServer)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
         if (assignments != null)
         {
             assignments.Clear();
@@ -42,6 +60,8 @@ public class WorldInteractionService : NetworkBehaviour
     }
 
     public int AssignmentCount => assignments != null ? assignments.Count : 0;
+
+    public string ActiveSceneName => activeSceneName.Value.ToString();
 
     public NetPlayerAssignment GetAssignment(int index)
     {
@@ -165,6 +185,29 @@ public class WorldInteractionService : NetworkBehaviour
     private void OnAssignmentsChanged(NetworkListEvent<NetPlayerAssignment> change)
     {
         AssignmentsChanged?.Invoke();
+    }
+
+    private void OnActiveSceneNameChanged(FixedString128Bytes previous, FixedString128Bytes current)
+    {
+        ActiveSceneChanged?.Invoke();
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        UpdateActiveSceneName(scene.name);
+    }
+
+    private void UpdateActiveSceneName(string sceneName)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        string resolvedName = string.IsNullOrWhiteSpace(sceneName)
+            ? string.Empty
+            : sceneName.Trim();
+        activeSceneName.Value = new FixedString128Bytes(resolvedName);
     }
 
     [ServerRpc(RequireOwnership = false)]

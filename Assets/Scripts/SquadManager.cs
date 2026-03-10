@@ -189,6 +189,12 @@ public class SquadManager : MonoBehaviour
         if (IsMultiplayerActive())
         {
             ApplyPendingCharacterStates();
+            RefreshNetworkCharacters();
+            UpdateCurrentCharacter();
+            UpdateCursorPosition();
+            UpdateSquadPanelCursorVisibility();
+            ApplySquadPanelVisibility(true);
+            RequestCrownReposition();
             StartCoroutine(RefreshNetworkCharactersRoutine());
             yield break;
         }
@@ -258,8 +264,7 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
-            CharacterData data = controller.CharacterData;
-            int index = currentSquad != null && data != null ? currentSquad.IndexOf(data) : -1;
+            int index = ResolveSquadIndex(controller);
             if (index >= 0)
             {
                 while (squadCharacters.Count <= index)
@@ -278,9 +283,14 @@ public class SquadManager : MonoBehaviour
         ApplyLocalAssignmentContext();
 
         GameObject local = LocalPlayerUtils.GetControlledCharacter();
-        if (local != null)
+        currentCharacter = local;
+
+        int localIndex = GetCurrentCharacterIndex();
+        if (localIndex >= 0)
         {
-            currentCharacter = local;
+            currentCursorIndex = localIndex;
+            UpdateCursorPosition();
+            RequestCrownReposition();
         }
 
         UpdateLeaderGroupFromCurrent();
@@ -302,17 +312,20 @@ public class SquadManager : MonoBehaviour
         WorldInteractionService service = WorldInteractionService.Instance;
         if (service == null)
         {
+            LocalPlayerContext.Clear();
             return;
         }
 
         if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
         {
+            LocalPlayerContext.Clear();
             return;
         }
 
         GameObject instance = ResolveCharacterInstanceById(characterId);
         if (instance == null)
         {
+            LocalPlayerContext.Clear();
             return;
         }
 
@@ -336,13 +349,7 @@ public class SquadManager : MonoBehaviour
                     continue;
                 }
 
-                SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
-                if (controller == null || controller.CharacterData == null)
-                {
-                    continue;
-                }
-
-                if (GetCharacterId(controller.CharacterData) == characterId)
+                if (NetcodeCharacterIdentity.MatchesCharacterId(character, characterId))
                 {
                     return character;
                 }
@@ -357,18 +364,56 @@ public class SquadManager : MonoBehaviour
         for (int i = 0; i < controllers.Length; i++)
         {
             SquadCharacterController controller = controllers[i];
-            if (controller == null || controller.CharacterData == null)
+            if (controller == null)
             {
                 continue;
             }
 
-            if (GetCharacterId(controller.CharacterData) == characterId)
+            if (NetcodeCharacterIdentity.MatchesCharacterId(controller.gameObject, characterId))
             {
                 return controller.gameObject;
             }
         }
 
         return null;
+    }
+
+    private int ResolveSquadIndex(SquadCharacterController controller)
+    {
+        if (controller == null || currentSquad == null)
+        {
+            return -1;
+        }
+
+        CharacterData data = controller.CharacterData;
+        if (data != null)
+        {
+            int index = currentSquad.IndexOf(data);
+            if (index >= 0)
+            {
+                return index;
+            }
+        }
+
+        NetcodeCharacterIdentity identity = controller.GetComponent<NetcodeCharacterIdentity>();
+        string characterId = identity != null && !string.IsNullOrWhiteSpace(identity.CharacterId)
+            ? identity.CharacterId
+            : GetCharacterId(data);
+        if (string.IsNullOrWhiteSpace(characterId))
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < currentSquad.Count; i++)
+        {
+            CharacterData candidate = currentSquad[i];
+            if (candidate != null && GetCharacterId(candidate) == characterId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public void RegisterNetworkCharacter(CharacterData character, GameObject instance)
@@ -1081,12 +1126,7 @@ public class SquadManager : MonoBehaviour
     {
         if (IsMultiplayerActive())
         {
-            GameObject local = LocalPlayerUtils.GetControlledCharacter();
-            if (local != null)
-            {
-                currentCharacter = local;
-            }
-
+            currentCharacter = LocalPlayerUtils.GetControlledCharacter();
             UpdateCrownPosition();
             return;
         }
@@ -1766,6 +1806,29 @@ public class SquadManager : MonoBehaviour
 
     private int GetCurrentCharacterIndex()
     {
+        if (IsMultiplayerActive())
+        {
+            GameObject local = LocalPlayerUtils.GetControlledCharacter();
+            if (local != null)
+            {
+                if (squadCharacters != null)
+                {
+                    int localIndex = squadCharacters.IndexOf(local);
+                    if (localIndex >= 0)
+                    {
+                        return localIndex;
+                    }
+                }
+
+                SquadCharacterController localController = local.GetComponent<SquadCharacterController>();
+                int resolvedIndex = ResolveSquadIndex(localController);
+                if (resolvedIndex >= 0)
+                {
+                    return resolvedIndex;
+                }
+            }
+        }
+
         int index = -1;
         if (currentCharacter != null && squadCharacters != null)
         {
@@ -2131,23 +2194,22 @@ public class SquadManager : MonoBehaviour
 
     private void OnLocalCharacterChanged(Transform _)
     {
-        if (LocalPlayerContext.LocalCharacterRoot != null)
-        {
-            currentCharacter = LocalPlayerContext.LocalCharacterRoot.gameObject;
-        }
+        currentCharacter = LocalPlayerContext.LocalCharacterRoot != null
+            ? LocalPlayerContext.LocalCharacterRoot.gameObject
+            : null;
 
         UpdateLeaderGroupFromCurrent();
         UpdateAllGroupIndicators();
 
-        if (charactersSelectionOn)
+        int index = GetCurrentCharacterIndex();
+        if (index >= 0)
         {
-            int index = GetCurrentCharacterIndex();
-            if (index >= 0)
-            {
-                currentCursorIndex = index;
-                UpdateCursorPosition();
-            }
+            currentCursorIndex = index;
+            UpdateCursorPosition();
         }
+
+        UpdateCurrentCharacter();
+        RequestCrownReposition();
     }
 
     private void HandleLeftShoulderInput()

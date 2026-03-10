@@ -96,11 +96,13 @@ public class NetcodeLobbyUI : MonoBehaviour
     {
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Multi += OnMultiPerformed;
+        RegisterTransportFailureCallback(true);
     }
 
     private void OnDisable()
     {
         LocalInputRouter.Multi -= OnMultiPerformed;
+        RegisterTransportFailureCallback(false);
     }
 
     private void Update()
@@ -155,8 +157,9 @@ public class NetcodeLobbyUI : MonoBehaviour
         CreateButton(hostRow.transform, "Generer", OnGenerateClicked, 90f);
         CreateButton(hostRow.transform, "Copier", OnCopyClicked, 70f);
         SetupCodeField(hostCodeInput);
-        hostCodeInput.text = NetcodeSessionCode.Generate(codeLength);
-        UpdatePortDisplay(hostCodeInput.text);
+        currentHostCode = ResolveOrGenerateHostCode();
+        hostCodeInput.text = currentHostCode;
+        UpdatePortDisplay(currentHostCode);
 
         GameObject buttonsRow = CreateRow(panelRoot.transform);
         CreateButton(buttonsRow.transform, "Host", OnHostClicked, 100f);
@@ -241,7 +244,7 @@ public class NetcodeLobbyUI : MonoBehaviour
         string code = ResolveCodeFromField(hostCodeInput);
         if (string.IsNullOrEmpty(code))
         {
-            code = NetcodeSessionCode.Generate(codeLength);
+            code = ResolveOrGenerateHostCode();
             if (hostCodeInput != null)
             {
                 hostCodeInput.SetTextWithoutNotify(code);
@@ -251,12 +254,19 @@ public class NetcodeLobbyUI : MonoBehaviour
         GUIUtility.systemCopyBuffer = code;
         currentHostCode = code;
         UpdatePortDisplay(code);
-        SetStatus($"Code copie: {code}");
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager != null && manager.IsHost)
+        {
+            SetStatus($"Code host copie: {code}");
+            return;
+        }
+
+        SetStatus($"Code copie: {code}. Clique sur Host pour ouvrir la session.");
     }
 
     private void OnHostClicked()
     {
-        if (!TryResolvePort(hostCodeInput, out string code, out ushort port))
+        if (!TryResolveHostEndpoint(out NetcodeSessionEndpoint endpoint))
         {
             SetStatus("Code host invalide.");
             return;
@@ -269,14 +279,47 @@ public class NetcodeLobbyUI : MonoBehaviour
             return;
         }
 
-        currentHostCode = code;
-        UpdatePortDisplay(code);
-        bool started = resolved.StartHostWithConnection(hostLoopbackAddress, port, listenAddress);
-        SetStatus(started ? $"Host lance (code {code})." : "Host deja actif.");
+        currentHostCode = endpoint.Code;
+        UpdatePortDisplay(endpoint.Code);
+        bool started = resolved.StartHostWithConnection(endpoint.Address, endpoint.Port, listenAddress);
+        SetStatus(started ? $"Host lance: code {endpoint.Code}, port {endpoint.Port}." : "Host deja actif.");
         if (started)
         {
             SetUIVisible(false);
         }
+    }
+
+    private void RegisterTransportFailureCallback(bool enabled)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null)
+        {
+            return;
+        }
+
+        manager.OnTransportFailure -= OnTransportFailure;
+        if (enabled)
+        {
+            manager.OnTransportFailure += OnTransportFailure;
+        }
+    }
+
+    private void OnTransportFailure()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        string reason = manager != null ? manager.DisconnectReason : string.Empty;
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            reason = "Le transport reseau s'est arrete. Verifie que le port est libre et que le pare-feu n'a pas bloque l'application.";
+        }
+
+        SetStatus(reason);
+        if (uiVisible)
+        {
+            return;
+        }
+
+        SetUIVisible(true);
     }
 
     private void OnCopyPublicIpClicked()
@@ -321,23 +364,11 @@ public class NetcodeLobbyUI : MonoBehaviour
         });
     }
 
-    private bool TryResolvePort(InputField field, out string code, out ushort port)
+    private bool TryResolveHostEndpoint(out NetcodeSessionEndpoint endpoint)
     {
-        port = 0;
-        code = ResolveCodeFromField(field);
-        if (string.IsNullOrEmpty(code))
-        {
-            return false;
-        }
-
-        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort resolvedPort, out string normalized))
-        {
-            return false;
-        }
-
-        code = normalized;
-        port = resolvedPort;
-        return true;
+        string code = ResolveCodeFromField(hostCodeInput);
+        string address = NetcodeSessionCode.NormalizeAddress(hostLoopbackAddress, "127.0.0.1");
+        return NetcodeSessionCode.TryCreateEndpoint(code, address, basePort, portRange, out endpoint);
     }
 
     private string ResolveCodeFromField(InputField field)
@@ -348,6 +379,18 @@ public class NetcodeLobbyUI : MonoBehaviour
         }
 
         return NetcodeSessionCode.Normalize(field.text);
+    }
+
+    private string ResolveOrGenerateHostCode()
+    {
+        string code = NetcodeSessionCode.Normalize(currentHostCode);
+        if (!string.IsNullOrEmpty(code))
+        {
+            return code;
+        }
+
+        currentHostCode = NetcodeSessionCode.Generate(codeLength);
+        return currentHostCode;
     }
 
     private NetcodeLauncher ResolveLauncher()

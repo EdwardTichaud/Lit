@@ -31,4 +31,15 @@ public static class LocalPlayerContext
         localCharacterRoot = null;
         LocalCharacterChanged?.Invoke(null);
     }
+
+    public static void Clear()
+    {
+        if (localCharacterRoot == null)
+        {
+            return;
+        }
+
+        localCharacterRoot = null;
+        LocalCharacterChanged?.Invoke(null);
+    }
 }

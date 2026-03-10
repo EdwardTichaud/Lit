@@ -194,12 +194,12 @@ public class NetworkCharacterInput : NetworkBehaviour
         WorldInteractionService service = WorldInteractionService.Instance;
         if (service == null)
         {
-            return !NetworkManager.Singleton.IsHost;
+            return true;
         }
 
         if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
         {
-            return !NetworkManager.Singleton.IsHost;
+            return false;
         }
 
         string localId = ResolveCharacterId();
@@ -213,6 +213,12 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private string ResolveCharacterId()
     {
+        NetcodeCharacterIdentity identity = GetComponent<NetcodeCharacterIdentity>();
+        if (identity != null && !string.IsNullOrWhiteSpace(identity.CharacterId))
+        {
+            return identity.CharacterId;
+        }
+
         if (controller == null)
         {
             controller = GetComponent<SquadCharacterController>();

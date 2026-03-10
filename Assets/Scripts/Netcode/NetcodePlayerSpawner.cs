@@ -157,6 +157,12 @@ public class NetcodePlayerSpawner : MonoBehaviour
             EnsureStarterInventoryIfEmpty(controller, character);
         }
 
+        NetcodeCharacterIdentity identity = NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
+        if (identity != null)
+        {
+            identity.SetCharacter(character);
+        }
+
         assignments[clientId] = character;
         if (!networkObject.IsSpawned)
         {
@@ -306,6 +312,12 @@ public class NetcodePlayerSpawner : MonoBehaviour
             usedRosterIndices.Add(index);
         }
 
+        NetcodeCharacterIdentity targetIdentity = NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(targetInstance);
+        if (targetIdentity != null)
+        {
+            targetIdentity.SetCharacter(target);
+        }
+
         UpdateAssignmentRegistry(clientId, target);
         targetNetwork.ChangeOwnership(clientId);
         RegisterWithSquadManager(target, targetInstance);
@@ -379,6 +391,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(instance);

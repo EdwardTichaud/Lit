@@ -328,6 +328,11 @@ public class NetworkInventory : NetworkBehaviour
         return true;
     }
 
+    public void RefreshControllerFromNetworkState()
+    {
+        ApplyToController();
+    }
+
     private bool ExecuteUseItem(Item item, out string feedback)
     {
         feedback = string.Empty;

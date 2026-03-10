@@ -11,6 +11,11 @@ public static class LocalPlayerUtils
             return localRoot.gameObject;
         }
 
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            return null;
+        }
+
         return SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
     }
 }

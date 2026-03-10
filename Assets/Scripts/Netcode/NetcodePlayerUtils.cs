@@ -86,12 +86,12 @@ public static class NetcodePlayerUtils
         for (int i = 0; i < controllers.Length; i++)
         {
             SquadCharacterController controller = controllers[i];
-            if (controller == null || controller.CharacterData == null)
+            if (controller == null)
             {
                 continue;
             }
 
-            if (GetCharacterId(controller.CharacterData) == characterId)
+            if (NetcodeCharacterIdentity.MatchesCharacterId(controller.gameObject, characterId))
             {
                 return controller.gameObject;
             }
@@ -102,26 +102,6 @@ public static class NetcodePlayerUtils
 
     private static string GetCharacterId(CharacterData character)
     {
-        if (character == null)
-        {
-            return string.Empty;
-        }
-
-        if (!string.IsNullOrWhiteSpace(character.UniqueId))
-        {
-            return character.UniqueId;
-        }
-
-        if (!string.IsNullOrWhiteSpace(character.characterId))
-        {
-            return character.characterId;
-        }
-
-        if (!string.IsNullOrWhiteSpace(character.characterName))
-        {
-            return character.characterName;
-        }
-
-        return character.name;
+        return NetcodeCharacterIdentity.GetCharacterId(character);
     }
 }

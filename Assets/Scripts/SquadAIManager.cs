@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 using Unity.AI.Navigation;
@@ -157,6 +158,11 @@ public class SquadAIManager : MonoBehaviour
             }
         }
 
+        if (!ShouldDriveFollowers())
+        {
+            return;
+        }
+
         if (rebuildNavMeshNow)
         {
             rebuildNavMeshNow = false;
@@ -181,6 +187,12 @@ public class SquadAIManager : MonoBehaviour
         }
 
         UpdateFollowers();
+    }
+
+    private static bool ShouldDriveFollowers()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager == null || !manager.IsListening || manager.IsServer;
     }
 
     [ContextMenu("Rebuild NavMesh Now")]

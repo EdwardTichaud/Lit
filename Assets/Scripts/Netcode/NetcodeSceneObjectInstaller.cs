@@ -110,6 +110,7 @@ public static class NetcodeSceneObjectInstaller
                 GameObject host = controller.gameObject;
                 NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(host);
                 NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(host);
+                NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(host);
                 NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(host);
                 NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(host);
                 NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(host);

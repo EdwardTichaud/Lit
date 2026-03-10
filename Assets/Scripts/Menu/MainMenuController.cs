@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -20,6 +22,7 @@ public class MainMenuController : MonoBehaviour
         GameOptions,
         SoloOptions,
         MultiOptions,
+        Options,
         Join,
         LoadMenu
     }
@@ -29,6 +32,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private CanvasGroup gameOptionsGroup;
     [SerializeField] private CanvasGroup soloOptionsGroup;
     [SerializeField] private CanvasGroup multiOptionsGroup;
+    [SerializeField] private CanvasGroup optionsGroup;
     [SerializeField] private CanvasGroup loadMenuGroup;
     [SerializeField] private CanvasGroup mainMenuGroup;
     [SerializeField] private bool hideTitleCardOnProceed = true;
@@ -71,6 +75,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private RectTransform gameOptionsCursorRoot;
     [SerializeField] private RectTransform soloOptionsCursorRoot;
     [SerializeField] private RectTransform multiOptionsCursorRoot;
+    [SerializeField] private RectTransform optionsCursorRoot;
     [SerializeField] private RectTransform loadMenuCursorRoot;
 
     [Header("Confirm Delete")]
@@ -126,12 +131,10 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Netcode")]
     [SerializeField] private string gameplaySceneName = "OutdoorsScene";
-    [SerializeField] private int codeLength = 6;
     [SerializeField] private ushort basePort = 7000;
     [SerializeField] private ushort portRange = 1000;
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
     [SerializeField] private string joinAddress = "127.0.0.1";
-    [SerializeField] private string listenAddress = "0.0.0.0";
 
     [Header("Entry Colors")]
     [SerializeField] private Color entryColor = new Color(1f, 1f, 1f, 0.08f);
@@ -158,8 +161,6 @@ public class MainMenuController : MonoBehaviour
     private bool isLoading;
     private readonly Dictionary<Graphic, float> newGameConfirmGraphicAlphas = new Dictionary<Graphic, float>();
     private readonly Dictionary<Graphic, float> joinConfirmGraphicAlphas = new Dictionary<Graphic, float>();
-    private bool textInputSubscribed;
-    private Keyboard subscribedKeyboard;
     private bool warnedMissingNewGameInputText;
     private bool warnedMissingJoinInputText;
     private bool warnedMissingJoinAddressInputText;
@@ -176,9 +177,12 @@ public class MainMenuController : MonoBehaviour
     private bool sharedCursorFallbackInitialized;
     private bool joinInProgress;
     private Coroutine joinTimeoutRoutine;
+    private Coroutine joinSceneSyncRoutine;
+    private NetcodeSessionEndpoint activeJoinEndpoint;
 
     private void Awake()
     {
+        MainMenuDisplaySettings.ApplySavedModeIfNeeded();
         EnsureSaveManager();
         ResolveOptionalReferences();
         ConfigureNewGameActions();
@@ -194,9 +198,10 @@ public class MainMenuController : MonoBehaviour
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
+        RegisterJoinTransportFailureCallback(true);
         RefreshSessions();
 
-        if (currentMenu == MenuState.GameOptions || currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions || currentMenu == MenuState.LoadMenu)
+        if (currentMenu == MenuState.GameOptions || currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions || currentMenu == MenuState.Options || currentMenu == MenuState.LoadMenu)
         {
             InputFocusStack.Push(this);
         }
@@ -207,6 +212,7 @@ public class MainMenuController : MonoBehaviour
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
+        RegisterJoinTransportFailureCallback(false);
         InputFocusStack.Pop(this);
         RegisterTextInput(false);
         RegisterJoinCallbacks(false);
@@ -214,6 +220,11 @@ public class MainMenuController : MonoBehaviour
         {
             StopCoroutine(joinTimeoutRoutine);
             joinTimeoutRoutine = null;
+        }
+        if (joinSceneSyncRoutine != null)
+        {
+            StopCoroutine(joinSceneSyncRoutine);
+            joinSceneSyncRoutine = null;
         }
     }
 
@@ -394,6 +405,17 @@ public class MainMenuController : MonoBehaviour
         SetMenuState(MenuState.MultiOptions);
     }
 
+    private void ShowOptionsMenu()
+    {
+        if (optionsGroup == null)
+        {
+            SetStatus("Menu options manquant.");
+            return;
+        }
+
+        SetMenuState(MenuState.Options);
+    }
+
     private void ShowJoinMenu()
     {
         if (joinPanelGroup == null)
@@ -409,6 +431,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         SetMenuState(MenuState.Join);
+        activeJoinEndpoint = default;
 
         if (joinPanelGroup != null)
         {
@@ -531,6 +554,18 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
+        if (optionsGroup != null)
+        {
+            if (state == MenuState.Options)
+            {
+                ShowPanel(optionsGroup);
+            }
+            else
+            {
+                HidePanel(optionsGroup);
+            }
+        }
+
         if (joinPanelGroup != null)
         {
             if (state == MenuState.Join)
@@ -558,7 +593,7 @@ public class MainMenuController : MonoBehaviour
 
         waitingForInput = waitForAnyInput && state == MenuState.TitleCard;
 
-        if (state == MenuState.GameOptions || state == MenuState.SoloOptions || state == MenuState.MultiOptions || state == MenuState.Join || state == MenuState.LoadMenu)
+        if (state == MenuState.GameOptions || state == MenuState.SoloOptions || state == MenuState.MultiOptions || state == MenuState.Options || state == MenuState.Join || state == MenuState.LoadMenu)
         {
             InputFocusStack.Push(this);
         }
@@ -612,6 +647,10 @@ public class MainMenuController : MonoBehaviour
         else if (currentMenu == MenuState.MultiOptions)
         {
             targetRoot = ResolveCursorRoot(multiOptionsCursorRoot, multiOptionsGroup);
+        }
+        else if (currentMenu == MenuState.Options)
+        {
+            targetRoot = ResolveCursorRoot(optionsCursorRoot, optionsGroup);
         }
         else if (currentMenu == MenuState.Join)
         {
@@ -1025,7 +1064,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions)
+        if (currentMenu == MenuState.SoloOptions || currentMenu == MenuState.MultiOptions || currentMenu == MenuState.Options)
         {
             ShowGameOptionsMenu();
             return;
@@ -1137,6 +1176,15 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
+        if (optionsGroup == null)
+        {
+            optionsGroup = FindCanvasGroup("MainMenu_Options");
+            if (optionsGroup == null)
+            {
+                optionsGroup = BuildOptionsPanel();
+            }
+        }
+
         if (soloOptionsCursorRoot == null && soloOptionsGroup != null)
         {
             soloOptionsCursorRoot = soloOptionsGroup.transform as RectTransform;
@@ -1145,6 +1193,19 @@ public class MainMenuController : MonoBehaviour
         if (multiOptionsCursorRoot == null && multiOptionsGroup != null)
         {
             multiOptionsCursorRoot = multiOptionsGroup.transform as RectTransform;
+        }
+
+        if (optionsGroup != null)
+        {
+            RectTransform detectedOptionsCursorRoot = FindOptionsCursorRoot(optionsGroup.transform);
+            if (detectedOptionsCursorRoot != null)
+            {
+                optionsCursorRoot = detectedOptionsCursorRoot;
+            }
+            else if (optionsCursorRoot == null)
+            {
+                optionsCursorRoot = optionsGroup.transform as RectTransform;
+            }
         }
 
         if (multiOptionsGroup != null)
@@ -1157,6 +1218,28 @@ public class MainMenuController : MonoBehaviour
             if (joinAction != null)
             {
                 joinAction.Configure(this, MenuCursorAction.MenuAction.Join);
+            }
+        }
+
+        if (gameOptionsGroup != null)
+        {
+            MenuCursorAction optionsAction = FindMenuCursorActionByName(gameOptionsGroup.transform, "Options");
+            if (optionsAction == null)
+            {
+                Transform optionsButton = FindInHierarchy(gameOptionsGroup.transform, "Options");
+                if (optionsButton != null)
+                {
+                    optionsAction = optionsButton.GetComponent<MenuCursorAction>();
+                    if (optionsAction == null)
+                    {
+                        optionsAction = optionsButton.gameObject.AddComponent<MenuCursorAction>();
+                    }
+                }
+            }
+
+            if (optionsAction != null)
+            {
+                optionsAction.Configure(this, MenuCursorAction.MenuAction.Options);
             }
         }
 
@@ -1460,6 +1543,245 @@ public class MainMenuController : MonoBehaviour
     {
         Transform found = FindInHierarchy(transform, name);
         return found != null ? found.GetComponent<CanvasGroup>() : null;
+    }
+
+    private CanvasGroup BuildOptionsPanel()
+    {
+        if (gameOptionsGroup == null)
+        {
+            return null;
+        }
+
+        Transform template = FindInHierarchy(gameOptionsGroup.transform, "Options");
+        if (template == null)
+        {
+            return null;
+        }
+
+        Transform parent = gameOptionsGroup.transform.parent;
+        if (parent == null)
+        {
+            return null;
+        }
+
+        GameObject root = new GameObject("MainMenu_Options",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(VerticalLayoutGroup),
+            typeof(CanvasGroup));
+        root.layer = gameOptionsGroup.gameObject.layer;
+        root.transform.SetParent(parent, false);
+        root.transform.SetSiblingIndex(gameOptionsGroup.transform.GetSiblingIndex() + 1);
+
+        RectTransform rootRect = root.GetComponent<RectTransform>();
+        CopyRectTransform(gameOptionsGroup.transform as RectTransform, rootRect);
+
+        VerticalLayoutGroup sourceLayout = gameOptionsGroup.GetComponent<VerticalLayoutGroup>();
+        VerticalLayoutGroup targetLayout = root.GetComponent<VerticalLayoutGroup>();
+        CopyVerticalLayoutGroup(sourceLayout, targetLayout);
+
+        CanvasGroup group = root.GetComponent<CanvasGroup>();
+        group.alpha = 0f;
+        group.interactable = false;
+        group.blocksRaycasts = false;
+
+        CreateOptionsHeaderRow(template, root.transform);
+        Transform optionsRoot = CreateOptionsItemsRoot(root.transform);
+        CreateDisplayModeRow(template, optionsRoot, "Fenetre", MainMenuDisplayModeAction.DisplayModeOption.Windowed);
+        CreateDisplayModeRow(template, optionsRoot, "PleinEcran", MainMenuDisplayModeAction.DisplayModeOption.Fullscreen);
+        CreateOptionsBackRow(template, optionsRoot);
+
+        return group;
+    }
+
+    private Transform CreateOptionsItemsRoot(Transform parent)
+    {
+        GameObject root = new GameObject("Options_Root",
+            typeof(RectTransform),
+            typeof(VerticalLayoutGroup));
+        root.layer = parent.gameObject.layer;
+        root.transform.SetParent(parent, false);
+
+        RectTransform rectTransform = root.GetComponent<RectTransform>();
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.anchoredPosition = new Vector2(0f, -114.63916f);
+        rectTransform.sizeDelta = new Vector2(0f, -229.2784f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+
+        VerticalLayoutGroup layout = root.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset();
+        layout.spacing = 0f;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = true;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childScaleWidth = false;
+        layout.childScaleHeight = false;
+        layout.reverseArrangement = false;
+
+        return root.transform;
+    }
+
+    private Transform CreateOptionsHeaderRow(Transform template, Transform parent)
+    {
+        GameObject row = Instantiate(template.gameObject, parent, false);
+        row.name = "Affichage";
+        DisableNestedMenuCursorHandlers(row.transform);
+
+        Image image = row.GetComponent<Image>();
+        if (image != null)
+        {
+            Color color = image.color;
+            color.a = 0.65f;
+            image.color = color;
+            image.raycastTarget = false;
+        }
+
+        TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.text = "Affichage";
+            text.raycastTarget = false;
+        }
+
+        return row.transform;
+    }
+
+    private Transform CreateDisplayModeRow(Transform template, Transform parent, string rowName, MainMenuDisplayModeAction.DisplayModeOption mode)
+    {
+        GameObject row = Instantiate(template.gameObject, parent, false);
+        row.name = rowName;
+        DisableNestedMenuCursorHandlers(row.transform);
+
+        TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.name = $"{rowName}_Text";
+            text.raycastTarget = false;
+        }
+
+        MainMenuDisplayModeAction action = row.GetComponent<MainMenuDisplayModeAction>();
+        if (action == null)
+        {
+            action = row.AddComponent<MainMenuDisplayModeAction>();
+        }
+
+        action.Configure(mode, text);
+        return row.transform;
+    }
+
+    private Transform CreateOptionsBackRow(Transform template, Transform parent)
+    {
+        GameObject row = Instantiate(template.gameObject, parent, false);
+        row.name = "Back";
+        DisableNestedMenuCursorHandlers(row.transform);
+
+        TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.name = "Back_Text";
+            text.text = "Retour";
+            text.raycastTarget = false;
+        }
+
+        MenuCursorAction action = row.GetComponent<MenuCursorAction>();
+        if (action == null)
+        {
+            action = row.AddComponent<MenuCursorAction>();
+        }
+
+        action.Configure(this, MenuCursorAction.MenuAction.BackToGameOptions);
+        return row.transform;
+    }
+
+    private static void CopyRectTransform(RectTransform source, RectTransform target)
+    {
+        if (source == null || target == null)
+        {
+            return;
+        }
+
+        target.anchorMin = source.anchorMin;
+        target.anchorMax = source.anchorMax;
+        target.anchoredPosition = source.anchoredPosition;
+        target.sizeDelta = source.sizeDelta;
+        target.pivot = source.pivot;
+        target.localRotation = source.localRotation;
+        target.localScale = source.localScale;
+    }
+
+    private static void CopyVerticalLayoutGroup(VerticalLayoutGroup source, VerticalLayoutGroup target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        if (source == null)
+        {
+            return;
+        }
+
+        target.padding = source.padding;
+        target.spacing = source.spacing;
+        target.childAlignment = source.childAlignment;
+        target.childForceExpandWidth = source.childForceExpandWidth;
+        target.childForceExpandHeight = source.childForceExpandHeight;
+        target.childControlWidth = source.childControlWidth;
+        target.childControlHeight = source.childControlHeight;
+        target.childScaleWidth = source.childScaleWidth;
+        target.childScaleHeight = source.childScaleHeight;
+        target.reverseArrangement = source.reverseArrangement;
+    }
+
+    private static void DisableNestedMenuCursorHandlers(Transform root)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        MenuCursorAction[] actions = root.GetComponentsInChildren<MenuCursorAction>(true);
+        for (int i = 0; i < actions.Length; i++)
+        {
+            if (actions[i] != null && actions[i].transform != root)
+            {
+                actions[i].enabled = false;
+            }
+        }
+
+        MainMenuDisplayModeAction[] displayActions = root.GetComponentsInChildren<MainMenuDisplayModeAction>(true);
+        for (int i = 0; i < displayActions.Length; i++)
+        {
+            if (displayActions[i] != null && displayActions[i].transform != root)
+            {
+                displayActions[i].enabled = false;
+            }
+        }
+    }
+
+    private static RectTransform FindOptionsCursorRoot(Transform optionsRoot)
+    {
+        if (optionsRoot == null)
+        {
+            return null;
+        }
+
+        Transform explicitRoot = FindInHierarchy(optionsRoot, "Options_Root");
+        if (explicitRoot is RectTransform explicitRect)
+        {
+            return explicitRect;
+        }
+
+        RectTransform firstItem = FindFirstCursorItem(optionsRoot);
+        if (firstItem != null && firstItem.parent is RectTransform parent)
+        {
+            return parent;
+        }
+
+        return null;
     }
 
     private static MenuCursorAction FindMenuCursorActionByName(Transform root, string name)
@@ -2288,6 +2610,7 @@ public class MainMenuController : MonoBehaviour
         {
             joinStatusText.text = string.Empty;
         }
+        activeJoinEndpoint = default;
         ShowMultiOptionsMenu();
     }
 
@@ -2326,16 +2649,14 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        string code = NetcodeSessionCode.Normalize(joinCodeInput != null ? joinCodeInput.text : string.Empty);
-        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort port, out string normalized))
+        if (!TryResolveJoinEndpoint(out NetcodeSessionEndpoint endpoint))
         {
             SetStatus(joinInvalidMessage);
             SetJoinStatus(joinInvalidMessage);
             return;
         }
 
-        code = normalized;
-        StartJoinFlow(code, port);
+        StartJoinFlow(endpoint);
     }
 
     private void CancelJoin()
@@ -2467,41 +2788,14 @@ public class MainMenuController : MonoBehaviour
 
     private void RegisterTextInput(bool enabled)
     {
-        if (!useManualTextInputFallback)
+        if (!enabled || !useManualTextInputFallback)
         {
             return;
         }
 
-        if (enabled)
-        {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null)
-            {
-                return;
-            }
-
-            if (textInputSubscribed && subscribedKeyboard == keyboard)
-            {
-                return;
-            }
-
-            if (subscribedKeyboard != null)
-            {
-                subscribedKeyboard.onTextInput -= OnTextInput;
-            }
-
-            keyboard.onTextInput += OnTextInput;
-            subscribedKeyboard = keyboard;
-            textInputSubscribed = true;
-            return;
-        }
-
-        if (subscribedKeyboard != null)
-        {
-            subscribedKeyboard.onTextInput -= OnTextInput;
-        }
-        subscribedKeyboard = null;
-        textInputSubscribed = false;
+        // TMP_InputField gere deja le clavier physique. Rejouer Keyboard.onTextInput
+        // ici dupliquait chaque caractere. Le clavier virtuel continue de passer
+        // explicitement par UI_VirtualKey -> OnTextInput.
     }
 
     private void OnTextInput(char character)
@@ -2989,7 +3283,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OnOptionsRequested()
     {
-        SetStatus("Options non configurees.");
+        ShowOptionsMenu();
     }
 
     public void UI_NewGame()
@@ -3390,39 +3684,6 @@ public class MainMenuController : MonoBehaviour
 #endif
     }
 
-    private void StartHostFlow()
-    {
-        if (isLoading)
-        {
-            return;
-        }
-
-        ushort port = ResolvePort();
-        NetcodeLauncher launcher = ResolveLauncher();
-        if (launcher == null)
-        {
-            SetStatus("NetcodeLauncher manquant.");
-            return;
-        }
-
-        bool started = launcher.StartHostWithConnection(hostLoopbackAddress, port, listenAddress);
-        if (!started)
-        {
-            SetStatus("Host deja actif.");
-            return;
-        }
-
-        ShowLoadingScreen();
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.SceneManager != null)
-        {
-            NetworkManager.Singleton.SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
-        }
-        else
-        {
-            SceneManager.LoadScene(gameplaySceneName);
-        }
-    }
-
     private void StartOfflineFlow()
     {
         if (isLoading)
@@ -3439,7 +3700,7 @@ public class MainMenuController : MonoBehaviour
         SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
     }
 
-    private void StartJoinFlow(string code, ushort port)
+    private void StartJoinFlow(NetcodeSessionEndpoint endpoint)
     {
         if (isLoading)
         {
@@ -3464,19 +3725,19 @@ public class MainMenuController : MonoBehaviour
             SaveSessionManager.Instance.SetCurrentSessionType(SaveSessionType.Multiplayer);
         }
 
-        string address = ResolveJoinAddress();
-        bool started = launcher.StartClientWithConnection(address, port);
+        bool started = launcher.StartClientWithConnection(endpoint.Address, endpoint.Port);
         if (!started)
         {
             SetStatus("Client deja actif.");
             return;
         }
 
+        activeJoinEndpoint = endpoint;
         joinInProgress = true;
         RegisterJoinCallbacks(true);
-        SetJoinStatus(joinConnectingMessage);
+        SetJoinStatus($"{joinConnectingMessage} {endpoint.EndpointLabel}");
         ShowLoadingScreen(joinConnectingMessage);
-        SetStatus($"Connexion au code {code}...");
+        SetStatus($"Connexion vers {endpoint.EndpointLabel} (code {endpoint.Code})...");
 
         if (joinTimeoutRoutine != null)
         {
@@ -3497,7 +3758,7 @@ public class MainMenuController : MonoBehaviour
 
     private System.Collections.IEnumerator JoinTimeoutRoutine()
     {
-        float timeout = Mathf.Max(1f, joinTimeoutSeconds);
+        float timeout = Mathf.Max(10f, joinTimeoutSeconds);
         float endTime = Time.unscaledTime + timeout;
         while (Time.unscaledTime < endTime)
         {
@@ -3517,8 +3778,33 @@ public class MainMenuController : MonoBehaviour
 
         if (joinInProgress)
         {
-            HandleJoinFailure(joinNoSessionMessage);
+            HandleJoinFailure(BuildJoinFailureMessage(true));
         }
+    }
+
+    private void RegisterJoinTransportFailureCallback(bool enabled)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null)
+        {
+            return;
+        }
+
+        manager.OnTransportFailure -= OnJoinTransportFailure;
+        if (enabled)
+        {
+            manager.OnTransportFailure += OnJoinTransportFailure;
+        }
+    }
+
+    private void OnJoinTransportFailure()
+    {
+        if (!joinInProgress)
+        {
+            return;
+        }
+
+        HandleJoinFailure(BuildJoinFailureMessage(false));
     }
 
     private void RegisterJoinCallbacks(bool enabled)
@@ -3551,13 +3837,18 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        joinInProgress = false;
-        RegisterJoinCallbacks(false);
         if (joinTimeoutRoutine != null)
         {
             StopCoroutine(joinTimeoutRoutine);
             joinTimeoutRoutine = null;
         }
+
+        if (joinSceneSyncRoutine != null)
+        {
+            StopCoroutine(joinSceneSyncRoutine);
+        }
+
+        joinSceneSyncRoutine = StartCoroutine(JoinSceneSyncRoutine());
     }
 
     private void OnJoinClientDisconnected(ulong clientId)
@@ -3573,7 +3864,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        HandleJoinFailure(joinNoSessionMessage);
+        HandleJoinFailure(BuildJoinFailureMessage(false));
     }
 
     private void HandleJoinFailure(string message)
@@ -3585,6 +3876,11 @@ public class MainMenuController : MonoBehaviour
             StopCoroutine(joinTimeoutRoutine);
             joinTimeoutRoutine = null;
         }
+        if (joinSceneSyncRoutine != null)
+        {
+            StopCoroutine(joinSceneSyncRoutine);
+            joinSceneSyncRoutine = null;
+        }
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
@@ -3594,6 +3890,55 @@ public class MainMenuController : MonoBehaviour
         HideLoadingScreen();
         SetJoinStatus(message);
         SetStatus(message);
+        activeJoinEndpoint = default;
+    }
+
+    private IEnumerator JoinSceneSyncRoutine()
+    {
+        string targetSceneName = string.Empty;
+        float timeout = Time.unscaledTime + Mathf.Max(5f, joinTimeoutSeconds);
+        while (Time.unscaledTime < timeout)
+        {
+            if (!joinInProgress)
+            {
+                joinSceneSyncRoutine = null;
+                yield break;
+            }
+
+            WorldInteractionService service = WorldInteractionService.Instance;
+            if (service != null && !string.IsNullOrWhiteSpace(service.ActiveSceneName))
+            {
+                targetSceneName = service.ActiveSceneName;
+                break;
+            }
+
+            yield return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            targetSceneName = gameplaySceneName;
+        }
+
+        joinInProgress = false;
+        RegisterJoinCallbacks(false);
+        activeJoinEndpoint = default;
+        joinSceneSyncRoutine = null;
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        if (string.Equals(activeScene.name, targetSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            HideLoadingScreen();
+            SetJoinStatus("Connexion et synchronisation terminees.");
+            SetStatus("Connexion et synchronisation terminees.");
+            yield break;
+        }
+
+        string loadingMessageText = $"Synchronisation de la scene {targetSceneName}...";
+        ShowLoadingScreen(loadingMessageText);
+        SetJoinStatus(loadingMessageText);
+        SetStatus(loadingMessageText);
+        SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
     }
 
     private void ShowLoadingScreen(string overrideMessage = null)
@@ -3655,12 +4000,88 @@ public class MainMenuController : MonoBehaviour
             address = joinAddress;
         }
 
-        if (string.IsNullOrWhiteSpace(address))
+        return NetcodeSessionCode.NormalizeAddress(address, hostLoopbackAddress);
+    }
+
+    private bool TryResolveJoinEndpoint(out NetcodeSessionEndpoint endpoint)
+    {
+        string code = joinCodeInput != null ? joinCodeInput.text : string.Empty;
+        string address = ResolveJoinAddress();
+        return NetcodeSessionCode.TryCreateEndpoint(code, address, basePort, portRange, out endpoint);
+    }
+
+    private string BuildJoinFailureMessage(bool timedOut)
+    {
+        if (!activeJoinEndpoint.IsValid)
         {
-            address = hostLoopbackAddress;
+            return joinNoSessionMessage;
         }
 
-        return address.Trim();
+        NetworkManager manager = NetworkManager.Singleton;
+        string disconnectReason = manager != null ? manager.DisconnectReason : string.Empty;
+        if (!string.IsNullOrWhiteSpace(disconnectReason))
+        {
+            return $"Connexion refusee par l'hote ({activeJoinEndpoint.EndpointLabel}, code {activeJoinEndpoint.Code}) : {disconnectReason}";
+        }
+
+        string reason = timedOut
+            ? "Aucune reponse de l'hote dans le delai imparti."
+            : "La connexion a ete interrompue avant la validation du join.";
+
+        string message = $"Connexion impossible a {activeJoinEndpoint.EndpointLabel} pour le code {activeJoinEndpoint.Code}. {reason} Verifie que l'hote est lance avec ce meme code.";
+        if (ShouldSuggestLoopback(activeJoinEndpoint.Address))
+        {
+            message += " Pour un test sur le meme PC, utilise 127.0.0.1 au lieu de l'IP publique.";
+        }
+
+        return message;
+    }
+
+    private static bool ShouldSuggestLoopback(string address)
+    {
+        string normalized = NetcodeSessionCode.NormalizeAddress(address);
+        if (string.IsNullOrWhiteSpace(normalized) || string.Equals(normalized, "localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!IPAddress.TryParse(normalized, out IPAddress parsed) || IPAddress.IsLoopback(parsed))
+        {
+            return false;
+        }
+
+        if (parsed.AddressFamily != AddressFamily.InterNetwork)
+        {
+            return false;
+        }
+
+        byte[] bytes = parsed.GetAddressBytes();
+        if (bytes.Length != 4)
+        {
+            return false;
+        }
+
+        if (bytes[0] == 10)
+        {
+            return false;
+        }
+
+        if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+        {
+            return false;
+        }
+
+        if (bytes[0] == 192 && bytes[1] == 168)
+        {
+            return false;
+        }
+
+        if (bytes[0] == 169 && bytes[1] == 254)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void SetActiveMenuInteractable(bool enabled)
@@ -3686,6 +4107,13 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (currentMenu == MenuState.Options && optionsGroup != null)
+        {
+            optionsGroup.interactable = enabled;
+            optionsGroup.blocksRaycasts = enabled;
+            return;
+        }
+
         if (currentMenu == MenuState.Join && joinPanelGroup != null)
         {
             joinPanelGroup.interactable = enabled;
@@ -3702,17 +4130,6 @@ public class MainMenuController : MonoBehaviour
                 loadGroup.blocksRaycasts = enabled;
             }
         }
-    }
-
-    private ushort ResolvePort()
-    {
-        string code = NetcodeSessionCode.Generate(codeLength);
-        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort port, out _))
-        {
-            return basePort;
-        }
-
-        return port;
     }
 
     private NetcodeLauncher ResolveLauncher()

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 [DefaultExecutionOrder(200)]
@@ -82,6 +83,11 @@ public class Zone : MonoBehaviour
     {
         // Gestion des personnages maison (waiting points + follow auto).
         if (!isMaison)
+        {
+            return;
+        }
+
+        if (!ShouldSimulateMaisonCharacters())
         {
             return;
         }
@@ -215,7 +221,7 @@ public class Zone : MonoBehaviour
         if (isMaison)
         {
             bool enteredMaison = AddMaisonCharacter(character);
-            if (enteredMaison)
+            if (enteredMaison && ShouldSimulateMaisonCharacters())
             {
                 TryResetTorchOnMaisonEntry(character);
             }
@@ -250,10 +256,13 @@ public class Zone : MonoBehaviour
         if (isMaison)
         {
             RemoveMaisonCharacter(character, 1);
-            SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
-            if (controller != null)
+            if (ShouldSimulateMaisonCharacters())
             {
-                controller.Stop();
+                SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
+                if (controller != null)
+                {
+                    controller.Stop();
+                }
             }
         }
     }
@@ -818,5 +827,11 @@ public class Zone : MonoBehaviour
         {
             maisonCounts.Remove(character);
         }
+    }
+
+    private static bool ShouldSimulateMaisonCharacters()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager == null || !manager.IsListening || manager.IsServer;
     }
 }

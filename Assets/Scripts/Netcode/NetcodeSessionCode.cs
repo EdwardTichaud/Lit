@@ -97,6 +97,35 @@ public static class NetcodeSessionCode
         return true;
     }
 
+    public static string NormalizeAddress(string value, string fallback = "")
+    {
+        string normalized = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        if (!string.IsNullOrWhiteSpace(normalized))
+        {
+            return normalized;
+        }
+
+        return string.IsNullOrWhiteSpace(fallback) ? string.Empty : fallback.Trim();
+    }
+
+    public static bool TryCreateEndpoint(string code, string address, ushort basePort, ushort range, out NetcodeSessionEndpoint endpoint)
+    {
+        endpoint = default;
+        if (!TryGetPort(code, basePort, range, out ushort port, out string normalizedCode))
+        {
+            return false;
+        }
+
+        string normalizedAddress = NormalizeAddress(address);
+        if (string.IsNullOrWhiteSpace(normalizedAddress))
+        {
+            return false;
+        }
+
+        endpoint = new NetcodeSessionEndpoint(normalizedCode, normalizedAddress, port);
+        return true;
+    }
+
     private static bool IsAllowed(char c)
     {
         return Alphabet.IndexOf(c) >= 0;
