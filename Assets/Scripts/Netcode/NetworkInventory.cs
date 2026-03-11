@@ -29,6 +29,21 @@ public class NetworkInventory : NetworkBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (!IsServer || controller == null || !IsSpawned)
+        {
+            return;
+        }
+
+        if (torchSeconds.Value != controller.TorchSecondsRemaining
+            || torchEquipped.Value != controller.IsTorchEquipped)
+        {
+            torchSeconds.Value = controller.TorchSecondsRemaining;
+            torchEquipped.Value = controller.IsTorchEquipped;
+        }
+    }
+
     public override void OnNetworkSpawn()
     {
         if (logInventoryDebug)
@@ -482,8 +497,9 @@ public class NetworkInventory : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestUseItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
     {
-        if (!IsRequestFromOwner(rpcParams))
+        if (!NetcodeServerRpcValidation.TryResolveOwnedInventoryContext(this, rpcParams, out _, out string rejectionReason))
         {
+            ShowFeedbackClientRpc(rejectionReason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -495,21 +511,22 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecuteUseItem(item, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void RequestBreakItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
     {
-        if (!IsRequestFromOwner(rpcParams))
+        if (!NetcodeServerRpcValidation.TryResolveOwnedInventoryContext(this, rpcParams, out _, out string rejectionReason))
         {
+            ShowFeedbackClientRpc(rejectionReason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -521,21 +538,22 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecuteBreakItem(item, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void RequestDropItemServerRpc(string itemId, int quantity, Vector3 position, Quaternion rotation, bool allowDropWithoutPrefab, bool destroyWhenEmpty, ServerRpcParams rpcParams = default)
     {
-        if (!IsRequestFromOwner(rpcParams))
+        if (!NetcodeServerRpcValidation.TryResolveOwnedInventoryContext(this, rpcParams, out _, out string rejectionReason))
         {
+            ShowFeedbackClientRpc(rejectionReason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -547,21 +565,22 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecuteDropItem(item, quantity, position, rotation, allowDropWithoutPrefab, destroyWhenEmpty, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void RequestPlaceItemServerRpc(string itemId, Vector3 position, Quaternion rotation, bool createLootContainer, bool destroyWhenEmpty, bool allowDropWithoutPrefab, ServerRpcParams rpcParams = default)
     {
-        if (!IsRequestFromOwner(rpcParams))
+        if (!NetcodeServerRpcValidation.TryResolveOwnedInventoryContext(this, rpcParams, out _, out string rejectionReason))
         {
+            ShowFeedbackClientRpc(rejectionReason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -573,13 +592,13 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecutePlaceItem(item, position, rotation, createLootContainer, destroyWhenEmpty, allowDropWithoutPrefab, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(feedback, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
         }
     }
 
@@ -592,22 +611,6 @@ public class NetworkInventory : NetworkBehaviour
         }
 
         InfoBoxUI.TryShow(message);
-    }
-
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
-    {
-        return new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
-            }
-        };
-    }
-
-    private bool IsRequestFromOwner(ServerRpcParams rpcParams)
-    {
-        return rpcParams.Receive.SenderClientId == OwnerClientId;
     }
 
     private void OnNetItemsChanged(NetworkListEvent<NetItemStack> change)

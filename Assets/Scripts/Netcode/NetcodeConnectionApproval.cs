@@ -56,6 +56,7 @@ public class NetcodeConnectionApproval : MonoBehaviour
             playerId = $"client-{request.ClientNetworkId}";
         }
 
+        playerId = ResolveRuntimePlayerId(playerId, request.ClientNetworkId);
         NetcodePlayerSessionRegistry.Register(request.ClientNetworkId, playerId);
 
         int currentConnections = NetworkManager.Singleton != null
@@ -66,5 +67,58 @@ public class NetcodeConnectionApproval : MonoBehaviour
         response.CreatePlayerObject = false;
         response.Pending = false;
         response.Reason = response.Approved ? string.Empty : "Serveur plein.";
+    }
+
+    private static string ResolveRuntimePlayerId(string playerId, ulong clientId)
+    {
+        string resolved = string.IsNullOrWhiteSpace(playerId)
+            ? $"client-{clientId}"
+            : playerId.Trim();
+
+        if (!IsPlayerIdInUse(resolved, clientId))
+        {
+            return resolved;
+        }
+
+        int suffix = 2;
+        string candidate = $"{resolved}#{suffix}";
+        while (IsPlayerIdInUse(candidate, clientId))
+        {
+            suffix++;
+            candidate = $"{resolved}#{suffix}";
+        }
+
+        return candidate;
+    }
+
+    private static bool IsPlayerIdInUse(string playerId, ulong clientId)
+    {
+        if (string.IsNullOrWhiteSpace(playerId))
+        {
+            return false;
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || manager.ConnectedClientsIds == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < manager.ConnectedClientsIds.Count; i++)
+        {
+            ulong otherClientId = manager.ConnectedClientsIds[i];
+            if (otherClientId == clientId)
+            {
+                continue;
+            }
+
+            if (NetcodePlayerSessionRegistry.TryGetPlayerId(otherClientId, out string otherPlayerId)
+                && string.Equals(otherPlayerId, playerId, System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

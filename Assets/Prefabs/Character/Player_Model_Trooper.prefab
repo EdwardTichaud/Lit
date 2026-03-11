@@ -15709,6 +15709,7 @@ GameObject:
   - component: {fileID: 880945654765737532}
   - component: {fileID: 2272791694640596917}
   - component: {fileID: 3281333903003229964}
+  - component: {fileID: 1607066502827416609}
   m_Layer: 0
   m_Name: Player_Model_Trooper
   m_TagString: Player
@@ -15868,6 +15869,8 @@ MonoBehaviour:
   ignoreCharacterCollisions: 1
   ignoreCharacterTriggerColliders: 1
   collisionRefreshInterval: 0.5
+  audioListener: {fileID: 0}
+  searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15904,6 +15907,8 @@ MonoBehaviour:
   fallbackSpatialBlend: 1
   fallbackMinDistance: 1
   fallbackMaxDistance: 20
+  duckMusicDuringVoiceLine: 1
+  musicDuckMultiplier: 0.5
 --- !u!54 &-8769395688154957966
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -15983,6 +15988,31 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2784444758471557209}
   m_Enabled: 1
+--- !u!114 &1607066502827416609
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &3041327079635033929
 GameObject:
   m_ObjectHideFlags: 0

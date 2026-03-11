@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 // Controle le mouvement et l'inventaire runtime d'un personnage de la squad.
@@ -204,10 +205,15 @@ public class SquadCharacterController : MonoBehaviour
     [SerializeField] private bool searchAudioListenerInChildren = true;
     private bool audioListenerActive;
     private NetworkObject cachedNetworkObject;
+    private NetworkTransform cachedNetworkTransform;
     private readonly RaycastHit[] stepCastHits = new RaycastHit[8];
     private readonly Collider[] stepOverlapHits = new Collider[8];
     private float nextStepDebugTime;
     private float footIkWeightCurrent;
+    private Vector3 lastVisualSamplePosition;
+    private Vector3 visualHorizontalVelocity;
+    private bool visualVelocityInitialized;
+    private AnimatorUpdateMode appliedAnimatorUpdateMode = (AnimatorUpdateMode)(-1);
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -235,9 +241,19 @@ public class SquadCharacterController : MonoBehaviour
 
     private void Update()
     {
-        // Torche + collisions en runtime.
-        UpdateTorchLifetime(Time.deltaTime);
+        // Les etats de gameplay partages restent autoritaires; la presentation peut tourner partout.
+        if (ShouldRunAuthoritativeGameplayState())
+        {
+            UpdateTorchLifetime(Time.deltaTime);
+        }
+
         RefreshCharacterCollisionsIfNeeded();
+        UpdateVisualVelocity(Time.deltaTime);
+        ApplyAnimatorSettings();
+        if (ShouldAnimateFromVisualState())
+        {
+            UpdateAnimationSpeed();
+        }
         UpdateAudioListenerState(false);
     }
 
@@ -292,6 +308,7 @@ public class SquadCharacterController : MonoBehaviour
         RegisterCharacter();
         CacheAudioListener();
         CacheNetworkObject();
+        visualVelocityInitialized = false;
         UpdateAudioListenerState(true);
     }
 
@@ -330,12 +347,15 @@ public class SquadCharacterController : MonoBehaviour
 
     private void CacheNetworkObject()
     {
-        if (cachedNetworkObject != null)
+        if (cachedNetworkObject == null)
         {
-            return;
+            cachedNetworkObject = GetComponentInParent<NetworkObject>();
         }
 
-        cachedNetworkObject = GetComponentInParent<NetworkObject>();
+        if (cachedNetworkTransform == null)
+        {
+            cachedNetworkTransform = GetComponentInParent<NetworkTransform>();
+        }
     }
 
     private void UpdateAudioListenerState(bool force)
@@ -1091,10 +1111,20 @@ public class SquadCharacterController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!ShouldSimulateLocally())
+        {
+            smoothedInput = Vector2.zero;
+            currentHorizontalVelocity = Vector3.zero;
+            return;
+        }
+
         UpdateInputLock(Time.fixedDeltaTime);
         SmoothInput(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
-        UpdateAnimationSpeed();
+        if (!ShouldAnimateFromVisualState())
+        {
+            UpdateAnimationSpeed();
+        }
     }
 
     private bool IsGroundAhead(Vector3 direction)
@@ -2098,6 +2128,11 @@ public class SquadCharacterController : MonoBehaviour
 
     private Vector3 GetCurrentHorizontalVelocity()
     {
+        if (ShouldUseReplicatedVisualVelocity())
+        {
+            return visualHorizontalVelocity;
+        }
+
         if (ShouldUseRigidbody() && rigidbodyTarget != null)
         {
             Vector3 velocity = rigidbodyTarget.linearVelocity;
@@ -2173,7 +2208,16 @@ public class SquadCharacterController : MonoBehaviour
         }
 
         animator.applyRootMotion = false;
-        animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
+        AnimatorUpdateMode desiredMode = animatePhysics && !ShouldAnimateFromVisualState()
+            ? AnimatorUpdateMode.Fixed
+            : AnimatorUpdateMode.Normal;
+        if (appliedAnimatorUpdateMode == desiredMode)
+        {
+            return;
+        }
+
+        animator.updateMode = desiredMode;
+        appliedAnimatorUpdateMode = desiredMode;
     }
 
     private bool ShouldUseRigidbody()
@@ -2189,6 +2233,60 @@ public class SquadCharacterController : MonoBehaviour
         }
 
         return preferRigidbody;
+    }
+
+    private bool ShouldUseReplicatedVisualVelocity()
+    {
+        CacheNetworkObject();
+        return cachedNetworkObject != null
+            && cachedNetworkObject.IsSpawned
+            && cachedNetworkTransform != null
+            && !cachedNetworkTransform.CanCommitToTransform;
+    }
+
+    private bool ShouldSimulateLocally()
+    {
+        CacheNetworkObject();
+        if (cachedNetworkObject == null || !cachedNetworkObject.IsSpawned || cachedNetworkTransform == null)
+        {
+            return true;
+        }
+
+        return cachedNetworkTransform.CanCommitToTransform;
+    }
+
+    private bool ShouldAnimateFromVisualState()
+    {
+        return ShouldUseReplicatedVisualVelocity();
+    }
+
+    private bool ShouldRunAuthoritativeGameplayState()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsListening)
+        {
+            return true;
+        }
+
+        return manager.IsServer;
+    }
+
+    private void UpdateVisualVelocity(float deltaTime)
+    {
+        Transform root = motionRoot != null ? motionRoot : transform;
+        Vector3 position = root.position;
+        if (!visualVelocityInitialized || deltaTime <= 0.0001f)
+        {
+            visualVelocityInitialized = true;
+            lastVisualSamplePosition = position;
+            visualHorizontalVelocity = Vector3.zero;
+            return;
+        }
+
+        Vector3 delta = position - lastVisualSamplePosition;
+        delta.y = 0f;
+        visualHorizontalVelocity = delta / deltaTime;
+        lastVisualSamplePosition = position;
     }
 
     public void AddImpulse(Vector3 worldImpulse, float lockInputForSeconds = -1f)

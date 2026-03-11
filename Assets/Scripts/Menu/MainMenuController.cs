@@ -3905,10 +3905,10 @@ public class MainMenuController : MonoBehaviour
                 yield break;
             }
 
-            WorldInteractionService service = WorldInteractionService.Instance;
-            if (service != null && !string.IsNullOrWhiteSpace(service.ActiveSceneName))
+            WorldInteractionService currentService = WorldInteractionService.Instance;
+            if (currentService != null && !string.IsNullOrWhiteSpace(currentService.ActiveSceneName))
             {
-                targetSceneName = service.ActiveSceneName;
+                targetSceneName = currentService.ActiveSceneName;
                 break;
             }
 
@@ -3926,8 +3926,13 @@ public class MainMenuController : MonoBehaviour
         joinSceneSyncRoutine = null;
 
         Scene activeScene = SceneManager.GetActiveScene();
+        WorldInteractionService service = WorldInteractionService.Instance;
         if (string.Equals(activeScene.name, targetSceneName, StringComparison.OrdinalIgnoreCase))
         {
+            if (service != null)
+            {
+                service.TryRequestLocalSessionSynchronization();
+            }
             HideLoadingScreen();
             SetJoinStatus("Connexion et synchronisation terminees.");
             SetStatus("Connexion et synchronisation terminees.");

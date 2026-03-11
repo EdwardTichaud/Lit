@@ -336,6 +336,50 @@ public class CharacterStateStore : MonoBehaviour
         playerBindings[playerId] = characterId;
     }
 
+    public string BuildSessionSnapshotJson()
+    {
+        SquadManager manager = GetSquadManager();
+        if (manager == null)
+        {
+            return string.Empty;
+        }
+
+        CharacterSaveData data = BuildSaveData(manager);
+        data.homeItems = new List<ItemStackData>();
+        data.builtConstructions = new List<BuiltConstructionData>();
+        data.braseros = new List<BraseroSaveEntry>();
+        return JsonUtility.ToJson(data);
+    }
+
+    public bool ApplySessionSnapshotJson(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
+
+        CharacterSaveData data = JsonUtility.FromJson<CharacterSaveData>(json);
+        if (data == null)
+        {
+            return false;
+        }
+
+        ApplyLoadedPlayerBindings(data);
+
+        SquadManager manager = GetSquadManager();
+        if (manager == null)
+        {
+            return false;
+        }
+
+        Dictionary<string, CharacterData> characterLookup = BuildCharacterLookup(manager);
+        Dictionary<string, Item> itemLookup = BuildItemLookup();
+        Dictionary<string, Skill> skillLookup = BuildSkillLookup();
+        manager.SetPendingLoadData(data, characterLookup, itemLookup, skillLookup);
+        manager.ApplyPendingLoadDataNow();
+        return true;
+    }
+
     private static bool IsNetworked()
     {
         return NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;

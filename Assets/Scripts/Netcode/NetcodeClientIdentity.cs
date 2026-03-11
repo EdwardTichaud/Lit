@@ -6,17 +6,20 @@ using UnityEngine;
 public static class NetcodeClientIdentity
 {
     private const string PlayerIdKey = "LitPlayerId";
+    private const string PlayerSlotArgumentPrefix = "-litPlayerSlot=";
+    private const string PlayerSlotEnvKey = "LIT_PLAYER_SLOT";
 
     public static string GetOrCreatePlayerId()
     {
-        string existing = PlayerPrefs.GetString(PlayerIdKey, string.Empty);
+        string key = GetResolvedPlayerIdKey();
+        string existing = PlayerPrefs.GetString(key, string.Empty);
         if (!string.IsNullOrWhiteSpace(existing))
         {
             return existing;
         }
 
         string created = Guid.NewGuid().ToString("N");
-        PlayerPrefs.SetString(PlayerIdKey, created);
+        PlayerPrefs.SetString(key, created);
         PlayerPrefs.Save();
         return created;
     }
@@ -51,5 +54,47 @@ public static class NetcodeClientIdentity
         }
 
         return true;
+    }
+
+    private static string GetResolvedPlayerIdKey()
+    {
+        if (!TryResolvePlayerSlot(out string slot))
+        {
+            return PlayerIdKey;
+        }
+
+        return $"{PlayerIdKey}.{slot}";
+    }
+
+    private static bool TryResolvePlayerSlot(out string slot)
+    {
+        slot = Environment.GetEnvironmentVariable(PlayerSlotEnvKey);
+        if (!string.IsNullOrWhiteSpace(slot))
+        {
+            slot = slot.Trim();
+            return true;
+        }
+
+        string[] args = Environment.GetCommandLineArgs();
+        if (args == null)
+        {
+            slot = string.Empty;
+            return false;
+        }
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            string arg = args[i];
+            if (string.IsNullOrWhiteSpace(arg) || !arg.StartsWith(PlayerSlotArgumentPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            slot = arg.Substring(PlayerSlotArgumentPrefix.Length).Trim();
+            return !string.IsNullOrWhiteSpace(slot);
+        }
+
+        slot = string.Empty;
+        return false;
     }
 }

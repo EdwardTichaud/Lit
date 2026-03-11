@@ -116,6 +116,23 @@ public class NetcodeCharacterIdentity : NetworkBehaviour
         return controller != null && string.Equals(GetCharacterId(controller.CharacterData), resolvedId, StringComparison.Ordinal);
     }
 
+    public static string GetCharacterId(GameObject instance)
+    {
+        if (instance == null)
+        {
+            return string.Empty;
+        }
+
+        NetcodeCharacterIdentity identity = instance.GetComponent<NetcodeCharacterIdentity>();
+        if (identity != null && !string.IsNullOrWhiteSpace(identity.CharacterId))
+        {
+            return identity.CharacterId;
+        }
+
+        SquadCharacterController controller = instance.GetComponent<SquadCharacterController>();
+        return controller != null ? GetCharacterId(controller.CharacterData) : string.Empty;
+    }
+
     public static bool TryResolveCharacterData(string resolvedId, out CharacterData character)
     {
         character = null;

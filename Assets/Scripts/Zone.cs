@@ -533,6 +533,7 @@ public class Zone : MonoBehaviour
         }
 
         GameObject controlled = SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        WorldInteractionService service = WorldInteractionService.Instance;
         float arriveDistance = Mathf.Max(0f, maisonArrivalDistance);
 
         foreach (GameObject character in trackedCharacters)
@@ -545,6 +546,12 @@ public class Zone : MonoBehaviour
             SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
             if (controller == null)
             {
+                continue;
+            }
+
+            if (service != null && service.IsCharacterAssigned(NetcodeCharacterIdentity.GetCharacterId(character)))
+            {
+                controller.Move(Vector2.zero);
                 continue;
             }
 

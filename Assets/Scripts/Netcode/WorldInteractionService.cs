@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -14,8 +16,14 @@ public class WorldInteractionService : NetworkBehaviour
         default,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    private Coroutine applyReplicatedWorldStateRoutine;
+    private bool localSessionSyncInProgress;
+    private bool localSessionSynchronized;
+    private string localSessionSynchronizedScene = string.Empty;
+    private ulong nextReplicatedWorldStateSequence = 1;
     public event Action AssignmentsChanged;
     public event Action ActiveSceneChanged;
+    public event Action LocalSessionSynchronizationCompleted;
 
     private void Awake()
     {
@@ -32,23 +40,30 @@ public class WorldInteractionService : NetworkBehaviour
     {
         assignments.OnListChanged += OnAssignmentsChanged;
         activeSceneName.OnValueChanged += OnActiveSceneNameChanged;
+        SceneManager.sceneLoaded += OnSceneLoaded;
         if (IsServer)
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
             UpdateActiveSceneName(SceneManager.GetActiveScene().name);
         }
         AssignmentsChanged?.Invoke();
         ActiveSceneChanged?.Invoke();
+        TryRequestLocalSessionSynchronization();
     }
 
     public override void OnNetworkDespawn()
     {
         assignments.OnListChanged -= OnAssignmentsChanged;
         activeSceneName.OnValueChanged -= OnActiveSceneNameChanged;
-        if (IsServer)
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (applyReplicatedWorldStateRoutine != null)
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
+            StopCoroutine(applyReplicatedWorldStateRoutine);
+            applyReplicatedWorldStateRoutine = null;
         }
+        localSessionSyncInProgress = false;
+        localSessionSynchronized = false;
+        localSessionSynchronizedScene = string.Empty;
+        nextReplicatedWorldStateSequence = 1;
         if (assignments != null)
         {
             assignments.Clear();
@@ -62,6 +77,8 @@ public class WorldInteractionService : NetworkBehaviour
     public int AssignmentCount => assignments != null ? assignments.Count : 0;
 
     public string ActiveSceneName => activeSceneName.Value.ToString();
+    public bool IsLocalSessionSynchronized => localSessionSynchronized;
+    public string LocalSessionSynchronizedScene => localSessionSynchronizedScene;
 
     public NetPlayerAssignment GetAssignment(int index)
     {
@@ -189,12 +206,36 @@ public class WorldInteractionService : NetworkBehaviour
 
     private void OnActiveSceneNameChanged(FixedString128Bytes previous, FixedString128Bytes current)
     {
+        if (IsClient && !IsServer)
+        {
+            StopApplyReplicatedWorldStateRoutine();
+            localSessionSyncInProgress = false;
+            localSessionSynchronized = false;
+            if (!string.Equals(localSessionSynchronizedScene, current.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                localSessionSynchronizedScene = string.Empty;
+            }
+            TryRequestLocalSessionSynchronization();
+        }
+
         ActiveSceneChanged?.Invoke();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        UpdateActiveSceneName(scene.name);
+        if (IsServer)
+        {
+            UpdateActiveSceneName(scene.name);
+        }
+
+        if (IsClient && !IsServer)
+        {
+            StopApplyReplicatedWorldStateRoutine();
+            localSessionSyncInProgress = false;
+            localSessionSynchronized = false;
+            localSessionSynchronizedScene = string.Empty;
+            TryRequestLocalSessionSynchronization();
+        }
     }
 
     private void UpdateActiveSceneName(string sceneName)
@@ -210,24 +251,182 @@ public class WorldInteractionService : NetworkBehaviour
         activeSceneName.Value = new FixedString128Bytes(resolvedName);
     }
 
+    public void TryRequestLocalSessionSynchronization()
+    {
+        if (!IsSpawned || !IsClient || IsServer)
+        {
+            return;
+        }
+
+        string targetSceneName = ActiveSceneName;
+        if (string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            return;
+        }
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        if (!activeScene.IsValid() || !string.Equals(activeScene.name, targetSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (localSessionSyncInProgress)
+        {
+            return;
+        }
+
+        if (localSessionSynchronized && string.Equals(localSessionSynchronizedScene, targetSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        localSessionSyncInProgress = true;
+        localSessionSynchronized = false;
+        RequestSessionSynchronizationServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestSessionSynchronizationServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        NetcodePlayerSpawner spawner = NetcodePlayerSpawner.Instance;
+        if (spawner != null)
+        {
+            spawner.ResynchronizeClientState(clientId);
+        }
+
+        RepublishSpawnedObjectsToClient(clientId);
+        string snapshotJson = ReplicatedWorldStateRegistry.CaptureJson(ActiveSceneName, nextReplicatedWorldStateSequence++);
+        ReceiveReplicatedWorldStateClientRpc(snapshotJson, ActiveSceneName, BuildClientRpcParams(clientId));
+    }
+
+    [ClientRpc]
+    private void ReceiveReplicatedWorldStateClientRpc(string snapshotJson, string sceneName, ClientRpcParams rpcParams = default)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        StopApplyReplicatedWorldStateRoutine();
+        applyReplicatedWorldStateRoutine = StartCoroutine(ApplyReplicatedWorldStateRoutine(snapshotJson, sceneName));
+    }
+
+    private IEnumerator ApplyReplicatedWorldStateRoutine(string snapshotJson, string sceneName)
+    {
+        float timeout = Time.unscaledTime + 10f;
+        bool sceneMatches = false;
+        bool worldApplied = true;
+        string worldDiagnostic = string.Empty;
+
+        while (Time.unscaledTime < timeout)
+        {
+            Scene activeScene = SceneManager.GetActiveScene();
+            sceneMatches = activeScene.IsValid()
+                && !string.IsNullOrWhiteSpace(sceneName)
+                && string.Equals(activeScene.name, sceneName, StringComparison.OrdinalIgnoreCase);
+            if (!sceneMatches)
+            {
+                yield return null;
+                continue;
+            }
+
+            worldApplied = ReplicatedWorldStateRegistry.TryApplyJson(snapshotJson, out worldDiagnostic);
+            if (worldApplied)
+            {
+                break;
+            }
+
+            yield return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(snapshotJson) && !worldApplied)
+        {
+            Debug.LogWarning($"WorldInteractionService: synchro partielle du monde pour le client local ({worldDiagnostic}).");
+        }
+
+        localSessionSyncInProgress = false;
+        localSessionSynchronized = sceneMatches && worldApplied;
+        localSessionSynchronizedScene = localSessionSynchronized ? sceneName : string.Empty;
+        applyReplicatedWorldStateRoutine = null;
+        LocalSessionSynchronizationCompleted?.Invoke();
+    }
+
+    private void StopApplyReplicatedWorldStateRoutine()
+    {
+        if (applyReplicatedWorldStateRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(applyReplicatedWorldStateRoutine);
+        applyReplicatedWorldStateRoutine = null;
+    }
+
+    private void RepublishSpawnedObjectsToClient(ulong clientId)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsServer || manager.SpawnManager == null)
+        {
+            return;
+        }
+
+        List<NetworkObject> visibleObjects = new List<NetworkObject>();
+        List<NetworkObject> allObjects = new List<NetworkObject>();
+        foreach (NetworkObject networkObject in manager.SpawnManager.SpawnedObjectsList)
+        {
+            if (networkObject == null || !networkObject.IsSpawned)
+            {
+                continue;
+            }
+
+            if (networkObject == NetworkObject)
+            {
+                continue;
+            }
+
+            allObjects.Add(networkObject);
+            if (networkObject.IsNetworkVisibleTo(clientId))
+            {
+                visibleObjects.Add(networkObject);
+            }
+        }
+
+        for (int i = 0; i < visibleObjects.Count; i++)
+        {
+            visibleObjects[i].NetworkHide(clientId);
+        }
+
+        for (int i = 0; i < allObjects.Count; i++)
+        {
+            allObjects[i].NetworkShow(clientId);
+        }
+    }
+
     [ServerRpc(RequireOwnership = false)]
     public void RequestReturnHomeServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetReturnHome(triggerId, out ReturnHomeTrigger trigger))
         {
-            SendReturnHomeResultClientRpc(triggerId, (int)SquadManager.SendHomeResult.InvalidCharacter, BuildClientRpcParams(rpcParams));
+            SendReturnHomeResultClientRpc(triggerId, (int)SquadManager.SendHomeResult.InvalidCharacter, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
-        GameObject character = ResolvePlayerCharacter(rpcParams);
+        if (!TryResolvePlayerCharacter(rpcParams, out GameObject character))
+        {
+            SendReturnHomeResultClientRpc(triggerId, (int)SquadManager.SendHomeResult.InvalidCharacter, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
         if (character == null || !trigger.IsServerCharacterAllowed(character))
         {
-            SendReturnHomeResultClientRpc(triggerId, (int)SquadManager.SendHomeResult.InvalidCharacter, BuildClientRpcParams(rpcParams));
+            SendReturnHomeResultClientRpc(triggerId, (int)SquadManager.SendHomeResult.InvalidCharacter, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         SquadManager.SendHomeResult result = trigger.ServerTrySendHome(character);
-        SendReturnHomeResultClientRpc(triggerId, (int)result, BuildClientRpcParams(rpcParams));
+        SendReturnHomeResultClientRpc(triggerId, (int)result, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ClientRpc]
@@ -246,13 +445,18 @@ public class WorldInteractionService : NetworkBehaviour
     {
         if (!NetcodeTriggerRegistry.TryGetHubSwap(triggerId, out HubCompanionSwapTrigger trigger))
         {
-            SendHubSwapResultClientRpc(triggerId, false, BuildClientRpcParams(rpcParams));
+            SendHubSwapResultClientRpc(triggerId, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
-        GameObject character = ResolvePlayerCharacter(rpcParams);
+        if (!TryResolvePlayerCharacter(rpcParams, out GameObject character))
+        {
+            SendHubSwapResultClientRpc(triggerId, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
         bool success = trigger.ServerTrySwap(character);
-        SendHubSwapResultClientRpc(triggerId, success, BuildClientRpcParams(rpcParams));
+        SendHubSwapResultClientRpc(triggerId, success, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ClientRpc]
@@ -274,7 +478,11 @@ public class WorldInteractionService : NetworkBehaviour
             return;
         }
 
-        GameObject character = ResolvePlayerCharacter(rpcParams);
+        if (!TryResolvePlayerCharacter(rpcParams, out GameObject character))
+        {
+            return;
+        }
+
         if (!trigger.IsServerCharacterAllowed(character))
         {
             return;
@@ -301,12 +509,12 @@ public class WorldInteractionService : NetworkBehaviour
         NetcodePlayerSpawner spawner = NetcodePlayerSpawner.Instance;
         if (spawner == null)
         {
-            SendSwitchResultClientRpc(false, "Spawner manquant.", BuildClientRpcParams(rpcParams));
+            SendSwitchResultClientRpc(false, "Spawner manquant.", NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         bool success = spawner.TrySwitchCharacter(rpcParams.Receive.SenderClientId, characterId, out string reason);
-        SendSwitchResultClientRpc(success, reason, BuildClientRpcParams(rpcParams));
+        SendSwitchResultClientRpc(success, reason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ClientRpc]
@@ -325,20 +533,31 @@ public class WorldInteractionService : NetworkBehaviour
         InfoBoxUI.TryShow(reason);
     }
 
-    private static GameObject ResolvePlayerCharacter(ServerRpcParams rpcParams)
+    private bool TryResolvePlayerCharacter(ServerRpcParams rpcParams, out GameObject character)
     {
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        return playerRoot != null ? playerRoot.gameObject : null;
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out _,
+                requireController: false,
+                requireInventory: false))
+        {
+            character = null;
+            return false;
+        }
+
+        character = context.PlayerObject;
+        return character != null;
     }
 
     private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
     {
-        return new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
-            }
-        };
+        return NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams);
+    }
+
+    private static ClientRpcParams BuildClientRpcParams(ulong clientId)
+    {
+        return NetcodeServerRpcValidation.BuildClientRpcParams(clientId);
     }
 }

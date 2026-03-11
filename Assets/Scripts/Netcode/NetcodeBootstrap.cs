@@ -73,6 +73,7 @@ public class NetcodeBootstrap : MonoBehaviour
         NetcodePrefabRegistry.Refresh();
 
         SyncLobbyUI(scene);
+        TryRequestClientSessionSynchronization(scene);
     }
 
     private static bool IsMenuScene(string sceneName)
@@ -119,6 +120,28 @@ public class NetcodeBootstrap : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void TryRequestClientSessionSynchronization(Scene scene)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsClient || manager.IsServer)
+        {
+            return;
+        }
+
+        if (!scene.IsValid() || IsMenuScene(scene.name))
+        {
+            return;
+        }
+
+        WorldInteractionService service = WorldInteractionService.Instance;
+        if (service == null)
+        {
+            return;
+        }
+
+        service.TryRequestLocalSessionSynchronization();
     }
 
     private void EnsureNetworkManager()

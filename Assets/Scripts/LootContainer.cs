@@ -2646,54 +2646,9 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         }
     }
 
-    private NetworkInventory GetNetworkInventoryForCharacter(Transform playerRoot)
+    private Collider ResolveInteractionCollider()
     {
-        if (playerRoot == null)
-        {
-            return null;
-        }
-
-        NetworkInventory inventory = playerRoot.GetComponent<NetworkInventory>();
-        if (inventory != null)
-        {
-            return inventory;
-        }
-
-        return playerRoot.GetComponentInChildren<NetworkInventory>(true);
-    }
-
-    private SquadCharacterController GetControllerFromRoot(Transform playerRoot)
-    {
-        if (playerRoot == null)
-        {
-            return null;
-        }
-
-        SquadCharacterController controller = playerRoot.GetComponent<SquadCharacterController>();
-        if (controller != null)
-        {
-            return controller;
-        }
-
-        return playerRoot.GetComponentInChildren<SquadCharacterController>(true);
-    }
-
-    private bool IsCharacterInRange(Transform characterRoot)
-    {
-        if (characterRoot == null)
-        {
-            return false;
-        }
-
-        Collider col = interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
-        if (col == null)
-        {
-            return true;
-        }
-
-        Vector3 closest = col.ClosestPoint(characterRoot.position);
-        float distanceSqr = (closest - characterRoot.position).sqrMagnitude;
-        return distanceSqr <= 0.25f;
+        return interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -2704,9 +2659,21 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out string reason,
+                requireController: true,
+                requireInventory: true))
         {
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!NetcodeServerRpcValidation.TryValidateRange(this, context, ResolveInteractionCollider(), 0.5f, "interagir avec le conteneur", out reason))
+        {
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2735,18 +2702,14 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (!item.CanTakeFromContainer(this, out string reason))
+        if (!item.CanTakeFromContainer(this, out reason))
         {
-            ShowFeedbackClientRpc(reason, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
-        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
-        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
-        if (inventory == null || controller == null)
-        {
-            return;
-        }
+        NetworkInventory inventory = context.Inventory;
+        SquadCharacterController controller = context.Controller;
 
         int available = Mathf.Max(0, entry.quantity);
         int toTake = Mathf.Min(available, quantity);
@@ -2766,21 +2729,33 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
         SyncNetFromLootItems();
         HandleEmptyContainer();
-        ShowFeedbackClientRpc(item.GetTakeSuccessMessage(), false, BuildClientRpcParams(rpcParams));
+        ShowFeedbackClientRpc(item.GetTakeSuccessMessage(), false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void RequestTakeAllServerRpc(ServerRpcParams rpcParams = default)
     {
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out string reason,
+                requireController: true,
+                requireInventory: true))
         {
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!NetcodeServerRpcValidation.TryValidateRange(this, context, ResolveInteractionCollider(), 0.5f, "interagir avec le conteneur", out reason))
+        {
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!collectable)
         {
-            ShowFeedbackClientRpc(takeNotAllowedMessage, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(takeNotAllowedMessage, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2789,12 +2764,8 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
-        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
-        if (inventory == null || controller == null)
-        {
-            return;
-        }
+        NetworkInventory inventory = context.Inventory;
+        SquadCharacterController controller = context.Controller;
 
         for (int i = lootItems.Count - 1; i >= 0; i--)
         {
@@ -2820,7 +2791,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         inventory.SyncFromController();
         SyncNetFromLootItems();
         HandleEmptyContainer();
-        ShowFeedbackClientRpc(takeAllSuccessMessage, false, BuildClientRpcParams(rpcParams));
+        ShowFeedbackClientRpc(takeAllSuccessMessage, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -2831,9 +2802,21 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out string reason,
+                requireController: true,
+                requireInventory: true))
         {
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!NetcodeServerRpcValidation.TryValidateRange(this, context, ResolveInteractionCollider(), 0.5f, "deposer dans le conteneur", out reason))
+        {
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2843,23 +2826,19 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (!item.CanDepositToContainer(this, out string reason))
+        if (!item.CanDepositToContainer(this, out reason))
         {
-            ShowFeedbackClientRpc(reason, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(reason, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
-        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
-        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
-        if (controller == null || inventory == null)
-        {
-            return;
-        }
+        SquadCharacterController controller = context.Controller;
+        NetworkInventory inventory = context.Inventory;
 
         int remainingCapacity = GetRemainingCapacity();
         if (remainingCapacity <= 0 || quantity > remainingCapacity)
         {
-            ShowFeedbackClientRpc(depositNoSpaceMessage, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(depositNoSpaceMessage, false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2895,7 +2874,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
         inventory.SyncFromController();
         SyncNetFromLootItems();
-        ShowFeedbackClientRpc(item.GetDepositSuccessMessage(), false, BuildClientRpcParams(rpcParams));
+        ShowFeedbackClientRpc(item.GetDepositSuccessMessage(), false, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -2906,9 +2885,21 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out string reason,
+                requireController: true,
+                requireInventory: true))
         {
+            ShowFeedbackClientRpc(reason, true, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!NetcodeServerRpcValidation.TryValidateRange(this, context, ResolveInteractionCollider(), 0.5f, "casser l'objet", out reason))
+        {
+            ShowFeedbackClientRpc(reason, true, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2939,7 +2930,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
         if (!item.HasBreakResults())
         {
-            ShowFeedbackClientRpc(breakInvalidMessage, true, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(breakInvalidMessage, true, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2950,7 +2941,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             int effectiveRemaining = remaining + 1;
             if (totalResults > effectiveRemaining)
             {
-                ShowFeedbackClientRpc(breakNoSpaceMessage, true, BuildClientRpcParams(rpcParams));
+                ShowFeedbackClientRpc(breakNoSpaceMessage, true, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
                 return;
             }
         }
@@ -2964,7 +2955,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         ApplyBreakResults(item);
         SyncNetFromLootItems();
         HandleEmptyContainer();
-        ShowFeedbackClientRpc(item.GetBreakSuccessMessage(), true, BuildClientRpcParams(rpcParams));
+        ShowFeedbackClientRpc(item.GetBreakSuccessMessage(), true, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     [ClientRpc]
@@ -2978,17 +2969,6 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         {
             ShowActionFeedback(message);
         }
-    }
-
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
-    {
-        return new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
-            }
-        };
     }
 
     private InventoryPanelController GetInventoryPanelController()

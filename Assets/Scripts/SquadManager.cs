@@ -424,6 +424,8 @@ public class SquadManager : MonoBehaviour
         }
 
         CharacterData runtimeCharacter = GetRuntimeCharacter(character);
+        CompanionRecord record = GetOrCreateRecord(runtimeCharacter);
+        record.instance = instance;
         if (squadCharacters == null)
         {
             squadCharacters = new List<GameObject>();
@@ -475,6 +477,36 @@ public class SquadManager : MonoBehaviour
         pendingCharacterLookup = characterLookup;
         pendingItemLookup = itemLookup;
         pendingSkillLookup = skillLookup;
+    }
+
+    public void ApplyPendingLoadDataNow()
+    {
+        if (pendingLoadData == null)
+        {
+            return;
+        }
+
+        ApplyPendingRoster();
+        EnsureRuntimeSquad();
+
+        SquadUISettings ui = GetSquadUI();
+        if (ui != null)
+        {
+            ui.InitializePanel(charactersSelectionOn);
+            ui.BuildSquadUnits(currentSquad);
+        }
+
+        ApplyPendingCharacterStates();
+
+        if (IsMultiplayerActive())
+        {
+            RefreshNetworkCharacters();
+            UpdateCurrentCharacter();
+            UpdateCursorPosition();
+            UpdateSquadPanelCursorVisibility();
+            ApplySquadPanelVisibility(true);
+            RequestCrownReposition();
+        }
     }
 
     public List<CharacterData> GetKnownCharacters()

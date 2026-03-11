@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Ajoute un NetworkObject aux objets de scene qui ont des NetworkBehaviour.
+// Valide les objets de scene deja reseautes sans muter la scene au runtime.
 public static class NetcodeSceneObjectInstaller
 {
     private static readonly HashSet<GameObject> processedRoots = new HashSet<GameObject>();
+    private static readonly HashSet<string> reportedMissingObjects = new HashSet<string>();
 
     public static void PrepareActiveScene()
     {
@@ -36,88 +36,72 @@ public static class NetcodeSceneObjectInstaller
             }
 
             processedRoots.Add(root);
-            NetworkBehaviour[] behaviours = root.GetComponentsInChildren<NetworkBehaviour>(true);
-            if (behaviours == null)
-            {
-                continue;
-            }
-
-            for (int j = 0; j < behaviours.Length; j++)
-            {
-                NetworkBehaviour behaviour = behaviours[j];
-                if (behaviour == null)
-                {
-                    continue;
-                }
-
-                GameObject host = behaviour.gameObject;
-                if (host == null)
-                {
-                    continue;
-                }
-
-                NetworkObject networkObject = host.GetComponent<NetworkObject>();
-                if (networkObject == null)
-                {
-                    networkObject = host.GetComponentInParent<NetworkObject>();
-                    if (networkObject != null)
-                    {
-                        uint parentHash = NetcodeSceneIdUtility.GetStableId(networkObject.transform);
-                        NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, parentHash);
-                        continue;
-                    }
-
-                    networkObject = host.AddComponent<NetworkObject>();
-                }
-
-                uint hash = NetcodeSceneIdUtility.GetStableId(networkObject.transform);
-                NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, hash);
-            }
+            ValidateSceneNetworkObjects(root, scene.path);
         }
-
-        PrepareSquadCharacters(roots);
     }
 
-    private static void PrepareSquadCharacters(GameObject[] roots)
+    private static void ValidateSceneNetworkObjects(GameObject root, string scenePath)
     {
-        if (roots == null)
+        NetworkBehaviour[] behaviours = root.GetComponentsInChildren<NetworkBehaviour>(true);
+        if (behaviours == null)
         {
             return;
         }
 
-        for (int i = 0; i < roots.Length; i++)
+        for (int i = 0; i < behaviours.Length; i++)
         {
-            GameObject root = roots[i];
-            if (root == null)
+            NetworkBehaviour behaviour = behaviours[i];
+            if (behaviour == null || ShouldSkipScenePreparation(behaviour))
             {
                 continue;
             }
 
-            SquadCharacterController[] controllers = root.GetComponentsInChildren<SquadCharacterController>(true);
-            if (controllers == null)
+            GameObject host = behaviour.gameObject;
+            if (host == null)
             {
                 continue;
             }
 
-            for (int j = 0; j < controllers.Length; j++)
+            NetworkObject networkObject = host.GetComponent<NetworkObject>();
+            if (networkObject == null)
             {
-                SquadCharacterController controller = controllers[j];
-                if (controller == null)
-                {
-                    continue;
-                }
-
-                GameObject host = controller.gameObject;
-                NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(host);
-                NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(host);
-                NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(host);
-                NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(host);
-                NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(host);
-                NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(host);
-
-                uint hash = NetcodeSceneIdUtility.GetStableId(networkObject.transform);
-                NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, hash);
+                networkObject = host.GetComponentInParent<NetworkObject>();
             }
+
+            if (networkObject == null)
+            {
+                ReportMissingNetworkObject(scenePath, behaviour, host);
+                continue;
+            }
+
+            uint hash = NetcodeSceneIdUtility.GetStableId(networkObject.transform);
+            NetcodeRuntimeUtilities.EnsureSceneObjectHash(
+                networkObject,
+                hash,
+                $"{behaviour.GetType().Name}:{host.name}");
         }
+    }
+
+    private static void ReportMissingNetworkObject(string scenePath, NetworkBehaviour behaviour, GameObject host)
+    {
+        string path = string.IsNullOrWhiteSpace(scenePath) ? "<scene inconnue>" : scenePath;
+        string key = $"{path}:{behaviour.GetType().Name}:{host.GetInstanceID()}";
+        if (!reportedMissingObjects.Add(key))
+        {
+            return;
+        }
+
+        Debug.LogError(
+            $"NetcodeSceneObjectInstaller: {host.name} ({behaviour.GetType().Name}) dans {path} n'a aucun NetworkObject serialize. " +
+            "Execute Tools > Lit > Netcode > Prepare Scene Network Objects pour corriger la scene.");
+    }
+
+    private static bool ShouldSkipScenePreparation(NetworkBehaviour behaviour)
+    {
+        return behaviour is WorldInteractionService
+            || behaviour is NetcodeCharacterIdentity
+            || behaviour is NetcodeLocalPlayer
+            || behaviour is NetworkCharacterInput
+            || behaviour is NetworkInventory;
     }
 }

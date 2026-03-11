@@ -23,15 +23,25 @@ public static class NetcodeSceneIdUtility
             return string.Empty;
         }
 
-        StringBuilder builder = new StringBuilder(target.name);
+        StringBuilder builder = new StringBuilder(BuildSegment(target));
         Transform current = target.parent;
         while (current != null)
         {
             builder.Insert(0, "/");
-            builder.Insert(0, current.name);
+            builder.Insert(0, BuildSegment(current));
             current = current.parent;
         }
 
         return builder.ToString();
+    }
+
+    private static string BuildSegment(Transform target)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        return $"{target.name}[{target.GetSiblingIndex()}]";
     }
 }

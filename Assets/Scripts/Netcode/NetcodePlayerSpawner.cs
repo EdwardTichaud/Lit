@@ -79,6 +79,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
             WorldInteractionService.Instance.ClearAllAssignments();
         }
 
+        SpawnSessionCharacters();
         SpawnForClient(NetworkManager.Singleton.LocalClientId);
     }
 
@@ -98,6 +99,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         {
             assignments.Remove(clientId);
             ReleaseRosterIndex(character);
+            ReleaseCharacterOwnership(character);
         }
 
         NetcodePlayerSessionRegistry.Unregister(clientId);
@@ -120,33 +122,8 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        GameObject instance = TryResolveExistingInstance(character);
-        if (instance != null)
+        if (!TryEnsureNetworkCharacter(character, out GameObject instance, out NetworkObject networkObject))
         {
-            PrepareExistingInstanceForNetwork(instance, character);
-        }
-        else
-        {
-            Transform parent = SquadManager.Instance != null ? SquadManager.Instance.squadCharactersParent : null;
-            Vector3 position = ResolveSpawnPosition(character);
-            Quaternion rotation = ResolveSpawnRotation(character);
-
-            instance = NetcodePrefabRegistry.SpawnCharacterInstance(character, position, rotation, parent);
-            if (instance == null)
-            {
-                Debug.LogWarning($"NetcodePlayerSpawner: prefab reseau manquant pour {character.name}.");
-                return;
-            }
-        }
-
-        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
-        if (networkObject == null)
-        {
-            Debug.LogWarning("NetcodePlayerSpawner: NetworkObject manquant sur le prefab reseau.");
-            if (instance != null)
-            {
-                Destroy(instance);
-            }
             return;
         }
 
@@ -390,33 +367,64 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(instance);
-
+        NetcodeRuntimeUtilities.ConfigureCharacterNetworkComponents(instance);
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
         if (networkObject.IsSpawned)
         {
             return;
         }
 
-        if (instance.scene.IsValid())
+        uint hash = NetcodePrefabRegistry.GetCharacterPrefabHash(character);
+        if (hash == 0u)
         {
-            uint sceneHash = NetcodeSceneIdUtility.GetStableId(instance.transform);
-            NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, sceneHash);
+            hash = NetcodeStableHash.Hash32($"character:{GetCharacterId(character)}");
+        }
+
+        // Les avatars de squad deja presents dans la scene sont quand meme des instances runtime.
+        // Si NGO les considere comme des scene objects, un client tardif ne peut pas les recreer.
+        networkObject.SetSceneObjectStatus(false);
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(
+            networkObject,
+            hash,
+            $"character:{GetCharacterId(character)}:existing-instance");
+    }
+
+    private bool TryEnsureNetworkCharacter(CharacterData character, out GameObject instance, out NetworkObject networkObject)
+    {
+        instance = TryResolveExistingInstance(character);
+        if (instance != null)
+        {
+            PrepareExistingInstanceForNetwork(instance, character);
         }
         else
         {
-            uint hash = NetcodePrefabRegistry.GetCharacterPrefabHash(character);
-            if (hash == 0u)
-            {
-                hash = NetcodeStableHash.Hash32($"character:{GetCharacterId(character)}");
-            }
+            Transform parent = SquadManager.Instance != null ? SquadManager.Instance.squadCharactersParent : null;
+            Vector3 position = ResolveSpawnPosition(character);
+            Quaternion rotation = ResolveSpawnRotation(character);
 
-            NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
+            instance = NetcodePrefabRegistry.SpawnCharacterInstance(character, position, rotation, parent);
+            if (instance == null)
+            {
+                Debug.LogWarning($"NetcodePlayerSpawner: prefab reseau manquant pour {character.name}.");
+                networkObject = null;
+                return false;
+            }
         }
+
+        networkObject = instance.GetComponent<NetworkObject>();
+        if (networkObject == null)
+        {
+            Debug.LogWarning("NetcodePlayerSpawner: NetworkObject manquant sur le prefab reseau.");
+            Destroy(instance);
+            return false;
+        }
+
+        if (!networkObject.IsSpawned)
+        {
+            networkObject.Spawn(true);
+        }
+
+        return true;
     }
 
     private void SpawnWorldInteractionService()
@@ -464,7 +472,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return preferred;
         }
 
-        int index = GetNextRosterIndex(roster.Count);
+        int index = GetRandomAvailableRosterIndex(roster.Count);
         if (index < 0 || index >= roster.Count)
         {
             index = 0;
@@ -477,6 +485,97 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         return character;
+    }
+
+    public void ResynchronizeClientState(ulong clientId)
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
+        SpawnSessionCharacters();
+        PruneAssignments();
+        if (!assignments.TryGetValue(clientId, out CharacterData character) || character == null)
+        {
+            SpawnForClient(clientId);
+            return;
+        }
+
+        if (!TryEnsureNetworkCharacter(character, out GameObject instance, out NetworkObject networkObject))
+        {
+            return;
+        }
+
+        if (networkObject.OwnerClientId != clientId)
+        {
+            networkObject.ChangeOwnership(clientId);
+        }
+
+        NetcodeCharacterIdentity identity = NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
+        if (identity != null)
+        {
+            identity.SetCharacter(character);
+        }
+
+        NetworkInventory inventory = instance.GetComponent<NetworkInventory>();
+        if (inventory != null && inventory.IsServer)
+        {
+            inventory.SyncFromController();
+        }
+
+        RegisterWithSquadManager(character, instance);
+        RegisterPlayerBinding(clientId, character);
+        UpdateAssignmentRegistry(clientId, character);
+    }
+
+    private void SpawnSessionCharacters()
+    {
+        SquadManager manager = SquadManager.Instance;
+        if (manager == null || manager.currentSquad == null || manager.currentSquad.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < manager.currentSquad.Count; i++)
+        {
+            CharacterData character = manager.currentSquad[i];
+            if (character == null)
+            {
+                continue;
+            }
+
+            if (!TryEnsureNetworkCharacter(character, out GameObject instance, out NetworkObject networkObject))
+            {
+                continue;
+            }
+
+            RegisterWithSquadManager(character, instance);
+
+            SquadCharacterController controller = instance.GetComponent<SquadCharacterController>();
+            if (controller != null)
+            {
+                controller.BindCharacterData(character, true);
+                EnsureStarterInventoryIfEmpty(controller, character);
+            }
+
+            NetcodeCharacterIdentity identity = NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
+            if (identity != null)
+            {
+                identity.SetCharacter(character);
+            }
+
+            if (!assignments.ContainsValue(character) && networkObject.OwnerClientId != NetworkManager.ServerClientId)
+            {
+                networkObject.RemoveOwnership();
+            }
+
+            NetworkInventory inventory = instance.GetComponent<NetworkInventory>();
+            if (inventory != null && inventory.IsServer)
+            {
+                inventory.SyncFromController();
+            }
+        }
     }
 
     private CharacterData ResolvePreferredCharacter(ulong clientId, List<CharacterData> roster)
@@ -541,19 +640,25 @@ public class NetcodePlayerSpawner : MonoBehaviour
         store.SetPlayerBinding(playerId, characterId);
     }
 
-    private int GetNextRosterIndex(int rosterCount)
+    private int GetRandomAvailableRosterIndex(int rosterCount)
     {
         if (rosterCount <= 0)
         {
             return -1;
         }
 
+        List<int> available = new List<int>();
         for (int i = 0; i < rosterCount; i++)
         {
             if (!usedRosterIndices.Contains(i))
             {
-                return i;
+                available.Add(i);
             }
+        }
+
+        if (available.Count > 0)
+        {
+            return available[UnityEngine.Random.Range(0, available.Count)];
         }
 
         return 0;
@@ -850,8 +955,32 @@ public class NetcodePlayerSpawner : MonoBehaviour
         for (int i = 0; i < toRemove.Count; i++)
         {
             ulong clientId = toRemove[i];
+            if (assignments.TryGetValue(clientId, out CharacterData character))
+            {
+                ReleaseCharacterOwnership(character);
+            }
             assignments.Remove(clientId);
             UpdateAssignmentRegistry(clientId, null);
+        }
+    }
+
+    private static void ReleaseCharacterOwnership(CharacterData character)
+    {
+        GameObject instance = TryResolveExistingInstance(character);
+        if (instance == null)
+        {
+            return;
+        }
+
+        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+        if (networkObject == null || !networkObject.IsSpawned)
+        {
+            return;
+        }
+
+        if (networkObject.OwnerClientId != NetworkManager.ServerClientId)
+        {
+            networkObject.RemoveOwnership();
         }
     }
 }

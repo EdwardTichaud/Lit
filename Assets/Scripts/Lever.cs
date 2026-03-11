@@ -118,6 +118,11 @@ public class Lever : NetworkBehaviour
         SetActiveInternal(active, true);
     }
 
+    public void ApplySnapshotState(bool active)
+    {
+        ApplyState(active, false);
+    }
+
     private void SetActiveServer(bool active)
     {
         SetActiveInternal(active, true);
@@ -308,13 +313,46 @@ public class Lever : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestInteractServerRpc(ServerRpcParams rpcParams = default)
     {
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out string reason,
+                requireController: false,
+                requireInventory: false))
         {
+            ShowFeedbackClientRpc(reason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        Vector3 center = transform.position;
+        float radius = interactionRadius;
+        if (leverCollider != null && useColliderBounds)
+        {
+            Bounds bounds = leverCollider.bounds;
+            center = bounds.center;
+            Vector3 extents = bounds.extents;
+            radius = Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z)) + colliderRadiusPadding;
+        }
+
+        if (!NetcodeServerRpcValidation.TryValidateRange(this, context, center, radius, "activer le levier", out reason))
+        {
+            ShowFeedbackClientRpc(reason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         SetActiveServer(true);
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackClientRpc(string message, ClientRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
     }
 
     private GameObject GetSquadCharacter(Collider other)

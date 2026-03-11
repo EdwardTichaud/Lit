@@ -335,6 +335,176 @@ public class BuilderController : NetworkBehaviour
         NotifyBuildingsChanged();
     }
 
+    public List<BuilderSessionSnapshotBuildingEntry> BuildSessionSnapshotEntries()
+    {
+        List<BuilderSessionSnapshotBuildingEntry> results = new List<BuilderSessionSnapshotBuildingEntry>();
+        if (builtBuildings == null)
+        {
+            return results;
+        }
+
+        for (int i = 0; i < builtBuildings.Count; i++)
+        {
+            BuiltBuildingEntry entry = builtBuildings[i];
+            if (entry == null)
+            {
+                continue;
+            }
+
+            Item building = entry.building;
+            if (building == null && entry.info != null)
+            {
+                building = entry.info.BuildingItem;
+            }
+
+            if (building == null && entry.info != null && !string.IsNullOrWhiteSpace(entry.info.BuildingItemId))
+            {
+                building = ResolveBuildingItem(entry.info.BuildingItemId);
+            }
+
+            if (building == null || !building.isBuilding)
+            {
+                continue;
+            }
+
+            BuildingInfoInteractable info = entry.info;
+            results.Add(new BuilderSessionSnapshotBuildingEntry
+            {
+                networkId = entry.networkId != 0 ? entry.networkId : (info != null ? info.NetworkBuildingId : 0),
+                buildingItemId = GetBuildingItemId(building),
+                level = Mathf.Max(1, info != null ? info.Level : entry.level),
+                position = info != null ? info.transform.position : entry.position,
+                rotation = info != null ? info.transform.rotation : Quaternion.identity
+            });
+        }
+
+        return results;
+    }
+
+    public void ApplySessionSnapshotEntries(List<BuilderSessionSnapshotBuildingEntry> entries)
+    {
+        HashSet<ulong> seen = new HashSet<ulong>();
+        if (entries != null)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                BuilderSessionSnapshotBuildingEntry entry = entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.buildingItemId))
+                {
+                    continue;
+                }
+
+                if (entry.networkId != 0)
+                {
+                    seen.Add(entry.networkId);
+                }
+
+                Item building = ResolveBuildingItem(entry.buildingItemId);
+                if (building == null || !building.isBuilding)
+                {
+                    continue;
+                }
+
+                BuildingInfoInteractable info = null;
+                if (entry.networkId != 0)
+                {
+                    netBuildingLookup.TryGetValue(entry.networkId, out info);
+                }
+
+                if (info == null)
+                {
+                    info = SpawnNetBuildingInstance(
+                        building,
+                        entry.position,
+                        entry.rotation,
+                        Mathf.Max(1, entry.level),
+                        entry.networkId);
+                }
+                else
+                {
+                    UpdateNetBuildingInfo(
+                        info,
+                        building,
+                        new NetBuiltBuilding(entry.networkId, entry.buildingItemId, Mathf.Max(1, entry.level), entry.position, entry.rotation));
+                }
+
+                if (info != null && entry.networkId != 0)
+                {
+                    netBuildingLookup[entry.networkId] = info;
+                }
+            }
+        }
+
+        if (netBuildingLookup.Count > 0)
+        {
+            List<ulong> toRemove = new List<ulong>();
+            foreach (KeyValuePair<ulong, BuildingInfoInteractable> pair in netBuildingLookup)
+            {
+                if (pair.Key == 0 || seen.Contains(pair.Key))
+                {
+                    continue;
+                }
+
+                if (pair.Value != null)
+                {
+                    Destroy(pair.Value.gameObject);
+                }
+
+                toRemove.Add(pair.Key);
+            }
+
+            for (int i = 0; i < toRemove.Count; i++)
+            {
+                netBuildingLookup.Remove(toRemove[i]);
+            }
+        }
+
+        if (builtBuildings == null)
+        {
+            builtBuildings = new List<BuiltBuildingEntry>();
+        }
+        else
+        {
+            builtBuildings.Clear();
+        }
+
+        if (entries != null)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                BuilderSessionSnapshotBuildingEntry entry = entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.buildingItemId))
+                {
+                    continue;
+                }
+
+                Item building = ResolveBuildingItem(entry.buildingItemId);
+                if (building == null || !building.isBuilding)
+                {
+                    continue;
+                }
+
+                BuildingInfoInteractable info = null;
+                if (entry.networkId != 0)
+                {
+                    netBuildingLookup.TryGetValue(entry.networkId, out info);
+                }
+
+                builtBuildings.Add(new BuiltBuildingEntry
+                {
+                    networkId = entry.networkId,
+                    info = info,
+                    building = building,
+                    level = Mathf.Max(1, entry.level),
+                    position = entry.position
+                });
+            }
+        }
+
+        SyncBuildingCurrentLevelsFromBuiltList();
+        NotifyBuildingsChanged();
+    }
+
     private void NotifyBuildingsChanged()
     {
         BuildingsChanged?.Invoke();
@@ -1989,8 +2159,9 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory, out string rejectionReason))
         {
+            SendFeedback(rejectionReason, rpcParams);
             return;
         }
 
@@ -2034,8 +2205,9 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory, out string rejectionReason))
         {
+            SendFeedback(rejectionReason, rpcParams);
             return;
         }
 
@@ -2093,8 +2265,9 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory, out string rejectionReason))
         {
+            SendFeedback(rejectionReason, rpcParams);
             return;
         }
 
@@ -2151,8 +2324,9 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory))
+        if (!TryResolveSender(rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory, out string rejectionReason))
         {
+            SendFeedback(rejectionReason, rpcParams);
             return;
         }
 
@@ -2342,35 +2516,26 @@ public class BuilderController : NetworkBehaviour
         return true;
     }
 
-    private bool TryResolveSender(ServerRpcParams rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory)
+    private bool TryResolveSender(ServerRpcParams rpcParams, out Transform playerRoot, out SquadCharacterController controller, out NetworkInventory inventory, out string reason)
     {
-        playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        controller = null;
-        inventory = null;
-
-        if (playerRoot == null)
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out reason,
+                requireController: true,
+                requireInventory: true))
         {
+            playerRoot = null;
+            controller = null;
+            inventory = null;
             return false;
         }
 
-        controller = playerRoot.GetComponent<SquadCharacterController>();
-        if (controller == null)
-        {
-            controller = playerRoot.GetComponentInChildren<SquadCharacterController>(true);
-        }
-
-        inventory = playerRoot.GetComponent<NetworkInventory>();
-        if (inventory == null)
-        {
-            inventory = playerRoot.GetComponentInChildren<NetworkInventory>(true);
-        }
-
-        if (inventory != null && inventory.OwnerClientId != rpcParams.Receive.SenderClientId)
-        {
-            inventory = null;
-        }
-
-        return controller != null && inventory != null;
+        playerRoot = context.PlayerRoot;
+        controller = context.Controller;
+        inventory = context.Inventory;
+        return true;
     }
 
     private BuildingInfoInteractable ResolveBuildingInfo(ulong networkId, string buildingItemId, Transform playerRoot)
@@ -2716,18 +2881,7 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
-        ShowFeedbackClientRpc(message, BuildClientRpcParams(rpcParams));
-    }
-
-    private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)
-    {
-        return new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
-            }
-        };
+        ShowFeedbackClientRpc(message, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
     }
 
     private static string GetBuildingItemId(Item data)

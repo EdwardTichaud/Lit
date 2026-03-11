@@ -176,6 +176,11 @@ public class Brasero : NetworkBehaviour
         SetLitInternal(!isLit);
     }
 
+    public void ApplySnapshotState(bool lit)
+    {
+        ApplyNetState(lit);
+    }
+
     private void ApplyVisuals(bool immediate)
     {
         if (litRoot != null)
@@ -806,13 +811,42 @@ public class Brasero : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestInteractServerRpc(ServerRpcParams rpcParams = default)
     {
-        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (!IsCharacterInRange(playerRoot))
+        if (!NetcodeServerRpcValidation.TryResolvePlayerContext(
+                this,
+                rpcParams,
+                out NetcodeServerRpcValidation.PlayerContext context,
+                out string reason,
+                requireController: false,
+                requireInventory: false))
         {
+            ShowFeedbackClientRpc(reason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!NetcodeServerRpcValidation.TryValidateRange(
+                this,
+                context,
+                transform.TransformPoint(interactionCenter),
+                Mathf.Max(0.05f, interactionRadius),
+                "interagir avec le brasero",
+                out reason))
+        {
+            ShowFeedbackClientRpc(reason, NetcodeServerRpcValidation.BuildClientRpcParams(rpcParams));
             return;
         }
 
         SetLitServer(!isLit);
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackClientRpc(string message, ClientRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
     }
 
     private Animator ResolveInteractionAnimator()

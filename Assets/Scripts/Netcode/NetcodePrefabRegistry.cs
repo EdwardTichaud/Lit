@@ -12,6 +12,8 @@ public static class NetcodePrefabRegistry
         public GameObject sourcePrefab;
         public uint plainHash;
         public uint lootHash;
+        public bool plainUsesLegacyHash;
+        public bool lootUsesLegacyHash;
     }
 
     private class CharacterSpawnInfo
@@ -19,6 +21,7 @@ public static class NetcodePrefabRegistry
         public CharacterData character;
         public GameObject sourcePrefab;
         public uint hash;
+        public bool usesLegacyHash;
     }
 
     private class ItemPrefabHandler : INetworkPrefabInstanceHandler
@@ -276,12 +279,16 @@ public static class NetcodePrefabRegistry
         }
 
         GameObject basePrefab = item.ResolveWorldPrefab();
+        uint plainHash = NetcodeRuntimeUtilities.ResolvePrefabHash(basePrefab, $"item:{key}:plain", out bool plainUsesLegacyHash);
+        uint lootHash = NetcodeStableHash.Hash32($"item:{key}:loot");
         ItemSpawnInfo created = new ItemSpawnInfo
         {
             item = item,
             sourcePrefab = basePrefab,
-            plainHash = NetcodeStableHash.Hash32($"item:{key}:plain"),
-            lootHash = NetcodeStableHash.Hash32($"item:{key}:loot")
+            plainHash = plainHash,
+            lootHash = lootHash,
+            plainUsesLegacyHash = plainUsesLegacyHash,
+            lootUsesLegacyHash = true
         };
 
         itemInfos[key] = created;
@@ -306,11 +313,13 @@ public static class NetcodePrefabRegistry
             return info;
         }
 
+        uint hash = NetcodeRuntimeUtilities.ResolvePrefabHash(character.model, $"character:{key}", out bool usesLegacyHash);
         CharacterSpawnInfo created = new CharacterSpawnInfo
         {
             character = character,
             sourcePrefab = character.model,
-            hash = NetcodeStableHash.Hash32($"character:{key}")
+            hash = hash,
+            usesLegacyHash = usesLegacyHash
         };
 
         characterInfos[key] = created;
@@ -345,7 +354,11 @@ public static class NetcodePrefabRegistry
 
         uint hash = withLootContainer ? info.lootHash : info.plainHash;
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
-        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
+        networkObject.SetSceneObjectStatus(false);
+        string context = withLootContainer
+            ? $"item:{GetItemKey(info.item)}:loot"
+            : $"item:{GetItemKey(info.item)}:plain";
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash, context);
         return instance;
     }
 
@@ -360,14 +373,13 @@ public static class NetcodePrefabRegistry
             ? Object.Instantiate(info.sourcePrefab, position, rotation, parent)
             : Object.Instantiate(info.sourcePrefab, position, rotation);
 
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetcodeLocalPlayer>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkCharacterInput>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(instance);
-
+        NetcodeRuntimeUtilities.ConfigureCharacterNetworkComponents(instance);
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
-        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, info.hash);
+        networkObject.SetSceneObjectStatus(false);
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(
+            networkObject,
+            info.hash,
+            $"character:{GetCharacterKey(info.character)}");
         return instance;
     }
 
@@ -376,7 +388,8 @@ public static class NetcodePrefabRegistry
         GameObject instance = new GameObject("WorldInteractionService");
         instance.AddComponent<WorldInteractionService>();
         NetworkObject networkObject = instance.AddComponent<NetworkObject>();
-        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
+        networkObject.SetSceneObjectStatus(false);
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash, "service:world-interaction");
         return instance;
     }
 
@@ -393,7 +406,8 @@ public static class NetcodePrefabRegistry
         }
 
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
-        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
+        networkObject.SetSceneObjectStatus(false);
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash, "item:fallback");
         return instance;
     }
 

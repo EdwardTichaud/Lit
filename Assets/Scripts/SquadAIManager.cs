@@ -635,6 +635,7 @@ public class SquadAIManager : MonoBehaviour
             ? Quaternion.LookRotation(leaderForward, Vector3.up)
             : Quaternion.identity;
         bool useSingleFile = ShouldUseSingleFile(leader.transform, leaderForward);
+        WorldInteractionService service = WorldInteractionService.Instance;
 
         int order = 0;
         for (int i = 0; i < groupIndices.Count; i++)
@@ -659,6 +660,12 @@ public class SquadAIManager : MonoBehaviour
             SquadCharacterController controller = follower.GetComponent<SquadCharacterController>();
             if (controller == null)
             {
+                continue;
+            }
+
+            if (service != null && service.IsCharacterAssigned(NetcodeCharacterIdentity.GetCharacterId(follower)))
+            {
+                controller.Move(Vector2.zero);
                 continue;
             }
 
@@ -1074,6 +1081,7 @@ public class SquadAIManager : MonoBehaviour
         }
 
         GameObject leader = squadManager.currentCharacter;
+        WorldInteractionService service = WorldInteractionService.Instance;
         for (int i = 0; i < squadManager.squadCharacters.Count; i++)
         {
             GameObject character = squadManager.squadCharacters[i];
@@ -1083,7 +1091,8 @@ public class SquadAIManager : MonoBehaviour
             }
 
             SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
-            if (controller != null)
+            if (controller != null
+                && (service == null || !service.IsCharacterAssigned(NetcodeCharacterIdentity.GetCharacterId(character))))
             {
                 controller.Move(Vector2.zero);
             }

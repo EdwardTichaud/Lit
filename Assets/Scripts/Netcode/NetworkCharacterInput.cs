@@ -1,17 +1,13 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Transmet les inputs locaux au serveur pour un personnage possede.
+// Route les inputs locaux vers le personnage controle localement par son proprietaire.
 [RequireComponent(typeof(NetworkObject))]
 public class NetworkCharacterInput : NetworkBehaviour
 {
     [SerializeField] private SquadCharacterController controller;
-    [SerializeField, Tooltip("Intervalle d'envoi des inputs (s).")]
-    private float sendInterval = 0.05f;
 
     private Vector2 pendingMove;
-    private Vector2 lastSentMove;
-    private float nextSendTime;
 
     private void Awake()
     {
@@ -48,7 +44,13 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         if (IsOwner && IsAssignedToLocalClient())
         {
-            SubmitMove(Vector2.zero);
+            pendingMove = Vector2.zero;
+            if (controller == null)
+            {
+                controller = GetComponent<SquadCharacterController>();
+            }
+
+            controller?.Stop();
         }
     }
 
@@ -64,7 +66,12 @@ public class NetworkCharacterInput : NetworkBehaviour
         LocalInputRouter.Move -= OnMoveChanged;
         LocalInputRouter.ToggleTorch -= OnToggleTorch;
         pendingMove = Vector2.zero;
-        lastSentMove = Vector2.zero;
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        controller?.Stop();
     }
 
     private void Update()
@@ -76,20 +83,17 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         if (IsGameplayInputBlocked())
         {
-            if (lastSentMove != Vector2.zero)
-            {
-                SubmitMove(Vector2.zero);
-            }
-
+            pendingMove = Vector2.zero;
+            controller?.Move(Vector2.zero);
             return;
         }
 
-        if (Time.time < nextSendTime && (pendingMove - lastSentMove).sqrMagnitude < 0.0001f)
+        if (controller == null)
         {
-            return;
+            controller = GetComponent<SquadCharacterController>();
         }
 
-        SubmitMove(pendingMove);
+        controller?.Move(pendingMove);
     }
 
     private void OnMoveChanged(Vector2 value)
@@ -121,34 +125,6 @@ public class NetworkCharacterInput : NetworkBehaviour
     private static bool IsGameplayInputBlocked()
     {
         return InputFocusStack.HasAnyFocus();
-    }
-
-    private void SubmitMove(Vector2 value)
-    {
-        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
-        {
-            return;
-        }
-
-        lastSentMove = value;
-        nextSendTime = Time.time + Mathf.Max(0.01f, sendInterval);
-        SubmitMoveServerRpc(value);
-    }
-
-    [ServerRpc]
-    private void SubmitMoveServerRpc(Vector2 input)
-    {
-        if (controller == null)
-        {
-            controller = GetComponent<SquadCharacterController>();
-        }
-
-        if (controller == null)
-        {
-            return;
-        }
-
-        controller.Move(input);
     }
 
     [ServerRpc]
