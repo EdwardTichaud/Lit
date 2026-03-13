@@ -56,6 +56,13 @@ public class BuildingInfoInteractable : MonoBehaviour
     private LocalBuildingInformationsPanelController localPanelInstance;
     private bool warnedMissingPrefab;
     private bool runtimeReferencesResolved;
+    private bool lastVisibilityActive;
+    private int lastLoggedDisplayedLevel = int.MinValue;
+    private bool lastLoggedWorldUiBound;
+    private bool lastLoggedProximityActive;
+    private int lastLoggedAuthoritativeLevel = int.MinValue;
+    private string lastPresentationLogSignature = string.Empty;
+    private string presentationOrigin = "unknown";
 
     private const string DefaultLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
     private const string DefaultLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
@@ -68,6 +75,7 @@ public class BuildingInfoInteractable : MonoBehaviour
     public string BuildingItemId => ResolveBuildingItemId(buildingItem, buildId);
     public bool IsHomeChest => buildingItem != null && buildingItem.isHomeChest;
     public ulong NetworkBuildingId => networkBuildingId;
+    public string PresentationOrigin => presentationOrigin;
 
     private void Awake()
     {
@@ -75,6 +83,7 @@ public class BuildingInfoInteractable : MonoBehaviour
 
         InitializeInteractionTrigger();
         ResolveRuntimeReferences();
+        RefreshPresentation("awake");
     }
 
     public void SetNetworkBuildingId(ulong id)
@@ -86,11 +95,14 @@ public class BuildingInfoInteractable : MonoBehaviour
     {
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
+        LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
+        RefreshPresentation("on_enable");
     }
 
     private void OnDisable()
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
+        LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
         ResetState();
     }
@@ -103,6 +115,7 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         ResolveRuntimeReferences();
+        RefreshControlledCharacterOverlap();
         RefreshCurrentCharacter();
         EnsureBuildingData();
         EnsureLocalPanel();
@@ -126,6 +139,8 @@ public class BuildingInfoInteractable : MonoBehaviour
         {
             CloseInfoPanels();
         }
+
+        TrackVisibilityState("update");
     }
 
     private void OnTriggerEnter(Collider other)
@@ -426,6 +441,50 @@ public class BuildingInfoInteractable : MonoBehaviour
         currentCharacter = null;
     }
 
+    private void RefreshControlledCharacterOverlap()
+    {
+        RemoveNullCharacters();
+
+        GameObject controlled = GetControlledCharacter();
+        if (controlled == null)
+        {
+            currentCharacter = null;
+            return;
+        }
+
+        bool overlaps = IsCharacterWithinInteraction(controlled);
+        bool contains = charactersInRange.Contains(controlled);
+        if (overlaps && !contains)
+        {
+            charactersInRange.Add(controlled);
+            characterColliderCounts[controlled] = 1;
+            LogBuildingPresentation(
+                "building_visibility_activated",
+                "local client visibility logic activates via overlap rescan");
+        }
+        else if (!overlaps && contains)
+        {
+            charactersInRange.Remove(controlled);
+            characterColliderCounts.Remove(controlled);
+            if (currentCharacter == controlled)
+            {
+                currentCharacter = null;
+            }
+
+            LogBuildingPresentation(
+                "building_visibility_deactivated",
+                "local client visibility logic deactivates because controlled character left interaction range");
+        }
+    }
+
+    private void OnLocalCharacterChanged(Transform _)
+    {
+        RefreshPresentation("local_character_changed");
+        LogBuildingPresentation(
+            "world_ui_rebound",
+            "World UI is initialized / rebound after local character changed");
+    }
+
     private static GameObject GetControlledCharacter()
     {
         return LocalPlayerUtils.GetControlledCharacter();
@@ -436,6 +495,7 @@ public class BuildingInfoInteractable : MonoBehaviour
         charactersInRange.Clear();
         characterColliderCounts.Clear();
         currentCharacter = null;
+        lastVisibilityActive = false;
     }
 
     private void EnsureBuildingData()
@@ -458,15 +518,6 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void ResolveRuntimeReferences()
     {
-        if (runtimeReferencesResolved)
-        {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
-            return;
-        }
-
         if (targetCamera == null)
         {
             targetCamera = Camera.main;
@@ -502,7 +553,7 @@ public class BuildingInfoInteractable : MonoBehaviour
             craftingPanel = ResolveCraftingPanel();
         }
 
-        runtimeReferencesResolved = true;
+        runtimeReferencesResolved = targetCamera != null || localInformationPanelPrefab != null || localPanelParent != null || craftingPanel != null;
     }
 
     private void EnsureLocalPanel()
@@ -544,6 +595,9 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         localPanelInstance.informationPanel = instance;
+        LogBuildingPresentation(
+            "world_ui_initialized",
+            "local world UI initialized");
     }
 
     private void UpdateLocalPanelAnchor()
@@ -623,14 +677,72 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     public void Initialize(string buildIdValue, Item item, int levelValue = 1)
     {
+        int previousLevel = level;
         buildingItem = item;
         buildId = !string.IsNullOrWhiteSpace(buildIdValue) ? buildIdValue : ResolveBuildingItemId(item, buildId);
         level = Mathf.Max(1, levelValue);
+        RefreshPresentation(previousLevel != level ? "initialize_level_changed" : "initialize");
     }
 
     public void SetLevel(int levelValue)
     {
+        int previousLevel = level;
         level = Mathf.Max(1, levelValue);
+        if (previousLevel != level)
+        {
+            LogBuildingPresentation(
+                "building_level_changed",
+                $"upgrade level changes previousLevel={previousLevel} nextLevel={level}");
+        }
+
+        RefreshPresentation(previousLevel != level ? "set_level_changed" : "set_level");
+    }
+
+    public void MarkPresentationOrigin(string source, bool overwrite = false)
+    {
+        string safeSource = string.IsNullOrWhiteSpace(source) ? "unknown" : source;
+        if (!overwrite
+            && !string.IsNullOrWhiteSpace(presentationOrigin)
+            && !string.Equals(presentationOrigin, "unknown", System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (string.Equals(presentationOrigin, safeSource, System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        presentationOrigin = safeSource;
+        LogBuildingPresentation(
+            "building_origin_marked",
+            $"building presentation origin set to {safeSource}");
+    }
+
+    public void RefreshPresentation(string reason)
+    {
+        EnsureBuildingData();
+        ResolveRuntimeReferences();
+        RefreshControlledCharacterOverlap();
+        RefreshCurrentCharacter();
+
+        if (localPanelInstance != null)
+        {
+            UpdateLocalPanelAnchor();
+            if (localPanelInstance.CurrentBuilding == this)
+            {
+                localPanelInstance.RefreshPanel();
+            }
+
+            LogBuildingPresentation(
+                "world_ui_rebound",
+                $"World UI is initialized / rebound reason='{reason}'");
+        }
+
+        LogBuildingPresentation(
+            "building_visual_refresh",
+            $"visual refresh method ran reason='{reason}'");
+        TrackVisibilityState(reason);
     }
 
     private static string ResolveBuildingItemId(Item item, string fallback)
@@ -831,9 +943,16 @@ public class BuildingInfoInteractable : MonoBehaviour
             return null;
         }
 
+        GameObject controlled = GetControlledCharacter();
+        if (controlled != null && IsColliderFromCharacter(other, controlled))
+        {
+            return controlled;
+        }
+
         if (SquadManager.Instance == null || SquadManager.Instance.squadCharacters == null)
         {
-            return null;
+            SquadCharacterController fallbackController = other.GetComponentInParent<SquadCharacterController>();
+            return fallbackController != null ? fallbackController.gameObject : null;
         }
 
         Transform current = other.transform;
@@ -884,6 +1003,87 @@ public class BuildingInfoInteractable : MonoBehaviour
         return null;
     }
 
+    private bool IsCharacterWithinInteraction(GameObject character)
+    {
+        if (character == null || interactionTrigger == null)
+        {
+            return false;
+        }
+
+        Collider[] colliders = character.GetComponentsInChildren<Collider>(true);
+        Bounds triggerBounds = interactionTrigger.bounds;
+        bool hadCollider = false;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null || collider.isTrigger)
+            {
+                continue;
+            }
+
+            hadCollider = true;
+            if (triggerBounds.Intersects(collider.bounds) || triggerBounds.Contains(collider.bounds.center))
+            {
+                return true;
+            }
+        }
+
+        return !hadCollider && triggerBounds.Contains(character.transform.position);
+    }
+
+    private static bool IsColliderFromCharacter(Collider other, GameObject character)
+    {
+        if (other == null || character == null)
+        {
+            return false;
+        }
+
+        Transform otherTransform = other.transform;
+        Transform characterTransform = character.transform;
+        return otherTransform == characterTransform
+            || otherTransform.IsChildOf(characterTransform)
+            || characterTransform.IsChildOf(otherTransform);
+    }
+
+    private void RemoveNullCharacters()
+    {
+        for (int i = charactersInRange.Count - 1; i >= 0; i--)
+        {
+            if (charactersInRange[i] != null)
+            {
+                continue;
+            }
+
+            charactersInRange.RemoveAt(i);
+        }
+
+        List<GameObject> toRemove = null;
+        foreach (KeyValuePair<GameObject, int> pair in characterColliderCounts)
+        {
+            if (pair.Key != null)
+            {
+                continue;
+            }
+
+            if (toRemove == null)
+            {
+                toRemove = new List<GameObject>();
+            }
+
+            toRemove.Add(pair.Key);
+        }
+
+        if (toRemove == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < toRemove.Count; i++)
+        {
+            characterColliderCounts.Remove(toRemove[i]);
+        }
+    }
+
     private bool RegisterCharacterCollider(GameObject character)
     {
         if (character == null)
@@ -922,6 +1122,65 @@ public class BuildingInfoInteractable : MonoBehaviour
 
         characterColliderCounts.Remove(character);
         return true;
+    }
+
+    private void TrackVisibilityState(string reason)
+    {
+        bool visibilityActive = openOnProximity && currentCharacter != null && charactersInRange.Contains(currentCharacter);
+        if (visibilityActive == lastVisibilityActive)
+        {
+            return;
+        }
+
+        lastVisibilityActive = visibilityActive;
+        LogBuildingPresentation(
+            visibilityActive ? "building_visibility_activated" : "building_visibility_deactivated",
+            visibilityActive
+                ? $"local client visibility logic activates reason='{reason}'"
+                : $"local client visibility logic deactivates reason='{reason}'");
+    }
+
+    private void LogBuildingPresentation(string eventName, string reason)
+    {
+        BuilderController builder = GetComponentInParent<BuilderController>();
+        int authoritativeLevel = builder != null && builder.TryGetSyncedBuildingLevel(this, out int syncedLevel)
+            ? syncedLevel
+            : 0;
+        bool worldUiBound = localPanelInstance != null;
+        bool proximityActive = openOnProximity && currentCharacter != null && charactersInRange.Contains(currentCharacter);
+        PersistentNetworkObject persistentObject = GetComponent<PersistentNetworkObject>();
+        string persistentId = persistentObject != null ? persistentObject.PersistentId : string.Empty;
+        string signature =
+            $"{eventName}|{persistentId}|{BuildId}|{BuildingItemId}|{NetworkBuildingId}|{level}|{authoritativeLevel}|{worldUiBound}|{proximityActive}|{presentationOrigin}|{reason}";
+
+        bool forceLog =
+            eventName == "building_reconstructed" ||
+            eventName == "building_runtime_spawned" ||
+            eventName == "building_level_changed" ||
+            eventName == "world_ui_initialized" ||
+            eventName == "world_ui_rebound" ||
+            eventName == "building_visibility_activated" ||
+            eventName == "building_visibility_deactivated";
+
+        if (!forceLog
+            && signature == lastPresentationLogSignature
+            && lastLoggedDisplayedLevel == level
+            && lastLoggedWorldUiBound == worldUiBound
+            && lastLoggedProximityActive == proximityActive
+            && lastLoggedAuthoritativeLevel == authoritativeLevel)
+        {
+            return;
+        }
+
+        lastPresentationLogSignature = signature;
+        lastLoggedDisplayedLevel = level;
+        lastLoggedWorldUiBound = worldUiBound;
+        lastLoggedProximityActive = proximityActive;
+        lastLoggedAuthoritativeLevel = authoritativeLevel;
+
+        Debug.Log(
+            $"[BuildingSync] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(transform)}' persistentId='{persistentId}' buildId='{BuildId}' itemId='{BuildingItemId}' networkId={networkBuildingId} displayedLevel={level} authoritativeSyncedLevel={authoritativeLevel} worldUiBound={worldUiBound} proximityActive={proximityActive} visibilityLogicActive={openOnProximity} upgradeRefreshCallbackRan={(eventName == "building_upgrade_refresh_callback")} visualRefreshRan={(eventName == "building_visual_refresh" || eventName == "world_ui_rebound" || eventName == "world_ui_initialized")} source='{presentationOrigin}' reason='{reason}'",
+            this);
     }
 }
 

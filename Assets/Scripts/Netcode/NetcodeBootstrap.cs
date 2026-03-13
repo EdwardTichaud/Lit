@@ -12,6 +12,7 @@ public class NetcodeBootstrap : MonoBehaviour
     [SerializeField] private bool autoCreateSpawner = true;
     [SerializeField] private bool autoCreateLobbyUI = true;
     [SerializeField] private bool autoCreateConnectionApproval = true;
+    [SerializeField] private bool autoCreatePersistentWorldSystems = true;
     [SerializeField] private bool enableSceneManagement = true;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -41,6 +42,7 @@ public class NetcodeBootstrap : MonoBehaviour
 
         LocalInputRouter.EnsureInitialized();
         EnsureNetworkManager();
+        EnsurePersistentWorldSystems();
 
         if (autoCreateLauncher)
         {
@@ -57,6 +59,8 @@ public class NetcodeBootstrap : MonoBehaviour
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeConnectionApproval>(gameObject);
         }
 
+        NetcodeSceneObjectInstaller.PrepareScene(SceneManager.GetActiveScene());
+        NetcodePrefabRegistry.Refresh();
         SyncLobbyUI(SceneManager.GetActiveScene());
 
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -180,5 +184,21 @@ public class NetcodeBootstrap : MonoBehaviour
 
             manager.NetworkConfig.NetworkTransport = transport;
         }
+    }
+
+    private void EnsurePersistentWorldSystems()
+    {
+        if (!autoCreatePersistentWorldSystems)
+        {
+            return;
+        }
+
+        NetcodeRuntimeUtilities.GetOrAdd<NetworkObjectRegistry>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<SpawnManager>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<WorldRulesStateManager>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<WorldStateManager>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<PersistentWorldSyncOverlay>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<JoinSyncSystem>(gameObject);
+        NetcodeRuntimeUtilities.GetOrAdd<WorldSaveAdapter>(gameObject);
     }
 }

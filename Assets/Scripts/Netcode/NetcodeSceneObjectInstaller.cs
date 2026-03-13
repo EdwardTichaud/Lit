@@ -76,6 +76,7 @@ public static class NetcodeSceneObjectInstaller
         }
 
         PrepareSquadCharacters(roots);
+        PersistentWorldSceneInstaller.PrepareScene(scene);
     }
 
     private static void PrepareSquadCharacters(GameObject[] roots)

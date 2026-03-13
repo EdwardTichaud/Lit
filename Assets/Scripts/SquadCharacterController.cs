@@ -190,6 +190,9 @@ public class SquadCharacterController : MonoBehaviour
     private Vector2 moveInput;
     private float inputLockTimer;
     private Vector2 smoothedInput;
+    private Vector2 animationPreviewInput;
+    private Vector2 smoothedAnimationPreviewInput;
+    private bool moveInputIsWorldSpace;
     private Vector3 currentHorizontalVelocity;
     private Transform torchTransform;
     private bool torchInitialized;
@@ -208,6 +211,10 @@ public class SquadCharacterController : MonoBehaviour
     private readonly Collider[] stepOverlapHits = new Collider[8];
     private float nextStepDebugTime;
     private float footIkWeightCurrent;
+    private string lastAnimationDriverMode = string.Empty;
+    private string lastAnimationMovementMode = string.Empty;
+    private int lastAnimationSpeedBucket = int.MinValue;
+    private bool lastAnimationAnimatorEnabled;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -285,6 +292,7 @@ public class SquadCharacterController : MonoBehaviour
 
         ApplyAnimatorSettings();
         InitializeTorchState();
+        RefreshAnimationBindings("awake");
     }
 
     private void OnEnable()
@@ -292,11 +300,18 @@ public class SquadCharacterController : MonoBehaviour
         RegisterCharacter();
         CacheAudioListener();
         CacheNetworkObject();
+        LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
+        RefreshAnimationBindings("on_enable");
+        LogAnimationStatus(
+            "animation_initialized",
+            force: true,
+            reason: "character initialized for animation");
         UpdateAudioListenerState(true);
     }
 
     private void OnDisable()
     {
+        LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
         SetAudioListenerActive(false);
         UnregisterCharacter();
     }
@@ -309,6 +324,11 @@ public class SquadCharacterController : MonoBehaviour
     private void OnTransformParentChanged()
     {
         MarkCollidersDirty();
+        RefreshAnimationBindings("transform_parent_changed");
+        LogAnimationStatus(
+            "animation_references_rebound",
+            force: true,
+            reason: "Animator references rebound after DDOL migration or parent change");
     }
 
     private void CacheAudioListener()
@@ -330,12 +350,50 @@ public class SquadCharacterController : MonoBehaviour
 
     private void CacheNetworkObject()
     {
-        if (cachedNetworkObject != null)
+        if (cachedNetworkObject != null
+            && (cachedNetworkObject.transform == transform || transform.IsChildOf(cachedNetworkObject.transform)))
         {
             return;
         }
 
         cachedNetworkObject = GetComponentInParent<NetworkObject>();
+    }
+
+    private void RefreshAnimationBindings(string reason)
+    {
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+        }
+
+        if (motionRoot == null)
+        {
+            motionRoot = transform;
+        }
+
+        cachedNetworkObject = null;
+        CacheNetworkObject();
+        ApplyAnimatorSettings();
+
+        LogAnimationStatus(
+            "animation_references_rebound",
+            force: true,
+            reason: $"animation bindings refreshed reason='{reason}'");
+    }
+
+    private void OnLocalCharacterChanged(Transform localCharacterRoot)
+    {
+        if (!IsSameOrRelatedTransform(transform, localCharacterRoot)
+            && !string.Equals(lastAnimationDriverMode, "local", System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        RefreshAnimationBindings("local_character_changed");
+        LogAnimationStatus(
+            "animation_authority_refresh",
+            force: true,
+            reason: "animation authority refreshed after local assignment change");
     }
 
     private void UpdateAudioListenerState(bool force)
@@ -1078,14 +1136,34 @@ public class SquadCharacterController : MonoBehaviour
 
     public void Move(Vector2 input)
     {
+        moveInputIsWorldSpace = false;
         moveInput = input;
+    }
+
+    public void MoveWorld(Vector2 worldInput)
+    {
+        moveInputIsWorldSpace = true;
+        moveInput = worldInput;
+    }
+
+    public void SetLocalAnimationPreview(Vector2 worldInput)
+    {
+        animationPreviewInput = Vector2.ClampMagnitude(worldInput, 1f);
+    }
+
+    public void ClearLocalAnimationPreview()
+    {
+        animationPreviewInput = Vector2.zero;
+        smoothedAnimationPreviewInput = Vector2.zero;
     }
 
     public void Stop()
     {
+        moveInputIsWorldSpace = false;
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
         currentHorizontalVelocity = Vector3.zero;
+        ClearLocalAnimationPreview();
         SetSpeed(0f);
     }
 
@@ -1093,6 +1171,7 @@ public class SquadCharacterController : MonoBehaviour
     {
         UpdateInputLock(Time.fixedDeltaTime);
         SmoothInput(Time.fixedDeltaTime);
+        SmoothAnimationPreview(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
     }
@@ -2058,6 +2137,18 @@ public class SquadCharacterController : MonoBehaviour
         smoothedInput = Vector2.Lerp(smoothedInput, moveInput, t);
     }
 
+    private void SmoothAnimationPreview(float deltaTime)
+    {
+        if (inputResponsiveness <= 0f)
+        {
+            smoothedAnimationPreviewInput = animationPreviewInput;
+            return;
+        }
+
+        float t = 1f - Mathf.Exp(-inputResponsiveness * deltaTime);
+        smoothedAnimationPreviewInput = Vector2.Lerp(smoothedAnimationPreviewInput, animationPreviewInput, t);
+    }
+
     private void UpdateAnimationSpeed()
     {
         if (animator == null || string.IsNullOrWhiteSpace(speedParam))
@@ -2065,35 +2156,227 @@ public class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        float rawSpeed;
-        if (useVelocityForAnimation)
-        {
-            Vector3 velocity = GetCurrentHorizontalVelocity();
-            rawSpeed = moveSpeed > 0f ? velocity.magnitude / moveSpeed : 0f;
-        }
-        else
-        {
-            rawSpeed = smoothedInput.magnitude;
-        }
+        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
+        string movementMode = NetcodePlayerUtils.ResolveMovementMode(controlState, followerAiEnabled: false, waitingPointEnabled: false);
+        string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
 
-        float animSpeed = rawSpeed;
-        if (useDiscreteLocomotion)
-        {
-            if (rawSpeed <= walkSpeedThreshold)
-            {
-                animSpeed = idleAnimValue;
-            }
-            else if (rawSpeed <= runSpeedThreshold)
-            {
-                animSpeed = walkAnimValue;
-            }
-            else
-            {
-                animSpeed = runAnimValue;
-            }
-        }
+        Vector3 velocity = GetCurrentHorizontalVelocity();
+        float velocitySpeed = moveSpeed > 0f ? velocity.magnitude / moveSpeed : 0f;
+        float inputSpeed = smoothedInput.magnitude;
+        float previewSpeed = smoothedAnimationPreviewInput.magnitude;
+
+        float rawSpeed = animationDriverMode == "local"
+            ? Mathf.Max(previewSpeed, velocitySpeed)
+            : (useVelocityForAnimation ? velocitySpeed : inputSpeed);
+
+        float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
 
         SetSpeed(animSpeed);
+        TrackAnimationState(controlState, movementMode, animationDriverMode, rawSpeed, animSpeed, previewSpeed, velocity);
+    }
+
+    private float ResolveAnimatorSpeedValue(float rawSpeed)
+    {
+        float animSpeed = rawSpeed;
+        if (!useDiscreteLocomotion)
+        {
+            return animSpeed;
+        }
+
+        if (rawSpeed <= walkSpeedThreshold)
+        {
+            return idleAnimValue;
+        }
+
+        if (rawSpeed <= runSpeedThreshold)
+        {
+            return walkAnimValue;
+        }
+
+        return runAnimValue;
+    }
+
+    private void TrackAnimationState(
+        NetcodePlayerUtils.CharacterControlState controlState,
+        string movementMode,
+        string animationDriverMode,
+        float rawSpeed,
+        float animSpeed,
+        float previewSpeed,
+        Vector3 velocity)
+    {
+        bool animatorEnabled = animator != null && animator.enabled;
+        int speedBucket = ResolveAnimationSpeedBucket(animSpeed);
+
+        if (!string.Equals(lastAnimationDriverMode, animationDriverMode, System.StringComparison.Ordinal))
+        {
+            string previousMode = string.IsNullOrWhiteSpace(lastAnimationDriverMode) ? "<none>" : lastAnimationDriverMode;
+            LogAnimationStatus(
+                "animation_driver_mode_changed",
+                controlState,
+                movementMode,
+                animationDriverMode,
+                rawSpeed,
+                animSpeed,
+                previewSpeed,
+                velocity,
+                reason: $"animation authority switched from {previousMode} to {animationDriverMode}");
+
+            if (string.Equals(animationDriverMode, "local", System.StringComparison.Ordinal))
+            {
+                LogAnimationStatus(
+                    "local_player_animation_mode_activated",
+                    controlState,
+                    movementMode,
+                    animationDriverMode,
+                    rawSpeed,
+                    animSpeed,
+                    previewSpeed,
+                    velocity,
+                    reason: "late-join owned character animation now uses local input preview");
+            }
+        }
+        else if (!string.Equals(lastAnimationMovementMode, movementMode, System.StringComparison.Ordinal))
+        {
+            LogAnimationStatus(
+                "animation_movement_mode_changed",
+                controlState,
+                movementMode,
+                animationDriverMode,
+                rawSpeed,
+                animSpeed,
+                previewSpeed,
+                velocity,
+                reason: $"movement mode changed to {movementMode}");
+        }
+        else if (lastAnimationAnimatorEnabled != animatorEnabled)
+        {
+            LogAnimationStatus(
+                "animation_animator_enabled_changed",
+                controlState,
+                movementMode,
+                animationDriverMode,
+                rawSpeed,
+                animSpeed,
+                previewSpeed,
+                velocity,
+                reason: animatorEnabled
+                    ? "Animator enabled"
+                    : "Animator disabled");
+        }
+        else if (lastAnimationSpeedBucket != speedBucket)
+        {
+            LogAnimationStatus(
+                "animation_speed_bucket_changed",
+                controlState,
+                movementMode,
+                animationDriverMode,
+                rawSpeed,
+                animSpeed,
+                previewSpeed,
+                velocity,
+                reason: $"Animator speed bucket changed to {speedBucket}");
+        }
+
+        lastAnimationDriverMode = animationDriverMode ?? string.Empty;
+        lastAnimationMovementMode = movementMode ?? string.Empty;
+        lastAnimationSpeedBucket = speedBucket;
+        lastAnimationAnimatorEnabled = animatorEnabled;
+    }
+
+    private int ResolveAnimationSpeedBucket(float animSpeed)
+    {
+        if (useDiscreteLocomotion)
+        {
+            if (Mathf.Approximately(animSpeed, idleAnimValue))
+            {
+                return 0;
+            }
+
+            if (Mathf.Approximately(animSpeed, walkAnimValue))
+            {
+                return 1;
+            }
+
+            if (Mathf.Approximately(animSpeed, runAnimValue))
+            {
+                return 2;
+            }
+        }
+
+        return Mathf.RoundToInt(animSpeed * 10f);
+    }
+
+    private void LogAnimationStatus(string eventName, bool force, string reason)
+    {
+        if (!force)
+        {
+            return;
+        }
+
+        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
+        string movementMode = NetcodePlayerUtils.ResolveMovementMode(controlState, followerAiEnabled: false, waitingPointEnabled: false);
+        string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
+        Vector3 velocity = GetCurrentHorizontalVelocity();
+        float velocitySpeed = moveSpeed > 0f ? velocity.magnitude / moveSpeed : 0f;
+        float previewSpeed = smoothedAnimationPreviewInput.magnitude;
+        float rawSpeed = animationDriverMode == "local"
+            ? Mathf.Max(previewSpeed, velocitySpeed)
+            : (useVelocityForAnimation ? velocitySpeed : smoothedInput.magnitude);
+        float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
+
+        LogAnimationStatus(
+            eventName,
+            controlState,
+            movementMode,
+            animationDriverMode,
+            rawSpeed,
+            animSpeed,
+            previewSpeed,
+            velocity,
+            reason);
+    }
+
+    private void LogAnimationStatus(
+        string eventName,
+        NetcodePlayerUtils.CharacterControlState controlState,
+        string movementMode,
+        string animationDriverMode,
+        float rawSpeed,
+        float animSpeed,
+        float previewSpeed,
+        Vector3 velocity,
+        string reason)
+    {
+        bool animatorEnabled = animator != null && animator.enabled;
+        Debug.Log(
+            $"[NetcodeAnimation] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(transform)}' characterId='{controlState.CharacterId}' ownerClientId={FormatClientId(controlState.HasNetworkObject, controlState.OwnerClientId)} localClientId={FormatClientId(controlState.HasLocalClientId, controlState.LocalClientId)} isOwner={controlState.IsOwner} isControlledLocally={controlState.IsControlledLocally} movementMode='{movementMode}' animatorEnabled={animatorEnabled} networkAnimationSyncEnabled=False animationDriverMode='{animationDriverMode}' speedValue={animSpeed:0.###} rawSpeed={rawSpeed:0.###} previewSpeed={previewSpeed:0.###} directionValue='n/a' turnValue='n/a' previewWorldInput='{FormatVector2(smoothedAnimationPreviewInput)}' velocityWorld='{FormatVector3(velocity)}' reason='{reason}'",
+            this);
+    }
+
+    private static bool IsSameOrRelatedTransform(Transform current, Transform candidate)
+    {
+        if (current == null || candidate == null)
+        {
+            return false;
+        }
+
+        return current == candidate || current.IsChildOf(candidate) || candidate.IsChildOf(current);
+    }
+
+    private static string FormatVector2(Vector2 value)
+    {
+        return $"({value.x:0.###},{value.y:0.###})";
+    }
+
+    private static string FormatVector3(Vector3 value)
+    {
+        return $"({value.x:0.###},{value.y:0.###},{value.z:0.###})";
+    }
+
+    private static string FormatClientId(bool hasValue, ulong value)
+    {
+        return hasValue ? value.ToString() : "n/a";
     }
 
     private Vector3 GetCurrentHorizontalVelocity()
@@ -2120,6 +2403,11 @@ public class SquadCharacterController : MonoBehaviour
 
     private Vector3 GetMoveDirection(Vector2 input)
     {
+        if (moveInputIsWorldSpace)
+        {
+            return new Vector3(input.x, 0f, input.y);
+        }
+
         Vector3 move = new Vector3(input.x, 0f, input.y);
         if (!useCameraRelative)
         {
@@ -2135,6 +2423,12 @@ public class SquadCharacterController : MonoBehaviour
         Vector3 camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
         Vector3 camRight = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
         return camRight * input.x + camForward * input.y;
+    }
+
+    public Vector2 GetWorldSpaceInput(Vector2 input)
+    {
+        Vector3 direction = GetMoveDirection(input);
+        return new Vector2(direction.x, direction.z);
     }
 
     public Vector2 GetInputFromWorldDirection(Vector3 worldDirection)

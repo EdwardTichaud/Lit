@@ -402,21 +402,13 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        if (instance.scene.IsValid())
+        uint hash = NetcodePrefabRegistry.GetCharacterPrefabHash(character);
+        if (hash == 0u)
         {
-            uint sceneHash = NetcodeSceneIdUtility.GetStableId(instance.transform);
-            NetcodeRuntimeUtilities.EnsureSceneObjectHash(networkObject, sceneHash);
+            hash = NetcodeStableHash.Hash32($"character:{GetCharacterId(character)}");
         }
-        else
-        {
-            uint hash = NetcodePrefabRegistry.GetCharacterPrefabHash(character);
-            if (hash == 0u)
-            {
-                hash = NetcodeStableHash.Hash32($"character:{GetCharacterId(character)}");
-            }
 
-            NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
-        }
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
     }
 
     private void SpawnWorldInteractionService()

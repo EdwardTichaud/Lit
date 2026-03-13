@@ -65,17 +65,20 @@ public class NetworkCharacterInput : NetworkBehaviour
         LocalInputRouter.ToggleTorch -= OnToggleTorch;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
+        UpdateLocalAnimationPreview(Vector2.zero);
     }
 
     private void Update()
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
+            UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
 
         if (IsGameplayInputBlocked())
         {
+            UpdateLocalAnimationPreview(Vector2.zero);
             if (lastSentMove != Vector2.zero)
             {
                 SubmitMove(Vector2.zero);
@@ -97,10 +100,19 @@ public class NetworkCharacterInput : NetworkBehaviour
         if (!IsOwner || !IsAssignedToLocalClient() || IsGameplayInputBlocked())
         {
             pendingMove = Vector2.zero;
+            UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
 
-        pendingMove = value;
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        pendingMove = controller != null
+            ? controller.GetWorldSpaceInput(value)
+            : value;
+        UpdateLocalAnimationPreview(pendingMove);
     }
 
     private void OnToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -120,7 +132,9 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private static bool IsGameplayInputBlocked()
     {
-        return InputFocusStack.HasAnyFocus();
+        return InputFocusStack.HasAnyFocus() ||
+               JoinSyncSystem.IsGameplayBlocked ||
+               (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked());
     }
 
     private void SubmitMove(Vector2 value)
@@ -148,7 +162,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        controller.Move(input);
+        controller.MoveWorld(input);
     }
 
     [ServerRpc]
@@ -209,6 +223,27 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         return string.Equals(characterId, localId, System.StringComparison.Ordinal);
+    }
+
+    private void UpdateLocalAnimationPreview(Vector2 worldInput)
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller == null)
+        {
+            return;
+        }
+
+        if (worldInput == Vector2.zero)
+        {
+            controller.ClearLocalAnimationPreview();
+            return;
+        }
+
+        controller.SetLocalAnimationPreview(worldInput);
     }
 
     private string ResolveCharacterId()

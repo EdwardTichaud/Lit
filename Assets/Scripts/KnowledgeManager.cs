@@ -69,6 +69,7 @@ public class KnowledgeManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
 
+        PersistentWorldSceneInstaller.EnsureRuntimeKnowledgeManager(this);
         RebuildLookup();
     }
 
@@ -83,6 +84,7 @@ public class KnowledgeManager : MonoBehaviour
         if (existing != null)
         {
             Instance = existing;
+            PersistentWorldSceneInstaller.EnsureRuntimeKnowledgeManager(existing);
             existing.RebuildLookup();
             return existing;
         }
@@ -160,6 +162,36 @@ public class KnowledgeManager : MonoBehaviour
         {
             unlockedKnowledge.Clear();
         }
+    }
+
+    public void RestoreUnlockedKnowledge(IReadOnlyList<KnowledgeSO> restoredKnowledge)
+    {
+        if (unlockedKnowledge == null)
+        {
+            unlockedKnowledge = new List<KnowledgeSO>();
+        }
+        else
+        {
+            unlockedKnowledge.Clear();
+        }
+
+        lookup.Clear();
+        if (restoredKnowledge != null)
+        {
+            for (int i = 0; i < restoredKnowledge.Count; i++)
+            {
+                KnowledgeSO knowledge = restoredKnowledge[i];
+                if (knowledge == null || !lookup.Add(knowledge))
+                {
+                    continue;
+                }
+
+                unlockedKnowledge.Add(knowledge);
+            }
+        }
+
+        lookupReady = true;
+        PersistentWorldSceneInstaller.EnsureRuntimeKnowledgeManager(this);
     }
 
     private void EnsureLookup()

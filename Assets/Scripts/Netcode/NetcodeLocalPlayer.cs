@@ -110,7 +110,8 @@ public class NetcodeLocalPlayer : NetworkBehaviour
             return;
         }
 
-        if (IsAssignedToLocalClient())
+        bool assignedToLocalClient = IsAssignedToLocalClient();
+        if (assignedToLocalClient)
         {
             LocalPlayerContext.SetLocalCharacter(localCharacterRoot);
         }
@@ -118,6 +119,17 @@ public class NetcodeLocalPlayer : NetworkBehaviour
         {
             LocalPlayerContext.ClearIfMatch(localCharacterRoot);
         }
+
+        Transform logTarget = localCharacterRoot != null ? localCharacterRoot : transform;
+        NetcodePlayerUtils.LogControlDecision(
+            "local_assignment",
+            logTarget != null ? logTarget.gameObject : gameObject,
+            followerAiEnabled: false,
+            waitingPointEnabled: false,
+            movementMode: null,
+            reason: assignedToLocalClient
+                ? "this character is locally controlled"
+                : "owner character is not the locally assigned character");
     }
 
     private bool IsAssignedToLocalClient()

@@ -452,6 +452,20 @@ public class NetworkInventory : NetworkBehaviour
             return;
         }
 
+        string itemId = ItemIdUtils.GetItemId(item);
+        string persistentId;
+        if (SpawnManager.Instance != null)
+        {
+            persistentId = SpawnManager.Instance.AllocatePersistentId(createLootContainer ? "dropped-loot" : "item", itemId);
+        }
+        else
+        {
+            persistentId = $"runtime:{(createLootContainer ? "dropped-loot" : "item")}:{itemId}:{System.Guid.NewGuid():N}";
+            PersistentWorldDebug.Warn(
+                $"spawned runtime {(createLootContainer ? "dropped-loot" : "item")} without SpawnManager allocator itemId='{itemId}' persistentId='{persistentId}'",
+                instance);
+        }
+
         LootContainer loot = instance.GetComponent<LootContainer>();
         if (createLootContainer)
         {
@@ -471,6 +485,8 @@ public class NetworkInventory : NetworkBehaviour
                 loot.collectable = collectable;
             }
         }
+
+        PersistentWorldSceneInstaller.EnsureRuntimeItemInstance(instance, item, persistentId, createLootContainer);
 
         NetworkObject networkObject = instance.GetComponent<NetworkObject>();
         if (networkObject != null && !networkObject.IsSpawned)

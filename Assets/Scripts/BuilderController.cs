@@ -42,7 +42,21 @@ public class BuilderController : NetworkBehaviour
 
         public bool Equals(NetBuiltBuilding other)
         {
-            return Id == other.Id;
+            return Id == other.Id
+                && ItemId.Equals(other.ItemId)
+                && Level == other.Level
+                && Position == other.Position
+                && Rotation == other.Rotation;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is NetBuiltBuilding other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return System.HashCode.Combine(Id, ItemId.GetHashCode(), Level, Position.GetHashCode(), Rotation.GetHashCode());
         }
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -272,9 +286,24 @@ public class BuilderController : NetworkBehaviour
 
                 if (!netBuildingLookup.TryGetValue(entry.Id, out BuildingInfoInteractable info) || info == null)
                 {
-                    info = SpawnNetBuildingInstance(building, entry.Position, entry.Rotation, entry.Level, entry.Id);
+                    info = ResolveExistingRuntimeBuilding(entry, building);
+                    if (info == null)
+                    {
+                        info = SpawnNetBuildingInstance(building, entry.Position, entry.Rotation, entry.Level, entry.Id);
+                    }
+                    else
+                    {
+                        netBuildingLookup[entry.Id] = info;
+                        info.MarkPresentationOrigin("snapshot_reconstruction", overwrite: false);
+                        info.RefreshPresentation("network_sync_existing");
+                        LogBuildingSync(
+                            "building_reconstructed",
+                            info,
+                            $"network sync reused existing runtime building entryId={entry.Id} level={entry.Level}");
+                    }
                 }
-                else
+
+                if (info != null)
                 {
                     UpdateNetBuildingInfo(info, building, entry);
                 }
@@ -672,7 +701,7 @@ public class BuilderController : NetworkBehaviour
 
                 if (root != null && !info.transform.IsChildOf(root))
                 {
-                    info.transform.SetParent(root, true);
+                    EnsureBuildingParent(info.transform);
                 }
 
                 builtBuildings.Add(new BuiltBuildingEntry
@@ -711,6 +740,10 @@ public class BuilderController : NetworkBehaviour
             {
                 info.SetNetworkBuildingId(nextNetBuildingId++);
             }
+            if (info.NetworkBuildingId != 0)
+            {
+                PersistentWorldSceneInstaller.EnsureRuntimeBuildingInstance(info, building, info.NetworkBuildingId);
+            }
             for (int i = 0; i < builtBuildings.Count; i++)
             {
                 BuiltBuildingEntry entry = builtBuildings[i];
@@ -743,6 +776,11 @@ public class BuilderController : NetworkBehaviour
             {
                 info.SetNetworkBuildingId(newEntry.networkId);
             }
+        }
+
+        if (info != null && newEntry.networkId != 0)
+        {
+            PersistentWorldSceneInstaller.EnsureRuntimeBuildingInstance(info, building, newEntry.networkId);
         }
 
         builtBuildings.Add(newEntry);
@@ -782,8 +820,15 @@ public class BuilderController : NetworkBehaviour
 
         info.Initialize(GetBuildingItemId(building), building, Mathf.Max(1, level));
         info.SetNetworkBuildingId(networkId);
+        info.MarkPresentationOrigin("runtime_spawn", overwrite: false);
         EnsureBuildingParent(instance.transform);
         netBuildingLookup[networkId] = info;
+        PersistentWorldSceneInstaller.EnsureRuntimeBuildingInstance(info, building, networkId);
+        info.RefreshPresentation("runtime_spawn");
+        LogBuildingSync(
+            "building_runtime_spawned",
+            info,
+            $"runtime building spawned level={level} networkId={networkId}");
 
         LootContainer container = instance.GetComponentInChildren<LootContainer>();
         if (container != null)
@@ -810,6 +855,7 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
+        int previousLevel = info.Level;
         info.SetNetworkBuildingId(entry.Id);
         if (info.BuildingItem != building)
         {
@@ -821,6 +867,12 @@ public class BuilderController : NetworkBehaviour
         }
 
         info.transform.SetPositionAndRotation(entry.Position, entry.Rotation);
+        PersistentWorldSceneInstaller.EnsureRuntimeBuildingInstance(info, building, entry.Id);
+        info.RefreshPresentation(previousLevel != entry.Level ? "network_upgrade_refresh" : "network_sync_refresh");
+        LogBuildingSync(
+            previousLevel != entry.Level ? "building_upgrade_refresh_callback" : "building_network_sync",
+            info,
+            $"net update previousLevel={previousLevel} syncedLevel={entry.Level} visualRefreshRan=true");
     }
 
     private void UpsertNetBuiltBuilding(BuiltBuildingEntry entry)
@@ -888,6 +940,15 @@ public class BuilderController : NetworkBehaviour
 
         if (!target.IsChildOf(root))
         {
+            NetworkObject targetNetworkObject = target.GetComponent<NetworkObject>();
+            if (targetNetworkObject != null && (!IsNetworked() || !IsServer))
+            {
+                PersistentWorldDebug.Log(
+                    $"builder parent skipped reason='{(!IsNetworked() ? "network_not_listening" : "non_server_client")}' target='{PersistentWorldDebug.DescribeTransform(target)}' root='{PersistentWorldDebug.DescribeTransform(root)}'",
+                    this);
+                return;
+            }
+
             target.SetParent(root, true);
         }
     }
@@ -1304,6 +1365,7 @@ public class BuilderController : NetworkBehaviour
             : int.MaxValue;
         int clampedLevel = Mathf.Clamp(targetLevel, 1, maxLevel);
         info.SetLevel(clampedLevel);
+        info.RefreshPresentation("authoritative_upgrade");
         if (item != null)
         {
             UpdateBuildingCurrentLevel(item, clampedLevel);
@@ -1344,6 +1406,47 @@ public class BuilderController : NetworkBehaviour
 
         NotifyBuildingsChanged();
         return true;
+    }
+
+    public bool TryGetSyncedBuildingLevel(BuildingInfoInteractable info, out int level)
+    {
+        level = 0;
+        if (info == null || builtBuildings == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < builtBuildings.Count; i++)
+        {
+            BuiltBuildingEntry entry = builtBuildings[i];
+            if (entry == null)
+            {
+                continue;
+            }
+
+            if (entry.info == info || (info.NetworkBuildingId != 0 && entry.networkId == info.NetworkBuildingId))
+            {
+                level = Mathf.Max(1, entry.level > 0 ? entry.level : (entry.info != null ? entry.info.Level : 0));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void LogBuildingSync(string eventName, BuildingInfoInteractable info, string reason)
+    {
+        if (info == null)
+        {
+            return;
+        }
+
+        int syncedLevel = TryGetSyncedBuildingLevel(info, out int levelValue) ? levelValue : 0;
+        PersistentNetworkObject persistentObject = info.GetComponent<PersistentNetworkObject>();
+        string persistentId = persistentObject != null ? persistentObject.PersistentId : string.Empty;
+        Debug.Log(
+            $"[BuildingSync] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(info.transform)}' persistentId='{persistentId}' buildId='{info.BuildId}' itemId='{info.BuildingItemId}' networkId={info.NetworkBuildingId} displayedLevel={info.Level} authoritativeSyncedLevel={syncedLevel} source='{info.PresentationOrigin}' reason='{reason}'",
+            info);
     }
 
     private void UpdateBuildingCurrentLevel(Item building, int levelValue)
@@ -2395,6 +2498,48 @@ public class BuilderController : NetworkBehaviour
         if (TryFindNearestBuilt(building, origin, out BuildingInfoInteractable info))
         {
             return info;
+        }
+
+        return null;
+    }
+
+    private BuildingInfoInteractable ResolveExistingRuntimeBuilding(NetBuiltBuilding entry, Item building)
+    {
+        if (entry.Id == 0)
+        {
+            return null;
+        }
+
+        string buildingItemId = GetBuildingItemId(building);
+        string persistentId = PersistentWorldSceneInstaller.BuildRuntimeBuildingPersistentId(entry.Id, buildingItemId);
+        if (NetworkObjectRegistry.Instance != null &&
+            NetworkObjectRegistry.Instance.TryGet(persistentId, out PersistentNetworkObject persistentObject) &&
+            persistentObject != null)
+        {
+            BuildingInfoInteractable resolvedFromRegistry = persistentObject.GetComponent<BuildingInfoInteractable>();
+            if (resolvedFromRegistry != null)
+            {
+                return resolvedFromRegistry;
+            }
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+#else
+        BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+#endif
+        if (infos == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < infos.Length; i++)
+        {
+            BuildingInfoInteractable info = infos[i];
+            if (info != null && info.NetworkBuildingId == entry.Id)
+            {
+                return info;
+            }
         }
 
         return null;

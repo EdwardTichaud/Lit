@@ -65,6 +65,8 @@ public class NetcodeCharacterIdentity : NetworkBehaviour
             return;
         }
 
+        SyncPersistentIdentity(resolvedId);
+
         if (controller == null)
         {
             controller = GetComponent<SquadCharacterController>();
@@ -97,6 +99,27 @@ public class NetcodeCharacterIdentity : NetworkBehaviour
         {
             inventory.RefreshControllerFromNetworkState();
         }
+
+        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
+        bool followerAiEnabled = NetcodePlayerUtils.IsFollowerSimulationActiveOnThisMachine() && !controlState.IsPlayerControlled;
+        bool waitingPointEnabled = NetcodePlayerUtils.IsWaitingSimulationActiveOnThisMachine() && !controlState.IsPlayerControlled;
+        NetcodePlayerUtils.LogControlDecision(
+            "character_spawn",
+            gameObject,
+            followerAiEnabled,
+            waitingPointEnabled,
+            movementMode: null,
+            reason: "spawned player character control snapshot");
+    }
+
+    private void SyncPersistentIdentity(string resolvedId)
+    {
+        if (string.IsNullOrWhiteSpace(resolvedId))
+        {
+            return;
+        }
+
+        PersistentWorldSceneInstaller.EnsureRuntimeCharacterIdentity(gameObject, resolvedId);
     }
 
     public static bool MatchesCharacterId(GameObject instance, string resolvedId)

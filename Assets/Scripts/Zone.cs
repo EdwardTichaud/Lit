@@ -261,6 +261,18 @@ public class Zone : MonoBehaviour
                 SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
                 if (controller != null)
                 {
+                    if (NetcodePlayerUtils.ShouldUsePlayerControl(character, out _))
+                    {
+                        NetcodePlayerUtils.LogControlDecision(
+                            "maison_exit",
+                            character,
+                            followerAiEnabled: false,
+                            waitingPointEnabled: false,
+                            movementMode: "player_owned_skip",
+                            reason: "waitingPoint return skipped because character is player-owned");
+                        return;
+                    }
+
                     controller.Stop();
                 }
             }
@@ -532,13 +544,24 @@ public class Zone : MonoBehaviour
             return;
         }
 
-        GameObject controlled = SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
         float arriveDistance = Mathf.Max(0f, maisonArrivalDistance);
 
         foreach (GameObject character in trackedCharacters)
         {
-            if (character == null || character == controlled)
+            if (character == null)
             {
+                continue;
+            }
+
+            if (NetcodePlayerUtils.ShouldUsePlayerControl(character, out _))
+            {
+                NetcodePlayerUtils.LogControlDecision(
+                    "maison_waiting",
+                    character,
+                    followerAiEnabled: false,
+                    waitingPointEnabled: false,
+                    movementMode: "player_owned_skip",
+                    reason: "waitingPoint return skipped because character is player-owned");
                 continue;
             }
 
@@ -551,7 +574,7 @@ public class Zone : MonoBehaviour
             CharacterData data = controller.CharacterData;
             if (data == null)
             {
-                controller.Move(Vector2.zero);
+                controller.Stop();
                 continue;
             }
 
@@ -562,7 +585,7 @@ public class Zone : MonoBehaviour
                     Debug.LogWarning($"Zone: aucun MaisonWaitingPoint trouve pour l'indice {data.maisonWaitingPoint}.", this);
                 }
 
-                controller.Move(Vector2.zero);
+                controller.Stop();
                 continue;
             }
 
@@ -574,24 +597,34 @@ public class Zone : MonoBehaviour
             float distance = toTarget.magnitude;
             if (distance <= arriveDistance)
             {
-                controller.Move(Vector2.zero);
+                controller.Stop();
                 ApplyWaitingRotation(character, waitingPoint.rotation);
                 continue;
             }
 
             Vector3 direction = toTarget.sqrMagnitude > 0.0001f ? toTarget.normalized : Vector3.zero;
+            SquadFollowerAgent agent = null;
+            bool followerAiEnabled = false;
             if (maisonUseNavMeshDirection)
             {
-                SquadFollowerAgent agent = GetFollowerAgent(character);
+                agent = GetFollowerAgent(character);
                 if (agent != null && agent.TryGetDesiredDirection(targetPosition, out Vector3 navDirection))
                 {
                     direction = navDirection;
                 }
+
+                followerAiEnabled = agent != null;
             }
 
-            Vector2 input = controller.GetInputFromWorldDirection(direction);
+            NetcodePlayerUtils.LogControlDecision(
+                "maison_waiting",
+                character,
+                followerAiEnabled,
+                waitingPointEnabled: true,
+                movementMode: distance <= arriveDistance ? "waiting_point_idle" : "waiting_point_return",
+                reason: "this character is follower/waiting");
             float inputScale = Mathf.Max(1f, maisonMaxInput);
-            controller.Move(input * inputScale);
+            controller.MoveWorld(new Vector2(direction.x, direction.z) * inputScale);
         }
     }
 

@@ -345,6 +345,7 @@ public static class NetcodePrefabRegistry
 
         uint hash = withLootContainer ? info.lootHash : info.plainHash;
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(instance);
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
         return instance;
     }
@@ -367,6 +368,7 @@ public static class NetcodePrefabRegistry
         NetcodeRuntimeUtilities.GetOrAdd<NetworkInventory>(instance);
 
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(instance);
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, info.hash);
         return instance;
     }

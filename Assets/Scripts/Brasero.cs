@@ -94,12 +94,36 @@ public class Brasero : NetworkBehaviour
 
     private void EnsureId()
     {
-        if (!string.IsNullOrWhiteSpace(braseroId))
+        if (TryResolvePersistentObjectId(out string resolvedId))
         {
+            braseroId = resolvedId;
             return;
         }
+    }
 
-        braseroId = Guid.NewGuid().ToString("N");
+    public bool TryResolvePersistentObjectId(out string id)
+    {
+        PersistentNetworkObject persistentObject = GetComponent<PersistentNetworkObject>();
+        if (persistentObject != null && !string.IsNullOrWhiteSpace(persistentObject.PersistentId))
+        {
+            id = persistentObject.PersistentId;
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(braseroId))
+        {
+            id = braseroId;
+            return true;
+        }
+
+        if (gameObject.scene.IsValid())
+        {
+            id = $"scene-brasero:{gameObject.scene.name}:{NetcodeSceneIdUtility.GetStableId(transform):X8}";
+            return true;
+        }
+
+        id = $"runtime-brasero:{name}:{GetInstanceID()}";
+        return true;
     }
 
     private void OnEnable()

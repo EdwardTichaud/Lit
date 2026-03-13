@@ -34,6 +34,8 @@ public class BraseroVolumeByYear : MonoBehaviour
 
     private VolumeProfile currentProfile;
 
+    public VolumeProfile CurrentProfile => currentProfile;
+
     private void OnEnable()
     {
         ResolveReferences();

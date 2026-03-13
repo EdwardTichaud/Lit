@@ -23,6 +23,7 @@ public static class NetcodeRuntimeUtilities
 
         GlobalHashField?.SetValue(networkObject, hash);
         PrefabHashField?.SetValue(networkObject, hash);
+        InSceneHashField?.SetValue(networkObject, 0u);
     }
 
     public static void EnsureSceneObjectHash(NetworkObject networkObject, uint hash)

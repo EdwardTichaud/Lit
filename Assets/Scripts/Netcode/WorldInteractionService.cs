@@ -49,7 +49,7 @@ public class WorldInteractionService : NetworkBehaviour
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
-        if (assignments != null)
+        if (assignments != null && IsServer)
         {
             assignments.Clear();
         }

@@ -71,6 +71,8 @@ public class TrouEtroit : MonoBehaviour
     private GameObject interactionBoxInstance;
     private Canvas interactionCanvas;
 
+    public bool IsDetected => detected;
+
     private void Awake()
     {
         Collider trigger = EnsureTriggerCollider();
@@ -272,6 +274,21 @@ public class TrouEtroit : MonoBehaviour
         {
             RefreshCurrentCharacter();
         }
+    }
+
+    public void RestoreDetectedState(bool detectedState)
+    {
+        detected = detectedState;
+        UpdateGlow();
+        ApplyVisibility();
+
+        if (charactersInRange.Count > 0)
+        {
+            RefreshCurrentCharacter();
+            return;
+        }
+
+        DestroyInteractionInstance();
     }
 
     private void UpdateGlow()

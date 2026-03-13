@@ -46,6 +46,11 @@ public static class LocalInputRouter
 
     internal static void SetMoveValue(Vector2 value)
     {
+        if (JoinSyncSystem.IsGameplayBlocked)
+        {
+            value = Vector2.zero;
+        }
+
         moveValue = value;
         Move?.Invoke(moveValue);
     }
@@ -129,6 +134,11 @@ public static class LocalInputRouter
 
     private static bool AllowInput(InputGate gate)
     {
+        if (JoinSyncSystem.IsGameplayBlocked)
+        {
+            return false;
+        }
+
         float debounce = InputDebounceSeconds;
         if (debounce <= 0f)
         {

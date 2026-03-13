@@ -624,7 +624,34 @@ public class SquadAIManager : MonoBehaviour
             return;
         }
 
-        int followerCount = groupIndices.Count - 1;
+        int followerCount = 0;
+        for (int i = 0; i < groupIndices.Count; i++)
+        {
+            int index = groupIndices[i];
+            if (index == leaderIndex || index < 0 || index >= squadManager.squadCharacters.Count)
+            {
+                continue;
+            }
+
+            GameObject candidate = squadManager.squadCharacters[index];
+            if (candidate == null || Zone.IsCharacterInMaison(candidate))
+            {
+                continue;
+            }
+
+            if (NetcodePlayerUtils.ShouldUsePlayerControl(candidate, out _))
+            {
+                continue;
+            }
+
+            if (candidate.GetComponent<SquadCharacterController>() == null)
+            {
+                continue;
+            }
+
+            followerCount++;
+        }
+
         if (followerCount <= 0)
         {
             return;
@@ -662,6 +689,18 @@ public class SquadAIManager : MonoBehaviour
                 continue;
             }
 
+            if (NetcodePlayerUtils.ShouldUsePlayerControl(follower, out _))
+            {
+                NetcodePlayerUtils.LogControlDecision(
+                    "follower_ai",
+                    follower,
+                    followerAiEnabled: false,
+                    waitingPointEnabled: false,
+                    movementMode: "player_owned_skip",
+                    reason: "follower AI skipped because character is player-owned");
+                continue;
+            }
+
             if (Zone.IsCharacterInMaison(follower))
             {
                 continue;
@@ -685,7 +724,14 @@ public class SquadAIManager : MonoBehaviour
 
             if (distance <= followStopDistance)
             {
-                controller.Move(Vector2.zero);
+                NetcodePlayerUtils.LogControlDecision(
+                    "follower_ai",
+                    follower,
+                    followerAiEnabled: true,
+                    waitingPointEnabled: false,
+                    movementMode: "follower_idle",
+                    reason: "this character is follower/waiting");
+                controller.Stop();
                 UpdateFollowerProgress(follower);
                 order++;
                 continue;
@@ -703,7 +749,13 @@ public class SquadAIManager : MonoBehaviour
 
             direction = ApplySeparation(follower, direction, groupIndices);
 
-            Vector2 input = controller.GetInputFromWorldDirection(direction);
+            NetcodePlayerUtils.LogControlDecision(
+                "follower_ai",
+                follower,
+                followerAiEnabled: true,
+                waitingPointEnabled: false,
+                movementMode: "follower_ai",
+                reason: "this character is follower/waiting");
             float inputScale = followCatchUpDistance <= 0f
                 ? 1f
                 : Mathf.Clamp01((distance - followStopDistance) / followCatchUpDistance);
@@ -714,7 +766,7 @@ public class SquadAIManager : MonoBehaviour
                 inputScale = 1f;
             }
 
-            controller.Move(input * inputScale);
+            controller.MoveWorld(new Vector2(direction.x, direction.z) * inputScale);
             UpdateFollowerProgress(follower);
             order++;
         }
@@ -1082,10 +1134,22 @@ public class SquadAIManager : MonoBehaviour
                 continue;
             }
 
+            if (NetcodePlayerUtils.ShouldUsePlayerControl(character, out _))
+            {
+                NetcodePlayerUtils.LogControlDecision(
+                    "follower_stop",
+                    character,
+                    followerAiEnabled: false,
+                    waitingPointEnabled: false,
+                    movementMode: "player_owned_skip",
+                    reason: "follower stop skipped because character is player-owned");
+                continue;
+            }
+
             SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
             if (controller != null)
             {
-                controller.Move(Vector2.zero);
+                controller.Stop();
             }
         }
     }

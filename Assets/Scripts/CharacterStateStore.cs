@@ -139,6 +139,7 @@ public class CharacterStateStore : MonoBehaviour
         try
         {
             File.WriteAllText(path, json);
+            SaveWorldSnapshot();
             if (SaveSessionManager.Instance != null)
             {
                 SaveSessionManager.Instance.RecordSaveMetadata(SceneManager.GetActiveScene().name);
@@ -149,6 +150,21 @@ public class CharacterStateStore : MonoBehaviour
         {
             Debug.LogWarning($"CharacterStateStore: echec d'ecriture {path}. {ex.Message}");
         }
+    }
+
+    private void SaveWorldSnapshot()
+    {
+#if UNITY_2023_1_OR_NEWER
+        WorldSaveAdapter adapter = FindFirstObjectByType<WorldSaveAdapter>();
+#else
+        WorldSaveAdapter adapter = FindObjectOfType<WorldSaveAdapter>();
+#endif
+        if (adapter == null)
+        {
+            return;
+        }
+
+        adapter.SaveWorldSnapshot();
     }
 
     public void Load()
@@ -204,9 +220,17 @@ public class CharacterStateStore : MonoBehaviour
         Dictionary<string, Item> buildingLookup = BuildBuildingLookup();
 
         manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
-        ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
-        ApplyHomeItems(loadedData, itemLookup);
-        ApplyBraseroStates(loadedData);
+
+        bool appliedWorldSnapshot = TryApplyLoadedWorldSnapshot();
+        if (!appliedWorldSnapshot)
+        {
+            ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
+            ApplyHomeItems(loadedData, itemLookup);
+            ApplyBraseroStates(loadedData);
+            return;
+        }
+
+        PersistentWorldDebug.Log("host load path restored world state from snapshot; legacy world restore skipped", this);
     }
 
     private void RequestScreenshotCapture()
@@ -293,6 +317,38 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         return Path.Combine(directory, screenshotFileName);
+    }
+
+    private bool TryApplyLoadedWorldSnapshot()
+    {
+#if UNITY_2023_1_OR_NEWER
+        WorldSaveAdapter adapter = FindFirstObjectByType<WorldSaveAdapter>();
+#else
+        WorldSaveAdapter adapter = FindObjectOfType<WorldSaveAdapter>();
+#endif
+        if (adapter == null)
+        {
+            return false;
+        }
+
+        if (!adapter.HasSavedWorldSnapshot())
+        {
+            PersistentWorldDebug.Log("host load path did not find a world snapshot; using legacy restore", this);
+            return false;
+        }
+
+        bool applied = adapter.EnsureHostWorldRestoredFromSave("character_state_store_host_load");
+        if (!applied)
+        {
+            PersistentWorldDebug.Error("host load path world snapshot apply failed; falling back to legacy restore", this);
+            return false;
+        }
+
+        WorldSnapshot snapshot = adapter.LastLoadedSnapshot;
+        PersistentWorldDebug.Log(
+            $"host load path restored world snapshot scene='{snapshot?.SceneName}' runtimeObjects={snapshot?.RuntimeObjects?.Count ?? 0} sceneObjects={snapshot?.SceneObjects?.Count ?? 0} restoreSequence={adapter.LastRestoreSequence} identityValidated={adapter.LastRestoreIdentityValidated} identityIssues={adapter.LastRestoreIdentityIssues}",
+            this);
+        return true;
     }
 
     private void ApplyLoadedPlayerBindings(CharacterSaveData data)

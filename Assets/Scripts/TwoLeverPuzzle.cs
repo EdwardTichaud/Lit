@@ -30,6 +30,8 @@ public class TwoLeverPuzzle : MonoBehaviour
 
     private bool triggered;
 
+    public bool IsTriggered => triggered;
+
     private void OnEnable()
     {
         SubscribeLever(leverA);
@@ -94,6 +96,28 @@ public class TwoLeverPuzzle : MonoBehaviour
     {
         triggered = false;
         Evaluate();
+    }
+
+    public void RestoreState(bool leverAState, bool leverBState, bool triggeredState)
+    {
+        leverAActive = leverAState;
+        leverBActive = leverBState;
+        triggered = triggeredState;
+
+        if (leverA != null)
+        {
+            leverA.SetActive(leverAState);
+        }
+
+        if (leverB != null)
+        {
+            leverB.SetActive(leverBState);
+        }
+
+        if (!triggered)
+        {
+            Evaluate();
+        }
     }
 
     private void SyncFromLevers()

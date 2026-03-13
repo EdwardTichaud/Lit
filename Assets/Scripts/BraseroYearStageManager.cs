@@ -29,6 +29,8 @@ public class BraseroYearStageManager : MonoBehaviour
 
     private GameObject currentRoot;
 
+    public GameObject CurrentRoot => currentRoot;
+
     private void OnEnable()
     {
         ResolveReferences();
