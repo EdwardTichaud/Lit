@@ -167,6 +167,8 @@ public class BuildingPanelController : MonoBehaviour
     private float nextMoveTime;
     private bool cursorDirty;
     private Item restoreSelectedItem;
+    private bool isRebuildingSlots;
+    private bool pendingRebuildSlots;
 
     private readonly List<GameObject> requirementSlots = new List<GameObject>();
 
@@ -494,7 +496,7 @@ public class BuildingPanelController : MonoBehaviour
         SetSquadInputLock(true);
         actionBoxSuppressFrame = Time.frameCount;
         HideActionBoxImmediate();
-        RebuildSlots();
+        RebuildSlotsSafely();
         FadePanelTo(1f, panelFadeDuration);
     }
 
@@ -1385,6 +1387,31 @@ public class BuildingPanelController : MonoBehaviour
         }
     }
 
+    private void RebuildSlotsSafely()
+    {
+        if (isRebuildingSlots)
+        {
+            pendingRebuildSlots = true;
+            return;
+        }
+
+        isRebuildingSlots = true;
+        try
+        {
+            RebuildSlots();
+        }
+        finally
+        {
+            isRebuildingSlots = false;
+        }
+
+        if (pendingRebuildSlots)
+        {
+            pendingRebuildSlots = false;
+            RebuildSlotsSafely();
+        }
+    }
+
     private GameObject CreateSlotInstance()
     {
         Transform parent = slotsParent != null ? slotsParent : transform;
@@ -1995,7 +2022,7 @@ public class BuildingPanelController : MonoBehaviour
             }
 
             restoreSelectedItem = building;
-            RebuildSlots();
+            RebuildSlotsSafely();
             return true;
         }
 
@@ -2025,7 +2052,7 @@ public class BuildingPanelController : MonoBehaviour
 
         SyncNetworkInventory(controller);
         restoreSelectedItem = building;
-        RebuildSlots();
+        RebuildSlotsSafely();
         return true;
     }
 
@@ -2929,7 +2956,7 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
-        RebuildSlots();
+        RebuildSlotsSafely();
     }
 
     private static bool IsNetworked()

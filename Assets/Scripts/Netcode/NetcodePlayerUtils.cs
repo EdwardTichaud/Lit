@@ -255,6 +255,11 @@ public static class NetcodePlayerUtils
         Debug.Log(message, character);
     }
 
+    public static string GetTransformPath(Transform target)
+    {
+        return DescribeTransform(target);
+    }
+
     private static GameObject ResolveCharacterInstanceById(string characterId)
     {
         if (string.IsNullOrWhiteSpace(characterId))

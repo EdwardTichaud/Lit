@@ -11883,7 +11883,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.95079386, y: 0.95079386, z: 0.95079386}
+  m_LocalScale: {x: 0.94831735, y: 0.94831735, z: 0.94831735}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -24501,7 +24501,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7089145, y: 1.7089145, z: 1.7089145}
+  m_LocalScale: {x: 1.7713829, y: 1.7713829, z: 1.7713829}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -67082,6 +67082,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 231835643}
     m_Modifications:
+    - target: {fileID: 4237948917492703723, guid: 3ce3f387175db264bbf9a32ae684f01d, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 561020376
+      objectReference: {fileID: 0}
+    - target: {fileID: 4237948917492703723, guid: 3ce3f387175db264bbf9a32ae684f01d, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4237948917492703723, guid: 3ce3f387175db264bbf9a32ae684f01d, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3058885720
+      objectReference: {fileID: 0}
     - target: {fileID: 6951128877935940965, guid: 3ce3f387175db264bbf9a32ae684f01d, type: 3}
       propertyPath: m_LocalScale.x
       value: 2
@@ -90568,7 +90580,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.1363304, y: 2.1363304, z: 2.1363304}
+  m_LocalScale: {x: 2.2144227, y: 2.2144227, z: 2.2144227}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}

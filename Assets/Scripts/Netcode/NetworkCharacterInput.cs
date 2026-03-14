@@ -9,6 +9,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     [SerializeField, Tooltip("Intervalle d'envoi des inputs (s).")]
     private float sendInterval = 0.05f;
 
+    private Vector2 rawMoveInput;
     private Vector2 pendingMove;
     private Vector2 lastSentMove;
     private float nextSendTime;
@@ -63,6 +64,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         LocalInputRouter.Move -= OnMoveChanged;
         LocalInputRouter.ToggleTorch -= OnToggleTorch;
+        rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
         UpdateLocalAnimationPreview(Vector2.zero);
@@ -72,12 +74,16 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
+            rawMoveInput = Vector2.zero;
+            pendingMove = Vector2.zero;
             UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
 
         if (IsGameplayInputBlocked())
         {
+            rawMoveInput = Vector2.zero;
+            pendingMove = Vector2.zero;
             UpdateLocalAnimationPreview(Vector2.zero);
             if (lastSentMove != Vector2.zero)
             {
@@ -86,6 +92,17 @@ public class NetworkCharacterInput : NetworkBehaviour
 
             return;
         }
+
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        rawMoveInput = LocalInputRouter.MoveValue;
+        pendingMove = controller != null
+            ? controller.GetWorldSpaceInput(rawMoveInput)
+            : rawMoveInput;
+        UpdateLocalAnimationPreview(pendingMove);
 
         if (Time.time < nextSendTime && (pendingMove - lastSentMove).sqrMagnitude < 0.0001f)
         {
@@ -97,6 +114,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void OnMoveChanged(Vector2 value)
     {
+        rawMoveInput = value;
         if (!IsOwner || !IsAssignedToLocalClient() || IsGameplayInputBlocked())
         {
             pendingMove = Vector2.zero;
@@ -146,7 +164,40 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         lastSentMove = value;
         nextSendTime = Time.time + Mathf.Max(0.01f, sendInterval);
+
+        if (ShouldUseHostLocalMovePath())
+        {
+            ApplyHostLocalMove(rawMoveInput);
+            return;
+        }
+
         SubmitMoveServerRpc(value);
+    }
+
+    private bool ShouldUseHostLocalMovePath()
+    {
+        return IsServer && IsOwner && IsSpawned && IsAssignedToLocalClient();
+    }
+
+    private void ApplyHostLocalMove(Vector2 input)
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller == null)
+        {
+            return;
+        }
+
+        if (input.sqrMagnitude < 0.0001f)
+        {
+            controller.Stop();
+            return;
+        }
+
+        controller.Move(input);
     }
 
     [ServerRpc]

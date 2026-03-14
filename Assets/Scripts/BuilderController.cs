@@ -69,6 +69,43 @@ public class BuilderController : NetworkBehaviour
         }
     }
 
+    public sealed class RequirementAvailability
+    {
+        public RequirementAvailability(string recipeId, bool useHomeResources)
+        {
+            RecipeId = recipeId ?? string.Empty;
+            UseHomeResources = useHomeResources;
+        }
+
+        public string RecipeId { get; }
+        public bool UseHomeResources { get; }
+        public Dictionary<Item, int> RequiredCounts { get; } = new Dictionary<Item, int>();
+        public Dictionary<Item, int> PlayerContribution { get; } = new Dictionary<Item, int>();
+        public Dictionary<Item, int> StorageContribution { get; } = new Dictionary<Item, int>();
+        public bool Craftable { get; set; }
+        public string FailureReason { get; set; } = string.Empty;
+
+        public int GetRequired(Item item)
+        {
+            return item != null && RequiredCounts.TryGetValue(item, out int value) ? value : 0;
+        }
+
+        public int GetPlayerContribution(Item item)
+        {
+            return item != null && PlayerContribution.TryGetValue(item, out int value) ? value : 0;
+        }
+
+        public int GetStorageContribution(Item item)
+        {
+            return item != null && StorageContribution.TryGetValue(item, out int value) ? value : 0;
+        }
+
+        public int GetCombinedContribution(Item item)
+        {
+            return GetPlayerContribution(item) + GetStorageContribution(item);
+        }
+    }
+
     [Header("Available Buildings")]
     [Tooltip("Tous les items building connus (pour la persistence/upgrade).")]
     public List<Item> availableBuildings = new List<Item>();
@@ -133,6 +170,9 @@ public class BuilderController : NetworkBehaviour
     private LocalVoiceLineController voiceLineController;
     private float nextVoiceLineTime;
     private Maison cachedMaison;
+    private readonly Dictionary<string, string> lastRequirementAnalysisLogs = new Dictionary<string, string>();
+    private bool isNotifyingBuildingsChanged;
+    private bool pendingBuildingsChangedNotification;
 
     private void Awake()
     {
@@ -205,7 +245,7 @@ public class BuilderController : NetworkBehaviour
         ApplyNetBuiltBuildings();
     }
 
-    private void SyncNetBuiltBuildingsFromLocal()
+    private void SyncNetBuiltBuildingsFromLocal(bool notifyChanges = true)
     {
         if (!IsServer)
         {
@@ -265,7 +305,10 @@ public class BuilderController : NetworkBehaviour
             nextNetBuildingId = maxId + 1;
         }
 
-        NotifyBuildingsChanged();
+        if (notifyChanges)
+        {
+            NotifyBuildingsChanged();
+        }
     }
 
     private void ApplyNetBuiltBuildings()
@@ -366,7 +409,27 @@ public class BuilderController : NetworkBehaviour
 
     private void NotifyBuildingsChanged()
     {
-        BuildingsChanged?.Invoke();
+        if (isNotifyingBuildingsChanged)
+        {
+            pendingBuildingsChangedNotification = true;
+            return;
+        }
+
+        isNotifyingBuildingsChanged = true;
+        try
+        {
+            BuildingsChanged?.Invoke();
+        }
+        finally
+        {
+            isNotifyingBuildingsChanged = false;
+        }
+
+        if (pendingBuildingsChangedNotification)
+        {
+            pendingBuildingsChangedNotification = false;
+            NotifyBuildingsChanged();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -624,6 +687,11 @@ public class BuilderController : NetworkBehaviour
 
     public void EnsureBuiltBuildings()
     {
+        EnsureBuiltBuildings(true);
+    }
+
+    public void EnsureBuiltBuildings(bool synchronizeNetworkState)
+    {
         if (builtBuildings == null)
         {
             builtBuildings = new List<BuiltBuildingEntry>();
@@ -652,7 +720,7 @@ public class BuilderController : NetworkBehaviour
         }
 
         SyncBuildingCurrentLevelsFromBuiltList();
-        if (IsNetworked() && IsServer)
+        if (synchronizeNetworkState && IsNetworked() && IsServer)
         {
             SyncNetBuiltBuildingsFromLocal();
         }
@@ -1256,7 +1324,7 @@ public class BuilderController : NetworkBehaviour
             return false;
         }
 
-        EnsureBuiltBuildings();
+        EnsureBuiltBuildings(false);
         if (builtBuildings != null && builtBuildings.Count > 0)
         {
             float bestSqr = float.MaxValue;
@@ -2584,72 +2652,179 @@ public class BuilderController : NetworkBehaviour
         return (info.transform.position - playerRoot.position).sqrMagnitude <= maxDistance * maxDistance;
     }
 
+    public RequirementAvailability EvaluateRequirements(Item targetItem, SquadCharacterController controller, bool useHomeResources)
+    {
+        RequirementAvailability availability = new RequirementAvailability(ResolveRecipeId(targetItem), useHomeResources);
+        if (targetItem == null || controller == null)
+        {
+            availability.FailureReason = "Ressources insuffisantes.";
+            return availability;
+        }
+
+        Dictionary<Item, int> requiredCounts = BuildRequirementCounts(targetItem);
+        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
+        {
+            availability.RequiredCounts[requirement.Key] = requirement.Value;
+        }
+
+        if (requiredCounts.Count == 0)
+        {
+            availability.Craftable = true;
+            return availability;
+        }
+
+        Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
+        List<LootContainer> homeContainers = useHomeResources ? ResolveHomeContainers() : null;
+        bool craftable = true;
+
+        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
+        {
+            Item requiredItem = requirement.Key;
+            int playerContribution = 0;
+            int storageContribution = 0;
+
+            if (requiredItem != null && inventoryCounts.TryGetValue(requiredItem, out int invCount))
+            {
+                playerContribution = invCount;
+            }
+
+            if (requiredItem != null && useHomeResources && homeContainers != null)
+            {
+                storageContribution = GetHomeItemCount(requiredItem, homeContainers);
+            }
+
+            availability.PlayerContribution[requiredItem] = playerContribution;
+            availability.StorageContribution[requiredItem] = storageContribution;
+
+            if (playerContribution + storageContribution < requirement.Value)
+            {
+                craftable = false;
+            }
+        }
+
+        availability.Craftable = craftable;
+        availability.FailureReason = craftable ? string.Empty : "Ressources insuffisantes.";
+        return availability;
+    }
+
+    public void LogCraftRequirementAnalysis(
+        string phase,
+        Item targetItem,
+        RequirementAvailability availability,
+        bool previewCraftable,
+        bool validationCraftable,
+        string consumptionSources)
+    {
+        if (availability == null)
+        {
+            return;
+        }
+
+        string recipeId = ResolveRecipeId(targetItem);
+        string message =
+            $"[CraftValidation] phase='{phase}' recipeId='{recipeId}' requiredResources='{DescribeItemQuantityMap(availability.RequiredCounts)}' playerContribution='{DescribeItemQuantityMap(availability.PlayerContribution)}' storageContribution='{DescribeItemQuantityMap(availability.StorageContribution)}' combinedContribution='{DescribeCombinedContribution(availability)}' previewCraftable={previewCraftable} validationCraftable={validationCraftable} consumptionSources='{consumptionSources}'";
+
+        string key = $"{phase}:{recipeId}";
+        if (lastRequirementAnalysisLogs.TryGetValue(key, out string previous) && previous == message)
+        {
+            return;
+        }
+
+        lastRequirementAnalysisLogs[key] = message;
+        Debug.Log(message, this);
+    }
+
+    public bool TryConsumeCraftRequirements(Item targetItem, SquadCharacterController controller, out string reason)
+    {
+        return TryConsumeRequirements(targetItem, controller, useHomeResourcesForCraft, out reason);
+    }
+
     private bool TryConsumeRequirements(Item targetItem, SquadCharacterController controller, bool useHomeResources, out string reason)
     {
-        reason = string.Empty;
+        RequirementAvailability availability = EvaluateRequirements(targetItem, controller, useHomeResources);
+        reason = availability.FailureReason;
+        LogCraftRequirementAnalysis(
+            "validation",
+            targetItem,
+            availability,
+            previewCraftable: availability.Craftable,
+            validationCraftable: availability.Craftable,
+            consumptionSources: availability.Craftable ? "pending" : "none");
+
         if (targetItem == null || controller == null)
         {
             return false;
         }
 
-        Dictionary<Item, int> requiredCounts = BuildRequirementCounts(targetItem);
-        if (requiredCounts.Count == 0)
+        if (!availability.Craftable)
         {
+            return false;
+        }
+
+        if (availability.RequiredCounts.Count == 0)
+        {
+            LogCraftRequirementAnalysis(
+                "consumption",
+                targetItem,
+                availability,
+                previewCraftable: true,
+                validationCraftable: true,
+                consumptionSources: "none");
             return true;
         }
 
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<LootContainer> homeContainers = useHomeResources ? ResolveHomeContainers() : null;
+        List<string> consumptionSources = new List<string>();
 
-        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
-        {
-            Item requiredItem = requirement.Key;
-            int requiredQuantity = requirement.Value;
-
-            int available = 0;
-            if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
-            {
-                available += invCount;
-            }
-
-            if (useHomeResources && homeContainers != null)
-            {
-                available += GetHomeItemCount(requiredItem, homeContainers);
-            }
-
-            if (available < requiredQuantity)
-            {
-                reason = "Ressources insuffisantes.";
-                return false;
-            }
-        }
-
-        foreach (KeyValuePair<Item, int> requirement in requiredCounts)
+        foreach (KeyValuePair<Item, int> requirement in availability.RequiredCounts)
         {
             Item requiredItem = requirement.Key;
             int remaining = requirement.Value;
-            if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
+            int removedFromInventory = 0;
+            int removedFromStorage = 0;
+
+            if (requiredItem != null && inventoryCounts.TryGetValue(requiredItem, out int invCount))
             {
                 int fromInventory = Mathf.Min(invCount, remaining);
                 if (fromInventory > 0)
                 {
                     controller.TryRemoveItemQuantity(requiredItem, fromInventory);
                     remaining -= fromInventory;
+                    removedFromInventory = fromInventory;
                 }
             }
 
-            if (remaining > 0 && useHomeResources && homeContainers != null)
+            if (remaining > 0 && requiredItem != null && useHomeResources && homeContainers != null)
             {
-                remaining -= RemoveFromHomeContainers(requiredItem, remaining, homeContainers);
+                removedFromStorage = RemoveFromHomeContainers(requiredItem, remaining, homeContainers);
+                remaining -= removedFromStorage;
             }
+
+            consumptionSources.Add(
+                $"{DescribeItem(requiredItem)}:player={removedFromInventory},storage={removedFromStorage}");
 
             if (remaining > 0)
             {
                 reason = "Ressources insuffisantes.";
+                LogCraftRequirementAnalysis(
+                    "consumption_failed",
+                    targetItem,
+                    availability,
+                    previewCraftable: availability.Craftable,
+                    validationCraftable: false,
+                    consumptionSources: string.Join(";", consumptionSources));
                 return false;
             }
         }
 
+        LogCraftRequirementAnalysis(
+            "consumption",
+            targetItem,
+            availability,
+            previewCraftable: availability.Craftable,
+            validationCraftable: true,
+            consumptionSources: string.Join(";", consumptionSources));
         return true;
     }
 
@@ -2771,6 +2946,76 @@ public class BuilderController : NetworkBehaviour
         }
 
         return quantity - remaining;
+    }
+
+    private static string ResolveRecipeId(Item item)
+    {
+        if (item == null)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.itemId))
+        {
+            return item.itemId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.itemName))
+        {
+            return item.itemName;
+        }
+
+        return item.name;
+    }
+
+    private static string DescribeItem(Item item)
+    {
+        return ResolveRecipeId(item);
+    }
+
+    private static string DescribeItemQuantityMap(Dictionary<Item, int> values)
+    {
+        if (values == null || values.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        List<string> entries = new List<string>();
+        foreach (KeyValuePair<Item, int> pair in values)
+        {
+            if (pair.Key == null)
+            {
+                continue;
+            }
+
+            entries.Add($"{DescribeItem(pair.Key)}:{pair.Value}");
+        }
+
+        entries.Sort(System.StringComparer.Ordinal);
+        return string.Join(",", entries);
+    }
+
+    private static string DescribeCombinedContribution(RequirementAvailability availability)
+    {
+        if (availability == null || availability.RequiredCounts.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        List<string> entries = new List<string>();
+        foreach (KeyValuePair<Item, int> requirement in availability.RequiredCounts)
+        {
+            Item item = requirement.Key;
+            if (item == null)
+            {
+                continue;
+            }
+
+            entries.Add($"{DescribeItem(item)}:{availability.GetCombinedContribution(item)}");
+        }
+
+        entries.Sort(System.StringComparer.Ordinal);
+        return string.Join(",", entries);
     }
 
     private Maison GetMaison()

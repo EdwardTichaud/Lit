@@ -63,6 +63,9 @@ public class BuildingInfoInteractable : MonoBehaviour
     private int lastLoggedAuthoritativeLevel = int.MinValue;
     private string lastPresentationLogSignature = string.Empty;
     private string presentationOrigin = "unknown";
+    private string lastWorldUiBindingFailureReason = string.Empty;
+
+    private static GameObject sharedLocalInformationPanelPrefab;
 
     private const string DefaultLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
     private const string DefaultLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
@@ -546,6 +549,17 @@ public class BuildingInfoInteractable : MonoBehaviour
             {
                 localInformationPanelPrefab = Resources.Load<GameObject>(DefaultLocalPanelResourcePath);
             }
+
+            if (localInformationPanelPrefab == null)
+            {
+                localInformationPanelPrefab = ResolveSharedLocalPanelPrefab();
+            }
+        }
+
+        if (localInformationPanelPrefab != null)
+        {
+            sharedLocalInformationPanelPrefab = localInformationPanelPrefab;
+            warnedMissingPrefab = false;
         }
 
         if (craftingPanel == null)
@@ -566,6 +580,8 @@ public class BuildingInfoInteractable : MonoBehaviour
                 Debug.LogWarning("BuildingInfoInteractable: prefab LocalBuildingInformationPanel manquant.", this);
                 warnedMissingPrefab = true;
             }
+
+            LogMissingWorldUiBinding("local world UI prefab missing after fallback resolution");
             return;
         }
 
@@ -595,6 +611,12 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         localPanelInstance.informationPanel = instance;
+        localPanelInstance.ClosePanel();
+        if (localPanelInstance.deactivatePanelOnClose && localPanelInstance.informationPanel != null)
+        {
+            localPanelInstance.informationPanel.SetActive(false);
+        }
+        lastWorldUiBindingFailureReason = string.Empty;
         LogBuildingPresentation(
             "world_ui_initialized",
             "local world UI initialized");
@@ -725,6 +747,7 @@ public class BuildingInfoInteractable : MonoBehaviour
         ResolveRuntimeReferences();
         RefreshControlledCharacterOverlap();
         RefreshCurrentCharacter();
+        EnsureLocalPanel();
 
         if (localPanelInstance != null)
         {
@@ -737,6 +760,10 @@ public class BuildingInfoInteractable : MonoBehaviour
             LogBuildingPresentation(
                 "world_ui_rebound",
                 $"World UI is initialized / rebound reason='{reason}'");
+        }
+        else
+        {
+            LogMissingWorldUiBinding($"world UI still unbound reason='{reason}'");
         }
 
         LogBuildingPresentation(
@@ -1150,8 +1177,11 @@ public class BuildingInfoInteractable : MonoBehaviour
         bool proximityActive = openOnProximity && currentCharacter != null && charactersInRange.Contains(currentCharacter);
         PersistentNetworkObject persistentObject = GetComponent<PersistentNetworkObject>();
         string persistentId = persistentObject != null ? persistentObject.PersistentId : string.Empty;
+        string localCharacterPath = currentCharacter != null
+            ? PersistentWorldDebug.DescribeTransform(currentCharacter.transform)
+            : string.Empty;
         string signature =
-            $"{eventName}|{persistentId}|{BuildId}|{BuildingItemId}|{NetworkBuildingId}|{level}|{authoritativeLevel}|{worldUiBound}|{proximityActive}|{presentationOrigin}|{reason}";
+            $"{eventName}|{persistentId}|{BuildId}|{BuildingItemId}|{NetworkBuildingId}|{level}|{authoritativeLevel}|{worldUiBound}|{proximityActive}|{presentationOrigin}|{localCharacterPath}|{reason}";
 
         bool forceLog =
             eventName == "building_reconstructed" ||
@@ -1159,6 +1189,7 @@ public class BuildingInfoInteractable : MonoBehaviour
             eventName == "building_level_changed" ||
             eventName == "world_ui_initialized" ||
             eventName == "world_ui_rebound" ||
+            eventName == "world_ui_binding_missing" ||
             eventName == "building_visibility_activated" ||
             eventName == "building_visibility_deactivated";
 
@@ -1179,8 +1210,61 @@ public class BuildingInfoInteractable : MonoBehaviour
         lastLoggedAuthoritativeLevel = authoritativeLevel;
 
         Debug.Log(
-            $"[BuildingSync] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(transform)}' persistentId='{persistentId}' buildId='{BuildId}' itemId='{BuildingItemId}' networkId={networkBuildingId} displayedLevel={level} authoritativeSyncedLevel={authoritativeLevel} worldUiBound={worldUiBound} proximityActive={proximityActive} visibilityLogicActive={openOnProximity} upgradeRefreshCallbackRan={(eventName == "building_upgrade_refresh_callback")} visualRefreshRan={(eventName == "building_visual_refresh" || eventName == "world_ui_rebound" || eventName == "world_ui_initialized")} source='{presentationOrigin}' reason='{reason}'",
+            $"[BuildingSync] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(transform)}' persistentId='{persistentId}' buildId='{BuildId}' itemId='{BuildingItemId}' networkId={networkBuildingId} displayedLevel={level} authoritativeSyncedLevel={authoritativeLevel} worldUiBound={worldUiBound} proximityActive={proximityActive} visibilityLogicActive={openOnProximity} localCharacterPath='{localCharacterPath}' upgradeRefreshCallbackRan={(eventName == "building_upgrade_refresh_callback")} visualRefreshRan={(eventName == "building_visual_refresh" || eventName == "world_ui_rebound" || eventName == "world_ui_initialized")} source='{presentationOrigin}' reason='{reason}'",
             this);
+    }
+
+    private void LogMissingWorldUiBinding(string reason)
+    {
+        if (lastWorldUiBindingFailureReason == reason)
+        {
+            return;
+        }
+
+        lastWorldUiBindingFailureReason = reason;
+        LogBuildingPresentation("world_ui_binding_missing", reason);
+    }
+
+    private GameObject ResolveSharedLocalPanelPrefab()
+    {
+        if (sharedLocalInformationPanelPrefab != null)
+        {
+            return sharedLocalInformationPanelPrefab;
+        }
+
+        BuildingInfoInteractable[] buildings = Resources.FindObjectsOfTypeAll<BuildingInfoInteractable>();
+        for (int i = 0; i < buildings.Length; i++)
+        {
+            BuildingInfoInteractable building = buildings[i];
+            if (building == null || building == this || building.localInformationPanelPrefab == null)
+            {
+                continue;
+            }
+
+            sharedLocalInformationPanelPrefab = building.localInformationPanelPrefab;
+            return sharedLocalInformationPanelPrefab;
+        }
+
+        LocalBuildingInformationsPanelController[] panels = Resources.FindObjectsOfTypeAll<LocalBuildingInformationsPanelController>();
+        for (int i = 0; i < panels.Length; i++)
+        {
+            LocalBuildingInformationsPanelController panel = panels[i];
+            if (panel == null)
+            {
+                continue;
+            }
+
+            GameObject panelTemplate = panel.informationPanel != null ? panel.informationPanel : panel.gameObject;
+            if (panelTemplate == null)
+            {
+                continue;
+            }
+
+            sharedLocalInformationPanelPrefab = panelTemplate;
+            return sharedLocalInformationPanelPrefab;
+        }
+
+        return null;
     }
 }
 

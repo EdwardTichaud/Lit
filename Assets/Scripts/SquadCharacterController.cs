@@ -2409,12 +2409,12 @@ public class SquadCharacterController : MonoBehaviour
         }
 
         Vector3 move = new Vector3(input.x, 0f, input.y);
-        if (!useCameraRelative)
+        if (!ShouldUseCameraRelativeInput())
         {
             return move;
         }
 
-        Camera cam = referenceCamera != null ? referenceCamera : Camera.main;
+        Camera cam = ResolveMovementCamera();
         if (cam == null)
         {
             return move;
@@ -2441,12 +2441,12 @@ public class SquadCharacterController : MonoBehaviour
 
         planar.Normalize();
 
-        if (!useCameraRelative)
+        if (!ShouldUseCameraRelativeInput())
         {
             return new Vector2(planar.x, planar.z);
         }
 
-        Camera cam = referenceCamera != null ? referenceCamera : Camera.main;
+        Camera cam = ResolveMovementCamera();
         if (cam == null)
         {
             return new Vector2(planar.x, planar.z);
@@ -2457,6 +2457,129 @@ public class SquadCharacterController : MonoBehaviour
         float x = Vector3.Dot(planar, camRight);
         float y = Vector3.Dot(planar, camForward);
         return new Vector2(x, y);
+    }
+
+    private bool ShouldUseCameraRelativeInput()
+    {
+        if (!useCameraRelative)
+        {
+            return false;
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsListening)
+        {
+            return true;
+        }
+
+        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
+        if (controlState.PlayerInputEnabled || controlState.IsControlledLocally)
+        {
+            return true;
+        }
+
+        if (controlState.IsPlayerControlled)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private Camera ResolveMovementCamera()
+    {
+        CameraController controller = ResolveMovementCameraController();
+        if (controller != null && controller.mainCam != null && controller.mainCam.isActiveAndEnabled)
+        {
+            referenceCamera = controller.mainCam;
+            return referenceCamera;
+        }
+
+        if (referenceCamera != null && referenceCamera.isActiveAndEnabled)
+        {
+            return referenceCamera;
+        }
+
+        Camera main = Camera.main;
+        if (main != null && main.isActiveAndEnabled)
+        {
+            referenceCamera = main;
+            return main;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+#else
+        Camera[] cameras = FindObjectsOfType<Camera>();
+#endif
+        if (cameras != null)
+        {
+            for (int i = 0; i < cameras.Length; i++)
+            {
+                Camera candidate = cameras[i];
+                if (candidate == null || !candidate.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                referenceCamera = candidate;
+                return referenceCamera;
+            }
+        }
+
+        return null;
+    }
+
+    private CameraController ResolveMovementCameraController()
+    {
+        Transform preferredTarget = LocalPlayerContext.LocalCharacterRoot != null
+            ? LocalPlayerContext.LocalCharacterRoot
+            : transform;
+
+#if UNITY_2023_1_OR_NEWER
+        CameraController[] controllers = FindObjectsByType<CameraController>(FindObjectsSortMode.None);
+#else
+        CameraController[] controllers = FindObjectsOfType<CameraController>();
+#endif
+        if (controllers == null || controllers.Length == 0)
+        {
+            return null;
+        }
+
+        CameraController fallback = null;
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            CameraController controller = controllers[i];
+            if (controller == null || !controller.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            if (fallback == null && controller.mainCam != null && controller.mainCam.isActiveAndEnabled)
+            {
+                fallback = controller;
+            }
+
+            if (controller.followOverrideTarget != null)
+            {
+                return controller;
+            }
+
+            Transform currentTarget = controller.mainCamCurrentTarget;
+            if (currentTarget == null || preferredTarget == null)
+            {
+                continue;
+            }
+
+            if (currentTarget == preferredTarget ||
+                currentTarget.IsChildOf(preferredTarget) ||
+                preferredTarget.IsChildOf(currentTarget))
+            {
+                return controller;
+            }
+        }
+
+        return fallback;
     }
 
     private void ApplyAnimatorSettings()

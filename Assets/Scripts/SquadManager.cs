@@ -113,6 +113,7 @@ public class SquadManager : MonoBehaviour
     private readonly Dictionary<string, CharacterData> runtimeCharacterSourceById = new Dictionary<string, CharacterData>();
     private readonly HashSet<string> runtimeCharacterIdWarnings = new HashSet<string>();
     private readonly HashSet<CharacterData> runtimeCharacters = new HashSet<CharacterData>();
+    private string lastLocalAssignmentRefreshLog = string.Empty;
 
     void Awake()
     {
@@ -312,24 +313,49 @@ public class SquadManager : MonoBehaviour
         WorldInteractionService service = WorldInteractionService.Instance;
         if (service == null)
         {
-            LocalPlayerContext.Clear();
+            LogLocalAssignmentRefresh("world interaction service unavailable; preserving current local assignment");
             return;
         }
 
         if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
         {
-            LocalPlayerContext.Clear();
+            LogLocalAssignmentRefresh("local client assignment not ready; preserving current local assignment");
             return;
         }
 
         GameObject instance = ResolveCharacterInstanceById(characterId);
         if (instance == null)
         {
-            LocalPlayerContext.Clear();
+            LogLocalAssignmentRefresh(
+                $"assigned character instance unresolved characterId='{characterId}'; preserving current local assignment");
             return;
         }
 
-        LocalPlayerContext.SetLocalCharacter(instance.transform);
+        lastLocalAssignmentRefreshLog = string.Empty;
+        LocalPlayerContext.SetLocalCharacter(
+            instance.transform,
+            "squad_manager_refresh",
+            LocalPlayerContext.Authority.Default);
+        NetcodePlayerUtils.LogControlDecision(
+            "local_assignment_refresh",
+            instance,
+            followerAiEnabled: false,
+            waitingPointEnabled: false,
+            movementMode: null,
+            reason: "squad manager refreshed local assignment from assignment registry");
+    }
+
+    private void LogLocalAssignmentRefresh(string reason)
+    {
+        if (lastLocalAssignmentRefreshLog == reason)
+        {
+            return;
+        }
+
+        lastLocalAssignmentRefreshLog = reason;
+        Debug.Log(
+            $"[NetcodeControl] system='local_assignment_refresh' characterId='' ownerClientId=n/a assignedClientId=n/a localClientId={(NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId.ToString() : "n/a")} isOwner=False isControlledLocally={(LocalPlayerContext.LocalCharacterRoot != null)} movementMode='pending' reason='{reason}'",
+            this);
     }
 
     private GameObject ResolveCharacterInstanceById(string characterId)

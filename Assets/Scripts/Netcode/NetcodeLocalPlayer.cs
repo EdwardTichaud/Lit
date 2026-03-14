@@ -30,7 +30,10 @@ public class NetcodeLocalPlayer : NetworkBehaviour
         UnsubscribeAssignments();
         if (IsOwner)
         {
-            LocalPlayerContext.ClearIfMatch(localCharacterRoot);
+            LocalPlayerContext.ClearIfMatch(
+                localCharacterRoot,
+                "netcode_local_player_despawn",
+                LocalPlayerContext.Authority.MultiplayerAssignment);
         }
     }
 
@@ -41,7 +44,10 @@ public class NetcodeLocalPlayer : NetworkBehaviour
 
     public override void OnLostOwnership()
     {
-        LocalPlayerContext.ClearIfMatch(localCharacterRoot);
+        LocalPlayerContext.ClearIfMatch(
+            localCharacterRoot,
+            "netcode_local_player_lost_ownership",
+            LocalPlayerContext.Authority.MultiplayerAssignment);
     }
 
     private void OnEnable()
@@ -110,14 +116,21 @@ public class NetcodeLocalPlayer : NetworkBehaviour
             return;
         }
 
-        bool assignedToLocalClient = IsAssignedToLocalClient();
-        if (assignedToLocalClient)
+        bool assignmentResolved = TryResolveAssignmentToLocalClient(out bool assignedToLocalClient);
+        bool preserveExistingLocalControl = !assignmentResolved && IsCurrentLocalCharacter();
+        if (assignedToLocalClient || preserveExistingLocalControl)
         {
-            LocalPlayerContext.SetLocalCharacter(localCharacterRoot);
+            LocalPlayerContext.SetLocalCharacter(
+                localCharacterRoot,
+                "netcode_local_player_assignment",
+                LocalPlayerContext.Authority.MultiplayerAssignment);
         }
         else
         {
-            LocalPlayerContext.ClearIfMatch(localCharacterRoot);
+            LocalPlayerContext.ClearIfMatch(
+                localCharacterRoot,
+                "netcode_local_player_unassigned",
+                LocalPlayerContext.Authority.MultiplayerAssignment);
         }
 
         Transform logTarget = localCharacterRoot != null ? localCharacterRoot : transform;
@@ -129,20 +142,25 @@ public class NetcodeLocalPlayer : NetworkBehaviour
             movementMode: null,
             reason: assignedToLocalClient
                 ? "this character is locally controlled"
-                : "owner character is not the locally assigned character");
+                : preserveExistingLocalControl
+                    ? "assignment registry temporarily unresolved; preserving existing local control"
+                    : "owner character is not the locally assigned character");
     }
 
-    private bool IsAssignedToLocalClient()
+    private bool TryResolveAssignmentToLocalClient(out bool assignedToLocalClient)
     {
+        assignedToLocalClient = false;
         if (NetworkManager.Singleton == null)
         {
+            assignedToLocalClient = true;
             return true;
         }
 
         WorldInteractionService service = WorldInteractionService.Instance;
         if (service == null)
         {
-            return true;
+            assignedToLocalClient = true;
+            return false;
         }
 
         if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
@@ -156,7 +174,26 @@ public class NetcodeLocalPlayer : NetworkBehaviour
             return false;
         }
 
-        return string.Equals(characterId, localId, System.StringComparison.Ordinal);
+        assignedToLocalClient = string.Equals(characterId, localId, System.StringComparison.Ordinal);
+        return true;
+    }
+
+    private bool IsCurrentLocalCharacter()
+    {
+        if (localCharacterRoot == null)
+        {
+            return false;
+        }
+
+        Transform current = LocalPlayerContext.LocalCharacterRoot;
+        if (current == null)
+        {
+            return false;
+        }
+
+        return current == localCharacterRoot
+            || current.IsChildOf(localCharacterRoot)
+            || localCharacterRoot.IsChildOf(current);
     }
 
     private string ResolveCharacterId()

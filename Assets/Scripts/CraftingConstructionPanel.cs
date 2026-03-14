@@ -93,6 +93,8 @@ public class CraftingConstructionPanel : MonoBehaviour
     private int lastMoveDirection;
     private float nextMoveTime;
     private bool cursorDirty;
+    private bool isRebuildingSlots;
+    private bool pendingRebuildSlots;
 
     private readonly List<GameObject> requirementSlots = new List<GameObject>();
     private Maison cachedMaison;
@@ -188,7 +190,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         panelOpen = true;
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
-        RebuildSlots();
+        RebuildSlotsSafely();
         UpdateBuildingInfo();
         FadePanelTo(1f, panelFadeDuration);
     }
@@ -507,6 +509,31 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
     }
 
+    private void RebuildSlotsSafely()
+    {
+        if (isRebuildingSlots)
+        {
+            pendingRebuildSlots = true;
+            return;
+        }
+
+        isRebuildingSlots = true;
+        try
+        {
+            RebuildSlots();
+        }
+        finally
+        {
+            isRebuildingSlots = false;
+        }
+
+        if (pendingRebuildSlots)
+        {
+            pendingRebuildSlots = false;
+            RebuildSlotsSafely();
+        }
+    }
+
     private GameObject CreateSlotInstance()
     {
         Transform parent = slotsParent != null ? slotsParent : transform;
@@ -654,8 +681,25 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         SquadCharacterController controller = currentController;
+        BuilderController builder = ResolveBuilder();
+        BuilderController.RequirementAvailability availability = builder != null
+            ? builder.EvaluateRequirements(craftItem, controller, builder.useHomeResourcesForCraft)
+            : null;
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<LootContainer> homeContainers = builder != null
+            ? (builder.useHomeResourcesForCraft ? ResolveHomeContainers() : null)
+            : ResolveHomeContainers();
+
+        if (builder != null && availability != null)
+        {
+            builder.LogCraftRequirementAnalysis(
+                "preview",
+                craftItem,
+                availability,
+                previewCraftable: availability.Craftable,
+                validationCraftable: availability.Craftable,
+                consumptionSources: "preview_only");
+        }
 
         if (requirementsParent != null)
         {
@@ -672,14 +716,21 @@ public class CraftingConstructionPanel : MonoBehaviour
             }
 
             int available = 0;
-            if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
+            if (availability != null)
             {
-                available += invCount;
+                available = availability.GetCombinedContribution(requiredItem);
             }
-
-            if (homeContainers != null)
+            else
             {
-                available += GetHomeItemCount(requiredItem, homeContainers);
+                if (inventoryCounts.TryGetValue(requiredItem, out int invCount))
+                {
+                    available += invCount;
+                }
+
+                if (homeContainers != null)
+                {
+                    available += GetHomeItemCount(requiredItem, homeContainers);
+                }
             }
 
             GameObject slot = CreateRequirementSlot();
@@ -699,6 +750,32 @@ public class CraftingConstructionPanel : MonoBehaviour
         if (craftItem == null || controller == null)
         {
             return false;
+        }
+
+        BuilderController builder = ResolveBuilder();
+        if (builder != null)
+        {
+            BuilderController.RequirementAvailability availability = builder.EvaluateRequirements(
+                craftItem,
+                controller,
+                builder.useHomeResourcesForCraft);
+            builder.LogCraftRequirementAnalysis(
+                "preview_validation",
+                craftItem,
+                availability,
+                previewCraftable: availability.Craftable,
+                validationCraftable: availability.Craftable,
+                consumptionSources: "preview_only");
+            foreach (KeyValuePair<Item, int> requirement in availability.RequiredCounts)
+            {
+                available = availability.GetCombinedContribution(requirement.Key);
+                if (available < requirement.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         Dictionary<Item, int> requiredCounts = BuildRequirementCounts(craftItem);
@@ -741,6 +818,12 @@ public class CraftingConstructionPanel : MonoBehaviour
         if (craftItem == null || controller == null)
         {
             return false;
+        }
+
+        BuilderController builder = ResolveBuilder();
+        if (builder != null)
+        {
+            return builder.TryConsumeCraftRequirements(craftItem, controller, out _);
         }
 
         Dictionary<Item, int> requiredCounts = BuildRequirementCounts(craftItem);
@@ -1310,7 +1393,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         UpdateBuildingInfo();
-        RebuildSlots();
+        RebuildSlotsSafely();
         CraftingSlotUI slot = currentFocusedSlot;
         if (slot != null && slot.CraftItem != null)
         {

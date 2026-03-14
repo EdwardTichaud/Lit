@@ -1127,7 +1127,10 @@ public class JoinSyncSystem : MonoBehaviour
         PersistentNetworkObject controlledObject = worldStateManager.ResolveControlledObject(snapshot, hookedManager.LocalClientId);
         if (controlledObject != null)
         {
-            LocalPlayerContext.SetLocalCharacter(controlledObject.transform);
+            LocalPlayerContext.SetLocalCharacter(
+                controlledObject.transform,
+                "join_snapshot_controlled_object",
+                LocalPlayerContext.Authority.MultiplayerAssignment);
         }
         else if (HasPlayerSnapshotForClient(snapshot, hookedManager.LocalClientId))
         {
