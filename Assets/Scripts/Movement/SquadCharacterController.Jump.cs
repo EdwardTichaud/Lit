@@ -822,16 +822,23 @@ public partial class SquadCharacterController
         Vector3 up = transform.up;
         if (TryGetStepCapsule(out Vector3 center, out float radius, out float height))
         {
-            float probeRadius = Mathf.Max(0.025f, radius * landingContactRadiusScale);
-            float halfHeight = height * 0.5f;
-            float bottomOffset = Mathf.Max(0f, halfHeight - radius);
-            Vector3 bottomHemisphereCenter = center - up * bottomOffset;
-            Vector3 capsuleBottom = bottomHemisphereCenter - up * radius;
-            Vector3 overlapCenter = capsuleBottom + up * probeRadius - up * 0.005f;
-            Vector3 origin = capsuleBottom + up * (probeRadius + 0.01f);
-            float distance = Mathf.Max(0.005f, landingContactProbeDistance) + 0.01f;
+            float probeDistance = Mathf.Max(0.005f, landingContactProbeDistance);
+            float probeRadius = Mathf.Max(0.02f, radius * landingContactRadiusScale * 0.25f);
+            Vector3 capsuleBottom = GetCommittedLandingCapsuleBottom(center, radius, height, up);
             int mask = GetVoidGroundMask();
 
+            if (TrySampleGround(capsuleBottom, up, probeRadius, probeDistance + probeRadius, mask, out StepGroundSample sample))
+            {
+                float bottomGap = Vector3.Dot(capsuleBottom - sample.point, up);
+                if (bottomGap <= probeDistance &&
+                    bottomGap >= -(probeRadius + 0.01f) &&
+                    Vector3.Dot(sample.normal, up) > 0.1f)
+                {
+                    return true;
+                }
+            }
+
+            Vector3 overlapCenter = capsuleBottom + up * (probeRadius - 0.002f);
             int overlapCount = Physics.OverlapSphereNonAlloc(
                 overlapCenter,
                 probeRadius,
@@ -850,12 +857,13 @@ public partial class SquadCharacterController
                 return true;
             }
 
+            Vector3 origin = capsuleBottom + up * (probeRadius + 0.002f);
             int hitCount = Physics.SphereCastNonAlloc(
                 origin,
                 probeRadius,
                 -up,
                 stepCastHits,
-                distance,
+                probeDistance + 0.004f,
                 mask,
                 QueryTriggerInteraction.Ignore);
 
@@ -867,6 +875,11 @@ public partial class SquadCharacterController
                     continue;
                 }
 
+                if (Vector3.Dot(stepCastHits[i].normal, up) <= 0.1f)
+                {
+                    continue;
+                }
+
                 return true;
             }
 
@@ -874,6 +887,14 @@ public partial class SquadCharacterController
         }
 
         return isGrounded;
+    }
+
+    private static Vector3 GetCommittedLandingCapsuleBottom(Vector3 center, float radius, float height, Vector3 up)
+    {
+        float halfHeight = height * 0.5f;
+        float bottomOffset = Mathf.Max(0f, halfHeight - radius);
+        Vector3 bottomHemisphereCenter = center - up * bottomOffset;
+        return bottomHemisphereCenter - up * radius;
     }
 
     private bool IsForwardAssistJumpIntent(Vector2 launchInput, Vector3 inputDirection)
