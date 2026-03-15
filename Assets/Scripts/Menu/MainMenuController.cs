@@ -2627,6 +2627,10 @@ public class MainMenuController : MonoBehaviour
         }
 
         string sessionName = newGameNameInput != null ? newGameNameInput.text : string.Empty;
+        if (!isLoading)
+        {
+            ShowLoadingScreen(loadingMessage);
+        }
         HideNewGamePrompt();
         CreateNewGameAndStart(sessionName);
     }
@@ -2740,8 +2744,14 @@ public class MainMenuController : MonoBehaviour
 
     private void CreateNewGameAndStart(string sessionName)
     {
+        if (!isLoading)
+        {
+            ShowLoadingScreen(loadingMessage);
+        }
+
         if (SaveSessionManager.Instance == null)
         {
+            HideLoadingScreen();
             return;
         }
 
@@ -2750,6 +2760,7 @@ public class MainMenuController : MonoBehaviour
         SaveSlotInfo save = SaveSessionManager.Instance.CreateSave(session.sessionId, initialSaveName);
         if (save == null)
         {
+            HideLoadingScreen();
             SetStatus("Impossible de creer la sauvegarde.");
             return;
         }
@@ -3404,13 +3415,20 @@ public class MainMenuController : MonoBehaviour
 
     private void OnLoadSelected()
     {
+        if (!isLoading)
+        {
+            ShowLoadingScreen(loadingMessage);
+        }
+
         if (SaveSessionManager.Instance == null)
         {
+            HideLoadingScreen();
             return;
         }
 
         if (selectedSave == null)
         {
+            HideLoadingScreen();
             SetStatus("Selectionne une sauvegarde.");
             return;
         }
@@ -3466,6 +3484,10 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (!isLoading)
+        {
+            ShowLoadingScreen(loadingMessage);
+        }
         selectedSave = pendingLoad;
         pendingLoad = null;
         loadConfirmOpen = false;
@@ -3686,9 +3708,9 @@ public class MainMenuController : MonoBehaviour
 
     private void StartOfflineFlow()
     {
-        if (isLoading)
+        if (!isLoading)
         {
-            return;
+            ShowLoadingScreen(loadingMessage);
         }
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
@@ -3696,7 +3718,6 @@ public class MainMenuController : MonoBehaviour
             NetworkManager.Singleton.Shutdown();
         }
 
-        ShowLoadingScreen();
         if (!LoadingScreenService.LoadScene(gameplaySceneName, loadingMessage, LoadSceneMode.Single))
         {
             HideLoadingScreen();
@@ -3705,20 +3726,22 @@ public class MainMenuController : MonoBehaviour
 
     private void StartJoinFlow(NetcodeSessionEndpoint endpoint)
     {
-        if (isLoading)
+        if (!isLoading)
         {
-            return;
+            ShowLoadingScreen(joinConnectingMessage);
         }
 
         NetcodeLauncher launcher = ResolveLauncher();
         if (launcher == null)
         {
+            HideLoadingScreen();
             SetStatus("NetcodeLauncher manquant.");
             return;
         }
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
+            HideLoadingScreen();
             SetStatus("Connexion deja active.");
             return;
         }
@@ -3731,6 +3754,7 @@ public class MainMenuController : MonoBehaviour
         bool started = launcher.StartClientWithConnection(endpoint.Address, endpoint.Port);
         if (!started)
         {
+            HideLoadingScreen();
             SetStatus("Client deja actif.");
             return;
         }
@@ -3739,7 +3763,6 @@ public class MainMenuController : MonoBehaviour
         joinInProgress = true;
         RegisterJoinCallbacks(true);
         SetJoinStatus($"{joinConnectingMessage} {endpoint.EndpointLabel}");
-        ShowLoadingScreen(joinConnectingMessage);
         SetStatus($"Connexion vers {endpoint.EndpointLabel} (code {endpoint.Code})...");
 
         if (joinTimeoutRoutine != null)
@@ -3951,41 +3974,42 @@ public class MainMenuController : MonoBehaviour
 
     private void ShowLoadingScreen(string overrideMessage = null)
     {
-        if (loadingGroup == null)
-        {
-            return;
-        }
-
         isLoading = true;
+        string message = string.IsNullOrWhiteSpace(overrideMessage) ? loadingMessage : overrideMessage;
+
+        LoadingScreenService.Show(message);
+
         if (loadingText != null)
         {
-            string message = string.IsNullOrWhiteSpace(overrideMessage) ? loadingMessage : overrideMessage;
             if (!string.IsNullOrWhiteSpace(message))
             {
                 loadingText.text = message;
             }
         }
 
-        loadingGroup.gameObject.SetActive(true);
-        loadingGroup.alpha = 1f;
-        loadingGroup.interactable = false;
-        loadingGroup.blocksRaycasts = true;
+        if (loadingGroup != null)
+        {
+            loadingGroup.gameObject.SetActive(true);
+            loadingGroup.alpha = 1f;
+            loadingGroup.interactable = false;
+            loadingGroup.blocksRaycasts = true;
+        }
 
         SetActiveMenuInteractable(false);
     }
 
     private void HideLoadingScreen()
     {
-        if (loadingGroup == null)
-        {
-            return;
-        }
-
         isLoading = false;
-        loadingGroup.alpha = 0f;
-        loadingGroup.interactable = false;
-        loadingGroup.blocksRaycasts = false;
-        loadingGroup.gameObject.SetActive(false);
+        LoadingScreenService.Hide();
+
+        if (loadingGroup != null)
+        {
+            loadingGroup.alpha = 0f;
+            loadingGroup.interactable = false;
+            loadingGroup.blocksRaycasts = false;
+            loadingGroup.gameObject.SetActive(false);
+        }
 
         SetActiveMenuInteractable(true);
     }

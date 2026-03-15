@@ -20,6 +20,8 @@ public sealed class LoadingScreenService : MonoBehaviour
     [Header("Fade")]
     [SerializeField, Min(0f), Tooltip("Duree du fondu d'apparition (s).")]
     private float showFadeDuration = 0.5f;
+    [SerializeField, Min(0f), Tooltip("Temps minimum avant d'autoriser la disparition du loading screen (s).")]
+    private float minimumVisibleDuration = 3f;
     [SerializeField, Min(0f), Tooltip("Temps d'attente apres chargement complet avant disparition (s).")]
     private float hideDelayAfterSceneLoad = 2f;
     [SerializeField, Min(0f), Tooltip("Duree du fondu de disparition (s).")]
@@ -40,6 +42,8 @@ public sealed class LoadingScreenService : MonoBehaviour
     private Coroutine sceneLoadRoutine;
     private Coroutine visibilityRoutine;
     private bool isRuntimeGenerated;
+    private float overlayShownAtUnscaledTime = float.NegativeInfinity;
+    private float currentFadeTarget;
     private readonly List<ParticleSystem> childParticleSystems = new List<ParticleSystem>();
     private readonly Dictionary<ParticleSystem, ParticleEmissionSnapshot> particleEmissionSnapshots = new Dictionary<ParticleSystem, ParticleEmissionSnapshot>();
 
@@ -324,9 +328,16 @@ public sealed class LoadingScreenService : MonoBehaviour
     {
         BuildUiIfNeeded();
         RefreshChildParticleCache();
-        PlayChildParticleSystems();
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = false;
+
+        if (currentFadeTarget >= 0.999f)
+        {
+            return;
+        }
+
+        overlayShownAtUnscaledTime = Time.unscaledTime;
+        PlayChildParticleSystems();
         StartVisibilityFade(1f, showFadeDuration, 0f);
     }
 
@@ -337,7 +348,8 @@ public sealed class LoadingScreenService : MonoBehaviour
             return;
         }
 
-        StartVisibilityFade(0f, hideFadeDuration, Mathf.Max(0f, delaySeconds));
+        float minimumDelay = GetRemainingMinimumVisibleDelay();
+        StartVisibilityFade(0f, hideFadeDuration, Mathf.Max(minimumDelay, Mathf.Max(0f, delaySeconds)));
     }
 
     private void StartVisibilityFade(float targetAlpha, float duration, float delaySeconds)
@@ -347,6 +359,7 @@ public sealed class LoadingScreenService : MonoBehaviour
             StopCoroutine(visibilityRoutine);
         }
 
+        currentFadeTarget = Mathf.Clamp01(targetAlpha);
         visibilityRoutine = StartCoroutine(FadeCanvasRoutine(targetAlpha, duration, delaySeconds));
     }
 
@@ -387,6 +400,7 @@ public sealed class LoadingScreenService : MonoBehaviour
         {
             canvasGroup.blocksRaycasts = false;
             canvasGroup.interactable = false;
+            overlayShownAtUnscaledTime = float.NegativeInfinity;
             StopChildParticleSystems();
         }
 
@@ -414,7 +428,20 @@ public sealed class LoadingScreenService : MonoBehaviour
         ApplyOverlayAlpha(0f);
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
+        overlayShownAtUnscaledTime = float.NegativeInfinity;
+        currentFadeTarget = 0f;
         StopChildParticleSystems();
+    }
+
+    private float GetRemainingMinimumVisibleDelay()
+    {
+        if (minimumVisibleDuration <= 0f || float.IsNegativeInfinity(overlayShownAtUnscaledTime))
+        {
+            return 0f;
+        }
+
+        float elapsed = Time.unscaledTime - overlayShownAtUnscaledTime;
+        return Mathf.Max(0f, minimumVisibleDuration - elapsed);
     }
 
     private void RefreshChildParticleCache()
