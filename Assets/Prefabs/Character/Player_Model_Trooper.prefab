@@ -15784,6 +15784,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
+  enableCommittedJump: 1
+  anticipationDuration: 0.07
+  impulseDelay: 0.02
+  useAnimationTimedImpulse: 1
+  takeoffImpulseNormalizedTime: 0.18
+  verticalImpulse: 7
+  idleLockedForwardSpeed: 0
+  movingJumpThreshold: 0.8
+  movingTakeoffMinLaunchSpeed: 5.25
+  movingJumpMinSpeedForRoll: 4.5
+  movingJumpSpeedMultiplier: 1.05
+  maxLockedForwardSpeed: 6.5
+  takeoffHorizontalAcceleration: 30
+  idleTakeoffForwardImpulse: 0
+  movingTakeoffForwardImpulse: 3
+  forwardAssistTakeoffForwardImpulse: 3
+  forwardAssistInputThreshold: 0.3
+  forwardAssistMinDot: 0.6
+  forwardAssistLaunchSpeed: 4.5
+  jumpCoyoteTime: 0.08
+  jumpCooldown: 0.12
+  jumpGroundIgnoreTime: 0.1
+  gravityMultiplier: 1.05
+  fallMultiplier: 2
+  maxFallSpeed: 22
+  landingContactProbeDistance: 0.025
+  landingContactRadiusScale: 0.55
+  landingContactMaxUpwardVelocity: 0.1
+  idleLandingRecoveryDuration: 0.34
+  idleLandingMovementLockDuration: 0.32
+  idleLandingStopDamping: 20
+  landingUnlockNormalizedTime: 0.82
+  rollApproachForwardSpeed: 4.8
+  rollApproachAcceleration: 24
+  rollForwardSpeed: 5.2
+  rollDistance: 2.2
+  rollDuration: 0.42
+  rollRecoveryDuration: 0.18
+  rollRecoveryDamping: 16
+  rollEndNormalizedTime: 0.92
+  forceJumpStateCrossFade: 0
+  jumpAnimationLayer: 0
+  jumpAnimationCrossFadeDuration: 0.06
+  jumpTriggerParam: JumpTrigger
+  isAirborneParam: IsAirborne
+  landingTypeParam: LandingType
+  jumpFromMovementParam: JumpFromMovement
+  rollTriggerParam: RollTrigger
+  jumpPhaseParam: JumpPhase
+  takeoffStateName: Jump_Takeoff
+  airborneStateName: Jump_Airborne
+  idleLandingStateName: Jump_Land
+  rollStateName: Jump_Roll
   items: []
   startingTorchSeconds: 300
   torchSecondsRemaining: 300
@@ -15816,6 +15869,9 @@ MonoBehaviour:
   referenceCamera: {fileID: 0}
   preferRigidbody: 1
   animatePhysics: 0
+  jumpGroundCheckDistance: 0.18
+  jumpGroundCheckRadiusScale: 0.9
+  groundedStickVelocity: 2
   enableVoidDetection: 1
   voidCheckDistance: 0.35
   voidCheckDepth: 4
@@ -15868,6 +15924,8 @@ MonoBehaviour:
   ignoreCharacterCollisions: 1
   ignoreCharacterTriggerColliders: 1
   collisionRefreshInterval: 0.5
+  audioListener: {fileID: 0}
+  searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15904,6 +15962,8 @@ MonoBehaviour:
   fallbackSpatialBlend: 1
   fallbackMinDistance: 1
   fallbackMaxDistance: 20
+  duckMusicDuringVoiceLine: 1
+  musicDuckMultiplier: 0.5
 --- !u!54 &-8769395688154957966
 Rigidbody:
   m_ObjectHideFlags: 0

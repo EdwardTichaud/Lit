@@ -192,13 +192,19 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
+        Vector2 jumpWorldInput = pendingMove;
+        if (jumpWorldInput == Vector2.zero && rawMoveInput != Vector2.zero && controller != null)
+        {
+            jumpWorldInput = controller.GetWorldSpaceInput(rawMoveInput);
+        }
+
         if (ShouldUseHostLocalMovePath())
         {
-            ApplyHostLocalJump();
+            ApplyHostLocalJump(jumpWorldInput);
             return;
         }
 
-        SubmitJumpServerRpc();
+        SubmitJumpServerRpc(jumpWorldInput);
     }
 
     private static bool IsGameplayInputBlocked()
@@ -247,7 +253,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         controller.Move(input);
     }
 
-    private void ApplyHostLocalJump()
+    private void ApplyHostLocalJump(Vector2 worldInput)
     {
         if (controller == null)
         {
@@ -259,6 +265,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
+        controller.QueueCommittedJumpInput(worldInput, isWorldSpace: true);
         controller.Jump();
     }
 
@@ -279,7 +286,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void SubmitJumpServerRpc()
+    private void SubmitJumpServerRpc(Vector2 worldInput)
     {
         if (controller == null)
         {
@@ -291,6 +298,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
+        controller.QueueCommittedJumpInput(worldInput, isWorldSpace: true);
         controller.Jump();
     }
 

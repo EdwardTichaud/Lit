@@ -15,6 +15,7 @@ public partial class SquadCharacterController
     {
         Idle = 0,
         Moving = 1,
+        AssistedForward = 2,
     }
 
     private enum CommittedLandingType
@@ -41,6 +42,8 @@ public partial class SquadCharacterController
     private float idleLockedForwardSpeed = 0f;
     [SerializeField, Tooltip("Vitesse minimale pour considerer que le saut commence en mouvement.")]
     private float movingJumpThreshold = 0.3f;
+    [SerializeField, Tooltip("Vitesse minimale preservee par un saut lance en mouvement.")]
+    private float movingTakeoffMinLaunchSpeed = 1.5f;
     [SerializeField, Tooltip("Vitesse minimale au depart pour declencher un roulage a l'atterrissage.")]
     private float movingJumpMinSpeedForRoll = 1.1f;
     [SerializeField, Tooltip("Multiplicateur applique a la vitesse de depart pour verrouiller l'elan.")]
@@ -49,6 +52,18 @@ public partial class SquadCharacterController
     private float maxLockedForwardSpeed = 4f;
     [SerializeField, Tooltip("Acceleration horizontale pendant le takeoff pour atteindre la vitesse verrouillee.")]
     private float takeoffHorizontalAcceleration = 18f;
+    [SerializeField, Tooltip("Boost avant ajoute au takeoff pour un saut demarre a l'arret.")]
+    private float idleTakeoffForwardImpulse = 0f;
+    [SerializeField, Tooltip("Boost avant ajoute au takeoff pour un saut lance en mouvement.")]
+    private float movingTakeoffForwardImpulse = 0f;
+    [SerializeField, Tooltip("Boost avant ajoute au takeoff pour un saut impulse vers l'avant depuis l'arret.")]
+    private float forwardAssistTakeoffForwardImpulse = 0f;
+    [SerializeField, Tooltip("Magnitude minimale d'input pour transformer un saut idle en saut impulse vers l'avant.")]
+    private float forwardAssistInputThreshold = 0.45f;
+    [SerializeField, Range(-1f, 1f), Tooltip("Alignement minimal entre l'input et le forward du personnage pour le saut impulse vers l'avant.")]
+    private float forwardAssistMinDot = 0.45f;
+    [SerializeField, Tooltip("Vitesse minimale du saut impulse vers l'avant quand on saute depuis l'arret.")]
+    private float forwardAssistLaunchSpeed = 1.75f;
     [SerializeField, Tooltip("Tolere un saut juste apres avoir quitte le sol (s).")]
     private float jumpCoyoteTime = 0.1f;
     [SerializeField, Tooltip("Temps minimal entre deux sauts engages (s).")]
@@ -63,6 +78,12 @@ public partial class SquadCharacterController
     private float fallMultiplier = 1.65f;
     [SerializeField, Tooltip("Vitesse max de chute appliquee au saut engage.")]
     private float maxFallSpeed = 20f;
+    [SerializeField, Tooltip("Distance de contact sol utilisee pour declencher les atterrissages engages (m).")]
+    private float landingContactProbeDistance = 0.04f;
+    [SerializeField, Tooltip("Multiplicateur de rayon pour confirmer un vrai contact sol a l'atterrissage.")]
+    private float landingContactRadiusScale = 0.65f;
+    [SerializeField, Tooltip("Vitesse verticale max autorisee pour valider le contact d'atterrissage.")]
+    private float landingContactMaxUpwardVelocity = 0.75f;
 
     [Header("Idle Landing")]
     [SerializeField, Tooltip("Duree de stabilization apres un saut demarre a l'arret (s).")]
@@ -75,6 +96,10 @@ public partial class SquadCharacterController
     private float landingUnlockNormalizedTime = 0.85f;
 
     [Header("Moving Landing / Roll")]
+    [SerializeField, Tooltip("Vitesse horizontale constante cible pendant la fin de saut avant une roulade. 0 = conserve l'elan verrouille.")]
+    private float rollApproachForwardSpeed = 0f;
+    [SerializeField, Tooltip("Acceleration utilisee pour converger vers la vitesse de fin de saut avant la roulade.")]
+    private float rollApproachAcceleration = 18f;
     [SerializeField, Tooltip("Vitesse avant du roulage. Si rollDistance > 0, la distance pilote la vitesse.")]
     private float rollForwardSpeed = 3.2f;
     [SerializeField, Tooltip("Distance cible du roulage. 0 = utilise rollForwardSpeed.")]
@@ -127,12 +152,22 @@ public partial class SquadCharacterController
     private float committedLaunchSpeed;
     private Vector3 committedLockedHorizontalVelocity;
     private float committedRollSpeed;
+    private Vector2 queuedCommittedJumpInput;
+    private bool queuedCommittedJumpInputIsWorldSpace;
+    private bool hasQueuedCommittedJumpInput;
 
     public bool IsJumpCommitted => enableCommittedJump && committedJumpPhase != CommittedJumpPhase.Grounded;
 
     public bool IsMovementInputSuppressed => inputLockTimer > 0f || IsJumpCommitted;
 
     public int CurrentCommittedJumpPhase => (int)committedJumpPhase;
+
+    public void QueueCommittedJumpInput(Vector2 input, bool isWorldSpace)
+    {
+        queuedCommittedJumpInput = Vector2.ClampMagnitude(input, 1f);
+        queuedCommittedJumpInputIsWorldSpace = isWorldSpace;
+        hasQueuedCommittedJumpInput = queuedCommittedJumpInput.sqrMagnitude > 0.0001f;
+    }
 
     private void ResetCommittedJumpRuntime()
     {
@@ -146,6 +181,7 @@ public partial class SquadCharacterController
         committedLaunchSpeed = 0f;
         committedLockedHorizontalVelocity = Vector3.zero;
         committedRollSpeed = 0f;
+        ClearQueuedCommittedJumpInput();
     }
 
     private void ValidateCommittedJumpSettings()
@@ -156,20 +192,32 @@ public partial class SquadCharacterController
         verticalImpulse = Mathf.Max(0f, verticalImpulse);
         idleLockedForwardSpeed = Mathf.Max(0f, idleLockedForwardSpeed);
         movingJumpThreshold = Mathf.Max(0f, movingJumpThreshold);
+        movingTakeoffMinLaunchSpeed = Mathf.Max(0f, movingTakeoffMinLaunchSpeed);
         movingJumpMinSpeedForRoll = Mathf.Max(0f, movingJumpMinSpeedForRoll);
         movingJumpSpeedMultiplier = Mathf.Max(0f, movingJumpSpeedMultiplier);
         maxLockedForwardSpeed = Mathf.Max(0f, maxLockedForwardSpeed);
         takeoffHorizontalAcceleration = Mathf.Max(0f, takeoffHorizontalAcceleration);
+        idleTakeoffForwardImpulse = Mathf.Max(0f, idleTakeoffForwardImpulse);
+        movingTakeoffForwardImpulse = Mathf.Max(0f, movingTakeoffForwardImpulse);
+        forwardAssistTakeoffForwardImpulse = Mathf.Max(0f, forwardAssistTakeoffForwardImpulse);
+        forwardAssistInputThreshold = Mathf.Clamp01(forwardAssistInputThreshold);
+        forwardAssistMinDot = Mathf.Clamp(forwardAssistMinDot, -1f, 1f);
+        forwardAssistLaunchSpeed = Mathf.Max(0f, forwardAssistLaunchSpeed);
         jumpCoyoteTime = Mathf.Max(0f, jumpCoyoteTime);
         jumpCooldown = Mathf.Max(0f, jumpCooldown);
         jumpGroundIgnoreTime = Mathf.Max(0f, jumpGroundIgnoreTime);
         gravityMultiplier = Mathf.Max(0f, gravityMultiplier);
         fallMultiplier = Mathf.Max(0f, fallMultiplier);
         maxFallSpeed = Mathf.Max(0f, maxFallSpeed);
+        landingContactProbeDistance = Mathf.Max(0.005f, landingContactProbeDistance);
+        landingContactRadiusScale = Mathf.Clamp(landingContactRadiusScale, 0.1f, 1.25f);
+        landingContactMaxUpwardVelocity = Mathf.Max(0f, landingContactMaxUpwardVelocity);
         idleLandingRecoveryDuration = Mathf.Max(0f, idleLandingRecoveryDuration);
         idleLandingMovementLockDuration = Mathf.Max(0f, idleLandingMovementLockDuration);
         idleLandingStopDamping = Mathf.Max(0f, idleLandingStopDamping);
         landingUnlockNormalizedTime = Mathf.Clamp01(landingUnlockNormalizedTime);
+        rollApproachForwardSpeed = Mathf.Max(0f, rollApproachForwardSpeed);
+        rollApproachAcceleration = Mathf.Max(0f, rollApproachAcceleration);
         rollForwardSpeed = Mathf.Max(0f, rollForwardSpeed);
         rollDistance = Mathf.Max(0f, rollDistance);
         rollDuration = Mathf.Max(0f, rollDuration);
@@ -213,6 +261,7 @@ public partial class SquadCharacterController
             committedJumpRequested = false;
             if (!CanStartCommittedJump())
             {
+                ClearQueuedCommittedJumpInput();
                 return;
             }
 
@@ -229,7 +278,7 @@ public partial class SquadCharacterController
                 break;
 
             case CommittedJumpPhase.Airborne:
-                if (isGrounded && Time.time >= groundIgnoreUntilTime)
+                if (ShouldBeginCommittedLanding())
                 {
                     BeginLandingPhase();
                 }
@@ -295,7 +344,7 @@ public partial class SquadCharacterController
         SetAnimatorBoolIfValid(isAirborneParam, committedJumpPhase == CommittedJumpPhase.Airborne);
         SetAnimatorBoolIfValid(
             jumpFromMovementParam,
-            committedJumpPhase != CommittedJumpPhase.Grounded && committedJumpStartContext == JumpStartContext.Moving);
+            committedJumpPhase != CommittedJumpPhase.Grounded && IsMovementStyleJumpContext(committedJumpStartContext));
         SetAnimatorIntIfValid(landingTypeParam, (int)committedLandingType);
         SetAnimatorIntIfValid(jumpPhaseParam, (int)committedJumpPhase);
     }
@@ -324,34 +373,54 @@ public partial class SquadCharacterController
     {
         Vector3 planarVelocity = GetCurrentHorizontalVelocity();
         float planarSpeed = planarVelocity.magnitude;
-        Vector2 launchInput = smoothedInput.sqrMagnitude > 0.0001f ? smoothedInput : moveInput;
-        Vector3 inputDirection = launchInput.sqrMagnitude > 0.0001f ? GetMoveDirection(launchInput) : Vector3.zero;
+        Vector2 launchInput = ResolveCommittedLaunchInput();
+        Vector3 inputDirection = launchInput.sqrMagnitude > 0.0001f
+            ? ResolveCommittedInputDirection(launchInput)
+            : Vector3.zero;
         float requestedSpeed = Mathf.Clamp01(launchInput.magnitude) * moveSpeed;
-        float evaluationSpeed = Mathf.Max(planarSpeed, requestedSpeed);
+        bool hasMomentumLaunch = planarSpeed >= movingJumpThreshold;
+        bool hasForwardAssistLaunch = !hasMomentumLaunch && IsForwardAssistJumpIntent(launchInput, inputDirection);
 
-        committedJumpStartContext = evaluationSpeed >= movingJumpThreshold
-            ? JumpStartContext.Moving
-            : JumpStartContext.Idle;
+        if (hasMomentumLaunch)
+        {
+            committedJumpStartContext = JumpStartContext.Moving;
+        }
+        else if (hasForwardAssistLaunch)
+        {
+            committedJumpStartContext = JumpStartContext.AssistedForward;
+        }
+        else
+        {
+            committedJumpStartContext = JumpStartContext.Idle;
+        }
 
-        committedJumpDirection = ResolveCommittedJumpDirection(inputDirection, planarVelocity);
-        committedLaunchSpeed = ResolveCommittedLaunchSpeed(evaluationSpeed);
+        committedJumpDirection = ResolveCommittedJumpDirection(planarVelocity, inputDirection);
+        committedLaunchSpeed = ResolveCommittedLaunchSpeed(planarSpeed, requestedSpeed);
         committedLockedHorizontalVelocity = committedJumpDirection * committedLaunchSpeed;
         takeoffImpulseApplied = false;
         committedLandingType = CommittedLandingType.None;
+        ClearQueuedCommittedJumpInput();
         EnterCommittedJumpPhase(CommittedJumpPhase.Takeoff);
         SetAnimatorTriggerIfValid(jumpTriggerParam);
         CrossFadeJumpStateIfRequested(takeoffStateName);
     }
 
-    private Vector3 ResolveCommittedJumpDirection(Vector3 inputDirection, Vector3 planarVelocity)
+    private Vector3 ResolveCommittedJumpDirection(Vector3 planarVelocity, Vector3 inputDirection)
     {
+        Vector3 planarVelocityDirection = new Vector3(planarVelocity.x, 0f, planarVelocity.z);
         Vector3 planarInput = new Vector3(inputDirection.x, 0f, inputDirection.z);
+
+        if (committedJumpStartContext == JumpStartContext.Moving &&
+            planarVelocityDirection.sqrMagnitude > 0.0001f)
+        {
+            return planarVelocityDirection.normalized;
+        }
+
         if (planarInput.sqrMagnitude > 0.0001f)
         {
             return planarInput.normalized;
         }
 
-        Vector3 planarVelocityDirection = new Vector3(planarVelocity.x, 0f, planarVelocity.z);
         if (planarVelocityDirection.sqrMagnitude > 0.0001f)
         {
             return planarVelocityDirection.normalized;
@@ -367,20 +436,23 @@ public partial class SquadCharacterController
         return Vector3.forward;
     }
 
-    private float ResolveCommittedLaunchSpeed(float evaluationSpeed)
+    private float ResolveCommittedLaunchSpeed(float planarSpeed, float requestedSpeed)
     {
         if (committedJumpStartContext == JumpStartContext.Idle)
         {
-            return Mathf.Max(0f, idleLockedForwardSpeed);
+            return ClampCommittedLaunchSpeed(idleLockedForwardSpeed + idleTakeoffForwardImpulse);
         }
 
-        float lockedSpeed = evaluationSpeed * movingJumpSpeedMultiplier;
-        if (maxLockedForwardSpeed > 0f)
+        if (committedJumpStartContext == JumpStartContext.AssistedForward)
         {
-            lockedSpeed = Mathf.Min(lockedSpeed, maxLockedForwardSpeed);
+            float assistedSpeed = Mathf.Max(requestedSpeed * movingJumpSpeedMultiplier, forwardAssistLaunchSpeed);
+            return ClampCommittedLaunchSpeed(assistedSpeed + forwardAssistTakeoffForwardImpulse);
         }
 
-        return Mathf.Max(movingJumpThreshold, lockedSpeed);
+        float lockedSpeed = Mathf.Max(planarSpeed * movingJumpSpeedMultiplier, movingTakeoffMinLaunchSpeed);
+        lockedSpeed = ClampCommittedLaunchSpeed(lockedSpeed + movingTakeoffForwardImpulse);
+
+        return Mathf.Max(planarSpeed, lockedSpeed);
     }
 
     private bool ShouldApplyTakeoffImpulse()
@@ -428,7 +500,7 @@ public partial class SquadCharacterController
 
     private void BeginLandingPhase()
     {
-        bool shouldRoll = committedJumpStartContext == JumpStartContext.Moving &&
+        bool shouldRoll = IsRollEligibleJumpContext(committedJumpStartContext) &&
                           committedLaunchSpeed >= movingJumpMinSpeedForRoll;
 
         committedLandingType = shouldRoll
@@ -482,6 +554,7 @@ public partial class SquadCharacterController
     private void ApplyAirborneMovement(float deltaTime)
     {
         Vector3 velocity = rigidbodyTarget.linearVelocity;
+        Vector3 horizontal = ResolveCommittedAirborneHorizontalVelocity(velocity.y, deltaTime);
         float extraGravityScale = velocity.y >= 0f ? gravityMultiplier : fallMultiplier;
         float vertical = velocity.y + (Physics.gravity.y * Mathf.Max(0f, extraGravityScale - 1f) * deltaTime);
 
@@ -491,11 +564,11 @@ public partial class SquadCharacterController
         }
 
         rigidbodyTarget.linearVelocity = new Vector3(
-            committedLockedHorizontalVelocity.x,
+            horizontal.x,
             vertical,
-            committedLockedHorizontalVelocity.z);
+            horizontal.z);
 
-        currentHorizontalVelocity = committedLockedHorizontalVelocity;
+        currentHorizontalVelocity = horizontal;
         RotateTowardsCommittedDirection(deltaTime);
     }
 
@@ -577,6 +650,21 @@ public partial class SquadCharacterController
         return HasReachedAnimationWindow(rollStateName, rollEndNormalizedTime);
     }
 
+    private bool ShouldBeginCommittedLanding()
+    {
+        if (Time.time < groundIgnoreUntilTime || !isGrounded || rigidbodyTarget == null)
+        {
+            return false;
+        }
+
+        if (rigidbodyTarget.linearVelocity.y > landingContactMaxUpwardVelocity)
+        {
+            return false;
+        }
+
+        return HasCommittedLandingContact();
+    }
+
     private void FinishCommittedJump()
     {
         committedJumpRequested = false;
@@ -585,6 +673,7 @@ public partial class SquadCharacterController
         committedRollSpeed = 0f;
         committedLaunchSpeed = 0f;
         committedLockedHorizontalVelocity = Vector3.zero;
+        ClearQueuedCommittedJumpInput();
         EnterCommittedJumpPhase(CommittedJumpPhase.Grounded);
     }
 
@@ -602,6 +691,38 @@ public partial class SquadCharacterController
         }
 
         return Vector3.MoveTowards(current, target, speed * deltaTime);
+    }
+
+    private float ClampCommittedLaunchSpeed(float speed)
+    {
+        float clampedSpeed = Mathf.Max(0f, speed);
+        if (maxLockedForwardSpeed > 0f)
+        {
+            clampedSpeed = Mathf.Min(clampedSpeed, maxLockedForwardSpeed);
+        }
+
+        return clampedSpeed;
+    }
+
+    private Vector3 ResolveCommittedAirborneHorizontalVelocity(float verticalVelocity, float deltaTime)
+    {
+        if (!ShouldUseRollApproachSpeed() || committedJumpDirection.sqrMagnitude < 0.0001f || verticalVelocity > 0f)
+        {
+            return committedLockedHorizontalVelocity;
+        }
+
+        Vector3 targetHorizontal = committedJumpDirection * ClampCommittedLaunchSpeed(rollApproachForwardSpeed);
+        if (rollApproachAcceleration <= 0f)
+        {
+            committedLockedHorizontalVelocity = targetHorizontal;
+            return committedLockedHorizontalVelocity;
+        }
+
+        committedLockedHorizontalVelocity = Vector3.MoveTowards(
+            committedLockedHorizontalVelocity,
+            targetHorizontal,
+            rollApproachAcceleration * deltaTime);
+        return committedLockedHorizontalVelocity;
     }
 
     private bool HasReachedAnimationWindow(string stateName, float normalizedTimeThreshold)
@@ -657,6 +778,145 @@ public partial class SquadCharacterController
         return stateInfo.shortNameHash == stateHash ||
                stateInfo.fullPathHash == stateHash ||
                stateInfo.IsName(stateName);
+    }
+
+    private Vector2 ResolveCommittedLaunchInput()
+    {
+        if (hasQueuedCommittedJumpInput)
+        {
+            return queuedCommittedJumpInput;
+        }
+
+        if (smoothedInput.sqrMagnitude > 0.0001f)
+        {
+            return smoothedInput;
+        }
+
+        return moveInput;
+    }
+
+    private Vector3 ResolveCommittedInputDirection(Vector2 launchInput)
+    {
+        if (!hasQueuedCommittedJumpInput)
+        {
+            return GetMoveDirection(launchInput);
+        }
+
+        if (queuedCommittedJumpInputIsWorldSpace)
+        {
+            return new Vector3(launchInput.x, 0f, launchInput.y);
+        }
+
+        return GetMoveDirection(launchInput);
+    }
+
+    private void ClearQueuedCommittedJumpInput()
+    {
+        queuedCommittedJumpInput = Vector2.zero;
+        queuedCommittedJumpInputIsWorldSpace = false;
+        hasQueuedCommittedJumpInput = false;
+    }
+
+    private bool HasCommittedLandingContact()
+    {
+        Vector3 up = transform.up;
+        if (TryGetStepCapsule(out Vector3 center, out float radius, out float height))
+        {
+            float probeRadius = Mathf.Max(0.025f, radius * landingContactRadiusScale);
+            float halfHeight = height * 0.5f;
+            float bottomOffset = Mathf.Max(0f, halfHeight - radius);
+            Vector3 bottomHemisphereCenter = center - up * bottomOffset;
+            Vector3 capsuleBottom = bottomHemisphereCenter - up * radius;
+            Vector3 overlapCenter = capsuleBottom + up * probeRadius - up * 0.005f;
+            Vector3 origin = capsuleBottom + up * (probeRadius + 0.01f);
+            float distance = Mathf.Max(0.005f, landingContactProbeDistance) + 0.01f;
+            int mask = GetVoidGroundMask();
+
+            int overlapCount = Physics.OverlapSphereNonAlloc(
+                overlapCenter,
+                probeRadius,
+                stepOverlapHits,
+                mask,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < overlapCount; i++)
+            {
+                Collider col = stepOverlapHits[i];
+                if (col == null || IsSelfCollider(col))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            int hitCount = Physics.SphereCastNonAlloc(
+                origin,
+                probeRadius,
+                -up,
+                stepCastHits,
+                distance,
+                mask,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider col = stepCastHits[i].collider;
+                if (col == null || IsSelfCollider(col))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        return isGrounded;
+    }
+
+    private bool IsForwardAssistJumpIntent(Vector2 launchInput, Vector3 inputDirection)
+    {
+        if (launchInput.sqrMagnitude < forwardAssistInputThreshold * forwardAssistInputThreshold)
+        {
+            return false;
+        }
+
+        Vector3 planarInput = new Vector3(inputDirection.x, 0f, inputDirection.z);
+        if (planarInput.sqrMagnitude < 0.0001f)
+        {
+            return false;
+        }
+
+        planarInput.Normalize();
+
+        Vector3 forward = motionRoot != null ? motionRoot.forward : transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            return false;
+        }
+
+        forward.Normalize();
+        return Vector3.Dot(planarInput, forward) >= forwardAssistMinDot;
+    }
+
+    private static bool IsMovementStyleJumpContext(JumpStartContext context)
+    {
+        return context != JumpStartContext.Idle;
+    }
+
+    private static bool IsRollEligibleJumpContext(JumpStartContext context)
+    {
+        return context == JumpStartContext.Moving;
+    }
+
+    private bool ShouldUseRollApproachSpeed()
+    {
+        return IsRollEligibleJumpContext(committedJumpStartContext) &&
+               committedLaunchSpeed >= movingJumpMinSpeedForRoll &&
+               rollApproachForwardSpeed > 0f;
     }
 
     private void CrossFadeJumpStateIfRequested(string stateName)
