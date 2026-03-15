@@ -112,6 +112,10 @@ public partial class SquadCharacterController
     private float rollRecoveryDamping = 12f;
     [SerializeField, Range(0f, 1f), Tooltip("Fenetre mini de l'animation de roulage avant rendu du controle.")]
     private float rollEndNormalizedTime = 0.9f;
+    [SerializeField, Tooltip("Pilote la fin de la roulade sur la duree reelle de l'etat Animator au lieu d'une duree fixe.")]
+    private bool useRollAnimationDurationForExit = true;
+    [SerializeField, Tooltip("Marge ajoutee apres la duree reelle de la roulade avant de rendre le controle (s).")]
+    private float rollAnimationExitPadding = 0f;
 
     [Header("Animation Sync")]
     [SerializeField, Tooltip("Force un CrossFade vers les etats nommes ci-dessous quand une phase commence.")]
@@ -224,6 +228,7 @@ public partial class SquadCharacterController
         rollRecoveryDuration = Mathf.Max(0f, rollRecoveryDuration);
         rollRecoveryDamping = Mathf.Max(0f, rollRecoveryDamping);
         rollEndNormalizedTime = Mathf.Clamp01(rollEndNormalizedTime);
+        rollAnimationExitPadding = Mathf.Max(0f, rollAnimationExitPadding);
         jumpAnimationLayer = Mathf.Max(0, jumpAnimationLayer);
         jumpAnimationCrossFadeDuration = Mathf.Max(0f, jumpAnimationCrossFadeDuration);
     }
@@ -588,22 +593,7 @@ public partial class SquadCharacterController
 
     private void ApplyLandingRollMovement(float deltaTime)
     {
-        float phaseElapsed = Time.time - committedJumpPhaseStartTime;
-        Vector3 nextHorizontal;
-        if (phaseElapsed <= rollDuration)
-        {
-            nextHorizontal = committedJumpDirection * committedRollSpeed;
-        }
-        else
-        {
-            Vector3 currentHorizontal = GetCurrentHorizontalVelocity();
-            nextHorizontal = MoveTowardsWithOptionalSnap(
-                currentHorizontal,
-                Vector3.zero,
-                rollRecoveryDamping,
-                deltaTime);
-        }
-
+        Vector3 nextHorizontal = committedJumpDirection * committedRollSpeed;
         rigidbodyTarget.linearVelocity = new Vector3(nextHorizontal.x, -groundedStickVelocity, nextHorizontal.z);
         currentHorizontalVelocity = nextHorizontal;
         RotateTowardsCommittedDirection(deltaTime);
@@ -641,6 +631,12 @@ public partial class SquadCharacterController
 
     private bool CanExitLandingRoll()
     {
+        if (useRollAnimationDurationForExit &&
+            TryGetJumpAnimationElapsedAndDuration(rollStateName, out float elapsedSeconds, out float durationSeconds))
+        {
+            return elapsedSeconds >= durationSeconds + rollAnimationExitPadding;
+        }
+
         float totalDuration = rollDuration + rollRecoveryDuration;
         if (Time.time < committedJumpPhaseStartTime + totalDuration)
         {
@@ -742,9 +738,40 @@ public partial class SquadCharacterController
         return true;
     }
 
+    private bool TryGetJumpAnimationElapsedAndDuration(string stateName, out float elapsedSeconds, out float durationSeconds)
+    {
+        elapsedSeconds = 0f;
+        durationSeconds = 0f;
+        if (!TryGetJumpAnimationStateInfo(stateName, out AnimatorStateInfo stateInfo))
+        {
+            return false;
+        }
+
+        if (stateInfo.length <= 0f || float.IsNaN(stateInfo.length) || float.IsInfinity(stateInfo.length))
+        {
+            return false;
+        }
+
+        durationSeconds = stateInfo.length;
+        elapsedSeconds = Mathf.Max(0f, stateInfo.normalizedTime) * durationSeconds;
+        return true;
+    }
+
     private bool TryGetJumpAnimationNormalizedTime(string stateName, out float normalizedTime)
     {
         normalizedTime = 0f;
+        if (!TryGetJumpAnimationStateInfo(stateName, out AnimatorStateInfo stateInfo))
+        {
+            return false;
+        }
+
+        normalizedTime = Mathf.Repeat(stateInfo.normalizedTime, 1f);
+        return true;
+    }
+
+    private bool TryGetJumpAnimationStateInfo(string stateName, out AnimatorStateInfo stateInfo)
+    {
+        stateInfo = default;
         if (animator == null || string.IsNullOrWhiteSpace(stateName))
         {
             return false;
@@ -753,7 +780,7 @@ public partial class SquadCharacterController
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(jumpAnimationLayer);
         if (AnimatorStateMatches(currentState, stateName))
         {
-            normalizedTime = Mathf.Repeat(currentState.normalizedTime, 1f);
+            stateInfo = currentState;
             return true;
         }
 
@@ -768,7 +795,7 @@ public partial class SquadCharacterController
             return false;
         }
 
-        normalizedTime = Mathf.Repeat(nextState.normalizedTime, 1f);
+        stateInfo = nextState;
         return true;
     }
 

@@ -3697,7 +3697,10 @@ public class MainMenuController : MonoBehaviour
         }
 
         ShowLoadingScreen();
-        SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
+        if (!LoadingScreenService.LoadScene(gameplaySceneName, loadingMessage, LoadSceneMode.Single))
+        {
+            HideLoadingScreen();
+        }
     }
 
     private void StartJoinFlow(NetcodeSessionEndpoint endpoint)
@@ -3938,7 +3941,12 @@ public class MainMenuController : MonoBehaviour
         ShowLoadingScreen(loadingMessageText);
         SetJoinStatus(loadingMessageText);
         SetStatus(loadingMessageText);
-        SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
+        if (!LoadingScreenService.LoadScene(targetSceneName, loadingMessageText, LoadSceneMode.Single))
+        {
+            HideLoadingScreen();
+            SetJoinStatus("Echec du chargement de scene.");
+            SetStatus("Echec du chargement de scene.");
+        }
     }
 
     private void ShowLoadingScreen(string overrideMessage = null)
