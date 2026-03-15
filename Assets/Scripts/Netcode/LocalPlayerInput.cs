@@ -9,6 +9,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
     [SerializeField] private bool dontDestroyOnLoad = true;
 
     private PlayerInputs playerInputs;
+
     public static void EnsureInstance()
     {
         if (Instance != null)

@@ -486,6 +486,13 @@ public class BuilderController : NetworkBehaviour
             currentCharacter = controlled;
         }
 
+        if (!openPanelOnInteract && !playVoiceLineOnInteract)
+        {
+            return;
+        }
+
+        LocalInputRouter.ConsumeInteract();
+
         if (openPanelOnInteract)
         {
             OpenBuildingPanel();

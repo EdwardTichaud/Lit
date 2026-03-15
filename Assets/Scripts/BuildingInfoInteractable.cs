@@ -199,6 +199,8 @@ public class BuildingInfoInteractable : MonoBehaviour
                 return;
             }
 
+            LocalInputRouter.ConsumeInteract();
+
             if (TryOpenCraftingPanel())
             {
                 return;
@@ -231,6 +233,8 @@ public class BuildingInfoInteractable : MonoBehaviour
             Debug.LogWarning("BuildingInfoInteractable: aucune donnee de construction.", this);
             return;
         }
+
+        LocalInputRouter.ConsumeInteract();
 
         if (TryOpenCraftingPanel())
         {

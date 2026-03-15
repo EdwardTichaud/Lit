@@ -482,17 +482,19 @@ public class Brasero : NetworkBehaviour
             return;
         }
 
-        if (interactionInProgress)
-        {
-            return;
-        }
-
         if (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked())
         {
             return;
         }
 
         if (!IsLocalCharacterInRange())
+        {
+            return;
+        }
+
+        LocalInputRouter.ConsumeInteract();
+
+        if (interactionInProgress)
         {
             return;
         }

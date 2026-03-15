@@ -57,12 +57,14 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Move += OnMoveChanged;
+        LocalInputRouter.Jump += OnJump;
         LocalInputRouter.ToggleTorch += OnToggleTorch;
     }
 
     private void UnregisterInput()
     {
         LocalInputRouter.Move -= OnMoveChanged;
+        LocalInputRouter.Jump -= OnJump;
         LocalInputRouter.ToggleTorch -= OnToggleTorch;
         rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
@@ -98,6 +100,19 @@ public class NetworkCharacterInput : NetworkBehaviour
             controller = GetComponent<SquadCharacterController>();
         }
 
+        if (controller != null && controller.IsMovementInputSuppressed)
+        {
+            rawMoveInput = Vector2.zero;
+            pendingMove = Vector2.zero;
+            UpdateLocalAnimationPreview(Vector2.zero);
+            if (lastSentMove != Vector2.zero)
+            {
+                SubmitMove(Vector2.zero);
+            }
+
+            return;
+        }
+
         rawMoveInput = LocalInputRouter.MoveValue;
         pendingMove = controller != null
             ? controller.GetWorldSpaceInput(rawMoveInput)
@@ -127,6 +142,13 @@ public class NetworkCharacterInput : NetworkBehaviour
             controller = GetComponent<SquadCharacterController>();
         }
 
+        if (controller != null && controller.IsMovementInputSuppressed)
+        {
+            pendingMove = Vector2.zero;
+            UpdateLocalAnimationPreview(Vector2.zero);
+            return;
+        }
+
         pendingMove = controller != null
             ? controller.GetWorldSpaceInput(value)
             : value;
@@ -146,6 +168,37 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         ToggleTorchServerRpc();
+    }
+
+    private void OnJump(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    {
+        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
+        {
+            return;
+        }
+
+        if (IsGameplayInputBlocked())
+        {
+            return;
+        }
+
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller != null && controller.IsJumpCommitted)
+        {
+            return;
+        }
+
+        if (ShouldUseHostLocalMovePath())
+        {
+            ApplyHostLocalJump();
+            return;
+        }
+
+        SubmitJumpServerRpc();
     }
 
     private static bool IsGameplayInputBlocked()
@@ -191,13 +244,22 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        if (input.sqrMagnitude < 0.0001f)
+        controller.Move(input);
+    }
+
+    private void ApplyHostLocalJump()
+    {
+        if (controller == null)
         {
-            controller.Stop();
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller == null)
+        {
             return;
         }
 
-        controller.Move(input);
+        controller.Jump();
     }
 
     [ServerRpc]
@@ -214,6 +276,22 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         controller.MoveWorld(input);
+    }
+
+    [ServerRpc]
+    private void SubmitJumpServerRpc()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller == null)
+        {
+            return;
+        }
+
+        controller.Jump();
     }
 
     [ServerRpc]

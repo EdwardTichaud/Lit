@@ -246,6 +246,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
+        UpdateCurrentCharacter();
+        if (currentCharacter != null)
+        {
+            LocalInputRouter.ConsumeInteract();
+        }
+
         if (takeQuantityActive)
         {
             ConfirmTakeQuantity();

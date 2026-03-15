@@ -284,6 +284,8 @@ public class HubCompanionSwapTrigger : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         if (IsNetworked())
         {
             if (awaitingServerResponse)

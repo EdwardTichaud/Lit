@@ -255,6 +255,8 @@ public class TrouEtroit : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         // Teleport apres un check reussi.
         TeleportCharacter(currentCharacter);
     }

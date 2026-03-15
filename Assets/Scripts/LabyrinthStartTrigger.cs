@@ -233,6 +233,8 @@ public class LabyrinthStartTrigger : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         if (IsNetworked())
         {
             if (awaitingServerResponse)

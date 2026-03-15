@@ -168,12 +168,14 @@ public class LocalVoiceLineController : MonoBehaviour
             return;
         }
 
-        if (interactCooldown > 0f && Time.time < nextInteractTime)
+        if (!IsCharacterInRange())
         {
             return;
         }
 
-        if (!IsCharacterInRange())
+        LocalInputRouter.ConsumeInteract();
+
+        if (interactCooldown > 0f && Time.time < nextInteractTime)
         {
             return;
         }

@@ -99,6 +99,7 @@ public class SquadManager : MonoBehaviour
     private int lastMoveDirection;
     private float nextMoveTime;
     private int inputLockCount;
+    private bool jumpRequested;
     private bool toggleTorchRequested;
     private bool takeAllRequested;
     private bool warnedMissingSquadUI;
@@ -135,6 +136,7 @@ public class SquadManager : MonoBehaviour
     void OnEnable()
     {
         LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Jump += OnJumpPerformed;
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
@@ -145,6 +147,7 @@ public class SquadManager : MonoBehaviour
 
     void OnDisable()
     {
+        LocalInputRouter.Jump -= OnJumpPerformed;
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
@@ -914,11 +917,13 @@ public class SquadManager : MonoBehaviour
         {
             if (!charactersSelectionOn)
             {
+                jumpRequested = false;
                 return;
             }
 
             if (IsInputLocked())
             {
+                jumpRequested = false;
                 StopAllSquadCharacters();
                 return;
             }
@@ -938,6 +943,7 @@ public class SquadManager : MonoBehaviour
 
         if (IsInputLocked())
         {
+            jumpRequested = false;
             StopAllSquadCharacters();
             return;
         }
@@ -946,6 +952,7 @@ public class SquadManager : MonoBehaviour
 
         if (charactersSelectionOn)
         {
+            jumpRequested = false;
             if (GetSquadUnitCount() == 0)
             {
                 return;
@@ -1223,10 +1230,18 @@ public class SquadManager : MonoBehaviour
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
         {
+            jumpRequested = false;
             return;
         }
 
-        controller.Move(moveInput);
+        Vector2 worldMoveInput = controller.GetWorldSpaceInput(moveInput);
+        controller.MoveWorld(worldMoveInput);
+        if (jumpRequested)
+        {
+            controller.Jump();
+        }
+
+        jumpRequested = false;
     }
 
     private void StopControlledCharacter()
@@ -1321,6 +1336,16 @@ public class SquadManager : MonoBehaviour
     private void OnToggleTorchPerformed(InputAction.CallbackContext context)
     {
         toggleTorchRequested = true;
+    }
+
+    private void OnJumpPerformed(InputAction.CallbackContext context)
+    {
+        if (IsInputLocked())
+        {
+            return;
+        }
+
+        jumpRequested = true;
     }
 
     private void OnTakeAllPerformed(InputAction.CallbackContext context)
@@ -2136,6 +2161,8 @@ public class SquadManager : MonoBehaviour
         {
             return;
         }
+
+        LocalInputRouter.ConsumeInteract();
 
         if (IsMultiplayerActive())
         {

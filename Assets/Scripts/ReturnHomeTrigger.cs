@@ -272,6 +272,8 @@ public class ReturnHomeTrigger : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         ShowStorageFull(false);
 
         if (!confirmVisible)

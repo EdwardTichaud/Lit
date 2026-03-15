@@ -142,6 +142,8 @@ public class Lever : NetworkBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         if (IsNetworked())
         {
             RequestInteractServerRpc();

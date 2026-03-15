@@ -7,6 +7,7 @@ public static class LocalInputRouter
 {
     private enum InputGate
     {
+        Jump,
         Interact,
         ToggleTorch,
         TakeAll,
@@ -18,6 +19,7 @@ public static class LocalInputRouter
     }
 
     public static event Action<Vector2> Move;
+    public static event Action<InputAction.CallbackContext> Jump;
     public static event Action<InputAction.CallbackContext> Interact;
     public static event Action<InputAction.CallbackContext> ToggleTorch;
     public static event Action<InputAction.CallbackContext> TakeAll;
@@ -29,6 +31,7 @@ public static class LocalInputRouter
 
     private static Vector2 moveValue;
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
+    private static bool interactConsumed;
 
     public static float InputDebounceSeconds { get; set; } = 0.15f;
 
@@ -61,7 +64,30 @@ public static class LocalInputRouter
         {
             return;
         }
+
+        interactConsumed = false;
         Interact?.Invoke(context);
+        if (interactConsumed || InputFocusStack.HasAnyFocus())
+        {
+            return;
+        }
+
+        RaiseJump(context);
+    }
+
+    internal static void RaiseJump(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.Jump))
+        {
+            return;
+        }
+
+        Jump?.Invoke(context);
+    }
+
+    internal static void ConsumeInteract()
+    {
+        interactConsumed = true;
     }
 
     internal static void RaiseToggleTorch(InputAction.CallbackContext context)

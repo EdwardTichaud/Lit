@@ -4,7 +4,7 @@ using UnityEngine;
 
 // Controle le mouvement et l'inventaire runtime d'un personnage de la squad.
 [RequireComponent(typeof(Animator))]
-public class SquadCharacterController : MonoBehaviour
+public partial class SquadCharacterController : MonoBehaviour
 {
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
@@ -82,6 +82,14 @@ public class SquadCharacterController : MonoBehaviour
     private bool preferRigidbody = true;
     [SerializeField, Tooltip("Anime les RB en physics.")]
     private bool animatePhysics = true;
+
+    [Header("Grounding")]
+    [SerializeField, Tooltip("Distance du controle sol pour autoriser les etats relies au sol (m).")]
+    private float jumpGroundCheckDistance = 0.18f;
+    [SerializeField, Tooltip("Multiplicateur du rayon capsule pour le controle sol.")]
+    private float jumpGroundCheckRadiusScale = 0.9f;
+    [SerializeField, Tooltip("Petite vitesse verticale negative pour rester plaque au sol.")]
+    private float groundedStickVelocity = 2f;
 
     [Header("Void Detection")]
     [SerializeField, Tooltip("Active la detection du vide pour eviter les chutes hors du monde.")]
@@ -194,6 +202,9 @@ public class SquadCharacterController : MonoBehaviour
     private Vector2 smoothedAnimationPreviewInput;
     private bool moveInputIsWorldSpace;
     private Vector3 currentHorizontalVelocity;
+    private bool isGrounded;
+    private float lastGroundedTime = float.NegativeInfinity;
+    private float groundIgnoreUntilTime;
     private Transform torchTransform;
     private bool torchInitialized;
     private bool torchEquipped;
@@ -229,6 +240,8 @@ public class SquadCharacterController : MonoBehaviour
 
     public int MaxHp => maxHp;
 
+    public bool IsGrounded => isGrounded;
+
     private void Reset()
     {
         animator = GetComponent<Animator>();
@@ -238,6 +251,7 @@ public class SquadCharacterController : MonoBehaviour
         motionRoot = transform;
         ApplyAnimatorSettings();
         InitializeTorchState();
+        ResetCommittedJumpRuntime();
     }
 
     private void Update()
@@ -292,6 +306,7 @@ public class SquadCharacterController : MonoBehaviour
 
         ApplyAnimatorSettings();
         InitializeTorchState();
+        ResetCommittedJumpRuntime();
         RefreshAnimationBindings("awake");
     }
 
@@ -1080,6 +1095,9 @@ public class SquadCharacterController : MonoBehaviour
         stepForwardBoost = Mathf.Max(0f, stepForwardBoost);
         stepRadiusPadding = Mathf.Max(0f, stepRadiusPadding);
         stepGroundCheckDistance = Mathf.Max(0f, stepGroundCheckDistance);
+        jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
+        jumpGroundCheckRadiusScale = Mathf.Clamp(jumpGroundCheckRadiusScale, 0.1f, 1.5f);
+        groundedStickVelocity = Mathf.Max(0f, groundedStickVelocity);
         footIkWeight = Mathf.Clamp01(footIkWeight);
         footIkPositionWeight = Mathf.Clamp01(footIkPositionWeight);
         footIkRotationWeight = Mathf.Clamp01(footIkRotationWeight);
@@ -1091,6 +1109,7 @@ public class SquadCharacterController : MonoBehaviour
         voidCheckDistance = Mathf.Max(0f, voidCheckDistance);
         voidCheckDepth = Mathf.Max(0.02f, voidCheckDepth);
 
+        ValidateCommittedJumpSettings();
         ApplyAnimatorSettings();
     }
 
@@ -1151,6 +1170,11 @@ public class SquadCharacterController : MonoBehaviour
         animationPreviewInput = Vector2.ClampMagnitude(worldInput, 1f);
     }
 
+    public void Jump()
+    {
+        RequestCommittedJump();
+    }
+
     public void ClearLocalAnimationPreview()
     {
         animationPreviewInput = Vector2.zero;
@@ -1172,8 +1196,11 @@ public class SquadCharacterController : MonoBehaviour
         UpdateInputLock(Time.fixedDeltaTime);
         SmoothInput(Time.fixedDeltaTime);
         SmoothAnimationPreview(Time.fixedDeltaTime);
+        UpdateGroundedState();
+        UpdateCommittedJump(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
+        UpdateCommittedJumpAnimation();
     }
 
     private bool IsGroundAhead(Vector3 direction)
@@ -1242,6 +1269,18 @@ public class SquadCharacterController : MonoBehaviour
             return;
         }
 
+        if (ShouldSuppressFootIkForCommittedJump())
+        {
+            SetFootIkWeights(0f, 0f);
+            return;
+        }
+
+        if (!isGrounded)
+        {
+            SetFootIkWeights(0f, 0f);
+            return;
+        }
+
         float speed = GetCurrentHorizontalVelocity().magnitude;
         float targetWeight = speed <= footIkSpeedThreshold ? footIkWeight : 0f;
         if (footIkBlendSpeed > 0f)
@@ -1298,6 +1337,11 @@ public class SquadCharacterController : MonoBehaviour
             StopHorizontalVelocity();
         }
 
+        if (TryApplyCommittedJumpMovement(deltaTime))
+        {
+            return;
+        }
+
         if (inputLockTimer > 0f)
         {
             return;
@@ -1308,10 +1352,12 @@ public class SquadCharacterController : MonoBehaviour
             Vector3 currentVelocity = rigidbodyTarget.linearVelocity;
             Vector3 currentHorizontal = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
             Vector3 targetHorizontal = new Vector3(desiredVelocity.x, 0f, desiredVelocity.z);
+            float newVertical = currentVelocity.y;
             Vector3 newHorizontal = hasInput
                 ? Vector3.MoveTowards(currentHorizontal, targetHorizontal, acceleration * deltaTime)
                 : Vector3.Lerp(currentHorizontal, Vector3.zero, 1f - Mathf.Exp(-deceleration * deltaTime));
-            rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, currentVelocity.y, newHorizontal.z);
+
+            rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, newVertical, newHorizontal.z);
             currentHorizontalVelocity = newHorizontal;
 
             if (hasInput)
@@ -1535,6 +1581,68 @@ public class SquadCharacterController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void UpdateGroundedState()
+    {
+        if (Time.time < groundIgnoreUntilTime)
+        {
+            isGrounded = false;
+            return;
+        }
+
+        if (characterController != null && !ShouldUseRigidbody())
+        {
+            isGrounded = characterController.isGrounded;
+            if (isGrounded)
+            {
+                lastGroundedTime = Time.time;
+            }
+
+            return;
+        }
+
+        if (!ShouldUseRigidbody())
+        {
+            isGrounded = false;
+            return;
+        }
+
+        isGrounded = CheckRigidbodyGrounded();
+        if (isGrounded)
+        {
+            lastGroundedTime = Time.time;
+        }
+    }
+
+    private bool CheckRigidbodyGrounded()
+    {
+        Vector3 up = transform.up;
+        if (TryGetStepCapsule(out Vector3 center, out float radius, out float height))
+        {
+            float probeRadius = Mathf.Max(0.05f, radius * jumpGroundCheckRadiusScale);
+            float halfHeight = height * 0.5f;
+            float bottomOffset = Mathf.Max(0f, halfHeight - radius);
+            Vector3 bottom = center - up * bottomOffset;
+            Vector3 origin = bottom + up * 0.02f;
+            float distance = Mathf.Max(0.02f, jumpGroundCheckDistance);
+            int hitCount = Physics.SphereCastNonAlloc(origin, probeRadius, -up, stepCastHits, distance, GetVoidGroundMask(), QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider col = stepCastHits[i].collider;
+                if (col == null || IsSelfCollider(col))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        Vector3 fallbackOrigin = GetWorldPosition() + up * 0.1f;
+        return Physics.Raycast(fallbackOrigin, -up, Mathf.Max(0.02f, jumpGroundCheckDistance + 0.1f), GetVoidGroundMask(), QueryTriggerInteraction.Ignore);
     }
 
     private bool HasStepClearance(Vector3 bottomCenter, float radius, float height, Vector3 up, Vector3 moveDir, float stepUp, float castDistance, int mask)
