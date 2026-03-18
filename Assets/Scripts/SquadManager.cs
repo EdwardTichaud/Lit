@@ -1168,6 +1168,7 @@ public class SquadManager : MonoBehaviour
         {
             currentCharacter = null;
             UpdateCrownPosition();
+            SyncSingleplayerLocalCharacterContext();
             return;
         }
 
@@ -1175,11 +1176,35 @@ public class SquadManager : MonoBehaviour
         {
             currentCharacter = null;
             UpdateCrownPosition();
+            SyncSingleplayerLocalCharacterContext();
             return;
         }
 
         currentCharacter = squadCharacters[currentCursorIndex];
         UpdateCrownPosition();
+        SyncSingleplayerLocalCharacterContext();
+    }
+
+    private void SyncSingleplayerLocalCharacterContext()
+    {
+        if (IsMultiplayerActive())
+        {
+            return;
+        }
+
+        Transform currentRoot = currentCharacter != null ? currentCharacter.transform : null;
+        if (currentRoot != null)
+        {
+            LocalPlayerContext.SetLocalCharacter(
+                currentRoot,
+                "squad_manager_singleplayer",
+                LocalPlayerContext.Authority.Default);
+            return;
+        }
+
+        LocalPlayerContext.Clear(
+            "squad_manager_singleplayer",
+            LocalPlayerContext.Authority.Default);
     }
 
     private void UpdateCrownPosition()
@@ -1224,6 +1249,7 @@ public class SquadManager : MonoBehaviour
     {
         if (currentCharacter == null)
         {
+            jumpRequested = false;
             return;
         }
 
@@ -1234,10 +1260,30 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
-        Vector2 worldMoveInput = controller.GetWorldSpaceInput(moveInput);
-        controller.MoveWorld(worldMoveInput);
+        if (InputFocusStack.HasAnyFocus() || controller.IsMovementInputSuppressed)
+        {
+            controller.Move(Vector2.zero);
+            controller.ClearLocalAnimationPreview();
+            jumpRequested = false;
+            return;
+        }
+
+        Vector2 rawMoveInput = moveInput;
+        Vector2 worldMoveInput = controller.GetWorldSpaceInput(rawMoveInput);
+
+        controller.Move(rawMoveInput);
+        if (worldMoveInput == Vector2.zero)
+        {
+            controller.ClearLocalAnimationPreview();
+        }
+        else
+        {
+            controller.SetLocalAnimationPreview(worldMoveInput);
+        }
+
         if (jumpRequested)
         {
+            controller.QueueCommittedJumpInput(worldMoveInput, isWorldSpace: true);
             controller.Jump();
         }
 

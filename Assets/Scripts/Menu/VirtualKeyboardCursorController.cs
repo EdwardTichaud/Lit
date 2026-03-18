@@ -36,6 +36,8 @@ public class VirtualKeyboardCursorController : MonoBehaviour
     private bool cachedSharedAllowInput;
     private bool cachedSharedActive;
     private bool cachedSharedVisualActive;
+    private MenuCursorNavigator sharedCursorNavigator;
+    private bool cachedSharedNavigatorActive;
 
     private void Awake()
     {
@@ -64,6 +66,8 @@ public class VirtualKeyboardCursorController : MonoBehaviour
                 sharedCursor = sharedCursorObject.GetComponent<CursorController>();
             }
         }
+
+        ResolveSharedCursorNavigator();
 
         ConfigureCursor();
         AssignActions();
@@ -363,43 +367,74 @@ public class VirtualKeyboardCursorController : MonoBehaviour
 
     private void DisableSharedCursor(bool disable)
     {
-        if (sharedCursor == null)
+        if (sharedCursor == null && sharedCursorNavigator == null)
         {
             return;
         }
-        if (sharedCursor == cursor)
+
+        ResolveSharedCursorNavigator();
+
+        if (sharedCursor == cursor && sharedCursorNavigator == null)
         {
             return;
         }
 
         if (disable)
         {
-            cachedSharedAllowInput = sharedCursor.allowInput;
-            cachedSharedActive = sharedCursor.enabled;
-            cachedSharedVisualActive = sharedCursor.cursor != null && sharedCursor.cursor.gameObject.activeSelf;
+            if (sharedCursor != null)
+            {
+                cachedSharedAllowInput = sharedCursor.allowInput;
+                cachedSharedActive = sharedCursor.enabled;
+                cachedSharedVisualActive = sharedCursor.cursor != null && sharedCursor.cursor.gameObject.activeSelf;
+            }
 
-            if (disableSharedCursorInput)
+            if (sharedCursorNavigator != null)
+            {
+                cachedSharedNavigatorActive = sharedCursorNavigator.enabled;
+                sharedCursorNavigator.enabled = false;
+            }
+
+            if (disableSharedCursorInput && sharedCursor != null)
             {
                 sharedCursor.allowInput = false;
                 sharedCursor.enabled = false;
             }
 
-            if (hideSharedCursorVisual && sharedCursor.cursor != null)
+            if (hideSharedCursorVisual && sharedCursor != null && sharedCursor.cursor != null)
             {
                 sharedCursor.cursor.gameObject.SetActive(false);
             }
             return;
         }
 
-        if (disableSharedCursorInput)
+        if (sharedCursorNavigator != null)
+        {
+            sharedCursorNavigator.enabled = cachedSharedNavigatorActive;
+        }
+
+        if (disableSharedCursorInput && sharedCursor != null)
         {
             sharedCursor.allowInput = cachedSharedAllowInput;
             sharedCursor.enabled = cachedSharedActive;
         }
 
-        if (hideSharedCursorVisual && sharedCursor.cursor != null)
+        if (hideSharedCursorVisual && sharedCursor != null && sharedCursor.cursor != null)
         {
             sharedCursor.cursor.gameObject.SetActive(cachedSharedVisualActive);
+        }
+    }
+
+    private void ResolveSharedCursorNavigator()
+    {
+        if (sharedCursorNavigator != null || sharedCursor == null)
+        {
+            return;
+        }
+
+        sharedCursorNavigator = sharedCursor.GetComponent<MenuCursorNavigator>();
+        if (sharedCursorNavigator == null)
+        {
+            sharedCursorNavigator = sharedCursor.GetComponentInParent<MenuCursorNavigator>();
         }
     }
 }

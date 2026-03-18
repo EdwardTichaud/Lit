@@ -15,6 +15,9 @@ using TMPro;
 public class MainMenuController : MonoBehaviour
 {
     public const string DefaultMenuSceneName = "MainMenu";
+    private const float DefaultTitleCardIntroDelaySeconds = 3f;
+    private const float DefaultTitleCardParticleLeadDelaySeconds = 2f;
+    private const float DefaultTitleCardIntroDurationSeconds = 2f;
 
     private enum MenuState
     {
@@ -43,9 +46,14 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Title Card FX")]
     [SerializeField] private AudioClipSO titleCardProceedSfx;
-    [SerializeField] private GameObject titleCardFlamesPrefab;
-    [SerializeField] private Transform titleCardFlamesParent;
-    [SerializeField] private bool spawnFlamesOnce = true;
+    [SerializeField] private float titleCardIntroDelay = 3f;
+    [SerializeField] private float titleCardParticleLeadDelay = 2f;
+    [SerializeField] private float titleCardIntroDuration = 2f;
+    [SerializeField] private float titleCardInputEnableDelay = 2f;
+    [SerializeField] private string titleCardParticleSortingLayerName = "UI";
+    [SerializeField] private int titleCardParticleSortingOrder = 100;
+    [SerializeField] private List<AudioClipSO> titleCardParticleSfx = new List<AudioClipSO>();
+    public List<GameObject> titleCardParticleRoots = new List<GameObject>();
 
     [Header("Save List")]
     [SerializeField] private Transform sessionsRoot;
@@ -155,7 +163,6 @@ public class MainMenuController : MonoBehaviour
     private RectTransform currentCursorRoot;
     private bool hasInitializedState;
     private bool titleCardProceedTriggered;
-    private GameObject titleCardFlamesInstance;
     private readonly Dictionary<CanvasGroup, Coroutine> fadeRoutines = new Dictionary<CanvasGroup, Coroutine>();
     private bool newGamePromptOpen;
     private bool isLoading;
@@ -178,16 +185,25 @@ public class MainMenuController : MonoBehaviour
     private bool joinInProgress;
     private Coroutine joinTimeoutRoutine;
     private Coroutine joinSceneSyncRoutine;
+    private Coroutine titleCardIntroRoutine;
     private NetcodeSessionEndpoint activeJoinEndpoint;
+    private bool titleCardIntroPlayed;
+    private Transform titleCardParticleRuntimeRoot;
+    private bool titleCardParticleRootsPrepared;
 
     private void Awake()
     {
+        titleCardIntroDelay = DefaultTitleCardIntroDelaySeconds;
+        titleCardParticleLeadDelay = DefaultTitleCardParticleLeadDelaySeconds;
+        titleCardIntroDuration = DefaultTitleCardIntroDurationSeconds;
         MainMenuDisplaySettings.ApplySavedModeIfNeeded();
+        MainMenuInputSettings.ApplySavedModeIfNeeded();
         EnsureSaveManager();
         ResolveOptionalReferences();
         ConfigureNewGameActions();
         ConfigureJoinActions();
         ConfigureLoadConfirmActions();
+        PrepareTitleCardParticleRoots();
         InitializeState();
         InitializeOverlays();
     }
@@ -226,6 +242,8 @@ public class MainMenuController : MonoBehaviour
             StopCoroutine(joinSceneSyncRoutine);
             joinSceneSyncRoutine = null;
         }
+        CancelTitleCardIntro();
+        SetTitleCardParticleRootsVisible(false);
     }
 
     private void OnDestroy()
@@ -514,6 +532,8 @@ public class MainMenuController : MonoBehaviour
             }
             else
             {
+                CancelTitleCardIntro();
+                SetTitleCardParticleRootsVisible(false);
                 HidePanel(titleCardGroup);
             }
         }
@@ -591,7 +611,9 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
-        waitingForInput = waitForAnyInput && state == MenuState.TitleCard;
+        waitingForInput = waitForAnyInput && state == MenuState.TitleCard && titleCardIntroRoutine == null;
+
+        SetSharedCursorChildrenActive(state != MenuState.TitleCard);
 
         if (state == MenuState.GameOptions || state == MenuState.SoloOptions || state == MenuState.MultiOptions || state == MenuState.Options || state == MenuState.Join || state == MenuState.LoadMenu)
         {
@@ -604,6 +626,33 @@ public class MainMenuController : MonoBehaviour
 
         UpdateCursorTarget();
         hasInitializedState = true;
+    }
+
+    private void SetSharedCursorChildrenActive(bool active)
+    {
+        if (sharedCursor == null)
+        {
+            return;
+        }
+
+        RectTransform cursorRoot = sharedCursor.cursor != null
+            ? sharedCursor.cursor
+            : sharedCursor.transform as RectTransform;
+        if (cursorRoot == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < cursorRoot.childCount; i++)
+        {
+            Transform child = cursorRoot.GetChild(i);
+            if (child == null)
+            {
+                continue;
+            }
+
+            child.gameObject.SetActive(active);
+        }
     }
 
     private void UpdateCursorTarget()
@@ -731,10 +780,20 @@ public class MainMenuController : MonoBehaviour
 
     private RectTransform ResolveCursorRoot(RectTransform explicitRoot, CanvasGroup group)
     {
-        RectTransform root = explicitRoot;
+        RectTransform root = IsUsableCursorRoot(explicitRoot) ? explicitRoot : null;
         if (root == null && group != null)
         {
-            root = group.transform as RectTransform;
+            RectTransform groupRoot = group.transform as RectTransform;
+            root = IsUsableCursorRoot(groupRoot) ? groupRoot : null;
+        }
+
+        if (root == null)
+        {
+            root = explicitRoot != null
+                ? explicitRoot
+                : group != null
+                    ? group.transform as RectTransform
+                    : null;
         }
 
         if (root == null)
@@ -742,21 +801,25 @@ public class MainMenuController : MonoBehaviour
             return null;
         }
 
-        if (HasDirectActiveChildren(root))
+        if (HasDirectCursorChildren(root))
         {
             return root;
         }
 
-        RectTransform fallback = FindFirstCursorItem(root);
-        if (fallback != null && fallback.parent is RectTransform parent)
+        if (FindFirstCursorItem(root) != null)
         {
-            return parent;
+            return root;
         }
 
         return root;
     }
 
-    private static bool HasDirectActiveChildren(RectTransform root)
+    private static bool IsUsableCursorRoot(RectTransform root)
+    {
+        return root != null && FindFirstCursorItem(root) != null;
+    }
+
+    private static bool HasDirectCursorChildren(RectTransform root)
     {
         if (root == null)
         {
@@ -765,8 +828,39 @@ public class MainMenuController : MonoBehaviour
 
         for (int i = 0; i < root.childCount; i++)
         {
-            Transform child = root.GetChild(i);
-            if (child != null && child.gameObject.activeInHierarchy)
+            RectTransform child = root.GetChild(i) as RectTransform;
+            if (IsDirectCursorTarget(child))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsDirectCursorTarget(RectTransform rect)
+    {
+        if (rect == null || !rect.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        MenuCursorAction action = rect.GetComponent<MenuCursorAction>();
+        if (action != null && action.isActiveAndEnabled)
+        {
+            return true;
+        }
+
+        MenuCursorItem item = rect.GetComponent<MenuCursorItem>();
+        if (item != null && item.isActiveAndEnabled)
+        {
+            return true;
+        }
+
+        MonoBehaviour[] behaviours = rect.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] != null && behaviours[i].isActiveAndEnabled && behaviours[i] is IMenuCursorHandler)
             {
                 return true;
             }
@@ -813,7 +907,19 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        StartFade(group, 1f, true);
+        if (!titleCardIntroPlayed)
+        {
+            CancelTitleCardIntro();
+            titleCardIntroRoutine = StartCoroutine(ShowTitleCardIntroRoutine(group));
+            titleCardIntroPlayed = true;
+        }
+        else
+        {
+            SetTitleCardParticleRootsVisible(true);
+            RestartTitleCardParticleSystems();
+            PlayTitleCardParticleSfx();
+            StartFade(group, 1f, true);
+        }
     }
 
     private void ShowPanel(CanvasGroup group)
@@ -834,6 +940,17 @@ public class MainMenuController : MonoBehaviour
         }
 
         StartFade(group, 0f, false, panelHideDuration);
+    }
+
+    private void CancelTitleCardIntro()
+    {
+        if (titleCardIntroRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(titleCardIntroRoutine);
+        titleCardIntroRoutine = null;
     }
 
     private void ShowVirtualKeyboard()
@@ -991,6 +1108,81 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    private IEnumerator ShowTitleCardIntroRoutine(CanvasGroup group)
+    {
+        if (group == null)
+        {
+            yield break;
+        }
+
+        if (fadeRoutines.TryGetValue(group, out Coroutine runningFade) && runningFade != null)
+        {
+            StopCoroutine(runningFade);
+            fadeRoutines.Remove(group);
+        }
+
+        group.gameObject.SetActive(true);
+        group.alpha = 0f;
+        group.interactable = false;
+        group.blocksRaycasts = false;
+
+        float delay = Mathf.Max(0f, titleCardIntroDelay);
+        if (delay > 0f)
+        {
+            float elapsedDelay = 0f;
+            while (elapsedDelay < delay)
+            {
+                elapsedDelay += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        SetTitleCardParticleRootsVisible(true);
+        RestartTitleCardParticleSystems();
+        PlayTitleCardParticleSfx();
+
+        float particleLeadDelay = Mathf.Max(0f, titleCardParticleLeadDelay);
+        if (particleLeadDelay > 0f)
+        {
+            float elapsedParticleLeadDelay = 0f;
+            while (elapsedParticleLeadDelay < particleLeadDelay)
+            {
+                elapsedParticleLeadDelay += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        float duration = Mathf.Max(0.01f, titleCardIntroDuration);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+            group.alpha = t;
+            elapsed += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            yield return null;
+        }
+
+        group.alpha = 1f;
+        group.interactable = false;
+        group.blocksRaycasts = false;
+
+        float inputEnableDelay = Mathf.Max(0f, titleCardInputEnableDelay);
+        if (inputEnableDelay > 0f)
+        {
+            float elapsedInputEnableDelay = 0f;
+            while (elapsedInputEnableDelay < inputEnableDelay)
+            {
+                elapsedInputEnableDelay += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        group.interactable = true;
+        group.blocksRaycasts = true;
+        titleCardIntroRoutine = null;
+        waitingForInput = waitForAnyInput && currentMenu == MenuState.TitleCard;
+    }
+
     private void HandleTitleCardProceed()
     {
         if (titleCardProceedTriggered)
@@ -1000,7 +1192,6 @@ public class MainMenuController : MonoBehaviour
 
         titleCardProceedTriggered = true;
         PlayTitleCardSfx();
-        SpawnTitleCardFlames();
         ShowGameOptionsMenu();
     }
 
@@ -1097,33 +1288,166 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void SpawnTitleCardFlames()
+    private void PlayTitleCardParticleSfx()
     {
-        if (titleCardFlamesPrefab == null)
+        if (titleCardParticleSfx == null || titleCardParticleSfx.Count == 0)
         {
             return;
         }
 
-        if (spawnFlamesOnce && titleCardFlamesInstance != null)
+        for (int i = 0; i < titleCardParticleSfx.Count; i++)
+        {
+            AudioClipSO clip = titleCardParticleSfx[i];
+            if (clip == null)
+            {
+                continue;
+            }
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayClip(clip, Vector3.zero);
+            }
+            else if (clip.audioClip != null)
+            {
+                AudioSource.PlayClipAtPoint(clip.audioClip, Vector3.zero, Mathf.Clamp01(clip.volume));
+            }
+        }
+    }
+
+    private void RestartTitleCardParticleSystems()
+    {
+        PrepareTitleCardParticleRoots();
+
+        if (titleCardParticleRoots == null)
         {
             return;
         }
 
-        Transform parent = titleCardFlamesParent;
-        if (parent == null && mainMenuGroup != null)
+        for (int i = 0; i < titleCardParticleRoots.Count; i++)
         {
-            parent = mainMenuGroup.transform;
+            GameObject root = titleCardParticleRoots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            ParticleSystem[] particleSystems = root.GetComponentsInChildren<ParticleSystem>(true);
+            for (int particleIndex = 0; particleIndex < particleSystems.Length; particleIndex++)
+            {
+                ParticleSystem current = particleSystems[particleIndex];
+                if (current == null)
+                {
+                    continue;
+                }
+
+                current.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                current.Play(withChildren: true);
+            }
         }
-        if (parent == null && titleCardGroup != null)
+    }
+
+    private void PrepareTitleCardParticleRoots()
+    {
+        if (titleCardParticleRootsPrepared || titleCardParticleRoots == null || titleCardParticleRoots.Count == 0)
         {
-            parent = titleCardGroup.transform;
-        }
-        if (parent == null)
-        {
-            parent = transform;
+            return;
         }
 
-        titleCardFlamesInstance = Instantiate(titleCardFlamesPrefab, parent);
+        Transform runtimeRoot = EnsureTitleCardParticleRuntimeRoot();
+        int sortingLayerId = SortingLayer.NameToID(titleCardParticleSortingLayerName);
+
+        for (int i = 0; i < titleCardParticleRoots.Count; i++)
+        {
+            GameObject root = titleCardParticleRoots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            if (runtimeRoot != null)
+            {
+                root.transform.SetParent(runtimeRoot, true);
+            }
+
+            ConfigureTitleCardParticleRenderers(root, sortingLayerId);
+            root.SetActive(false);
+        }
+
+        titleCardParticleRootsPrepared = true;
+    }
+
+    private Transform EnsureTitleCardParticleRuntimeRoot()
+    {
+        if (titleCardParticleRuntimeRoot != null)
+        {
+            return titleCardParticleRuntimeRoot;
+        }
+
+        Canvas canvas = GetComponent<Canvas>();
+        Camera targetCamera = canvas != null && canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+        GameObject runtimeRoot = new GameObject("MainMenu_TitleCardParticles_Runtime");
+        titleCardParticleRuntimeRoot = runtimeRoot.transform;
+        if (targetCamera != null)
+        {
+            titleCardParticleRuntimeRoot.SetParent(targetCamera.transform, false);
+        }
+
+        return titleCardParticleRuntimeRoot;
+    }
+
+    private void ConfigureTitleCardParticleRenderers(GameObject root, int sortingLayerId)
+    {
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer current = renderers[i];
+            if (current == null)
+            {
+                continue;
+            }
+
+            current.sortingLayerID = sortingLayerId;
+            current.sortingOrder = titleCardParticleSortingOrder;
+        }
+    }
+
+    private void SetTitleCardParticleRootsVisible(bool visible)
+    {
+        PrepareTitleCardParticleRoots();
+
+        if (titleCardParticleRoots == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < titleCardParticleRoots.Count; i++)
+        {
+            GameObject root = titleCardParticleRoots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            if (visible)
+            {
+                root.SetActive(true);
+                continue;
+            }
+
+            ParticleSystem[] particleSystems = root.GetComponentsInChildren<ParticleSystem>(true);
+            for (int particleIndex = 0; particleIndex < particleSystems.Length; particleIndex++)
+            {
+                ParticleSystem current = particleSystems[particleIndex];
+                if (current == null)
+                {
+                    continue;
+                }
+
+                current.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+
+            root.SetActive(false);
+        }
     }
 
     private void InitializeOverlays()
@@ -1184,6 +1508,8 @@ public class MainMenuController : MonoBehaviour
                 optionsGroup = BuildOptionsPanel();
             }
         }
+
+        EnsureOptionsInputModeRows();
 
         if (soloOptionsCursorRoot == null && soloOptionsGroup != null)
         {
@@ -1528,9 +1854,26 @@ public class MainMenuController : MonoBehaviour
         }
 
 
-        if (loadingGroup == null)
+        ResolveLoadingReferences();
+    }
+
+    private CanvasGroup FindCanvasGroup(string name)
+    {
+        Transform found = FindInHierarchy(transform, name);
+        return found != null ? found.GetComponent<CanvasGroup>() : null;
+    }
+
+    private void ResolveLoadingReferences()
+    {
+        CanvasGroup resolved = ResolveLoadingGroup();
+        if (resolved != null)
         {
-            loadingGroup = FindCanvasGroup("MainMenu_Loading");
+            loadingGroup = resolved;
+        }
+
+        if (loadingText != null && loadingGroup != null && !loadingText.transform.IsChildOf(loadingGroup.transform))
+        {
+            loadingText = null;
         }
 
         if (loadingText == null && loadingGroup != null)
@@ -1539,10 +1882,51 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private CanvasGroup FindCanvasGroup(string name)
+    private CanvasGroup ResolveLoadingGroup()
     {
-        Transform found = FindInHierarchy(transform, name);
-        return found != null ? found.GetComponent<CanvasGroup>() : null;
+        if (IsValidLoadingGroup(loadingGroup))
+        {
+            return loadingGroup;
+        }
+
+        CanvasGroup candidate = FindCanvasGroup("MainMenu_Loading");
+        if (IsValidLoadingGroup(candidate))
+        {
+            return candidate;
+        }
+
+        candidate = FindCanvasGroup("LoadingScreen");
+        if (IsValidLoadingGroup(candidate))
+        {
+            return candidate;
+        }
+
+        LoadingScreenService service = GetComponentInChildren<LoadingScreenService>(true);
+        if (service != null)
+        {
+            candidate = service.GetComponent<CanvasGroup>();
+            if (IsValidLoadingGroup(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsValidLoadingGroup(CanvasGroup group)
+    {
+        if (group == null)
+        {
+            return false;
+        }
+
+        if (group == loadMenuGroup)
+        {
+            return false;
+        }
+
+        return !string.Equals(group.gameObject.name, "MainMenu_Load", StringComparison.Ordinal);
     }
 
     private CanvasGroup BuildOptionsPanel()
@@ -1626,8 +2010,14 @@ public class MainMenuController : MonoBehaviour
 
     private Transform CreateOptionsHeaderRow(Transform template, Transform parent)
     {
+        return CreateOptionsHeaderRow(template, parent, "Affichage", "Affichage");
+    }
+
+    private Transform CreateOptionsHeaderRow(Transform template, Transform parent, string rowName, string label)
+    {
         GameObject row = Instantiate(template.gameObject, parent, false);
-        row.name = "Affichage";
+        row.name = rowName;
+        DisableRootOptionHandlers(row, disableCursorItem: true);
         DisableNestedMenuCursorHandlers(row.transform);
 
         Image image = row.GetComponent<Image>();
@@ -1642,7 +2032,7 @@ public class MainMenuController : MonoBehaviour
         TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
         if (text != null)
         {
-            text.text = "Affichage";
+            text.text = label;
             text.raycastTarget = false;
         }
 
@@ -1653,6 +2043,7 @@ public class MainMenuController : MonoBehaviour
     {
         GameObject row = Instantiate(template.gameObject, parent, false);
         row.name = rowName;
+        DisableRootOptionHandlers(row);
         DisableNestedMenuCursorHandlers(row.transform);
 
         TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
@@ -1668,6 +2059,32 @@ public class MainMenuController : MonoBehaviour
             action = row.AddComponent<MainMenuDisplayModeAction>();
         }
 
+        action.enabled = true;
+        action.Configure(mode, text);
+        return row.transform;
+    }
+
+    private Transform CreateInputModeRow(Transform template, Transform parent, string rowName, MainMenuInputSettings.InputMode mode)
+    {
+        GameObject row = Instantiate(template.gameObject, parent, false);
+        row.name = rowName;
+        DisableRootOptionHandlers(row);
+        DisableNestedMenuCursorHandlers(row.transform);
+
+        TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.name = $"{rowName}_Text";
+            text.raycastTarget = false;
+        }
+
+        MainMenuInputModeAction action = row.GetComponent<MainMenuInputModeAction>();
+        if (action == null)
+        {
+            action = row.AddComponent<MainMenuInputModeAction>();
+        }
+
+        action.enabled = true;
         action.Configure(mode, text);
         return row.transform;
     }
@@ -1676,6 +2093,7 @@ public class MainMenuController : MonoBehaviour
     {
         GameObject row = Instantiate(template.gameObject, parent, false);
         row.name = "Back";
+        DisableRootOptionHandlers(row);
         DisableNestedMenuCursorHandlers(row.transform);
 
         TMP_Text text = row.GetComponentInChildren<TMP_Text>(true);
@@ -1692,8 +2110,65 @@ public class MainMenuController : MonoBehaviour
             action = row.AddComponent<MenuCursorAction>();
         }
 
+        action.enabled = true;
         action.Configure(this, MenuCursorAction.MenuAction.BackToGameOptions);
         return row.transform;
+    }
+
+    private void EnsureOptionsInputModeRows()
+    {
+        if (optionsGroup == null)
+        {
+            return;
+        }
+
+        Transform optionsRoot = FindOptionsCursorRoot(optionsGroup.transform);
+        if (optionsRoot == null)
+        {
+            return;
+        }
+
+        Transform headerTemplate = FindInHierarchy(optionsGroup.transform, "Affichage");
+        Transform rowTemplate = FindInHierarchy(optionsGroup.transform, "Fenetre");
+        if (headerTemplate == null || rowTemplate == null)
+        {
+            return;
+        }
+
+        if (FindInHierarchy(optionsRoot, "ModeEntree") == null)
+        {
+            Transform header = CreateOptionsHeaderRow(headerTemplate, optionsRoot, "ModeEntree", "Mode d'entree");
+            InsertOptionsRowBeforeBack(optionsRoot, header);
+        }
+
+        if (FindInHierarchy(optionsRoot, "ClavierSouris") == null)
+        {
+            Transform keyboardMouse = CreateInputModeRow(rowTemplate, optionsRoot, "ClavierSouris", MainMenuInputSettings.InputMode.KeyboardMouse);
+            InsertOptionsRowBeforeBack(optionsRoot, keyboardMouse);
+        }
+
+        if (FindInHierarchy(optionsRoot, "Gamepad") == null)
+        {
+            Transform gamepad = CreateInputModeRow(rowTemplate, optionsRoot, "Gamepad", MainMenuInputSettings.InputMode.Gamepad);
+            InsertOptionsRowBeforeBack(optionsRoot, gamepad);
+        }
+    }
+
+    private static void InsertOptionsRowBeforeBack(Transform parent, Transform row)
+    {
+        if (parent == null || row == null)
+        {
+            return;
+        }
+
+        Transform back = FindInHierarchy(parent, "Back");
+        if (back == null || back.parent != parent)
+        {
+            row.SetAsLastSibling();
+            return;
+        }
+
+        row.SetSiblingIndex(back.GetSiblingIndex());
     }
 
     private static void CopyRectTransform(RectTransform source, RectTransform target)
@@ -1758,6 +2233,50 @@ public class MainMenuController : MonoBehaviour
             if (displayActions[i] != null && displayActions[i].transform != root)
             {
                 displayActions[i].enabled = false;
+            }
+        }
+
+        MainMenuInputModeAction[] inputActions = root.GetComponentsInChildren<MainMenuInputModeAction>(true);
+        for (int i = 0; i < inputActions.Length; i++)
+        {
+            if (inputActions[i] != null && inputActions[i].transform != root)
+            {
+                inputActions[i].enabled = false;
+            }
+        }
+    }
+
+    private static void DisableRootOptionHandlers(GameObject row, bool disableCursorItem = false)
+    {
+        if (row == null)
+        {
+            return;
+        }
+
+        MenuCursorAction menuAction = row.GetComponent<MenuCursorAction>();
+        if (menuAction != null)
+        {
+            menuAction.enabled = false;
+        }
+
+        MainMenuDisplayModeAction displayAction = row.GetComponent<MainMenuDisplayModeAction>();
+        if (displayAction != null)
+        {
+            displayAction.enabled = false;
+        }
+
+        MainMenuInputModeAction inputAction = row.GetComponent<MainMenuInputModeAction>();
+        if (inputAction != null)
+        {
+            inputAction.enabled = false;
+        }
+
+        if (disableCursorItem)
+        {
+            MenuCursorItem cursorItem = row.GetComponent<MenuCursorItem>();
+            if (cursorItem != null)
+            {
+                cursorItem.enabled = false;
             }
         }
     }
@@ -2130,7 +2649,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (!HasDirectActiveChildren(targetRoot))
+        if (!HasDirectCursorChildren(targetRoot))
         {
             RectTransform fallback = FindFirstCursorItem(targetRoot);
             if (fallback == null)
@@ -2159,7 +2678,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (!HasDirectActiveChildren(targetRoot))
+        if (!HasDirectCursorChildren(targetRoot))
         {
             RectTransform fallback = FindFirstCursorItem(targetRoot);
             if (fallback == null)
@@ -3976,6 +4495,7 @@ public class MainMenuController : MonoBehaviour
     {
         isLoading = true;
         string message = string.IsNullOrWhiteSpace(overrideMessage) ? loadingMessage : overrideMessage;
+        ResolveLoadingReferences();
 
         LoadingScreenService.Show(message);
 
@@ -4001,6 +4521,7 @@ public class MainMenuController : MonoBehaviour
     private void HideLoadingScreen()
     {
         isLoading = false;
+        ResolveLoadingReferences();
         LoadingScreenService.Hide();
 
         if (loadingGroup != null)

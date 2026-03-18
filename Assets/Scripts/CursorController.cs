@@ -61,12 +61,12 @@ public class CursorController : MonoBehaviour
     public Vector2 rightOffset = new Vector2(20f, 0f);
     [Tooltip("Utilise la largeur du texte (TMP) pour placer le curseur a droite.")]
     public bool useTextBoundsForRightOffset = false;
+    [Tooltip("Texte TMP a utiliser pour le placement a droite. Laisse vide pour detection automatique.")]
+    public TMP_Text rightPlacementTextOverride;
+    [Tooltip("Marge ajoutee apres le texte quand le curseur est place a droite.")]
+    public float rightTextMargin = 20f;
     [Tooltip("Ajuste la taille du curseur a celle de la cible.")]
     public bool matchTargetSize = true;
-    [Tooltip("Cree un curseur si manquant.")]
-    public bool createCursorIfMissing = true;
-    [Tooltip("Sprite utilise pour le curseur cree automatiquement (optionnel).")]
-    public Sprite cursorSprite;
 
     [Header("Audio")]
     [Tooltip("SFX joue quand le curseur se deplace.")]
@@ -125,8 +125,9 @@ public class CursorController : MonoBehaviour
     private bool cursorHasTarget;
     private bool cursorInitialized;
     private float lastMoveSfxTime = -999f;
-    private static Sprite runtimeCursorSprite;
-
+    private bool cursorVisualVisible;
+    private bool cursorParticleRestartPending;
+    private RectTransform lastParticleTarget;
     private void Awake()
     {
         ResolveLayout();
@@ -374,37 +375,76 @@ public class CursorController : MonoBehaviour
             return;
         }
 
+        if (CollectDirectItems(parent, items) > 0)
+        {
+            return;
+        }
+
         for (int i = 0; i < parent.childCount; i++)
         {
-            Transform child = parent.GetChild(i);
-            if (child == null)
-            {
-                continue;
-            }
-
-            if (!includeInactive && !child.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            RectTransform rect = child as RectTransform;
-            if (rect == null)
-            {
-                continue;
-            }
-
-            if (cursor != null && rect == cursor)
-            {
-                continue;
-            }
-
-            if (!PassesItemFilter(rect))
-            {
-                continue;
-            }
-
-            items.Add(rect);
+            CollectNestedItems(parent.GetChild(i) as RectTransform, items);
         }
+    }
+
+    private int CollectDirectItems(RectTransform parent, List<RectTransform> destination)
+    {
+        if (parent == null || destination == null)
+        {
+            return 0;
+        }
+
+        int startCount = destination.Count;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            RectTransform rect = parent.GetChild(i) as RectTransform;
+            if (!ShouldIncludeItem(rect))
+            {
+                continue;
+            }
+
+            destination.Add(rect);
+        }
+
+        return destination.Count - startCount;
+    }
+
+    private void CollectNestedItems(RectTransform root, List<RectTransform> destination)
+    {
+        if (root == null || destination == null)
+        {
+            return;
+        }
+
+        if (ShouldIncludeItem(root))
+        {
+            destination.Add(root);
+            return;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            CollectNestedItems(root.GetChild(i) as RectTransform, destination);
+        }
+    }
+
+    private bool ShouldIncludeItem(RectTransform rect)
+    {
+        if (rect == null)
+        {
+            return false;
+        }
+
+        if (!includeInactive && !rect.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        if (cursor != null && rect == cursor)
+        {
+            return false;
+        }
+
+        return PassesItemFilter(rect);
     }
 
     private bool PassesItemFilter(RectTransform rect)
@@ -760,10 +800,10 @@ public class CursorController : MonoBehaviour
 
         if (placement == CursorPlacement.RightOfTarget)
         {
+            rect.pivot = new Vector2(0f, 0.5f);
             if (useTextBoundsForRightOffset && TryGetTextBounds(target, out Vector3 textCenter, out float textHalfWidth, out Vector3 textRight, out Vector3 textUp))
             {
-                float halfCursor = cursorTargetSize.x * 0.5f;
-                float offset = textHalfWidth + halfCursor + rightOffset.x;
+                float offset = textHalfWidth + ResolveRightTextMargin();
                 cursorTargetPosition = textCenter + textRight * offset + textUp * rightOffset.y;
             }
             else
@@ -771,22 +811,31 @@ public class CursorController : MonoBehaviour
                 Vector3 right = target.right;
                 Vector3 up = target.up;
                 float halfTarget = targetSize.x * 0.5f;
-                float halfCursor = cursorTargetSize.x * 0.5f;
-                float offset = halfTarget + halfCursor + rightOffset.x;
+                float offset = halfTarget + rightOffset.x;
                 cursorTargetPosition = target.position + right * offset + up * rightOffset.y;
             }
         }
         else
         {
+            rect.pivot = new Vector2(0.5f, 0.5f);
             cursorTargetPosition = target.position;
         }
         cursorHasTarget = true;
-        rect.pivot = new Vector2(0.5f, 0.5f);
 
         if (!smoothCursor || !cursorInitialized)
         {
             ApplyCursorImmediate(rect, cursorTargetPosition, cursorTargetSize);
         }
+
+        bool targetChanged = lastParticleTarget != target;
+        bool becameVisible = !cursorVisualVisible;
+        if (targetChanged || becameVisible)
+        {
+            QueueCursorParticleRestart(target);
+        }
+
+        cursorVisualVisible = true;
+        lastParticleTarget = target;
 
         cursorDirty = false;
         isUpdatingCursor = false;
@@ -794,6 +843,9 @@ public class CursorController : MonoBehaviour
 
     private void HideCursor()
     {
+        cursorVisualVisible = false;
+        cursorParticleRestartPending = false;
+
         if (cursor != null)
         {
             if (cursor == transform as RectTransform)
@@ -842,89 +894,186 @@ public class CursorController : MonoBehaviour
             return false;
         }
 
-        TMP_Text tmp = target.GetComponent<TMP_Text>();
-        if (tmp == null)
+        Vector3 scoreAxis = target.right.sqrMagnitude > 0.0001f ? target.right.normalized : Vector3.right;
+        float bestScore = float.NegativeInfinity;
+        bool found = false;
+
+        TMP_Text preferredText = ResolvePreferredTextTarget(target);
+        if (TryAssignBestTextBounds(preferredText, scoreAxis, ref bestScore, ref found, ref centerWorld, ref halfWidth, ref right, ref up))
         {
-            tmp = target.GetComponentInChildren<TMP_Text>(true);
+            return true;
         }
 
-        if (tmp == null)
+        TMP_Text[] texts = target.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TryAssignBestTextBounds(texts[i], scoreAxis, ref bestScore, ref found, ref centerWorld, ref halfWidth, ref right, ref up);
+        }
+
+        return found;
+    }
+
+    private TMP_Text ResolvePreferredTextTarget(RectTransform target)
+    {
+        if (rightPlacementTextOverride != null)
+        {
+            return rightPlacementTextOverride;
+        }
+
+        if (target == null)
+        {
+            return null;
+        }
+
+        string expectedName = target.name + "_Text";
+        TMP_Text[] texts = target.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TMP_Text tmp = texts[i];
+            if (tmp != null && string.Equals(tmp.gameObject.name, expectedName, System.StringComparison.Ordinal))
+            {
+                return tmp;
+            }
+        }
+
+        TMP_Text directText = target.GetComponent<TMP_Text>();
+        if (directText != null)
+        {
+            return directText;
+        }
+
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TMP_Text tmp = texts[i];
+            if (tmp != null && tmp.transform.parent == target)
+            {
+                return tmp;
+            }
+        }
+
+        return texts.Length > 0 ? texts[0] : null;
+    }
+
+    private float ResolveRightTextMargin()
+    {
+        return rightTextMargin;
+    }
+
+    private static bool TryAssignBestTextBounds(
+        TMP_Text tmp,
+        Vector3 scoreAxis,
+        ref float bestScore,
+        ref bool found,
+        ref Vector3 bestCenterWorld,
+        ref float bestHalfWidth,
+        ref Vector3 bestRight,
+        ref Vector3 bestUp)
+    {
+        if (!TryGetRenderedTextBounds(tmp, out Vector3 centerWorld, out float halfWidth, out Vector3 right, out Vector3 up))
         {
             return false;
         }
 
-        tmp.ForceMeshUpdate();
-        Bounds bounds = tmp.textBounds;
-        if (bounds.size == Vector3.zero)
+        float score = Vector3.Dot(centerWorld, scoreAxis) + halfWidth;
+        if (found && score <= bestScore)
         {
             return false;
         }
 
-        centerWorld = tmp.transform.TransformPoint(bounds.center);
-        halfWidth = Mathf.Abs(bounds.extents.x);
-        right = tmp.transform.right;
-        up = tmp.transform.up;
+        bestScore = score;
+        bestCenterWorld = centerWorld;
+        bestHalfWidth = halfWidth;
+        bestRight = right;
+        bestUp = up;
+        found = true;
         return true;
+    }
+
+    private static bool TryGetRenderedTextBounds(TMP_Text tmp, out Vector3 centerWorld, out float halfWidth, out Vector3 right, out Vector3 up)
+    {
+        centerWorld = Vector3.zero;
+        halfWidth = 0f;
+        right = Vector3.right;
+        up = Vector3.up;
+
+        if (tmp == null)
+        {
+            return false;
+        }
+
+        tmp.ForceMeshUpdate(true, true);
+
+        TMP_TextInfo textInfo = tmp.textInfo;
+        bool hasVisibleCharacters = false;
+        float minX = 0f;
+        float maxX = 0f;
+        float minY = 0f;
+        float maxY = 0f;
+
+        for (int i = 0; i < textInfo.characterCount; i++)
+        {
+            TMP_CharacterInfo character = textInfo.characterInfo[i];
+            if (!character.isVisible)
+            {
+                continue;
+            }
+
+            Vector3 bottomLeft = character.bottomLeft;
+            Vector3 topRight = character.topRight;
+            if (!hasVisibleCharacters)
+            {
+                minX = bottomLeft.x;
+                maxX = topRight.x;
+                minY = bottomLeft.y;
+                maxY = topRight.y;
+                hasVisibleCharacters = true;
+                continue;
+            }
+
+            minX = Mathf.Min(minX, bottomLeft.x);
+            maxX = Mathf.Max(maxX, topRight.x);
+            minY = Mathf.Min(minY, bottomLeft.y);
+            maxY = Mathf.Max(maxY, topRight.y);
+        }
+
+        if (!hasVisibleCharacters)
+        {
+            Bounds bounds = tmp.textBounds;
+            if (bounds.size == Vector3.zero)
+            {
+                return false;
+            }
+
+            Vector3 localLeft = new Vector3(bounds.min.x, bounds.center.y, bounds.center.z);
+            Vector3 localRight = new Vector3(bounds.max.x, bounds.center.y, bounds.center.z);
+            Vector3 worldLeft = tmp.transform.TransformPoint(localLeft);
+            Vector3 worldRight = tmp.transform.TransformPoint(localRight);
+            Vector3 worldSpan = worldRight - worldLeft;
+
+            centerWorld = (worldLeft + worldRight) * 0.5f;
+            halfWidth = worldSpan.magnitude * 0.5f;
+            right = worldSpan.sqrMagnitude > 0.0001f ? worldSpan.normalized : tmp.transform.right;
+            up = tmp.transform.up;
+            return halfWidth > 0.0001f;
+        }
+
+        Vector3 localCenter = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, 0f);
+        Vector3 localLeftVisible = new Vector3(minX, localCenter.y, 0f);
+        Vector3 localRightVisible = new Vector3(maxX, localCenter.y, 0f);
+        Vector3 worldLeftVisible = tmp.transform.TransformPoint(localLeftVisible);
+        Vector3 worldRightVisible = tmp.transform.TransformPoint(localRightVisible);
+        Vector3 visibleSpan = worldRightVisible - worldLeftVisible;
+
+        centerWorld = (worldLeftVisible + worldRightVisible) * 0.5f;
+        halfWidth = visibleSpan.magnitude * 0.5f;
+        right = visibleSpan.sqrMagnitude > 0.0001f ? visibleSpan.normalized : tmp.transform.right;
+        up = tmp.transform.up;
+        return halfWidth > 0.0001f;
     }
 
     private RectTransform EnsureCursor()
     {
-        if (cursor != null)
-        {
-            return cursor;
-        }
-
-        if (!createCursorIfMissing)
-        {
-            return null;
-        }
-
-        RectTransform parent = GetCursorParent();
-        if (parent == null)
-        {
-            return null;
-        }
-
-        GameObject cursorObject = new GameObject("Cursor", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
-        RectTransform rect = cursorObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-
-        Image image = cursorObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.25f);
-        image.raycastTarget = false;
-        image.sprite = ResolveCursorSprite();
-        image.type = image.sprite != null && image.sprite.border.sqrMagnitude > 0f ? Image.Type.Sliced : Image.Type.Simple;
-
-        LayoutElement layoutElement = cursorObject.GetComponent<LayoutElement>();
-        layoutElement.ignoreLayout = true;
-
-        cursor = rect;
-        if (!isUpdatingCursor)
-        {
-            SnapCursorImmediate();
-        }
-        return rect;
-    }
-
-    private Sprite ResolveCursorSprite()
-    {
-        if (cursorSprite != null)
-        {
-            return cursorSprite;
-        }
-
-        if (runtimeCursorSprite != null)
-        {
-            return runtimeCursorSprite;
-        }
-
-        Texture2D texture = Texture2D.whiteTexture;
-        runtimeCursorSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
-        runtimeCursorSprite.name = "RuntimeCursorSprite";
-        return runtimeCursorSprite;
+        return cursor;
     }
 
     private void SnapCursorImmediate()
@@ -984,5 +1133,56 @@ public class CursorController : MonoBehaviour
         Vector2 lerpedSize = Vector2.Lerp(currentSize, cursorTargetSize, sizeT);
         cursor.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, lerpedSize.x);
         cursor.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, lerpedSize.y);
+
+        if (cursorParticleRestartPending && (cursor.position - cursorTargetPosition).sqrMagnitude <= 1f)
+        {
+            RestartCursorChildParticleSystems();
+            cursorParticleRestartPending = false;
+        }
+    }
+
+    private void QueueCursorParticleRestart(RectTransform target)
+    {
+        if (target == null)
+        {
+            cursorParticleRestartPending = false;
+            return;
+        }
+
+        if (!smoothCursor || !cursorInitialized || cursor == null || (cursor.position - cursorTargetPosition).sqrMagnitude <= 1f)
+        {
+            RestartCursorChildParticleSystems();
+            cursorParticleRestartPending = false;
+            return;
+        }
+
+        cursorParticleRestartPending = true;
+    }
+
+    private void RestartCursorChildParticleSystems()
+    {
+        if (cursor == null)
+        {
+            return;
+        }
+
+        ParticleSystem[] particleSystems = cursor.GetComponentsInChildren<ParticleSystem>(true);
+        if (particleSystems == null || particleSystems.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            ParticleSystem system = particleSystems[i];
+            if (system == null || !system.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            system.Clear(true);
+            system.Play(true);
+        }
     }
 }

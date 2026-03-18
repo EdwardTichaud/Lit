@@ -6,6 +6,19 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public partial class SquadCharacterController : MonoBehaviour
 {
+    private enum TorchVisualTransition
+    {
+        None,
+        Equip,
+        Unequip
+    }
+
+    private const int TorchAnimationLayerIndex = 0;
+    private const float TorchAnimationStateFallbackDelay = 0.2f;
+    private const float TorchAnimationVisualDelay = 0.5f;
+    private static readonly int TorchEquipStateHash = Animator.StringToHash("Torch_Equip");
+    private static readonly int TorchUnequipStateHash = Animator.StringToHash("Torch_Unequip");
+
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
     [SerializeField, Tooltip("Duree initiale de la torche (secondes).")]
@@ -208,6 +221,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private Transform torchTransform;
     private bool torchInitialized;
     private bool torchEquipped;
+    private bool torchVisualEquipped;
+    private TorchVisualTransition pendingTorchVisualTransition;
+    private bool torchVisualTransitionStateObserved;
+    private float torchVisualTransitionTimer;
     private float torchDrainTimer;
     private float nextCollisionRefreshTime;
     private bool collidersDirty = true;
@@ -260,6 +277,11 @@ public partial class SquadCharacterController : MonoBehaviour
         UpdateTorchLifetime(Time.deltaTime);
         RefreshCharacterCollisionsIfNeeded();
         UpdateAudioListenerState(false);
+    }
+
+    private void LateUpdate()
+    {
+        UpdateTorchVisualTransition();
     }
 
     private void Awake()
@@ -1957,6 +1979,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         torchInitialized = false;
         EnsureTorchCached();
+        ClearPendingTorchVisualTransition();
 
         if (torchTransform == null)
         {
@@ -1966,7 +1989,7 @@ public partial class SquadCharacterController : MonoBehaviour
         if (!HasTorchItem)
         {
             torchEquipped = false;
-            torchTransform.gameObject.SetActive(false);
+            ApplyTorchVisualState(false);
             if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
             {
                 animator.SetBool(torchBoolParam, false);
@@ -1981,8 +2004,9 @@ public partial class SquadCharacterController : MonoBehaviour
         else
         {
             torchEquipped = torchStartsActive;
-            torchTransform.gameObject.SetActive(torchEquipped);
         }
+
+        ApplyTorchVisualState(torchEquipped);
 
         if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
         {
@@ -1991,7 +2015,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (torchSecondsRemaining <= 0 && torchEquipped)
         {
-            SetTorchEquipped(false);
+            torchEquipped = false;
+            ApplyTorchVisualState(false);
+            if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
+            {
+                animator.SetBool(torchBoolParam, false);
+            }
         }
     }
 
@@ -2096,14 +2125,133 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         torchEquipped = equipped;
-        torchTransform.gameObject.SetActive(torchEquipped);
 
         if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
         {
             animator.SetBool(torchBoolParam, torchEquipped);
         }
 
+        QueueTorchVisualTransition(equipped);
+
         SyncTorchStateToCharacterData();
+    }
+
+    private void ApplyTorchVisualState(bool equipped)
+    {
+        if (torchTransform == null)
+        {
+            return;
+        }
+
+        torchVisualEquipped = equipped;
+        if (torchTransform.gameObject.activeSelf != equipped)
+        {
+            torchTransform.gameObject.SetActive(equipped);
+        }
+    }
+
+    private void QueueTorchVisualTransition(bool equipped)
+    {
+        if (torchVisualEquipped == equipped)
+        {
+            ClearPendingTorchVisualTransition();
+            return;
+        }
+
+        if (!CanDelayTorchVisualTransition())
+        {
+            ApplyTorchVisualState(equipped);
+            ClearPendingTorchVisualTransition();
+            return;
+        }
+
+        pendingTorchVisualTransition = equipped ? TorchVisualTransition.Equip : TorchVisualTransition.Unequip;
+        torchVisualTransitionStateObserved = false;
+        torchVisualTransitionTimer = 0f;
+    }
+
+    private void UpdateTorchVisualTransition()
+    {
+        if (pendingTorchVisualTransition == TorchVisualTransition.None)
+        {
+            return;
+        }
+
+        EnsureTorchCached();
+        if (torchTransform == null)
+        {
+            ClearPendingTorchVisualTransition();
+            return;
+        }
+
+        if (!CanDelayTorchVisualTransition())
+        {
+            ApplyTorchVisualState(torchEquipped);
+            ClearPendingTorchVisualTransition();
+            return;
+        }
+
+        torchVisualTransitionTimer += Time.deltaTime;
+        if (!torchVisualTransitionStateObserved && IsTorchAnimationStateActive(pendingTorchVisualTransition))
+        {
+            torchVisualTransitionStateObserved = true;
+            torchVisualTransitionTimer = 0f;
+            return;
+        }
+
+        if (!torchVisualTransitionStateObserved && torchVisualTransitionTimer < TorchAnimationStateFallbackDelay)
+        {
+            return;
+        }
+
+        torchVisualTransitionStateObserved = true;
+        if (torchVisualTransitionTimer < TorchAnimationVisualDelay)
+        {
+            return;
+        }
+
+        ApplyTorchVisualState(torchEquipped);
+        ClearPendingTorchVisualTransition();
+    }
+
+    private bool CanDelayTorchVisualTransition()
+    {
+        return animator != null
+            && animator.isActiveAndEnabled
+            && animator.layerCount > TorchAnimationLayerIndex
+            && !string.IsNullOrWhiteSpace(torchBoolParam);
+    }
+
+    private bool IsTorchAnimationStateActive(TorchVisualTransition transition)
+    {
+        if (animator == null || animator.layerCount <= TorchAnimationLayerIndex)
+        {
+            return false;
+        }
+
+        int stateHash = transition == TorchVisualTransition.Equip
+            ? TorchEquipStateHash
+            : TorchUnequipStateHash;
+
+        if (MatchesTorchAnimationState(animator.GetCurrentAnimatorStateInfo(TorchAnimationLayerIndex), stateHash))
+        {
+            return true;
+        }
+
+        return animator.IsInTransition(TorchAnimationLayerIndex)
+            && MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(TorchAnimationLayerIndex), stateHash);
+    }
+
+    private static bool MatchesTorchAnimationState(AnimatorStateInfo stateInfo, int stateHash)
+    {
+        return stateInfo.shortNameHash == stateHash;
+    }
+
+    private void ClearPendingTorchVisualTransition()
+    {
+        pendingTorchVisualTransition = TorchVisualTransition.None;
+        torchVisualTransitionStateObserved = false;
+        torchVisualTransitionTimer = 0f;
     }
 
     private Item GetTorchItem()
@@ -2569,29 +2717,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool ShouldUseCameraRelativeInput()
     {
-        if (!useCameraRelative)
-        {
-            return false;
-        }
-
-        NetworkManager manager = NetworkManager.Singleton;
-        if (manager == null || !manager.IsListening)
-        {
-            return true;
-        }
-
-        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
-        if (controlState.PlayerInputEnabled || controlState.IsControlledLocally)
-        {
-            return true;
-        }
-
-        if (controlState.IsPlayerControlled)
-        {
-            return false;
-        }
-
-        return true;
+        return useCameraRelative;
     }
 
     private Camera ResolveMovementCamera()

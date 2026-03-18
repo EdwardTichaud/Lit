@@ -259,7 +259,7 @@ public class CameraController : MonoBehaviour
 
         float orbitDelta = 0f;
 
-        if (Gamepad.current != null)
+        if (MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null)
         {
             float stickX = Gamepad.current.rightStick.ReadValue().x;
             if (Mathf.Abs(stickX) > orbitDeadzone)
@@ -268,7 +268,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        if (Keyboard.current != null)
+        if (MainMenuInputSettings.AllowsKeyboardMouse() && Keyboard.current != null)
         {
             if (Keyboard.current.qKey.isPressed)
             {
@@ -280,7 +280,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        if (allowMouseOrbit && Mouse.current != null)
+        if (MainMenuInputSettings.AllowsKeyboardMouse() && allowMouseOrbit && Mouse.current != null)
         {
             orbitDelta += Mouse.current.delta.ReadValue().x * mouseOrbitSensitivity;
         }
@@ -375,7 +375,7 @@ public class CameraController : MonoBehaviour
         float orbitDelta = 0f;
         float speed = placementOrbitSpeed > 0f ? placementOrbitSpeed : orbitSpeed;
 
-        if (Gamepad.current != null)
+        if (MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null)
         {
             float stickX = Gamepad.current.rightStick.ReadValue().x;
             if (Mathf.Abs(stickX) > orbitDeadzone)
@@ -384,7 +384,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        if (Keyboard.current != null)
+        if (MainMenuInputSettings.AllowsKeyboardMouse() && Keyboard.current != null)
         {
             if (Keyboard.current.qKey.isPressed)
             {
@@ -396,7 +396,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        if (placementAllowMouseOrbit && Mouse.current != null)
+        if (MainMenuInputSettings.AllowsKeyboardMouse() && placementAllowMouseOrbit && Mouse.current != null)
         {
             orbitDelta += Mouse.current.delta.ReadValue().x * mouseOrbitSensitivity;
         }
@@ -416,7 +416,7 @@ public class CameraController : MonoBehaviour
 
         float zoomDelta = 0f;
 
-        if (Mouse.current != null)
+        if (MainMenuInputSettings.AllowsKeyboardMouse() && Mouse.current != null)
         {
             float scroll = Mouse.current.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
@@ -425,7 +425,7 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        if (Gamepad.current != null)
+        if (MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null)
         {
             float triggerDelta = Gamepad.current.rightTrigger.ReadValue() - Gamepad.current.leftTrigger.ReadValue();
             if (Mathf.Abs(triggerDelta) > zoomDeadzone)
