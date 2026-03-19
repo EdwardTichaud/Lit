@@ -2416,6 +2416,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LabyrinthStartTrigger
   interactionBox: {fileID: 320819308015763433, guid: bfa88639767bbe44c82b243f221e928b, type: 3}
   interactionOffset: {x: 0, y: 3, z: 0}
+  confirmationPanel: {fileID: 1323397344}
+  confirmationBox: {fileID: 4151098751637033772, guid: b01ab9303218e6a46bcfda229a575030, type: 3}
+  confirmationMessage: Partir en exploration?
+  forceConfirmOnTop: 1
+  confirmSortingOrder: 100
+  confirmationYesIndex: 0
+  confirmationNoIndex: 1
+  confirmationFadeDuration: 0.5
+  confirmationAddCanvasGroupIfMissing: 1
+  confirmationDisableRaycastsWhenHidden: 1
+  confirmationSetAlphaToZeroOnStart: 1
   labyrinthRoot: {fileID: 228332932}
   spawnPointOverride: {fileID: 1099510179}
   spawnPointTag: SpawnPoint
@@ -2427,6 +2438,7 @@ MonoBehaviour:
   teleportVfxParent: {fileID: 0}
   teleportVfxLifetime: 2.5
   boxesPanel: {fileID: 407913454}
+  confirmationBoxes: {fileID: 1323397345}
   targetCamera: {fileID: 1823688466}
 --- !u!4 &193486432 stripped
 Transform:

@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
@@ -13,6 +15,32 @@ public class LabyrinthStartTrigger : MonoBehaviour
     public GameObject interactionBox;
     [Tooltip("Offset en world pour la box d'interaction.")]
     public Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
+
+    [Header("UI - Confirmation")]
+    [Tooltip("Panel parent de la confirmation.")]
+    public GameObject confirmationPanel;
+    [Tooltip("Prefab de la confirmation (Oui/Non).")]
+    public GameObject confirmationBox;
+    [Tooltip("Texte affiche dans la confirmation.")]
+    public string confirmationMessage = "Partir en exploration?";
+    [Tooltip("Force un sorting order eleve.")]
+    public bool forceConfirmOnTop = true;
+    [Tooltip("Sorting order pour le panel de confirmation.")]
+    public int confirmSortingOrder = 100;
+    [Tooltip("Index de l'option Oui dans la confirmationBox.")]
+    public int confirmationYesIndex = 0;
+    [Tooltip("Index de l'option Non dans la confirmationBox.")]
+    public int confirmationNoIndex = 1;
+
+    [Header("UI - Confirmation Fade")]
+    [Tooltip("Duree du fade de la confirmation.")]
+    public float confirmationFadeDuration = 0.5f;
+    [Tooltip("Ajoute un CanvasGroup si manquant.")]
+    public bool confirmationAddCanvasGroupIfMissing = true;
+    [Tooltip("Desactive les raycasts quand cache.")]
+    public bool confirmationDisableRaycastsWhenHidden = true;
+    [Tooltip("Met l'alpha a 0 au demarrage.")]
+    public bool confirmationSetAlphaToZeroOnStart = true;
 
     [Header("Destination")]
     [Tooltip("Racine du labyrinthe/chateau (optionnel).")]
@@ -41,6 +69,8 @@ public class LabyrinthStartTrigger : MonoBehaviour
     [Header("UI - Parent")]
     [Tooltip("Parent des boxes UI.")]
     public Transform boxesPanel;
+    [Tooltip("Parent des confirmations UI.")]
+    public Transform confirmationBoxes;
 
     [Header("Camera")]
     [Tooltip("Camera UI/world pour positionner l'interaction box.")]
@@ -52,11 +82,26 @@ public class LabyrinthStartTrigger : MonoBehaviour
     private Transform interactionTarget;
 
     private GameObject interactionBoxInstance;
+    private GameObject confirmationBoxInstance;
     private Canvas interactionCanvas;
     private bool isTriggerZone;
     private Collider triggerCollider;
+    private bool confirmVisible;
+    private CursorController confirmationCursor;
+    private CanvasGroup confirmationCanvasGroup;
+    private Coroutine confirmationFadeRoutine;
+    private bool confirmationInputLocked;
+    private TMP_Text confirmationMessageText;
     private bool awaitingServerResponse;
     private uint netcodeId;
+
+    private enum ConfirmationChoice
+    {
+        Unknown,
+        Yes,
+        No
+    }
+
     private void Awake()
     {
         triggerCollider = GetComponent<Collider>();
@@ -67,6 +112,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         netcodeId = NetcodeSceneIdUtility.GetStableId(transform);
+        InitializeConfirmationFade();
     }
 
     private void OnEnable()
@@ -222,7 +268,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void HandleInteract()
     {
-        if (InputFocusStack.HasAnyFocus())
+        if (InputFocusStack.HasAnyFocus() && !InputFocusStack.HasFocus(this))
         {
             return;
         }
@@ -234,6 +280,26 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         LocalInputRouter.ConsumeInteract();
+
+        if (!confirmVisible)
+        {
+            ShowConfirm(true);
+            return;
+        }
+
+        ConfirmationChoice choice = GetConfirmationChoice();
+        if (choice == ConfirmationChoice.No)
+        {
+            ShowConfirm(false);
+            ShowInteraction(true);
+            return;
+        }
+
+        if (choice == ConfirmationChoice.Unknown)
+        {
+            Debug.LogWarning("LabyrinthStartTrigger: confirmationBox ou CursorController non configure.");
+            return;
+        }
 
         if (IsNetworked())
         {
@@ -256,6 +322,26 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         StartLabyrinth();
+    }
+
+    private void OnInteract()
+    {
+        HandleInteract();
+    }
+
+    private void OnSouthButton()
+    {
+        OnInteract();
+    }
+
+    private void OnEastButton()
+    {
+        if (!confirmVisible)
+        {
+            return;
+        }
+
+        ShowConfirm(false);
     }
 
     private void StartLabyrinth()
@@ -296,6 +382,11 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void ShowInteraction(bool show)
     {
+        if (confirmVisible && show)
+        {
+            return;
+        }
+
         if (!show)
         {
             DestroyInteractionInstance();
@@ -317,6 +408,96 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
     }
 
+    private void ShowConfirm(bool show)
+    {
+        if (!show)
+        {
+            FadeConfirmationPanelTo(0f, confirmationFadeDuration);
+            SetConfirmationInputLock(false);
+            DestroyConfirmInstance();
+            confirmVisible = false;
+            RefreshCurrentCharacter(true);
+            return;
+        }
+
+        DestroyInteractionInstance();
+
+        if (confirmationPanel == null)
+        {
+            Debug.LogWarning("LabyrinthStartTrigger: confirmationPanel non assigne.");
+            SetConfirmationInputLock(false);
+            confirmVisible = false;
+            return;
+        }
+
+        if (!confirmationPanel.activeSelf)
+        {
+            confirmationPanel.SetActive(true);
+        }
+
+        if (confirmationBoxInstance == null)
+        {
+            Transform parent = confirmationBoxes != null ? confirmationBoxes : confirmationPanel.transform;
+            confirmationBoxInstance = CreateInstance(confirmationBox, parent);
+        }
+
+        if (confirmationBoxInstance == null)
+        {
+            Debug.LogWarning("LabyrinthStartTrigger: confirmationBox non assignee.");
+            SetConfirmationInputLock(false);
+            confirmVisible = false;
+            return;
+        }
+
+        confirmationBoxInstance.SetActive(true);
+        ApplyConfirmationMessage();
+        confirmationCursor = confirmationBoxInstance.GetComponentInChildren<CursorController>(true);
+        if (confirmationCursor != null)
+        {
+            confirmationCursor.Refresh();
+        }
+
+        SetConfirmationInputLock(true);
+        FadeConfirmationPanelTo(1f, confirmationFadeDuration);
+        BringConfirmToFront();
+        confirmVisible = true;
+    }
+
+    private void BringConfirmToFront()
+    {
+        if (confirmationBoxInstance == null && confirmationPanel == null)
+        {
+            return;
+        }
+
+        if (confirmationBoxInstance != null && confirmationBoxInstance.transform.parent != null)
+        {
+            confirmationBoxInstance.transform.SetAsLastSibling();
+        }
+
+        if (!forceConfirmOnTop)
+        {
+            return;
+        }
+
+        Canvas canvas = null;
+        if (confirmationPanel != null)
+        {
+            canvas = confirmationPanel.GetComponent<Canvas>();
+        }
+
+        if (canvas == null && confirmationBoxInstance != null)
+        {
+            canvas = confirmationBoxInstance.GetComponentInParent<Canvas>();
+        }
+
+        if (canvas != null)
+        {
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = confirmSortingOrder;
+        }
+    }
+
     private void DestroyInteractionInstance()
     {
         if (interactionBoxInstance != null)
@@ -327,9 +508,24 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
     }
 
+    private void DestroyConfirmInstance()
+    {
+        if (confirmationBoxInstance != null)
+        {
+            Destroy(confirmationBoxInstance);
+            confirmationBoxInstance = null;
+            confirmationCursor = null;
+            confirmationMessageText = null;
+        }
+    }
+
     private void ResetUIState()
     {
         DestroyInteractionInstance();
+        DestroyConfirmInstance();
+        FadeConfirmationPanelTo(0f, 0f);
+        SetConfirmationInputLock(false);
+        confirmVisible = false;
         charactersInRange.Clear();
         characterColliderCounts.Clear();
         currentCharacter = null;
@@ -388,6 +584,246 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         return Instantiate(source);
+    }
+
+    private void InitializeConfirmationFade()
+    {
+        confirmationCanvasGroup = GetConfirmationCanvasGroup();
+        if (confirmationCanvasGroup != null && confirmationSetAlphaToZeroOnStart)
+        {
+            confirmationCanvasGroup.alpha = 0f;
+            if (confirmationDisableRaycastsWhenHidden)
+            {
+                confirmationCanvasGroup.interactable = false;
+                confirmationCanvasGroup.blocksRaycasts = false;
+            }
+        }
+    }
+
+    private CanvasGroup GetConfirmationCanvasGroup()
+    {
+        if (confirmationPanel == null)
+        {
+            return null;
+        }
+
+        if (confirmationCanvasGroup != null)
+        {
+            return confirmationCanvasGroup;
+        }
+
+        confirmationCanvasGroup = confirmationPanel.GetComponent<CanvasGroup>();
+        if (confirmationCanvasGroup == null && confirmationAddCanvasGroupIfMissing)
+        {
+            confirmationCanvasGroup = confirmationPanel.AddComponent<CanvasGroup>();
+        }
+
+        return confirmationCanvasGroup;
+    }
+
+    private void FadeConfirmationPanelTo(float targetAlpha, float duration)
+    {
+        CanvasGroup canvasGroup = GetConfirmationCanvasGroup();
+        if (canvasGroup == null)
+        {
+            return;
+        }
+
+        if (!CanRunCoroutines())
+        {
+            canvasGroup.alpha = targetAlpha;
+            if (confirmationDisableRaycastsWhenHidden)
+            {
+                bool visible = targetAlpha > 0.001f;
+                canvasGroup.interactable = visible;
+                canvasGroup.blocksRaycasts = visible;
+            }
+            return;
+        }
+
+        if (confirmationFadeRoutine != null)
+        {
+            StopCoroutine(confirmationFadeRoutine);
+        }
+
+        float startAlpha = canvasGroup.alpha;
+        if (duration <= 0f)
+        {
+            canvasGroup.alpha = targetAlpha;
+            if (confirmationDisableRaycastsWhenHidden)
+            {
+                bool visible = targetAlpha > 0.001f;
+                canvasGroup.interactable = visible;
+                canvasGroup.blocksRaycasts = visible;
+            }
+            return;
+        }
+
+        confirmationFadeRoutine = StartCoroutine(FadeConfirmationRoutine(canvasGroup, startAlpha, targetAlpha, duration));
+    }
+
+    private IEnumerator FadeConfirmationRoutine(CanvasGroup canvasGroup, float startAlpha, float targetAlpha, float duration)
+    {
+        if (canvasGroup == null)
+        {
+            yield break;
+        }
+
+        float time = 0f;
+        if (confirmationDisableRaycastsWhenHidden)
+        {
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+        }
+
+        while (time < duration)
+        {
+            time += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(time / duration);
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+            yield return null;
+        }
+
+        canvasGroup.alpha = targetAlpha;
+        if (confirmationDisableRaycastsWhenHidden)
+        {
+            bool visible = targetAlpha > 0.001f;
+            canvasGroup.interactable = visible;
+            canvasGroup.blocksRaycasts = visible;
+        }
+    }
+
+    private bool CanRunCoroutines()
+    {
+        return isActiveAndEnabled && gameObject.activeInHierarchy;
+    }
+
+    private void SetConfirmationInputLock(bool locked)
+    {
+        if (locked)
+        {
+            if (confirmationInputLocked)
+            {
+                return;
+            }
+
+            confirmationInputLocked = true;
+            InputFocusStack.Push(this);
+            if (SquadManager.Instance != null)
+            {
+                SquadManager.Instance.SetInputLocked(true);
+            }
+            return;
+        }
+
+        if (!confirmationInputLocked)
+        {
+            InputFocusStack.Pop(this);
+            return;
+        }
+
+        confirmationInputLocked = false;
+        InputFocusStack.Pop(this);
+        if (SquadManager.Instance != null)
+        {
+            SquadManager.Instance.SetInputLocked(false);
+        }
+    }
+
+    private ConfirmationChoice GetConfirmationChoice()
+    {
+        if (confirmationBoxInstance == null)
+        {
+            return ConfirmationChoice.Unknown;
+        }
+
+        if (confirmationCursor == null)
+        {
+            confirmationCursor = confirmationBoxInstance.GetComponentInChildren<CursorController>(true);
+        }
+
+        if (confirmationCursor == null)
+        {
+            return ConfirmationChoice.Unknown;
+        }
+
+        int index = confirmationCursor.CurrentIndex;
+        if (index == confirmationYesIndex)
+        {
+            return ConfirmationChoice.Yes;
+        }
+
+        if (index == confirmationNoIndex)
+        {
+            return ConfirmationChoice.No;
+        }
+
+        return ConfirmationChoice.Unknown;
+    }
+
+    private void ApplyConfirmationMessage()
+    {
+        if (confirmationBoxInstance == null || string.IsNullOrWhiteSpace(confirmationMessage))
+        {
+            return;
+        }
+
+        TMP_Text textTarget = FindConfirmationMessageText();
+        if (textTarget != null)
+        {
+            textTarget.text = confirmationMessage;
+        }
+    }
+
+    private TMP_Text FindConfirmationMessageText()
+    {
+        if (confirmationMessageText != null)
+        {
+            return confirmationMessageText;
+        }
+
+        if (confirmationBoxInstance == null)
+        {
+            return null;
+        }
+
+        TMP_Text[] texts = confirmationBoxInstance.GetComponentsInChildren<TMP_Text>(true);
+        TMP_Text fallback = null;
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TMP_Text text = texts[i];
+            if (text == null)
+            {
+                continue;
+            }
+
+            string value = text.text != null ? text.text.Trim() : string.Empty;
+            string objectName = text.gameObject.name != null ? text.gameObject.name.Trim() : string.Empty;
+            if (IsConfirmationChoiceLabel(value) || IsConfirmationChoiceLabel(objectName))
+            {
+                continue;
+            }
+
+            if (fallback == null)
+            {
+                fallback = text;
+            }
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                confirmationMessageText = text;
+                return confirmationMessageText;
+            }
+        }
+
+        confirmationMessageText = fallback;
+        return confirmationMessageText;
+    }
+
+    private static bool IsConfirmationChoiceLabel(string value)
+    {
+        return string.Equals(value, "Oui", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "Non", System.StringComparison.OrdinalIgnoreCase);
     }
 
     private void TeleportSquadToSpawn()
