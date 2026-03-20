@@ -854,7 +854,7 @@ public partial class SquadCharacterController
             Vector3 capsuleBottom = GetCommittedLandingCapsuleBottom(center, radius, height, up);
             int mask = GetVoidGroundMask();
 
-            if (TrySampleGround(capsuleBottom, up, probeRadius, probeDistance + probeRadius, mask, out StepGroundSample sample))
+            if (TrySampleGround(capsuleBottom, up, probeRadius, probeDistance + probeRadius, mask, false, out StepGroundSample sample))
             {
                 float bottomGap = Vector3.Dot(capsuleBottom - sample.point, up);
                 if (bottomGap <= probeDistance &&

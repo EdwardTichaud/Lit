@@ -16,6 +16,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private const int TorchAnimationLayerIndex = 0;
     private const float TorchAnimationStateFallbackDelay = 0.2f;
     private const float TorchAnimationVisualDelay = 0.5f;
+    private const int StepAssistLookAheadSampleCount = 3;
+    private const float StepAssistSurfaceDeadZone = 0.01f;
     private static readonly int TorchEquipStateHash = Animator.StringToHash("Torch_Equip");
     private static readonly int TorchUnequipStateHash = Animator.StringToHash("Torch_Unequip");
 
@@ -120,37 +122,41 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Permet de monter/descendre les marches et reliefs avec un Rigidbody.")]
     private bool enableStepAssist = true;
     [SerializeField, Tooltip("Hauteur max des marches (m).")]
-    private float stepHeight = 0.35f;
+    private float stepHeight = 0.55f;
     [SerializeField, Tooltip("Distance de detection des marches (m).")]
-    private float stepCheckDistance = 0.25f;
+    private float stepCheckDistance = 0.35f;
     [SerializeField, Tooltip("Vitesse verticale appliquee pour monter une marche.")]
-    private float stepUpSpeed = 4f;
+    private float stepUpSpeed = 7f;
     [SerializeField, Tooltip("Hauteur max pour descendre une marche (0 = utilise stepHeight).")]
     private float stepDownHeight = 0f;
     [SerializeField, Tooltip("Vitesse verticale appliquee pour descendre une marche (0 = utilise stepUpSpeed).")]
     private float stepDownSpeed = 0f;
+    [SerializeField, Tooltip("Temps de lissage vertical en montee sur les escaliers (s).")]
+    private float stepUpSmoothTime = 0.08f;
+    [SerializeField, Tooltip("Temps de lissage vertical en descente sur les escaliers (s).")]
+    private float stepDownSmoothTime = 0.1f;
     [SerializeField, Tooltip("Marge ajoutee a la hauteur max pour etre plus permissif (m).")]
-    private float stepHeightTolerance = 0.15f;
+    private float stepHeightTolerance = 0.05f;
     [SerializeField, Tooltip("Seuil minimal de relief pour declencher un step (m).")]
     private float stepMinHeight = 0.05f;
     [SerializeField, Tooltip("Vitesse verticale max autorisee pour declencher un step (0 = ignore).")]
     private float stepMaxUpVelocity = 1.5f;
     [SerializeField, Tooltip("Necessite d'etre au sol pour declencher un step.")]
-    private bool requireGroundForStep = false;
+    private bool requireGroundForStep = true;
     [SerializeField, Tooltip("Rayon du test haut (0 = meme que bas).")]
     private float stepUpperRadius = 0.0f;
     [SerializeField, Tooltip("Hauteur ajoutee au test haut (m).")]
     private float stepUpperHeightOffset = 0.02f;
     [SerializeField, Tooltip("Petit boost avant applique lors d'un step (m).")]
-    private float stepForwardBoost = 0.03f;
+    private float stepForwardBoost = 0f;
     [SerializeField, Tooltip("Marge retiree au rayon pour les tests.")]
     private float stepRadiusPadding = 0.02f;
     [SerializeField, Tooltip("Distance de verification du sol (m).")]
     private float stepGroundCheckDistance = 0.15f;
-    [SerializeField, Tooltip("LayerMask utilise pour les marches.")]
-    private LayerMask stepLayerMask = ~0;
-    [SerializeField, Tooltip("Utilise la matrice de collision du layer pour detecter les marches.")]
-    private bool stepUseCollisionMatrixMask = true;
+    [SerializeField, Tooltip("LayerMask utilise pour les escaliers.")]
+    private LayerMask stepLayerMask = 1 << 7;
+    [SerializeField, Tooltip("Combine stepLayerMask avec la matrice de collision du layer.")]
+    private bool stepUseCollisionMatrixMask = false;
     [SerializeField, Tooltip("Active les logs de debug pour le step assist.")]
     private bool stepDebugLogs = false;
     [SerializeField, Tooltip("Cooldown des logs (secondes).")]
@@ -238,6 +244,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private readonly RaycastHit[] stepCastHits = new RaycastHit[8];
     private readonly Collider[] stepOverlapHits = new Collider[8];
     private float nextStepDebugTime;
+    private float stepVerticalSmoothVelocity;
     private float footIkWeightCurrent;
     private string lastAnimationDriverMode = string.Empty;
     private string lastAnimationMovementMode = string.Empty;
@@ -1109,6 +1116,8 @@ public partial class SquadCharacterController : MonoBehaviour
         stepUpSpeed = Mathf.Max(0f, stepUpSpeed);
         stepDownHeight = Mathf.Max(0f, stepDownHeight);
         stepDownSpeed = Mathf.Max(0f, stepDownSpeed);
+        stepUpSmoothTime = Mathf.Max(0f, stepUpSmoothTime);
+        stepDownSmoothTime = Mathf.Max(0f, stepDownSmoothTime);
         stepHeightTolerance = Mathf.Max(0f, stepHeightTolerance);
         stepMinHeight = Mathf.Max(0f, stepMinHeight);
         stepMaxUpVelocity = Mathf.Max(0f, stepMaxUpVelocity);
@@ -1265,17 +1274,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return voidGroundMask;
         }
 
-        int mask = 0;
-        int layer = gameObject.layer;
-        for (int i = 0; i < 32; i++)
-        {
-            if (!Physics.GetIgnoreLayerCollision(layer, i))
-            {
-                mask |= 1 << i;
-            }
-        }
-
-        return mask;
+        return GetCollisionMatrixMask();
     }
 
     private void OnAnimatorIK(int layerIndex)
@@ -1361,11 +1360,13 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (TryApplyCommittedJumpMovement(deltaTime))
         {
+            ResetStepAssistSmoothing();
             return;
         }
 
         if (inputLockTimer > 0f)
         {
+            ResetStepAssistSmoothing();
             return;
         }
 
@@ -1386,6 +1387,10 @@ public partial class SquadCharacterController : MonoBehaviour
             {
                 TryStepAssistRigidbody(newHorizontal, deltaTime);
             }
+            else
+            {
+                ResetStepAssistSmoothing();
+            }
 
             if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
             {
@@ -1395,6 +1400,8 @@ public partial class SquadCharacterController : MonoBehaviour
             }
             return;
         }
+
+        ResetStepAssistSmoothing();
 
         Vector3 newKinematicHorizontal = hasInput
             ? Vector3.MoveTowards(currentHorizontalVelocity, new Vector3(desiredVelocity.x, 0f, desiredVelocity.z), acceleration * deltaTime)
@@ -1445,30 +1452,35 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         if (!enableStepAssist || rigidbodyTarget == null)
         {
+            ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: desactive ou Rigidbody manquant.");
             return;
         }
 
         if (stepHeight <= 0f || stepCheckDistance <= 0f)
         {
+            ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: parametres invalides (stepHeight/stepCheckDistance).");
             return;
         }
 
         if (stepUpSpeed <= 0f)
         {
+            ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: stepUpSpeed <= 0.");
             return;
         }
 
         if (stepMaxUpVelocity > 0f && rigidbodyTarget.linearVelocity.y > stepMaxUpVelocity)
         {
+            ResetStepAssistSmoothing();
             LogStepDebug($"StepAssist: vitesse verticale > {stepMaxUpVelocity:F2} (en saut/chute).");
             return;
         }
 
         if (!TryGetStepCapsule(out Vector3 center, out float radius, out float height))
         {
+            ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: CapsuleCollider manquant ou direction != Y.");
             return;
         }
@@ -1477,6 +1489,7 @@ public partial class SquadCharacterController : MonoBehaviour
         float speed = moveDir.magnitude;
         if (speed < 0.0001f)
         {
+            ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: pas de mouvement horizontal.");
             return;
         }
@@ -1487,73 +1500,266 @@ public partial class SquadCharacterController : MonoBehaviour
         float bottomOffset = Mathf.Max(0f, halfHeight - radius);
         Vector3 bottomCenter = center - up * bottomOffset;
         Vector3 foot = bottomCenter - up * radius;
+        int walkableMask = GetVoidGroundMask();
+        int stairMask = GetStepMask();
+        int blockingMask = GetStepBlockingMask();
 
-        int stepMask = GetStepMask();
-        if (requireGroundForStep && !IsGroundedForStep(bottomCenter, radius, up, stepMask))
+        if (stairMask == 0)
         {
+            ResetStepAssistSmoothing();
+            LogStepDebug("StepAssist: aucun layer d'escalier valide.");
+            return;
+        }
+
+        if (requireGroundForStep && !IsGroundedForStep(bottomCenter, radius, up, walkableMask))
+        {
+            ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: pas au sol (ground check).");
             return;
         }
 
         float maxUp = stepHeight + stepHeightTolerance;
         float maxDown = (stepDownHeight > 0f ? stepDownHeight : stepHeight) + stepHeightTolerance;
-        float minHeight = Mathf.Max(0.001f, stepMinHeight);
-        float castDistance = Mathf.Max(0.02f, stepCheckDistance);
-        float probeUp = maxUp + stepGroundCheckDistance;
-        float probeDown = maxDown + stepGroundCheckDistance;
-
-        if (!TrySampleGround(foot, up, probeUp, probeDown, stepMask, out StepGroundSample currentGround))
+        if (!TryEvaluateStairAssistTarget(
+                foot,
+                moveDir,
+                up,
+                radius,
+                maxUp,
+                maxDown,
+                walkableMask,
+                stairMask,
+                out float targetHeightDelta,
+                out bool currentOnStairs))
         {
-            LogStepDebug("StepAssist: sol courant introuvable.");
+            ResetStepAssistSmoothing();
+            LogStepDebug("StepAssist: aucune trajectoire d'escalier valide.");
             return;
         }
 
-        Vector3 ahead = foot + moveDir * (radius + castDistance);
-        if (!TrySampleGround(ahead, up, probeUp, probeDown, stepMask, out StepGroundSample aheadGround))
+        float deadZone = currentOnStairs ? StepAssistSurfaceDeadZone : Mathf.Max(0.001f, stepMinHeight);
+        if (Mathf.Abs(targetHeightDelta) <= deadZone)
         {
-            LogStepDebug("StepAssist: sol devant introuvable.");
+            ResetStepAssistSmoothing();
+            LogStepDebug("StepAssist: correction verticale trop faible.");
             return;
         }
 
-        float heightDelta = Vector3.Dot(aheadGround.point - currentGround.point, up);
+        float currentFootHeight = Vector3.Dot(foot, up);
 
-        if (heightDelta > minHeight)
+        if (targetHeightDelta > 0f)
         {
-            if (heightDelta > maxUp + 0.01f)
+            if (!HasStepClearance(bottomCenter, radius, height, up, moveDir, targetHeightDelta, Mathf.Max(0.02f, stepCheckDistance), blockingMask))
             {
-                LogStepDebug($"StepAssist: relief trop haut ({heightDelta:F3}m).");
+                ResetStepAssistSmoothing();
+                LogStepDebug("StepAssist: obstacle detecte au-dessus de l'escalier.");
                 return;
             }
 
-            if (!HasStepClearance(bottomCenter, radius, height, up, moveDir, heightDelta, castDistance, stepMask))
+            float stepAmount = ComputeSmoothedStepOffset(
+                currentFootHeight,
+                currentFootHeight + targetHeightDelta,
+                stepUpSmoothTime,
+                stepUpSpeed,
+                deltaTime);
+            if (stepAmount <= 0.0001f)
             {
-                LogStepDebug("StepAssist: obstacle detecte en haut (pas de passage).");
+                LogStepDebug("StepAssist: lissage up nul.");
                 return;
             }
 
-            float stepAmount = Mathf.Min(heightDelta, stepUpSpeed * deltaTime);
             ApplyStepOffset(up, moveDir, stepAmount, true);
-            LogStepDebug($"StepAssist: step-up applique ({stepAmount:F3}m).");
+            LogStepDebug($"StepAssist: suivi escalier up ({stepAmount:F3}m, cible {targetHeightDelta:F3}m).");
             return;
         }
 
-        if (heightDelta < -minHeight)
+        float dropAmount = -targetHeightDelta;
+        float downSpeed = stepDownSpeed > 0f ? stepDownSpeed : stepUpSpeed;
+        float appliedDrop = ComputeSmoothedStepOffset(
+            currentFootHeight,
+            currentFootHeight - dropAmount,
+            stepDownSmoothTime,
+            downSpeed,
+            deltaTime);
+        if (appliedDrop <= 0.0001f)
         {
-            float drop = -heightDelta;
-            if (drop > maxDown + 0.01f)
-            {
-                LogStepDebug($"StepAssist: drop trop haut ({drop:F3}m).");
-                return;
-            }
-
-            float downSpeed = stepDownSpeed > 0f ? stepDownSpeed : stepUpSpeed;
-            float stepAmount = downSpeed > 0f ? Mathf.Min(drop, downSpeed * deltaTime) : drop;
-            ApplyStepOffset(up, moveDir, stepAmount, false);
-            LogStepDebug($"StepAssist: step-down applique ({stepAmount:F3}m).");
+            LogStepDebug("StepAssist: lissage down nul.");
+            return;
         }
+
+        ApplyStepOffset(up, moveDir, appliedDrop, false);
+        LogStepDebug($"StepAssist: suivi escalier down ({appliedDrop:F3}m, cible {dropAmount:F3}m).");
     }
 
-    private bool TrySampleGround(Vector3 origin, Vector3 up, float maxUp, float maxDown, int mask, out StepGroundSample sample)
+    private float ComputeSmoothedStepOffset(float currentHeight, float targetHeight, float smoothTime, float maxSpeed, float deltaTime)
+    {
+        if (deltaTime <= 0f)
+        {
+            return 0f;
+        }
+
+        float delta = targetHeight - currentHeight;
+        if (Mathf.Abs(delta) <= 0.0001f)
+        {
+            stepVerticalSmoothVelocity = 0f;
+            return 0f;
+        }
+
+        float direction = Mathf.Sign(delta);
+        if (stepVerticalSmoothVelocity != 0f && Mathf.Sign(stepVerticalSmoothVelocity) != direction)
+        {
+            stepVerticalSmoothVelocity = 0f;
+        }
+
+        float clampedSpeed = Mathf.Max(0.01f, maxSpeed);
+        float nextHeight = smoothTime > 0f
+            ? Mathf.SmoothDamp(currentHeight, targetHeight, ref stepVerticalSmoothVelocity, smoothTime, clampedSpeed, deltaTime)
+            : Mathf.MoveTowards(currentHeight, targetHeight, clampedSpeed * deltaTime);
+
+        float applied = direction > 0f
+            ? Mathf.Max(0f, nextHeight - currentHeight)
+            : Mathf.Max(0f, currentHeight - nextHeight);
+
+        return Mathf.Min(applied, Mathf.Abs(delta));
+    }
+
+    private bool TryEvaluateStairAssistTarget(
+        Vector3 foot,
+        Vector3 moveDir,
+        Vector3 up,
+        float radius,
+        float maxUp,
+        float maxDown,
+        int walkableMask,
+        int stairMask,
+        out float targetHeightDelta,
+        out bool currentOnStairs)
+    {
+        targetHeightDelta = 0f;
+        currentOnStairs = false;
+
+        float probeUp = maxUp + stepGroundCheckDistance;
+        float probeDown = maxDown + stepGroundCheckDistance;
+        if (!TrySampleGround(foot, up, probeUp, probeDown, walkableMask, false, out StepGroundSample currentGround))
+        {
+            return false;
+        }
+
+        currentOnStairs = IsStepSurfaceCollider(currentGround.collider);
+        if (TryComputeAheadStairDelta(foot, moveDir, up, radius, probeUp, probeDown, maxUp, maxDown, stairMask, currentGround, currentOnStairs, out targetHeightDelta))
+        {
+            return true;
+        }
+
+        if (!currentOnStairs)
+        {
+            return false;
+        }
+
+        return TryComputeAheadLandingDelta(foot, moveDir, up, radius, probeUp, probeDown, maxUp, maxDown, walkableMask, currentGround, out targetHeightDelta);
+    }
+
+    private bool TryComputeAheadStairDelta(
+        Vector3 foot,
+        Vector3 moveDir,
+        Vector3 up,
+        float radius,
+        float probeUp,
+        float probeDown,
+        float maxUp,
+        float maxDown,
+        int stairMask,
+        StepGroundSample currentGround,
+        bool currentOnStairs,
+        out float targetHeightDelta)
+    {
+        targetHeightDelta = 0f;
+        float startDistance = radius + Mathf.Max(0.02f, stepCheckDistance * 0.35f);
+        float endDistance = radius + Mathf.Max(0.02f, stepCheckDistance);
+        float weightedDelta = 0f;
+        float totalWeight = 0f;
+
+        for (int i = 0; i < StepAssistLookAheadSampleCount; i++)
+        {
+            float t = StepAssistLookAheadSampleCount == 1 ? 1f : (float)i / (StepAssistLookAheadSampleCount - 1);
+            float distance = Mathf.Lerp(startDistance, endDistance, t);
+            Vector3 sampleOrigin = foot + moveDir * distance;
+            if (!TrySampleGround(sampleOrigin, up, probeUp, probeDown, stairMask, true, out StepGroundSample stairGround))
+            {
+                continue;
+            }
+
+            float delta = Vector3.Dot(stairGround.point - currentGround.point, up);
+            if (delta > maxUp + 0.01f || delta < -maxDown - 0.01f)
+            {
+                continue;
+            }
+
+            if (!currentOnStairs && delta < Mathf.Max(0.001f, stepMinHeight))
+            {
+                continue;
+            }
+
+            float weight = 1f - (t * 0.7f);
+            weightedDelta += delta * weight;
+            totalWeight += weight;
+        }
+
+        if (totalWeight <= 0f)
+        {
+            return false;
+        }
+
+        targetHeightDelta = weightedDelta / totalWeight;
+        return true;
+    }
+
+    private bool TryComputeAheadLandingDelta(
+        Vector3 foot,
+        Vector3 moveDir,
+        Vector3 up,
+        float radius,
+        float probeUp,
+        float probeDown,
+        float maxUp,
+        float maxDown,
+        int walkableMask,
+        StepGroundSample currentGround,
+        out float targetHeightDelta)
+    {
+        targetHeightDelta = 0f;
+        float startDistance = radius + Mathf.Max(0.02f, stepCheckDistance * 0.35f);
+        float endDistance = radius + Mathf.Max(0.02f, stepCheckDistance);
+
+        for (int i = 0; i < StepAssistLookAheadSampleCount; i++)
+        {
+            float t = StepAssistLookAheadSampleCount == 1 ? 1f : (float)i / (StepAssistLookAheadSampleCount - 1);
+            float distance = Mathf.Lerp(startDistance, endDistance, t);
+            Vector3 sampleOrigin = foot + moveDir * distance;
+            if (!TrySampleGround(sampleOrigin, up, probeUp, probeDown, walkableMask, false, out StepGroundSample aheadGround))
+            {
+                continue;
+            }
+
+            if (IsStepSurfaceCollider(aheadGround.collider))
+            {
+                continue;
+            }
+
+            float delta = Vector3.Dot(aheadGround.point - currentGround.point, up);
+            if (delta > maxUp + 0.01f || delta < -maxDown - 0.01f)
+            {
+                continue;
+            }
+
+            targetHeightDelta = delta;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TrySampleGround(Vector3 origin, Vector3 up, float maxUp, float maxDown, int mask, bool requireStepSurface, out StepGroundSample sample)
     {
         sample = default;
         float upRange = Mathf.Max(0.02f, maxUp);
@@ -1570,6 +1776,11 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             Collider col = stepCastHits[i].collider;
             if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            if (requireStepSurface && !IsStepSurfaceCollider(col))
             {
                 continue;
             }
@@ -1603,6 +1814,23 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool IsStepSurfaceCollider(Collider collider)
+    {
+        if (collider == null)
+        {
+            return false;
+        }
+
+        int stairMask = GetStepMask();
+        if (stairMask == 0)
+        {
+            return false;
+        }
+
+        int colliderLayerBit = 1 << collider.gameObject.layer;
+        return (stairMask & colliderLayerBit) != 0;
     }
 
     private void UpdateGroundedState()
@@ -1669,6 +1897,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool HasStepClearance(Vector3 bottomCenter, float radius, float height, Vector3 up, Vector3 moveDir, float stepUp, float castDistance, int mask)
     {
+        if (mask == 0)
+        {
+            return true;
+        }
+
         float castRadius = Mathf.Max(0.01f, radius - stepRadiusPadding);
         float upperRadius = stepUpperRadius > 0f ? stepUpperRadius : castRadius;
         float capsuleSegment = Mathf.Max(0f, height - (radius * 2f));
@@ -1716,6 +1949,11 @@ public partial class SquadCharacterController : MonoBehaviour
                 rigidbodyTarget.linearVelocity = velocity;
             }
         }
+    }
+
+    private void ResetStepAssistSmoothing()
+    {
+        stepVerticalSmoothVelocity = 0f;
     }
 
     private void LogStepDebug(string message)
@@ -1797,6 +2035,11 @@ public partial class SquadCharacterController : MonoBehaviour
             return footIkLayerMask;
         }
 
+        return GetCollisionMatrixMask();
+    }
+
+    private int GetCollisionMatrixMask()
+    {
         int mask = 0;
         int layer = gameObject.layer;
         for (int i = 0; i < 32; i++)
@@ -1838,22 +2081,23 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private int GetStepMask()
     {
+        int mask = stepLayerMask.value;
+        if (mask == 0)
+        {
+            return 0;
+        }
+
         if (!stepUseCollisionMatrixMask)
         {
-            return stepLayerMask;
+            return mask;
         }
 
-        int mask = 0;
-        int layer = gameObject.layer;
-        for (int i = 0; i < 32; i++)
-        {
-            if (!Physics.GetIgnoreLayerCollision(layer, i))
-            {
-                mask |= 1 << i;
-            }
-        }
+        return mask & GetCollisionMatrixMask();
+    }
 
-        return mask;
+    private int GetStepBlockingMask()
+    {
+        return GetCollisionMatrixMask() & ~GetStepMask();
     }
 
     private bool IsGroundedForStep(Vector3 bottom, float radius, Vector3 up, int mask)

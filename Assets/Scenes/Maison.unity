@@ -973,6 +973,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stairs_Wall_02 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 2119875296341517701, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_LocalScale.x
       value: 2.28
@@ -1984,7 +1988,7 @@ GameObject:
   m_Component:
   - component: {fileID: 134424851}
   - component: {fileID: 134424852}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stairs_Angel_Of_Justice
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2223,6 +2227,10 @@ PrefabInstance:
     - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7896,7 +7904,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 958213802}
@@ -9522,6 +9530,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Stairs_01_Sml
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 39620096eaa29594e97de532169fc6f1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9958,6 +9970,10 @@ PrefabInstance:
     - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11022,6 +11038,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stairs_Wall_01 Variant 1_2
       objectReference: {fileID: 0}
+    - target: {fileID: 4358448674291551344, guid: 95c5318d7dee0704fb70b5915bfeaa16, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11895,7 +11915,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.94831735, y: 0.94831735, z: 0.94831735}
+  m_LocalScale: {x: 0.9532716, y: 0.9532716, z: 0.9532716}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -11983,9 +12003,9 @@ MonoBehaviour:
   placement: 0
   rightOffset: {x: 20, y: 0}
   useTextBoundsForRightOffset: 0
+  rightPlacementTextOverride: {fileID: 0}
+  rightTextMargin: 20
   matchTargetSize: 1
-  createCursorIfMissing: 1
-  cursorSprite: {fileID: 0}
   moveSfx: {fileID: 0}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
@@ -17469,7 +17489,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 491975040}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stairs_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18378,6 +18398,10 @@ PrefabInstance:
     - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_Name
       value: Stairs_Wall_02 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2119875296341517701, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -24513,7 +24537,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7713829, y: 1.7713829, z: 1.7713829}
+  m_LocalScale: {x: 1.9049464, y: 1.9049464, z: 1.9049464}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -24601,9 +24625,9 @@ MonoBehaviour:
   placement: 0
   rightOffset: {x: 20, y: 0}
   useTextBoundsForRightOffset: 0
+  rightPlacementTextOverride: {fileID: 0}
+  rightTextMargin: 20
   matchTargetSize: 1
-  createCursorIfMissing: 1
-  cursorSprite: {fileID: 0}
   moveSfx: {fileID: 0}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
@@ -31881,6 +31905,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_1
       objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
       value: -10.04
@@ -32116,6 +32144,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_5
       objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
       value: -17.82
@@ -32175,7 +32207,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 807150404}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stairs_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -32871,7 +32903,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 874028259}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Walls
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -37971,6 +38003,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Stairs_01_Sml_2
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 39620096eaa29594e97de532169fc6f1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -39353,6 +39389,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stairs_Wall_02 Variant_3
       objectReference: {fileID: 0}
+    - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 2119875296341517701, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_LocalPosition.x
       value: -6.0999985
@@ -39688,6 +39728,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
       value: -13.890001
@@ -39840,6 +39884,10 @@ PrefabInstance:
     - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
@@ -48239,6 +48287,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_7
       objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
       value: -10.039999
@@ -48890,6 +48942,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stairs_Wall_01 Variant 1_3
       objectReference: {fileID: 0}
+    - target: {fileID: 4358448674291551344, guid: 95c5318d7dee0704fb70b5915bfeaa16, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -49118,7 +49174,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1540903982}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stairs_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -50979,7 +51035,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1639276822}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stairs_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -61091,6 +61147,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stairs_Wall_02 Variant_1
       objectReference: {fileID: 0}
+    - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 2119875296341517701, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_LocalPosition.x
       value: -6.0999994
@@ -66453,9 +66513,9 @@ MonoBehaviour:
   placement: 0
   rightOffset: {x: 20, y: 0}
   useTextBoundsForRightOffset: 0
+  rightPlacementTextOverride: {fileID: 0}
+  rightTextMargin: 20
   matchTargetSize: 1
-  createCursorIfMissing: 1
-  cursorSprite: {fileID: 0}
   moveSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
@@ -66606,6 +66666,10 @@ PrefabInstance:
     - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_Name
       value: Wall_Stone_01_Sml Variant_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1175867769559953386, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
@@ -79246,6 +79310,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stairs_Wall_01 Variant 1_1
       objectReference: {fileID: 0}
+    - target: {fileID: 4358448674291551344, guid: 95c5318d7dee0704fb70b5915bfeaa16, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -79389,6 +79457,10 @@ PrefabInstance:
     - target: {fileID: 4358448674291551344, guid: 88eb1438a678c464bb378cd898512166, type: 3}
       propertyPath: m_Name
       value: Stairs_Wall_01 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 4358448674291551344, guid: 88eb1438a678c464bb378cd898512166, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -80196,6 +80268,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Stairs_01_Sml_1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 39620096eaa29594e97de532169fc6f1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -80593,6 +80669,10 @@ PrefabInstance:
     - target: {fileID: 4358448674291551344, guid: 95c5318d7dee0704fb70b5915bfeaa16, type: 3}
       propertyPath: m_Name
       value: Stairs_Wall_01 Variant 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4358448674291551344, guid: 95c5318d7dee0704fb70b5915bfeaa16, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -85301,6 +85381,10 @@ PrefabInstance:
     - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_Name
       value: Stairs_Wall_02 Variant_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1594450143447334719, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2119875296341517701, guid: 5f18c7d9e5e633b42a627b84040f957c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -90592,7 +90676,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.2144227, y: 2.2144227, z: 2.2144227}
+  m_LocalScale: {x: 2.3813918, y: 2.3813918, z: 2.3813918}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}
@@ -90680,9 +90764,9 @@ MonoBehaviour:
   placement: 0
   rightOffset: {x: 20, y: 0}
   useTextBoundsForRightOffset: 0
+  rightPlacementTextOverride: {fileID: 0}
+  rightTextMargin: 20
   matchTargetSize: 1
-  createCursorIfMissing: 1
-  cursorSprite: {fileID: 0}
   moveSfx: {fileID: 0}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5

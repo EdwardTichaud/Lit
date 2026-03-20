@@ -213,7 +213,7 @@ public class VirtualKeyboardCursorController : MonoBehaviour
 
         if (controller != null)
         {
-            controller.UI_CancelNewGame();
+            controller.UI_TryCancelVirtualKeyboard();
         }
     }
 

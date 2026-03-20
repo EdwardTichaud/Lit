@@ -15882,24 +15882,26 @@ MonoBehaviour:
     m_Bits: 4294967295
   voidUseCollisionMatrixMask: 1
   enableStepAssist: 1
-  stepHeight: 1
-  stepCheckDistance: 0.25
-  stepUpSpeed: 4
+  stepHeight: 0.55
+  stepCheckDistance: 0.35
+  stepUpSpeed: 7
   stepDownHeight: 0
   stepDownSpeed: 0
-  stepHeightTolerance: 0.15
+  stepUpSmoothTime: 0.08
+  stepDownSmoothTime: 0.1
+  stepHeightTolerance: 0.05
   stepMinHeight: 0.05
-  stepMaxUpVelocity: 0
-  requireGroundForStep: 0
+  stepMaxUpVelocity: 1.5
+  requireGroundForStep: 1
   stepUpperRadius: 0
   stepUpperHeightOffset: 0.02
-  stepForwardBoost: 0.03
+  stepForwardBoost: 0
   stepRadiusPadding: 0.02
   stepGroundCheckDistance: 0.15
   stepLayerMask:
     serializedVersion: 2
-    m_Bits: 136
-  stepUseCollisionMatrixMask: 1
+    m_Bits: 128
+  stepUseCollisionMatrixMask: 0
   stepDebugLogs: 1
   stepDebugCooldown: 0.5
   enableFootIk: 1

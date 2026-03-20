@@ -2259,7 +2259,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5410697229499434688, guid: 59e8b8dc620f507499b3d0d5a0a604a0, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7595554728449620270, guid: 59e8b8dc620f507499b3d0d5a0a604a0, type: 3}
       propertyPath: m_SortingLayer
@@ -2533,7 +2533,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000021844719}
+  m_AnchoredPosition: {x: 0, y: 0.000998253}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &785104526
@@ -2704,7 +2704,7 @@ MonoBehaviour:
   titleCardProceedSfx: {fileID: 11400000, guid: ab316721e18d8f94c942fb58e32d0131, type: 2}
   titleCardIntroDelay: 1
   titleCardParticleLeadDelay: 3
-  titleCardIntroDuration: 5
+  titleCardIntroDuration: 0
   titleCardInputEnableDelay: 5
   titleCardParticleSortingLayerName: UI
   titleCardParticleSortingOrder: 100
@@ -6515,7 +6515,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2063844794}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99406767
+  m_Size: 0.9999987
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -11530,7 +11530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2115927368
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11561,9 +11561,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2115927367}
   m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!1 &2128282184
 GameObject:
@@ -20611,7 +20611,7 @@ RectTransform:
   m_GameObject: {fileID: 170974880744051482}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3898646, y: 1.3898646, z: 1.3898646}
+  m_LocalScale: {x: 1.4796307, y: 1.4796307, z: 1.4796307}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4010461551893436198}

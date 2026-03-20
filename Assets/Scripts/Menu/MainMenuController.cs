@@ -188,8 +188,12 @@ public class MainMenuController : MonoBehaviour
     private Coroutine titleCardIntroRoutine;
     private NetcodeSessionEndpoint activeJoinEndpoint;
     private bool titleCardIntroPlayed;
+    private bool titleCardIntroInputLocked;
     private Transform titleCardParticleRuntimeRoot;
     private bool titleCardParticleRootsPrepared;
+    private bool cachedTitleCardCursorAllowInput;
+    private bool cachedTitleCardCursorNavigatorEnabled;
+    private bool titleCardCursorStateCached;
 
     private void Awake()
     {
@@ -200,6 +204,7 @@ public class MainMenuController : MonoBehaviour
         MainMenuInputSettings.ApplySavedModeIfNeeded();
         EnsureSaveManager();
         ResolveOptionalReferences();
+        ApplyInitialMenuVisibility();
         ConfigureNewGameActions();
         ConfigureJoinActions();
         ConfigureLoadConfirmActions();
@@ -266,6 +271,11 @@ public class MainMenuController : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        if (titleCardIntroInputLocked)
+        {
+            return;
+        }
+
         if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
         {
             return;
@@ -292,6 +302,16 @@ public class MainMenuController : MonoBehaviour
 
     private void OnReturnPerformed(InputAction.CallbackContext context)
     {
+        if (titleCardIntroInputLocked)
+        {
+            return;
+        }
+
+        if (TryCancelVirtualKeyboard())
+        {
+            return;
+        }
+
         if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
         {
             return;
@@ -302,6 +322,11 @@ public class MainMenuController : MonoBehaviour
 
     private void OnToggleTorchPerformed(InputAction.CallbackContext context)
     {
+        if (titleCardIntroInputLocked)
+        {
+            return;
+        }
+
         if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
         {
             return;
@@ -535,6 +560,7 @@ public class MainMenuController : MonoBehaviour
             else
             {
                 CancelTitleCardIntro();
+                SetTitleCardIntroInputLock(false);
                 SetTitleCardParticleRootsVisible(false);
                 HidePanel(titleCardGroup);
             }
@@ -920,12 +946,14 @@ public class MainMenuController : MonoBehaviour
             CancelTitleCardIntro();
             ApplyFadeImmediate(group, 0f, false);
             SetTitleCardParticleRootsVisible(false);
+            SetTitleCardIntroInputLock(true);
             waitingForInput = false;
             titleCardIntroRoutine = StartCoroutine(ShowTitleCardIntroRoutine(group));
             titleCardIntroPlayed = true;
         }
         else
         {
+            SetTitleCardIntroInputLock(false);
             SetTitleCardParticleRootsVisible(true);
             RestartTitleCardParticleSystems();
             PlayTitleCardParticleSfx();
@@ -964,6 +992,69 @@ public class MainMenuController : MonoBehaviour
         titleCardIntroRoutine = null;
     }
 
+    private void ApplyInitialMenuVisibility()
+    {
+        ApplyFadeImmediate(titleCardGroup, 0f, false);
+        ApplyFadeImmediate(gameOptionsGroup, 0f, false);
+        ApplyFadeImmediate(soloOptionsGroup, 0f, false);
+        ApplyFadeImmediate(multiOptionsGroup, 0f, false);
+        ApplyFadeImmediate(optionsGroup, 0f, false);
+        ApplyFadeImmediate(joinPanelGroup, 0f, false);
+        ApplyFadeImmediate(ResolveLoadMenuGroup(), 0f, false);
+        SetTitleCardParticleRootsVisible(false);
+        SetSharedCursorChildrenActive(false);
+        SetTitleCardIntroInputLock(waitForAnyInput && titleCardGroup != null && !titleCardIntroPlayed);
+    }
+
+    private void SetTitleCardIntroInputLock(bool locked)
+    {
+        titleCardIntroInputLocked = locked;
+
+        if (sharedCursor == null && sharedCursorNavigator == null)
+        {
+            return;
+        }
+
+        if (locked)
+        {
+            if (!titleCardCursorStateCached)
+            {
+                cachedTitleCardCursorAllowInput = sharedCursor != null && sharedCursor.allowInput;
+                cachedTitleCardCursorNavigatorEnabled = sharedCursorNavigator != null && sharedCursorNavigator.enabled;
+                titleCardCursorStateCached = true;
+            }
+
+            if (sharedCursor != null)
+            {
+                sharedCursor.allowInput = false;
+            }
+
+            if (sharedCursorNavigator != null)
+            {
+                sharedCursorNavigator.enabled = false;
+            }
+
+            return;
+        }
+
+        if (!titleCardCursorStateCached)
+        {
+            return;
+        }
+
+        if (sharedCursor != null)
+        {
+            sharedCursor.allowInput = cachedTitleCardCursorAllowInput;
+        }
+
+        if (sharedCursorNavigator != null)
+        {
+            sharedCursorNavigator.enabled = cachedTitleCardCursorNavigatorEnabled;
+        }
+
+        titleCardCursorStateCached = false;
+    }
+
     private void ShowVirtualKeyboard()
     {
         if (virtualKeyboardGroup != null)
@@ -999,6 +1090,42 @@ public class MainMenuController : MonoBehaviour
         {
             virtualKeyboardRoot.gameObject.SetActive(false);
         }
+    }
+
+    private bool IsVirtualKeyboardVisible()
+    {
+        if (virtualKeyboardRoot != null && virtualKeyboardRoot.gameObject.activeInHierarchy)
+        {
+            return true;
+        }
+
+        return virtualKeyboardGroup != null
+            && virtualKeyboardGroup.gameObject.activeInHierarchy
+            && virtualKeyboardGroup.alpha > 0.001f;
+    }
+
+    private bool TryCancelVirtualKeyboard()
+    {
+        if (!IsVirtualKeyboardVisible())
+        {
+            return false;
+        }
+
+        if (newGamePromptOpen)
+        {
+            CancelNewGame();
+            return true;
+        }
+
+        if (currentMenu == MenuState.Join)
+        {
+            CancelJoin();
+            return true;
+        }
+
+        HideVirtualKeyboard();
+        UpdateCursorTarget();
+        return true;
     }
 
     private void ApplyVirtualKeyboardImmediate(bool show)
@@ -1200,6 +1327,7 @@ public class MainMenuController : MonoBehaviour
         group.alpha = 1f;
         group.interactable = true;
         group.blocksRaycasts = true;
+        SetTitleCardIntroInputLock(false);
         titleCardIntroRoutine = null;
         waitingForInput = waitForAnyInput && currentMenu == MenuState.TitleCard;
     }
@@ -3856,6 +3984,11 @@ public class MainMenuController : MonoBehaviour
     public void UI_CancelNewGame()
     {
         CancelNewGame();
+    }
+
+    public bool UI_TryCancelVirtualKeyboard()
+    {
+        return TryCancelVirtualKeyboard();
     }
 
     public void UI_ConfirmLoad()
