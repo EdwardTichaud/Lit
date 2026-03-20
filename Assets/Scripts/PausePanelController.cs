@@ -136,7 +136,7 @@ public class PausePanelController : MonoBehaviour
             return;
         }
 
-        if (InputFocusStack.HasAnyFocus() && !InputFocusStack.HasFocus(this))
+        if (!HasPauseInputFocus())
         {
             return;
         }
@@ -148,10 +148,20 @@ public class PausePanelController : MonoBehaviour
     {
         if (isOpen)
         {
-            return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this);
+            return HasPauseInputFocus();
         }
 
         return true;
+    }
+
+    private bool HasPauseInputFocus()
+    {
+        if (!InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
+        {
+            return true;
+        }
+
+        return cursorNavigator != null && cursorNavigator.HasInputFocus();
     }
 
     public void OpenPanel()

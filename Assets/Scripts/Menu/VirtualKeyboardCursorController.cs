@@ -174,6 +174,8 @@ public class VirtualKeyboardCursorController : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         if (currentHandler != null)
         {
             currentHandler.OnCursorSubmit();

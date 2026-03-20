@@ -402,6 +402,11 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (depositQuantityActive || placementActive || inventoryOpen)
+        {
+            LocalInputRouter.ConsumeInteract();
+        }
+
         if (depositQuantityActive)
         {
             ConfirmDepositQuantity();

@@ -95,6 +95,8 @@ public class MenuCursorNavigator : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         if (currentHandler != null)
         {
             currentHandler.OnCursorSubmit();
@@ -132,9 +134,9 @@ public class MenuCursorNavigator : MonoBehaviour
         }
     }
 
-    private bool CanProcessInput()
+    public bool HasInputFocus()
     {
-        if (!isActiveAndEnabled || cursor == null)
+        if (!isActiveAndEnabled)
         {
             return false;
         }
@@ -146,6 +148,16 @@ public class MenuCursorNavigator : MonoBehaviour
 
         ResolveFocusTarget();
         return InputFocusStack.HasFocus(focusTarget);
+    }
+
+    private bool CanProcessInput()
+    {
+        if (!isActiveAndEnabled || cursor == null)
+        {
+            return false;
+        }
+
+        return HasInputFocus();
     }
 
     private void ResolveFocusTarget()

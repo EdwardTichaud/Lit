@@ -1739,7 +1739,7 @@ RectTransform:
   m_GameObject: {fileID: 535243508}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7433617, y: 1.7433617, z: 1.7433617}
+  m_LocalScale: {x: 1.7128714, y: 1.7128714, z: 1.7128714}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2115927368}
@@ -2533,7 +2533,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0009962902}
+  m_AnchoredPosition: {x: 0, y: 0.000021844719}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &785104526
@@ -2703,9 +2703,9 @@ MonoBehaviour:
   fadeUseUnscaledTime: 1
   titleCardProceedSfx: {fileID: 11400000, guid: ab316721e18d8f94c942fb58e32d0131, type: 2}
   titleCardIntroDelay: 1
-  titleCardParticleLeadDelay: 2
-  titleCardIntroDuration: 2
-  titleCardInputEnableDelay: 2
+  titleCardParticleLeadDelay: 3
+  titleCardIntroDuration: 5
+  titleCardInputEnableDelay: 5
   titleCardParticleSortingLayerName: UI
   titleCardParticleSortingOrder: 100
   titleCardParticleSfx:
@@ -6515,7 +6515,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2063844794}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999987
+  m_Size: 0.99406767
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -20611,7 +20611,7 @@ RectTransform:
   m_GameObject: {fileID: 170974880744051482}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.414605, y: 1.414605, z: 1.414605}
+  m_LocalScale: {x: 1.3898646, y: 1.3898646, z: 1.3898646}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4010461551893436198}

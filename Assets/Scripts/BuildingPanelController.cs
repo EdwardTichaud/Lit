@@ -772,6 +772,11 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
+        if (placementActive || panelOpen)
+        {
+            LocalInputRouter.ConsumeInteract();
+        }
+
         if (placementActive)
         {
             TryConfirmPlacement();

@@ -273,6 +273,7 @@ public class MainMenuController : MonoBehaviour
 
         if (deleteConfirmOpen)
         {
+            LocalInputRouter.ConsumeInteract();
             ConfirmDelete();
             return;
         }
@@ -284,6 +285,7 @@ public class MainMenuController : MonoBehaviour
 
         if (hoveredSessionEntry != null && IsCursorOnSessionsRoot())
         {
+            LocalInputRouter.ConsumeInteract();
             OnSessionInteract(hoveredSessionEntry);
         }
     }
@@ -907,9 +909,18 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        if (fadeRoutines.TryGetValue(group, out Coroutine runningFade) && runningFade != null)
+        {
+            StopCoroutine(runningFade);
+            fadeRoutines.Remove(group);
+        }
+
         if (!titleCardIntroPlayed)
         {
             CancelTitleCardIntro();
+            ApplyFadeImmediate(group, 0f, false);
+            SetTitleCardParticleRootsVisible(false);
+            waitingForInput = false;
             titleCardIntroRoutine = StartCoroutine(ShowTitleCardIntroRoutine(group));
             titleCardIntroPlayed = true;
         }
@@ -1121,62 +1132,72 @@ public class MainMenuController : MonoBehaviour
             fadeRoutines.Remove(group);
         }
 
-        group.gameObject.SetActive(true);
-        group.alpha = 0f;
-        group.interactable = false;
-        group.blocksRaycasts = false;
+        ApplyFadeImmediate(group, 0f, false);
+        SetTitleCardParticleRootsVisible(false);
 
-        float delay = Mathf.Max(0f, titleCardIntroDelay);
-        if (delay > 0f)
-        {
-            float elapsedDelay = 0f;
-            while (elapsedDelay < delay)
-            {
-                elapsedDelay += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                yield return null;
-            }
-        }
-
-        SetTitleCardParticleRootsVisible(true);
-        RestartTitleCardParticleSystems();
-        PlayTitleCardParticleSfx();
-
+        float introDelay = Mathf.Max(0f, titleCardIntroDelay);
         float particleLeadDelay = Mathf.Max(0f, titleCardParticleLeadDelay);
-        if (particleLeadDelay > 0f)
+        float inputEnableDelay = Mathf.Max(0f, titleCardInputEnableDelay);
+        float duration = Mathf.Max(0.01f, titleCardIntroDuration);
+        bool hasParticles = false;
+        if (titleCardParticleRoots != null)
         {
-            float elapsedParticleLeadDelay = 0f;
-            while (elapsedParticleLeadDelay < particleLeadDelay)
+            for (int i = 0; i < titleCardParticleRoots.Count; i++)
             {
-                elapsedParticleLeadDelay += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                yield return null;
+                if (titleCardParticleRoots[i] != null)
+                {
+                    hasParticles = true;
+                    break;
+                }
             }
         }
 
-        float duration = Mathf.Max(0.01f, titleCardIntroDuration);
         float elapsed = 0f;
-        while (elapsed < duration)
+        bool particlesStarted = !hasParticles;
+        bool fadeStarted = false;
+        bool inputDelayReached = inputEnableDelay <= 0f;
+        while (true)
         {
-            float t = Mathf.Clamp01(elapsed / duration);
-            group.alpha = t;
+            if (!particlesStarted && elapsed >= particleLeadDelay)
+            {
+                SetTitleCardParticleRootsVisible(true);
+                RestartTitleCardParticleSystems();
+                PlayTitleCardParticleSfx();
+                particlesStarted = true;
+            }
+
+            if (!fadeStarted && elapsed >= introDelay)
+            {
+                group.gameObject.SetActive(true);
+                group.alpha = 0f;
+                group.interactable = false;
+                group.blocksRaycasts = false;
+                fadeStarted = true;
+            }
+
+            if (fadeStarted)
+            {
+                float fadeElapsed = Mathf.Clamp(elapsed - introDelay, 0f, duration);
+                group.alpha = Mathf.Clamp01(fadeElapsed / duration);
+            }
+
+            if (!inputDelayReached && elapsed >= inputEnableDelay)
+            {
+                inputDelayReached = true;
+            }
+
+            bool fadeComplete = fadeStarted && elapsed >= introDelay + duration;
+            if (particlesStarted && fadeComplete && inputDelayReached)
+            {
+                break;
+            }
+
             elapsed += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             yield return null;
         }
 
+        group.gameObject.SetActive(true);
         group.alpha = 1f;
-        group.interactable = false;
-        group.blocksRaycasts = false;
-
-        float inputEnableDelay = Mathf.Max(0f, titleCardInputEnableDelay);
-        if (inputEnableDelay > 0f)
-        {
-            float elapsedInputEnableDelay = 0f;
-            while (elapsedInputEnableDelay < inputEnableDelay)
-            {
-                elapsedInputEnableDelay += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                yield return null;
-            }
-        }
-
         group.interactable = true;
         group.blocksRaycasts = true;
         titleCardIntroRoutine = null;

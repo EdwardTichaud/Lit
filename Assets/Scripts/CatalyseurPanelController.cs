@@ -198,6 +198,8 @@ public class CatalyseurPanelController : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         OptionEntry entry = GetSelectedOption();
         if (entry != null && entry.Button != null)
         {

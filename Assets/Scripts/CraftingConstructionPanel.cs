@@ -227,6 +227,8 @@ public class CraftingConstructionPanel : MonoBehaviour
             return;
         }
 
+        LocalInputRouter.ConsumeInteract();
+
         CraftingSlotUI slot = currentFocusedSlot;
         if (slot == null || slot.CraftItem == null || currentController == null || currentBuilding == null)
         {
