@@ -15852,9 +15852,9 @@ MonoBehaviour:
   characterController: {fileID: 0}
   motionRoot: {fileID: 2233782780378164146}
   speedParam: Speed
-  speedDampTime: 0.1
-  useSpeedDamping: 0
-  useDiscreteLocomotion: 1
+  speedDampTime: 0.08
+  useSpeedDamping: 1
+  useDiscreteLocomotion: 0
   walkSpeedThreshold: 0.1
   runSpeedThreshold: 1
   idleAnimValue: 0
@@ -15908,7 +15908,7 @@ MonoBehaviour:
   footIkWeight: 1
   footIkPositionWeight: 1
   footIkRotationWeight: 1
-  footIkSpeedThreshold: 0.15
+  footIkSpeedThreshold: 2.6
   footIkBlendSpeed: 10
   footIkHeightOffset: 0.02
   footIkRaycastUp: 0.25

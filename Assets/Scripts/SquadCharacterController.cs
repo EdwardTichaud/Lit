@@ -13,12 +13,14 @@ public partial class SquadCharacterController : MonoBehaviour
         Unequip
     }
 
-    private const int TorchAnimationLayerIndex = 0;
+    private const string TorchAnimationLayerName = "Upper Body Torch";
     private const float TorchAnimationStateFallbackDelay = 0.2f;
     private const float TorchAnimationVisualDelay = 0.5f;
     private const int StepAssistLookAheadSampleCount = 3;
     private const float StepAssistSurfaceDeadZone = 0.01f;
     private static readonly int TorchEquipStateHash = Animator.StringToHash("Torch_Equip");
+    private static readonly int TorchLocomotionStateHash = Animator.StringToHash("Torch_Locomotion");
+    private static readonly int TorchOffStateHash = Animator.StringToHash("Torch_Off");
     private static readonly int TorchUnequipStateHash = Animator.StringToHash("Torch_Unequip");
 
     [Header("Inventory")]
@@ -199,6 +201,12 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool torchStartsActive = true;
     [SerializeField, Tooltip("Lit l'etat depuis la hierarchie.")]
     private bool initializeTorchFromHierarchy = true;
+    [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche a l'arret.")]
+    private float torchUpperBodyIdleLayerWeight = 0.92f;
+    [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche en locomotion rapide.")]
+    private float torchUpperBodyMovingLayerWeight = 0.76f;
+    [SerializeField, Tooltip("Vitesse de lissage du poids du layer torche.")]
+    private float torchUpperBodyLayerWeightResponsiveness = 10f;
 
     [Header("External Forces")]
     [SerializeField, Tooltip("Temps de blocage input apres une force externe.")]
@@ -289,6 +297,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private void LateUpdate()
     {
         UpdateTorchVisualTransition();
+        UpdateTorchAnimationLayerWeight();
     }
 
     private void Awake()
@@ -2211,7 +2220,8 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (useSpeedDamping)
         {
-            animator.SetFloat(speedParam, speed, speedDampTime, Time.deltaTime);
+            float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
+            animator.SetFloat(speedParam, speed, speedDampTime, deltaTime);
         }
         else
         {
@@ -2237,7 +2247,9 @@ public partial class SquadCharacterController : MonoBehaviour
             if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
             {
                 animator.SetBool(torchBoolParam, false);
+                SyncTorchAnimationStateImmediate();
             }
+            UpdateTorchAnimationLayerWeight(immediate: true);
             return;
         }
 
@@ -2255,7 +2267,10 @@ public partial class SquadCharacterController : MonoBehaviour
         if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
         {
             animator.SetBool(torchBoolParam, torchEquipped);
+            SyncTorchAnimationStateImmediate();
         }
+
+        UpdateTorchAnimationLayerWeight(immediate: true);
 
         if (torchSecondsRemaining <= 0 && torchEquipped)
         {
@@ -2264,7 +2279,9 @@ public partial class SquadCharacterController : MonoBehaviour
             if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
             {
                 animator.SetBool(torchBoolParam, false);
+                SyncTorchAnimationStateImmediate();
             }
+            UpdateTorchAnimationLayerWeight(immediate: true);
         }
     }
 
@@ -2376,6 +2393,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         QueueTorchVisualTransition(equipped);
+        UpdateTorchAnimationLayerWeight(immediate: true);
 
         SyncTorchStateToCharacterData();
     }
@@ -2399,6 +2417,7 @@ public partial class SquadCharacterController : MonoBehaviour
         if (torchVisualEquipped == equipped)
         {
             ClearPendingTorchVisualTransition();
+            UpdateTorchAnimationLayerWeight(immediate: true);
             return;
         }
 
@@ -2406,12 +2425,14 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             ApplyTorchVisualState(equipped);
             ClearPendingTorchVisualTransition();
+            UpdateTorchAnimationLayerWeight(immediate: true);
             return;
         }
 
         pendingTorchVisualTransition = equipped ? TorchVisualTransition.Equip : TorchVisualTransition.Unequip;
         torchVisualTransitionStateObserved = false;
         torchVisualTransitionTimer = 0f;
+        UpdateTorchAnimationLayerWeight(immediate: true);
     }
 
     private void UpdateTorchVisualTransition()
@@ -2460,15 +2481,14 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool CanDelayTorchVisualTransition()
     {
-        return animator != null
-            && animator.isActiveAndEnabled
-            && animator.layerCount > TorchAnimationLayerIndex
+        return GetTorchAnimationLayerIndex() >= 0
             && !string.IsNullOrWhiteSpace(torchBoolParam);
     }
 
     private bool IsTorchAnimationStateActive(TorchVisualTransition transition)
     {
-        if (animator == null || animator.layerCount <= TorchAnimationLayerIndex)
+        int layerIndex = GetTorchAnimationLayerIndex();
+        if (layerIndex < 0)
         {
             return false;
         }
@@ -2477,13 +2497,79 @@ public partial class SquadCharacterController : MonoBehaviour
             ? TorchEquipStateHash
             : TorchUnequipStateHash;
 
-        if (MatchesTorchAnimationState(animator.GetCurrentAnimatorStateInfo(TorchAnimationLayerIndex), stateHash))
+        if (MatchesTorchAnimationState(animator.GetCurrentAnimatorStateInfo(layerIndex), stateHash))
         {
             return true;
         }
 
-        return animator.IsInTransition(TorchAnimationLayerIndex)
-            && MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(TorchAnimationLayerIndex), stateHash);
+        return animator.IsInTransition(layerIndex)
+            && MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash);
+    }
+
+    private int GetTorchAnimationLayerIndex()
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            return -1;
+        }
+
+        return animator.GetLayerIndex(TorchAnimationLayerName);
+    }
+
+    private void SyncTorchAnimationStateImmediate()
+    {
+        int layerIndex = GetTorchAnimationLayerIndex();
+        if (layerIndex < 0)
+        {
+            return;
+        }
+
+        int stateHash = torchEquipped ? TorchLocomotionStateHash : TorchOffStateHash;
+        animator.Play(stateHash, layerIndex, 0f);
+    }
+
+    private void UpdateTorchAnimationLayerWeight(bool immediate = false)
+    {
+        int layerIndex = GetTorchAnimationLayerIndex();
+        if (layerIndex < 0)
+        {
+            return;
+        }
+
+        float targetWeight = ResolveTorchAnimationLayerWeightTarget();
+        float nextWeight = targetWeight;
+
+        if (!immediate && Application.isPlaying)
+        {
+            float currentWeight = animator.GetLayerWeight(layerIndex);
+            if (torchUpperBodyLayerWeightResponsiveness > 0f)
+            {
+                float t = 1f - Mathf.Exp(-torchUpperBodyLayerWeightResponsiveness * Time.deltaTime);
+                nextWeight = Mathf.Lerp(currentWeight, targetWeight, t);
+            }
+        }
+
+        if (!Mathf.Approximately(animator.GetLayerWeight(layerIndex), nextWeight))
+        {
+            animator.SetLayerWeight(layerIndex, nextWeight);
+        }
+    }
+
+    private float ResolveTorchAnimationLayerWeightTarget()
+    {
+        if (pendingTorchVisualTransition != TorchVisualTransition.None)
+        {
+            return 1f;
+        }
+
+        if (!torchEquipped)
+        {
+            return 0f;
+        }
+
+        float maxMoveSpeed = Mathf.Max(0.01f, moveSpeed);
+        float normalizedSpeed = Mathf.Clamp01(GetCurrentHorizontalVelocity().magnitude / maxMoveSpeed);
+        return Mathf.Lerp(torchUpperBodyIdleLayerWeight, torchUpperBodyMovingLayerWeight, normalizedSpeed);
     }
 
     private static bool MatchesTorchAnimationState(AnimatorStateInfo stateInfo, int stateHash)
@@ -2496,6 +2582,7 @@ public partial class SquadCharacterController : MonoBehaviour
         pendingTorchVisualTransition = TorchVisualTransition.None;
         torchVisualTransitionStateObserved = false;
         torchVisualTransitionTimer = 0f;
+        UpdateTorchAnimationLayerWeight(immediate: true);
     }
 
     private Item GetTorchItem()
@@ -2661,9 +2748,10 @@ public partial class SquadCharacterController : MonoBehaviour
         string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
 
         Vector3 velocity = GetCurrentHorizontalVelocity();
-        float velocitySpeed = moveSpeed > 0f ? velocity.magnitude / moveSpeed : 0f;
-        float inputSpeed = smoothedInput.magnitude;
-        float previewSpeed = smoothedAnimationPreviewInput.magnitude;
+        float velocitySpeed = velocity.magnitude;
+        float targetMoveSpeed = Mathf.Max(0f, moveSpeed);
+        float inputSpeed = Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed;
+        float previewSpeed = Mathf.Clamp01(smoothedAnimationPreviewInput.magnitude) * targetMoveSpeed;
 
         float rawSpeed = animationDriverMode == "local"
             ? Mathf.Max(previewSpeed, velocitySpeed)
@@ -2818,11 +2906,12 @@ public partial class SquadCharacterController : MonoBehaviour
         string movementMode = NetcodePlayerUtils.ResolveMovementMode(controlState, followerAiEnabled: false, waitingPointEnabled: false);
         string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
         Vector3 velocity = GetCurrentHorizontalVelocity();
-        float velocitySpeed = moveSpeed > 0f ? velocity.magnitude / moveSpeed : 0f;
-        float previewSpeed = smoothedAnimationPreviewInput.magnitude;
+        float velocitySpeed = velocity.magnitude;
+        float targetMoveSpeed = Mathf.Max(0f, moveSpeed);
+        float previewSpeed = Mathf.Clamp01(smoothedAnimationPreviewInput.magnitude) * targetMoveSpeed;
         float rawSpeed = animationDriverMode == "local"
             ? Mathf.Max(previewSpeed, velocitySpeed)
-            : (useVelocityForAnimation ? velocitySpeed : smoothedInput.magnitude);
+            : (useVelocityForAnimation ? velocitySpeed : Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed);
         float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
 
         LogAnimationStatus(
