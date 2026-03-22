@@ -19,7 +19,7 @@ public class CameraController : MonoBehaviour
     [Tooltip("Sommet actuel de la pile d'override de focus.")]
     public Transform followOverrideTarget;
     [Tooltip("Offset applique a la cible courante.")]
-    public Vector3 targetOffset = new Vector3(0f, 1.5f, 0f);
+    public Vector3 targetOffset = new Vector3(0f, 1.8f, 0f);
     [Tooltip("Offset applique a une cible temporaire d'override.")]
     public Vector3 overrideTargetOffset = Vector3.zero;
     [Tooltip("Utilise le targetOffset standard pour les overrides.")]

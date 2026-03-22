@@ -11915,7 +11915,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9794922, y: 0.9794922, z: 0.9794922}
+  m_LocalScale: {x: 0.9730518, y: 0.9730518, z: 0.9730518}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -24537,7 +24537,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.8173337, y: 1.8173337, z: 1.8173337}
+  m_LocalScale: {x: 1.8088341, y: 1.8088341, z: 1.8088341}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -48646,7 +48646,7 @@ MonoBehaviour:
   pitchPivot: {fileID: 910000006}
   mainCamCurrentTarget: {fileID: 0}
   followOverrideTarget: {fileID: 0}
-  targetOffset: {x: 0, y: 1.5, z: 0}
+  targetOffset: {x: 0, y: 0.5, z: 0}
   overrideTargetOffset: {x: 0, y: 0, z: 0}
   useTargetOffsetForOverride: 0
   zoomNormalized: 0.28
@@ -90784,7 +90784,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.2718658, y: 2.2718658, z: 2.2718658}
+  m_LocalScale: {x: 2.2612402, y: 2.2612402, z: 2.2612402}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}
