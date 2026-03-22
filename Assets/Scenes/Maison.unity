@@ -11915,7 +11915,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9532716, y: 0.9532716, z: 0.9532716}
+  m_LocalScale: {x: 0.9794922, y: 0.9794922, z: 0.9794922}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -24537,7 +24537,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.9049464, y: 1.9049464, z: 1.9049464}
+  m_LocalScale: {x: 1.8173337, y: 1.8173337, z: 1.8173337}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -38235,6 +38235,102 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 907451100}
   m_CullTransparentMesh: 1
+--- !u!1 &910000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000002}
+  m_Layer: 0
+  m_Name: CameraAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 910000004}
+  m_Father: {fileID: 1504185060}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &910000003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000004}
+  m_Layer: 0
+  m_Name: YawPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910000004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000003}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 910000006}
+  m_Father: {fileID: 910000002}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &910000005
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000006}
+  m_Layer: 0
+  m_Name: PitchPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910000006
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000005}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1823688467}
+  m_Father: {fileID: 910000004}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &910877675
 GameObject:
   m_ObjectHideFlags: 0
@@ -48545,52 +48641,64 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraController
   mainCam: {fileID: 1823688466}
+  cameraAnchor: {fileID: 910000002}
+  yawPivot: {fileID: 910000004}
+  pitchPivot: {fileID: 910000006}
   mainCamCurrentTarget: {fileID: 0}
   followOverrideTarget: {fileID: 0}
-  mainCamOffset: {x: 5, y: 7, z: 0}
   targetOffset: {x: 0, y: 1.5, z: 0}
   overrideTargetOffset: {x: 0, y: 0, z: 0}
   useTargetOffsetForOverride: 0
-  positionLerpSpeed: 5
-  rotationLerpSpeed: 8
-  obstructionLerpSpeed: 14
-  allowOrbit: 1
-  orbitSpeed: 90
-  orbitDeadzone: 0.1
-  allowMouseOrbit: 1
-  mouseOrbitSensitivity: 0.15
-  placementLookLerpDuration: 0.5
-  placementOrbitRadius: 5
-  placementAllowOrbit: 1
-  placementAllowMouseOrbit: 1
-  placementOrbitSpeed: 0
-  allowZoom: 1
+  zoomNormalized: 0.28
+  zoomInSpeed: 0.5
+  zoomOutSpeed: 0.5
+  zoomSharpness: 10
   minDistance: 0.1
-  maxDistance: 10
-  zoomInSpeed: 2
-  zoomOutSpeed: 2
-  zoomLerpSpeed: 12
-  zoomDeadzone: 0.1
-  mouseZoomSensitivity: 0.02
-  gamepadZoomSensitivity: 3
-  allowRightStickZoom: 1
-  rightStickZoomSensitivity: 4
-  rightStickHorizontalDominance: 1.2
-  collisionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  collisionRadius: 0.25
-  collisionBuffer: 0.1
-  minCollisionDistance: 0.3
-  ignoreTargetColliders: 1
-  hideCharacterWhenClose: 1
-  hideCharacterDistance: 1.5
-  showCharacterDistance: 2
-  useDynamicLookAt: 1
-  focusAlongCharacterForward: 0
-  closeFocusDistance: 4
-  focusBlendStartDistance: 6
-  focusBlendEndDistance: 2.5
+  maxDistance: 18
+  minPivotHeight: 0
+  maxPivotHeight: 8.5
+  zoomedInPitch: 42
+  zoomedOutPitch: 63
+  minPanSpeed: 8
+  maxPanSpeed: 24
+  rotationSharpness: 12
+  minPitch: 0
+  maxPitch: 89
+  pitchOffsetMin: -45
+  pitchOffsetMax: 45
+  dragPanDistanceFactor: 0.012
+  anchorSharpness: 14
+  obstructionSharpness: 18
+  releaseSharpness: 10
+  cameraInput:
+    keyboardPanWeight: 1
+    enableEdgeScrolling: 1
+    edgeScrollMargin: 20
+    edgeScrollWeight: 1
+    mouseOrbitSensitivity: 0.12
+    mousePanDragSensitivity: 1
+    mouseScrollZoomSensitivity: 0.0015
+    gamepadPanWeight: 1
+    gamepadOrbitSensitivity: 150
+    gamepadPitchSensitivity: 150
+    gamepadStickUpRaisesCamera: 1
+    gamepadZoomSensitivity: 0.9
+  cameraFocus:
+    followSharpness: 8
+    freePanSharpness: 12
+    freeCameraMaxDistance: 20
+    freeCameraSoftZone: 4
+  cameraCollision:
+    collisionMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    cameraRadius: 0.35
+    collisionBuffer: 0.15
+    minCollisionDistance: 1.25
+    ignoreTargetColliders: 1
+    groundProbeUp: 8
+    groundProbeDown: 24
+    anchorGroundClearance: 0.5
 --- !u!4 &1504185060
 Transform:
   m_ObjectHideFlags: 0
@@ -48600,11 +48708,11 @@ Transform:
   m_GameObject: {fileID: 1504185058}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 7, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1823688467}
+  - {fileID: 910000002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1505579930
@@ -67532,13 +67640,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1823688464}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.27359128, y: 0.062642515, z: -0.04672779, w: -0.9586659}
-  m_LocalPosition: {x: 0.7, y: 1.77, z: 2.26}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -9.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1504185060}
-  m_LocalEulerAnglesHint: {x: 32.034, y: -366.403, z: 3.741}
+  m_Father: {fileID: 910000006}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1823688468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90676,7 +90784,7 @@ RectTransform:
   m_GameObject: {fileID: 2035309053}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.3813918, y: 2.3813918, z: 2.3813918}
+  m_LocalScale: {x: 2.2718658, y: 2.2718658, z: 2.2718658}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7933109251189380249}

@@ -15908,6 +15908,7 @@ MonoBehaviour:
   footIkWeight: 1
   footIkPositionWeight: 1
   footIkRotationWeight: 1
+  footIkIdleRotationWeight: 0.2
   footIkSpeedThreshold: 2.6
   footIkBlendSpeed: 10
   footIkHeightOffset: 0.02

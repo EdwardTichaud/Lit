@@ -173,6 +173,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private float footIkPositionWeight = 1f;
     [SerializeField, Tooltip("Poids rotation IK (0-1).")]
     private float footIkRotationWeight = 1f;
+    [SerializeField, Tooltip("Poids rotation IK applique uniquement a l'Idle pour eviter de vriller les jambes tout en gardant les appuis stables.")]
+    private float footIkIdleRotationWeight = 0.2f;
     [SerializeField, Tooltip("Vitesse max pour activer l'IK (m/s).")]
     private float footIkSpeedThreshold = 0.15f;
     [SerializeField, Tooltip("Vitesse de blend du poids IK.")]
@@ -1141,6 +1143,7 @@ public partial class SquadCharacterController : MonoBehaviour
         footIkWeight = Mathf.Clamp01(footIkWeight);
         footIkPositionWeight = Mathf.Clamp01(footIkPositionWeight);
         footIkRotationWeight = Mathf.Clamp01(footIkRotationWeight);
+        footIkIdleRotationWeight = Mathf.Clamp01(footIkIdleRotationWeight);
         footIkSpeedThreshold = Mathf.Max(0f, footIkSpeedThreshold);
         footIkBlendSpeed = Mathf.Max(0f, footIkBlendSpeed);
         footIkHeightOffset = Mathf.Max(0f, footIkHeightOffset);
@@ -1329,8 +1332,9 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         int mask = GetFootIkMask();
-        ApplyFootIk(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot, mask, footIkWeightCurrent);
-        ApplyFootIk(AvatarIKGoal.RightFoot, HumanBodyBones.RightFoot, mask, footIkWeightCurrent);
+        float rotationWeight = ResolveFootIkRotationWeight(speed);
+        ApplyFootIk(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot, mask, footIkWeightCurrent, rotationWeight);
+        ApplyFootIk(AvatarIKGoal.RightFoot, HumanBodyBones.RightFoot, mask, footIkWeightCurrent, rotationWeight);
     }
 
     private void UpdateInputLock(float deltaTime)
@@ -1990,7 +1994,20 @@ public partial class SquadCharacterController : MonoBehaviour
         animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, rotationWeight);
     }
 
-    private void ApplyFootIk(AvatarIKGoal goal, HumanBodyBones bone, int mask, float baseWeight)
+    private float ResolveFootIkRotationWeight(float speed)
+    {
+        float movingRotationWeight = Mathf.Clamp01(footIkRotationWeight);
+        float idleRotationWeight = Mathf.Clamp01(Mathf.Min(footIkIdleRotationWeight, movingRotationWeight));
+        if (walkSpeedThreshold <= 0f)
+        {
+            return movingRotationWeight;
+        }
+
+        float t = Mathf.Clamp01(speed / walkSpeedThreshold);
+        return Mathf.Lerp(idleRotationWeight, movingRotationWeight, t);
+    }
+
+    private void ApplyFootIk(AvatarIKGoal goal, HumanBodyBones bone, int mask, float baseWeight, float rotationWeightScale)
     {
         Transform boneTransform = animator.GetBoneTransform(bone);
         if (boneTransform == null)
@@ -2019,7 +2036,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         float positionWeight = baseWeight * footIkPositionWeight;
-        float rotationWeight = baseWeight * footIkRotationWeight;
+        float rotationWeight = baseWeight * rotationWeightScale;
         Vector3 footPosition = hit.point + up * footIkHeightOffset;
 
         Vector3 forward = Vector3.ProjectOnPlane(boneTransform.forward, hit.normal);

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // Singleton local qui capture les inputs et les envoie au LocalInputRouter.
-public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
+public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, PlayerInputs.ICameraActions
 {
     public static LocalPlayerInput Instance { get; private set; }
 
@@ -44,6 +44,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
         MainMenuInputSettings.ApplySavedModeIfNeeded();
         playerInputs = new PlayerInputs();
         playerInputs.Player.SetCallbacks(this);
+        playerInputs.Camera.SetCallbacks(this);
         MainMenuInputSettings.ModeChanged += OnInputModeChanged;
         playerInputs.Enable();
     }
@@ -64,6 +65,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
         MainMenuInputSettings.ModeChanged -= OnInputModeChanged;
 
         LocalInputRouter.ResetMove();
+        LocalInputRouter.ResetCamera();
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -140,9 +142,106 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions
         }
     }
 
+    public void OnPan(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraPanValue(context.ReadValue<Vector2>());
+    }
+
+    public void OnOrbit(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraOrbitValue(context.ReadValue<Vector2>());
+    }
+
+    public void OnZoom(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraZoomValue(context.ReadValue<float>());
+    }
+
+    public void OnPointerScroll(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraPointerScrollValue(context.ReadValue<float>());
+    }
+
+    public void OnPointerDelta(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraPointerDelta(context.ReadValue<Vector2>());
+    }
+
+    public void OnPointerPosition(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraPointerPosition(context.ReadValue<Vector2>());
+    }
+
+    public void OnOrbitModifier(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraOrbitModifierPressed(context.ReadValueAsButton());
+    }
+
+    public void OnPanModifier(InputAction.CallbackContext context)
+    {
+        if (!ShouldProcess(context))
+        {
+            return;
+        }
+
+        LocalInputRouter.SetCameraPanModifierPressed(context.ReadValueAsButton());
+    }
+
+    public void OnRecenter(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseCameraRecenter();
+        }
+    }
+
+    public void OnToggleFreeCamera(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseCameraToggleFreeMode();
+        }
+    }
+
     private void OnInputModeChanged(MainMenuInputSettings.InputMode mode)
     {
         LocalInputRouter.ResetMove();
+        LocalInputRouter.ResetCamera();
     }
 
     private static bool ShouldProcess(InputAction.CallbackContext context)

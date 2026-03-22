@@ -1,708 +1,420 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-[ExecuteAlways]
-// Camera de suivi orbitale (zoom, collisions, visibility).
+[DisallowMultipleComponent]
 public class CameraController : MonoBehaviour
 {
-    [Header("MainCamera")]
-    [Tooltip("Camera principale (fallback sur Camera.main).")]
+    [Header("Rig References")]
+    [Tooltip("Camera principale utilisee par le rig.")]
     public Camera mainCam;
-    [Tooltip("Cible actuelle de la camera.")]
+    [Tooltip("Pivot monde libre du rig.")]
+    [SerializeField] private Transform cameraAnchor;
+    [Tooltip("Pivot de rotation horizontale.")]
+    [SerializeField] private Transform yawPivot;
+    [Tooltip("Pivot de rotation verticale.")]
+    [SerializeField] private Transform pitchPivot;
+
+    [Header("Compatibility")]
+    [Tooltip("Cible logique courante resolue par la camera.")]
     public Transform mainCamCurrentTarget;
-    [Tooltip("Cible temporaire a suivre (placement, cutscene, etc.).")]
+    [Tooltip("Sommet actuel de la pile d'override de focus.")]
     public Transform followOverrideTarget;
-    [Tooltip("Offset initial par rapport a la cible.")]
-    public Vector3 mainCamOffset;
-    [Tooltip("Offset applique au pivot de la cible.")]
+    [Tooltip("Offset applique a la cible courante.")]
     public Vector3 targetOffset = new Vector3(0f, 1.5f, 0f);
-    [Tooltip("Offset applique quand un override est actif.")]
+    [Tooltip("Offset applique a une cible temporaire d'override.")]
     public Vector3 overrideTargetOffset = Vector3.zero;
-    [Tooltip("Utilise le targetOffset meme en override.")]
+    [Tooltip("Utilise le targetOffset standard pour les overrides.")]
     public bool useTargetOffsetForOverride = false;
-    [Tooltip("Vitesse de lerp de position.")]
-    public float positionLerpSpeed = 5f;
-    [Tooltip("Vitesse de lerp de rotation.")]
-    public float rotationLerpSpeed = 8f;
-    [Tooltip("Vitesse de lerp lors d'obstruction.")]
-    public float obstructionLerpSpeed = 14f;
 
-    [Header("Orbit")]
-    [Tooltip("Autorise l'orbite autour de la cible.")]
-    public bool allowOrbit = true;
-    [Tooltip("Vitesse d'orbite.")]
-    public float orbitSpeed = 90f;
-    [Tooltip("Deadzone pour l'orbite.")]
-    public float orbitDeadzone = 0.1f;
-    [Tooltip("Autorise l'orbite a la souris.")]
-    public bool allowMouseOrbit = true;
-    [Tooltip("Sensibilite d'orbite souris.")]
-    public float mouseOrbitSensitivity = 0.15f;
+    [Header("Zoom Profile")]
+    [SerializeField, Range(0f, 1f), Tooltip("0 = zoom tactique proche, 1 = zoom tactique lointain.")]
+    private float zoomNormalized = 0.28f;
+    [SerializeField] private float zoomInSpeed = 2f;
+    [SerializeField] private float zoomOutSpeed = 2.2f;
+    [SerializeField] private float zoomSharpness = 10f;
+    [SerializeField] private float minDistance = 3.4f;
+    [SerializeField] private float maxDistance = 18f;
+    [SerializeField] private float minPivotHeight = 0.95f;
+    [SerializeField] private float maxPivotHeight = 8.5f;
+    [SerializeField] private float zoomedInPitch = 42f;
+    [SerializeField] private float zoomedOutPitch = 63f;
+    [SerializeField] private float minPanSpeed = 8f;
+    [SerializeField] private float maxPanSpeed = 24f;
 
-    [Header("Placement Override")]
-    [Tooltip("Duree du lerp du regard avant de suivre la cible.")]
-    public float placementLookLerpDuration = 0.5f;
-    [Tooltip("Rayon d'orbite autour de la cible (0 = conserver la distance initiale).")]
-    public float placementOrbitRadius = 5f;
-    [Tooltip("Autorise l'orbite pendant l'override.")]
-    public bool placementAllowOrbit = true;
-    [Tooltip("Autorise l'orbite a la souris pendant l'override.")]
-    public bool placementAllowMouseOrbit = true;
-    [Tooltip("Vitesse d'orbite pendant l'override (0 = utiliser orbitSpeed).")]
-    public float placementOrbitSpeed = 0f;
+    [Header("Rotation")]
+    [SerializeField] private float rotationSharpness = 12f;
+    [SerializeField] private float minPitch = 0f;
+    [SerializeField] private float maxPitch = 89f;
+    [SerializeField] private float pitchOffsetMin = -45f;
+    [SerializeField] private float pitchOffsetMax = 45f;
 
-    [Header("Zoom")]
-    [Tooltip("Autorise le zoom.")]
-    public bool allowZoom = true;
-    [Tooltip("Distance min au pivot.")]
-    public float minDistance = 2f;
-    [Tooltip("Distance max au pivot.")]
-    public float maxDistance = 10f;
-    [Tooltip("Vitesse de zoom avant.")]
-    public float zoomInSpeed = 6f;
-    [Tooltip("Vitesse de zoom arriere.")]
-    public float zoomOutSpeed = 6f;
-    [Tooltip("Vitesse de lerp du zoom.")]
-    public float zoomLerpSpeed = 12f;
-    [Tooltip("Deadzone du zoom.")]
-    public float zoomDeadzone = 0.1f;
-    [Tooltip("Sensibilite zoom souris.")]
-    public float mouseZoomSensitivity = 0.02f;
-    [Tooltip("Sensibilite zoom gamepad.")]
-    public float gamepadZoomSensitivity = 3f;
-    [Tooltip("Autorise zoom via stick droit.")]
-    public bool allowRightStickZoom = true;
-    [Tooltip("Sensibilite zoom stick droit.")]
-    public float rightStickZoomSensitivity = 4f;
-    [Tooltip("Favorise l'axe horizontal pour l'orbite.")]
-    public float rightStickHorizontalDominance = 1.2f;
+    [Header("Pan")]
+    [SerializeField, Tooltip("Conversion pixels drag -> metres monde, modulee par la distance de camera.")]
+    private float dragPanDistanceFactor = 0.012f;
 
-    [Header("Collision")]
-    [Tooltip("Masque des obstacles pour la camera.")]
-    public LayerMask collisionMask = ~0;
-    [Tooltip("Rayon du spherecast de collision.")]
-    public float collisionRadius = 0.25f;
-    [Tooltip("Distance de marge avant l'obstacle.")]
-    public float collisionBuffer = 0.1f;
-    [Tooltip("Distance minimale au pivot.")]
-    public float minCollisionDistance = 0.3f;
-    [Tooltip("Ignore les colliders de la cible.")]
-    public bool ignoreTargetColliders = true;
+    [Header("Collision Smoothing")]
+    [SerializeField] private float anchorSharpness = 14f;
+    [SerializeField] private float obstructionSharpness = 18f;
+    [SerializeField] private float releaseSharpness = 10f;
 
-    [Header("Character Visibility")]
-    [Tooltip("Masque le personnage quand la camera est trop proche.")]
-    public bool hideCharacterWhenClose = true;
-    [Tooltip("Distance a partir de laquelle on masque.")]
-    public float hideCharacterDistance = 1.5f;
-    [Tooltip("Distance a partir de laquelle on re-affiche.")]
-    public float showCharacterDistance = 2f;
+    [Header("Subsystems")]
+    [SerializeField] private CrpgCameraInput cameraInput = new CrpgCameraInput();
+    [SerializeField] private CrpgCameraFocus cameraFocus = new CrpgCameraFocus();
+    [SerializeField] private CrpgCameraCollision cameraCollision = new CrpgCameraCollision();
 
-    [Header("Focus")]
-    [Tooltip("Calcule un look-at dynamique selon la distance.")]
-    public bool useDynamicLookAt = true;
-    [Tooltip("Utilise le forward du personnage pour le focus.")]
-    public bool focusAlongCharacterForward = false;
-    [Tooltip("Distance de focus proche.")]
-    public float closeFocusDistance = 1.5f;
-    [Tooltip("Distance ou le blend commence.")]
-    public float focusBlendStartDistance = 6f;
-    [Tooltip("Distance ou le blend se termine.")]
-    public float focusBlendEndDistance = 2.5f;
-
-    private float orbitYaw;
-    private float desiredDistance;
+    private bool runtimeInitialized;
+    private float desiredYaw;
+    private float currentYaw;
+    private float manualPitchOffset;
+    private float currentPitch;
+    private float desiredZoomNormalized;
+    private float currentZoomNormalized;
     private float currentDistance;
-    private bool distanceInitialized;
-    private Vector3 currentOrbitDirection;
-    private readonly RaycastHit[] collisionHits = new RaycastHit[8];
-    private Transform cachedTarget;
-    private Renderer[] cachedTargetRenderers;
-    private bool[] cachedTargetRendererStates;
-    private bool targetHidden;
-    private bool lastUsingOverride;
-    private bool overrideInitialized;
-    private float overrideStartTime;
-    private Vector3 overrideStartCamPosition;
-    private Quaternion overrideStartCamRotation;
-    private float overrideHeightOffset;
-    private float overrideBaseRadius;
-    private float overrideOrbitYaw;
+    private Vector3 currentAnchorPosition;
 
-    private void Start()
+    private void Awake()
     {
-        orbitYaw = GetInitialYaw();
+        TryResolveRigReferences();
+        ValidateFields();
+    }
+
+    private void OnEnable()
+    {
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: true);
+        cameraInput.Bind();
+        cameraFocus.Reset();
+        mainCamCurrentTarget = null;
+        followOverrideTarget = null;
+        runtimeInitialized = false;
+    }
+
+    private void OnDisable()
+    {
+        cameraInput.Unbind();
     }
 
     private void LateUpdate()
     {
-        if (mainCam == null)
-        {
-            mainCam = Camera.main;
-        }
-
-        if (mainCam == null)
+        if (!TryResolveRigReferences())
         {
             return;
         }
 
-        Transform desiredTarget = followOverrideTarget;
-        bool usingOverride = desiredTarget != null;
-        if (usingOverride)
+        float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 1f / 60f;
+        if (deltaTime <= 0f)
         {
-            mainCamCurrentTarget = desiredTarget;
-            UpdatePlacementOverride(desiredTarget);
-            if (!lastUsingOverride)
-            {
-                ClearTargetVisibility();
-            }
-            lastUsingOverride = true;
-            return;
+            deltaTime = 1f / 60f;
         }
 
-        Transform localTarget = LocalPlayerContext.LocalCharacterRoot;
-        if (localTarget != null)
-        {
-            desiredTarget = localTarget;
-        }
-        else if (SquadManager.Instance != null && SquadManager.Instance.currentCharacter != null)
-        {
-            desiredTarget = SquadManager.Instance.currentCharacter.transform;
-        }
+        Transform gameplayTarget = ResolveGameplayTarget();
+        followOverrideTarget = cameraFocus.GetTopOverrideTarget();
+        Transform logicalTarget = followOverrideTarget != null ? followOverrideTarget : gameplayTarget;
+        mainCamCurrentTarget = logicalTarget;
 
-        if (desiredTarget != null)
-        {
-            // Suivi de la cible courante.
-            mainCamCurrentTarget = desiredTarget;
-            bool inputLocked = InputFocusStack.HasAnyFocusBlockingCamera();
-            if (!inputLocked)
-            {
-                UpdateOrbitYaw();
-                UpdateZoom(Time.deltaTime);
-            }
+        Vector3 logicalFocusPoint = ResolveFocusPoint(logicalTarget, followOverrideTarget != null);
+        InitializeRuntimeState(logicalFocusPoint);
 
-            Vector3 offset = mainCamOffset.sqrMagnitude > 0.0001f
-                ? mainCamOffset
-                : new Vector3(0f, 3f, -6f);
+        bool inputBlocked = InputFocusStack.HasAnyFocusBlockingCamera();
+        CrpgCameraInput.FrameState inputState = cameraInput.Collect(inputBlocked, deltaTime);
 
-            float baseDistance = offset.magnitude;
-            InitializeDistance(baseDistance);
+        UpdateZoom(inputState.zoomDelta, deltaTime);
+        UpdateRotation(inputState.orbitDelta, deltaTime);
 
-            Vector3 desiredOrbitDirection = Quaternion.Euler(0f, orbitYaw, 0f) * offset.normalized;
-            if (currentOrbitDirection.sqrMagnitude < 0.0001f)
-            {
-                currentOrbitDirection = desiredOrbitDirection;
-            }
+        Vector3 panDelta = ResolveWorldPanDelta(inputState, deltaTime);
+        Vector3 focusPoint = cameraFocus.Update(
+            logicalFocusPoint,
+            panDelta,
+            inputState.recenterRequested,
+            inputState.toggleFreeCameraRequested,
+            deltaTime);
+        UpdateRig(focusPoint, logicalTarget, deltaTime);
 
-            float orbitT = 1f - Mathf.Exp(-positionLerpSpeed * Time.deltaTime);
-            currentOrbitDirection = Vector3.Slerp(currentOrbitDirection, desiredOrbitDirection, orbitT);
-
-            Vector3 pivot = mainCamCurrentTarget.position + targetOffset;
-            float collisionDistance = ResolveCollisionDistance(pivot, currentOrbitDirection, desiredDistance);
-            float targetDistance = Mathf.Min(desiredDistance, collisionDistance);
-            float lerpSpeed = collisionDistance < desiredDistance ? obstructionLerpSpeed : zoomLerpSpeed;
-
-            float t = 1f - Mathf.Exp(-lerpSpeed * Time.deltaTime);
-            currentDistance = Mathf.Lerp(currentDistance, targetDistance, t);
-            currentDistance = Mathf.Min(currentDistance, collisionDistance);
-
-            Vector3 desiredPosition = pivot + currentOrbitDirection * currentDistance;
-            mainCam.transform.position = desiredPosition;
-
-            Vector3 lookTarget = GetLookTarget(pivot);
-            Vector3 lookDirection = lookTarget - mainCam.transform.position;
-            if (lookDirection.sqrMagnitude > 0.0001f)
-            {
-                Quaternion desiredRotation = Quaternion.LookRotation(lookDirection);
-                mainCam.transform.rotation = Quaternion.Slerp(
-                    mainCam.transform.rotation,
-                    desiredRotation,
-                    rotationLerpSpeed * Time.deltaTime);
-            }
-
-            UpdateTargetVisibility(pivot);
-            lastUsingOverride = false;
-        }
-        else
-        {
-            mainCamCurrentTarget = null;
-            ClearTargetVisibility();
-            lastUsingOverride = false;
-        }
+        zoomNormalized = currentZoomNormalized;
     }
 
     public void SetFollowOverride(Transform target)
     {
-        if (followOverrideTarget == target)
-        {
-            return;
-        }
-
-        followOverrideTarget = target;
-        overrideInitialized = false;
+        cameraFocus.PushOverride(target);
+        followOverrideTarget = cameraFocus.GetTopOverrideTarget();
     }
 
     public void ClearFollowOverride(Transform target)
     {
-        if (followOverrideTarget == target)
+        cameraFocus.ClearOverride(target);
+        followOverrideTarget = cameraFocus.GetTopOverrideTarget();
+    }
+
+    public void RecenterOnCurrentTarget(bool immediate = false)
+    {
+        Transform gameplayTarget = ResolveGameplayTarget();
+        followOverrideTarget = cameraFocus.GetTopOverrideTarget();
+        Transform logicalTarget = followOverrideTarget != null ? followOverrideTarget : gameplayTarget;
+        Vector3 logicalFocusPoint = ResolveFocusPoint(logicalTarget, followOverrideTarget != null);
+
+        if (immediate)
         {
-            followOverrideTarget = null;
-            overrideInitialized = false;
+            LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: true);
+            cameraFocus.SetFreeCameraMode(false);
+            cameraFocus.SnapTo(logicalFocusPoint);
+            currentAnchorPosition = logicalFocusPoint + Vector3.up * EvaluatePivotHeight(currentZoomNormalized);
+        }
+        else
+        {
+            LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: true);
+            cameraFocus.Update(
+                logicalFocusPoint,
+                Vector3.zero,
+                recenterRequested: true,
+                toggleFreeCameraRequested: false,
+                Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 1f / 60f);
         }
     }
 
-    private void UpdateOrbitYaw()
+    private void UpdateZoom(float zoomDelta, float deltaTime)
     {
-        if (!allowOrbit)
-        {
-            return;
-        }
-
-        float orbitDelta = 0f;
-
-        if (MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null)
-        {
-            float stickX = Gamepad.current.rightStick.ReadValue().x;
-            if (Mathf.Abs(stickX) > orbitDeadzone)
-            {
-                orbitDelta += stickX * orbitSpeed * Time.deltaTime;
-            }
-        }
-
-        if (MainMenuInputSettings.AllowsKeyboardMouse() && Keyboard.current != null)
-        {
-            if (Keyboard.current.qKey.isPressed)
-            {
-                orbitDelta -= orbitSpeed * Time.deltaTime;
-            }
-            if (Keyboard.current.eKey.isPressed)
-            {
-                orbitDelta += orbitSpeed * Time.deltaTime;
-            }
-        }
-
-        if (MainMenuInputSettings.AllowsKeyboardMouse() && allowMouseOrbit && Mouse.current != null)
-        {
-            orbitDelta += Mouse.current.delta.ReadValue().x * mouseOrbitSensitivity;
-        }
-
-        if (Mathf.Abs(orbitDelta) > 0.0001f)
-        {
-            orbitYaw += orbitDelta;
-        }
-    }
-
-    private void UpdatePlacementOverride(Transform target)
-    {
-        if (mainCam == null || target == null)
-        {
-            return;
-        }
-
-        if (!overrideInitialized)
-        {
-            InitializePlacementOverrideState(target);
-        }
-
-        float deltaTime = Time.unscaledDeltaTime;
-        float elapsed = Time.unscaledTime - overrideStartTime;
-        Vector3 pivotOffset = useTargetOffsetForOverride ? targetOffset : overrideTargetOffset;
-        Vector3 pivot = target.position + pivotOffset;
-
-        UpdatePlacementOrbitYaw(deltaTime);
-
-        float lookDuration = Mathf.Max(0f, placementLookLerpDuration);
-        if (elapsed < lookDuration)
-        {
-            mainCam.transform.position = overrideStartCamPosition;
-            Vector3 lookDirection = pivot - overrideStartCamPosition;
-            if (lookDirection.sqrMagnitude > 0.0001f)
-            {
-                Quaternion desiredRotation = Quaternion.LookRotation(lookDirection);
-                float t = lookDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / lookDuration);
-                mainCam.transform.rotation = Quaternion.Slerp(overrideStartCamRotation, desiredRotation, t);
-            }
-            return;
-        }
-
-        float radius = placementOrbitRadius > 0f ? placementOrbitRadius : overrideBaseRadius;
-        Vector3 flatDir = Quaternion.Euler(0f, overrideOrbitYaw, 0f) * Vector3.forward;
-        Vector3 desiredOffset = new Vector3(flatDir.x * radius, overrideHeightOffset, flatDir.z * radius);
-        Vector3 desiredPosition = pivot + desiredOffset;
-        mainCam.transform.position = desiredPosition;
-
-        Vector3 lookDir = pivot - desiredPosition;
-        if (lookDir.sqrMagnitude > 0.0001f)
-        {
-            Quaternion desiredRotation = Quaternion.LookRotation(lookDir);
-            mainCam.transform.rotation = Quaternion.Slerp(
-                mainCam.transform.rotation,
-                desiredRotation,
-                rotationLerpSpeed * deltaTime);
-        }
-    }
-
-    private void InitializePlacementOverrideState(Transform target)
-    {
-        if (mainCam == null || target == null)
-        {
-            overrideInitialized = false;
-            return;
-        }
-
-        overrideInitialized = true;
-        overrideStartTime = Time.unscaledTime;
-        overrideStartCamPosition = mainCam.transform.position;
-        overrideStartCamRotation = mainCam.transform.rotation;
-        Vector3 offset = overrideStartCamPosition - target.position;
-        overrideHeightOffset = offset.y;
-        Vector3 flatOffset = new Vector3(offset.x, 0f, offset.z);
-        overrideBaseRadius = flatOffset.magnitude;
-        if (overrideBaseRadius < 0.01f)
-        {
-            overrideBaseRadius = placementOrbitRadius > 0f ? placementOrbitRadius : 5f;
-        }
-
-        overrideOrbitYaw = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg;
-    }
-
-    private void UpdatePlacementOrbitYaw(float deltaTime)
-    {
-        if (!placementAllowOrbit)
-        {
-            return;
-        }
-
-        float orbitDelta = 0f;
-        float speed = placementOrbitSpeed > 0f ? placementOrbitSpeed : orbitSpeed;
-
-        if (MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null)
-        {
-            float stickX = Gamepad.current.rightStick.ReadValue().x;
-            if (Mathf.Abs(stickX) > orbitDeadzone)
-            {
-                orbitDelta += stickX * speed * deltaTime;
-            }
-        }
-
-        if (MainMenuInputSettings.AllowsKeyboardMouse() && Keyboard.current != null)
-        {
-            if (Keyboard.current.qKey.isPressed)
-            {
-                orbitDelta -= speed * deltaTime;
-            }
-            if (Keyboard.current.eKey.isPressed)
-            {
-                orbitDelta += speed * deltaTime;
-            }
-        }
-
-        if (MainMenuInputSettings.AllowsKeyboardMouse() && placementAllowMouseOrbit && Mouse.current != null)
-        {
-            orbitDelta += Mouse.current.delta.ReadValue().x * mouseOrbitSensitivity;
-        }
-
-        if (Mathf.Abs(orbitDelta) > 0.0001f)
-        {
-            overrideOrbitYaw += orbitDelta;
-        }
-    }
-
-    private void UpdateZoom(float deltaTime)
-    {
-        if (!allowZoom)
-        {
-            return;
-        }
-
-        float zoomDelta = 0f;
-
-        if (MainMenuInputSettings.AllowsKeyboardMouse() && Mouse.current != null)
-        {
-            float scroll = Mouse.current.scroll.ReadValue().y;
-            if (Mathf.Abs(scroll) > 0.01f)
-            {
-                zoomDelta -= scroll * mouseZoomSensitivity;
-            }
-        }
-
-        if (MainMenuInputSettings.AllowsGamepad() && Gamepad.current != null)
-        {
-            float triggerDelta = Gamepad.current.rightTrigger.ReadValue() - Gamepad.current.leftTrigger.ReadValue();
-            if (Mathf.Abs(triggerDelta) > zoomDeadzone)
-            {
-                zoomDelta -= triggerDelta * gamepadZoomSensitivity * deltaTime;
-            }
-
-            if (allowRightStickZoom)
-            {
-                Vector2 stick = Gamepad.current.rightStick.ReadValue();
-                float absX = Mathf.Abs(stick.x);
-                float absY = Mathf.Abs(stick.y);
-                bool isMostlyHorizontal = absX >= absY * rightStickHorizontalDominance;
-
-                if (!isMostlyHorizontal && absY > zoomDeadzone)
-                {
-                    zoomDelta -= stick.y * rightStickZoomSensitivity * deltaTime;
-                }
-            }
-        }
-
+        float next = desiredZoomNormalized;
         if (Mathf.Abs(zoomDelta) > 0.0001f)
         {
             float speed = zoomDelta < 0f ? zoomInSpeed : zoomOutSpeed;
-            desiredDistance = Mathf.Clamp(desiredDistance + zoomDelta * speed, minDistance, maxDistance);
+            next = Mathf.Clamp01(next + zoomDelta * speed);
+        }
+
+        desiredZoomNormalized = next;
+
+        if (zoomSharpness <= 0f)
+        {
+            currentZoomNormalized = desiredZoomNormalized;
+            return;
+        }
+
+        float t = 1f - Mathf.Exp(-zoomSharpness * deltaTime);
+        currentZoomNormalized = Mathf.Lerp(currentZoomNormalized, desiredZoomNormalized, t);
+    }
+
+    private void UpdateRotation(Vector2 orbitDelta, float deltaTime)
+    {
+        desiredYaw += orbitDelta.x;
+        manualPitchOffset = Mathf.Clamp(manualPitchOffset + orbitDelta.y, pitchOffsetMin, pitchOffsetMax);
+
+        float desiredPitch = Mathf.Clamp(EvaluateProfilePitch(currentZoomNormalized) + manualPitchOffset, minPitch, maxPitch);
+        float rotationT = rotationSharpness <= 0f ? 1f : 1f - Mathf.Exp(-rotationSharpness * deltaTime);
+        currentYaw = Mathf.LerpAngle(currentYaw, desiredYaw, rotationT);
+        currentPitch = Mathf.Lerp(currentPitch, desiredPitch, rotationT);
+    }
+
+    private Vector3 ResolveWorldPanDelta(CrpgCameraInput.FrameState inputState, float deltaTime)
+    {
+        Vector2 panAxes = Vector2.ClampMagnitude(inputState.panAxes, 1f);
+        float panSpeed = EvaluatePanSpeed(currentZoomNormalized);
+        Quaternion yawRotation = Quaternion.Euler(0f, currentYaw, 0f);
+        Vector3 flatForward = Vector3.ProjectOnPlane(yawRotation * Vector3.forward, Vector3.up).normalized;
+        Vector3 flatRight = Vector3.ProjectOnPlane(yawRotation * Vector3.right, Vector3.up).normalized;
+
+        Vector3 worldPan = (flatRight * panAxes.x + flatForward * panAxes.y) * panSpeed * deltaTime;
+
+        if (inputState.panDragDelta.sqrMagnitude > 0.0001f)
+        {
+            float dragScale = Mathf.Max(0.001f, currentDistance) * dragPanDistanceFactor;
+            worldPan += (-flatRight * inputState.panDragDelta.x - flatForward * inputState.panDragDelta.y) * dragScale;
+        }
+
+        return worldPan;
+    }
+
+    private void UpdateRig(Vector3 focusPoint, Transform ignoredTarget, float deltaTime)
+    {
+        float desiredDistance = EvaluateDistance(currentZoomNormalized);
+        float desiredPivotHeight = EvaluatePivotHeight(currentZoomNormalized);
+        Vector3 desiredAnchorPosition = focusPoint + Vector3.up * desiredPivotHeight;
+
+        Quaternion rigRotation = Quaternion.Euler(0f, currentYaw, 0f) * Quaternion.Euler(currentPitch, 0f, 0f);
+        CrpgCameraCollision.SolveResult solve = cameraCollision.Solve(desiredAnchorPosition, rigRotation, desiredDistance, ignoredTarget);
+
+        float anchorT = anchorSharpness <= 0f ? 1f : 1f - Mathf.Exp(-anchorSharpness * deltaTime);
+        currentAnchorPosition = Vector3.Lerp(currentAnchorPosition, solve.anchorPosition, anchorT);
+
+        float distanceSharpness = solve.obstructed || solve.allowedDistance < currentDistance
+            ? obstructionSharpness
+            : releaseSharpness;
+        float distanceT = distanceSharpness <= 0f ? 1f : 1f - Mathf.Exp(-distanceSharpness * deltaTime);
+        currentDistance = Mathf.Lerp(currentDistance, solve.allowedDistance, distanceT);
+
+        if (cameraAnchor != null)
+        {
+            cameraAnchor.position = currentAnchorPosition;
+        }
+
+        if (yawPivot != null)
+        {
+            yawPivot.localPosition = Vector3.zero;
+            yawPivot.localRotation = Quaternion.Euler(0f, currentYaw, 0f);
+        }
+
+        if (pitchPivot != null)
+        {
+            pitchPivot.localPosition = Vector3.zero;
+            pitchPivot.localRotation = Quaternion.Euler(currentPitch, 0f, 0f);
+        }
+
+        if (mainCam != null)
+        {
+            Transform camTransform = mainCam.transform;
+            camTransform.localPosition = new Vector3(0f, 0f, -currentDistance);
+            camTransform.localRotation = Quaternion.identity;
         }
     }
 
-    private void InitializeDistance(float baseDistance)
+    private void InitializeRuntimeState(Vector3 focusPoint)
     {
-        if (distanceInitialized)
+        if (runtimeInitialized)
         {
             return;
         }
 
-        minDistance = Mathf.Max(0.1f, minDistance);
-        maxDistance = Mathf.Max(minDistance, maxDistance);
+        desiredZoomNormalized = Mathf.Clamp01(zoomNormalized);
+        currentZoomNormalized = desiredZoomNormalized;
+        desiredYaw = yawPivot != null ? yawPivot.localEulerAngles.y : 0f;
+        currentYaw = desiredYaw;
+        manualPitchOffset = 0f;
+        currentPitch = Mathf.Clamp(EvaluateProfilePitch(currentZoomNormalized), minPitch, maxPitch);
+        currentDistance = EvaluateDistance(currentZoomNormalized);
+        currentAnchorPosition = focusPoint + Vector3.up * EvaluatePivotHeight(currentZoomNormalized);
+        cameraFocus.SnapTo(focusPoint);
 
-        float startDistance = Mathf.Clamp(baseDistance, minDistance, maxDistance);
-        desiredDistance = startDistance;
-        currentDistance = startDistance;
-        currentOrbitDirection = mainCamOffset.sqrMagnitude > 0.0001f
-            ? mainCamOffset.normalized
-            : new Vector3(0f, 0.5f, -1f).normalized;
-        distanceInitialized = true;
+        if (cameraAnchor != null)
+        {
+            cameraAnchor.position = currentAnchorPosition;
+        }
+
+        runtimeInitialized = true;
     }
 
-    private float ResolveCollisionDistance(Vector3 pivot, Vector3 direction, float desired)
+    private Transform ResolveGameplayTarget()
     {
-        if (desired <= 0.01f)
+        if (SquadManager.Instance != null && SquadManager.Instance.currentCharacter != null)
         {
-            return desired;
+            return SquadManager.Instance.currentCharacter.transform;
         }
 
-        int hitCount = Physics.SphereCastNonAlloc(
-            pivot,
-            collisionRadius,
-            direction,
-            collisionHits,
-            desired,
-            collisionMask,
-            QueryTriggerInteraction.Ignore);
-
-        if (hitCount <= 0)
-        {
-            return desired;
-        }
-
-        float closest = desired;
-        for (int i = 0; i < hitCount; i++)
-        {
-            RaycastHit hit = collisionHits[i];
-            if (hit.collider == null)
-            {
-                continue;
-            }
-
-            if (ignoreTargetColliders && mainCamCurrentTarget != null &&
-                hit.collider.transform.IsChildOf(mainCamCurrentTarget))
-            {
-                continue;
-            }
-
-            if (hit.distance < closest)
-            {
-                closest = hit.distance;
-            }
-        }
-
-        if (closest < desired)
-        {
-            return Mathf.Max(minCollisionDistance, closest - collisionBuffer);
-        }
-
-        return desired;
+        return LocalPlayerContext.LocalCharacterRoot;
     }
 
-    private float GetInitialYaw()
+    private Vector3 ResolveFocusPoint(Transform logicalTarget, bool usingOverride)
     {
-        Vector3 flatOffset = new Vector3(mainCamOffset.x, 0f, mainCamOffset.z);
-        if (flatOffset.sqrMagnitude > 0.0001f)
+        if (logicalTarget == null)
         {
-            return Mathf.Atan2(flatOffset.x, flatOffset.z) * Mathf.Rad2Deg;
+            if (runtimeInitialized)
+            {
+                return cameraFocus.CurrentFocusPoint;
+            }
+
+            return transform.position;
         }
 
-        return 0f;
+        Vector3 offset = usingOverride && !useTargetOffsetForOverride ? overrideTargetOffset : targetOffset;
+        return logicalTarget.position + offset;
     }
 
-    private Vector3 GetLookTarget(Vector3 pivot)
+    private float EvaluateDistance(float normalizedZoom)
     {
-        if (!useDynamicLookAt)
+        return Mathf.Lerp(minDistance, maxDistance, normalizedZoom);
+    }
+
+    private float EvaluatePivotHeight(float normalizedZoom)
+    {
+        return Mathf.Lerp(minPivotHeight, maxPivotHeight, normalizedZoom);
+    }
+
+    private float EvaluateProfilePitch(float normalizedZoom)
+    {
+        return Mathf.Lerp(zoomedInPitch, zoomedOutPitch, normalizedZoom);
+    }
+
+    private float EvaluatePanSpeed(float normalizedZoom)
+    {
+        return Mathf.Lerp(minPanSpeed, maxPanSpeed, normalizedZoom);
+    }
+
+    private bool TryResolveRigReferences()
+    {
+        if (cameraAnchor == null)
         {
-            return pivot;
+            cameraAnchor = FindChildRecursive(transform, "CameraAnchor");
         }
 
-        float start = Mathf.Max(0.01f, focusBlendStartDistance);
-        float end = Mathf.Max(0.01f, focusBlendEndDistance);
-        float t;
-        if (start > end)
+        if (yawPivot == null)
         {
-            t = Mathf.InverseLerp(start, end, currentDistance);
-        }
-        else
-        {
-            t = Mathf.InverseLerp(end, start, currentDistance);
+            yawPivot = FindChildRecursive(transform, "YawPivot");
         }
 
-        if (t <= 0f || closeFocusDistance <= 0f)
+        if (pitchPivot == null)
         {
-            return pivot;
+            pitchPivot = FindChildRecursive(transform, "PitchPivot");
         }
 
-        Vector3 direction = Vector3.zero;
-        if (focusAlongCharacterForward && mainCamCurrentTarget != null)
+        if (mainCam == null)
         {
-            direction = Vector3.ProjectOnPlane(mainCamCurrentTarget.forward, Vector3.up);
-        }
-        else
-        {
-            direction = Vector3.ProjectOnPlane(-currentOrbitDirection, Vector3.up);
+            mainCam = GetComponentInChildren<Camera>(true);
         }
 
-        if (direction.sqrMagnitude < 0.0001f)
-        {
-            direction = Vector3.ProjectOnPlane(mainCam.transform.forward, Vector3.up);
-        }
-
-        if (direction.sqrMagnitude > 0.0001f)
-        {
-            direction = direction.normalized;
-        }
-
-        return pivot + direction * (closeFocusDistance * t);
+        return mainCam != null && cameraAnchor != null && yawPivot != null && pitchPivot != null;
     }
 
     private void OnValidate()
     {
-        minDistance = Mathf.Max(0.1f, minDistance);
-        maxDistance = Mathf.Max(minDistance, maxDistance);
+        ValidateFields();
+    }
+
+    private void ValidateFields()
+    {
+        zoomNormalized = Mathf.Clamp01(zoomNormalized);
         zoomInSpeed = Mathf.Max(0f, zoomInSpeed);
         zoomOutSpeed = Mathf.Max(0f, zoomOutSpeed);
-        zoomLerpSpeed = Mathf.Max(0f, zoomLerpSpeed);
-        obstructionLerpSpeed = Mathf.Max(0f, obstructionLerpSpeed);
-        collisionRadius = Mathf.Max(0.01f, collisionRadius);
-        collisionBuffer = Mathf.Max(0f, collisionBuffer);
-        minCollisionDistance = Mathf.Max(0.05f, minCollisionDistance);
-        closeFocusDistance = Mathf.Max(0f, closeFocusDistance);
-        focusBlendStartDistance = Mathf.Max(0.01f, focusBlendStartDistance);
-        focusBlendEndDistance = Mathf.Max(0.01f, focusBlendEndDistance);
-        rightStickHorizontalDominance = Mathf.Max(0.01f, rightStickHorizontalDominance);
-        hideCharacterDistance = Mathf.Max(0.05f, hideCharacterDistance);
-        showCharacterDistance = Mathf.Max(hideCharacterDistance, showCharacterDistance);
-        placementLookLerpDuration = Mathf.Max(0f, placementLookLerpDuration);
-        placementOrbitRadius = Mathf.Max(0f, placementOrbitRadius);
-        placementOrbitSpeed = Mathf.Max(0f, placementOrbitSpeed);
+        zoomSharpness = Mathf.Max(0f, zoomSharpness);
+        minDistance = Mathf.Max(0.1f, minDistance);
+        maxDistance = Mathf.Max(minDistance, maxDistance);
+        minPivotHeight = Mathf.Max(0f, minPivotHeight);
+        maxPivotHeight = Mathf.Max(minPivotHeight, maxPivotHeight);
+        minPanSpeed = Mathf.Max(0f, minPanSpeed);
+        maxPanSpeed = Mathf.Max(minPanSpeed, maxPanSpeed);
+        rotationSharpness = Mathf.Max(0f, rotationSharpness);
+        minPitch = Mathf.Clamp(minPitch, 0f, 89f);
+        maxPitch = Mathf.Clamp(maxPitch, minPitch, 89f);
+        zoomedInPitch = Mathf.Clamp(zoomedInPitch, minPitch, maxPitch);
+        zoomedOutPitch = Mathf.Clamp(zoomedOutPitch, minPitch, maxPitch);
+        pitchOffsetMin = Mathf.Min(pitchOffsetMin, pitchOffsetMax);
+        dragPanDistanceFactor = Mathf.Max(0f, dragPanDistanceFactor);
+        anchorSharpness = Mathf.Max(0f, anchorSharpness);
+        obstructionSharpness = Mathf.Max(0f, obstructionSharpness);
+        releaseSharpness = Mathf.Max(0f, releaseSharpness);
+
+        cameraInput?.Validate();
+        cameraFocus?.Validate();
+        cameraCollision?.Validate();
     }
 
-    private void UpdateTargetVisibility(Vector3 pivot)
+    private static Transform FindChildRecursive(Transform root, string childName)
     {
-        CacheTargetRenderers();
-
-        if (!hideCharacterWhenClose || cachedTargetRenderers == null || cachedTargetRenderers.Length == 0)
+        if (root == null)
         {
-            if (targetHidden)
+            return null;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child.name == childName)
             {
-                SetRenderersVisible(cachedTargetRenderers, cachedTargetRendererStates, true);
-                targetHidden = false;
-            }
-            return;
-        }
-
-        float distance = Vector3.Distance(mainCam.transform.position, pivot);
-        bool shouldHide = targetHidden
-            ? distance < showCharacterDistance
-            : distance < hideCharacterDistance;
-
-        if (shouldHide != targetHidden)
-        {
-            SetRenderersVisible(cachedTargetRenderers, cachedTargetRendererStates, !shouldHide);
-            targetHidden = shouldHide;
-        }
-    }
-
-    private void CacheTargetRenderers()
-    {
-        if (mainCamCurrentTarget == cachedTarget)
-        {
-            return;
-        }
-
-        if (cachedTargetRenderers != null && cachedTargetRenderers.Length > 0)
-        {
-            SetRenderersVisible(cachedTargetRenderers, cachedTargetRendererStates, true);
-        }
-
-        cachedTarget = mainCamCurrentTarget;
-        targetHidden = false;
-
-        if (cachedTarget == null)
-        {
-            cachedTargetRenderers = null;
-            cachedTargetRendererStates = null;
-            return;
-        }
-
-        cachedTargetRenderers = cachedTarget.GetComponentsInChildren<Renderer>(true);
-        if (cachedTargetRenderers == null || cachedTargetRenderers.Length == 0)
-        {
-            cachedTargetRendererStates = null;
-            return;
-        }
-
-        cachedTargetRendererStates = new bool[cachedTargetRenderers.Length];
-        for (int i = 0; i < cachedTargetRenderers.Length; i++)
-        {
-            Renderer renderer = cachedTargetRenderers[i];
-            cachedTargetRendererStates[i] = renderer != null && renderer.enabled;
-        }
-    }
-
-    private void ClearTargetVisibility()
-    {
-        if (cachedTargetRenderers != null && cachedTargetRenderers.Length > 0)
-        {
-            SetRenderersVisible(cachedTargetRenderers, cachedTargetRendererStates, true);
-        }
-
-        cachedTarget = null;
-        cachedTargetRenderers = null;
-        cachedTargetRendererStates = null;
-        targetHidden = false;
-    }
-
-    private static void SetRenderersVisible(Renderer[] renderers, bool[] states, bool visible)
-    {
-        if (renderers == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null)
-            {
-                continue;
+                return child;
             }
 
-            if (visible)
+            Transform nested = FindChildRecursive(child, childName);
+            if (nested != null)
             {
-                bool state = states != null && i < states.Length ? states[i] : true;
-                renderer.enabled = state;
-            }
-            else
-            {
-                renderer.enabled = false;
+                return nested;
             }
         }
+
+        return null;
     }
 }
