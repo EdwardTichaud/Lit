@@ -15882,8 +15882,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   voidUseCollisionMatrixMask: 1
   enableStepAssist: 1
-  stepHeight: 0.55
-  stepCheckDistance: 0.35
+  stepHeight: 0.8
+  stepCheckDistance: 0.7
   stepUpSpeed: 7
   stepDownHeight: 0
   stepDownSpeed: 0
@@ -15924,6 +15924,9 @@ MonoBehaviour:
   torchBoolParam: Torch
   torchStartsActive: 1
   initializeTorchFromHierarchy: 1
+  torchUpperBodyIdleLayerWeight: 0.92
+  torchUpperBodyMovingLayerWeight: 0.76
+  torchUpperBodyLayerWeightResponsiveness: 10
   inputLockTime: 0.2
   knockbackForceMode: 2
   ignoreCharacterCollisions: 1

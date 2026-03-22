@@ -1881,6 +1881,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool CheckRigidbodyGrounded()
     {
         Vector3 up = transform.up;
+        int groundMask = GetJumpGroundMask();
         if (TryGetStepCapsule(out Vector3 center, out float radius, out float height))
         {
             float probeRadius = Mathf.Max(0.05f, radius * jumpGroundCheckRadiusScale);
@@ -1889,7 +1890,7 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 bottom = center - up * bottomOffset;
             Vector3 origin = bottom + up * 0.02f;
             float distance = Mathf.Max(0.02f, jumpGroundCheckDistance);
-            int hitCount = Physics.SphereCastNonAlloc(origin, probeRadius, -up, stepCastHits, distance, GetVoidGroundMask(), QueryTriggerInteraction.Ignore);
+            int hitCount = Physics.SphereCastNonAlloc(origin, probeRadius, -up, stepCastHits, distance, groundMask, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < hitCount; i++)
             {
                 Collider col = stepCastHits[i].collider;
@@ -1905,7 +1906,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         Vector3 fallbackOrigin = GetWorldPosition() + up * 0.1f;
-        return Physics.Raycast(fallbackOrigin, -up, Mathf.Max(0.02f, jumpGroundCheckDistance + 0.1f), GetVoidGroundMask(), QueryTriggerInteraction.Ignore);
+        return Physics.Raycast(fallbackOrigin, -up, Mathf.Max(0.02f, jumpGroundCheckDistance + 0.1f), groundMask, QueryTriggerInteraction.Ignore);
     }
 
     private bool HasStepClearance(Vector3 bottomCenter, float radius, float height, Vector3 up, Vector3 moveDir, float stepUp, float castDistance, int mask)
@@ -2124,6 +2125,11 @@ public partial class SquadCharacterController : MonoBehaviour
     private int GetStepBlockingMask()
     {
         return GetCollisionMatrixMask() & ~GetStepMask();
+    }
+
+    private int GetJumpGroundMask()
+    {
+        return GetVoidGroundMask() | GetStepMask();
     }
 
     private bool IsGroundedForStep(Vector3 bottom, float radius, Vector3 up, int mask)
