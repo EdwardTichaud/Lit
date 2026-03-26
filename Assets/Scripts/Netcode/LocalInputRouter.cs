@@ -58,6 +58,7 @@ public static class LocalInputRouter
     public static bool CameraOrbitModifierPressed => cameraOrbitModifierPressed;
     public static bool CameraPanModifierPressed => cameraPanModifierPressed;
     public static bool CameraFreeModeActive => cameraFreeModeActive;
+    internal static bool IsInteractConsumed => interactConsumed;
 
     public static void EnsureInitialized()
     {
@@ -213,6 +214,17 @@ public static class LocalInputRouter
     internal static void ConsumeInteract()
     {
         interactConsumed = true;
+    }
+
+    internal static bool TryConsumeInteract()
+    {
+        if (interactConsumed)
+        {
+            return false;
+        }
+
+        interactConsumed = true;
+        return true;
     }
 
     internal static void RaiseToggleTorch(InputAction.CallbackContext context)

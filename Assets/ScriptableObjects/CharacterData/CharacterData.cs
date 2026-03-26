@@ -32,6 +32,7 @@ public class CharacterData : ScriptableObject
 
     [Header("Inventory (Runtime)")]
     public List<Item> inventoryItems = new List<Item>();
+    public List<Item> equippedInteractionItems = new List<Item>();
     public int torchSecondsRemaining;
     public bool torchEquipped;
     public bool inventoryInitialized;
@@ -77,6 +78,11 @@ public class CharacterData : ScriptableObject
 
     public void SetInventory(List<Item> items, int torchSeconds, bool equipped, bool markInitialized = true)
     {
+        SetInventory(items, torchSeconds, equipped, markInitialized, null);
+    }
+
+    public void SetInventory(List<Item> items, int torchSeconds, bool equipped, bool markInitialized, List<Item> equippedItems)
+    {
         if (inventoryItems == null)
         {
             inventoryItems = new List<Item>();
@@ -93,6 +99,29 @@ public class CharacterData : ScriptableObject
 
         torchSecondsRemaining = Mathf.Max(0, torchSeconds);
         torchEquipped = equipped;
+        if (equippedInteractionItems == null)
+        {
+            equippedInteractionItems = new List<Item>();
+        }
+        else
+        {
+            equippedInteractionItems.Clear();
+        }
+
+        if (equippedItems != null)
+        {
+            for (int i = 0; i < equippedItems.Count; i++)
+            {
+                Item item = equippedItems[i];
+                if (item == null || equippedInteractionItems.Contains(item))
+                {
+                    continue;
+                }
+
+                equippedInteractionItems.Add(item);
+            }
+        }
+
         if (markInitialized)
         {
             inventoryInitialized = true;

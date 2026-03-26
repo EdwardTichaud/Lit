@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 297a383fda10e164096d09df64300d26
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313812
+  packageName: Game VFX - Six Elements VFX Mega Pack(HDRP)
+  packageVersion: 1.0
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Shader/Dissolve02.shadergraph
+  uploadId: 740178

@@ -236,6 +236,9 @@ public class MainMenuController : MonoBehaviour
         RegisterJoinTransportFailureCallback(false);
         InputFocusStack.Pop(this);
         RegisterTextInput(false);
+        ConfirmationManager.Dismiss(this);
+        loadConfirmOpen = false;
+        deleteConfirmOpen = false;
         RegisterJoinCallbacks(false);
         if (joinTimeoutRoutine != null)
         {
@@ -278,13 +281,6 @@ public class MainMenuController : MonoBehaviour
 
         if (InputFocusStack.HasAnyFocus() && !HasInputFocus())
         {
-            return;
-        }
-
-        if (deleteConfirmOpen)
-        {
-            LocalInputRouter.ConsumeInteract();
-            ConfirmDelete();
             return;
         }
 
@@ -1614,6 +1610,11 @@ public class MainMenuController : MonoBehaviour
         if (loadConfirmGroup != null)
         {
             ApplyFadeImmediate(loadConfirmGroup, 0f, false);
+        }
+
+        if (confirmRoot != null)
+        {
+            confirmRoot.SetActive(false);
         }
 
         ApplyVirtualKeyboardImmediate(false);
@@ -4096,6 +4097,8 @@ public class MainMenuController : MonoBehaviour
         if (SaveSessionManager.Instance == null)
         {
             HideLoadingScreen();
+            SetActiveMenuInteractable(true);
+            SetSharedCursorInputEnabled(true);
             return;
         }
 
@@ -4103,6 +4106,8 @@ public class MainMenuController : MonoBehaviour
         {
             HideLoadingScreen();
             SetStatus("Selectionne une sauvegarde.");
+            SetActiveMenuInteractable(true);
+            SetSharedCursorInputEnabled(true);
             return;
         }
 
@@ -4118,35 +4123,31 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (loadConfirmOpen)
-        {
-            pendingLoad = save;
-            if (loadConfirmText != null)
-            {
-                string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
-                loadConfirmText.text = string.Format(loadConfirmMessageFormat, label);
-            }
-            return;
-        }
-
         pendingLoad = save;
+        loadConfirmOpen = true;
+        SetActiveMenuInteractable(false);
+        SetSharedCursorInputEnabled(false);
 
-        if (loadConfirmText != null)
-        {
-            string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
-            loadConfirmText.text = string.Format(loadConfirmMessageFormat, label);
-        }
+        string label = string.IsNullOrWhiteSpace(save.saveName) ? "sauvegarde" : save.saveName;
+        string message = string.Format(loadConfirmMessageFormat, label);
+        bool shown = ConfirmationManager.TryShow(
+            new ConfirmationRequest(this, message, ConfirmLoad, CancelLoadConfirm)
+            {
+                Title = "Chargement",
+                ConfirmLabel = "Charger",
+                CancelLabel = "Annuler",
+                DebugContext = "MainMenu.LoadConfirm"
+            });
 
-        if (loadConfirmGroup == null)
+        if (shown)
         {
-            OnLoadSelected();
             return;
         }
 
-        loadConfirmOpen = true;
-        StartFade(loadConfirmGroup, 1f, true);
-        SetActiveMenuInteractable(false);
-        UpdateCursorTargetForLoadConfirm();
+        loadConfirmOpen = false;
+        SetActiveMenuInteractable(true);
+        SetSharedCursorInputEnabled(true);
+        SetStatus("Confirmation indisponible.");
     }
 
     private void ConfirmLoad()
@@ -4164,11 +4165,8 @@ public class MainMenuController : MonoBehaviour
         selectedSave = pendingLoad;
         pendingLoad = null;
         loadConfirmOpen = false;
-
-        if (loadConfirmGroup != null)
-        {
-            StartFade(loadConfirmGroup, 0f, false);
-        }
+        ConfirmationManager.Dismiss(this);
+        SetSharedCursorInputEnabled(true);
 
         OnLoadSelected();
     }
@@ -4177,11 +4175,9 @@ public class MainMenuController : MonoBehaviour
     {
         pendingLoad = null;
         loadConfirmOpen = false;
-        if (loadConfirmGroup != null)
-        {
-            StartFade(loadConfirmGroup, 0f, false);
-        }
+        ConfirmationManager.Dismiss(this);
         SetActiveMenuInteractable(true);
+        SetSharedCursorInputEnabled(true);
         FocusSavesRoot();
     }
 
@@ -4242,24 +4238,27 @@ public class MainMenuController : MonoBehaviour
     private void OpenDeleteConfirm(string message)
     {
         deleteConfirmOpen = true;
-
-        if (confirmText != null)
-        {
-            confirmText.text = message;
-        }
-
-        if (confirmRoot != null)
-        {
-            confirmRoot.SetActive(true);
-            confirmRoot.transform.SetAsLastSibling();
-        }
-        else
-        {
-            InfoBoxUI.TryShowTopLeft($"{message} (Interact = confirmer / Retour = annuler)");
-        }
-
         SetActiveMenuInteractable(false);
         SetSharedCursorInputEnabled(false);
+
+        bool shown = ConfirmationManager.TryShow(
+            new ConfirmationRequest(this, message, ConfirmDelete, CancelDelete)
+            {
+                Title = "Suppression",
+                ConfirmLabel = "Supprimer",
+                CancelLabel = "Annuler",
+                DebugContext = "MainMenu.DeleteConfirm"
+            });
+
+        if (shown)
+        {
+            return;
+        }
+
+        deleteConfirmOpen = false;
+        SetActiveMenuInteractable(true);
+        SetSharedCursorInputEnabled(true);
+        SetStatus("Confirmation indisponible.");
     }
 
     private void ConfirmDelete()
@@ -4310,10 +4309,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         deleteConfirmOpen = false;
-        if (confirmRoot != null)
-        {
-            confirmRoot.SetActive(false);
-        }
+        ConfirmationManager.Dismiss(this);
         SetActiveMenuInteractable(true);
         SetSharedCursorInputEnabled(true);
     }
@@ -4424,7 +4420,7 @@ public class MainMenuController : MonoBehaviour
             SaveSessionManager.Instance.SetCurrentSessionType(SaveSessionType.Multiplayer);
         }
 
-        bool started = launcher.StartClientWithConnection(endpoint.Address, endpoint.Port);
+        bool started = launcher.StartClientWithSessionEndpoint(endpoint);
         if (!started)
         {
             HideLoadingScreen();
@@ -4435,6 +4431,9 @@ public class MainMenuController : MonoBehaviour
         activeJoinEndpoint = endpoint;
         joinInProgress = true;
         RegisterJoinCallbacks(true);
+        Debug.Log(
+            $"[NetcodeJoin] start code='{endpoint.Code}' target='{endpoint.EndpointLabel}' scene='{gameplaySceneName}'",
+            this);
         SetJoinStatus($"{joinConnectingMessage} {endpoint.EndpointLabel}");
         SetStatus($"Connexion vers {endpoint.EndpointLabel} (code {endpoint.Code})...");
 
@@ -4568,6 +4567,9 @@ public class MainMenuController : MonoBehaviour
 
     private void HandleJoinFailure(string message)
     {
+        NetcodeSessionEndpoint failedEndpoint = ResolveFailedJoinEndpoint();
+        string failedCode = failedEndpoint.IsValid ? failedEndpoint.Code : "n/a";
+        string failedTarget = failedEndpoint.IsValid ? failedEndpoint.EndpointLabel : "n/a";
         joinInProgress = false;
         RegisterJoinCallbacks(false);
         if (joinTimeoutRoutine != null)
@@ -4587,6 +4589,9 @@ public class MainMenuController : MonoBehaviour
         }
 
         HideLoadingScreen();
+        Debug.LogWarning(
+            $"[NetcodeJoin] failure code='{failedCode}' target='{failedTarget}' message='{message}'",
+            this);
         SetJoinStatus(message);
         SetStatus(message);
         activeJoinEndpoint = default;
@@ -4702,6 +4707,12 @@ public class MainMenuController : MonoBehaviour
     private string ResolveJoinAddress()
     {
         string address = joinAddressInput != null ? joinAddressInput.text : string.Empty;
+        NetcodeLauncher launcher = ResolveLauncher();
+        if (launcher != null)
+        {
+            return launcher.ResolveJoinAddress(address);
+        }
+
         if (string.IsNullOrWhiteSpace(address))
         {
             address = joinAddress;
@@ -4713,13 +4724,21 @@ public class MainMenuController : MonoBehaviour
     private bool TryResolveJoinEndpoint(out NetcodeSessionEndpoint endpoint)
     {
         string code = joinCodeInput != null ? joinCodeInput.text : string.Empty;
-        string address = ResolveJoinAddress();
-        return NetcodeSessionCode.TryCreateEndpoint(code, address, basePort, portRange, out endpoint);
+        string address = joinAddressInput != null ? joinAddressInput.text : string.Empty;
+        NetcodeLauncher launcher = ResolveLauncher();
+        if (launcher != null)
+        {
+            return launcher.TryResolveJoinEndpoint(code, address, out endpoint, out _);
+        }
+
+        string normalizedAddress = ResolveJoinAddress();
+        return NetcodeSessionCode.TryCreateEndpoint(code, normalizedAddress, basePort, portRange, out endpoint);
     }
 
     private string BuildJoinFailureMessage(bool timedOut)
     {
-        if (!activeJoinEndpoint.IsValid)
+        NetcodeSessionEndpoint failedEndpoint = ResolveFailedJoinEndpoint();
+        if (!failedEndpoint.IsValid)
         {
             return joinNoSessionMessage;
         }
@@ -4728,20 +4747,77 @@ public class MainMenuController : MonoBehaviour
         string disconnectReason = manager != null ? manager.DisconnectReason : string.Empty;
         if (!string.IsNullOrWhiteSpace(disconnectReason))
         {
-            return $"Connexion refusee par l'hote ({activeJoinEndpoint.EndpointLabel}, code {activeJoinEndpoint.Code}) : {disconnectReason}";
+            return $"Connexion refusee par l'hote ({failedEndpoint.EndpointLabel}, code {failedEndpoint.Code}) : {disconnectReason}";
         }
 
         string reason = timedOut
-            ? "Aucune reponse de l'hote dans le delai imparti."
-            : "La connexion a ete interrompue avant la validation du join.";
+            ? BuildJoinTimeoutReason(failedEndpoint)
+            : BuildJoinInterruptedReason(failedEndpoint);
 
-        string message = $"Connexion impossible a {activeJoinEndpoint.EndpointLabel} pour le code {activeJoinEndpoint.Code}. {reason} Verifie que l'hote est lance avec ce meme code.";
-        if (ShouldSuggestLoopback(activeJoinEndpoint.Address))
+        string message =
+            $"Connexion impossible a {failedEndpoint.EndpointLabel} pour le code {failedEndpoint.Code}. " +
+            $"Le client a tente l'endpoint {failedEndpoint.EndpointLabel}. {reason}";
+        if (ShouldSuggestLoopback(failedEndpoint.Address))
         {
             message += " Pour un test sur le meme PC, utilise 127.0.0.1 au lieu de l'IP publique.";
         }
 
         return message;
+    }
+
+    private NetcodeSessionEndpoint ResolveFailedJoinEndpoint()
+    {
+        if (activeJoinEndpoint.IsValid)
+        {
+            return activeJoinEndpoint;
+        }
+
+        NetcodeLauncher launcher = ResolveLauncher();
+        if (launcher != null && launcher.TryGetLastConnectionAttempt(out NetcodeConnectionAttemptInfo attempt))
+        {
+            return new NetcodeSessionEndpoint(
+                string.IsNullOrWhiteSpace(attempt.Code) ? "?" : attempt.Code,
+                attempt.Address,
+                attempt.Port);
+        }
+
+        return default;
+    }
+
+    private static string BuildJoinTimeoutReason(NetcodeSessionEndpoint endpoint)
+    {
+        if (IsLoopbackAddress(endpoint.Address))
+        {
+            return "Aucune reponse n'a ete recue sur l'endpoint local dans le delai imparti. Causes probables : l'hote n'est pas lance sur ce PC, le code ne correspond pas au meme port, ou le pare-feu local bloque la connexion.";
+        }
+
+        return "Aucune reponse n'a ete recue sur ce port dans le delai imparti. Causes probables : l'hote n'ecoute pas sur ce port, l'IP est incorrecte, le port n'est pas redirige/NAT, ou le pare-feu bloque l'acces.";
+    }
+
+    private static string BuildJoinInterruptedReason(NetcodeSessionEndpoint endpoint)
+    {
+        if (IsLoopbackAddress(endpoint.Address))
+        {
+            return "La connexion locale a ete interrompue avant validation. Verifie que l'hote est toujours lance sur ce PC et que le code utilise correspond au meme port.";
+        }
+
+        return "La connexion a ete interrompue avant validation par l'hote. Verifie que l'hote est toujours lance, que le port est accessible depuis Internet/LAN et que le meme code a ete utilise.";
+    }
+
+    private static bool IsLoopbackAddress(string address)
+    {
+        string normalized = NetcodeSessionCode.NormalizeAddress(address);
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return false;
+        }
+
+        if (string.Equals(normalized, "localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return IPAddress.TryParse(normalized, out IPAddress parsed) && IPAddress.IsLoopback(parsed);
     }
 
     private static bool ShouldSuggestLoopback(string address)

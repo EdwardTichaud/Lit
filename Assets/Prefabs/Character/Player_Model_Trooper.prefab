@@ -239,7 +239,7 @@ GameObject:
   - component: {fileID: 8372679545073153904}
   - component: {fileID: 3983019744587857514}
   - component: {fileID: 4894254686035315863}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Spark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5506,7 +5506,7 @@ GameObject:
   - component: {fileID: 7902730623139603822}
   - component: {fileID: 8521810314918021466}
   - component: {fileID: 5458105612469478004}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Flame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10730,7 +10730,7 @@ GameObject:
   - component: {fileID: 2058860206160617947}
   - component: {fileID: 5389205459331627456}
   - component: {fileID: 6244732809406361524}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Fire_B
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15709,7 +15709,7 @@ GameObject:
   - component: {fileID: 880945654765737532}
   - component: {fileID: 2272791694640596917}
   - component: {fileID: 3281333903003229964}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Player_Model_Trooper
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -15839,9 +15839,13 @@ MonoBehaviour:
   airborneStateName: Jump_Airborne
   idleLandingStateName: Jump_Land
   rollStateName: Jump_Roll
+  maxWalkableSlopeAngle: 55
+  debugSurfaceProbeGizmos: 0
   items: []
+  equippedInteractionItems: []
   startingTorchSeconds: 300
   torchSecondsRemaining: 300
+  logInventoryInitialization: 1
   characterData: {fileID: 0}
   maxHp: 10
   currentHp: 10
@@ -15882,14 +15886,14 @@ MonoBehaviour:
     m_Bits: 4294967295
   voidUseCollisionMatrixMask: 1
   enableStepAssist: 1
-  stepHeight: 0.8
-  stepCheckDistance: 0.7
-  stepUpSpeed: 7
+  stepHeight: 1.15
+  stepCheckDistance: 0.95
+  stepUpSpeed: 9
   stepDownHeight: 0
   stepDownSpeed: 0
   stepUpSmoothTime: 0.08
   stepDownSmoothTime: 0.1
-  stepHeightTolerance: 0.05
+  stepHeightTolerance: 0.1
   stepMinHeight: 0.05
   stepMaxUpVelocity: 1.5
   requireGroundForStep: 1
@@ -15932,6 +15936,9 @@ MonoBehaviour:
   ignoreCharacterCollisions: 1
   ignoreCharacterTriggerColliders: 1
   collisionRefreshInterval: 0.5
+  preventWallPenetration: 1
+  movementCollisionSkin: 0.03
+  movementCollisionWalkableNormalDot: 0.35
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845
@@ -15998,7 +16005,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!136 &880945654765737532
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -16256,7 +16263,7 @@ GameObject:
   - component: {fileID: 1980749008324350739}
   - component: {fileID: 5071775568168607801}
   - component: {fileID: 4386892185770952894}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Glow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21218,7 +21225,7 @@ GameObject:
   - component: {fileID: 5596139298118977256}
   - component: {fileID: 3112449627529490230}
   - component: {fileID: 8582352858469832001}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Glow_Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26216,7 +26223,7 @@ GameObject:
   - component: {fileID: 6843767388511174400}
   - component: {fileID: 9035861501353636054}
   - component: {fileID: 5769210153247188712}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Fire_Sheet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -31570,7 +31577,7 @@ GameObject:
   - component: {fileID: 7700660421274350288}
   - component: {fileID: 7565488321440880079}
   - component: {fileID: 7455123714638215891}
-  m_Layer: 19
+  m_Layer: 0
   m_Name: Fire_A
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -79,14 +79,6 @@ public class MenuCursorItem : MonoBehaviour, IPointerEnterHandler, IPointerExitH
             return;
         }
 
-        RectTransform parent = rectTransform.parent as RectTransform;
-        if (parent != null)
-        {
-            cursor.itemsParent = parent;
-            cursor.layoutGroup = parent.GetComponent<LayoutGroup>();
-        }
-
-        cursor.Refresh();
-        cursor.TrySetCurrentItem(rectTransform, false);
+        MenuCursorSyncUtility.SyncCursorToItem(cursor, rectTransform);
     }
 }

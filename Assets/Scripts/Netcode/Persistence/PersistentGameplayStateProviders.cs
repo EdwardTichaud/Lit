@@ -12,6 +12,8 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         public string ContainerItemId;
         public bool Collectable;
         public bool DestroyWhenEmpty;
+        public bool Locked;
+        public bool TrapTriggered;
         public List<ItemEntry> Items = new List<ItemEntry>();
     }
 
@@ -51,7 +53,9 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         {
             ContainerItemId = container.containerItem != null ? ItemIdUtils.GetItemId(container.containerItem) : string.Empty,
             Collectable = container.collectable,
-            DestroyWhenEmpty = container.destroyWhenEmpty
+            DestroyWhenEmpty = container.destroyWhenEmpty,
+            Locked = container.isLocked,
+            TrapTriggered = container.HasTriggeredTrap
         };
 
         if (container.lootItems != null)
@@ -162,6 +166,8 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         container.containerItem = string.IsNullOrWhiteSpace(data.ContainerItemId) ? null : resolvedContainerItem;
         container.collectable = data.Collectable;
         container.destroyWhenEmpty = data.DestroyWhenEmpty;
+        container.RestoreLockedState(data.Locked);
+        container.RestoreTrapTriggeredState(data.TrapTriggered);
         container.SetLootItems(entries, false);
 
         int actualStacks = PersistentStateValidation.CountStacks(container.lootItems);
@@ -172,11 +178,13 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
             actualQuantity == expectedQuantity &&
             string.Equals(ItemIdUtils.GetItemId(container.containerItem), data.ContainerItemId ?? string.Empty, StringComparison.Ordinal) &&
             container.collectable == data.Collectable &&
-            container.destroyWhenEmpty == data.DestroyWhenEmpty;
+            container.destroyWhenEmpty == data.DestroyWhenEmpty &&
+            container.isLocked == data.Locked &&
+            container.HasTriggeredTrap == data.TrapTriggered;
         PersistentStateValidation.LogValidation(
             scenario,
             success,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(container)}' containerItemId='{ItemIdUtils.GetItemId(container.containerItem)}' expectedStacks={expectedStacks} actualStacks={actualStacks} expectedQuantity={expectedQuantity} actualQuantity={actualQuantity} collectable={container.collectable} destroyWhenEmpty={container.destroyWhenEmpty}",
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(container)}' containerItemId='{ItemIdUtils.GetItemId(container.containerItem)}' expectedStacks={expectedStacks} actualStacks={actualStacks} expectedQuantity={expectedQuantity} actualQuantity={actualQuantity} collectable={container.collectable} destroyWhenEmpty={container.destroyWhenEmpty} locked={container.isLocked} trapTriggered={container.HasTriggeredTrap}",
             container,
             context);
     }
@@ -490,8 +498,8 @@ public class PersistentPuzzleElementState : MonoBehaviour, IPersistentStateProvi
         }
         else
         {
-            leverA?.SetActive(data.LeverAActive);
-            leverB?.SetActive(data.LeverBActive);
+            leverA?.RestoreActiveState(data.LeverAActive, data.LeverAActive);
+            leverB?.RestoreActiveState(data.LeverBActive, data.LeverBActive);
         }
 
         bool actualLeverA = leverA != null && leverA.IsActive;
@@ -616,23 +624,19 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
             brasero,
             context);
 
-        bool hasStageRoots = context.WorldRules.TryGetString(WorldRulesStateManager.ActiveStageRootsKey, out string activeStageRoots);
         bool hasVolumeProfiles = context.WorldRules.TryGetString(WorldRulesStateManager.ActiveVolumeProfilesKey, out string activeVolumeProfiles);
         int expectedTotalCount = timeManager.braseros != null ? timeManager.braseros.Count : 0;
-        string actualStageRoots = context.WorldRules.DescribeActiveStageRoots();
         string actualVolumeProfiles = context.WorldRules.DescribeActiveVolumeProfiles();
         bool extendedSuccess =
             baseSuccess &&
             hasTotalCount &&
-            hasStageRoots &&
             hasVolumeProfiles &&
             totalCount == expectedTotalCount &&
-            string.Equals(activeStageRoots, actualStageRoots, StringComparison.Ordinal) &&
             string.Equals(activeVolumeProfiles, actualVolumeProfiles, StringComparison.Ordinal);
         PersistentStateValidation.LogValidation(
             "world_rules_extended",
             extendedSuccess,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedTotalBraziers={expectedTotalCount} actualTotalBraziers={totalCount} expectedStageRoots='{actualStageRoots}' actualStageRoots='{activeStageRoots}' expectedVolumeProfiles='{actualVolumeProfiles}' actualVolumeProfiles='{activeVolumeProfiles}'",
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedTotalBraziers={expectedTotalCount} actualTotalBraziers={totalCount} expectedVolumeProfiles='{actualVolumeProfiles}' actualVolumeProfiles='{activeVolumeProfiles}'",
             brasero,
             context);
     }

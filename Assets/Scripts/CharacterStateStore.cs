@@ -382,6 +382,46 @@ public class CharacterStateStore : MonoBehaviour
         return playerBindings.TryGetValue(playerId, out characterId);
     }
 
+    public bool TryGetLoadedCharacterEntry(CharacterData character, out CharacterSaveEntry entry)
+    {
+        entry = null;
+        string characterId = GetCharacterId(character);
+        if (string.IsNullOrWhiteSpace(characterId))
+        {
+            return false;
+        }
+
+        return TryGetLoadedCharacterEntry(characterId, out entry);
+    }
+
+    public bool TryGetLoadedCharacterEntry(string characterId, out CharacterSaveEntry entry)
+    {
+        entry = null;
+        if (loadedData == null || loadedData.characters == null || string.IsNullOrWhiteSpace(characterId))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < loadedData.characters.Count; i++)
+        {
+            CharacterSaveEntry candidate = loadedData.characters[i];
+            if (candidate == null || string.IsNullOrWhiteSpace(candidate.characterId))
+            {
+                continue;
+            }
+
+            if (!string.Equals(candidate.characterId, characterId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            entry = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
     public void SetPlayerBinding(string playerId, string characterId)
     {
         if (string.IsNullOrWhiteSpace(playerId) || string.IsNullOrWhiteSpace(characterId))

@@ -25,6 +25,8 @@ public class BraseroVolumeByYear : MonoBehaviour
     public bool autoFindManager = true;
     [Tooltip("Cherche automatiquement un Volume si non assigne.")]
     public bool autoFindVolume = true;
+    [Tooltip("Valeur comparee pour choisir le profil.")]
+    public TimePeriodValueMode valueMode = TimePeriodValueMode.YearOffsetFromBase;
 
     [Header("Profiles")]
     [Tooltip("Profil par defaut si aucune regle ne matche.")]
@@ -61,7 +63,15 @@ public class BraseroVolumeByYear : MonoBehaviour
 
         if (timeManager == null && autoFindManager)
         {
-            timeManager = FindObjectOfType<BraseroTimeManager>();
+            timeManager = BraseroTimeManager.ActiveInstance;
+            if (timeManager == null)
+            {
+#if UNITY_2023_1_OR_NEWER
+                timeManager = FindFirstObjectByType<BraseroTimeManager>();
+#else
+                timeManager = FindObjectOfType<BraseroTimeManager>();
+#endif
+            }
         }
     }
 
@@ -87,7 +97,8 @@ public class BraseroVolumeByYear : MonoBehaviour
 
     private void OnTimeChanged(int year, int litCount)
     {
-        ApplyForYear(year);
+        int currentValue = timeManager != null ? timeManager.GetComparisonValue(valueMode) : year;
+        ApplyForValue(currentValue);
     }
 
     private void ApplyForCurrentYear()
@@ -98,17 +109,22 @@ public class BraseroVolumeByYear : MonoBehaviour
             return;
         }
 
-        ApplyForYear(timeManager.CurrentYear);
+        ApplyForValue(timeManager.GetComparisonValue(valueMode));
     }
 
     public void ApplyForYear(int year)
+    {
+        ApplyForValue(year);
+    }
+
+    public void ApplyForValue(int currentValue)
     {
         if (targetVolume == null)
         {
             return;
         }
 
-        VolumeProfile selected = SelectProfile(year);
+        VolumeProfile selected = SelectProfile(currentValue);
         if (selected == null)
         {
             selected = defaultProfile;
@@ -123,7 +139,7 @@ public class BraseroVolumeByYear : MonoBehaviour
         currentProfile = selected;
     }
 
-    private VolumeProfile SelectProfile(int year)
+    private VolumeProfile SelectProfile(int currentValue)
     {
         VolumeProfile bestProfile = null;
         int bestMinYear = int.MinValue;
@@ -136,7 +152,7 @@ public class BraseroVolumeByYear : MonoBehaviour
                 continue;
             }
 
-            if (year >= entry.minYear && entry.minYear >= bestMinYear)
+            if (currentValue >= entry.minYear && entry.minYear >= bestMinYear)
             {
                 bestMinYear = entry.minYear;
                 bestProfile = entry.profile;

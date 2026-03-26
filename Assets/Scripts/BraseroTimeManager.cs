@@ -6,6 +6,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class BraseroTimeManager : MonoBehaviour
 {
+    public static BraseroTimeManager ActiveInstance { get; private set; }
+
     [Header("Braseros")]
     [Tooltip("Si true, collecte automatiquement les braseros dans les enfants.")]
     public bool autoCollectChildren = true;
@@ -17,6 +19,8 @@ public class BraseroTimeManager : MonoBehaviour
     public int baseYear = 0;
     [Tooltip("Nombre d'annees gagnees par brasero allume.")]
     public int yearsPerBrasero = 100;
+    [Tooltip("Ecrit un log quand la periode change.")]
+    public bool logTimeChanges = false;
 
     [Header("State")]
     [SerializeField, Tooltip("Nombre de braseros allumes.")]
@@ -26,23 +30,31 @@ public class BraseroTimeManager : MonoBehaviour
 
     public int LitCount => litCount;
     public int CurrentYear => currentYear;
+    public int CurrentYearOffset => litCount * yearsPerBrasero;
 
     public event Action<int, int> TimeChanged;
 
     private void OnEnable()
     {
+        ActiveInstance = this;
+
         if (autoCollectChildren)
         {
             RefreshBraseros();
         }
 
         Subscribe();
-        RecalculateTime();
+        RecalculateTime(rescanTimePeriodVisibility: true);
     }
 
     private void OnDisable()
     {
         Unsubscribe();
+
+        if (ReferenceEquals(ActiveInstance, this))
+        {
+            ActiveInstance = null;
+        }
     }
 
     private void OnTransformChildrenChanged()
@@ -74,8 +86,10 @@ public class BraseroTimeManager : MonoBehaviour
         RecalculateTime();
     }
 
-    public void RecalculateTime()
+    public void RecalculateTime(bool rescanTimePeriodVisibility = true)
     {
+        int previousLitCount = litCount;
+        int previousYear = currentYear;
         int count = 0;
         for (int i = 0; i < braseros.Count; i++)
         {
@@ -93,7 +107,15 @@ public class BraseroTimeManager : MonoBehaviour
 
         litCount = count;
         currentYear = baseYear + litCount * yearsPerBrasero;
+        if (logTimeChanges && (previousLitCount != litCount || previousYear != currentYear))
+        {
+            Debug.Log(
+                $"[TimePeriod] litCount={litCount}/{(braseros != null ? braseros.Count : 0)} currentYear={currentYear} yearOffset={CurrentYearOffset}",
+                this);
+        }
+
         TimeChanged?.Invoke(currentYear, litCount);
+        TimePeriodVisibility.RefreshAllForManager(this, rescanTimePeriodVisibility);
     }
 
     public void SetAllLit(bool lit)
@@ -141,6 +163,22 @@ public class BraseroTimeManager : MonoBehaviour
     private void OnBraseroStateChanged(Brasero brasero, bool lit)
     {
         RecalculateTime();
+    }
+
+    public int GetComparisonValue(TimePeriodValueMode valueMode)
+    {
+        switch (valueMode)
+        {
+            case TimePeriodValueMode.YearOffsetFromBase:
+                return CurrentYearOffset;
+
+            case TimePeriodValueMode.LitBrazierCount:
+                return LitCount;
+
+            case TimePeriodValueMode.AbsoluteYear:
+            default:
+                return CurrentYear;
+        }
     }
 
 #if UNITY_EDITOR

@@ -835,6 +835,9 @@ public class SquadManager : MonoBehaviour
 
             if (!pendingItemLookup.TryGetValue(stack.itemId, out Item item) || item == null)
             {
+                Debug.LogWarning(
+                    $"SquadManager: item sauvegarde introuvable pour characterId='{entry.characterId}' itemId='{stack.itemId}' quantity={stack.quantity}. L'item sera ignore lors de la restauration.",
+                    this);
                 continue;
             }
 
@@ -960,7 +963,6 @@ public class SquadManager : MonoBehaviour
 
             ClampCursorIndex();
             HandleCursorNavigation();
-            UpdateCurrentCharacter();
             UpdateCursorPosition();
             HandleGroupingInputs();
         }
@@ -1037,7 +1039,6 @@ public class SquadManager : MonoBehaviour
             if (IsSelectableIndex(nextIndex))
             {
                 currentCursorIndex = nextIndex;
-                UpdateCurrentCharacter();
                 return;
             }
         }
@@ -1167,6 +1168,16 @@ public class SquadManager : MonoBehaviour
         if (squadCharacters == null || squadCharacters.Count == 0)
         {
             currentCharacter = null;
+            UpdateCrownPosition();
+            SyncSingleplayerLocalCharacterContext();
+            return;
+        }
+
+        if (charactersSelectionOn
+            && currentCharacter != null
+            && squadCharacters != null
+            && squadCharacters.Contains(currentCharacter))
+        {
             UpdateCrownPosition();
             SyncSingleplayerLocalCharacterContext();
             return;
@@ -2071,6 +2082,8 @@ public class SquadManager : MonoBehaviour
             }
         }
 
+        WarnIfSourceCharacterHasRuntimeInventoryState(character);
+
         CharacterData clone = Instantiate(character);
         clone.name = $"{character.name}_Runtime";
         clone.hideFlags = HideFlags.DontSave;
@@ -2102,6 +2115,7 @@ public class SquadManager : MonoBehaviour
         }
 
         clone.inventoryItems = new List<Item>();
+        clone.equippedInteractionItems = new List<Item>();
         clone.torchSecondsRemaining = 0;
         clone.torchEquipped = false;
         clone.inventoryInitialized = false;
@@ -2127,6 +2141,29 @@ public class SquadManager : MonoBehaviour
         }
 
         return clone;
+    }
+
+    private void WarnIfSourceCharacterHasRuntimeInventoryState(CharacterData character)
+    {
+        if (character == null || runtimeCharacters.Contains(character))
+        {
+            return;
+        }
+
+        int inventoryCount = character.inventoryItems != null ? character.inventoryItems.Count : 0;
+        int equippedCount = character.equippedInteractionItems != null ? character.equippedInteractionItems.Count : 0;
+        if (inventoryCount <= 0
+            && equippedCount <= 0
+            && !character.inventoryInitialized
+            && character.torchSecondsRemaining <= 0
+            && !character.torchEquipped)
+        {
+            return;
+        }
+
+        Debug.LogWarning(
+            $"SquadManager: source CharacterData '{character.name}' contient deja un etat runtime avant clonage. inventoryInitialized={character.inventoryInitialized} inventoryCount={inventoryCount} equippedCount={equippedCount} torchSeconds={character.torchSecondsRemaining} torchEquipped={character.torchEquipped}. Cela suggere qu'un ScriptableObject a ete modifie en runtime.",
+            character);
     }
 
     private void EnsureRuntimeSquad()
@@ -2216,13 +2253,33 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
+        CommitSingleplayerCharacterSwitchFromCursor();
+    }
+
+    private void CommitSingleplayerCharacterSwitchFromCursor()
+    {
         if (squadCharacters == null || squadCharacters.Count == 0)
         {
             return;
         }
 
         ClampCursorIndex();
-        UpdateCurrentCharacter();
+        if (currentCursorIndex < 0 || currentCursorIndex >= squadCharacters.Count)
+        {
+            return;
+        }
+
+        GameObject targetCharacter = squadCharacters[currentCursorIndex];
+        if (targetCharacter == null)
+        {
+            return;
+        }
+
+        currentCharacter = targetCharacter;
+        UpdateLeaderGroupFromCurrent();
+        UpdateCrownPosition();
+        SyncSingleplayerLocalCharacterContext();
+        RequestCrownReposition();
     }
 
     private void RequestCharacterSwitchFromCursor()
@@ -2354,13 +2411,10 @@ public class SquadManager : MonoBehaviour
         lastMoveDirection = 0;
         nextMoveTime = 0f;
 
-        if (IsMultiplayerActive())
+        int index = GetCurrentCharacterIndex();
+        if (index >= 0)
         {
-            int index = GetCurrentCharacterIndex();
-            if (index >= 0)
-            {
-                currentCursorIndex = index;
-            }
+            currentCursorIndex = index;
         }
 
         ClampCursorIndex();

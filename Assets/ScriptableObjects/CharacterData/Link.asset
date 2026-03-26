@@ -30,10 +30,18 @@ MonoBehaviour:
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
     quantity: 300
+  - item: {fileID: 11400000, guid: a763255ec4969994fb6662ac56fa33d1, type: 2}
+    quantity: 300
+  - item: {fileID: 11400000, guid: a7d7df4a7b1d0da4e8455ce4f6f0af8d, type: 2}
+    quantity: 300
+  - item: {fileID: 11400000, guid: a5c3f3a9d07349c8ae99536999f1db1c, type: 2}
+    quantity: 300
   hp: 10
-  voiceLines: []
+  voiceLines:
+  - {fileID: 0}
   maisonWaitingPoint: 1
   inventoryItems: []
+  equippedInteractionItems: []
   torchSecondsRemaining: 0
   torchEquipped: 0
   inventoryInitialized: 0

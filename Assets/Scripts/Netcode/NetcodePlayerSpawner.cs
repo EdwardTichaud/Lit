@@ -208,7 +208,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        if (HasSaveFile())
+        if (HasSavedCharacterEntry(character))
         {
             return;
         }
@@ -229,6 +229,17 @@ public class NetcodePlayerSpawner : MonoBehaviour
         {
             string path = session.GetActiveSaveFilePath("CharacterState.json");
             return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        }
+
+        return false;
+    }
+
+    private static bool HasSavedCharacterEntry(CharacterData character)
+    {
+        CharacterStateStore store = ResolveCharacterStateStore();
+        if (store != null && store.TryGetLoadedCharacterEntry(character, out _))
+        {
+            return true;
         }
 
         return false;

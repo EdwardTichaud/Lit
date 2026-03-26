@@ -10,17 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
-  m_Name: Item_Building_Container_Chest_1
+  m_Name: Item_Container_Chest_2_Key
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  itemId: chest02
-  itemName: Coffre
-  itemSprite: {fileID: 21300000, guid: 91f97e7330a955744a6cb6d3a81e6618, type: 3}
-  description: Aussi lourd que pratique.
+  itemId: key02
+  itemName: "Cl\xE9"
+  itemSprite: {fileID: 21300000, guid: a744d092f0b13ce43b147fc7552bcfea, type: 3}
+  description: "Une cl\xE9 ordinaire. Reste \xE0 savoir ce qu'elle ouvre..."
   canUse: 0
   canPlace: 1
   isContainer: 1
   worldPrefab: {fileID: 7727207527928336351, guid: 3ce3f387175db264bbf9a32ae684f01d, type: 3}
   isTorch: 0
+  isKey: 1
+  keyId: container_chest_2_key
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
   allowDropFromInventory: 1
   allowPlaceFromInventory: 1
   allowInstantDropWithoutPrefab: 1

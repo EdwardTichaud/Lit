@@ -126,6 +126,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
         NetcodeTriggerRegistry.Unregister(this, netcodeId);
+        ConfirmationManager.Dismiss(this);
 
         ResetUIState();
     }
@@ -280,48 +281,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         LocalInputRouter.ConsumeInteract();
-
-        if (!confirmVisible)
-        {
-            ShowConfirm(true);
-            return;
-        }
-
-        ConfirmationChoice choice = GetConfirmationChoice();
-        if (choice == ConfirmationChoice.No)
-        {
-            ShowConfirm(false);
-            ShowInteraction(true);
-            return;
-        }
-
-        if (choice == ConfirmationChoice.Unknown)
-        {
-            Debug.LogWarning("LabyrinthStartTrigger: confirmationBox ou CursorController non configure.");
-            return;
-        }
-
-        if (IsNetworked())
-        {
-            if (awaitingServerResponse)
-            {
-                return;
-            }
-
-            awaitingServerResponse = true;
-            WorldInteractionService service = WorldInteractionService.Instance;
-            if (service != null)
-            {
-                service.RequestLabyrinthStartServerRpc(netcodeId);
-            }
-            else
-            {
-                awaitingServerResponse = false;
-            }
-            return;
-        }
-
-        StartLabyrinth();
+        RequestCentralConfirmation();
     }
 
     private void OnInteract()
@@ -341,7 +301,73 @@ public class LabyrinthStartTrigger : MonoBehaviour
             return;
         }
 
-        ShowConfirm(false);
+        ConfirmationManager.Dismiss(this, true);
+    }
+
+    private void RequestCentralConfirmation()
+    {
+        if (confirmVisible || awaitingServerResponse)
+        {
+            return;
+        }
+
+        bool shown = ConfirmationManager.TryShow(
+            new ConfirmationRequest(this, confirmationMessage, ConfirmStartLabyrinth, CancelStartLabyrinth)
+            {
+                Title = "Confirmation",
+                ConfirmLabel = "Oui",
+                CancelLabel = "Non",
+                DebugContext = "LabyrinthStartTrigger.Start"
+            });
+
+        if (!shown)
+        {
+            Debug.LogWarning($"[Confirmation] LabyrinthStartTrigger failed to open confirmation for '{name}'.", this);
+            ShowInteraction(true);
+            return;
+        }
+
+        confirmVisible = true;
+        ShowInteraction(false);
+    }
+
+    private void ConfirmStartLabyrinth()
+    {
+        confirmVisible = false;
+        RefreshCurrentCharacter(true);
+        if (currentCharacter == null)
+        {
+            return;
+        }
+
+        if (IsNetworked())
+        {
+            if (awaitingServerResponse)
+            {
+                return;
+            }
+
+            awaitingServerResponse = true;
+            WorldInteractionService service = WorldInteractionService.Instance;
+            if (service != null)
+            {
+                service.RequestLabyrinthStartServerRpc(netcodeId);
+            }
+            else
+            {
+                awaitingServerResponse = false;
+                ShowInteraction(true);
+            }
+            return;
+        }
+
+        StartLabyrinth();
+    }
+
+    private void CancelStartLabyrinth()
+    {
+        confirmVisible = false;
+        RefreshCurrentCharacter(true);
     }
 
     private void StartLabyrinth()
@@ -521,6 +547,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void ResetUIState()
     {
+        ConfirmationManager.Dismiss(this);
         DestroyInteractionInstance();
         DestroyConfirmInstance();
         FadeConfirmationPanelTo(0f, 0f);
@@ -535,12 +562,14 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     public void ServerStartLabyrinth()
     {
+        ConfirmationManager.Dismiss(this);
         awaitingServerResponse = false;
         StartLabyrinth();
     }
 
     public void ClientHandleLabyrinthStarted()
     {
+        ConfirmationManager.Dismiss(this);
         awaitingServerResponse = false;
         if (labyrinthRoot != null)
         {

@@ -11,6 +11,8 @@ public class BraseroAnimatorByYear : MonoBehaviour
     public BraseroTimeManager timeManager;
     [Tooltip("Cherche automatiquement un manager si non assigne.")]
     public bool autoFindManager = true;
+    [Tooltip("Valeur comparee pour choisir le bool d'Animator.")]
+    public TimePeriodValueMode valueMode = TimePeriodValueMode.YearOffsetFromBase;
 
     [Header("Animators")]
     [Tooltip("Liste des animators a piloter (si vide, auto-collect).")]
@@ -41,7 +43,15 @@ public class BraseroAnimatorByYear : MonoBehaviour
     {
         if (timeManager == null && autoFindManager)
         {
-            timeManager = FindObjectOfType<BraseroTimeManager>();
+            timeManager = BraseroTimeManager.ActiveInstance;
+            if (timeManager == null)
+            {
+#if UNITY_2023_1_OR_NEWER
+                timeManager = FindFirstObjectByType<BraseroTimeManager>();
+#else
+                timeManager = FindObjectOfType<BraseroTimeManager>();
+#endif
+            }
         }
     }
 
@@ -94,7 +104,8 @@ public class BraseroAnimatorByYear : MonoBehaviour
 
     private void OnTimeChanged(int year, int litCount)
     {
-        ApplyForYear(year);
+        int currentValue = timeManager != null ? timeManager.GetComparisonValue(valueMode) : year;
+        ApplyForYear(currentValue);
     }
 
     private void ApplyForCurrentYear()
@@ -104,7 +115,7 @@ public class BraseroAnimatorByYear : MonoBehaviour
             return;
         }
 
-        ApplyForYear(timeManager.CurrentYear);
+        ApplyForYear(timeManager.GetComparisonValue(valueMode));
     }
 
     public void ApplyForYear(int year)

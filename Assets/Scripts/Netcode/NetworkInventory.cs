@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -17,6 +18,9 @@ public class NetworkInventory : NetworkBehaviour
 
     private readonly NetworkVariable<bool> torchEquipped = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private readonly NetworkList<FixedString64Bytes> netEquippedInteractionItems = new NetworkList<FixedString64Bytes>(
+        null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     public event System.Action InventoryChanged;
     [SerializeField] private bool logInventoryDebug = true;
@@ -38,6 +42,7 @@ public class NetworkInventory : NetworkBehaviour
         netItems.OnListChanged += OnNetItemsChanged;
         torchSeconds.OnValueChanged += OnTorchChanged;
         torchEquipped.OnValueChanged += OnTorchChanged;
+        netEquippedInteractionItems.OnListChanged += OnEquippedInteractionItemsChanged;
 
         if (IsServer)
         {
@@ -57,6 +62,7 @@ public class NetworkInventory : NetworkBehaviour
         netItems.OnListChanged -= OnNetItemsChanged;
         torchSeconds.OnValueChanged -= OnTorchChanged;
         torchEquipped.OnValueChanged -= OnTorchChanged;
+        netEquippedInteractionItems.OnListChanged -= OnEquippedInteractionItemsChanged;
     }
 
     public void SyncFromController()
@@ -104,9 +110,27 @@ public class NetworkInventory : NetworkBehaviour
             netItems.Add(new NetItemStack(pair.Key, pair.Value));
         }
 
+        netEquippedInteractionItems.Clear();
+        IReadOnlyList<Item> equippedItems = controller.EquippedInteractionItems;
+        if (equippedItems != null)
+        {
+            HashSet<string> equippedIds = new HashSet<string>();
+            for (int i = 0; i < equippedItems.Count; i++)
+            {
+                Item item = equippedItems[i];
+                string id = ItemIdUtils.GetItemId(item);
+                if (string.IsNullOrWhiteSpace(id) || !equippedIds.Add(id))
+                {
+                    continue;
+                }
+
+                netEquippedInteractionItems.Add(new FixedString64Bytes(id));
+            }
+        }
+
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, torchSeconds={torchSeconds.Value}, torchEquipped={torchEquipped.Value}", this);
+            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, torchSeconds={torchSeconds.Value}, torchEquipped={torchEquipped.Value}", this);
         }
     }
 
@@ -641,6 +665,11 @@ public class NetworkInventory : NetworkBehaviour
         ApplyToController();
     }
 
+    private void OnEquippedInteractionItemsChanged(NetworkListEvent<FixedString64Bytes> change)
+    {
+        ApplyToController();
+    }
+
     private void ApplyToController()
     {
         if (controller == null)
@@ -654,7 +683,9 @@ public class NetworkInventory : NetworkBehaviour
         }
 
         List<Item> resolved = new List<Item>();
+        List<Item> resolvedEquippedItems = new List<Item>();
         int unresolvedCount = 0;
+        List<string> unresolvedItemIds = logInventoryDebug ? new List<string>() : null;
         for (int i = 0; i < netItems.Count; i++)
         {
             NetItemStack stack = netItems[i];
@@ -667,6 +698,10 @@ public class NetworkInventory : NetworkBehaviour
             if (item == null)
             {
                 unresolvedCount++;
+                if (unresolvedItemIds != null)
+                {
+                    unresolvedItemIds.Add(stack.ItemId.ToString());
+                }
                 continue;
             }
 
@@ -677,10 +712,27 @@ public class NetworkInventory : NetworkBehaviour
             }
         }
 
-        controller.ApplyInventoryState(resolved, torchSeconds.Value, torchEquipped.Value);
+        for (int i = 0; i < netEquippedInteractionItems.Count; i++)
+        {
+            Item item = ItemRegistry.Resolve(netEquippedInteractionItems[i].ToString());
+            if (item == null || resolvedEquippedItems.Contains(item))
+            {
+                continue;
+            }
+
+            resolvedEquippedItems.Add(item);
+        }
+
+        controller.ApplyInventoryState(resolved, torchSeconds.Value, torchEquipped.Value, resolvedEquippedItems);
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, torchSeconds={torchSeconds.Value}", this);
+            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, torchSeconds={torchSeconds.Value}", this);
+            if (unresolvedItemIds != null && unresolvedItemIds.Count > 0)
+            {
+                Debug.LogWarning(
+                    $"NetworkInventory: unresolved item IDs for {name}: [{string.Join(", ", unresolvedItemIds)}]. Ces items n'ont pas pu etre reappliques au controller.",
+                    this);
+            }
         }
         InventoryChanged?.Invoke();
     }
@@ -692,7 +744,7 @@ public class NetworkInventory : NetworkBehaviour
             controller = GetComponent<SquadCharacterController>();
         }
 
-        if (controller == null || HasSaveFile())
+        if (controller == null || HasSavedCharacterEntry(controller.CharacterData))
         {
             return;
         }
@@ -734,6 +786,17 @@ public class NetworkInventory : NetworkBehaviour
         {
             string path = session.GetActiveSaveFilePath("CharacterState.json");
             return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+        }
+
+        return false;
+    }
+
+    private static bool HasSavedCharacterEntry(CharacterData character)
+    {
+        CharacterStateStore store = CharacterStateStore.Instance;
+        if (store != null && store.TryGetLoadedCharacterEntry(character, out _))
+        {
+            return true;
         }
 
         return false;

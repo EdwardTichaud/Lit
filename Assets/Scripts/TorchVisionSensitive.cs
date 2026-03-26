@@ -1,5 +1,6 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public class TorchVisionSensitive : MonoBehaviour
@@ -11,50 +12,49 @@ public class TorchVisionSensitive : MonoBehaviour
         HiddenWhenVisionMatches
     }
 
+    private struct DissolveRendererData
+    {
+        public Renderer Renderer;
+        public bool OriginalEnabled;
+        public bool HasDissolveAmountProperty;
+        public int DissolveAmountPropertyId;
+        public bool HasDissolveColorProperty;
+        public int DissolveColorPropertyId;
+    }
+
+    [Header("Evaluation")]
+    [SerializeField] private Transform distanceReference;
+    [SerializeField, Min(0.02f)] private float localRefreshInterval = 0.1f;
+
     [Header("Vision")]
     [SerializeField] private VisibilityMode visibilityMode = VisibilityMode.VisibleOnlyWhenVisionMatches;
     [SerializeField] private TorchVisionDefinition vision;
 
     [Header("Torch")]
     [SerializeField] private bool requireTorchEquipped = true;
+    [SerializeField, Min(0f)] private float hiddenDistance = 5f;
+    [SerializeField, Min(0f)] private float fullyVisibleDistance = 2f;
 
-    [Header("Fade")]
-    [SerializeField] private float fadeDuration = 1f;
-
-    [Header("Targets")]
+    [Header("Visuals")]
+    [SerializeField] private Transform visualRoot;
     [SerializeField] private bool includeChildren = true;
-    [SerializeField] private bool affectRenderers = true;
-    [SerializeField] private bool enableRendererWhenVisible = true;
-    [SerializeField] private bool enableRendererWhenHidden = false;
+    [SerializeField] private Renderer[] targetRenderers;
+    [SerializeField] private string dissolveAmountPropertyName = "_DissolveAmount";
+    [SerializeField] private string dissolveColorPropertyName = "_DissolveColor";
+
+    [Header("Interaction")]
     [SerializeField] private bool affectColliders = true;
-    [SerializeField] private bool enableColliderWhenVisible = true;
-    [SerializeField] private bool enableColliderWhenHidden = false;
-    [FormerlySerializedAs("disableColliderWhenVisible")]
-    [FormerlySerializedAs("enableColliderWhenVisible")]
-    [SerializeField, HideInInspector] private bool legacyColliderWhenVisible = false;
-    [SerializeField, HideInInspector] private bool colliderVisibilityMigrated = false;
-    [SerializeField] private bool affectBehaviours = false;
-    [SerializeField] private Renderer[] renderers;
     [SerializeField] private Collider[] colliders;
+    [SerializeField] private bool affectBehaviours = false;
     [SerializeField] private Behaviour[] behaviours;
 
-    private struct RendererFadeData
-    {
-        public Renderer Renderer;
-        public int ColorPropertyId;
-        public Color BaseColor;
-        public bool CanFade;
-    }
-
-    private RendererFadeData[] fadeRenderers;
+    private readonly List<Renderer> rendererBuffer = new List<Renderer>();
+    private DissolveRendererData[] cachedRenderers = Array.Empty<DissolveRendererData>();
     private MaterialPropertyBlock propertyBlock;
-    private Coroutine fadeRoutine;
-    private float currentFade = 1f;
-    private bool currentVisible = true;
+    private float refreshTimer;
 
     private void Awake()
     {
-        MigrateColliderVisibilityIfNeeded();
         CacheTargets();
     }
 
@@ -62,31 +62,45 @@ public class TorchVisionSensitive : MonoBehaviour
     {
         CacheTargets();
         TorchVisionSystem.GetOrCreate();
-        TorchVisionSystem.VisionChanged += OnVisionChanged;
+        TorchVisionSystem.VisionChanged += OnTorchDataChanged;
         TorchVisionSystem.TorchStateChanged += OnTorchStateChanged;
-        ApplyVision();
+        TorchVisionSystem.TorchSourcesChanged += OnTorchSourcesChanged;
+        RefreshState();
     }
 
     private void OnDisable()
     {
-        TorchVisionSystem.VisionChanged -= OnVisionChanged;
+        TorchVisionSystem.VisionChanged -= OnTorchDataChanged;
         TorchVisionSystem.TorchStateChanged -= OnTorchStateChanged;
+        TorchVisionSystem.TorchSourcesChanged -= OnTorchSourcesChanged;
+        ClearPropertyBlocks();
+        RestoreRendererState();
+    }
+
+    private void Update()
+    {
+        refreshTimer -= Time.deltaTime;
+        if (refreshTimer > 0f)
+        {
+            return;
+        }
+
+        RefreshState();
     }
 
     private void OnValidate()
     {
         if (!Application.isPlaying)
         {
-            MigrateColliderVisibilityIfNeeded();
             CacheTargets();
         }
     }
 
     private void CacheTargets()
     {
-        if (affectRenderers && (renderers == null || renderers.Length == 0))
+        if (targetRenderers == null || targetRenderers.Length == 0)
         {
-            renderers = includeChildren ? GetComponentsInChildren<Renderer>(true) : GetComponents<Renderer>();
+            targetRenderers = CollectRenderers(visualRoot != null ? visualRoot : transform);
         }
 
         if (affectColliders && (colliders == null || colliders.Length == 0))
@@ -99,111 +113,322 @@ public class TorchVisionSensitive : MonoBehaviour
             behaviours = includeChildren ? GetComponentsInChildren<Behaviour>(true) : GetComponents<Behaviour>();
         }
 
-        CacheFadeRenderers();
+        CacheRendererData();
     }
 
-    private void MigrateColliderVisibilityIfNeeded()
+    private Renderer[] CollectRenderers(Transform root)
     {
-        if (colliderVisibilityMigrated)
+        if (root == null)
         {
-            return;
+            return Array.Empty<Renderer>();
         }
 
-        enableColliderWhenVisible = !legacyColliderWhenVisible;
-        enableColliderWhenHidden = false;
-        colliderVisibilityMigrated = true;
-    }
-
-    private void CacheFadeRenderers()
-    {
-        if (!affectRenderers || renderers == null || renderers.Length == 0)
+        rendererBuffer.Clear();
+        if (includeChildren)
         {
-            fadeRenderers = null;
-            return;
+            root.GetComponentsInChildren(true, rendererBuffer);
         }
-
-        if (fadeRenderers == null || fadeRenderers.Length != renderers.Length)
+        else
         {
-            fadeRenderers = new RendererFadeData[renderers.Length];
-        }
-
-        int baseColorId = Shader.PropertyToID("_BaseColor");
-        int colorId = Shader.PropertyToID("_Color");
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            RendererFadeData data = new RendererFadeData
+            Renderer renderer = root.GetComponent<Renderer>();
+            if (renderer != null)
             {
-                Renderer = renderer,
-                CanFade = false,
-                ColorPropertyId = 0,
-                BaseColor = Color.white
+                rendererBuffer.Add(renderer);
+            }
+        }
+
+        return rendererBuffer.ToArray();
+    }
+
+    private void CacheRendererData()
+    {
+        if (targetRenderers == null || targetRenderers.Length == 0)
+        {
+            cachedRenderers = Array.Empty<DissolveRendererData>();
+            return;
+        }
+
+        cachedRenderers = new DissolveRendererData[targetRenderers.Length];
+        for (int i = 0; i < targetRenderers.Length; i++)
+        {
+            Renderer renderer = targetRenderers[i];
+            DissolveRendererData data = new DissolveRendererData
+            {
+                Renderer = renderer
             };
 
             if (renderer == null)
             {
-                fadeRenderers[i] = data;
+                cachedRenderers[i] = data;
                 continue;
             }
 
-            Material[] materials = renderer.sharedMaterials;
-            if (materials != null)
+            data.OriginalEnabled = renderer.enabled;
+            Material[] inspectionMaterials = renderer.sharedMaterials ?? Array.Empty<Material>();
+
+            if (inspectionMaterials != null)
             {
-                for (int m = 0; m < materials.Length; m++)
+                for (int m = 0; m < inspectionMaterials.Length; m++)
                 {
-                    Material material = materials[m];
+                    Material material = inspectionMaterials[m];
                     if (material == null)
                     {
                         continue;
                     }
 
-                    if (material.HasProperty(baseColorId))
+                    if (!data.HasDissolveAmountProperty
+                        && TryResolveFloatProperty(material, dissolveAmountPropertyName, out int dissolveAmountPropertyId))
                     {
-                        data.ColorPropertyId = baseColorId;
-                        data.BaseColor = material.GetColor(baseColorId);
-                        data.CanFade = true;
-                        break;
+                        data.HasDissolveAmountProperty = true;
+                        data.DissolveAmountPropertyId = dissolveAmountPropertyId;
                     }
 
-                    if (!data.CanFade && material.HasProperty(colorId))
+                    if (!data.HasDissolveColorProperty
+                        && TryResolveColorProperty(material, dissolveColorPropertyName, out int dissolveColorPropertyId))
                     {
-                        data.ColorPropertyId = colorId;
-                        data.BaseColor = material.GetColor(colorId);
-                        data.CanFade = true;
+                        data.HasDissolveColorProperty = true;
+                        data.DissolveColorPropertyId = dissolveColorPropertyId;
                     }
                 }
             }
 
-            fadeRenderers[i] = data;
+            cachedRenderers[i] = data;
         }
     }
 
-    private void OnVisionChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)
+    private static bool TryResolveFloatProperty(Material material, string propertyName, out int propertyId)
     {
-        ApplyVision();
+        propertyId = 0;
+
+        if (material == null || string.IsNullOrWhiteSpace(propertyName))
+        {
+            return false;
+        }
+
+        propertyId = Shader.PropertyToID(propertyName);
+        if (!material.HasProperty(propertyId))
+        {
+            propertyId = 0;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryResolveColorProperty(Material material, string propertyName, out int propertyId)
+    {
+        propertyId = 0;
+
+        if (material == null || string.IsNullOrWhiteSpace(propertyName))
+        {
+            return false;
+        }
+
+        propertyId = Shader.PropertyToID(propertyName);
+        if (!material.HasProperty(propertyId))
+        {
+            propertyId = 0;
+            return false;
+        }
+
+        return true;
+    }
+
+    private void RestoreRendererState()
+    {
+        if (cachedRenderers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+            DissolveRendererData data = cachedRenderers[i];
+            if (data.Renderer == null)
+            {
+                continue;
+            }
+
+            data.Renderer.enabled = data.OriginalEnabled;
+        }
+    }
+
+    private void ClearPropertyBlocks()
+    {
+        if (cachedRenderers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+            Renderer renderer = cachedRenderers[i].Renderer;
+            if (renderer != null)
+            {
+                renderer.SetPropertyBlock(null);
+            }
+        }
+    }
+
+    private void OnTorchDataChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)
+    {
+        RefreshState();
     }
 
     private void OnTorchStateChanged(SquadCharacterController controller, bool equipped)
     {
-        ApplyVision();
+        RefreshState();
     }
 
-    private void ApplyVision()
+    private void OnTorchSourcesChanged()
     {
-        TorchVisionSystem.GetVisionActivity(vision, requireTorchEquipped, out bool hasAnyVision, out bool hasMatchingVision);
-        bool visible = IsVisibleFor(hasAnyVision, hasMatchingVision);
-        ApplyRenderers(visible);
+        RefreshState();
+    }
 
+    private void RefreshState()
+    {
+        refreshTimer = Mathf.Max(0.02f, localRefreshInterval);
+
+        float visibilityFactor = DetermineVisibilityFactor(out Color dissolveColor);
+        ApplyVisuals(visibilityFactor, dissolveColor);
+        ApplyInteraction(visibilityFactor >= 0.999f);
+    }
+
+    private float DetermineVisibilityFactor(out Color dissolveColor)
+    {
+        switch (visibilityMode)
+        {
+            case VisibilityMode.AlwaysVisible:
+                dissolveColor = GetFallbackTorchColor();
+                return 1f;
+            case VisibilityMode.HiddenWhenVisionMatches:
+            {
+                float revealFactor = GetRevealFactorFromNearestTorch(out dissolveColor);
+                return 1f - revealFactor;
+            }
+            default:
+                return GetRevealFactorFromNearestTorch(out dissolveColor);
+        }
+    }
+
+    private float GetRevealFactorFromNearestTorch(out Color torchColor)
+    {
+        torchColor = GetFallbackTorchColor();
+        GetOrderedDistanceThresholds(out float maxRevealDistance, out float fullRevealDistance);
+
+        if (!TorchVisionSystem.TryGetNearestMatchingTorch(
+                vision,
+                GetReferencePosition(),
+                maxRevealDistance,
+                requireTorchEquipped,
+                out TorchVisionSystem.TorchSourceMatch match))
+        {
+            return 0f;
+        }
+
+        torchColor = GetTorchColor(match);
+        if (match.Distance <= fullRevealDistance)
+        {
+            return 1f;
+        }
+
+        if (maxRevealDistance <= fullRevealDistance)
+        {
+            return 1f;
+        }
+
+        return Mathf.Clamp01(Mathf.InverseLerp(maxRevealDistance, fullRevealDistance, match.Distance));
+    }
+
+    private void GetOrderedDistanceThresholds(out float maxRevealDistance, out float fullRevealDistance)
+    {
+        maxRevealDistance = Mathf.Max(hiddenDistance, fullyVisibleDistance);
+        fullRevealDistance = Mathf.Min(hiddenDistance, fullyVisibleDistance);
+    }
+
+    private Vector3 GetReferencePosition()
+    {
+        Transform reference = distanceReference != null ? distanceReference : transform;
+        return reference.position;
+    }
+
+    private Color GetFallbackTorchColor()
+    {
+        if (vision != null && !vision.useDefaultLightSettings)
+        {
+            return vision.lightColor;
+        }
+
+        return Color.white;
+    }
+
+    private Color GetTorchColor(TorchVisionSystem.TorchSourceMatch match)
+    {
+        if (match.Receiver != null)
+        {
+            return match.Receiver.CurrentTorchColor;
+        }
+
+        if (match.Vision != null && !match.Vision.useDefaultLightSettings)
+        {
+            return match.Vision.lightColor;
+        }
+
+        return GetFallbackTorchColor();
+    }
+
+    private void ApplyVisuals(float visibilityFactor, Color dissolveColor)
+    {
+        if (cachedRenderers == null || cachedRenderers.Length == 0)
+        {
+            return;
+        }
+
+        float clampedVisibility = Mathf.Clamp01(visibilityFactor);
+        float dissolveAmount = 1f - clampedVisibility;
+
+        if (propertyBlock == null)
+        {
+            propertyBlock = new MaterialPropertyBlock();
+        }
+
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+            DissolveRendererData data = cachedRenderers[i];
+            if (data.Renderer == null)
+            {
+                continue;
+            }
+
+            bool canDriveDissolve = data.HasDissolveAmountProperty;
+            data.Renderer.enabled = data.OriginalEnabled && (canDriveDissolve || clampedVisibility > 0f);
+
+            data.Renderer.GetPropertyBlock(propertyBlock);
+
+            if (data.HasDissolveAmountProperty)
+            {
+                propertyBlock.SetFloat(data.DissolveAmountPropertyId, dissolveAmount);
+            }
+
+            if (data.HasDissolveColorProperty)
+            {
+                propertyBlock.SetColor(data.DissolveColorPropertyId, dissolveColor);
+            }
+
+            data.Renderer.SetPropertyBlock(propertyBlock);
+        }
+    }
+
+    private void ApplyInteraction(bool enabled)
+    {
         if (affectColliders && colliders != null)
         {
-            bool colliderEnabled = visible ? enableColliderWhenVisible : enableColliderWhenHidden;
             for (int i = 0; i < colliders.Length; i++)
             {
                 Collider collider = colliders[i];
                 if (collider != null)
                 {
-                    collider.enabled = colliderEnabled;
+                    collider.enabled = enabled;
                 }
             }
         }
@@ -218,163 +443,8 @@ public class TorchVisionSensitive : MonoBehaviour
                     continue;
                 }
 
-                behaviour.enabled = visible;
+                behaviour.enabled = enabled;
             }
-        }
-    }
-
-    private void ApplyRenderers(bool visible)
-    {
-        if (!affectRenderers || renderers == null || renderers.Length == 0)
-        {
-            return;
-        }
-
-        currentVisible = visible;
-
-        if (fadeDuration <= 0f || !HasFadeableRenderers())
-        {
-            currentFade = visible ? 1f : 0f;
-            SetRenderersEnabledForVisibility(visible);
-            ApplyFadeToRenderers(currentFade);
-            return;
-        }
-
-        if (fadeRoutine != null)
-        {
-            StopCoroutine(fadeRoutine);
-        }
-
-        float target = visible ? 1f : 0f;
-        fadeRoutine = StartCoroutine(FadeRoutine(target));
-    }
-
-    private bool HasFadeableRenderers()
-    {
-        if (fadeRenderers == null || fadeRenderers.Length == 0)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < fadeRenderers.Length; i++)
-        {
-            if (fadeRenderers[i].Renderer != null && fadeRenderers[i].CanFade)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private System.Collections.IEnumerator FadeRoutine(float target)
-    {
-        float start = currentFade;
-        if (Mathf.Approximately(start, target))
-        {
-            currentFade = target;
-            ApplyFadeToRenderers(currentFade);
-            SetRenderersEnabledForVisibility(target > 0f);
-            fadeRoutine = null;
-            yield break;
-        }
-
-        if (target > 0f)
-        {
-            SetRenderersEnabledForVisibility(true);
-        }
-        else if (enableRendererWhenHidden)
-        {
-            SetRenderersEnabledForVisibility(false);
-        }
-
-        float duration = Mathf.Max(0.001f, fadeDuration);
-        float t = 0f;
-        while (t < duration)
-        {
-            t += Time.deltaTime;
-            float lerp = Mathf.Clamp01(t / duration);
-            currentFade = Mathf.Lerp(start, target, lerp);
-            ApplyFadeToRenderers(currentFade);
-            yield return null;
-        }
-
-        currentFade = target;
-        ApplyFadeToRenderers(currentFade);
-        SetRenderersEnabledForVisibility(target > 0f);
-
-        fadeRoutine = null;
-    }
-
-    private void ApplyFadeToRenderers(float fade)
-    {
-        if (fadeRenderers == null || fadeRenderers.Length == 0)
-        {
-            return;
-        }
-
-        if (propertyBlock == null)
-        {
-            propertyBlock = new MaterialPropertyBlock();
-        }
-
-        for (int i = 0; i < fadeRenderers.Length; i++)
-        {
-            RendererFadeData data = fadeRenderers[i];
-            if (data.Renderer == null)
-            {
-                continue;
-            }
-
-            if (!data.CanFade)
-            {
-                continue;
-            }
-
-            data.Renderer.GetPropertyBlock(propertyBlock);
-            Color color = data.BaseColor;
-            color.a *= Mathf.Clamp01(fade);
-            propertyBlock.SetColor(data.ColorPropertyId, color);
-            data.Renderer.SetPropertyBlock(propertyBlock);
-        }
-    }
-
-    private void SetRenderersEnabledForVisibility(bool visible)
-    {
-        if (renderers == null)
-        {
-            return;
-        }
-
-        bool enabled = visible ? enableRendererWhenVisible : enableRendererWhenHidden;
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer != null)
-            {
-                renderer.enabled = enabled;
-            }
-        }
-    }
-
-    private bool IsVisibleFor(bool hasAnyVision, bool hasMatchingVision)
-    {
-        switch (visibilityMode)
-        {
-            case VisibilityMode.AlwaysVisible:
-                return true;
-            case VisibilityMode.HiddenWhenVisionMatches:
-                if (vision == null)
-                {
-                    return hasAnyVision;
-                }
-                return !hasMatchingVision;
-            default:
-                if (vision == null)
-                {
-                    return !hasAnyVision;
-                }
-                return hasMatchingVision;
         }
     }
 }

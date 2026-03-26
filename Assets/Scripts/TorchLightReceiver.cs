@@ -17,6 +17,42 @@ public class TorchLightReceiver : MonoBehaviour
     private float defaultColorTemperature;
     private bool hasDefault;
 
+    public SquadCharacterController Owner => owner;
+
+    public Color CurrentTorchColor
+    {
+        get
+        {
+            CacheLight();
+
+            if (targetLight != null)
+            {
+                return targetLight.color;
+            }
+
+            TorchVisionDefinition vision = GetOwnerVision();
+            if (vision != null && !vision.useDefaultLightSettings)
+            {
+                return vision.lightColor;
+            }
+
+            return hasDefault ? defaultColor : Color.white;
+        }
+    }
+
+    public Vector3 TorchWorldPosition
+    {
+        get
+        {
+            if (targetLight != null)
+            {
+                return targetLight.transform.position;
+            }
+
+            return transform.position;
+        }
+    }
+
     private void Awake()
     {
         CacheLight();
@@ -28,12 +64,14 @@ public class TorchLightReceiver : MonoBehaviour
         CacheLight();
         CacheOwner();
         TorchVisionSystem.GetOrCreate();
+        TorchVisionSystem.RegisterTorchSource(this);
         TorchVisionSystem.VisionChanged += OnVisionChanged;
         ApplyVision(GetOwnerVision());
     }
 
     private void OnDisable()
     {
+        TorchVisionSystem.UnregisterTorchSource(this);
         TorchVisionSystem.VisionChanged -= OnVisionChanged;
     }
 
@@ -76,6 +114,23 @@ public class TorchLightReceiver : MonoBehaviour
         }
 
         return TorchVisionSystem.GetVisionFor(owner);
+    }
+
+    public bool TryGetTorchSourceInfo(
+        out SquadCharacterController controller,
+        out TorchVisionDefinition vision,
+        out bool torchEquipped,
+        out Vector3 position)
+    {
+        CacheOwner();
+        CacheLight();
+
+        controller = owner;
+        vision = GetOwnerVision();
+        torchEquipped = owner != null && owner.IsTorchEquipped;
+        position = TorchWorldPosition;
+
+        return controller != null;
     }
 
     private void OnVisionChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)

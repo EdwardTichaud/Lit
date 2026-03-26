@@ -18,6 +18,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private const float TorchAnimationVisualDelay = 0.5f;
     private const int StepAssistLookAheadSampleCount = 3;
     private const float StepAssistSurfaceDeadZone = 0.01f;
+    private const float StepAssistFollowGraceTime = 0.12f;
     private static readonly int TorchEquipStateHash = Animator.StringToHash("Torch_Equip");
     private static readonly int TorchLocomotionStateHash = Animator.StringToHash("Torch_Locomotion");
     private static readonly int TorchOffStateHash = Animator.StringToHash("Torch_Off");
@@ -25,10 +26,13 @@ public partial class SquadCharacterController : MonoBehaviour
 
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
+    [SerializeField, HideInInspector] private List<Item> equippedInteractionItems = new List<Item>();
     [SerializeField, Tooltip("Duree initiale de la torche (secondes).")]
     private int startingTorchSeconds = 300;
     [SerializeField, Tooltip("Duree restante de la torche (secondes).")]
     private int torchSecondsRemaining = 300;
+    [SerializeField, Tooltip("Active les logs du flux d'initialisation d'inventaire.")]
+    private bool logInventoryInitialization = true;
 
     [Header("Character Data")]
     [SerializeField, Tooltip("CharacterData lie a ce controller.")]
@@ -124,11 +128,11 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Permet de monter/descendre les marches et reliefs avec un Rigidbody.")]
     private bool enableStepAssist = true;
     [SerializeField, Tooltip("Hauteur max des marches (m).")]
-    private float stepHeight = 0.55f;
+    private float stepHeight = 1.15f;
     [SerializeField, Tooltip("Distance de detection des marches (m).")]
-    private float stepCheckDistance = 0.35f;
+    private float stepCheckDistance = 0.95f;
     [SerializeField, Tooltip("Vitesse verticale appliquee pour monter une marche.")]
-    private float stepUpSpeed = 7f;
+    private float stepUpSpeed = 9f;
     [SerializeField, Tooltip("Hauteur max pour descendre une marche (0 = utilise stepHeight).")]
     private float stepDownHeight = 0f;
     [SerializeField, Tooltip("Vitesse verticale appliquee pour descendre une marche (0 = utilise stepUpSpeed).")]
@@ -138,7 +142,7 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Temps de lissage vertical en descente sur les escaliers (s).")]
     private float stepDownSmoothTime = 0.1f;
     [SerializeField, Tooltip("Marge ajoutee a la hauteur max pour etre plus permissif (m).")]
-    private float stepHeightTolerance = 0.05f;
+    private float stepHeightTolerance = 0.1f;
     [SerializeField, Tooltip("Seuil minimal de relief pour declencher un step (m).")]
     private float stepMinHeight = 0.05f;
     [SerializeField, Tooltip("Vitesse verticale max autorisee pour declencher un step (0 = ignore).")]
@@ -223,6 +227,12 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool ignoreCharacterTriggerColliders = true;
     [SerializeField, Tooltip("Intervalle de refresh des collisions.")]
     private float collisionRefreshInterval = 0.5f;
+    [SerializeField, Tooltip("Empeche les deplacements pilotes par le controller de traverser les obstacles.")]
+    private bool preventWallPenetration = true;
+    [SerializeField, Tooltip("Marge conservee avant un obstacle lors du sweep de mouvement (m).")]
+    private float movementCollisionSkin = 0.03f;
+    [SerializeField, Range(0f, 1f), Tooltip("Normale minimale consideree comme walkable et ignoree pour le blocage horizontal.")]
+    private float movementCollisionWalkableNormalDot = 0.35f;
 
     private Vector2 moveInput;
     private float inputLockTimer;
@@ -255,6 +265,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private readonly Collider[] stepOverlapHits = new Collider[8];
     private float nextStepDebugTime;
     private float stepVerticalSmoothVelocity;
+    private float stepAssistFollowUntilTime;
     private float footIkWeightCurrent;
     private string lastAnimationDriverMode = string.Empty;
     private string lastAnimationMovementMode = string.Empty;
@@ -267,6 +278,8 @@ public partial class SquadCharacterController : MonoBehaviour
     public CharacterData CharacterData => characterData;
 
     public IReadOnlyList<Item> Items => items;
+
+    public IReadOnlyList<Item> EquippedInteractionItems => equippedInteractionItems;
 
     public IReadOnlyList<Skill> Skills => characterData != null ? characterData.skills : null;
 
@@ -284,6 +297,7 @@ public partial class SquadCharacterController : MonoBehaviour
         stepCapsule = GetComponent<CapsuleCollider>();
         motionRoot = transform;
         ApplyAnimatorSettings();
+        EnsureRigidbodyCollisionSafety();
         InitializeTorchState();
         ResetCommittedJumpRuntime();
     }
@@ -345,6 +359,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         ApplyAnimatorSettings();
+        EnsureRigidbodyCollisionSafety();
         InitializeTorchState();
         ResetCommittedJumpRuntime();
         RefreshAnimationBindings("awake");
@@ -506,6 +521,7 @@ public partial class SquadCharacterController : MonoBehaviour
         characterData = data;
         SyncCharacterInfo(characterData);
         EnsureInventoryList();
+        EnsureEquippedInteractionList();
         InitializeHealthFromCharacterData(resetHpOnBind);
 
         if (characterData == null)
@@ -515,47 +531,79 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (initializeInventory)
         {
-            bool forceStarterItems = ShouldForceStarterItems(characterData);
+            bool forceStarterItems = ShouldForceStarterItems(characterData, out string starterReason);
             if (!characterData.inventoryInitialized || forceStarterItems)
             {
+                if (logInventoryInitialization)
+                {
+                    Debug.Log(
+                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='apply_starter_items' inventoryInitialized={characterData.inventoryInitialized} forceStarterItems={forceStarterItems} reason='{starterReason}' runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} starterStackCount={characterData.starterItemsWithQuantity?.Count ?? -1} torchSeconds={characterData.torchSecondsRemaining}",
+                        this);
+                }
+
                 ApplyStarterItems(characterData, true);
                 characterData.inventoryInitialized = true;
                 SyncTorchStateToCharacterData();
             }
             else
             {
+                if (logInventoryInitialization)
+                {
+                    Debug.Log(
+                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} torchSeconds={characterData.torchSecondsRemaining} torchEquipped={characterData.torchEquipped}",
+                        this);
+                }
+
                 LoadInventoryFromCharacterData();
             }
         }
         else
         {
+            if (logInventoryInitialization)
+            {
+                Debug.Log(
+                    $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory_without_init' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} torchSeconds={characterData.torchSecondsRemaining} torchEquipped={characterData.torchEquipped}",
+                    this);
+            }
+
             LoadInventoryFromCharacterData();
         }
     }
 
-    private bool ShouldForceStarterItems(CharacterData data)
+    private bool ShouldForceStarterItems(CharacterData data, out string reason)
     {
         if (data == null || data.starterItemsWithQuantity == null || data.starterItemsWithQuantity.Count == 0)
         {
+            reason = "no_starter_items";
             return false;
         }
 
         if (data.inventoryItems != null && data.inventoryItems.Count > 0)
         {
+            reason = "runtime_inventory_already_present";
             return false;
         }
 
         if (data.torchSecondsRemaining > 0 || data.torchEquipped)
         {
+            reason = "runtime_torch_state_already_present";
             return false;
         }
 
         CharacterStateStore store = CharacterStateStore.Instance;
         if (store != null && store.HasSaveFile)
         {
-            return false;
+            if (store.TryGetLoadedCharacterEntry(data, out _))
+            {
+                reason = "loaded_save_entry_exists";
+                return false;
+            }
+
+            reason = "save_file_exists_but_character_has_no_loaded_entry";
+            return true;
         }
 
+        reason = "no_save_file";
         return true;
     }
 
@@ -763,9 +811,10 @@ public partial class SquadCharacterController : MonoBehaviour
         return null;
     }
 
-    public void ApplyInventoryState(List<Item> newItems, int torchSeconds, bool equipTorch)
+    public void ApplyInventoryState(List<Item> newItems, int torchSeconds, bool equipTorch, List<Item> newEquippedInteractionItems = null)
     {
         EnsureInventoryList();
+        EnsureEquippedInteractionList();
         MarkInventoryInitialized();
 
         if (newItems == null)
@@ -780,6 +829,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         items.Clear();
         items.AddRange(newItems);
+        ApplyEquippedInteractionItems(newEquippedInteractionItems);
         torchSecondsRemaining = Mathf.Max(0, torchSeconds);
         InitializeTorchState();
         if (HasTorchItem && torchSecondsRemaining > 0)
@@ -792,6 +842,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         SyncTorchStateToCharacterData();
+        SyncInteractionEquipmentToCharacterData();
     }
 
     public bool TryUseItem(Item item)
@@ -812,6 +863,110 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return item.TryUse(this, out reason);
+    }
+
+    public bool IsInteractionItemEquipped(Item item)
+    {
+        EnsureEquippedInteractionList();
+        return item != null && equippedInteractionItems.Contains(item);
+    }
+
+    public bool HasEquippedInteractionCapability(InteractionCapability capability)
+    {
+        if (capability == InteractionCapability.None)
+        {
+            return true;
+        }
+
+        return (GetEquippedInteractionCapabilities() & capability) == capability;
+    }
+
+    public InteractionCapability GetEquippedInteractionCapabilities()
+    {
+        EnsureEquippedInteractionList();
+        InteractionCapability capabilities = InteractionCapability.None;
+        for (int i = 0; i < equippedInteractionItems.Count; i++)
+        {
+            Item item = equippedInteractionItems[i];
+            if (item == null)
+            {
+                continue;
+            }
+
+            capabilities |= item.interactionCapabilities;
+        }
+
+        if (IsTorchEquipped && TorchItem != null)
+        {
+            capabilities |= TorchItem.interactionCapabilities;
+        }
+
+        return capabilities;
+    }
+
+    public bool TryToggleEquippedInteractionItem(Item item, out string reason)
+    {
+        if (IsInteractionItemEquipped(item))
+        {
+            return TryUnequipInteractionItem(item, out reason);
+        }
+
+        return TryEquipInteractionItem(item, out reason);
+    }
+
+    public bool TryEquipInteractionItem(Item item, out string reason)
+    {
+        reason = string.Empty;
+        if (item == null)
+        {
+            reason = "Impossible d'equiper cet objet.";
+            return false;
+        }
+
+        if (!item.HasInteractionCapabilities())
+        {
+            reason = "Cet objet ne fournit aucune capacite d'interaction.";
+            return false;
+        }
+
+        EnsureInventoryList();
+        EnsureEquippedInteractionList();
+        MarkInventoryInitialized();
+
+        if (!items.Contains(item))
+        {
+            reason = "L'objet doit etre dans l'inventaire pour etre equipe.";
+            return false;
+        }
+
+        if (equippedInteractionItems.Contains(item))
+        {
+            return true;
+        }
+
+        equippedInteractionItems.Add(item);
+        SyncInteractionEquipmentToCharacterData();
+        return true;
+    }
+
+    public bool TryUnequipInteractionItem(Item item, out string reason)
+    {
+        reason = string.Empty;
+        if (item == null)
+        {
+            reason = "Impossible de desequiper cet objet.";
+            return false;
+        }
+
+        EnsureEquippedInteractionList();
+        if (!equippedInteractionItems.Remove(item))
+        {
+            reason = "Cet objet n'est pas equipe.";
+            return false;
+        }
+
+        SyncInteractionEquipmentToCharacterData();
+        return true;
     }
 
     public bool TryBreakItem(Item item)
@@ -851,6 +1006,28 @@ public partial class SquadCharacterController : MonoBehaviour
         return true;
     }
 
+    public bool HasMatchingKey(string lockId)
+    {
+        return TryFindMatchingKey(lockId, out _);
+    }
+
+    public bool TryUseMatchingKey(string lockId, bool consumeKeyOnUse, out Item keyItem)
+    {
+        keyItem = null;
+        if (!TryFindMatchingKey(lockId, out Item matchingKey))
+        {
+            return false;
+        }
+
+        if (consumeKeyOnUse && !TryRemoveItem(matchingKey, 1))
+        {
+            return false;
+        }
+
+        keyItem = matchingKey;
+        return true;
+    }
+
     public bool LearnSkill(Skill skill)
     {
         if (characterData == null || skill == null)
@@ -886,6 +1063,7 @@ public partial class SquadCharacterController : MonoBehaviour
     public bool TryRemoveItem(Item item, int count)
     {
         EnsureInventoryList();
+        EnsureEquippedInteractionList();
         MarkInventoryInitialized();
 
         if (IsTorchItem(item))
@@ -906,7 +1084,13 @@ public partial class SquadCharacterController : MonoBehaviour
             return true;
         }
 
-        return ConsumeItem(item, count);
+        bool removed = ConsumeItem(item, count);
+        if (removed)
+        {
+            SanitizeEquippedInteractionItems();
+        }
+
+        return removed;
     }
 
     public bool TryRemoveItemQuantity(Item item, int quantity)
@@ -917,6 +1101,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         EnsureInventoryList();
+        EnsureEquippedInteractionList();
         MarkInventoryInitialized();
 
         if (IsTorchItem(item))
@@ -944,17 +1129,25 @@ public partial class SquadCharacterController : MonoBehaviour
             return true;
         }
 
-        return ConsumeItem(item, quantity);
+        bool removed = ConsumeItem(item, quantity);
+        if (removed)
+        {
+            SanitizeEquippedInteractionItems();
+        }
+
+        return removed;
     }
 
     public void ApplyStarterItems(CharacterData data, bool clearExisting = true)
     {
         EnsureInventoryList();
+        EnsureEquippedInteractionList();
         MarkInventoryInitialized();
 
         if (clearExisting)
         {
             items.Clear();
+            equippedInteractionItems.Clear();
             torchSecondsRemaining = 0;
         }
 
@@ -963,6 +1156,7 @@ public partial class SquadCharacterController : MonoBehaviour
             torchSecondsRemaining = 0;
             SetTorchEquipped(false);
             SyncTorchStateToCharacterData();
+            SyncInteractionEquipmentToCharacterData();
             return;
         }
 
@@ -1014,6 +1208,14 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         SyncTorchStateToCharacterData();
+        SyncInteractionEquipmentToCharacterData();
+
+        if (logInventoryInitialization && data != null)
+        {
+            Debug.Log(
+                $"[InventoryInit] apply_starter_items character='{data.name}' clearExisting={clearExisting} starterStackCount={data.starterItemsWithQuantity?.Count ?? -1} resultInventoryCount={items?.Count ?? -1} torchSeconds={torchSecondsRemaining} torchEquipped={torchEquipped}",
+                this);
+        }
     }
 
     private void EnsureInventoryList()
@@ -1039,6 +1241,99 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
+    private void EnsureEquippedInteractionList()
+    {
+        if (characterData != null)
+        {
+            if (characterData.equippedInteractionItems == null)
+            {
+                characterData.equippedInteractionItems = new List<Item>();
+            }
+
+            if (!ReferenceEquals(equippedInteractionItems, characterData.equippedInteractionItems))
+            {
+                equippedInteractionItems = characterData.equippedInteractionItems;
+            }
+
+            return;
+        }
+
+        if (equippedInteractionItems == null)
+        {
+            equippedInteractionItems = new List<Item>();
+        }
+    }
+
+    private void ApplyEquippedInteractionItems(List<Item> source)
+    {
+        EnsureEquippedInteractionList();
+
+        if (ReferenceEquals(source, equippedInteractionItems))
+        {
+            source = source != null ? new List<Item>(source) : null;
+        }
+
+        equippedInteractionItems.Clear();
+        if (source != null)
+        {
+            for (int i = 0; i < source.Count; i++)
+            {
+                Item item = source[i];
+                if (item == null || equippedInteractionItems.Contains(item))
+                {
+                    continue;
+                }
+
+                equippedInteractionItems.Add(item);
+            }
+        }
+
+        SanitizeEquippedInteractionItems();
+    }
+
+    private void SanitizeEquippedInteractionItems()
+    {
+        EnsureInventoryList();
+        EnsureEquippedInteractionList();
+
+        for (int i = equippedInteractionItems.Count - 1; i >= 0; i--)
+        {
+            Item item = equippedInteractionItems[i];
+            if (item == null || !items.Contains(item) || !item.HasInteractionCapabilities())
+            {
+                equippedInteractionItems.RemoveAt(i);
+            }
+        }
+
+        SyncInteractionEquipmentToCharacterData();
+    }
+
+    private bool TryFindMatchingKey(string lockId, out Item keyItem)
+    {
+        keyItem = null;
+        if (string.IsNullOrWhiteSpace(lockId))
+        {
+            return false;
+        }
+
+        EnsureInventoryList();
+        MarkInventoryInitialized();
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Item item = items[i];
+            if (item == null || !item.IsMatchingKey(lockId))
+            {
+                continue;
+            }
+
+            keyItem = item;
+            return true;
+        }
+
+        return false;
+    }
+
     private void MarkInventoryInitialized()
     {
         if (characterData != null)
@@ -1055,6 +1350,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         EnsureInventoryList();
+        EnsureEquippedInteractionList();
         torchSecondsRemaining = Mathf.Max(0, characterData.torchSecondsRemaining);
         InitializeTorchState();
         if (HasTorchItem && torchSecondsRemaining > 0)
@@ -1064,6 +1360,15 @@ public partial class SquadCharacterController : MonoBehaviour
         else
         {
             SetTorchEquipped(false);
+        }
+
+        ApplyEquippedInteractionItems(characterData.equippedInteractionItems);
+
+        if (logInventoryInitialization)
+        {
+            Debug.Log(
+                $"[InventoryInit] load_runtime_inventory character='{characterData.name}' resultInventoryCount={items?.Count ?? -1} equippedCount={equippedInteractionItems?.Count ?? -1} torchSeconds={torchSecondsRemaining} torchEquipped={torchEquipped}",
+                this);
         }
     }
 
@@ -1076,6 +1381,17 @@ public partial class SquadCharacterController : MonoBehaviour
 
         characterData.torchSecondsRemaining = Mathf.Max(0, torchSecondsRemaining);
         characterData.torchEquipped = torchEquipped;
+        characterData.inventoryInitialized = true;
+    }
+
+    private void SyncInteractionEquipmentToCharacterData()
+    {
+        if (characterData == null)
+        {
+            return;
+        }
+
+        EnsureEquippedInteractionList();
         characterData.inventoryInitialized = true;
     }
 
@@ -1151,9 +1467,13 @@ public partial class SquadCharacterController : MonoBehaviour
         footIkRaycastDown = Mathf.Max(0.02f, footIkRaycastDown);
         voidCheckDistance = Mathf.Max(0f, voidCheckDistance);
         voidCheckDepth = Mathf.Max(0.02f, voidCheckDepth);
+        maxWalkableSlopeAngle = Mathf.Clamp(maxWalkableSlopeAngle, 0f, 89f);
+        movementCollisionSkin = Mathf.Max(0.001f, movementCollisionSkin);
+        movementCollisionWalkableNormalDot = Mathf.Clamp01(movementCollisionWalkableNormalDot);
 
         ValidateCommittedJumpSettings();
         ApplyAnimatorSettings();
+        EnsureRigidbodyCollisionSafety();
     }
 
     public void ToggleTorch()
@@ -1248,35 +1568,13 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool IsGroundAhead(Vector3 direction)
     {
-        if (direction.sqrMagnitude < 0.01f)
+        if (direction.sqrMagnitude < 0.01f || !isGrounded)
         {
             return true;
         }
 
-        Vector3 up = transform.up;
-        Vector3 origin = GetWorldPosition();
-        float radius = 0.2f;
-
-        if (characterController != null)
-        {
-            Bounds bounds = characterController.bounds;
-            radius = Mathf.Max(0.01f, characterController.radius);
-            origin = new Vector3(bounds.center.x, bounds.min.y + radius, bounds.center.z);
-        }
-        else if (TryGetStepCapsule(out Vector3 center, out float capRadius, out float height))
-        {
-            radius = Mathf.Max(0.01f, capRadius);
-            float halfHeight = height * 0.5f;
-            float bottomOffset = Mathf.Max(0f, halfHeight - radius);
-            origin = center - up * bottomOffset;
-        }
-
-        float checkDistance = radius + Mathf.Max(0f, voidCheckDistance);
-        Vector3 checkPos = origin + up * 0.05f + direction.normalized * checkDistance;
-
-        int mask = GetVoidGroundMask();
-        float depth = Mathf.Max(0.02f, voidCheckDepth);
-        return Physics.Raycast(checkPos, -up, depth, mask, QueryTriggerInteraction.Ignore);
+        SurfaceTraversalResult traversal = EvaluateForwardTraversal(direction);
+        return traversal.type != SurfaceTraversalType.Ledge;
     }
 
     private int GetVoidGroundMask()
@@ -1393,6 +1691,7 @@ public partial class SquadCharacterController : MonoBehaviour
                 ? Vector3.MoveTowards(currentHorizontal, targetHorizontal, acceleration * deltaTime)
                 : Vector3.Lerp(currentHorizontal, Vector3.zero, 1f - Mathf.Exp(-deceleration * deltaTime));
 
+            newHorizontal = ConstrainHorizontalVelocityAgainstWalls(newHorizontal, deltaTime);
             rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, newVertical, newHorizontal.z);
             currentHorizontalVelocity = newHorizontal;
 
@@ -1435,7 +1734,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         Transform root = motionRoot != null ? motionRoot : transform;
-        root.position += newKinematicHorizontal * deltaTime;
+        root.position += ResolveSafeHorizontalDisplacement(newKinematicHorizontal * deltaTime);
         if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(desiredVelocity);
@@ -1452,6 +1751,172 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
         }
+    }
+
+    private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
+    {
+        if (!preventWallPenetration || deltaTime <= 0f)
+        {
+            return desiredHorizontalVelocity;
+        }
+
+        Vector3 desiredDisplacement = desiredHorizontalVelocity * deltaTime;
+        Vector3 safeDisplacement = ResolveSafeHorizontalDisplacement(desiredDisplacement);
+        return safeDisplacement / deltaTime;
+    }
+
+    private Vector3 ResolveSafeHorizontalDisplacement(Vector3 desiredDisplacement)
+    {
+        Vector3 up = transform.up;
+        Vector3 flattenedDisplacement = Vector3.ProjectOnPlane(desiredDisplacement, up);
+        if (!preventWallPenetration || flattenedDisplacement.sqrMagnitude <= 0.00000001f)
+        {
+            return flattenedDisplacement;
+        }
+
+        if (!TryGetMovementCapsule(out Vector3 point1, out Vector3 point2, out float radius))
+        {
+            return flattenedDisplacement;
+        }
+
+        int mask = GetMovementBlockingMask();
+        if (mask == 0)
+        {
+            return flattenedDisplacement;
+        }
+
+        float castRadius = Mathf.Max(0.01f, radius - movementCollisionSkin);
+        Vector3 accumulated = Vector3.zero;
+        Vector3 remaining = flattenedDisplacement;
+
+        for (int i = 0; i < 2; i++)
+        {
+            float distance = remaining.magnitude;
+            if (distance <= 0.0001f)
+            {
+                break;
+            }
+
+            Vector3 direction = remaining / distance;
+            Vector3 castPoint1 = point1 + accumulated;
+            Vector3 castPoint2 = point2 + accumulated;
+            if (!TryGetHorizontalBlockingHit(castPoint1, castPoint2, castRadius, direction, distance + movementCollisionSkin, mask, out RaycastHit hit))
+            {
+                accumulated += remaining;
+                break;
+            }
+
+            float allowedDistance = Mathf.Max(0f, hit.distance - movementCollisionSkin);
+            if (allowedDistance > 0f)
+            {
+                accumulated += direction * Mathf.Min(allowedDistance, distance);
+            }
+
+            Vector3 consumed = direction * Mathf.Min(distance, Mathf.Max(0f, hit.distance));
+            Vector3 leftover = remaining - consumed;
+            Vector3 slide = Vector3.ProjectOnPlane(leftover, hit.normal);
+            slide = Vector3.ProjectOnPlane(slide, up);
+            if (slide.sqrMagnitude <= 0.00000001f || Vector3.Dot(slide, remaining) <= 0f)
+            {
+                break;
+            }
+
+            remaining = slide;
+        }
+
+        return accumulated;
+    }
+
+    private bool TryGetMovementCapsule(out Vector3 point1, out Vector3 point2, out float radius)
+    {
+        Vector3 up = transform.up;
+        if (TryGetStepCapsule(out Vector3 center, out float capsuleRadius, out float height))
+        {
+            float segmentHalf = Mathf.Max(0f, (height * 0.5f) - capsuleRadius);
+            point1 = center + up * segmentHalf;
+            point2 = center - up * segmentHalf;
+            radius = capsuleRadius;
+            return true;
+        }
+
+        if (characterController != null)
+        {
+            Bounds bounds = characterController.bounds;
+            radius = Mathf.Max(0.01f, characterController.radius);
+            Vector3 controllerCenter = bounds.center;
+            float segmentHalf = Mathf.Max(0f, bounds.extents.y - radius);
+            point1 = controllerCenter + up * segmentHalf;
+            point2 = controllerCenter - up * segmentHalf;
+            return true;
+        }
+
+        point1 = Vector3.zero;
+        point2 = Vector3.zero;
+        radius = 0f;
+        return false;
+    }
+
+    private int GetMovementBlockingMask()
+    {
+        return GetStepBlockingMask();
+    }
+
+    private bool TryGetHorizontalBlockingHit(
+        Vector3 point1,
+        Vector3 point2,
+        float radius,
+        Vector3 direction,
+        float distance,
+        int mask,
+        out RaycastHit hit)
+    {
+        hit = default;
+        if (mask == 0 || distance <= 0.0001f)
+        {
+            return false;
+        }
+
+        int hitCount = Physics.CapsuleCastNonAlloc(
+            point1,
+            point2,
+            radius,
+            direction,
+            stepCastHits,
+            distance,
+            mask,
+            QueryTriggerInteraction.Ignore);
+        float bestDistance = float.PositiveInfinity;
+        int bestIndex = -1;
+        Vector3 up = transform.up;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = stepCastHits[i].collider;
+            if (col == null || IsSelfCollider(col))
+            {
+                continue;
+            }
+
+            if (Vector3.Dot(stepCastHits[i].normal, up) >= movementCollisionWalkableNormalDot)
+            {
+                continue;
+            }
+
+            float hitDistance = stepCastHits[i].distance;
+            if (hitDistance < bestDistance)
+            {
+                bestDistance = hitDistance;
+                bestIndex = i;
+            }
+        }
+
+        if (bestIndex < 0)
+        {
+            return false;
+        }
+
+        hit = stepCastHits[bestIndex];
+        return true;
     }
 
     private struct StepGroundSample
@@ -1491,7 +1956,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        if (!TryGetStepCapsule(out Vector3 center, out float radius, out float height))
+        if (!TryBuildSurfaceProbeContext(out SurfaceProbeContext probeContext))
         {
             ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: CapsuleCollider manquant ou direction != Y.");
@@ -1508,61 +1973,85 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         moveDir /= speed;
-        Vector3 up = transform.up;
-        float halfHeight = height * 0.5f;
-        float bottomOffset = Mathf.Max(0f, halfHeight - radius);
-        Vector3 bottomCenter = center - up * bottomOffset;
-        Vector3 foot = bottomCenter - up * radius;
-        int walkableMask = GetVoidGroundMask();
-        int stairMask = GetStepMask();
-        int blockingMask = GetStepBlockingMask();
 
-        if (stairMask == 0)
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: aucun layer d'escalier valide.");
-            return;
-        }
+        bool followGraceActive = IsStepAssistFollowActive();
+        float supportProbeDistance = Mathf.Max(0.02f, stepGroundCheckDistance);
+        float supportProbeRadius = Mathf.Max(0.02f, probeContext.radius * 0.9f);
+        bool hasCurrentSupport = TryProbeGroundedSupport(
+            supportProbeDistance,
+            supportProbeRadius,
+            out StepGroundSample currentSupport,
+            out _);
 
-        if (requireGroundForStep && !IsGroundedForStep(bottomCenter, radius, up, walkableMask))
+        if (requireGroundForStep &&
+            !hasCurrentSupport &&
+            !followGraceActive)
         {
             ResetStepAssistSmoothing();
             LogStepDebug("StepAssist: pas au sol (ground check).");
             return;
         }
 
-        float maxUp = stepHeight + stepHeightTolerance;
-        float maxDown = (stepDownHeight > 0f ? stepDownHeight : stepHeight) + stepHeightTolerance;
-        if (!TryEvaluateStairAssistTarget(
-                foot,
-                moveDir,
-                up,
-                radius,
-                maxUp,
-                maxDown,
-                walkableMask,
-                stairMask,
-                out float targetHeightDelta,
-                out bool currentOnStairs))
+        SurfaceTraversalResult traversal = EvaluateForwardTraversal(moveDir);
+
+        Vector3 up = probeContext.up;
+        float currentFootHeight = Vector3.Dot(probeContext.footPoint, up);
+        bool usingTraversalTarget = traversal.type == SurfaceTraversalType.StepUp ||
+                                    traversal.type == SurfaceTraversalType.StepDown;
+        bool usingFollowTarget = false;
+        StepGroundSample targetGround = default;
+
+        if (usingTraversalTarget && traversal.hasTargetGround)
+        {
+            targetGround = traversal.targetGround;
+        }
+        else if (TryGetContinuedStepSupport(probeContext, moveDir, hasCurrentSupport, currentSupport, out StepGroundSample continuedSupport))
+        {
+            targetGround = continuedSupport;
+            usingFollowTarget = true;
+        }
+        else
         {
             ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: aucune trajectoire d'escalier valide.");
+            LogStepDebug($"StepAssist: aucun step valide (type {traversal.type}).");
             return;
         }
 
-        float deadZone = currentOnStairs ? StepAssistSurfaceDeadZone : Mathf.Max(0.001f, stepMinHeight);
+        bool currentOnStairs = hasCurrentSupport && IsStepSurfaceCollider(currentSupport.collider);
+        bool traversalCurrentOnStairs = traversal.hasCurrentGround && IsStepSurfaceCollider(traversal.currentGround.collider);
+        bool targetOnStairs = IsStepSurfaceCollider(targetGround.collider);
+        float deadZone = (currentOnStairs || traversalCurrentOnStairs || targetOnStairs || followGraceActive)
+            ? StepAssistSurfaceDeadZone
+            : Mathf.Max(0.001f, stepMinHeight);
+
+        float targetFootHeight = Vector3.Dot(targetGround.point, up);
+        float targetHeightDelta = targetFootHeight - currentFootHeight;
         if (Mathf.Abs(targetHeightDelta) <= deadZone)
         {
-            ResetStepAssistSmoothing();
+            stepVerticalSmoothVelocity = 0f;
+            if (currentOnStairs || targetOnStairs)
+            {
+                ExtendStepAssistFollowGrace();
+            }
+
             LogStepDebug("StepAssist: correction verticale trop faible.");
             return;
         }
 
-        float currentFootHeight = Vector3.Dot(foot, up);
+        int blockingMask = GetStepBlockingMask();
+        bool steppingUp = targetHeightDelta > 0f;
 
-        if (targetHeightDelta > 0f)
+        if (steppingUp)
         {
-            if (!HasStepClearance(bottomCenter, radius, height, up, moveDir, targetHeightDelta, Mathf.Max(0.02f, stepCheckDistance), blockingMask))
+            if (!HasStepClearance(
+                    probeContext.bottomCenter,
+                    probeContext.radius,
+                    probeContext.height,
+                    up,
+                    moveDir,
+                    targetHeightDelta,
+                    Mathf.Max(0.02f, stepCheckDistance),
+                    blockingMask))
             {
                 ResetStepAssistSmoothing();
                 LogStepDebug("StepAssist: obstacle detecte au-dessus de l'escalier.");
@@ -1571,7 +2060,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
             float stepAmount = ComputeSmoothedStepOffset(
                 currentFootHeight,
-                currentFootHeight + targetHeightDelta,
+                targetFootHeight,
                 stepUpSmoothTime,
                 stepUpSpeed,
                 deltaTime);
@@ -1582,15 +2071,18 @@ public partial class SquadCharacterController : MonoBehaviour
             }
 
             ApplyStepOffset(up, moveDir, stepAmount, true);
-            LogStepDebug($"StepAssist: suivi escalier up ({stepAmount:F3}m, cible {targetHeightDelta:F3}m).");
+            ExtendStepAssistFollowGrace();
+            isGrounded = true;
+            lastGroundedTime = Time.time;
+            LogStepDebug(
+                $"StepAssist: suivi escalier up ({stepAmount:F3}m, cible {targetHeightDelta:F3}m, source {(usingFollowTarget ? "follow" : traversal.type.ToString())}).");
             return;
         }
 
-        float dropAmount = -targetHeightDelta;
         float downSpeed = stepDownSpeed > 0f ? stepDownSpeed : stepUpSpeed;
         float appliedDrop = ComputeSmoothedStepOffset(
             currentFootHeight,
-            currentFootHeight - dropAmount,
+            targetFootHeight,
             stepDownSmoothTime,
             downSpeed,
             deltaTime);
@@ -1601,7 +2093,11 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         ApplyStepOffset(up, moveDir, appliedDrop, false);
-        LogStepDebug($"StepAssist: suivi escalier down ({appliedDrop:F3}m, cible {dropAmount:F3}m).");
+        ExtendStepAssistFollowGrace();
+        isGrounded = true;
+        lastGroundedTime = Time.time;
+        LogStepDebug(
+            $"StepAssist: suivi escalier down ({appliedDrop:F3}m, cible {-targetHeightDelta:F3}m, source {(usingFollowTarget ? "follow" : traversal.type.ToString())}).");
     }
 
     private float ComputeSmoothedStepOffset(float currentHeight, float targetHeight, float smoothTime, float maxSpeed, float deltaTime)
@@ -1636,140 +2132,52 @@ public partial class SquadCharacterController : MonoBehaviour
         return Mathf.Min(applied, Mathf.Abs(delta));
     }
 
-    private bool TryEvaluateStairAssistTarget(
-        Vector3 foot,
-        Vector3 moveDir,
-        Vector3 up,
-        float radius,
-        float maxUp,
-        float maxDown,
-        int walkableMask,
-        int stairMask,
-        out float targetHeightDelta,
-        out bool currentOnStairs)
+    private bool IsStepAssistFollowActive()
     {
-        targetHeightDelta = 0f;
-        currentOnStairs = false;
+        return Time.time <= stepAssistFollowUntilTime;
+    }
 
-        float probeUp = maxUp + stepGroundCheckDistance;
-        float probeDown = maxDown + stepGroundCheckDistance;
-        if (!TrySampleGround(foot, up, probeUp, probeDown, walkableMask, false, out StepGroundSample currentGround))
+    private void ExtendStepAssistFollowGrace()
+    {
+        stepAssistFollowUntilTime = Time.time + StepAssistFollowGraceTime;
+    }
+
+    private bool TryGetContinuedStepSupport(
+        SurfaceProbeContext probeContext,
+        Vector3 moveDir,
+        bool hasCurrentSupport,
+        StepGroundSample currentSupport,
+        out StepGroundSample support)
+    {
+        support = default;
+        if (!IsStepAssistFollowActive())
         {
             return false;
         }
 
-        currentOnStairs = IsStepSurfaceCollider(currentGround.collider);
-        if (TryComputeAheadStairDelta(foot, moveDir, up, radius, probeUp, probeDown, maxUp, maxDown, stairMask, currentGround, currentOnStairs, out targetHeightDelta))
+        if (hasCurrentSupport && IsStepSurfaceCollider(currentSupport.collider))
         {
+            support = currentSupport;
             return true;
         }
 
-        if (!currentOnStairs)
+        float sampleDistance = Mathf.Max(0.02f, Mathf.Min(stepCheckDistance, probeContext.radius + (stepCheckDistance * 0.5f)));
+        Vector3 sampleOrigin = probeContext.footPoint + moveDir * sampleDistance;
+        float maxDown = Mathf.Max(stepHeight + stepHeightTolerance, jumpGroundCheckDistance) + stepGroundCheckDistance;
+        float maxUp = Mathf.Max(0.02f, stepGroundCheckDistance);
+        if (!TrySampleGround(
+                sampleOrigin,
+                probeContext.up,
+                maxUp,
+                maxDown,
+                GetSurfaceSupportMask(),
+                requireStepSurface: false,
+                out support))
         {
             return false;
         }
 
-        return TryComputeAheadLandingDelta(foot, moveDir, up, radius, probeUp, probeDown, maxUp, maxDown, walkableMask, currentGround, out targetHeightDelta);
-    }
-
-    private bool TryComputeAheadStairDelta(
-        Vector3 foot,
-        Vector3 moveDir,
-        Vector3 up,
-        float radius,
-        float probeUp,
-        float probeDown,
-        float maxUp,
-        float maxDown,
-        int stairMask,
-        StepGroundSample currentGround,
-        bool currentOnStairs,
-        out float targetHeightDelta)
-    {
-        targetHeightDelta = 0f;
-        float startDistance = radius + Mathf.Max(0.02f, stepCheckDistance * 0.35f);
-        float endDistance = radius + Mathf.Max(0.02f, stepCheckDistance);
-        float weightedDelta = 0f;
-        float totalWeight = 0f;
-
-        for (int i = 0; i < StepAssistLookAheadSampleCount; i++)
-        {
-            float t = StepAssistLookAheadSampleCount == 1 ? 1f : (float)i / (StepAssistLookAheadSampleCount - 1);
-            float distance = Mathf.Lerp(startDistance, endDistance, t);
-            Vector3 sampleOrigin = foot + moveDir * distance;
-            if (!TrySampleGround(sampleOrigin, up, probeUp, probeDown, stairMask, true, out StepGroundSample stairGround))
-            {
-                continue;
-            }
-
-            float delta = Vector3.Dot(stairGround.point - currentGround.point, up);
-            if (delta > maxUp + 0.01f || delta < -maxDown - 0.01f)
-            {
-                continue;
-            }
-
-            if (!currentOnStairs && delta < Mathf.Max(0.001f, stepMinHeight))
-            {
-                continue;
-            }
-
-            float weight = 1f - (t * 0.7f);
-            weightedDelta += delta * weight;
-            totalWeight += weight;
-        }
-
-        if (totalWeight <= 0f)
-        {
-            return false;
-        }
-
-        targetHeightDelta = weightedDelta / totalWeight;
-        return true;
-    }
-
-    private bool TryComputeAheadLandingDelta(
-        Vector3 foot,
-        Vector3 moveDir,
-        Vector3 up,
-        float radius,
-        float probeUp,
-        float probeDown,
-        float maxUp,
-        float maxDown,
-        int walkableMask,
-        StepGroundSample currentGround,
-        out float targetHeightDelta)
-    {
-        targetHeightDelta = 0f;
-        float startDistance = radius + Mathf.Max(0.02f, stepCheckDistance * 0.35f);
-        float endDistance = radius + Mathf.Max(0.02f, stepCheckDistance);
-
-        for (int i = 0; i < StepAssistLookAheadSampleCount; i++)
-        {
-            float t = StepAssistLookAheadSampleCount == 1 ? 1f : (float)i / (StepAssistLookAheadSampleCount - 1);
-            float distance = Mathf.Lerp(startDistance, endDistance, t);
-            Vector3 sampleOrigin = foot + moveDir * distance;
-            if (!TrySampleGround(sampleOrigin, up, probeUp, probeDown, walkableMask, false, out StepGroundSample aheadGround))
-            {
-                continue;
-            }
-
-            if (IsStepSurfaceCollider(aheadGround.collider))
-            {
-                continue;
-            }
-
-            float delta = Vector3.Dot(aheadGround.point - currentGround.point, up);
-            if (delta > maxUp + 0.01f || delta < -maxDown - 0.01f)
-            {
-                continue;
-            }
-
-            targetHeightDelta = delta;
-            return true;
-        }
-
-        return false;
+        return IsStepSurfaceCollider(support.collider);
     }
 
     private bool TrySampleGround(Vector3 origin, Vector3 up, float maxUp, float maxDown, int mask, bool requireStepSurface, out StepGroundSample sample)
@@ -1804,7 +2212,7 @@ public partial class SquadCharacterController : MonoBehaviour
                 continue;
             }
 
-            if (Vector3.Dot(stepCastHits[i].normal, up) <= 0.1f)
+            if (Vector3.Dot(stepCastHits[i].normal, up) < GetWalkableGroundNormalDot())
             {
                 continue;
             }
@@ -1880,33 +2288,14 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool CheckRigidbodyGrounded()
     {
-        Vector3 up = transform.up;
-        int groundMask = GetJumpGroundMask();
-        if (TryGetStepCapsule(out Vector3 center, out float radius, out float height))
+        float probeDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
+        float probeRadius = 0.05f;
+        if (TryBuildSurfaceProbeContext(out SurfaceProbeContext probeContext))
         {
-            float probeRadius = Mathf.Max(0.05f, radius * jumpGroundCheckRadiusScale);
-            float halfHeight = height * 0.5f;
-            float bottomOffset = Mathf.Max(0f, halfHeight - radius);
-            Vector3 bottom = center - up * bottomOffset;
-            Vector3 origin = bottom + up * 0.02f;
-            float distance = Mathf.Max(0.02f, jumpGroundCheckDistance);
-            int hitCount = Physics.SphereCastNonAlloc(origin, probeRadius, -up, stepCastHits, distance, groundMask, QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < hitCount; i++)
-            {
-                Collider col = stepCastHits[i].collider;
-                if (col == null || IsSelfCollider(col))
-                {
-                    continue;
-                }
-
-                return true;
-            }
-
-            return false;
+            probeRadius = Mathf.Max(0.05f, probeContext.radius * jumpGroundCheckRadiusScale);
         }
 
-        Vector3 fallbackOrigin = GetWorldPosition() + up * 0.1f;
-        return Physics.Raycast(fallbackOrigin, -up, Mathf.Max(0.02f, jumpGroundCheckDistance + 0.1f), groundMask, QueryTriggerInteraction.Ignore);
+        return TryProbeGroundedSupport(probeDistance, probeRadius, out _, out _);
     }
 
     private bool HasStepClearance(Vector3 bottomCenter, float radius, float height, Vector3 up, Vector3 moveDir, float stepUp, float castDistance, int mask)
@@ -1947,27 +2336,14 @@ public partial class SquadCharacterController : MonoBehaviour
         rigidbodyTarget.MovePosition(targetPosition);
 
         Vector3 velocity = rigidbodyTarget.linearVelocity;
-        if (stepUp)
-        {
-            if (velocity.y < 0f)
-            {
-                velocity.y = 0f;
-                rigidbodyTarget.linearVelocity = velocity;
-            }
-        }
-        else
-        {
-            if (velocity.y > 0f)
-            {
-                velocity.y = 0f;
-                rigidbodyTarget.linearVelocity = velocity;
-            }
-        }
+        velocity.y = 0f;
+        rigidbodyTarget.linearVelocity = velocity;
     }
 
     private void ResetStepAssistSmoothing()
     {
         stepVerticalSmoothVelocity = 0f;
+        stepAssistFollowUntilTime = 0f;
     }
 
     private void LogStepDebug(string message)
@@ -2125,53 +2501,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private int GetStepBlockingMask()
     {
         return GetCollisionMatrixMask() & ~GetStepMask();
-    }
-
-    private int GetJumpGroundMask()
-    {
-        return GetVoidGroundMask() | GetStepMask();
-    }
-
-    private bool IsGroundedForStep(Vector3 bottom, float radius, Vector3 up, int mask)
-    {
-        float checkDistance = Mathf.Max(0.02f, stepGroundCheckDistance);
-        Vector3 origin = bottom + up * 0.02f;
-
-        if (OverlapForStep(origin, radius * 0.9f, mask))
-        {
-            return true;
-        }
-
-        int hitCount = Physics.SphereCastNonAlloc(origin, radius * 0.9f, -up, stepCastHits, checkDistance, mask, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = stepCastHits[i].collider;
-            if (col == null || IsSelfCollider(col))
-            {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool OverlapForStep(Vector3 origin, float radius, int mask)
-    {
-        int hitCount = Physics.OverlapSphereNonAlloc(origin, radius, stepOverlapHits, mask, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = stepOverlapHits[i];
-            if (col == null || IsSelfCollider(col))
-            {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
     }
 
     private bool OverlapCapsuleForStep(Vector3 point1, Vector3 point2, float radius, int mask)
@@ -3181,6 +3510,18 @@ public partial class SquadCharacterController : MonoBehaviour
 
         animator.applyRootMotion = false;
         animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
+    }
+
+    private void EnsureRigidbodyCollisionSafety()
+    {
+        if (rigidbodyTarget == null)
+        {
+            return;
+        }
+
+        rigidbodyTarget.collisionDetectionMode = rigidbodyTarget.isKinematic
+            ? CollisionDetectionMode.ContinuousSpeculative
+            : CollisionDetectionMode.ContinuousDynamic;
     }
 
     private bool ShouldUseRigidbody()

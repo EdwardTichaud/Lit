@@ -491,6 +491,7 @@ public partial class SquadCharacterController
             takeoffHorizontalAcceleration,
             deltaTime);
 
+        launchHorizontal = ConstrainHorizontalVelocityAgainstWalls(launchHorizontal, deltaTime);
         rigidbodyTarget.linearVelocity = new Vector3(launchHorizontal.x, verticalImpulse, launchHorizontal.z);
         currentHorizontalVelocity = launchHorizontal;
         committedLockedHorizontalVelocity = launchHorizontal;
@@ -550,6 +551,7 @@ public partial class SquadCharacterController
             takeoffHorizontalAcceleration,
             deltaTime);
 
+        nextHorizontal = ConstrainHorizontalVelocityAgainstWalls(nextHorizontal, deltaTime);
         float vertical = -groundedStickVelocity;
         rigidbodyTarget.linearVelocity = new Vector3(nextHorizontal.x, vertical, nextHorizontal.z);
         currentHorizontalVelocity = nextHorizontal;
@@ -560,6 +562,7 @@ public partial class SquadCharacterController
     {
         Vector3 velocity = rigidbodyTarget.linearVelocity;
         Vector3 horizontal = ResolveCommittedAirborneHorizontalVelocity(velocity.y, deltaTime);
+        horizontal = ConstrainHorizontalVelocityAgainstWalls(horizontal, deltaTime);
         float extraGravityScale = velocity.y >= 0f ? gravityMultiplier : fallMultiplier;
         float vertical = velocity.y + (Physics.gravity.y * Mathf.Max(0f, extraGravityScale - 1f) * deltaTime);
 
@@ -586,6 +589,7 @@ public partial class SquadCharacterController
             idleLandingStopDamping,
             deltaTime);
 
+        nextHorizontal = ConstrainHorizontalVelocityAgainstWalls(nextHorizontal, deltaTime);
         rigidbodyTarget.linearVelocity = new Vector3(nextHorizontal.x, -groundedStickVelocity, nextHorizontal.z);
         currentHorizontalVelocity = nextHorizontal;
         RotateTowardsCommittedDirection(deltaTime);
@@ -594,6 +598,7 @@ public partial class SquadCharacterController
     private void ApplyLandingRollMovement(float deltaTime)
     {
         Vector3 nextHorizontal = committedJumpDirection * committedRollSpeed;
+        nextHorizontal = ConstrainHorizontalVelocityAgainstWalls(nextHorizontal, deltaTime);
         rigidbodyTarget.linearVelocity = new Vector3(nextHorizontal.x, -groundedStickVelocity, nextHorizontal.z);
         currentHorizontalVelocity = nextHorizontal;
         RotateTowardsCommittedDirection(deltaTime);
@@ -846,82 +851,14 @@ public partial class SquadCharacterController
 
     private bool HasCommittedLandingContact()
     {
-        Vector3 up = transform.up;
-        if (TryGetStepCapsule(out Vector3 center, out float radius, out float height))
+        if (TryGetStepCapsule(out _, out float radius, out _))
         {
             float probeDistance = Mathf.Max(0.005f, landingContactProbeDistance);
             float probeRadius = Mathf.Max(0.02f, radius * landingContactRadiusScale * 0.25f);
-            Vector3 capsuleBottom = GetCommittedLandingCapsuleBottom(center, radius, height, up);
-            int mask = GetVoidGroundMask();
-
-            if (TrySampleGround(capsuleBottom, up, probeRadius, probeDistance + probeRadius, mask, false, out StepGroundSample sample))
-            {
-                float bottomGap = Vector3.Dot(capsuleBottom - sample.point, up);
-                if (bottomGap <= probeDistance &&
-                    bottomGap >= -(probeRadius + 0.01f) &&
-                    Vector3.Dot(sample.normal, up) > 0.1f)
-                {
-                    return true;
-                }
-            }
-
-            Vector3 overlapCenter = capsuleBottom + up * (probeRadius - 0.002f);
-            int overlapCount = Physics.OverlapSphereNonAlloc(
-                overlapCenter,
-                probeRadius,
-                stepOverlapHits,
-                mask,
-                QueryTriggerInteraction.Ignore);
-
-            for (int i = 0; i < overlapCount; i++)
-            {
-                Collider col = stepOverlapHits[i];
-                if (col == null || IsSelfCollider(col))
-                {
-                    continue;
-                }
-
-                return true;
-            }
-
-            Vector3 origin = capsuleBottom + up * (probeRadius + 0.002f);
-            int hitCount = Physics.SphereCastNonAlloc(
-                origin,
-                probeRadius,
-                -up,
-                stepCastHits,
-                probeDistance + 0.004f,
-                mask,
-                QueryTriggerInteraction.Ignore);
-
-            for (int i = 0; i < hitCount; i++)
-            {
-                Collider col = stepCastHits[i].collider;
-                if (col == null || IsSelfCollider(col))
-                {
-                    continue;
-                }
-
-                if (Vector3.Dot(stepCastHits[i].normal, up) <= 0.1f)
-                {
-                    continue;
-                }
-
-                return true;
-            }
-
-            return false;
+            return TryProbeGroundedSupport(probeDistance, probeRadius, out _, out _);
         }
 
         return isGrounded;
-    }
-
-    private static Vector3 GetCommittedLandingCapsuleBottom(Vector3 center, float radius, float height, Vector3 up)
-    {
-        float halfHeight = height * 0.5f;
-        float bottomOffset = Mathf.Max(0f, halfHeight - radius);
-        Vector3 bottomHemisphereCenter = center - up * bottomOffset;
-        return bottomHemisphereCenter - up * radius;
     }
 
     private bool IsForwardAssistJumpIntent(Vector2 launchInput, Vector3 inputDirection)

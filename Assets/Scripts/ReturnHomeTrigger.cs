@@ -114,6 +114,7 @@ public class ReturnHomeTrigger : MonoBehaviour
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
         NetcodeTriggerRegistry.Unregister(this, netcodeId);
+        ConfirmationManager.Dismiss(this);
 
         ResetUIState();
     }
@@ -275,24 +276,57 @@ public class ReturnHomeTrigger : MonoBehaviour
         LocalInputRouter.ConsumeInteract();
 
         ShowStorageFull(false);
+        RequestCentralConfirmation();
+    }
 
+    void OnSouthButton()
+    {
+        OnInteract();
+    }
+
+    void OnEastButton()
+    {
         if (!confirmVisible)
         {
-            ShowConfirm(true);
             return;
         }
 
-        ConfirmationChoice choice = GetConfirmationChoice();
-        if (choice == ConfirmationChoice.No)
+        ConfirmationManager.Dismiss(this, true);
+    }
+
+    private void RequestCentralConfirmation()
+    {
+        if (confirmVisible || awaitingServerResponse)
         {
-            ShowConfirm(false);
+            return;
+        }
+
+        bool shown = ConfirmationManager.TryShow(
+            new ConfirmationRequest(this, "Renvoyer ce personnage a la maison ?", ConfirmReturnHome, CancelReturnHome)
+            {
+                Title = "Confirmation",
+                ConfirmLabel = "Oui",
+                CancelLabel = "Non",
+                DebugContext = "ReturnHomeTrigger.SendHome"
+            });
+
+        if (!shown)
+        {
+            Debug.LogWarning($"[Confirmation] ReturnHomeTrigger failed to open confirmation for '{name}'.", this);
             ShowInteraction(true);
             return;
         }
 
-        if (choice == ConfirmationChoice.Unknown)
+        confirmVisible = true;
+        ShowInteraction(false);
+    }
+
+    private void ConfirmReturnHome()
+    {
+        confirmVisible = false;
+        RefreshCurrentCharacter();
+        if (currentCharacter == null)
         {
-            Debug.LogWarning("ReturnHomeTrigger: confirmationBox ou CursorController non configure.");
             return;
         }
 
@@ -312,67 +346,21 @@ public class ReturnHomeTrigger : MonoBehaviour
             else
             {
                 awaitingServerResponse = false;
+                ShowInteraction(true);
             }
             return;
         }
 
         if (SquadManager.Instance != null)
         {
-            SquadManager.SendHomeResult result = SquadManager.Instance.TrySendCharacterHome(currentCharacter, maisonLootContainer);
-            if (result == SquadManager.SendHomeResult.StorageFull)
-            {
-                ShowConfirm(false);
-                ShowInteraction(true);
-                ShowStorageFull(true);
-                if (autoOpenInventoryOnStorageFull)
-                {
-                    InventoryPanelController inventory = inventoryPanelController;
-                    if (inventory == null)
-                    {
-#if UNITY_2023_1_OR_NEWER
-                        inventory = FindFirstObjectByType<InventoryPanelController>();
-#else
-                        inventory = FindObjectOfType<InventoryPanelController>();
-#endif
-                    }
-                    if (inventory != null)
-                    {
-                        inventory.TryOpenInventory();
-                    }
-                }
-                return;
-            }
-
-            if (result == SquadManager.SendHomeResult.Success)
-            {
-                charactersInRange.Remove(currentCharacter);
-                characterColliderCounts.Remove(currentCharacter);
-                currentCharacter = null;
-                interactionTarget = null;
-                ShowConfirm(false);
-                ShowInteraction(false);
-
-                if (charactersInRange.Count > 0)
-                {
-                    RefreshCurrentCharacter();
-                }
-            }
+            HandleSendHomeResult(SquadManager.Instance.TrySendCharacterHome(currentCharacter, maisonLootContainer));
         }
     }
 
-    void OnSouthButton()
+    private void CancelReturnHome()
     {
-        OnInteract();
-    }
-
-    void OnEastButton()
-    {
-        if (!confirmVisible)
-        {
-            return;
-        }
-
-        ShowConfirm(false);
+        confirmVisible = false;
+        RefreshCurrentCharacter();
     }
 
     private void SetCurrentCharacter(GameObject character)
@@ -592,6 +580,7 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     private void ResetUIState()
     {
+        ConfirmationManager.Dismiss(this);
         DestroyInteractionInstance();
         DestroyConfirmInstance();
         DestroyStorageFullInstance();
@@ -607,11 +596,17 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     public void HandleReturnHomeResult(SquadManager.SendHomeResult result)
     {
+        ConfirmationManager.Dismiss(this);
         awaitingServerResponse = false;
+        HandleSendHomeResult(result);
+    }
+
+    private void HandleSendHomeResult(SquadManager.SendHomeResult result)
+    {
+        confirmVisible = false;
 
         if (result == SquadManager.SendHomeResult.StorageFull)
         {
-            ShowConfirm(false);
             ShowInteraction(true);
             ShowStorageFull(true);
             if (autoOpenInventoryOnStorageFull)
@@ -639,7 +634,6 @@ public class ReturnHomeTrigger : MonoBehaviour
             characterColliderCounts.Remove(currentCharacter);
             currentCharacter = null;
             interactionTarget = null;
-            ShowConfirm(false);
             ShowInteraction(false);
 
             if (charactersInRange.Count > 0)
@@ -649,7 +643,6 @@ public class ReturnHomeTrigger : MonoBehaviour
             return;
         }
 
-        ShowConfirm(false);
         ShowInteraction(true);
     }
 

@@ -153,14 +153,6 @@ public class MainMenuInputModeAction : MonoBehaviour, IMenuCursorHandler, IPoint
             return;
         }
 
-        RectTransform parent = rectTransform.parent as RectTransform;
-        if (parent != null)
-        {
-            sharedCursor.itemsParent = parent;
-            sharedCursor.layoutGroup = parent.GetComponent<LayoutGroup>();
-        }
-
-        sharedCursor.Refresh();
-        sharedCursor.TrySetCurrentItem(rectTransform, false);
+        MenuCursorSyncUtility.SyncCursorToItem(sharedCursor, rectTransform);
     }
 }

@@ -96,6 +96,8 @@ public class SquadAIManager : MonoBehaviour
     private bool useNavMeshDirection = true;
     [SerializeField, Tooltip("Ajoute un SquadFollowerAgent si manquant.")]
     private bool autoAddNavMeshFollowers = true;
+    [SerializeField, Tooltip("Distance max au leader pour piloter activement un membre groupe. Au-dela, il reste groupe logiquement mais ne suit pas et ne se teleporte pas.")]
+    private float maxActiveFollowDistance = 20f;
     [SerializeField, Tooltip("Rayon de separation pour eviter collisions.")]
     private float separationRadius = 1.1f;
     [SerializeField, Tooltip("Force de separation appliquee.")]
@@ -120,6 +122,7 @@ public class SquadAIManager : MonoBehaviour
     {
         public Vector3 lastPosition;
         public float lastProgressTime;
+        public bool suspendedByLeaderDistance;
     }
 
     private readonly Dictionary<GameObject, FollowerState> followerStates = new Dictionary<GameObject, FollowerState>();
@@ -144,6 +147,28 @@ public class SquadAIManager : MonoBehaviour
         {
             BuildNavMesh();
         }
+    }
+
+    private void OnValidate()
+    {
+        navMeshUpdateInterval = Mathf.Max(0.2f, navMeshUpdateInterval);
+        fanRadius = Mathf.Max(0f, fanRadius);
+        fanRadiusStep = Mathf.Max(0f, fanRadiusStep);
+        fanRowSize = Mathf.Max(1, fanRowSize);
+        corridorCheckDistance = Mathf.Max(0f, corridorCheckDistance);
+        corridorWidthThreshold = Mathf.Max(0f, corridorWidthThreshold);
+        singleFileSpacing = Mathf.Max(0.01f, singleFileSpacing);
+        followStopDistance = Mathf.Max(0f, followStopDistance);
+        followCatchUpDistance = Mathf.Max(0f, followCatchUpDistance);
+        followMaxInput = Mathf.Clamp01(followMaxInput);
+        maxActiveFollowDistance = Mathf.Max(0f, maxActiveFollowDistance);
+        separationRadius = Mathf.Max(0f, separationRadius);
+        separationStrength = Mathf.Max(0f, separationStrength);
+        catchUpDistance = Mathf.Max(followStopDistance, catchUpDistance);
+        teleportDistance = Mathf.Max(catchUpDistance, teleportDistance);
+        stuckTimeBeforeTeleport = Mathf.Max(0f, stuckTimeBeforeTeleport);
+        minProgressDistance = Mathf.Max(0f, minProgressDistance);
+        teleportSampleRadius = Mathf.Max(0.1f, teleportSampleRadius);
     }
 
     private void Update()
@@ -624,38 +649,7 @@ public class SquadAIManager : MonoBehaviour
             return;
         }
 
-        int followerCount = 0;
-        for (int i = 0; i < groupIndices.Count; i++)
-        {
-            int index = groupIndices[i];
-            if (index == leaderIndex || index < 0 || index >= squadManager.squadCharacters.Count)
-            {
-                continue;
-            }
-
-            GameObject candidate = squadManager.squadCharacters[index];
-            if (candidate == null || Zone.IsCharacterInMaison(candidate))
-            {
-                continue;
-            }
-
-            if (NetcodePlayerUtils.ShouldUsePlayerControl(candidate, out _))
-            {
-                continue;
-            }
-
-            if (candidate.GetComponent<SquadCharacterController>() == null)
-            {
-                continue;
-            }
-
-            followerCount++;
-        }
-
-        if (followerCount <= 0)
-        {
-            return;
-        }
+        int followerCount = CountActiveFollowers(leader, leaderIndex, groupIndices);
 
         Vector3 leaderForward = GetLeaderForward(leader);
         Quaternion formationRotation = followOffsetsInLeaderSpace
@@ -667,44 +661,19 @@ public class SquadAIManager : MonoBehaviour
         for (int i = 0; i < groupIndices.Count; i++)
         {
             int index = groupIndices[i];
-            if (index == leaderIndex)
+            if (!TryGetFollowerContext(leader, leaderIndex, index, out GameObject follower, out SquadCharacterController controller))
             {
                 continue;
             }
 
-            if (index < 0 || index >= squadManager.squadCharacters.Count)
+            FollowerState state = GetFollowerState(follower);
+            if (!IsWithinActiveLeaderRange(leader, follower))
             {
+                SuspendFollowerOutOfRange(follower, controller, state);
                 continue;
             }
 
-            GameObject follower = squadManager.squadCharacters[index];
-            if (follower == null)
-            {
-                continue;
-            }
-
-            SquadCharacterController controller = follower.GetComponent<SquadCharacterController>();
-            if (controller == null)
-            {
-                continue;
-            }
-
-            if (NetcodePlayerUtils.ShouldUsePlayerControl(follower, out _))
-            {
-                NetcodePlayerUtils.LogControlDecision(
-                    "follower_ai",
-                    follower,
-                    followerAiEnabled: false,
-                    waitingPointEnabled: false,
-                    movementMode: "player_owned_skip",
-                    reason: "follower AI skipped because character is player-owned");
-                continue;
-            }
-
-            if (Zone.IsCharacterInMaison(follower))
-            {
-                continue;
-            }
+            bool resumedFromRangeSuspension = ResumeFollowerFromDistanceSuspension(follower, state);
 
             Vector3 offset = useSingleFile
                 ? GetSingleFileOffset(order)
@@ -716,7 +685,7 @@ public class SquadAIManager : MonoBehaviour
             toTarget.y = 0f;
             float distance = toTarget.magnitude;
 
-            if (TryTeleportIfNeeded(follower, targetPosition, distance))
+            if (!resumedFromRangeSuspension && TryTeleportIfNeeded(follower, targetPosition, distance))
             {
                 order++;
                 continue;
@@ -770,6 +739,115 @@ public class SquadAIManager : MonoBehaviour
             UpdateFollowerProgress(follower);
             order++;
         }
+    }
+
+    private int CountActiveFollowers(GameObject leader, int leaderIndex, List<int> groupIndices)
+    {
+        if (groupIndices == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < groupIndices.Count; i++)
+        {
+            int index = groupIndices[i];
+            if (!TryGetFollowerContext(leader, leaderIndex, index, out GameObject follower, out _))
+            {
+                continue;
+            }
+
+            if (IsWithinActiveLeaderRange(leader, follower))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private bool TryGetFollowerContext(
+        GameObject leader,
+        int leaderIndex,
+        int index,
+        out GameObject follower,
+        out SquadCharacterController controller)
+    {
+        follower = null;
+        controller = null;
+
+        if (leader == null
+            || squadManager == null
+            || squadManager.squadCharacters == null
+            || index == leaderIndex
+            || index < 0
+            || index >= squadManager.squadCharacters.Count)
+        {
+            return false;
+        }
+
+        GameObject candidate = squadManager.squadCharacters[index];
+        if (candidate == null || candidate == leader || Zone.IsCharacterInMaison(candidate))
+        {
+            return false;
+        }
+
+        if (NetcodePlayerUtils.ShouldUsePlayerControl(candidate, out _))
+        {
+            return false;
+        }
+
+        SquadCharacterController candidateController = candidate.GetComponent<SquadCharacterController>();
+        if (candidateController == null)
+        {
+            return false;
+        }
+
+        follower = candidate;
+        controller = candidateController;
+        return true;
+    }
+
+    private bool IsWithinActiveLeaderRange(GameObject leader, GameObject follower)
+    {
+        if (leader == null || follower == null || maxActiveFollowDistance <= 0f)
+        {
+            return true;
+        }
+
+        Vector3 delta = leader.transform.position - follower.transform.position;
+        delta.y = 0f;
+        return delta.sqrMagnitude <= maxActiveFollowDistance * maxActiveFollowDistance;
+    }
+
+    private void SuspendFollowerOutOfRange(GameObject follower, SquadCharacterController controller, FollowerState state)
+    {
+        if (follower == null || state == null)
+        {
+            return;
+        }
+
+        if (controller != null)
+        {
+            controller.Stop();
+        }
+
+        state.lastPosition = follower.transform.position;
+        state.lastProgressTime = Time.time;
+        state.suspendedByLeaderDistance = true;
+    }
+
+    private bool ResumeFollowerFromDistanceSuspension(GameObject follower, FollowerState state)
+    {
+        if (follower == null || state == null || !state.suspendedByLeaderDistance)
+        {
+            return false;
+        }
+
+        state.suspendedByLeaderDistance = false;
+        state.lastPosition = follower.transform.position;
+        state.lastProgressTime = Time.time;
+        return true;
     }
 
     private bool TryGetLeaderGroup(out GameObject leader, out int leaderIndex, out List<int> groupIndices)
@@ -837,7 +915,7 @@ public class SquadAIManager : MonoBehaviour
             return;
         }
 
-        int followerCount = groupIndices.Count - 1;
+        int followerCount = CountActiveFollowers(leader, leaderIndex, groupIndices);
         if (followerCount <= 0)
         {
             return;
@@ -857,7 +935,12 @@ public class SquadAIManager : MonoBehaviour
         for (int i = 0; i < groupIndices.Count; i++)
         {
             int index = groupIndices[i];
-            if (index == leaderIndex)
+            if (!TryGetFollowerContext(leader, leaderIndex, index, out GameObject follower, out _))
+            {
+                continue;
+            }
+
+            if (!IsWithinActiveLeaderRange(leader, follower))
             {
                 continue;
             }

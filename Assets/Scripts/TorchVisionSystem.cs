@@ -6,8 +6,32 @@ public class TorchVisionSystem : MonoBehaviour
 {
     private static TorchVisionSystem instance;
 
+    public readonly struct TorchSourceMatch
+    {
+        public TorchSourceMatch(
+            SquadCharacterController controller,
+            TorchVisionDefinition vision,
+            Vector3 position,
+            float distance,
+            TorchLightReceiver receiver)
+        {
+            Controller = controller;
+            Vision = vision;
+            Position = position;
+            Distance = distance;
+            Receiver = receiver;
+        }
+
+        public SquadCharacterController Controller { get; }
+        public TorchVisionDefinition Vision { get; }
+        public Vector3 Position { get; }
+        public float Distance { get; }
+        public TorchLightReceiver Receiver { get; }
+    }
+
     public static event Action<SquadCharacterController, TorchVisionDefinition, TorchVisionDefinition> VisionChanged;
     public static event Action<SquadCharacterController, bool> TorchStateChanged;
+    public static event Action TorchSourcesChanged;
 
     private struct VisionEntry
     {
@@ -17,19 +41,7 @@ public class TorchVisionSystem : MonoBehaviour
 
     private readonly Dictionary<SquadCharacterController, VisionEntry> visions = new Dictionary<SquadCharacterController, VisionEntry>();
     private readonly Dictionary<SquadCharacterController, bool> torchStates = new Dictionary<SquadCharacterController, bool>();
-
-    public static TorchVisionDefinition CurrentVision
-    {
-        get
-        {
-            if (instance == null)
-            {
-                return null;
-            }
-
-            return instance.GetVisionForInternal(GetCurrentController());
-        }
-    }
+    private readonly HashSet<TorchLightReceiver> torchSources = new HashSet<TorchLightReceiver>();
 
     public static TorchVisionDefinition GetVisionFor(SquadCharacterController controller)
     {
@@ -104,16 +116,40 @@ public class TorchVisionSystem : MonoBehaviour
         instance.SetVisionInternal(controller, null, 0f);
     }
 
-    public static void GetVisionActivity(TorchVisionDefinition vision, bool requireTorchEquipped, out bool hasAnyVision, out bool hasMatchingVision)
+    public static void RegisterTorchSource(TorchLightReceiver receiver)
     {
-        if (instance == null)
+        if (receiver == null)
         {
-            hasAnyVision = false;
-            hasMatchingVision = false;
             return;
         }
 
-        instance.GetVisionActivityInternal(vision, requireTorchEquipped, out hasAnyVision, out hasMatchingVision);
+        GetOrCreate().RegisterTorchSourceInternal(receiver);
+    }
+
+    public static void UnregisterTorchSource(TorchLightReceiver receiver)
+    {
+        if (receiver == null || instance == null)
+        {
+            return;
+        }
+
+        instance.UnregisterTorchSourceInternal(receiver);
+    }
+
+    public static bool TryGetNearestMatchingTorch(
+        TorchVisionDefinition vision,
+        Vector3 worldPosition,
+        float maxDistance,
+        bool requireTorchEquipped,
+        out TorchSourceMatch match)
+    {
+        if (instance == null)
+        {
+            match = default;
+            return false;
+        }
+
+        return instance.TryGetNearestMatchingTorchInternal(vision, worldPosition, maxDistance, requireTorchEquipped, out match);
     }
 
     private static SquadCharacterController GetCurrentController()
@@ -184,6 +220,32 @@ public class TorchVisionSystem : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void RegisterTorchSourceInternal(TorchLightReceiver receiver)
+    {
+        if (receiver == null)
+        {
+            return;
+        }
+
+        if (torchSources.Add(receiver))
+        {
+            TorchSourcesChanged?.Invoke();
+        }
+    }
+
+    private void UnregisterTorchSourceInternal(TorchLightReceiver receiver)
+    {
+        if (receiver == null)
+        {
+            return;
+        }
+
+        if (torchSources.Remove(receiver))
+        {
+            TorchSourcesChanged?.Invoke();
+        }
     }
 
     private void Update()
@@ -337,20 +399,42 @@ public class TorchVisionSystem : MonoBehaviour
         }
     }
 
-    private void GetVisionActivityInternal(TorchVisionDefinition vision, bool requireTorchEquipped, out bool hasAnyVision, out bool hasMatchingVision)
+    private bool TryGetNearestMatchingTorchInternal(
+        TorchVisionDefinition vision,
+        Vector3 worldPosition,
+        float maxDistance,
+        bool requireTorchEquipped,
+        out TorchSourceMatch match)
     {
-        hasAnyVision = false;
-        hasMatchingVision = false;
+        match = default;
 
-        if (visions.Count == 0)
+        if (torchSources.Count == 0)
         {
-            return;
+            return false;
         }
 
-        foreach (KeyValuePair<SquadCharacterController, VisionEntry> pair in visions)
+        float bestDistanceSqr = maxDistance > 0f ? maxDistance * maxDistance : float.PositiveInfinity;
+        bool found = false;
+        List<TorchLightReceiver> staleSources = null;
+
+        foreach (TorchLightReceiver source in torchSources)
         {
-            SquadCharacterController controller = pair.Key;
-            if (controller == null)
+            if (source == null)
+            {
+                if (staleSources == null)
+                {
+                    staleSources = new List<TorchLightReceiver>();
+                }
+
+                staleSources.Add(source);
+                continue;
+            }
+
+            if (!source.TryGetTorchSourceInfo(
+                    out SquadCharacterController controller,
+                    out TorchVisionDefinition activeVision,
+                    out bool torchEquipped,
+                    out Vector3 sourcePosition))
             {
                 continue;
             }
@@ -360,25 +444,51 @@ public class TorchVisionSystem : MonoBehaviour
                 continue;
             }
 
-            if (requireTorchEquipped && !controller.IsTorchEquipped)
+            if (requireTorchEquipped && !torchEquipped)
             {
                 continue;
             }
 
-            TorchVisionDefinition activeVision = pair.Value.Vision;
-            if (activeVision == null)
+            if (!IsVisionMatch(vision, activeVision))
             {
                 continue;
             }
 
-            hasAnyVision = true;
-
-            if (vision != null && activeVision == vision)
+            float distanceSqr = (sourcePosition - worldPosition).sqrMagnitude;
+            if (distanceSqr > bestDistanceSqr)
             {
-                hasMatchingVision = true;
-                return;
+                continue;
+            }
+
+            bestDistanceSqr = distanceSqr;
+            match = new TorchSourceMatch(
+                controller,
+                activeVision,
+                sourcePosition,
+                Mathf.Sqrt(distanceSqr),
+                source);
+            found = true;
+        }
+
+        if (staleSources != null)
+        {
+            for (int i = 0; i < staleSources.Count; i++)
+            {
+                torchSources.Remove(staleSources[i]);
             }
         }
+
+        return found;
+    }
+
+    private static bool IsVisionMatch(TorchVisionDefinition requiredVision, TorchVisionDefinition activeVision)
+    {
+        if (activeVision == null)
+        {
+            return false;
+        }
+
+        return requiredVision == null || activeVision == requiredVision;
     }
 
     private void OnDisable()

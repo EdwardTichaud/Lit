@@ -282,15 +282,7 @@ public class MainMenuDisplayModeAction : MonoBehaviour, IMenuCursorHandler, IPoi
             return;
         }
 
-        RectTransform parent = rectTransform.parent as RectTransform;
-        if (parent != null)
-        {
-            sharedCursor.itemsParent = parent;
-            sharedCursor.layoutGroup = parent.GetComponent<LayoutGroup>();
-        }
-
-        sharedCursor.Refresh();
-        sharedCursor.TrySetCurrentItem(rectTransform, false);
+        MenuCursorSyncUtility.SyncCursorToItem(sharedCursor, rectTransform);
     }
 
     private static MainMenuDisplaySettings.DisplayMode ToDisplayMode(DisplayModeOption mode)

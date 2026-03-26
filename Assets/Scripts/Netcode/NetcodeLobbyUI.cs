@@ -281,8 +281,11 @@ public class NetcodeLobbyUI : MonoBehaviour
 
         currentHostCode = endpoint.Code;
         UpdatePortDisplay(endpoint.Code);
-        bool started = resolved.StartHostWithConnection(endpoint.Address, endpoint.Port, listenAddress);
-        SetStatus(started ? $"Host lance: code {endpoint.Code}, port {endpoint.Port}." : "Host deja actif.");
+        bool started = resolved.StartHostWithSessionEndpoint(endpoint);
+        string listenLabel = $"{resolved.SessionListenAddress}:{endpoint.Port}";
+        SetStatus(started
+            ? $"Host lance: code {endpoint.Code}, port {endpoint.Port}, ecoute {listenLabel}."
+            : "Host deja actif.");
         if (started)
         {
             SetUIVisible(false);
@@ -310,7 +313,15 @@ public class NetcodeLobbyUI : MonoBehaviour
         string reason = manager != null ? manager.DisconnectReason : string.Empty;
         if (string.IsNullOrWhiteSpace(reason))
         {
-            reason = "Le transport reseau s'est arrete. Verifie que le port est libre et que le pare-feu n'a pas bloque l'application.";
+            NetcodeLauncher resolved = ResolveLauncher();
+            if (resolved != null && resolved.TryGetLastConnectionAttempt(out NetcodeConnectionAttemptInfo attempt))
+            {
+                reason = $"Le transport reseau s'est arrete sur {attempt.ListenLabel}. Verifie que le port est libre et que le pare-feu n'a pas bloque l'application.";
+            }
+            else
+            {
+                reason = "Le transport reseau s'est arrete. Verifie que le port est libre et que le pare-feu n'a pas bloque l'application.";
+            }
         }
 
         SetStatus(reason);
@@ -367,6 +378,12 @@ public class NetcodeLobbyUI : MonoBehaviour
     private bool TryResolveHostEndpoint(out NetcodeSessionEndpoint endpoint)
     {
         string code = ResolveCodeFromField(hostCodeInput);
+        NetcodeLauncher resolved = ResolveLauncher();
+        if (resolved != null)
+        {
+            return resolved.TryResolveHostEndpoint(code, out endpoint, out _);
+        }
+
         string address = NetcodeSessionCode.NormalizeAddress(hostLoopbackAddress, "127.0.0.1");
         return NetcodeSessionCode.TryCreateEndpoint(code, address, basePort, portRange, out endpoint);
     }
@@ -415,7 +432,12 @@ public class NetcodeLobbyUI : MonoBehaviour
             return;
         }
 
-        if (!NetcodeSessionCode.TryGetPort(code, basePort, portRange, out ushort port, out _))
+        NetcodeLauncher resolved = ResolveLauncher();
+        ushort port;
+        bool gotPort = resolved != null
+            ? resolved.TryResolveSessionPort(code, out port, out _)
+            : NetcodeSessionCode.TryGetPort(code, basePort, portRange, out port, out _);
+        if (!gotPort)
         {
             portText.text = "Port: -";
             return;

@@ -2,13 +2,16 @@ using UnityEngine;
 using UnityEngine.Playables;
 
 // Puzzle simple: deux leviers doivent etre actifs pour declencher la timeline.
-public class TwoLeverPuzzle : MonoBehaviour
+[DisallowMultipleComponent]
+public class TwoLeverPuzzle : MonoBehaviour, ILeverTarget
 {
     [Header("Levers")]
     [Tooltip("Levier A du puzzle.")]
     public Lever leverA;
     [Tooltip("Levier B du puzzle.")]
     public Lever leverB;
+    [SerializeField, Tooltip("Ecoute directement Lever.StateChanged. Desactive si tu relies ce puzzle via Lever.targetBindings.")]
+    private bool subscribeToLeverEvents = true;
 
     [Header("Timeline")]
     [Tooltip("Timeline a jouer quand les deux leviers sont actifs.")]
@@ -21,29 +24,117 @@ public class TwoLeverPuzzle : MonoBehaviour
     [Header("Behavior")]
     [Tooltip("Si true, le puzzle ne peut se declencher qu'une fois.")]
     public bool playOnce = true;
+    [SerializeField, Tooltip("Active des logs de diagnostic pour le puzzle.")]
+    private bool logDebug;
 
     [Header("State")]
     [SerializeField, Tooltip("Etat du levier A (debug).")]
     private bool leverAActive;
     [SerializeField, Tooltip("Etat du levier B (debug).")]
     private bool leverBActive;
-
+    [SerializeField, Tooltip("Indique si l'action du puzzle a deja ete declenchee.")]
     private bool triggered;
+
+    private bool restoringState;
 
     public bool IsTriggered => triggered;
 
+    private void OnValidate()
+    {
+        if (leverA != null && leverA == leverB)
+        {
+            Debug.LogWarning($"[LeverPuzzle] event='invalid_setup' puzzle='{name}' reason='duplicate_lever_reference'", this);
+        }
+    }
+
     private void OnEnable()
     {
-        SubscribeLever(leverA);
-        SubscribeLever(leverB);
+        if (subscribeToLeverEvents)
+        {
+            SubscribeLever(leverA);
+            SubscribeLever(leverB);
+        }
+
         SyncFromLevers();
-        Evaluate();
+        Evaluate("on_enable");
     }
 
     private void OnDisable()
     {
+        if (!subscribeToLeverEvents)
+        {
+            return;
+        }
+
         UnsubscribeLever(leverA);
         UnsubscribeLever(leverB);
+    }
+
+    public void HandleLeverStateChanged(Lever lever, bool active)
+    {
+        if (lever == null)
+        {
+            return;
+        }
+
+        if (lever == leverA)
+        {
+            leverAActive = active;
+        }
+        else if (lever == leverB)
+        {
+            leverBActive = active;
+        }
+        else
+        {
+            LogDebug("state_ignored", $"reason='unknown_lever' lever='{lever.name}'");
+            return;
+        }
+
+        LogDebug("state_received", $"lever='{lever.name}' active={active} restoring={restoringState}");
+        if (restoringState)
+        {
+            return;
+        }
+
+        Evaluate($"lever_change:{lever.name}");
+    }
+
+    public void SetLeverA(bool active)
+    {
+        leverAActive = active;
+        Evaluate("manual_set_lever_a");
+    }
+
+    public void SetLeverB(bool active)
+    {
+        leverBActive = active;
+        Evaluate("manual_set_lever_b");
+    }
+
+    public void ResetPuzzle()
+    {
+        triggered = false;
+        Evaluate("reset");
+    }
+
+    public void RestoreState(bool leverAState, bool leverBState, bool triggeredState)
+    {
+        restoringState = true;
+        leverAActive = leverAState;
+        leverBActive = leverBState;
+        triggered = triggeredState;
+
+        leverA?.RestoreActiveState(leverAState, leverAState);
+        leverB?.RestoreActiveState(leverBState, leverBState);
+
+        restoringState = false;
+        LogDebug("state_restored", $"leverA={leverAState} leverB={leverBState} triggered={triggeredState}");
+
+        if (!triggered)
+        {
+            Evaluate("restore_state");
+        }
     }
 
     private void SubscribeLever(Lever lever)
@@ -53,6 +144,7 @@ public class TwoLeverPuzzle : MonoBehaviour
             return;
         }
 
+        lever.StateChanged -= OnLeverStateChanged;
         lever.StateChanged += OnLeverStateChanged;
     }
 
@@ -68,56 +160,7 @@ public class TwoLeverPuzzle : MonoBehaviour
 
     private void OnLeverStateChanged(Lever lever, bool active)
     {
-        if (lever == leverA)
-        {
-            leverAActive = active;
-        }
-        else if (lever == leverB)
-        {
-            leverBActive = active;
-        }
-
-        Evaluate();
-    }
-
-    public void SetLeverA(bool active)
-    {
-        leverAActive = active;
-        Evaluate();
-    }
-
-    public void SetLeverB(bool active)
-    {
-        leverBActive = active;
-        Evaluate();
-    }
-
-    public void ResetPuzzle()
-    {
-        triggered = false;
-        Evaluate();
-    }
-
-    public void RestoreState(bool leverAState, bool leverBState, bool triggeredState)
-    {
-        leverAActive = leverAState;
-        leverBActive = leverBState;
-        triggered = triggeredState;
-
-        if (leverA != null)
-        {
-            leverA.SetActive(leverAState);
-        }
-
-        if (leverB != null)
-        {
-            leverB.SetActive(leverBState);
-        }
-
-        if (!triggered)
-        {
-            Evaluate();
-        }
+        HandleLeverStateChanged(lever, active);
     }
 
     private void SyncFromLevers()
@@ -133,12 +176,12 @@ public class TwoLeverPuzzle : MonoBehaviour
         }
     }
 
-    private void Evaluate()
+    private void Evaluate(string reason)
     {
-        // Declenchement si les deux leviers sont actifs.
+        LogDebug("evaluate", $"reason='{reason}' leverA={leverAActive} leverB={leverBActive} triggered={triggered}");
         if (leverAActive && leverBActive)
         {
-            TriggerTarget();
+            TriggerTarget(reason);
             return;
         }
 
@@ -148,10 +191,11 @@ public class TwoLeverPuzzle : MonoBehaviour
         }
     }
 
-    private void TriggerTarget()
+    private void TriggerTarget(string reason)
     {
         if (playOnce && triggered)
         {
+            LogDebug("trigger_skipped", $"reason='{reason}' cause='already_triggered'");
             return;
         }
 
@@ -160,10 +204,12 @@ public class TwoLeverPuzzle : MonoBehaviour
 
         if (playableDirector == null)
         {
+            Debug.LogWarning($"[LeverPuzzle] event='director_missing' puzzle='{name}' reason='{reason}'", this);
             return;
         }
 
         playableDirector.Play();
+        LogDebug("triggered", $"reason='{reason}' director='{playableDirector.name}'");
     }
 
     private void PlaySfx(AudioClipSO clip)
@@ -180,5 +226,18 @@ public class TwoLeverPuzzle : MonoBehaviour
         }
 
         AudioSource.PlayClipAtPoint(clip.audioClip, transform.position, Mathf.Clamp01(clip.volume));
+    }
+
+    private void LogDebug(string eventName, string extra = "")
+    {
+        if (!logDebug)
+        {
+            return;
+        }
+
+        string suffix = string.IsNullOrWhiteSpace(extra) ? string.Empty : $" {extra}";
+        Debug.Log(
+            $"[LeverPuzzle] event='{eventName}' puzzle='{name}' leverA={leverAActive} leverB={leverBActive} triggered={triggered}{suffix}",
+            this);
     }
 }

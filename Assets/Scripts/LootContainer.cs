@@ -13,6 +13,12 @@ using UnityEngine.UI;
 [RequireComponent(typeof(NetworkObject))]
 public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 {
+    public enum TrapEffectType
+    {
+        None = 0,
+        TeleportCharacter = 1
+    }
+
     [System.Serializable]
     public class LootItemEntry
     {
@@ -33,6 +39,53 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     public bool collectable = true;
     [Tooltip("Capacite max de toutes les quantites (0 = infini).")]
     public int maxTotalQuantity = 0;
+
+    [Header("Lock")]
+    [Tooltip("Si true, le conteneur doit etre deverrouille avant ouverture.")]
+    public bool isLocked = false;
+    [Tooltip("Identifiant de serrure requis pour deverrouiller ce conteneur.")]
+    public string lockId;
+    [Tooltip("Consomme la cle utilisee lors du deverrouillage.")]
+    public bool consumeKeyOnUse = false;
+    [Tooltip("Feedback affiche si la bonne cle n'est pas trouvee.")]
+    public string lockedNoKeyMessage = "Le conteneur est verrouille. Il faut la bonne cle.";
+    [Tooltip("Feedback affiche lorsque le conteneur est deverrouille.")]
+    public string unlockSuccessMessage = "Le conteneur est deverrouille.";
+
+    [Header("Lockpick")]
+    [Tooltip("Autorise une tentative de crochetage si le personnage n'a pas la bonne cle.")]
+    public bool allowLockpick = true;
+    [Min(1)]
+    [Tooltip("Difficulte du crochetage (DC).")]
+    public int lockDifficulty = 12;
+    [Tooltip("Reference explicite vers l'item de crochetage. Laisse vide pour utiliser l'ID par defaut.")]
+    public Item lockpickToolItem;
+    [Tooltip("ID fallback de l'item de crochetage si aucune reference n'est assignee.")]
+    public string lockpickToolItemId = "outils_de_crochetage";
+    [Tooltip("Message affiche dans la confirmation avant consommation de l'outil.")]
+    public string lockpickConfirmationMessage = "Utiliser 1 outil de crochetage pour tenter d'ouvrir ce coffre ?";
+    [Tooltip("Feedback affiche si aucun outil de crochetage n'est disponible.")]
+    public string missingLockpickMessage = "Il manque des outils de crochetage.";
+    [Tooltip("Feedback de succes apres un crochetage reussi.")]
+    public string lockpickSuccessMessage = "Crochetage reussi.";
+    [Tooltip("Feedback d'echec apres un crochetage rate.")]
+    public string lockpickFailureMessage = "Crochetage rat\u00E9, votre outil de crochetage se brise...";
+
+    [Header("Trap")]
+    [Tooltip("Si true, le conteneur possede un piege.")]
+    public bool isTrapped = false;
+    [Tooltip("Si true, le piege se declenche a l'ouverture. Sinon, il se declenche sur un echec de crochetage.")]
+    public bool triggerTrapOnOpen = false;
+    [Tooltip("Desarme le piege apres son premier declenchement.")]
+    public bool disarmTrapAfterTrigger = true;
+    [Tooltip("Type d'effet applique par le piege.")]
+    public TrapEffectType trapEffect = TrapEffectType.TeleportCharacter;
+    [Tooltip("Point de teleportation utilise par le piege.")]
+    public Transform trapTeleportTarget;
+    [Tooltip("Applique la rotation du point de teleportation au personnage teleporte.")]
+    public bool trapUseTargetRotation = true;
+    [Tooltip("Feedback affiche lorsque le piege se declenche.")]
+    public string trapTriggeredMessage = "Un piege de teleportation se declenche !";
 
     [Header("Break")]
     [Tooltip("Autorise l'action Casser quand le conteneur est non collectable.")]
@@ -108,7 +161,17 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private readonly NetworkList<NetItemStack> netLootItems = new NetworkList<NetItemStack>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> netIsLocked = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> netTrapTriggered = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private const int MinLockDifficulty = 1;
+    private const int MaxLockDifficulty = 30;
+    private const int MinDexterityBonus = -5;
+    private const int MaxDexterityBonus = 10;
     private bool applyingNetLoot;
+    private bool unlockAttemptInProgress;
+    private bool trapTriggered;
 
     private void Awake()
     {
@@ -146,17 +209,25 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         characterColliderCounts.Clear();
         currentCharacter = null;
         depositInventoryOpen = false;
+        unlockAttemptInProgress = false;
+        ConfirmationManager.Dismiss(this);
     }
 
     public override void OnNetworkSpawn()
     {
         netLootItems.OnListChanged += OnNetLootChanged;
+        netIsLocked.OnValueChanged += OnNetIsLockedChanged;
+        netTrapTriggered.OnValueChanged += OnNetTrapTriggeredChanged;
         if (IsServer)
         {
+            netIsLocked.Value = isLocked;
+            netTrapTriggered.Value = trapTriggered;
             SyncNetFromLootItems();
         }
         else
         {
+            isLocked = netIsLocked.Value;
+            trapTriggered = netTrapTriggered.Value;
             ApplyLootFromNet();
         }
     }
@@ -164,6 +235,8 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     public override void OnNetworkDespawn()
     {
         netLootItems.OnListChanged -= OnNetLootChanged;
+        netIsLocked.OnValueChanged -= OnNetIsLockedChanged;
+        netTrapTriggered.OnValueChanged -= OnNetTrapTriggeredChanged;
     }
 
     private void LateUpdate()
@@ -352,6 +425,11 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
+        if (unlockAttemptInProgress)
+        {
+            return;
+        }
+
         if (depositInventoryOpen)
         {
             return;
@@ -399,7 +477,172 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
+        if (IsLockedForInteraction())
+        {
+            if (IsNetworked() && !IsServer)
+            {
+                HandleLockedInteractClient();
+                return;
+            }
+
+            SquadCharacterController controller = GetCurrentCharacterController();
+            if (TryUnlockWithKey(controller, out bool inventoryChanged))
+            {
+                if (inventoryChanged)
+                {
+                    SyncNetworkInventoryForCurrentCharacter();
+                }
+
+                if (TryTriggerTrapOnOpen(controller, out string trapFeedback))
+                {
+                    ShowActionFeedback(trapFeedback);
+                    return;
+                }
+
+                OpenLoot();
+                return;
+            }
+
+            if (!CanOfferLockpick(controller, out int availableTools, out string lockpickFeedback))
+            {
+                ShowActionFeedback(lockpickFeedback);
+                return;
+            }
+
+            BeginLockpickConfirmation(availableTools);
+            return;
+        }
+
+        if (IsNetworked() && !IsServer && CanTriggerTrapOnOpen())
+        {
+            unlockAttemptInProgress = true;
+            RequestUnlockAndOpenServerRpc(false);
+            return;
+        }
+
+        if (TryTriggerTrapOnOpen(GetCurrentCharacterController(), out string openTrapFeedback))
+        {
+            ShowActionFeedback(openTrapFeedback);
+            return;
+        }
+
         OpenLoot();
+    }
+
+    private void HandleLockedInteractClient()
+    {
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (controller == null)
+        {
+            ShowActionFeedback(GetMissingKeyFeedback());
+            return;
+        }
+
+        if (CanUnlockWithKey(controller))
+        {
+            unlockAttemptInProgress = true;
+            RequestUnlockAndOpenServerRpc(false);
+            return;
+        }
+
+        if (!CanOfferLockpick(controller, out int availableTools, out string lockpickFeedback))
+        {
+            ShowActionFeedback(lockpickFeedback);
+            return;
+        }
+
+        BeginLockpickConfirmation(availableTools);
+    }
+
+    private void BeginLockpickConfirmation(int availableTools)
+    {
+        bool shown = ConfirmationManager.TryShow(
+            this,
+            BuildLockpickConfirmationMessage(availableTools),
+            OnLockpickConfirmed,
+            OnLockpickCancelled,
+            "Utiliser",
+            "Annuler",
+            "Crochetage",
+            "LootContainer.Lockpick");
+
+        if (shown)
+        {
+            Debug.Log($"[Lockpick] confirmation_shown container='{name}' availableTools={availableTools}", this);
+            return;
+        }
+
+        ShowActionFeedback("Confirmation de crochetage indisponible.");
+    }
+
+    private void OnLockpickConfirmed()
+    {
+        if (this == null || !isActiveAndEnabled)
+        {
+            return;
+        }
+
+        UpdateCurrentCharacter();
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (controller == null)
+        {
+            ShowActionFeedback(GetMissingLockpickFeedback());
+            return;
+        }
+
+        if (IsNetworked() && !IsServer)
+        {
+            unlockAttemptInProgress = true;
+            RequestUnlockAndOpenServerRpc(true);
+            return;
+        }
+
+        if (TryUnlockWithKey(controller, out bool keyInventoryChanged))
+        {
+            if (keyInventoryChanged)
+            {
+                SyncNetworkInventoryForCurrentCharacter();
+            }
+
+            if (TryTriggerTrapOnOpen(controller, out string keyTrapFeedback))
+            {
+                ShowActionFeedback(keyTrapFeedback);
+                return;
+            }
+
+            OpenLoot();
+            return;
+        }
+
+        if (!TryPerformLockpickAttempt(controller, out string feedback, out bool inventoryChanged))
+        {
+            if (inventoryChanged)
+            {
+                SyncNetworkInventoryForCurrentCharacter();
+            }
+
+            ShowActionFeedback(feedback);
+            return;
+        }
+
+        if (inventoryChanged)
+        {
+            SyncNetworkInventoryForCurrentCharacter();
+        }
+
+        if (TryTriggerTrapOnOpen(controller, out string openTrapFeedback))
+        {
+            ShowActionFeedback(CombineFeedbackMessages(feedback, openTrapFeedback));
+            return;
+        }
+
+        ShowActionFeedback(feedback);
+        OpenLoot();
+    }
+
+    private void OnLockpickCancelled()
+    {
+        Debug.Log($"[Lockpick] confirmation_cancelled container='{name}'", this);
     }
 
     private void HandleTakeAll()
@@ -420,9 +663,16 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private void UpdateCurrentCharacter()
     {
+        GameObject previousCharacter = currentCharacter;
+        PruneCharactersInRange();
+
         if (charactersInRange.Count == 0)
         {
             currentCharacter = null;
+            if (previousCharacter != null)
+            {
+                HandleCharacterNoLongerInRange();
+            }
             return;
         }
 
@@ -430,10 +680,50 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         if (controlled != null)
         {
             currentCharacter = charactersInRange.Contains(controlled) ? controlled : null;
+            if (previousCharacter != null && currentCharacter == null)
+            {
+                HandleCharacterNoLongerInRange();
+            }
             return;
         }
 
         currentCharacter = charactersInRange[0];
+    }
+
+    private void PruneCharactersInRange()
+    {
+        for (int i = charactersInRange.Count - 1; i >= 0; i--)
+        {
+            GameObject character = charactersInRange[i];
+            if (character != null && IsCharacterInRange(character.transform))
+            {
+                continue;
+            }
+
+            charactersInRange.RemoveAt(i);
+            if (character != null)
+            {
+                characterColliderCounts.Remove(character);
+            }
+        }
+    }
+
+    private void HandleCharacterNoLongerInRange()
+    {
+        HideActionBoxImmediate();
+        ConfirmationManager.Dismiss(this);
+        unlockAttemptInProgress = false;
+
+        if (!lootOpen)
+        {
+            return;
+        }
+
+        LootUISettings settings = GetSettings();
+        if (settings != null && settings.closeLootWhenLeaving)
+        {
+            CloseLoot();
+        }
     }
 
     private void HandleCharacterEnter(Collider other)
@@ -481,11 +771,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
         if (currentCharacter == null)
         {
-            LootUISettings settings = GetSettings();
-            if (settings != null && settings.closeLootWhenLeaving)
-            {
-                CloseLoot();
-            }
+            HandleCharacterNoLongerInRange();
         }
     }
 
@@ -1123,6 +1409,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
+        if (IsLockedForInteraction())
+        {
+            ShowActionFeedback(GetMissingKeyFeedback());
+            return false;
+        }
+
         if (IsNetworked() && !IsServer)
         {
             RequestTakeServerRpc(ItemIdUtils.GetItemId(entry.item), quantity);
@@ -1182,6 +1474,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private bool TryBreakFocusedItem()
     {
+        if (IsLockedForInteraction())
+        {
+            ShowActionFeedback(GetMissingKeyFeedback());
+            return false;
+        }
+
         LootSlotUI focusedSlot = GetFocusedSlot();
         if (focusedSlot == null || focusedSlot.Entry == null)
         {
@@ -1917,6 +2215,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
+        if (IsLockedForInteraction())
+        {
+            ShowActionFeedback(GetMissingKeyFeedback());
+            return false;
+        }
+
         if (IsNetworked() && !IsServer)
         {
             RequestDepositServerRpc(ItemIdUtils.GetItemId(item), quantity);
@@ -2147,6 +2451,16 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         ApplyLootFromNet();
     }
 
+    private void OnNetIsLockedChanged(bool previousValue, bool newValue)
+    {
+        isLocked = newValue;
+    }
+
+    private void OnNetTrapTriggeredChanged(bool previousValue, bool newValue)
+    {
+        trapTriggered = newValue;
+    }
+
     private void ApplyLootFromNet()
     {
         if (IsServer)
@@ -2225,6 +2539,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private void TakeAllItems()
     {
+        if (IsLockedForInteraction())
+        {
+            ShowActionFeedback(GetMissingKeyFeedback());
+            return;
+        }
+
         if (IsNetworked() && !IsServer)
         {
             RequestTakeAllServerRpc();
@@ -2607,6 +2927,492 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         return true;
     }
 
+    public bool IsLockedForInteraction()
+    {
+        return isLocked;
+    }
+
+    public bool HasTriggeredTrap => trapTriggered;
+
+    public bool TryUnlock()
+    {
+        return TryUnlock(out _);
+    }
+
+    public bool TryUnlock(out string feedback)
+    {
+        SquadCharacterController controller = GetCurrentCharacterController();
+        bool success = TryUnlockWithKey(controller, out bool inventoryChanged);
+        feedback = success ? GetUnlockSuccessFeedback() : GetMissingKeyFeedback();
+        if (inventoryChanged)
+        {
+            SyncNetworkInventoryForCurrentCharacter();
+        }
+
+        return success;
+    }
+
+    private bool CanUnlockWithKey(SquadCharacterController controller)
+    {
+        return controller != null
+            && !string.IsNullOrWhiteSpace(lockId)
+            && controller.HasMatchingKey(lockId);
+    }
+
+    private void SetLockedState(bool locked)
+    {
+        isLocked = locked;
+        if (IsServer)
+        {
+            netIsLocked.Value = locked;
+        }
+    }
+
+    private void SetTrapTriggeredState(bool triggered)
+    {
+        trapTriggered = triggered;
+        if (IsServer)
+        {
+            netTrapTriggered.Value = triggered;
+        }
+    }
+
+    public void RestoreLockedState(bool locked)
+    {
+        SetLockedState(locked);
+    }
+
+    public void RestoreTrapTriggeredState(bool triggered)
+    {
+        SetTrapTriggeredState(triggered);
+    }
+
+    private string GetMissingKeyFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(lockedNoKeyMessage))
+        {
+            return lockedNoKeyMessage;
+        }
+
+        return "Le conteneur est verrouille. Il faut la bonne cle.";
+    }
+
+    private string GetUnlockSuccessFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(unlockSuccessMessage))
+        {
+            return unlockSuccessMessage;
+        }
+
+        return "Le conteneur est deverrouille.";
+    }
+
+    private string GetMissingLockpickFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(missingLockpickMessage))
+        {
+            return missingLockpickMessage;
+        }
+
+        return "Il manque des outils de crochetage.";
+    }
+
+    private string GetLockpickSuccessFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(lockpickSuccessMessage))
+        {
+            return lockpickSuccessMessage;
+        }
+
+        return "Crochetage reussi.";
+    }
+
+    private string GetLockpickFailureFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(lockpickFailureMessage))
+        {
+            return lockpickFailureMessage;
+        }
+
+        return "Crochetage rat\u00E9, votre outil de crochetage se brise...";
+    }
+
+    private int GetNormalizedLockDifficulty()
+    {
+        return Mathf.Clamp(lockDifficulty, MinLockDifficulty, MaxLockDifficulty);
+    }
+
+    private string GetResolvedLockpickToolItemId()
+    {
+        if (lockpickToolItem != null)
+        {
+            string explicitId = ItemIdUtils.GetItemId(lockpickToolItem);
+            if (!string.IsNullOrWhiteSpace(explicitId))
+            {
+                return explicitId;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(lockpickToolItemId))
+        {
+            return lockpickToolItemId;
+        }
+
+        return "outils_de_crochetage";
+    }
+
+    private string BuildLockpickConfirmationMessage(int availableTools)
+    {
+        string question = !string.IsNullOrWhiteSpace(lockpickConfirmationMessage)
+            ? lockpickConfirmationMessage
+            : "Utiliser 1 outil de crochetage pour tenter d'ouvrir ce coffre ?";
+        return $"{question}\n\nOutils disponibles : {Mathf.Max(0, availableTools)}";
+    }
+
+    private bool TryConsumeLockpickTool(SquadCharacterController controller, out Item consumedTool)
+    {
+        consumedTool = null;
+        if (controller == null)
+        {
+            return false;
+        }
+
+        if (lockpickToolItem != null)
+        {
+            if (!controller.TryRemoveItemQuantity(lockpickToolItem, 1))
+            {
+                return false;
+            }
+
+            consumedTool = lockpickToolItem;
+            return true;
+        }
+
+        string toolId = GetResolvedLockpickToolItemId();
+        if (string.IsNullOrWhiteSpace(toolId))
+        {
+            Debug.LogWarning($"LootContainer '{name}' ne peut pas tenter de crochetage: aucun item de crochetage configure.", this);
+            return false;
+        }
+
+        return controller.TryConsumeItemById(toolId, 1, out consumedTool);
+    }
+
+    private int CountAvailableLockpickTools(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return 0;
+        }
+
+        if (lockpickToolItem != null)
+        {
+            return controller.CountItem(lockpickToolItem);
+        }
+
+        string toolId = GetResolvedLockpickToolItemId();
+        if (string.IsNullOrWhiteSpace(toolId))
+        {
+            Debug.LogWarning($"[Lockpick] no_tool_id_configured container='{name}'", this);
+            return 0;
+        }
+
+        return controller.CountItemById(toolId);
+    }
+
+    private bool CanOfferLockpick(SquadCharacterController controller, out int availableTools, out string feedback)
+    {
+        availableTools = 0;
+        feedback = string.Empty;
+        if (controller == null)
+        {
+            feedback = GetMissingKeyFeedback();
+            return false;
+        }
+
+        if (!allowLockpick)
+        {
+            feedback = GetMissingKeyFeedback();
+            return false;
+        }
+
+        availableTools = CountAvailableLockpickTools(controller);
+        if (availableTools > 0)
+        {
+            return true;
+        }
+
+        feedback = GetMissingLockpickFeedback();
+        return false;
+    }
+
+    private bool TryUnlockWithKey(SquadCharacterController controller, out bool inventoryChanged)
+    {
+        inventoryChanged = false;
+        if (!IsLockedForInteraction())
+        {
+            return true;
+        }
+
+        if (controller == null || string.IsNullOrWhiteSpace(lockId))
+        {
+            return false;
+        }
+
+        if (!controller.TryUseMatchingKey(lockId, consumeKeyOnUse, out Item keyItem))
+        {
+            return false;
+        }
+
+        SetLockedState(false);
+        inventoryChanged = consumeKeyOnUse && keyItem != null;
+        Debug.Log(
+            $"[Lockpick] container='{name}' character='{controller.name}' path='key' lockId='{lockId}' consumeKey={consumeKeyOnUse} inventoryChanged={inventoryChanged}",
+            this);
+        return true;
+    }
+
+    private bool TryPerformLockpickAttempt(SquadCharacterController controller, out string feedback, out bool inventoryChanged)
+    {
+        feedback = string.Empty;
+        inventoryChanged = false;
+        if (!allowLockpick)
+        {
+            feedback = GetMissingKeyFeedback();
+            return false;
+        }
+
+        if (controller == null)
+        {
+            feedback = GetMissingLockpickFeedback();
+            return false;
+        }
+
+        if (!TryConsumeLockpickTool(controller, out _))
+        {
+            feedback = GetMissingLockpickFeedback();
+            return false;
+        }
+
+        inventoryChanged = true;
+        int difficulty = GetNormalizedLockDifficulty();
+        int dexterity = controller.GetDexterityValue();
+        int dexterityBonus = Mathf.Clamp(controller.GetDexterityModifier(), MinDexterityBonus, MaxDexterityBonus);
+        int roll = Random.Range(1, 21);
+        int total = roll + dexterityBonus;
+        bool success = total >= difficulty;
+
+        Debug.Log(
+            $"[Lockpick] container='{name}' character='{controller.name}' path='lockpick' difficulty={difficulty} roll={roll} dexterity={dexterity} dexBonus={dexterityBonus} total={total} success={success}",
+            this);
+
+        if (!success)
+        {
+            feedback = GetLockpickFailureFeedback();
+            if (TryTriggerTrapOnFailedLockpick(controller, out string trapFeedback))
+            {
+                feedback = CombineFeedbackMessages(feedback, trapFeedback);
+            }
+            return false;
+        }
+
+        SetLockedState(false);
+        feedback = GetLockpickSuccessFeedback();
+        return true;
+    }
+
+    private bool CanTriggerTrapOnOpen()
+    {
+        return IsTrapArmed() && triggerTrapOnOpen;
+    }
+
+    private bool CanTriggerTrapOnFailedLockpick()
+    {
+        return IsTrapArmed() && !triggerTrapOnOpen;
+    }
+
+    private bool IsTrapArmed()
+    {
+        if (!isTrapped || trapEffect == TrapEffectType.None)
+        {
+            return false;
+        }
+
+        if (!disarmTrapAfterTrigger)
+        {
+            return true;
+        }
+
+        return !trapTriggered;
+    }
+
+    private bool TryTriggerTrapOnOpen(SquadCharacterController controller, out string feedback)
+    {
+        feedback = string.Empty;
+        if (!CanTriggerTrapOnOpen())
+        {
+            return false;
+        }
+
+        return TryTriggerTrap(controller, "open", out feedback);
+    }
+
+    private bool TryTriggerTrapOnFailedLockpick(SquadCharacterController controller, out string feedback)
+    {
+        feedback = string.Empty;
+        if (!CanTriggerTrapOnFailedLockpick())
+        {
+            return false;
+        }
+
+        return TryTriggerTrap(controller, "failed_lockpick", out feedback);
+    }
+
+    private bool TryTriggerTrap(SquadCharacterController controller, string triggerPath, out string feedback)
+    {
+        feedback = string.Empty;
+        if (!IsTrapArmed())
+        {
+            return false;
+        }
+
+        if (controller == null)
+        {
+            Debug.LogWarning($"[LootTrap] trigger_skipped container='{name}' path='{triggerPath}' reason='missing_controller'", this);
+            return false;
+        }
+
+        Vector3 destination = Vector3.zero;
+        bool executed = false;
+        switch (trapEffect)
+        {
+            case TrapEffectType.TeleportCharacter:
+                executed = TryExecuteTeleportTrap(controller, out destination);
+                break;
+            default:
+                Debug.LogWarning($"[LootTrap] trigger_skipped container='{name}' path='{triggerPath}' reason='unsupported_trap_effect' effect='{trapEffect}'", this);
+                break;
+        }
+
+        if (!executed)
+        {
+            return false;
+        }
+
+        if (disarmTrapAfterTrigger)
+        {
+            SetTrapTriggeredState(true);
+        }
+
+        feedback = GetTrapTriggeredFeedback();
+        Debug.Log(
+            $"[LootTrap] triggered container='{name}' character='{controller.name}' path='{triggerPath}' effect='{trapEffect}' disarmed={disarmTrapAfterTrigger} destination='{destination}'",
+            this);
+        return true;
+    }
+
+    private bool TryExecuteTeleportTrap(SquadCharacterController controller, out Vector3 destination)
+    {
+        destination = Vector3.zero;
+        if (trapTeleportTarget == null)
+        {
+            Debug.LogWarning($"[LootTrap] teleport_trap_skipped container='{name}' reason='missing_target'", this);
+            return false;
+        }
+
+        GameObject characterRoot = ResolveTrapCharacterRoot(controller);
+        if (characterRoot == null)
+        {
+            Debug.LogWarning($"[LootTrap] teleport_trap_skipped container='{name}' reason='missing_character_root'", this);
+            return false;
+        }
+
+        destination = trapTeleportTarget.position;
+        Quaternion rotation = trapUseTargetRotation
+            ? trapTeleportTarget.rotation
+            : characterRoot.transform.rotation;
+
+        CharacterController characterController = controller != null ? controller.GetComponent<CharacterController>() : null;
+        Rigidbody rigidbody = characterRoot.GetComponent<Rigidbody>();
+
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        if (rigidbody != null)
+        {
+            rigidbody.position = destination;
+            rigidbody.rotation = rotation;
+            rigidbody.linearVelocity = Vector3.zero;
+            rigidbody.angularVelocity = Vector3.zero;
+        }
+
+        characterRoot.transform.SetPositionAndRotation(destination, rotation);
+
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+        }
+
+        controller.Stop();
+        return true;
+    }
+
+    private GameObject ResolveTrapCharacterRoot(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return currentCharacter;
+        }
+
+        NetworkObject networkRoot = controller.GetComponentInParent<NetworkObject>();
+        if (networkRoot != null)
+        {
+            return networkRoot.gameObject;
+        }
+
+        return controller.gameObject;
+    }
+
+    private string GetTrapTriggeredFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(trapTriggeredMessage))
+        {
+            return trapTriggeredMessage;
+        }
+
+        switch (trapEffect)
+        {
+            case TrapEffectType.TeleportCharacter:
+                return "Un piege de teleportation se declenche !";
+            default:
+                return "Un piege se declenche !";
+        }
+    }
+
+    private static string CombineFeedbackMessages(string first, string second)
+    {
+        bool hasFirst = !string.IsNullOrWhiteSpace(first);
+        bool hasSecond = !string.IsNullOrWhiteSpace(second);
+        if (!hasFirst)
+        {
+            return hasSecond ? second : string.Empty;
+        }
+
+        if (!hasSecond)
+        {
+            return first;
+        }
+
+        return $"{first}\n{second}";
+    }
+
+    private void ClearPendingUnlockAttempt()
+    {
+        unlockAttemptInProgress = false;
+    }
+
     private void ShowActionFeedback(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
@@ -2703,6 +3509,93 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     }
 
     [ServerRpc(RequireOwnership = false)]
+    private void RequestUnlockAndOpenServerRpc(bool confirmedLockpick, ServerRpcParams rpcParams = default)
+    {
+        Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
+        if (!IsCharacterInRange(playerRoot))
+        {
+            ShowFeedbackClientRpc(string.Empty, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        SquadCharacterController controller = GetControllerFromRoot(playerRoot);
+        NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
+        if (controller == null)
+        {
+            ShowFeedbackClientRpc(string.Empty, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (IsLockedForInteraction())
+        {
+            if (TryUnlockWithKey(controller, out bool keyInventoryChanged))
+            {
+                if (keyInventoryChanged)
+                {
+                    if (inventory != null)
+                    {
+                        inventory.SyncFromController();
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Lockpick] inventory sync skipped for key unlock on container='{name}' because NetworkInventory is missing on '{playerRoot?.name}'.", this);
+                    }
+                }
+
+                if (TryTriggerTrapOnOpen(controller, out string keyTrapFeedback))
+                {
+                    ShowFeedbackClientRpc(keyTrapFeedback, false, BuildClientRpcParams(rpcParams));
+                    return;
+                }
+
+                OpenLootClientRpc(BuildClientRpcParams(rpcParams));
+                return;
+            }
+
+            if (!confirmedLockpick)
+            {
+                ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+                return;
+            }
+
+            bool success = TryPerformLockpickAttempt(controller, out string feedback, out bool inventoryChanged);
+            if (inventoryChanged)
+            {
+                if (inventory != null)
+                {
+                    inventory.SyncFromController();
+                }
+                else
+                {
+                    Debug.LogWarning($"[Lockpick] inventory sync skipped for lockpick on container='{name}' because NetworkInventory is missing on '{playerRoot?.name}'.", this);
+                }
+            }
+
+            if (!success)
+            {
+                ShowFeedbackClientRpc(feedback, false, BuildClientRpcParams(rpcParams));
+                return;
+            }
+
+            if (TryTriggerTrapOnOpen(controller, out string openTrapFeedback))
+            {
+                ShowFeedbackClientRpc(CombineFeedbackMessages(feedback, openTrapFeedback), false, BuildClientRpcParams(rpcParams));
+                return;
+            }
+
+            ShowFeedbackClientRpc(feedback, false, BuildClientRpcParams(rpcParams));
+        }
+
+        if (TryTriggerTrapOnOpen(controller, out string trapFeedback))
+        {
+            ShowFeedbackClientRpc(trapFeedback, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        OpenLootClientRpc(BuildClientRpcParams(rpcParams));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     private void RequestTakeServerRpc(string itemId, int quantity, ServerRpcParams rpcParams = default)
     {
         if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0)
@@ -2713,6 +3606,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))
         {
+            return;
+        }
+
+        if (IsLockedForInteraction())
+        {
+            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2784,6 +3683,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
+        if (IsLockedForInteraction())
+        {
+            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
         if (!collectable)
         {
             ShowFeedbackClientRpc(takeNotAllowedMessage, false, BuildClientRpcParams(rpcParams));
@@ -2840,6 +3745,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
         if (!IsCharacterInRange(playerRoot))
         {
+            return;
+        }
+
+        if (IsLockedForInteraction())
+        {
+            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -2918,6 +3829,12 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
+        if (IsLockedForInteraction())
+        {
+            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
         Item item = ItemRegistry.Resolve(itemId);
         if (item == null)
         {
@@ -2976,6 +3893,16 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     [ClientRpc]
     private void ShowFeedbackClientRpc(string message, bool isBreak, ClientRpcParams rpcParams = default)
     {
+        if (!isBreak)
+        {
+            ClearPendingUnlockAttempt();
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
         if (isBreak)
         {
             ShowBreakFeedback(message);
@@ -2984,6 +3911,18 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         {
             ShowActionFeedback(message);
         }
+    }
+
+    [ClientRpc]
+    private void OpenLootClientRpc(ClientRpcParams rpcParams = default)
+    {
+        ClearPendingUnlockAttempt();
+        if (!isActiveAndEnabled || lootOpen)
+        {
+            return;
+        }
+
+        OpenLoot();
     }
 
     private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)

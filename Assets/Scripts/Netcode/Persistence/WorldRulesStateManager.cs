@@ -8,7 +8,6 @@ public class WorldRulesStateManager : MonoBehaviour
     public const string BrazierLitCountKey = "world.braziers.lit_count";
     public const string BrazierTotalCountKey = "world.braziers.total_count";
     public const string CurrentYearKey = "world.time.current_year";
-    public const string ActiveStageRootsKey = "world.environment.active_stage_roots";
     public const string ActiveVolumeProfilesKey = "world.environment.active_volume_profiles";
 
     [SerializeField] private BraseroTimeManager braseroTimeManager;
@@ -166,40 +165,7 @@ public class WorldRulesStateManager : MonoBehaviour
         SetInt(BrazierLitCountKey, braseroTimeManager.LitCount);
         SetInt(BrazierTotalCountKey, braseroTimeManager.braseros != null ? braseroTimeManager.braseros.Count : 0);
         SetInt(CurrentYearKey, braseroTimeManager.CurrentYear);
-        SetString(ActiveStageRootsKey, DescribeActiveStageRoots());
         SetString(ActiveVolumeProfilesKey, DescribeActiveVolumeProfiles());
-    }
-
-    public string DescribeActiveStageRoots()
-    {
-        List<string> values = new List<string>();
-#if UNITY_2023_1_OR_NEWER
-        BraseroYearStageManager[] managers = FindObjectsByType<BraseroYearStageManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-#else
-        BraseroYearStageManager[] managers = FindObjectsOfType<BraseroYearStageManager>(true);
-#endif
-        if (managers == null)
-        {
-            return string.Empty;
-        }
-
-        for (int i = 0; i < managers.Length; i++)
-        {
-            BraseroYearStageManager manager = managers[i];
-            if (manager == null)
-            {
-                continue;
-            }
-
-            string managerPath = PersistentWorldDebug.DescribeTransform(manager.transform);
-            string currentRoot = manager.CurrentRoot != null
-                ? PersistentWorldDebug.DescribeTransform(manager.CurrentRoot.transform)
-                : "<none>";
-            values.Add($"{managerPath}=>{currentRoot}");
-        }
-
-        values.Sort(StringComparer.Ordinal);
-        return string.Join("|", values);
     }
 
     public string DescribeActiveVolumeProfiles()

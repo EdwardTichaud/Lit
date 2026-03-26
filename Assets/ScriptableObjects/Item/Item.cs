@@ -68,6 +68,16 @@ public class Item : ScriptableObject
     public GameObject worldPrefab;
     [Tooltip("Item special torche.")]
     public bool isTorch;
+    [Header("Lock / Key")]
+    [Tooltip("Si true, cet item peut servir de cle.")]
+    public bool isKey;
+    [Tooltip("Identifiant de serrure compatible avec cette cle.")]
+    public string keyId;
+    [Header("World Interactions")]
+    [Tooltip("Capacites d'interaction accordees lorsque l'objet est equipe.")]
+    public InteractionCapability interactionCapabilities = InteractionCapability.None;
+    [Tooltip("Utiliser l'objet l'equipe/le desequipe pour les interactions de monde.")]
+    public bool toggleEquipOnUse = false;
     [Header("Inventory Rules")]
     [Tooltip("Autorise le drop depuis l'inventaire.")]
     public bool allowDropFromInventory = true;
@@ -359,6 +369,11 @@ public class Item : ScriptableObject
 
     public bool CanUse()
     {
+        if (CanToggleEquipOnUse())
+        {
+            return true;
+        }
+
         if (!canUse)
         {
             return false;
@@ -378,6 +393,11 @@ public class Item : ScriptableObject
         {
             reason = ResolveMessage(cannotUseMessage, "Impossible d'utiliser cet objet.");
             return false;
+        }
+
+        if (CanToggleEquipOnUse())
+        {
+            return controller.TryToggleEquippedInteractionItem(this, out reason);
         }
 
         if (!CanUse())
@@ -482,6 +502,41 @@ public class Item : ScriptableObject
     public string GetBreakSuccessMessage()
     {
         return ResolveMessage(breakSuccessMessage, "Casse reussie.");
+    }
+
+    public bool HasInteractionCapabilities()
+    {
+        return interactionCapabilities != InteractionCapability.None;
+    }
+
+    public bool GrantsInteractionCapability(InteractionCapability capability)
+    {
+        if (capability == InteractionCapability.None)
+        {
+            return true;
+        }
+
+        return (interactionCapabilities & capability) == capability;
+    }
+
+    public bool IsMatchingKey(string requiredLockId)
+    {
+        if (!isKey)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(keyId) || string.IsNullOrWhiteSpace(requiredLockId))
+        {
+            return false;
+        }
+
+        return string.Equals(keyId.Trim(), requiredLockId.Trim(), System.StringComparison.Ordinal);
+    }
+
+    public bool CanToggleEquipOnUse()
+    {
+        return toggleEquipOnUse && HasInteractionCapabilities();
     }
 
     public bool CanDepositToContainer(LootContainer container)

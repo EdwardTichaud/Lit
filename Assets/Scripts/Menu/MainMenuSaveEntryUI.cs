@@ -173,15 +173,7 @@ public class MainMenuSaveEntryUI : MonoBehaviour, IPointerEnterHandler, IPointer
             return;
         }
 
-        RectTransform parent = rectTransform.parent as RectTransform;
-        if (parent != null)
-        {
-            sharedCursor.itemsParent = parent;
-            sharedCursor.layoutGroup = parent.GetComponent<LayoutGroup>();
-        }
-
-        sharedCursor.Refresh();
-        sharedCursor.TrySetCurrentItem(rectTransform, false);
+        MenuCursorSyncUtility.SyncCursorToItem(sharedCursor, rectTransform);
     }
 
     private void UpdateColor(Color color)
