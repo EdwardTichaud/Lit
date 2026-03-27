@@ -109,6 +109,32 @@ public class JoinSyncSystem : MonoBehaviour
         }
     }
 
+    public void ResetRuntimeState(string reason = null)
+    {
+        pendingTransfer = null;
+        readyClients.Clear();
+        pendingServerTransfers.Clear();
+        localSnapshotRequestSent = false;
+        localSyncFailed = false;
+        syncInputLockApplied = false;
+        earliestSnapshotRequestTime = 0f;
+        forceSnapshotRequestTime = 0f;
+        lastSnapshotRequestSentTime = 0f;
+        nextTransferId = 1;
+        localSyncStatusMessage = string.Empty;
+        IsLocalWorldReady = true;
+
+        UnregisterMessageHandlers();
+        UnhookNetworkManager();
+        UnhookWorldSaveAdapter();
+        ReleaseLocalGameplayBlock();
+
+        if (syncOverlay != null)
+        {
+            syncOverlay.SetVisible(false);
+        }
+    }
+
     public bool IsClientReady(ulong clientId)
     {
         if (hookedManager != null && hookedManager.IsServer && clientId == hookedManager.LocalClientId)

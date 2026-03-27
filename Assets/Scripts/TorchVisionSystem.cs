@@ -152,6 +152,16 @@ public class TorchVisionSystem : MonoBehaviour
         return instance.TryGetNearestMatchingTorchInternal(vision, worldPosition, maxDistance, requireTorchEquipped, out match);
     }
 
+    public static void ResetRuntimeState(string reason = null)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        instance.ResetRuntimeStateInternal(reason);
+    }
+
     private static SquadCharacterController GetCurrentController()
     {
         SquadManager manager = SquadManager.Instance;
@@ -489,6 +499,14 @@ public class TorchVisionSystem : MonoBehaviour
         }
 
         return requiredVision == null || activeVision == requiredVision;
+    }
+
+    private void ResetRuntimeStateInternal(string reason)
+    {
+        visions.Clear();
+        torchStates.Clear();
+        torchSources.Clear();
+        TorchSourcesChanged?.Invoke();
     }
 
     private void OnDisable()

@@ -9,8 +9,10 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
     {
         None = 0,
         Quit = 5,
+        AudioOptions = 9,
         Save = 14,
-        Resume = 16
+        Resume = 16,
+        AudioOptionsBack = 17
     }
 
     [SerializeField] private PausePanelController controller;
@@ -83,6 +85,12 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
 
         switch (action)
         {
+            case PauseAction.AudioOptions:
+                controller.UI_OpenAudioOptions();
+                break;
+            case PauseAction.AudioOptionsBack:
+                controller.UI_CloseAudioOptions();
+                break;
             case PauseAction.Save:
                 controller.UI_Save();
                 break;
@@ -113,7 +121,7 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
 
     private void SyncSharedCursor()
     {
-        CursorController sharedCursor = cursorLink != null ? cursorLink.Cursor : null;
+        CursorController sharedCursor = cursorLink != null ? cursorLink.Cursor : controller != null ? controller.cursorController : null;
         if (sharedCursor == null || rectTransform == null)
         {
             return;

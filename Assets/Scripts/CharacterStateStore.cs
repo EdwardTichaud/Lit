@@ -37,6 +37,8 @@ public class CharacterStateStore : MonoBehaviour
     [Header("Persistence")]
     [Tooltip("Nom du fichier de sauvegarde.")]
     public string saveFileName = "CharacterState.json";
+    [Tooltip("Autorise un fichier global hors session active. Desactive pour isoler completement les parties runtime.")]
+    public bool allowGlobalFallbackWithoutActiveSave = false;
     [Tooltip("Charge automatiquement au Awake.")]
     public bool loadOnAwake = true;
     [Tooltip("Sauvegarde lors du OnDisable.")]
@@ -1757,6 +1759,11 @@ public class CharacterStateStore : MonoBehaviour
             {
                 return managedPath;
             }
+        }
+
+        if (!allowGlobalFallbackWithoutActiveSave)
+        {
+            return null;
         }
 
         return Path.Combine(Application.persistentDataPath, saveFileName);

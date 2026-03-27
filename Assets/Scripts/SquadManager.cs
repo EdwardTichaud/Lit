@@ -158,6 +158,22 @@ public class SquadManager : MonoBehaviour
         InputFocusStack.Pop(this);
     }
 
+    public void PrepareForRuntimeReset(string reason)
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        StopAllCoroutines();
+        LocalPlayerContext.Clear($"SquadManager.Reset:{reason}", LocalPlayerContext.Authority.MultiplayerAssignment);
+
+        if (gameObject.activeSelf)
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
     void Start()
     {
         StartCoroutine(StartRoutine());

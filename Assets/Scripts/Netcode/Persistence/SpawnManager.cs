@@ -51,6 +51,13 @@ public class SpawnManager : MonoBehaviour
         BuildLookup();
     }
 
+    public void ResetRuntimeState(string reason = null)
+    {
+        runtimeIdCounters.Clear();
+        issuedPersistentIds.Clear();
+        BuildLookup();
+    }
+
     public PersistentNetworkObject SpawnRuntimeObject(string prefabId, Vector3 position, Quaternion rotation, Transform parent = null)
     {
         if (!IsServer())

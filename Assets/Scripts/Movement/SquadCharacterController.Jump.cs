@@ -144,6 +144,8 @@ public partial class SquadCharacterController
     private string idleLandingStateName = "Jump_Land";
     [SerializeField, Tooltip("Nom de l'etat Animator de roulage.")]
     private string rollStateName = "Jump_Roll";
+    [SerializeField, Tooltip("Nom de l'etat Animator de locomotion utilise comme repli quand le saut se termine.")]
+    private string groundedRecoveryStateName = "Locomotion";
 
     private CommittedJumpPhase committedJumpPhase;
     private JumpStartContext committedJumpStartContext;
@@ -676,6 +678,7 @@ public partial class SquadCharacterController
         committedLockedHorizontalVelocity = Vector3.zero;
         ClearQueuedCommittedJumpInput();
         EnterCommittedJumpPhase(CommittedJumpPhase.Grounded);
+        CrossFadeToGroundedRecoveryStateIfNeeded();
     }
 
     private void EnterCommittedJumpPhase(CommittedJumpPhase newPhase)
@@ -770,7 +773,7 @@ public partial class SquadCharacterController
             return false;
         }
 
-        normalizedTime = Mathf.Repeat(stateInfo.normalizedTime, 1f);
+        normalizedTime = Mathf.Max(0f, stateInfo.normalizedTime);
         return true;
     }
 
@@ -912,6 +915,35 @@ public partial class SquadCharacterController
         }
 
         animator.CrossFadeInFixedTime(stateName, jumpAnimationCrossFadeDuration, jumpAnimationLayer, 0f);
+    }
+
+    private void CrossFadeToGroundedRecoveryStateIfNeeded()
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(groundedRecoveryStateName))
+        {
+            return;
+        }
+
+        int shortStateHash = Animator.StringToHash(groundedRecoveryStateName);
+        string layerName = animator.GetLayerName(jumpAnimationLayer);
+        int fullPathStateHash = string.IsNullOrWhiteSpace(layerName)
+            ? shortStateHash
+            : Animator.StringToHash(layerName + "." + groundedRecoveryStateName);
+        if (!animator.HasState(jumpAnimationLayer, shortStateHash) &&
+            !animator.HasState(jumpAnimationLayer, fullPathStateHash))
+        {
+            return;
+        }
+
+        if (!TryGetJumpAnimationStateInfo(takeoffStateName, out _) &&
+            !TryGetJumpAnimationStateInfo(airborneStateName, out _) &&
+            !TryGetJumpAnimationStateInfo(idleLandingStateName, out _) &&
+            !TryGetJumpAnimationStateInfo(rollStateName, out _))
+        {
+            return;
+        }
+
+        animator.CrossFadeInFixedTime(groundedRecoveryStateName, jumpAnimationCrossFadeDuration, jumpAnimationLayer, 0f);
     }
 
     private void SetAnimatorTriggerIfValid(string parameterName)

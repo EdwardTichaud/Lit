@@ -94,6 +94,19 @@ public class KnowledgeManager : MonoBehaviour
         return manager;
     }
 
+    public void PrepareForRuntimeReset(string reason)
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        if (gameObject.activeSelf)
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
     public bool HasKnowledge(KnowledgeSO knowledge)
     {
         if (knowledge == null)

@@ -10,6 +10,7 @@ public class WorldSaveAdapter : MonoBehaviour
     [SerializeField] private NetworkObjectRegistry registry;
     [SerializeField] private string fileName = "WorldSnapshot.bin";
     [SerializeField] private bool useActiveSaveSession = true;
+    [SerializeField] private bool allowGlobalFallbackWithoutActiveSave;
     [SerializeField] private bool validateRestoredRuntimeIdentity = true;
 
     private readonly SnapshotSerializer snapshotSerializer = new SnapshotSerializer();
@@ -39,6 +40,20 @@ public class WorldSaveAdapter : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+    }
+
+    public void ResetSessionState(string reason = null)
+    {
+        IsHostWorldRestoreInProgress = false;
+        HasRestoredWorldSnapshotThisSession = false;
+        LastRestoreSucceeded = false;
+        LastRestoreIdentityValidated = false;
+        LastRestoreIdentityIssues = 0;
+        LastRestoreSequence = 0;
+        LastRestoreReason = string.Empty;
+        LastRestoreSnapshotPath = string.Empty;
+        LastLoadedSnapshot = null;
+        lastAppliedSnapshotPath = string.Empty;
     }
 
     public bool HasSavedWorldSnapshot()
@@ -435,6 +450,11 @@ public class WorldSaveAdapter : MonoBehaviour
         if (useActiveSaveSession && SaveSessionManager.Instance != null && SaveSessionManager.Instance.HasActiveSave)
         {
             return SaveSessionManager.Instance.GetActiveSaveFilePath(fileName);
+        }
+
+        if (!allowGlobalFallbackWithoutActiveSave)
+        {
+            return null;
         }
 
         return Path.Combine(Application.persistentDataPath, fileName);

@@ -33,6 +33,15 @@ public class NetworkObjectRegistry : MonoBehaviour
         }
     }
 
+    public void ResetRuntimeState(string reason = null)
+    {
+        objectsById.Clear();
+        sceneObjectsById.Clear();
+        runtimeObjectsById.Clear();
+        loggedCollisions.Clear();
+        loggedMissingIdInstances.Clear();
+    }
+
     public void Register(PersistentNetworkObject persistentObject)
     {
         if (persistentObject == null)

@@ -4420,6 +4420,8 @@ public class MainMenuController : MonoBehaviour
             SaveSessionManager.Instance.SetCurrentSessionType(SaveSessionType.Multiplayer);
         }
 
+        GameplayRuntimeReset.PrepareForGameplayStart("main_menu_join_flow");
+
         bool started = launcher.StartClientWithSessionEndpoint(endpoint);
         if (!started)
         {
@@ -4450,6 +4452,8 @@ public class MainMenuController : MonoBehaviour
         {
             SaveSessionManager.Instance.SetCurrentSessionType(currentSessionType);
         }
+
+        GameplayRuntimeReset.PrepareForGameplayStart("main_menu_start_game");
 
         StartOfflineFlow();
     }

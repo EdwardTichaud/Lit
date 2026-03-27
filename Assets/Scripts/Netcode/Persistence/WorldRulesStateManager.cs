@@ -29,6 +29,12 @@ public class WorldRulesStateManager : MonoBehaviour
         Unsubscribe();
     }
 
+    public void ResetRuntimeState(string reason = null)
+    {
+        variables.Clear();
+        VariablesChanged?.Invoke();
+    }
+
     public void SetInt(string key, int value)
     {
         Upsert(new WorldVariableSnapshot

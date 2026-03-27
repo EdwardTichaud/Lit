@@ -81,6 +81,7 @@ public class SaveSessionManager : MonoBehaviour
         if (string.Equals(scene.name, menuSceneName, StringComparison.OrdinalIgnoreCase))
         {
             StopPlaytimeTracking();
+            GameplayRuntimeReset.ResetForMenuScene($"menu_scene_loaded:{scene.name}");
         }
         else if (HasActiveSave)
         {

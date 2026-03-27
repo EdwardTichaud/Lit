@@ -13,6 +13,14 @@ public partial class SquadCharacterController : MonoBehaviour
         Unequip
     }
 
+    private enum StepAssistLocomotionState
+    {
+        Ground = 0,
+        StairTraversal = 1,
+        GroundTransition = 2,
+        Airborne = 3,
+    }
+
     private const string TorchAnimationLayerName = "Upper Body Torch";
     private const float TorchAnimationStateFallbackDelay = 0.2f;
     private const float TorchAnimationVisualDelay = 0.5f;
@@ -266,6 +274,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private float nextStepDebugTime;
     private float stepVerticalSmoothVelocity;
     private float stepAssistFollowUntilTime;
+    private StepAssistLocomotionState stepAssistLocomotionState;
+    private string stepAssistStateReason = string.Empty;
     private float footIkWeightCurrent;
     private string lastAnimationDriverMode = string.Empty;
     private string lastAnimationMovementMode = string.Empty;
@@ -1695,7 +1705,7 @@ public partial class SquadCharacterController : MonoBehaviour
             rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, newVertical, newHorizontal.z);
             currentHorizontalVelocity = newHorizontal;
 
-            if (hasInput)
+            if (ShouldResolveSurfaceFollow(newHorizontal))
             {
                 TryStepAssistRigidbody(newHorizontal, deltaTime);
             }
@@ -1751,6 +1761,37 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
         }
+    }
+
+    private bool ShouldResolveSurfaceFollow(Vector3 horizontalVelocity)
+    {
+        return horizontalVelocity.sqrMagnitude > 0.0001f ||
+               IsStepAssistFollowActive() ||
+               stepAssistLocomotionState == StepAssistLocomotionState.StairTraversal ||
+               stepAssistLocomotionState == StepAssistLocomotionState.GroundTransition;
+    }
+
+    private bool IsSurfaceFollowOwningLocomotionState()
+    {
+        if (!enableStepAssist || rigidbodyTarget == null)
+        {
+            return false;
+        }
+
+        if (committedJumpPhase != CommittedJumpPhase.Grounded)
+        {
+            return false;
+        }
+
+        if (!isGrounded &&
+            !IsStepAssistFollowActive() &&
+            stepAssistLocomotionState != StepAssistLocomotionState.StairTraversal &&
+            stepAssistLocomotionState != StepAssistLocomotionState.GroundTransition)
+        {
+            return false;
+        }
+
+        return ShouldResolveSurfaceFollow(GetCurrentHorizontalVelocity());
     }
 
     private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
@@ -1965,14 +2006,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Vector3 moveDir = new Vector3(horizontalVelocity.x, 0f, horizontalVelocity.z);
         float speed = moveDir.magnitude;
-        if (speed < 0.0001f)
+        bool hasHorizontalMotion = speed >= 0.0001f;
+        if (hasHorizontalMotion)
         {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: pas de mouvement horizontal.");
-            return;
+            moveDir /= speed;
         }
-
-        moveDir /= speed;
 
         bool followGraceActive = IsStepAssistFollowActive();
         float supportProbeDistance = Mathf.Max(0.02f, stepGroundCheckDistance);
@@ -1983,8 +2021,16 @@ public partial class SquadCharacterController : MonoBehaviour
             out StepGroundSample currentSupport,
             out _);
 
+        SurfaceTraversalResult traversal = hasHorizontalMotion
+            ? EvaluateForwardTraversal(moveDir)
+            : default;
+        StepGroundSample resolvedCurrentGround = hasCurrentSupport
+            ? currentSupport
+            : traversal.currentGround;
+        bool hasResolvedCurrentGround = hasCurrentSupport || traversal.hasCurrentGround;
+
         if (requireGroundForStep &&
-            !hasCurrentSupport &&
+            !hasResolvedCurrentGround &&
             !followGraceActive)
         {
             ResetStepAssistSmoothing();
@@ -1992,20 +2038,42 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        SurfaceTraversalResult traversal = EvaluateForwardTraversal(moveDir);
+        bool currentOnStairs = hasResolvedCurrentGround && IsStepSurfaceCollider(resolvedCurrentGround.collider);
+        bool traversalCurrentOnStairs = traversal.hasCurrentGround && IsStepSurfaceCollider(traversal.currentGround.collider);
+        bool traversalTargetOnStairs = traversal.hasTargetGround && IsStepSurfaceCollider(traversal.targetGround.collider);
+        bool allowWalkableTransitionTarget = followGraceActive ||
+                                             currentOnStairs ||
+                                             traversalCurrentOnStairs ||
+                                             traversalTargetOnStairs;
 
         Vector3 up = probeContext.up;
         float currentFootHeight = Vector3.Dot(probeContext.footPoint, up);
-        bool usingTraversalTarget = traversal.type == SurfaceTraversalType.StepUp ||
-                                    traversal.type == SurfaceTraversalType.StepDown;
+        bool usingTraversalTarget = hasHorizontalMotion &&
+                                    traversal.hasTargetGround &&
+                                    (traversal.type == SurfaceTraversalType.StepUp ||
+                                     traversal.type == SurfaceTraversalType.StepDown ||
+                                     (allowWalkableTransitionTarget && traversal.type == SurfaceTraversalType.Walkable));
         bool usingFollowTarget = false;
+        bool usingCurrentSupportAnchor = false;
         StepGroundSample targetGround = default;
 
-        if (usingTraversalTarget && traversal.hasTargetGround)
+        if (usingTraversalTarget)
         {
             targetGround = traversal.targetGround;
         }
-        else if (TryGetContinuedStepSupport(probeContext, moveDir, hasCurrentSupport, currentSupport, out StepGroundSample continuedSupport))
+        else if (hasResolvedCurrentGround)
+        {
+            targetGround = resolvedCurrentGround;
+            usingCurrentSupportAnchor = true;
+        }
+        else if (hasHorizontalMotion &&
+                 TryGetContinuedStepSupport(
+                     probeContext,
+                     moveDir,
+                     hasCurrentSupport,
+                     currentSupport,
+                     allowWalkableTransitionTarget,
+                     out StepGroundSample continuedSupport))
         {
             targetGround = continuedSupport;
             usingFollowTarget = true;
@@ -2013,25 +2081,46 @@ public partial class SquadCharacterController : MonoBehaviour
         else
         {
             ResetStepAssistSmoothing();
+            SetStepAssistLocomotionState(
+                hasResolvedCurrentGround ? StepAssistLocomotionState.Ground : StepAssistLocomotionState.Airborne,
+                hasResolvedCurrentGround ? "step transition complete" : "step target lost");
             LogStepDebug($"StepAssist: aucun step valide (type {traversal.type}).");
             return;
         }
 
-        bool currentOnStairs = hasCurrentSupport && IsStepSurfaceCollider(currentSupport.collider);
-        bool traversalCurrentOnStairs = traversal.hasCurrentGround && IsStepSurfaceCollider(traversal.currentGround.collider);
         bool targetOnStairs = IsStepSurfaceCollider(targetGround.collider);
         float deadZone = (currentOnStairs || traversalCurrentOnStairs || targetOnStairs || followGraceActive)
             ? StepAssistSurfaceDeadZone
             : Mathf.Max(0.001f, stepMinHeight);
 
         float targetFootHeight = Vector3.Dot(targetGround.point, up);
-        float targetHeightDelta = targetFootHeight - currentFootHeight;
+        float targetHeightDelta = usingCurrentSupportAnchor
+            ? 0f
+            : targetFootHeight - currentFootHeight;
         if (Mathf.Abs(targetHeightDelta) <= deadZone)
         {
             stepVerticalSmoothVelocity = 0f;
-            if (currentOnStairs || targetOnStairs)
+            if (currentOnStairs || traversalCurrentOnStairs || targetOnStairs)
             {
                 ExtendStepAssistFollowGrace();
+                ApplySurfaceAttachmentState(
+                    StepAssistLocomotionState.StairTraversal,
+                    "stair support stable",
+                    0f);
+            }
+            else if (followGraceActive)
+            {
+                ApplySurfaceAttachmentState(
+                    StepAssistLocomotionState.GroundTransition,
+                    "handoff to flat ground",
+                    0f);
+            }
+            else
+            {
+                ApplySurfaceAttachmentState(
+                    StepAssistLocomotionState.Ground,
+                    "flat ground stable",
+                    -groundedStickVelocity);
             }
 
             LogStepDebug("StepAssist: correction verticale trop faible.");
@@ -2072,8 +2161,10 @@ public partial class SquadCharacterController : MonoBehaviour
 
             ApplyStepOffset(up, moveDir, stepAmount, true);
             ExtendStepAssistFollowGrace();
-            isGrounded = true;
-            lastGroundedTime = Time.time;
+            ApplySurfaceAttachmentState(
+                StepAssistLocomotionState.StairTraversal,
+                "step up",
+                0f);
             LogStepDebug(
                 $"StepAssist: suivi escalier up ({stepAmount:F3}m, cible {targetHeightDelta:F3}m, source {(usingFollowTarget ? "follow" : traversal.type.ToString())}).");
             return;
@@ -2094,8 +2185,10 @@ public partial class SquadCharacterController : MonoBehaviour
 
         ApplyStepOffset(up, moveDir, appliedDrop, false);
         ExtendStepAssistFollowGrace();
-        isGrounded = true;
-        lastGroundedTime = Time.time;
+        ApplySurfaceAttachmentState(
+            StepAssistLocomotionState.StairTraversal,
+            "step down",
+            0f);
         LogStepDebug(
             $"StepAssist: suivi escalier down ({appliedDrop:F3}m, cible {-targetHeightDelta:F3}m, source {(usingFollowTarget ? "follow" : traversal.type.ToString())}).");
     }
@@ -2147,6 +2240,7 @@ public partial class SquadCharacterController : MonoBehaviour
         Vector3 moveDir,
         bool hasCurrentSupport,
         StepGroundSample currentSupport,
+        bool allowWalkableTransition,
         out StepGroundSample support)
     {
         support = default;
@@ -2155,7 +2249,8 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        if (hasCurrentSupport && IsStepSurfaceCollider(currentSupport.collider))
+        if (hasCurrentSupport &&
+            (IsStepSurfaceCollider(currentSupport.collider) || allowWalkableTransition))
         {
             support = currentSupport;
             return true;
@@ -2177,7 +2272,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        return IsStepSurfaceCollider(support.collider);
+        return IsStepSurfaceCollider(support.collider) || allowWalkableTransition;
     }
 
     private bool TrySampleGround(Vector3 origin, Vector3 up, float maxUp, float maxDown, int mask, bool requireStepSurface, out StepGroundSample sample)
@@ -2259,6 +2354,7 @@ public partial class SquadCharacterController : MonoBehaviour
         if (Time.time < groundIgnoreUntilTime)
         {
             isGrounded = false;
+            SetStepAssistLocomotionState(StepAssistLocomotionState.Airborne, "ground ignore");
             return;
         }
 
@@ -2270,12 +2366,17 @@ public partial class SquadCharacterController : MonoBehaviour
                 lastGroundedTime = Time.time;
             }
 
+            SetStepAssistLocomotionState(
+                isGrounded ? StepAssistLocomotionState.Ground : StepAssistLocomotionState.Airborne,
+                isGrounded ? "character controller grounded" : "character controller airborne");
+
             return;
         }
 
         if (!ShouldUseRigidbody())
         {
             isGrounded = false;
+            SetStepAssistLocomotionState(StepAssistLocomotionState.Airborne, "no active locomotion body");
             return;
         }
 
@@ -2283,6 +2384,15 @@ public partial class SquadCharacterController : MonoBehaviour
         if (isGrounded)
         {
             lastGroundedTime = Time.time;
+        }
+
+        if (!IsSurfaceFollowOwningLocomotionState() &&
+            stepAssistLocomotionState != StepAssistLocomotionState.StairTraversal &&
+            stepAssistLocomotionState != StepAssistLocomotionState.GroundTransition)
+        {
+            SetStepAssistLocomotionState(
+                isGrounded ? StepAssistLocomotionState.Ground : StepAssistLocomotionState.Airborne,
+                isGrounded ? "rigidbody grounded" : "rigidbody airborne");
         }
     }
 
@@ -2334,10 +2444,20 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         rigidbodyTarget.MovePosition(targetPosition);
+    }
 
-        Vector3 velocity = rigidbodyTarget.linearVelocity;
-        velocity.y = 0f;
-        rigidbodyTarget.linearVelocity = velocity;
+    private void ApplySurfaceAttachmentState(StepAssistLocomotionState newState, string reason, float verticalVelocity)
+    {
+        if (rigidbodyTarget != null)
+        {
+            Vector3 velocity = rigidbodyTarget.linearVelocity;
+            velocity.y = verticalVelocity;
+            rigidbodyTarget.linearVelocity = velocity;
+        }
+
+        isGrounded = true;
+        lastGroundedTime = Time.time;
+        SetStepAssistLocomotionState(newState, reason);
     }
 
     private void ResetStepAssistSmoothing()
@@ -2361,6 +2481,29 @@ public partial class SquadCharacterController : MonoBehaviour
 
         nextStepDebugTime = now + Mathf.Max(0.05f, stepDebugCooldown);
         Debug.Log($"{name} | {message}", this);
+    }
+
+    private void SetStepAssistLocomotionState(StepAssistLocomotionState newState, string reason)
+    {
+        reason ??= string.Empty;
+        if (stepAssistLocomotionState == newState &&
+            string.Equals(stepAssistStateReason, reason, System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        stepAssistLocomotionState = newState;
+        stepAssistStateReason = reason;
+
+        if (!stepDebugLogs)
+        {
+            return;
+        }
+
+        float verticalSpeed = rigidbodyTarget != null ? rigidbodyTarget.linearVelocity.y : 0f;
+        Debug.Log(
+            $"{name} | StepState={newState} grounded={isGrounded} vertical={verticalSpeed:F3} reason={reason}",
+            this);
     }
 
     private void SetFootIkWeights(float positionWeight, float rotationWeight)

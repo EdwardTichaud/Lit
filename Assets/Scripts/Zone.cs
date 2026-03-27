@@ -46,6 +46,12 @@ public class Zone : MonoBehaviour
     private Collider zoneCollider;
     private float nextMaisonPollTime;
 
+    public static void ResetRuntimeState()
+    {
+        noConsumeCounts.Clear();
+        maisonCounts.Clear();
+    }
+
     private void Awake()
     {
         zoneCollider = GetComponent<Collider>();

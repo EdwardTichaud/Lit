@@ -3356,6 +3356,9 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         controller.Stop();
+        Physics.SyncTransforms();
+        RemoveTeleportedCharacterFromRange(characterRoot != null ? characterRoot.transform : null);
+        UpdateCurrentCharacter();
         return true;
     }
 
@@ -3506,6 +3509,39 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         Vector3 closest = col.ClosestPoint(characterRoot.position);
         float distanceSqr = (closest - characterRoot.position).sqrMagnitude;
         return distanceSqr <= 0.25f;
+    }
+
+    private void RemoveTeleportedCharacterFromRange(Transform characterRoot)
+    {
+        if (characterRoot == null)
+        {
+            return;
+        }
+
+        for (int i = charactersInRange.Count - 1; i >= 0; i--)
+        {
+            GameObject trackedCharacter = charactersInRange[i];
+            if (!IsSameOrRelatedTransform(trackedCharacter != null ? trackedCharacter.transform : null, characterRoot))
+            {
+                continue;
+            }
+
+            charactersInRange.RemoveAt(i);
+            if (trackedCharacter != null)
+            {
+                characterColliderCounts.Remove(trackedCharacter);
+            }
+        }
+    }
+
+    private static bool IsSameOrRelatedTransform(Transform first, Transform second)
+    {
+        if (first == null || second == null)
+        {
+            return false;
+        }
+
+        return first == second || first.IsChildOf(second) || second.IsChildOf(first);
     }
 
     [ServerRpc(RequireOwnership = false)]

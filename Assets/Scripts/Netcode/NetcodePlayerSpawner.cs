@@ -58,6 +58,12 @@ public class NetcodePlayerSpawner : MonoBehaviour
         NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
     }
 
+    public void ResetRuntimeState(string reason = null)
+    {
+        assignments.Clear();
+        usedRosterIndices.Clear();
+    }
+
     private void OnServerStarted()
     {
         if (!NetworkManager.Singleton.IsServer)
