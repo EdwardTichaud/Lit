@@ -854,7 +854,7 @@ public partial class SquadCharacterController
 
     private bool HasCommittedLandingContact()
     {
-        if (TryGetStepCapsule(out _, out float radius, out _))
+        if (TryGetLocomotionCapsule(out _, out float radius, out _))
         {
             float probeDistance = Mathf.Max(0.005f, landingContactProbeDistance);
             float probeRadius = Mathf.Max(0.02f, radius * landingContactRadiusScale * 0.25f);

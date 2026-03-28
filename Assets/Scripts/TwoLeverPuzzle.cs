@@ -1,7 +1,6 @@
 using UnityEngine;
-using UnityEngine.Playables;
 
-// Puzzle simple: deux leviers doivent etre actifs pour declencher la timeline.
+// Puzzle simple: deux leviers doivent etre actifs pour declencher un pivot.
 [DisallowMultipleComponent]
 public class TwoLeverPuzzle : MonoBehaviour, ILeverTarget
 {
@@ -13,9 +12,9 @@ public class TwoLeverPuzzle : MonoBehaviour, ILeverTarget
     [SerializeField, Tooltip("Ecoute directement Lever.StateChanged. Desactive si tu relies ce puzzle via Lever.targetBindings.")]
     private bool subscribeToLeverEvents = true;
 
-    [Header("Timeline")]
-    [Tooltip("Timeline a jouer quand les deux leviers sont actifs.")]
-    public PlayableDirector playableDirector;
+    [Header("Target")]
+    [Tooltip("Script Pivot declenche quand les deux leviers sont actifs.")]
+    public Pivot pivotTarget;
 
     [Header("Audio")]
     [Tooltip("SFX de reussite.")]
@@ -44,6 +43,11 @@ public class TwoLeverPuzzle : MonoBehaviour, ILeverTarget
         if (leverA != null && leverA == leverB)
         {
             Debug.LogWarning($"[LeverPuzzle] event='invalid_setup' puzzle='{name}' reason='duplicate_lever_reference'", this);
+        }
+
+        if (pivotTarget == null)
+        {
+            pivotTarget = GetComponent<Pivot>();
         }
     }
 
@@ -199,17 +203,22 @@ public class TwoLeverPuzzle : MonoBehaviour, ILeverTarget
             return;
         }
 
-        triggered = true;
-        PlaySfx(successSfx);
-
-        if (playableDirector == null)
+        if (pivotTarget == null)
         {
-            Debug.LogWarning($"[LeverPuzzle] event='director_missing' puzzle='{name}' reason='{reason}'", this);
+            pivotTarget = GetComponent<Pivot>();
+        }
+
+        if (pivotTarget == null)
+        {
+            Debug.LogWarning($"[LeverPuzzle] event='pivot_missing' puzzle='{name}' reason='{reason}'", this);
             return;
         }
 
-        playableDirector.Play();
-        LogDebug("triggered", $"reason='{reason}' director='{playableDirector.name}'");
+        triggered = true;
+        PlaySfx(successSfx);
+
+        pivotTarget.TriggerPivot();
+        LogDebug("triggered", $"reason='{reason}' pivot='{pivotTarget.name}'");
     }
 
     private void PlaySfx(AudioClipSO clip)

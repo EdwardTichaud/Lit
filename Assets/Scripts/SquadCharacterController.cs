@@ -13,20 +13,9 @@ public partial class SquadCharacterController : MonoBehaviour
         Unequip
     }
 
-    private enum StepAssistLocomotionState
-    {
-        Ground = 0,
-        StairTraversal = 1,
-        GroundTransition = 2,
-        Airborne = 3,
-    }
-
     private const string TorchAnimationLayerName = "Upper Body Torch";
     private const float TorchAnimationStateFallbackDelay = 0.2f;
     private const float TorchAnimationVisualDelay = 0.5f;
-    private const int StepAssistLookAheadSampleCount = 3;
-    private const float StepAssistSurfaceDeadZone = 0.01f;
-    private const float StepAssistFollowGraceTime = 0.12f;
     private static readonly int TorchEquipStateHash = Animator.StringToHash("Torch_Equip");
     private static readonly int TorchLocomotionStateHash = Animator.StringToHash("Torch_Locomotion");
     private static readonly int TorchOffStateHash = Animator.StringToHash("Torch_Off");
@@ -132,50 +121,6 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Utilise la matrice de collision du layer pour la detection du sol.")]
     private bool voidUseCollisionMatrixMask = true;
 
-    [Header("Step Assist")]
-    [SerializeField, Tooltip("Permet de monter/descendre les marches et reliefs avec un Rigidbody.")]
-    private bool enableStepAssist = true;
-    [SerializeField, Tooltip("Hauteur max des marches (m).")]
-    private float stepHeight = 1.15f;
-    [SerializeField, Tooltip("Distance de detection des marches (m).")]
-    private float stepCheckDistance = 0.95f;
-    [SerializeField, Tooltip("Vitesse verticale appliquee pour monter une marche.")]
-    private float stepUpSpeed = 9f;
-    [SerializeField, Tooltip("Hauteur max pour descendre une marche (0 = utilise stepHeight).")]
-    private float stepDownHeight = 0f;
-    [SerializeField, Tooltip("Vitesse verticale appliquee pour descendre une marche (0 = utilise stepUpSpeed).")]
-    private float stepDownSpeed = 0f;
-    [SerializeField, Tooltip("Temps de lissage vertical en montee sur les escaliers (s).")]
-    private float stepUpSmoothTime = 0.08f;
-    [SerializeField, Tooltip("Temps de lissage vertical en descente sur les escaliers (s).")]
-    private float stepDownSmoothTime = 0.1f;
-    [SerializeField, Tooltip("Marge ajoutee a la hauteur max pour etre plus permissif (m).")]
-    private float stepHeightTolerance = 0.1f;
-    [SerializeField, Tooltip("Seuil minimal de relief pour declencher un step (m).")]
-    private float stepMinHeight = 0.05f;
-    [SerializeField, Tooltip("Vitesse verticale max autorisee pour declencher un step (0 = ignore).")]
-    private float stepMaxUpVelocity = 1.5f;
-    [SerializeField, Tooltip("Necessite d'etre au sol pour declencher un step.")]
-    private bool requireGroundForStep = true;
-    [SerializeField, Tooltip("Rayon du test haut (0 = meme que bas).")]
-    private float stepUpperRadius = 0.0f;
-    [SerializeField, Tooltip("Hauteur ajoutee au test haut (m).")]
-    private float stepUpperHeightOffset = 0.02f;
-    [SerializeField, Tooltip("Petit boost avant applique lors d'un step (m).")]
-    private float stepForwardBoost = 0f;
-    [SerializeField, Tooltip("Marge retiree au rayon pour les tests.")]
-    private float stepRadiusPadding = 0.02f;
-    [SerializeField, Tooltip("Distance de verification du sol (m).")]
-    private float stepGroundCheckDistance = 0.15f;
-    [SerializeField, Tooltip("LayerMask utilise pour les escaliers.")]
-    private LayerMask stepLayerMask = 1 << 7;
-    [SerializeField, Tooltip("Combine stepLayerMask avec la matrice de collision du layer.")]
-    private bool stepUseCollisionMatrixMask = false;
-    [SerializeField, Tooltip("Active les logs de debug pour le step assist.")]
-    private bool stepDebugLogs = false;
-    [SerializeField, Tooltip("Cooldown des logs (secondes).")]
-    private float stepDebugCooldown = 0.5f;
-
     [Header("Foot IK")]
     [SerializeField, Tooltip("Active l'IK des pieds pour stabiliser l'ancrage au sol.")]
     private bool enableFootIk = true;
@@ -263,19 +208,14 @@ public partial class SquadCharacterController : MonoBehaviour
     private float nextCollisionRefreshTime;
     private bool collidersDirty = true;
     private readonly List<Collider> cachedColliders = new List<Collider>();
-    private CapsuleCollider stepCapsule;
+    private CapsuleCollider locomotionCapsule;
     [Header("Audio")]
     [SerializeField] private AudioListener audioListener;
     [SerializeField] private bool searchAudioListenerInChildren = true;
     private bool audioListenerActive;
     private NetworkObject cachedNetworkObject;
-    private readonly RaycastHit[] stepCastHits = new RaycastHit[8];
-    private readonly Collider[] stepOverlapHits = new Collider[8];
-    private float nextStepDebugTime;
-    private float stepVerticalSmoothVelocity;
-    private float stepAssistFollowUntilTime;
-    private StepAssistLocomotionState stepAssistLocomotionState;
-    private string stepAssistStateReason = string.Empty;
+    private readonly RaycastHit[] movementCastHits = new RaycastHit[8];
+    private readonly Collider[] movementOverlapHits = new Collider[8];
     private float footIkWeightCurrent;
     private string lastAnimationDriverMode = string.Empty;
     private string lastAnimationMovementMode = string.Empty;
@@ -304,7 +244,7 @@ public partial class SquadCharacterController : MonoBehaviour
         animator = GetComponent<Animator>();
         characterController = GetComponent<CharacterController>();
         rigidbodyTarget = GetComponent<Rigidbody>();
-        stepCapsule = GetComponent<CapsuleCollider>();
+        locomotionCapsule = GetComponent<CapsuleCollider>();
         motionRoot = transform;
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
@@ -343,9 +283,9 @@ public partial class SquadCharacterController : MonoBehaviour
             rigidbodyTarget = GetComponent<Rigidbody>();
         }
 
-        if (stepCapsule == null)
+        if (locomotionCapsule == null)
         {
-            stepCapsule = GetComponent<CapsuleCollider>();
+            locomotionCapsule = GetComponent<CapsuleCollider>();
         }
 
         if (motionRoot == null)
@@ -1432,9 +1372,9 @@ public partial class SquadCharacterController : MonoBehaviour
             rigidbodyTarget = GetComponent<Rigidbody>();
         }
 
-        if (stepCapsule == null)
+        if (locomotionCapsule == null)
         {
-            stepCapsule = GetComponent<CapsuleCollider>();
+            locomotionCapsule = GetComponent<CapsuleCollider>();
         }
 
         if (motionRoot == null)
@@ -1448,21 +1388,6 @@ public partial class SquadCharacterController : MonoBehaviour
         walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
         runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
         speedDampTime = Mathf.Max(0f, speedDampTime);
-        stepHeight = Mathf.Max(0f, stepHeight);
-        stepCheckDistance = Mathf.Max(0f, stepCheckDistance);
-        stepUpSpeed = Mathf.Max(0f, stepUpSpeed);
-        stepDownHeight = Mathf.Max(0f, stepDownHeight);
-        stepDownSpeed = Mathf.Max(0f, stepDownSpeed);
-        stepUpSmoothTime = Mathf.Max(0f, stepUpSmoothTime);
-        stepDownSmoothTime = Mathf.Max(0f, stepDownSmoothTime);
-        stepHeightTolerance = Mathf.Max(0f, stepHeightTolerance);
-        stepMinHeight = Mathf.Max(0f, stepMinHeight);
-        stepMaxUpVelocity = Mathf.Max(0f, stepMaxUpVelocity);
-        stepUpperRadius = Mathf.Max(0f, stepUpperRadius);
-        stepUpperHeightOffset = Mathf.Max(0f, stepUpperHeightOffset);
-        stepForwardBoost = Mathf.Max(0f, stepForwardBoost);
-        stepRadiusPadding = Mathf.Max(0f, stepRadiusPadding);
-        stepGroundCheckDistance = Mathf.Max(0f, stepGroundCheckDistance);
         jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
         jumpGroundCheckRadiusScale = Mathf.Clamp(jumpGroundCheckRadiusScale, 0.1f, 1.5f);
         groundedStickVelocity = Mathf.Max(0f, groundedStickVelocity);
@@ -1583,8 +1508,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return true;
         }
 
-        SurfaceTraversalResult traversal = EvaluateForwardTraversal(direction);
-        return traversal.type != SurfaceTraversalType.Ledge;
+        return HasGroundSupportAhead(direction);
     }
 
     private int GetVoidGroundMask()
@@ -1681,13 +1605,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (TryApplyCommittedJumpMovement(deltaTime))
         {
-            ResetStepAssistSmoothing();
             return;
         }
 
         if (inputLockTimer > 0f)
         {
-            ResetStepAssistSmoothing();
             return;
         }
 
@@ -1705,15 +1627,6 @@ public partial class SquadCharacterController : MonoBehaviour
             rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, newVertical, newHorizontal.z);
             currentHorizontalVelocity = newHorizontal;
 
-            if (ShouldResolveSurfaceFollow(newHorizontal))
-            {
-                TryStepAssistRigidbody(newHorizontal, deltaTime);
-            }
-            else
-            {
-                ResetStepAssistSmoothing();
-            }
-
             if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(desiredVelocity);
@@ -1722,8 +1635,6 @@ public partial class SquadCharacterController : MonoBehaviour
             }
             return;
         }
-
-        ResetStepAssistSmoothing();
 
         Vector3 newKinematicHorizontal = hasInput
             ? Vector3.MoveTowards(currentHorizontalVelocity, new Vector3(desiredVelocity.x, 0f, desiredVelocity.z), acceleration * deltaTime)
@@ -1761,37 +1672,6 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
         }
-    }
-
-    private bool ShouldResolveSurfaceFollow(Vector3 horizontalVelocity)
-    {
-        return horizontalVelocity.sqrMagnitude > 0.0001f ||
-               IsStepAssistFollowActive() ||
-               stepAssistLocomotionState == StepAssistLocomotionState.StairTraversal ||
-               stepAssistLocomotionState == StepAssistLocomotionState.GroundTransition;
-    }
-
-    private bool IsSurfaceFollowOwningLocomotionState()
-    {
-        if (!enableStepAssist || rigidbodyTarget == null)
-        {
-            return false;
-        }
-
-        if (committedJumpPhase != CommittedJumpPhase.Grounded)
-        {
-            return false;
-        }
-
-        if (!isGrounded &&
-            !IsStepAssistFollowActive() &&
-            stepAssistLocomotionState != StepAssistLocomotionState.StairTraversal &&
-            stepAssistLocomotionState != StepAssistLocomotionState.GroundTransition)
-        {
-            return false;
-        }
-
-        return ShouldResolveSurfaceFollow(GetCurrentHorizontalVelocity());
     }
 
     private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
@@ -1871,7 +1751,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool TryGetMovementCapsule(out Vector3 point1, out Vector3 point2, out float radius)
     {
         Vector3 up = transform.up;
-        if (TryGetStepCapsule(out Vector3 center, out float capsuleRadius, out float height))
+        if (TryGetLocomotionCapsule(out Vector3 center, out float capsuleRadius, out float height))
         {
             float segmentHalf = Mathf.Max(0f, (height * 0.5f) - capsuleRadius);
             point1 = center + up * segmentHalf;
@@ -1899,7 +1779,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private int GetMovementBlockingMask()
     {
-        return GetStepBlockingMask();
+        return GetCollisionMatrixMask();
     }
 
     private bool TryGetHorizontalBlockingHit(
@@ -1922,7 +1802,7 @@ public partial class SquadCharacterController : MonoBehaviour
             point2,
             radius,
             direction,
-            stepCastHits,
+            movementCastHits,
             distance,
             mask,
             QueryTriggerInteraction.Ignore);
@@ -1932,18 +1812,18 @@ public partial class SquadCharacterController : MonoBehaviour
 
         for (int i = 0; i < hitCount; i++)
         {
-            Collider col = stepCastHits[i].collider;
+            Collider col = movementCastHits[i].collider;
             if (col == null || IsSelfCollider(col))
             {
                 continue;
             }
 
-            if (Vector3.Dot(stepCastHits[i].normal, up) >= movementCollisionWalkableNormalDot)
+            if (Vector3.Dot(movementCastHits[i].normal, up) >= movementCollisionWalkableNormalDot)
             {
                 continue;
             }
 
-            float hitDistance = stepCastHits[i].distance;
+            float hitDistance = movementCastHits[i].distance;
             if (hitDistance < bestDistance)
             {
                 bestDistance = hitDistance;
@@ -1956,397 +1836,15 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        hit = stepCastHits[bestIndex];
+        hit = movementCastHits[bestIndex];
         return true;
     }
 
-    private struct StepGroundSample
+    private struct GroundProbeSample
     {
         public Vector3 point;
         public Vector3 normal;
         public Collider collider;
-    }
-
-    private void TryStepAssistRigidbody(Vector3 horizontalVelocity, float deltaTime)
-    {
-        if (!enableStepAssist || rigidbodyTarget == null)
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: desactive ou Rigidbody manquant.");
-            return;
-        }
-
-        if (stepHeight <= 0f || stepCheckDistance <= 0f)
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: parametres invalides (stepHeight/stepCheckDistance).");
-            return;
-        }
-
-        if (stepUpSpeed <= 0f)
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: stepUpSpeed <= 0.");
-            return;
-        }
-
-        if (stepMaxUpVelocity > 0f && rigidbodyTarget.linearVelocity.y > stepMaxUpVelocity)
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug($"StepAssist: vitesse verticale > {stepMaxUpVelocity:F2} (en saut/chute).");
-            return;
-        }
-
-        if (!TryBuildSurfaceProbeContext(out SurfaceProbeContext probeContext))
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: CapsuleCollider manquant ou direction != Y.");
-            return;
-        }
-
-        Vector3 moveDir = new Vector3(horizontalVelocity.x, 0f, horizontalVelocity.z);
-        float speed = moveDir.magnitude;
-        bool hasHorizontalMotion = speed >= 0.0001f;
-        if (hasHorizontalMotion)
-        {
-            moveDir /= speed;
-        }
-
-        bool followGraceActive = IsStepAssistFollowActive();
-        float supportProbeDistance = Mathf.Max(0.02f, stepGroundCheckDistance);
-        float supportProbeRadius = Mathf.Max(0.02f, probeContext.radius * 0.9f);
-        bool hasCurrentSupport = TryProbeGroundedSupport(
-            supportProbeDistance,
-            supportProbeRadius,
-            out StepGroundSample currentSupport,
-            out _);
-
-        SurfaceTraversalResult traversal = hasHorizontalMotion
-            ? EvaluateForwardTraversal(moveDir)
-            : default;
-        StepGroundSample resolvedCurrentGround = hasCurrentSupport
-            ? currentSupport
-            : traversal.currentGround;
-        bool hasResolvedCurrentGround = hasCurrentSupport || traversal.hasCurrentGround;
-
-        if (requireGroundForStep &&
-            !hasResolvedCurrentGround &&
-            !followGraceActive)
-        {
-            ResetStepAssistSmoothing();
-            LogStepDebug("StepAssist: pas au sol (ground check).");
-            return;
-        }
-
-        bool currentOnStairs = hasResolvedCurrentGround && IsStepSurfaceCollider(resolvedCurrentGround.collider);
-        bool traversalCurrentOnStairs = traversal.hasCurrentGround && IsStepSurfaceCollider(traversal.currentGround.collider);
-        bool traversalTargetOnStairs = traversal.hasTargetGround && IsStepSurfaceCollider(traversal.targetGround.collider);
-        bool allowWalkableTransitionTarget = followGraceActive ||
-                                             currentOnStairs ||
-                                             traversalCurrentOnStairs ||
-                                             traversalTargetOnStairs;
-
-        Vector3 up = probeContext.up;
-        float currentFootHeight = Vector3.Dot(probeContext.footPoint, up);
-        bool usingTraversalTarget = hasHorizontalMotion &&
-                                    traversal.hasTargetGround &&
-                                    (traversal.type == SurfaceTraversalType.StepUp ||
-                                     traversal.type == SurfaceTraversalType.StepDown ||
-                                     (allowWalkableTransitionTarget && traversal.type == SurfaceTraversalType.Walkable));
-        bool usingFollowTarget = false;
-        bool usingCurrentSupportAnchor = false;
-        StepGroundSample targetGround = default;
-
-        if (usingTraversalTarget)
-        {
-            targetGround = traversal.targetGround;
-        }
-        else if (hasResolvedCurrentGround)
-        {
-            targetGround = resolvedCurrentGround;
-            usingCurrentSupportAnchor = true;
-        }
-        else if (hasHorizontalMotion &&
-                 TryGetContinuedStepSupport(
-                     probeContext,
-                     moveDir,
-                     hasCurrentSupport,
-                     currentSupport,
-                     allowWalkableTransitionTarget,
-                     out StepGroundSample continuedSupport))
-        {
-            targetGround = continuedSupport;
-            usingFollowTarget = true;
-        }
-        else
-        {
-            ResetStepAssistSmoothing();
-            SetStepAssistLocomotionState(
-                hasResolvedCurrentGround ? StepAssistLocomotionState.Ground : StepAssistLocomotionState.Airborne,
-                hasResolvedCurrentGround ? "step transition complete" : "step target lost");
-            LogStepDebug($"StepAssist: aucun step valide (type {traversal.type}).");
-            return;
-        }
-
-        bool targetOnStairs = IsStepSurfaceCollider(targetGround.collider);
-        float deadZone = (currentOnStairs || traversalCurrentOnStairs || targetOnStairs || followGraceActive)
-            ? StepAssistSurfaceDeadZone
-            : Mathf.Max(0.001f, stepMinHeight);
-
-        float targetFootHeight = Vector3.Dot(targetGround.point, up);
-        float targetHeightDelta = usingCurrentSupportAnchor
-            ? 0f
-            : targetFootHeight - currentFootHeight;
-        if (Mathf.Abs(targetHeightDelta) <= deadZone)
-        {
-            stepVerticalSmoothVelocity = 0f;
-            if (currentOnStairs || traversalCurrentOnStairs || targetOnStairs)
-            {
-                ExtendStepAssistFollowGrace();
-                ApplySurfaceAttachmentState(
-                    StepAssistLocomotionState.StairTraversal,
-                    "stair support stable",
-                    0f);
-            }
-            else if (followGraceActive)
-            {
-                ApplySurfaceAttachmentState(
-                    StepAssistLocomotionState.GroundTransition,
-                    "handoff to flat ground",
-                    0f);
-            }
-            else
-            {
-                ApplySurfaceAttachmentState(
-                    StepAssistLocomotionState.Ground,
-                    "flat ground stable",
-                    -groundedStickVelocity);
-            }
-
-            LogStepDebug("StepAssist: correction verticale trop faible.");
-            return;
-        }
-
-        int blockingMask = GetStepBlockingMask();
-        bool steppingUp = targetHeightDelta > 0f;
-
-        if (steppingUp)
-        {
-            if (!HasStepClearance(
-                    probeContext.bottomCenter,
-                    probeContext.radius,
-                    probeContext.height,
-                    up,
-                    moveDir,
-                    targetHeightDelta,
-                    Mathf.Max(0.02f, stepCheckDistance),
-                    blockingMask))
-            {
-                ResetStepAssistSmoothing();
-                LogStepDebug("StepAssist: obstacle detecte au-dessus de l'escalier.");
-                return;
-            }
-
-            float stepAmount = ComputeSmoothedStepOffset(
-                currentFootHeight,
-                targetFootHeight,
-                stepUpSmoothTime,
-                stepUpSpeed,
-                deltaTime);
-            if (stepAmount <= 0.0001f)
-            {
-                LogStepDebug("StepAssist: lissage up nul.");
-                return;
-            }
-
-            ApplyStepOffset(up, moveDir, stepAmount, true);
-            ExtendStepAssistFollowGrace();
-            ApplySurfaceAttachmentState(
-                StepAssistLocomotionState.StairTraversal,
-                "step up",
-                0f);
-            LogStepDebug(
-                $"StepAssist: suivi escalier up ({stepAmount:F3}m, cible {targetHeightDelta:F3}m, source {(usingFollowTarget ? "follow" : traversal.type.ToString())}).");
-            return;
-        }
-
-        float downSpeed = stepDownSpeed > 0f ? stepDownSpeed : stepUpSpeed;
-        float appliedDrop = ComputeSmoothedStepOffset(
-            currentFootHeight,
-            targetFootHeight,
-            stepDownSmoothTime,
-            downSpeed,
-            deltaTime);
-        if (appliedDrop <= 0.0001f)
-        {
-            LogStepDebug("StepAssist: lissage down nul.");
-            return;
-        }
-
-        ApplyStepOffset(up, moveDir, appliedDrop, false);
-        ExtendStepAssistFollowGrace();
-        ApplySurfaceAttachmentState(
-            StepAssistLocomotionState.StairTraversal,
-            "step down",
-            0f);
-        LogStepDebug(
-            $"StepAssist: suivi escalier down ({appliedDrop:F3}m, cible {-targetHeightDelta:F3}m, source {(usingFollowTarget ? "follow" : traversal.type.ToString())}).");
-    }
-
-    private float ComputeSmoothedStepOffset(float currentHeight, float targetHeight, float smoothTime, float maxSpeed, float deltaTime)
-    {
-        if (deltaTime <= 0f)
-        {
-            return 0f;
-        }
-
-        float delta = targetHeight - currentHeight;
-        if (Mathf.Abs(delta) <= 0.0001f)
-        {
-            stepVerticalSmoothVelocity = 0f;
-            return 0f;
-        }
-
-        float direction = Mathf.Sign(delta);
-        if (stepVerticalSmoothVelocity != 0f && Mathf.Sign(stepVerticalSmoothVelocity) != direction)
-        {
-            stepVerticalSmoothVelocity = 0f;
-        }
-
-        float clampedSpeed = Mathf.Max(0.01f, maxSpeed);
-        float nextHeight = smoothTime > 0f
-            ? Mathf.SmoothDamp(currentHeight, targetHeight, ref stepVerticalSmoothVelocity, smoothTime, clampedSpeed, deltaTime)
-            : Mathf.MoveTowards(currentHeight, targetHeight, clampedSpeed * deltaTime);
-
-        float applied = direction > 0f
-            ? Mathf.Max(0f, nextHeight - currentHeight)
-            : Mathf.Max(0f, currentHeight - nextHeight);
-
-        return Mathf.Min(applied, Mathf.Abs(delta));
-    }
-
-    private bool IsStepAssistFollowActive()
-    {
-        return Time.time <= stepAssistFollowUntilTime;
-    }
-
-    private void ExtendStepAssistFollowGrace()
-    {
-        stepAssistFollowUntilTime = Time.time + StepAssistFollowGraceTime;
-    }
-
-    private bool TryGetContinuedStepSupport(
-        SurfaceProbeContext probeContext,
-        Vector3 moveDir,
-        bool hasCurrentSupport,
-        StepGroundSample currentSupport,
-        bool allowWalkableTransition,
-        out StepGroundSample support)
-    {
-        support = default;
-        if (!IsStepAssistFollowActive())
-        {
-            return false;
-        }
-
-        if (hasCurrentSupport &&
-            (IsStepSurfaceCollider(currentSupport.collider) || allowWalkableTransition))
-        {
-            support = currentSupport;
-            return true;
-        }
-
-        float sampleDistance = Mathf.Max(0.02f, Mathf.Min(stepCheckDistance, probeContext.radius + (stepCheckDistance * 0.5f)));
-        Vector3 sampleOrigin = probeContext.footPoint + moveDir * sampleDistance;
-        float maxDown = Mathf.Max(stepHeight + stepHeightTolerance, jumpGroundCheckDistance) + stepGroundCheckDistance;
-        float maxUp = Mathf.Max(0.02f, stepGroundCheckDistance);
-        if (!TrySampleGround(
-                sampleOrigin,
-                probeContext.up,
-                maxUp,
-                maxDown,
-                GetSurfaceSupportMask(),
-                requireStepSurface: false,
-                out support))
-        {
-            return false;
-        }
-
-        return IsStepSurfaceCollider(support.collider) || allowWalkableTransition;
-    }
-
-    private bool TrySampleGround(Vector3 origin, Vector3 up, float maxUp, float maxDown, int mask, bool requireStepSurface, out StepGroundSample sample)
-    {
-        sample = default;
-        float upRange = Mathf.Max(0.02f, maxUp);
-        float downRange = Mathf.Max(0.02f, maxDown);
-        float rayStart = upRange + 0.05f;
-        float rayDistance = upRange + downRange + 0.1f;
-        Vector3 rayOrigin = origin + up * rayStart;
-
-        int hitCount = Physics.RaycastNonAlloc(rayOrigin, -up, stepCastHits, rayDistance, mask, QueryTriggerInteraction.Ignore);
-        float bestDistance = float.PositiveInfinity;
-        int bestIndex = -1;
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = stepCastHits[i].collider;
-            if (col == null || IsSelfCollider(col))
-            {
-                continue;
-            }
-
-            if (requireStepSurface && !IsStepSurfaceCollider(col))
-            {
-                continue;
-            }
-
-            float heightOffset = Vector3.Dot(stepCastHits[i].point - origin, up);
-            if (heightOffset > upRange || heightOffset < -downRange)
-            {
-                continue;
-            }
-
-            if (Vector3.Dot(stepCastHits[i].normal, up) < GetWalkableGroundNormalDot())
-            {
-                continue;
-            }
-
-            float d = stepCastHits[i].distance;
-            if (d < bestDistance)
-            {
-                bestDistance = d;
-                bestIndex = i;
-            }
-        }
-
-        if (bestIndex >= 0)
-        {
-            RaycastHit bestHit = stepCastHits[bestIndex];
-            sample.point = bestHit.point;
-            sample.normal = bestHit.normal;
-            sample.collider = bestHit.collider;
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool IsStepSurfaceCollider(Collider collider)
-    {
-        if (collider == null)
-        {
-            return false;
-        }
-
-        int stairMask = GetStepMask();
-        if (stairMask == 0)
-        {
-            return false;
-        }
-
-        int colliderLayerBit = 1 << collider.gameObject.layer;
-        return (stairMask & colliderLayerBit) != 0;
     }
 
     private void UpdateGroundedState()
@@ -2354,7 +1852,6 @@ public partial class SquadCharacterController : MonoBehaviour
         if (Time.time < groundIgnoreUntilTime)
         {
             isGrounded = false;
-            SetStepAssistLocomotionState(StepAssistLocomotionState.Airborne, "ground ignore");
             return;
         }
 
@@ -2365,18 +1862,12 @@ public partial class SquadCharacterController : MonoBehaviour
             {
                 lastGroundedTime = Time.time;
             }
-
-            SetStepAssistLocomotionState(
-                isGrounded ? StepAssistLocomotionState.Ground : StepAssistLocomotionState.Airborne,
-                isGrounded ? "character controller grounded" : "character controller airborne");
-
             return;
         }
 
         if (!ShouldUseRigidbody())
         {
             isGrounded = false;
-            SetStepAssistLocomotionState(StepAssistLocomotionState.Airborne, "no active locomotion body");
             return;
         }
 
@@ -2385,125 +1876,18 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             lastGroundedTime = Time.time;
         }
-
-        if (!IsSurfaceFollowOwningLocomotionState() &&
-            stepAssistLocomotionState != StepAssistLocomotionState.StairTraversal &&
-            stepAssistLocomotionState != StepAssistLocomotionState.GroundTransition)
-        {
-            SetStepAssistLocomotionState(
-                isGrounded ? StepAssistLocomotionState.Ground : StepAssistLocomotionState.Airborne,
-                isGrounded ? "rigidbody grounded" : "rigidbody airborne");
-        }
     }
 
     private bool CheckRigidbodyGrounded()
     {
         float probeDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
         float probeRadius = 0.05f;
-        if (TryBuildSurfaceProbeContext(out SurfaceProbeContext probeContext))
+        if (TryBuildGroundProbeContext(out GroundProbeContext probeContext))
         {
             probeRadius = Mathf.Max(0.05f, probeContext.radius * jumpGroundCheckRadiusScale);
         }
 
         return TryProbeGroundedSupport(probeDistance, probeRadius, out _, out _);
-    }
-
-    private bool HasStepClearance(Vector3 bottomCenter, float radius, float height, Vector3 up, Vector3 moveDir, float stepUp, float castDistance, int mask)
-    {
-        if (mask == 0)
-        {
-            return true;
-        }
-
-        float castRadius = Mathf.Max(0.01f, radius - stepRadiusPadding);
-        float upperRadius = stepUpperRadius > 0f ? stepUpperRadius : castRadius;
-        float capsuleSegment = Mathf.Max(0f, height - (radius * 2f));
-        Vector3 upperBottom = bottomCenter + up * (stepUp + upperRadius + stepUpperHeightOffset);
-        Vector3 upperTop = upperBottom + up * capsuleSegment;
-
-        bool upperHit = CapsuleCastForStep(upperBottom, upperTop, upperRadius, moveDir, castDistance, mask, out _);
-        if (!upperHit && OverlapCapsuleForStep(upperBottom, upperTop, upperRadius, mask))
-        {
-            upperHit = true;
-        }
-
-        return !upperHit;
-    }
-
-    private void ApplyStepOffset(Vector3 up, Vector3 moveDir, float amount, bool stepUp)
-    {
-        if (amount <= 0f || rigidbodyTarget == null)
-        {
-            return;
-        }
-
-        Vector3 targetPosition = rigidbodyTarget.position + (stepUp ? up : -up) * amount;
-        if (stepForwardBoost > 0f)
-        {
-            targetPosition += moveDir * stepForwardBoost;
-        }
-
-        rigidbodyTarget.MovePosition(targetPosition);
-    }
-
-    private void ApplySurfaceAttachmentState(StepAssistLocomotionState newState, string reason, float verticalVelocity)
-    {
-        if (rigidbodyTarget != null)
-        {
-            Vector3 velocity = rigidbodyTarget.linearVelocity;
-            velocity.y = verticalVelocity;
-            rigidbodyTarget.linearVelocity = velocity;
-        }
-
-        isGrounded = true;
-        lastGroundedTime = Time.time;
-        SetStepAssistLocomotionState(newState, reason);
-    }
-
-    private void ResetStepAssistSmoothing()
-    {
-        stepVerticalSmoothVelocity = 0f;
-        stepAssistFollowUntilTime = 0f;
-    }
-
-    private void LogStepDebug(string message)
-    {
-        if (!stepDebugLogs)
-        {
-            return;
-        }
-
-        float now = Time.time;
-        if (now < nextStepDebugTime)
-        {
-            return;
-        }
-
-        nextStepDebugTime = now + Mathf.Max(0.05f, stepDebugCooldown);
-        Debug.Log($"{name} | {message}", this);
-    }
-
-    private void SetStepAssistLocomotionState(StepAssistLocomotionState newState, string reason)
-    {
-        reason ??= string.Empty;
-        if (stepAssistLocomotionState == newState &&
-            string.Equals(stepAssistStateReason, reason, System.StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        stepAssistLocomotionState = newState;
-        stepAssistStateReason = reason;
-
-        if (!stepDebugLogs)
-        {
-            return;
-        }
-
-        float verticalSpeed = rigidbodyTarget != null ? rigidbodyTarget.linearVelocity.y : 0f;
-        Debug.Log(
-            $"{name} | StepState={newState} grounded={isGrounded} vertical={verticalSpeed:F3} reason={reason}",
-            this);
     }
 
     private void SetFootIkWeights(float positionWeight, float rotationWeight)
@@ -2599,13 +1983,13 @@ public partial class SquadCharacterController : MonoBehaviour
         return mask;
     }
 
-    private bool TryGetStepCapsule(out Vector3 center, out float radius, out float height)
+    private bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
     {
-        CapsuleCollider capsule = stepCapsule;
+        CapsuleCollider capsule = locomotionCapsule;
         if (capsule == null)
         {
             capsule = GetComponent<CapsuleCollider>();
-            stepCapsule = capsule;
+            locomotionCapsule = capsule;
         }
 
         if (capsule == null || capsule.direction != 1)
@@ -2623,76 +2007,6 @@ public partial class SquadCharacterController : MonoBehaviour
         height = Mathf.Max(capsule.height * absY, radius * 2f);
         center = transform.TransformPoint(capsule.center);
         return true;
-    }
-
-    private int GetStepMask()
-    {
-        int mask = stepLayerMask.value;
-        if (mask == 0)
-        {
-            return 0;
-        }
-
-        if (!stepUseCollisionMatrixMask)
-        {
-            return mask;
-        }
-
-        return mask & GetCollisionMatrixMask();
-    }
-
-    private int GetStepBlockingMask()
-    {
-        return GetCollisionMatrixMask() & ~GetStepMask();
-    }
-
-    private bool OverlapCapsuleForStep(Vector3 point1, Vector3 point2, float radius, int mask)
-    {
-        int hitCount = Physics.OverlapCapsuleNonAlloc(point1, point2, radius, stepOverlapHits, mask, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = stepOverlapHits[i];
-            if (col == null || IsSelfCollider(col))
-            {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool CapsuleCastForStep(Vector3 point1, Vector3 point2, float radius, Vector3 direction, float distance, int mask, out RaycastHit hit)
-    {
-        int hitCount = Physics.CapsuleCastNonAlloc(point1, point2, radius, direction, stepCastHits, distance, mask, QueryTriggerInteraction.Ignore);
-        float bestDistance = float.PositiveInfinity;
-        int bestIndex = -1;
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = stepCastHits[i].collider;
-            if (col == null || IsSelfCollider(col))
-            {
-                continue;
-            }
-
-            float d = stepCastHits[i].distance;
-            if (d < bestDistance)
-            {
-                bestDistance = d;
-                bestIndex = i;
-            }
-        }
-
-        if (bestIndex >= 0)
-        {
-            hit = stepCastHits[bestIndex];
-            return true;
-        }
-
-        hit = default;
-        return false;
     }
 
     private bool IsSelfCollider(Collider collider)
