@@ -22,9 +22,11 @@ public class TorchVisionSensitive : MonoBehaviour
         public int DissolveColorPropertyId;
     }
 
+    private const float ActiveRefreshInterval = 0.02f;
+    private const float IdleRefreshInterval = 0.1f;
+
     [Header("Evaluation")]
     [SerializeField] private Transform distanceReference;
-    [SerializeField, Min(0.02f)] private float localRefreshInterval = 0.1f;
 
     [Header("Vision")]
     [SerializeField] private VisibilityMode visibilityMode = VisibilityMode.VisibleOnlyWhenVisionMatches;
@@ -287,33 +289,34 @@ public class TorchVisionSensitive : MonoBehaviour
 
     private void RefreshState()
     {
-        refreshTimer = Mathf.Max(0.02f, localRefreshInterval);
-
-        float visibilityFactor = DetermineVisibilityFactor(out Color dissolveColor);
+        float visibilityFactor = DetermineVisibilityFactor(out Color dissolveColor, out bool torchInRange);
+        refreshTimer = torchInRange ? ActiveRefreshInterval : IdleRefreshInterval;
         ApplyVisuals(visibilityFactor, dissolveColor);
         ApplyInteraction(visibilityFactor >= 0.999f);
     }
 
-    private float DetermineVisibilityFactor(out Color dissolveColor)
+    private float DetermineVisibilityFactor(out Color dissolveColor, out bool torchInRange)
     {
         switch (visibilityMode)
         {
             case VisibilityMode.AlwaysVisible:
                 dissolveColor = GetFallbackTorchColor();
+                torchInRange = false;
                 return 1f;
             case VisibilityMode.HiddenWhenVisionMatches:
             {
-                float revealFactor = GetRevealFactorFromNearestTorch(out dissolveColor);
+                float revealFactor = GetRevealFactorFromNearestTorch(out dissolveColor, out torchInRange);
                 return 1f - revealFactor;
             }
             default:
-                return GetRevealFactorFromNearestTorch(out dissolveColor);
+                return GetRevealFactorFromNearestTorch(out dissolveColor, out torchInRange);
         }
     }
 
-    private float GetRevealFactorFromNearestTorch(out Color torchColor)
+    private float GetRevealFactorFromNearestTorch(out Color torchColor, out bool torchInRange)
     {
         torchColor = GetFallbackTorchColor();
+        torchInRange = false;
         GetOrderedDistanceThresholds(out float maxRevealDistance, out float fullRevealDistance);
 
         if (!TorchVisionSystem.TryGetNearestMatchingTorch(
@@ -326,6 +329,7 @@ public class TorchVisionSensitive : MonoBehaviour
             return 0f;
         }
 
+        torchInRange = true;
         torchColor = GetTorchColor(match);
         if (match.Distance <= fullRevealDistance)
         {

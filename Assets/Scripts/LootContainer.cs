@@ -2661,6 +2661,10 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         recoverableWorldInfo.destroyPanelOnExit = false;
         recoverableWorldInfo.openCraftingPanelOnInteract = false;
         recoverableWorldInfo.consumeInteractOnProximity = false;
+        if (!displayItem.isBuilding)
+        {
+            recoverableWorldInfo.localInformationPanelPrefab = null;
+        }
         recoverableWorldInfo.Initialize(displayItem, 1);
         recoverableWorldInfo.MarkPresentationOrigin("recoverable_loot", true);
     }
@@ -3571,12 +3575,29 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         Collider col = interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
         if (col == null)
         {
-            return true;
+            return false;
         }
 
-        Vector3 closest = col.ClosestPoint(characterRoot.position);
-        float distanceSqr = (closest - characterRoot.position).sqrMagnitude;
-        return distanceSqr <= 0.25f;
+        Collider[] colliders = characterRoot.GetComponentsInChildren<Collider>(true);
+        Bounds triggerBounds = col.bounds;
+        bool hadCollider = false;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider characterCollider = colliders[i];
+            if (characterCollider == null || characterCollider.isTrigger)
+            {
+                continue;
+            }
+
+            hadCollider = true;
+            Bounds characterBounds = characterCollider.bounds;
+            if (triggerBounds.Intersects(characterBounds) || triggerBounds.Contains(characterBounds.center))
+            {
+                return true;
+            }
+        }
+
+        return !hadCollider && triggerBounds.Contains(characterRoot.position);
     }
 
     private void RemoveTeleportedCharacterFromRange(Transform characterRoot)

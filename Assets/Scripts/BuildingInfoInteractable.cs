@@ -67,11 +67,18 @@ public class BuildingInfoInteractable : MonoBehaviour
     private string presentationOrigin = "unknown";
     private string lastWorldUiBindingFailureReason = string.Empty;
 
-    private static GameObject sharedLocalInformationPanelPrefab;
+    private bool localPanelPrefabResolvedAutomatically;
+    private bool resolvedAutoLocalPanelForItem;
 
-    private const string DefaultLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
-    private const string DefaultLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
-    private const string DefaultLocalPanelResourceName = "LocalBuildingInformationsPanel";
+    private static GameObject sharedBuildingLocalInformationPanelPrefab;
+    private static GameObject sharedItemLocalInformationPanelPrefab;
+
+    private const string DefaultBuildingLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
+    private const string DefaultBuildingLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
+    private const string DefaultBuildingLocalPanelResourceName = "LocalBuildingInformationsPanel";
+    private const string DefaultItemLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalItemInformationsPanel.prefab";
+    private const string DefaultItemLocalPanelResourcePath = "Prefabs/UI/LocalItemInformationsPanel";
+    private const string DefaultItemLocalPanelResourceName = "LocalItemInformationsPanel";
     private const string DefaultLocalPanelParentName = "LocalsBuildingInformationsPanels";
 
     public string BuildId => buildId;
@@ -550,30 +557,30 @@ public class BuildingInfoInteractable : MonoBehaviour
             }
         }
 
+        bool wantsItemPanel = ShouldUseItemInformationPanel();
+        if (localPanelPrefabResolvedAutomatically && resolvedAutoLocalPanelForItem != wantsItemPanel)
+        {
+            CloseInfoPanels();
+            if (localPanelInstance != null)
+            {
+                Destroy(localPanelInstance.gameObject);
+                localPanelInstance = null;
+            }
+
+            localInformationPanelPrefab = null;
+            warnedMissingPrefab = false;
+        }
+
         if (localInformationPanelPrefab == null)
         {
-#if UNITY_EDITOR
-            localInformationPanelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DefaultLocalPanelPrefabPath);
-#endif
-            if (localInformationPanelPrefab == null)
-            {
-                localInformationPanelPrefab = Resources.Load<GameObject>(DefaultLocalPanelResourceName);
-            }
-
-            if (localInformationPanelPrefab == null)
-            {
-                localInformationPanelPrefab = Resources.Load<GameObject>(DefaultLocalPanelResourcePath);
-            }
-
-            if (localInformationPanelPrefab == null)
-            {
-                localInformationPanelPrefab = ResolveSharedLocalPanelPrefab();
-            }
+            localInformationPanelPrefab = ResolveDefaultLocalPanelPrefab(wantsItemPanel);
+            localPanelPrefabResolvedAutomatically = localInformationPanelPrefab != null;
+            resolvedAutoLocalPanelForItem = wantsItemPanel;
         }
 
         if (localInformationPanelPrefab != null)
         {
-            sharedLocalInformationPanelPrefab = localInformationPanelPrefab;
+            CacheSharedLocalPanelPrefab(localInformationPanelPrefab, wantsItemPanel);
             warnedMissingPrefab = false;
         }
 
@@ -585,6 +592,55 @@ public class BuildingInfoInteractable : MonoBehaviour
         runtimeReferencesResolved = targetCamera != null || localInformationPanelPrefab != null || localPanelParent != null || craftingPanel != null;
     }
 
+    private bool ShouldUseItemInformationPanel()
+    {
+        return buildingItem != null && !buildingItem.isBuilding;
+    }
+
+    private GameObject ResolveDefaultLocalPanelPrefab(bool wantsItemPanel)
+    {
+        string prefabPath = wantsItemPanel ? DefaultItemLocalPanelPrefabPath : DefaultBuildingLocalPanelPrefabPath;
+        string resourceName = wantsItemPanel ? DefaultItemLocalPanelResourceName : DefaultBuildingLocalPanelResourceName;
+        string resourcePath = wantsItemPanel ? DefaultItemLocalPanelResourcePath : DefaultBuildingLocalPanelResourcePath;
+        GameObject panelPrefab = null;
+
+#if UNITY_EDITOR
+        panelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+#endif
+        if (panelPrefab == null)
+        {
+            panelPrefab = Resources.Load<GameObject>(resourceName);
+        }
+
+        if (panelPrefab == null)
+        {
+            panelPrefab = Resources.Load<GameObject>(resourcePath);
+        }
+
+        if (panelPrefab == null)
+        {
+            panelPrefab = ResolveSharedLocalPanelPrefab(wantsItemPanel);
+        }
+
+        return panelPrefab;
+    }
+
+    private void CacheSharedLocalPanelPrefab(GameObject panelPrefab, bool itemPanel)
+    {
+        if (panelPrefab == null)
+        {
+            return;
+        }
+
+        if (itemPanel)
+        {
+            sharedItemLocalInformationPanelPrefab = panelPrefab;
+            return;
+        }
+
+        sharedBuildingLocalInformationPanelPrefab = panelPrefab;
+    }
+
     private void EnsureLocalPanel()
     {
         ResolveRuntimeReferences();
@@ -592,7 +648,7 @@ public class BuildingInfoInteractable : MonoBehaviour
         {
             if (!warnedMissingPrefab)
             {
-                Debug.LogWarning("BuildingInfoInteractable: prefab LocalBuildingInformationPanel manquant.", this);
+                Debug.LogWarning("BuildingInfoInteractable: prefab LocalInformationPanel manquant.", this);
                 warnedMissingPrefab = true;
             }
 
@@ -1240,11 +1296,14 @@ public class BuildingInfoInteractable : MonoBehaviour
         LogBuildingPresentation("world_ui_binding_missing", reason);
     }
 
-    private GameObject ResolveSharedLocalPanelPrefab()
+    private GameObject ResolveSharedLocalPanelPrefab(bool wantsItemPanel)
     {
-        if (sharedLocalInformationPanelPrefab != null)
+        GameObject sharedPrefab = wantsItemPanel
+            ? sharedItemLocalInformationPanelPrefab
+            : sharedBuildingLocalInformationPanelPrefab;
+        if (sharedPrefab != null)
         {
-            return sharedLocalInformationPanelPrefab;
+            return sharedPrefab;
         }
 
         BuildingInfoInteractable[] buildings = Resources.FindObjectsOfTypeAll<BuildingInfoInteractable>();
@@ -1256,8 +1315,13 @@ public class BuildingInfoInteractable : MonoBehaviour
                 continue;
             }
 
-            sharedLocalInformationPanelPrefab = building.localInformationPanelPrefab;
-            return sharedLocalInformationPanelPrefab;
+            if (!IsMatchingLocalPanelPrefab(building.localInformationPanelPrefab, wantsItemPanel))
+            {
+                continue;
+            }
+
+            CacheSharedLocalPanelPrefab(building.localInformationPanelPrefab, wantsItemPanel);
+            return building.localInformationPanelPrefab;
         }
 
         LocalBuildingInformationsPanelController[] panels = Resources.FindObjectsOfTypeAll<LocalBuildingInformationsPanelController>();
@@ -1275,11 +1339,28 @@ public class BuildingInfoInteractable : MonoBehaviour
                 continue;
             }
 
-            sharedLocalInformationPanelPrefab = panelTemplate;
-            return sharedLocalInformationPanelPrefab;
+            if (!IsMatchingLocalPanelPrefab(panelTemplate, wantsItemPanel))
+            {
+                continue;
+            }
+
+            CacheSharedLocalPanelPrefab(panelTemplate, wantsItemPanel);
+            return panelTemplate;
         }
 
         return null;
+    }
+
+    private bool IsMatchingLocalPanelPrefab(GameObject panelPrefab, bool wantsItemPanel)
+    {
+        if (panelPrefab == null)
+        {
+            return false;
+        }
+
+        string prefabName = panelPrefab.name;
+        bool looksLikeItemPanel = prefabName.IndexOf("item", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        return wantsItemPanel ? looksLikeItemPanel : !looksLikeItemPanel;
     }
 }
 
