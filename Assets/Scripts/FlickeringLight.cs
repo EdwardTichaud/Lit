@@ -10,6 +10,8 @@ public class FlickeringLight : MonoBehaviour
     [SerializeField] private bool searchInChildren = true;
     [SerializeField] private bool forcePointLight = true;
     [SerializeField] private bool useCurrentLightAsBase = true;
+    [SerializeField] private bool syncTorchReceiverColor = true;
+    [SerializeField] private bool deferShadowingToTorchReceiver = true;
 
     [Header("Base Flame")]
     [SerializeField, Min(0.01f)] private float baseIntensity = 1.4f;
@@ -48,6 +50,7 @@ public class FlickeringLight : MonoBehaviour
     private Vector3 initialLocalPosition;
     private bool hasCachedState;
     private HDAdditionalLightData targetHdLight;
+    private TorchLightReceiver torchLightReceiver;
 
     private float noiseSeedA;
     private float noiseSeedB;
@@ -103,7 +106,7 @@ public class FlickeringLight : MonoBehaviour
         ApplyLightSetup();
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (targetLight == null)
         {
@@ -121,6 +124,17 @@ public class FlickeringLight : MonoBehaviour
         }
 
         targetHdLight = targetLight != null ? targetLight.GetComponent<HDAdditionalLightData>() : null;
+        torchLightReceiver = GetComponent<TorchLightReceiver>();
+
+        if (torchLightReceiver == null && targetLight != null)
+        {
+            torchLightReceiver = targetLight.GetComponent<TorchLightReceiver>();
+        }
+
+        if (torchLightReceiver == null)
+        {
+            torchLightReceiver = GetComponentInParent<TorchLightReceiver>(true);
+        }
     }
 
     private void ApplyLightSetup()
@@ -180,6 +194,11 @@ public class FlickeringLight : MonoBehaviour
             return;
         }
 
+        if (deferShadowingToTorchReceiver && torchLightReceiver != null && torchLightReceiver.ControlsShadowing)
+        {
+            return;
+        }
+
         targetLight.renderMode = renderMode;
         targetLight.shadows = shadowMode;
         targetLight.shadowStrength = shadowStrength;
@@ -211,10 +230,12 @@ public class FlickeringLight : MonoBehaviour
         // Blend smooth noise with a sharper turbulence term so the light feels alive without strobing.
         float flicker = (primary * 0.65f) + (secondary * 0.35f) - (burst * burstStrength);
         float normalizedHeat = Mathf.Clamp01(0.5f + (flicker * 0.8f));
+        Color drivenFlameColor = GetDrivenFlameColor();
+        Color drivenEmberColor = Color.Lerp(emberColor, drivenFlameColor, 0.35f);
 
         targetLight.intensity = Mathf.Max(0.01f, baseIntensity * (1f + (flicker * intensityVariation)));
         targetLight.range = Mathf.Max(0.01f, baseRange * (1f + ((primary * 0.6f + secondary * 0.4f) * rangeVariation)));
-        targetLight.color = Color.Lerp(emberColor, flameColor, Mathf.Lerp(0.5f, normalizedHeat, colorVariation));
+        targetLight.color = Color.Lerp(drivenEmberColor, drivenFlameColor, Mathf.Lerp(0.5f, normalizedHeat, colorVariation));
 
         if (!animateLocalPosition)
         {
@@ -235,8 +256,28 @@ public class FlickeringLight : MonoBehaviour
 
         targetLight.intensity = initialIntensity;
         targetLight.range = initialRange;
-        targetLight.color = initialColor;
+        targetLight.color = GetRestoreColor();
         targetLight.transform.localPosition = initialLocalPosition;
+    }
+
+    private Color GetDrivenFlameColor()
+    {
+        if (syncTorchReceiverColor && torchLightReceiver != null)
+        {
+            return torchLightReceiver.CurrentTorchColor;
+        }
+
+        return flameColor;
+    }
+
+    private Color GetRestoreColor()
+    {
+        if (syncTorchReceiverColor && torchLightReceiver != null)
+        {
+            return torchLightReceiver.CurrentTorchColor;
+        }
+
+        return initialColor;
     }
 
     private static float SampleSignedNoise(float seed, float timeValue, float speed)

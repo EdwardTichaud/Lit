@@ -94,6 +94,12 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
+    public void OnRightShoulder(InputAction.CallbackContext context)
+    {
+        // The generated input wrapper currently exposes RightShoulder, but the
+        // local gameplay router does not use it yet.
+    }
+
     public void OnToggleTorch(InputAction.CallbackContext context)
     {
         if (context.performed && ShouldProcess(context))

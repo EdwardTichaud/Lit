@@ -132,6 +132,8 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     public Collider interactionTrigger;
     [Tooltip("Panel d'inventaire pour deposer/retirer.")]
     public InventoryPanelController inventoryPanelController;
+    [SerializeField, HideInInspector]
+    private BuildingInfoInteractable recoverableWorldInfo;
 
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
@@ -176,6 +178,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     private void Awake()
     {
         InitializeInteractionTrigger();
+        RefreshRecoverableWorldInfo();
 
         LootUISettings settings = GetSettings();
         if (settings != null)
@@ -188,6 +191,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private void OnEnable()
     {
+        RefreshRecoverableWorldInfo();
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
@@ -230,6 +234,8 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             trapTriggered = netTrapTriggered.Value;
             ApplyLootFromNet();
         }
+
+        RefreshRecoverableWorldInfo();
     }
 
     public override void OnNetworkDespawn()
@@ -2488,6 +2494,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         applyingNetLoot = false;
+        RefreshRecoverableWorldInfo();
 
         if (lootOpen)
         {
@@ -2497,6 +2504,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private void SyncNetFromLootItems()
     {
+        RefreshRecoverableWorldInfo();
         if (!IsServer || applyingNetLoot)
         {
             return;
@@ -2597,6 +2605,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
     private void HandleEmptyContainer()
     {
+        RefreshRecoverableWorldInfo();
         if (!destroyWhenEmpty)
         {
             return;
@@ -2619,6 +2628,65 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         Destroy(gameObject);
+    }
+
+    public void RefreshRecoverableWorldInfo()
+    {
+        Item displayItem = ResolveRecoverableDisplayItem();
+        bool shouldShow = collectable && displayItem != null;
+
+        if (!shouldShow)
+        {
+            if (recoverableWorldInfo != null)
+            {
+                recoverableWorldInfo.enabled = false;
+            }
+
+            return;
+        }
+
+        if (recoverableWorldInfo == null)
+        {
+            recoverableWorldInfo = GetComponent<BuildingInfoInteractable>();
+            if (recoverableWorldInfo == null)
+            {
+                recoverableWorldInfo = gameObject.AddComponent<BuildingInfoInteractable>();
+            }
+        }
+
+        recoverableWorldInfo.enabled = true;
+        recoverableWorldInfo.interactionTrigger = interactionTrigger;
+        recoverableWorldInfo.openOnProximity = true;
+        recoverableWorldInfo.closePanelOnExit = true;
+        recoverableWorldInfo.destroyPanelOnExit = false;
+        recoverableWorldInfo.openCraftingPanelOnInteract = false;
+        recoverableWorldInfo.consumeInteractOnProximity = false;
+        recoverableWorldInfo.Initialize(displayItem, 1);
+        recoverableWorldInfo.MarkPresentationOrigin("recoverable_loot", true);
+    }
+
+    private Item ResolveRecoverableDisplayItem()
+    {
+        if (containerItem != null)
+        {
+            return containerItem;
+        }
+
+        if (lootItems == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < lootItems.Count; i++)
+        {
+            LootItemEntry entry = lootItems[i];
+            if (entry != null && entry.item != null && entry.quantity > 0)
+            {
+                return entry.item;
+            }
+        }
+
+        return null;
     }
 
     private void HandleLootNavigation()

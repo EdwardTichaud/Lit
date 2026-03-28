@@ -141,6 +141,13 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
 
         SetText(buildingNameText, ResolveBuildingName(building, item));
         SetText(effectDescriptionText, effectDescription);
+        if (item != null && !item.isBuilding)
+        {
+            SetText(currentLevelText, string.Empty);
+            SetText(currentBonusText, string.Empty);
+            return;
+        }
+
         SetText(currentLevelText, FormatValue(currentLevelFormat, level.ToString()));
         SetText(currentBonusText, FormatValue(currentBonusFormat, bonusDescription));
     }

@@ -30,9 +30,11 @@ public class TorchLightReceiver : MonoBehaviour
     private bool defaultUseColorTemperature;
     private float defaultColorTemperature;
     private bool hasDefault;
+    private Color currentTorchColor = Color.white;
     private HDAdditionalLightData targetHdLight;
 
     public SquadCharacterController Owner => owner;
+    public bool ControlsShadowing => configureTorchShadowing;
 
     public Color CurrentTorchColor
     {
@@ -40,9 +42,9 @@ public class TorchLightReceiver : MonoBehaviour
         {
             CacheLight();
 
-            if (targetLight != null)
+            if (hasDefault)
             {
-                return targetLight.color;
+                return currentTorchColor;
             }
 
             TorchVisionDefinition vision = GetOwnerVision();
@@ -122,6 +124,7 @@ public class TorchLightReceiver : MonoBehaviour
         defaultColor = targetLight.color;
         defaultUseColorTemperature = targetLight.useColorTemperature;
         defaultColorTemperature = targetLight.colorTemperature;
+        currentTorchColor = defaultColor;
         hasDefault = true;
     }
 
@@ -211,6 +214,8 @@ public class TorchLightReceiver : MonoBehaviour
 
         if (vision == null || vision.useDefaultLightSettings)
         {
+            currentTorchColor = hasDefault ? defaultColor : Color.white;
+
             if (hasDefault)
             {
                 targetLight.color = defaultColor;
@@ -220,6 +225,7 @@ public class TorchLightReceiver : MonoBehaviour
             return;
         }
 
+        currentTorchColor = vision.lightColor;
         targetLight.color = vision.lightColor;
 
         if (disableColorTemperatureWhenColored)

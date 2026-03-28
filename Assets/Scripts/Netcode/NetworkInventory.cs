@@ -275,7 +275,7 @@ public class NetworkInventory : NetworkBehaviour
                 return false;
             }
 
-            SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true);
+            SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true, 0u, false);
             SyncFromController();
             InfoBoxUI.TryShow(item.GetDropSuccessMessage());
             return true;
@@ -301,7 +301,15 @@ public class NetworkInventory : NetworkBehaviour
         return true;
     }
 
-    public bool RequestPlaceItem(Item item, Vector3 position, Quaternion rotation, bool createLootContainer, bool destroyWhenEmpty, bool allowDropWithoutPrefab)
+    public bool RequestPlaceItem(
+        Item item,
+        Vector3 position,
+        Quaternion rotation,
+        bool createLootContainer,
+        bool destroyWhenEmpty,
+        bool allowDropWithoutPrefab,
+        uint placementColorPacked = 0u,
+        bool usePlacementColor = false)
     {
         if (item == null)
         {
@@ -326,7 +334,7 @@ public class NetworkInventory : NetworkBehaviour
                 return false;
             }
 
-            SpawnWorldItem(item, 1, position, rotation, createLootContainer, destroyWhenEmpty, true);
+            SpawnWorldItem(item, 1, position, rotation, createLootContainer, destroyWhenEmpty, true, placementColorPacked, usePlacementColor);
             SyncFromController();
             InfoBoxUI.TryShow(item.GetPlaceSuccessMessage());
             return true;
@@ -334,7 +342,16 @@ public class NetworkInventory : NetworkBehaviour
 
         if (IsServer)
         {
-            bool success = ExecutePlaceItem(item, position, rotation, createLootContainer, destroyWhenEmpty, allowDropWithoutPrefab, out string feedback);
+            bool success = ExecutePlaceItem(
+                item,
+                position,
+                rotation,
+                createLootContainer,
+                destroyWhenEmpty,
+                allowDropWithoutPrefab,
+                placementColorPacked,
+                usePlacementColor,
+                out string feedback);
             if (!string.IsNullOrWhiteSpace(feedback))
             {
                 InfoBoxUI.TryShow(feedback);
@@ -348,7 +365,7 @@ public class NetworkInventory : NetworkBehaviour
             return false;
         }
 
-        RequestPlaceItemServerRpc(itemId, position, rotation, createLootContainer, destroyWhenEmpty, allowDropWithoutPrefab);
+        RequestPlaceItemServerRpc(itemId, position, rotation, createLootContainer, destroyWhenEmpty, allowDropWithoutPrefab, placementColorPacked, usePlacementColor);
         return true;
     }
 
@@ -414,13 +431,22 @@ public class NetworkInventory : NetworkBehaviour
             return false;
         }
 
-        SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true);
+        SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true, 0u, false);
         SyncFromController();
         feedback = item.GetDropSuccessMessage();
         return true;
     }
 
-    private bool ExecutePlaceItem(Item item, Vector3 position, Quaternion rotation, bool createLootContainer, bool destroyWhenEmpty, bool allowDropWithoutPrefab, out string feedback)
+    private bool ExecutePlaceItem(
+        Item item,
+        Vector3 position,
+        Quaternion rotation,
+        bool createLootContainer,
+        bool destroyWhenEmpty,
+        bool allowDropWithoutPrefab,
+        uint placementColorPacked,
+        bool usePlacementColor,
+        out string feedback)
     {
         feedback = string.Empty;
         if (!IsServer || controller == null || item == null)
@@ -439,13 +465,22 @@ public class NetworkInventory : NetworkBehaviour
             return false;
         }
 
-        SpawnWorldItem(item, 1, position, rotation, createLootContainer, destroyWhenEmpty, true);
+        SpawnWorldItem(item, 1, position, rotation, createLootContainer, destroyWhenEmpty, true, placementColorPacked, usePlacementColor);
         SyncFromController();
         feedback = item.GetPlaceSuccessMessage();
         return true;
     }
 
-    private void SpawnWorldItem(Item item, int quantity, Vector3 position, Quaternion rotation, bool createLootContainer, bool destroyWhenEmpty, bool collectable)
+    private void SpawnWorldItem(
+        Item item,
+        int quantity,
+        Vector3 position,
+        Quaternion rotation,
+        bool createLootContainer,
+        bool destroyWhenEmpty,
+        bool collectable,
+        uint placementColorPacked,
+        bool usePlacementColor)
     {
         if (item == null)
         {
@@ -461,6 +496,8 @@ public class NetworkInventory : NetworkBehaviour
                 return;
             }
 
+            ApplyPlacementColor(fallbackInstance, placementColorPacked, usePlacementColor);
+
             if (createLootContainer)
             {
                 item.CreateDroppedLootContainer(fallbackInstance, quantity, destroyWhenEmpty, collectable);
@@ -475,6 +512,8 @@ public class NetworkInventory : NetworkBehaviour
         {
             return;
         }
+
+        ApplyPlacementColor(instance, placementColorPacked, usePlacementColor);
 
         string itemId = ItemIdUtils.GetItemId(item);
         string persistentId;
@@ -507,6 +546,7 @@ public class NetworkInventory : NetworkBehaviour
                 loot.containerItem = item;
                 loot.destroyWhenEmpty = destroyWhenEmpty;
                 loot.collectable = collectable;
+                loot.RefreshRecoverableWorldInfo();
             }
         }
 
@@ -598,7 +638,16 @@ public class NetworkInventory : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestPlaceItemServerRpc(string itemId, Vector3 position, Quaternion rotation, bool createLootContainer, bool destroyWhenEmpty, bool allowDropWithoutPrefab, ServerRpcParams rpcParams = default)
+    private void RequestPlaceItemServerRpc(
+        string itemId,
+        Vector3 position,
+        Quaternion rotation,
+        bool createLootContainer,
+        bool destroyWhenEmpty,
+        bool allowDropWithoutPrefab,
+        uint placementColorPacked,
+        bool usePlacementColor,
+        ServerRpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
         {
@@ -611,7 +660,16 @@ public class NetworkInventory : NetworkBehaviour
             return;
         }
 
-        if (ExecutePlaceItem(item, position, rotation, createLootContainer, destroyWhenEmpty, allowDropWithoutPrefab, out string feedback))
+        if (ExecutePlaceItem(
+            item,
+            position,
+            rotation,
+            createLootContainer,
+            destroyWhenEmpty,
+            allowDropWithoutPrefab,
+            placementColorPacked,
+            usePlacementColor,
+            out string feedback))
         {
             ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
             return;
@@ -648,6 +706,25 @@ public class NetworkInventory : NetworkBehaviour
     private bool IsRequestFromOwner(ServerRpcParams rpcParams)
     {
         return rpcParams.Receive.SenderClientId == OwnerClientId;
+    }
+
+    private static void ApplyPlacementColor(GameObject instance, uint packedColor, bool usePlacementColor)
+    {
+        if (!usePlacementColor || instance == null)
+        {
+            return;
+        }
+
+        BeaconMarker.TrySetColor(instance, UnpackPlacementColor(packedColor));
+    }
+
+    private static Color UnpackPlacementColor(uint packedColor)
+    {
+        byte r = (byte)(packedColor & 0xFFu);
+        byte g = (byte)((packedColor >> 8) & 0xFFu);
+        byte b = (byte)((packedColor >> 16) & 0xFFu);
+        byte a = (byte)((packedColor >> 24) & 0xFFu);
+        return new Color32(r, g, b, a);
     }
 
     private void OnNetItemsChanged(NetworkListEvent<NetItemStack> change)

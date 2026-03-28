@@ -10,6 +10,18 @@ using UnityEngine.UI;
 // Controle l'UI d'inventaire: navigation, ActionBox, depot et placement d'objets.
 public class InventoryPanelController : MonoBehaviour
 {
+    private static readonly Color[] DefaultBeaconPalette =
+    {
+        new Color(0.98f, 0.48f, 0.14f, 1f),
+        new Color(0.85f, 0.18f, 0.18f, 1f),
+        new Color(0.2f, 0.72f, 0.28f, 1f),
+        new Color(0.15f, 0.72f, 0.74f, 1f),
+        new Color(0.18f, 0.44f, 0.86f, 1f),
+        new Color(0.62f, 0.28f, 0.82f, 1f),
+        new Color(0.96f, 0.86f, 0.26f, 1f),
+        new Color(0.9f, 0.9f, 0.9f, 1f)
+    };
+
     private struct InventoryEntry
     {
         public Item item;
@@ -110,6 +122,23 @@ public class InventoryPanelController : MonoBehaviour
     [Tooltip("Message si la position est invalide.")]
     public string placementInvalidMessage = "Position invalide.";
 
+    [Header("Beacon Placement")]
+    [Tooltip("Hauteur du probe de mur pour les balises.")]
+    public float beaconWallProbeHeight = 1.2f;
+    [Tooltip("Rayon du sphere cast utilise pour detecter un mur.")]
+    public float beaconWallProbeRadius = 0.18f;
+    [Range(0f, 1f)]
+    [Tooltip("Normale maximale sur Y pour considerer un support comme un mur.")]
+    public float beaconWallNormalMaxY = 0.6f;
+
+    [Header("Beacon Color Panel")]
+    [Tooltip("Position du panel de couleur dans BalisePanel_Root.")]
+    public Vector2 beaconPanelAnchoredPosition = new Vector2(0f, -220f);
+    [Tooltip("Taille des swatches de couleur.")]
+    public Vector2 beaconSwatchSize = new Vector2(44f, 44f);
+    [Tooltip("Couleurs proposees pour les balises.")]
+    public Color[] beaconPaletteColors = new Color[0];
+
     [Header("Building Placement")]
     [Tooltip("Utilise les ressources des coffres maison pour les buildings.")]
     public bool placementUseHomeResources = true;
@@ -160,6 +189,16 @@ public class InventoryPanelController : MonoBehaviour
     private CursorController disabledCursorController;
     private bool disabledCursorControllerWasEnabled;
     private bool disabledCursorControllerAllowInput;
+    private bool beaconColorPanelVisible;
+    private Item beaconPanelItem;
+    private RectTransform beaconPanelRoot;
+    private RectTransform beaconPanelContent;
+    private CanvasGroup beaconPanelCanvasGroup;
+    private readonly List<BeaconColorSwatch> beaconColorSwatches = new List<BeaconColorSwatch>();
+    private int beaconColorIndex;
+    private Color beaconPlacementColor = new Color(0.98f, 0.48f, 0.14f, 1f);
+    private bool placementHasBeaconColor;
+    private bool warnedMissingBeaconColorPanel;
 
     private readonly List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
     private readonly List<InventoryEntry> entries = new List<InventoryEntry>();
@@ -330,6 +369,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (beaconColorPanelVisible)
+        {
+            HandleBeaconColorPanelNavigation();
+            return;
+        }
+
         if (!depositMode && actionBoxVisible)
         {
             HandleActionBoxNavigation();
@@ -374,6 +419,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (beaconColorPanelVisible)
+        {
+            HideBeaconColorPanel();
+            return;
+        }
+
         if (placementActive)
         {
             CancelPlacement(true);
@@ -410,6 +461,12 @@ public class InventoryPanelController : MonoBehaviour
         if (depositQuantityActive)
         {
             ConfirmDepositQuantity();
+            return;
+        }
+
+        if (beaconColorPanelVisible)
+        {
+            ConfirmBeaconColorSelection();
             return;
         }
 
@@ -556,6 +613,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         HideActionBoxImmediate();
+        HideBeaconColorPanelImmediate();
         CloseQuantityBox();
         inventoryOpen = false;
         actionBoxSuppressFrame = -1;
@@ -1451,6 +1509,12 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        if (item != null && item.isBeacon)
+        {
+            ShowBeaconColorPanel(item);
+            return false;
+        }
+
         NetworkInventory inventory = ResolveNetworkInventory(controller);
         if (IsNetworked() && inventory != null)
         {
@@ -1465,6 +1529,395 @@ public class InventoryPanelController : MonoBehaviour
 
         ShowActionFeedback(reason);
         return false;
+    }
+
+    private Color[] GetBeaconPaletteColors()
+    {
+        if (beaconPaletteColors != null && beaconPaletteColors.Length > 0)
+        {
+            return beaconPaletteColors;
+        }
+
+        return DefaultBeaconPalette;
+    }
+
+    private void ShowBeaconColorPanel(Item item)
+    {
+        if (item == null || !item.isBeacon || !inventoryOpen)
+        {
+            return;
+        }
+
+        EnsureBeaconColorPanel();
+        if (beaconPanelRoot == null || beaconColorSwatches.Count == 0)
+        {
+            ShowPlacementFeedback("BaliseColorPanel manquant dans BalisePanel_Root.");
+            return;
+        }
+
+        if (!placementHasBeaconColor)
+        {
+            beaconPlacementColor = GetBeaconColorAt(0);
+        }
+
+        beaconPanelItem = item;
+        beaconColorIndex = FindClosestBeaconColorIndex(beaconPlacementColor);
+        beaconColorPanelVisible = true;
+        lastMoveDirection = 0;
+        nextMoveTime = 0f;
+        SetBeaconColorPanelRootVisible(true);
+        HideActionBoxImmediate();
+        UpdateBeaconColorPanelVisuals();
+    }
+
+    private void HideBeaconColorPanel()
+    {
+        beaconColorPanelVisible = false;
+        beaconPanelItem = null;
+        lastMoveDirection = 0;
+        nextMoveTime = 0f;
+        SetBeaconColorPanelRootVisible(false);
+    }
+
+    private void HideBeaconColorPanelImmediate()
+    {
+        beaconColorPanelVisible = false;
+        beaconPanelItem = null;
+        lastMoveDirection = 0;
+        nextMoveTime = 0f;
+        SetBeaconColorPanelRootVisible(false);
+    }
+
+    private void EnsureBeaconColorPanel()
+    {
+        if (beaconPanelRoot != null && beaconPanelContent != null && beaconColorSwatches.Count > 0)
+        {
+            return;
+        }
+
+        InventoryUISettings settings = GetSettings();
+        if (settings == null || settings.inventoryPanel == null)
+        {
+            WarnMissingBeaconColorPanel("InventoryPanel introuvable.");
+            return;
+        }
+
+        Transform existingRoot = settings.inventoryPanel.transform.Find("BalisePanel_Root");
+        if (existingRoot == null)
+        {
+            WarnMissingBeaconColorPanel("BalisePanel_Root introuvable sous l'InventoryPanel.");
+            return;
+        }
+
+        beaconPanelRoot = existingRoot as RectTransform;
+        if (beaconPanelRoot == null)
+        {
+            WarnMissingBeaconColorPanel("BalisePanel_Root n'a pas de RectTransform.");
+            return;
+        }
+
+        beaconPanelCanvasGroup = beaconPanelRoot.GetComponent<CanvasGroup>();
+        if (beaconPanelCanvasGroup != null)
+        {
+            beaconPanelRoot.gameObject.SetActive(true);
+        }
+
+        SetBeaconColorPanelRootVisible(false);
+
+        Transform panelTransform = beaconPanelRoot.Find("BaliseColorPanel");
+        if (panelTransform == null)
+        {
+            WarnMissingBeaconColorPanel("BaliseColorPanel introuvable sous BalisePanel_Root.");
+            return;
+        }
+
+        beaconPanelContent = panelTransform.Find("Content") as RectTransform;
+        if (beaconPanelContent == null)
+        {
+            beaconPanelContent = panelTransform as RectTransform;
+        }
+
+        RebuildBeaconColorSwatches();
+        if (beaconColorSwatches.Count == 0)
+        {
+            WarnMissingBeaconColorPanel("Aucun swatch de couleur n'a ete trouve dans BaliseColorPanel.");
+            return;
+        }
+
+        warnedMissingBeaconColorPanel = false;
+    }
+
+    private void RebuildBeaconColorSwatches()
+    {
+        beaconColorSwatches.Clear();
+        if (beaconPanelContent == null)
+        {
+            return;
+        }
+
+        Color[] explicitPalette = beaconPaletteColors != null && beaconPaletteColors.Length > 0
+            ? beaconPaletteColors
+            : null;
+
+        for (int i = 0; i < beaconPanelContent.childCount; i++)
+        {
+            RectTransform swatchRect = beaconPanelContent.GetChild(i) as RectTransform;
+            if (swatchRect == null)
+            {
+                continue;
+            }
+
+            Button button = swatchRect.GetComponent<Button>();
+            Image frame = swatchRect.GetComponent<Image>();
+            if (button == null || frame == null)
+            {
+                continue;
+            }
+
+            Transform fillTransform = swatchRect.Find("Fill");
+            Image fill = fillTransform != null ? fillTransform.GetComponent<Image>() : null;
+
+            Color color = fill != null ? fill.color : frame.color;
+            if (explicitPalette != null && i < explicitPalette.Length)
+            {
+                color = explicitPalette[i];
+                if (fill != null)
+                {
+                    fill.color = color;
+                }
+            }
+
+            int capturedIndex = beaconColorSwatches.Count;
+            button.transition = Selectable.Transition.None;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => OnBeaconSwatchClicked(capturedIndex));
+
+            beaconColorSwatches.Add(new BeaconColorSwatch(swatchRect, frame, fill, color));
+        }
+    }
+
+    private int FindClosestBeaconColorIndex(Color color)
+    {
+        int colorCount = GetBeaconSelectableColorCount();
+        if (colorCount == 0)
+        {
+            return 0;
+        }
+
+        int bestIndex = 0;
+        float bestDistance = float.MaxValue;
+        for (int i = 0; i < colorCount; i++)
+        {
+            Color candidate = GetBeaconColorAt(i);
+            float distance =
+                Mathf.Abs(candidate.r - color.r) +
+                Mathf.Abs(candidate.g - color.g) +
+                Mathf.Abs(candidate.b - color.b) +
+                Mathf.Abs(candidate.a - color.a);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private void HandleBeaconColorPanelNavigation()
+    {
+        if (!beaconColorPanelVisible || beaconColorSwatches.Count == 0)
+        {
+            return;
+        }
+
+        InventoryUISettings settings = GetSettings();
+        if (settings == null)
+        {
+            return;
+        }
+
+        Vector2 moveInput = LocalInputRouter.MoveValue;
+        int direction = GetBeaconColorMoveDirection(moveInput, settings.moveDeadzone);
+        if (direction == 0)
+        {
+            lastMoveDirection = 0;
+            nextMoveTime = 0f;
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        if (direction != lastMoveDirection)
+        {
+            MoveBeaconColorSelection(direction);
+            lastMoveDirection = direction;
+            nextMoveTime = now + settings.initialRepeatDelay;
+            return;
+        }
+
+        if (now >= nextMoveTime)
+        {
+            MoveBeaconColorSelection(direction);
+            nextMoveTime = now + settings.repeatInterval;
+        }
+    }
+
+    private static int GetBeaconColorMoveDirection(Vector2 input, float deadzone)
+    {
+        float absX = Mathf.Abs(input.x);
+        float absY = Mathf.Abs(input.y);
+        if (absX < deadzone && absY < deadzone)
+        {
+            return 0;
+        }
+
+        if (absX >= absY)
+        {
+            return input.x > 0f ? 1 : -1;
+        }
+
+        return input.y > 0f ? -1 : 1;
+    }
+
+    private void MoveBeaconColorSelection(int direction)
+    {
+        if (beaconColorSwatches.Count == 0)
+        {
+            return;
+        }
+
+        beaconColorIndex += direction > 0 ? 1 : -1;
+        if (beaconColorIndex < 0)
+        {
+            beaconColorIndex = beaconColorSwatches.Count - 1;
+        }
+        else if (beaconColorIndex >= beaconColorSwatches.Count)
+        {
+            beaconColorIndex = 0;
+        }
+
+        UpdateBeaconColorPanelVisuals();
+    }
+
+    private void UpdateBeaconColorPanelVisuals()
+    {
+        for (int i = 0; i < beaconColorSwatches.Count; i++)
+        {
+            BeaconColorSwatch swatch = beaconColorSwatches[i];
+            bool selected = i == beaconColorIndex;
+            if (swatch.Frame != null)
+            {
+                swatch.Frame.color = selected ? Color.white : new Color(1f, 1f, 1f, 0.2f);
+            }
+
+            if (swatch.Fill != null)
+            {
+                swatch.Fill.rectTransform.localScale = selected ? Vector3.one * 1.08f : Vector3.one;
+            }
+        }
+    }
+
+    private void OnBeaconSwatchClicked(int index)
+    {
+        if (index < 0 || index >= beaconColorSwatches.Count)
+        {
+            return;
+        }
+
+        beaconColorIndex = index;
+        UpdateBeaconColorPanelVisuals();
+        ConfirmBeaconColorSelection();
+    }
+
+    private void ConfirmBeaconColorSelection()
+    {
+        if (!beaconColorPanelVisible)
+        {
+            return;
+        }
+
+        if (GetBeaconSelectableColorCount() == 0)
+        {
+            HideBeaconColorPanel();
+            return;
+        }
+
+        beaconPlacementColor = GetBeaconColorAt(beaconColorIndex);
+        placementHasBeaconColor = true;
+        Item item = beaconPanelItem;
+        HideBeaconColorPanelImmediate();
+        if (item == null)
+        {
+            return;
+        }
+
+        if (!StartPlacementSession(item))
+        {
+            ShowPlacementFeedback(placementCannotPlaceMessage);
+        }
+    }
+
+    private int GetBeaconSelectableColorCount()
+    {
+        if (beaconColorSwatches.Count > 0)
+        {
+            return beaconColorSwatches.Count;
+        }
+
+        Color[] palette = GetBeaconPaletteColors();
+        return palette != null ? palette.Length : 0;
+    }
+
+    private Color GetBeaconColorAt(int index)
+    {
+        if (beaconColorSwatches.Count > 0)
+        {
+            int clampedIndex = Mathf.Clamp(index, 0, beaconColorSwatches.Count - 1);
+            return beaconColorSwatches[clampedIndex].Color;
+        }
+
+        Color[] palette = GetBeaconPaletteColors();
+        if (palette != null && palette.Length > 0)
+        {
+            int clampedIndex = Mathf.Clamp(index, 0, palette.Length - 1);
+            return palette[clampedIndex];
+        }
+
+        return beaconPlacementColor;
+    }
+
+    private void WarnMissingBeaconColorPanel(string reason)
+    {
+        if (warnedMissingBeaconColorPanel)
+        {
+            return;
+        }
+
+        warnedMissingBeaconColorPanel = true;
+        Debug.LogWarning($"InventoryPanelController: {reason}", this);
+    }
+
+    private void SetBeaconColorPanelRootVisible(bool visible)
+    {
+        if (beaconPanelRoot == null)
+        {
+            return;
+        }
+
+        if (beaconPanelCanvasGroup != null)
+        {
+            if (!beaconPanelRoot.gameObject.activeSelf)
+            {
+                beaconPanelRoot.gameObject.SetActive(true);
+            }
+
+            beaconPanelCanvasGroup.alpha = visible ? 1f : 0f;
+            beaconPanelCanvasGroup.interactable = visible;
+            beaconPanelCanvasGroup.blocksRaycasts = visible;
+            return;
+        }
+
+        beaconPanelRoot.gameObject.SetActive(visible);
     }
 
     private void TryDepositSelectedItem()
@@ -2211,7 +2664,7 @@ public class InventoryPanelController : MonoBehaviour
         offset.y = 0f;
         if (placementItem == null || !placementItem.isBuilding)
         {
-            float radius = Mathf.Max(0f, placementRadius);
+            float radius = GetPlacementRadius(placementItem);
             if (offset.magnitude > radius)
             {
                 offset = offset.normalized * radius;
@@ -2219,8 +2672,9 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         position = new Vector3(anchorPos.x + offset.x, position.y, anchorPos.z + offset.z);
-        position = SnapPlacementToGround(position);
-        placementInstance.transform.position = position;
+        Quaternion rotation = placementInstance.transform.rotation;
+        ResolvePlacementPose(placementItem, position, rotation, out position, out rotation);
+        placementInstance.transform.SetPositionAndRotation(position, rotation);
 
         bool valid = IsPlacementValid();
         UpdatePlacementVisuals(valid);
@@ -2261,6 +2715,11 @@ public class InventoryPanelController : MonoBehaviour
 
     private Vector3 SnapPlacementToGround(Vector3 position)
     {
+        return SnapPlacementToGround(position, false);
+    }
+
+    private Vector3 SnapPlacementToGround(Vector3 position, bool ignoreCharacterSupport)
+    {
         if (!placementSnapToGround)
         {
             return position;
@@ -2282,6 +2741,11 @@ public class InventoryPanelController : MonoBehaviour
                 RaycastHit hit = hits[i];
                 Collider col = hit.collider;
                 if (col == null || IsIgnoredPlacementCollider(col))
+                {
+                    continue;
+                }
+
+                if (ignoreCharacterSupport && IsPlacementCharacterCollider(col))
                 {
                     continue;
                 }
@@ -2335,6 +2799,17 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool IsPlacementCharacterCollider(Collider col)
+    {
+        if (col == null)
+        {
+            return false;
+        }
+
+        return col.GetComponentInParent<SquadCharacterController>() != null
+            || col.GetComponentInParent<Character>() != null;
     }
 
     private bool IsPlacementGroundCollider(Collider col)
@@ -2404,6 +2879,12 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         Item item = currentFocusedSlot.Item;
+        if (item != null && item.isBeacon)
+        {
+            ShowBeaconColorPanel(item);
+            return true;
+        }
+
         SquadCharacterController controller = GetCurrentCharacterController();
         if (allowDropWithoutWorldPrefab
             && item != null
@@ -2421,6 +2902,11 @@ public class InventoryPanelController : MonoBehaviour
             }
         }
 
+        return StartPlacementSession(item);
+    }
+
+    private bool StartPlacementSession(Item item)
+    {
         if (!TryBeginPlacement(item))
         {
             FlashActionBoxInvalid();
@@ -2494,6 +2980,7 @@ public class InventoryPanelController : MonoBehaviour
         placementItem = item;
         placementActive = true;
         CachePlacementPhysics(placementInstance);
+        ApplyPlacementItemState(placementInstance, placementItem);
         if (placementItem != null && placementItem.isBuilding)
         {
             SetPlacementCameraOverride(placementInstance.transform);
@@ -2523,15 +3010,16 @@ public class InventoryPanelController : MonoBehaviour
         startOffset.y = 0f;
         if (item != null && !item.isBuilding)
         {
-            float radius = Mathf.Max(0f, placementRadius);
+            float radius = GetPlacementRadius(item);
             if (startOffset.magnitude > radius)
             {
                 startOffset = startOffset.normalized * radius;
                 startPos = new Vector3(placementAnchor.position.x + startOffset.x, startPos.y, placementAnchor.position.z + startOffset.z);
             }
         }
-        startPos = SnapPlacementToGround(startPos);
-        placementInstance.transform.position = startPos;
+        Quaternion startRotation = placementInstance.transform.rotation;
+        ResolvePlacementPose(item, startPos, startRotation, out startPos, out startRotation);
+        placementInstance.transform.SetPositionAndRotation(startPos, startRotation);
         CachePlacementVisuals(placementInstance);
         UpdatePlacementVisuals(IsPlacementValid());
         return true;
@@ -2540,6 +3028,211 @@ public class InventoryPanelController : MonoBehaviour
     private GameObject ResolvePlacementPrefab(Item item)
     {
         return item != null ? item.ResolveWorldPrefab() : null;
+    }
+
+    private float GetPlacementRadius(Item item)
+    {
+        if (item != null && item.placementRadiusOverride > 0f)
+        {
+            return Mathf.Max(0f, item.placementRadiusOverride);
+        }
+
+        return Mathf.Max(0f, placementRadius);
+    }
+
+    private void ApplyPlacementItemState(GameObject instance, Item item)
+    {
+        if (instance == null || item == null)
+        {
+            return;
+        }
+
+        if (item.isBeacon)
+        {
+            BeaconMarker.TrySetColor(instance, beaconPlacementColor);
+        }
+    }
+
+    private void ResolvePlacementPose(Item item, Vector3 desiredPosition, Quaternion currentRotation, out Vector3 resolvedPosition, out Quaternion resolvedRotation)
+    {
+        resolvedPosition = desiredPosition;
+        resolvedRotation = currentRotation;
+
+        if (item != null && item.isBeacon)
+        {
+            if (TryResolveBeaconPlacementPose(desiredPosition, out resolvedPosition, out resolvedRotation))
+            {
+                return;
+            }
+        }
+
+        resolvedPosition = SnapPlacementToGround(desiredPosition, item != null && item.isBeacon);
+    }
+
+    private bool TryResolveBeaconPlacementPose(Vector3 desiredPosition, out Vector3 resolvedPosition, out Quaternion resolvedRotation)
+    {
+        resolvedPosition = desiredPosition;
+        resolvedRotation = placementInstance != null ? placementInstance.transform.rotation : Quaternion.identity;
+
+        if (placementAnchor == null)
+        {
+            placementGroundCollider = null;
+            return false;
+        }
+
+        Vector3 facingHint = ResolvePlacementFacingHint();
+        if (TryFindBeaconWallSupport(desiredPosition, out RaycastHit wallHit))
+        {
+            Vector3 normal = wallHit.normal.sqrMagnitude > 0.0001f ? wallHit.normal.normalized : Vector3.forward;
+            float offset = 0.02f;
+            if (BeaconMarker.TryFind(placementInstance, out BeaconMarker beacon))
+            {
+                offset = Mathf.Max(offset, beacon.SurfaceOffset);
+            }
+
+            resolvedPosition = wallHit.point + normal * offset;
+            resolvedRotation = BuildPlacementSurfaceRotation(normal, facingHint);
+            placementGroundCollider = wallHit.collider;
+            return true;
+        }
+
+        resolvedPosition = SnapPlacementToGround(desiredPosition, true);
+        resolvedRotation = BuildPlacementSurfaceRotation(Vector3.up, facingHint);
+        return placementGroundCollider != null;
+    }
+
+    private bool TryFindBeaconWallSupport(Vector3 desiredPosition, out RaycastHit bestHit)
+    {
+        bestHit = default;
+        if (placementAnchor == null)
+        {
+            return false;
+        }
+
+        Vector3 origin = placementAnchor.position + Vector3.up * Mathf.Max(0f, beaconWallProbeHeight);
+        Vector3 target = new Vector3(desiredPosition.x, origin.y, desiredPosition.z);
+        Vector3 direction = target - origin;
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            Vector3 fallback = ResolvePlacementFacingHint();
+            fallback.y = 0f;
+            direction = fallback.sqrMagnitude > 0.0001f ? fallback.normalized * Mathf.Max(0.25f, placementStartDistance) : Vector3.forward * Mathf.Max(0.25f, placementStartDistance);
+        }
+
+        float distance = Mathf.Min(GetPlacementRadius(placementItem), direction.magnitude);
+        if (distance <= 0.01f)
+        {
+            return false;
+        }
+
+        Vector3 castDirection = direction.normalized;
+        int mask = placementGroundMask.value | placementCollisionMask.value;
+        RaycastHit[] hits = Physics.SphereCastAll(
+            origin,
+            Mathf.Max(0.01f, beaconWallProbeRadius),
+            castDirection,
+            distance,
+            mask,
+            QueryTriggerInteraction.Ignore);
+
+        bool found = false;
+        float bestDistance = float.MaxValue;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit hit = hits[i];
+            Collider col = hit.collider;
+            if (col == null || IsIgnoredPlacementCollider(col))
+            {
+                continue;
+            }
+
+            if (IsPlacementCharacterCollider(col))
+            {
+                continue;
+            }
+
+            Vector3 normal = hit.normal;
+            if (normal.sqrMagnitude < 0.0001f || Mathf.Abs(normal.y) > beaconWallNormalMaxY)
+            {
+                continue;
+            }
+
+            if (hit.distance < bestDistance)
+            {
+                bestDistance = hit.distance;
+                bestHit = hit;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
+    private Vector3 ResolvePlacementFacingHint()
+    {
+        Vector3 forward = placementAnchor != null ? placementAnchor.forward : Vector3.forward;
+        if (placementUseCameraRelative)
+        {
+            Camera cam = placementCamera != null ? placementCamera : Camera.main;
+            if (cam != null)
+            {
+                forward = cam.transform.forward;
+            }
+        }
+
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            forward = Vector3.forward;
+        }
+
+        return forward.normalized;
+    }
+
+    private static Quaternion BuildPlacementSurfaceRotation(Vector3 surfaceNormal, Vector3 facingHint)
+    {
+        Vector3 up = surfaceNormal.sqrMagnitude > 0.0001f ? surfaceNormal.normalized : Vector3.up;
+        Vector3 forward = Vector3.ProjectOnPlane(facingHint, up);
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            forward = Vector3.ProjectOnPlane(Vector3.forward, up);
+        }
+
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            forward = Vector3.Cross(up, Vector3.right);
+        }
+
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            forward = Vector3.Cross(up, Vector3.forward);
+        }
+
+        return Quaternion.LookRotation(forward.normalized, up);
+    }
+
+    private bool TryGetPackedPlacementColor(Item item, GameObject instance, out uint packedColor)
+    {
+        packedColor = 0u;
+        if (item == null || !item.isBeacon || instance == null)
+        {
+            return false;
+        }
+
+        if (!BeaconMarker.TryFind(instance, out BeaconMarker beacon))
+        {
+            return false;
+        }
+
+        packedColor = PackPlacementColor(beacon.MarkerColor);
+        return true;
+    }
+
+    private static uint PackPlacementColor(Color color)
+    {
+        Color32 c = color;
+        return (uint)c.r | ((uint)c.g << 8) | ((uint)c.b << 16) | ((uint)c.a << 24);
     }
 
     private bool HasBuildingResources(Item building, SquadCharacterController controller, out string reason)
@@ -2932,6 +3625,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         NetworkInventory inventory = ResolveNetworkInventory(controller);
+        bool createLootContainer = ShouldCreatePlacementLootContainer(placementItem);
         if (IsNetworked() && inventory != null && !inventory.IsServer)
         {
             if (placementItem.isBuilding)
@@ -2943,13 +3637,17 @@ public class InventoryPanelController : MonoBehaviour
 
             Vector3 targetPosition = placementInstance.transform.position;
             Quaternion targetRotation = placementInstance.transform.rotation;
+            uint placementColorPacked = 0u;
+            bool usePlacementColor = TryGetPackedPlacementColor(placementItem, placementInstance, out placementColorPacked);
             bool requested = inventory.RequestPlaceItem(
                 placementItem,
                 targetPosition,
                 targetRotation,
-                placementCreateLootContainer,
+                createLootContainer,
                 placementDestroyWhenEmpty,
-                allowDropWithoutWorldPrefab);
+                allowDropWithoutWorldPrefab,
+                placementColorPacked,
+                usePlacementColor);
 
             RestorePlacementPhysics();
             ClearPlacementVisuals();
@@ -2997,7 +3695,7 @@ public class InventoryPanelController : MonoBehaviour
         {
             ConfigurePlacedBuilding(placementInstance, placementItem);
         }
-        else if (placementCreateLootContainer)
+        else if (createLootContainer)
         {
             CreateDroppedLootContainer(placementInstance, placementItem);
         }
@@ -3295,6 +3993,11 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        if (placementItem != null && placementItem.isBeacon && placementGroundCollider == null)
+        {
+            return false;
+        }
+
         if (placementColliders == null || placementColliders.Length == 0)
         {
             return true;
@@ -3334,7 +4037,17 @@ public class InventoryPanelController : MonoBehaviour
         for (int i = 0; i < overlaps.Length; i++)
         {
             Collider hit = overlaps[i];
-            if (hit == null || IsIgnoredPlacementCollider(hit))
+            if (hit == null)
+            {
+                continue;
+            }
+
+            if (placementItem != null && placementItem.isBeacon && IsPlacementCharacterCollider(hit))
+            {
+                return false;
+            }
+
+            if (IsIgnoredPlacementCollider(hit))
             {
                 continue;
             }
@@ -3467,6 +4180,11 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         item.CreateDroppedLootContainer(instance, quantity, placementDestroyWhenEmpty);
+    }
+
+    private bool ShouldCreatePlacementLootContainer(Item item)
+    {
+        return placementCreateLootContainer || (item != null && item.isBeacon);
     }
 
     private void UpdateActionBoxCursor()
@@ -3699,6 +4417,22 @@ public class InventoryPanelController : MonoBehaviour
         public string Name { get; }
         public Color FrameBaseColor { get; }
         public Color LabelBaseColor { get; }
+    }
+
+    private sealed class BeaconColorSwatch
+    {
+        public BeaconColorSwatch(RectTransform rect, Image frame, Image fill, Color color)
+        {
+            Rect = rect;
+            Frame = frame;
+            Fill = fill;
+            Color = color;
+        }
+
+        public RectTransform Rect { get; }
+        public Image Frame { get; }
+        public Image Fill { get; }
+        public Color Color { get; }
     }
 
     private readonly struct PlacementRigidbodyState

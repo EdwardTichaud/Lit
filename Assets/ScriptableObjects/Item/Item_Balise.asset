@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
-  m_Name: "Item_R\xE9sidu lumineux"
+  m_Name: Item_Balise
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  itemId: 
-  itemName: 
+  itemId: Item_Balise
+  itemName: Balise
   itemSprite: {fileID: 0}
-  description: Residu lumineux utilisable pour fabriquer une balise.
-  canUse: 1
-  canPlace: 0
+  description: Balise colorable pour marquer un lieu, un mur ou une zone deja fouillee.
+  canUse: 0
+  canPlace: 1
   isContainer: 0
-  worldPrefab: {fileID: 0}
+  worldPrefab: {fileID: 101000000000000001, guid: 1fa3d4d9810e47d2a2509a422f434bf2, type: 3}
   isTorch: 0
-  isBeacon: 0
-  allowWallPlacement: 0
-  placementRadiusOverride: 0
+  isBeacon: 1
+  allowWallPlacement: 1
+  placementRadiusOverride: 10
   isWetClay: 0
   driedReplacementItem: {fileID: 0}
   preservesWetClay: 0
@@ -35,26 +35,25 @@ MonoBehaviour:
   allowDropFromInventory: 1
   allowPlaceFromInventory: 1
   allowInstantDropWithoutPrefab: 1
-  useEffects:
-  - {fileID: 11400000, guid: 23e35f23889b4bb9a0d9d7fd8cd1ec11, type: 2}
+  useEffects: []
   requireAllUseEffects: 0
   consumeOnUse: 0
   consumeQuantity: 1
   itemPassiveEffect: {fileID: 0}
   allowDepositToContainers: 1
   allowTakeFromContainers: 1
-  cannotPlaceMessage: 
+  cannotPlaceMessage: Balise impossible a poser.
   cannotPlaceWhileEquippedMessage: 
   cannotDropMessage: 
-  cannotUseMessage: 
-  useFailedMessage: Il faut 1 residu lumineux et 1 argile humide pour fabriquer une balise.
+  cannotUseMessage: Choisissez une couleur avant de poser la balise.
+  useFailedMessage: 
   cannotPickupMessage: 
   cannotDepositMessage: 
   cannotTakeMessage: 
   cannotBreakMessage: 
   breakFailedMessage: 
-  useSuccessMessage: Balise fabriquee.
-  placeSuccessMessage: 
+  useSuccessMessage: 
+  placeSuccessMessage: Balise posee.
   dropSuccessMessage: 
   depositSuccessMessage: 
   takeSuccessMessage: 

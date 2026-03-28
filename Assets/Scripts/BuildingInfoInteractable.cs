@@ -48,6 +48,8 @@ public class BuildingInfoInteractable : MonoBehaviour
     public bool closePanelOnExit = true;
     [Tooltip("Ouvre automatiquement le panel quand le joueur est proche.")]
     public bool openOnProximity = true;
+    [Tooltip("Consomme l'input Interact meme si l'objet n'ouvre qu'une UI de proximite.")]
+    public bool consumeInteractOnProximity = true;
 
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
@@ -107,6 +109,7 @@ public class BuildingInfoInteractable : MonoBehaviour
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
+        CloseInfoPanels();
         ResetState();
     }
 
@@ -199,14 +202,22 @@ public class BuildingInfoInteractable : MonoBehaviour
                 return;
             }
 
-            LocalInputRouter.ConsumeInteract();
-
             if (TryOpenCraftingPanel())
             {
+                LocalInputRouter.ConsumeInteract();
                 return;
             }
 
-            TryApplyInteractEffects();
+            if (TryApplyInteractEffects())
+            {
+                LocalInputRouter.ConsumeInteract();
+                return;
+            }
+
+            if (consumeInteractOnProximity)
+            {
+                LocalInputRouter.ConsumeInteract();
+            }
             return;
         }
 

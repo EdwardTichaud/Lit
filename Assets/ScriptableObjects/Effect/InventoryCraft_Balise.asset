@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e729a94073f4fe787c4466af7a8b5b1, type: 3}
+  m_Name: InventoryCraft_Balise
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryCraftEffect
+  effectDescription: 1 Résidu lumineux + 1 Argile humide -> 1 Balise
+  ingredients:
+  - item: {fileID: 11400000, guid: 6f3d7907a16bcc34fa2428da170052ee, type: 2}
+    quantity: 1
+  - item: {fileID: 11400000, guid: 1acb25a119d54a2d944f0a9c79fd6d39, type: 2}
+    quantity: 1
+  outputItem: {fileID: 11400000, guid: 9de9ff17a74645eb8ed89d570ccb2a8c, type: 2}
+  outputQuantity: 1

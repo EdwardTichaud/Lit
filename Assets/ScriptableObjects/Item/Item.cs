@@ -68,6 +68,24 @@ public class Item : ScriptableObject
     public GameObject worldPrefab;
     [Tooltip("Item special torche.")]
     public bool isTorch;
+    [Header("Special Placement")]
+    [Tooltip("Item special de type balise.")]
+    public bool isBeacon;
+    [Tooltip("Autorise l'accroche sur les murs pendant la pose.")]
+    public bool allowWallPlacement;
+    [Min(0f)]
+    [Tooltip("Rayon de pose specifique (0 = utilise le rayon global).")]
+    public float placementRadiusOverride = 0f;
+    [Header("Preservation")]
+    [Tooltip("Argile humide qui peut secher si elle n'est pas preservee.")]
+    public bool isWetClay;
+    [Tooltip("Item remplaçant l'argile humide lorsqu'elle seche.")]
+    public Item driedReplacementItem;
+    [Tooltip("Conserve une quantite d'argile humide dans l'inventaire.")]
+    public bool preservesWetClay;
+    [Min(0)]
+    [Tooltip("Quantite d'argile humide preservee par cet item.")]
+    public int preservedWetClayCapacity = 1;
     [Header("Lock / Key")]
     [Tooltip("Si true, cet item peut servir de cle.")]
     public bool isKey;
@@ -707,6 +725,7 @@ public class Item : ScriptableObject
             existing.containerItem = this;
             existing.destroyWhenEmpty = destroyWhenEmpty;
             existing.collectable = collectable;
+            existing.RefreshRecoverableWorldInfo();
             return existing;
         }
 
@@ -735,6 +754,7 @@ public class Item : ScriptableObject
         loot.interactionTrigger = trigger;
         loot.destroyWhenEmpty = destroyWhenEmpty;
         loot.collectable = collectable;
+        loot.RefreshRecoverableWorldInfo();
         return loot;
     }
 

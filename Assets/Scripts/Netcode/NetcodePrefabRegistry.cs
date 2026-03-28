@@ -346,6 +346,10 @@ public static class NetcodePrefabRegistry
         uint hash = withLootContainer ? info.lootHash : info.plainHash;
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(instance);
+        if (BeaconMarker.TryFind(instance, out _))
+        {
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentBeaconState>(instance);
+        }
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
         return instance;
     }
@@ -395,6 +399,10 @@ public static class NetcodePrefabRegistry
         }
 
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
+        if (BeaconMarker.TryFind(instance, out _))
+        {
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentBeaconState>(instance);
+        }
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
         return instance;
     }

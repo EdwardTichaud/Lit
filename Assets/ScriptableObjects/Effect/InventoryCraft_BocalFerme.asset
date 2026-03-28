@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e729a94073f4fe787c4466af7a8b5b1, type: 3}
+  m_Name: InventoryCraft_BocalFerme
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryCraftEffect
+  effectDescription: 1 Bocal en verre sans couvercle + 1 Couvercle -> 1 Bocal en verre fermé
+  ingredients:
+  - item: {fileID: 11400000, guid: 7df7b280729e46f8afc1d17dff7e0af1, type: 2}
+    quantity: 1
+  - item: {fileID: 11400000, guid: d2b72e5c813047ea86ea0e79840f5c75, type: 2}
+    quantity: 1
+  outputItem: {fileID: 11400000, guid: c2959b0ace224ce2a9fd6634504499f0, type: 2}
+  outputQuantity: 1

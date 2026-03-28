@@ -674,6 +674,8 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             items.Add(item);
         }
+
+        NormalizeReactiveInventoryItems();
     }
 
     private void EnsureDynamicMeshCollidersSafe()
@@ -779,6 +781,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         items.Clear();
         items.AddRange(newItems);
+        NormalizeReactiveInventoryItems();
         ApplyEquippedInteractionItems(newEquippedInteractionItems);
         torchSecondsRemaining = Mathf.Max(0, torchSeconds);
         InitializeTorchState();
@@ -1037,6 +1040,7 @@ public partial class SquadCharacterController : MonoBehaviour
         bool removed = ConsumeItem(item, count);
         if (removed)
         {
+            NormalizeReactiveInventoryItems();
             SanitizeEquippedInteractionItems();
         }
 
@@ -1082,6 +1086,7 @@ public partial class SquadCharacterController : MonoBehaviour
         bool removed = ConsumeItem(item, quantity);
         if (removed)
         {
+            NormalizeReactiveInventoryItems();
             SanitizeEquippedInteractionItems();
         }
 
@@ -1256,6 +1261,77 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         SyncInteractionEquipmentToCharacterData();
+    }
+
+    private void NormalizeReactiveInventoryItems()
+    {
+        EnsureInventoryList();
+        if (items == null || items.Count == 0)
+        {
+            return;
+        }
+
+        bool inventoryChanged = NormalizeWetClayPreservation();
+        if (inventoryChanged)
+        {
+            SanitizeEquippedInteractionItems();
+        }
+    }
+
+    private bool NormalizeWetClayPreservation()
+    {
+        int preservedCapacity = 0;
+        List<int> wetClayIndices = null;
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Item item = items[i];
+            if (item == null)
+            {
+                continue;
+            }
+
+            if (item.preservesWetClay)
+            {
+                preservedCapacity += Mathf.Max(0, item.preservedWetClayCapacity);
+            }
+
+            if (!item.isWetClay)
+            {
+                continue;
+            }
+
+            wetClayIndices ??= new List<int>();
+            wetClayIndices.Add(i);
+        }
+
+        if (wetClayIndices == null || wetClayIndices.Count == 0 || wetClayIndices.Count <= preservedCapacity)
+        {
+            return false;
+        }
+
+        bool changed = false;
+        int preservedRemaining = Mathf.Max(0, preservedCapacity);
+        for (int i = 0; i < wetClayIndices.Count; i++)
+        {
+            int index = wetClayIndices[i];
+            if (preservedRemaining > 0)
+            {
+                preservedRemaining--;
+                continue;
+            }
+
+            Item wetClay = items[index];
+            if (wetClay == null || !wetClay.isWetClay || wetClay.driedReplacementItem == null)
+            {
+                continue;
+            }
+
+            items[index] = wetClay.driedReplacementItem;
+            changed = true;
+        }
+
+        return changed;
     }
 
     private bool TryFindMatchingKey(string lockId, out Item keyItem)

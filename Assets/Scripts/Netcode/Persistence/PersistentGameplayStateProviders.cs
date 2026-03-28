@@ -191,6 +191,80 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
 }
 
 [DisallowMultipleComponent]
+public class PersistentBeaconState : MonoBehaviour, IPersistentStateProvider
+{
+    [Serializable]
+    private sealed class BeaconStateData
+    {
+        public float R;
+        public float G;
+        public float B;
+        public float A = 1f;
+    }
+
+    [SerializeField] private BeaconMarker beacon;
+
+    public string ProviderId => "beacon";
+
+    private void Awake()
+    {
+        ResolveBeacon();
+    }
+
+    public byte[] CaptureState(PersistentStateContext context)
+    {
+        ResolveBeacon();
+        if (beacon == null)
+        {
+            return Array.Empty<byte>();
+        }
+
+        Color color = beacon.MarkerColor;
+        return PersistentStateJson.ToBytes(new BeaconStateData
+        {
+            R = color.r,
+            G = color.g,
+            B = color.b,
+            A = color.a
+        });
+    }
+
+    public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
+    {
+        if (phase != PersistentApplyPhase.ApplyGameplayState)
+        {
+            return;
+        }
+
+        ResolveBeacon();
+        if (beacon == null)
+        {
+            return;
+        }
+
+        if (!PersistentStateJson.TryFromBytes(state, ProviderId, beacon, context, out BeaconStateData data))
+        {
+            return;
+        }
+
+        beacon.SetColor(new Color(data.R, data.G, data.B, data.A));
+    }
+
+    private void ResolveBeacon()
+    {
+        if (beacon == null)
+        {
+            beacon = GetComponent<BeaconMarker>();
+        }
+
+        if (beacon == null)
+        {
+            beacon = GetComponentInChildren<BeaconMarker>(true);
+        }
+    }
+}
+
+[DisallowMultipleComponent]
 public class PersistentKnowledgeState : MonoBehaviour, IPersistentStateProvider
 {
     [Serializable]
