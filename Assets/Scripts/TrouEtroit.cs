@@ -51,6 +51,10 @@ public class TrouEtroit : MonoBehaviour
     public Camera targetCamera;
 
     [Header("Teleport")]
+    [Tooltip("Point A du passage. Si A et B sont assignes, le personnage est teleporte vers l'autre point selon celui dont il est le plus proche.")]
+    public Transform teleportPointA;
+    [Tooltip("Point B du passage. Si A et B sont assignes, le personnage est teleporte vers l'autre point selon celui dont il est le plus proche.")]
+    public Transform teleportPointB;
     [Tooltip("Distance de teleport de l'autre cote.")]
     public float teleportDistance = 1.5f;
     [Tooltip("Offset additionnel applique a la destination.")]
@@ -591,22 +595,30 @@ public class TrouEtroit : MonoBehaviour
         }
 
         Transform t = character.transform;
-        Vector3 toCharacter = t.position - transform.position;
-        float side = Vector3.Dot(transform.forward, toCharacter) >= 0f ? 1f : -1f;
-        Vector3 exitDir = side >= 0f ? -transform.forward : transform.forward;
-
-        Vector3 destination = transform.position + exitDir * Mathf.Max(0f, teleportDistance);
-        if (keepOriginalHeight)
-        {
-            destination.y = t.position.y;
-        }
-
-        destination += teleportOffset;
-
         Quaternion rotation = t.rotation;
-        if (faceExitDirection && exitDir.sqrMagnitude > 0.001f)
+        Vector3 destination;
+        if (!TryGetTransformTeleportDestination(t, out destination, out Quaternion targetRotation))
         {
-            rotation = Quaternion.LookRotation(exitDir.normalized, Vector3.up);
+            Vector3 toCharacter = t.position - transform.position;
+            float side = Vector3.Dot(transform.forward, toCharacter) >= 0f ? 1f : -1f;
+            Vector3 exitDir = side >= 0f ? -transform.forward : transform.forward;
+
+            destination = transform.position + exitDir * Mathf.Max(0f, teleportDistance);
+            if (keepOriginalHeight)
+            {
+                destination.y = t.position.y;
+            }
+
+            destination += teleportOffset;
+
+            if (faceExitDirection && exitDir.sqrMagnitude > 0.001f)
+            {
+                rotation = Quaternion.LookRotation(exitDir.normalized, Vector3.up);
+            }
+        }
+        else if (faceExitDirection)
+        {
+            rotation = targetRotation;
         }
 
         Rigidbody rb = character.GetComponent<Rigidbody>();
@@ -637,6 +649,39 @@ public class TrouEtroit : MonoBehaviour
         {
             squadController.Stop();
         }
+    }
+
+    private bool TryGetTransformTeleportDestination(Transform character, out Vector3 destination, out Quaternion rotation)
+    {
+        destination = default;
+        rotation = Quaternion.identity;
+
+        if (character == null || teleportPointA == null || teleportPointB == null)
+        {
+            return false;
+        }
+
+        Vector3 characterPosition = character.position;
+        float distanceToA = (characterPosition - teleportPointA.position).sqrMagnitude;
+        float distanceToB = (characterPosition - teleportPointB.position).sqrMagnitude;
+        Transform targetPoint = distanceToA <= distanceToB ? teleportPointB : teleportPointA;
+        if (targetPoint == null)
+        {
+            return false;
+        }
+
+        destination = targetPoint.position + teleportOffset;
+        if (keepOriginalHeight)
+        {
+            destination.y = characterPosition.y;
+        }
+
+        Vector3 flatForward = targetPoint.forward;
+        flatForward.y = 0f;
+        rotation = flatForward.sqrMagnitude > 0.001f
+            ? Quaternion.LookRotation(flatForward.normalized, Vector3.up)
+            : character.rotation;
+        return true;
     }
 
     private bool TryCheckSkill(GameObject character, Skill skill)

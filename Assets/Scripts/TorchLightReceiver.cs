@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 
 [DisallowMultipleComponent]
 public class TorchLightReceiver : MonoBehaviour
@@ -8,6 +9,19 @@ public class TorchLightReceiver : MonoBehaviour
     [SerializeField] private bool searchInChildren = true;
     [SerializeField] private bool disableColorTemperatureWhenColored = true;
 
+    [Header("Shadowing")]
+    [SerializeField] private bool configureTorchShadowing = true;
+    [SerializeField] private LightRenderMode renderMode = LightRenderMode.ForcePixel;
+    [SerializeField] private LightShadows shadowMode = LightShadows.Soft;
+    [SerializeField, Range(0f, 1f)] private float shadowStrength = 1f;
+    [SerializeField, Range(0f, 0.2f)] private float shadowBias = 0.02f;
+    [SerializeField, Range(0f, 0.5f)] private float shadowNormalBias = 0.08f;
+    [SerializeField, Min(0.01f)] private float shadowNearPlane = 0.05f;
+    [SerializeField, Min(128)] private int hdrpShadowResolution = 1024;
+    [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.2f;
+    [SerializeField] private bool enableHdrpContactShadows = true;
+
     [Header("Owner")]
     [SerializeField] private SquadCharacterController owner;
     [SerializeField] private bool searchOwnerInParents = true;
@@ -16,6 +30,7 @@ public class TorchLightReceiver : MonoBehaviour
     private bool defaultUseColorTemperature;
     private float defaultColorTemperature;
     private bool hasDefault;
+    private HDAdditionalLightData targetHdLight;
 
     public SquadCharacterController Owner => owner;
 
@@ -57,16 +72,31 @@ public class TorchLightReceiver : MonoBehaviour
     {
         CacheLight();
         CacheOwner();
+        ApplyShadowing();
     }
 
     private void OnEnable()
     {
         CacheLight();
         CacheOwner();
+        ApplyShadowing();
         TorchVisionSystem.GetOrCreate();
         TorchVisionSystem.RegisterTorchSource(this);
         TorchVisionSystem.VisionChanged += OnVisionChanged;
         ApplyVision(GetOwnerVision());
+    }
+
+    private void OnValidate()
+    {
+        CacheLight();
+        shadowStrength = Mathf.Clamp01(shadowStrength);
+        shadowBias = Mathf.Clamp(shadowBias, 0f, 0.2f);
+        shadowNormalBias = Mathf.Clamp(shadowNormalBias, 0f, 0.5f);
+        shadowNearPlane = Mathf.Max(0.01f, shadowNearPlane);
+        hdrpShadowResolution = Mathf.Max(128, hdrpShadowResolution);
+        hdrpNormalBias = Mathf.Clamp01(hdrpNormalBias);
+        hdrpSlopeBias = Mathf.Clamp01(hdrpSlopeBias);
+        ApplyShadowing();
     }
 
     private void OnDisable()
@@ -82,6 +112,8 @@ public class TorchLightReceiver : MonoBehaviour
             targetLight = searchInChildren ? GetComponentInChildren<Light>(true) : GetComponent<Light>();
         }
 
+        targetHdLight = targetLight != null ? targetLight.GetComponent<HDAdditionalLightData>() : null;
+
         if (targetLight == null || hasDefault)
         {
             return;
@@ -91,6 +123,33 @@ public class TorchLightReceiver : MonoBehaviour
         defaultUseColorTemperature = targetLight.useColorTemperature;
         defaultColorTemperature = targetLight.colorTemperature;
         hasDefault = true;
+    }
+
+    private void ApplyShadowing()
+    {
+        if (targetLight == null || !configureTorchShadowing)
+        {
+            return;
+        }
+
+        targetLight.renderMode = renderMode;
+        targetLight.shadows = shadowMode;
+        targetLight.shadowStrength = shadowStrength;
+        targetLight.shadowBias = shadowBias;
+        targetLight.shadowNormalBias = shadowNormalBias;
+        targetLight.shadowNearPlane = shadowNearPlane;
+
+        if (targetHdLight == null)
+        {
+            return;
+        }
+
+        targetHdLight.SetShadowResolution(hdrpShadowResolution);
+        targetHdLight.shadowDimmer = 1f;
+        targetHdLight.normalBias = hdrpNormalBias;
+        targetHdLight.slopeBias = hdrpSlopeBias;
+        targetHdLight.useContactShadow.useOverride = true;
+        targetHdLight.useContactShadow.@override = enableHdrpContactShadows;
     }
 
     private void CacheOwner()

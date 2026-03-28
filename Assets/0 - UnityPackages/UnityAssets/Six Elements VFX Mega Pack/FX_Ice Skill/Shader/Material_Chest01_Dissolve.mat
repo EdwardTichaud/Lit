@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Material_Chest01
+  m_Name: Material_Chest01_Dissolve
   m_Shader: {fileID: -6465566751694194690, guid: 297a383fda10e164096d09df64300d26, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -63,7 +63,7 @@ Material:
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
-    - _DissolveAmount: 1
+    - _DissolveAmount: 0
     - _DissolveScale: 100
     - _DissolveWidth: 0.1
     - _DoubleSidedEnable: 0
