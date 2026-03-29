@@ -69,6 +69,15 @@ public partial class SquadCharacterController
             if (string.Equals(child.name, "root", System.StringComparison.OrdinalIgnoreCase))
             {
                 AddObstacleTraversalVisualTarget(child);
+                return;
+            }
+        }
+
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if (child == null)
+            {
                 continue;
             }
 
@@ -102,8 +111,14 @@ public partial class SquadCharacterController
             return;
         }
 
-        obstacleTraversalVisualLag = Mathf.Clamp(
-            obstacleTraversalVisualLag + stepHeight,
+        float filteredStepHeight = Mathf.Max(0f, stepHeight - obstacleTraversalVisualDeadZone);
+        if (filteredStepHeight <= 0.0001f)
+        {
+            return;
+        }
+
+        obstacleTraversalVisualLagTarget = Mathf.Clamp(
+            obstacleTraversalVisualLagTarget + filteredStepHeight,
             0f,
             obstacleTraversalVisualMaxLag);
     }
@@ -117,10 +132,19 @@ public partial class SquadCharacterController
 
         if (deltaTime > 0f)
         {
-            obstacleTraversalVisualLag = Mathf.MoveTowards(
-                obstacleTraversalVisualLag,
+            obstacleTraversalVisualLagTarget = Mathf.MoveTowards(
+                obstacleTraversalVisualLagTarget,
                 0f,
                 obstacleTraversalVisualCatchUpSpeed * deltaTime);
+            float blend = 1f - Mathf.Exp(-obstacleTraversalVisualResponsiveness * deltaTime);
+            obstacleTraversalVisualLag = Mathf.Lerp(
+                obstacleTraversalVisualLag,
+                obstacleTraversalVisualLagTarget,
+                blend);
+        }
+        else
+        {
+            obstacleTraversalVisualLag = obstacleTraversalVisualLagTarget;
         }
 
         for (int i = 0; i < obstacleTraversalVisualTargets.Count; i++)
@@ -142,6 +166,7 @@ public partial class SquadCharacterController
     private void ResetObstacleTraversalVisualTargetsImmediate()
     {
         obstacleTraversalVisualLag = 0f;
+        obstacleTraversalVisualLagTarget = 0f;
         int count = Mathf.Min(obstacleTraversalVisualTargets.Count, obstacleTraversalVisualBaseLocalPositions.Count);
         for (int i = 0; i < count; i++)
         {

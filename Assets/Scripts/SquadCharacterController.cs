@@ -206,8 +206,12 @@ public partial class SquadCharacterController : MonoBehaviour
     private Transform obstacleTraversalVisualRoot;
     [SerializeField, Tooltip("Vitesse de rattrapage du visuel apres un step-up (m/s).")]
     private float obstacleTraversalVisualCatchUpSpeed = 4f;
+    [SerializeField, Tooltip("Vitesse de lissage appliquee au retard visuel pour eviter les a-coups (1/s).")]
+    private float obstacleTraversalVisualResponsiveness = 12f;
     [SerializeField, Tooltip("Retard visuel maximal autorise pendant un step-up (m).")]
     private float obstacleTraversalVisualMaxLag = 0.18f;
+    [SerializeField, Tooltip("Ignore les micro step-up sous cette hauteur pour eviter le bruit visuel (m).")]
+    private float obstacleTraversalVisualDeadZone = 0.015f;
     private Vector2 moveInput;
     private float inputLockTimer;
     private Vector2 smoothedInput;
@@ -245,6 +249,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private int lastAnimationSpeedBucket = int.MinValue;
     private bool lastAnimationAnimatorEnabled;
     private float obstacleTraversalVisualLag;
+    private float obstacleTraversalVisualLagTarget;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -1515,7 +1520,9 @@ public partial class SquadCharacterController : MonoBehaviour
         obstacleTraversalGroundGraceTime = Mathf.Max(0f, obstacleTraversalGroundGraceTime);
         obstacleTraversalContactOffset = Mathf.Max(0f, obstacleTraversalContactOffset);
         obstacleTraversalVisualCatchUpSpeed = Mathf.Max(0.01f, obstacleTraversalVisualCatchUpSpeed);
+        obstacleTraversalVisualResponsiveness = Mathf.Max(0.01f, obstacleTraversalVisualResponsiveness);
         obstacleTraversalVisualMaxLag = Mathf.Max(0f, obstacleTraversalVisualMaxLag);
+        obstacleTraversalVisualDeadZone = Mathf.Max(0f, obstacleTraversalVisualDeadZone);
 
         ValidateCommittedJumpSettings();
         ApplyAnimatorSettings();
