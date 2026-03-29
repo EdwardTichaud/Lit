@@ -714,18 +714,10 @@ public class Item : ScriptableObject
             return null;
         }
 
-        int clampedQuantity = Mathf.Max(1, quantity);
         LootContainer existing = instance.GetComponentInChildren<LootContainer>();
         if (existing != null)
         {
-            existing.lootItems = new List<LootContainer.LootItemEntry>
-            {
-                new LootContainer.LootItemEntry { item = this, quantity = clampedQuantity }
-            };
-            existing.containerItem = this;
-            existing.destroyWhenEmpty = destroyWhenEmpty;
-            existing.collectable = collectable;
-            existing.RefreshRecoverableWorldInfo();
+            ConfigureDroppedLootContainer(existing, quantity, destroyWhenEmpty, collectable);
             return existing;
         }
 
@@ -746,16 +738,31 @@ public class Item : ScriptableObject
         trigger.size = bounds.size;
 
         LootContainer loot = root.AddComponent<LootContainer>();
-        loot.lootItems = new List<LootContainer.LootItemEntry>
+        loot.interactionTrigger = trigger;
+        ConfigureDroppedLootContainer(loot, quantity, destroyWhenEmpty, collectable);
+        return loot;
+    }
+
+    public void ConfigureDroppedLootContainer(LootContainer container, int quantity, bool destroyWhenEmpty, bool collectable = true)
+    {
+        if (container == null)
+        {
+            return;
+        }
+
+        int clampedQuantity = Mathf.Max(1, quantity);
+        container.lootItems = new List<LootContainer.LootItemEntry>
         {
             new LootContainer.LootItemEntry { item = this, quantity = clampedQuantity }
         };
-        loot.containerItem = this;
-        loot.interactionTrigger = trigger;
-        loot.destroyWhenEmpty = destroyWhenEmpty;
-        loot.collectable = collectable;
-        loot.RefreshRecoverableWorldInfo();
-        return loot;
+        container.containerItem = this;
+        container.destroyWhenEmpty = destroyWhenEmpty;
+        container.collectable = collectable;
+        if (container.interactionTrigger == null)
+        {
+            container.interactionTrigger = FindBestInteractionTrigger(container.gameObject);
+        }
+        container.RefreshRecoverableWorldInfo();
     }
 
     private static bool TryCalculateBounds(GameObject instance, out Bounds bounds)
@@ -828,6 +835,41 @@ public class Item : ScriptableObject
         }
 
         return true;
+    }
+
+    private static Collider FindBestInteractionTrigger(GameObject root)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider != null && collider.isTrigger && !IsConcaveMeshCollider(collider))
+            {
+                return collider;
+            }
+        }
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider != null && !IsConcaveMeshCollider(collider))
+            {
+                return collider;
+            }
+        }
+
+        return colliders.Length > 0 ? colliders[0] : null;
+    }
+
+    private static bool IsConcaveMeshCollider(Collider collider)
+    {
+        MeshCollider meshCollider = collider as MeshCollider;
+        return meshCollider != null && !meshCollider.convex;
     }
 
     private string ResolveMessage(string custom, string fallback)

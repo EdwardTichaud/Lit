@@ -539,14 +539,7 @@ public class NetworkInventory : NetworkBehaviour
 
             if (loot != null)
             {
-                loot.lootItems = new List<LootContainer.LootItemEntry>
-                {
-                    new LootContainer.LootItemEntry { item = item, quantity = Mathf.Max(1, quantity) }
-                };
-                loot.containerItem = item;
-                loot.destroyWhenEmpty = destroyWhenEmpty;
-                loot.collectable = collectable;
-                loot.RefreshRecoverableWorldInfo();
+                item.ConfigureDroppedLootContainer(loot, quantity, destroyWhenEmpty, collectable);
             }
         }
 

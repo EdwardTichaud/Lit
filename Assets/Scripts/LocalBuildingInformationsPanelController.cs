@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 // Panel d'informations local instancie pour un batiment.
 public class LocalBuildingInformationsPanelController : MonoBehaviour
@@ -27,6 +28,8 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
     public TMP_Text currentLevelText;
     [Tooltip("Champ du bonus actuel.")]
     public TMP_Text currentBonusText;
+    [Tooltip("Image optionnelle pour afficher le sprite d'item dans le panneau item.")]
+    public Image itemSpriteImage;
 
     [Header("Format")]
     [Tooltip("Format du niveau (ex: \"Niveau actuel: {0}\").")]
@@ -126,6 +129,7 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
             SetText(effectDescriptionText, string.Empty);
             SetText(currentLevelText, string.Empty);
             SetText(currentBonusText, string.Empty);
+            SetItemSprite(null);
             return;
         }
 
@@ -143,11 +147,13 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         SetText(effectDescriptionText, effectDescription);
         if (item != null && !item.isBuilding)
         {
+            SetItemSprite(item);
             SetText(currentLevelText, string.Empty);
             SetText(currentBonusText, string.Empty);
             return;
         }
 
+        SetItemSprite(null);
         SetText(currentLevelText, FormatValue(currentLevelFormat, level.ToString()));
         SetText(currentBonusText, FormatValue(currentBonusFormat, bonusDescription));
     }
@@ -313,6 +319,15 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         {
             currentBonusText = FindTextTarget(root, CurrentBonusFallback, "BonusActuel", "CurrentBonus");
         }
+
+        if (itemSpriteImage == null)
+        {
+            itemSpriteImage = FindImageTarget(root, "Root/Frame/Image");
+            if (itemSpriteImage == null)
+            {
+                itemSpriteImage = FindImageTarget(root, "Image");
+            }
+        }
     }
 
     private TMP_Text FindTextTarget(Transform root, params string[] names)
@@ -342,6 +357,34 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         return null;
     }
 
+    private Image FindImageTarget(Transform root, string pathOrName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(pathOrName))
+        {
+            return null;
+        }
+
+        Transform direct = root.Find(pathOrName);
+        if (direct != null)
+        {
+            return direct.GetComponent<Image>();
+        }
+
+        Transform[] children = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+            if (child == null || !MatchesName(child.name, pathOrName))
+            {
+                continue;
+            }
+
+            return child.GetComponent<Image>();
+        }
+
+        return null;
+    }
+
     private bool MatchesName(string candidate, string[] names)
     {
         if (string.IsNullOrWhiteSpace(candidate))
@@ -359,6 +402,16 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool MatchesName(string candidate, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        return MatchesName(candidate, new[] { name });
     }
 
     private string NormalizeName(string value)
@@ -392,6 +445,18 @@ public class LocalBuildingInformationsPanelController : MonoBehaviour
         }
 
         target.text = value ?? string.Empty;
+    }
+
+    private void SetItemSprite(Item item)
+    {
+        if (itemSpriteImage == null)
+        {
+            return;
+        }
+
+        Sprite sprite = item != null ? item.itemSprite : null;
+        itemSpriteImage.sprite = sprite;
+        itemSpriteImage.enabled = sprite != null;
     }
 
     private string FormatValue(string format, string value)

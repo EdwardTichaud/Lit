@@ -66,6 +66,7 @@ public class BuildingInfoInteractable : MonoBehaviour
     private string lastPresentationLogSignature = string.Empty;
     private string presentationOrigin = "unknown";
     private string lastWorldUiBindingFailureReason = string.Empty;
+    private TorchVisionSensitive visibilityGate;
 
     private bool localPanelPrefabResolvedAutomatically;
     private bool resolvedAutoLocalPanelForItem;
@@ -131,15 +132,23 @@ public class BuildingInfoInteractable : MonoBehaviour
         RefreshControlledCharacterOverlap();
         RefreshCurrentCharacter();
         EnsureBuildingData();
+
+        if (!CanDisplayWorldUi())
+        {
+            CloseInfoPanels();
+            TrackVisibilityState("update_hidden_by_torch_vision");
+            return;
+        }
+
         EnsureLocalPanel();
 
         if (currentCharacter != null && HasBuildingData())
         {
             if (localPanelInstance != null)
             {
-                UpdateLocalPanelAnchor();
                 if (!localPanelInstance.IsOpen || localPanelInstance.CurrentBuilding != this)
                 {
+                    PrepareLocalPanelForDisplay();
                     localPanelInstance.OpenPanel(this);
                 }
                 else
@@ -190,6 +199,11 @@ public class BuildingInfoInteractable : MonoBehaviour
     {
         ResolveRuntimeReferences();
         EnsureBuildingData();
+        if (!CanDisplayWorldUi())
+        {
+            return;
+        }
+
         if (openOnProximity)
         {
             if (InputFocusStack.HasAnyFocus())
@@ -239,6 +253,11 @@ public class BuildingInfoInteractable : MonoBehaviour
             return;
         }
 
+        if (!CanDisplayWorldUi())
+        {
+            return;
+        }
+
         RefreshCurrentCharacter();
         if (currentCharacter == null)
         {
@@ -270,6 +289,7 @@ public class BuildingInfoInteractable : MonoBehaviour
                 return;
             }
 
+            PrepareLocalPanelForDisplay();
             localPanelInstance.OpenPanel(this);
             return;
         }
@@ -548,6 +568,8 @@ public class BuildingInfoInteractable : MonoBehaviour
             targetCamera = Camera.main;
         }
 
+        ResolveVisibilityGate();
+
         if (localPanelParent == null)
         {
             GameObject parentObject = GameObject.Find(DefaultLocalPanelParentName);
@@ -590,6 +612,119 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         runtimeReferencesResolved = targetCamera != null || localInformationPanelPrefab != null || localPanelParent != null || craftingPanel != null;
+    }
+
+    private void ResolveVisibilityGate()
+    {
+        if (visibilityGate != null)
+        {
+            return;
+        }
+
+        visibilityGate = GetComponent<TorchVisionSensitive>();
+        if (visibilityGate == null)
+        {
+            visibilityGate = GetComponentInParent<TorchVisionSensitive>(true);
+        }
+
+        if (visibilityGate == null)
+        {
+            visibilityGate = GetComponentInChildren<TorchVisionSensitive>(true);
+        }
+
+        if (visibilityGate != null)
+        {
+            return;
+        }
+
+        Transform scope = transform.parent;
+        while (scope != null)
+        {
+            TorchVisionSensitive[] candidates = scope.GetComponentsInChildren<TorchVisionSensitive>(true);
+            visibilityGate = SelectClosestVisibilityGate(candidates);
+            if (visibilityGate != null)
+            {
+                return;
+            }
+
+            scope = scope.parent;
+        }
+    }
+
+    private bool CanDisplayWorldUi()
+    {
+        ResolveVisibilityGate();
+        return visibilityGate == null || visibilityGate.IsWorldUiVisible;
+    }
+
+    private TorchVisionSensitive SelectClosestVisibilityGate(TorchVisionSensitive[] candidates)
+    {
+        if (candidates == null || candidates.Length == 0)
+        {
+            return null;
+        }
+
+        TorchVisionSensitive best = null;
+        int bestHierarchyDistance = int.MaxValue;
+        float bestWorldDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            TorchVisionSensitive candidate = candidates[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            int hierarchyDistance = GetHierarchyDistance(transform, candidate.transform);
+            float worldDistance = (candidate.transform.position - transform.position).sqrMagnitude;
+            if (hierarchyDistance < bestHierarchyDistance
+                || (hierarchyDistance == bestHierarchyDistance && worldDistance < bestWorldDistance))
+            {
+                best = candidate;
+                bestHierarchyDistance = hierarchyDistance;
+                bestWorldDistance = worldDistance;
+            }
+        }
+
+        return best;
+    }
+
+    private static int GetHierarchyDistance(Transform from, Transform to)
+    {
+        if (from == null || to == null)
+        {
+            return int.MaxValue;
+        }
+
+        if (from == to)
+        {
+            return 0;
+        }
+
+        List<Transform> fromParents = new List<Transform>();
+        Transform current = from;
+        while (current != null)
+        {
+            fromParents.Add(current);
+            current = current.parent;
+        }
+
+        int toDepth = 0;
+        current = to;
+        while (current != null)
+        {
+            int fromDepth = fromParents.IndexOf(current);
+            if (fromDepth >= 0)
+            {
+                return fromDepth + toDepth;
+            }
+
+            current = current.parent;
+            toDepth++;
+        }
+
+        return int.MaxValue;
     }
 
     private bool ShouldUseItemInformationPanel()
@@ -658,7 +793,11 @@ public class BuildingInfoInteractable : MonoBehaviour
 
         if (localPanelInstance != null)
         {
-            UpdateLocalPanelAnchor();
+            if (!localPanelInstance.IsOpen)
+            {
+                UpdateLocalPanelAnchor();
+            }
+
             return;
         }
 
@@ -682,18 +821,30 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         localPanelInstance.informationPanel = instance;
+        localPanelInstance.faceCamera = true;
         localPanelInstance.ClosePanel();
         if (localPanelInstance.deactivatePanelOnClose && localPanelInstance.informationPanel != null)
         {
             localPanelInstance.informationPanel.SetActive(false);
         }
+        UpdateLocalPanelAnchor();
         lastWorldUiBindingFailureReason = string.Empty;
         LogBuildingPresentation(
             "world_ui_initialized",
             "local world UI initialized");
     }
 
+    private void PrepareLocalPanelForDisplay()
+    {
+        UpdateLocalPanelAnchor(orientToCamera: true);
+    }
+
     private void UpdateLocalPanelAnchor()
+    {
+        UpdateLocalPanelAnchor(orientToCamera: false);
+    }
+
+    private void UpdateLocalPanelAnchor(bool orientToCamera)
     {
         if (localPanelInstance == null)
         {
@@ -701,10 +852,10 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         Transform anchor = informationAnchor != null ? informationAnchor : transform;
-        PositionLocalPanel(localPanelInstance.transform, anchor, informationOffset);
+        PositionLocalPanel(localPanelInstance.transform, anchor, informationOffset, orientToCamera);
     }
 
-    private void PositionLocalPanel(Transform panelTransform, Transform anchor, Vector3 offset)
+    private void PositionLocalPanel(Transform panelTransform, Transform anchor, Vector3 offset, bool orientToCamera)
     {
         if (panelTransform == null || anchor == null)
         {
@@ -745,7 +896,7 @@ public class BuildingInfoInteractable : MonoBehaviour
         }
 
         panelTransform.position = worldPosition;
-        if (cam != null && localPanelInstance != null && localPanelInstance.faceCamera)
+        if (orientToCamera && cam != null && localPanelInstance != null && localPanelInstance.faceCamera)
         {
             Vector3 toCamera = panelTransform.position - cam.transform.position;
             if (toCamera.sqrMagnitude > 0.0001f)
@@ -822,7 +973,11 @@ public class BuildingInfoInteractable : MonoBehaviour
 
         if (localPanelInstance != null)
         {
-            UpdateLocalPanelAnchor();
+            if (!localPanelInstance.IsOpen)
+            {
+                UpdateLocalPanelAnchor();
+            }
+
             if (localPanelInstance.CurrentBuilding == this)
             {
                 localPanelInstance.RefreshPanel();

@@ -54,6 +54,14 @@ public class TorchVisionSensitive : MonoBehaviour
     private DissolveRendererData[] cachedRenderers = Array.Empty<DissolveRendererData>();
     private MaterialPropertyBlock propertyBlock;
     private float refreshTimer;
+    private float currentVisibilityFactor = 1f;
+    private bool currentTorchInRange;
+    private bool hasEvaluatedVisibility;
+
+    public float CurrentVisibilityFactor => currentVisibilityFactor;
+    public bool IsWorldUiVisible => visibilityMode == VisibilityMode.AlwaysVisible
+        || (hasEvaluatedVisibility && currentVisibilityFactor > 0.001f);
+    public bool IsTorchInRange => currentTorchInRange;
 
     private void Awake()
     {
@@ -290,9 +298,12 @@ public class TorchVisionSensitive : MonoBehaviour
     private void RefreshState()
     {
         float visibilityFactor = DetermineVisibilityFactor(out Color dissolveColor, out bool torchInRange);
+        currentVisibilityFactor = Mathf.Clamp01(visibilityFactor);
+        currentTorchInRange = torchInRange;
+        hasEvaluatedVisibility = true;
         refreshTimer = torchInRange ? ActiveRefreshInterval : IdleRefreshInterval;
-        ApplyVisuals(visibilityFactor, dissolveColor);
-        ApplyInteraction(visibilityFactor >= 0.999f);
+        ApplyVisuals(currentVisibilityFactor, dissolveColor);
+        ApplyInteraction(currentVisibilityFactor >= 0.999f);
     }
 
     private float DetermineVisibilityFactor(out Color dissolveColor, out bool torchInRange)

@@ -196,28 +196,7 @@ MonoBehaviour:
       - rid: 4239847802960871450
       - rid: 4239847802960871451
     m_RuntimeSettings:
-      m_List:
-      - rid: 8556427327610290176
-      - rid: 8556427327610290180
-      - rid: 4239847802960871424
-      - rid: 4239847802960871425
-      - rid: 4239847802960871428
-      - rid: 4239847802960871429
-      - rid: 4239847802960871430
-      - rid: 4239847802960871431
-      - rid: 4239847802960871433
-      - rid: 4239847802960871434
-      - rid: 4239847802960871436
-      - rid: 4239847802960871437
-      - rid: 4239847802960871438
-      - rid: 4239847802960871441
-      - rid: 4239847802960871443
-      - rid: 4239847802960871444
-      - rid: 4239847802960871447
-      - rid: 4239847802960871448
-      - rid: 4239847802960871449
-      - rid: 4239847802960871450
-      - rid: 4239847802960871451
+      m_List: []
   renderingLayerNames:
   - Light Layer default
   - Light Layer 1
@@ -487,7 +466,7 @@ MonoBehaviour:
           sssQualityLevel: 0
           sssCustomSampleBudget: 20
           sssCustomDownsampleSteps: 0
-          msaaMode: 1
+          msaaMode: 9
           materialQuality: 0
         m_CustomOrBakedReflection:
           bitDatas:

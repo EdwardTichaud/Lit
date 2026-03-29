@@ -218,7 +218,7 @@ MonoBehaviour:
   currentBonusText: {fileID: 0}
   currentLevelFormat: '{0}'
   currentBonusFormat: '{0}'
-  faceCamera: 0
+  faceCamera: 1
 --- !u!1 &5371066795317135610
 GameObject:
   m_ObjectHideFlags: 0

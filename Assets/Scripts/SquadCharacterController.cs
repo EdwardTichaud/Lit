@@ -187,6 +187,27 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Range(0f, 1f), Tooltip("Normale minimale consideree comme walkable et ignoree pour le blocage horizontal.")]
     private float movementCollisionWalkableNormalDot = 0.35f;
 
+    [Header("Obstacle Traversal")]
+    [SerializeField, Tooltip("Autorise le franchissement permissif des marches et petits obstacles.")]
+    private bool enableObstacleTraversal = true;
+    [SerializeField, Tooltip("Hauteur maximale des marches/obstacles franchissables (m).")]
+    private float obstacleTraversalMaxStepHeight = 0.65f;
+    [SerializeField, Tooltip("Marge verticale supplementaire appliquee pendant le step-up (m).")]
+    private float obstacleTraversalClearance = 0.08f;
+    [SerializeField, Tooltip("Distance supplementaire de recherche de support apres un step-up (m).")]
+    private float obstacleTraversalProbeDistance = 0.8f;
+    [SerializeField, Tooltip("Courte grace time apres perte de sol pendant laquelle le franchissement reste autorise.")]
+    private float obstacleTraversalGroundGraceTime = 0.12f;
+    [SerializeField, Tooltip("Petit offset conserve au-dessus du support apres un step-up (m).")]
+    private float obstacleTraversalContactOffset = 0.01f;
+    [SerializeField, Tooltip("Lisse visuellement les step-up en retardant legerement le mesh par rapport au root physique.")]
+    private bool smoothObstacleTraversalVisuals = true;
+    [SerializeField, Tooltip("Root visuel optionnel a amortir pendant les step-up. Si vide, le controller cherche un root visuel automatiquement.")]
+    private Transform obstacleTraversalVisualRoot;
+    [SerializeField, Tooltip("Vitesse de rattrapage du visuel apres un step-up (m/s).")]
+    private float obstacleTraversalVisualCatchUpSpeed = 4f;
+    [SerializeField, Tooltip("Retard visuel maximal autorise pendant un step-up (m).")]
+    private float obstacleTraversalVisualMaxLag = 0.18f;
     private Vector2 moveInput;
     private float inputLockTimer;
     private Vector2 smoothedInput;
@@ -216,11 +237,14 @@ public partial class SquadCharacterController : MonoBehaviour
     private NetworkObject cachedNetworkObject;
     private readonly RaycastHit[] movementCastHits = new RaycastHit[8];
     private readonly Collider[] movementOverlapHits = new Collider[8];
+    private readonly List<Transform> obstacleTraversalVisualTargets = new List<Transform>();
+    private readonly List<Vector3> obstacleTraversalVisualBaseLocalPositions = new List<Vector3>();
     private float footIkWeightCurrent;
     private string lastAnimationDriverMode = string.Empty;
     private string lastAnimationMovementMode = string.Empty;
     private int lastAnimationSpeedBucket = int.MinValue;
     private bool lastAnimationAnimatorEnabled;
+    private float obstacleTraversalVisualLag;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -264,6 +288,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         UpdateTorchVisualTransition();
         UpdateTorchAnimationLayerWeight();
+        UpdateObstacleTraversalVisualSmoothing(Time.deltaTime);
     }
 
     private void Awake()
@@ -293,6 +318,7 @@ public partial class SquadCharacterController : MonoBehaviour
             motionRoot = transform;
         }
 
+        CacheObstacleTraversalVisualTargets();
         CacheAudioListener();
         CacheNetworkObject();
         EnsureDynamicMeshCollidersSafe();
@@ -332,6 +358,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private void OnDisable()
     {
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
+        ResetObstacleTraversalVisualTargetsImmediate();
         SetAudioListenerActive(false);
         UnregisterCharacter();
     }
@@ -394,6 +421,7 @@ public partial class SquadCharacterController : MonoBehaviour
         cachedNetworkObject = null;
         CacheNetworkObject();
         ApplyAnimatorSettings();
+        CacheObstacleTraversalVisualTargets();
 
         LogAnimationStatus(
             "animation_references_rebound",
@@ -1481,6 +1509,13 @@ public partial class SquadCharacterController : MonoBehaviour
         maxWalkableSlopeAngle = Mathf.Clamp(maxWalkableSlopeAngle, 0f, 89f);
         movementCollisionSkin = Mathf.Max(0.001f, movementCollisionSkin);
         movementCollisionWalkableNormalDot = Mathf.Clamp01(movementCollisionWalkableNormalDot);
+        obstacleTraversalMaxStepHeight = Mathf.Max(0f, obstacleTraversalMaxStepHeight);
+        obstacleTraversalClearance = Mathf.Max(0f, obstacleTraversalClearance);
+        obstacleTraversalProbeDistance = Mathf.Max(0.02f, obstacleTraversalProbeDistance);
+        obstacleTraversalGroundGraceTime = Mathf.Max(0f, obstacleTraversalGroundGraceTime);
+        obstacleTraversalContactOffset = Mathf.Max(0f, obstacleTraversalContactOffset);
+        obstacleTraversalVisualCatchUpSpeed = Mathf.Max(0.01f, obstacleTraversalVisualCatchUpSpeed);
+        obstacleTraversalVisualMaxLag = Mathf.Max(0f, obstacleTraversalVisualMaxLag);
 
         ValidateCommittedJumpSettings();
         ApplyAnimatorSettings();
@@ -1759,6 +1794,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Vector3 desiredDisplacement = desiredHorizontalVelocity * deltaTime;
         Vector3 safeDisplacement = ResolveSafeHorizontalDisplacement(desiredDisplacement);
+        ApplyObstacleTraversalOffsetToRigidbody(safeDisplacement);
         return safeDisplacement / deltaTime;
     }
 
@@ -1799,7 +1835,31 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 castPoint2 = point2 + accumulated;
             if (!TryGetHorizontalBlockingHit(castPoint1, castPoint2, castRadius, direction, distance + movementCollisionSkin, mask, out RaycastHit hit))
             {
+                if (TryResolveForwardSupportTraversal(castPoint1, castPoint2, radius, remaining, mask, out Vector3 forwardSupportTraversal))
+                {
+                    accumulated += forwardSupportTraversal;
+                    break;
+                }
+
+                if (TryResolveProactiveObstacleTraversal(castPoint1, castPoint2, radius, remaining, mask, out Vector3 proactiveTraversalDisplacement))
+                {
+                    accumulated += proactiveTraversalDisplacement;
+                    break;
+                }
+
                 accumulated += remaining;
+                break;
+            }
+
+            if (TryResolveForwardSupportTraversal(castPoint1, castPoint2, radius, remaining, mask, out Vector3 forwardSupportStep))
+            {
+                accumulated += forwardSupportStep;
+                break;
+            }
+
+            if (TryResolveObstacleTraversal(castPoint1, castPoint2, radius, remaining, mask, hit, out Vector3 traversalDisplacement))
+            {
+                accumulated += traversalDisplacement;
                 break;
             }
 

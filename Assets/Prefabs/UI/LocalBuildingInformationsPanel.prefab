@@ -627,7 +627,7 @@ MonoBehaviour:
   currentBonusText: {fileID: 3445635745265496392}
   currentLevelFormat: '{0}'
   currentBonusFormat: '{0}'
-  faceCamera: 0
+  faceCamera: 1
 --- !u!1 &5899348952062400047
 GameObject:
   m_ObjectHideFlags: 0
