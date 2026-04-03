@@ -39,6 +39,8 @@ public class Brasero : NetworkBehaviour
     public GameObject flameBurst;
     [Tooltip("Offset local applique lors de l'instanciation du burst de flamme.")]
     public Vector3 flameBurstOffset = Vector3.zero;
+    [Tooltip("Objets actives quand le brasero est allume.")]
+    public GameObject[] activateWhenLitTargets = Array.Empty<GameObject>();
 
     [Header("Interaction")]
     [Tooltip("Ecoute l'input Interact pour allumer/eteindre.")]
@@ -217,7 +219,31 @@ public class Brasero : NetworkBehaviour
             flameLight.enabled = isLit;
         }
 
+        ApplyLitActivationTargets();
         UpdateFlameVisuals(immediate);
+    }
+
+    public void SetGameObjectActiveWhenLit(GameObject target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.SetActive(isLit);
+    }
+
+    public void ApplyLitActivationTargets()
+    {
+        if (activateWhenLitTargets == null || activateWhenLitTargets.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < activateWhenLitTargets.Length; i++)
+        {
+            SetGameObjectActiveWhenLit(activateWhenLitTargets[i]);
+        }
     }
 
     private void UpdateFlameVisuals(bool immediate)

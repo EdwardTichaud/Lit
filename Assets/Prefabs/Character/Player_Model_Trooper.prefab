@@ -1259,7 +1259,9 @@ MonoBehaviour:
   smoothObstacleTraversalVisuals: 1
   obstacleTraversalVisualRoot: {fileID: 0}
   obstacleTraversalVisualCatchUpSpeed: 4
+  obstacleTraversalVisualResponsiveness: 12
   obstacleTraversalVisualMaxLag: 0.18
+  obstacleTraversalVisualDeadZone: 0.015
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845
@@ -3323,6 +3325,10 @@ PrefabInstance:
       propertyPath: baseIntensity
       value: 471.38953
       objectReference: {fileID: 0}
+    - target: {fileID: 4632745134331999296, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: owner
+      value: 
+      objectReference: {fileID: 6731850666202294345}
     - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_Range
       value: 5.89897

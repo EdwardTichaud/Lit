@@ -14,6 +14,7 @@ public static class LocalInputRouter
         Return,
         Inventory,
         LeftShoulder,
+        RightShoulder,
         Multi,
         Start
     }
@@ -26,6 +27,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> Return;
     public static event Action<InputAction.CallbackContext> Inventory;
     public static event Action<InputAction.CallbackContext> LeftShoulder;
+    public static event Action<InputAction.CallbackContext> RightShoulder;
     public static event Action<InputAction.CallbackContext> Multi;
     public static event Action<InputAction.CallbackContext> Start;
     public static event Action CameraRecenter;
@@ -270,6 +272,16 @@ public static class LocalInputRouter
             return;
         }
         LeftShoulder?.Invoke(context);
+    }
+
+    internal static void RaiseRightShoulder(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.RightShoulder))
+        {
+            return;
+        }
+
+        RightShoulder?.Invoke(context);
     }
 
     internal static void RaiseMulti(InputAction.CallbackContext context)

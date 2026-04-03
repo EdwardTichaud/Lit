@@ -42,6 +42,8 @@ MonoBehaviour:
     quantity: 300
   - item: {fileID: 11400000, guid: 6f3d7907a16bcc34fa2428da170052ee, type: 2}
     quantity: 300
+  - item: {fileID: 11400000, guid: 4c1f1ce8be50409b86794fc750a5101d, type: 2}
+    quantity: 300
   hp: 10
   voiceLines: []
   maisonWaitingPoint: 1

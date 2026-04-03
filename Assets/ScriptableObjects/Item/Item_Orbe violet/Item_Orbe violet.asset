@@ -10,23 +10,33 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
-  m_Name: Item_Orbe lumineux
+  m_Name: Item_Orbe violet
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  itemId: orbelumineux
-  itemName: Orbe lumineux
-  itemSprite: {fileID: 21300000, guid: ea9bbdd46d79b8242a4bfefdae989c83, type: 3}
-  description: "Une source de lumi\xE8re pr\xE9cieuse qui vous permettra de pr\xE9venir
-    le danger avant qu'il ne vous frappe."
+  itemId: orbeviolette
+  itemName: Orbe violette
+  itemSprite: {fileID: 0}
+  description: "Une orbe violette qui teinte la torche et relie les torches actives
+    partageant la meme couleur."
   canUse: 1
   canPlace: 1
   isContainer: 0
   worldPrefab: {fileID: 2745207279955555355, guid: 9fec1361f2dd7a34d892c476c638447a, type: 3}
   isTorch: 0
+  allowWallPlacement: 0
+  placementRadiusOverride: 0
+  isWetClay: 0
+  driedReplacementItem: {fileID: 0}
+  preservesWetClay: 0
+  preservedWetClayCapacity: 1
+  isKey: 0
+  keyId: 
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
   allowDropFromInventory: 1
   allowPlaceFromInventory: 1
   allowInstantDropWithoutPrefab: 1
   useEffects:
-  - {fileID: 11400000, guid: 8b0531cffd30c564b979e209d4b1dd76, type: 2}
+  - {fileID: 11400000, guid: 7103fb002ae04de4a2e6cf2fe0974731, type: 2}
   requireAllUseEffects: 0
   consumeOnUse: 1
   consumeQuantity: 1

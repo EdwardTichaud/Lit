@@ -15,12 +15,16 @@ public class CrpgCameraCollision
     [SerializeField] private float cameraRadius = 0.35f;
     [SerializeField] private float collisionBuffer = 0.15f;
     [SerializeField] private float minCollisionDistance = 1.25f;
+    [SerializeField] private float tightSpaceMinDistance = 0.15f;
     [SerializeField] private bool ignoreTargetColliders = true;
 
     [Header("Relief")]
     [SerializeField] private float groundProbeUp = 8f;
     [SerializeField] private float groundProbeDown = 24f;
     [SerializeField] private float anchorGroundClearance = 0.5f;
+    [SerializeField] private float ceilingProbeHeight = 3f;
+    [SerializeField] private float ceilingClearance = 0.15f;
+    [SerializeField, Range(0.1f, 2f)] private float ceilingProbeRadiusScale = 0.9f;
 
     private readonly RaycastHit[] obstructionHits = new RaycastHit[16];
 
@@ -31,16 +35,21 @@ public class CrpgCameraCollision
         cameraRadius = Mathf.Max(0.01f, cameraRadius);
         collisionBuffer = Mathf.Max(0f, collisionBuffer);
         minCollisionDistance = Mathf.Max(0.1f, minCollisionDistance);
+        tightSpaceMinDistance = Mathf.Max(0.01f, tightSpaceMinDistance);
         groundProbeUp = Mathf.Max(0.1f, groundProbeUp);
         groundProbeDown = Mathf.Max(0.1f, groundProbeDown);
         anchorGroundClearance = Mathf.Max(0f, anchorGroundClearance);
+        ceilingProbeHeight = Mathf.Max(0f, ceilingProbeHeight);
+        ceilingClearance = Mathf.Max(0f, ceilingClearance);
+        ceilingProbeRadiusScale = Mathf.Clamp(ceilingProbeRadiusScale, 0.1f, 2f);
     }
 
     public SolveResult Solve(Vector3 desiredAnchorPosition, Quaternion rigRotation, float desiredDistance, Transform ignoredTarget)
     {
         Vector3 anchor = ResolveAnchorHeight(desiredAnchorPosition, ignoredTarget);
         Vector3 toCameraDirection = rigRotation * Vector3.back;
-        float allowedDistance = Mathf.Max(minCollisionDistance, desiredDistance);
+        float allowedDistance = desiredDistance;
+        bool obstructed = false;
 
         if (desiredDistance > 0.01f)
         {
@@ -57,12 +66,7 @@ public class CrpgCameraCollision
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit hit = obstructionHits[i];
-                if (hit.collider == null)
-                {
-                    continue;
-                }
-
-                if (ignoreTargetColliders && ignoredTarget != null && hit.collider.transform.IsChildOf(ignoredTarget))
+                if (ShouldIgnoreCollider(hit.collider, ignoredTarget))
                 {
                     continue;
                 }
@@ -75,7 +79,12 @@ public class CrpgCameraCollision
 
             if (closest < desiredDistance)
             {
-                allowedDistance = Mathf.Max(minCollisionDistance, closest - collisionBuffer);
+                obstructed = true;
+                float availableDistance = Mathf.Max(0f, closest - collisionBuffer);
+                float hardMinDistance = Mathf.Min(
+                    desiredDistance,
+                    Mathf.Max(0.01f, Mathf.Min(minCollisionDistance, tightSpaceMinDistance)));
+                allowedDistance = Mathf.Clamp(availableDistance, hardMinDistance, desiredDistance);
             }
         }
 
@@ -83,30 +92,95 @@ public class CrpgCameraCollision
         {
             anchorPosition = anchor,
             allowedDistance = allowedDistance,
-            obstructed = allowedDistance + 0.001f < desiredDistance
+            obstructed = obstructed
         };
     }
 
     private Vector3 ResolveAnchorHeight(Vector3 anchorPosition, Transform ignoredTarget)
     {
+        float minimumY = float.NegativeInfinity;
         Vector3 origin = anchorPosition + Vector3.up * groundProbeUp;
         float maxDistance = groundProbeUp + groundProbeDown;
-        if (!Physics.Raycast(origin, Vector3.down, out RaycastHit hit, maxDistance, collisionMask, QueryTriggerInteraction.Ignore))
+        int hitCount = Physics.RaycastNonAlloc(
+            origin,
+            Vector3.down,
+            obstructionHits,
+            maxDistance,
+            collisionMask,
+            QueryTriggerInteraction.Ignore);
+
+        float closestGroundDistance = float.PositiveInfinity;
+        for (int i = 0; i < hitCount; i++)
         {
-            return anchorPosition;
+            RaycastHit hit = obstructionHits[i];
+            if (ShouldIgnoreCollider(hit.collider, ignoredTarget))
+            {
+                continue;
+            }
+
+            if (hit.distance < closestGroundDistance)
+            {
+                closestGroundDistance = hit.distance;
+                minimumY = hit.point.y + anchorGroundClearance;
+            }
         }
 
-        if (ignoreTargetColliders && ignoredTarget != null && hit.collider != null && hit.collider.transform.IsChildOf(ignoredTarget))
-        {
-            return anchorPosition;
-        }
-
-        float minimumY = hit.point.y + anchorGroundClearance;
-        if (anchorPosition.y < minimumY)
+        if (!float.IsNegativeInfinity(minimumY) && anchorPosition.y < minimumY)
         {
             anchorPosition.y = minimumY;
         }
 
+        if (ceilingProbeHeight > 0f)
+        {
+            float probeRadius = Mathf.Max(0.01f, cameraRadius * ceilingProbeRadiusScale);
+            int ceilingHitCount = Physics.SphereCastNonAlloc(
+                anchorPosition,
+                probeRadius,
+                Vector3.up,
+                obstructionHits,
+                ceilingProbeHeight,
+                collisionMask,
+                QueryTriggerInteraction.Ignore);
+
+            float closestCeilingDistance = float.PositiveInfinity;
+            for (int i = 0; i < ceilingHitCount; i++)
+            {
+                RaycastHit hit = obstructionHits[i];
+                if (ShouldIgnoreCollider(hit.collider, ignoredTarget))
+                {
+                    continue;
+                }
+
+                if (hit.distance < closestCeilingDistance)
+                {
+                    closestCeilingDistance = hit.distance;
+                }
+            }
+
+            if (!float.IsPositiveInfinity(closestCeilingDistance))
+            {
+                float maximumY = anchorPosition.y + closestCeilingDistance - ceilingClearance;
+                anchorPosition.y = Mathf.Min(anchorPosition.y, maximumY);
+
+                if (!float.IsNegativeInfinity(minimumY))
+                {
+                    anchorPosition.y = Mathf.Max(anchorPosition.y, minimumY);
+                }
+            }
+        }
+
         return anchorPosition;
+    }
+
+    private bool ShouldIgnoreCollider(Collider collider, Transform ignoredTarget)
+    {
+        if (collider == null)
+        {
+            return true;
+        }
+
+        return ignoreTargetColliders
+            && ignoredTarget != null
+            && collider.transform.IsChildOf(ignoredTarget);
     }
 }

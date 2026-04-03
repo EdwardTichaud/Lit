@@ -56,6 +56,10 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float obstructionSharpness = 18f;
     [SerializeField] private float releaseSharpness = 10f;
 
+    [Header("Trigger-Driven Zoom Test")]
+    [SerializeField, Tooltip("Desactive le focus auto et le clamp collision pour tester un zoom pilote manuellement.")]
+    private bool triggerDrivenZoomTestMode = true;
+
     [Header("Subsystems")]
     [SerializeField] private CrpgCameraInput cameraInput = new CrpgCameraInput();
     [SerializeField] private CrpgCameraFocus cameraFocus = new CrpgCameraFocus();
@@ -114,22 +118,99 @@ public class CameraController : MonoBehaviour
         Vector3 logicalFocusPoint = ResolveFocusPoint(logicalTarget, followOverrideTarget != null);
         InitializeRuntimeState(logicalFocusPoint);
 
+        if (triggerDrivenZoomTestMode)
+        {
+            if (LocalInputRouter.CameraFreeModeActive)
+            {
+                LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
+            }
+
+            cameraFocus.SetFreeCameraMode(false);
+        }
+
         bool inputBlocked = InputFocusStack.HasAnyFocusBlockingCamera();
         CrpgCameraInput.FrameState inputState = cameraInput.Collect(inputBlocked, deltaTime);
 
+        SyncExternalZoomRequest();
         UpdateZoom(inputState.zoomDelta, deltaTime);
         UpdateRotation(inputState.orbitDelta, deltaTime);
 
-        Vector3 panDelta = ResolveWorldPanDelta(inputState, deltaTime);
-        Vector3 focusPoint = cameraFocus.Update(
-            logicalFocusPoint,
-            panDelta,
-            inputState.recenterRequested,
-            inputState.toggleFreeCameraRequested,
-            deltaTime);
+        Vector3 focusPoint;
+        if (triggerDrivenZoomTestMode)
+        {
+            cameraFocus.SnapTo(logicalFocusPoint);
+            focusPoint = logicalFocusPoint;
+        }
+        else
+        {
+            Vector3 panDelta = ResolveWorldPanDelta(inputState, deltaTime);
+            focusPoint = cameraFocus.Update(
+                logicalFocusPoint,
+                panDelta,
+                inputState.recenterRequested,
+                inputState.toggleFreeCameraRequested,
+                deltaTime);
+        }
+
         UpdateRig(focusPoint, logicalTarget, deltaTime);
 
         zoomNormalized = currentZoomNormalized;
+    }
+
+    public void SetTriggerDrivenZoomTestMode(bool active)
+    {
+        triggerDrivenZoomTestMode = active;
+        if (triggerDrivenZoomTestMode && LocalInputRouter.CameraFreeModeActive)
+        {
+            LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
+            cameraFocus.SetFreeCameraMode(false);
+        }
+    }
+
+    public void SetZoomNormalized(float normalized)
+    {
+        float clamped = Mathf.Clamp01(normalized);
+        desiredZoomNormalized = clamped;
+        zoomNormalized = clamped;
+
+        if (!runtimeInitialized)
+        {
+            currentZoomNormalized = clamped;
+        }
+    }
+
+    public void SnapZoomNormalized(float normalized)
+    {
+        float clamped = Mathf.Clamp01(normalized);
+        zoomNormalized = clamped;
+        desiredZoomNormalized = clamped;
+        currentZoomNormalized = clamped;
+
+        if (!runtimeInitialized)
+        {
+            return;
+        }
+
+        currentDistance = EvaluateDistance(clamped);
+        currentPitch = Mathf.Clamp(EvaluateProfilePitch(clamped) + manualPitchOffset, minPitch, maxPitch);
+    }
+
+    private void SyncExternalZoomRequest()
+    {
+        float clampedInspectorZoom = Mathf.Clamp01(zoomNormalized);
+        if (!runtimeInitialized)
+        {
+            desiredZoomNormalized = clampedInspectorZoom;
+            currentZoomNormalized = clampedInspectorZoom;
+            return;
+        }
+
+        bool inspectorValueChanged = Mathf.Abs(clampedInspectorZoom - desiredZoomNormalized) > 0.0001f;
+        bool valueCameFromThisController = Mathf.Abs(clampedInspectorZoom - currentZoomNormalized) <= 0.0001f;
+        if (inspectorValueChanged && !valueCameFromThisController)
+        {
+            desiredZoomNormalized = clampedInspectorZoom;
+        }
     }
 
     public void SetFollowOverride(Transform target)
@@ -228,7 +309,14 @@ public class CameraController : MonoBehaviour
         Vector3 desiredAnchorPosition = focusPoint + Vector3.up * desiredPivotHeight;
 
         Quaternion rigRotation = Quaternion.Euler(0f, currentYaw, 0f) * Quaternion.Euler(currentPitch, 0f, 0f);
-        CrpgCameraCollision.SolveResult solve = cameraCollision.Solve(desiredAnchorPosition, rigRotation, desiredDistance, ignoredTarget);
+        CrpgCameraCollision.SolveResult solve = triggerDrivenZoomTestMode
+            ? new CrpgCameraCollision.SolveResult
+            {
+                anchorPosition = desiredAnchorPosition,
+                allowedDistance = desiredDistance,
+                obstructed = false
+            }
+            : cameraCollision.Solve(desiredAnchorPosition, rigRotation, desiredDistance, ignoredTarget);
 
         float anchorT = anchorSharpness <= 0f ? 1f : 1f - Mathf.Exp(-anchorSharpness * deltaTime);
         currentAnchorPosition = Vector3.Lerp(currentAnchorPosition, solve.anchorPosition, anchorT);

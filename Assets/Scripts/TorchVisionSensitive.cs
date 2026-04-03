@@ -62,6 +62,7 @@ public class TorchVisionSensitive : MonoBehaviour
     public bool IsWorldUiVisible => visibilityMode == VisibilityMode.AlwaysVisible
         || (hasEvaluatedVisibility && currentVisibilityFactor > 0.001f);
     public bool IsTorchInRange => currentTorchInRange;
+    public TorchVisionDefinition RequiredVision => vision;
 
     private void Awake()
     {
@@ -293,6 +294,37 @@ public class TorchVisionSensitive : MonoBehaviour
     private void OnTorchSourcesChanged()
     {
         RefreshState();
+    }
+
+    public void ConfigureRuntime(
+        TorchVisionDefinition targetVision,
+        VisibilityMode mode = VisibilityMode.VisibleOnlyWhenVisionMatches,
+        bool requireEquippedTorch = true,
+        Transform runtimeVisualRoot = null,
+        bool includeChildRenderers = true,
+        float maxRevealDistance = 5f,
+        float fullRevealDistance = 2f,
+        bool driveColliders = true,
+        bool driveBehaviours = false)
+    {
+        visibilityMode = mode;
+        vision = targetVision;
+        requireTorchEquipped = requireEquippedTorch;
+        visualRoot = runtimeVisualRoot;
+        includeChildren = includeChildRenderers;
+        hiddenDistance = Mathf.Max(0f, maxRevealDistance);
+        fullyVisibleDistance = Mathf.Max(0f, fullRevealDistance);
+        affectColliders = driveColliders;
+        affectBehaviours = driveBehaviours;
+        targetRenderers = Array.Empty<Renderer>();
+        colliders = Array.Empty<Collider>();
+        behaviours = Array.Empty<Behaviour>();
+        CacheTargets();
+
+        if (Application.isPlaying && isActiveAndEnabled)
+        {
+            RefreshState();
+        }
     }
 
     private void RefreshState()
