@@ -1210,8 +1210,8 @@ MonoBehaviour:
   turnInPlaceAngleThreshold: 60
   rootMotionApplicationMode: 1
   rootMotionGroundedOnly: 1
-  walkMoveSpeed: 2.5
-  moveSpeed: 3.25
+  walkMoveSpeed: 3.25
+  moveSpeed: 6
   inputResponsiveness: 12
   useVelocityForAnimation: 1
   rotateToInput: 1

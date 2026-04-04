@@ -211,7 +211,7 @@ public partial class SquadCharacterController
         return true;
     }
 
-    private bool HasGroundSupportAhead(Vector3 moveDirection)
+    private bool HasGroundSupportAhead(Vector3 moveDirection, float lookAheadDistance = -1f)
     {
         if (moveDirection.sqrMagnitude < 0.0001f)
         {
@@ -224,7 +224,11 @@ public partial class SquadCharacterController
         }
 
         Vector3 direction = moveDirection.normalized;
-        float sampleDistance = Mathf.Max(0.05f, voidCheckDistance);
+        float configuredLookAhead = Mathf.Max(0.05f, voidCheckDistance);
+        float requestedLookAhead = lookAheadDistance > 0f
+            ? Mathf.Max(0.05f, lookAheadDistance)
+            : configuredLookAhead;
+        float sampleDistance = Mathf.Min(configuredLookAhead, requestedLookAhead);
         float sampleRadius = Mathf.Max(0.05f, context.radius * 0.35f);
         float sampleDepth = Mathf.Max(0.05f, voidCheckDepth);
         int mask = GetGroundSupportMask();

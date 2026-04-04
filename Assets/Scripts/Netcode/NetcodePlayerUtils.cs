@@ -177,13 +177,24 @@ public static class NetcodePlayerUtils
             authoritySource = "singleplayer_local_context";
         }
 
-        bool playerInputEnabled =
+        bool hasNetworkInputDriver =
             character.GetComponent<NetworkCharacterInput>() != null &&
-            character.GetComponent<NetworkCharacterInput>().enabled &&
-            hasNetworkObject &&
-            isSpawned &&
-            isOwner &&
-            IsAssignedToLocalClient(characterId, manager, service);
+            character.GetComponent<NetworkCharacterInput>().enabled;
+
+        bool playerInputEnabled;
+        if (networked)
+        {
+            playerInputEnabled =
+                hasNetworkInputDriver &&
+                hasNetworkObject &&
+                isSpawned &&
+                isOwner &&
+                IsAssignedToLocalClient(character.transform, characterId, manager, service);
+        }
+        else
+        {
+            playerInputEnabled = isControlledLocally;
+        }
 
         SquadFollowerAgent followerAgent = character.GetComponent<SquadFollowerAgent>();
         bool followerAgentEnabled = followerAgent != null && followerAgent.enabled;
@@ -334,13 +345,8 @@ public static class NetcodePlayerUtils
         return controller != null ? GetCharacterId(controller.CharacterData) : string.Empty;
     }
 
-    private static bool IsAssignedToLocalClient(string characterId, NetworkManager manager, WorldInteractionService service)
+    private static bool IsAssignedToLocalClient(Transform character, string characterId, NetworkManager manager, WorldInteractionService service)
     {
-        if (string.IsNullOrWhiteSpace(characterId))
-        {
-            return false;
-        }
-
         if (manager == null || !manager.IsListening)
         {
             return true;
@@ -348,15 +354,31 @@ public static class NetcodePlayerUtils
 
         if (service == null)
         {
-            return false;
+            return ShouldPreservePendingLocalInput(character);
         }
 
         if (!service.TryGetAssignedCharacterId(manager.LocalClientId, out string localCharacterId))
         {
-            return false;
+            return ShouldPreservePendingLocalInput(character);
+        }
+
+        if (string.IsNullOrWhiteSpace(characterId))
+        {
+            return ShouldPreservePendingLocalInput(character);
         }
 
         return string.Equals(localCharacterId, characterId, System.StringComparison.Ordinal);
+    }
+
+    private static bool ShouldPreservePendingLocalInput(Transform character)
+    {
+        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (localRoot != null)
+        {
+            return IsSameOrRelatedTransform(character, localRoot);
+        }
+
+        return true;
     }
 
     private static bool IsSameOrRelatedTransform(Transform character, Transform candidate)

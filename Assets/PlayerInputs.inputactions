@@ -284,6 +284,28 @@
                     "action": "RightShoulder",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a4aa3c1e-f315-4e1d-b9fe-ec7c7971d001",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "RightShoulder",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d7f66b4f-a7df-4f3a-a754-b8bb746d41b7",
+                    "path": "<Keyboard>/rightShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "RightShoulder",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },

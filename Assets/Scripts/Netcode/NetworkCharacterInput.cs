@@ -374,21 +374,42 @@ public class NetworkCharacterInput : NetworkBehaviour
         WorldInteractionService service = WorldInteractionService.Instance;
         if (service == null)
         {
-            return true;
+            return ShouldPreserveLocalInputWithoutResolvedAssignment();
         }
 
         if (!service.TryGetAssignedCharacterId(NetworkManager.Singleton.LocalClientId, out string characterId))
         {
-            return false;
+            return ShouldPreserveLocalInputWithoutResolvedAssignment();
         }
 
         string localId = ResolveCharacterId();
         if (string.IsNullOrWhiteSpace(localId))
         {
-            return false;
+            return ShouldPreserveLocalInputWithoutResolvedAssignment();
         }
 
         return string.Equals(characterId, localId, System.StringComparison.Ordinal);
+    }
+
+    private bool ShouldPreserveLocalInputWithoutResolvedAssignment()
+    {
+        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (localRoot != null)
+        {
+            return IsSameOrRelatedTransform(transform, localRoot);
+        }
+
+        return IsOwner;
+    }
+
+    private static bool IsSameOrRelatedTransform(Transform current, Transform candidate)
+    {
+        if (current == null || candidate == null)
+        {
+            return false;
+        }
+
+        return current == candidate || current.IsChildOf(candidate) || candidate.IsChildOf(current);
     }
 
     private void UpdateLocalAnimationPreview(Vector2 worldInput)
