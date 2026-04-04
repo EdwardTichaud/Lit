@@ -45,6 +45,7 @@ public static class LocalInputRouter
     private static bool cameraOrbitModifierPressed;
     private static bool cameraPanModifierPressed;
     private static bool cameraFreeModeActive;
+    private static bool rightShoulderPressed;
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
     private static bool interactConsumed;
 
@@ -60,6 +61,7 @@ public static class LocalInputRouter
     public static bool CameraOrbitModifierPressed => cameraOrbitModifierPressed;
     public static bool CameraPanModifierPressed => cameraPanModifierPressed;
     public static bool CameraFreeModeActive => cameraFreeModeActive;
+    public static bool RightShoulderPressed => rightShoulderPressed;
     internal static bool IsInteractConsumed => interactConsumed;
 
     public static void EnsureInitialized()
@@ -170,6 +172,11 @@ public static class LocalInputRouter
     internal static void SetCameraPanModifierPressed(bool value)
     {
         cameraPanModifierPressed = value && !JoinSyncSystem.IsGameplayBlocked;
+    }
+
+    internal static void SetRightShoulderPressed(bool value)
+    {
+        rightShoulderPressed = value && !JoinSyncSystem.IsGameplayBlocked;
     }
 
     internal static Vector2 ConsumeCameraPointerDelta()
@@ -327,6 +334,7 @@ public static class LocalInputRouter
 
     internal static void ResetMove()
     {
+        SetRightShoulderPressed(false);
         SetMoveValue(Vector2.zero);
     }
 
@@ -343,6 +351,7 @@ public static class LocalInputRouter
         cameraPointerScrollValue = 0f;
         cameraOrbitModifierPressed = false;
         cameraPanModifierPressed = false;
+        rightShoulderPressed = false;
     }
 
     private static bool AllowInput(InputGate gate)

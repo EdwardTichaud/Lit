@@ -1083,11 +1083,11 @@ Animator:
   m_Avatar: {fileID: 9000000, guid: 639b6ce73b347e5429ac0526c9c29094, type: 3}
   m_Controller: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
   m_CullingMode: 1
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_UpdateMode: 1
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
+  m_AnimatePhysics: 1
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -1193,22 +1193,35 @@ MonoBehaviour:
   speedDampTime: 0.08
   useSpeedDamping: 1
   useDiscreteLocomotion: 0
-  walkSpeedThreshold: 0.1
-  runSpeedThreshold: 1
+  walkSpeedThreshold: 1.35
+  runSpeedThreshold: 3.25
   idleAnimValue: 0
-  walkAnimValue: 0.5
-  runAnimValue: 2
-  moveSpeed: 6
-  acceleration: 50
-  deceleration: 10
+  walkAnimValue: 1.35
+  runAnimValue: 3.25
+  localAnimationPreviewMaxLeadSpeed: 0.4
+  animationMovingExitSpeed: 0.05
+  animationMovingEnterSpeed: 0.12
+  animationTurnResponsiveness: 10
+  isMovingParam: IsMoving
+  moveStartTriggerParam: MoveStartTrigger
+  moveStopTriggerParam: MoveStopTrigger
+  turnParam: Turn
+  turnInPlaceParam: TurnInPlace
+  turnInPlaceAngleThreshold: 60
+  rootMotionApplicationMode: 1
+  rootMotionGroundedOnly: 1
+  walkMoveSpeed: 2.5
+  moveSpeed: 3.25
   inputResponsiveness: 12
   useVelocityForAnimation: 1
   rotateToInput: 1
   rotationSpeed: 20
   useCameraRelative: 1
   referenceCamera: {fileID: 0}
-  preferRigidbody: 1
-  animatePhysics: 0
+  animatePhysics: 1
+  sprintAnimationMinSpeed: 1
+  movingRotationSpeed: 12
+  movingRotationSpeedThreshold: 0.9
   jumpGroundCheckDistance: 0.18
   jumpGroundCheckRadiusScale: 0.9
   groundedStickVelocity: 2
@@ -1224,7 +1237,7 @@ MonoBehaviour:
   footIkPositionWeight: 1
   footIkRotationWeight: 1
   footIkIdleRotationWeight: 0.2
-  footIkSpeedThreshold: 2.6
+  footIkSpeedThreshold: 1.45
   footIkBlendSpeed: 10
   footIkHeightOffset: 0.02
   footIkRaycastUp: 0.25
@@ -1239,9 +1252,9 @@ MonoBehaviour:
   torchBoolParam: Torch
   torchStartsActive: 1
   initializeTorchFromHierarchy: 1
-  torchUpperBodyIdleLayerWeight: 0.92
-  torchUpperBodyMovingLayerWeight: 0.76
-  torchUpperBodyLayerWeightResponsiveness: 10
+  torchUpperBodyIdleLayerWeight: 0.85
+  torchUpperBodyMovingLayerWeight: 0.25
+  torchUpperBodyLayerWeightResponsiveness: 12
   inputLockTime: 0.2
   knockbackForceMode: 2
   ignoreCharacterCollisions: 1

@@ -96,7 +96,10 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnRightShoulder(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        bool shouldProcess = ShouldProcess(context);
+        LocalInputRouter.SetRightShoulderPressed(shouldProcess && context.ReadValueAsButton());
+
+        if (context.performed && shouldProcess)
         {
             LocalInputRouter.RaiseRightShoulder(context);
         }

@@ -20,10 +20,6 @@ public class TorchColorLinkSystem : MonoBehaviour
     private GameObject treasureFinderPrefab;
     [SerializeField, Tooltip("Vision violette speciale utilisee pour les croisements.")]
     private TorchVisionDefinition violetVision;
-    [SerializeField, Tooltip("Item revele par un TreasureFinder violet.")]
-    private Item treasureItem;
-    [SerializeField, Min(1), Tooltip("Quantite de l'item revelee par chaque croisement.")]
-    private int treasureQuantity = 1;
     [SerializeField, Min(0.05f), Tooltip("Distance de fusion de deux croisements sur le plan XZ.")]
     private float intersectionMergeDistance = 0.75f;
     [SerializeField, Range(0f, 0.2f), Tooltip("Ignore les croisements trop proches des extremites des segments.")]
@@ -32,8 +28,6 @@ public class TorchColorLinkSystem : MonoBehaviour
     private float lineIntersectionEpsilon = 0.0001f;
     [SerializeField, Tooltip("Id de secours si la reference de la vision violette n'est pas renseignee.")]
     private string violetVisionId = "torchvisionviolet";
-    [SerializeField, Tooltip("Id de secours de l'item a reveler.")]
-    private string violetTreasureItemId = "orbeviolette";
 
     private static TorchColorLinkSystem instance;
     private static Material fallbackLineMaterial;
@@ -101,7 +95,6 @@ public class TorchColorLinkSystem : MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
 
-        treasureQuantity = Mathf.Max(1, treasureQuantity);
         intersectionMergeDistance = Mathf.Max(0.05f, intersectionMergeDistance);
         endpointIntersectionEpsilon = Mathf.Clamp(endpointIntersectionEpsilon, 0f, 0.2f);
         lineIntersectionEpsilon = Mathf.Max(0.00001f, lineIntersectionEpsilon);
@@ -150,6 +143,11 @@ public class TorchColorLinkSystem : MonoBehaviour
     private void OnRightShoulderPerformed(InputAction.CallbackContext context)
     {
         if (!context.performed)
+        {
+            return;
+        }
+
+        if (LocalInputRouter.MoveValue.sqrMagnitude > 0.0001f)
         {
             return;
         }
@@ -426,7 +424,7 @@ public class TorchColorLinkSystem : MonoBehaviour
             finder = finderObject.AddComponent<TreasureFinder>();
         }
 
-        finder.ConfigureRuntime(ResolveVioletVision(), ResolveTreasureItem(), treasureQuantity);
+        finder.ConfigureRuntime(ResolveVioletVision());
         spawnedTreasureFinders.Add(finder);
         return true;
     }
@@ -435,10 +433,6 @@ public class TorchColorLinkSystem : MonoBehaviour
     {
         GameObject fallback = new GameObject("VioletTreasureFinder");
         fallback.transform.SetPositionAndRotation(position, Quaternion.identity);
-
-        SphereCollider collider = fallback.AddComponent<SphereCollider>();
-        collider.isTrigger = true;
-        collider.radius = 1.1f;
 
         TorchVisionDefinition fallbackVision = ResolveVioletVision();
         Light fallbackLight = fallback.AddComponent<Light>();
@@ -453,6 +447,7 @@ public class TorchColorLinkSystem : MonoBehaviour
         fallbackLight.useColorTemperature = false;
 
         fallback.AddComponent<TorchLightReceiver>();
+        fallback.AddComponent<FlickeringLight>();
         fallback.AddComponent<TreasureFinder>();
         return fallback;
     }
@@ -579,29 +574,6 @@ public class TorchColorLinkSystem : MonoBehaviour
             {
                 violetVision = definition;
                 return violetVision;
-            }
-        }
-
-        return null;
-    }
-
-    private Item ResolveTreasureItem()
-    {
-        if (treasureItem != null)
-        {
-            return treasureItem;
-        }
-
-        Item[] loadedItems = Resources.FindObjectsOfTypeAll<Item>();
-        for (int i = 0; i < loadedItems.Length; i++)
-        {
-            Item item = loadedItems[i];
-            if (item != null
-                && !string.IsNullOrWhiteSpace(item.itemId)
-                && string.Equals(item.itemId, violetTreasureItemId, System.StringComparison.OrdinalIgnoreCase))
-            {
-                treasureItem = item;
-                return treasureItem;
             }
         }
 

@@ -12,6 +12,8 @@ public class NetworkCharacterInput : NetworkBehaviour
     private Vector2 rawMoveInput;
     private Vector2 pendingMove;
     private Vector2 lastSentMove;
+    private bool wantsRun;
+    private bool lastSentRun;
     private float nextSendTime;
 
     private void Awake()
@@ -49,7 +51,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         if (IsOwner && IsAssignedToLocalClient())
         {
-            SubmitMove(Vector2.zero);
+            SubmitMove(Vector2.zero, false);
         }
     }
 
@@ -69,6 +71,13 @@ public class NetworkCharacterInput : NetworkBehaviour
         rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
+        wantsRun = false;
+        lastSentRun = false;
+        if (controller != null)
+        {
+            controller.SetSprintModifier(false);
+        }
+
         UpdateLocalAnimationPreview(Vector2.zero);
     }
 
@@ -78,6 +87,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         {
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
+            wantsRun = false;
             UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
@@ -86,10 +96,16 @@ public class NetworkCharacterInput : NetworkBehaviour
         {
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
-            UpdateLocalAnimationPreview(Vector2.zero);
-            if (lastSentMove != Vector2.zero)
+            wantsRun = false;
+            if (controller != null)
             {
-                SubmitMove(Vector2.zero);
+                controller.SetSprintModifier(false);
+            }
+
+            UpdateLocalAnimationPreview(Vector2.zero);
+            if (lastSentMove != Vector2.zero || lastSentRun)
+            {
+                SubmitMove(Vector2.zero, false);
             }
 
             return;
@@ -104,27 +120,37 @@ public class NetworkCharacterInput : NetworkBehaviour
         {
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
+            wantsRun = false;
+            controller.SetSprintModifier(false);
             UpdateLocalAnimationPreview(Vector2.zero);
-            if (lastSentMove != Vector2.zero)
+            if (lastSentMove != Vector2.zero || lastSentRun)
             {
-                SubmitMove(Vector2.zero);
+                SubmitMove(Vector2.zero, false);
             }
 
             return;
         }
 
         rawMoveInput = LocalInputRouter.MoveValue;
+        wantsRun = LocalInputRouter.RightShoulderPressed;
+        if (controller != null)
+        {
+            controller.SetSprintModifier(wantsRun);
+        }
+
         pendingMove = controller != null
             ? controller.GetWorldSpaceInput(rawMoveInput)
             : rawMoveInput;
         UpdateLocalAnimationPreview(pendingMove);
 
-        if (Time.time < nextSendTime && (pendingMove - lastSentMove).sqrMagnitude < 0.0001f)
+        if (Time.time < nextSendTime &&
+            (pendingMove - lastSentMove).sqrMagnitude < 0.0001f &&
+            wantsRun == lastSentRun)
         {
             return;
         }
 
-        SubmitMove(pendingMove);
+        SubmitMove(pendingMove, wantsRun);
     }
 
     private void OnMoveChanged(Vector2 value)
@@ -214,7 +240,7 @@ public class NetworkCharacterInput : NetworkBehaviour
                (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked());
     }
 
-    private void SubmitMove(Vector2 value)
+    private void SubmitMove(Vector2 value, bool runPressed)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
@@ -222,15 +248,16 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         lastSentMove = value;
+        lastSentRun = runPressed;
         nextSendTime = Time.time + Mathf.Max(0.01f, sendInterval);
 
         if (ShouldUseHostLocalMovePath())
         {
-            ApplyHostLocalMove(rawMoveInput);
+            ApplyHostLocalMove(rawMoveInput, runPressed);
             return;
         }
 
-        SubmitMoveServerRpc(value);
+        SubmitMoveServerRpc(value, runPressed);
     }
 
     private bool ShouldUseHostLocalMovePath()
@@ -238,7 +265,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         return IsServer && IsOwner && IsSpawned && IsAssignedToLocalClient();
     }
 
-    private void ApplyHostLocalMove(Vector2 input)
+    private void ApplyHostLocalMove(Vector2 input, bool runPressed)
     {
         if (controller == null)
         {
@@ -250,6 +277,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
+        controller.SetSprintModifier(runPressed);
         controller.Move(input);
     }
 
@@ -270,7 +298,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void SubmitMoveServerRpc(Vector2 input)
+    private void SubmitMoveServerRpc(Vector2 input, bool runPressed)
     {
         if (controller == null)
         {
@@ -282,6 +310,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
+        controller.SetSprintModifier(runPressed);
         controller.MoveWorld(input);
     }
 

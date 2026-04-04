@@ -384,7 +384,7 @@ public partial class SquadCharacterController
         Vector3 inputDirection = launchInput.sqrMagnitude > 0.0001f
             ? ResolveCommittedInputDirection(launchInput)
             : Vector3.zero;
-        float requestedSpeed = Mathf.Clamp01(launchInput.magnitude) * moveSpeed;
+        float requestedSpeed = Mathf.Clamp01(launchInput.magnitude) * ResolveCurrentTargetMoveSpeed();
         bool hasMomentumLaunch = planarSpeed >= movingJumpThreshold;
         bool hasForwardAssistLaunch = !hasMomentumLaunch && IsForwardAssistJumpIntent(launchInput, inputDirection);
 
@@ -447,17 +447,27 @@ public partial class SquadCharacterController
     {
         if (committedJumpStartContext == JumpStartContext.Idle)
         {
-            return ClampCommittedLaunchSpeed(idleLockedForwardSpeed + idleTakeoffForwardImpulse);
+            return ClampCommittedLaunchSpeed(
+                ScaleConfiguredLocomotionSpeed(idleLockedForwardSpeed) +
+                ScaleConfiguredLocomotionSpeed(idleTakeoffForwardImpulse));
         }
 
         if (committedJumpStartContext == JumpStartContext.AssistedForward)
         {
-            float assistedSpeed = Mathf.Max(requestedSpeed * movingJumpSpeedMultiplier, forwardAssistLaunchSpeed);
-            return ClampCommittedLaunchSpeed(assistedSpeed + forwardAssistTakeoffForwardImpulse);
+            float assistedSpeed = Mathf.Max(
+                requestedSpeed * movingJumpSpeedMultiplier,
+                ScaleConfiguredLocomotionSpeed(forwardAssistLaunchSpeed));
+            return ClampCommittedLaunchSpeed(
+                assistedSpeed +
+                ScaleConfiguredLocomotionSpeed(forwardAssistTakeoffForwardImpulse));
         }
 
-        float lockedSpeed = Mathf.Max(planarSpeed * movingJumpSpeedMultiplier, movingTakeoffMinLaunchSpeed);
-        lockedSpeed = ClampCommittedLaunchSpeed(lockedSpeed + movingTakeoffForwardImpulse);
+        float lockedSpeed = Mathf.Max(
+            planarSpeed * movingJumpSpeedMultiplier,
+            ScaleConfiguredLocomotionSpeed(movingTakeoffMinLaunchSpeed));
+        lockedSpeed = ClampCommittedLaunchSpeed(
+            lockedSpeed +
+            ScaleConfiguredLocomotionSpeed(movingTakeoffForwardImpulse));
 
         return Mathf.Max(planarSpeed, lockedSpeed);
     }
@@ -532,12 +542,12 @@ public partial class SquadCharacterController
     {
         if (rollDistance > 0f && rollDuration > 0f)
         {
-            return rollDistance / rollDuration;
+            return (rollDistance / rollDuration) * ResolveCurrentMoveSpeedScale();
         }
 
         if (rollForwardSpeed > 0f)
         {
-            return rollForwardSpeed;
+            return ScaleConfiguredLocomotionSpeed(rollForwardSpeed);
         }
 
         return committedLaunchSpeed;
@@ -700,9 +710,10 @@ public partial class SquadCharacterController
     private float ClampCommittedLaunchSpeed(float speed)
     {
         float clampedSpeed = Mathf.Max(0f, speed);
-        if (maxLockedForwardSpeed > 0f)
+        float scaledMaxLockedForwardSpeed = ScaleConfiguredLocomotionSpeed(maxLockedForwardSpeed);
+        if (scaledMaxLockedForwardSpeed > 0f)
         {
-            clampedSpeed = Mathf.Min(clampedSpeed, maxLockedForwardSpeed);
+            clampedSpeed = Mathf.Min(clampedSpeed, scaledMaxLockedForwardSpeed);
         }
 
         return clampedSpeed;
@@ -715,7 +726,8 @@ public partial class SquadCharacterController
             return committedLockedHorizontalVelocity;
         }
 
-        Vector3 targetHorizontal = committedJumpDirection * ClampCommittedLaunchSpeed(rollApproachForwardSpeed);
+        Vector3 targetHorizontal = committedJumpDirection * ClampCommittedLaunchSpeed(
+            ScaleConfiguredLocomotionSpeed(rollApproachForwardSpeed));
         if (rollApproachAcceleration <= 0f)
         {
             committedLockedHorizontalVelocity = targetHorizontal;
@@ -904,7 +916,7 @@ public partial class SquadCharacterController
     {
         return IsRollEligibleJumpContext(committedJumpStartContext) &&
                committedLaunchSpeed >= movingJumpMinSpeedForRoll &&
-               rollApproachForwardSpeed > 0f;
+               ScaleConfiguredLocomotionSpeed(rollApproachForwardSpeed) > 0f;
     }
 
     private void CrossFadeJumpStateIfRequested(string stateName)
@@ -974,6 +986,16 @@ public partial class SquadCharacterController
         }
 
         animator.SetInteger(parameterName, value);
+    }
+
+    private void SetAnimatorFloatIfValid(string parameterName, float value)
+    {
+        if (!HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Float))
+        {
+            return;
+        }
+
+        animator.SetFloat(parameterName, value);
     }
 
     private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType expectedType)

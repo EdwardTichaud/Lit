@@ -3,9 +3,16 @@ using Unity.Netcode;
 using UnityEngine;
 
 // Controle le mouvement et l'inventaire runtime d'un personnage de la squad.
-[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(Animator), typeof(Rigidbody))]
 public partial class SquadCharacterController : MonoBehaviour
 {
+    private enum RootMotionApplicationMode
+    {
+        Disabled = 0,
+        TranslationOnly = 1,
+        TranslationAndRotation = 2
+    }
+
     private enum TorchVisualTransition
     {
         None,
@@ -66,24 +73,50 @@ public partial class SquadCharacterController : MonoBehaviour
     [Header("Animation")]
     [SerializeField, Tooltip("Utilise des valeurs discretes (idle/walk/run).")]
     private bool useDiscreteLocomotion = true;
-    [SerializeField, Tooltip("Seuil de vitesse pour la marche.")]
-    private float walkSpeedThreshold = 0.1f;
-    [SerializeField, Tooltip("Seuil de vitesse pour la course.")]
-    private float runSpeedThreshold = 1f;
+    [SerializeField, Tooltip("Vitesse gameplay a laquelle la phase de marche atteint son plein poids dans le blend tree.")]
+    private float walkSpeedThreshold = 1.5f;
+    [SerializeField, Tooltip("Vitesse gameplay a laquelle la phase de course atteint son plein poids dans le blend tree.")]
+    private float runSpeedThreshold = 4.6f;
     [SerializeField, Tooltip("Valeur Speed pour idle.")]
     private float idleAnimValue = 0f;
-    [SerializeField, Tooltip("Valeur Speed pour marche.")]
-    private float walkAnimValue = 0.5f;
-    [SerializeField, Tooltip("Valeur Speed pour course.")]
-    private float runAnimValue = 2f;
+    [SerializeField, Tooltip("Valeur Speed du blend tree correspondant au palier marche.")]
+    private float walkAnimValue = 1.5f;
+    [SerializeField, Tooltip("Valeur Speed du blend tree correspondant au palier course.")]
+    private float runAnimValue = 4.6f;
+
+    [Header("Animation Feel")]
+    [SerializeField, Tooltip("Avance max accordee a l'intention locale sur la vitesse reelle pour garder une lecture reactivite/poids coherente.")]
+    private float localAnimationPreviewMaxLeadSpeed = 1.35f;
+    [SerializeField, Tooltip("Seuil bas utilise pour couper les etats de locomotion optionnels de l'Animator.")]
+    private float animationMovingExitSpeed = 0.12f;
+    [SerializeField, Tooltip("Seuil haut utilise pour declencher les etats de locomotion optionnels de l'Animator.")]
+    private float animationMovingEnterSpeed = 0.32f;
+    [SerializeField, Tooltip("Responsivite du float de turn optionnel expose a l'Animator.")]
+    private float animationTurnResponsiveness = 10f;
+    [SerializeField, Tooltip("Nom du bool optionnel pour distinguer idle et locomotion.")]
+    private string isMovingParam = "IsMoving";
+    [SerializeField, Tooltip("Nom du trigger optionnel emis au depart du mouvement.")]
+    private string moveStartTriggerParam = "MoveStartTrigger";
+    [SerializeField, Tooltip("Nom du trigger optionnel emis a l'arret du mouvement.")]
+    private string moveStopTriggerParam = "MoveStopTrigger";
+    [SerializeField, Tooltip("Nom du float optionnel signe (-1..1) mesurant le besoin de rotation.")]
+    private string turnParam = "Turn";
+    [SerializeField, Tooltip("Nom du bool optionnel actif quand un pivot sur place est pertinent.")]
+    private string turnInPlaceParam = "TurnInPlace";
+    [SerializeField, Tooltip("Angle minimal avant d'annoncer un pivot sur place (deg).")]
+    private float turnInPlaceAngleThreshold = 60f;
+
+    [Header("Root Motion")]
+    [SerializeField, Tooltip("Autorite root motion de l'Animator. Disabled coupe la locomotion au sol: il n'existe plus de fallback scripté concurrent.")]
+    private RootMotionApplicationMode rootMotionApplicationMode = RootMotionApplicationMode.TranslationOnly;
+    [SerializeField, Tooltip("Quand actif, le root motion n'est consomme que pour les phases au sol. Les sauts/roulades restent alors sous autorite gameplay/code.")]
+    private bool rootMotionGroundedOnly = true;
 
     [Header("Movement")]
+    [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
+    private float walkMoveSpeed = 1.5f;
     [SerializeField, Tooltip("Vitesse de deplacement.")]
     private float moveSpeed = 2.5f;
-    [SerializeField, Tooltip("Acceleration horizontale.")]
-    private float acceleration = 15f;
-    [SerializeField, Tooltip("Deceleration horizontale.")]
-    private float deceleration = 10f;
     [SerializeField, Tooltip("Lissage de l'input.")]
     private float inputResponsiveness = 12f;
     [SerializeField, Tooltip("Utilise la velocite pour l'animation.")]
@@ -96,10 +129,14 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool useCameraRelative = true;
     [SerializeField, Tooltip("Camera de reference (fallback Main).")]
     private Camera referenceCamera;
-    [SerializeField, Tooltip("Prefere un Rigidbody si present.")]
-    private bool preferRigidbody = true;
     [SerializeField, Tooltip("Anime les RB en physics.")]
     private bool animatePhysics = true;
+    [SerializeField, Tooltip("Seuil minimal de vitesse reelle avant d'autoriser l'animation de course.")]
+    private float sprintAnimationMinSpeed = 1f;
+    [SerializeField, Tooltip("Responsivite de rotation appliquee quand le personnage est deja en mouvement.")]
+    private float movingRotationSpeed = 12f;
+    [SerializeField, Tooltip("Seuil de vitesse a partir duquel la rotation passe en mode mouvement.")]
+    private float movingRotationSpeedThreshold = 0.9f;
 
     [Header("Grounding")]
     [SerializeField, Tooltip("Distance du controle sol pour autoriser les etats relies au sol (m).")]
@@ -218,7 +255,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private Vector2 animationPreviewInput;
     private Vector2 smoothedAnimationPreviewInput;
     private bool moveInputIsWorldSpace;
+    private bool sprintModifierPressed;
     private Vector3 currentHorizontalVelocity;
+    private Vector3 lastObservedWorldPosition;
+    private bool hasObservedWorldPosition;
     private bool isGrounded;
     private float lastGroundedTime = float.NegativeInfinity;
     private float groundIgnoreUntilTime;
@@ -234,6 +274,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool collidersDirty = true;
     private readonly List<Collider> cachedColliders = new List<Collider>();
     private CapsuleCollider locomotionCapsule;
+    private bool wasMovingForAnimator;
+    private float smoothedTurnAmount;
     [Header("Audio")]
     [SerializeField] private AudioListener audioListener;
     [SerializeField] private bool searchAudioListenerInChildren = true;
@@ -296,6 +338,16 @@ public partial class SquadCharacterController : MonoBehaviour
         UpdateObstacleTraversalVisualSmoothing(Time.deltaTime);
     }
 
+    private void OnAnimatorMove()
+    {
+        if (animator == null || !ShouldConsumeAnimatorRootMotion())
+        {
+            return;
+        }
+
+        ApplyAnimatorRootMotion(animator.deltaPosition, animator.deltaRotation);
+    }
+
     private void Awake()
     {
         if (animator == null)
@@ -311,6 +363,11 @@ public partial class SquadCharacterController : MonoBehaviour
         if (rigidbodyTarget == null)
         {
             rigidbodyTarget = GetComponent<Rigidbody>();
+        }
+
+        if (rigidbodyTarget == null)
+        {
+            Debug.LogError("SquadCharacterController requires a Rigidbody. The grounded scripted locomotion fallback was removed.", this);
         }
 
         if (locomotionCapsule == null)
@@ -1491,12 +1548,21 @@ public partial class SquadCharacterController : MonoBehaviour
             motionRoot = transform;
         }
 
-        acceleration = Mathf.Max(0f, acceleration);
-        deceleration = Mathf.Max(0f, deceleration);
+        walkMoveSpeed = Mathf.Max(0f, walkMoveSpeed);
+        moveSpeed = Mathf.Max(0f, moveSpeed);
+        walkMoveSpeed = Mathf.Min(walkMoveSpeed, moveSpeed);
         inputResponsiveness = Mathf.Max(0f, inputResponsiveness);
         walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
         runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
         speedDampTime = Mathf.Max(0f, speedDampTime);
+        sprintAnimationMinSpeed = Mathf.Max(0f, sprintAnimationMinSpeed);
+        localAnimationPreviewMaxLeadSpeed = Mathf.Max(0f, localAnimationPreviewMaxLeadSpeed);
+        animationMovingExitSpeed = Mathf.Max(0f, animationMovingExitSpeed);
+        animationMovingEnterSpeed = Mathf.Max(animationMovingExitSpeed, animationMovingEnterSpeed);
+        animationTurnResponsiveness = Mathf.Max(0f, animationTurnResponsiveness);
+        turnInPlaceAngleThreshold = Mathf.Clamp(turnInPlaceAngleThreshold, 0f, 180f);
+        movingRotationSpeed = Mathf.Max(0f, movingRotationSpeed);
+        movingRotationSpeedThreshold = Mathf.Max(0f, movingRotationSpeedThreshold);
         jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
         jumpGroundCheckRadiusScale = Mathf.Clamp(jumpGroundCheckRadiusScale, 0.1f, 1.5f);
         groundedStickVelocity = Mathf.Max(0f, groundedStickVelocity);
@@ -1586,6 +1652,11 @@ public partial class SquadCharacterController : MonoBehaviour
         animationPreviewInput = Vector2.ClampMagnitude(worldInput, 1f);
     }
 
+    public void SetSprintModifier(bool pressed)
+    {
+        sprintModifierPressed = pressed;
+    }
+
     public void Jump()
     {
         RequestCommittedJump();
@@ -1602,8 +1673,14 @@ public partial class SquadCharacterController : MonoBehaviour
         moveInputIsWorldSpace = false;
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
+        sprintModifierPressed = false;
         currentHorizontalVelocity = Vector3.zero;
         ClearLocalAnimationPreview();
+        wasMovingForAnimator = false;
+        smoothedTurnAmount = 0f;
+        SetAnimatorBoolIfValid(isMovingParam, false);
+        SetAnimatorBoolIfValid(turnInPlaceParam, false);
+        SetAnimatorFloatIfValid(turnParam, 0f);
         SetSpeed(0f);
     }
 
@@ -1613,6 +1690,7 @@ public partial class SquadCharacterController : MonoBehaviour
         SmoothInput(Time.fixedDeltaTime);
         SmoothAnimationPreview(Time.fixedDeltaTime);
         UpdateGroundedState();
+        UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
         UpdateCommittedJump(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
@@ -1701,7 +1779,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         Vector2 effectiveInput = smoothedInput;
         bool hasInput = effectiveInput.sqrMagnitude > 0.0001f;
-        Vector3 desiredVelocity = Vector3.zero;
         Vector3 desiredDirection = Vector3.zero;
         if (hasInput)
         {
@@ -1710,15 +1787,17 @@ public partial class SquadCharacterController : MonoBehaviour
             {
                 desiredDirection = desiredDirection.normalized;
             }
-
-            desiredVelocity = desiredDirection * (Mathf.Clamp01(effectiveInput.magnitude) * moveSpeed);
         }
 
         if (enableVoidDetection && hasInput && !IsGroundAhead(desiredDirection))
         {
             hasInput = false;
-            desiredVelocity = Vector3.zero;
             StopHorizontalVelocity();
+        }
+
+        if (!CanSimulateMovementLocally())
+        {
+            return;
         }
 
         if (TryApplyCommittedJumpMovement(deltaTime))
@@ -1728,57 +1807,107 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (inputLockTimer > 0f)
         {
+            ClearScriptDrivenHorizontalVelocity();
             return;
         }
 
-        if (ShouldUseRigidbody())
+        // La locomotion au sol est maintenant exclusivement drivee par root motion.
+        // Le gameplay fournit l'intention et, si besoin, la rotation.
+        HandleGroundedLocomotionIntent(desiredDirection, hasInput, deltaTime);
+    }
+
+    private bool ShouldUseGroundedLocomotionRootMotion()
+    {
+        return IsAnimatorRootMotionEnabled()
+               && isGrounded
+               && !IsJumpCommitted;
+    }
+
+    private bool CanSimulateMovementLocally()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager == null || !manager.IsListening || manager.IsServer;
+    }
+
+    private void HandleGroundedLocomotionIntent(Vector3 desiredDirection, bool hasInput, float deltaTime)
+    {
+        ClearScriptDrivenHorizontalVelocity();
+        if (!ShouldUseGroundedLocomotionRootMotion() ||
+            !hasInput ||
+            desiredDirection.sqrMagnitude <= 0.0001f)
         {
-            Vector3 currentVelocity = rigidbodyTarget.linearVelocity;
-            Vector3 currentHorizontal = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
-            Vector3 targetHorizontal = new Vector3(desiredVelocity.x, 0f, desiredVelocity.z);
-            float newVertical = currentVelocity.y;
-            Vector3 newHorizontal = hasInput
-                ? Vector3.MoveTowards(currentHorizontal, targetHorizontal, acceleration * deltaTime)
-                : Vector3.Lerp(currentHorizontal, Vector3.zero, 1f - Mathf.Exp(-deceleration * deltaTime));
-
-            newHorizontal = ConstrainHorizontalVelocityAgainstWalls(newHorizontal, deltaTime);
-            rigidbodyTarget.linearVelocity = new Vector3(newHorizontal.x, newVertical, newHorizontal.z);
-            currentHorizontalVelocity = newHorizontal;
-
-            if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(desiredVelocity);
-                rigidbodyTarget.MoveRotation(
-                    Quaternion.Slerp(rigidbodyTarget.rotation, targetRotation, rotationSpeed * deltaTime));
-            }
             return;
         }
 
-        Vector3 newKinematicHorizontal = hasInput
-            ? Vector3.MoveTowards(currentHorizontalVelocity, new Vector3(desiredVelocity.x, 0f, desiredVelocity.z), acceleration * deltaTime)
-            : Vector3.Lerp(currentHorizontalVelocity, Vector3.zero, 1f - Mathf.Exp(-deceleration * deltaTime));
-        currentHorizontalVelocity = newKinematicHorizontal;
-
-        if (characterController != null)
+        if (rootMotionApplicationMode == RootMotionApplicationMode.TranslationAndRotation)
         {
-            characterController.Move(newKinematicHorizontal * deltaTime);
-
-            if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
-            {
-                Transform target = motionRoot != null ? motionRoot : transform;
-                Quaternion targetRotation = Quaternion.LookRotation(desiredVelocity);
-                target.rotation = Quaternion.Slerp(target.rotation, targetRotation, rotationSpeed * deltaTime);
-            }
             return;
         }
 
-        Transform root = motionRoot != null ? motionRoot : transform;
-        root.position += ResolveSafeHorizontalDisplacement(newKinematicHorizontal * deltaTime);
-        if (rotateToInput && desiredVelocity.sqrMagnitude > 0.0001f)
+        RotateTowardsDesiredDirection(desiredDirection, deltaTime, ResolveCurrentTargetMoveSpeed());
+    }
+
+    private void ClearScriptDrivenHorizontalVelocity()
+    {
+        currentHorizontalVelocity = Vector3.zero;
+
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(desiredVelocity);
-            root.rotation = Quaternion.Slerp(root.rotation, targetRotation, rotationSpeed * deltaTime);
+            Vector3 velocity = rigidbodyTarget.linearVelocity;
+            rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
         }
+    }
+
+    private void UpdateObservedHorizontalVelocity(float deltaTime)
+    {
+        Vector3 worldPosition = GetWorldPosition();
+        if (!hasObservedWorldPosition || deltaTime <= 0f)
+        {
+            lastObservedWorldPosition = worldPosition;
+            hasObservedWorldPosition = true;
+            return;
+        }
+
+        Vector3 delta = worldPosition - lastObservedWorldPosition;
+        lastObservedWorldPosition = worldPosition;
+
+        if (CanSimulateMovementLocally())
+        {
+            return;
+        }
+
+        if (delta.sqrMagnitude > 4f)
+        {
+            currentHorizontalVelocity = Vector3.zero;
+            return;
+        }
+
+        currentHorizontalVelocity = Vector3.ProjectOnPlane(delta / deltaTime, transform.up);
+    }
+
+    private void RotateTowardsDesiredDirection(Vector3 desiredDirection, float deltaTime, float horizontalSpeed)
+    {
+        if (!rotateToInput || desiredDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        float rotationResponsiveness = rotationSpeed;
+        if (horizontalSpeed >= movingRotationSpeedThreshold && movingRotationSpeed > 0f)
+        {
+            rotationResponsiveness = movingRotationSpeed;
+        }
+
+        Quaternion targetRotation = Quaternion.LookRotation(desiredDirection, transform.up);
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        {
+            rigidbodyTarget.MoveRotation(
+                Quaternion.Slerp(rigidbodyTarget.rotation, targetRotation, rotationResponsiveness * deltaTime));
+            return;
+        }
+
+        Transform target = motionRoot != null ? motionRoot : transform;
+        target.rotation = Quaternion.Slerp(target.rotation, targetRotation, rotationResponsiveness * deltaTime);
     }
 
     private void StopHorizontalVelocity()
@@ -1790,6 +1919,29 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
         }
+    }
+
+    private float ResolveCurrentTargetMoveSpeed()
+    {
+        float sprintSpeed = Mathf.Max(0f, moveSpeed);
+        float walkingSpeed = Mathf.Clamp(walkMoveSpeed, 0f, sprintSpeed);
+        return sprintModifierPressed ? sprintSpeed : walkingSpeed;
+    }
+
+    private float ResolveCurrentMoveSpeedScale()
+    {
+        float sprintSpeed = Mathf.Max(0.0001f, moveSpeed);
+        return Mathf.Clamp01(ResolveCurrentTargetMoveSpeed() / sprintSpeed);
+    }
+
+    private float ScaleConfiguredLocomotionSpeed(float speed)
+    {
+        return Mathf.Max(0f, speed) * ResolveCurrentMoveSpeedScale();
+    }
+
+    private bool CanUseRunAnimation(float rawSpeed)
+    {
+        return sprintModifierPressed && rawSpeed > sprintAnimationMinSpeed;
     }
 
     private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
@@ -2701,36 +2853,183 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Vector3 velocity = GetCurrentHorizontalVelocity();
         float velocitySpeed = velocity.magnitude;
-        float targetMoveSpeed = Mathf.Max(0f, moveSpeed);
+        float targetMoveSpeed = ResolveCurrentTargetMoveSpeed();
         float inputSpeed = Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed;
         float previewSpeed = Mathf.Clamp01(smoothedAnimationPreviewInput.magnitude) * targetMoveSpeed;
 
-        float rawSpeed = animationDriverMode == "local"
-            ? Mathf.Max(previewSpeed, velocitySpeed)
-            : (useVelocityForAnimation ? velocitySpeed : inputSpeed);
+        float rawSpeed = ResolveAnimationDriverSpeed(animationDriverMode, velocitySpeed, inputSpeed, previewSpeed);
 
         float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
 
         SetSpeed(animSpeed);
+        UpdateLocomotionAnimatorSignals(rawSpeed, velocity, deltaTime: Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime);
         TrackAnimationState(controlState, movementMode, animationDriverMode, rawSpeed, animSpeed, previewSpeed, velocity);
+    }
+
+    private float ResolveAnimationDriverSpeed(
+        string animationDriverMode,
+        float velocitySpeed,
+        float inputSpeed,
+        float previewSpeed)
+    {
+        if (!string.Equals(animationDriverMode, "local", System.StringComparison.Ordinal))
+        {
+            return useVelocityForAnimation ? velocitySpeed : inputSpeed;
+        }
+
+        // Le preview local reste utile pour la reactivite reseau,
+        // mais on borne son avance pour eviter un depart visuellement a pleine vitesse.
+        float localIntentSpeed = Mathf.Max(inputSpeed, previewSpeed);
+        float maxLedSpeed = Mathf.Max(velocitySpeed, velocitySpeed + localAnimationPreviewMaxLeadSpeed);
+        return Mathf.Max(velocitySpeed, Mathf.Min(localIntentSpeed, maxLedSpeed));
+    }
+
+    private void UpdateLocomotionAnimatorSignals(float presentationSpeed, Vector3 velocity, float deltaTime)
+    {
+        Vector3 desiredDirection = ResolveAnimatorDesiredDirection(velocity);
+        Vector3 facingDirection = GetFacingPlanarForward();
+        float signedTurn = 0f;
+
+        if (desiredDirection.sqrMagnitude > 0.0001f)
+        {
+            signedTurn = Mathf.Clamp(
+                Vector3.SignedAngle(facingDirection, desiredDirection, transform.up) / 90f,
+                -1f,
+                1f);
+        }
+
+        if (animationTurnResponsiveness > 0f)
+        {
+            float t = 1f - Mathf.Exp(-animationTurnResponsiveness * deltaTime);
+            smoothedTurnAmount = Mathf.Lerp(smoothedTurnAmount, signedTurn, t);
+        }
+        else
+        {
+            smoothedTurnAmount = signedTurn;
+        }
+
+        SetAnimatorFloatIfValid(turnParam, smoothedTurnAmount);
+
+        bool isMovingNow = presentationSpeed >= animationMovingEnterSpeed
+            ? true
+            : presentationSpeed <= animationMovingExitSpeed
+                ? false
+                : wasMovingForAnimator;
+
+        if (isMovingNow != wasMovingForAnimator)
+        {
+            if (isMovingNow)
+            {
+                SetAnimatorTriggerIfValid(moveStartTriggerParam);
+            }
+            else
+            {
+                SetAnimatorTriggerIfValid(moveStopTriggerParam);
+            }
+        }
+
+        SetAnimatorBoolIfValid(isMovingParam, isMovingNow);
+
+        bool shouldTurnInPlace = !isMovingNow &&
+                                 !IsJumpCommitted &&
+                                 desiredDirection.sqrMagnitude > 0.0001f &&
+                                 Mathf.Abs(Vector3.SignedAngle(facingDirection, desiredDirection, transform.up)) >= turnInPlaceAngleThreshold;
+        SetAnimatorBoolIfValid(turnInPlaceParam, shouldTurnInPlace);
+
+        wasMovingForAnimator = isMovingNow;
+    }
+
+    private Vector3 ResolveAnimatorDesiredDirection(Vector3 velocity)
+    {
+        Vector3 desiredDirection = Vector3.zero;
+
+        if (smoothedAnimationPreviewInput.sqrMagnitude > 0.0001f)
+        {
+            desiredDirection = new Vector3(smoothedAnimationPreviewInput.x, 0f, smoothedAnimationPreviewInput.y);
+        }
+        else if (smoothedInput.sqrMagnitude > 0.0001f)
+        {
+            desiredDirection = GetMoveDirection(smoothedInput);
+        }
+        else if (velocity.sqrMagnitude > 0.0001f)
+        {
+            desiredDirection = velocity;
+        }
+
+        desiredDirection.y = 0f;
+        if (desiredDirection.sqrMagnitude > 0.0001f)
+        {
+            desiredDirection.Normalize();
+        }
+
+        return desiredDirection;
+    }
+
+    private Vector3 GetFacingPlanarForward()
+    {
+        Transform target = motionRoot != null ? motionRoot : transform;
+        Vector3 forward = target.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude <= 0.0001f)
+        {
+            return Vector3.forward;
+        }
+
+        return forward.normalized;
     }
 
     private float ResolveAnimatorSpeedValue(float rawSpeed)
     {
-        float animSpeed = rawSpeed;
+        float animSpeed = Mathf.Max(0f, rawSpeed);
+        bool canUseRunAnimation = CanUseRunAnimation(animSpeed);
+
         if (!useDiscreteLocomotion)
         {
-            return animSpeed;
+            return ResolveContinuousAnimatorSpeed(animSpeed);
         }
 
-        if (rawSpeed <= walkSpeedThreshold)
+        if (!canUseRunAnimation)
+        {
+            animSpeed = Mathf.Min(animSpeed, walkSpeedThreshold);
+        }
+
+        if (canUseRunAnimation)
+        {
+            return runAnimValue;
+        }
+
+        if (animSpeed <= walkSpeedThreshold)
         {
             return idleAnimValue;
         }
 
+        return walkAnimValue;
+    }
+
+    private float ResolveContinuousAnimatorSpeed(float rawSpeed)
+    {
+        // En locomotion continue, on remappe la vitesse gameplay vers l'echelle
+        // attendue par le blend tree pour garder Walk/Run coherents.
+        if (walkSpeedThreshold <= 0f)
+        {
+            return Mathf.Min(rawSpeed, runAnimValue);
+        }
+
+        if (rawSpeed <= walkSpeedThreshold)
+        {
+            float walkT = Mathf.InverseLerp(0f, walkSpeedThreshold, rawSpeed);
+            return Mathf.Lerp(idleAnimValue, walkAnimValue, walkT);
+        }
+
+        if (runSpeedThreshold <= walkSpeedThreshold)
+        {
+            return runAnimValue;
+        }
+
         if (rawSpeed <= runSpeedThreshold)
         {
-            return walkAnimValue;
+            float runT = Mathf.InverseLerp(walkSpeedThreshold, runSpeedThreshold, rawSpeed);
+            return Mathf.Lerp(walkAnimValue, runAnimValue, runT);
         }
 
         return runAnimValue;
@@ -2859,11 +3158,10 @@ public partial class SquadCharacterController : MonoBehaviour
         string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
         Vector3 velocity = GetCurrentHorizontalVelocity();
         float velocitySpeed = velocity.magnitude;
-        float targetMoveSpeed = Mathf.Max(0f, moveSpeed);
+        float targetMoveSpeed = ResolveCurrentTargetMoveSpeed();
+        float inputSpeed = Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed;
         float previewSpeed = Mathf.Clamp01(smoothedAnimationPreviewInput.magnitude) * targetMoveSpeed;
-        float rawSpeed = animationDriverMode == "local"
-            ? Mathf.Max(previewSpeed, velocitySpeed)
-            : (useVelocityForAnimation ? velocitySpeed : Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed);
+        float rawSpeed = ResolveAnimationDriverSpeed(animationDriverMode, velocitySpeed, inputSpeed, previewSpeed);
         float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
 
         LogAnimationStatus(
@@ -2922,6 +3220,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private Vector3 GetCurrentHorizontalVelocity()
     {
+        if (!CanSimulateMovementLocally() || ShouldUseGroundedLocomotionRootMotion())
+        {
+            return currentHorizontalVelocity;
+        }
+
         if (ShouldUseRigidbody() && rigidbodyTarget != null)
         {
             Vector3 velocity = rigidbodyTarget.linearVelocity;
@@ -3108,8 +3411,123 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        animator.applyRootMotion = false;
+        animator.applyRootMotion = IsAnimatorRootMotionEnabled();
         animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
+    }
+
+    private bool IsAnimatorRootMotionEnabled()
+    {
+        return rootMotionApplicationMode != RootMotionApplicationMode.Disabled;
+    }
+
+    private bool ShouldConsumeAnimatorRootMotion()
+    {
+        if (!IsAnimatorRootMotionEnabled())
+        {
+            return false;
+        }
+
+        if (!CanSimulateMovementLocally())
+        {
+            return false;
+        }
+
+        if (!rootMotionGroundedOnly)
+        {
+            return true;
+        }
+
+        return isGrounded && !IsJumpCommitted;
+    }
+
+    private void ApplyAnimatorRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
+    {
+        Vector3 resolvedDeltaPosition = deltaPosition;
+        bool applyTranslation = deltaPosition.sqrMagnitude > 0.00000001f;
+        bool applyRotation = rootMotionApplicationMode == RootMotionApplicationMode.TranslationAndRotation;
+
+        if (applyTranslation)
+        {
+            resolvedDeltaPosition = ResolveAnimatorRootMotionTranslation(deltaPosition);
+            applyTranslation = resolvedDeltaPosition.sqrMagnitude > 0.00000001f;
+        }
+
+        if (!applyTranslation && !applyRotation)
+        {
+            if (ShouldUseGroundedLocomotionRootMotion())
+            {
+                currentHorizontalVelocity = Vector3.zero;
+            }
+
+            return;
+        }
+
+        float deltaTime = animator.updateMode == AnimatorUpdateMode.Fixed
+            ? Time.fixedDeltaTime
+            : Time.deltaTime;
+
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        {
+            if (applyTranslation)
+            {
+                rigidbodyTarget.MovePosition(rigidbodyTarget.position + resolvedDeltaPosition);
+                if (deltaTime > 0f)
+                {
+                    currentHorizontalVelocity = Vector3.ProjectOnPlane(resolvedDeltaPosition / deltaTime, transform.up);
+                }
+            }
+            else if (ShouldUseGroundedLocomotionRootMotion())
+            {
+                currentHorizontalVelocity = Vector3.zero;
+            }
+
+            if (applyRotation)
+            {
+                rigidbodyTarget.MoveRotation(deltaRotation * rigidbodyTarget.rotation);
+            }
+
+            return;
+        }
+
+        Transform target = motionRoot != null ? motionRoot : transform;
+        if (applyTranslation)
+        {
+            target.position += resolvedDeltaPosition;
+            if (deltaTime > 0f)
+            {
+                currentHorizontalVelocity = Vector3.ProjectOnPlane(resolvedDeltaPosition / deltaTime, transform.up);
+            }
+        }
+        else if (ShouldUseGroundedLocomotionRootMotion())
+        {
+            currentHorizontalVelocity = Vector3.zero;
+        }
+
+        if (applyRotation)
+        {
+            target.rotation = deltaRotation * target.rotation;
+        }
+    }
+
+    private Vector3 ResolveAnimatorRootMotionTranslation(Vector3 deltaPosition)
+    {
+        if (!rootMotionGroundedOnly)
+        {
+            return deltaPosition;
+        }
+
+        Vector3 planarDelta = Vector3.ProjectOnPlane(deltaPosition, transform.up);
+        if (planarDelta.sqrMagnitude <= 0.00000001f)
+        {
+            return Vector3.zero;
+        }
+
+        if (enableVoidDetection && !IsGroundAhead(planarDelta.normalized))
+        {
+            return Vector3.zero;
+        }
+
+        return ResolveSafeHorizontalDisplacement(planarDelta);
     }
 
     private void EnsureRigidbodyCollisionSafety()
@@ -3126,17 +3544,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool ShouldUseRigidbody()
     {
-        if (rigidbodyTarget == null)
-        {
-            return false;
-        }
-
-        if (characterController == null)
-        {
-            return true;
-        }
-
-        return preferRigidbody;
+        return rigidbodyTarget != null;
     }
 
     public void AddImpulse(Vector3 worldImpulse, float lockInputForSeconds = -1f)

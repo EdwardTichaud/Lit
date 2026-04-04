@@ -1289,6 +1289,7 @@ public class SquadManager : MonoBehaviour
 
         if (InputFocusStack.HasAnyFocus() || controller.IsMovementInputSuppressed)
         {
+            controller.SetSprintModifier(false);
             controller.Move(Vector2.zero);
             controller.ClearLocalAnimationPreview();
             jumpRequested = false;
@@ -1297,7 +1298,9 @@ public class SquadManager : MonoBehaviour
 
         Vector2 rawMoveInput = moveInput;
         Vector2 worldMoveInput = controller.GetWorldSpaceInput(rawMoveInput);
+        bool sprintRequested = LocalInputRouter.RightShoulderPressed;
 
+        controller.SetSprintModifier(sprintRequested);
         controller.Move(rawMoveInput);
         if (worldMoveInput == Vector2.zero)
         {

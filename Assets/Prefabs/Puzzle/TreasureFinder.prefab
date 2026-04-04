@@ -9,11 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4000000000000000001}
-  - component: {fileID: 1350000000000000001}
   - component: {fileID: 1140000000000000001}
   - component: {fileID: 4372108104001003614}
   - component: {fileID: 196639180497969549}
   - component: {fileID: 2789663193247531184}
+  - component: {fileID: 1140000000000000002}
   m_Layer: 0
   m_Name: TreasureFinder
   m_TagString: Untagged
@@ -36,27 +36,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &1350000000000000001
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000001}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 4
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1140000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,22 +48,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1227aa3599e485198ca7f25c3c7c45c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreasureFinder
-  treasureItem: {fileID: 0}
-  treasureQuantity: 1
-  spawnOffset: {x: 0, y: 0.15, z: 0}
-  createLootContainer: 1
-  destroyLootContainerWhenEmpty: 1
-  collectable: 1
   requiredVision: {fileID: 0}
   torchReceiver: {fileID: 2789663193247531184}
-  requireMatchingVision: 1
-  gateSpawnedTreasureWithVision: 1
-  revealDistance: 5
-  fullRevealDistance: 2
-  triggerCollider: {fileID: 1350000000000000001}
-  fallbackTriggerRadius: 1.1
-  spawnOnlyOnce: 1
-  disableTriggerAfterSpawn: 1
 --- !u!108 &4372108104001003614
 Light:
   m_ObjectHideFlags: 0
@@ -323,3 +288,44 @@ MonoBehaviour:
   registerAsWorldTorchSource: 0
   worldVision: {fileID: 0}
   worldTorchCountsAsEquipped: 1
+--- !u!114 &1140000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f3e10f1710d75e43bf63af34beedf4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
+  targetLight: {fileID: 4372108104001003614}
+  searchInChildren: 1
+  forcePointLight: 1
+  useCurrentLightAsBase: 1
+  syncTorchReceiverColor: 1
+  deferShadowingToTorchReceiver: 1
+  baseIntensity: 200
+  baseRange: 4
+  emberColor: {r: 0.35, g: 0.05, b: 0.55, a: 1}
+  flameColor: {r: 0.64, g: 0.3, b: 1, a: 1}
+  intensityVariation: 0.24
+  rangeVariation: 0.08
+  colorVariation: 0.45
+  flickerSpeed: 7.5
+  burstStrength: 0.12
+  animateLocalPosition: 1
+  swayAmplitude: 0.015
+  swaySpeed: 1.6
+  configureCandleShadowing: 1
+  renderMode: 1
+  shadowMode: 2
+  shadowStrength: 1
+  shadowBias: 0.02
+  shadowNormalBias: 0.08
+  shadowNearPlane: 0.05
+  hdrpShadowResolution: 1024
+  hdrpNormalBias: 0.1
+  hdrpSlopeBias: 0.2
+  enableHdrpContactShadows: 1
