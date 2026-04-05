@@ -9,11 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4000000000000000001}
-  - component: {fileID: 1140000000000000001}
-  - component: {fileID: 4372108104001003614}
-  - component: {fileID: 196639180497969549}
   - component: {fileID: 2789663193247531184}
-  - component: {fileID: 1140000000000000002}
   m_Layer: 0
   m_Name: TreasureFinder
   m_TagString: Untagged
@@ -30,13 +26,14 @@ Transform:
   m_GameObject: {fileID: 1000000000000000001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -19.18, y: 3.27, z: -19.63}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 6525572887991523330}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1140000000000000001
+--- !u!114 &2789663193247531184
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -45,24 +42,75 @@ MonoBehaviour:
   m_GameObject: {fileID: 1000000000000000001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1227aa3599e485198ca7f25c3c7c45c, type: 3}
+  m_Script: {fileID: 11500000, guid: 1aaf3f8ddc407ec4da32ec6a5b12e395, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TreasureFinder
-  requiredVision: {fileID: 0}
-  torchReceiver: {fileID: 2789663193247531184}
---- !u!108 &4372108104001003614
+  m_EditorClassIdentifier: Assembly-CSharp::TorchLightReceiver
+  targetLight: {fileID: 2053659529824676487}
+  searchInChildren: 1
+  disableColorTemperatureWhenColored: 1
+  configureTorchShadowing: 1
+  renderMode: 1
+  shadowMode: 2
+  shadowStrength: 1
+  shadowBias: 0.02
+  shadowNormalBias: 0.08
+  shadowNearPlane: 0.05
+  hdrpShadowResolution: 1024
+  hdrpNormalBias: 0.1
+  hdrpSlopeBias: 0.2
+  enableHdrpContactShadows: 1
+  owner: {fileID: 0}
+  searchOwnerInParents: 1
+  registerAsWorldTorchSource: 0
+  worldVision: {fileID: 0}
+  worldTorchCountsAsEquipped: 1
+--- !u!1 &2549314999783709347
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6525572887991523330}
+  - component: {fileID: 2053659529824676487}
+  - component: {fileID: 975603455679390743}
+  - component: {fileID: 1546519097495800151}
+  m_Layer: 0
+  m_Name: Root
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6525572887991523330
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2549314999783709347}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.701724, z: -0, w: 0.71244895}
+  m_LocalPosition: {x: -0.0054906025, y: 0, z: -0.0052125254}
+  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4000000000000000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!108 &2053659529824676487
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000001}
+  m_GameObject: {fileID: 2549314999783709347}
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
-  m_Color: {r: 0.6406398, g: 0, b: 1, a: 1}
-  m_Intensity: 200
-  m_Range: 4
+  m_Color: {r: 0.5398107, g: 0.017346049, b: 0.84388554, a: 1}
+  m_Intensity: 195.5034
+  m_Range: 3.9910216
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -115,13 +163,13 @@ Light:
   m_LightUnit: 2
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!114 &196639180497969549
+--- !u!114 &975603455679390743
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000001}
+  m_GameObject: {fileID: 2549314999783709347}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a68c43fe1f2a47cfa234b5eeaa98012, type: 3}
@@ -257,50 +305,19 @@ MonoBehaviour:
   m_ObsoleteUseShadowQualitySettings: 0
   m_ObsoleteCustomShadowResolution: 512
   m_ObsoleteContactShadows: 0
---- !u!114 &2789663193247531184
+--- !u!114 &1546519097495800151
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1aaf3f8ddc407ec4da32ec6a5b12e395, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchLightReceiver
-  targetLight: {fileID: 4372108104001003614}
-  searchInChildren: 1
-  disableColorTemperatureWhenColored: 1
-  configureTorchShadowing: 1
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.02
-  shadowNormalBias: 0.08
-  shadowNearPlane: 0.05
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.1
-  hdrpSlopeBias: 0.2
-  enableHdrpContactShadows: 1
-  owner: {fileID: 0}
-  searchOwnerInParents: 1
-  registerAsWorldTorchSource: 0
-  worldVision: {fileID: 0}
-  worldTorchCountsAsEquipped: 1
---- !u!114 &1140000000000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000001}
+  m_GameObject: {fileID: 2549314999783709347}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f3e10f1710d75e43bf63af34beedf4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
-  targetLight: {fileID: 4372108104001003614}
+  targetLight: {fileID: 2053659529824676487}
   searchInChildren: 1
   forcePointLight: 1
   useCurrentLightAsBase: 1
@@ -309,7 +326,7 @@ MonoBehaviour:
   baseIntensity: 200
   baseRange: 4
   emberColor: {r: 0.35, g: 0.05, b: 0.55, a: 1}
-  flameColor: {r: 0.64, g: 0.3, b: 1, a: 1}
+  flameColor: {r: 0.6406398, g: 0, b: 1, a: 1}
   intensityVariation: 0.24
   rangeVariation: 0.08
   colorVariation: 0.45
