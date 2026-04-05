@@ -77,8 +77,6 @@ public class NetworkCharacterInput : NetworkBehaviour
         {
             controller.SetSprintModifier(false);
         }
-
-        UpdateLocalAnimationPreview(Vector2.zero);
     }
 
     private void Update()
@@ -88,7 +86,6 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
-            UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
 
@@ -101,8 +98,6 @@ public class NetworkCharacterInput : NetworkBehaviour
             {
                 controller.SetSprintModifier(false);
             }
-
-            UpdateLocalAnimationPreview(Vector2.zero);
             if (lastSentMove != Vector2.zero || lastSentRun)
             {
                 SubmitMove(Vector2.zero, false);
@@ -122,7 +117,6 @@ public class NetworkCharacterInput : NetworkBehaviour
             pendingMove = Vector2.zero;
             wantsRun = false;
             controller.SetSprintModifier(false);
-            UpdateLocalAnimationPreview(Vector2.zero);
             if (lastSentMove != Vector2.zero || lastSentRun)
             {
                 SubmitMove(Vector2.zero, false);
@@ -141,7 +135,6 @@ public class NetworkCharacterInput : NetworkBehaviour
         pendingMove = controller != null
             ? controller.GetWorldSpaceInput(rawMoveInput)
             : rawMoveInput;
-        UpdateLocalAnimationPreview(pendingMove);
 
         if (Time.time < nextSendTime &&
             (pendingMove - lastSentMove).sqrMagnitude < 0.0001f &&
@@ -159,7 +152,6 @@ public class NetworkCharacterInput : NetworkBehaviour
         if (!IsOwner || !IsAssignedToLocalClient() || IsGameplayInputBlocked())
         {
             pendingMove = Vector2.zero;
-            UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
 
@@ -171,14 +163,12 @@ public class NetworkCharacterInput : NetworkBehaviour
         if (controller != null && controller.IsMovementInputSuppressed)
         {
             pendingMove = Vector2.zero;
-            UpdateLocalAnimationPreview(Vector2.zero);
             return;
         }
 
         pendingMove = controller != null
             ? controller.GetWorldSpaceInput(value)
             : value;
-        UpdateLocalAnimationPreview(pendingMove);
     }
 
     private void OnToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -410,27 +400,6 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         return current == candidate || current.IsChildOf(candidate) || candidate.IsChildOf(current);
-    }
-
-    private void UpdateLocalAnimationPreview(Vector2 worldInput)
-    {
-        if (controller == null)
-        {
-            controller = GetComponent<SquadCharacterController>();
-        }
-
-        if (controller == null)
-        {
-            return;
-        }
-
-        if (worldInput == Vector2.zero)
-        {
-            controller.ClearLocalAnimationPreview();
-            return;
-        }
-
-        controller.SetLocalAnimationPreview(worldInput);
     }
 
     private string ResolveCharacterId()

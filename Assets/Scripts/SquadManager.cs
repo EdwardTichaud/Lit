@@ -1291,7 +1291,6 @@ public class SquadManager : MonoBehaviour
         {
             controller.SetSprintModifier(false);
             controller.Move(Vector2.zero);
-            controller.ClearLocalAnimationPreview();
             jumpRequested = false;
             return;
         }
@@ -1302,14 +1301,6 @@ public class SquadManager : MonoBehaviour
 
         controller.SetSprintModifier(sprintRequested);
         controller.Move(rawMoveInput);
-        if (worldMoveInput == Vector2.zero)
-        {
-            controller.ClearLocalAnimationPreview();
-        }
-        else
-        {
-            controller.SetLocalAnimationPreview(worldMoveInput);
-        }
 
         if (jumpRequested)
         {

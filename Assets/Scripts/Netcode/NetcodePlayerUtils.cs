@@ -445,26 +445,6 @@ public static class NetcodePlayerUtils
         return "observer";
     }
 
-    public static string ResolveAnimationDriverMode(CharacterControlState state)
-    {
-        if (state.PlayerInputEnabled)
-        {
-            return "local";
-        }
-
-        if (state.IsPlayerControlled)
-        {
-            return "remote";
-        }
-
-        if (IsFollowerSimulationActiveOnThisMachine() || IsWaitingSimulationActiveOnThisMachine())
-        {
-            return "ai";
-        }
-
-        return "observer";
-    }
-
     private static string DescribeTransform(Transform target)
     {
         if (target == null)

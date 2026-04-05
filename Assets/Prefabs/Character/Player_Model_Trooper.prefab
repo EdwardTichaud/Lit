@@ -1187,18 +1187,16 @@ MonoBehaviour:
   clampHpToMax: 1
   animator: {fileID: 963045829911085934}
   rigidbodyTarget: {fileID: -8769395688154957966}
-  characterController: {fileID: 0}
   motionRoot: {fileID: 2233782780378164146}
   speedParam: Speed
-  speedDampTime: 0.08
+  speedDampTime: 0.06
   useSpeedDamping: 1
-  useDiscreteLocomotion: 0
   walkSpeedThreshold: 1.35
   runSpeedThreshold: 3.25
   idleAnimValue: 0
   walkAnimValue: 1.35
   runAnimValue: 3.25
-  localAnimationPreviewMaxLeadSpeed: 0.4
+  trotPresentationSpeed: 2.5
   animationMovingExitSpeed: 0.05
   animationMovingEnterSpeed: 0.12
   animationTurnResponsiveness: 10
@@ -1208,20 +1206,17 @@ MonoBehaviour:
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
   turnInPlaceAngleThreshold: 60
-  rootMotionApplicationMode: 1
-  rootMotionGroundedOnly: 1
-  walkMoveSpeed: 3.25
-  moveSpeed: 6
-  inputResponsiveness: 12
-  useVelocityForAnimation: 1
+  applyRootMotionRotation: 0
+  walkMoveSpeed: 5
+  moveSpeed: 6.5
+  inputResponsiveness: 14
   rotateToInput: 1
-  rotationSpeed: 20
+  rotationSpeed: 24
   useCameraRelative: 1
   referenceCamera: {fileID: 0}
   animatePhysics: 1
-  sprintAnimationMinSpeed: 1
-  movingRotationSpeed: 12
-  movingRotationSpeedThreshold: 0.9
+  movingRotationSpeed: 16
+  movingRotationSpeedThreshold: 0.75
   jumpGroundCheckDistance: 0.18
   jumpGroundCheckRadiusScale: 0.9
   groundedStickVelocity: 2

@@ -6,12 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(Animator), typeof(Rigidbody))]
 public partial class SquadCharacterController : MonoBehaviour
 {
-    private enum RootMotionApplicationMode
-    {
-        Disabled = 0,
-        TranslationOnly = 1,
-        TranslationAndRotation = 2
-    }
 
     private enum TorchVisualTransition
     {
@@ -57,8 +51,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private Animator animator;
     [SerializeField, Tooltip("Rigidbody optionnel pour le mouvement.")]
     private Rigidbody rigidbodyTarget;
-    [SerializeField, Tooltip("CharacterController optionnel.")]
-    private CharacterController characterController;
     [SerializeField, Tooltip("Transform racine utilise pour le mouvement.")]
     private Transform motionRoot;
 
@@ -66,27 +58,25 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Nom du parametre Speed dans l'Animator.")]
     private string speedParam = "Speed";
     [SerializeField, Tooltip("Damping du parametre Speed.")]
-    private float speedDampTime = 0.1f;
+    private float speedDampTime = 0.06f;
     [SerializeField, Tooltip("Utilise un damping sur Speed.")]
     private bool useSpeedDamping = false;
 
     [Header("Animation")]
-    [SerializeField, Tooltip("Utilise des valeurs discretes (idle/walk/run).")]
-    private bool useDiscreteLocomotion = true;
     [SerializeField, Tooltip("Vitesse gameplay a laquelle la phase de marche atteint son plein poids dans le blend tree.")]
-    private float walkSpeedThreshold = 1.5f;
+    private float walkSpeedThreshold = 1.35f;
     [SerializeField, Tooltip("Vitesse gameplay a laquelle la phase de course atteint son plein poids dans le blend tree.")]
-    private float runSpeedThreshold = 4.6f;
+    private float runSpeedThreshold = 3.25f;
     [SerializeField, Tooltip("Valeur Speed pour idle.")]
     private float idleAnimValue = 0f;
     [SerializeField, Tooltip("Valeur Speed du blend tree correspondant au palier marche.")]
-    private float walkAnimValue = 1.5f;
+    private float walkAnimValue = 1.35f;
     [SerializeField, Tooltip("Valeur Speed du blend tree correspondant au palier course.")]
-    private float runAnimValue = 4.6f;
+    private float runAnimValue = 3.25f;
+    [SerializeField, Tooltip("Vitesse nominale envoyee a l'Animator quand le personnage atteint son trot max sans sprint. Permet d'augmenter la vitesse gameplay reelle sans pousser le blend tree sur le clip de sprint.")]
+    private float trotPresentationSpeed = 2.5f;
 
     [Header("Animation Feel")]
-    [SerializeField, Tooltip("Avance max accordee a l'intention locale sur la vitesse reelle pour garder une lecture reactivite/poids coherente.")]
-    private float localAnimationPreviewMaxLeadSpeed = 1.35f;
     [SerializeField, Tooltip("Seuil bas utilise pour couper les etats de locomotion optionnels de l'Animator.")]
     private float animationMovingExitSpeed = 0.12f;
     [SerializeField, Tooltip("Seuil haut utilise pour declencher les etats de locomotion optionnels de l'Animator.")]
@@ -107,36 +97,30 @@ public partial class SquadCharacterController : MonoBehaviour
     private float turnInPlaceAngleThreshold = 60f;
 
     [Header("Root Motion")]
-    [SerializeField, Tooltip("Autorite root motion de l'Animator. Disabled coupe la locomotion au sol: il n'existe plus de fallback scripté concurrent.")]
-    private RootMotionApplicationMode rootMotionApplicationMode = RootMotionApplicationMode.TranslationOnly;
-    [SerializeField, Tooltip("Quand actif, le root motion n'est consomme que pour les phases au sol. Les sauts/roulades restent alors sous autorite gameplay/code.")]
-    private bool rootMotionGroundedOnly = true;
+    [SerializeField, Tooltip("Consomme aussi la rotation racine des clips. A laisser desactive si la direction reste pilotee par le gameplay.")]
+    private bool applyRootMotionRotation = false;
 
     [Header("Movement")]
     [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
-    private float walkMoveSpeed = 1.5f;
+    private float walkMoveSpeed = 5f;
     [SerializeField, Tooltip("Vitesse de deplacement.")]
-    private float moveSpeed = 2.5f;
+    private float moveSpeed = 6.5f;
     [SerializeField, Tooltip("Lissage de l'input.")]
-    private float inputResponsiveness = 12f;
-    [SerializeField, Tooltip("Utilise la velocite pour l'animation.")]
-    private bool useVelocityForAnimation = true;
+    private float inputResponsiveness = 14f;
     [SerializeField, Tooltip("Tourne vers la direction d'input.")]
     private bool rotateToInput = true;
     [SerializeField, Tooltip("Vitesse de rotation.")]
-    private float rotationSpeed = 10f;
+    private float rotationSpeed = 24f;
     [SerializeField, Tooltip("Deplacement relatif a la camera.")]
     private bool useCameraRelative = true;
     [SerializeField, Tooltip("Camera de reference (fallback Main).")]
     private Camera referenceCamera;
     [SerializeField, Tooltip("Anime les RB en physics.")]
     private bool animatePhysics = true;
-    [SerializeField, Tooltip("Seuil minimal de vitesse reelle avant d'autoriser l'animation de course.")]
-    private float sprintAnimationMinSpeed = 1f;
     [SerializeField, Tooltip("Responsivite de rotation appliquee quand le personnage est deja en mouvement.")]
-    private float movingRotationSpeed = 12f;
+    private float movingRotationSpeed = 16f;
     [SerializeField, Tooltip("Seuil de vitesse a partir duquel la rotation passe en mode mouvement.")]
-    private float movingRotationSpeedThreshold = 0.9f;
+    private float movingRotationSpeedThreshold = 0.75f;
 
     [Header("Grounding")]
     [SerializeField, Tooltip("Distance du controle sol pour autoriser les etats relies au sol (m).")]
@@ -252,8 +236,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private Vector2 moveInput;
     private float inputLockTimer;
     private Vector2 smoothedInput;
-    private Vector2 animationPreviewInput;
-    private Vector2 smoothedAnimationPreviewInput;
     private bool moveInputIsWorldSpace;
     private bool sprintModifierPressed;
     private Vector3 currentHorizontalVelocity;
@@ -286,10 +268,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private readonly List<Transform> obstacleTraversalVisualTargets = new List<Transform>();
     private readonly List<Vector3> obstacleTraversalVisualBaseLocalPositions = new List<Vector3>();
     private float footIkWeightCurrent;
-    private string lastAnimationDriverMode = string.Empty;
-    private string lastAnimationMovementMode = string.Empty;
-    private int lastAnimationSpeedBucket = int.MinValue;
-    private bool lastAnimationAnimatorEnabled;
     private float obstacleTraversalVisualLag;
     private float obstacleTraversalVisualLagTarget;
     private float nextRootMotionDiagnosticTime;
@@ -314,7 +292,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private void Reset()
     {
         animator = GetComponent<Animator>();
-        characterController = GetComponent<CharacterController>();
         rigidbodyTarget = GetComponent<Rigidbody>();
         locomotionCapsule = GetComponent<CapsuleCollider>();
         motionRoot = transform;
@@ -354,11 +331,6 @@ public partial class SquadCharacterController : MonoBehaviour
         if (animator == null)
         {
             animator = GetComponent<Animator>();
-        }
-
-        if (characterController == null)
-        {
-            characterController = GetComponent<CharacterController>();
         }
 
         if (rigidbodyTarget == null)
@@ -401,7 +373,7 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureRigidbodyCollisionSafety();
         InitializeTorchState();
         ResetCommittedJumpRuntime();
-        RefreshAnimationBindings("awake");
+        RefreshAnimationReferences();
     }
 
     private void OnEnable()
@@ -409,18 +381,12 @@ public partial class SquadCharacterController : MonoBehaviour
         RegisterCharacter();
         CacheAudioListener();
         CacheNetworkObject();
-        LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
-        RefreshAnimationBindings("on_enable");
-        LogAnimationStatus(
-            "animation_initialized",
-            force: true,
-            reason: "character initialized for animation");
+        RefreshAnimationReferences();
         UpdateAudioListenerState(true);
     }
 
     private void OnDisable()
     {
-        LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
         ResetObstacleTraversalVisualTargetsImmediate();
         SetAudioListenerActive(false);
         UnregisterCharacter();
@@ -434,11 +400,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private void OnTransformParentChanged()
     {
         MarkCollidersDirty();
-        RefreshAnimationBindings("transform_parent_changed");
-        LogAnimationStatus(
-            "animation_references_rebound",
-            force: true,
-            reason: "Animator references rebound after DDOL migration or parent change");
+        RefreshAnimationReferences();
     }
 
     private void CacheAudioListener()
@@ -469,7 +431,7 @@ public partial class SquadCharacterController : MonoBehaviour
         cachedNetworkObject = GetComponentInParent<NetworkObject>();
     }
 
-    private void RefreshAnimationBindings(string reason)
+    private void RefreshAnimationReferences()
     {
         if (animator == null)
         {
@@ -485,26 +447,6 @@ public partial class SquadCharacterController : MonoBehaviour
         CacheNetworkObject();
         ApplyAnimatorSettings();
         CacheObstacleTraversalVisualTargets();
-
-        LogAnimationStatus(
-            "animation_references_rebound",
-            force: true,
-            reason: $"animation bindings refreshed reason='{reason}'");
-    }
-
-    private void OnLocalCharacterChanged(Transform localCharacterRoot)
-    {
-        if (!IsSameOrRelatedTransform(transform, localCharacterRoot)
-            && !string.Equals(lastAnimationDriverMode, "local", System.StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        RefreshAnimationBindings("local_character_changed");
-        LogAnimationStatus(
-            "animation_authority_refresh",
-            force: true,
-            reason: "animation authority refreshed after local assignment change");
     }
 
     private void UpdateAudioListenerState(bool force)
@@ -1529,11 +1471,6 @@ public partial class SquadCharacterController : MonoBehaviour
             animator = GetComponent<Animator>();
         }
 
-        if (characterController == null)
-        {
-            characterController = GetComponent<CharacterController>();
-        }
-
         if (rigidbodyTarget == null)
         {
             rigidbodyTarget = GetComponent<Rigidbody>();
@@ -1555,9 +1492,8 @@ public partial class SquadCharacterController : MonoBehaviour
         inputResponsiveness = Mathf.Max(0f, inputResponsiveness);
         walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
         runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
+        trotPresentationSpeed = Mathf.Clamp(trotPresentationSpeed, walkSpeedThreshold, runSpeedThreshold);
         speedDampTime = Mathf.Max(0f, speedDampTime);
-        sprintAnimationMinSpeed = Mathf.Max(0f, sprintAnimationMinSpeed);
-        localAnimationPreviewMaxLeadSpeed = Mathf.Max(0f, localAnimationPreviewMaxLeadSpeed);
         animationMovingExitSpeed = Mathf.Max(0f, animationMovingExitSpeed);
         animationMovingEnterSpeed = Mathf.Max(animationMovingExitSpeed, animationMovingEnterSpeed);
         animationTurnResponsiveness = Mathf.Max(0f, animationTurnResponsiveness);
@@ -1648,11 +1584,6 @@ public partial class SquadCharacterController : MonoBehaviour
         moveInput = worldInput;
     }
 
-    public void SetLocalAnimationPreview(Vector2 worldInput)
-    {
-        animationPreviewInput = Vector2.ClampMagnitude(worldInput, 1f);
-    }
-
     public void SetSprintModifier(bool pressed)
     {
         sprintModifierPressed = pressed;
@@ -1663,12 +1594,6 @@ public partial class SquadCharacterController : MonoBehaviour
         RequestCommittedJump();
     }
 
-    public void ClearLocalAnimationPreview()
-    {
-        animationPreviewInput = Vector2.zero;
-        smoothedAnimationPreviewInput = Vector2.zero;
-    }
-
     public void Stop()
     {
         moveInputIsWorldSpace = false;
@@ -1676,7 +1601,6 @@ public partial class SquadCharacterController : MonoBehaviour
         smoothedInput = Vector2.zero;
         sprintModifierPressed = false;
         currentHorizontalVelocity = Vector3.zero;
-        ClearLocalAnimationPreview();
         wasMovingForAnimator = false;
         smoothedTurnAmount = 0f;
         SetAnimatorBoolIfValid(isMovingParam, false);
@@ -1689,7 +1613,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         UpdateInputLock(Time.fixedDeltaTime);
         SmoothInput(Time.fixedDeltaTime);
-        SmoothAnimationPreview(Time.fixedDeltaTime);
         UpdateGroundedState();
         UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
         UpdateCommittedJump(Time.fixedDeltaTime);
@@ -1820,8 +1743,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool ShouldUseGroundedLocomotionRootMotion()
     {
-        return IsAnimatorRootMotionEnabled()
-               && !IsJumpCommitted;
+        return !IsJumpCommitted;
     }
 
     private bool CanSimulateMovementLocally()
@@ -1840,7 +1762,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        if (rootMotionApplicationMode == RootMotionApplicationMode.TranslationAndRotation)
+        if (applyRootMotionRotation)
         {
             return;
         }
@@ -1934,20 +1856,28 @@ public partial class SquadCharacterController : MonoBehaviour
         return sprintModifierPressed ? sprintSpeed : walkingSpeed;
     }
 
+    private float ResolveCurrentTargetPresentationSpeed()
+    {
+        float sprintPresentationSpeed = Mathf.Max(runSpeedThreshold, 0.0001f);
+        float trotSpeed = Mathf.Clamp(trotPresentationSpeed, 0f, sprintPresentationSpeed);
+        return sprintModifierPressed ? sprintPresentationSpeed : trotSpeed;
+    }
+
     private float ResolveCurrentMoveSpeedScale()
     {
         float sprintSpeed = Mathf.Max(0.0001f, moveSpeed);
         return Mathf.Clamp01(ResolveCurrentTargetMoveSpeed() / sprintSpeed);
     }
 
+    private float ResolveCurrentRootMotionTranslationScale()
+    {
+        float presentationSpeed = Mathf.Max(0.0001f, ResolveCurrentTargetPresentationSpeed());
+        return Mathf.Max(0f, ResolveCurrentTargetMoveSpeed()) / presentationSpeed;
+    }
+
     private float ScaleConfiguredLocomotionSpeed(float speed)
     {
         return Mathf.Max(0f, speed) * ResolveCurrentMoveSpeedScale();
-    }
-
-    private bool CanUseRunAnimation(float rawSpeed)
-    {
-        return sprintModifierPressed && rawSpeed > sprintAnimationMinSpeed;
     }
 
     private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
@@ -2061,17 +1991,6 @@ public partial class SquadCharacterController : MonoBehaviour
             return true;
         }
 
-        if (characterController != null)
-        {
-            Bounds bounds = characterController.bounds;
-            radius = Mathf.Max(0.01f, characterController.radius);
-            Vector3 controllerCenter = bounds.center;
-            float segmentHalf = Mathf.Max(0f, bounds.extents.y - radius);
-            point1 = controllerCenter + up * segmentHalf;
-            point2 = controllerCenter - up * segmentHalf;
-            return true;
-        }
-
         point1 = Vector3.zero;
         point2 = Vector3.zero;
         radius = 0f;
@@ -2153,16 +2072,6 @@ public partial class SquadCharacterController : MonoBehaviour
         if (Time.time < groundIgnoreUntilTime)
         {
             isGrounded = false;
-            return;
-        }
-
-        if (characterController != null && !ShouldUseRigidbody())
-        {
-            isGrounded = characterController.isGrounded;
-            if (isGrounded)
-            {
-                lastGroundedTime = Time.time;
-            }
             return;
         }
 
@@ -2834,18 +2743,6 @@ public partial class SquadCharacterController : MonoBehaviour
         smoothedInput = Vector2.Lerp(smoothedInput, moveInput, t);
     }
 
-    private void SmoothAnimationPreview(float deltaTime)
-    {
-        if (inputResponsiveness <= 0f)
-        {
-            smoothedAnimationPreviewInput = animationPreviewInput;
-            return;
-        }
-
-        float t = 1f - Mathf.Exp(-inputResponsiveness * deltaTime);
-        smoothedAnimationPreviewInput = Vector2.Lerp(smoothedAnimationPreviewInput, animationPreviewInput, t);
-    }
-
     private void UpdateAnimationSpeed()
     {
         if (animator == null || string.IsNullOrWhiteSpace(speedParam))
@@ -2853,50 +2750,32 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
-        string movementMode = NetcodePlayerUtils.ResolveMovementMode(controlState, followerAiEnabled: false, waitingPointEnabled: false);
-        string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
-
         Vector3 velocity = GetCurrentHorizontalVelocity();
-        float velocitySpeed = velocity.magnitude;
-        float targetMoveSpeed = ResolveCurrentTargetMoveSpeed();
-        float inputSpeed = Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed;
-        float previewSpeed = Mathf.Clamp01(smoothedAnimationPreviewInput.magnitude) * targetMoveSpeed;
-
-        float rawSpeed = ResolveAnimationDriverSpeed(animationDriverMode, velocitySpeed, inputSpeed, previewSpeed);
-
+        float rawSpeed = ResolveAnimationPresentationSpeed(velocity);
         float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
 
         SetSpeed(animSpeed);
         UpdateLocomotionAnimatorSignals(rawSpeed, velocity, deltaTime: Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime);
-        TrackAnimationState(controlState, movementMode, animationDriverMode, rawSpeed, animSpeed, previewSpeed, velocity);
     }
 
-    private float ResolveAnimationDriverSpeed(
-        string animationDriverMode,
-        float velocitySpeed,
-        float inputSpeed,
-        float previewSpeed)
+    private float ResolveAnimationPresentationSpeed(Vector3 velocity)
     {
-        if (!string.Equals(animationDriverMode, "local", System.StringComparison.Ordinal))
+        float inputMagnitude = Mathf.Clamp01(smoothedInput.magnitude);
+        if (inputMagnitude > 0.0001f)
         {
-            return useVelocityForAnimation ? velocitySpeed : inputSpeed;
+            return inputMagnitude * ResolveCurrentTargetPresentationSpeed();
         }
-
-        float localIntentSpeed = Mathf.Max(inputSpeed, previewSpeed);
 
         if (ShouldUseGroundedLocomotionRootMotion())
         {
-            // En locomotion root motion locale, l'Animator est la source de verite
-            // du deplacement visible. Il faut donc alimenter Speed depuis l'intention,
-            // sinon un cap de "preview lead" trop bas bloque le demarrage du mouvement.
-            return localIntentSpeed;
+            float rootMotionScale = ResolveCurrentRootMotionTranslationScale();
+            if (rootMotionScale > 0.0001f)
+            {
+                return velocity.magnitude / rootMotionScale;
+            }
         }
 
-        // Le preview local reste utile pour la reactivite reseau,
-        // mais on borne son avance pour eviter un depart visuellement a pleine vitesse.
-        float maxLedSpeed = Mathf.Max(velocitySpeed, velocitySpeed + localAnimationPreviewMaxLeadSpeed);
-        return Mathf.Max(velocitySpeed, Mathf.Min(localIntentSpeed, maxLedSpeed));
+        return velocity.magnitude;
     }
 
     private void UpdateLocomotionAnimatorSignals(float presentationSpeed, Vector3 velocity, float deltaTime)
@@ -2958,11 +2837,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         Vector3 desiredDirection = Vector3.zero;
 
-        if (smoothedAnimationPreviewInput.sqrMagnitude > 0.0001f)
-        {
-            desiredDirection = new Vector3(smoothedAnimationPreviewInput.x, 0f, smoothedAnimationPreviewInput.y);
-        }
-        else if (smoothedInput.sqrMagnitude > 0.0001f)
+        if (smoothedInput.sqrMagnitude > 0.0001f)
         {
             desiredDirection = GetMoveDirection(smoothedInput);
         }
@@ -2996,29 +2871,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private float ResolveAnimatorSpeedValue(float rawSpeed)
     {
         float animSpeed = Mathf.Max(0f, rawSpeed);
-        bool canUseRunAnimation = CanUseRunAnimation(animSpeed);
-
-        if (!useDiscreteLocomotion)
-        {
-            return ResolveContinuousAnimatorSpeed(animSpeed);
-        }
-
-        if (!canUseRunAnimation)
-        {
-            animSpeed = Mathf.Min(animSpeed, walkSpeedThreshold);
-        }
-
-        if (canUseRunAnimation)
-        {
-            return runAnimValue;
-        }
-
-        if (animSpeed <= walkSpeedThreshold)
-        {
-            return idleAnimValue;
-        }
-
-        return walkAnimValue;
+        return ResolveContinuousAnimatorSpeed(animSpeed);
     }
 
     private float ResolveContinuousAnimatorSpeed(float rawSpeed)
@@ -3050,174 +2903,6 @@ public partial class SquadCharacterController : MonoBehaviour
         return runAnimValue;
     }
 
-    private void TrackAnimationState(
-        NetcodePlayerUtils.CharacterControlState controlState,
-        string movementMode,
-        string animationDriverMode,
-        float rawSpeed,
-        float animSpeed,
-        float previewSpeed,
-        Vector3 velocity)
-    {
-        bool animatorEnabled = animator != null && animator.enabled;
-        int speedBucket = ResolveAnimationSpeedBucket(animSpeed);
-
-        if (!string.Equals(lastAnimationDriverMode, animationDriverMode, System.StringComparison.Ordinal))
-        {
-            string previousMode = string.IsNullOrWhiteSpace(lastAnimationDriverMode) ? "<none>" : lastAnimationDriverMode;
-            LogAnimationStatus(
-                "animation_driver_mode_changed",
-                controlState,
-                movementMode,
-                animationDriverMode,
-                rawSpeed,
-                animSpeed,
-                previewSpeed,
-                velocity,
-                reason: $"animation authority switched from {previousMode} to {animationDriverMode}");
-
-            if (string.Equals(animationDriverMode, "local", System.StringComparison.Ordinal))
-            {
-                LogAnimationStatus(
-                    "local_player_animation_mode_activated",
-                    controlState,
-                    movementMode,
-                    animationDriverMode,
-                    rawSpeed,
-                    animSpeed,
-                    previewSpeed,
-                    velocity,
-                    reason: "late-join owned character animation now uses local input preview");
-            }
-        }
-        else if (!string.Equals(lastAnimationMovementMode, movementMode, System.StringComparison.Ordinal))
-        {
-            LogAnimationStatus(
-                "animation_movement_mode_changed",
-                controlState,
-                movementMode,
-                animationDriverMode,
-                rawSpeed,
-                animSpeed,
-                previewSpeed,
-                velocity,
-                reason: $"movement mode changed to {movementMode}");
-        }
-        else if (lastAnimationAnimatorEnabled != animatorEnabled)
-        {
-            LogAnimationStatus(
-                "animation_animator_enabled_changed",
-                controlState,
-                movementMode,
-                animationDriverMode,
-                rawSpeed,
-                animSpeed,
-                previewSpeed,
-                velocity,
-                reason: animatorEnabled
-                    ? "Animator enabled"
-                    : "Animator disabled");
-        }
-        else if (lastAnimationSpeedBucket != speedBucket)
-        {
-            LogAnimationStatus(
-                "animation_speed_bucket_changed",
-                controlState,
-                movementMode,
-                animationDriverMode,
-                rawSpeed,
-                animSpeed,
-                previewSpeed,
-                velocity,
-                reason: $"Animator speed bucket changed to {speedBucket}");
-        }
-
-        lastAnimationDriverMode = animationDriverMode ?? string.Empty;
-        lastAnimationMovementMode = movementMode ?? string.Empty;
-        lastAnimationSpeedBucket = speedBucket;
-        lastAnimationAnimatorEnabled = animatorEnabled;
-    }
-
-    private int ResolveAnimationSpeedBucket(float animSpeed)
-    {
-        if (useDiscreteLocomotion)
-        {
-            if (Mathf.Approximately(animSpeed, idleAnimValue))
-            {
-                return 0;
-            }
-
-            if (Mathf.Approximately(animSpeed, walkAnimValue))
-            {
-                return 1;
-            }
-
-            if (Mathf.Approximately(animSpeed, runAnimValue))
-            {
-                return 2;
-            }
-        }
-
-        return Mathf.RoundToInt(animSpeed * 10f);
-    }
-
-    private void LogAnimationStatus(string eventName, bool force, string reason)
-    {
-        if (!force)
-        {
-            return;
-        }
-
-        NetcodePlayerUtils.CharacterControlState controlState = NetcodePlayerUtils.ResolveCharacterControlState(gameObject);
-        string movementMode = NetcodePlayerUtils.ResolveMovementMode(controlState, followerAiEnabled: false, waitingPointEnabled: false);
-        string animationDriverMode = NetcodePlayerUtils.ResolveAnimationDriverMode(controlState);
-        Vector3 velocity = GetCurrentHorizontalVelocity();
-        float velocitySpeed = velocity.magnitude;
-        float targetMoveSpeed = ResolveCurrentTargetMoveSpeed();
-        float inputSpeed = Mathf.Clamp01(smoothedInput.magnitude) * targetMoveSpeed;
-        float previewSpeed = Mathf.Clamp01(smoothedAnimationPreviewInput.magnitude) * targetMoveSpeed;
-        float rawSpeed = ResolveAnimationDriverSpeed(animationDriverMode, velocitySpeed, inputSpeed, previewSpeed);
-        float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
-
-        LogAnimationStatus(
-            eventName,
-            controlState,
-            movementMode,
-            animationDriverMode,
-            rawSpeed,
-            animSpeed,
-            previewSpeed,
-            velocity,
-            reason);
-    }
-
-    private void LogAnimationStatus(
-        string eventName,
-        NetcodePlayerUtils.CharacterControlState controlState,
-        string movementMode,
-        string animationDriverMode,
-        float rawSpeed,
-        float animSpeed,
-        float previewSpeed,
-        Vector3 velocity,
-        string reason)
-    {
-        bool animatorEnabled = animator != null && animator.enabled;
-        Debug.Log(
-            $"[NetcodeAnimation] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(transform)}' characterId='{controlState.CharacterId}' ownerClientId={FormatClientId(controlState.HasNetworkObject, controlState.OwnerClientId)} localClientId={FormatClientId(controlState.HasLocalClientId, controlState.LocalClientId)} isOwner={controlState.IsOwner} isControlledLocally={controlState.IsControlledLocally} movementMode='{movementMode}' animatorEnabled={animatorEnabled} networkAnimationSyncEnabled=False animationDriverMode='{animationDriverMode}' speedValue={animSpeed:0.###} rawSpeed={rawSpeed:0.###} previewSpeed={previewSpeed:0.###} directionValue='n/a' turnValue='n/a' previewWorldInput='{FormatVector2(smoothedAnimationPreviewInput)}' velocityWorld='{FormatVector3(velocity)}' reason='{reason}'",
-            this);
-    }
-
-    private static bool IsSameOrRelatedTransform(Transform current, Transform candidate)
-    {
-        if (current == null || candidate == null)
-        {
-            return false;
-        }
-
-        return current == candidate || current.IsChildOf(candidate) || candidate.IsChildOf(current);
-    }
-
     private static string FormatVector2(Vector2 value)
     {
         return $"({value.x:0.###},{value.y:0.###})";
@@ -3226,11 +2911,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private static string FormatVector3(Vector3 value)
     {
         return $"({value.x:0.###},{value.y:0.###},{value.z:0.###})";
-    }
-
-    private static string FormatClientId(bool hasValue, ulong value)
-    {
-        return hasValue ? value.ToString() : "n/a";
     }
 
     private Vector3 GetCurrentHorizontalVelocity()
@@ -3426,35 +3106,16 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        animator.applyRootMotion = IsAnimatorRootMotionEnabled();
+        animator.applyRootMotion = true;
         animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
-    }
-
-    private bool IsAnimatorRootMotionEnabled()
-    {
-        return rootMotionApplicationMode != RootMotionApplicationMode.Disabled;
     }
 
     private bool ShouldConsumeAnimatorRootMotion()
     {
-        if (!IsAnimatorRootMotionEnabled())
-        {
-            return false;
-        }
-
         if (!CanSimulateMovementLocally())
         {
             return false;
         }
-
-        if (!rootMotionGroundedOnly)
-        {
-            return true;
-        }
-
-        // Le mode "grounded only" reserve toujours Jump/Roll au gameplay,
-        // mais ne doit pas bloquer toute locomotion si le probing de sol
-        // a une frame de retard ou se rate ponctuellement.
         return !IsJumpCommitted;
     }
 
@@ -3464,15 +3125,25 @@ public partial class SquadCharacterController : MonoBehaviour
             ? Time.fixedDeltaTime
             : Time.deltaTime;
 
-        Vector3 resolvedDeltaPosition = deltaPosition;
-        bool applyTranslation = deltaPosition.sqrMagnitude > 0.00000001f;
-        bool applyRotation = rootMotionApplicationMode == RootMotionApplicationMode.TranslationAndRotation;
+        Vector3 scaledDeltaPosition = deltaPosition;
+        if (ShouldUseGroundedLocomotionRootMotion() && smoothedInput.sqrMagnitude > 0.0001f)
+        {
+            float rootMotionScale = ResolveCurrentRootMotionTranslationScale();
+            if (rootMotionScale > 0.0001f && !Mathf.Approximately(rootMotionScale, 1f))
+            {
+                scaledDeltaPosition *= rootMotionScale;
+            }
+        }
+
+        Vector3 resolvedDeltaPosition = scaledDeltaPosition;
+        bool applyTranslation = scaledDeltaPosition.sqrMagnitude > 0.00000001f;
+        bool applyRotation = applyRootMotionRotation;
         string diagnosticReason = null;
 
         if (applyTranslation)
         {
             if (TryResolveAnimatorRootMotionTranslation(
-                    deltaPosition,
+                    scaledDeltaPosition,
                     out resolvedDeltaPosition,
                     out string rootMotionFilterReason))
             {
@@ -3564,7 +3235,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        if (smoothedInput.sqrMagnitude <= 0.0001f && smoothedAnimationPreviewInput.sqrMagnitude <= 0.0001f)
+        if (smoothedInput.sqrMagnitude <= 0.0001f)
         {
             return;
         }
@@ -3572,7 +3243,7 @@ public partial class SquadCharacterController : MonoBehaviour
         nextRootMotionDiagnosticTime = Time.unscaledTime + 0.35f;
         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
         Debug.LogWarning(
-            $"[RootMotion] path='{PersistentWorldDebug.DescribeTransform(transform)}' stateHash={state.shortNameHash} normalizedTime={state.normalizedTime:0.###} grounded={isGrounded} jumpCommitted={IsJumpCommitted} input='{FormatVector2(smoothedInput)}' preview='{FormatVector2(smoothedAnimationPreviewInput)}' rawDelta='{FormatVector3(rawDeltaPosition)}' resolvedDelta='{FormatVector3(resolvedDeltaPosition)}' reason='{reason}'",
+            $"[RootMotion] path='{PersistentWorldDebug.DescribeTransform(transform)}' stateHash={state.shortNameHash} normalizedTime={state.normalizedTime:0.###} grounded={isGrounded} jumpCommitted={IsJumpCommitted} input='{FormatVector2(smoothedInput)}' rawDelta='{FormatVector3(rawDeltaPosition)}' resolvedDelta='{FormatVector3(resolvedDeltaPosition)}' reason='{reason}'",
             this);
     }
 
@@ -3583,11 +3254,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         resolvedDeltaPosition = deltaPosition;
         reason = null;
-
-        if (!rootMotionGroundedOnly)
-        {
-            return true;
-        }
 
         Vector3 planarDelta = Vector3.ProjectOnPlane(deltaPosition, transform.up);
         if (planarDelta.sqrMagnitude <= 0.00000001f)

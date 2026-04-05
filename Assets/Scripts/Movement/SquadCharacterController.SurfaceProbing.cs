@@ -46,26 +46,7 @@ public partial class SquadCharacterController
             return true;
         }
 
-        if (characterController == null)
-        {
-            return false;
-        }
-
-        Bounds bounds = characterController.bounds;
-        Vector3 fallbackUp = transform.up;
-        radius = Mathf.Max(0.01f, Mathf.Max(bounds.extents.x, bounds.extents.z));
-        height = Mathf.Max(bounds.size.y, radius * 2f);
-        center = bounds.center;
-        float fallbackHalfHeight = height * 0.5f;
-        float fallbackBottomOffset = Mathf.Max(0f, fallbackHalfHeight - radius);
-        Vector3 fallbackBottomCenter = center - fallbackUp * fallbackBottomOffset;
-
-        context.up = fallbackUp;
-        context.center = center;
-        context.radius = radius;
-        context.height = height;
-        context.footPoint = fallbackBottomCenter - fallbackUp * radius;
-        return true;
+        return false;
     }
 
     private bool TryProbeGroundedSupport(float probeDistance, float probeRadius, out GroundProbeSample sample, out float bottomGap)
