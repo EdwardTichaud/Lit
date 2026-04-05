@@ -134,11 +134,6 @@ public class TriggerPairTeleporter : MonoBehaviour
             return;
         }
 
-        if (!IsTravelerFullyInsideTrigger(sourceEndpoint.trigger, travelerRoot))
-        {
-            return;
-        }
-
         ResolveDestinationPose(destinationEndpoint, out Vector3 destinationPosition, out Quaternion destinationRotation);
         TeleportTraveler(travelerRoot, destinationPosition, destinationRotation);
 
@@ -208,54 +203,6 @@ public class TriggerPairTeleporter : MonoBehaviour
         {
             squadController.Stop();
         }
-    }
-
-    private bool IsTravelerFullyInsideTrigger(Collider trigger, Transform travelerRoot)
-    {
-        if (trigger == null || travelerRoot == null || !trigger.enabled)
-        {
-            return false;
-        }
-
-        Renderer[] renderers = travelerRoot.GetComponentsInChildren<Renderer>(true);
-        bool foundRenderer = false;
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            foundRenderer = true;
-            if (!AreBoundsInsideTrigger(trigger, renderer.bounds))
-            {
-                return false;
-            }
-        }
-
-        if (foundRenderer)
-        {
-            return true;
-        }
-
-        return IsPointInsideTrigger(trigger, travelerRoot.position);
-    }
-
-    private bool AreBoundsInsideTrigger(Collider trigger, Bounds bounds)
-    {
-        Vector3 min = bounds.min;
-        Vector3 max = bounds.max;
-
-        return IsPointInsideTrigger(trigger, bounds.center)
-            && IsPointInsideTrigger(trigger, new Vector3(min.x, min.y, min.z))
-            && IsPointInsideTrigger(trigger, new Vector3(min.x, min.y, max.z))
-            && IsPointInsideTrigger(trigger, new Vector3(min.x, max.y, min.z))
-            && IsPointInsideTrigger(trigger, new Vector3(min.x, max.y, max.z))
-            && IsPointInsideTrigger(trigger, new Vector3(max.x, min.y, min.z))
-            && IsPointInsideTrigger(trigger, new Vector3(max.x, min.y, max.z))
-            && IsPointInsideTrigger(trigger, new Vector3(max.x, max.y, min.z))
-            && IsPointInsideTrigger(trigger, new Vector3(max.x, max.y, max.z));
     }
 
     private bool IsPointInsideTrigger(Collider trigger, Vector3 point)

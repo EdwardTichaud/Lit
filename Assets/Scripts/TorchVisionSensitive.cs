@@ -50,6 +50,10 @@ public class TorchVisionSensitive : MonoBehaviour
     [SerializeField] private bool affectBehaviours = false;
     [SerializeField] private Behaviour[] behaviours;
 
+    [Header("Debug")]
+    [SerializeField] private bool showDistanceReferenceGizmo = true;
+    [SerializeField, Min(0.01f)] private float distanceReferenceGizmoRadius = 0.2f;
+
     private readonly List<Renderer> rendererBuffer = new List<Renderer>();
     private DissolveRendererData[] cachedRenderers = Array.Empty<DissolveRendererData>();
     private MaterialPropertyBlock propertyBlock;
@@ -104,6 +108,27 @@ public class TorchVisionSensitive : MonoBehaviour
         if (!Application.isPlaying)
         {
             CacheTargets();
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!showDistanceReferenceGizmo)
+        {
+            return;
+        }
+
+        Vector3 referencePosition = GetReferencePosition();
+
+        Gizmos.color = distanceReference != null
+            ? new Color(0.2f, 0.8f, 1f, 0.95f)
+            : new Color(1f, 0.75f, 0.2f, 0.95f);
+        Gizmos.DrawSphere(referencePosition, Mathf.Max(0.01f, distanceReferenceGizmoRadius));
+
+        if (distanceReference != null)
+        {
+            Gizmos.DrawLine(transform.position, referencePosition);
+            Gizmos.DrawWireSphere(referencePosition, Mathf.Max(0.01f, distanceReferenceGizmoRadius * 1.5f));
         }
     }
 
