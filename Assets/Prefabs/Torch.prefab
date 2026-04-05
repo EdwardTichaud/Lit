@@ -293,8 +293,8 @@ MonoBehaviour:
   deferShadowingToTorchReceiver: 1
   baseIntensity: 489.64603
   baseRange: 5.9720516
-  emberColor: {r: 1, g: 0.48, b: 0.18, a: 1}
-  flameColor: {r: 1, g: 0.5989479, b: 0.3675717, a: 1}
+  emberColor: {r: 1, g: 1, b: 1, a: 1}
+  flameColor: {r: 1, g: 1, b: 1, a: 1}
   intensityVariation: 0.24
   rangeVariation: 0.08
   colorVariation: 0.45

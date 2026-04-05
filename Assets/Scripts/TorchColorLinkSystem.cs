@@ -39,7 +39,7 @@ public class TorchColorLinkSystem : MonoBehaviour
     private readonly List<TorchVisionSystem.TorchSourceInfo> violetSources = new List<TorchVisionSystem.TorchSourceInfo>();
     private readonly List<VioletLinkSegment> violetSegments = new List<VioletLinkSegment>();
     private readonly List<Vector3> violetIntersections = new List<Vector3>();
-    private readonly List<TreasureFinder> spawnedTreasureFinders = new List<TreasureFinder>();
+    private readonly List<Transform> spawnedTreasureFinders = new List<Transform>();
     private readonly HashSet<int> uniqueControllerIds = new HashSet<int>();
 
     private bool autoCreated;
@@ -418,14 +418,15 @@ public class TorchColorLinkSystem : MonoBehaviour
             ? "VioletTreasureFinder"
             : finderObject.name;
 
-        TreasureFinder finder = finderObject.GetComponent<TreasureFinder>();
-        if (finder == null)
+        TorchLightReceiver receiver = EnsureTreasureFinderReceiver(finderObject);
+        if (receiver == null)
         {
-            finder = finderObject.AddComponent<TreasureFinder>();
+            Destroy(finderObject);
+            return false;
         }
 
-        finder.ConfigureRuntime(ResolveVioletVision());
-        spawnedTreasureFinders.Add(finder);
+        receiver.ConfigureWorldTorchSource(ResolveVioletVision(), countsAsEquipped: true);
+        spawnedTreasureFinders.Add(finderObject.transform);
         return true;
     }
 
@@ -448,8 +449,29 @@ public class TorchColorLinkSystem : MonoBehaviour
 
         fallback.AddComponent<TorchLightReceiver>();
         fallback.AddComponent<FlickeringLight>();
-        fallback.AddComponent<TreasureFinder>();
         return fallback;
+    }
+
+    private static TorchLightReceiver EnsureTreasureFinderReceiver(GameObject finderObject)
+    {
+        if (finderObject == null)
+        {
+            return null;
+        }
+
+        TorchLightReceiver receiver = finderObject.GetComponent<TorchLightReceiver>();
+        if (receiver != null)
+        {
+            return receiver;
+        }
+
+        receiver = finderObject.GetComponentInChildren<TorchLightReceiver>(true);
+        if (receiver != null)
+        {
+            return receiver;
+        }
+
+        return finderObject.AddComponent<TorchLightReceiver>();
     }
 
     private bool HasTreasureFinderNear(Vector3 position)
@@ -457,13 +479,13 @@ public class TorchColorLinkSystem : MonoBehaviour
         float mergeDistanceSqr = intersectionMergeDistance * intersectionMergeDistance;
         for (int i = 0; i < spawnedTreasureFinders.Count; i++)
         {
-            TreasureFinder finder = spawnedTreasureFinders[i];
-            if (finder == null)
+            Transform finderRoot = spawnedTreasureFinders[i];
+            if (finderRoot == null)
             {
                 continue;
             }
 
-            Vector3 existingPosition = finder.FinderPosition;
+            Vector3 existingPosition = finderRoot.position;
             Vector2 delta = new Vector2(existingPosition.x - position.x, existingPosition.z - position.z);
             if (delta.sqrMagnitude <= mergeDistanceSqr)
             {

@@ -162,6 +162,16 @@ public class TorchVisionSystem : MonoBehaviour
         instance.UnregisterTorchSourceInternal(receiver);
     }
 
+    public static void RefreshTorchSource(TorchLightReceiver receiver)
+    {
+        if (receiver == null)
+        {
+            return;
+        }
+
+        GetOrCreate().RefreshTorchSourceInternal(receiver);
+    }
+
     public static bool TryGetNearestMatchingTorch(
         TorchVisionDefinition vision,
         Vector3 worldPosition,
@@ -298,6 +308,23 @@ public class TorchVisionSystem : MonoBehaviour
         {
             TorchSourcesChanged?.Invoke();
         }
+    }
+
+    private void RefreshTorchSourceInternal(TorchLightReceiver receiver)
+    {
+        if (receiver == null)
+        {
+            return;
+        }
+
+        if (!receiver.isActiveAndEnabled)
+        {
+            UnregisterTorchSourceInternal(receiver);
+            return;
+        }
+
+        torchSources.Add(receiver);
+        TorchSourcesChanged?.Invoke();
     }
 
     private void Update()

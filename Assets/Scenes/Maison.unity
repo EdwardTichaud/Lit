@@ -18138,7 +18138,7 @@ Transform:
   m_GameObject: {fileID: 136035438}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -19.8, y: 0.21, z: -24.5}
+  m_LocalPosition: {x: -19.8, y: -0.463, z: -24.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18304,7 +18304,7 @@ GameObject:
   - component: {fileID: 148570352}
   - component: {fileID: 148570351}
   m_Layer: 0
-  m_Name: SM_Chest_02_Top
+  m_Name: SM_Chest_03_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18372,7 +18372,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3ae84fb1dc48b9d46ac23e20eeb21dd6, type: 2}
+  - {fileID: 2100000, guid: 9bcf74bdc8230204b94b6feeb3ce4d49, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -26810,7 +26810,7 @@ Transform:
   m_GameObject: {fileID: 290585904}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.1414479, y: 0.7, z: -0.09251693}
+  m_LocalPosition: {x: -0.14249602, y: 0.7, z: -0.059791073}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -26969,8 +26969,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.01236513
-  m_Range: 0.061714485
+  m_Intensity: 0.01
+  m_Range: 0.026132787
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -27041,8 +27041,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.054468144
+  baseIntensity: 0.0132331895
+  baseRange: 0.032900132
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -54568,7 +54568,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.73924094, y: 0.73924094, z: 0.73924094}
+  m_LocalScale: {x: 0.68519664, y: 0.68519664, z: 0.68519664}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -74444,7 +74444,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.935546, y: 4.935546, z: 4.935546}
+  m_LocalScale: {x: 4.815719, y: 4.815719, z: 4.815719}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -87641,7 +87641,6 @@ Transform:
   - {fileID: 783966173}
   - {fileID: 1524958497}
   - {fileID: 1060746062}
-  - {fileID: 7871944513186141902}
   m_Father: {fileID: 758288327}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &789262142
@@ -110273,14 +110272,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 910000001}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.36, z: 4.31}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 985.2, y: 0.9, z: -23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 910000004}
   m_Father: {fileID: 1504185060}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1 &910000003
 GameObject:
   m_ObjectHideFlags: 0
@@ -130776,7 +130775,7 @@ Transform:
   m_GameObject: {fileID: 961790107}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.12199038, y: 0.7, z: -0.18742397}
+  m_LocalPosition: {x: -0.13395667, y: 0.7, z: -0.1712024}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -130800,8 +130799,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.04936024
+  baseIntensity: 0.013889812
+  baseRange: 0.05440417
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -130976,8 +130975,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.010505023
-  m_Range: 0.05055585
+  m_Intensity: 0.013237409
+  m_Range: 0.05333775
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -131058,7 +131057,7 @@ Transform:
   m_GameObject: {fileID: 962258032}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.109815724, y: 0.7, z: -0.1099625}
+  m_LocalPosition: {x: -0.14408025, y: 0.7, z: -0.13577294}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -131218,7 +131217,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   m_Intensity: 0.01
-  m_Range: 0.047451265
+  m_Range: 0.03852114
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -131289,8 +131288,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.012064056
-  baseRange: 0.05564213
+  baseIntensity: 0.011520652
+  baseRange: 0.04690434
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -136980,7 +136979,7 @@ Transform:
   m_GameObject: {fileID: 1012998759}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.058558542, y: 0.7, z: -0.13970107}
+  m_LocalPosition: {x: -0.06582464, y: 0.7, z: -0.15561245}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -137004,8 +137003,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.0106604155
-  baseRange: 0.013768032
+  baseIntensity: 0.014804451
+  baseRange: 0.012449878
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -137180,8 +137179,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.011162833
-  m_Range: 0.014072629
+  m_Intensity: 0.015925493
+  m_Range: 0.013063308
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -137569,7 +137568,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.701724, z: -0, w: 0.71244895}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2023297514}
@@ -139163,7 +139162,7 @@ Transform:
   m_GameObject: {fileID: 1068951298}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.15963307, y: 0.7, z: -0.14317979}
+  m_LocalPosition: {x: -0.17618324, y: 0.7, z: -0.14923789}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -139322,8 +139321,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.013663688
-  m_Range: 0.033453003
+  m_Intensity: 0.01
+  m_Range: 0.017475622
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -139394,8 +139393,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.027517239
+  baseIntensity: 0.011726759
+  baseRange: 0.022983799
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -139665,7 +139664,7 @@ Transform:
   m_GameObject: {fileID: 1077237955}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.1497855, y: 0.7, z: -0.05442253}
+  m_LocalPosition: {x: -0.15617056, y: 0.7, z: -0.075032234}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -139824,8 +139823,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.016971435
-  m_Range: 0.071637355
+  m_Intensity: 0.010449811
+  m_Range: 0.049157288
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -139896,8 +139895,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.015887463
-  baseRange: 0.06938653
+  baseIntensity: 0.011056338
+  baseRange: 0.048618592
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -184161,7 +184160,7 @@ Transform:
   m_GameObject: {fileID: 1272332829}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.1883201, y: 0.96, z: -0.15446633}
+  m_LocalPosition: {x: -0.20299095, y: 0.96, z: -0.13305774}
   m_LocalScale: {x: 1.7, y: 1.7000002, z: 1.7000002}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -184320,8 +184319,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.4581191, b: 0.16509432, a: 1}
-  m_Intensity: 2.3124146
-  m_Range: 45.137814
+  m_Intensity: 2.2188349
+  m_Range: 46.59203
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -184392,8 +184391,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 2.2257943
-  baseRange: 44.708828
+  baseIntensity: 2.0878708
+  baseRange: 45.36631
   emberColor: {r: 1, g: 0.4581191, b: 0.16509432, a: 1}
   flameColor: {r: 1, g: 0.4581191, b: 0.16509432, a: 1}
   intensityVariation: 0.24
@@ -198364,7 +198363,7 @@ Transform:
   m_GameObject: {fileID: 1400218666}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.12873942, y: 0.7, z: -0.13598329}
+  m_LocalPosition: {x: -0.14905016, y: 0.7, z: -0.155593}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -198389,7 +198388,7 @@ MonoBehaviour:
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
   baseIntensity: 0.01
-  baseRange: 0.031071298
+  baseRange: 0.026820026
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -198564,8 +198563,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.012227823
-  m_Range: 0.034780078
+  m_Intensity: 0.01
+  m_Range: 0.025898948
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -209195,7 +209194,7 @@ Transform:
   m_GameObject: {fileID: 1429163556}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.27423468, y: 0.7, z: -0.16037358}
+  m_LocalPosition: {x: -0.29473448, y: 0.7, z: -0.17453144}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -209354,8 +209353,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.010042667
-  m_Range: 0.01197019
+  m_Intensity: 0.011870088
+  m_Range: 0.014683339
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -209426,8 +209425,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.013482929
-  baseRange: 0.013479992
+  baseIntensity: 0.017683443
+  baseRange: 0.017254459
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -210000,7 +209999,7 @@ MonoBehaviour:
   unlitRoot: {fileID: 0}
   flameLight: {fileID: 0}
   flamePrefabs:
-  - {fileID: 2779093224865303206, guid: 4a64b8814aa5de341bdcf4d4fe48a0ea, type: 3}
+  - {fileID: 5410697229499434688, guid: 61d7509bef404884998803a1e1ef3678, type: 3}
   flamePrefabsOffset: {x: 0, y: 2.7, z: 0}
   flameBurst: {fileID: 5706726923497195754, guid: ee9874f0aac828e47bcc32eb03144926, type: 3}
   flameBurstOffset: {x: 0, y: 2, z: 0}
@@ -217628,7 +217627,7 @@ MonoBehaviour:
   unlitRoot: {fileID: 0}
   flameLight: {fileID: 0}
   flamePrefabs:
-  - {fileID: 2779093224865303206, guid: 4a64b8814aa5de341bdcf4d4fe48a0ea, type: 3}
+  - {fileID: 5410697229499434688, guid: 61d7509bef404884998803a1e1ef3678, type: 3}
   flamePrefabsOffset: {x: 0, y: 2.7, z: 0}
   flameBurst: {fileID: 5706726923497195754, guid: ee9874f0aac828e47bcc32eb03144926, type: 3}
   flameBurstOffset: {x: 0, y: 2, z: 0}
@@ -218715,7 +218714,7 @@ Transform:
   m_GameObject: {fileID: 1589874269}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.066413835, y: 0.7, z: -0.00815038}
+  m_LocalPosition: {x: -0.08028256, y: 0.7, z: -0.002128845}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -218739,8 +218738,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.3833213
+  baseIntensity: 0.011659133
+  baseRange: 0.34803364
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -218915,8 +218914,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.01
-  m_Range: 0.37065333
+  m_Intensity: 0.013031327
+  m_Range: 0.3731321
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -234756,7 +234755,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1638391813
 Transform:
   m_ObjectHideFlags: 0
@@ -297699,7 +297698,7 @@ Transform:
   m_GameObject: {fileID: 1855540501}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.14648646, y: 0.7, z: -0.10745089}
+  m_LocalPosition: {x: -0.166997, y: 0.7, z: -0.12270682}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -297724,7 +297723,7 @@ MonoBehaviour:
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
   baseIntensity: 0.01
-  baseRange: 0.13809732
+  baseRange: 0.063837186
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -297899,8 +297898,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.012193934
-  m_Range: 0.1571145
+  m_Intensity: 0.010043989
+  m_Range: 0.063751794
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -342038,7 +342037,7 @@ GameObject:
   - component: {fileID: 2023297516}
   - component: {fileID: 2023297515}
   m_Layer: 0
-  m_Name: SM_Chest_02
+  m_Name: SM_Chest_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -342106,7 +342105,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3ae84fb1dc48b9d46ac23e20eeb21dd6, type: 2}
+  - {fileID: 2100000, guid: 9bcf74bdc8230204b94b6feeb3ce4d49, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -628336,96 +628335,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1579282228142749896}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &7871944513186141901
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 787325467}
-    m_Modifications:
-    - target: {fileID: 1000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_Name
-      value: TreasureFinder
-      objectReference: {fileID: 0}
-    - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_Range
-      value: 4.215075
-      objectReference: {fileID: 0}
-    - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_Color.b
-      value: 0.7887732
-      objectReference: {fileID: 0}
-    - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_Color.g
-      value: 0.023469644
-      objectReference: {fileID: 0}
-    - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_Color.r
-      value: 0.50421554
-      objectReference: {fileID: 0}
-    - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_Intensity
-      value: 232.15611
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -19.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 3.27
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -19.63
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6525572887991523330, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -0.0007786113
-      objectReference: {fileID: 0}
-    - target: {fileID: 6525572887991523330, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.002714933
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
---- !u!4 &7871944513186141902 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-  m_PrefabInstance: {fileID: 7871944513186141901}
-  m_PrefabAsset: {fileID: 0}
 --- !u!23 &7872800678734704912
 MeshRenderer:
   m_ObjectHideFlags: 0

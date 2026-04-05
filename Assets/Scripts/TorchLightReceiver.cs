@@ -40,6 +40,7 @@ public class TorchLightReceiver : MonoBehaviour
 
     public SquadCharacterController Owner => owner;
     public bool ControlsShadowing => configureTorchShadowing;
+    public bool IsWorldTorchSource => registerAsWorldTorchSource && worldVision != null;
 
     public Color CurrentTorchColor
     {
@@ -106,6 +107,11 @@ public class TorchLightReceiver : MonoBehaviour
         hdrpSlopeBias = Mathf.Clamp01(hdrpSlopeBias);
         ApplyShadowing();
         ApplyVision(GetActiveVision());
+
+        if (Application.isPlaying)
+        {
+            RefreshTorchSourceRegistration();
+        }
     }
 
     private void OnDisable()
@@ -187,13 +193,18 @@ public class TorchLightReceiver : MonoBehaviour
 
     private TorchVisionDefinition GetActiveVision()
     {
+        if (IsWorldTorchSource)
+        {
+            return worldVision;
+        }
+
         TorchVisionDefinition ownerVision = GetOwnerVision();
         if (ownerVision != null || owner != null)
         {
             return ownerVision;
         }
 
-        return registerAsWorldTorchSource ? worldVision : null;
+        return null;
     }
 
     public void ConfigureWorldTorchSource(TorchVisionDefinition vision, bool countsAsEquipped = true)
@@ -203,6 +214,7 @@ public class TorchLightReceiver : MonoBehaviour
         worldTorchCountsAsEquipped = countsAsEquipped;
         CacheLight();
         ApplyVision(GetActiveVision());
+        RefreshTorchSourceRegistration();
     }
 
     public bool TryGetTorchSourceInfo(
@@ -214,14 +226,21 @@ public class TorchLightReceiver : MonoBehaviour
         CacheOwner();
         CacheLight();
 
+        if (IsWorldTorchSource)
+        {
+            controller = null;
+            vision = worldVision;
+            torchEquipped = worldTorchCountsAsEquipped;
+            position = TorchWorldPosition;
+            return true;
+        }
+
         controller = owner;
-        vision = GetActiveVision();
-        torchEquipped = owner != null
-            ? owner.IsTorchEquipped
-            : registerAsWorldTorchSource && worldTorchCountsAsEquipped;
+        vision = GetOwnerVision();
+        torchEquipped = owner != null && owner.IsTorchEquipped;
         position = TorchWorldPosition;
 
-        return controller != null || (registerAsWorldTorchSource && vision != null);
+        return controller != null;
     }
 
     private void OnVisionChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)
@@ -231,7 +250,17 @@ public class TorchLightReceiver : MonoBehaviour
             return;
         }
 
-        ApplyVision(current);
+        ApplyVision(GetActiveVision());
+    }
+
+    private void RefreshTorchSourceRegistration()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        TorchVisionSystem.RefreshTorchSource(this);
     }
 
     private void ApplyVision(TorchVisionDefinition vision)

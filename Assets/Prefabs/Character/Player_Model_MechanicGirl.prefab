@@ -536,11 +536,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: flameColor.b
-      value: 0.2632954
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: flameColor.g
-      value: 0.5328215
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: baseIntensity

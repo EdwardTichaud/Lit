@@ -20,6 +20,8 @@ public class TorchVisionSensitive : MonoBehaviour
         public int DissolveAmountPropertyId;
         public bool HasDissolveColorProperty;
         public int DissolveColorPropertyId;
+        public Material[] OriginalSharedMaterials;
+        public Material[] RuntimeMaterials;
     }
 
     private const float ActiveRefreshInterval = 0.02f;
@@ -85,6 +87,7 @@ public class TorchVisionSensitive : MonoBehaviour
         TorchVisionSystem.TorchStateChanged -= OnTorchStateChanged;
         TorchVisionSystem.TorchSourcesChanged -= OnTorchSourcesChanged;
         ClearPropertyBlocks();
+        ReleaseRuntimeMaterials();
         RestoreRendererState();
     }
 
@@ -109,6 +112,8 @@ public class TorchVisionSensitive : MonoBehaviour
 
     private void CacheTargets()
     {
+        ReleaseRuntimeMaterials();
+
         if (targetRenderers == null || targetRenderers.Length == 0)
         {
             targetRenderers = CollectRenderers(visualRoot != null ? visualRoot : transform);
@@ -175,7 +180,8 @@ public class TorchVisionSensitive : MonoBehaviour
             }
 
             data.OriginalEnabled = renderer.enabled;
-            Material[] inspectionMaterials = renderer.sharedMaterials ?? Array.Empty<Material>();
+            data.OriginalSharedMaterials = renderer.sharedMaterials ?? Array.Empty<Material>();
+            Material[] inspectionMaterials = data.OriginalSharedMaterials;
 
             if (inspectionMaterials != null)
             {
@@ -262,6 +268,75 @@ public class TorchVisionSensitive : MonoBehaviour
 
             data.Renderer.enabled = data.OriginalEnabled;
         }
+    }
+
+    private void ReleaseRuntimeMaterials()
+    {
+        if (cachedRenderers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+            DissolveRendererData data = cachedRenderers[i];
+            if (data.Renderer == null || data.RuntimeMaterials == null || data.RuntimeMaterials.Length == 0)
+            {
+                continue;
+            }
+
+            if (data.OriginalSharedMaterials != null && data.OriginalSharedMaterials.Length > 0)
+            {
+                data.Renderer.SetPropertyBlock(null);
+                data.Renderer.sharedMaterials = data.OriginalSharedMaterials;
+            }
+
+            for (int m = 0; m < data.RuntimeMaterials.Length; m++)
+            {
+                Material material = data.RuntimeMaterials[m];
+                if (material == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(material);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(material);
+                }
+            }
+
+            data.RuntimeMaterials = null;
+            cachedRenderers[i] = data;
+        }
+    }
+
+    private void EnsureRuntimeMaterials(ref DissolveRendererData data)
+    {
+        if (!Application.isPlaying
+            || data.Renderer == null
+            || data.RuntimeMaterials != null
+            || (!data.HasDissolveAmountProperty && !data.HasDissolveColorProperty))
+        {
+            return;
+        }
+
+        if (data.OriginalSharedMaterials == null || data.OriginalSharedMaterials.Length == 0)
+        {
+            data.OriginalSharedMaterials = data.Renderer.sharedMaterials ?? Array.Empty<Material>();
+        }
+
+        if (data.OriginalSharedMaterials.Length == 0)
+        {
+            return;
+        }
+
+        // Some renderers/shaders ignore per-renderer blocks in play mode; use per-renderer material
+        // instances as a reliable fallback for dissolve-driven visibility.
+        data.RuntimeMaterials = data.Renderer.materials;
     }
 
     private void ClearPropertyBlocks()
@@ -450,6 +525,8 @@ public class TorchVisionSensitive : MonoBehaviour
             bool canDriveDissolve = data.HasDissolveAmountProperty;
             data.Renderer.enabled = data.OriginalEnabled && (canDriveDissolve || clampedVisibility > 0f);
 
+            EnsureRuntimeMaterials(ref data);
+
             data.Renderer.GetPropertyBlock(propertyBlock);
 
             if (data.HasDissolveAmountProperty)
@@ -463,6 +540,30 @@ public class TorchVisionSensitive : MonoBehaviour
             }
 
             data.Renderer.SetPropertyBlock(propertyBlock);
+
+            if (data.RuntimeMaterials != null)
+            {
+                for (int m = 0; m < data.RuntimeMaterials.Length; m++)
+                {
+                    Material material = data.RuntimeMaterials[m];
+                    if (material == null)
+                    {
+                        continue;
+                    }
+
+                    if (data.HasDissolveAmountProperty && material.HasProperty(data.DissolveAmountPropertyId))
+                    {
+                        material.SetFloat(data.DissolveAmountPropertyId, dissolveAmount);
+                    }
+
+                    if (data.HasDissolveColorProperty && material.HasProperty(data.DissolveColorPropertyId))
+                    {
+                        material.SetColor(data.DissolveColorPropertyId, dissolveColor);
+                    }
+                }
+            }
+
+            cachedRenderers[i] = data;
         }
     }
 
