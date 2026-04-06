@@ -8,7 +8,7 @@ public static class CharacterDataIdAssigner
         AssignIds();
     }
 
-    [MenuItem("Tools/CharacterData/Refresh Unique IDs")]
+    [MenuItem("Lit/CharacterData/Refresh Unique IDs")]
     public static void AssignIds()
     {
         string[] guids = AssetDatabase.FindAssets("t:CharacterData");

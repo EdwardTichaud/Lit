@@ -132,9 +132,9 @@ public static class PersistentWorldDebug
             return nameof(BuildingInfoInteractable);
         }
 
-        if (gameObject.GetComponent<LootContainer>() != null)
+        if (gameObject.GetComponent<InteractableItem>() != null)
         {
-            return nameof(LootContainer);
+            return nameof(InteractableItem);
         }
 
         if (gameObject.GetComponent<Brasero>() != null)

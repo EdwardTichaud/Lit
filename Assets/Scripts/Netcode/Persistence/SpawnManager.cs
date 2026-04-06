@@ -547,8 +547,8 @@ public class SpawnManager : MonoBehaviour
             }
 
             GameObject created = NetcodePrefabRegistry.SpawnItemInstance(item, true, snapshot.Transform.Position, snapshot.Transform.Rotation);
-            LootContainer lootContainer = created != null
-                ? (created.GetComponent<LootContainer>() ?? created.GetComponentInChildren<LootContainer>(true))
+            InteractableItem lootContainer = created != null
+                ? (created.GetComponent<InteractableItem>() ?? created.GetComponentInChildren<InteractableItem>(true))
                 : null;
             if (lootContainer != null)
             {

@@ -57,7 +57,7 @@ public class BeaconMarker : MonoBehaviour
     private MaterialPropertyBlock propertyBlock;
     private readonly RaycastHit[] supportHits = new RaycastHit[8];
     private HDAdditionalLightData[] pointHdLights = System.Array.Empty<HDAdditionalLightData>();
-    private LootContainer cachedLootContainer;
+    private InteractableItem cachedLootContainer;
     private Transform movementRoot;
     private Collider currentSupportCollider;
     private Vector3 currentSupportNormal = Vector3.up;
@@ -528,10 +528,10 @@ public class BeaconMarker : MonoBehaviour
     {
         if (cachedLootContainer == null)
         {
-            cachedLootContainer = GetComponent<LootContainer>();
+            cachedLootContainer = GetComponent<InteractableItem>();
             if (cachedLootContainer == null)
             {
-                cachedLootContainer = GetComponentInParent<LootContainer>(true);
+                cachedLootContainer = GetComponentInParent<InteractableItem>(true);
             }
         }
 

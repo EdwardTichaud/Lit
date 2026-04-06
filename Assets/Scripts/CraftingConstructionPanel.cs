@@ -688,7 +688,7 @@ public class CraftingConstructionPanel : MonoBehaviour
             ? builder.EvaluateRequirements(craftItem, controller, builder.useHomeResourcesForCraft)
             : null;
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = builder != null
+        List<InteractableItem> homeContainers = builder != null
             ? (builder.useHomeResourcesForCraft ? ResolveHomeContainers() : null)
             : ResolveHomeContainers();
 
@@ -787,7 +787,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {
@@ -835,7 +835,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {
@@ -1003,7 +1003,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         return counts;
     }
 
-    private List<LootContainer> ResolveHomeContainers()
+    private List<InteractableItem> ResolveHomeContainers()
     {
         if (!useHomeResources)
         {
@@ -1016,11 +1016,11 @@ public class CraftingConstructionPanel : MonoBehaviour
             return null;
         }
 
-        List<LootContainer> containers = maison.ResolveMaisonLootContainers(null);
+        List<InteractableItem> containers = maison.ResolveMaisonLootContainers(null);
         return containers != null && containers.Count > 0 ? containers : null;
     }
 
-    private List<LootContainer> ResolveHomeContainersForOutput()
+    private List<InteractableItem> ResolveHomeContainersForOutput()
     {
         Maison maison = GetMaison();
         if (maison == null)
@@ -1028,11 +1028,11 @@ public class CraftingConstructionPanel : MonoBehaviour
             return null;
         }
 
-        List<LootContainer> containers = maison.ResolveMaisonLootContainers(null);
+        List<InteractableItem> containers = maison.ResolveMaisonLootContainers(null);
         return containers != null && containers.Count > 0 ? containers : null;
     }
 
-    private bool CanAddToHomeContainers(Item item, int quantity, out List<LootContainer> containers)
+    private bool CanAddToHomeContainers(Item item, int quantity, out List<InteractableItem> containers)
     {
         containers = ResolveHomeContainersForOutput();
         if (item == null || quantity <= 0 || containers == null || containers.Count == 0)
@@ -1050,7 +1050,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         return remaining >= quantity;
     }
 
-    private bool AddToHomeContainers(Item item, int quantity, List<LootContainer> containers)
+    private bool AddToHomeContainers(Item item, int quantity, List<InteractableItem> containers)
     {
         if (item == null || quantity <= 0 || containers == null || containers.Count == 0)
         {
@@ -1060,7 +1060,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         int remaining = quantity;
         for (int i = 0; i < containers.Count && remaining > 0; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -1085,7 +1085,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         return remaining <= 0;
     }
 
-    private int GetTotalRemainingCapacity(List<LootContainer> containers)
+    private int GetTotalRemainingCapacity(List<InteractableItem> containers)
     {
         if (containers == null || containers.Count == 0)
         {
@@ -1095,7 +1095,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         int total = 0;
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -1113,7 +1113,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         return total;
     }
 
-    private int GetHomeItemCount(Item item, List<LootContainer> containers)
+    private int GetHomeItemCount(Item item, List<InteractableItem> containers)
     {
         if (item == null || containers == null)
         {
@@ -1123,7 +1123,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         int total = 0;
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -1135,7 +1135,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         return total;
     }
 
-    private int RemoveFromHomeContainers(Item item, int quantity, List<LootContainer> containers)
+    private int RemoveFromHomeContainers(Item item, int quantity, List<InteractableItem> containers)
     {
         if (item == null || quantity <= 0 || containers == null)
         {
@@ -1145,7 +1145,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         int remaining = quantity;
         for (int i = 0; i < containers.Count && remaining > 0; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;

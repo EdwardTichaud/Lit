@@ -7,7 +7,7 @@ public class ItemPassiveEffectSystem : MonoBehaviour
 {
     [Tooltip("Intervalle de rafraichissement des sources (secondes).")]
     public float refreshInterval = 0.5f;
-    [Tooltip("Inclut les LootContainer inactifs.")]
+    [Tooltip("Inclut les InteractableItem inactifs.")]
     public bool includeInactiveContainers = false;
     [Tooltip("Ne pas detruire a la charge de scene.")]
     public bool dontDestroyOnLoad = true;
@@ -150,22 +150,22 @@ public class ItemPassiveEffectSystem : MonoBehaviour
     {
 #if UNITY_2023_1_OR_NEWER
         FindObjectsInactive inactiveFlag = includeInactiveContainers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
-        LootContainer[] containers = FindObjectsByType<LootContainer>(inactiveFlag, FindObjectsSortMode.None);
+        InteractableItem[] containers = FindObjectsByType<InteractableItem>(inactiveFlag, FindObjectsSortMode.None);
 #else
-        LootContainer[] containers = includeInactiveContainers
-            ? FindObjectsOfType<LootContainer>(true)
-            : FindObjectsOfType<LootContainer>();
+        InteractableItem[] containers = includeInactiveContainers
+            ? FindObjectsOfType<InteractableItem>(true)
+            : FindObjectsOfType<InteractableItem>();
 #endif
 
         for (int i = 0; i < containers.Length; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
             }
 
-            List<LootContainer.LootItemEntry> entries = container.lootItems;
+            List<InteractableItem.LootItemEntry> entries = container.lootItems;
             if (entries == null || entries.Count == 0)
             {
                 continue;
@@ -173,7 +173,7 @@ public class ItemPassiveEffectSystem : MonoBehaviour
 
             for (int j = 0; j < entries.Count; j++)
             {
-                LootContainer.LootItemEntry entry = entries[j];
+                InteractableItem.LootItemEntry entry = entries[j];
                 if (entry == null || entry.item == null || entry.quantity <= 0)
                 {
                     continue;

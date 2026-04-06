@@ -1743,12 +1743,12 @@ public class SquadManager : MonoBehaviour
         return TrySendCharacterHome(character, null) == SendHomeResult.Success;
     }
 
-    public bool SendCharacterHome(GameObject character, LootContainer homeLootContainer)
+    public bool SendCharacterHome(GameObject character, InteractableItem homeLootContainer)
     {
         return TrySendCharacterHome(character, homeLootContainer) == SendHomeResult.Success;
     }
 
-    public SendHomeResult TrySendCharacterHome(GameObject character, LootContainer homeLootContainer)
+    public SendHomeResult TrySendCharacterHome(GameObject character, InteractableItem homeLootContainer)
     {
         if (character == null)
         {
@@ -1775,7 +1775,7 @@ public class SquadManager : MonoBehaviour
             Maison maisonComponent = GetMaison();
             if (maisonComponent != null)
             {
-                List<LootContainer> homeContainers = maisonComponent.ResolveMaisonLootContainers(homeLootContainer);
+                List<InteractableItem> homeContainers = maisonComponent.ResolveMaisonLootContainers(homeLootContainer);
                 if (!maisonComponent.TransferNonTorchItemsToHome(character, homeContainers))
                 {
                     return SendHomeResult.StorageFull;
@@ -1861,7 +1861,7 @@ public class SquadManager : MonoBehaviour
             Maison maisonComponent = GetMaison();
             if (maisonComponent != null)
             {
-                List<LootContainer> homeContainers = maisonComponent.ResolveMaisonLootContainers(null);
+                List<InteractableItem> homeContainers = maisonComponent.ResolveMaisonLootContainers(null);
                 if (!maisonComponent.HasHomeStorageForCharacter(oldInstance, homeContainers))
                 {
                     return false;

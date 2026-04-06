@@ -557,12 +557,12 @@ public class Item : ScriptableObject
         return toggleEquipOnUse && HasInteractionCapabilities();
     }
 
-    public bool CanDepositToContainer(LootContainer container)
+    public bool CanDepositToContainer(InteractableItem container)
     {
         return CanDepositToContainer(container, out _);
     }
 
-    public bool CanDepositToContainer(LootContainer container, out string reason)
+    public bool CanDepositToContainer(InteractableItem container, out string reason)
     {
         if (!allowDepositToContainers)
         {
@@ -574,12 +574,12 @@ public class Item : ScriptableObject
         return true;
     }
 
-    public bool CanTakeFromContainer(LootContainer container)
+    public bool CanTakeFromContainer(InteractableItem container)
     {
         return CanTakeFromContainer(container, out _);
     }
 
-    public bool CanTakeFromContainer(LootContainer container, out string reason)
+    public bool CanTakeFromContainer(InteractableItem container, out string reason)
     {
         if (!allowTakeFromContainers)
         {
@@ -707,169 +707,14 @@ public class Item : ScriptableObject
         return fallback;
     }
 
-    public LootContainer CreateDroppedLootContainer(GameObject instance, int quantity, bool destroyWhenEmpty, bool collectable = true)
+    public InteractableItem CreateDroppedLootContainer(GameObject instance, int quantity, bool destroyWhenEmpty, bool collectable = true)
     {
-        if (instance == null)
-        {
-            return null;
-        }
-
-        LootContainer existing = instance.GetComponentInChildren<LootContainer>();
-        if (existing != null)
-        {
-            ConfigureDroppedLootContainer(existing, quantity, destroyWhenEmpty, collectable);
-            return existing;
-        }
-
-        string baseName = !string.IsNullOrWhiteSpace(itemName) ? itemName : name;
-        GameObject root = new GameObject($"Dropped_{baseName}");
-        root.transform.SetPositionAndRotation(instance.transform.position, Quaternion.identity);
-        root.transform.localScale = Vector3.one;
-        instance.transform.SetParent(root.transform, true);
-
-        if (!TryCalculateBounds(instance, out Bounds bounds))
-        {
-            bounds = new Bounds(root.transform.position, Vector3.one);
-        }
-
-        BoxCollider trigger = root.AddComponent<BoxCollider>();
-        trigger.isTrigger = true;
-        trigger.center = root.transform.InverseTransformPoint(bounds.center);
-        trigger.size = bounds.size;
-
-        LootContainer loot = root.AddComponent<LootContainer>();
-        loot.interactionTrigger = trigger;
-        ConfigureDroppedLootContainer(loot, quantity, destroyWhenEmpty, collectable);
-        return loot;
+        return WorldPickupUtility.CreateOrConfigureDroppedPickup(instance, this, quantity, destroyWhenEmpty, collectable);
     }
 
-    public void ConfigureDroppedLootContainer(LootContainer container, int quantity, bool destroyWhenEmpty, bool collectable = true)
+    public void ConfigureDroppedLootContainer(InteractableItem container, int quantity, bool destroyWhenEmpty, bool collectable = true)
     {
-        if (container == null)
-        {
-            return;
-        }
-
-        int clampedQuantity = Mathf.Max(1, quantity);
-        container.lootItems = new List<LootContainer.LootItemEntry>
-        {
-            new LootContainer.LootItemEntry { item = this, quantity = clampedQuantity }
-        };
-        container.containerItem = this;
-        container.destroyWhenEmpty = destroyWhenEmpty;
-        container.collectable = collectable;
-        if (container.interactionTrigger == null)
-        {
-            container.interactionTrigger = FindBestInteractionTrigger(container.gameObject);
-        }
-        container.RefreshRecoverableWorldInfo();
-    }
-
-    private static bool TryCalculateBounds(GameObject instance, out Bounds bounds)
-    {
-        bounds = new Bounds(Vector3.zero, Vector3.zero);
-        if (instance == null)
-        {
-            return false;
-        }
-
-        bool hasBounds = false;
-        Collider[] colliders = instance.GetComponentsInChildren<Collider>(true);
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider col = colliders[i];
-            if (col == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = col.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(col.bounds);
-            }
-        }
-
-        if (hasBounds)
-        {
-            if (bounds.size == Vector3.zero)
-            {
-                bounds.size = Vector3.one;
-            }
-            return true;
-        }
-
-        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
-        }
-
-        if (!hasBounds)
-        {
-            bounds = new Bounds(instance.transform.position, Vector3.one);
-            return false;
-        }
-
-        if (bounds.size == Vector3.zero)
-        {
-            bounds.size = Vector3.one;
-        }
-
-        return true;
-    }
-
-    private static Collider FindBestInteractionTrigger(GameObject root)
-    {
-        if (root == null)
-        {
-            return null;
-        }
-
-        Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider collider = colliders[i];
-            if (collider != null && collider.isTrigger && !IsConcaveMeshCollider(collider))
-            {
-                return collider;
-            }
-        }
-
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider collider = colliders[i];
-            if (collider != null && !IsConcaveMeshCollider(collider))
-            {
-                return collider;
-            }
-        }
-
-        return colliders.Length > 0 ? colliders[0] : null;
-    }
-
-    private static bool IsConcaveMeshCollider(Collider collider)
-    {
-        MeshCollider meshCollider = collider as MeshCollider;
-        return meshCollider != null && !meshCollider.convex;
+        WorldPickupUtility.ConfigureLootContainer(container, this, quantity, destroyWhenEmpty, collectable);
     }
 
     private string ResolveMessage(string custom, string fallback)

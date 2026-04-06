@@ -98,7 +98,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   lootItems:
   - item: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
     quantity: 1

@@ -1230,7 +1230,7 @@ public class BuildingPanelController : MonoBehaviour
 
         SquadCharacterController controller = GetCurrentCharacterController();
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {
@@ -2523,7 +2523,7 @@ public class BuildingPanelController : MonoBehaviour
 
         info.Initialize(GetBuildingItemId(building), building, Mathf.Max(1, level));
 
-        LootContainer container = instance.GetComponentInChildren<LootContainer>();
+        InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
             container.containerItem = building;
@@ -2810,7 +2810,7 @@ public class BuildingPanelController : MonoBehaviour
 
         info.Initialize(GetBuildingItemId(building), building, level);
 
-        LootContainer container = instance.GetComponentInChildren<LootContainer>();
+        InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
             container.containerItem = building;
@@ -2877,7 +2877,7 @@ public class BuildingPanelController : MonoBehaviour
         return "MaisonChest";
     }
 
-    private void EnsureHomeChestDefaults(LootContainer container)
+    private void EnsureHomeChestDefaults(InteractableItem container)
     {
         if (container == null)
         {
@@ -3085,7 +3085,7 @@ public class BuildingPanelController : MonoBehaviour
         return counts;
     }
 
-    private List<LootContainer> ResolveHomeContainers()
+    private List<InteractableItem> ResolveHomeContainers()
     {
         if (!useHomeResources)
         {
@@ -3098,11 +3098,11 @@ public class BuildingPanelController : MonoBehaviour
             return null;
         }
 
-        List<LootContainer> containers = maison.ResolveMaisonLootContainers(null);
+        List<InteractableItem> containers = maison.ResolveMaisonLootContainers(null);
         return containers != null && containers.Count > 0 ? containers : null;
     }
 
-    private int GetHomeItemCount(Item item, List<LootContainer> containers)
+    private int GetHomeItemCount(Item item, List<InteractableItem> containers)
     {
         if (item == null || containers == null)
         {
@@ -3112,7 +3112,7 @@ public class BuildingPanelController : MonoBehaviour
         int total = 0;
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -3124,7 +3124,7 @@ public class BuildingPanelController : MonoBehaviour
         return total;
     }
 
-    private int RemoveFromHomeContainers(Item item, int quantity, List<LootContainer> containers)
+    private int RemoveFromHomeContainers(Item item, int quantity, List<InteractableItem> containers)
     {
         if (item == null || quantity <= 0 || containers == null)
         {
@@ -3134,7 +3134,7 @@ public class BuildingPanelController : MonoBehaviour
         int remaining = quantity;
         for (int i = 0; i < containers.Count && remaining > 0; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -3167,7 +3167,7 @@ public class BuildingPanelController : MonoBehaviour
 
         Dictionary<Item, int> requiredCounts = BuildRequirementCounts(building);
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {
@@ -3214,7 +3214,7 @@ public class BuildingPanelController : MonoBehaviour
 
         Dictionary<Item, int> requiredCounts = BuildRequirementCounts(building);
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {

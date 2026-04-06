@@ -905,7 +905,7 @@ public class BuilderController : NetworkBehaviour
             info,
             $"runtime building spawned level={level} networkId={networkId}");
 
-        LootContainer container = instance.GetComponentInChildren<LootContainer>();
+        InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
             container.containerItem = building;
@@ -1166,7 +1166,7 @@ public class BuilderController : NetworkBehaviour
             UpdateBuildingCurrentLevel(entry.building, entry.level);
             AddAvailableBuilding(entry.building);
 
-            LootContainer container = instance.GetComponentInChildren<LootContainer>();
+            InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
             if (container != null)
             {
                 container.containerItem = entry.building;
@@ -2681,7 +2681,7 @@ public class BuilderController : NetworkBehaviour
         }
 
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = useHomeResources ? ResolveHomeContainers() : null;
+        List<InteractableItem> homeContainers = useHomeResources ? ResolveHomeContainers() : null;
         bool craftable = true;
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
@@ -2781,7 +2781,7 @@ public class BuilderController : NetworkBehaviour
         }
 
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = useHomeResources ? ResolveHomeContainers() : null;
+        List<InteractableItem> homeContainers = useHomeResources ? ResolveHomeContainers() : null;
         List<string> consumptionSources = new List<string>();
 
         foreach (KeyValuePair<Item, int> requirement in availability.RequiredCounts)
@@ -2899,7 +2899,7 @@ public class BuilderController : NetworkBehaviour
         return counts;
     }
 
-    private List<LootContainer> ResolveHomeContainers()
+    private List<InteractableItem> ResolveHomeContainers()
     {
         Maison maison = GetMaison();
         if (maison == null)
@@ -2910,7 +2910,7 @@ public class BuilderController : NetworkBehaviour
         return maison.ResolveMaisonLootContainers(null);
     }
 
-    private int GetHomeItemCount(Item item, List<LootContainer> containers)
+    private int GetHomeItemCount(Item item, List<InteractableItem> containers)
     {
         if (item == null || containers == null)
         {
@@ -2920,7 +2920,7 @@ public class BuilderController : NetworkBehaviour
         int total = 0;
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -2932,7 +2932,7 @@ public class BuilderController : NetworkBehaviour
         return total;
     }
 
-    private int RemoveFromHomeContainers(Item item, int quantity, List<LootContainer> containers)
+    private int RemoveFromHomeContainers(Item item, int quantity, List<InteractableItem> containers)
     {
         if (item == null || quantity <= 0 || containers == null)
         {
@@ -2942,7 +2942,7 @@ public class BuilderController : NetworkBehaviour
         int remaining = quantity;
         for (int i = 0; i < containers.Count && remaining > 0; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -3081,7 +3081,7 @@ public class BuilderController : NetworkBehaviour
         return "MaisonChest";
     }
 
-    private void EnsureHomeChestDefaults(LootContainer container)
+    private void EnsureHomeChestDefaults(InteractableItem container)
     {
         if (container == null)
         {

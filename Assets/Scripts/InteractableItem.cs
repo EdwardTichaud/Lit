@@ -11,7 +11,7 @@ using UnityEngine.UI;
 // Conteneur de loot avec interaction, UI et ActionBox (prendre/deposer/casser).
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(NetworkObject))]
-public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
+public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 {
     public enum TrapEffectType
     {
@@ -292,7 +292,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
         if (logWarning && settings == null)
         {
-            Debug.LogWarning("LootContainer: LootUISettings manquant.");
+            Debug.LogWarning("InteractableItem: LootUISettings manquant.");
         }
 
         return settings;
@@ -570,7 +570,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             "Utiliser",
             "Annuler",
             "Crochetage",
-            "LootContainer.Lockpick");
+            "InteractableItem.Lockpick");
 
         if (shown)
         {
@@ -825,7 +825,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
 
         if (interactionTrigger == null)
         {
-            Debug.LogWarning("LootContainer: aucun collider trouve pour l'interaction.");
+            Debug.LogWarning("InteractableItem: aucun collider trouve pour l'interaction.");
             useSelfTriggerEvents = false;
             return;
         }
@@ -836,22 +836,22 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
             if (fallback != null)
             {
                 interactionTrigger = fallback;
-                Debug.LogWarning("LootContainer: MeshCollider concave detecte, ajout d'un BoxCollider Trigger pour l'interaction.", this);
+                Debug.LogWarning("InteractableItem: MeshCollider concave detecte, ajout d'un BoxCollider Trigger pour l'interaction.", this);
             }
         }
         else if (!interactionTrigger.isTrigger)
         {
             interactionTrigger.isTrigger = true;
-            Debug.LogWarning("LootContainer: le collider d'interaction n'etait pas en Trigger. Il a ete force en Trigger.", this);
+            Debug.LogWarning("InteractableItem: le collider d'interaction n'etait pas en Trigger. Il a ete force en Trigger.", this);
         }
 
         useSelfTriggerEvents = interactionTrigger.gameObject == gameObject;
         if (!useSelfTriggerEvents)
         {
-            LootContainerTriggerProxy proxy = interactionTrigger.GetComponent<LootContainerTriggerProxy>();
+            InteractableItemTriggerProxy proxy = interactionTrigger.GetComponent<InteractableItemTriggerProxy>();
             if (proxy == null)
             {
-                proxy = interactionTrigger.gameObject.AddComponent<LootContainerTriggerProxy>();
+                proxy = interactionTrigger.gameObject.AddComponent<InteractableItemTriggerProxy>();
             }
             proxy.Owner = this;
         }
@@ -924,7 +924,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         LootUISettings settings = GetSettings(true);
         if (settings == null || settings.lootPanel == null)
         {
-            Debug.LogWarning("LootContainer: aucun lootPanel defini.");
+            Debug.LogWarning("InteractableItem: aucun lootPanel defini.");
             return;
         }
 
@@ -1171,7 +1171,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         LootUISettings settings = GetSettings(true);
         if (settings == null || settings.lootItemsParent == null)
         {
-            Debug.LogWarning("LootContainer: lootItemsParent manquant.");
+            Debug.LogWarning("InteractableItem: lootItemsParent manquant.");
             return;
         }
 
@@ -2991,7 +2991,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         SquadCharacterController controller = GetCurrentCharacterController();
         if (controller == null)
         {
-            Debug.LogWarning("LootContainer: aucun personnage valide pour recevoir l'item.");
+            Debug.LogWarning("InteractableItem: aucun personnage valide pour recevoir l'item.");
             return false;
         }
 
@@ -3163,7 +3163,7 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
         string toolId = GetResolvedLockpickToolItemId();
         if (string.IsNullOrWhiteSpace(toolId))
         {
-            Debug.LogWarning($"LootContainer '{name}' ne peut pas tenter de crochetage: aucun item de crochetage configure.", this);
+            Debug.LogWarning($"InteractableItem '{name}' ne peut pas tenter de crochetage: aucun item de crochetage configure.", this);
             return false;
         }
 
@@ -4239,9 +4239,9 @@ public class LootContainer : NetworkBehaviour, ISerializationCallbackReceiver
     }
 }
 
-public class LootContainerTriggerProxy : MonoBehaviour
+public class InteractableItemTriggerProxy : MonoBehaviour
 {
-    public LootContainer Owner { get; set; }
+    public InteractableItem Owner { get; set; }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -4262,13 +4262,13 @@ public class LootContainerTriggerProxy : MonoBehaviour
 
 public class LootSlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHandler
 {
-    public LootContainer Owner { get; private set; }
-    public LootContainer.LootItemEntry Entry { get; private set; }
+    public InteractableItem Owner { get; private set; }
+    public InteractableItem.LootItemEntry Entry { get; private set; }
     public Item Item { get; private set; }
     public int Quantity { get; private set; }
     public RectTransform SlotRect { get; private set; }
 
-    public void Initialize(LootContainer owner, LootContainer.LootItemEntry entry)
+    public void Initialize(InteractableItem owner, InteractableItem.LootItemEntry entry)
     {
         Owner = owner;
         Entry = entry;

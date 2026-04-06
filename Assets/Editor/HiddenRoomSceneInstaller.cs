@@ -10,7 +10,7 @@ public static class HiddenRoomSceneInstaller
     private const string HiddenRoomName = "HiddenRoom";
     private const string RootName = "Root";
 
-    [MenuItem("Tools/Hidden Room/Refresh Existing Setup In Maison")]
+    [MenuItem("Lit/Hidden Room/Refresh Existing Setup In Maison")]
     public static void InstallMaison()
     {
         Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);

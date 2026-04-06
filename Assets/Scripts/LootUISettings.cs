@@ -206,10 +206,10 @@ public class LootUISettings : MonoBehaviour
     }
 
     /// <summary>
-    /// Met à jour le nom + l'icône du container depuis un LootContainer (MonoBehaviour en scène).
+    /// Met à jour le nom + l'icône du container depuis un InteractableItem (MonoBehaviour en scène).
     /// Cherche le nom dans lootContainer.containerItem.itemName et le sprite dans lootContainer.containerItem.itemSprite.
     /// </summary>
-    public void UpdateContainerHeader(LootContainer lootContainer)
+    public void UpdateContainerHeader(InteractableItem lootContainer)
     {
         if (lootPanel == null)
         {

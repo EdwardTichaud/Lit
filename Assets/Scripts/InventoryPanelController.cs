@@ -113,9 +113,9 @@ public class InventoryPanelController : MonoBehaviour
     public Color placementValidColor = new Color(0.2f, 1f, 0.2f, 0.65f);
     [Tooltip("Couleur de placement invalide.")]
     public Color placementInvalidColor = new Color(1f, 0.2f, 0.2f, 0.65f);
-    [Tooltip("Cree un LootContainer si le prefab n'en a pas.")]
+    [Tooltip("Cree un InteractableItem si le prefab n'en a pas.")]
     public bool placementCreateLootContainer = true;
-    [Tooltip("Detruit le LootContainer si vide apres depot.")]
+    [Tooltip("Detruit le InteractableItem si vide apres depot.")]
     public bool placementDestroyWhenEmpty = true;
     [Tooltip("Message si l'objet ne peut pas etre pose.")]
     public string placementCannotPlaceMessage = "Cet objet ne peut pas etre pose.";
@@ -164,7 +164,7 @@ public class InventoryPanelController : MonoBehaviour
     private bool actionBoxCursorDirty;
     private Coroutine actionBoxFlashRoutine;
     private bool depositMode;
-    private LootContainer depositContainer;
+    private InteractableItem depositContainer;
     private bool depositQuantityActive;
     private int depositQuantityMax;
     private Item depositQuantityItem;
@@ -511,7 +511,7 @@ public class InventoryPanelController : MonoBehaviour
         return settings;
     }
 
-    public bool TryOpenForLootDeposit(LootContainer container)
+    public bool TryOpenForLootDeposit(InteractableItem container)
     {
         if (container == null)
         {
@@ -629,7 +629,7 @@ public class InventoryPanelController : MonoBehaviour
         cursorDirty = false;
         ResetActionBoxNavigation();
         ResetDepositQuantityState();
-        LootContainer previousDeposit = depositContainer;
+        InteractableItem previousDeposit = depositContainer;
         bool wasDeposit = depositMode;
         depositMode = false;
         depositContainer = null;
@@ -3255,7 +3255,7 @@ public class InventoryPanelController : MonoBehaviour
 
         Dictionary<Item, int> requiredCounts = BuildRequirementCounts(building);
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {
@@ -3302,7 +3302,7 @@ public class InventoryPanelController : MonoBehaviour
 
         Dictionary<Item, int> requiredCounts = BuildRequirementCounts(building);
         Dictionary<Item, int> inventoryCounts = BuildInventoryCounts(controller);
-        List<LootContainer> homeContainers = ResolveHomeContainers();
+        List<InteractableItem> homeContainers = ResolveHomeContainers();
 
         foreach (KeyValuePair<Item, int> requirement in requiredCounts)
         {
@@ -3418,7 +3418,7 @@ public class InventoryPanelController : MonoBehaviour
         return counts;
     }
 
-    private List<LootContainer> ResolveHomeContainers()
+    private List<InteractableItem> ResolveHomeContainers()
     {
         if (!placementUseHomeResources)
         {
@@ -3431,11 +3431,11 @@ public class InventoryPanelController : MonoBehaviour
             return null;
         }
 
-        List<LootContainer> containers = maison.ResolveMaisonLootContainers(null);
+        List<InteractableItem> containers = maison.ResolveMaisonLootContainers(null);
         return containers != null && containers.Count > 0 ? containers : null;
     }
 
-    private int GetHomeItemCount(Item item, List<LootContainer> containers)
+    private int GetHomeItemCount(Item item, List<InteractableItem> containers)
     {
         if (item == null || containers == null)
         {
@@ -3445,7 +3445,7 @@ public class InventoryPanelController : MonoBehaviour
         int total = 0;
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -3457,7 +3457,7 @@ public class InventoryPanelController : MonoBehaviour
         return total;
     }
 
-    private int RemoveFromHomeContainers(Item item, int quantity, List<LootContainer> containers)
+    private int RemoveFromHomeContainers(Item item, int quantity, List<InteractableItem> containers)
     {
         if (item == null || quantity <= 0 || containers == null)
         {
@@ -3467,7 +3467,7 @@ public class InventoryPanelController : MonoBehaviour
         int remaining = quantity;
         for (int i = 0; i < containers.Count && remaining > 0; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -3737,7 +3737,7 @@ public class InventoryPanelController : MonoBehaviour
             builder.ApplyBuildingEffects(building, 0, 1);
         }
 
-        LootContainer container = instance.GetComponentInChildren<LootContainer>();
+        InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
             container.containerItem = building;
@@ -3811,7 +3811,7 @@ public class InventoryPanelController : MonoBehaviour
         return "MaisonChest";
     }
 
-    private void EnsureHomeChestDefaults(LootContainer container)
+    private void EnsureHomeChestDefaults(InteractableItem container)
     {
         if (container == null)
         {

@@ -62,7 +62,7 @@ public class ReturnHomeTrigger : MonoBehaviour
 
     [Header("Maison - Stockage")]
     [Tooltip("Coffre maison principal.")]
-    public LootContainer maisonLootContainer;
+    public InteractableItem maisonLootContainer;
 
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();

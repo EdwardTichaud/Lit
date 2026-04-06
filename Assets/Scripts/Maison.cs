@@ -9,7 +9,7 @@ public class Maison : MonoBehaviour
 
     [Header("Maison - Stockage")]
     [Tooltip("Coffre maison principal.")]
-    public LootContainer maisonLootContainer;
+    public InteractableItem maisonLootContainer;
     [Tooltip("Tag utilise pour trouver les coffres maison.")]
     public string maisonChestTag = "MaisonChest";
     [Tooltip("Capacite max par coffre maison.")]
@@ -27,9 +27,9 @@ public class Maison : MonoBehaviour
         Instance = this;
     }
 
-    public List<LootContainer> ResolveMaisonLootContainers(LootContainer preferred)
+    public List<InteractableItem> ResolveMaisonLootContainers(InteractableItem preferred)
     {
-        List<LootContainer> results = new List<LootContainer>();
+        List<InteractableItem> results = new List<InteractableItem>();
         AddUnique(results, preferred);
         AddUnique(results, maisonLootContainer);
 
@@ -42,7 +42,7 @@ public class Maison : MonoBehaviour
                 {
                     for (int i = 0; i < found.Length; i++)
                     {
-                        LootContainer container = found[i] != null ? found[i].GetComponent<LootContainer>() : null;
+                        InteractableItem container = found[i] != null ? found[i].GetComponent<InteractableItem>() : null;
                         AddUnique(results, container);
                     }
                 }
@@ -56,7 +56,7 @@ public class Maison : MonoBehaviour
         return results;
     }
 
-    public void EnsureHomeContainers(List<LootContainer> containers)
+    public void EnsureHomeContainers(List<InteractableItem> containers)
     {
         if (containers == null)
         {
@@ -69,7 +69,7 @@ public class Maison : MonoBehaviour
         }
     }
 
-    public void EnsureHomeChestDefaults(LootContainer container)
+    public void EnsureHomeChestDefaults(InteractableItem container)
     {
         if (container == null)
         {
@@ -87,7 +87,7 @@ public class Maison : MonoBehaviour
         }
     }
 
-    public bool TransferNonTorchItemsToHome(GameObject character, List<LootContainer> homeLootContainers)
+    public bool TransferNonTorchItemsToHome(GameObject character, List<InteractableItem> homeLootContainers)
     {
         if (character == null)
         {
@@ -133,7 +133,7 @@ public class Maison : MonoBehaviour
             int remaining = pair.Value;
             for (int i = 0; i < homeLootContainers.Count && remaining > 0; i++)
             {
-                LootContainer container = homeLootContainers[i];
+                InteractableItem container = homeLootContainers[i];
                 if (container == null)
                 {
                     continue;
@@ -159,7 +159,7 @@ public class Maison : MonoBehaviour
         return true;
     }
 
-    public bool HasHomeStorageForCharacter(GameObject character, List<LootContainer> homeLootContainers)
+    public bool HasHomeStorageForCharacter(GameObject character, List<InteractableItem> homeLootContainers)
     {
         if (character == null)
         {
@@ -232,7 +232,7 @@ public class Maison : MonoBehaviour
         return totalCount > 0;
     }
 
-    private int GetTotalRemainingCapacity(List<LootContainer> containers)
+    private int GetTotalRemainingCapacity(List<InteractableItem> containers)
     {
         if (containers == null || containers.Count == 0)
         {
@@ -242,7 +242,7 @@ public class Maison : MonoBehaviour
         int total = 0;
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
@@ -260,7 +260,7 @@ public class Maison : MonoBehaviour
         return total;
     }
 
-    private void AddUnique(List<LootContainer> list, LootContainer container)
+    private void AddUnique(List<InteractableItem> list, InteractableItem container)
     {
         if (container == null || list == null)
         {

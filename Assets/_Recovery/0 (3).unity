@@ -18156,7 +18156,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   lootItems:
   - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
@@ -24913,7 +24913,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   lootItems:
   - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
@@ -88687,7 +88687,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   lootItems:
   - item: {fileID: 11400000, guid: 845afa1e4c271764cbf03d62c8752b96, type: 2}
@@ -94003,7 +94003,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   lootItems:
   - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
@@ -130414,7 +130414,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   lootItems:
   - item: {fileID: 11400000, guid: a7d7df4a7b1d0da4e8455ce4f6f0af8d, type: 2}
@@ -272169,7 +272169,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   lootItems:
   - item: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
@@ -472726,7 +472726,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootContainer
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
 --- !u!64 &2492225761433570558
 MeshCollider:
   m_ObjectHideFlags: 0

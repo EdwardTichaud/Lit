@@ -529,12 +529,12 @@ public class NetworkInventory : NetworkBehaviour
                 instance);
         }
 
-        LootContainer loot = instance.GetComponent<LootContainer>();
+        InteractableItem loot = instance.GetComponent<InteractableItem>();
         if (createLootContainer)
         {
             if (loot == null)
             {
-                loot = instance.GetComponentInChildren<LootContainer>();
+                loot = instance.GetComponentInChildren<InteractableItem>();
             }
 
             if (loot != null)

@@ -339,8 +339,7 @@ public static class NetcodePrefabRegistry
 
         if (withLootContainer)
         {
-            EnsureTriggerCollider(instance);
-            NetcodeRuntimeUtilities.GetOrAdd<LootContainer>(instance);
+            WorldPickupUtility.EnsurePickupInfrastructure(instance);
         }
 
         uint hash = withLootContainer ? info.lootHash : info.plainHash;
@@ -394,8 +393,7 @@ public static class NetcodePrefabRegistry
 
         if (withLootContainer)
         {
-            EnsureTriggerCollider(instance);
-            NetcodeRuntimeUtilities.GetOrAdd<LootContainer>(instance);
+            WorldPickupUtility.EnsurePickupInfrastructure(instance);
         }
 
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
@@ -501,93 +499,4 @@ public static class NetcodePrefabRegistry
         }
     }
 
-    private static void EnsureTriggerCollider(GameObject root)
-    {
-        if (root == null)
-        {
-            return;
-        }
-
-        Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
-        if (colliders != null)
-        {
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                if (colliders[i] != null && colliders[i].isTrigger)
-                {
-                    return;
-                }
-            }
-        }
-
-        if (!TryCalculateBounds(root, out Bounds bounds))
-        {
-            bounds = new Bounds(root.transform.position, Vector3.one);
-        }
-
-        BoxCollider trigger = root.AddComponent<BoxCollider>();
-        trigger.isTrigger = true;
-        trigger.center = root.transform.InverseTransformPoint(bounds.center);
-        trigger.size = bounds.size;
-    }
-
-    private static bool TryCalculateBounds(GameObject instance, out Bounds bounds)
-    {
-        bounds = new Bounds(Vector3.zero, Vector3.zero);
-        if (instance == null)
-        {
-            return false;
-        }
-
-        bool hasBounds = false;
-        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
-        }
-
-        if (!hasBounds)
-        {
-            Collider[] colliders = instance.GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                Collider col = colliders[i];
-                if (col == null)
-                {
-                    continue;
-                }
-
-                if (!hasBounds)
-                {
-                    bounds = col.bounds;
-                    hasBounds = true;
-                }
-                else
-                {
-                    bounds.Encapsulate(col.bounds);
-                }
-            }
-        }
-
-        if (hasBounds && bounds.size == Vector3.zero)
-        {
-            bounds.size = Vector3.one;
-        }
-
-        return hasBounds;
-    }
 }

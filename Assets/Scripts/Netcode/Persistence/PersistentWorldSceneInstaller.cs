@@ -131,7 +131,7 @@ public static class PersistentWorldSceneInstaller
 
         if (droppedLoot)
         {
-            LootContainer lootContainer = target.GetComponent<LootContainer>() ?? target.GetComponentInChildren<LootContainer>(true);
+            InteractableItem lootContainer = target.GetComponent<InteractableItem>() ?? target.GetComponentInChildren<InteractableItem>(true);
             if (lootContainer != null && lootContainer.GetComponentInParent<BuildingInfoInteractable>(true) == null)
             {
                 NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(lootContainer.gameObject);
@@ -317,7 +317,7 @@ public static class PersistentWorldSceneInstaller
             NetcodeRuntimeUtilities.GetOrAdd<PersistentBrazierState>(target);
         }
 
-        if (target.GetComponent<LootContainer>() != null && target.GetComponentInParent<BuildingInfoInteractable>(true) == null)
+        if (target.GetComponent<InteractableItem>() != null && target.GetComponentInParent<BuildingInfoInteractable>(true) == null)
         {
             NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(target);
         }
@@ -480,10 +480,10 @@ public static class PersistentWorldSceneInstaller
 
     private static void PrepareSceneContainers(GameObject root)
     {
-        LootContainer[] containers = root.GetComponentsInChildren<LootContainer>(true);
+        InteractableItem[] containers = root.GetComponentsInChildren<InteractableItem>(true);
         for (int i = 0; i < containers.Length; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;

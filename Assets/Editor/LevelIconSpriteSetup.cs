@@ -17,7 +17,7 @@ public static class LevelIconSpriteSetup
         new Color(0.92f, 0.55f, 0.8f, 1f)
     };
 
-    [MenuItem("Tools/Lit/Create Default Level Icons (TMP)")]
+    [MenuItem("Lit/Create Default Level Icons (TMP)")]
     public static void CreateDefaultIcons()
     {
         int maxLevel = ResolveMaxLevel();

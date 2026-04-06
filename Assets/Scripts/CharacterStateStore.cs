@@ -24,7 +24,7 @@ public class CharacterStateStore : MonoBehaviour
 
     [Header("Maison - Stockage")]
     [Tooltip("Coffre maison principal.")]
-    public LootContainer maisonLootContainer;
+    public InteractableItem maisonLootContainer;
     [Tooltip("Tag utilise pour trouver les coffres maison.")]
     public string maisonChestTag = "MaisonChest";
     [Tooltip("Capacite max par coffre maison.")]
@@ -934,7 +934,7 @@ public class CharacterStateStore : MonoBehaviour
     private List<ItemStackData> BuildHomeItems()
     {
         List<ItemStackData> items = new List<ItemStackData>();
-        List<LootContainer> containers = GetHomeLootContainers();
+        List<InteractableItem> containers = GetHomeLootContainers();
         if (containers == null || containers.Count == 0)
         {
             return items;
@@ -943,7 +943,7 @@ public class CharacterStateStore : MonoBehaviour
         Dictionary<string, int> counts = new Dictionary<string, int>();
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null || container.lootItems == null)
             {
                 continue;
@@ -951,7 +951,7 @@ public class CharacterStateStore : MonoBehaviour
 
             for (int j = 0; j < container.lootItems.Count; j++)
             {
-                LootContainer.LootItemEntry entry = container.lootItems[j];
+                InteractableItem.LootItemEntry entry = container.lootItems[j];
                 if (entry == null || entry.item == null)
                 {
                     continue;
@@ -1005,7 +1005,7 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         // Re-injecte les items de la maison dans les coffres.
-        List<LootContainer> containers = GetHomeLootContainers();
+        List<InteractableItem> containers = GetHomeLootContainers();
         if (containers == null || containers.Count == 0)
         {
             return;
@@ -1013,14 +1013,14 @@ public class CharacterStateStore : MonoBehaviour
 
         for (int i = 0; i < containers.Count; i++)
         {
-            LootContainer container = containers[i];
+            InteractableItem container = containers[i];
             if (container == null)
             {
                 continue;
             }
 
             EnsureHomeChestDefaults(container);
-            container.SetLootItems(new List<LootContainer.LootItemEntry>(), false);
+            container.SetLootItems(new List<InteractableItem.LootItemEntry>(), false);
         }
 
         int containerIndex = 0;
@@ -1040,7 +1040,7 @@ public class CharacterStateStore : MonoBehaviour
             int remaining = stack.quantity;
             while (remaining > 0 && containerIndex < containers.Count)
             {
-                LootContainer container = containers[containerIndex];
+                InteractableItem container = containers[containerIndex];
                 if (container == null)
                 {
                     containerIndex++;
@@ -1228,7 +1228,7 @@ public class CharacterStateStore : MonoBehaviour
                     string itemId = buildingItemId;
                     if (string.IsNullOrWhiteSpace(itemId))
                     {
-                        LootContainer container = info != null ? info.GetComponentInChildren<LootContainer>() : null;
+                        InteractableItem container = info != null ? info.GetComponentInChildren<InteractableItem>() : null;
                         if (container != null && container.containerItem != null)
                         {
                             itemId = GetItemId(container.containerItem);
@@ -1323,7 +1323,7 @@ public class CharacterStateStore : MonoBehaviour
             string itemId = buildingItemId;
             if (string.IsNullOrWhiteSpace(itemId))
             {
-                LootContainer container = info.GetComponentInChildren<LootContainer>();
+                InteractableItem container = info.GetComponentInChildren<InteractableItem>();
                 if (container != null && container.containerItem != null)
                 {
                     itemId = GetItemId(container.containerItem);
@@ -1499,7 +1499,7 @@ public class CharacterStateStore : MonoBehaviour
                 TryAssignMaisonChestTag(instance);
             }
 
-            LootContainer container = instance.GetComponentInChildren<LootContainer>();
+            InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
             if (container != null)
             {
             if (item != null)
@@ -1613,9 +1613,9 @@ public class CharacterStateStore : MonoBehaviour
         }
     }
 
-    private List<LootContainer> GetHomeLootContainers()
+    private List<InteractableItem> GetHomeLootContainers()
     {
-        List<LootContainer> results = new List<LootContainer>();
+        List<InteractableItem> results = new List<InteractableItem>();
         AddUnique(results, maisonLootContainer);
         Maison resolvedMaison = GetMaison();
         if (resolvedMaison != null)
@@ -1634,7 +1634,7 @@ public class CharacterStateStore : MonoBehaviour
                 {
                     for (int i = 0; i < found.Length; i++)
                     {
-                        LootContainer container = found[i] != null ? found[i].GetComponent<LootContainer>() : null;
+                        InteractableItem container = found[i] != null ? found[i].GetComponent<InteractableItem>() : null;
                         AddUnique(results, container);
                     }
                 }
@@ -1659,7 +1659,7 @@ public class CharacterStateStore : MonoBehaviour
         return Mathf.Max(0, maisonChestCapacity);
     }
 
-    private void EnsureHomeChestDefaults(LootContainer container)
+    private void EnsureHomeChestDefaults(InteractableItem container)
     {
         if (container == null)
         {
@@ -1679,7 +1679,7 @@ public class CharacterStateStore : MonoBehaviour
         }
     }
 
-    private void AddUnique(List<LootContainer> list, LootContainer container)
+    private void AddUnique(List<InteractableItem> list, InteractableItem container)
     {
         if (list == null || container == null)
         {

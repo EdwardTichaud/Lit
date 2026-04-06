@@ -24,7 +24,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         public int Quantity;
     }
 
-    [SerializeField] private LootContainer container;
+    [SerializeField] private InteractableItem container;
 
     public string ProviderId => "container";
 
@@ -32,7 +32,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
     {
         if (container == null)
         {
-            container = GetComponent<LootContainer>();
+            container = GetComponent<InteractableItem>();
         }
     }
 
@@ -62,7 +62,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         {
             for (int i = 0; i < container.lootItems.Count; i++)
             {
-                LootContainer.LootItemEntry entry = container.lootItems[i];
+                InteractableItem.LootItemEntry entry = container.lootItems[i];
                 if (entry == null || entry.item == null || entry.quantity <= 0)
                 {
                     continue;
@@ -109,7 +109,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         }
 
         string scenario = PersistentStateValidation.ResolveContainerScenario(container);
-        List<LootContainer.LootItemEntry> entries = new List<LootContainer.LootItemEntry>();
+        List<InteractableItem.LootItemEntry> entries = new List<InteractableItem.LootItemEntry>();
         int expectedStacks = 0;
         int expectedQuantity = 0;
         int missingItemDefinitions = 0;
@@ -155,7 +155,7 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
                     continue;
                 }
 
-                entries.Add(new LootContainer.LootItemEntry
+                entries.Add(new InteractableItem.LootItemEntry
                 {
                     item = item,
                     quantity = itemEntry.Quantity
@@ -753,7 +753,7 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
 
     [SerializeField] private BuildingInfoInteractable building;
     [SerializeField] private BuilderController builderController;
-    [SerializeField] private LootContainer childContainer;
+    [SerializeField] private InteractableItem childContainer;
 
     public string ProviderId => "building";
 
@@ -771,7 +771,7 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
 
         if (childContainer == null)
         {
-            childContainer = GetComponentInChildren<LootContainer>(true);
+            childContainer = GetComponentInChildren<InteractableItem>(true);
         }
     }
 
@@ -813,7 +813,7 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
             {
                 for (int i = 0; i < childContainer.lootItems.Count; i++)
                 {
-                    LootContainer.LootItemEntry entry = childContainer.lootItems[i];
+                    InteractableItem.LootItemEntry entry = childContainer.lootItems[i];
                     if (entry == null || entry.item == null || entry.quantity <= 0)
                     {
                         continue;
@@ -882,7 +882,7 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
             int unresolvedContainerItems = 0;
             if (childContainer != null)
             {
-                List<LootContainer.LootItemEntry> entries = new List<LootContainer.LootItemEntry>();
+                List<InteractableItem.LootItemEntry> entries = new List<InteractableItem.LootItemEntry>();
                 if (data.ContainerItems != null)
                 {
                     for (int i = 0; i < data.ContainerItems.Count; i++)
@@ -909,7 +909,7 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
                             continue;
                         }
 
-                        entries.Add(new LootContainer.LootItemEntry
+                        entries.Add(new InteractableItem.LootItemEntry
                         {
                             item = lootItem,
                             quantity = itemData.Quantity
@@ -1239,7 +1239,7 @@ internal static class PersistentStateValidation
             : PersistentWorldDebug.DescribeTransform(component.transform);
     }
 
-    public static int CountStacks(List<LootContainer.LootItemEntry> entries)
+    public static int CountStacks(List<InteractableItem.LootItemEntry> entries)
     {
         if (entries == null)
         {
@@ -1249,7 +1249,7 @@ internal static class PersistentStateValidation
         int count = 0;
         for (int i = 0; i < entries.Count; i++)
         {
-            LootContainer.LootItemEntry entry = entries[i];
+            InteractableItem.LootItemEntry entry = entries[i];
             if (entry == null || entry.item == null || entry.quantity <= 0)
             {
                 continue;
@@ -1261,7 +1261,7 @@ internal static class PersistentStateValidation
         return count;
     }
 
-    public static int CountQuantity(List<LootContainer.LootItemEntry> entries)
+    public static int CountQuantity(List<InteractableItem.LootItemEntry> entries)
     {
         if (entries == null)
         {
@@ -1271,7 +1271,7 @@ internal static class PersistentStateValidation
         int quantity = 0;
         for (int i = 0; i < entries.Count; i++)
         {
-            LootContainer.LootItemEntry entry = entries[i];
+            InteractableItem.LootItemEntry entry = entries[i];
             if (entry == null || entry.item == null || entry.quantity <= 0)
             {
                 continue;
@@ -1283,7 +1283,7 @@ internal static class PersistentStateValidation
         return quantity;
     }
 
-    public static string ResolveContainerScenario(LootContainer container)
+    public static string ResolveContainerScenario(InteractableItem container)
     {
         if (container == null)
         {
