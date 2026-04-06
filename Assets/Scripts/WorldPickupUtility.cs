@@ -81,13 +81,14 @@ public static class WorldPickupUtility
         }
 
         int clampedQuantity = Mathf.Max(1, quantity);
-        container.lootItems = new List<InteractableItem.LootItemEntry>
+        container.storedItems = new List<InteractableItem.LootItemEntry>
         {
             new InteractableItem.LootItemEntry { item = item, quantity = clampedQuantity }
         };
-        container.containerItem = displayItem != null ? displayItem : item;
-        container.destroyWhenEmpty = destroyWhenEmpty;
-        container.collectable = collectable;
+        container.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
+        container.representedItem = displayItem != null ? displayItem : item;
+        container.destroyWhenStorageEmpty = destroyWhenEmpty;
+        container.allowTake = collectable;
 
         Collider resolvedTrigger = ResolveInteractionTrigger(container, preferredTrigger);
         if (resolvedTrigger != null)

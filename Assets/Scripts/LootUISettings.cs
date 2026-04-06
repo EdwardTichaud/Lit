@@ -206,8 +206,8 @@ public class LootUISettings : MonoBehaviour
     }
 
     /// <summary>
-    /// Met à jour le nom + l'icône du container depuis un InteractableItem (MonoBehaviour en scène).
-    /// Cherche le nom dans lootContainer.containerItem.itemName et le sprite dans lootContainer.containerItem.itemSprite.
+    /// Met Ã  jour le nom + l'icÃ´ne du container depuis un InteractableItem (MonoBehaviour en scÃ¨ne).
+    /// Cherche le nom dans lootContainer.representedItem.itemName et le sprite dans lootContainer.representedItem.itemSprite.
     /// </summary>
     public void UpdateContainerHeader(InteractableItem lootContainer)
     {
@@ -218,16 +218,16 @@ public class LootUISettings : MonoBehaviour
 
         CacheContainerHeaderRefsIfNeeded();
 
-        Item containerItem = lootContainer != null ? lootContainer.containerItem : null;
-        if (containerItem == null)
+        Item representedItem = lootContainer != null ? lootContainer.representedItem : null;
+        if (representedItem == null)
         {
             SetContainerIcon(null);
             SetContainerName(string.Empty);
             return;
         }
 
-        SetContainerIcon(containerItem.itemSprite);
-        SetContainerName(containerItem.itemName);
+        SetContainerIcon(representedItem.itemSprite);
+        SetContainerName(representedItem.itemName);
     }
 
     private void SetContainerIcon(Sprite sprite)

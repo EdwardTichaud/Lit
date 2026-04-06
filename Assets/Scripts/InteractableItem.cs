@@ -5,14 +5,19 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-// Conteneur de loot avec interaction, UI et ActionBox (prendre/deposer/casser).
+// Objet interactif en monde: contenu, verrouillage, pieges et UI d'interaction.
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(NetworkObject))]
-public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
+public class InteractableItem : NetworkBehaviour
 {
+    public enum InteractableCategory
+    {
+        Container = 0,
+        RecoverableItem = 1
+    }
+
     public enum TrapEffectType
     {
         None = 0,
@@ -22,35 +27,41 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     [System.Serializable]
     public class LootItemEntry
     {
-        [Tooltip("Item stocke.")]
+        [Tooltip("Item stocké.")]
         public Item item;
-        [Tooltip("Quantite stockee.")]
+        [Tooltip("Quantite stockée.")]
         public int quantity = 1;
     }
 
-    [Header("Items")]
-    [Tooltip("Liste des items dans ce conteneur.")]
-    public List<LootItemEntry> lootItems = new List<LootItemEntry>();
-    [Tooltip("Item associe au conteneur (icone/description).")]
-    public Item containerItem;
-    [Tooltip("Detruit l'objet si vide.")]
-    public bool destroyWhenEmpty = false;
-    [Tooltip("Si false, le joueur ne peut pas prendre (ex: MaisonChest).")]
-    public bool collectable = true;
-    [Tooltip("Capacite max de toutes les quantites (0 = infini).")]
-    public int maxTotalQuantity = 0;
+    [Header("Category")]
+    [Tooltip("Indique si cet objet interactif est pense comme un container ou comme un item recuperable.")]
+    public InteractableCategory interactableCategory = InteractableCategory.Container;
+
+    [Header("Represented Item")]
+    [Tooltip("Item represente par cet objet interactif pour le nom, l'icone, la description et le pickup monde.")]
+    public Item representedItem;
+
+    [Header("Stored Content")]
+    [Tooltip("Contenu interne si cet objet interactif sert de container.")]
+    public List<LootItemEntry> storedItems = new List<LootItemEntry>();
+    [Tooltip("Detruit l'objet interactif lorsque son contenu devient vide.")]
+    public bool destroyWhenStorageEmpty = false;
+    [Tooltip("Autorise le joueur a recuperer le contenu ou l'objet represente depuis le monde.")]
+    public bool allowTake = true;
+    [Tooltip("Capacite totale du contenu stocke (0 = infini).")]
+    public int maxStoredQuantity = 0;
 
     [Header("Lock")]
-    [Tooltip("Si true, le conteneur doit etre deverrouille avant ouverture.")]
+    [Tooltip("Si true, l'objet interactif doit etre deverrouille avant interaction.")]
     public bool isLocked = false;
-    [Tooltip("Identifiant de serrure requis pour deverrouiller ce conteneur.")]
+    [Tooltip("Identifiant de serrure requis pour déverrouiller cet objet interactif.")]
     public string lockId;
-    [Tooltip("Consomme la cle utilisee lors du deverrouillage.")]
+    [Tooltip("Consomme la cle utilisee lors du déverrouillage.")]
     public bool consumeKeyOnUse = false;
     [Tooltip("Feedback affiche si la bonne cle n'est pas trouvee.")]
-    public string lockedNoKeyMessage = "Le conteneur est verrouille. Il faut la bonne cle.";
-    [Tooltip("Feedback affiche lorsque le conteneur est deverrouille.")]
-    public string unlockSuccessMessage = "Le conteneur est deverrouille.";
+    public string lockedNoKeyMessage = "Le conteneur est verrouillé. Il faut la bonne clé.";
+    [Tooltip("Feedback affiche lorsque le conteneur est déverrouillé.")]
+    public string unlockSuccessMessage = "Le conteneur est déverrouillé.";
 
     [Header("Lockpick")]
     [Tooltip("Autorise une tentative de crochetage si le personnage n'a pas la bonne cle.")]
@@ -63,18 +74,18 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     [Tooltip("ID fallback de l'item de crochetage si aucune reference n'est assignee.")]
     public string lockpickToolItemId = "outils_de_crochetage";
     [Tooltip("Message affiche dans la confirmation avant consommation de l'outil.")]
-    public string lockpickConfirmationMessage = "Utiliser 1 outil de crochetage pour tenter d'ouvrir ce coffre ?";
+    public string lockpickConfirmationMessage = "Utiliser un outil de crochetage pour tenter d'ouvrir ce coffre ?";
     [Tooltip("Feedback affiche si aucun outil de crochetage n'est disponible.")]
     public string missingLockpickMessage = "Il manque des outils de crochetage.";
     [Tooltip("Feedback de succes apres un crochetage reussi.")]
-    public string lockpickSuccessMessage = "Crochetage reussi.";
+    public string lockpickSuccessMessage = "Crochetage réussi.";
     [Tooltip("Feedback d'echec apres un crochetage rate.")]
-    public string lockpickFailureMessage = "Crochetage rat\u00E9, votre outil de crochetage se brise...";
+    public string lockpickFailureMessage = "Crochetage raté, votre outil de crochetage se brise...";
 
     [Header("Trap")]
-    [Tooltip("Si true, le conteneur possede un piege.")]
+    [Tooltip("Si true, cet objet interactif possede un piege.")]
     public bool isTrapped = false;
-    [Tooltip("Si true, le piege se declenche a l'ouverture. Sinon, il se declenche sur un echec de crochetage.")]
+    [Tooltip("Si true, le piege se declenche a l'ouverture. Sinon, il se declenche sur un échec de crochetage.")]
     public bool triggerTrapOnOpen = false;
     [Tooltip("Desarme le piege apres son premier declenchement.")]
     public bool disarmTrapAfterTrigger = true;
@@ -85,26 +96,26 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     [Tooltip("Applique la rotation du point de teleportation au personnage teleporte.")]
     public bool trapUseTargetRotation = true;
     [Tooltip("Feedback affiche lorsque le piege se declenche.")]
-    public string trapTriggeredMessage = "Un piege de teleportation se declenche !";
+    public string trapTriggeredMessage = "Un piège de téléportation se déclenche !";
 
     [Header("Break")]
-    [Tooltip("Autorise l'action Casser quand le conteneur est non collectable.")]
-    public bool allowBreakWhenNotCollectable = true;
+    [Tooltip("Autorise l'action Casser lorsque la prise est desactivee.")]
+    public bool allowBreakWhenTakeDisabled = true;
     [Tooltip("Message si l'item ne peut pas etre casse.")]
     public string breakInvalidMessage = "Cet objet ne peut pas etre casse.";
-    [Tooltip("Message si le conteneur est plein apres casse.")]
+    [Tooltip("Message si l'objet interactif de destination est plein apres casse.")]
     public string breakNoSpaceMessage = "Pas assez de place dans le coffre.";
 
     [Header("Feedback")]
-    [Tooltip("Message si l'objet ne peut pas etre pris.")]
-    public string takeNotAllowedMessage = "Impossible de prendre cet objet.";
+    [Tooltip("Message si la prise depuis cet objet interactif est interdite.")]
+    public string takeBlockedMessage = "Impossible de prendre cet objet.";
     [Tooltip("Message quand tout le contenu est pris.")]
-    public string takeAllSuccessMessage = "Objets recuperes.";
-    [Tooltip("Message si le container est plein.")]
+    public string takeAllSuccessMessage = "Objets récupérés.";
+    [Tooltip("Message si la destination de depot est pleine.")]
     public string depositNoSpaceMessage = "Pas assez de place dans le coffre.";
 
-    [Header("Action Box")]
-    [Tooltip("ActionBox utilisee par le loot. Laisse vide pour auto-detecter.")]
+    [Header("Interaction Action Box")]
+    [Tooltip("ActionBox utilisee par cet objet interactif. Laisse vide pour auto-detecter.")]
     public GameObject actionBox;
     [Tooltip("Offset en UI par rapport au slot selectionne.")]
     public Vector2 actionBoxOffset = Vector2.zero;
@@ -121,7 +132,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     [Tooltip("Alpha des actions indisponibles.")]
     public float actionBoxDisabledAlpha = 0.25f;
 
-    [Header("Take Quantity")]
+    [Header("Take Quantity UI")]
     [Tooltip("Offset en UI par rapport au slot selectionne.")]
     public Vector2 takeQuantityPanelOffset = Vector2.zero;
     [Tooltip("Format d'affichage (quantite/total).")]
@@ -130,8 +141,8 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     [Header("Interaction")]
     [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
     public Collider interactionTrigger;
-    [Tooltip("Panel d'inventaire pour deposer/retirer.")]
-    public InventoryPanelController inventoryPanelController;
+    [Tooltip("Panel d'inventaire utilise pour deposer/retirer du contenu.")]
+    public InventoryPanelController linkedInventoryPanelController;
     [SerializeField, HideInInspector]
     private BuildingInfoInteractable recoverableWorldInfo;
 
@@ -158,8 +169,6 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     private Coroutine actionBoxFadeRoutine;
     private bool actionBoxVisible;
     private readonly List<ActionBoxEntry> actionBoxEntries = new List<ActionBoxEntry>();
-    [SerializeField, HideInInspector, FormerlySerializedAs("items")]
-    private List<Item> legacyItems = new List<Item>();
 
     private readonly NetworkList<NetItemStack> netLootItems = new NetworkList<NetItemStack>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -450,9 +459,9 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         LootUISettings settings = GetSettings();
         if (lootOpen)
         {
-            if (!collectable)
+            if (!allowTake)
             {
-                if (allowBreakWhenNotCollectable)
+                if (allowBreakWhenTakeDisabled)
                 {
                     if (actionBoxVisible)
                     {
@@ -1185,9 +1194,9 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
         LootSlotUI firstSlot = null;
         LootSlotUI preferredSlot = null;
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entryData = lootItems[i];
+            LootItemEntry entryData = storedItems[i];
             if (entryData == null || entryData.item == null)
             {
                 continue;
@@ -1313,9 +1322,9 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     private bool TryTakeFocusedItem()
     {
-        if (!collectable)
+        if (!allowTake)
         {
-            ShowActionFeedback(takeNotAllowedMessage);
+            ShowActionFeedback(takeBlockedMessage);
             return false;
         }
 
@@ -1436,7 +1445,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         entry.quantity = Mathf.Max(0, entry.quantity - quantity);
         if (entry.quantity <= 0)
         {
-            lootItems.Remove(entry);
+            storedItems.Remove(entry);
         }
 
         RebuildLootSlots(item, currentSlotIndex);
@@ -1512,7 +1521,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         int totalResults = GetBreakResultTotal(item);
-        if (maxTotalQuantity > 0)
+        if (maxStoredQuantity > 0)
         {
             int remaining = GetRemainingCapacity();
             int effectiveRemaining = remaining + 1;
@@ -1526,7 +1535,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         entry.quantity = Mathf.Max(0, entry.quantity - 1);
         if (entry.quantity <= 0)
         {
-            lootItems.Remove(entry);
+            storedItems.Remove(entry);
         }
 
         ApplyBreakResults(item);
@@ -1592,15 +1601,15 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (lootItems == null)
+        if (storedItems == null)
         {
-            lootItems = new List<LootItemEntry>();
+            storedItems = new List<LootItemEntry>();
         }
 
         LootItemEntry existing = null;
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry != null && entry.item == item)
             {
                 existing = entry;
@@ -1614,7 +1623,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
         else
         {
-            lootItems.Add(new LootItemEntry { item = item, quantity = quantity });
+            storedItems.Add(new LootItemEntry { item = item, quantity = quantity });
         }
     }
 
@@ -2263,15 +2272,15 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return false;
         }
 
-        if (lootItems == null)
+        if (storedItems == null)
         {
-            lootItems = new List<LootItemEntry>();
+            storedItems = new List<LootItemEntry>();
         }
 
         LootItemEntry existing = null;
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry != null && entry.item == item)
             {
                 existing = entry;
@@ -2285,7 +2294,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
         else
         {
-            lootItems.Add(new LootItemEntry { item = item, quantity = quantity });
+            storedItems.Add(new LootItemEntry { item = item, quantity = quantity });
         }
 
         if (lootOpen)
@@ -2328,7 +2337,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return 0;
         }
 
-        int toAdd = maxTotalQuantity > 0 ? Mathf.Min(quantity, remaining) : quantity;
+        int toAdd = maxStoredQuantity > 0 ? Mathf.Min(quantity, remaining) : quantity;
         if (toAdd <= 0)
         {
             return 0;
@@ -2340,15 +2349,15 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     public int GetTotalQuantity()
     {
-        if (lootItems == null || lootItems.Count == 0)
+        if (storedItems == null || storedItems.Count == 0)
         {
             return 0;
         }
 
         int total = 0;
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry == null)
             {
                 continue;
@@ -2363,26 +2372,26 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     public int GetRemainingCapacity()
     {
-        if (maxTotalQuantity <= 0)
+        if (maxStoredQuantity <= 0)
         {
             return int.MaxValue;
         }
 
         int used = GetTotalQuantity();
-        return Mathf.Max(0, maxTotalQuantity - used);
+        return Mathf.Max(0, maxStoredQuantity - used);
     }
 
     public int GetItemCount(Item item)
     {
-        if (item == null || lootItems == null || lootItems.Count == 0)
+        if (item == null || storedItems == null || storedItems.Count == 0)
         {
             return 0;
         }
 
         int total = 0;
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry == null || entry.item != item)
             {
                 continue;
@@ -2396,15 +2405,15 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     public int RemoveItems(Item item, int quantity)
     {
-        if (item == null || quantity <= 0 || lootItems == null || lootItems.Count == 0)
+        if (item == null || quantity <= 0 || storedItems == null || storedItems.Count == 0)
         {
             return 0;
         }
 
         int remaining = quantity;
-        for (int i = lootItems.Count - 1; i >= 0 && remaining > 0; i--)
+        for (int i = storedItems.Count - 1; i >= 0 && remaining > 0; i--)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry == null || entry.item != item)
             {
                 continue;
@@ -2413,7 +2422,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             int available = Mathf.Max(0, entry.quantity);
             if (available <= 0)
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
                 continue;
             }
 
@@ -2423,7 +2432,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
             if (entry.quantity <= 0)
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
             }
         }
 
@@ -2438,7 +2447,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     public void SetLootItems(List<LootItemEntry> entries, bool rebuildIfOpen = true)
     {
-        lootItems = entries ?? new List<LootItemEntry>();
+        storedItems = entries ?? new List<LootItemEntry>();
         if (lootOpen && rebuildIfOpen)
         {
             RebuildLootSlots(null, currentSlotIndex);
@@ -2475,7 +2484,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         applyingNetLoot = true;
-        lootItems = new List<LootItemEntry>();
+        storedItems = new List<LootItemEntry>();
         for (int i = 0; i < netLootItems.Count; i++)
         {
             NetItemStack stack = netLootItems[i];
@@ -2490,7 +2499,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
                 continue;
             }
 
-            lootItems.Add(new LootItemEntry { item = item, quantity = stack.Quantity });
+            storedItems.Add(new LootItemEntry { item = item, quantity = stack.Quantity });
         }
 
         applyingNetLoot = false;
@@ -2512,11 +2521,11 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
         applyingNetLoot = true;
         netLootItems.Clear();
-        if (lootItems != null)
+        if (storedItems != null)
         {
-            for (int i = 0; i < lootItems.Count; i++)
+            for (int i = 0; i < storedItems.Count; i++)
             {
-                LootItemEntry entry = lootItems[i];
+                LootItemEntry entry = storedItems[i];
                 if (entry == null || entry.item == null)
                 {
                     continue;
@@ -2559,37 +2568,37 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (!collectable)
+        if (!allowTake)
         {
-            ShowActionFeedback(takeNotAllowedMessage);
+            ShowActionFeedback(takeBlockedMessage);
             return;
         }
 
-        if (lootItems == null || lootItems.Count == 0)
+        if (storedItems == null || storedItems.Count == 0)
         {
             return;
         }
 
         bool showedFeedback = false;
-        for (int i = lootItems.Count - 1; i >= 0; i--)
+        for (int i = storedItems.Count - 1; i >= 0; i--)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry == null || entry.item == null)
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
                 continue;
             }
 
             int quantity = Mathf.Max(0, entry.quantity);
             if (quantity <= 0)
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
                 continue;
             }
 
             if (TryAddItemToCurrentCharacter(entry.item, quantity, !showedFeedback))
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
             }
             else
             {
@@ -2606,12 +2615,12 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     private void HandleEmptyContainer()
     {
         RefreshRecoverableWorldInfo();
-        if (!destroyWhenEmpty)
+        if (!destroyWhenStorageEmpty)
         {
             return;
         }
 
-        if (lootItems == null || lootItems.Count > 0)
+        if (storedItems == null || storedItems.Count > 0)
         {
             return;
         }
@@ -2633,7 +2642,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
     public void RefreshRecoverableWorldInfo()
     {
         Item displayItem = ResolveRecoverableDisplayItem();
-        bool shouldShow = collectable && displayItem != null;
+        bool shouldShow = allowTake && displayItem != null;
 
         if (!shouldShow)
         {
@@ -2671,19 +2680,19 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     private Item ResolveRecoverableDisplayItem()
     {
-        if (containerItem != null)
+        if (representedItem != null)
         {
-            return containerItem;
+            return representedItem;
         }
 
-        if (lootItems == null)
+        if (storedItems == null)
         {
             return null;
         }
 
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry != null && entry.item != null && entry.quantity > 0)
             {
                 return entry.item;
@@ -3747,11 +3756,11 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         LootItemEntry entry = null;
-        if (lootItems != null)
+        if (storedItems != null)
         {
-            for (int i = 0; i < lootItems.Count; i++)
+            for (int i = 0; i < storedItems.Count; i++)
             {
-                LootItemEntry candidate = lootItems[i];
+                LootItemEntry candidate = storedItems[i];
                 if (candidate != null && candidate.item == item)
                 {
                     entry = candidate;
@@ -3791,7 +3800,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         entry.quantity = Mathf.Max(0, entry.quantity - toTake);
         if (entry.quantity <= 0)
         {
-            lootItems.Remove(entry);
+            storedItems.Remove(entry);
         }
 
         SyncNetFromLootItems();
@@ -3814,13 +3823,13 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (!collectable)
+        if (!allowTake)
         {
-            ShowFeedbackClientRpc(takeNotAllowedMessage, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackClientRpc(takeBlockedMessage, false, BuildClientRpcParams(rpcParams));
             return;
         }
 
-        if (lootItems == null || lootItems.Count == 0)
+        if (storedItems == null || storedItems.Count == 0)
         {
             return;
         }
@@ -3832,25 +3841,25 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        for (int i = lootItems.Count - 1; i >= 0; i--)
+        for (int i = storedItems.Count - 1; i >= 0; i--)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry == null || entry.item == null)
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
                 continue;
             }
 
             int quantity = Mathf.Max(0, entry.quantity);
             if (quantity <= 0)
             {
-                lootItems.RemoveAt(i);
+                storedItems.RemoveAt(i);
                 continue;
             }
 
             controller.AddItem(entry.item, quantity);
             entry.quantity = 0;
-            lootItems.RemoveAt(i);
+            storedItems.RemoveAt(i);
         }
 
         inventory.SyncFromController();
@@ -3910,15 +3919,15 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
             return;
         }
 
-        if (lootItems == null)
+        if (storedItems == null)
         {
-            lootItems = new List<LootItemEntry>();
+            storedItems = new List<LootItemEntry>();
         }
 
         LootItemEntry existing = null;
-        for (int i = 0; i < lootItems.Count; i++)
+        for (int i = 0; i < storedItems.Count; i++)
         {
-            LootItemEntry entry = lootItems[i];
+            LootItemEntry entry = storedItems[i];
             if (entry != null && entry.item == item)
             {
                 existing = entry;
@@ -3932,7 +3941,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
         else
         {
-            lootItems.Add(new LootItemEntry { item = item, quantity = quantity });
+            storedItems.Add(new LootItemEntry { item = item, quantity = quantity });
         }
 
         inventory.SyncFromController();
@@ -3967,11 +3976,11 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         LootItemEntry entry = null;
-        if (lootItems != null)
+        if (storedItems != null)
         {
-            for (int i = 0; i < lootItems.Count; i++)
+            for (int i = 0; i < storedItems.Count; i++)
             {
-                LootItemEntry candidate = lootItems[i];
+                LootItemEntry candidate = storedItems[i];
                 if (candidate != null && candidate.item == item)
                 {
                     entry = candidate;
@@ -3992,7 +4001,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         }
 
         int totalResults = GetBreakResultTotal(item);
-        if (maxTotalQuantity > 0)
+        if (maxStoredQuantity > 0)
         {
             int remaining = GetRemainingCapacity();
             int effectiveRemaining = remaining + 1;
@@ -4006,7 +4015,7 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
         entry.quantity = Mathf.Max(0, entry.quantity - 1);
         if (entry.quantity <= 0)
         {
-            lootItems.Remove(entry);
+            storedItems.Remove(entry);
         }
 
         ApplyBreakResults(item);
@@ -4063,17 +4072,17 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
     private InventoryPanelController GetInventoryPanelController()
     {
-        if (inventoryPanelController != null)
+        if (linkedInventoryPanelController != null)
         {
-            return inventoryPanelController;
+            return linkedInventoryPanelController;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        inventoryPanelController = FindFirstObjectByType<InventoryPanelController>();
+        linkedInventoryPanelController = FindFirstObjectByType<InventoryPanelController>();
 #else
-        inventoryPanelController = FindFirstObjectByType<InventoryPanelController>();
+        linkedInventoryPanelController = FindFirstObjectByType<InventoryPanelController>();
 #endif
-        return inventoryPanelController;
+        return linkedInventoryPanelController;
     }
 
     public void NotifyDepositInventoryClosed()
@@ -4108,30 +4117,6 @@ public class InteractableItem : NetworkBehaviour, ISerializationCallbackReceiver
 
         SquadManager.Instance.SetInputLocked(false);
         squadInputLocked = false;
-    }
-
-    public void OnBeforeSerialize()
-    {
-    }
-
-    public void OnAfterDeserialize()
-    {
-        if ((lootItems == null || lootItems.Count == 0) && legacyItems != null && legacyItems.Count > 0)
-        {
-            lootItems = new List<LootItemEntry>(legacyItems.Count);
-            for (int i = 0; i < legacyItems.Count; i++)
-            {
-                Item item = legacyItems[i];
-                if (item == null)
-                {
-                    continue;
-                }
-
-                lootItems.Add(new LootItemEntry { item = item, quantity = 1 });
-            }
-
-            legacyItems.Clear();
-        }
     }
 
     private GameObject GetSquadCharacter(Collider other)

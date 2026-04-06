@@ -552,7 +552,8 @@ public class SpawnManager : MonoBehaviour
                 : null;
             if (lootContainer != null)
             {
-                lootContainer.containerItem = item;
+                lootContainer.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
+                lootContainer.representedItem = item;
             }
 
             instance = created != null ? NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(created) : null;

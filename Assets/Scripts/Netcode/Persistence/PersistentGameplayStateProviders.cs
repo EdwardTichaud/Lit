@@ -51,18 +51,18 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
 
         ContainerStateData data = new ContainerStateData
         {
-            ContainerItemId = container.containerItem != null ? ItemIdUtils.GetItemId(container.containerItem) : string.Empty,
-            Collectable = container.collectable,
-            DestroyWhenEmpty = container.destroyWhenEmpty,
+            ContainerItemId = container.representedItem != null ? ItemIdUtils.GetItemId(container.representedItem) : string.Empty,
+            Collectable = container.allowTake,
+            DestroyWhenEmpty = container.destroyWhenStorageEmpty,
             Locked = container.isLocked,
             TrapTriggered = container.HasTriggeredTrap
         };
 
-        if (container.lootItems != null)
+        if (container.storedItems != null)
         {
-            for (int i = 0; i < container.lootItems.Count; i++)
+            for (int i = 0; i < container.storedItems.Count; i++)
             {
-                InteractableItem.LootItemEntry entry = container.lootItems[i];
+                InteractableItem.LootItemEntry entry = container.storedItems[i];
                 if (entry == null || entry.item == null || entry.quantity <= 0)
                 {
                     continue;
@@ -109,6 +109,11 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         }
 
         string scenario = PersistentStateValidation.ResolveContainerScenario(container);
+        if (string.Equals(scenario, "dropped_loot", StringComparison.Ordinal))
+        {
+            container.interactableCategory = InteractableItem.InteractableCategory.RecoverableItem;
+        }
+
         List<InteractableItem.LootItemEntry> entries = new List<InteractableItem.LootItemEntry>();
         int expectedStacks = 0;
         int expectedQuantity = 0;
@@ -163,28 +168,28 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
             }
         }
 
-        container.containerItem = string.IsNullOrWhiteSpace(data.ContainerItemId) ? null : resolvedContainerItem;
-        container.collectable = data.Collectable;
-        container.destroyWhenEmpty = data.DestroyWhenEmpty;
+        container.representedItem = string.IsNullOrWhiteSpace(data.ContainerItemId) ? null : resolvedContainerItem;
+        container.allowTake = data.Collectable;
+        container.destroyWhenStorageEmpty = data.DestroyWhenEmpty;
         container.RestoreLockedState(data.Locked);
         container.RestoreTrapTriggeredState(data.TrapTriggered);
         container.SetLootItems(entries, false);
 
-        int actualStacks = PersistentStateValidation.CountStacks(container.lootItems);
-        int actualQuantity = PersistentStateValidation.CountQuantity(container.lootItems);
+        int actualStacks = PersistentStateValidation.CountStacks(container.storedItems);
+        int actualQuantity = PersistentStateValidation.CountQuantity(container.storedItems);
         bool success =
             missingItemDefinitions == 0 &&
             actualStacks == expectedStacks &&
             actualQuantity == expectedQuantity &&
-            string.Equals(ItemIdUtils.GetItemId(container.containerItem), data.ContainerItemId ?? string.Empty, StringComparison.Ordinal) &&
-            container.collectable == data.Collectable &&
-            container.destroyWhenEmpty == data.DestroyWhenEmpty &&
+            string.Equals(ItemIdUtils.GetItemId(container.representedItem), data.ContainerItemId ?? string.Empty, StringComparison.Ordinal) &&
+            container.allowTake == data.Collectable &&
+            container.destroyWhenStorageEmpty == data.DestroyWhenEmpty &&
             container.isLocked == data.Locked &&
             container.HasTriggeredTrap == data.TrapTriggered;
         PersistentStateValidation.LogValidation(
             scenario,
             success,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(container)}' containerItemId='{ItemIdUtils.GetItemId(container.containerItem)}' expectedStacks={expectedStacks} actualStacks={actualStacks} expectedQuantity={expectedQuantity} actualQuantity={actualQuantity} collectable={container.collectable} destroyWhenEmpty={container.destroyWhenEmpty} locked={container.isLocked} trapTriggered={container.HasTriggeredTrap}",
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(container)}' containerItemId='{ItemIdUtils.GetItemId(container.representedItem)}' expectedStacks={expectedStacks} actualStacks={actualStacks} expectedQuantity={expectedQuantity} actualQuantity={actualQuantity} collectable={container.allowTake} destroyWhenEmpty={container.destroyWhenStorageEmpty} locked={container.isLocked} trapTriggered={container.HasTriggeredTrap}",
             container,
             context);
     }
@@ -806,14 +811,14 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
 
         if (childContainer != null)
         {
-            data.ContainerCollectable = childContainer.collectable;
-            data.ContainerDestroyWhenEmpty = childContainer.destroyWhenEmpty;
+            data.ContainerCollectable = childContainer.allowTake;
+            data.ContainerDestroyWhenEmpty = childContainer.destroyWhenStorageEmpty;
 
-            if (childContainer.lootItems != null)
+            if (childContainer.storedItems != null)
             {
-                for (int i = 0; i < childContainer.lootItems.Count; i++)
+                for (int i = 0; i < childContainer.storedItems.Count; i++)
                 {
-                    InteractableItem.LootItemEntry entry = childContainer.lootItems[i];
+                    InteractableItem.LootItemEntry entry = childContainer.storedItems[i];
                     if (entry == null || entry.item == null || entry.quantity <= 0)
                     {
                         continue;
@@ -917,8 +922,8 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
                     }
                 }
 
-                childContainer.collectable = data.IsHomeChest ? false : data.ContainerCollectable;
-                childContainer.destroyWhenEmpty = data.ContainerDestroyWhenEmpty;
+                childContainer.allowTake = data.IsHomeChest ? false : data.ContainerCollectable;
+                childContainer.destroyWhenStorageEmpty = data.ContainerDestroyWhenEmpty;
                 childContainer.SetLootItems(entries, false);
             }
 
@@ -1011,8 +1016,8 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
         PersistentStateContext context)
     {
         string scenario = data.Level > 1 ? "building_upgrade" : "building_placement";
-        int actualStacks = childContainer != null ? PersistentStateValidation.CountStacks(childContainer.lootItems) : 0;
-        int actualQuantity = childContainer != null ? PersistentStateValidation.CountQuantity(childContainer.lootItems) : 0;
+        int actualStacks = childContainer != null ? PersistentStateValidation.CountStacks(childContainer.storedItems) : 0;
+        int actualQuantity = childContainer != null ? PersistentStateValidation.CountQuantity(childContainer.storedItems) : 0;
         bool success =
             unresolvedContainerItems == 0 &&
             string.Equals(building.BuildId ?? string.Empty, data.BuildId ?? string.Empty, StringComparison.Ordinal) &&
@@ -1020,8 +1025,8 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
             building.Level == Mathf.Max(1, data.Level) &&
             building.NetworkBuildingId == data.BuilderInstanceId &&
             (childContainer == null ||
-             (childContainer.collectable == (data.IsHomeChest ? false : data.ContainerCollectable) &&
-              childContainer.destroyWhenEmpty == data.ContainerDestroyWhenEmpty &&
+             (childContainer.allowTake == (data.IsHomeChest ? false : data.ContainerCollectable) &&
+              childContainer.destroyWhenStorageEmpty == data.ContainerDestroyWhenEmpty &&
               actualStacks == expectedStacks &&
               actualQuantity == expectedQuantity));
         PersistentStateValidation.LogValidation(

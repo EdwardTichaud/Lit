@@ -5,6 +5,13 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Item", menuName = "Scriptable Objects/Item")]
 public class Item : ScriptableObject
 {
+    public enum ReadableKind
+    {
+        None = 0,
+        Book = 1,
+        Parchment = 2
+    }
+
     [System.Serializable]
     public class BreakResult
     {
@@ -44,6 +51,14 @@ public class Item : ScriptableObject
         public List<Item> unlockedCrafts = new List<Item>();
     }
 
+    [System.Serializable]
+    public class ReadablePage
+    {
+        [TextArea(8, 20)]
+        [Tooltip("Texte affiche sur cette page.")]
+        public string text;
+    }
+
     [Header("Identity")]
     [Tooltip("Identifiant unique (optionnel).")]
     public string itemId;
@@ -56,6 +71,15 @@ public class Item : ScriptableObject
     [TextArea]
     [Tooltip("Description affichee dans l'UI.")]
     public string description;
+
+    [Header("Readable")]
+    [Tooltip("Type de document lisible ouvert depuis l'inventaire.")]
+    public ReadableKind readableKind = ReadableKind.None;
+    [TextArea(8, 20)]
+    [Tooltip("Texte unique d'un parchemin.")]
+    public string parchmentText;
+    [Tooltip("Pages d'un livre ouvert dans BookPanel.")]
+    public List<ReadablePage> bookPages = new List<ReadablePage>();
 
     [Header("Usage")]
     [Tooltip("Peut etre utilise via l'ActionBox.")]
@@ -398,6 +422,59 @@ public class Item : ScriptableObject
         }
 
         return useEffects != null && useEffects.Count > 0;
+    }
+
+    public bool IsReadable()
+    {
+        return readableKind != ReadableKind.None;
+    }
+
+    public bool IsReadableBook()
+    {
+        return readableKind == ReadableKind.Book;
+    }
+
+    public bool IsReadableParchment()
+    {
+        return readableKind == ReadableKind.Parchment;
+    }
+
+    public int GetBookPageCount()
+    {
+        if (!IsReadableBook() || bookPages == null || bookPages.Count == 0)
+        {
+            return 0;
+        }
+
+        int count = bookPages.Count;
+        while (count > 0)
+        {
+            ReadablePage page = bookPages[count - 1];
+            if (page != null && !string.IsNullOrWhiteSpace(page.text))
+            {
+                break;
+            }
+
+            count--;
+        }
+
+        return count;
+    }
+
+    public string GetBookPageText(int pageIndex)
+    {
+        if (pageIndex < 0 || bookPages == null || pageIndex >= bookPages.Count)
+        {
+            return string.Empty;
+        }
+
+        ReadablePage page = bookPages[pageIndex];
+        return page != null ? page.text ?? string.Empty : string.Empty;
+    }
+
+    public string GetParchmentText()
+    {
+        return parchmentText ?? string.Empty;
     }
 
     public bool TryUse(SquadCharacterController controller)

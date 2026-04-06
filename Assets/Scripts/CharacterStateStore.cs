@@ -944,14 +944,14 @@ public class CharacterStateStore : MonoBehaviour
         for (int i = 0; i < containers.Count; i++)
         {
             InteractableItem container = containers[i];
-            if (container == null || container.lootItems == null)
+            if (container == null || container.storedItems == null)
             {
                 continue;
             }
 
-            for (int j = 0; j < container.lootItems.Count; j++)
+            for (int j = 0; j < container.storedItems.Count; j++)
             {
-                InteractableItem.LootItemEntry entry = container.lootItems[j];
+                InteractableItem.LootItemEntry entry = container.storedItems[j];
                 if (entry == null || entry.item == null)
                 {
                     continue;
@@ -1229,9 +1229,9 @@ public class CharacterStateStore : MonoBehaviour
                     if (string.IsNullOrWhiteSpace(itemId))
                     {
                         InteractableItem container = info != null ? info.GetComponentInChildren<InteractableItem>() : null;
-                        if (container != null && container.containerItem != null)
+                        if (container != null && container.representedItem != null)
                         {
-                            itemId = GetItemId(container.containerItem);
+                            itemId = GetItemId(container.representedItem);
                         }
                     }
 
@@ -1324,9 +1324,9 @@ public class CharacterStateStore : MonoBehaviour
             if (string.IsNullOrWhiteSpace(itemId))
             {
                 InteractableItem container = info.GetComponentInChildren<InteractableItem>();
-                if (container != null && container.containerItem != null)
+                if (container != null && container.representedItem != null)
                 {
-                    itemId = GetItemId(container.containerItem);
+                    itemId = GetItemId(container.representedItem);
                 }
             }
 
@@ -1502,10 +1502,11 @@ public class CharacterStateStore : MonoBehaviour
             InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
             if (container != null)
             {
-            if (item != null)
-            {
-                container.containerItem = item;
-            }
+                container.interactableCategory = InteractableItem.InteractableCategory.Container;
+                if (item != null)
+                {
+                    container.representedItem = item;
+                }
 
                 if (entry.isHomeChest)
                 {
@@ -1667,15 +1668,15 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         int capacity = GetHomeChestCapacity();
-        if (capacity > 0 && container.maxTotalQuantity <= 0)
+        if (capacity > 0 && container.maxStoredQuantity <= 0)
         {
-            container.maxTotalQuantity = capacity;
+            container.maxStoredQuantity = capacity;
         }
 
         Maison resolvedMaison = GetMaison();
         if (resolvedMaison != null && resolvedMaison.forceMaisonChestNonCollectable)
         {
-            container.collectable = false;
+            container.allowTake = false;
         }
     }
 

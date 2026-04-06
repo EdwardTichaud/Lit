@@ -908,7 +908,8 @@ public class BuilderController : NetworkBehaviour
         InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
-            container.containerItem = building;
+            container.interactableCategory = InteractableItem.InteractableCategory.Container;
+            container.representedItem = building;
         }
 
         if (building.isHomeChest)
@@ -1169,7 +1170,8 @@ public class BuilderController : NetworkBehaviour
             InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
             if (container != null)
             {
-                container.containerItem = entry.building;
+                container.interactableCategory = InteractableItem.InteractableCategory.Container;
+                container.representedItem = entry.building;
             }
         }
     }

@@ -10,6 +10,13 @@ using UnityEngine.UI;
 // Controle l'UI d'inventaire: navigation, ActionBox, depot et placement d'objets.
 public class InventoryPanelController : MonoBehaviour
 {
+    private enum ReadablePanelKind
+    {
+        None = 0,
+        Book = 1,
+        Parchment = 2
+    }
+
     private static readonly Color[] DefaultBeaconPalette =
     {
         new Color(0.98f, 0.48f, 0.14f, 1f),
@@ -199,6 +206,17 @@ public class InventoryPanelController : MonoBehaviour
     private Color beaconPlacementColor = new Color(0.98f, 0.48f, 0.14f, 1f);
     private bool placementHasBeaconColor;
     private bool warnedMissingBeaconColorPanel;
+    private bool readablePanelOpen;
+    private ReadablePanelKind readablePanelKind;
+    private Item readableItem;
+    private int readableBookSpreadStartIndex;
+    private int readableBookLastDirection;
+    private float readableBookNextMoveTime;
+    private CanvasGroup bookPanelCanvasGroup;
+    private CanvasGroup parchoPanelCanvasGroup;
+    private TextMeshProUGUI bookLeftPageText;
+    private TextMeshProUGUI bookRightPageText;
+    private TextMeshProUGUI parchoText;
 
     private readonly List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
     private readonly List<InventoryEntry> entries = new List<InventoryEntry>();
@@ -363,6 +381,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (readablePanelOpen)
+        {
+            HandleReadablePanelNavigation();
+            return;
+        }
+
         if (depositQuantityActive)
         {
             HandleDepositQuantityInput();
@@ -413,6 +437,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (readablePanelOpen)
+        {
+            CloseReadablePanel();
+            return;
+        }
+
         if (depositQuantityActive)
         {
             CancelDepositQuantity();
@@ -456,6 +486,11 @@ public class InventoryPanelController : MonoBehaviour
         if (depositQuantityActive || placementActive || inventoryOpen)
         {
             LocalInputRouter.ConsumeInteract();
+        }
+
+        if (readablePanelOpen)
+        {
+            return;
         }
 
         if (depositQuantityActive)
@@ -614,6 +649,7 @@ public class InventoryPanelController : MonoBehaviour
 
         HideActionBoxImmediate();
         HideBeaconColorPanelImmediate();
+        CloseReadablePanel();
         CloseQuantityBox();
         inventoryOpen = false;
         actionBoxSuppressFrame = -1;
@@ -1515,6 +1551,11 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        if (item != null && item.IsReadable())
+        {
+            return OpenReadableItem(item);
+        }
+
         NetworkInventory inventory = ResolveNetworkInventory(controller);
         if (IsNetworked() && inventory != null)
         {
@@ -1529,6 +1570,247 @@ public class InventoryPanelController : MonoBehaviour
 
         ShowActionFeedback(reason);
         return false;
+    }
+
+    private bool OpenReadableItem(Item item)
+    {
+        if (item == null || !item.IsReadable())
+        {
+            return false;
+        }
+
+        if (!ResolveReadablePanels())
+        {
+            ShowActionFeedback("Panels de lecture introuvables dans la scene.");
+            return false;
+        }
+
+        HideActionBoxImmediate();
+        readableItem = item;
+        readableBookSpreadStartIndex = 0;
+        ResetReadableNavigation();
+
+        if (item.IsReadableBook())
+        {
+            if (bookPanelCanvasGroup == null || bookLeftPageText == null || bookRightPageText == null)
+            {
+                ShowActionFeedback("BookPanel incomplet.");
+                return false;
+            }
+
+            readablePanelOpen = true;
+            readablePanelKind = ReadablePanelKind.Book;
+            SetReadablePanelVisible(parchoPanelCanvasGroup, false);
+            UpdateReadableBookPages();
+            SetReadablePanelVisible(bookPanelCanvasGroup, true);
+            return false;
+        }
+
+        if (item.IsReadableParchment())
+        {
+            if (parchoPanelCanvasGroup == null || parchoText == null)
+            {
+                ShowActionFeedback("ParchoPanel incomplet.");
+                return false;
+            }
+
+            readablePanelOpen = true;
+            readablePanelKind = ReadablePanelKind.Parchment;
+            parchoText.text = item.GetParchmentText();
+            SetReadablePanelVisible(bookPanelCanvasGroup, false);
+            SetReadablePanelVisible(parchoPanelCanvasGroup, true);
+            return false;
+        }
+
+        return false;
+    }
+
+    private void CloseReadablePanel()
+    {
+        readablePanelOpen = false;
+        readablePanelKind = ReadablePanelKind.None;
+        readableItem = null;
+        readableBookSpreadStartIndex = 0;
+        ResetReadableNavigation();
+        SetReadablePanelVisible(bookPanelCanvasGroup, false);
+        SetReadablePanelVisible(parchoPanelCanvasGroup, false);
+    }
+
+    private void HandleReadablePanelNavigation()
+    {
+        if (!readablePanelOpen || readablePanelKind != ReadablePanelKind.Book || readableItem == null)
+        {
+            return;
+        }
+
+        InventoryUISettings settings = GetSettings();
+        if (settings == null)
+        {
+            return;
+        }
+
+        Vector2 moveInput = LocalInputRouter.MoveValue;
+        int direction = GetReadableBookDirection(moveInput, settings.moveDeadzone);
+        if (direction == 0)
+        {
+            readableBookLastDirection = 0;
+            readableBookNextMoveTime = 0f;
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        if (direction != readableBookLastDirection)
+        {
+            TurnReadableBook(direction);
+            readableBookLastDirection = direction;
+            readableBookNextMoveTime = now + settings.initialRepeatDelay;
+            return;
+        }
+
+        if (now >= readableBookNextMoveTime)
+        {
+            TurnReadableBook(direction);
+            readableBookNextMoveTime = now + settings.repeatInterval;
+        }
+    }
+
+    private int GetReadableBookDirection(Vector2 input, float deadzone)
+    {
+        if (Mathf.Abs(input.x) < deadzone)
+        {
+            return 0;
+        }
+
+        return input.x > 0f ? 1 : -1;
+    }
+
+    private void TurnReadableBook(int direction)
+    {
+        if (readableItem == null || !readableItem.IsReadableBook() || direction == 0)
+        {
+            return;
+        }
+
+        int pageCount = readableItem.GetBookPageCount();
+        if (pageCount <= 2)
+        {
+            return;
+        }
+
+        int nextIndex = readableBookSpreadStartIndex + (direction > 0 ? 2 : -2);
+        if (nextIndex < 0 || nextIndex >= pageCount)
+        {
+            return;
+        }
+
+        readableBookSpreadStartIndex = nextIndex;
+        UpdateReadableBookPages();
+    }
+
+    private void UpdateReadableBookPages()
+    {
+        if (readableItem == null || !readableItem.IsReadableBook())
+        {
+            return;
+        }
+
+        if (bookLeftPageText == null || bookRightPageText == null)
+        {
+            return;
+        }
+
+        int pageCount = readableItem.GetBookPageCount();
+        if (pageCount <= 0)
+        {
+            bookLeftPageText.text = string.Empty;
+            bookRightPageText.text = string.Empty;
+            return;
+        }
+
+        readableBookSpreadStartIndex = Mathf.Clamp(readableBookSpreadStartIndex, 0, Mathf.Max(0, pageCount - 1));
+        if ((readableBookSpreadStartIndex & 1) != 0)
+        {
+            readableBookSpreadStartIndex--;
+        }
+
+        bookLeftPageText.text = readableItem.GetBookPageText(readableBookSpreadStartIndex);
+        bookRightPageText.text = readableBookSpreadStartIndex + 1 < pageCount
+            ? readableItem.GetBookPageText(readableBookSpreadStartIndex + 1)
+            : string.Empty;
+    }
+
+    private void ResetReadableNavigation()
+    {
+        readableBookLastDirection = 0;
+        readableBookNextMoveTime = 0f;
+    }
+
+    private bool ResolveReadablePanels()
+    {
+        if (bookPanelCanvasGroup == null)
+        {
+            GameObject bookPanel = GameObject.Find("BookPanel");
+            if (bookPanel != null)
+            {
+                bookPanelCanvasGroup = bookPanel.GetComponent<CanvasGroup>();
+                Transform page1 = FindChildRecursive(bookPanel.transform, "Page_1");
+                Transform page2 = FindChildRecursive(bookPanel.transform, "Page_2");
+                bookLeftPageText = page1 != null ? page1.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+                bookRightPageText = page2 != null ? page2.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+            }
+        }
+
+        if (parchoPanelCanvasGroup == null)
+        {
+            GameObject parchoPanel = GameObject.Find("ParchoPanel");
+            if (parchoPanel != null)
+            {
+                parchoPanelCanvasGroup = parchoPanel.GetComponent<CanvasGroup>();
+                parchoText = parchoPanel.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+        }
+
+        return bookPanelCanvasGroup != null || parchoPanelCanvasGroup != null;
+    }
+
+    private void SetReadablePanelVisible(CanvasGroup canvasGroup, bool visible)
+    {
+        if (canvasGroup == null)
+        {
+            return;
+        }
+
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.interactable = visible;
+        canvasGroup.blocksRaycasts = visible;
+        if (visible && canvasGroup.transform != null)
+        {
+            canvasGroup.transform.SetAsLastSibling();
+        }
+    }
+
+    private Transform FindChildRecursive(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = FindChildRecursive(root.GetChild(i), childName);
+            if (child != null)
+            {
+                return child;
+            }
+        }
+
+        return null;
     }
 
     private Color[] GetBeaconPaletteColors()
@@ -3740,7 +4022,8 @@ public class InventoryPanelController : MonoBehaviour
         InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
-            container.containerItem = building;
+            container.interactableCategory = InteractableItem.InteractableCategory.Container;
+            container.representedItem = building;
         }
 
         if (building.isHomeChest)
@@ -3825,7 +4108,7 @@ public class InventoryPanelController : MonoBehaviour
         }
         else
         {
-            container.collectable = false;
+            container.allowTake = false;
         }
     }
 

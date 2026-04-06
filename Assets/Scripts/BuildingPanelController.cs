@@ -2526,7 +2526,8 @@ public class BuildingPanelController : MonoBehaviour
         InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
-            container.containerItem = building;
+            container.interactableCategory = InteractableItem.InteractableCategory.Container;
+            container.representedItem = building;
         }
 
         if (building.isHomeChest)
@@ -2813,7 +2814,8 @@ public class BuildingPanelController : MonoBehaviour
         InteractableItem container = instance.GetComponentInChildren<InteractableItem>();
         if (container != null)
         {
-            container.containerItem = building;
+            container.interactableCategory = InteractableItem.InteractableCategory.Container;
+            container.representedItem = building;
         }
 
         if (building.isHomeChest)
@@ -2891,7 +2893,7 @@ public class BuildingPanelController : MonoBehaviour
         }
         else
         {
-            container.collectable = false;
+            container.allowTake = false;
         }
     }
 

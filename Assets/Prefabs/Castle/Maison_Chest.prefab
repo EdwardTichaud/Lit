@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  lootItems:
+  storedItems:
   - item: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
     quantity: 1
   - item: {fileID: 11400000, guid: 845afa1e4c271764cbf03d62c8752b96, type: 2}
@@ -108,14 +108,15 @@ MonoBehaviour:
     quantity: 5
   - item: {fileID: 11400000, guid: b6f049c8b4df32b46988eedc08553261, type: 2}
     quantity: 5
-  containerItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
-  destroyWhenEmpty: 0
-  collectable: 0
-  maxTotalQuantity: 0
-  allowBreakWhenNotCollectable: 1
+  representedItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
+  destroyWhenStorageEmpty: 0
+  allowTake: 0
+  maxStoredQuantity: 0
+  allowBreakWhenTakeDisabled: 1
   breakInvalidMessage: "Cet objet ne peut pas etre cass\xE9."
   breakNoSpaceMessage: Pas assez de place dans le coffre.
-  takeNotAllowedMessage: Impossible de prendre cet objet.
+  takeBlockedMessage: Impossible de prendre cet objet.
+  takeAllSuccessMessage: "Objets recup\xE9r\xE9s."
   depositNoSpaceMessage: Pas assez de place dans le coffre.
   actionBox: {fileID: 0}
   actionBoxOffset: {x: 0, y: 0}
@@ -125,9 +126,10 @@ MonoBehaviour:
   actionBoxDisableRaycastsWhenHidden: 1
   actionBoxEnabledAlpha: 1
   actionBoxDisabledAlpha: 0.25
+  takeQuantityPanelOffset: {x: 0, y: 0}
+  takeQuantityFormat: '{0}/{1}'
   interactionTrigger: {fileID: 7434141378917972205}
-  inventoryPanelController: {fileID: 0}
-  legacyItems: []
+  linkedInventoryPanelController: {fileID: 0}
 --- !u!65 &1040901325205510312
 BoxCollider:
   m_ObjectHideFlags: 0

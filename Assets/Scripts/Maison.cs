@@ -76,14 +76,14 @@ public class Maison : MonoBehaviour
             return;
         }
 
-        if (container.maxTotalQuantity <= 0 && maisonChestCapacity > 0)
+        if (container.maxStoredQuantity <= 0 && maisonChestCapacity > 0)
         {
-            container.maxTotalQuantity = maisonChestCapacity;
+            container.maxStoredQuantity = maisonChestCapacity;
         }
 
         if (forceMaisonChestNonCollectable)
         {
-            container.collectable = false;
+            container.allowTake = false;
         }
     }
 

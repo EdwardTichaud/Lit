@@ -165,7 +165,7 @@ public class ItemPassiveEffectSystem : MonoBehaviour
                 continue;
             }
 
-            List<InteractableItem.LootItemEntry> entries = container.lootItems;
+            List<InteractableItem.LootItemEntry> entries = container.storedItems;
             if (entries == null || entries.Count == 0)
             {
                 continue;
