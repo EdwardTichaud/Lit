@@ -7,7 +7,7 @@ using UnityEditor;
 
 // Interaction sur un batiment pour ouvrir le panel d'informations.
 [RequireComponent(typeof(Collider))]
-public class BuildingInfoInteractable : MonoBehaviour
+public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInteractable
 {
     [Header("Building Data")]
     [SerializeField, Tooltip("Identifiant de construction (fallback si Item manquant).")]
@@ -42,8 +42,10 @@ public class BuildingInfoInteractable : MonoBehaviour
     public string craftingPanelTag = "CraftingConstructionPanel";
 
     [Header("Interaction")]
-    [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
+    [Tooltip("Collider de reference pour la detection et la validation d'interaction. Laisse vide pour auto-detecter.")]
     public Collider interactionTrigger;
+    [Tooltip("Distance maximale a laquelle le personnage peut cibler cette interaction.")]
+    public float interactionMaxDistance = 2f;
     [Tooltip("Ferme le panel quand le joueur quitte la zone.")]
     public bool closePanelOnExit = true;
     [Tooltip("Ouvre automatiquement le panel quand le joueur est proche.")]
@@ -97,6 +99,50 @@ public class BuildingInfoInteractable : MonoBehaviour
         InitializeInteractionTrigger();
         ResolveRuntimeReferences();
         RefreshPresentation("awake");
+    }
+
+    public bool CanBeDetectedBy(SquadCharacterController controller)
+    {
+        return controller != null && isActiveAndEnabled && HasBuildingData() && CanDisplayWorldUi();
+    }
+
+    public Collider GetInteractionDetectionCollider()
+    {
+        return ResolveInteractionColliderReference();
+    }
+
+    public Transform GetInteractionAnchor()
+    {
+        return informationAnchor != null ? informationAnchor : transform;
+    }
+
+    public float GetInteractionMaxDistance(SquadCharacterController controller)
+    {
+        return Mathf.Max(0.1f, interactionMaxDistance);
+    }
+
+    public int GetInteractionPriority(SquadCharacterController controller)
+    {
+        return openOnProximity ? 20 : 30;
+    }
+
+    public void SetDetectedCharacter(GameObject character)
+    {
+        if (currentCharacter == character)
+        {
+            return;
+        }
+
+        currentCharacter = character;
+        if (currentCharacter == null && closePanelOnExit)
+        {
+            CloseInfoPanels();
+            if (destroyPanelOnExit && localPanelInstance != null)
+            {
+                Destroy(localPanelInstance.gameObject);
+                localPanelInstance = null;
+            }
+        }
     }
 
     public void SetNetworkBuildingId(ulong id)
@@ -476,6 +522,11 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void RefreshCurrentCharacter()
     {
+        if (UsesControllerDrivenDetection())
+        {
+            return;
+        }
+
         GameObject controlled = GetControlledCharacter();
         if (controlled != null && charactersInRange.Contains(controlled))
         {
@@ -488,6 +539,11 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void RefreshControlledCharacterOverlap()
     {
+        if (UsesControllerDrivenDetection())
+        {
+            return;
+        }
+
         RemoveNullCharacters();
 
         GameObject controlled = GetControlledCharacter();
@@ -1023,170 +1079,24 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void InitializeInteractionTrigger()
     {
-        if (interactionTrigger == null)
-        {
-            Collider[] colliders = GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                if (colliders[i] != null && colliders[i].isTrigger && !IsConcaveMeshCollider(colliders[i]))
-                {
-                    interactionTrigger = colliders[i];
-                    break;
-                }
-            }
-
-            if (interactionTrigger == null)
-            {
-                for (int i = 0; i < colliders.Length; i++)
-                {
-                    if (colliders[i] != null && !IsConcaveMeshCollider(colliders[i]))
-                    {
-                        interactionTrigger = colliders[i];
-                        break;
-                    }
-                }
-            }
-
-            if (interactionTrigger == null && colliders.Length > 0)
-            {
-                interactionTrigger = colliders[0];
-            }
-        }
-
-        if (interactionTrigger == null)
-        {
-            interactionTrigger = CreateFallbackTrigger();
-        }
+        interactionTrigger = ResolveInteractionColliderReference();
+        useSelfTriggerEvents = false;
 
         if (interactionTrigger == null)
         {
             Debug.LogWarning("BuildingInfoInteractable: aucun collider trouve pour l'interaction.", this);
-            useSelfTriggerEvents = false;
-            return;
-        }
-
-        if (IsConcaveMeshCollider(interactionTrigger))
-        {
-            Collider fallback = CreateBoxTrigger(interactionTrigger);
-            if (fallback != null)
-            {
-                interactionTrigger = fallback;
-                Debug.LogWarning("BuildingInfoInteractable: MeshCollider concave detecte, ajout d'un BoxCollider Trigger pour l'interaction.", this);
-            }
-        }
-        else if (!interactionTrigger.isTrigger)
-        {
-            interactionTrigger.isTrigger = true;
-            Debug.LogWarning("BuildingInfoInteractable: le collider d'interaction n'etait pas en Trigger. Il a ete force en Trigger.", this);
-        }
-
-        useSelfTriggerEvents = interactionTrigger.gameObject == gameObject;
-        if (!useSelfTriggerEvents)
-        {
-            BuildingInfoTriggerProxy proxy = interactionTrigger.GetComponent<BuildingInfoTriggerProxy>();
-            if (proxy == null)
-            {
-                proxy = interactionTrigger.gameObject.AddComponent<BuildingInfoTriggerProxy>();
-            }
-            proxy.Owner = this;
         }
     }
 
-    private Collider CreateFallbackTrigger()
+    private Collider ResolveInteractionColliderReference()
     {
-        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
-        Bounds bounds = new Bounds(transform.position, Vector3.one);
-        bool hasBounds = false;
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            if (renderers[i] == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = renderers[i].bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(renderers[i].bounds);
-            }
-        }
-
-        BoxCollider box = gameObject.AddComponent<BoxCollider>();
-        box.isTrigger = true;
-        if (hasBounds)
-        {
-            box.center = transform.InverseTransformPoint(bounds.center);
-            Vector3 localSize = transform.InverseTransformVector(bounds.size);
-            box.size = new Vector3(Mathf.Abs(localSize.x), Mathf.Abs(localSize.y), Mathf.Abs(localSize.z));
-        }
-
-        return box;
+        interactionTrigger = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionTrigger);
+        return interactionTrigger;
     }
 
-    private static bool IsConcaveMeshCollider(Collider collider)
+    private static bool UsesControllerDrivenDetection()
     {
-        MeshCollider meshCollider = collider as MeshCollider;
-        return meshCollider != null && !meshCollider.convex;
-    }
-
-    private Collider CreateBoxTrigger(Collider reference)
-    {
-        if (reference == null)
-        {
-            return null;
-        }
-
-        BoxCollider box = reference.gameObject.AddComponent<BoxCollider>();
-        box.isTrigger = true;
-        FitBoxToCollider(box, reference);
-        return box;
-    }
-
-    private void FitBoxToCollider(BoxCollider box, Collider reference)
-    {
-        if (box == null)
-        {
-            return;
-        }
-
-        if (reference == null)
-        {
-            box.center = Vector3.zero;
-            box.size = Vector3.one;
-            return;
-        }
-
-        if (reference is BoxCollider boxCollider)
-        {
-            box.center = boxCollider.center;
-            box.size = boxCollider.size;
-            return;
-        }
-
-        if (reference is SphereCollider sphereCollider)
-        {
-            float diameter = sphereCollider.radius * 2f;
-            box.center = sphereCollider.center;
-            box.size = new Vector3(diameter, diameter, diameter);
-            return;
-        }
-
-        if (reference is CapsuleCollider capsuleCollider)
-        {
-            float diameter = capsuleCollider.radius * 2f;
-            box.center = capsuleCollider.center;
-            box.size = new Vector3(diameter, capsuleCollider.height, diameter);
-            return;
-        }
-
-        Bounds bounds = reference.bounds;
-        box.center = reference.transform.InverseTransformPoint(bounds.center);
-        Vector3 localSize = reference.transform.InverseTransformVector(bounds.size);
-        box.size = new Vector3(Mathf.Abs(localSize.x), Mathf.Abs(localSize.y), Mathf.Abs(localSize.z));
+        return true;
     }
 
     private GameObject GetSquadCharacter(Collider other)
@@ -1258,30 +1168,11 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private bool IsCharacterWithinInteraction(GameObject character)
     {
-        if (character == null || interactionTrigger == null)
-        {
-            return false;
-        }
-
-        Collider[] colliders = character.GetComponentsInChildren<Collider>(true);
-        Bounds triggerBounds = interactionTrigger.bounds;
-        bool hadCollider = false;
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider collider = colliders[i];
-            if (collider == null || collider.isTrigger)
-            {
-                continue;
-            }
-
-            hadCollider = true;
-            if (triggerBounds.Intersects(collider.bounds) || triggerBounds.Contains(collider.bounds.center))
-            {
-                return true;
-            }
-        }
-
-        return !hadCollider && triggerBounds.Contains(character.transform.position);
+        return CharacterInteractionDetection.IsCharacterWithinRange(
+            character != null ? character.transform : null,
+            ResolveInteractionColliderReference(),
+            GetInteractionAnchor(),
+            interactionMaxDistance);
     }
 
     private static bool IsColliderFromCharacter(Collider other, GameObject character)
@@ -1379,7 +1270,7 @@ public class BuildingInfoInteractable : MonoBehaviour
 
     private void TrackVisibilityState(string reason)
     {
-        bool visibilityActive = openOnProximity && currentCharacter != null && charactersInRange.Contains(currentCharacter);
+        bool visibilityActive = IsProximityActiveForPresentation();
         if (visibilityActive == lastVisibilityActive)
         {
             return;
@@ -1400,7 +1291,7 @@ public class BuildingInfoInteractable : MonoBehaviour
             ? syncedLevel
             : 0;
         bool worldUiBound = localPanelInstance != null;
-        bool proximityActive = openOnProximity && currentCharacter != null && charactersInRange.Contains(currentCharacter);
+        bool proximityActive = IsProximityActiveForPresentation();
         PersistentNetworkObject persistentObject = GetComponent<PersistentNetworkObject>();
         string persistentId = persistentObject != null ? persistentObject.PersistentId : string.Empty;
         string localCharacterPath = currentCharacter != null
@@ -1438,6 +1329,17 @@ public class BuildingInfoInteractable : MonoBehaviour
         Debug.Log(
             $"[BuildingSync] event='{eventName}' path='{PersistentWorldDebug.DescribeTransform(transform)}' persistentId='{persistentId}' buildId='{BuildId}' itemId='{BuildingItemId}' networkId={networkBuildingId} displayedLevel={level} authoritativeSyncedLevel={authoritativeLevel} worldUiBound={worldUiBound} proximityActive={proximityActive} visibilityLogicActive={openOnProximity} localCharacterPath='{localCharacterPath}' upgradeRefreshCallbackRan={(eventName == "building_upgrade_refresh_callback")} visualRefreshRan={(eventName == "building_visual_refresh" || eventName == "world_ui_rebound" || eventName == "world_ui_initialized")} source='{presentationOrigin}' reason='{reason}'",
             this);
+    }
+
+    private bool IsProximityActiveForPresentation()
+    {
+        if (!openOnProximity || currentCharacter == null)
+        {
+            return false;
+        }
+
+        return UsesControllerDrivenDetection()
+            || charactersInRange.Contains(currentCharacter);
     }
 
     private void LogMissingWorldUiBinding(string reason)
@@ -1516,26 +1418,5 @@ public class BuildingInfoInteractable : MonoBehaviour
         string prefabName = panelPrefab.name;
         bool looksLikeItemPanel = prefabName.IndexOf("item", System.StringComparison.OrdinalIgnoreCase) >= 0;
         return wantsItemPanel ? looksLikeItemPanel : !looksLikeItemPanel;
-    }
-}
-
-public class BuildingInfoTriggerProxy : MonoBehaviour
-{
-    public BuildingInfoInteractable Owner { get; set; }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (Owner != null)
-        {
-            Owner.NotifyTriggerEnter(other);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (Owner != null)
-        {
-            Owner.NotifyTriggerExit(other);
-        }
     }
 }

@@ -17028,10 +17028,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 87236762}
+  - component: {fileID: 87236766}
+  - component: {fileID: 87236768}
   - component: {fileID: 87236764}
   - component: {fileID: 87236763}
+  - component: {fileID: 87236767}
+  - component: {fileID: 87236769}
   m_Layer: 0
-  m_Name: OldBookOpen
+  m_Name: OldBookOpen_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17045,12 +17049,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 87236761}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.000000089406925, y: -9.3132213e-10, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.70699555, y: -0.012539294, z: -0.012539174, w: 0.70699567}
+  m_LocalPosition: {x: -1.294, y: 0.12300001, z: -2.071}
+  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 1113415977}
+  m_Father: {fileID: 180192438}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: -2.032}
 --- !u!23 &87236763
 MeshRenderer:
@@ -17108,6 +17112,139 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 87236761}
   m_Mesh: {fileID: 5954670508314506658, guid: 829c936806e032648b795ae17b485e8c, type: 3}
+--- !u!114 &87236766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87236761}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 570080317
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!54 &87236767
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87236761}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 2
+--- !u!114 &87236768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87236761}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 1
+  representedItem: {fileID: 11400000, guid: 32f7eb40a44f4842bc6d9e047adb0c6d, type: 2}
+  storedItems: []
+  destroyWhenStorageEmpty: 0
+  allowTake: 1
+  maxStoredQuantity: 0
+  isLocked: 0
+  lockId: 
+  consumeKeyOnUse: 0
+  lockedNoKeyMessage: Le conteneur est verrouille. Il faut la bonne cle.
+  unlockSuccessMessage: Le conteneur est deverrouille.
+  allowLockpick: 1
+  lockDifficulty: 12
+  lockpickToolItem: {fileID: 0}
+  lockpickToolItemId: outils_de_crochetage
+  lockpickConfirmationMessage: Utiliser 1 outil de crochetage pour tenter d'ouvrir
+    ce coffre ?
+  missingLockpickMessage: Il manque des outils de crochetage.
+  lockpickSuccessMessage: Crochetage reussi.
+  lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
+  isTrapped: 0
+  triggerTrapOnOpen: 0
+  disarmTrapAfterTrigger: 1
+  trapEffect: 1
+  trapTeleportTarget: {fileID: 0}
+  trapUseTargetRotation: 1
+  trapTriggeredMessage: Un piege de teleportation se declenche !
+  allowBreakWhenTakeDisabled: 1
+  breakInvalidMessage: "Cet objet ne peut pas etre cass\xE9."
+  breakNoSpaceMessage: Pas assez de place dans le coffre.
+  takeBlockedMessage: Impossible de prendre cet objet.
+  takeAllSuccessMessage: "Objets recup\xE9r\xE9s."
+  depositNoSpaceMessage: Pas assez de place dans le coffre.
+  actionBox: {fileID: 0}
+  actionBoxOffset: {x: 0, y: 0}
+  actionBoxFadeDuration: 0.15
+  actionBoxSetAlphaToZeroOnStart: 1
+  actionBoxAddCanvasGroupIfMissing: 1
+  actionBoxDisableRaycastsWhenHidden: 1
+  actionBoxEnabledAlpha: 1
+  actionBoxDisabledAlpha: 0.25
+  takeQuantityPanelOffset: {x: 0, y: 0}
+  takeQuantityFormat: '{0}/{1}'
+  interactionTrigger: {fileID: 0}
+  interactionMaxDistance: 1.75
+  linkedInventoryPanelController: {fileID: 0}
+  recoverableWorldInfo: {fileID: 0}
+--- !u!65 &87236769
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 87236761}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.40562215, y: 0.24973345, z: 0.04788388}
+  m_Center: {x: 0.009299017, y: 0.001972858, z: 0.0041539287}
 --- !u!1001 &93683358
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18084,6 +18221,7 @@ MonoBehaviour:
   beaconWallProbeHeight: 1.2
   beaconWallProbeRadius: 0.18
   beaconWallNormalMaxY: 0.6
+  itemPlacementMaxSlopeAngle: 35
   beaconPanelAnchoredPosition: {x: 0, y: -220}
   beaconSwatchSize: {x: 44, y: 44}
   beaconPaletteColors: []
@@ -18321,6 +18459,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
   representedItem: {fileID: 11400000, guid: 621b44d49a5163e4d9a964189be1b2a3, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
@@ -18368,6 +18507,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: Prendre {0}/{1}
   interactionTrigger: {fileID: 0}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!114 &136035441
@@ -19033,7 +19173,7 @@ Transform:
   - {fileID: 1885505865}
   - {fileID: 1838128787}
   - {fileID: 1689910930}
-  - {fileID: 1113415977}
+  - {fileID: 87236762}
   m_Father: {fileID: 336291304}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &180192442
@@ -25082,6 +25222,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
   representedItem: {fileID: 11400000, guid: 621b44d49a5163e4d9a964189be1b2a3, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
@@ -25129,6 +25270,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: Prendre {0}/{1}
   interactionTrigger: {fileID: 0}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!65 &231835645
@@ -26977,7 +27119,7 @@ Transform:
   m_GameObject: {fileID: 290585904}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.116560645, y: 0.7, z: -0.08397121}
+  m_LocalPosition: {x: -0.10131213, y: 0.7, z: -0.119784236}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27136,8 +27278,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.013600786
-  m_Range: 0.045678087
+  m_Intensity: 0.01
+  m_Range: 0.023210518
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -27208,8 +27350,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.010824484
-  baseRange: 0.039856464
+  baseIntensity: 0.010591579
+  baseRange: 0.023711806
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -54872,7 +55014,7 @@ RectTransform:
   m_GameObject: {fileID: 459111343}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.66509074, y: 0.66509074, z: 0.66509074}
+  m_LocalScale: {x: 0.68612826, y: 0.68612826, z: 0.68612826}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1133611984}
@@ -74876,7 +75018,7 @@ RectTransform:
   m_GameObject: {fileID: 663038337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5.403082, y: 5.403082, z: 5.403082}
+  m_LocalScale: {x: 5.477458, y: 5.477458, z: 5.477458}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2074735048}
@@ -89122,6 +89264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
   representedItem: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: 845afa1e4c271764cbf03d62c8752b96, type: 2}
@@ -89169,6 +89312,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: Prendre {0}/{1}
   interactionTrigger: {fileID: 833875487}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!65 &833875487
@@ -94437,6 +94581,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
   representedItem: {fileID: 11400000, guid: 621b44d49a5163e4d9a964189be1b2a3, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
@@ -94484,6 +94629,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: Prendre {0}/{1}
   interactionTrigger: {fileID: 0}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!114 &850668429
@@ -130849,6 +130995,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
   representedItem: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: a7d7df4a7b1d0da4e8455ce4f6f0af8d, type: 2}
@@ -130894,6 +131041,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: Prendre {0}/{1}
   interactionTrigger: {fileID: 947205148}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!65 &947205148
@@ -131256,7 +131404,7 @@ Transform:
   m_GameObject: {fileID: 961790107}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.14390221, y: 0.7, z: -0.22064161}
+  m_LocalPosition: {x: -0.15142989, y: 0.7, z: -0.21878366}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -131281,7 +131429,7 @@ MonoBehaviour:
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
   baseIntensity: 0.01
-  baseRange: 0.020047719
+  baseRange: 0.01
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -131457,7 +131605,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   m_Intensity: 0.01
-  m_Range: 0.01795264
+  m_Range: 0.01
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -131538,7 +131686,7 @@ Transform:
   m_GameObject: {fileID: 962258032}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.13495193, y: 0.7, z: -0.08020263}
+  m_LocalPosition: {x: -0.11200387, y: 0.7, z: -0.10201754}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -131698,7 +131846,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   m_Intensity: 0.01
-  m_Range: 0.021256942
+  m_Range: 0.011419253
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -131769,8 +131917,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.021450104
+  baseIntensity: 0.010658925
+  baseRange: 0.012348129
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -137509,7 +137657,7 @@ Transform:
   m_GameObject: {fileID: 1012998759}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.056733005, y: 0.7, z: -0.14158261}
+  m_LocalPosition: {x: -0.03203174, y: 0.7, z: -0.16120192}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -137709,8 +137857,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.01
-  m_Range: 0.01
+  m_Intensity: 0.011851964
+  m_Range: 0.011221432
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -139829,7 +139977,7 @@ Transform:
   m_GameObject: {fileID: 1068951298}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.18006687, y: 0.7, z: -0.17909166}
+  m_LocalPosition: {x: -0.1987304, y: 0.7, z: -0.21652853}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -139989,7 +140137,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   m_Intensity: 0.01
-  m_Range: 0.012918592
+  m_Range: 0.01
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -140061,7 +140209,7 @@ MonoBehaviour:
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
   baseIntensity: 0.01
-  baseRange: 0.01379736
+  baseRange: 0.01
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -140331,7 +140479,7 @@ Transform:
   m_GameObject: {fileID: 1077237955}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.14692214, y: 0.7, z: -0.079200685}
+  m_LocalPosition: {x: -0.15868174, y: 0.7, z: -0.10199842}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -140490,8 +140638,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.01
-  m_Range: 0.03773821
+  m_Intensity: 0.013137172
+  m_Range: 0.03706026
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -140562,8 +140710,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.010841687
-  baseRange: 0.044118755
+  baseIntensity: 0.01
+  baseRange: 0.03120818
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -146542,146 +146690,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3093796872826920830, guid: 21c488b1dd142b846ace7f683d7375ee, type: 3}
   m_PrefabInstance: {fileID: 1112725026}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1113415976
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1113415977}
-  - component: {fileID: 1113415980}
-  - component: {fileID: 1113415979}
-  - component: {fileID: 1113415978}
-  m_Layer: 0
-  m_Name: Pickup_OldBookOpen_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1113415977
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1113415976}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.7069955, y: -0.012539294, z: -0.012539174, w: 0.7069957}
-  m_LocalPosition: {x: -1.294, y: 0.123, z: -2.071}
-  m_LocalScale: {x: 0.39215687, y: 0.3921569, z: 0.3921569}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 87236762}
-  m_Father: {fileID: 180192438}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1113415978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1113415976}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  ShowTopMostFoldoutHeaderGroup: 1
-  interactableCategory: 1
-  representedItem: {fileID: 11400000, guid: 32f7eb40a44f4842bc6d9e047adb0c6d, type: 2}
-  storedItems: []
-  destroyWhenStorageEmpty: 0
-  allowTake: 1
-  maxStoredQuantity: 0
-  isLocked: 0
-  lockId: 
-  consumeKeyOnUse: 0
-  lockedNoKeyMessage: Le conteneur est verrouille. Il faut la bonne cle.
-  unlockSuccessMessage: Le conteneur est deverrouille.
-  allowLockpick: 1
-  lockDifficulty: 12
-  lockpickToolItem: {fileID: 0}
-  lockpickToolItemId: outils_de_crochetage
-  lockpickConfirmationMessage: Utiliser 1 outil de crochetage pour tenter d'ouvrir
-    ce coffre ?
-  missingLockpickMessage: Il manque des outils de crochetage.
-  lockpickSuccessMessage: Crochetage reussi.
-  lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
-  isTrapped: 0
-  triggerTrapOnOpen: 0
-  disarmTrapAfterTrigger: 1
-  trapEffect: 1
-  trapTeleportTarget: {fileID: 0}
-  trapUseTargetRotation: 1
-  trapTriggeredMessage: Un piege de teleportation se declenche !
-  allowBreakWhenTakeDisabled: 1
-  breakInvalidMessage: "Cet objet ne peut pas etre cass\xE9."
-  breakNoSpaceMessage: Pas assez de place dans le coffre.
-  takeBlockedMessage: Impossible de prendre cet objet.
-  takeAllSuccessMessage: "Objets recup\xE9r\xE9s."
-  depositNoSpaceMessage: Pas assez de place dans le coffre.
-  actionBox: {fileID: 0}
-  actionBoxOffset: {x: 0, y: 0}
-  actionBoxFadeDuration: 0.15
-  actionBoxSetAlphaToZeroOnStart: 1
-  actionBoxAddCanvasGroupIfMissing: 1
-  actionBoxDisableRaycastsWhenHidden: 1
-  actionBoxEnabledAlpha: 1
-  actionBoxDisabledAlpha: 0.25
-  takeQuantityPanelOffset: {x: 0, y: 0}
-  takeQuantityFormat: '{0}/{1}'
-  interactionTrigger: {fileID: 1113415979}
-  linkedInventoryPanelController: {fileID: 0}
-  recoverableWorldInfo: {fileID: 0}
---- !u!65 &1113415979
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1113415976}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.4142228, y: 0.047883973, z: 0.26396003}
-  m_Center: {x: 0.009274865, y: 0.0019717962, z: 0.004145859}
---- !u!114 &1113415980
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1113415976}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4048591503
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!1001 &1114330500
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -157301,6 +157309,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: '{0}/{1}'
   interactionTrigger: {fileID: 1143855387}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!65 &1143855387
@@ -185325,7 +185334,7 @@ Transform:
   m_GameObject: {fileID: 1272332829}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.20037384, y: 0.96, z: -0.16732079}
+  m_LocalPosition: {x: -0.22824414, y: 0.96, z: -0.19500172}
   m_LocalScale: {x: 1.7, y: 1.7000002, z: 1.7000002}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -185484,8 +185493,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.4581191, b: 0.16509432, a: 1}
-  m_Intensity: 2.3507073
-  m_Range: 46.787037
+  m_Intensity: 1.7698177
+  m_Range: 43.75488
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -185556,8 +185565,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 2.4617064
-  baseRange: 47.51948
+  baseIntensity: 1.7940154
+  baseRange: 43.97286
   emberColor: {r: 1, g: 0.4581191, b: 0.16509432, a: 1}
   flameColor: {r: 1, g: 0.4581191, b: 0.16509432, a: 1}
   intensityVariation: 0.24
@@ -199528,7 +199537,7 @@ Transform:
   m_GameObject: {fileID: 1400218666}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.15598856, y: 0.7, z: -0.16781339}
+  m_LocalPosition: {x: -0.16728881, y: 0.7, z: -0.18807027}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -199552,8 +199561,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.018269433
+  baseIntensity: 0.011814842
+  baseRange: 0.017622095
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -199728,8 +199737,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.0136207
-  m_Range: 0.022160012
+  m_Intensity: 0.010925023
+  m_Range: 0.017033326
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -210359,7 +210368,7 @@ Transform:
   m_GameObject: {fileID: 1429163556}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.28996825, y: 0.7, z: -0.18583882}
+  m_LocalPosition: {x: -0.30242535, y: 0.7, z: -0.20188496}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -210518,8 +210527,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.013154854
-  m_Range: 0.014660573
+  m_Intensity: 0.01
+  m_Range: 0.013820263
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -210590,8 +210599,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.01688524
-  baseRange: 0.016268633
+  baseIntensity: 0.010788833
+  baseRange: 0.0150364805
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -219968,7 +219977,7 @@ Transform:
   m_GameObject: {fileID: 1589874269}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.05491771, y: 0.7, z: -0.030630939}
+  m_LocalPosition: {x: -0.049857754, y: 0.7, z: -0.033291824}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -219992,8 +220001,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
-  baseIntensity: 0.011761483
-  baseRange: 0.23706792
+  baseIntensity: 0.01
+  baseRange: 0.13481121
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -220169,7 +220178,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   m_Intensity: 0.01
-  m_Range: 0.20459823
+  m_Range: 0.12224995
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -273639,6 +273648,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
   representedItem: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
@@ -273684,6 +273694,7 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: Prendre {0}/{1}
   interactionTrigger: {fileID: 1785474842}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
 --- !u!65 &1785474842
@@ -299165,7 +299176,7 @@ Transform:
   m_GameObject: {fileID: 1855540501}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.13567454, y: 0.7, z: -0.11229268}
+  m_LocalPosition: {x: -0.16518468, y: 0.7, z: -0.101209596}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -299190,7 +299201,7 @@ MonoBehaviour:
   syncTorchReceiverColor: 1
   deferShadowingToTorchReceiver: 1
   baseIntensity: 0.01
-  baseRange: 0.10479352
+  baseRange: 0.07740128
   emberColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   flameColor: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
   intensityVariation: 0.75
@@ -299365,8 +299376,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.1971293, b: 0.18039215, a: 1}
-  m_Intensity: 0.01
-  m_Range: 0.09221383
+  m_Intensity: 0.010894229
+  m_Range: 0.08014799
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -349931,6 +349942,10 @@ MonoBehaviour:
   placementShowValidity: 1
   placementValidColor: {r: 0.2, g: 1, b: 0.2, a: 0.65}
   placementInvalidColor: {r: 1, g: 0.2, b: 0.2, a: 0.65}
+  placementMaxSlopeAngle: 35
+  placementWallProbeHeight: 1.2
+  placementWallProbeRadius: 0.18
+  placementWallNormalMaxY: 0.6
   placementInvalidMessage: Position invalide.
   placementReopenPanelOnCancel: 1
 --- !u!114 &2076498659
@@ -630423,23 +630438,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_Range
-      value: 3.5670927
+      value: 3.7014952
       objectReference: {fileID: 0}
     - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_Color.b
-      value: 0.5510502
+      value: 0.55001444
       objectReference: {fileID: 0}
     - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_Color.g
-      value: 0.04988332
+      value: 0.0499984
       objectReference: {fileID: 0}
     - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_Color.r
-      value: 0.35067824
+      value: 0.3500093
       objectReference: {fileID: 0}
     - target: {fileID: 2053659529824676487, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_Intensity
-      value: 126.8916
+      value: 131.16167
       objectReference: {fileID: 0}
     - target: {fileID: 4000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_LocalPosition.x
@@ -630483,11 +630498,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6525572887991523330, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.02778692
+      value: -0.046179
       objectReference: {fileID: 0}
     - target: {fileID: 6525572887991523330, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.007351533
+      value: 0.0008169003
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

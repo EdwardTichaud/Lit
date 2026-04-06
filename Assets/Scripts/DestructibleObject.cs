@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 // Objet de monde destructible via une capacite accordee par un item equipe.
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(NetworkObject))]
-public class DestructibleObject : NetworkBehaviour
+public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractable
 {
     [Header("Destruction")]
     [Tooltip("Si false, l'objet ne peut pas etre detruit.")]
@@ -34,8 +34,10 @@ public class DestructibleObject : NetworkBehaviour
     public bool logDestroyDebug = false;
 
     [Header("Interaction")]
-    [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
+    [Tooltip("Collider de reference pour la detection et la validation d'interaction. Laisse vide pour auto-detecter.")]
     public Collider interactionTrigger;
+    [Tooltip("Distance maximale a laquelle le personnage peut detruire cet objet.")]
+    public float interactionMaxDistance = 1.6f;
 
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
@@ -51,6 +53,36 @@ public class DestructibleObject : NetworkBehaviour
     private void Awake()
     {
         InitializeInteractionTrigger();
+    }
+
+    public bool CanBeDetectedBy(SquadCharacterController controller)
+    {
+        return controller != null && !isDestroyed && isActiveAndEnabled;
+    }
+
+    public Collider GetInteractionDetectionCollider()
+    {
+        return ResolveInteractionColliderReference();
+    }
+
+    public Transform GetInteractionAnchor()
+    {
+        return transform;
+    }
+
+    public float GetInteractionMaxDistance(SquadCharacterController controller)
+    {
+        return Mathf.Max(0.1f, interactionMaxDistance);
+    }
+
+    public int GetInteractionPriority(SquadCharacterController controller)
+    {
+        return 60;
+    }
+
+    public void SetDetectedCharacter(GameObject character)
+    {
+        currentCharacter = character;
     }
 
     private void OnEnable()
@@ -348,6 +380,11 @@ public class DestructibleObject : NetworkBehaviour
 
     private void UpdateCurrentCharacter()
     {
+        if (UsesControllerDrivenDetection())
+        {
+            return;
+        }
+
         if (charactersInRange.Count == 0)
         {
             currentCharacter = null;
@@ -420,120 +457,24 @@ public class DestructibleObject : NetworkBehaviour
 
     private void InitializeInteractionTrigger()
     {
-        if (interactionTrigger == null)
-        {
-            Collider[] colliders = GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                if (colliders[i] != null && colliders[i].isTrigger)
-                {
-                    interactionTrigger = colliders[i];
-                    break;
-                }
-            }
-
-            if (interactionTrigger == null)
-            {
-                for (int i = 0; i < colliders.Length; i++)
-                {
-                    if (colliders[i] != null)
-                    {
-                        interactionTrigger = colliders[i];
-                        break;
-                    }
-                }
-            }
-        }
+        interactionTrigger = ResolveInteractionColliderReference();
+        useSelfTriggerEvents = false;
 
         if (interactionTrigger == null)
         {
             Debug.LogWarning("DestructibleObject: aucun collider trouve pour l'interaction.", this);
-            useSelfTriggerEvents = false;
-            return;
-        }
-
-        if (!interactionTrigger.isTrigger || IsConcaveMeshCollider(interactionTrigger))
-        {
-            Collider fallback = CreateBoxTrigger(interactionTrigger);
-            if (fallback != null)
-            {
-                interactionTrigger = fallback;
-            }
-        }
-
-        useSelfTriggerEvents = interactionTrigger.gameObject == gameObject;
-        if (!useSelfTriggerEvents)
-        {
-            DestructibleObjectTriggerProxy proxy = interactionTrigger.GetComponent<DestructibleObjectTriggerProxy>();
-            if (proxy == null)
-            {
-                proxy = interactionTrigger.gameObject.AddComponent<DestructibleObjectTriggerProxy>();
-            }
-
-            proxy.Owner = this;
         }
     }
 
-    private static bool IsConcaveMeshCollider(Collider collider)
+    private Collider ResolveInteractionColliderReference()
     {
-        MeshCollider meshCollider = collider as MeshCollider;
-        return meshCollider != null && !meshCollider.convex;
+        interactionTrigger = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionTrigger);
+        return interactionTrigger;
     }
 
-    private Collider CreateBoxTrigger(Collider reference)
+    private static bool UsesControllerDrivenDetection()
     {
-        if (reference == null)
-        {
-            return null;
-        }
-
-        BoxCollider box = reference.gameObject.AddComponent<BoxCollider>();
-        box.isTrigger = true;
-        FitBoxToCollider(box, reference);
-        return box;
-    }
-
-    private void FitBoxToCollider(BoxCollider box, Collider reference)
-    {
-        if (box == null)
-        {
-            return;
-        }
-
-        if (reference == null)
-        {
-            box.center = Vector3.zero;
-            box.size = Vector3.one;
-            return;
-        }
-
-        if (reference is BoxCollider boxCollider)
-        {
-            box.center = boxCollider.center;
-            box.size = boxCollider.size;
-            return;
-        }
-
-        if (reference is SphereCollider sphereCollider)
-        {
-            float diameter = sphereCollider.radius * 2f;
-            box.center = sphereCollider.center;
-            box.size = new Vector3(diameter, diameter, diameter);
-            return;
-        }
-
-        if (reference is CapsuleCollider capsuleCollider)
-        {
-            float diameter = capsuleCollider.radius * 2f;
-            box.center = capsuleCollider.center;
-            box.size = new Vector3(diameter, capsuleCollider.height, diameter);
-            return;
-        }
-
-        Bounds bounds = reference.bounds;
-        box.center = reference.transform.InverseTransformPoint(bounds.center);
-        Vector3 localSize = reference.transform.InverseTransformVector(bounds.size);
-        box.size = new Vector3(Mathf.Abs(localSize.x), Mathf.Abs(localSize.y), Mathf.Abs(localSize.z));
+        return true;
     }
 
     private SquadCharacterController GetCurrentCharacterController()
@@ -564,20 +505,11 @@ public class DestructibleObject : NetworkBehaviour
 
     private bool IsCharacterInRange(Transform characterRoot)
     {
-        if (characterRoot == null)
-        {
-            return false;
-        }
-
-        Collider col = interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
-        if (col == null)
-        {
-            return true;
-        }
-
-        Vector3 closest = col.ClosestPoint(characterRoot.position);
-        float distanceSqr = (closest - characterRoot.position).sqrMagnitude;
-        return distanceSqr <= 0.25f;
+        return CharacterInteractionDetection.IsCharacterWithinRange(
+            characterRoot,
+            ResolveInteractionColliderReference(),
+            transform,
+            interactionMaxDistance);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -720,26 +652,5 @@ public class DestructibleObject : NetworkBehaviour
 
         characterColliderCounts.Remove(character);
         return true;
-    }
-}
-
-public class DestructibleObjectTriggerProxy : MonoBehaviour
-{
-    public DestructibleObject Owner { get; set; }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (Owner != null)
-        {
-            Owner.NotifyTriggerEnter(other);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (Owner != null)
-        {
-            Owner.NotifyTriggerExit(other);
-        }
     }
 }

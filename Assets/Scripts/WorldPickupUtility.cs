@@ -13,11 +13,11 @@ public static class WorldPickupUtility
         }
 
         NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(root);
-        Collider trigger = EnsureRootTriggerCollider(root);
         InteractableItem container = NetcodeRuntimeUtilities.GetOrAdd<InteractableItem>(root);
-        if (trigger != null)
+        Collider interactionCollider = EnsureInteractionColliderInternal(root, container, null);
+        if (interactionCollider != null)
         {
-            container.interactionTrigger = trigger;
+            container.interactionTrigger = interactionCollider;
         }
 
         return container;
@@ -90,73 +90,23 @@ public static class WorldPickupUtility
         container.destroyWhenStorageEmpty = destroyWhenEmpty;
         container.allowTake = collectable;
 
-        Collider resolvedTrigger = ResolveInteractionTrigger(container, preferredTrigger);
-        if (resolvedTrigger != null)
+        Collider resolvedCollider = EnsureInteractionColliderInternal(container != null ? container.gameObject : null, container, preferredTrigger);
+        if (resolvedCollider != null)
         {
-            container.interactionTrigger = resolvedTrigger;
+            container.interactionTrigger = resolvedCollider;
         }
 
         container.RefreshRecoverableWorldInfo();
     }
 
-    public static Collider EnsureTriggerCollider(GameObject root)
+    public static Collider EnsureInteractionCollider(GameObject root)
     {
-        if (root == null)
-        {
-            return null;
-        }
-
-        Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
-        if (colliders != null)
-        {
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                Collider collider = colliders[i];
-                if (collider == null || !collider.isTrigger || IsConcaveMeshCollider(collider))
-                {
-                    continue;
-                }
-
-                return collider;
-            }
-        }
-
-        return EnsureRootTriggerCollider(root);
+        return EnsureInteractionColliderInternal(root, root != null ? root.GetComponentInChildren<InteractableItem>(true) : null, null);
     }
 
-    public static BoxCollider EnsureRootTriggerCollider(GameObject root)
+    public static BoxCollider EnsureRootInteractionBoxCollider(GameObject root)
     {
-        if (root == null)
-        {
-            return null;
-        }
-
-        if (!TryCalculateBounds(root, out Bounds bounds))
-        {
-            bounds = new Bounds(root.transform.position, Vector3.one);
-        }
-
-        BoxCollider reusableRootTrigger = null;
-        BoxCollider[] rootBoxes = root.GetComponents<BoxCollider>();
-        for (int i = 0; i < rootBoxes.Length; i++)
-        {
-            BoxCollider candidate = rootBoxes[i];
-            if (candidate != null && candidate.isTrigger)
-            {
-                reusableRootTrigger = candidate;
-                break;
-            }
-        }
-
-        if (reusableRootTrigger == null)
-        {
-            reusableRootTrigger = root.AddComponent<BoxCollider>();
-        }
-
-        reusableRootTrigger.isTrigger = true;
-        reusableRootTrigger.center = root.transform.InverseTransformPoint(bounds.center);
-        reusableRootTrigger.size = bounds.size;
-        return reusableRootTrigger;
+        return EnsureInteractionCollider(root) as BoxCollider;
     }
 
     public static bool TryCalculateBounds(GameObject instance, out Bounds bounds)
@@ -219,35 +169,61 @@ public static class WorldPickupUtility
         return hasBounds;
     }
 
-    private static Collider ResolveInteractionTrigger(InteractableItem container, Collider preferredTrigger)
+    private static Collider ResolveInteractionCollider(InteractableItem container, Collider preferredCollider)
     {
         if (container == null)
         {
             return null;
         }
 
-        if (IsValidTrigger(preferredTrigger))
-        {
-            return preferredTrigger;
-        }
-
-        if (IsValidTrigger(container.interactionTrigger))
-        {
-            return container.interactionTrigger;
-        }
-
-        return EnsureTriggerCollider(container.gameObject);
+        return CharacterInteractionDetection.ResolveInteractionCollider(container, preferredCollider != null ? preferredCollider : container.interactionTrigger);
     }
 
-    private static bool IsValidTrigger(Collider collider)
+    private static Collider EnsureInteractionColliderInternal(GameObject root, InteractableItem container, Collider preferredCollider)
     {
-        return collider != null && collider.isTrigger && !IsConcaveMeshCollider(collider);
+        Collider resolved = ResolveInteractionCollider(container, preferredCollider);
+        if (resolved != null)
+        {
+            return resolved;
+        }
+
+        BoxCollider fallback = CreateFallbackBoxCollider(root);
+        if (fallback == null)
+        {
+            return resolved;
+        }
+
+        if (container != null)
+        {
+            container.interactionTrigger = fallback;
+        }
+
+        return fallback;
     }
 
-    private static bool IsConcaveMeshCollider(Collider collider)
+    private static BoxCollider CreateFallbackBoxCollider(GameObject root)
     {
-        MeshCollider meshCollider = collider as MeshCollider;
-        return meshCollider != null && !meshCollider.convex;
+        if (root == null || !TryCalculateBounds(root, out Bounds bounds))
+        {
+            return null;
+        }
+
+        BoxCollider box = root.GetComponent<BoxCollider>();
+        if (box == null)
+        {
+            box = root.AddComponent<BoxCollider>();
+        }
+
+        Transform rootTransform = root.transform;
+        Vector3 localCenter = rootTransform.InverseTransformPoint(bounds.center);
+        Vector3 localSize = rootTransform.InverseTransformVector(bounds.size);
+        box.center = localCenter;
+        box.size = new Vector3(
+            Mathf.Max(0.01f, Mathf.Abs(localSize.x)),
+            Mathf.Max(0.01f, Mathf.Abs(localSize.y)),
+            Mathf.Max(0.01f, Mathf.Abs(localSize.z)));
+        box.isTrigger = false;
+        return box;
     }
 
     private static string ResolvePickupName(Item item, string fallback)

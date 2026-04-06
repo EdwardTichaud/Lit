@@ -289,6 +289,18 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public bool IsGrounded => isGrounded;
 
+    public bool TryGetHeadWorldY(out float headWorldY)
+    {
+        if (TryGetLocomotionCapsule(out Vector3 center, out _, out float height))
+        {
+            headWorldY = center.y + height * 0.5f;
+            return true;
+        }
+
+        headWorldY = transform.position.y;
+        return false;
+    }
+
     private void Reset()
     {
         animator = GetComponent<Animator>();
@@ -307,6 +319,7 @@ public partial class SquadCharacterController : MonoBehaviour
         UpdateTorchLifetime(Time.deltaTime);
         RefreshCharacterCollisionsIfNeeded();
         UpdateAudioListenerState(false);
+        UpdateLocalInteractionDetection();
     }
 
     private void LateUpdate()
@@ -387,6 +400,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearLocalInteractionTarget();
         ResetObstacleTraversalVisualTargetsImmediate();
         SetAudioListenerActive(false);
         UnregisterCharacter();

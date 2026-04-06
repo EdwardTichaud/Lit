@@ -5,6 +5,13 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Item", menuName = "Scriptable Objects/Item")]
 public class Item : ScriptableObject
 {
+    public enum PlacementSurfaceMode
+    {
+        None = 0,
+        HorizontalOnly = 1,
+        HorizontalOrWall = 2
+    }
+
     public enum ReadableKind
     {
         None = 0,
@@ -677,7 +684,7 @@ public class Item : ScriptableObject
 
     public bool CanPlaceFromInventory(SquadCharacterController controller, out string reason)
     {
-        if (!canPlace || !allowPlaceFromInventory)
+        if (!allowPlaceFromInventory)
         {
             reason = ResolveMessage(cannotPlaceMessage, "Impossible de poser cet objet.");
             return false;
@@ -697,6 +704,41 @@ public class Item : ScriptableObject
 
         reason = string.Empty;
         return true;
+    }
+
+    public PlacementSurfaceMode GetPlacementSurfaceMode()
+    {
+        if (isBeacon || allowWallPlacement)
+        {
+            return PlacementSurfaceMode.HorizontalOrWall;
+        }
+
+        if (isBuilding || canPlace || worldPrefab != null || buildingPrefab != null)
+        {
+            return PlacementSurfaceMode.HorizontalOnly;
+        }
+
+        return PlacementSurfaceMode.None;
+    }
+
+    public bool SupportsWallPlacement()
+    {
+        return GetPlacementSurfaceMode() == PlacementSurfaceMode.HorizontalOrWall;
+    }
+
+    public bool RequiresPlacementSurfaceSupport()
+    {
+        return GetPlacementSurfaceMode() != PlacementSurfaceMode.None;
+    }
+
+    public float GetPlacementRadius(float fallbackRadius)
+    {
+        if (placementRadiusOverride > 0f)
+        {
+            return Mathf.Max(0f, placementRadiusOverride);
+        }
+
+        return Mathf.Max(0f, fallbackRadius);
     }
 
     public bool CanInstantDropFromInventory(SquadCharacterController controller, bool allowDropWithoutPrefab)

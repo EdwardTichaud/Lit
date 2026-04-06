@@ -8,9 +8,8 @@ using Unity.Netcode;
 using UnityEngine.UI;
 
 // Objet interactif en monde: contenu, verrouillage, pieges et UI d'interaction.
-[RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(NetworkObject))]
-public class InteractableItem : NetworkBehaviour
+public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 {
     public enum InteractableCategory
     {
@@ -139,8 +138,10 @@ public class InteractableItem : NetworkBehaviour
     public string takeQuantityFormat = "{0}/{1}";
 
     [Header("Interaction")]
-    [Tooltip("Trigger d'interaction. Laisse vide pour auto-detecter.")]
+    [Tooltip("Collider de reference pour la detection et la validation d'interaction. Laisse vide pour auto-detecter.")]
     public Collider interactionTrigger;
+    [Tooltip("Distance maximale a laquelle le personnage peut interagir avec cet objet.")]
+    public float interactionMaxDistance = 1.75f;
     [Tooltip("Panel d'inventaire utilise pour deposer/retirer du contenu.")]
     public InventoryPanelController linkedInventoryPanelController;
     [SerializeField, HideInInspector]
@@ -196,6 +197,49 @@ public class InteractableItem : NetworkBehaviour
         }
 
         InitializeActionBox();
+    }
+
+    public bool CanBeDetectedBy(SquadCharacterController controller)
+    {
+        return controller != null && isActiveAndEnabled;
+    }
+
+    public Collider GetInteractionDetectionCollider()
+    {
+        return ResolveInteractionColliderReference();
+    }
+
+    public Transform GetInteractionAnchor()
+    {
+        return transform;
+    }
+
+    public float GetInteractionMaxDistance(SquadCharacterController controller)
+    {
+        return Mathf.Max(0.1f, interactionMaxDistance);
+    }
+
+    public int GetInteractionPriority(SquadCharacterController controller)
+    {
+        return interactableCategory == InteractableCategory.RecoverableItem ? 120 : 100;
+    }
+
+    public void SetDetectedCharacter(GameObject character)
+    {
+        if (currentCharacter == character)
+        {
+            ForwardDetectedCharacterToRecoverableInfo(character);
+            return;
+        }
+
+        GameObject previousCharacter = currentCharacter;
+        currentCharacter = character;
+        if (previousCharacter != null && currentCharacter == null)
+        {
+            HandleCharacterNoLongerInRange();
+        }
+
+        ForwardDetectedCharacterToRecoverableInfo(character);
     }
 
     private void OnEnable()
@@ -514,7 +558,7 @@ public class InteractableItem : NetworkBehaviour
                     return;
                 }
 
-                OpenLoot();
+                CompletePrimaryInteraction();
                 return;
             }
 
@@ -541,7 +585,7 @@ public class InteractableItem : NetworkBehaviour
             return;
         }
 
-        OpenLoot();
+        CompletePrimaryInteraction();
     }
 
     private void HandleLockedInteractClient()
@@ -625,7 +669,7 @@ public class InteractableItem : NetworkBehaviour
                 return;
             }
 
-            OpenLoot();
+            CompletePrimaryInteraction();
             return;
         }
 
@@ -652,7 +696,7 @@ public class InteractableItem : NetworkBehaviour
         }
 
         ShowActionFeedback(feedback);
-        OpenLoot();
+        CompletePrimaryInteraction();
     }
 
     private void OnLockpickCancelled()
@@ -678,6 +722,11 @@ public class InteractableItem : NetworkBehaviour
 
     private void UpdateCurrentCharacter()
     {
+        if (UsesControllerDrivenDetection())
+        {
+            return;
+        }
+
         GameObject previousCharacter = currentCharacter;
         PruneCharactersInRange();
 
@@ -802,130 +851,34 @@ public class InteractableItem : NetworkBehaviour
 
     private void InitializeInteractionTrigger()
     {
-        if (interactionTrigger == null)
-        {
-            Collider[] colliders = GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                if (colliders[i] != null && colliders[i].isTrigger && !IsConcaveMeshCollider(colliders[i]))
-                {
-                    interactionTrigger = colliders[i];
-                    break;
-                }
-            }
-
-            if (interactionTrigger == null)
-            {
-                for (int i = 0; i < colliders.Length; i++)
-                {
-                    if (colliders[i] != null && !IsConcaveMeshCollider(colliders[i]))
-                    {
-                        interactionTrigger = colliders[i];
-                        break;
-                    }
-                }
-            }
-
-            if (interactionTrigger == null && colliders.Length > 0)
-            {
-                interactionTrigger = colliders[0];
-            }
-        }
+        interactionTrigger = ResolveInteractionColliderReference();
+        useSelfTriggerEvents = false;
 
         if (interactionTrigger == null)
         {
             Debug.LogWarning("InteractableItem: aucun collider trouve pour l'interaction.");
-            useSelfTriggerEvents = false;
-            return;
-        }
-
-        if (IsConcaveMeshCollider(interactionTrigger))
-        {
-            Collider fallback = CreateBoxTrigger(interactionTrigger);
-            if (fallback != null)
-            {
-                interactionTrigger = fallback;
-                Debug.LogWarning("InteractableItem: MeshCollider concave detecte, ajout d'un BoxCollider Trigger pour l'interaction.", this);
-            }
-        }
-        else if (!interactionTrigger.isTrigger)
-        {
-            interactionTrigger.isTrigger = true;
-            Debug.LogWarning("InteractableItem: le collider d'interaction n'etait pas en Trigger. Il a ete force en Trigger.", this);
-        }
-
-        useSelfTriggerEvents = interactionTrigger.gameObject == gameObject;
-        if (!useSelfTriggerEvents)
-        {
-            InteractableItemTriggerProxy proxy = interactionTrigger.GetComponent<InteractableItemTriggerProxy>();
-            if (proxy == null)
-            {
-                proxy = interactionTrigger.gameObject.AddComponent<InteractableItemTriggerProxy>();
-            }
-            proxy.Owner = this;
         }
     }
 
-    private static bool IsConcaveMeshCollider(Collider collider)
+    private Collider ResolveInteractionColliderReference()
     {
-        MeshCollider meshCollider = collider as MeshCollider;
-        return meshCollider != null && !meshCollider.convex;
+        interactionTrigger = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionTrigger);
+        return interactionTrigger;
     }
 
-    private Collider CreateBoxTrigger(Collider reference)
+    private static bool UsesControllerDrivenDetection()
     {
-        if (reference == null)
-        {
-            return null;
-        }
-
-        BoxCollider box = reference.gameObject.AddComponent<BoxCollider>();
-        box.isTrigger = true;
-        FitBoxToCollider(box, reference);
-        return box;
+        return true;
     }
 
-    private void FitBoxToCollider(BoxCollider box, Collider reference)
+    private void ForwardDetectedCharacterToRecoverableInfo(GameObject character)
     {
-        if (box == null)
+        if (recoverableWorldInfo == null || !recoverableWorldInfo.isActiveAndEnabled)
         {
             return;
         }
 
-        if (reference == null)
-        {
-            box.center = Vector3.zero;
-            box.size = Vector3.one;
-            return;
-        }
-
-        if (reference is BoxCollider boxCollider)
-        {
-            box.center = boxCollider.center;
-            box.size = boxCollider.size;
-            return;
-        }
-
-        if (reference is SphereCollider sphereCollider)
-        {
-            float diameter = sphereCollider.radius * 2f;
-            box.center = sphereCollider.center;
-            box.size = new Vector3(diameter, diameter, diameter);
-            return;
-        }
-
-        if (reference is CapsuleCollider capsuleCollider)
-        {
-            float diameter = capsuleCollider.radius * 2f;
-            box.center = capsuleCollider.center;
-            box.size = new Vector3(diameter, capsuleCollider.height, diameter);
-            return;
-        }
-
-        Bounds bounds = reference.bounds;
-        box.center = reference.transform.InverseTransformPoint(bounds.center);
-        Vector3 localSize = reference.transform.InverseTransformVector(bounds.size);
-        box.size = new Vector3(Mathf.Abs(localSize.x), Mathf.Abs(localSize.y), Mathf.Abs(localSize.z));
+        recoverableWorldInfo.SetDetectedCharacter(character);
     }
 
     private void OpenLoot()
@@ -945,6 +898,17 @@ public class InteractableItem : NetworkBehaviour
         settings.UpdateContainerHeader(this);
 
         RebuildLootSlots(null);
+    }
+
+    private void CompletePrimaryInteraction()
+    {
+        if (interactableCategory == InteractableCategory.RecoverableItem)
+        {
+            TakeAllItems();
+            return;
+        }
+
+        OpenLoot();
     }
 
     private void CloseLoot()
@@ -2574,8 +2538,9 @@ public class InteractableItem : NetworkBehaviour
             return;
         }
 
-        if (storedItems == null || storedItems.Count == 0)
+        if (!HasAvailableStoredItems())
         {
+            TryTakeRepresentedItemDirectLocal();
             return;
         }
 
@@ -2615,7 +2580,7 @@ public class InteractableItem : NetworkBehaviour
     private void HandleEmptyContainer()
     {
         RefreshRecoverableWorldInfo();
-        if (!destroyWhenStorageEmpty)
+        if (!destroyWhenStorageEmpty && interactableCategory != InteractableCategory.RecoverableItem)
         {
             return;
         }
@@ -2637,6 +2602,135 @@ public class InteractableItem : NetworkBehaviour
         }
 
         Destroy(gameObject);
+    }
+
+    private bool HasAvailableStoredItems()
+    {
+        if (storedItems == null || storedItems.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < storedItems.Count; i++)
+        {
+            LootItemEntry entry = storedItems[i];
+            if (entry != null && entry.item != null && entry.quantity > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool CanTakeRepresentedItemDirect(out Item item)
+    {
+        item = null;
+        if (interactableCategory != InteractableCategory.RecoverableItem)
+        {
+            return false;
+        }
+
+        if (representedItem == null)
+        {
+            return false;
+        }
+
+        if (HasAvailableStoredItems())
+        {
+            return false;
+        }
+
+        item = representedItem;
+        return true;
+    }
+
+    private bool TryTakeRepresentedItemDirectLocal()
+    {
+        if (!CanTakeRepresentedItemDirect(out Item item))
+        {
+            return false;
+        }
+
+        if (!TryAddItemToCurrentCharacter(item, 1))
+        {
+            return false;
+        }
+
+        HandleEmptyContainer();
+        SyncNetFromLootItems();
+        SyncNetworkInventoryForCurrentCharacter();
+        ShowActionFeedback(item.GetTakeSuccessMessage());
+        return true;
+    }
+
+    private bool TryTakeAllItemsForCharacterServer(
+        Transform playerRoot,
+        SquadCharacterController controller,
+        NetworkInventory inventory,
+        ServerRpcParams rpcParams)
+    {
+        if (controller == null || inventory == null)
+        {
+            return false;
+        }
+
+        ClientRpcParams clientRpcParams = BuildClientRpcParams(rpcParams);
+
+        if (!HasAvailableStoredItems())
+        {
+            if (!CanTakeRepresentedItemDirect(out Item representedPickup))
+            {
+                return false;
+            }
+
+            if (!representedPickup.CanTakeFromContainer(this, out string representedReason))
+            {
+                ShowFeedbackClientRpc(representedReason, false, clientRpcParams);
+                return true;
+            }
+
+            controller.AddItem(representedPickup, 1);
+            inventory.SyncFromController();
+            HandleEmptyContainer();
+            SyncNetFromLootItems();
+            ShowFeedbackClientRpc(representedPickup.GetTakeSuccessMessage(), false, clientRpcParams);
+            return true;
+        }
+
+        bool movedAnyItem = false;
+        for (int i = storedItems.Count - 1; i >= 0; i--)
+        {
+            LootItemEntry entry = storedItems[i];
+            if (entry == null || entry.item == null)
+            {
+                storedItems.RemoveAt(i);
+                continue;
+            }
+
+            int quantity = Mathf.Max(0, entry.quantity);
+            if (quantity <= 0)
+            {
+                storedItems.RemoveAt(i);
+                continue;
+            }
+
+            controller.AddItem(entry.item, quantity);
+            entry.quantity = 0;
+            storedItems.RemoveAt(i);
+            movedAnyItem = true;
+        }
+
+        if (!movedAnyItem)
+        {
+            return false;
+        }
+
+        inventory.SyncFromController();
+        SyncNetFromLootItems();
+        HandleEmptyContainer();
+        ShowFeedbackClientRpc(takeAllSuccessMessage, false, clientRpcParams);
+        return true;
     }
 
     public void RefreshRecoverableWorldInfo()
@@ -3576,37 +3670,11 @@ public class InteractableItem : NetworkBehaviour
 
     private bool IsCharacterInRange(Transform characterRoot)
     {
-        if (characterRoot == null)
-        {
-            return false;
-        }
-
-        Collider col = interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
-        if (col == null)
-        {
-            return false;
-        }
-
-        Collider[] colliders = characterRoot.GetComponentsInChildren<Collider>(true);
-        Bounds triggerBounds = col.bounds;
-        bool hadCollider = false;
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider characterCollider = colliders[i];
-            if (characterCollider == null || characterCollider.isTrigger)
-            {
-                continue;
-            }
-
-            hadCollider = true;
-            Bounds characterBounds = characterCollider.bounds;
-            if (triggerBounds.Intersects(characterBounds) || triggerBounds.Contains(characterBounds.center))
-            {
-                return true;
-            }
-        }
-
-        return !hadCollider && triggerBounds.Contains(characterRoot.position);
+        return CharacterInteractionDetection.IsCharacterWithinRange(
+            characterRoot,
+            ResolveInteractionColliderReference(),
+            transform,
+            interactionMaxDistance);
     }
 
     private void RemoveTeleportedCharacterFromRange(Transform characterRoot)
@@ -3614,6 +3682,12 @@ public class InteractableItem : NetworkBehaviour
         if (characterRoot == null)
         {
             return;
+        }
+
+        if (UsesControllerDrivenDetection()
+            && IsSameOrRelatedTransform(currentCharacter != null ? currentCharacter.transform : null, characterRoot))
+        {
+            SetDetectedCharacter(null);
         }
 
         for (int i = charactersInRange.Count - 1; i >= 0; i--)
@@ -3682,7 +3756,11 @@ public class InteractableItem : NetworkBehaviour
                     return;
                 }
 
-                OpenLootClientRpc(BuildClientRpcParams(rpcParams));
+                if (!TryTakeAllItemsForCharacterServer(playerRoot, controller, inventory, rpcParams)
+                    && interactableCategory == InteractableCategory.Container)
+                {
+                    OpenLootClientRpc(BuildClientRpcParams(rpcParams));
+                }
                 return;
             }
 
@@ -3726,7 +3804,11 @@ public class InteractableItem : NetworkBehaviour
             return;
         }
 
-        OpenLootClientRpc(BuildClientRpcParams(rpcParams));
+        if (!TryTakeAllItemsForCharacterServer(playerRoot, controller, inventory, rpcParams)
+            && interactableCategory == InteractableCategory.Container)
+        {
+            OpenLootClientRpc(BuildClientRpcParams(rpcParams));
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -3829,43 +3911,12 @@ public class InteractableItem : NetworkBehaviour
             return;
         }
 
-        if (storedItems == null || storedItems.Count == 0)
-        {
-            return;
-        }
-
         NetworkInventory inventory = GetNetworkInventoryForCharacter(playerRoot);
         SquadCharacterController controller = GetControllerFromRoot(playerRoot);
-        if (inventory == null || controller == null)
+        if (!TryTakeAllItemsForCharacterServer(playerRoot, controller, inventory, rpcParams))
         {
             return;
         }
-
-        for (int i = storedItems.Count - 1; i >= 0; i--)
-        {
-            LootItemEntry entry = storedItems[i];
-            if (entry == null || entry.item == null)
-            {
-                storedItems.RemoveAt(i);
-                continue;
-            }
-
-            int quantity = Mathf.Max(0, entry.quantity);
-            if (quantity <= 0)
-            {
-                storedItems.RemoveAt(i);
-                continue;
-            }
-
-            controller.AddItem(entry.item, quantity);
-            entry.quantity = 0;
-            storedItems.RemoveAt(i);
-        }
-
-        inventory.SyncFromController();
-        SyncNetFromLootItems();
-        HandleEmptyContainer();
-        ShowFeedbackClientRpc(takeAllSuccessMessage, false, BuildClientRpcParams(rpcParams));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -4051,7 +4102,7 @@ public class InteractableItem : NetworkBehaviour
     private void OpenLootClientRpc(ClientRpcParams rpcParams = default)
     {
         ClearPendingUnlockAttempt();
-        if (!isActiveAndEnabled || lootOpen)
+        if (!isActiveAndEnabled || lootOpen || interactableCategory != InteractableCategory.Container)
         {
             return;
         }
@@ -4221,27 +4272,6 @@ public class InteractableItem : NetworkBehaviour
 
         characterColliderCounts.Remove(character);
         return true;
-    }
-}
-
-public class InteractableItemTriggerProxy : MonoBehaviour
-{
-    public InteractableItem Owner { get; set; }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (Owner != null)
-        {
-            Owner.NotifyTriggerEnter(other);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (Owner != null)
-        {
-            Owner.NotifyTriggerExit(other);
-        }
     }
 }
 

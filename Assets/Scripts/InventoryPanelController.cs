@@ -137,6 +137,9 @@ public class InventoryPanelController : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Normale maximale sur Y pour considerer un support comme un mur.")]
     public float beaconWallNormalMaxY = 0.6f;
+    [Range(0f, 89f)]
+    [Tooltip("Angle maximal de pente autorise pour poser un item hors accroche murale.")]
+    public float itemPlacementMaxSlopeAngle = 35f;
 
     [Header("Beacon Color Panel")]
     [Tooltip("Position du panel de couleur dans BalisePanel_Root.")]
@@ -179,13 +182,10 @@ public class InventoryPanelController : MonoBehaviour
     private bool placementActive;
     private Item placementItem;
     private GameObject placementInstance;
-    private readonly List<PlacementRigidbodyState> placementRigidbodies = new List<PlacementRigidbodyState>();
-    private Collider[] placementColliders;
+    private Quaternion placementBaseRotation = Quaternion.identity;
     private Transform placementAnchor;
     private Collider placementGroundCollider;
-    private readonly List<PlacementRendererState> placementRenderers = new List<PlacementRendererState>();
-    private MaterialPropertyBlock placementPropertyBlock;
-    private bool placementLastValid;
+    private readonly WorldPlacementUtility.PreviewCaches placementPreviewCaches = new WorldPlacementUtility.PreviewCaches();
     private CameraController placementCameraController;
     private bool restoreSelectionOnNextOpen;
     private Item restoreSelectedItem;
@@ -2920,6 +2920,33 @@ public class InventoryPanelController : MonoBehaviour
         nextMoveTime = 0f;
     }
 
+    private WorldPlacementUtility.Settings GetPlacementSettings()
+    {
+        return new WorldPlacementUtility.Settings
+        {
+            placementRadius = placementRadius,
+            placementStartDistance = placementStartDistance,
+            placementUseCameraRelative = placementUseCameraRelative,
+            placementCamera = placementCamera,
+            placementSnapToGround = placementSnapToGround,
+            placementGroundMask = placementGroundMask,
+            placementGroundRaycastHeight = placementGroundRaycastHeight,
+            placementGroundRaycastDistance = placementGroundRaycastDistance,
+            placementGroundOffset = placementGroundOffset,
+            placementCollisionMask = placementCollisionMask,
+            placementIgnoreMask = placementIgnoreMask,
+            placementBlockTriggers = placementBlockTriggers,
+            placementBoundsPadding = placementBoundsPadding,
+            placementShowValidity = placementShowValidity,
+            placementValidColor = placementValidColor,
+            placementInvalidColor = placementInvalidColor,
+            wallProbeHeight = beaconWallProbeHeight,
+            wallProbeRadius = beaconWallProbeRadius,
+            wallNormalMaxY = beaconWallNormalMaxY,
+            horizontalPlacementMaxSlopeAngle = itemPlacementMaxSlopeAngle
+        };
+    }
+
     private void UpdatePlacement()
     {
         if (!placementActive)
@@ -2941,20 +2968,13 @@ public class InventoryPanelController : MonoBehaviour
             position += moveDir * placementMoveSpeed * Time.unscaledDeltaTime;
         }
 
-        Vector3 anchorPos = placementAnchor.position;
-        Vector3 offset = position - anchorPos;
-        offset.y = 0f;
-        if (placementItem == null || !placementItem.isBuilding)
-        {
-            float radius = GetPlacementRadius(placementItem);
-            if (offset.magnitude > radius)
-            {
-                offset = offset.normalized * radius;
-            }
-        }
+        position = WorldPlacementUtility.ClampPositionAroundAnchor(
+            placementAnchor,
+            placementItem,
+            position,
+            GetPlacementSettings());
 
-        position = new Vector3(anchorPos.x + offset.x, position.y, anchorPos.z + offset.z);
-        Quaternion rotation = placementInstance.transform.rotation;
+        Quaternion rotation = placementBaseRotation;
         ResolvePlacementPose(placementItem, position, rotation, out position, out rotation);
         placementInstance.transform.SetPositionAndRotation(position, rotation);
 
@@ -2964,150 +2984,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private Vector3 GetPlacementMoveDirection(Vector2 input)
     {
-        if (input.sqrMagnitude <= 0.0001f)
-        {
-            return Vector3.zero;
-        }
-
-        Vector3 forward = Vector3.forward;
-        Vector3 right = Vector3.right;
-        if (placementUseCameraRelative)
-        {
-            Camera cam = placementCamera != null ? placementCamera : Camera.main;
-            if (cam != null)
-            {
-                forward = cam.transform.forward;
-                right = cam.transform.right;
-            }
-        }
-
-        forward.y = 0f;
-        right.y = 0f;
-        forward = forward.sqrMagnitude > 0f ? forward.normalized : Vector3.forward;
-        right = right.sqrMagnitude > 0f ? right.normalized : Vector3.right;
-
-        Vector3 move = forward * input.y + right * input.x;
-        if (move.sqrMagnitude > 1f)
-        {
-            move.Normalize();
-        }
-
-        return move;
-    }
-
-    private Vector3 SnapPlacementToGround(Vector3 position)
-    {
-        return SnapPlacementToGround(position, false);
-    }
-
-    private Vector3 SnapPlacementToGround(Vector3 position, bool ignoreCharacterSupport)
-    {
-        if (!placementSnapToGround)
-        {
-            return position;
-        }
-
-        float height = Mathf.Max(0f, placementGroundRaycastHeight);
-        float distance = Mathf.Max(0f, placementGroundRaycastDistance);
-        Vector3 origin = position + Vector3.up * height;
-        float maxDistance = height + distance;
-        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, maxDistance, placementGroundMask, QueryTriggerInteraction.Ignore);
-        if (hits != null && hits.Length > 0)
-        {
-            bool hasHit = false;
-            float bestDistance = float.MaxValue;
-            RaycastHit bestHit = default;
-
-            for (int i = 0; i < hits.Length; i++)
-            {
-                RaycastHit hit = hits[i];
-                Collider col = hit.collider;
-                if (col == null || IsIgnoredPlacementCollider(col))
-                {
-                    continue;
-                }
-
-                if (ignoreCharacterSupport && IsPlacementCharacterCollider(col))
-                {
-                    continue;
-                }
-
-                if (hit.distance < bestDistance)
-                {
-                    bestDistance = hit.distance;
-                    bestHit = hit;
-                    hasHit = true;
-                }
-            }
-
-            if (hasHit)
-            {
-                position.y = bestHit.point.y + placementGroundOffset;
-                placementGroundCollider = bestHit.collider;
-            }
-            else
-            {
-                placementGroundCollider = null;
-            }
-        }
-        else
-        {
-            placementGroundCollider = null;
-        }
-
-        return position;
-    }
-
-    private bool IsIgnoredPlacementCollider(Collider col)
-    {
-        if (col == null)
-        {
-            return true;
-        }
-
-        if (placementInstance != null && col.transform.IsChildOf(placementInstance.transform))
-        {
-            return true;
-        }
-
-        if (placementAnchor != null && col.transform.IsChildOf(placementAnchor))
-        {
-            return true;
-        }
-
-        if ((placementIgnoreMask.value & (1 << col.gameObject.layer)) != 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool IsPlacementCharacterCollider(Collider col)
-    {
-        if (col == null)
-        {
-            return false;
-        }
-
-        return col.GetComponentInParent<SquadCharacterController>() != null
-            || col.GetComponentInParent<Character>() != null;
-    }
-
-    private bool IsPlacementGroundCollider(Collider col)
-    {
-        if (col == null || placementGroundCollider == null)
-        {
-            return false;
-        }
-
-        if (col == placementGroundCollider)
-        {
-            return true;
-        }
-
-        Transform root = placementGroundCollider.transform;
-        return root != null && col.transform.IsChildOf(root);
+        return WorldPlacementUtility.GetPlacementMoveDirection(input, GetPlacementSettings());
     }
 
     private CameraController ResolvePlacementCamera()
@@ -3250,6 +3127,8 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        placementBaseRotation = placementInstance.transform.rotation;
+
         if (item.isBuilding)
         {
             BuilderController builder = GetBuilderController();
@@ -3268,38 +3147,11 @@ public class InventoryPanelController : MonoBehaviour
             SetPlacementCameraOverride(placementInstance.transform);
         }
 
-        Vector3 startPos = placementAnchor.position;
-        Vector3 forward = placementAnchor.forward;
-        if (placementUseCameraRelative)
-        {
-            Camera cam = placementCamera != null ? placementCamera : Camera.main;
-            if (cam != null)
-            {
-                forward = cam.transform.forward;
-            }
-        }
-
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = placementAnchor.forward;
-            forward.y = 0f;
-        }
-
-        forward = forward.sqrMagnitude > 0f ? forward.normalized : Vector3.forward;
-        startPos += forward * Mathf.Max(0f, placementStartDistance);
-        Vector3 startOffset = startPos - placementAnchor.position;
-        startOffset.y = 0f;
-        if (item != null && !item.isBuilding)
-        {
-            float radius = GetPlacementRadius(item);
-            if (startOffset.magnitude > radius)
-            {
-                startOffset = startOffset.normalized * radius;
-                startPos = new Vector3(placementAnchor.position.x + startOffset.x, startPos.y, placementAnchor.position.z + startOffset.z);
-            }
-        }
-        Quaternion startRotation = placementInstance.transform.rotation;
+        Vector3 startPos = WorldPlacementUtility.GetPlacementStartPosition(
+            placementAnchor,
+            item,
+            GetPlacementSettings());
+        Quaternion startRotation = placementBaseRotation;
         ResolvePlacementPose(item, startPos, startRotation, out startPos, out startRotation);
         placementInstance.transform.SetPositionAndRotation(startPos, startRotation);
         CachePlacementVisuals(placementInstance);
@@ -3314,12 +3166,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private float GetPlacementRadius(Item item)
     {
-        if (item != null && item.placementRadiusOverride > 0f)
-        {
-            return Mathf.Max(0f, item.placementRadiusOverride);
-        }
-
-        return Mathf.Max(0f, placementRadius);
+        return item != null ? item.GetPlacementRadius(placementRadius) : Mathf.Max(0f, placementRadius);
     }
 
     private void ApplyPlacementItemState(GameObject instance, Item item)
@@ -3337,161 +3184,16 @@ public class InventoryPanelController : MonoBehaviour
 
     private void ResolvePlacementPose(Item item, Vector3 desiredPosition, Quaternion currentRotation, out Vector3 resolvedPosition, out Quaternion resolvedRotation)
     {
-        resolvedPosition = desiredPosition;
-        resolvedRotation = currentRotation;
-
-        if (item != null && item.isBeacon)
-        {
-            if (TryResolveBeaconPlacementPose(desiredPosition, out resolvedPosition, out resolvedRotation))
-            {
-                return;
-            }
-        }
-
-        resolvedPosition = SnapPlacementToGround(desiredPosition, item != null && item.isBeacon);
-    }
-
-    private bool TryResolveBeaconPlacementPose(Vector3 desiredPosition, out Vector3 resolvedPosition, out Quaternion resolvedRotation)
-    {
-        resolvedPosition = desiredPosition;
-        resolvedRotation = placementInstance != null ? placementInstance.transform.rotation : Quaternion.identity;
-
-        if (placementAnchor == null)
-        {
-            placementGroundCollider = null;
-            return false;
-        }
-
-        Vector3 facingHint = ResolvePlacementFacingHint();
-        if (TryFindBeaconWallSupport(desiredPosition, out RaycastHit wallHit))
-        {
-            Vector3 normal = wallHit.normal.sqrMagnitude > 0.0001f ? wallHit.normal.normalized : Vector3.forward;
-            float offset = 0.02f;
-            if (BeaconMarker.TryFind(placementInstance, out BeaconMarker beacon))
-            {
-                offset = Mathf.Max(offset, beacon.SurfaceOffset);
-            }
-
-            resolvedPosition = wallHit.point + normal * offset;
-            resolvedRotation = BuildPlacementSurfaceRotation(normal, facingHint);
-            placementGroundCollider = wallHit.collider;
-            return true;
-        }
-
-        resolvedPosition = SnapPlacementToGround(desiredPosition, true);
-        resolvedRotation = BuildPlacementSurfaceRotation(Vector3.up, facingHint);
-        return placementGroundCollider != null;
-    }
-
-    private bool TryFindBeaconWallSupport(Vector3 desiredPosition, out RaycastHit bestHit)
-    {
-        bestHit = default;
-        if (placementAnchor == null)
-        {
-            return false;
-        }
-
-        Vector3 origin = placementAnchor.position + Vector3.up * Mathf.Max(0f, beaconWallProbeHeight);
-        Vector3 target = new Vector3(desiredPosition.x, origin.y, desiredPosition.z);
-        Vector3 direction = target - origin;
-        direction.y = 0f;
-
-        if (direction.sqrMagnitude < 0.0001f)
-        {
-            Vector3 fallback = ResolvePlacementFacingHint();
-            fallback.y = 0f;
-            direction = fallback.sqrMagnitude > 0.0001f ? fallback.normalized * Mathf.Max(0.25f, placementStartDistance) : Vector3.forward * Mathf.Max(0.25f, placementStartDistance);
-        }
-
-        float distance = Mathf.Min(GetPlacementRadius(placementItem), direction.magnitude);
-        if (distance <= 0.01f)
-        {
-            return false;
-        }
-
-        Vector3 castDirection = direction.normalized;
-        int mask = placementGroundMask.value | placementCollisionMask.value;
-        RaycastHit[] hits = Physics.SphereCastAll(
-            origin,
-            Mathf.Max(0.01f, beaconWallProbeRadius),
-            castDirection,
-            distance,
-            mask,
-            QueryTriggerInteraction.Ignore);
-
-        bool found = false;
-        float bestDistance = float.MaxValue;
-        for (int i = 0; i < hits.Length; i++)
-        {
-            RaycastHit hit = hits[i];
-            Collider col = hit.collider;
-            if (col == null || IsIgnoredPlacementCollider(col))
-            {
-                continue;
-            }
-
-            if (IsPlacementCharacterCollider(col))
-            {
-                continue;
-            }
-
-            Vector3 normal = hit.normal;
-            if (normal.sqrMagnitude < 0.0001f || Mathf.Abs(normal.y) > beaconWallNormalMaxY)
-            {
-                continue;
-            }
-
-            if (hit.distance < bestDistance)
-            {
-                bestDistance = hit.distance;
-                bestHit = hit;
-                found = true;
-            }
-        }
-
-        return found;
-    }
-
-    private Vector3 ResolvePlacementFacingHint()
-    {
-        Vector3 forward = placementAnchor != null ? placementAnchor.forward : Vector3.forward;
-        if (placementUseCameraRelative)
-        {
-            Camera cam = placementCamera != null ? placementCamera : Camera.main;
-            if (cam != null)
-            {
-                forward = cam.transform.forward;
-            }
-        }
-
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.forward;
-        }
-
-        return forward.normalized;
-    }
-
-    private static Quaternion BuildPlacementSurfaceRotation(Vector3 surfaceNormal, Vector3 facingHint)
-    {
-        Vector3 up = surfaceNormal.sqrMagnitude > 0.0001f ? surfaceNormal.normalized : Vector3.up;
-        Vector3 forward = Vector3.ProjectOnPlane(facingHint, up);
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.ProjectOnPlane(Vector3.forward, up);
-        }
-
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.Cross(up, Vector3.right);
-        }
-
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.Cross(up, Vector3.forward);
-        }
-
-        return Quaternion.LookRotation(forward.normalized, up);
+        WorldPlacementUtility.TryResolvePlacementPose(
+            item,
+            placementInstance,
+            placementAnchor,
+            GetPlacementSettings(),
+            desiredPosition,
+            currentRotation,
+            ref placementGroundCollider,
+            out resolvedPosition,
+            out resolvedRotation);
     }
 
     private bool TryGetPackedPlacementColor(Item item, GameObject instance, out uint packedColor)
@@ -3840,46 +3542,12 @@ public class InventoryPanelController : MonoBehaviour
 
     private void CachePlacementPhysics(GameObject instance)
     {
-        placementRigidbodies.Clear();
-        if (instance == null)
-        {
-            placementColliders = null;
-            return;
-        }
-
-        Rigidbody[] bodies = instance.GetComponentsInChildren<Rigidbody>(true);
-        for (int i = 0; i < bodies.Length; i++)
-        {
-            Rigidbody body = bodies[i];
-            if (body == null)
-            {
-                continue;
-            }
-
-            placementRigidbodies.Add(new PlacementRigidbodyState(body, body.isKinematic, body.useGravity));
-            body.isKinematic = true;
-            body.useGravity = false;
-        }
-
-        placementColliders = instance.GetComponentsInChildren<Collider>(true);
+        WorldPlacementUtility.CachePlacementPhysics(instance, placementPreviewCaches);
     }
 
     private void RestorePlacementPhysics()
     {
-        for (int i = 0; i < placementRigidbodies.Count; i++)
-        {
-            PlacementRigidbodyState state = placementRigidbodies[i];
-            if (state.Body == null)
-            {
-                continue;
-            }
-
-            state.Body.isKinematic = state.WasKinematic;
-            state.Body.useGravity = state.UsedGravity;
-        }
-
-        placementRigidbodies.Clear();
-        placementColliders = null;
+        WorldPlacementUtility.RestorePlacementPhysics(placementPreviewCaches);
     }
 
     private void TryConfirmPlacement()
@@ -3938,6 +3606,7 @@ public class InventoryPanelController : MonoBehaviour
             placementActive = false;
             placementItem = null;
             placementInstance = null;
+            placementBaseRotation = Quaternion.identity;
             placementAnchor = null;
             placementGroundCollider = null;
             SetSquadInputLock(false);
@@ -3985,6 +3654,7 @@ public class InventoryPanelController : MonoBehaviour
         placementActive = false;
         placementItem = null;
         placementInstance = null;
+        placementBaseRotation = Quaternion.identity;
         placementAnchor = null;
         placementGroundCollider = null;
         SetSquadInputLock(false);
@@ -4125,6 +3795,7 @@ public class InventoryPanelController : MonoBehaviour
         placementActive = false;
         placementItem = null;
         placementInstance = null;
+        placementBaseRotation = Quaternion.identity;
         placementAnchor = null;
         placementGroundCollider = null;
         if (!preserveRestore)
@@ -4271,183 +3942,33 @@ public class InventoryPanelController : MonoBehaviour
 
     private bool IsPlacementValid()
     {
-        if (placementInstance == null)
-        {
-            return false;
-        }
-
-        if (placementItem != null && placementItem.isBeacon && placementGroundCollider == null)
-        {
-            return false;
-        }
-
-        if (placementColliders == null || placementColliders.Length == 0)
-        {
-            return true;
-        }
-
-        Collider seed = null;
-        for (int i = 0; i < placementColliders.Length; i++)
-        {
-            Collider col = placementColliders[i];
-            if (col != null && !col.isTrigger)
-            {
-                seed = col;
-                break;
-            }
-        }
-
-        if (seed == null)
-        {
-            return true;
-        }
-
-        Bounds bounds = seed.bounds;
-        for (int i = 0; i < placementColliders.Length; i++)
-        {
-            Collider col = placementColliders[i];
-            if (col == null || col.isTrigger)
-            {
-                continue;
-            }
-
-            bounds.Encapsulate(col.bounds);
-        }
-
-        Vector3 extents = bounds.extents + Vector3.one * Mathf.Max(0f, placementBoundsPadding);
-        QueryTriggerInteraction triggerInteraction = placementBlockTriggers ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore;
-        Collider[] overlaps = Physics.OverlapBox(bounds.center, extents, Quaternion.identity, placementCollisionMask, triggerInteraction);
-        for (int i = 0; i < overlaps.Length; i++)
-        {
-            Collider hit = overlaps[i];
-            if (hit == null)
-            {
-                continue;
-            }
-
-            if (placementItem != null && placementItem.isBeacon && IsPlacementCharacterCollider(hit))
-            {
-                return false;
-            }
-
-            if (IsIgnoredPlacementCollider(hit))
-            {
-                continue;
-            }
-            if (IsPlacementGroundCollider(hit))
-            {
-                continue;
-            }
-
-            return false;
-        }
-
-        return true;
+        return WorldPlacementUtility.IsPlacementValid(
+            placementItem,
+            placementInstance,
+            placementAnchor,
+            placementGroundCollider,
+            placementPreviewCaches,
+            GetPlacementSettings());
     }
 
     private void CachePlacementVisuals(GameObject instance)
     {
-        placementRenderers.Clear();
-        placementPropertyBlock = null;
-        placementLastValid = false;
-
-        if (instance == null || !placementShowValidity)
-        {
-            return;
-        }
-
-        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
-        if (renderers == null || renderers.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null || renderer.sharedMaterial == null)
-            {
-                continue;
-            }
-
-            string property = null;
-            if (renderer.sharedMaterial.HasProperty("_BaseColor"))
-            {
-                property = "_BaseColor";
-            }
-            else if (renderer.sharedMaterial.HasProperty("_Color"))
-            {
-                property = "_Color";
-            }
-
-            if (string.IsNullOrEmpty(property))
-            {
-                continue;
-            }
-
-            placementRenderers.Add(new PlacementRendererState(renderer, property));
-        }
-
-        if (placementRenderers.Count > 0)
-        {
-            placementPropertyBlock = new MaterialPropertyBlock();
-        }
+        WorldPlacementUtility.CachePlacementVisuals(instance, placementPreviewCaches, placementShowValidity);
     }
 
     private void UpdatePlacementVisuals(bool isValid)
     {
-        if (!placementShowValidity || placementRenderers.Count == 0)
-        {
-            return;
-        }
-
-        if (placementLastValid == isValid && placementPropertyBlock != null)
-        {
-            return;
-        }
-
-        Color color = isValid ? placementValidColor : placementInvalidColor;
-        if (placementPropertyBlock == null)
-        {
-            placementPropertyBlock = new MaterialPropertyBlock();
-        }
-
-        for (int i = 0; i < placementRenderers.Count; i++)
-        {
-            PlacementRendererState state = placementRenderers[i];
-            if (state.Renderer == null)
-            {
-                continue;
-            }
-
-            placementPropertyBlock.Clear();
-            placementPropertyBlock.SetColor(state.ColorProperty, color);
-            state.Renderer.SetPropertyBlock(placementPropertyBlock);
-        }
-
-        placementLastValid = isValid;
+        WorldPlacementUtility.UpdatePlacementVisuals(
+            placementPreviewCaches,
+            placementShowValidity,
+            isValid,
+            placementValidColor,
+            placementInvalidColor);
     }
 
     private void ClearPlacementVisuals()
     {
-        if (placementRenderers.Count == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < placementRenderers.Count; i++)
-        {
-            PlacementRendererState state = placementRenderers[i];
-            if (state.Renderer == null)
-            {
-                continue;
-            }
-
-            state.Renderer.SetPropertyBlock(null);
-        }
-
-        placementRenderers.Clear();
-        placementPropertyBlock = null;
+        WorldPlacementUtility.ClearPlacementVisuals(placementPreviewCaches);
     }
 
     private void CreateDroppedLootContainer(GameObject instance, Item item)
@@ -4716,32 +4237,6 @@ public class InventoryPanelController : MonoBehaviour
         public Image Frame { get; }
         public Image Fill { get; }
         public Color Color { get; }
-    }
-
-    private readonly struct PlacementRigidbodyState
-    {
-        public PlacementRigidbodyState(Rigidbody body, bool wasKinematic, bool usedGravity)
-        {
-            Body = body;
-            WasKinematic = wasKinematic;
-            UsedGravity = usedGravity;
-        }
-
-        public Rigidbody Body { get; }
-        public bool WasKinematic { get; }
-        public bool UsedGravity { get; }
-    }
-
-    private readonly struct PlacementRendererState
-    {
-        public PlacementRendererState(Renderer renderer, string colorProperty)
-        {
-            Renderer = renderer;
-            ColorProperty = colorProperty;
-        }
-
-        public Renderer Renderer { get; }
-        public string ColorProperty { get; }
     }
 
     private readonly struct SlotInfo

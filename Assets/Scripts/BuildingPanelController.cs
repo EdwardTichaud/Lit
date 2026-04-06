@@ -147,6 +147,16 @@ public class BuildingPanelController : MonoBehaviour
     public Color placementValidColor = new Color(0.2f, 1f, 0.2f, 0.65f);
     [Tooltip("Couleur de placement invalide.")]
     public Color placementInvalidColor = new Color(1f, 0.2f, 0.2f, 0.65f);
+    [Range(0f, 89f)]
+    [Tooltip("Angle maximal de pente autorise pour un placement horizontal.")]
+    public float placementMaxSlopeAngle = 35f;
+    [Tooltip("Hauteur du probe pour les supports muraux.")]
+    public float placementWallProbeHeight = 1.2f;
+    [Tooltip("Rayon du sphere cast utilise pour detecter un support mural.")]
+    public float placementWallProbeRadius = 0.18f;
+    [Range(0f, 1f)]
+    [Tooltip("Normale maximale sur Y pour considerer un support comme un mur.")]
+    public float placementWallNormalMaxY = 0.6f;
     [Tooltip("Message si la position est invalide.")]
     public string placementInvalidMessage = "Position invalide.";
     [Tooltip("Reouvre le panel si la pose est annulee.")]
@@ -188,13 +198,10 @@ public class BuildingPanelController : MonoBehaviour
     private bool placementActive;
     private Item placementItem;
     private GameObject placementInstance;
-    private readonly List<PlacementRigidbodyState> placementRigidbodies = new List<PlacementRigidbodyState>();
-    private Collider[] placementColliders;
+    private Quaternion placementBaseRotation = Quaternion.identity;
     private Transform placementAnchor;
     private Collider placementGroundCollider;
-    private readonly List<PlacementRendererState> placementRenderers = new List<PlacementRendererState>();
-    private MaterialPropertyBlock placementPropertyBlock;
-    private bool placementLastValid;
+    private readonly WorldPlacementUtility.PreviewCaches placementPreviewCaches = new WorldPlacementUtility.PreviewCaches();
     private Item placementRestoreItem;
     private CameraController placementCameraController;
 
@@ -2115,54 +2122,55 @@ public class BuildingPanelController : MonoBehaviour
             return false;
         }
 
+        placementBaseRotation = placementInstance.transform.rotation;
+
         if (currentBuilder != null)
         {
             currentBuilder.EnsureBuildingParent(placementInstance.transform);
         }
 
-        placementInstance.transform.rotation = placementAnchor.rotation;
         placementItem = building;
         placementActive = true;
         CachePlacementPhysics(placementInstance);
         SetPlacementCameraOverride(placementInstance.transform);
 
-        Vector3 startPos = placementAnchor.position;
-        Vector3 forward = placementAnchor.forward;
-        if (placementUseCameraRelative)
-        {
-            Camera cam = placementCamera != null ? placementCamera : Camera.main;
-            if (cam != null)
-            {
-                forward = cam.transform.forward;
-            }
-        }
-
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = placementAnchor.forward;
-            forward.y = 0f;
-        }
-
-        forward = forward.sqrMagnitude > 0f ? forward.normalized : Vector3.forward;
-        startPos += forward * Mathf.Max(0f, placementStartDistance);
-        Vector3 startOffset = startPos - placementAnchor.position;
-        startOffset.y = 0f;
-        if (building != null && !building.isBuilding)
-        {
-            float radius = Mathf.Max(0f, placementRadius);
-            if (startOffset.magnitude > radius)
-            {
-                startOffset = startOffset.normalized * radius;
-                startPos = new Vector3(placementAnchor.position.x + startOffset.x, startPos.y, placementAnchor.position.z + startOffset.z);
-            }
-        }
-
-        startPos = SnapPlacementToGround(startPos);
-        placementInstance.transform.position = startPos;
+        Vector3 startPos = WorldPlacementUtility.GetPlacementStartPosition(
+            placementAnchor,
+            building,
+            GetPlacementSettings());
+        Quaternion startRotation = placementBaseRotation;
+        ResolvePlacementPose(building, startPos, startRotation, out startPos, out startRotation);
+        placementInstance.transform.SetPositionAndRotation(startPos, startRotation);
         CachePlacementVisuals(placementInstance);
         UpdatePlacementVisuals(IsPlacementValid());
         return true;
+    }
+
+    private WorldPlacementUtility.Settings GetPlacementSettings()
+    {
+        return new WorldPlacementUtility.Settings
+        {
+            placementRadius = placementRadius,
+            placementStartDistance = placementStartDistance,
+            placementUseCameraRelative = placementUseCameraRelative,
+            placementCamera = placementCamera,
+            placementSnapToGround = placementSnapToGround,
+            placementGroundMask = placementGroundMask,
+            placementGroundRaycastHeight = placementGroundRaycastHeight,
+            placementGroundRaycastDistance = placementGroundRaycastDistance,
+            placementGroundOffset = placementGroundOffset,
+            placementCollisionMask = placementCollisionMask,
+            placementIgnoreMask = placementIgnoreMask,
+            placementBlockTriggers = placementBlockTriggers,
+            placementBoundsPadding = placementBoundsPadding,
+            placementShowValidity = placementShowValidity,
+            placementValidColor = placementValidColor,
+            placementInvalidColor = placementInvalidColor,
+            wallProbeHeight = placementWallProbeHeight,
+            wallProbeRadius = placementWallProbeRadius,
+            wallNormalMaxY = placementWallNormalMaxY,
+            horizontalPlacementMaxSlopeAngle = placementMaxSlopeAngle
+        };
     }
 
     private void UpdatePlacement()
@@ -2186,21 +2194,15 @@ public class BuildingPanelController : MonoBehaviour
             position += moveDir * placementMoveSpeed * Time.unscaledDeltaTime;
         }
 
-        Vector3 anchorPos = placementAnchor.position;
-        Vector3 offset = position - anchorPos;
-        offset.y = 0f;
-        if (placementItem == null || !placementItem.isBuilding)
-        {
-            float radius = Mathf.Max(0f, placementRadius);
-            if (offset.magnitude > radius)
-            {
-                offset = offset.normalized * radius;
-            }
-        }
+        position = WorldPlacementUtility.ClampPositionAroundAnchor(
+            placementAnchor,
+            placementItem,
+            position,
+            GetPlacementSettings());
 
-        position = new Vector3(anchorPos.x + offset.x, position.y, anchorPos.z + offset.z);
-        position = SnapPlacementToGround(position);
-        placementInstance.transform.position = position;
+        Quaternion rotation = placementBaseRotation;
+        ResolvePlacementPose(placementItem, position, rotation, out position, out rotation);
+        placementInstance.transform.SetPositionAndRotation(position, rotation);
 
         bool valid = IsPlacementValid();
         UpdatePlacementVisuals(valid);
@@ -2208,129 +2210,21 @@ public class BuildingPanelController : MonoBehaviour
 
     private Vector3 GetPlacementMoveDirection(Vector2 input)
     {
-        if (input.sqrMagnitude <= 0.0001f)
-        {
-            return Vector3.zero;
-        }
-
-        Vector3 forward = Vector3.forward;
-        Vector3 right = Vector3.right;
-        if (placementUseCameraRelative)
-        {
-            Camera cam = placementCamera != null ? placementCamera : Camera.main;
-            if (cam != null)
-            {
-                forward = cam.transform.forward;
-                right = cam.transform.right;
-            }
-        }
-
-        forward.y = 0f;
-        right.y = 0f;
-        forward = forward.sqrMagnitude > 0f ? forward.normalized : Vector3.forward;
-        right = right.sqrMagnitude > 0f ? right.normalized : Vector3.right;
-
-        Vector3 move = forward * input.y + right * input.x;
-        if (move.sqrMagnitude > 1f)
-        {
-            move.Normalize();
-        }
-
-        return move;
+        return WorldPlacementUtility.GetPlacementMoveDirection(input, GetPlacementSettings());
     }
 
-    private Vector3 SnapPlacementToGround(Vector3 position)
+    private void ResolvePlacementPose(Item item, Vector3 desiredPosition, Quaternion currentRotation, out Vector3 resolvedPosition, out Quaternion resolvedRotation)
     {
-        if (!placementSnapToGround)
-        {
-            return position;
-        }
-
-        float height = Mathf.Max(0f, placementGroundRaycastHeight);
-        float distance = Mathf.Max(0f, placementGroundRaycastDistance);
-        Vector3 origin = position + Vector3.up * height;
-        float maxDistance = height + distance;
-        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, maxDistance, placementGroundMask, QueryTriggerInteraction.Ignore);
-        if (hits != null && hits.Length > 0)
-        {
-            bool hasHit = false;
-            float bestDistance = float.MaxValue;
-            RaycastHit bestHit = default;
-
-            for (int i = 0; i < hits.Length; i++)
-            {
-                RaycastHit hit = hits[i];
-                Collider col = hit.collider;
-                if (col == null || IsIgnoredPlacementCollider(col))
-                {
-                    continue;
-                }
-
-                if (hit.distance < bestDistance)
-                {
-                    bestDistance = hit.distance;
-                    bestHit = hit;
-                    hasHit = true;
-                }
-            }
-
-            if (hasHit)
-            {
-                position.y = bestHit.point.y + placementGroundOffset;
-                placementGroundCollider = bestHit.collider;
-            }
-            else
-            {
-                placementGroundCollider = null;
-            }
-        }
-        else
-        {
-            placementGroundCollider = null;
-        }
-
-        return position;
-    }
-
-    private bool IsIgnoredPlacementCollider(Collider col)
-    {
-        if (col == null)
-        {
-            return true;
-        }
-
-        if (placementInstance != null && col.transform.IsChildOf(placementInstance.transform))
-        {
-            return true;
-        }
-
-        if (placementAnchor != null && col.transform.IsChildOf(placementAnchor))
-        {
-            return true;
-        }
-
-        if ((placementIgnoreMask.value & (1 << col.gameObject.layer)) != 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool IsPlacementGroundCollider(Collider col)
-    {
-        if (col == null || placementGroundCollider == null)
-        {
-            return false;
-        }
-
-        if (col == placementGroundCollider)
-        {
-            return true;
-        }
-
-        Transform root = placementGroundCollider.transform;
-        return root != null && col.transform.IsChildOf(root);
+        WorldPlacementUtility.TryResolvePlacementPose(
+            item,
+            placementInstance,
+            placementAnchor,
+            GetPlacementSettings(),
+            desiredPosition,
+            currentRotation,
+            ref placementGroundCollider,
+            out resolvedPosition,
+            out resolvedRotation);
     }
 
     private CameraController ResolvePlacementCamera()
@@ -2413,6 +2307,7 @@ public class BuildingPanelController : MonoBehaviour
             placementActive = false;
             placementItem = null;
             placementInstance = null;
+            placementBaseRotation = Quaternion.identity;
             placementAnchor = null;
             placementGroundCollider = null;
             placementRestoreItem = null;
@@ -2448,6 +2343,7 @@ public class BuildingPanelController : MonoBehaviour
         placementActive = false;
         placementItem = null;
         placementInstance = null;
+        placementBaseRotation = Quaternion.identity;
         placementAnchor = null;
         placementGroundCollider = null;
         placementRestoreItem = null;
@@ -2477,6 +2373,7 @@ public class BuildingPanelController : MonoBehaviour
         placementActive = false;
         placementItem = null;
         placementInstance = null;
+        placementBaseRotation = Quaternion.identity;
         placementAnchor = null;
         placementGroundCollider = null;
         InputFocusStack.Pop(this);
@@ -2544,212 +2441,43 @@ public class BuildingPanelController : MonoBehaviour
 
     private void CachePlacementPhysics(GameObject instance)
     {
-        placementRigidbodies.Clear();
-        if (instance == null)
-        {
-            placementColliders = null;
-            return;
-        }
-
-        Rigidbody[] bodies = instance.GetComponentsInChildren<Rigidbody>(true);
-        for (int i = 0; i < bodies.Length; i++)
-        {
-            Rigidbody body = bodies[i];
-            if (body == null)
-            {
-                continue;
-            }
-
-            placementRigidbodies.Add(new PlacementRigidbodyState(body, body.isKinematic, body.useGravity));
-            body.isKinematic = true;
-            body.useGravity = false;
-        }
-
-        placementColliders = instance.GetComponentsInChildren<Collider>(true);
+        WorldPlacementUtility.CachePlacementPhysics(instance, placementPreviewCaches);
     }
 
     private void RestorePlacementPhysics()
     {
-        for (int i = 0; i < placementRigidbodies.Count; i++)
-        {
-            PlacementRigidbodyState state = placementRigidbodies[i];
-            if (state.Body == null)
-            {
-                continue;
-            }
-
-            state.Body.isKinematic = state.WasKinematic;
-            state.Body.useGravity = state.UsedGravity;
-        }
-
-        placementRigidbodies.Clear();
-        placementColliders = null;
+        WorldPlacementUtility.RestorePlacementPhysics(placementPreviewCaches);
     }
 
     private bool IsPlacementValid()
     {
-        if (placementInstance == null)
-        {
-            return false;
-        }
-
-        if (placementColliders == null || placementColliders.Length == 0)
-        {
-            return true;
-        }
-
-        Collider seed = null;
-        for (int i = 0; i < placementColliders.Length; i++)
-        {
-            Collider col = placementColliders[i];
-            if (col != null && !col.isTrigger)
-            {
-                seed = col;
-                break;
-            }
-        }
-
-        if (seed == null)
-        {
-            return true;
-        }
-
-        Bounds bounds = seed.bounds;
-        for (int i = 0; i < placementColliders.Length; i++)
-        {
-            Collider col = placementColliders[i];
-            if (col == null || col.isTrigger)
-            {
-                continue;
-            }
-
-            bounds.Encapsulate(col.bounds);
-        }
-
-        Vector3 extents = bounds.extents + Vector3.one * Mathf.Max(0f, placementBoundsPadding);
-        QueryTriggerInteraction triggerInteraction = placementBlockTriggers ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore;
-        Collider[] overlaps = Physics.OverlapBox(bounds.center, extents, Quaternion.identity, placementCollisionMask, triggerInteraction);
-        for (int i = 0; i < overlaps.Length; i++)
-        {
-            Collider hit = overlaps[i];
-            if (hit == null || IsIgnoredPlacementCollider(hit))
-            {
-                continue;
-            }
-            if (IsPlacementGroundCollider(hit))
-            {
-                continue;
-            }
-
-            return false;
-        }
-
-        return true;
+        return WorldPlacementUtility.IsPlacementValid(
+            placementItem,
+            placementInstance,
+            placementAnchor,
+            placementGroundCollider,
+            placementPreviewCaches,
+            GetPlacementSettings());
     }
 
     private void CachePlacementVisuals(GameObject instance)
     {
-        placementRenderers.Clear();
-        placementPropertyBlock = null;
-        placementLastValid = false;
-
-        if (instance == null || !placementShowValidity)
-        {
-            return;
-        }
-
-        Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
-        if (renderers == null || renderers.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null || renderer.sharedMaterial == null)
-            {
-                continue;
-            }
-
-            string property = null;
-            if (renderer.sharedMaterial.HasProperty("_BaseColor"))
-            {
-                property = "_BaseColor";
-            }
-            else if (renderer.sharedMaterial.HasProperty("_Color"))
-            {
-                property = "_Color";
-            }
-
-            if (string.IsNullOrEmpty(property))
-            {
-                continue;
-            }
-
-            placementRenderers.Add(new PlacementRendererState(renderer, property));
-        }
-
-        if (placementRenderers.Count > 0)
-        {
-            placementPropertyBlock = new MaterialPropertyBlock();
-        }
+        WorldPlacementUtility.CachePlacementVisuals(instance, placementPreviewCaches, placementShowValidity);
     }
 
     private void UpdatePlacementVisuals(bool isValid)
     {
-        if (!placementShowValidity || placementRenderers.Count == 0)
-        {
-            return;
-        }
-
-        if (placementLastValid == isValid && placementPropertyBlock != null)
-        {
-            return;
-        }
-
-        Color color = isValid ? placementValidColor : placementInvalidColor;
-        if (placementPropertyBlock == null)
-        {
-            placementPropertyBlock = new MaterialPropertyBlock();
-        }
-
-        for (int i = 0; i < placementRenderers.Count; i++)
-        {
-            PlacementRendererState state = placementRenderers[i];
-            if (state.Renderer == null)
-            {
-                continue;
-            }
-
-            placementPropertyBlock.Clear();
-            placementPropertyBlock.SetColor(state.ColorProperty, color);
-            state.Renderer.SetPropertyBlock(placementPropertyBlock);
-        }
-
-        placementLastValid = isValid;
+        WorldPlacementUtility.UpdatePlacementVisuals(
+            placementPreviewCaches,
+            placementShowValidity,
+            isValid,
+            placementValidColor,
+            placementInvalidColor);
     }
 
     private void ClearPlacementVisuals()
     {
-        if (placementRenderers.Count == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < placementRenderers.Count; i++)
-        {
-            PlacementRendererState state = placementRenderers[i];
-            if (state.Renderer == null)
-            {
-                continue;
-            }
-
-            state.Renderer.SetPropertyBlock(null);
-        }
-
-        placementRenderers.Clear();
-        placementPropertyBlock = null;
+        WorldPlacementUtility.ClearPlacementVisuals(placementPreviewCaches);
     }
 
     private void ShowPlacementFeedback(string message)
@@ -3631,32 +3359,6 @@ public class BuildingPanelController : MonoBehaviour
             requirementSlotPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/NecessaryResourcesSlot.prefab");
         }
 #endif
-    }
-
-    private readonly struct PlacementRigidbodyState
-    {
-        public PlacementRigidbodyState(Rigidbody body, bool wasKinematic, bool usedGravity)
-        {
-            Body = body;
-            WasKinematic = wasKinematic;
-            UsedGravity = usedGravity;
-        }
-
-        public Rigidbody Body { get; }
-        public bool WasKinematic { get; }
-        public bool UsedGravity { get; }
-    }
-
-    private readonly struct PlacementRendererState
-    {
-        public PlacementRendererState(Renderer renderer, string colorProperty)
-        {
-            Renderer = renderer;
-            ColorProperty = colorProperty;
-        }
-
-        public Renderer Renderer { get; }
-        public string ColorProperty { get; }
     }
 
     private readonly struct SlotInfo
