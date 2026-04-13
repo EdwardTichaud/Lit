@@ -67,7 +67,7 @@ MonoBehaviour:
   drawSupportDebug: 0
   configureBeaconShadowing: 1
   lightRenderMode: 1
-  shadowMode: 2
+  shadowMode: 0
   shadowStrength: 1
   shadowBias: 0.02
   shadowNormalBias: 0.08
@@ -75,7 +75,7 @@ MonoBehaviour:
   hdrpShadowResolution: 1024
   hdrpNormalBias: 0.1
   hdrpSlopeBias: 0.2
-  enableHdrpContactShadows: 1
+  enableHdrpContactShadows: 0
   autoPositionPointLights: 1
   pointLightStemRatio: 0.65
   pointLightAdditionalOffset: 0.015
@@ -136,7 +136,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
