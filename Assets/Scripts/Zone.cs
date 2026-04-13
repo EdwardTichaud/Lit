@@ -39,9 +39,13 @@ public class Zone : MonoBehaviour
 
     private static readonly Dictionary<GameObject, int> noConsumeCounts = new Dictionary<GameObject, int>();
     private static readonly Dictionary<GameObject, int> maisonCounts = new Dictionary<GameObject, int>();
+    private const int MaisonOverlapBufferSize = 1024;
     private readonly HashSet<GameObject> trackedCharacters = new HashSet<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private readonly HashSet<int> maisonMissingPointWarnings = new HashSet<int>();
+    private readonly Collider[] maisonOverlapHits = new Collider[MaisonOverlapBufferSize];
+    private readonly HashSet<GameObject> maisonPreviousCharacters = new HashSet<GameObject>();
+    private readonly HashSet<GameObject> maisonCurrentCharacters = new HashSet<GameObject>();
     private bool isTriggerZone;
     private Collider zoneCollider;
     private float nextMaisonPollTime;
@@ -492,54 +496,79 @@ public class Zone : MonoBehaviour
 
     private void RebuildMaisonCharacters()
     {
-        HashSet<GameObject> previous = new HashSet<GameObject>(trackedCharacters);
-        HashSet<GameObject> current = new HashSet<GameObject>();
+        maisonPreviousCharacters.Clear();
+        maisonPreviousCharacters.UnionWith(trackedCharacters);
+        maisonCurrentCharacters.Clear();
 
         Bounds bounds = zoneCollider.bounds;
         QueryTriggerInteraction triggerInteraction = maisonIncludeTriggerColliders
             ? QueryTriggerInteraction.Collide
             : QueryTriggerInteraction.Ignore;
-        Collider[] hits = Physics.OverlapBox(bounds.center, bounds.extents, Quaternion.identity, ~0, triggerInteraction);
-        if (hits != null)
-        {
-            for (int i = 0; i < hits.Length; i++)
-            {
-                Collider hit = hits[i];
-                if (hit == null)
-                {
-                    continue;
-                }
 
-                GameObject character = GetMaisonCharacter(hit);
-                if (character != null)
-                {
-                    current.Add(character);
-                }
-            }
+        int hitCount = Physics.OverlapBoxNonAlloc(
+            bounds.center,
+            bounds.extents,
+            maisonOverlapHits,
+            Quaternion.identity,
+            ~0,
+            triggerInteraction);
+
+        if (hitCount >= maisonOverlapHits.Length)
+        {
+            Collider[] allHits = Physics.OverlapBox(bounds.center, bounds.extents, Quaternion.identity, ~0, triggerInteraction);
+            CollectMaisonCharacters(allHits, allHits != null ? allHits.Length : 0, maisonCurrentCharacters);
+        }
+        else
+        {
+            CollectMaisonCharacters(maisonOverlapHits, hitCount, maisonCurrentCharacters);
         }
 
-        foreach (GameObject character in previous)
+        foreach (GameObject character in maisonPreviousCharacters)
         {
-            if (!current.Contains(character))
+            if (!maisonCurrentCharacters.Contains(character))
             {
                 RemoveCharacter(character);
             }
         }
 
-        foreach (GameObject character in current)
+        foreach (GameObject character in maisonCurrentCharacters)
         {
-            if (!previous.Contains(character))
+            if (!maisonPreviousCharacters.Contains(character))
             {
                 AddCharacter(character);
             }
         }
 
         trackedCharacters.Clear();
-        trackedCharacters.UnionWith(current);
+        trackedCharacters.UnionWith(maisonCurrentCharacters);
         characterColliderCounts.Clear();
-        foreach (GameObject character in current)
+        foreach (GameObject character in maisonCurrentCharacters)
         {
             characterColliderCounts[character] = 1;
+        }
+    }
+
+    private void CollectMaisonCharacters(Collider[] hits, int hitCount, HashSet<GameObject> results)
+    {
+        if (hits == null || results == null)
+        {
+            return;
+        }
+
+        int safeCount = Mathf.Min(hitCount, hits.Length);
+        for (int i = 0; i < safeCount; i++)
+        {
+            Collider hit = hits[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            GameObject character = GetMaisonCharacter(hit);
+            if (character != null)
+            {
+                results.Add(character);
+            }
         }
     }
 

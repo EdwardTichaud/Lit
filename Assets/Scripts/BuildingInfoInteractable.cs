@@ -52,6 +52,8 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     public bool openOnProximity = true;
     [Tooltip("Consomme l'input Interact meme si l'objet n'ouvre qu'une UI de proximite.")]
     public bool consumeInteractOnProximity = true;
+    [SerializeField, Min(0.02f), Tooltip("Frequence max de rafraichissement du panel deja ouvert.")]
+    private float openPanelRefreshInterval = 0.15f;
 
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
@@ -69,12 +71,19 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private string presentationOrigin = "unknown";
     private string lastWorldUiBindingFailureReason = string.Empty;
     private TorchVisionSensitive visibilityGate;
+    private bool targetCameraLookupCompleted;
+    private bool visibilityGateLookupCompleted;
+    private bool attemptedAutoLocalPanelResolution;
+    private float nextOpenPanelRefreshTime;
+    private float nextVisibilityGateLookupTime;
 
     private bool localPanelPrefabResolvedAutomatically;
     private bool resolvedAutoLocalPanelForItem;
 
     private static GameObject sharedBuildingLocalInformationPanelPrefab;
     private static GameObject sharedItemLocalInformationPanelPrefab;
+    private static Transform sharedLocalPanelParent;
+    private static bool sharedLocalPanelParentLookupCompleted;
 
     private const string DefaultBuildingLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalBuildingInformationsPanel.prefab";
     private const string DefaultBuildingLocalPanelResourcePath = "Prefabs/UI/LocalBuildingInformationsPanel";
@@ -83,6 +92,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private const string DefaultItemLocalPanelResourcePath = "Prefabs/UI/LocalItemInformationsPanel";
     private const string DefaultItemLocalPanelResourceName = "LocalItemInformationsPanel";
     private const string DefaultLocalPanelParentName = "LocalsBuildingInformationsPanels";
+    private const float VisibilityGateRetryInterval = 0.5f;
 
     public string BuildId => buildId;
     public Item BuildingItem => buildingItem;
@@ -155,6 +165,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
+        nextOpenPanelRefreshTime = 0f;
         RefreshPresentation("on_enable");
     }
 
@@ -186,20 +197,20 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             return;
         }
 
-        EnsureLocalPanel();
-
         if (currentCharacter != null && HasBuildingData())
         {
+            EnsureLocalPanel();
             if (localPanelInstance != null)
             {
                 if (!localPanelInstance.IsOpen || localPanelInstance.CurrentBuilding != this)
                 {
                     PrepareLocalPanelForDisplay();
                     localPanelInstance.OpenPanel(this);
+                    nextOpenPanelRefreshTime = Time.time + Mathf.Max(0.02f, openPanelRefreshInterval);
                 }
                 else
                 {
-                    localPanelInstance.RefreshPanel();
+                    RefreshOpenLocalPanelIfDue();
                 }
             }
         }
@@ -452,6 +463,14 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         return panel;
     }
 
+    private bool ShouldResolveCraftingPanel()
+    {
+        return openCraftingPanelOnInteract
+            && buildingItem != null
+            && buildingItem.isBuilding
+            && buildingItem.isCraftingBuilding;
+    }
+
     private bool CanProcessInteract()
     {
         if (openOnProximity)
@@ -617,22 +636,36 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         return buildingItem != null || !string.IsNullOrWhiteSpace(buildId);
     }
 
-    private void ResolveRuntimeReferences()
+    private void ResolveRuntimeReferences(bool resolveLocalPanelPrefab = false)
     {
-        if (targetCamera == null)
+        if (targetCamera == null && (!targetCameraLookupCompleted || resolveLocalPanelPrefab))
         {
             targetCamera = Camera.main;
+            targetCameraLookupCompleted = true;
         }
 
         ResolveVisibilityGate();
 
         if (localPanelParent == null)
         {
-            GameObject parentObject = GameObject.Find(DefaultLocalPanelParentName);
-            if (parentObject != null)
+            if (sharedLocalPanelParent != null)
             {
-                localPanelParent = parentObject.transform;
+                localPanelParent = sharedLocalPanelParent;
             }
+            else if (!sharedLocalPanelParentLookupCompleted || resolveLocalPanelPrefab)
+            {
+                GameObject parentObject = GameObject.Find(DefaultLocalPanelParentName);
+                sharedLocalPanelParentLookupCompleted = true;
+                if (parentObject != null)
+                {
+                    localPanelParent = parentObject.transform;
+                    sharedLocalPanelParent = localPanelParent;
+                }
+            }
+        }
+        else if (sharedLocalPanelParent == null)
+        {
+            sharedLocalPanelParent = localPanelParent;
         }
 
         bool wantsItemPanel = ShouldUseItemInformationPanel();
@@ -647,10 +680,14 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
             localInformationPanelPrefab = null;
             warnedMissingPrefab = false;
+            attemptedAutoLocalPanelResolution = false;
         }
 
-        if (localInformationPanelPrefab == null)
+        if (resolveLocalPanelPrefab
+            && localInformationPanelPrefab == null
+            && (!attemptedAutoLocalPanelResolution || resolvedAutoLocalPanelForItem != wantsItemPanel))
         {
+            attemptedAutoLocalPanelResolution = true;
             localInformationPanelPrefab = ResolveDefaultLocalPanelPrefab(wantsItemPanel);
             localPanelPrefabResolvedAutomatically = localInformationPanelPrefab != null;
             resolvedAutoLocalPanelForItem = wantsItemPanel;
@@ -662,7 +699,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             warnedMissingPrefab = false;
         }
 
-        if (craftingPanel == null)
+        if (craftingPanel == null && ShouldResolveCraftingPanel())
         {
             craftingPanel = ResolveCraftingPanel();
         }
@@ -673,6 +710,13 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private void ResolveVisibilityGate()
     {
         if (visibilityGate != null)
+        {
+            return;
+        }
+
+        if (visibilityGateLookupCompleted
+            && Application.isPlaying
+            && Time.time < nextVisibilityGateLookupTime)
         {
             return;
         }
@@ -690,6 +734,8 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
         if (visibilityGate != null)
         {
+            visibilityGateLookupCompleted = true;
+            nextVisibilityGateLookupTime = 0f;
             return;
         }
 
@@ -700,17 +746,31 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             visibilityGate = SelectClosestVisibilityGate(candidates);
             if (visibilityGate != null)
             {
+                visibilityGateLookupCompleted = true;
+                nextVisibilityGateLookupTime = 0f;
                 return;
             }
 
             scope = scope.parent;
         }
+
+        visibilityGateLookupCompleted = true;
+        nextVisibilityGateLookupTime = Application.isPlaying
+            ? Time.time + VisibilityGateRetryInterval
+            : 0f;
     }
 
     private bool CanDisplayWorldUi()
     {
         ResolveVisibilityGate();
         return visibilityGate == null || visibilityGate.IsWorldUiVisible;
+    }
+
+    private void OnTransformParentChanged()
+    {
+        visibilityGate = null;
+        visibilityGateLookupCompleted = false;
+        nextVisibilityGateLookupTime = 0f;
     }
 
     private TorchVisionSensitive SelectClosestVisibilityGate(TorchVisionSensitive[] candidates)
@@ -834,7 +894,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private void EnsureLocalPanel()
     {
-        ResolveRuntimeReferences();
+        ResolveRuntimeReferences(resolveLocalPanelPrefab: true);
         if (localInformationPanelPrefab == null)
         {
             if (!warnedMissingPrefab)
@@ -893,6 +953,23 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private void PrepareLocalPanelForDisplay()
     {
         UpdateLocalPanelAnchor(orientToCamera: true);
+    }
+
+    private void RefreshOpenLocalPanelIfDue()
+    {
+        if (localPanelInstance == null)
+        {
+            return;
+        }
+
+        float interval = Mathf.Max(0.02f, openPanelRefreshInterval);
+        if (Time.time < nextOpenPanelRefreshTime)
+        {
+            return;
+        }
+
+        nextOpenPanelRefreshTime = Time.time + interval;
+        localPanelInstance.RefreshPanel();
     }
 
     private void UpdateLocalPanelAnchor()
@@ -1025,7 +1102,13 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         ResolveRuntimeReferences();
         RefreshControlledCharacterOverlap();
         RefreshCurrentCharacter();
-        EnsureLocalPanel();
+
+        bool shouldBindLocalPanel = currentCharacter != null
+            || (localPanelInstance != null && localPanelInstance.CurrentBuilding == this);
+        if (shouldBindLocalPanel)
+        {
+            EnsureLocalPanel();
+        }
 
         if (localPanelInstance != null)
         {
@@ -1043,7 +1126,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
                 "world_ui_rebound",
                 $"World UI is initialized / rebound reason='{reason}'");
         }
-        else
+        else if (shouldBindLocalPanel)
         {
             LogMissingWorldUiBinding($"world UI still unbound reason='{reason}'");
         }

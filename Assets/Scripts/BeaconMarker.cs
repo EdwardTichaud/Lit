@@ -31,7 +31,7 @@ public class BeaconMarker : MonoBehaviour
     [Header("Shadowing")]
     [SerializeField] private bool configureBeaconShadowing = true;
     [SerializeField] private LightRenderMode lightRenderMode = LightRenderMode.ForcePixel;
-    [SerializeField] private LightShadows shadowMode = LightShadows.Soft;
+    [SerializeField] private LightShadows shadowMode = LightShadows.None;
     [SerializeField, Range(0f, 1f)] private float shadowStrength = 1f;
     [SerializeField, Range(0f, 0.2f)] private float shadowBias = 0.02f;
     [SerializeField, Range(0f, 0.5f)] private float shadowNormalBias = 0.08f;
@@ -39,7 +39,7 @@ public class BeaconMarker : MonoBehaviour
     [SerializeField, Min(128)] private int hdrpShadowResolution = 1024;
     [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.1f;
     [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.2f;
-    [SerializeField] private bool enableHdrpContactShadows = true;
+    [SerializeField] private bool enableHdrpContactShadows = false;
 
     [Header("Light Placement")]
     [SerializeField] private bool autoPositionPointLights = true;
@@ -65,6 +65,7 @@ public class BeaconMarker : MonoBehaviour
     private float currentFallSpeed;
     private bool isFalling;
     private bool supportInitialized;
+    private bool movementRootResolved;
 
     public Color MarkerColor => markerColor;
     public float SurfaceOffset => Mathf.Max(0f, surfaceOffset);
@@ -83,6 +84,7 @@ public class BeaconMarker : MonoBehaviour
         EnsurePropertyBlock();
         ApplyLightSetup();
         ApplyColor();
+        movementRootResolved = false;
         ResolveMovementRoot();
         ResetDynamicSupportState();
     }
@@ -129,6 +131,7 @@ public class BeaconMarker : MonoBehaviour
 
     public void NotifyPlacedOnSurface(Collider supportCollider, Vector3 supportNormal)
     {
+        movementRootResolved = false;
         ResolveMovementRoot();
         currentSupportCollider = supportCollider;
         currentSupportNormal = NormalizeSupportNormal(supportNormal);
@@ -526,6 +529,12 @@ public class BeaconMarker : MonoBehaviour
 
     private void ResolveMovementRoot()
     {
+        if (movementRootResolved)
+        {
+            movementRoot = cachedLootContainer != null ? cachedLootContainer.transform : null;
+            return;
+        }
+
         if (cachedLootContainer == null)
         {
             cachedLootContainer = GetComponent<InteractableItem>();
@@ -536,6 +545,12 @@ public class BeaconMarker : MonoBehaviour
         }
 
         movementRoot = cachedLootContainer != null ? cachedLootContainer.transform : null;
+        movementRootResolved = true;
+    }
+
+    private void OnTransformParentChanged()
+    {
+        movementRootResolved = false;
     }
 
     private void ResetDynamicSupportState()

@@ -25,6 +25,7 @@ public class FlickeringLight : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float colorVariation = 0.45f;
     [SerializeField, Min(0.1f)] private float flickerSpeed = 7.5f;
     [SerializeField, Min(0f)] private float burstStrength = 0.12f;
+    [SerializeField, Min(0f)] private float runtimeUpdateInterval = 0.05f;
 
     [Header("Motion")]
     [SerializeField] private bool animateLocalPosition = true;
@@ -34,7 +35,7 @@ public class FlickeringLight : MonoBehaviour
     [Header("Shadowing")]
     [SerializeField] private bool configureCandleShadowing = true;
     [SerializeField] private LightRenderMode renderMode = LightRenderMode.ForcePixel;
-    [SerializeField] private LightShadows shadowMode = LightShadows.Soft;
+    [SerializeField] private LightShadows shadowMode = LightShadows.None;
     [SerializeField, Range(0f, 1f)] private float shadowStrength = 1f;
     [SerializeField, Range(0f, 0.2f)] private float shadowBias = 0.02f;
     [SerializeField, Range(0f, 0.5f)] private float shadowNormalBias = 0.08f;
@@ -42,7 +43,7 @@ public class FlickeringLight : MonoBehaviour
     [SerializeField, Min(128)] private int hdrpShadowResolution = 1024;
     [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.1f;
     [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.2f;
-    [SerializeField] private bool enableHdrpContactShadows = true;
+    [SerializeField] private bool enableHdrpContactShadows = false;
 
     private float initialIntensity;
     private float initialRange;
@@ -51,6 +52,7 @@ public class FlickeringLight : MonoBehaviour
     private bool hasCachedState;
     private HDAdditionalLightData targetHdLight;
     private TorchLightReceiver torchLightReceiver;
+    private float nextRuntimeUpdateTime;
 
     private float noiseSeedA;
     private float noiseSeedB;
@@ -78,7 +80,11 @@ public class FlickeringLight : MonoBehaviour
         CacheLight();
         CacheInitialState();
         ApplyLightSetup();
-        ApplyFlicker(Time.time);
+        float now = Time.time;
+        ApplyFlicker(now);
+        nextRuntimeUpdateTime = Application.isPlaying && runtimeUpdateInterval > 0f
+            ? now + runtimeUpdateInterval
+            : 0f;
     }
 
     private void OnDisable()
@@ -93,6 +99,7 @@ public class FlickeringLight : MonoBehaviour
         baseIntensity = Mathf.Max(0.01f, baseIntensity);
         baseRange = Mathf.Max(0.01f, baseRange);
         flickerSpeed = Mathf.Max(0.1f, flickerSpeed);
+        runtimeUpdateInterval = Mathf.Max(0f, runtimeUpdateInterval);
         swaySpeed = Mathf.Max(0.1f, swaySpeed);
         swayAmplitude = Mathf.Max(0f, swayAmplitude);
         shadowStrength = Mathf.Clamp01(shadowStrength);
@@ -113,7 +120,18 @@ public class FlickeringLight : MonoBehaviour
             return;
         }
 
-        ApplyFlicker(Time.time);
+        float now = Time.time;
+        if (Application.isPlaying && runtimeUpdateInterval > 0f)
+        {
+            if (now < nextRuntimeUpdateTime)
+            {
+                return;
+            }
+
+            nextRuntimeUpdateTime = now + runtimeUpdateInterval;
+        }
+
+        ApplyFlicker(now);
     }
 
     private void CacheLight()

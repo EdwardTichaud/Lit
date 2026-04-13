@@ -68,6 +68,10 @@ public class TorchVisionSystem : MonoBehaviour
     private readonly Dictionary<SquadCharacterController, VisionEntry> visions = new Dictionary<SquadCharacterController, VisionEntry>();
     private readonly Dictionary<SquadCharacterController, bool> torchStates = new Dictionary<SquadCharacterController, bool>();
     private readonly HashSet<TorchLightReceiver> torchSources = new HashSet<TorchLightReceiver>();
+    private readonly HashSet<SquadCharacterController> activeControllersScratch = new HashSet<SquadCharacterController>();
+    private readonly List<SquadCharacterController> controllerRemovalScratch = new List<SquadCharacterController>();
+    private readonly List<SquadCharacterController> visionRemovalScratch = new List<SquadCharacterController>();
+    private readonly List<TorchLightReceiver> staleTorchSourcesScratch = new List<TorchLightReceiver>();
 
     public static TorchVisionDefinition GetVisionFor(SquadCharacterController controller)
     {
@@ -315,7 +319,8 @@ public class TorchVisionSystem : MonoBehaviour
             return;
         }
 
-        HashSet<SquadCharacterController> activeSet = new HashSet<SquadCharacterController>();
+        activeControllersScratch.Clear();
+        controllerRemovalScratch.Clear();
 
         for (int i = 0; i < active.Count; i++)
         {
@@ -325,7 +330,7 @@ public class TorchVisionSystem : MonoBehaviour
                 continue;
             }
 
-            activeSet.Add(controller);
+            activeControllersScratch.Add(controller);
 
             bool equipped = controller.IsTorchEquipped;
             if (!torchStates.TryGetValue(controller, out bool cached) || cached != equipped)
@@ -337,36 +342,35 @@ public class TorchVisionSystem : MonoBehaviour
 
         if (torchStates.Count == 0)
         {
+            controllerRemovalScratch.Clear();
+            activeControllersScratch.Clear();
             return;
         }
 
-        List<SquadCharacterController> toRemove = null;
         foreach (KeyValuePair<SquadCharacterController, bool> pair in torchStates)
         {
             SquadCharacterController controller = pair.Key;
-            if (controller == null || !activeSet.Contains(controller))
+            if (controller == null || !activeControllersScratch.Contains(controller))
             {
                 if (pair.Value)
                 {
                     TorchStateChanged?.Invoke(controller, false);
                 }
 
-                if (toRemove == null)
-                {
-                    toRemove = new List<SquadCharacterController>();
-                }
-
-                toRemove.Add(controller);
+                controllerRemovalScratch.Add(controller);
             }
         }
 
-        if (toRemove != null)
+        if (controllerRemovalScratch.Count > 0)
         {
-            for (int i = 0; i < toRemove.Count; i++)
+            for (int i = 0; i < controllerRemovalScratch.Count; i++)
             {
-                torchStates.Remove(toRemove[i]);
+                torchStates.Remove(controllerRemovalScratch[i]);
             }
         }
+
+        controllerRemovalScratch.Clear();
+        activeControllersScratch.Clear();
     }
 
     private void UpdateVisionDurations(float deltaTime)
@@ -376,7 +380,7 @@ public class TorchVisionSystem : MonoBehaviour
             return;
         }
 
-        List<SquadCharacterController> toClear = null;
+        visionRemovalScratch.Clear();
 
         foreach (KeyValuePair<SquadCharacterController, VisionEntry> pair in visions)
         {
@@ -389,12 +393,7 @@ public class TorchVisionSystem : MonoBehaviour
             entry.RemainingDuration -= deltaTime;
             if (entry.RemainingDuration <= 0f)
             {
-                if (toClear == null)
-                {
-                    toClear = new List<SquadCharacterController>();
-                }
-
-                toClear.Add(pair.Key);
+                visionRemovalScratch.Add(pair.Key);
             }
             else
             {
@@ -402,19 +401,21 @@ public class TorchVisionSystem : MonoBehaviour
             }
         }
 
-        if (toClear == null)
+        if (visionRemovalScratch.Count == 0)
         {
             return;
         }
 
-        for (int i = 0; i < toClear.Count; i++)
+        for (int i = 0; i < visionRemovalScratch.Count; i++)
         {
-            SquadCharacterController controller = toClear[i];
+            SquadCharacterController controller = visionRemovalScratch[i];
             if (controller != null)
             {
                 SetVisionInternal(controller, null, 0f);
             }
         }
+
+        visionRemovalScratch.Clear();
     }
 
     private void CleanupDestroyedControllers()
@@ -424,7 +425,7 @@ public class TorchVisionSystem : MonoBehaviour
             return;
         }
 
-        List<SquadCharacterController> toRemove = null;
+        visionRemovalScratch.Clear();
         foreach (KeyValuePair<SquadCharacterController, VisionEntry> pair in visions)
         {
             if (pair.Key != null)
@@ -432,23 +433,20 @@ public class TorchVisionSystem : MonoBehaviour
                 continue;
             }
 
-            if (toRemove == null)
-            {
-                toRemove = new List<SquadCharacterController>();
-            }
-
-            toRemove.Add(pair.Key);
+            visionRemovalScratch.Add(pair.Key);
         }
 
-        if (toRemove == null)
+        if (visionRemovalScratch.Count == 0)
         {
             return;
         }
 
-        for (int i = 0; i < toRemove.Count; i++)
+        for (int i = 0; i < visionRemovalScratch.Count; i++)
         {
-            visions.Remove(toRemove[i]);
+            visions.Remove(visionRemovalScratch[i]);
         }
+
+        visionRemovalScratch.Clear();
     }
 
     private bool TryGetNearestMatchingTorchInternal(
@@ -467,18 +465,13 @@ public class TorchVisionSystem : MonoBehaviour
 
         float bestDistanceSqr = maxDistance > 0f ? maxDistance * maxDistance : float.PositiveInfinity;
         bool found = false;
-        List<TorchLightReceiver> staleSources = null;
+        staleTorchSourcesScratch.Clear();
 
         foreach (TorchLightReceiver source in torchSources)
         {
             if (source == null)
             {
-                if (staleSources == null)
-                {
-                    staleSources = new List<TorchLightReceiver>();
-                }
-
-                staleSources.Add(source);
+                staleTorchSourcesScratch.Add(source);
                 continue;
             }
 
@@ -522,13 +515,15 @@ public class TorchVisionSystem : MonoBehaviour
             found = true;
         }
 
-        if (staleSources != null)
+        if (staleTorchSourcesScratch.Count > 0)
         {
-            for (int i = 0; i < staleSources.Count; i++)
+            for (int i = 0; i < staleTorchSourcesScratch.Count; i++)
             {
-                torchSources.Remove(staleSources[i]);
+                torchSources.Remove(staleTorchSourcesScratch[i]);
             }
         }
+
+        staleTorchSourcesScratch.Clear();
 
         return found;
     }
@@ -540,18 +535,13 @@ public class TorchVisionSystem : MonoBehaviour
             return;
         }
 
-        List<TorchLightReceiver> staleSources = null;
+        staleTorchSourcesScratch.Clear();
 
         foreach (TorchLightReceiver source in torchSources)
         {
             if (source == null)
             {
-                if (staleSources == null)
-                {
-                    staleSources = new List<TorchLightReceiver>();
-                }
-
-                staleSources.Add(source);
+                staleTorchSourcesScratch.Add(source);
                 continue;
             }
 
@@ -583,15 +573,17 @@ public class TorchVisionSystem : MonoBehaviour
                 source));
         }
 
-        if (staleSources == null)
+        if (staleTorchSourcesScratch.Count == 0)
         {
             return;
         }
 
-        for (int i = 0; i < staleSources.Count; i++)
+        for (int i = 0; i < staleTorchSourcesScratch.Count; i++)
         {
-            torchSources.Remove(staleSources[i]);
+            torchSources.Remove(staleTorchSourcesScratch[i]);
         }
+
+        staleTorchSourcesScratch.Clear();
     }
 
     private static bool IsVisionMatch(TorchVisionDefinition requiredVision, TorchVisionDefinition activeVision)

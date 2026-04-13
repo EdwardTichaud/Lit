@@ -12,7 +12,7 @@ public class TorchLightReceiver : MonoBehaviour
     [Header("Shadowing")]
     [SerializeField] private bool configureTorchShadowing = true;
     [SerializeField] private LightRenderMode renderMode = LightRenderMode.ForcePixel;
-    [SerializeField] private LightShadows shadowMode = LightShadows.Soft;
+    [SerializeField] private LightShadows shadowMode = LightShadows.None;
     [SerializeField, Range(0f, 1f)] private float shadowStrength = 1f;
     [SerializeField, Range(0f, 0.2f)] private float shadowBias = 0.02f;
     [SerializeField, Range(0f, 0.5f)] private float shadowNormalBias = 0.08f;
@@ -20,7 +20,7 @@ public class TorchLightReceiver : MonoBehaviour
     [SerializeField, Min(128)] private int hdrpShadowResolution = 1024;
     [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.1f;
     [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.2f;
-    [SerializeField] private bool enableHdrpContactShadows = true;
+    [SerializeField] private bool enableHdrpContactShadows = false;
 
     [Header("Owner")]
     [SerializeField] private SquadCharacterController owner;

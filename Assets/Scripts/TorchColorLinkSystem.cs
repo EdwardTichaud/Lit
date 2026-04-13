@@ -443,7 +443,7 @@ public class TorchColorLinkSystem : MonoBehaviour
         fallbackLight.intensity = 200f;
         fallbackLight.range = 4f;
         fallbackLight.renderMode = LightRenderMode.ForcePixel;
-        fallbackLight.shadows = LightShadows.Soft;
+        fallbackLight.shadows = LightShadows.None;
         fallbackLight.useColorTemperature = false;
 
         fallback.AddComponent<TorchLightReceiver>();

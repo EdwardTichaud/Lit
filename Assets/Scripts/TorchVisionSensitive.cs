@@ -24,6 +24,7 @@ public class TorchVisionSensitive : MonoBehaviour
 
     private const float ActiveRefreshInterval = 0.02f;
     private const float IdleRefreshInterval = 0.1f;
+    private const float VisibilityApplyEpsilon = 0.001f;
 
     [Header("Evaluation")]
     [SerializeField] private Transform distanceReference;
@@ -61,6 +62,11 @@ public class TorchVisionSensitive : MonoBehaviour
     private float currentVisibilityFactor = 1f;
     private bool currentTorchInRange;
     private bool hasEvaluatedVisibility;
+    private float lastAppliedVisibilityFactor = float.NaN;
+    private Color lastAppliedDissolveColor;
+    private bool lastAppliedInteractionEnabled;
+    private bool hasAppliedVisuals;
+    private bool hasAppliedInteraction;
 
     public float CurrentVisibilityFactor => currentVisibilityFactor;
     public bool IsWorldUiVisible => visibilityMode == VisibilityMode.AlwaysVisible
@@ -80,6 +86,7 @@ public class TorchVisionSensitive : MonoBehaviour
         TorchVisionSystem.VisionChanged += OnTorchDataChanged;
         TorchVisionSystem.TorchStateChanged += OnTorchStateChanged;
         TorchVisionSystem.TorchSourcesChanged += OnTorchSourcesChanged;
+        InvalidateAppliedState();
         RefreshState();
     }
 
@@ -90,6 +97,7 @@ public class TorchVisionSensitive : MonoBehaviour
         TorchVisionSystem.TorchSourcesChanged -= OnTorchSourcesChanged;
         ClearPropertyBlocks();
         RestoreRendererState();
+        InvalidateAppliedState();
     }
 
     private void Update()
@@ -150,6 +158,7 @@ public class TorchVisionSensitive : MonoBehaviour
         }
 
         CacheRendererData();
+        InvalidateAppliedState();
     }
 
     private Renderer[] CollectRenderers(Transform root)
@@ -345,6 +354,7 @@ public class TorchVisionSensitive : MonoBehaviour
         colliders = Array.Empty<Collider>();
         behaviours = Array.Empty<Behaviour>();
         CacheTargets();
+        InvalidateAppliedState();
 
         if (Application.isPlaying && isActiveAndEnabled)
         {
@@ -359,8 +369,19 @@ public class TorchVisionSensitive : MonoBehaviour
         currentTorchInRange = torchInRange;
         hasEvaluatedVisibility = true;
         refreshTimer = torchInRange ? ActiveRefreshInterval : IdleRefreshInterval;
-        ApplyVisuals(currentVisibilityFactor, dissolveColor);
-        ApplyInteraction(currentVisibilityFactor >= 0.999f);
+
+        if (ShouldApplyVisuals(currentVisibilityFactor, dissolveColor))
+        {
+            ApplyVisuals(currentVisibilityFactor, dissolveColor);
+            MarkVisualsApplied(currentVisibilityFactor, dissolveColor);
+        }
+
+        bool interactionEnabled = currentVisibilityFactor >= 0.999f;
+        if (ShouldApplyInteraction(interactionEnabled))
+        {
+            ApplyInteraction(interactionEnabled);
+            MarkInteractionApplied(interactionEnabled);
+        }
     }
 
     private float DetermineVisibilityFactor(out Color dissolveColor, out bool torchInRange)
@@ -518,5 +539,47 @@ public class TorchVisionSensitive : MonoBehaviour
                 behaviour.enabled = enabled;
             }
         }
+    }
+
+    private bool ShouldApplyVisuals(float visibilityFactor, Color dissolveColor)
+    {
+        return !hasAppliedVisuals
+            || Mathf.Abs(lastAppliedVisibilityFactor - visibilityFactor) > VisibilityApplyEpsilon
+            || !ColorsApproximatelyEqual(lastAppliedDissolveColor, dissolveColor);
+    }
+
+    private void MarkVisualsApplied(float visibilityFactor, Color dissolveColor)
+    {
+        hasAppliedVisuals = true;
+        lastAppliedVisibilityFactor = visibilityFactor;
+        lastAppliedDissolveColor = dissolveColor;
+    }
+
+    private bool ShouldApplyInteraction(bool enabled)
+    {
+        return affectBehaviours || !hasAppliedInteraction || lastAppliedInteractionEnabled != enabled;
+    }
+
+    private void MarkInteractionApplied(bool enabled)
+    {
+        hasAppliedInteraction = true;
+        lastAppliedInteractionEnabled = enabled;
+    }
+
+    private void InvalidateAppliedState()
+    {
+        hasAppliedVisuals = false;
+        hasAppliedInteraction = false;
+        lastAppliedVisibilityFactor = float.NaN;
+        lastAppliedDissolveColor = default;
+        lastAppliedInteractionEnabled = false;
+    }
+
+    private static bool ColorsApproximatelyEqual(Color a, Color b)
+    {
+        return Mathf.Abs(a.r - b.r) <= VisibilityApplyEpsilon
+            && Mathf.Abs(a.g - b.g) <= VisibilityApplyEpsilon
+            && Mathf.Abs(a.b - b.b) <= VisibilityApplyEpsilon
+            && Mathf.Abs(a.a - b.a) <= VisibilityApplyEpsilon;
     }
 }

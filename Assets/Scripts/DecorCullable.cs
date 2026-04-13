@@ -1,0 +1,381 @@
+using System;
+using UnityEngine;
+
+[DisallowMultipleComponent]
+public sealed class DecorCullable : MonoBehaviour
+{
+    [Header("Bounds")]
+    [SerializeField] private Transform boundsRoot;
+    [SerializeField] private bool includeInactiveChildren = true;
+    [SerializeField, Min(0f)] private float boundsPadding = 2f;
+    [SerializeField, Min(0.05f)] private float minimumBoundsRadius = 0.5f;
+
+    [Header("Culling Targets")]
+    [SerializeField] private bool autoCollectTargets = true;
+    [SerializeField] private bool disableRenderers = true;
+    [SerializeField] private bool disableLights = true;
+    [SerializeField] private bool pauseParticles = true;
+    [SerializeField] private bool disableCollidersWhenCulled = false;
+    [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
+    [SerializeField] private Light[] targetLights = Array.Empty<Light>();
+    [SerializeField] private ParticleSystem[] targetParticles = Array.Empty<ParticleSystem>();
+    [SerializeField] private Collider[] targetColliders = Array.Empty<Collider>();
+
+    private bool[] rendererEnabledStates = Array.Empty<bool>();
+    private bool[] lightEnabledStates = Array.Empty<bool>();
+    private bool[] particlePlayingStates = Array.Empty<bool>();
+    private bool[] colliderEnabledStates = Array.Empty<bool>();
+    private BoundingSphere boundingSphere;
+    private bool boundsDirty = true;
+    private bool isCulled;
+    private bool isRegistered;
+
+    public bool IsCulled => isCulled;
+
+    internal BoundingSphere CurrentBoundingSphere
+    {
+        get
+        {
+            if (boundsDirty)
+            {
+                RecalculateBounds();
+            }
+
+            return boundingSphere;
+        }
+    }
+
+    private Transform BoundsRoot => boundsRoot != null ? boundsRoot : transform;
+
+    private void Reset()
+    {
+        boundsRoot = transform;
+        RefreshCachedTargets();
+    }
+
+    private void Awake()
+    {
+        if (autoCollectTargets)
+        {
+            RefreshCachedTargets();
+        }
+        else
+        {
+            RecalculateBounds();
+        }
+    }
+
+    private void OnEnable()
+    {
+        boundsDirty = true;
+
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        DecorCullingManager.Register(this);
+        isRegistered = true;
+    }
+
+    private void OnDisable()
+    {
+        if (isCulled)
+        {
+            ApplyVisibleState();
+            isCulled = false;
+        }
+
+        if (isRegistered)
+        {
+            DecorCullingManager.Unregister(this);
+            isRegistered = false;
+        }
+    }
+
+    private void OnValidate()
+    {
+        boundsPadding = Mathf.Max(0f, boundsPadding);
+        minimumBoundsRadius = Mathf.Max(0.05f, minimumBoundsRadius);
+
+        if (!Application.isPlaying && autoCollectTargets)
+        {
+            RefreshCachedTargets();
+        }
+        else
+        {
+            boundsDirty = true;
+        }
+    }
+
+    private void OnTransformChildrenChanged()
+    {
+        boundsDirty = true;
+    }
+
+    public void RefreshCachedTargets()
+    {
+        Transform root = BoundsRoot;
+        if (root == null)
+        {
+            targetRenderers = Array.Empty<Renderer>();
+            targetLights = Array.Empty<Light>();
+            targetParticles = Array.Empty<ParticleSystem>();
+            targetColliders = Array.Empty<Collider>();
+            boundsDirty = true;
+            return;
+        }
+
+        targetRenderers = disableRenderers
+            ? root.GetComponentsInChildren<Renderer>(includeInactiveChildren)
+            : Array.Empty<Renderer>();
+        targetLights = disableLights
+            ? root.GetComponentsInChildren<Light>(includeInactiveChildren)
+            : Array.Empty<Light>();
+        targetParticles = pauseParticles
+            ? root.GetComponentsInChildren<ParticleSystem>(includeInactiveChildren)
+            : Array.Empty<ParticleSystem>();
+        targetColliders = disableCollidersWhenCulled
+            ? root.GetComponentsInChildren<Collider>(includeInactiveChildren)
+            : Array.Empty<Collider>();
+
+        boundsDirty = true;
+        RecalculateBounds();
+    }
+
+    internal void SetCulled(bool culled)
+    {
+        if (isCulled == culled)
+        {
+            return;
+        }
+
+        if (culled)
+        {
+            CaptureTargetStates();
+            ApplyCulledState();
+        }
+        else
+        {
+            ApplyVisibleState();
+        }
+
+        isCulled = culled;
+    }
+
+    private void CaptureTargetStates()
+    {
+        EnsureStateArray(ref rendererEnabledStates, targetRenderers != null ? targetRenderers.Length : 0);
+        EnsureStateArray(ref lightEnabledStates, targetLights != null ? targetLights.Length : 0);
+        EnsureStateArray(ref particlePlayingStates, targetParticles != null ? targetParticles.Length : 0);
+        EnsureStateArray(ref colliderEnabledStates, targetColliders != null ? targetColliders.Length : 0);
+
+        for (int i = 0; targetRenderers != null && i < targetRenderers.Length; i++)
+        {
+            Renderer target = targetRenderers[i];
+            rendererEnabledStates[i] = target != null && target.enabled;
+        }
+
+        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            lightEnabledStates[i] = target != null && target.enabled;
+        }
+
+        for (int i = 0; targetParticles != null && i < targetParticles.Length; i++)
+        {
+            ParticleSystem target = targetParticles[i];
+            particlePlayingStates[i] = target != null && (target.isPlaying || target.isEmitting);
+        }
+
+        for (int i = 0; targetColliders != null && i < targetColliders.Length; i++)
+        {
+            Collider target = targetColliders[i];
+            colliderEnabledStates[i] = target != null && target.enabled;
+        }
+    }
+
+    private void ApplyCulledState()
+    {
+        if (disableRenderers && targetRenderers != null)
+        {
+            for (int i = 0; i < targetRenderers.Length; i++)
+            {
+                Renderer target = targetRenderers[i];
+                if (target != null)
+                {
+                    target.enabled = false;
+                }
+            }
+        }
+
+        if (disableLights && targetLights != null)
+        {
+            for (int i = 0; i < targetLights.Length; i++)
+            {
+                Light target = targetLights[i];
+                if (target != null)
+                {
+                    target.enabled = false;
+                }
+            }
+        }
+
+        if (pauseParticles && Application.isPlaying && targetParticles != null)
+        {
+            for (int i = 0; i < targetParticles.Length; i++)
+            {
+                ParticleSystem target = targetParticles[i];
+                if (target != null && particlePlayingStates.Length > i && particlePlayingStates[i])
+                {
+                    target.Pause(withChildren: true);
+                }
+            }
+        }
+
+        if (disableCollidersWhenCulled && targetColliders != null)
+        {
+            for (int i = 0; i < targetColliders.Length; i++)
+            {
+                Collider target = targetColliders[i];
+                if (target != null)
+                {
+                    target.enabled = false;
+                }
+            }
+        }
+    }
+
+    private void ApplyVisibleState()
+    {
+        if (disableRenderers && targetRenderers != null)
+        {
+            for (int i = 0; i < targetRenderers.Length; i++)
+            {
+                Renderer target = targetRenderers[i];
+                if (target != null && rendererEnabledStates.Length > i)
+                {
+                    target.enabled = rendererEnabledStates[i];
+                }
+            }
+        }
+
+        if (disableLights && targetLights != null)
+        {
+            for (int i = 0; i < targetLights.Length; i++)
+            {
+                Light target = targetLights[i];
+                if (target != null && lightEnabledStates.Length > i)
+                {
+                    target.enabled = lightEnabledStates[i];
+                }
+            }
+        }
+
+        if (pauseParticles && Application.isPlaying && targetParticles != null)
+        {
+            for (int i = 0; i < targetParticles.Length; i++)
+            {
+                ParticleSystem target = targetParticles[i];
+                if (target != null && particlePlayingStates.Length > i && particlePlayingStates[i])
+                {
+                    target.Play(withChildren: true);
+                }
+            }
+        }
+
+        if (disableCollidersWhenCulled && targetColliders != null)
+        {
+            for (int i = 0; i < targetColliders.Length; i++)
+            {
+                Collider target = targetColliders[i];
+                if (target != null && colliderEnabledStates.Length > i)
+                {
+                    target.enabled = colliderEnabledStates[i];
+                }
+            }
+        }
+    }
+
+    private void RecalculateBounds()
+    {
+        Bounds bounds = default;
+        bool hasBounds = false;
+
+        if (targetRenderers != null)
+        {
+            for (int i = 0; i < targetRenderers.Length; i++)
+            {
+                Renderer target = targetRenderers[i];
+                if (target == null)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = target.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(target.bounds);
+                }
+            }
+        }
+
+        if (!hasBounds && targetColliders != null)
+        {
+            for (int i = 0; i < targetColliders.Length; i++)
+            {
+                Collider target = targetColliders[i];
+                if (target == null)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = target.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(target.bounds);
+                }
+            }
+        }
+
+        if (hasBounds)
+        {
+            boundingSphere = new BoundingSphere(
+                bounds.center,
+                Mathf.Max(minimumBoundsRadius, bounds.extents.magnitude + boundsPadding));
+        }
+        else
+        {
+            boundingSphere = new BoundingSphere(
+                transform.position,
+                Mathf.Max(minimumBoundsRadius, boundsPadding));
+        }
+
+        boundsDirty = false;
+    }
+
+    private static void EnsureStateArray(ref bool[] states, int targetLength)
+    {
+        if (states == null || states.Length != targetLength)
+        {
+            states = new bool[targetLength];
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        BoundingSphere sphere = CurrentBoundingSphere;
+        Gizmos.color = isCulled
+            ? new Color(1f, 0.35f, 0.15f, 0.35f)
+            : new Color(0.2f, 0.85f, 1f, 0.35f);
+        Gizmos.DrawWireSphere(sphere.position, sphere.radius);
+    }
+}
