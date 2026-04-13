@@ -110,7 +110,14 @@ public sealed class DecorCullable : MonoBehaviour
 
     private void OnTransformChildrenChanged()
     {
-        boundsDirty = true;
+        if (!Application.isPlaying && autoCollectTargets)
+        {
+            RefreshCachedTargets();
+        }
+        else
+        {
+            boundsDirty = true;
+        }
     }
 
     public void RefreshCachedTargets()
@@ -127,20 +134,70 @@ public sealed class DecorCullable : MonoBehaviour
         }
 
         targetRenderers = disableRenderers
-            ? root.GetComponentsInChildren<Renderer>(includeInactiveChildren)
+            ? FilterOwnedTargets(root.GetComponentsInChildren<Renderer>(includeInactiveChildren))
             : Array.Empty<Renderer>();
         targetLights = disableLights
-            ? root.GetComponentsInChildren<Light>(includeInactiveChildren)
+            ? FilterOwnedTargets(root.GetComponentsInChildren<Light>(includeInactiveChildren))
             : Array.Empty<Light>();
         targetParticles = pauseParticles
-            ? root.GetComponentsInChildren<ParticleSystem>(includeInactiveChildren)
+            ? FilterOwnedTargets(root.GetComponentsInChildren<ParticleSystem>(includeInactiveChildren))
             : Array.Empty<ParticleSystem>();
         targetColliders = disableCollidersWhenCulled
-            ? root.GetComponentsInChildren<Collider>(includeInactiveChildren)
+            ? FilterOwnedTargets(root.GetComponentsInChildren<Collider>(includeInactiveChildren))
             : Array.Empty<Collider>();
 
         boundsDirty = true;
         RecalculateBounds();
+    }
+
+    private T[] FilterOwnedTargets<T>(T[] targets) where T : Component
+    {
+        if (targets == null || targets.Length == 0)
+        {
+            return targets ?? Array.Empty<T>();
+        }
+
+        int writeIndex = 0;
+        for (int i = 0; i < targets.Length; i++)
+        {
+            T target = targets[i];
+            if (IsOwnedTarget(target))
+            {
+                targets[writeIndex] = target;
+                writeIndex++;
+            }
+        }
+
+        if (writeIndex == targets.Length)
+        {
+            return targets;
+        }
+
+        T[] filteredTargets = new T[writeIndex];
+        Array.Copy(targets, filteredTargets, writeIndex);
+        return filteredTargets;
+    }
+
+    private bool IsOwnedTarget(Component target)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        Transform current = target.transform;
+        while (current != null)
+        {
+            DecorCullable owner = current.GetComponent<DecorCullable>();
+            if (owner != null)
+            {
+                return owner == this;
+            }
+
+            current = current.parent;
+        }
+
+        return true;
     }
 
     internal void SetCulled(bool culled)

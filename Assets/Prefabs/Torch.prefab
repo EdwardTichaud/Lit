@@ -202,7 +202,7 @@ MonoBehaviour:
   m_VolumetricShadowDimmer: 1
   m_ShadowFadeDistance: 10000
   m_UseContactShadow:
-    m_Override: 1
+    m_Override: 0
     m_UseOverride: 1
     m_Level: 0
   m_RayTracedContactShadow: 0
@@ -300,6 +300,7 @@ MonoBehaviour:
   colorVariation: 0.45
   flickerSpeed: 7.5
   burstStrength: 0.12
+  runtimeUpdateInterval: 0.05
   animateLocalPosition: 1
   swayAmplitude: 0.015
   swaySpeed: 1.6

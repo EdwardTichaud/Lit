@@ -7,6 +7,7 @@ public static class DecorCullingTools
 {
     private const string MenuRoot = "Tools/Lit/Decor Culling/";
     private const string FantasticDungeonPackRoot = "Assets/Fantastic Dungeon Pack/prefabs";
+    private const float SplitMaxBoundsRadius = 20f;
 
     private static readonly HashSet<string> ExcludedBehaviourNames = new HashSet<string>
     {
@@ -26,6 +27,14 @@ public static class DecorCullingTools
         "TreasureFinder",
         "TrouEtroit",
         "Zone"
+    };
+
+    private static readonly HashSet<string> ExcludedRootNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "lever",
+        "levers",
+        "trap",
+        "traps"
     };
 
     [MenuItem(MenuRoot + "Create Manager In Scene")]
@@ -93,6 +102,73 @@ public static class DecorCullingTools
 
     [MenuItem(MenuRoot + "Add Cullable To Selection", true)]
     private static bool ValidateAddCullableToSelection()
+    {
+        return Selection.gameObjects != null && Selection.gameObjects.Length > 0;
+    }
+
+    [MenuItem(MenuRoot + "Split Selection Into Smaller Cullables")]
+    public static void SplitSelectionIntoSmallerCullables()
+    {
+        GameObject[] selected = Selection.gameObjects;
+        int added = 0;
+        int removed = 0;
+        int skipped = 0;
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Split Decor Cullables");
+
+        for (int i = 0; i < selected.Length; i++)
+        {
+            GameObject target = selected[i];
+            if (target == null)
+            {
+                continue;
+            }
+
+            if (EditorUtility.IsPersistent(target))
+            {
+                skipped++;
+                Debug.Log($"Decor culling split: '{target.name}' ignore (selectionne une instance de scene, pas un prefab asset).", target);
+                continue;
+            }
+
+            if (!HasCullableTargets(target))
+            {
+                skipped++;
+                Debug.Log($"Decor culling split: '{target.name}' ignore (aucun Renderer, Light ou ParticleSystem).", target);
+                continue;
+            }
+
+            DecorCullable rootCullable = target.GetComponent<DecorCullable>();
+            int addedBefore = added;
+            Transform targetTransform = target.transform;
+            for (int childIndex = 0; childIndex < targetTransform.childCount; childIndex++)
+            {
+                AddCullablesRecursively(targetTransform.GetChild(childIndex).gameObject, ref added, ref skipped);
+            }
+
+            if (added > addedBefore)
+            {
+                if (rootCullable != null)
+                {
+                    Undo.DestroyObjectImmediate(rootCullable);
+                    removed++;
+                }
+            }
+            else
+            {
+                skipped++;
+                Debug.Log($"Decor culling split: '{target.name}' n'a pas de sous-racine decor eligible.", target);
+            }
+
+            EditorUtility.SetDirty(target);
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+        Debug.Log($"Decor culling split: {added} sous-racine(s) preparee(s), {removed} DecorCullable racine retire(s), {skipped} element(s) ignore(s).");
+    }
+
+    [MenuItem(MenuRoot + "Split Selection Into Smaller Cullables", true)]
+    private static bool ValidateSplitSelectionIntoSmallerCullables()
     {
         return Selection.gameObjects != null && Selection.gameObjects.Length > 0;
     }
@@ -187,6 +263,12 @@ public static class DecorCullingTools
             return false;
         }
 
+        if (ExcludedRootNames.Contains(root.name))
+        {
+            reason = $"groupe exclu: {root.name}";
+            return false;
+        }
+
         if (HasExcludedBehaviour(root, out string behaviourName))
         {
             reason = $"script gameplay detecte: {behaviourName}";
@@ -200,6 +282,114 @@ public static class DecorCullingTools
         }
 
         return true;
+    }
+
+    private static void AddCullablesRecursively(GameObject root, ref int added, ref int skipped)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        if (ExcludedRootNames.Contains(root.name))
+        {
+            skipped++;
+            Debug.Log($"Decor culling split: '{root.name}' ignore (groupe gameplay probable).", root);
+            return;
+        }
+
+        if (!HasCullableTargets(root))
+        {
+            skipped++;
+            return;
+        }
+
+        if (root.GetComponent<DecorCullable>() != null)
+        {
+            skipped++;
+            return;
+        }
+
+        if (ShouldSplitFurther(root))
+        {
+            int addedBefore = added;
+            Transform rootTransform = root.transform;
+            for (int childIndex = 0; childIndex < rootTransform.childCount; childIndex++)
+            {
+                AddCullablesRecursively(rootTransform.GetChild(childIndex).gameObject, ref added, ref skipped);
+            }
+
+            if (added > addedBefore)
+            {
+                return;
+            }
+        }
+
+        if (TryAddCullableToSceneObject(root))
+        {
+            added++;
+        }
+        else
+        {
+            skipped++;
+        }
+    }
+
+    private static bool ShouldSplitFurther(GameObject root)
+    {
+        if (root.transform.childCount == 0)
+        {
+            return false;
+        }
+
+        if (!TryCalculateRendererBounds(root, out Bounds bounds))
+        {
+            return false;
+        }
+
+        if (bounds.extents.magnitude <= SplitMaxBoundsRadius)
+        {
+            return false;
+        }
+
+        Transform rootTransform = root.transform;
+        for (int childIndex = 0; childIndex < rootTransform.childCount; childIndex++)
+        {
+            if (HasCullableTargets(rootTransform.GetChild(childIndex).gameObject))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryCalculateRendererBounds(GameObject root, out Bounds bounds)
+    {
+        bounds = default;
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+        bool hasBounds = false;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        return hasBounds;
     }
 
     private static bool HasCullableTargets(GameObject root)
