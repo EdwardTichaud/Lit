@@ -81,6 +81,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8384270561318101996}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6130801948611221116}
   m_SourcePrefab: {fileID: 100100000, guid: 366893e57486b7047b941d0d967b9603, type: 3}
 --- !u!1 &4904099126078092212 stripped
 GameObject:
@@ -99,6 +102,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 0
+  representedItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
   storedItems:
   - item: {fileID: 11400000, guid: 8b9463cd94146fd448f8fc19891a0045, type: 2}
     quantity: 1
@@ -108,10 +114,36 @@ MonoBehaviour:
     quantity: 5
   - item: {fileID: 11400000, guid: b6f049c8b4df32b46988eedc08553261, type: 2}
     quantity: 5
-  representedItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
+  - item: {fileID: 11400000, guid: a763255ec4969994fb6662ac56fa33d1, type: 2}
+    quantity: 5
+  - item: {fileID: 11400000, guid: a7d7df4a7b1d0da4e8455ce4f6f0af8d, type: 2}
+    quantity: 5
+  - item: {fileID: 11400000, guid: 48fbda0fe391203448804b5e27a45e35, type: 2}
+    quantity: 5
   destroyWhenStorageEmpty: 0
-  allowTake: 0
+  allowTake: 1
   maxStoredQuantity: 0
+  isLocked: 0
+  lockId: 
+  consumeKeyOnUse: 0
+  lockedNoKeyMessage: "Le conteneur est verrouill\xE9. Il faut la bonne cl\xE9."
+  unlockSuccessMessage: "Le conteneur est d\xE9verrouill\xE9."
+  allowLockpick: 1
+  lockDifficulty: 12
+  lockpickToolItem: {fileID: 0}
+  lockpickToolItemId: outils_de_crochetage
+  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir
+    ce coffre ?
+  missingLockpickMessage: Il manque des outils de crochetage.
+  lockpickSuccessMessage: "Crochetage r\xE9ussi."
+  lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
+  isTrapped: 0
+  triggerTrapOnOpen: 0
+  disarmTrapAfterTrigger: 1
+  trapEffect: 1
+  trapTeleportTarget: {fileID: 0}
+  trapUseTargetRotation: 1
+  trapTriggeredMessage: "Un pi\xE8ge de t\xE9l\xE9portation se d\xE9clenche !"
   allowBreakWhenTakeDisabled: 1
   breakInvalidMessage: "Cet objet ne peut pas etre cass\xE9."
   breakNoSpaceMessage: Pas assez de place dans le coffre.
@@ -129,7 +161,9 @@ MonoBehaviour:
   takeQuantityPanelOffset: {x: 0, y: 0}
   takeQuantityFormat: '{0}/{1}'
   interactionTrigger: {fileID: 7434141378917972205}
+  interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
+  recoverableWorldInfo: {fileID: 0}
 --- !u!65 &1040901325205510312
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -166,6 +200,7 @@ MonoBehaviour:
   buildId: 
   buildingItem: {fileID: 11400000, guid: 6ad441fc43c08f24284944ef2037a0c9, type: 2}
   level: 1
+  networkBuildingId: 0
   localInformationPanelPrefab: {fileID: 4865652701375795038, guid: 8693d19c8191d354cad67928ac3d13e3, type: 3}
   localPanelParent: {fileID: 0}
   informationAnchor: {fileID: 0}
@@ -176,8 +211,35 @@ MonoBehaviour:
   openCraftingPanelOnInteract: 1
   craftingPanelTag: CraftingConstructionPanel
   interactionTrigger: {fileID: 1040901325205510312}
+  interactionMaxDistance: 2
   closePanelOnExit: 1
   openOnProximity: 1
+  consumeInteractOnProximity: 1
+--- !u!114 &6130801948611221116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4904099126078092212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3761726350
+  InScenePlacedSourceGlobalObjectIdHash: 3532529533
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!64 &7434141378917972205 stripped
 MeshCollider:
   m_CorrespondingSourceObject: {fileID: 3451118302482216456, guid: 366893e57486b7047b941d0d967b9603, type: 3}

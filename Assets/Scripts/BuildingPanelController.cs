@@ -2219,6 +2219,7 @@ public class BuildingPanelController : MonoBehaviour
             item,
             placementInstance,
             placementAnchor,
+            placementPreviewCaches,
             GetPlacementSettings(),
             desiredPosition,
             currentRotation,

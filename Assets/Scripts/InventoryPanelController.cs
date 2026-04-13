@@ -3188,6 +3188,7 @@ public class InventoryPanelController : MonoBehaviour
             item,
             placementInstance,
             placementAnchor,
+            placementPreviewCaches,
             GetPlacementSettings(),
             desiredPosition,
             currentRotation,

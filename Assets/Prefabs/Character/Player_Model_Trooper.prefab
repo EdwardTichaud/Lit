@@ -1118,6 +1118,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
+  enableCharacterInteractionDetection: 1
+  interactionDetectionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  interactionDetectionRadius: 2.25
+  interactionMinimumForwardDot: -0.35
+  interactionDetectionHeightOffset: 0.9
+  interactionCurrentTargetBonus: 0.15
   enableCommittedJump: 1
   anticipationDuration: 0.07
   impulseDelay: 0.02

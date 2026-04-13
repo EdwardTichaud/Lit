@@ -4,6 +4,8 @@ using UnityEngine;
 // Runtime partage pour la previsualisation et la validation de pose en monde.
 public static class WorldPlacementUtility
 {
+    private const float PlacementPenetrationTolerance = 0.005f;
+
     public struct Settings
     {
         public float placementRadius;
@@ -131,6 +133,7 @@ public static class WorldPlacementUtility
         Item item,
         GameObject instance,
         Transform anchor,
+        PreviewCaches previewCaches,
         Settings settings,
         Vector3 desiredPosition,
         Quaternion baseRotation,
@@ -146,6 +149,7 @@ public static class WorldPlacementUtility
                 item,
                 instance,
                 anchor,
+                previewCaches,
                 settings,
                 desiredPosition,
                 baseRotation,
@@ -162,6 +166,7 @@ public static class WorldPlacementUtility
                 item,
                 instance,
                 anchor,
+                previewCaches,
                 settings,
                 desiredPosition,
                 baseRotation,
@@ -212,74 +217,73 @@ public static class WorldPlacementUtility
             return false;
         }
 
-        Collider[] colliders = previewCaches != null ? previewCaches.colliders : null;
+        Collider[] colliders = GetPlacementColliders(instance, previewCaches);
         if (colliders == null || colliders.Length == 0)
         {
             return true;
         }
 
-        Collider seed = null;
+        bool hasSolidCollider = false;
         for (int i = 0; i < colliders.Length; i++)
         {
             Collider col = colliders[i];
-            if (col != null && !col.isTrigger)
+            if (IsPlacementSolidCollider(col))
             {
-                seed = col;
+                hasSolidCollider = true;
                 break;
             }
         }
 
-        if (seed == null)
+        if (!hasSolidCollider)
         {
             return true;
         }
 
-        Bounds bounds = seed.bounds;
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider col = colliders[i];
-            if (col == null || col.isTrigger)
-            {
-                continue;
-            }
-
-            bounds.Encapsulate(col.bounds);
-        }
-
-        Vector3 extents = bounds.extents + Vector3.one * Mathf.Max(0f, settings.placementBoundsPadding);
         QueryTriggerInteraction triggerInteraction = settings.placementBlockTriggers
             ? QueryTriggerInteraction.Collide
             : QueryTriggerInteraction.Ignore;
-        Collider[] overlaps = Physics.OverlapBox(
-            bounds.center,
-            extents,
-            Quaternion.identity,
-            settings.placementCollisionMask,
-            triggerInteraction);
-        for (int i = 0; i < overlaps.Length; i++)
+
+        for (int i = 0; i < colliders.Length; i++)
         {
-            Collider hit = overlaps[i];
-            if (hit == null)
+            Collider col = colliders[i];
+            if (!IsPlacementSolidCollider(col))
             {
                 continue;
             }
 
-            if (SupportsWallPlacement(item) && IsPlacementCharacterCollider(hit))
-            {
-                return false;
-            }
-
-            if (IsIgnoredPlacementCollider(hit, instance, anchor, settings.placementIgnoreMask))
-            {
-                continue;
-            }
-
-            if (IsPlacementGroundCollider(hit, groundCollider))
+            Collider[] overlaps = QueryPlacementColliderOverlaps(
+                col,
+                Mathf.Max(0f, settings.placementBoundsPadding),
+                settings.placementCollisionMask,
+                triggerInteraction);
+            if (overlaps == null || overlaps.Length == 0)
             {
                 continue;
             }
 
-            return false;
+            for (int j = 0; j < overlaps.Length; j++)
+            {
+                Collider hit = overlaps[j];
+                if (hit == null)
+                {
+                    continue;
+                }
+
+                if (SupportsWallPlacement(item) && IsPlacementCharacterCollider(hit))
+                {
+                    return false;
+                }
+
+                if (IsIgnoredPlacementCollider(hit, instance, anchor, settings.placementIgnoreMask))
+                {
+                    continue;
+                }
+
+                if (HasBlockingPlacementPenetration(col, hit))
+                {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -459,6 +463,7 @@ public static class WorldPlacementUtility
         Item item,
         GameObject instance,
         Transform anchor,
+        PreviewCaches previewCaches,
         Settings settings,
         Vector3 desiredPosition,
         Quaternion baseRotation,
@@ -485,7 +490,13 @@ public static class WorldPlacementUtility
                 offset = Mathf.Max(offset, beacon.SurfaceOffset);
             }
 
+            Quaternion wallRotation = BuildPlacementSurfaceRotation(normal, facingHint, baseRotation);
             Vector3 wallPosition = wallHit.point + normal * offset;
+            if (TryAlignPlacementToSupport(instance, previewCaches, wallPosition, wallRotation, wallHit.point, normal, offset, out Vector3 alignedWallPosition))
+            {
+                wallPosition = alignedWallPosition;
+            }
+
             if (!IsWithinPlacementHeadHeight(wallPosition, anchor))
             {
                 groundCollider = null;
@@ -493,7 +504,7 @@ public static class WorldPlacementUtility
             else
             {
                 resolvedPosition = wallPosition;
-                resolvedRotation = BuildPlacementSurfaceRotation(normal, facingHint, baseRotation);
+                resolvedRotation = wallRotation;
                 groundCollider = wallHit.collider;
                 return true;
             }
@@ -503,6 +514,7 @@ public static class WorldPlacementUtility
             item,
             instance,
             anchor,
+            previewCaches,
             settings,
             desiredPosition,
             baseRotation,
@@ -516,6 +528,7 @@ public static class WorldPlacementUtility
         Item item,
         GameObject instance,
         Transform anchor,
+        PreviewCaches previewCaches,
         Settings settings,
         Vector3 desiredPosition,
         Quaternion baseRotation,
@@ -536,12 +549,25 @@ public static class WorldPlacementUtility
                 GetPlacementMinimumUpDot(settings),
                 ref groundCollider,
                 out resolvedPosition,
-                out _))
+                out RaycastHit supportHit))
         {
             return false;
         }
 
         resolvedRotation = BuildPlacementSurfaceRotation(Vector3.up, ResolveFacingHint(anchor, settings), baseRotation);
+        if (TryAlignPlacementToSupport(
+                instance,
+                previewCaches,
+                resolvedPosition,
+                resolvedRotation,
+                supportHit.point,
+                Vector3.up,
+                settings.placementGroundOffset,
+                out Vector3 alignedPosition))
+        {
+            resolvedPosition = alignedPosition;
+        }
+
         return true;
     }
 
@@ -860,6 +886,262 @@ public static class WorldPlacementUtility
         }
 
         return false;
+    }
+
+    private static bool TryAlignPlacementToSupport(
+        GameObject instance,
+        PreviewCaches previewCaches,
+        Vector3 desiredPosition,
+        Quaternion desiredRotation,
+        Vector3 supportPoint,
+        Vector3 supportNormal,
+        float surfaceOffset,
+        out Vector3 alignedPosition)
+    {
+        alignedPosition = desiredPosition;
+        if (instance == null)
+        {
+            return false;
+        }
+
+        Collider[] colliders = GetPlacementColliders(instance, previewCaches);
+        if (colliders == null || colliders.Length == 0)
+        {
+            return false;
+        }
+
+        Vector3 normal = supportNormal.sqrMagnitude > 0.0001f ? supportNormal.normalized : Vector3.up;
+        Vector3 targetPoint = supportPoint + normal * Mathf.Max(0f, surfaceOffset);
+        Vector3 probePoint = targetPoint - normal * GetPlacementProbeDistance(colliders);
+        float targetProjection = Vector3.Dot(targetPoint, normal);
+
+        Transform root = instance.transform;
+        Vector3 originalPosition = root.position;
+        Quaternion originalRotation = root.rotation;
+        bool hasSupportFace = false;
+        float supportProjection = 0f;
+
+        try
+        {
+            root.SetPositionAndRotation(desiredPosition, desiredRotation);
+
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Collider col = colliders[i];
+                if (!IsPlacementSolidCollider(col))
+                {
+                    continue;
+                }
+
+                Vector3 closestPoint = col.ClosestPoint(probePoint);
+                float projection = Vector3.Dot(closestPoint, normal);
+                if (!hasSupportFace || projection < supportProjection)
+                {
+                    supportProjection = projection;
+                    hasSupportFace = true;
+                }
+            }
+        }
+        finally
+        {
+            root.SetPositionAndRotation(originalPosition, originalRotation);
+        }
+
+        if (!hasSupportFace)
+        {
+            return false;
+        }
+
+        alignedPosition = desiredPosition + normal * (targetProjection - supportProjection);
+        return true;
+    }
+
+    private static Collider[] GetPlacementColliders(GameObject instance, PreviewCaches previewCaches)
+    {
+        if (previewCaches != null && previewCaches.colliders != null)
+        {
+            return previewCaches.colliders;
+        }
+
+        return instance != null ? instance.GetComponentsInChildren<Collider>(true) : null;
+    }
+
+    private static bool IsPlacementSolidCollider(Collider col)
+    {
+        return col != null
+            && col.enabled
+            && col.gameObject.activeInHierarchy
+            && !col.isTrigger;
+    }
+
+    private static Collider[] QueryPlacementColliderOverlaps(
+        Collider col,
+        float padding,
+        LayerMask collisionMask,
+        QueryTriggerInteraction triggerInteraction)
+    {
+        if (col == null)
+        {
+            return null;
+        }
+
+        if (col is BoxCollider box)
+        {
+            Vector3 scale = AbsVector(box.transform.lossyScale);
+            Vector3 halfExtents = Vector3.Scale(box.size * 0.5f, scale) + Vector3.one * padding;
+            return Physics.OverlapBox(
+                box.transform.TransformPoint(box.center),
+                halfExtents,
+                box.transform.rotation,
+                collisionMask,
+                triggerInteraction);
+        }
+
+        if (col is SphereCollider sphere)
+        {
+            float radius = sphere.radius * MaxComponent(AbsVector(sphere.transform.lossyScale)) + padding;
+            return Physics.OverlapSphere(
+                sphere.transform.TransformPoint(sphere.center),
+                radius,
+                collisionMask,
+                triggerInteraction);
+        }
+
+        if (col is CapsuleCollider capsule)
+        {
+            GetCapsuleWorldGeometry(capsule, out Vector3 point0, out Vector3 point1, out float radius);
+            return Physics.OverlapCapsule(
+                point0,
+                point1,
+                radius + padding,
+                collisionMask,
+                triggerInteraction);
+        }
+
+        Bounds bounds = col.bounds;
+        return Physics.OverlapBox(
+            bounds.center,
+            bounds.extents + Vector3.one * padding,
+            Quaternion.identity,
+            collisionMask,
+            triggerInteraction);
+    }
+
+    private static void GetCapsuleWorldGeometry(CapsuleCollider capsule, out Vector3 point0, out Vector3 point1, out float radius)
+    {
+        Vector3 scale = AbsVector(capsule.transform.lossyScale);
+        Vector3 center = capsule.transform.TransformPoint(capsule.center);
+        Vector3 axis;
+        float heightScale;
+        float radiusScale;
+
+        switch (capsule.direction)
+        {
+            case 0:
+                axis = capsule.transform.right;
+                heightScale = scale.x;
+                radiusScale = Mathf.Max(scale.y, scale.z);
+                break;
+            case 2:
+                axis = capsule.transform.forward;
+                heightScale = scale.z;
+                radiusScale = Mathf.Max(scale.x, scale.y);
+                break;
+            default:
+                axis = capsule.transform.up;
+                heightScale = scale.y;
+                radiusScale = Mathf.Max(scale.x, scale.z);
+                break;
+        }
+
+        radius = capsule.radius * radiusScale;
+        float height = Mathf.Max(capsule.height * heightScale, radius * 2f);
+        float halfSegment = Mathf.Max(0f, height * 0.5f - radius);
+        Vector3 offset = axis.normalized * halfSegment;
+        point0 = center + offset;
+        point1 = center - offset;
+    }
+
+    private static bool HasBlockingPlacementPenetration(Collider placementCollider, Collider hit)
+    {
+        if (placementCollider == null || hit == null)
+        {
+            return false;
+        }
+
+        if (TryComputePenetrationDistance(placementCollider, hit, out float penetrationDistance))
+        {
+            return penetrationDistance > PlacementPenetrationTolerance;
+        }
+
+        return TryGetBoundsIntersectionDepth(placementCollider.bounds, hit.bounds, out float boundsDepth)
+            && boundsDepth > PlacementPenetrationTolerance;
+    }
+
+    private static bool TryComputePenetrationDistance(Collider placementCollider, Collider hit, out float distance)
+    {
+        distance = 0f;
+        if (placementCollider == null || hit == null)
+        {
+            return false;
+        }
+
+        return Physics.ComputePenetration(
+            placementCollider,
+            placementCollider.transform.position,
+            placementCollider.transform.rotation,
+            hit,
+            hit.transform.position,
+            hit.transform.rotation,
+            out _,
+            out distance);
+    }
+
+    private static bool TryGetBoundsIntersectionDepth(Bounds a, Bounds b, out float depth)
+    {
+        depth = 0f;
+        float overlapX = Mathf.Min(a.max.x, b.max.x) - Mathf.Max(a.min.x, b.min.x);
+        float overlapY = Mathf.Min(a.max.y, b.max.y) - Mathf.Max(a.min.y, b.min.y);
+        float overlapZ = Mathf.Min(a.max.z, b.max.z) - Mathf.Max(a.min.z, b.min.z);
+        if (overlapX <= 0f || overlapY <= 0f || overlapZ <= 0f)
+        {
+            return false;
+        }
+
+        depth = Mathf.Min(overlapX, Mathf.Min(overlapY, overlapZ));
+        return true;
+    }
+
+    private static float GetPlacementProbeDistance(Collider[] colliders)
+    {
+        float distance = 4f;
+        if (colliders == null)
+        {
+            return distance;
+        }
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider col = colliders[i];
+            if (!IsPlacementSolidCollider(col))
+            {
+                continue;
+            }
+
+            distance = Mathf.Max(distance, col.bounds.extents.magnitude * 4f);
+        }
+
+        return distance;
+    }
+
+    private static Vector3 AbsVector(Vector3 value)
+    {
+        return new Vector3(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z));
+    }
+
+    private static float MaxComponent(Vector3 value)
+    {
+        return Mathf.Max(value.x, Mathf.Max(value.y, value.z));
     }
 
     private static bool IsPlacementCharacterCollider(Collider col)
