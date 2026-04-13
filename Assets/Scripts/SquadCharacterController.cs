@@ -96,10 +96,6 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Angle minimal avant d'annoncer un pivot sur place (deg).")]
     private float turnInPlaceAngleThreshold = 60f;
 
-    [Header("Root Motion")]
-    [SerializeField, Tooltip("Consomme aussi la rotation racine des clips. A laisser desactive si la direction reste pilotee par le gameplay.")]
-    private bool applyRootMotionRotation = false;
-
     [Header("Movement")]
     [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
     private float walkMoveSpeed = 5f;
@@ -107,6 +103,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private float moveSpeed = 6.5f;
     [SerializeField, Tooltip("Lissage de l'input.")]
     private float inputResponsiveness = 14f;
+    [SerializeField, Tooltip("Lissage utilise quand le stick revient dans la zone morte.")]
+    private float inputReleaseResponsiveness = 36f;
+    [SerializeField, Range(0f, 1f), Tooltip("Zone morte gameplay de la locomotion InPlace.")]
+    private float movementInputDeadZone = 0.08f;
     [SerializeField, Tooltip("Tourne vers la direction d'input.")]
     private bool rotateToInput = true;
     [SerializeField, Tooltip("Vitesse de rotation.")]
@@ -270,7 +270,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private float footIkWeightCurrent;
     private float obstacleTraversalVisualLag;
     private float obstacleTraversalVisualLagTarget;
-    private float nextRootMotionDiagnosticTime;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -329,16 +328,6 @@ public partial class SquadCharacterController : MonoBehaviour
         UpdateObstacleTraversalVisualSmoothing(Time.deltaTime);
     }
 
-    private void OnAnimatorMove()
-    {
-        if (animator == null || !ShouldConsumeAnimatorRootMotion())
-        {
-            return;
-        }
-
-        ApplyAnimatorRootMotion(animator.deltaPosition, animator.deltaRotation);
-    }
-
     private void Awake()
     {
         if (animator == null)
@@ -353,7 +342,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (rigidbodyTarget == null)
         {
-            Debug.LogError("SquadCharacterController requires a Rigidbody. The grounded scripted locomotion fallback was removed.", this);
+            Debug.LogError("SquadCharacterController requires a Rigidbody for in-place scripted locomotion.", this);
         }
 
         if (locomotionCapsule == null)
@@ -1504,6 +1493,8 @@ public partial class SquadCharacterController : MonoBehaviour
         moveSpeed = Mathf.Max(0f, moveSpeed);
         walkMoveSpeed = Mathf.Min(walkMoveSpeed, moveSpeed);
         inputResponsiveness = Mathf.Max(0f, inputResponsiveness);
+        inputReleaseResponsiveness = Mathf.Max(0f, inputReleaseResponsiveness);
+        movementInputDeadZone = Mathf.Clamp01(movementInputDeadZone);
         walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
         runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
         trotPresentationSpeed = Mathf.Clamp(trotPresentationSpeed, walkSpeedThreshold, runSpeedThreshold);
@@ -1614,7 +1605,7 @@ public partial class SquadCharacterController : MonoBehaviour
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
         sprintModifierPressed = false;
-        currentHorizontalVelocity = Vector3.zero;
+        StopHorizontalVelocity();
         wasMovingForAnimator = false;
         smoothedTurnAmount = 0f;
         SetAnimatorBoolIfValid(isMovingParam, false);
@@ -1716,7 +1707,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private void ApplyMovement(float deltaTime)
     {
         Vector2 effectiveInput = smoothedInput;
-        bool hasInput = effectiveInput.sqrMagnitude > 0.0001f;
+        float inputMagnitude = ResolveMovementInputMagnitude(effectiveInput);
+        bool hasInput = inputMagnitude > 0f;
         Vector3 desiredDirection = Vector3.zero;
         if (hasInput)
         {
@@ -1727,10 +1719,11 @@ public partial class SquadCharacterController : MonoBehaviour
             }
         }
 
-        float lookAheadDistance = ResolveCurrentTargetMoveSpeed() * Mathf.Max(0f, deltaTime);
+        float lookAheadDistance = ResolveCurrentTargetMoveSpeed() * inputMagnitude * Mathf.Max(0f, deltaTime);
         if (enableVoidDetection && hasInput && !IsGroundAhead(desiredDirection, lookAheadDistance))
         {
             hasInput = false;
+            inputMagnitude = 0f;
             StopHorizontalVelocity();
         }
 
@@ -1746,18 +1739,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (inputLockTimer > 0f)
         {
-            ClearScriptDrivenHorizontalVelocity();
+            CaptureCurrentRigidbodyHorizontalVelocity();
             return;
         }
 
-        // La locomotion au sol est maintenant exclusivement drivee par root motion.
-        // Le gameplay fournit l'intention et, si besoin, la rotation.
-        HandleGroundedLocomotionIntent(desiredDirection, hasInput, deltaTime);
-    }
-
-    private bool ShouldUseGroundedLocomotionRootMotion()
-    {
-        return !IsJumpCommitted;
+        // Les clips restent in-place: le gameplay pilote le deplacement, l'Animator ne fait que presenter la pose.
+        HandleGroundedLocomotionIntent(desiredDirection, inputMagnitude, deltaTime);
     }
 
     private bool CanSimulateMovementLocally()
@@ -1766,38 +1753,61 @@ public partial class SquadCharacterController : MonoBehaviour
         return manager == null || !manager.IsListening || manager.IsServer;
     }
 
-    private void HandleGroundedLocomotionIntent(Vector3 desiredDirection, bool hasInput, float deltaTime)
+    private void HandleGroundedLocomotionIntent(Vector3 desiredDirection, float inputMagnitude, float deltaTime)
     {
-        ClearScriptDrivenHorizontalVelocity();
-        if (!ShouldUseGroundedLocomotionRootMotion() ||
-            !hasInput ||
-            desiredDirection.sqrMagnitude <= 0.0001f)
+        if (inputMagnitude <= 0f || desiredDirection.sqrMagnitude <= 0.0001f)
         {
+            ClearScriptDrivenHorizontalVelocity();
             return;
         }
 
-        if (applyRootMotionRotation)
+        float targetSpeed = ResolveCurrentTargetMoveSpeed() * inputMagnitude;
+        Vector3 desiredHorizontalVelocity = desiredDirection * targetSpeed;
+        Vector3 resolvedVelocity = ConstrainHorizontalVelocityAgainstWalls(desiredHorizontalVelocity, deltaTime);
+        currentHorizontalVelocity = Vector3.ProjectOnPlane(resolvedVelocity, transform.up);
+
+        RotateTowardsDesiredDirection(desiredDirection, deltaTime, currentHorizontalVelocity.magnitude);
+
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
         {
+            Vector3 velocity = rigidbodyTarget.linearVelocity;
+            float verticalVelocity = isGrounded
+                ? Mathf.Min(velocity.y, -groundedStickVelocity)
+                : velocity.y;
+
+            rigidbodyTarget.WakeUp();
+            rigidbodyTarget.linearVelocity = new Vector3(
+                currentHorizontalVelocity.x,
+                verticalVelocity,
+                currentHorizontalVelocity.z);
             return;
         }
 
-        RotateTowardsDesiredDirection(desiredDirection, deltaTime, ResolveCurrentTargetMoveSpeed());
+        Transform target = motionRoot != null ? motionRoot : transform;
+        target.position += currentHorizontalVelocity * Mathf.Max(0f, deltaTime);
     }
 
     private void ClearScriptDrivenHorizontalVelocity()
     {
         currentHorizontalVelocity = Vector3.zero;
 
-        if (ShouldUseGroundedLocomotionRootMotion())
-        {
-            return;
-        }
-
         if (ShouldUseRigidbody() && rigidbodyTarget != null)
         {
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
         }
+    }
+
+    private void CaptureCurrentRigidbodyHorizontalVelocity()
+    {
+        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        {
+            Vector3 velocity = rigidbodyTarget.linearVelocity;
+            currentHorizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
+            return;
+        }
+
+        currentHorizontalVelocity = Vector3.zero;
     }
 
     private void UpdateObservedHorizontalVelocity(float deltaTime)
@@ -1881,12 +1891,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         float sprintSpeed = Mathf.Max(0.0001f, moveSpeed);
         return Mathf.Clamp01(ResolveCurrentTargetMoveSpeed() / sprintSpeed);
-    }
-
-    private float ResolveCurrentRootMotionTranslationScale()
-    {
-        float presentationSpeed = Mathf.Max(0.0001f, ResolveCurrentTargetPresentationSpeed());
-        return Mathf.Max(0f, ResolveCurrentTargetMoveSpeed()) / presentationSpeed;
     }
 
     private float ScaleConfiguredLocomotionSpeed(float speed)
@@ -2747,14 +2751,45 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void SmoothInput(float deltaTime)
     {
-        if (inputResponsiveness <= 0f)
+        float responsiveness = ShouldUseInputReleaseSmoothing()
+            ? inputReleaseResponsiveness
+            : inputResponsiveness;
+
+        if (responsiveness <= 0f)
         {
             smoothedInput = moveInput;
             return;
         }
 
-        float t = 1f - Mathf.Exp(-inputResponsiveness * deltaTime);
+        float t = 1f - Mathf.Exp(-responsiveness * deltaTime);
         smoothedInput = Vector2.Lerp(smoothedInput, moveInput, t);
+        if (moveInput.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone &&
+            smoothedInput.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
+        {
+            smoothedInput = Vector2.zero;
+        }
+    }
+
+    private bool ShouldUseInputReleaseSmoothing()
+    {
+        float deadZoneSqr = movementInputDeadZone * movementInputDeadZone;
+        return moveInput.sqrMagnitude <= deadZoneSqr && smoothedInput.sqrMagnitude > deadZoneSqr;
+    }
+
+    private float ResolveMovementInputMagnitude(Vector2 input)
+    {
+        float magnitude = Mathf.Clamp01(input.magnitude);
+        if (magnitude <= movementInputDeadZone)
+        {
+            return 0f;
+        }
+
+        if (movementInputDeadZone >= 0.999f)
+        {
+            return 1f;
+        }
+
+        return Mathf.InverseLerp(movementInputDeadZone, 1f, magnitude);
     }
 
     private void UpdateAnimationSpeed()
@@ -2774,19 +2809,10 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private float ResolveAnimationPresentationSpeed(Vector3 velocity)
     {
-        float inputMagnitude = Mathf.Clamp01(smoothedInput.magnitude);
-        if (inputMagnitude > 0.0001f)
+        float inputMagnitude = ResolveMovementInputMagnitude(smoothedInput);
+        if (inputMagnitude > 0f)
         {
             return inputMagnitude * ResolveCurrentTargetPresentationSpeed();
-        }
-
-        if (ShouldUseGroundedLocomotionRootMotion())
-        {
-            float rootMotionScale = ResolveCurrentRootMotionTranslationScale();
-            if (rootMotionScale > 0.0001f)
-            {
-                return velocity.magnitude / rootMotionScale;
-            }
         }
 
         return velocity.magnitude;
@@ -2851,7 +2877,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         Vector3 desiredDirection = Vector3.zero;
 
-        if (smoothedInput.sqrMagnitude > 0.0001f)
+        if (ResolveMovementInputMagnitude(smoothedInput) > 0f)
         {
             desiredDirection = GetMoveDirection(smoothedInput);
         }
@@ -2917,19 +2943,9 @@ public partial class SquadCharacterController : MonoBehaviour
         return runAnimValue;
     }
 
-    private static string FormatVector2(Vector2 value)
-    {
-        return $"({value.x:0.###},{value.y:0.###})";
-    }
-
-    private static string FormatVector3(Vector3 value)
-    {
-        return $"({value.x:0.###},{value.y:0.###},{value.z:0.###})";
-    }
-
     private Vector3 GetCurrentHorizontalVelocity()
     {
-        if (!CanSimulateMovementLocally() || ShouldUseGroundedLocomotionRootMotion())
+        if (!CanSimulateMovementLocally())
         {
             return currentHorizontalVelocity;
         }
@@ -3120,178 +3136,8 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        animator.applyRootMotion = true;
+        animator.applyRootMotion = false;
         animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
-    }
-
-    private bool ShouldConsumeAnimatorRootMotion()
-    {
-        if (!CanSimulateMovementLocally())
-        {
-            return false;
-        }
-        return !IsJumpCommitted;
-    }
-
-    private void ApplyAnimatorRootMotion(Vector3 deltaPosition, Quaternion deltaRotation)
-    {
-        float deltaTime = animator.updateMode == AnimatorUpdateMode.Fixed
-            ? Time.fixedDeltaTime
-            : Time.deltaTime;
-
-        Vector3 scaledDeltaPosition = deltaPosition;
-        if (ShouldUseGroundedLocomotionRootMotion() && smoothedInput.sqrMagnitude > 0.0001f)
-        {
-            float rootMotionScale = ResolveCurrentRootMotionTranslationScale();
-            if (rootMotionScale > 0.0001f && !Mathf.Approximately(rootMotionScale, 1f))
-            {
-                scaledDeltaPosition *= rootMotionScale;
-            }
-        }
-
-        Vector3 resolvedDeltaPosition = scaledDeltaPosition;
-        bool applyTranslation = scaledDeltaPosition.sqrMagnitude > 0.00000001f;
-        bool applyRotation = applyRootMotionRotation;
-        string diagnosticReason = null;
-
-        if (applyTranslation)
-        {
-            if (TryResolveAnimatorRootMotionTranslation(
-                    scaledDeltaPosition,
-                    out resolvedDeltaPosition,
-                    out string rootMotionFilterReason))
-            {
-                applyTranslation = resolvedDeltaPosition.sqrMagnitude > 0.00000001f;
-            }
-            else
-            {
-                applyTranslation = false;
-                diagnosticReason = string.IsNullOrWhiteSpace(rootMotionFilterReason)
-                    ? "root delta cancelled by collision or void filtering"
-                    : rootMotionFilterReason;
-            }
-        }
-        else if (ShouldUseGroundedLocomotionRootMotion())
-        {
-            diagnosticReason = "Animator.deltaPosition is zero";
-        }
-
-        if (!applyTranslation && ShouldUseGroundedLocomotionRootMotion() && !string.IsNullOrWhiteSpace(diagnosticReason))
-        {
-            LogRootMotionDiagnostic(deltaPosition, resolvedDeltaPosition, diagnosticReason);
-        }
-
-        if (!applyTranslation && !applyRotation)
-        {
-            if (ShouldUseGroundedLocomotionRootMotion())
-            {
-                currentHorizontalVelocity = Vector3.zero;
-            }
-
-            return;
-        }
-
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
-        {
-            if (applyTranslation)
-            {
-                Vector3 targetPosition = rigidbodyTarget.position + resolvedDeltaPosition;
-                rigidbodyTarget.WakeUp();
-                rigidbodyTarget.MovePosition(targetPosition);
-
-                if (deltaTime > 0f)
-                {
-                    currentHorizontalVelocity = Vector3.ProjectOnPlane(resolvedDeltaPosition / deltaTime, transform.up);
-                }
-            }
-            else if (ShouldUseGroundedLocomotionRootMotion())
-            {
-                currentHorizontalVelocity = Vector3.zero;
-            }
-
-            if (applyRotation)
-            {
-                rigidbodyTarget.MoveRotation(deltaRotation * rigidbodyTarget.rotation);
-            }
-
-            return;
-        }
-
-        Transform target = motionRoot != null ? motionRoot : transform;
-        if (applyTranslation)
-        {
-            target.position += resolvedDeltaPosition;
-            if (deltaTime > 0f)
-            {
-                currentHorizontalVelocity = Vector3.ProjectOnPlane(resolvedDeltaPosition / deltaTime, transform.up);
-            }
-        }
-        else if (ShouldUseGroundedLocomotionRootMotion())
-        {
-            currentHorizontalVelocity = Vector3.zero;
-        }
-
-        if (applyRotation)
-        {
-            target.rotation = deltaRotation * target.rotation;
-        }
-    }
-
-    private void LogRootMotionDiagnostic(Vector3 rawDeltaPosition, Vector3 resolvedDeltaPosition, string reason)
-    {
-        if (!Application.isPlaying || animator == null)
-        {
-            return;
-        }
-
-        if (Time.unscaledTime < nextRootMotionDiagnosticTime)
-        {
-            return;
-        }
-
-        if (smoothedInput.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        nextRootMotionDiagnosticTime = Time.unscaledTime + 0.35f;
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        Debug.LogWarning(
-            $"[RootMotion] path='{PersistentWorldDebug.DescribeTransform(transform)}' stateHash={state.shortNameHash} normalizedTime={state.normalizedTime:0.###} grounded={isGrounded} jumpCommitted={IsJumpCommitted} input='{FormatVector2(smoothedInput)}' rawDelta='{FormatVector3(rawDeltaPosition)}' resolvedDelta='{FormatVector3(resolvedDeltaPosition)}' reason='{reason}'",
-            this);
-    }
-
-    private bool TryResolveAnimatorRootMotionTranslation(
-        Vector3 deltaPosition,
-        out Vector3 resolvedDeltaPosition,
-        out string reason)
-    {
-        resolvedDeltaPosition = deltaPosition;
-        reason = null;
-
-        Vector3 planarDelta = Vector3.ProjectOnPlane(deltaPosition, transform.up);
-        if (planarDelta.sqrMagnitude <= 0.00000001f)
-        {
-            resolvedDeltaPosition = Vector3.zero;
-            reason = "root delta has no planar displacement";
-            return false;
-        }
-
-        if (enableVoidDetection && !IsGroundAhead(planarDelta.normalized, planarDelta.magnitude))
-        {
-            resolvedDeltaPosition = Vector3.zero;
-            reason = "root delta blocked by void detection";
-            return false;
-        }
-
-        resolvedDeltaPosition = ResolveSafeHorizontalDisplacement(planarDelta);
-        if (resolvedDeltaPosition.sqrMagnitude <= 0.00000001f)
-        {
-            reason = "root delta blocked by collision filtering";
-            return false;
-        }
-
-        return true;
     }
 
     private void EnsureRigidbodyCollisionSafety()

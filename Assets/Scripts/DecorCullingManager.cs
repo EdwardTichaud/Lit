@@ -14,9 +14,11 @@ public sealed class DecorCullingManager : MonoBehaviour
 
     [Header("Culling")]
     [SerializeField, Min(10f)] private float maxVisibleDistance = 140f;
+    [SerializeField] private bool limitDecorLightsByDistance = true;
+    [SerializeField, Min(5f)] private float maxLightVisibleDistance = 45f;
     [SerializeField] private bool requireCameraFrustum = true;
     [SerializeField, Min(0f)] private float offscreenGraceSeconds = 0.35f;
-    [SerializeField, Min(0.05f)] private float evaluationInterval = 0.2f;
+    [SerializeField, Min(0.05f)] private float evaluationInterval = 0.25f;
 
     private readonly List<DecorCullable> cullables = new List<DecorCullable>();
     private readonly Dictionary<DecorCullable, int> cullableIndices = new Dictionary<DecorCullable, int>();
@@ -241,15 +243,20 @@ public sealed class DecorCullingManager : MonoBehaviour
             return;
         }
 
-        bool withinDistance = cullingGroup.GetDistance(index) == 0;
+        int distanceBand = cullingGroup.GetDistance(index);
+        bool withinDistance = distanceBand <= GetVisibleDistanceBand();
         bool withinCamera = !requireCameraFrustum || cullingGroup.IsVisible(index);
         bool shouldBeVisible = withinDistance && withinCamera;
+        bool shouldKeepLights = shouldBeVisible && IsLightDistanceBand(distanceBand);
         if (shouldBeVisible)
         {
             invisibleSince[index] = -1f;
             cullable.SetCulled(false);
+            cullable.SetLightDistanceCulled(!shouldKeepLights);
             return;
         }
+
+        cullable.SetLightDistanceCulled(true);
 
         bool distanceCulled = !withinDistance;
         if (distanceCulled || offscreenGraceSeconds <= 0f)
@@ -336,11 +343,29 @@ public sealed class DecorCullingManager : MonoBehaviour
 
     private void ConfigureDistances()
     {
-        distanceBands = new[] { Mathf.Max(10f, maxVisibleDistance) };
+        if (limitDecorLightsByDistance && maxLightVisibleDistance < maxVisibleDistance)
+        {
+            distanceBands = new[] { maxLightVisibleDistance, maxVisibleDistance };
+        }
+        else
+        {
+            distanceBands = new[] { Mathf.Max(10f, maxVisibleDistance) };
+        }
+
         if (cullingGroup != null)
         {
             cullingGroup.SetBoundingDistances(distanceBands);
         }
+    }
+
+    private int GetVisibleDistanceBand()
+    {
+        return distanceBands != null && distanceBands.Length > 1 ? 1 : 0;
+    }
+
+    private bool IsLightDistanceBand(int distanceBand)
+    {
+        return !limitDecorLightsByDistance || distanceBands == null || distanceBands.Length <= 1 || distanceBand == 0;
     }
 
     private void EnsureCapacity(int requiredCount)
@@ -380,6 +405,7 @@ public sealed class DecorCullingManager : MonoBehaviour
             DecorCullable cullable = cullables[i];
             if (cullable != null)
             {
+                cullable.SetLightDistanceCulled(false);
                 cullable.SetCulled(false);
             }
 
@@ -404,6 +430,7 @@ public sealed class DecorCullingManager : MonoBehaviour
     private void ClampSettings()
     {
         maxVisibleDistance = Mathf.Max(10f, maxVisibleDistance);
+        maxLightVisibleDistance = Mathf.Clamp(maxLightVisibleDistance, 5f, Mathf.Max(5f, maxVisibleDistance - 0.1f));
         offscreenGraceSeconds = Mathf.Max(0f, offscreenGraceSeconds);
         evaluationInterval = Mathf.Max(0.05f, evaluationInterval);
     }

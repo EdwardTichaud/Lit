@@ -1084,7 +1084,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 1
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 1
@@ -1214,10 +1214,11 @@ MonoBehaviour:
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
   turnInPlaceAngleThreshold: 60
-  applyRootMotionRotation: 0
   walkMoveSpeed: 5
   moveSpeed: 6.5
   inputResponsiveness: 14
+  inputReleaseResponsiveness: 36
+  movementInputDeadZone: 0.08
   rotateToInput: 1
   rotationSpeed: 24
   useCameraRelative: 1

@@ -87,7 +87,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 1
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 1
@@ -217,10 +217,11 @@ MonoBehaviour:
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
   turnInPlaceAngleThreshold: 60
-  applyRootMotionRotation: 0
   walkMoveSpeed: 5
-  moveSpeed: 6.5
+  moveSpeed: 10
   inputResponsiveness: 14
+  inputReleaseResponsiveness: 36
+  movementInputDeadZone: 0.08
   rotateToInput: 1
   rotationSpeed: 24
   useCameraRelative: 1
@@ -592,31 +593,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.43005309
+      value: -0.20184478
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.0542204
+      value: 0.885391
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.11500126
+      value: -0.221037
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.52339566
+      value: -0.37871644
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.59941703
+      value: -0.6223565
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.60503197
+      value: -0.67454606
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.026315257
+      value: -0.11930632
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 
 [DisallowMultipleComponent]
 public sealed class DecorCullable : MonoBehaviour
@@ -14,6 +15,8 @@ public sealed class DecorCullable : MonoBehaviour
     [SerializeField] private bool autoCollectTargets = true;
     [SerializeField] private bool disableRenderers = true;
     [SerializeField] private bool disableLights = true;
+    [SerializeField] private bool disableLightShadows = true;
+    [SerializeField] private bool disableHdrpContactShadows = true;
     [SerializeField] private bool pauseParticles = true;
     [SerializeField] private bool disableCollidersWhenCulled = false;
     [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
@@ -28,6 +31,7 @@ public sealed class DecorCullable : MonoBehaviour
     private BoundingSphere boundingSphere;
     private bool boundsDirty = true;
     private bool isCulled;
+    private bool isLightDistanceCulled;
     private bool isRegistered;
 
     public bool IsCulled => isCulled;
@@ -61,6 +65,7 @@ public sealed class DecorCullable : MonoBehaviour
         }
         else
         {
+            ApplyLightPerformanceSettings();
             RecalculateBounds();
         }
     }
@@ -80,8 +85,9 @@ public sealed class DecorCullable : MonoBehaviour
 
     private void OnDisable()
     {
-        if (isCulled)
+        if (isCulled || isLightDistanceCulled)
         {
+            isLightDistanceCulled = false;
             ApplyVisibleState();
             isCulled = false;
         }
@@ -104,6 +110,7 @@ public sealed class DecorCullable : MonoBehaviour
         }
         else
         {
+            ApplyLightPerformanceSettings();
             boundsDirty = true;
         }
     }
@@ -146,6 +153,7 @@ public sealed class DecorCullable : MonoBehaviour
             ? FilterOwnedTargets(root.GetComponentsInChildren<Collider>(includeInactiveChildren))
             : Array.Empty<Collider>();
 
+        ApplyLightPerformanceSettings();
         boundsDirty = true;
         RecalculateBounds();
     }
@@ -209,7 +217,7 @@ public sealed class DecorCullable : MonoBehaviour
 
         if (culled)
         {
-            CaptureTargetStates();
+            CaptureTargetStates(captureLights: !isLightDistanceCulled);
             ApplyCulledState();
         }
         else
@@ -220,10 +228,42 @@ public sealed class DecorCullable : MonoBehaviour
         isCulled = culled;
     }
 
-    private void CaptureTargetStates()
+    internal void SetLightDistanceCulled(bool culled)
+    {
+        if (!disableLights || targetLights == null || targetLights.Length == 0)
+        {
+            isLightDistanceCulled = false;
+            return;
+        }
+
+        if (isLightDistanceCulled == culled)
+        {
+            return;
+        }
+
+        if (culled)
+        {
+            if (!isCulled)
+            {
+                CaptureLightStates();
+                ApplyLightCulledState();
+            }
+
+            isLightDistanceCulled = true;
+        }
+        else
+        {
+            isLightDistanceCulled = false;
+            if (!isCulled)
+            {
+                ApplyLightVisibleState();
+            }
+        }
+    }
+
+    private void CaptureTargetStates(bool captureLights = true)
     {
         EnsureStateArray(ref rendererEnabledStates, targetRenderers != null ? targetRenderers.Length : 0);
-        EnsureStateArray(ref lightEnabledStates, targetLights != null ? targetLights.Length : 0);
         EnsureStateArray(ref particlePlayingStates, targetParticles != null ? targetParticles.Length : 0);
         EnsureStateArray(ref colliderEnabledStates, targetColliders != null ? targetColliders.Length : 0);
 
@@ -233,10 +273,9 @@ public sealed class DecorCullable : MonoBehaviour
             rendererEnabledStates[i] = target != null && target.enabled;
         }
 
-        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        if (captureLights)
         {
-            Light target = targetLights[i];
-            lightEnabledStates[i] = target != null && target.enabled;
+            CaptureLightStates();
         }
 
         for (int i = 0; targetParticles != null && i < targetParticles.Length; i++)
@@ -268,14 +307,7 @@ public sealed class DecorCullable : MonoBehaviour
 
         if (disableLights && targetLights != null)
         {
-            for (int i = 0; i < targetLights.Length; i++)
-            {
-                Light target = targetLights[i];
-                if (target != null)
-                {
-                    target.enabled = false;
-                }
-            }
+            ApplyLightCulledState();
         }
 
         if (pauseParticles && Application.isPlaying && targetParticles != null)
@@ -317,16 +349,9 @@ public sealed class DecorCullable : MonoBehaviour
             }
         }
 
-        if (disableLights && targetLights != null)
+        if (disableLights && targetLights != null && !isLightDistanceCulled)
         {
-            for (int i = 0; i < targetLights.Length; i++)
-            {
-                Light target = targetLights[i];
-                if (target != null && lightEnabledStates.Length > i)
-                {
-                    target.enabled = lightEnabledStates[i];
-                }
-            }
+            ApplyLightVisibleState();
         }
 
         if (pauseParticles && Application.isPlaying && targetParticles != null)
@@ -351,6 +376,72 @@ public sealed class DecorCullable : MonoBehaviour
                     target.enabled = colliderEnabledStates[i];
                 }
             }
+        }
+    }
+
+    private void CaptureLightStates()
+    {
+        EnsureStateArray(ref lightEnabledStates, targetLights != null ? targetLights.Length : 0);
+
+        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            lightEnabledStates[i] = target != null && target.enabled;
+        }
+    }
+
+    private void ApplyLightCulledState()
+    {
+        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            if (target != null)
+            {
+                target.enabled = false;
+            }
+        }
+    }
+
+    private void ApplyLightVisibleState()
+    {
+        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            if (target != null && lightEnabledStates.Length > i)
+            {
+                target.enabled = lightEnabledStates[i];
+            }
+        }
+    }
+
+    private void ApplyLightPerformanceSettings()
+    {
+        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            if (target == null)
+            {
+                continue;
+            }
+
+            if (disableLightShadows)
+            {
+                target.shadows = LightShadows.None;
+            }
+
+            if (!disableHdrpContactShadows)
+            {
+                continue;
+            }
+
+            HDAdditionalLightData hdLight = target.GetComponent<HDAdditionalLightData>();
+            if (hdLight == null)
+            {
+                continue;
+            }
+
+            hdLight.useContactShadow.useOverride = true;
+            hdLight.useContactShadow.@override = false;
         }
     }
 

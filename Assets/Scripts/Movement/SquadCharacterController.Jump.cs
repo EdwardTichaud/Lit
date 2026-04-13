@@ -834,12 +834,14 @@ public partial class SquadCharacterController
             return queuedCommittedJumpInput;
         }
 
-        if (smoothedInput.sqrMagnitude > 0.0001f)
+        if (ResolveMovementInputMagnitude(smoothedInput) > 0f)
         {
             return smoothedInput;
         }
 
-        return moveInput;
+        return ResolveMovementInputMagnitude(moveInput) > 0f
+            ? moveInput
+            : Vector2.zero;
     }
 
     private Vector3 ResolveCommittedInputDirection(Vector2 launchInput)
