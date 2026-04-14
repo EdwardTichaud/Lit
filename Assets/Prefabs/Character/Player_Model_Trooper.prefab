@@ -1118,6 +1118,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
+  enableHeightProbeTraversal: 1
+  heightProbeForwardDistance: 10
+  heightProbeSampleCount: 24
+  heightProbeMaxRise: 3.5
+  heightProbeMaxDrop: 3.5
+  heightProbeVerticalPadding: 0.25
+  heightProbeContactOffset: 0.02
+  heightProbeMinRise: 0.03
+  heightProbeGroundGraceTime: 0.12
   enableCharacterInteractionDetection: 1
   interactionDetectionMask:
     serializedVersion: 2
@@ -1211,6 +1220,7 @@ MonoBehaviour:
   isMovingParam: IsMoving
   moveStartTriggerParam: MoveStartTrigger
   moveStopTriggerParam: MoveStopTrigger
+  locomotionTierParam: LocomotionTier
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
   turnInPlaceAngleThreshold: 60
@@ -1267,18 +1277,6 @@ MonoBehaviour:
   preventWallPenetration: 1
   movementCollisionSkin: 0.03
   movementCollisionWalkableNormalDot: 0.35
-  enableObstacleTraversal: 1
-  obstacleTraversalMaxStepHeight: 0.65
-  obstacleTraversalClearance: 0.08
-  obstacleTraversalProbeDistance: 0.8
-  obstacleTraversalGroundGraceTime: 0.12
-  obstacleTraversalContactOffset: 0.01
-  smoothObstacleTraversalVisuals: 1
-  obstacleTraversalVisualRoot: {fileID: 0}
-  obstacleTraversalVisualCatchUpSpeed: 4
-  obstacleTraversalVisualResponsiveness: 12
-  obstacleTraversalVisualMaxLag: 0.18
-  obstacleTraversalVisualDeadZone: 0.015
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845

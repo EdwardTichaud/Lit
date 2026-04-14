@@ -6,6 +6,9 @@ using UnityEngine;
 [RequireComponent(typeof(Animator), typeof(Rigidbody))]
 public partial class SquadCharacterController : MonoBehaviour
 {
+    private const float WalkLocomotionTier = 1f;
+    private const float JogtrotLocomotionTier = 2f;
+    private const float RunLocomotionTier = 3f;
 
     private enum TorchVisualTransition
     {
@@ -89,6 +92,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private string moveStartTriggerParam = "MoveStartTrigger";
     [SerializeField, Tooltip("Nom du trigger optionnel emis a l'arret du mouvement.")]
     private string moveStopTriggerParam = "MoveStopTrigger";
+    [SerializeField, Tooltip("Nom du float optionnel qui selectionne le Start/Stop locomotion: 1=Walk, 2=Jogtrot, 3=Run.")]
+    private string locomotionTierParam = "LocomotionTier";
     [SerializeField, Tooltip("Nom du float optionnel signe (-1..1) mesurant le besoin de rotation.")]
     private string turnParam = "Turn";
     [SerializeField, Tooltip("Nom du bool optionnel actif quand un pivot sur place est pertinent.")]
@@ -208,31 +213,6 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Range(0f, 1f), Tooltip("Normale minimale consideree comme walkable et ignoree pour le blocage horizontal.")]
     private float movementCollisionWalkableNormalDot = 0.35f;
 
-    [Header("Obstacle Traversal")]
-    [SerializeField, Tooltip("Autorise le franchissement permissif des marches et petits obstacles.")]
-    private bool enableObstacleTraversal = true;
-    [SerializeField, Tooltip("Hauteur maximale des marches/obstacles franchissables (m).")]
-    private float obstacleTraversalMaxStepHeight = 0.65f;
-    [SerializeField, Tooltip("Marge verticale supplementaire appliquee pendant le step-up (m).")]
-    private float obstacleTraversalClearance = 0.08f;
-    [SerializeField, Tooltip("Distance supplementaire de recherche de support apres un step-up (m).")]
-    private float obstacleTraversalProbeDistance = 0.8f;
-    [SerializeField, Tooltip("Courte grace time apres perte de sol pendant laquelle le franchissement reste autorise.")]
-    private float obstacleTraversalGroundGraceTime = 0.12f;
-    [SerializeField, Tooltip("Petit offset conserve au-dessus du support apres un step-up (m).")]
-    private float obstacleTraversalContactOffset = 0.01f;
-    [SerializeField, Tooltip("Lisse visuellement les step-up en retardant legerement le mesh par rapport au root physique.")]
-    private bool smoothObstacleTraversalVisuals = true;
-    [SerializeField, Tooltip("Root visuel optionnel a amortir pendant les step-up. Si vide, le controller cherche un root visuel automatiquement.")]
-    private Transform obstacleTraversalVisualRoot;
-    [SerializeField, Tooltip("Vitesse de rattrapage du visuel apres un step-up (m/s).")]
-    private float obstacleTraversalVisualCatchUpSpeed = 4f;
-    [SerializeField, Tooltip("Vitesse de lissage appliquee au retard visuel pour eviter les a-coups (1/s).")]
-    private float obstacleTraversalVisualResponsiveness = 12f;
-    [SerializeField, Tooltip("Retard visuel maximal autorise pendant un step-up (m).")]
-    private float obstacleTraversalVisualMaxLag = 0.18f;
-    [SerializeField, Tooltip("Ignore les micro step-up sous cette hauteur pour eviter le bruit visuel (m).")]
-    private float obstacleTraversalVisualDeadZone = 0.015f;
     private Vector2 moveInput;
     private float inputLockTimer;
     private Vector2 smoothedInput;
@@ -258,6 +238,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private CapsuleCollider locomotionCapsule;
     private bool wasMovingForAnimator;
     private float smoothedTurnAmount;
+    private float lastMovingLocomotionTier = WalkLocomotionTier;
     [Header("Audio")]
     [SerializeField] private AudioListener audioListener;
     [SerializeField] private bool searchAudioListenerInChildren = true;
@@ -265,11 +246,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private NetworkObject cachedNetworkObject;
     private readonly RaycastHit[] movementCastHits = new RaycastHit[8];
     private readonly Collider[] movementOverlapHits = new Collider[8];
-    private readonly List<Transform> obstacleTraversalVisualTargets = new List<Transform>();
-    private readonly List<Vector3> obstacleTraversalVisualBaseLocalPositions = new List<Vector3>();
     private float footIkWeightCurrent;
-    private float obstacleTraversalVisualLag;
-    private float obstacleTraversalVisualLagTarget;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -325,7 +302,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         UpdateTorchVisualTransition();
         UpdateTorchAnimationLayerWeight();
-        UpdateObstacleTraversalVisualSmoothing(Time.deltaTime);
     }
 
     private void Awake()
@@ -355,7 +331,6 @@ public partial class SquadCharacterController : MonoBehaviour
             motionRoot = transform;
         }
 
-        CacheObstacleTraversalVisualTargets();
         CacheAudioListener();
         CacheNetworkObject();
         EnsureDynamicMeshCollidersSafe();
@@ -390,7 +365,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private void OnDisable()
     {
         ClearLocalInteractionTarget();
-        ResetObstacleTraversalVisualTargetsImmediate();
         SetAudioListenerActive(false);
         UnregisterCharacter();
     }
@@ -449,7 +423,6 @@ public partial class SquadCharacterController : MonoBehaviour
         cachedNetworkObject = null;
         CacheNetworkObject();
         ApplyAnimatorSettings();
-        CacheObstacleTraversalVisualTargets();
     }
 
     private void UpdateAudioListenerState(bool force)
@@ -1522,15 +1495,7 @@ public partial class SquadCharacterController : MonoBehaviour
         maxWalkableSlopeAngle = Mathf.Clamp(maxWalkableSlopeAngle, 0f, 89f);
         movementCollisionSkin = Mathf.Max(0.001f, movementCollisionSkin);
         movementCollisionWalkableNormalDot = Mathf.Clamp01(movementCollisionWalkableNormalDot);
-        obstacleTraversalMaxStepHeight = Mathf.Max(0f, obstacleTraversalMaxStepHeight);
-        obstacleTraversalClearance = Mathf.Max(0f, obstacleTraversalClearance);
-        obstacleTraversalProbeDistance = Mathf.Max(0.02f, obstacleTraversalProbeDistance);
-        obstacleTraversalGroundGraceTime = Mathf.Max(0f, obstacleTraversalGroundGraceTime);
-        obstacleTraversalContactOffset = Mathf.Max(0f, obstacleTraversalContactOffset);
-        obstacleTraversalVisualCatchUpSpeed = Mathf.Max(0.01f, obstacleTraversalVisualCatchUpSpeed);
-        obstacleTraversalVisualResponsiveness = Mathf.Max(0.01f, obstacleTraversalVisualResponsiveness);
-        obstacleTraversalVisualMaxLag = Mathf.Max(0f, obstacleTraversalVisualMaxLag);
-        obstacleTraversalVisualDeadZone = Mathf.Max(0f, obstacleTraversalVisualDeadZone);
+        ValidateHeightProbeTraversalSettings();
 
         ValidateCommittedJumpSettings();
         ApplyAnimatorSettings();
@@ -1608,8 +1573,10 @@ public partial class SquadCharacterController : MonoBehaviour
         StopHorizontalVelocity();
         wasMovingForAnimator = false;
         smoothedTurnAmount = 0f;
+        lastMovingLocomotionTier = WalkLocomotionTier;
         SetAnimatorBoolIfValid(isMovingParam, false);
         SetAnimatorBoolIfValid(turnInPlaceParam, false);
+        SetAnimatorFloatIfValid(locomotionTierParam, lastMovingLocomotionTier);
         SetAnimatorFloatIfValid(turnParam, 0f);
         SetSpeed(0f);
     }
@@ -1907,8 +1874,8 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Vector3 desiredDisplacement = desiredHorizontalVelocity * deltaTime;
         Vector3 safeDisplacement = ResolveSafeHorizontalDisplacement(desiredDisplacement);
-        ApplyObstacleTraversalOffsetToRigidbody(safeDisplacement);
-        return safeDisplacement / deltaTime;
+        ApplyHeightProbeTraversalOffsetToRigidbody(safeDisplacement);
+        return Vector3.ProjectOnPlane(safeDisplacement, transform.up) / deltaTime;
     }
 
     private Vector3 ResolveSafeHorizontalDisplacement(Vector3 desiredDisplacement)
@@ -1948,31 +1915,13 @@ public partial class SquadCharacterController : MonoBehaviour
             Vector3 castPoint2 = point2 + accumulated;
             if (!TryGetHorizontalBlockingHit(castPoint1, castPoint2, castRadius, direction, distance + movementCollisionSkin, mask, out RaycastHit hit))
             {
-                if (TryResolveForwardSupportTraversal(castPoint1, castPoint2, radius, remaining, mask, out Vector3 forwardSupportTraversal))
-                {
-                    accumulated += forwardSupportTraversal;
-                    break;
-                }
-
-                if (TryResolveProactiveObstacleTraversal(castPoint1, castPoint2, radius, remaining, mask, out Vector3 proactiveTraversalDisplacement))
-                {
-                    accumulated += proactiveTraversalDisplacement;
-                    break;
-                }
-
                 accumulated += remaining;
                 break;
             }
 
-            if (TryResolveForwardSupportTraversal(castPoint1, castPoint2, radius, remaining, mask, out Vector3 forwardSupportStep))
+            if (TryResolveHeightProbeTraversal(castPoint1, castPoint2, radius, remaining, mask, hit, out Vector3 stepDisplacement))
             {
-                accumulated += forwardSupportStep;
-                break;
-            }
-
-            if (TryResolveObstacleTraversal(castPoint1, castPoint2, radius, remaining, mask, hit, out Vector3 traversalDisplacement))
-            {
-                accumulated += traversalDisplacement;
+                accumulated += stepDisplacement;
                 break;
             }
 
@@ -2850,6 +2799,16 @@ public partial class SquadCharacterController : MonoBehaviour
                 ? false
                 : wasMovingForAnimator;
 
+        float locomotionTier = isMovingNow
+            ? ResolveLocomotionTier(presentationSpeed)
+            : lastMovingLocomotionTier;
+        if (isMovingNow)
+        {
+            lastMovingLocomotionTier = locomotionTier;
+        }
+
+        SetAnimatorFloatIfValid(locomotionTierParam, locomotionTier);
+
         if (isMovingNow != wasMovingForAnimator)
         {
             if (isMovingNow)
@@ -2871,6 +2830,25 @@ public partial class SquadCharacterController : MonoBehaviour
         SetAnimatorBoolIfValid(turnInPlaceParam, shouldTurnInPlace);
 
         wasMovingForAnimator = isMovingNow;
+    }
+
+    private float ResolveLocomotionTier(float presentationSpeed)
+    {
+        float speed = Mathf.Max(0f, presentationSpeed);
+        float jogThreshold = Mathf.Lerp(walkSpeedThreshold, trotPresentationSpeed, 0.5f);
+        float runThreshold = Mathf.Lerp(trotPresentationSpeed, runSpeedThreshold, 0.5f);
+
+        if (speed >= runThreshold)
+        {
+            return RunLocomotionTier;
+        }
+
+        if (speed >= jogThreshold)
+        {
+            return JogtrotLocomotionTier;
+        }
+
+        return WalkLocomotionTier;
     }
 
     private Vector3 ResolveAnimatorDesiredDirection(Vector3 velocity)
