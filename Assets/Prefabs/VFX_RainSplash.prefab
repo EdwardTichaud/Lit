@@ -19663,6 +19663,7 @@ GameObject:
   - component: {fileID: 4978514593656585705}
   - component: {fileID: 3019600660757514274}
   - component: {fileID: 383544228686938741}
+  - component: {fileID: 4052776256565753039}
   m_Layer: 0
   m_Name: VFX_RainSplash
   m_TagString: Untagged
@@ -19681,7 +19682,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 907.40356, y: 8.1963, z: -43.079285}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6515347166067694786}
   - {fileID: 2402371649397558772}
@@ -24519,6 +24520,97 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &4052776256565753039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008745065993787195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a4dd30e4da04647af450dd3b6d996a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DecorCullable
+  boundsRoot: {fileID: 4978514593656585705}
+  includeInactiveChildren: 1
+  boundsPadding: 2
+  minimumBoundsRadius: 0.5
+  autoCollectTargets: 1
+  disableRenderers: 1
+  disableLights: 1
+  disableLightShadows: 1
+  disableHdrpContactShadows: 1
+  pauseParticles: 1
+  disableCollidersWhenCulled: 0
+  targetRenderers:
+  - {fileID: 383544228686938741}
+  - {fileID: 4177710599809075286}
+  - {fileID: 7374557534690422802}
+  - {fileID: 917208410140932575}
+  - {fileID: 7086253458592599517}
+  - {fileID: 3947894361851398469}
+  - {fileID: 7012159559515122184}
+  - {fileID: 9022264106622124064}
+  - {fileID: 1663512510707473827}
+  - {fileID: 3681769837377402376}
+  - {fileID: 966592964623768160}
+  - {fileID: 857233393810968442}
+  - {fileID: 5366530261527338749}
+  - {fileID: 1555462138342339830}
+  - {fileID: 3731485669462951521}
+  - {fileID: 3301787359090494110}
+  - {fileID: 2535293794854064747}
+  - {fileID: 9047233204123400592}
+  - {fileID: 6492844311545720587}
+  - {fileID: 6394982239125253986}
+  - {fileID: 2812574539273989840}
+  - {fileID: 4508186364623669839}
+  - {fileID: 1217773927222152281}
+  - {fileID: 4750926271934609959}
+  - {fileID: 4999248639121892320}
+  - {fileID: 5885603060967169935}
+  - {fileID: 2902210769673716862}
+  - {fileID: 2595651631944461836}
+  - {fileID: 5133062192406221650}
+  - {fileID: 8840702852529822641}
+  - {fileID: 5329616229931361267}
+  - {fileID: 926300735247987149}
+  targetLights: []
+  targetParticles:
+  - {fileID: 3019600660757514274}
+  - {fileID: 2142488423772978607}
+  - {fileID: 6344944470170387442}
+  - {fileID: 8389570594356222324}
+  - {fileID: 2481369706733699424}
+  - {fileID: 7159637866510776604}
+  - {fileID: 5649967117267590344}
+  - {fileID: 7493621193084720554}
+  - {fileID: 4271649961497723107}
+  - {fileID: 1601110880858018990}
+  - {fileID: 3519876041255505594}
+  - {fileID: 2830978576549881455}
+  - {fileID: 3513473594322868548}
+  - {fileID: 6252308551770594564}
+  - {fileID: 3013872240523415644}
+  - {fileID: 2730760793602738213}
+  - {fileID: 8374503805147412934}
+  - {fileID: 2150906173125779329}
+  - {fileID: 8031493382592399825}
+  - {fileID: 9195370983699402881}
+  - {fileID: 5016978845890934571}
+  - {fileID: 6482899745871845831}
+  - {fileID: 3410127144861348609}
+  - {fileID: 8375965910461686758}
+  - {fileID: 3551042174281748822}
+  - {fileID: 1107381274117369350}
+  - {fileID: 3512716332977632031}
+  - {fileID: 3756413321008301477}
+  - {fileID: 9169527480536745109}
+  - {fileID: 2351270741122109959}
+  - {fileID: 6970191210719975706}
+  - {fileID: 4820008925807061564}
+  targetColliders: []
 --- !u!1 &1115090046333942231
 GameObject:
   m_ObjectHideFlags: 0
