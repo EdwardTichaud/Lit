@@ -1123,6 +1123,10 @@ MonoBehaviour:
   heightProbeSampleCount: 24
   heightProbeMaxRise: 3.5
   heightProbeMaxDrop: 3.5
+  heightProbeMaxStepRise: 0.55
+  heightProbeMaxStepDrop: 0.75
+  heightProbeStepSearchExtraDistance: 0.45
+  enableHeightProbeGroundSnap: 1
   heightProbeVerticalPadding: 0.25
   heightProbeContactOffset: 0.02
   heightProbeMinRise: 0.03
@@ -1141,6 +1145,8 @@ MonoBehaviour:
   useAnimationTimedImpulse: 1
   takeoffImpulseNormalizedTime: 0.18
   verticalImpulse: 7
+  minimumJumpTravelDistance: 3
+  minimumJumpTravelSpeedSafety: 1.15
   idleLockedForwardSpeed: 0
   movingJumpThreshold: 0.8
   movingTakeoffMinLaunchSpeed: 5.25
@@ -1148,6 +1154,8 @@ MonoBehaviour:
   movingJumpSpeedMultiplier: 1.05
   maxLockedForwardSpeed: 6.5
   takeoffHorizontalAcceleration: 30
+  takeoffMomentumBrakeDuration: 0.08
+  takeoffMomentumBrakeDamping: 32
   idleTakeoffForwardImpulse: 0
   movingTakeoffForwardImpulse: 3
   forwardAssistTakeoffForwardImpulse: 3
@@ -1185,6 +1193,7 @@ MonoBehaviour:
   landingTypeParam: LandingType
   jumpFromMovementParam: JumpFromMovement
   rollTriggerParam: RollTrigger
+  landingTriggerParam: LandTrigger
   jumpPhaseParam: JumpPhase
   takeoffStateName: Jump_Takeoff
   airborneStateName: Jump_Airborne

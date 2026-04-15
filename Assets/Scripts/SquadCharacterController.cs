@@ -247,6 +247,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private readonly RaycastHit[] movementCastHits = new RaycastHit[8];
     private readonly Collider[] movementOverlapHits = new Collider[8];
     private float footIkWeightCurrent;
+    private float heightProbeVerticalOffsetThisStep;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -1739,7 +1740,7 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             float verticalVelocity = isGrounded
-                ? Mathf.Min(velocity.y, -groundedStickVelocity)
+                ? ResolveGroundedLocomotionVerticalVelocity(velocity.y)
                 : velocity.y;
 
             rigidbodyTarget.WakeUp();
@@ -1867,6 +1868,8 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
     {
+        heightProbeVerticalOffsetThisStep = 0f;
+
         if (!preventWallPenetration || deltaTime <= 0f)
         {
             return desiredHorizontalVelocity;
@@ -1876,6 +1879,16 @@ public partial class SquadCharacterController : MonoBehaviour
         Vector3 safeDisplacement = ResolveSafeHorizontalDisplacement(desiredDisplacement);
         ApplyHeightProbeTraversalOffsetToRigidbody(safeDisplacement);
         return Vector3.ProjectOnPlane(safeDisplacement, transform.up) / deltaTime;
+    }
+
+    private float ResolveGroundedLocomotionVerticalVelocity(float currentVerticalVelocity)
+    {
+        if (heightProbeVerticalOffsetThisStep > 0.0001f)
+        {
+            return Mathf.Max(currentVerticalVelocity, 0f);
+        }
+
+        return Mathf.Min(currentVerticalVelocity, -groundedStickVelocity);
     }
 
     private Vector3 ResolveSafeHorizontalDisplacement(Vector3 desiredDisplacement)
@@ -1941,6 +1954,11 @@ public partial class SquadCharacterController : MonoBehaviour
             }
 
             remaining = slide;
+        }
+
+        if (TryResolveHeightProbeGroundSnap(point1, point2, radius, accumulated, mask, out Vector3 snappedDisplacement))
+        {
+            return snappedDisplacement;
         }
 
         return accumulated;

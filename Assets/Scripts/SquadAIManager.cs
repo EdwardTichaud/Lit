@@ -96,8 +96,12 @@ public class SquadAIManager : MonoBehaviour
     private bool useNavMeshDirection = true;
     [SerializeField, Tooltip("Ajoute un SquadFollowerAgent si manquant.")]
     private bool autoAddNavMeshFollowers = true;
+    [SerializeField, Tooltip("Autorise explicitement la teleportation de rattrapage des followers. Desactive par defaut pour les enigmes de separation.")]
+    private bool allowFollowerTeleportCatchUp = false;
     [SerializeField, Tooltip("Distance max au leader pour piloter activement un membre groupe. Au-dela, il reste groupe logiquement mais ne suit pas et ne se teleporte pas.")]
     private float maxActiveFollowDistance = 20f;
+    [SerializeField, Tooltip("Suspend le follow au-dela de maxActiveFollowDistance. Desactive par defaut: les followers continuent a chercher un chemin NavMesh meme loin.")]
+    private bool suspendFollowBeyondMaxActiveDistance = false;
     [SerializeField, Tooltip("Rayon de separation pour eviter collisions.")]
     private float separationRadius = 1.1f;
     [SerializeField, Tooltip("Force de separation appliquee.")]
@@ -685,7 +689,9 @@ public class SquadAIManager : MonoBehaviour
             toTarget.y = 0f;
             float distance = toTarget.magnitude;
 
-            if (!resumedFromRangeSuspension && TryTeleportIfNeeded(follower, targetPosition, distance))
+            if (allowFollowerTeleportCatchUp &&
+                !resumedFromRangeSuspension &&
+                TryTeleportIfNeeded(follower, targetPosition, distance))
             {
                 order++;
                 continue;
@@ -810,7 +816,10 @@ public class SquadAIManager : MonoBehaviour
 
     private bool IsWithinActiveLeaderRange(GameObject leader, GameObject follower)
     {
-        if (leader == null || follower == null || maxActiveFollowDistance <= 0f)
+        if (!suspendFollowBeyondMaxActiveDistance ||
+            leader == null ||
+            follower == null ||
+            maxActiveFollowDistance <= 0f)
         {
             return true;
         }

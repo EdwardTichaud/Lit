@@ -46,6 +46,7 @@ public class Zone : MonoBehaviour
     private readonly Collider[] maisonOverlapHits = new Collider[MaisonOverlapBufferSize];
     private readonly HashSet<GameObject> maisonPreviousCharacters = new HashSet<GameObject>();
     private readonly HashSet<GameObject> maisonCurrentCharacters = new HashSet<GameObject>();
+    private readonly Dictionary<Collider, GameObject> maisonCharacterColliderCache = new Dictionary<Collider, GameObject>();
     private bool isTriggerZone;
     private Collider zoneCollider;
     private float nextMaisonPollTime;
@@ -119,6 +120,7 @@ public class Zone : MonoBehaviour
 
         ClearTrackedCharacters();
         characterColliderCounts.Clear();
+        maisonCharacterColliderCache.Clear();
         maisonMissingPointWarnings.Clear();
     }
 
@@ -735,6 +737,18 @@ public class Zone : MonoBehaviour
             return null;
         }
 
+        if (maisonCharacterColliderCache.TryGetValue(other, out GameObject cachedCharacter))
+        {
+            return cachedCharacter;
+        }
+
+        GameObject resolvedCharacter = ResolveMaisonCharacter(other);
+        maisonCharacterColliderCache[other] = resolvedCharacter;
+        return resolvedCharacter;
+    }
+
+    private GameObject ResolveMaisonCharacter(Collider other)
+    {
         Transform current = other.transform;
         while (current != null)
         {

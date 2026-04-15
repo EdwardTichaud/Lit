@@ -26,6 +26,10 @@ public class SquadFollowerAgent : MonoBehaviour
     private ObstacleAvoidanceType avoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
     [SerializeField, Tooltip("Distance de sample pour rejoindre le NavMesh.")]
     private float navMeshSampleDistance = 1.5f;
+    [SerializeField, Tooltip("Distance de sample pour ramener la destination de formation sur le NavMesh.")]
+    private float destinationSampleDistance = 2f;
+    [SerializeField, Tooltip("Distance minimale au steering target avant de l'utiliser comme direction.")]
+    private float steeringTargetMinDistance = 0.05f;
     [SerializeField, Tooltip("Warp sur le NavMesh si hors navmesh.")]
     private bool warpToNavMesh = true;
 
@@ -42,6 +46,19 @@ public class SquadFollowerAgent : MonoBehaviour
     {
         EnsureAgent();
         ConfigureAgent();
+    }
+
+    private void OnValidate()
+    {
+        destinationUpdateInterval = Mathf.Max(0.02f, destinationUpdateInterval);
+        stoppingDistance = Mathf.Max(0f, stoppingDistance);
+        agentSpeed = Mathf.Max(0.01f, agentSpeed);
+        agentAcceleration = Mathf.Max(0.01f, agentAcceleration);
+        agentRadius = Mathf.Max(0.01f, agentRadius);
+        agentHeight = Mathf.Max(agentRadius * 2f, agentHeight);
+        navMeshSampleDistance = Mathf.Max(0.05f, navMeshSampleDistance);
+        destinationSampleDistance = Mathf.Max(0.05f, destinationSampleDistance);
+        steeringTargetMinDistance = Mathf.Max(0.01f, steeringTargetMinDistance);
     }
 
     private void EnsureAgent()
@@ -89,14 +106,33 @@ public class SquadFollowerAgent : MonoBehaviour
             return false;
         }
 
-        agent.nextPosition = transform.position;
+        Vector3 agentPosition = ResolveAgentNavMeshPosition();
+        agent.nextPosition = agentPosition;
+        Vector3 navDestination = ResolveDestinationOnNavMesh(destination);
 
         float now = Time.time;
-        if (now >= nextUpdateTime || (destination - lastDestination).sqrMagnitude > 0.25f)
+        if (now >= nextUpdateTime || (navDestination - lastDestination).sqrMagnitude > 0.25f)
         {
-            agent.SetDestination(destination);
-            lastDestination = destination;
+            if (!agent.SetDestination(navDestination))
+            {
+                return false;
+            }
+
+            lastDestination = navDestination;
             nextUpdateTime = now + Mathf.Max(0.02f, destinationUpdateInterval);
+        }
+
+        if (!agent.pathPending &&
+            agent.hasPath &&
+            agent.pathStatus != NavMeshPathStatus.PathInvalid)
+        {
+            Vector3 steeringDirection = agent.steeringTarget - agentPosition;
+            steeringDirection.y = 0f;
+            if (steeringDirection.sqrMagnitude >= steeringTargetMinDistance * steeringTargetMinDistance)
+            {
+                desiredDirection = steeringDirection.normalized;
+                return true;
+            }
         }
 
         Vector3 desiredVelocity = agent.desiredVelocity;
@@ -108,6 +144,26 @@ public class SquadFollowerAgent : MonoBehaviour
 
         desiredDirection = desiredVelocity.normalized;
         return true;
+    }
+
+    private Vector3 ResolveAgentNavMeshPosition()
+    {
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, navMeshSampleDistance, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+
+        return agent != null && agent.isOnNavMesh ? agent.nextPosition : transform.position;
+    }
+
+    private Vector3 ResolveDestinationOnNavMesh(Vector3 destination)
+    {
+        if (NavMesh.SamplePosition(destination, out NavMeshHit hit, destinationSampleDistance, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+
+        return destination;
     }
 
     private bool EnsureOnNavMesh()
@@ -125,6 +181,8 @@ public class SquadFollowerAgent : MonoBehaviour
         if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, navMeshSampleDistance, NavMesh.AllAreas))
         {
             agent.Warp(hit.position);
+            lastDestination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            nextUpdateTime = 0f;
             return agent.isOnNavMesh;
         }
 

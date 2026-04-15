@@ -59,7 +59,7 @@ public sealed class DecorCullable : MonoBehaviour
 
     private void Awake()
     {
-        if (autoCollectTargets)
+        if (autoCollectTargets && ShouldRefreshTargetsOnAwake())
         {
             RefreshCachedTargets();
         }
@@ -68,6 +68,42 @@ public sealed class DecorCullable : MonoBehaviour
             ApplyLightPerformanceSettings();
             RecalculateBounds();
         }
+    }
+
+    private bool ShouldRefreshTargetsOnAwake()
+    {
+        if (!Application.isPlaying)
+        {
+            return true;
+        }
+
+        return !HasAnyCachedTargetReference();
+    }
+
+    private bool HasAnyCachedTargetReference()
+    {
+        return HasAnyReference(targetRenderers) ||
+               HasAnyReference(targetLights) ||
+               HasAnyReference(targetParticles) ||
+               HasAnyReference(targetColliders);
+    }
+
+    private static bool HasAnyReference<T>(T[] targets) where T : UnityEngine.Object
+    {
+        if (targets == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < targets.Length; i++)
+        {
+            if (targets[i] != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void OnEnable()

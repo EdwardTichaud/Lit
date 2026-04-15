@@ -6,6 +6,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class DecorCullingManager : MonoBehaviour
 {
+    private const int DefaultMaxEvaluationsPerFrame = 1024;
+
     private static DecorCullingManager instance;
 
     [Header("Camera")]
@@ -19,9 +21,12 @@ public sealed class DecorCullingManager : MonoBehaviour
     [SerializeField] private bool requireCameraFrustum = true;
     [SerializeField, Min(0f)] private float offscreenGraceSeconds = 0.35f;
     [SerializeField, Min(0.05f)] private float evaluationInterval = 0.25f;
+    [SerializeField, Min(1)] private int maxEvaluationsPerFrame = DefaultMaxEvaluationsPerFrame;
 
     private readonly List<DecorCullable> cullables = new List<DecorCullable>();
     private readonly Dictionary<DecorCullable, int> cullableIndices = new Dictionary<DecorCullable, int>();
+    private readonly Queue<int> pendingEvaluationQueue = new Queue<int>();
+    private readonly HashSet<int> pendingEvaluationIndices = new HashSet<int>();
     private BoundingSphere[] boundingSpheres = Array.Empty<BoundingSphere>();
     private float[] invisibleSince = Array.Empty<float>();
     private CullingGroup cullingGroup;
@@ -131,15 +136,15 @@ public sealed class DecorCullingManager : MonoBehaviour
         }
 
         float now = Time.unscaledTime;
-        if (!cullingGroupDirty && now < nextEvaluationTime)
+        if (cullingGroupDirty || now >= nextEvaluationTime)
         {
-            return;
+            nextEvaluationTime = now + evaluationInterval;
+            RefreshBoundingSpheres();
+            QueueAllEvaluations();
+            cullingGroupDirty = false;
         }
 
-        nextEvaluationTime = now + evaluationInterval;
-        RefreshBoundingSpheres();
-        EvaluateAll();
-        cullingGroupDirty = false;
+        ProcessPendingEvaluations(now);
     }
 
     private void RegisterInternal(DecorCullable cullable)
@@ -159,6 +164,7 @@ public sealed class DecorCullingManager : MonoBehaviour
 
         EnsureCullingGroup();
         cullingGroup.SetBoundingSphereCount(cullables.Count);
+        EnqueueEvaluation(index);
     }
 
     private void UnregisterInternal(DecorCullable cullable)
@@ -185,6 +191,7 @@ public sealed class DecorCullingManager : MonoBehaviour
             cullableIndices[moved] = index;
             boundingSpheres[index] = boundingSpheres[lastIndex];
             invisibleSince[index] = invisibleSince[lastIndex];
+            EnqueueEvaluation(index);
         }
 
         cullables.RemoveAt(lastIndex);
@@ -217,11 +224,11 @@ public sealed class DecorCullingManager : MonoBehaviour
         }
     }
 
-    private void EvaluateAll()
+    private void QueueAllEvaluations()
     {
         for (int i = 0; i < cullables.Count; i++)
         {
-            EvaluateIndex(i, Time.unscaledTime);
+            EnqueueEvaluation(i);
         }
     }
 
@@ -232,7 +239,44 @@ public sealed class DecorCullingManager : MonoBehaviour
             return;
         }
 
-        EvaluateIndex(sphereEvent.index, Time.unscaledTime);
+        EnqueueEvaluation(sphereEvent.index);
+    }
+
+    private void EnqueueEvaluation(int index)
+    {
+        if (index < 0 || index >= cullables.Count)
+        {
+            return;
+        }
+
+        if (!pendingEvaluationIndices.Add(index))
+        {
+            return;
+        }
+
+        pendingEvaluationQueue.Enqueue(index);
+    }
+
+    private void ProcessPendingEvaluations(float now)
+    {
+        int budget = Mathf.Max(1, maxEvaluationsPerFrame);
+        while (budget > 0 && pendingEvaluationQueue.Count > 0)
+        {
+            int index = pendingEvaluationQueue.Dequeue();
+            pendingEvaluationIndices.Remove(index);
+
+            if (index >= 0 && index < cullables.Count)
+            {
+                EvaluateIndex(index, now);
+                budget--;
+            }
+        }
+    }
+
+    private void ClearPendingEvaluations()
+    {
+        pendingEvaluationQueue.Clear();
+        pendingEvaluationIndices.Clear();
     }
 
     private void EvaluateIndex(int index, float now)
@@ -414,6 +458,8 @@ public sealed class DecorCullingManager : MonoBehaviour
                 invisibleSince[i] = -1f;
             }
         }
+
+        ClearPendingEvaluations();
     }
 
     private void DisposeCullingGroup()
@@ -433,5 +479,9 @@ public sealed class DecorCullingManager : MonoBehaviour
         maxLightVisibleDistance = Mathf.Clamp(maxLightVisibleDistance, 5f, Mathf.Max(5f, maxVisibleDistance - 0.1f));
         offscreenGraceSeconds = Mathf.Max(0f, offscreenGraceSeconds);
         evaluationInterval = Mathf.Max(0.05f, evaluationInterval);
+        if (maxEvaluationsPerFrame <= 0)
+        {
+            maxEvaluationsPerFrame = DefaultMaxEvaluationsPerFrame;
+        }
     }
 }
