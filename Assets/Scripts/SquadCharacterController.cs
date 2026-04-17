@@ -365,6 +365,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelLadderTraversal();
         ClearLocalInteractionTarget();
         SetAudioListenerActive(false);
         UnregisterCharacter();
@@ -1499,6 +1500,7 @@ public partial class SquadCharacterController : MonoBehaviour
         ValidateHeightProbeTraversalSettings();
 
         ValidateCommittedJumpSettings();
+        ValidateLadderTraversalSettings();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
     }
@@ -1567,6 +1569,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Stop()
     {
+        CancelLadderTraversal();
         moveInputIsWorldSpace = false;
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
@@ -1588,6 +1591,7 @@ public partial class SquadCharacterController : MonoBehaviour
         SmoothInput(Time.fixedDeltaTime);
         UpdateGroundedState();
         UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
+        UpdateLadderTraversal(Time.fixedDeltaTime);
         UpdateCommittedJump(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
@@ -1628,6 +1632,12 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         if (ShouldSuppressFootIkForCommittedJump())
+        {
+            SetFootIkWeights(0f, 0f);
+            return;
+        }
+
+        if (IsLadderTraversalActive)
         {
             SetFootIkWeights(0f, 0f);
             return;
@@ -1696,6 +1706,11 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         if (!CanSimulateMovementLocally())
+        {
+            return;
+        }
+
+        if (ladderTraversalActive || ladderTraversalConsumedMovementThisStep)
         {
             return;
         }
@@ -2762,6 +2777,11 @@ public partial class SquadCharacterController : MonoBehaviour
     private void UpdateAnimationSpeed()
     {
         if (animator == null || string.IsNullOrWhiteSpace(speedParam))
+        {
+            return;
+        }
+
+        if (ladderTraversalActive || ladderTraversalConsumedMovementThisStep)
         {
             return;
         }

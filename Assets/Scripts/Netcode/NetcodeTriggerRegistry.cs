@@ -6,6 +6,7 @@ public static class NetcodeTriggerRegistry
     private static readonly Dictionary<uint, ReturnHomeTrigger> returnHomeTriggers = new Dictionary<uint, ReturnHomeTrigger>();
     private static readonly Dictionary<uint, HubCompanionSwapTrigger> hubSwapTriggers = new Dictionary<uint, HubCompanionSwapTrigger>();
     private static readonly Dictionary<uint, LabyrinthStartTrigger> labyrinthTriggers = new Dictionary<uint, LabyrinthStartTrigger>();
+    private static readonly Dictionary<uint, LadderInteractable> ladderTriggers = new Dictionary<uint, LadderInteractable>();
 
     public static void Register(ReturnHomeTrigger trigger, uint id)
     {
@@ -89,5 +90,33 @@ public static class NetcodeTriggerRegistry
     public static bool TryGetLabyrinth(uint id, out LabyrinthStartTrigger trigger)
     {
         return labyrinthTriggers.TryGetValue(id, out trigger);
+    }
+
+    public static void Register(LadderInteractable trigger, uint id)
+    {
+        if (trigger == null || id == 0u)
+        {
+            return;
+        }
+
+        ladderTriggers[id] = trigger;
+    }
+
+    public static void Unregister(LadderInteractable trigger, uint id)
+    {
+        if (trigger == null || id == 0u)
+        {
+            return;
+        }
+
+        if (ladderTriggers.TryGetValue(id, out LadderInteractable existing) && existing == trigger)
+        {
+            ladderTriggers.Remove(id);
+        }
+    }
+
+    public static bool TryGetLadder(uint id, out LadderInteractable trigger)
+    {
+        return ladderTriggers.TryGetValue(id, out trigger);
     }
 }

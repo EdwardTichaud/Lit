@@ -296,6 +296,31 @@ public class WorldInteractionService : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
+    public void RequestLadderUseServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
+    {
+        if (!NetcodeTriggerRegistry.TryGetLadder(triggerId, out LadderInteractable ladder))
+        {
+            SendLadderUseResultClientRpc(triggerId, false, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        GameObject character = ResolvePlayerCharacter(rpcParams);
+        bool success = character != null && ladder.IsServerCharacterAllowed(character) && ladder.ServerTryUse(character);
+        SendLadderUseResultClientRpc(triggerId, success, BuildClientRpcParams(rpcParams));
+    }
+
+    [ClientRpc]
+    private void SendLadderUseResultClientRpc(uint triggerId, bool success, ClientRpcParams rpcParams = default)
+    {
+        if (!NetcodeTriggerRegistry.TryGetLadder(triggerId, out LadderInteractable ladder))
+        {
+            return;
+        }
+
+        ladder.HandleLadderUseResult(success);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     public void RequestCharacterSwitchServerRpc(string characterId, ServerRpcParams rpcParams = default)
     {
         NetcodePlayerSpawner spawner = NetcodePlayerSpawner.Instance;

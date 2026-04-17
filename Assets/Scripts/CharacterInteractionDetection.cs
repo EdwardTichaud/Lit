@@ -38,6 +38,11 @@ public static class CharacterInteractionDetection
                 return buildingInfo;
             }
 
+            if (current.TryGetComponent(out LadderInteractable ladder) && ladder.isActiveAndEnabled)
+            {
+                return ladder;
+            }
+
             current = current.parent;
         }
 
