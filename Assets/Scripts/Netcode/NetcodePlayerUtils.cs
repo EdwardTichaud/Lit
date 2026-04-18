@@ -63,6 +63,8 @@ public static class NetcodePlayerUtils
 
     private static readonly Dictionary<string, string> loggedControlStates = new Dictionary<string, string>();
 
+    public static bool ControlDecisionLogsEnabled { get; set; }
+
     public static Transform GetPlayerTransform(ulong clientId)
     {
         if (NetworkManager.Singleton == null)
@@ -244,7 +246,7 @@ public static class NetcodePlayerUtils
         string movementMode,
         string reason)
     {
-        if (character == null)
+        if (!ControlDecisionLogsEnabled || character == null)
         {
             return;
         }

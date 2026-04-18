@@ -7,18 +7,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 {
-    [Header("Anchors")]
-    [Tooltip("Base basse de l'echelle. La position et la rotation servent au placement du personnage avant la montee.")]
-    public Transform bottomBase;
-    [Tooltip("Base haute de l'echelle. La position et la rotation servent au placement du personnage avant la descente.")]
-    public Transform topBase;
-    [SerializeField, Tooltip("Cote utilise pour les bases auto si aucun point n'est assigne.")]
-    private bool fallbackAnchorsOnNegativeForwardSide = true;
-    [SerializeField, Tooltip("Distance entre l'echelle et les bases auto si aucun point n'est assigne.")]
-    private float fallbackAnchorStandOff = 0.45f;
-    [SerializeField, Tooltip("Marge verticale appliquee aux bases auto depuis les bounds.")]
-    private float fallbackAnchorVerticalPadding = 0.05f;
-
     [Header("Interaction")]
     [Tooltip("Collider de reference pour la detection. Laisse vide pour auto-detecter un collider non-trigger.")]
     public Collider interactionCollider;
@@ -31,7 +19,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
     [Tooltip("Prefab/objet UI d'interaction.")]
     public GameObject interactionBox;
     [Tooltip("Texte affiche dans l'InteractionBox.")]
-    public string interactionText = "Utiliser l'échelle";
+    public string interactionText = "Utiliser l'echelle";
     [Tooltip("Offset en world pour la box d'interaction.")]
     public Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
 
@@ -51,12 +39,6 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
     private uint netcodeId;
     private bool awaitingServerResponse;
 
-    private struct LadderPose
-    {
-        public Vector3 Position;
-        public Quaternion Rotation;
-    }
-
     private void Reset()
     {
         interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
@@ -64,8 +46,6 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 
     private void OnValidate()
     {
-        fallbackAnchorStandOff = Mathf.Max(0f, fallbackAnchorStandOff);
-        fallbackAnchorVerticalPadding = Mathf.Max(0f, fallbackAnchorVerticalPadding);
         interactionMaxDistance = Mathf.Max(0.1f, interactionMaxDistance);
     }
 
@@ -152,10 +132,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
-        return controller != null
-            && isActiveAndEnabled
-            && !controller.IsLadderTraversalActive
-            && TryResolveBasePoses(out _, out _);
+        return controller != null && isActiveAndEnabled;
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -203,22 +180,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
         }
 
         GameObject character = currentCharacter;
-        if (character == null || !IsControlledCharacter(character))
-        {
-            return;
-        }
-
-        SquadCharacterController controller = GetController(character);
-        if (controller == null || controller.IsLadderTraversalActive)
-        {
-            return;
-        }
-
-        if (!CharacterInteractionDetection.IsCharacterWithinRange(
-                character.transform,
-                GetInteractionDetectionCollider(),
-                GetInteractionAnchor(),
-                interactionMaxDistance))
+        if (!CanUse(character, requireLocalControl: true, rangePadding: 0f))
         {
             return;
         }
@@ -226,11 +188,6 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
         if (IsNetworked() && !NetworkManager.Singleton.IsServer)
         {
             if (awaitingServerResponse)
-            {
-                return;
-            }
-
-            if (!TryResolveTraversal(character, out _, out _, out _))
             {
                 return;
             }
@@ -247,44 +204,25 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        if (!TryStartTraversalForCharacter(character, requireLocalControl: true))
-        {
-            return;
-        }
-
         LocalInputRouter.ConsumeInteract();
-        DestroyInteractionInstance();
     }
 
     public bool ServerTryUse(GameObject character)
     {
-        return TryStartTraversalForCharacter(character, requireLocalControl: false);
+        return CanUse(character, requireLocalControl: false, rangePadding: 0.35f);
     }
 
     public bool IsServerCharacterAllowed(GameObject character)
     {
-        if (character == null)
-        {
-            return false;
-        }
-
-        return CharacterInteractionDetection.IsCharacterWithinRange(
-            character.transform,
-            GetInteractionDetectionCollider(),
-            GetInteractionAnchor(),
-            interactionMaxDistance + 0.35f);
+        return CanUse(character, requireLocalControl: false, rangePadding: 0.35f);
     }
 
     public void HandleLadderUseResult(bool success)
     {
         awaitingServerResponse = false;
-        if (success)
-        {
-            DestroyInteractionInstance();
-        }
     }
 
-    private bool TryStartTraversalForCharacter(GameObject character, bool requireLocalControl)
+    private bool CanUse(GameObject character, bool requireLocalControl, float rangePadding)
     {
         if (character == null)
         {
@@ -296,158 +234,16 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
             return false;
         }
 
-        SquadCharacterController controller = GetController(character);
-        if (controller == null || controller.IsLadderTraversalActive)
+        if (GetController(character) == null)
         {
             return false;
         }
 
-        if (!CharacterInteractionDetection.IsCharacterWithinRange(
-                character.transform,
-                GetInteractionDetectionCollider(),
-                GetInteractionAnchor(),
-                interactionMaxDistance))
-        {
-            return false;
-        }
-
-        if (!TryResolveTraversal(character, out LadderPose startPose, out LadderPose endPose, out bool ascending))
-        {
-            return false;
-        }
-
-        return controller.TryStartLadderTraversal(this, startPose.Position, startPose.Rotation, endPose.Position, endPose.Rotation, ascending);
-    }
-
-    private bool TryResolveTraversal(GameObject character, out LadderPose startPose, out LadderPose endPose, out bool ascending)
-    {
-        startPose = default;
-        endPose = default;
-        ascending = true;
-
-        if (character == null || !TryResolveBasePoses(out LadderPose bottomPose, out LadderPose topPose))
-        {
-            return false;
-        }
-
-        Vector3 origin = ResolveCharacterOrigin(character);
-        float distanceToBottom = (origin - bottomPose.Position).sqrMagnitude;
-        float distanceToTop = (origin - topPose.Position).sqrMagnitude;
-
-        ascending = distanceToBottom <= distanceToTop;
-        startPose = ascending ? bottomPose : topPose;
-        endPose = ascending ? topPose : bottomPose;
-        return true;
-    }
-
-    private bool TryResolveBasePoses(out LadderPose bottomPose, out LadderPose topPose)
-    {
-        bottomPose = default;
-        topPose = default;
-
-        bool hasBottom = bottomBase != null;
-        bool hasTop = topBase != null;
-        if (hasBottom && hasTop)
-        {
-            bottomPose = new LadderPose { Position = bottomBase.position, Rotation = bottomBase.rotation };
-            topPose = new LadderPose { Position = topBase.position, Rotation = topBase.rotation };
-            return true;
-        }
-
-        if (!TryBuildFallbackPoses(out LadderPose fallbackBottom, out LadderPose fallbackTop))
-        {
-            return false;
-        }
-
-        bottomPose = hasBottom
-            ? new LadderPose { Position = bottomBase.position, Rotation = bottomBase.rotation }
-            : fallbackBottom;
-        topPose = hasTop
-            ? new LadderPose { Position = topBase.position, Rotation = topBase.rotation }
-            : fallbackTop;
-        return true;
-    }
-
-    private bool TryBuildFallbackPoses(out LadderPose bottomPose, out LadderPose topPose)
-    {
-        bottomPose = default;
-        topPose = default;
-
-        if (!TryGetFallbackBounds(out Bounds bounds))
-        {
-            return false;
-        }
-
-        Vector3 forward = transform.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.forward;
-        }
-        else
-        {
-            forward.Normalize();
-        }
-
-        Vector3 positionOffset = (fallbackAnchorsOnNegativeForwardSide ? -forward : forward) * fallbackAnchorStandOff;
-        Vector3 facing = fallbackAnchorsOnNegativeForwardSide ? forward : -forward;
-        Quaternion rotation = Quaternion.LookRotation(facing, Vector3.up);
-
-        Vector3 center = bounds.center + positionOffset;
-        float bottomY = bounds.min.y + fallbackAnchorVerticalPadding;
-        float topY = bounds.max.y - fallbackAnchorVerticalPadding;
-        if (topY < bottomY)
-        {
-            float middleY = bounds.center.y;
-            bottomY = middleY;
-            topY = middleY;
-        }
-
-        bottomPose = new LadderPose
-        {
-            Position = new Vector3(center.x, bottomY, center.z),
-            Rotation = rotation
-        };
-        topPose = new LadderPose
-        {
-            Position = new Vector3(center.x, topY, center.z),
-            Rotation = rotation
-        };
-        return true;
-    }
-
-    private bool TryGetFallbackBounds(out Bounds bounds)
-    {
-        Collider collider = GetInteractionDetectionCollider();
-        if (collider != null)
-        {
-            bounds = collider.bounds;
-            return true;
-        }
-
-        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
-        bool hasBounds = false;
-        bounds = default;
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer renderer = renderers[i];
-            if (renderer == null)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
-        }
-
-        return hasBounds;
+        return CharacterInteractionDetection.IsCharacterWithinRange(
+            character.transform,
+            GetInteractionDetectionCollider(),
+            GetInteractionAnchor(),
+            interactionMaxDistance + Mathf.Max(0f, rangePadding));
     }
 
     private void ShowInteraction(bool show)
@@ -554,17 +350,6 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
         label.raycastTarget = false;
 
         return instance;
-    }
-
-    private static Vector3 ResolveCharacterOrigin(GameObject character)
-    {
-        if (character == null)
-        {
-            return Vector3.zero;
-        }
-
-        SquadCharacterController controller = GetController(character);
-        return controller != null ? controller.GetInteractionOriginWorldPosition() : character.transform.position;
     }
 
     private static SquadCharacterController GetController(GameObject character)

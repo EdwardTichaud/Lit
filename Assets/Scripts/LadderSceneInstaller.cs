@@ -3,11 +3,6 @@ using UnityEngine.SceneManagement;
 
 public static class LadderSceneInstaller
 {
-    private const string BottomAnchorName = "Base_Basse";
-    private const string TopAnchorName = "Base_Haute";
-    private const float DefaultAnchorStandOff = 0.45f;
-    private const float DefaultAnchorVerticalPadding = 0.05f;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Initialize()
     {
@@ -62,7 +57,7 @@ public static class LadderSceneInstaller
                 ladder = candidate.gameObject.AddComponent<LadderInteractable>();
             }
 
-            ConfigureLadder(ladder);
+            ConfigureLadderInteraction(ladder);
         }
     }
 
@@ -74,9 +69,17 @@ public static class LadderSceneInstaller
         }
 
         string lowerName = candidate.name.ToLowerInvariant();
-        if (!lowerName.Contains("ladder") &&
-            !lowerName.Contains("echelle") &&
-            !lowerName.Contains("échelle"))
+        if (!IsLadderName(lowerName))
+        {
+            return false;
+        }
+
+        if (HasLocalLadderGeometry(candidate))
+        {
+            return true;
+        }
+
+        if (HasDescendantLadderCandidate(candidate))
         {
             return false;
         }
@@ -85,12 +88,63 @@ public static class LadderSceneInstaller
                candidate.GetComponentInChildren<Renderer>(true) != null;
     }
 
+    private static bool IsLadderName(string lowerName)
+    {
+        return lowerName.Contains("ladder") ||
+               lowerName.Contains("echelle") ||
+               lowerName.Contains("échelle");
+    }
+
+    private static bool HasLocalLadderGeometry(Transform candidate)
+    {
+        return candidate != null &&
+               (candidate.GetComponent<Collider>() != null ||
+                candidate.GetComponent<Renderer>() != null ||
+                candidate.GetComponent<MeshFilter>() != null);
+    }
+
+    private static bool HasDescendantLadderCandidate(Transform candidate)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        Transform[] children = candidate.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+            if (child == null || child == candidate)
+            {
+                continue;
+            }
+
+            if (IsLadderName(child.name.ToLowerInvariant()) &&
+                (HasLocalLadderGeometry(child) ||
+                 child.GetComponentInChildren<Collider>(true) != null ||
+                 child.GetComponentInChildren<Renderer>(true) != null))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsLadderContainer(Transform candidate)
+    {
+        return candidate != null &&
+               IsLadderName(candidate.name.ToLowerInvariant()) &&
+               !HasLocalLadderGeometry(candidate) &&
+               HasDescendantLadderCandidate(candidate);
+    }
+
     private static bool HasLadderInteractableInParent(Transform candidate)
     {
         Transform parent = candidate.parent;
         while (parent != null)
         {
-            if (parent.GetComponent<LadderInteractable>() != null)
+            if (parent.GetComponent<LadderInteractable>() != null && !IsLadderContainer(parent))
             {
                 return true;
             }
@@ -101,99 +155,24 @@ public static class LadderSceneInstaller
         return false;
     }
 
-    private static void ConfigureLadder(LadderInteractable ladder)
+    private static void ConfigureLadderInteraction(LadderInteractable ladder)
     {
         if (ladder == null)
         {
             return;
         }
 
-        Transform root = ladder.transform;
         if (ladder.interactionCollider == null)
         {
             ladder.interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(ladder, null);
         }
 
-        if (ladder.interactionCollider == null && TryCalculateBounds(root, out Bounds colliderBounds))
+        if (ladder.interactionCollider == null && TryCalculateBounds(ladder.transform, out Bounds colliderBounds))
         {
-            BoxCollider box = root.gameObject.AddComponent<BoxCollider>();
+            BoxCollider box = ladder.gameObject.AddComponent<BoxCollider>();
             FitBoxColliderToWorldBounds(box, colliderBounds);
             ladder.interactionCollider = box;
         }
-
-        bool createdAnchor = false;
-        if (ladder.bottomBase == null)
-        {
-            ladder.bottomBase = FindOrCreateAnchor(root, BottomAnchorName, out bool createdBottom);
-            createdAnchor |= createdBottom;
-        }
-
-        if (ladder.topBase == null)
-        {
-            ladder.topBase = FindOrCreateAnchor(root, TopAnchorName, out bool createdTop);
-            createdAnchor |= createdTop;
-        }
-
-        if (ladder.bottomBase == null || ladder.topBase == null)
-        {
-            return;
-        }
-
-        if (!createdAnchor)
-        {
-            return;
-        }
-
-        if (!TryCalculateBounds(root, out Bounds bounds))
-        {
-            return;
-        }
-
-        Vector3 forward = root.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.forward;
-        }
-        else
-        {
-            forward.Normalize();
-        }
-
-        Vector3 offset = -forward * DefaultAnchorStandOff;
-        Quaternion rotation = Quaternion.LookRotation(forward, Vector3.up);
-        Vector3 center = bounds.center + offset;
-        float bottomY = bounds.min.y + DefaultAnchorVerticalPadding;
-        float topY = bounds.max.y - DefaultAnchorVerticalPadding;
-        if (topY < bottomY)
-        {
-            bottomY = bounds.center.y;
-            topY = bounds.center.y;
-        }
-
-        ladder.bottomBase.SetPositionAndRotation(new Vector3(center.x, bottomY, center.z), rotation);
-        ladder.topBase.SetPositionAndRotation(new Vector3(center.x, topY, center.z), rotation);
-    }
-
-    private static Transform FindOrCreateAnchor(Transform root, string anchorName, out bool created)
-    {
-        created = false;
-        if (root == null)
-        {
-            return null;
-        }
-
-        Transform existing = root.Find(anchorName);
-        if (existing != null)
-        {
-            return existing;
-        }
-
-        GameObject anchorObject = new GameObject(anchorName);
-        Transform anchor = anchorObject.transform;
-        anchor.SetParent(root, false);
-        created = true;
-        return anchor;
     }
 
     private static bool TryCalculateBounds(Transform root, out Bounds bounds)
@@ -209,7 +188,7 @@ public static class LadderSceneInstaller
         for (int i = 0; i < colliders.Length; i++)
         {
             Collider collider = colliders[i];
-            if (collider == null || collider.GetComponent<LadderInteractable>() != null)
+            if (collider == null)
             {
                 continue;
             }

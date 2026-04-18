@@ -5,6 +5,8 @@ using UnityEngine.AI;
 [DisallowMultipleComponent]
 public class SquadFollowerAgent : MonoBehaviour
 {
+    private const float DefaultNavMeshSampleDistance = 1.5f;
+
     [Header("NavMesh")]
     [SerializeField, Tooltip("NavMeshAgent utilise pour le pathfinding.")]
     private NavMeshAgent agent;
@@ -70,8 +72,22 @@ public class SquadFollowerAgent : MonoBehaviour
 
         if (agent == null)
         {
+            if (!HasNavMeshNear(transform.position, navMeshSampleDistance))
+            {
+                return;
+            }
+
             agent = gameObject.AddComponent<NavMeshAgent>();
         }
+    }
+
+    public static bool HasNavMeshNear(Vector3 position, float sampleDistance = DefaultNavMeshSampleDistance)
+    {
+        return NavMesh.SamplePosition(
+            position,
+            out _,
+            Mathf.Max(0.05f, sampleDistance),
+            NavMesh.AllAreas);
     }
 
     private void ConfigureAgent()
@@ -98,7 +114,12 @@ public class SquadFollowerAgent : MonoBehaviour
         desiredDirection = Vector3.zero;
         if (agent == null)
         {
-            return false;
+            EnsureAgent();
+            ConfigureAgent();
+            if (agent == null)
+            {
+                return false;
+            }
         }
 
         if (!EnsureOnNavMesh())

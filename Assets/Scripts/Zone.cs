@@ -26,6 +26,8 @@ public class Zone : MonoBehaviour
     public bool maisonUseNavMeshDirection = true;
     [Tooltip("Ajoute automatiquement un SquadFollowerAgent aux personnages dans la maison.")]
     public bool maisonAutoAddNavMeshFollower = true;
+    [Tooltip("Distance max pour autoriser l'ajout d'un agent NavMesh autour du personnage.")]
+    public float maisonNavMeshAgentSampleDistance = 1.5f;
     [Tooltip("Valeur max d'input injectee pour simuler le controle.")]
     public float maisonMaxInput = 1f;
 
@@ -826,6 +828,11 @@ public class Zone : MonoBehaviour
         SquadFollowerAgent agent = character.GetComponent<SquadFollowerAgent>();
         if (agent == null)
         {
+            if (!SquadFollowerAgent.HasNavMeshNear(character.transform.position, maisonNavMeshAgentSampleDistance))
+            {
+                return null;
+            }
+
             agent = character.AddComponent<SquadFollowerAgent>();
         }
 

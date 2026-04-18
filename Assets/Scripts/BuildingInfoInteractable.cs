@@ -55,6 +55,10 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     [SerializeField, Min(0.02f), Tooltip("Frequence max de rafraichissement du panel deja ouvert.")]
     private float openPanelRefreshInterval = 0.15f;
 
+    [Header("Debug")]
+    [SerializeField, Tooltip("Log les evenements BuildingSync. Desactive par defaut pour eviter les spikes de logs en Play Mode.")]
+    private bool logBuildingSyncEvents;
+
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
@@ -1369,6 +1373,11 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private void LogBuildingPresentation(string eventName, string reason)
     {
+        if (!logBuildingSyncEvents)
+        {
+            return;
+        }
+
         BuilderController builder = GetComponentInParent<BuilderController>();
         int authoritativeLevel = builder != null && builder.TryGetSyncedBuildingLevel(this, out int syncedLevel)
             ? syncedLevel

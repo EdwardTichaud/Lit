@@ -365,7 +365,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void OnDisable()
     {
-        CancelLadderTraversal();
         ClearLocalInteractionTarget();
         SetAudioListenerActive(false);
         UnregisterCharacter();
@@ -1500,7 +1499,6 @@ public partial class SquadCharacterController : MonoBehaviour
         ValidateHeightProbeTraversalSettings();
 
         ValidateCommittedJumpSettings();
-        ValidateLadderTraversalSettings();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
     }
@@ -1569,7 +1567,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Stop()
     {
-        CancelLadderTraversal();
         moveInputIsWorldSpace = false;
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
@@ -1591,7 +1588,6 @@ public partial class SquadCharacterController : MonoBehaviour
         SmoothInput(Time.fixedDeltaTime);
         UpdateGroundedState();
         UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
-        UpdateLadderTraversal(Time.fixedDeltaTime);
         UpdateCommittedJump(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
@@ -1632,12 +1628,6 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         if (ShouldSuppressFootIkForCommittedJump())
-        {
-            SetFootIkWeights(0f, 0f);
-            return;
-        }
-
-        if (IsLadderTraversalActive)
         {
             SetFootIkWeights(0f, 0f);
             return;
@@ -1710,11 +1700,6 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        if (ladderTraversalActive || ladderTraversalConsumedMovementThisStep)
-        {
-            return;
-        }
-
         if (TryApplyCommittedJumpMovement(deltaTime))
         {
             return;
@@ -1774,7 +1759,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         currentHorizontalVelocity = Vector3.zero;
 
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        if (ShouldUseRigidbody() && rigidbodyTarget != null && !rigidbodyTarget.isKinematic)
         {
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
@@ -1849,7 +1834,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         currentHorizontalVelocity = Vector3.zero;
 
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        if (ShouldUseRigidbody() && rigidbodyTarget != null && !rigidbodyTarget.isKinematic)
         {
             Vector3 velocity = rigidbodyTarget.linearVelocity;
             rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
@@ -2777,11 +2762,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private void UpdateAnimationSpeed()
     {
         if (animator == null || string.IsNullOrWhiteSpace(speedParam))
-        {
-            return;
-        }
-
-        if (ladderTraversalActive || ladderTraversalConsumedMovementThisStep)
         {
             return;
         }

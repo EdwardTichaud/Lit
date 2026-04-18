@@ -18,9 +18,9 @@ public class SquadAIManager : MonoBehaviour
     private bool autoAddNavMeshSurface = true;
     [SerializeField, Tooltip("Build du NavMesh au Start.")]
     private bool buildNavMeshOnStart = true;
-    [SerializeField, Tooltip("Rebuild automatique du NavMesh.")]
-    private bool autoUpdateNavMesh = true;
-    [SerializeField, Tooltip("Intervalle de rebuild du NavMesh.")]
+    [SerializeField, Tooltip("Autorise les rebuilds NavMesh demandes par le code. Le NavMesh n'est plus rebake toutes les X secondes sans changement.")]
+    private bool autoUpdateNavMesh;
+    [SerializeField, Tooltip("Delai minimal entre deux rebuilds NavMesh demandes.")]
     private float navMeshUpdateInterval = 2f;
     [SerializeField, Tooltip("AgentTypeId utilise pour le bake.")]
     private int agentTypeId = 0;
@@ -38,8 +38,8 @@ public class SquadAIManager : MonoBehaviour
     private bool buildHeightMesh = false;
     [SerializeField, Tooltip("Area par defaut du NavMesh.")]
     private int defaultArea = 0;
-    [SerializeField, Tooltip("Calcule automatiquement les bounds.")]
-    private bool autoCalculateBounds = true;
+    [SerializeField, Tooltip("Calcule automatiquement les bounds via tous les colliders. A eviter en runtime dans les grosses scenes.")]
+    private bool autoCalculateBounds;
     [SerializeField, Tooltip("Taille des bounds si autoCalculateBounds = false.")]
     private Vector3 navMeshBoundsSize = new Vector3(200f, 40f, 200f);
     [SerializeField, Tooltip("Padding applique aux bounds.")]
@@ -120,6 +120,7 @@ public class SquadAIManager : MonoBehaviour
     private float teleportSampleRadius = 1.5f;
 
     private float nextNavMeshUpdateTime;
+    private bool navMeshDirty;
     private readonly HashSet<Mesh> warnedUnreadableMeshes = new HashSet<Mesh>();
 
     private class FollowerState
@@ -150,6 +151,7 @@ public class SquadAIManager : MonoBehaviour
         if (buildNavMeshOnStart)
         {
             BuildNavMesh();
+            navMeshDirty = false;
         }
     }
 
@@ -196,11 +198,13 @@ public class SquadAIManager : MonoBehaviour
         {
             rebuildNavMeshNow = false;
             BuildNavMesh();
+            navMeshDirty = false;
         }
 
-        if (autoUpdateNavMesh && Time.time >= nextNavMeshUpdateTime)
+        if (autoUpdateNavMesh && navMeshDirty && Time.time >= nextNavMeshUpdateTime)
         {
             BuildNavMesh();
+            navMeshDirty = false;
         }
 
         if (squadManager.IsInputLocked())
@@ -228,6 +232,12 @@ public class SquadAIManager : MonoBehaviour
     public void DebugRebuildNavMesh()
     {
         BuildNavMesh();
+        navMeshDirty = false;
+    }
+
+    public void RequestNavMeshRebuild()
+    {
+        navMeshDirty = true;
     }
 
     private void BuildNavMesh()
@@ -260,7 +270,7 @@ public class SquadAIManager : MonoBehaviour
             return new Bounds(center, navMeshBoundsSize);
         }
 
-        Collider[] colliders = Object.FindObjectsOfType<Collider>();
+        Collider[] colliders = Object.FindObjectsByType<Collider>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         bool hasBounds = false;
         Bounds bounds = new Bounds(center, Vector3.zero);
         int mask = navMeshLayerMask.value;
@@ -1256,6 +1266,11 @@ public class SquadAIManager : MonoBehaviour
         SquadFollowerAgent agent = character.GetComponent<SquadFollowerAgent>();
         if (agent == null && autoAddNavMeshFollowers)
         {
+            if (!SquadFollowerAgent.HasNavMeshNear(character.transform.position, teleportSampleRadius))
+            {
+                return null;
+            }
+
             agent = character.AddComponent<SquadFollowerAgent>();
         }
 
