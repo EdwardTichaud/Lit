@@ -167,6 +167,46 @@ public class SquadFollowerAgent : MonoBehaviour
         return true;
     }
 
+    public bool TryGetCurrentLadder(out LadderController ladder)
+    {
+        ladder = null;
+        if (agent == null || !agent.isOnNavMesh || !agent.isOnOffMeshLink)
+        {
+            return false;
+        }
+
+        UnityEngine.Object linkOwner = agent.currentOffMeshLinkData.owner;
+        Component linkComponent = linkOwner as Component;
+        if (linkComponent == null)
+        {
+            return false;
+        }
+
+        ladder = linkComponent.GetComponentInParent<LadderController>();
+        return ladder != null;
+    }
+
+    public void CompleteCurrentOffMeshLink()
+    {
+        if (agent == null || !agent.isOnNavMesh)
+        {
+            return;
+        }
+
+        if (agent.isOnOffMeshLink)
+        {
+            agent.CompleteOffMeshLink();
+        }
+
+        if (agent.hasPath)
+        {
+            agent.ResetPath();
+        }
+
+        lastDestination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        nextUpdateTime = 0f;
+    }
+
     private Vector3 ResolveAgentNavMeshPosition()
     {
         if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, navMeshSampleDistance, NavMesh.AllAreas))

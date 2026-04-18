@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 
 public class LadderController : MonoBehaviour
@@ -58,6 +59,8 @@ public class LadderController : MonoBehaviour
     private float minimumLoopDuration = 0.1f;
     [SerializeField, Tooltip("Duree du deplacement vers le point de sortie pendant Ladder_End.")]
     private float exitDuration = 0.45f;
+    [SerializeField, Tooltip("Garde la rotation du point d'entree pendant les phases Ladder_Start et Ladder_Loop.")]
+    private bool keepEntryRotationDuringClimb = true;
 
     [Header("Root Alignment")]
     [SerializeField, Tooltip("Compense le root aux pieds: en sortie haute, Ladder_End commence avant que les pieds atteignent le H_Trigger.")]
@@ -89,13 +92,33 @@ public class LadderController : MonoBehaviour
     [SerializeField, Tooltip("Duree de transition si le script doit CrossFade vers un state.")]
     private float crossFadeDuration = 0.08f;
 
+    [Header("NavMesh")]
+    [SerializeField, Tooltip("Cree des NavMeshLink runtime pour que le NavMesh considere l'echelle comme un passage.")]
+    private bool autoCreateNavMeshLinks = true;
+    [SerializeField, Tooltip("Largeur des NavMeshLink generes pour l'echelle.")]
+    private float navMeshLinkWidth = 0.8f;
+    [SerializeField, Tooltip("Area NavMesh assignee aux NavMeshLink de l'echelle.")]
+    private int navMeshLinkArea;
+    [SerializeField, Tooltip("Cout NavMesh du lien. Une valeur negative laisse Unity utiliser le cout de l'area.")]
+    private float navMeshLinkCostOverride = -1f;
+    [SerializeField, Tooltip("Autorise les followers a utiliser le lien dans les deux sens.")]
+    private bool navMeshLinkBidirectional = true;
+
     private Coroutine activeRoutine;
+    private readonly List<NavMeshLink> managedNavMeshLinks = new List<NavMeshLink>();
 
     public bool IsBusy => activeRoutine != null;
 
     private void Awake()
     {
         ResolvePointReferencesIfNeeded();
+        EnsureNavMeshLinks();
+    }
+
+    private void OnEnable()
+    {
+        ResolvePointReferencesIfNeeded();
+        EnsureNavMeshLinks();
     }
 
     private void OnValidate()
@@ -110,6 +133,8 @@ public class LadderController : MonoBehaviour
         ladderStartFallbackDuration = Mathf.Max(0f, ladderStartFallbackDuration);
         ladderEndFallbackDuration = Mathf.Max(0f, ladderEndFallbackDuration);
         crossFadeDuration = Mathf.Max(0f, crossFadeDuration);
+        navMeshLinkWidth = Mathf.Max(0.05f, navMeshLinkWidth);
+        navMeshLinkArea = Mathf.Max(0, navMeshLinkArea);
     }
 
     public void UseLadder()
@@ -152,6 +177,9 @@ public class LadderController : MonoBehaviour
             route.EntryPoint.position,
             route.TargetPoint.position,
             route.ExitsAtTop);
+        Quaternion climbRotation = keepEntryRotationDuringClimb
+            ? route.EntryPoint.rotation
+            : route.TargetPoint.rotation;
         LadderAnimationSet animationSet = ResolveLadderAnimationSet(route.ExitsAtTop);
 
         activeRoutine = StartCoroutine(UseLadderRoutine(
@@ -161,7 +189,7 @@ public class LadderController : MonoBehaviour
             motionRoot,
             route.EntryPoint,
             ladderEndStartPosition,
-            route.TargetPoint.rotation,
+            climbRotation,
             route.ExitPoint,
             animationSet,
             driveMotion));
@@ -182,10 +210,19 @@ public class LadderController : MonoBehaviour
     {
         bool inputSuppressed = false;
         bool bodyPrepared = false;
+        bool animatorRootMotionPrepared = false;
+        bool previousApplyRootMotion = false;
         RigidbodyState bodyState = default;
 
         try
         {
+            if (animator != null && animator.applyRootMotion)
+            {
+                previousApplyRootMotion = animator.applyRootMotion;
+                animator.applyRootMotion = false;
+                animatorRootMotionPrepared = true;
+            }
+
             if (controller != null)
             {
                 controller.PushScriptedMovementSuppression();
@@ -271,6 +308,11 @@ public class LadderController : MonoBehaviour
             if (inputSuppressed && controller != null)
             {
                 controller.PopScriptedMovementSuppression();
+            }
+
+            if (animatorRootMotionPrepared && animator != null)
+            {
+                animator.applyRootMotion = previousApplyRootMotion;
             }
 
             activeRoutine = null;
@@ -439,6 +481,166 @@ public class LadderController : MonoBehaviour
         return exitsAtTop
             ? new LadderAnimationSet(ladderUpStartName, ladderUpLoopName, ladderUpEndName)
             : new LadderAnimationSet(ladderDownStartName, ladderDownLoopName, ladderDownEndName);
+    }
+
+    private void EnsureNavMeshLinks()
+    {
+        if (!autoCreateNavMeshLinks)
+        {
+            DisableManagedNavMeshLinks();
+            return;
+        }
+
+        ResolvePointReferencesIfNeeded();
+
+        Transform topEndpoint = ResolveNavMeshTopEndpoint();
+        if (topEndpoint == null)
+        {
+            DisableManagedNavMeshLinks();
+            return;
+        }
+
+        List<Transform> baseEndpoints = CollectNavMeshBaseEndpoints();
+        if (baseEndpoints.Count == 0)
+        {
+            DisableManagedNavMeshLinks();
+            return;
+        }
+
+        Transform linkRoot = GetOrCreateNavMeshLinkRoot();
+        for (int i = 0; i < baseEndpoints.Count; i++)
+        {
+            NavMeshLink link = GetOrCreateManagedNavMeshLink(linkRoot, i);
+            ConfigureNavMeshLink(link, baseEndpoints[i], topEndpoint);
+        }
+
+        for (int i = baseEndpoints.Count; i < managedNavMeshLinks.Count; i++)
+        {
+            if (managedNavMeshLinks[i] != null)
+            {
+                managedNavMeshLinks[i].activated = false;
+            }
+        }
+    }
+
+    private Transform ResolveNavMeshTopEndpoint()
+    {
+        if (ladderExit != null)
+        {
+            return ladderExit;
+        }
+
+        return ladderTop;
+    }
+
+    private List<Transform> CollectNavMeshBaseEndpoints()
+    {
+        List<Transform> endpoints = new List<Transform>();
+        if (ladderBases != null)
+        {
+            for (int i = 0; i < ladderBases.Length; i++)
+            {
+                Transform ladderBase = ladderBases[i];
+                if (ladderBase != null && !endpoints.Contains(ladderBase))
+                {
+                    endpoints.Add(ladderBase);
+                }
+            }
+        }
+
+        if (endpoints.Count == 0 && bottomExit != null)
+        {
+            endpoints.Add(bottomExit);
+        }
+
+        return endpoints;
+    }
+
+    private Transform GetOrCreateNavMeshLinkRoot()
+    {
+        const string rootName = "__LadderNavMeshLinks";
+        Transform linkRoot = transform.Find(rootName);
+        if (linkRoot != null)
+        {
+            return linkRoot;
+        }
+
+        GameObject rootObject = new GameObject(rootName);
+        Transform rootTransform = rootObject.transform;
+        rootTransform.SetParent(transform, false);
+        rootTransform.localPosition = Vector3.zero;
+        rootTransform.localRotation = Quaternion.identity;
+        rootTransform.localScale = Vector3.one;
+        return rootTransform;
+    }
+
+    private NavMeshLink GetOrCreateManagedNavMeshLink(Transform linkRoot, int index)
+    {
+        while (managedNavMeshLinks.Count <= index)
+        {
+            managedNavMeshLinks.Add(null);
+        }
+
+        NavMeshLink link = managedNavMeshLinks[index];
+        if (link != null)
+        {
+            return link;
+        }
+
+        string linkName = $"LadderNavMeshLink_{index:00}";
+        Transform existing = linkRoot != null ? linkRoot.Find(linkName) : null;
+        if (existing == null)
+        {
+            GameObject linkObject = new GameObject(linkName);
+            existing = linkObject.transform;
+            existing.SetParent(linkRoot != null ? linkRoot : transform, false);
+            existing.localPosition = Vector3.zero;
+            existing.localRotation = Quaternion.identity;
+            existing.localScale = Vector3.one;
+        }
+
+        link = existing.GetComponent<NavMeshLink>();
+        if (link == null)
+        {
+            link = existing.gameObject.AddComponent<NavMeshLink>();
+        }
+
+        managedNavMeshLinks[index] = link;
+        return link;
+    }
+
+    private void ConfigureNavMeshLink(NavMeshLink link, Transform start, Transform end)
+    {
+        if (link == null)
+        {
+            return;
+        }
+
+        if (start == null || end == null || start == end)
+        {
+            link.activated = false;
+            return;
+        }
+
+        link.startTransform = start;
+        link.endTransform = end;
+        link.bidirectional = navMeshLinkBidirectional;
+        link.width = navMeshLinkWidth;
+        link.costModifier = navMeshLinkCostOverride;
+        link.area = navMeshLinkArea;
+        link.activated = true;
+        link.UpdateLink();
+    }
+
+    private void DisableManagedNavMeshLinks()
+    {
+        for (int i = 0; i < managedNavMeshLinks.Count; i++)
+        {
+            if (managedNavMeshLinks[i] != null)
+            {
+                managedNavMeshLinks[i].activated = false;
+            }
+        }
     }
 
     private void TriggerOneShotAnimation(Animator animator, string animationName)

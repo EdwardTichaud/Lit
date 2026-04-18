@@ -9,6 +9,9 @@ public partial class SquadCharacterController : MonoBehaviour
     private const float WalkLocomotionTier = 1f;
     private const float JogtrotLocomotionTier = 2f;
     private const float RunLocomotionTier = 3f;
+    private const string WalkStartStateName = "Walk_Start";
+    private const string JogtrotStartStateName = "Jogtrot_Start";
+    private const string RunStartStateName = "Run_Start";
     private static readonly int[] LocomotionEndStateHashes =
     {
         Animator.StringToHash("Walk_Stop"),
@@ -113,6 +116,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private float turnInPlaceAngleThreshold = 60f;
     [SerializeField, Tooltip("Layer Animator contenant la locomotion base.")]
     private int locomotionAnimationLayer;
+    [SerializeField, Tooltip("Seuil d'input qui autorise l'interruption directe d'une animation Walk/Jogtrot/Run_End.")]
+    private float locomotionEndRestartInputThreshold = 0.12f;
+    [SerializeField, Tooltip("Duree du crossfade quand un input relance la locomotion depuis une animation End.")]
+    private float locomotionEndRestartTransitionDuration = 0.04f;
 
     [Header("Movement")]
     [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
@@ -1492,6 +1499,8 @@ public partial class SquadCharacterController : MonoBehaviour
         animationTurnResponsiveness = Mathf.Max(0f, animationTurnResponsiveness);
         turnInPlaceAngleThreshold = Mathf.Clamp(turnInPlaceAngleThreshold, 0f, 180f);
         locomotionAnimationLayer = Mathf.Max(0, locomotionAnimationLayer);
+        locomotionEndRestartInputThreshold = Mathf.Clamp01(locomotionEndRestartInputThreshold);
+        locomotionEndRestartTransitionDuration = Mathf.Max(0f, locomotionEndRestartTransitionDuration);
         movingRotationSpeed = Mathf.Max(0f, movingRotationSpeed);
         movingRotationSpeedThreshold = Mathf.Max(0f, movingRotationSpeedThreshold);
         jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
@@ -1739,8 +1748,20 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (IsLocomotionEndAnimationActive())
         {
-            StopHorizontalVelocity();
-            return;
+            if (TryRestartLocomotionFromEndAnimation(
+                    deltaTime,
+                    out Vector3 restartDirection,
+                    out float restartInputMagnitude))
+            {
+                desiredDirection = restartDirection;
+                inputMagnitude = restartInputMagnitude;
+                hasInput = true;
+            }
+            else
+            {
+                StopHorizontalVelocity();
+                return;
+            }
         }
 
         if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0)
@@ -1790,6 +1811,142 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool TryRestartLocomotionFromEndAnimation(
+        float deltaTime,
+        out Vector3 desiredDirection,
+        out float inputMagnitude)
+    {
+        desiredDirection = Vector3.zero;
+        inputMagnitude = 0f;
+
+        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0)
+        {
+            return false;
+        }
+
+        if (!TryResolveLocomotionRestartIntent(out desiredDirection, out inputMagnitude))
+        {
+            return false;
+        }
+
+        float lookAheadDistance = ResolveCurrentTargetMoveSpeed() * inputMagnitude * Mathf.Max(0f, deltaTime);
+        if (enableVoidDetection && !IsGroundAhead(desiredDirection, lookAheadDistance))
+        {
+            return false;
+        }
+
+        TriggerLocomotionRestartFromEnd(inputMagnitude, desiredDirection);
+        return true;
+    }
+
+    private bool TryResolveLocomotionRestartIntent(out Vector3 desiredDirection, out float inputMagnitude)
+    {
+        Vector2 restartInput = smoothedInput;
+        if (moveInput.sqrMagnitude > restartInput.sqrMagnitude)
+        {
+            restartInput = moveInput;
+        }
+
+        inputMagnitude = ResolveMovementInputMagnitude(restartInput);
+        if (inputMagnitude <= locomotionEndRestartInputThreshold)
+        {
+            desiredDirection = Vector3.zero;
+            return false;
+        }
+
+        desiredDirection = GetMoveDirection(restartInput);
+        if (desiredDirection.sqrMagnitude <= 0.0001f)
+        {
+            desiredDirection = Vector3.zero;
+            return false;
+        }
+
+        desiredDirection.Normalize();
+        return true;
+    }
+
+    private void TriggerLocomotionRestartFromEnd(float inputMagnitude, Vector3 desiredDirection)
+    {
+        float presentationSpeed = inputMagnitude * ResolveCurrentTargetPresentationSpeed();
+        float locomotionTier = ResolveLocomotionTier(presentationSpeed);
+
+        lastMovingLocomotionTier = locomotionTier;
+        wasMovingForAnimator = true;
+
+        SetAnimatorFloatIfValid(locomotionTierParam, locomotionTier);
+        SetAnimatorBoolIfValid(isMovingParam, true);
+        SetAnimatorBoolIfValid(turnInPlaceParam, false);
+
+        Vector3 facingDirection = GetFacingPlanarForward();
+        smoothedTurnAmount = desiredDirection.sqrMagnitude > 0.0001f
+            ? Mathf.Clamp(Vector3.SignedAngle(facingDirection, desiredDirection, transform.up) / 90f, -1f, 1f)
+            : 0f;
+        SetAnimatorFloatIfValid(turnParam, smoothedTurnAmount);
+        SetSpeed(ResolveAnimatorSpeedValue(presentationSpeed));
+
+        ResetAnimatorTriggerIfValid(moveStopTriggerParam);
+        SetAnimatorTriggerIfValid(moveStartTriggerParam);
+        TryCrossFadeLocomotionStartState(locomotionTier);
+    }
+
+    private bool TryCrossFadeLocomotionStartState(float locomotionTier)
+    {
+        return TryCrossFadeLocomotionState(
+            ResolveLocomotionStartStateName(locomotionTier),
+            locomotionEndRestartTransitionDuration);
+    }
+
+    private bool TryCrossFadeLocomotionState(string stateName, float transitionDuration)
+    {
+        if (animator == null ||
+            string.IsNullOrWhiteSpace(stateName) ||
+            locomotionAnimationLayer < 0 ||
+            locomotionAnimationLayer >= animator.layerCount)
+        {
+            return false;
+        }
+
+        string layerPath = animator.GetLayerName(locomotionAnimationLayer) + "." + stateName;
+        int fullPathHash = Animator.StringToHash(layerPath);
+        if (animator.HasState(locomotionAnimationLayer, fullPathHash))
+        {
+            animator.CrossFadeInFixedTime(
+                fullPathHash,
+                Mathf.Max(0f, transitionDuration),
+                locomotionAnimationLayer,
+                0f);
+            return true;
+        }
+
+        int shortNameHash = Animator.StringToHash(stateName);
+        if (!animator.HasState(locomotionAnimationLayer, shortNameHash))
+        {
+            return false;
+        }
+
+        animator.CrossFadeInFixedTime(
+            shortNameHash,
+            Mathf.Max(0f, transitionDuration),
+            locomotionAnimationLayer,
+            0f);
+        return true;
+    }
+
+    private static string ResolveLocomotionStartStateName(float locomotionTier)
+    {
+        if (locomotionTier >= (JogtrotLocomotionTier + RunLocomotionTier) * 0.5f)
+        {
+            return RunStartStateName;
+        }
+
+        if (locomotionTier >= (WalkLocomotionTier + JogtrotLocomotionTier) * 0.5f)
+        {
+            return JogtrotStartStateName;
+        }
+
+        return WalkStartStateName;
     }
 
     private void HandleGroundedLocomotionIntent(Vector3 desiredDirection, float inputMagnitude, float deltaTime)

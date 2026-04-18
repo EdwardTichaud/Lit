@@ -1064,6 +1064,16 @@ public partial class SquadCharacterController
         animator.SetTrigger(parameterName);
     }
 
+    private void ResetAnimatorTriggerIfValid(string parameterName)
+    {
+        if (!HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Trigger))
+        {
+            return;
+        }
+
+        animator.ResetTrigger(parameterName);
+    }
+
     private void SetAnimatorBoolIfValid(string parameterName, bool value)
     {
         if (!HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Bool))

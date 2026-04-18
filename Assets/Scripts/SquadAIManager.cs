@@ -106,6 +106,8 @@ public class SquadAIManager : MonoBehaviour
     private float separationRadius = 1.1f;
     [SerializeField, Tooltip("Force de separation appliquee.")]
     private float separationStrength = 1f;
+    [SerializeField, Tooltip("Delai avant de retenter une echelle si elle est occupee ou refusee.")]
+    private float ladderRetryDelay = 0.75f;
 
     [Header("Catch Up")]
     [SerializeField, Tooltip("Distance a partir de laquelle on accelere.")]
@@ -128,6 +130,8 @@ public class SquadAIManager : MonoBehaviour
         public Vector3 lastPosition;
         public float lastProgressTime;
         public bool suspendedByLeaderDistance;
+        public LadderController activeLadder;
+        public float nextLadderUseTime;
     }
 
     private readonly Dictionary<GameObject, FollowerState> followerStates = new Dictionary<GameObject, FollowerState>();
@@ -170,6 +174,7 @@ public class SquadAIManager : MonoBehaviour
         maxActiveFollowDistance = Mathf.Max(0f, maxActiveFollowDistance);
         separationRadius = Mathf.Max(0f, separationRadius);
         separationStrength = Mathf.Max(0f, separationStrength);
+        ladderRetryDelay = Mathf.Max(0f, ladderRetryDelay);
         catchUpDistance = Mathf.Max(followStopDistance, catchUpDistance);
         teleportDistance = Mathf.Max(catchUpDistance, teleportDistance);
         stuckTimeBeforeTeleport = Mathf.Max(0f, stuckTimeBeforeTeleport);
@@ -688,6 +693,12 @@ public class SquadAIManager : MonoBehaviour
             }
 
             bool resumedFromRangeSuspension = ResumeFollowerFromDistanceSuspension(follower, state);
+            SquadFollowerAgent navFollower = useNavMeshDirection ? GetFollowerAgent(follower) : null;
+            if (TryUpdateFollowerLadderTraversal(follower, controller, navFollower, state))
+            {
+                order++;
+                continue;
+            }
 
             Vector3 offset = useSingleFile
                 ? GetSingleFileOffset(order)
@@ -723,10 +734,9 @@ public class SquadAIManager : MonoBehaviour
             }
 
             Vector3 direction = toTarget.sqrMagnitude > 0.0001f ? toTarget.normalized : Vector3.zero;
-            if (useNavMeshDirection)
+            if (navFollower != null)
             {
-                SquadFollowerAgent navFollower = GetFollowerAgent(follower);
-                if (navFollower != null && navFollower.TryGetDesiredDirection(targetPosition, out Vector3 navDirection))
+                if (navFollower.TryGetDesiredDirection(targetPosition, out Vector3 navDirection))
                 {
                     direction = navDirection;
                 }
@@ -755,6 +765,69 @@ public class SquadAIManager : MonoBehaviour
             UpdateFollowerProgress(follower);
             order++;
         }
+    }
+
+    private bool TryUpdateFollowerLadderTraversal(
+        GameObject follower,
+        SquadCharacterController controller,
+        SquadFollowerAgent navFollower,
+        FollowerState state)
+    {
+        if (follower == null || controller == null || state == null)
+        {
+            return false;
+        }
+
+        if (state.activeLadder != null)
+        {
+            if (state.activeLadder.IsBusy || controller.IsMovementInputSuppressed)
+            {
+                UpdateFollowerProgress(follower);
+                return true;
+            }
+
+            navFollower?.CompleteCurrentOffMeshLink();
+            state.activeLadder = null;
+            state.lastPosition = follower.transform.position;
+            state.lastProgressTime = Time.time;
+            return false;
+        }
+
+        if (controller.IsMovementInputSuppressed)
+        {
+            UpdateFollowerProgress(follower);
+            return true;
+        }
+
+        if (navFollower == null || !navFollower.TryGetCurrentLadder(out LadderController ladder) || ladder == null)
+        {
+            return false;
+        }
+
+        if (Time.time < state.nextLadderUseTime)
+        {
+            controller.Stop();
+            return true;
+        }
+
+        if (ladder.IsBusy)
+        {
+            state.nextLadderUseTime = Time.time + ladderRetryDelay;
+            controller.Stop();
+            return true;
+        }
+
+        if (!ladder.UseLadder(follower, driveMotion: true))
+        {
+            state.nextLadderUseTime = Time.time + ladderRetryDelay;
+            controller.Stop();
+            return true;
+        }
+
+        state.activeLadder = ladder;
+        state.lastPosition = follower.transform.position;
+        state.lastProgressTime = Time.time;
+        return true;
     }
 
     private int CountActiveFollowers(GameObject leader, int leaderIndex, List<int> groupIndices)
