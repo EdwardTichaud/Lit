@@ -9,6 +9,17 @@ public partial class SquadCharacterController : MonoBehaviour
     private const float WalkLocomotionTier = 1f;
     private const float JogtrotLocomotionTier = 2f;
     private const float RunLocomotionTier = 3f;
+    private static readonly int[] LocomotionEndStateHashes =
+    {
+        Animator.StringToHash("Walk_Stop"),
+        Animator.StringToHash("Jogtrot_Stop"),
+        Animator.StringToHash("Run_Stop"),
+        Animator.StringToHash("Walk_End"),
+        Animator.StringToHash("Wal_End"),
+        Animator.StringToHash("Jogtrot_End"),
+        Animator.StringToHash("Jojtrot_End"),
+        Animator.StringToHash("Run_End")
+    };
 
     private enum TorchVisualTransition
     {
@@ -100,6 +111,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private string turnInPlaceParam = "TurnInPlace";
     [SerializeField, Tooltip("Angle minimal avant d'annoncer un pivot sur place (deg).")]
     private float turnInPlaceAngleThreshold = 60f;
+    [SerializeField, Tooltip("Layer Animator contenant la locomotion base.")]
+    private int locomotionAnimationLayer;
 
     [Header("Movement")]
     [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
@@ -215,6 +228,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private Vector2 moveInput;
     private float inputLockTimer;
+    private int scriptedMovementSuppressionCount;
     private Vector2 smoothedInput;
     private bool moveInputIsWorldSpace;
     private bool sprintModifierPressed;
@@ -1477,6 +1491,7 @@ public partial class SquadCharacterController : MonoBehaviour
         animationMovingEnterSpeed = Mathf.Max(animationMovingExitSpeed, animationMovingEnterSpeed);
         animationTurnResponsiveness = Mathf.Max(0f, animationTurnResponsiveness);
         turnInPlaceAngleThreshold = Mathf.Clamp(turnInPlaceAngleThreshold, 0f, 180f);
+        locomotionAnimationLayer = Mathf.Max(0, locomotionAnimationLayer);
         movingRotationSpeed = Mathf.Max(0f, movingRotationSpeed);
         movingRotationSpeedThreshold = Mathf.Max(0f, movingRotationSpeedThreshold);
         jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
@@ -1580,6 +1595,23 @@ public partial class SquadCharacterController : MonoBehaviour
         SetAnimatorFloatIfValid(locomotionTierParam, lastMovingLocomotionTier);
         SetAnimatorFloatIfValid(turnParam, 0f);
         SetSpeed(0f);
+    }
+
+    public void PushScriptedMovementSuppression()
+    {
+        scriptedMovementSuppressionCount = Mathf.Max(0, scriptedMovementSuppressionCount + 1);
+        Stop();
+    }
+
+    public void PopScriptedMovementSuppression()
+    {
+        if (scriptedMovementSuppressionCount <= 0)
+        {
+            scriptedMovementSuppressionCount = 0;
+            return;
+        }
+
+        scriptedMovementSuppressionCount--;
     }
 
     private void FixedUpdate()
@@ -1705,7 +1737,13 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        if (inputLockTimer > 0f)
+        if (IsLocomotionEndAnimationActive())
+        {
+            StopHorizontalVelocity();
+            return;
+        }
+
+        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0)
         {
             CaptureCurrentRigidbodyHorizontalVelocity();
             return;
@@ -1719,6 +1757,39 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         NetworkManager manager = NetworkManager.Singleton;
         return manager == null || !manager.IsListening || manager.IsServer;
+    }
+
+    private bool IsLocomotionEndAnimationActive()
+    {
+        if (animator == null ||
+            !animator.isActiveAndEnabled ||
+            locomotionAnimationLayer < 0 ||
+            locomotionAnimationLayer >= animator.layerCount)
+        {
+            return false;
+        }
+
+        if (MatchesLocomotionEndAnimationState(animator.GetCurrentAnimatorStateInfo(locomotionAnimationLayer)))
+        {
+            return true;
+        }
+
+        return animator.IsInTransition(locomotionAnimationLayer) &&
+               MatchesLocomotionEndAnimationState(animator.GetNextAnimatorStateInfo(locomotionAnimationLayer));
+    }
+
+    private static bool MatchesLocomotionEndAnimationState(AnimatorStateInfo stateInfo)
+    {
+        int shortNameHash = stateInfo.shortNameHash;
+        for (int i = 0; i < LocomotionEndStateHashes.Length; i++)
+        {
+            if (shortNameHash == LocomotionEndStateHashes[i])
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void HandleGroundedLocomotionIntent(Vector3 desiredDirection, float inputMagnitude, float deltaTime)

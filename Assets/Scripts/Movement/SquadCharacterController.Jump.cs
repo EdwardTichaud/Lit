@@ -174,7 +174,7 @@ public partial class SquadCharacterController
 
     public bool IsJumpCommitted => enableCommittedJump && committedJumpPhase != CommittedJumpPhase.Grounded;
 
-    public bool IsMovementInputSuppressed => inputLockTimer > 0f || IsJumpCommitted;
+    public bool IsMovementInputSuppressed => inputLockTimer > 0f || scriptedMovementSuppressionCount > 0 || IsJumpCommitted;
 
     public int CurrentCommittedJumpPhase => (int)committedJumpPhase;
 

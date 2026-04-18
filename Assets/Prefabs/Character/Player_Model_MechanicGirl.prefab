@@ -236,7 +236,7 @@ MonoBehaviour:
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
   turnInPlaceAngleThreshold: 60
-  walkMoveSpeed: 5
+  walkMoveSpeed: 6.5
   moveSpeed: 10
   inputResponsiveness: 14
   inputReleaseResponsiveness: 36

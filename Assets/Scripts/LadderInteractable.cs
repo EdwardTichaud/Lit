@@ -8,6 +8,8 @@ using UnityEngine.UI;
 public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 {
     [Header("Interaction")]
+    [Tooltip("Controller qui pilote la sequence de montee. Laisse vide pour auto-detecter sur ce GameObject, ses parents ou ses enfants.")]
+    public LadderController ladderController;
     [Tooltip("Collider de reference pour la detection. Laisse vide pour auto-detecter un collider non-trigger.")]
     public Collider interactionCollider;
     [Tooltip("Distance maximale a laquelle le personnage peut cibler cette echelle.")]
@@ -41,6 +43,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 
     private void Reset()
     {
+        ladderController = ResolveLadderController();
         interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
     }
 
@@ -51,6 +54,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
+        ladderController = ResolveLadderController();
         resolvedInteractionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
         if (interactionCollider == null)
         {
@@ -132,7 +136,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
-        return controller != null && isActiveAndEnabled;
+        return controller != null && isActiveAndEnabled && ResolveLadderController() != null;
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -204,12 +208,18 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        if (!TryStartLadderUse(character, driveMotion: true))
+        {
+            return;
+        }
+
         LocalInputRouter.ConsumeInteract();
     }
 
     public bool ServerTryUse(GameObject character)
     {
-        return CanUse(character, requireLocalControl: false, rangePadding: 0.35f);
+        return CanUse(character, requireLocalControl: false, rangePadding: 0.35f)
+            && TryStartLadderUse(character, driveMotion: true);
     }
 
     public bool IsServerCharacterAllowed(GameObject character)
@@ -220,6 +230,15 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
     public void HandleLadderUseResult(bool success)
     {
         awaitingServerResponse = false;
+        if (!success)
+        {
+            return;
+        }
+
+        GameObject character = currentCharacter != null
+            ? currentCharacter
+            : LocalPlayerUtils.GetControlledCharacter();
+        TryStartLadderUse(character, driveMotion: false);
     }
 
     private bool CanUse(GameObject character, bool requireLocalControl, float rangePadding)
@@ -239,11 +258,50 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
             return false;
         }
 
+        if (ResolveLadderController() == null)
+        {
+            return false;
+        }
+
         return CharacterInteractionDetection.IsCharacterWithinRange(
             character.transform,
             GetInteractionDetectionCollider(),
             GetInteractionAnchor(),
             interactionMaxDistance + Mathf.Max(0f, rangePadding));
+    }
+
+    private bool TryStartLadderUse(GameObject character, bool driveMotion)
+    {
+        if (character == null)
+        {
+            return false;
+        }
+
+        LadderController controller = ResolveLadderController();
+        return controller != null && controller.UseLadder(character, driveMotion);
+    }
+
+    private LadderController ResolveLadderController()
+    {
+        if (ladderController != null)
+        {
+            return ladderController;
+        }
+
+        ladderController = GetComponent<LadderController>();
+        if (ladderController != null)
+        {
+            return ladderController;
+        }
+
+        ladderController = GetComponentInParent<LadderController>();
+        if (ladderController != null)
+        {
+            return ladderController;
+        }
+
+        ladderController = GetComponentInChildren<LadderController>(true);
+        return ladderController;
     }
 
     private void ShowInteraction(bool show)
