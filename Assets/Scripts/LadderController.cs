@@ -174,13 +174,15 @@ public class LadderController : MonoBehaviour
         }
 
         SquadCharacterController controller = ResolveCharacterController(character);
+        StarterInspiredThirdPersonMotor starterMotor = ResolveStarterMotor(character);
         Animator animator = ResolveCharacterAnimator(character, controller);
-        Rigidbody body = ResolveCharacterRigidbody(character, controller);
-        Transform motionRoot = ResolveCharacterMotionRoot(character, controller, body);
+        Rigidbody body = starterMotor != null ? null : ResolveCharacterRigidbody(character, controller);
+        Transform motionRoot = ResolveCharacterMotionRoot(character, starterMotor, controller, body);
         if (motionRoot == null)
         {
             return false;
         }
+        ScriptedMotionTarget motionTarget = new ScriptedMotionTarget(starterMotor, motionRoot, body);
 
         LadderAnimationSet animationSet = ResolveLadderAnimationSet(route.ExitsAtTop);
         Vector3 ladderEndStartPosition = ResolveLadderEndStartPosition(
@@ -203,8 +205,7 @@ public class LadderController : MonoBehaviour
         activeRoutine = StartCoroutine(UseLadderRoutine(
             controller,
             animator,
-            body,
-            motionRoot,
+            motionTarget,
             route.EntryPoint,
             ladderLoopEndPosition,
             ladderEndStartPosition,
@@ -218,8 +219,7 @@ public class LadderController : MonoBehaviour
     private IEnumerator UseLadderRoutine(
         SquadCharacterController controller,
         Animator animator,
-        Rigidbody body,
-        Transform motionRoot,
+        ScriptedMotionTarget motionTarget,
         Transform entryPoint,
         Vector3 ladderLoopEndPosition,
         Vector3 ladderEndStartPosition,
@@ -230,6 +230,7 @@ public class LadderController : MonoBehaviour
     {
         bool inputSuppressed = false;
         bool bodyPrepared = false;
+        bool starterMotorPrepared = false;
         bool animatorRootMotionPrepared = false;
         bool previousApplyRootMotion = false;
         RigidbodyState bodyState = default;
@@ -243,22 +244,28 @@ public class LadderController : MonoBehaviour
                 animatorRootMotionPrepared = true;
             }
 
-            if (controller != null)
+            if (motionTarget.StarterMotor != null)
+            {
+                motionTarget.StarterMotor.BeginLadderTraversal();
+                starterMotorPrepared = true;
+            }
+
+            if (controller != null && motionTarget.StarterMotor == null)
             {
                 controller.PushScriptedMovementSuppression();
                 inputSuppressed = true;
             }
 
-            if (driveMotion && body != null)
+            if (driveMotion && motionTarget.Body != null)
             {
-                bodyState = new RigidbodyState(body);
-                PrepareBodyForScriptedMotion(body);
+                bodyState = new RigidbodyState(motionTarget.Body);
+                PrepareBodyForScriptedMotion(motionTarget.Body);
                 bodyPrepared = true;
             }
 
             if (driveMotion)
             {
-                yield return MoveToPoint(motionRoot, body, entryPoint.position, entryPoint.rotation, approachDuration);
+                yield return MoveToPoint(motionTarget, entryPoint.position, entryPoint.rotation, approachDuration);
             }
             else
             {
@@ -294,8 +301,7 @@ public class LadderController : MonoBehaviour
                 animator,
                 animationSet.StartName,
                 animationSet.LoopName,
-                motionRoot,
-                body,
+                motionTarget,
                 entryPoint.position,
                 entryPoint.rotation,
                 ladderLoopEndPosition,
@@ -323,8 +329,7 @@ public class LadderController : MonoBehaviour
                 yield return MoveToPointDuringAnimationStateTimeRange(
                     animator,
                     animationSet.EndName,
-                    motionRoot,
-                    body,
+                    motionTarget,
                     ladderEndStartPosition,
                     ladderEndStartRotation,
                     0f,
@@ -343,8 +348,7 @@ public class LadderController : MonoBehaviour
                 yield return MoveToPointDuringAnimationStateTimeRange(
                     animator,
                     animationSet.EndName,
-                    motionRoot,
-                    body,
+                    motionTarget,
                     exitPoint.position,
                     exitPoint.rotation,
                     exitMoveStartTime,
@@ -357,8 +361,7 @@ public class LadderController : MonoBehaviour
                 yield return MoveToPointDuringAnimationStateTimeRange(
                     animator,
                     animationSet.EndName,
-                    motionRoot,
-                    body,
+                    motionTarget,
                     ladderEndStartPosition,
                     ladderEndStartRotation,
                     0f,
@@ -369,7 +372,7 @@ public class LadderController : MonoBehaviour
                 float exitMoveDuration = Mathf.Max(0f, exitDuration);
                 if (driveMotion)
                 {
-                    yield return MoveToPoint(motionRoot, body, exitPoint.position, exitPoint.rotation, exitMoveDuration);
+                    yield return MoveToPoint(motionTarget, exitPoint.position, exitPoint.rotation, exitMoveDuration);
                 }
                 else
                 {
@@ -379,9 +382,15 @@ public class LadderController : MonoBehaviour
                 exitMoveEndTime = endDuration + exitMoveDuration;
             }
 
+            if (starterMotorPrepared && motionTarget.StarterMotor != null)
+            {
+                motionTarget.StarterMotor.EndLadderTraversal();
+                starterMotorPrepared = false;
+            }
+
             if (bodyPrepared)
             {
-                bodyState.Restore(body);
+                bodyState.Restore(motionTarget.Body);
                 bodyPrepared = false;
             }
 
@@ -401,9 +410,14 @@ public class LadderController : MonoBehaviour
         {
             SetLoopAnimation(animator, animationSet.LoopName, false);
 
+            if (starterMotorPrepared && motionTarget.StarterMotor != null)
+            {
+                motionTarget.StarterMotor.EndLadderTraversal();
+            }
+
             if (bodyPrepared)
             {
-                bodyState.Restore(body);
+                bodyState.Restore(motionTarget.Body);
             }
 
             if (inputSuppressed && controller != null)
@@ -424,8 +438,7 @@ public class LadderController : MonoBehaviour
         Animator animator,
         string ladderStartName,
         string ladderLoopName,
-        Transform motionRoot,
-        Rigidbody body,
+        ScriptedMotionTarget motionTarget,
         Vector3 startPosition,
         Quaternion startRotation,
         Vector3 endPosition,
@@ -445,8 +458,7 @@ public class LadderController : MonoBehaviour
             if (driveMotion)
             {
                 TryApplyStartPhaseMotion(
-                    motionRoot,
-                    body,
+                    motionTarget,
                     startPosition,
                     startRotation,
                     endPosition,
@@ -467,8 +479,7 @@ public class LadderController : MonoBehaviour
         if (driveMotion)
         {
             TryApplyStartPhaseMotion(
-                motionRoot,
-                body,
+                motionTarget,
                 startPosition,
                 startRotation,
                 endPosition,
@@ -493,8 +504,7 @@ public class LadderController : MonoBehaviour
             if (driveMotion)
             {
                 ApplyPose(
-                    motionRoot,
-                    body,
+                    motionTarget,
                     Vector3.Lerp(loopStartPosition, endPosition, t),
                     Quaternion.Slerp(loopStartRotation, endRotation, t));
             }
@@ -505,7 +515,7 @@ public class LadderController : MonoBehaviour
 
         if (driveMotion)
         {
-            ApplyPose(motionRoot, body, endPosition, endRotation);
+            ApplyPose(motionTarget, endPosition, endRotation);
         }
     }
 
@@ -654,14 +664,14 @@ public class LadderController : MonoBehaviour
         return elapsed >= Mathf.Max(0f, fallbackStartDuration - crossFadeDuration);
     }
 
-    private IEnumerator MoveToPoint(Transform motionRoot, Rigidbody body, Vector3 targetPosition, Quaternion targetRotation, float duration)
+    private IEnumerator MoveToPoint(ScriptedMotionTarget motionTarget, Vector3 targetPosition, Quaternion targetRotation, float duration)
     {
-        Vector3 startPosition = body != null ? body.position : motionRoot.position;
-        Quaternion startRotation = body != null ? body.rotation : motionRoot.rotation;
+        Vector3 startPosition = ResolveMotionPosition(motionTarget);
+        Quaternion startRotation = ResolveMotionRotation(motionTarget);
         float clampedDuration = Mathf.Max(0f, duration);
         if (clampedDuration <= 0f)
         {
-            ApplyPose(motionRoot, body, targetPosition, targetRotation);
+            ApplyPose(motionTarget, targetPosition, targetRotation);
             yield break;
         }
 
@@ -670,8 +680,7 @@ public class LadderController : MonoBehaviour
         {
             float t = Mathf.Clamp01(elapsed / clampedDuration);
             ApplyPose(
-                motionRoot,
-                body,
+                motionTarget,
                 Vector3.Lerp(startPosition, targetPosition, t),
                 Quaternion.Slerp(startRotation, targetRotation, t));
 
@@ -679,14 +688,13 @@ public class LadderController : MonoBehaviour
             elapsed += Time.fixedDeltaTime;
         }
 
-        ApplyPose(motionRoot, body, targetPosition, targetRotation);
+        ApplyPose(motionTarget, targetPosition, targetRotation);
     }
 
     private IEnumerator MoveToPointDuringAnimationStateTimeRange(
         Animator animator,
         string animationName,
-        Transform motionRoot,
-        Rigidbody body,
+        ScriptedMotionTarget motionTarget,
         Vector3 targetPosition,
         Quaternion targetRotation,
         float startStateTime,
@@ -709,12 +717,12 @@ public class LadderController : MonoBehaviour
 
         if (clampedEndTime <= clampedStartTime)
         {
-            ApplyPose(motionRoot, body, targetPosition, targetRotation);
+            ApplyPose(motionTarget, targetPosition, targetRotation);
             yield break;
         }
 
-        Vector3 startPosition = body != null ? body.position : motionRoot.position;
-        Quaternion startRotation = body != null ? body.rotation : motionRoot.rotation;
+        Vector3 startPosition = ResolveMotionPosition(motionTarget);
+        Quaternion startRotation = ResolveMotionRotation(motionTarget);
         float fallbackElapsed = clampedStartTime;
         while (fallbackElapsed < clampedEndTime)
         {
@@ -731,8 +739,7 @@ public class LadderController : MonoBehaviour
 
             float t = Mathf.Clamp01((Mathf.Max(stateElapsedTime, clampedStartTime) - clampedStartTime) / (clampedEndTime - clampedStartTime));
             ApplyPose(
-                motionRoot,
-                body,
+                motionTarget,
                 Vector3.Lerp(startPosition, targetPosition, t),
                 Quaternion.Slerp(startRotation, targetRotation, t));
 
@@ -740,7 +747,7 @@ public class LadderController : MonoBehaviour
             fallbackElapsed += Time.fixedDeltaTime;
         }
 
-        ApplyPose(motionRoot, body, targetPosition, targetRotation);
+        ApplyPose(motionTarget, targetPosition, targetRotation);
     }
 
     private IEnumerator WaitForFixedDuration(float duration)
@@ -753,21 +760,29 @@ public class LadderController : MonoBehaviour
         }
     }
 
-    private void ApplyPose(Transform motionRoot, Rigidbody body, Vector3 position, Quaternion rotation)
+    private void ApplyPose(ScriptedMotionTarget motionTarget, Vector3 position, Quaternion rotation)
     {
-        if (body != null)
+        if (motionTarget.StarterMotor != null)
         {
-            body.position = position;
-            body.rotation = rotation;
+            motionTarget.StarterMotor.ApplyLadderPose(position, rotation);
             return;
         }
 
-        motionRoot.SetPositionAndRotation(position, rotation);
+        if (motionTarget.Body != null)
+        {
+            motionTarget.Body.position = position;
+            motionTarget.Body.rotation = rotation;
+            return;
+        }
+
+        if (motionTarget.MotionRoot != null)
+        {
+            motionTarget.MotionRoot.SetPositionAndRotation(position, rotation);
+        }
     }
 
     private bool TryApplyStartPhaseMotion(
-        Transform motionRoot,
-        Rigidbody body,
+        ScriptedMotionTarget motionTarget,
         Vector3 startPosition,
         Quaternion startRotation,
         Vector3 endPosition,
@@ -787,8 +802,7 @@ public class LadderController : MonoBehaviour
             float phaseTime = Mathf.Clamp(elapsed, startPhaseMoveStartTime, startPhaseMoveEndTime);
             float phaseProgress = Mathf.Clamp01((phaseTime - startPhaseMoveStartTime) / (startPhaseMoveEndTime - startPhaseMoveStartTime));
             ApplyClimbProgress(
-                motionRoot,
-                body,
+                motionTarget,
                 startPosition,
                 startRotation,
                 endPosition,
@@ -805,8 +819,7 @@ public class LadderController : MonoBehaviour
         }
 
         ApplyClimbProgress(
-            motionRoot,
-            body,
+            motionTarget,
             startPosition,
             startRotation,
             endPosition,
@@ -818,8 +831,7 @@ public class LadderController : MonoBehaviour
     }
 
     private void ApplyClimbProgress(
-        Transform motionRoot,
-        Rigidbody body,
+        ScriptedMotionTarget motionTarget,
         Vector3 startPosition,
         Quaternion startRotation,
         Vector3 endPosition,
@@ -834,7 +846,7 @@ public class LadderController : MonoBehaviour
             : Mathf.Clamp01(Mathf.Max(0f, distance) / climbDistance);
         currentPosition = Vector3.Lerp(startPosition, endPosition, progress);
         currentRotation = Quaternion.Slerp(startRotation, endRotation, progress);
-        ApplyPose(motionRoot, body, currentPosition, currentRotation);
+        ApplyPose(motionTarget, currentPosition, currentRotation);
     }
 
     private float ResolveClimbDuration(Vector3 basePosition, Vector3 topPosition)
@@ -1670,6 +1682,28 @@ public class LadderController : MonoBehaviour
         return character.GetComponentInParent<SquadCharacterController>();
     }
 
+    private static StarterInspiredThirdPersonMotor ResolveStarterMotor(GameObject character)
+    {
+        if (character == null)
+        {
+            return null;
+        }
+
+        StarterInspiredThirdPersonMotor motor = character.GetComponent<StarterInspiredThirdPersonMotor>();
+        if (motor != null)
+        {
+            return motor;
+        }
+
+        motor = character.GetComponentInChildren<StarterInspiredThirdPersonMotor>(true);
+        if (motor != null)
+        {
+            return motor;
+        }
+
+        return character.GetComponentInParent<StarterInspiredThirdPersonMotor>();
+    }
+
     private static Animator ResolveCharacterAnimator(GameObject character, SquadCharacterController controller)
     {
         Animator animator = controller != null ? controller.GetComponent<Animator>() : null;
@@ -1857,8 +1891,17 @@ public class LadderController : MonoBehaviour
         return collider != null && collider.enabled && !collider.isTrigger;
     }
 
-    private static Transform ResolveCharacterMotionRoot(GameObject character, SquadCharacterController controller, Rigidbody body)
+    private static Transform ResolveCharacterMotionRoot(
+        GameObject character,
+        StarterInspiredThirdPersonMotor starterMotor,
+        SquadCharacterController controller,
+        Rigidbody body)
     {
+        if (starterMotor != null)
+        {
+            return starterMotor.transform;
+        }
+
         if (body != null)
         {
             return body.transform;
@@ -1872,6 +1915,36 @@ public class LadderController : MonoBehaviour
         return character != null ? character.transform : null;
     }
 
+    private static Vector3 ResolveMotionPosition(ScriptedMotionTarget motionTarget)
+    {
+        if (motionTarget.StarterMotor != null)
+        {
+            return motionTarget.StarterMotor.transform.position;
+        }
+
+        if (motionTarget.Body != null)
+        {
+            return motionTarget.Body.position;
+        }
+
+        return motionTarget.MotionRoot != null ? motionTarget.MotionRoot.position : Vector3.zero;
+    }
+
+    private static Quaternion ResolveMotionRotation(ScriptedMotionTarget motionTarget)
+    {
+        if (motionTarget.StarterMotor != null)
+        {
+            return motionTarget.StarterMotor.transform.rotation;
+        }
+
+        if (motionTarget.Body != null)
+        {
+            return motionTarget.Body.rotation;
+        }
+
+        return motionTarget.MotionRoot != null ? motionTarget.MotionRoot.rotation : Quaternion.identity;
+    }
+
     private static void PrepareBodyForScriptedMotion(Rigidbody body)
     {
         body.linearVelocity = Vector3.zero;
@@ -1879,6 +1952,20 @@ public class LadderController : MonoBehaviour
         body.useGravity = false;
         body.isKinematic = true;
         body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+    }
+
+    private readonly struct ScriptedMotionTarget
+    {
+        public ScriptedMotionTarget(StarterInspiredThirdPersonMotor starterMotor, Transform motionRoot, Rigidbody body)
+        {
+            StarterMotor = starterMotor;
+            MotionRoot = motionRoot;
+            Body = body;
+        }
+
+        public StarterInspiredThirdPersonMotor StarterMotor { get; }
+        public Transform MotionRoot { get; }
+        public Rigidbody Body { get; }
     }
 
     private readonly struct LadderRoute
