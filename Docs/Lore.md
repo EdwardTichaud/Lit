@@ -8,6 +8,18 @@ Ce document consolide le lore actuel du projet. Il sert de base narrative de tra
 
 Le joueur explore ce chateau pour comprendre ce qui s'y est reellement produit, decouvrir qui mentait, qui tentait d'empecher la catastrophe, et pourquoi le temps lui-meme s'est brise.
 
+## Implantation du chateau
+
+Le chateau est perche sur un immense rocher qui surplombe un ocean gigantesque. Vu de l'exterieur, il semble moins pose sur le monde qu'arrache a lui : une forteresse verticale, isolee par les falaises, les vents et l'etendue de l'eau.
+
+Le site existait avant le chateau. Au centre du promontoire rocheux se dressait deja une statue gigantesque, visible depuis les rares voies d'approche et depuis la mer. Le chateau a ete construit autour d'elle, comme si l'architecture avait d'abord cherche a enfermer, proteger ou consacrer cette presence.
+
+L'acces au promontoire est extremement difficile. La nature elle-meme rend le lieu presque imprenable : falaises abruptes, passages etroits, mer violente, absence de terrain favorable a un siege classique.
+
+Des ecrits trouvables dans le chateau doivent laisser entendre cela de maniere subtile. Ils ne disent pas explicitement que l'attaque de l'an 666 etait impossible, mais ils repetent une idee devenue banale pour les habitants : personne de sain d'esprit n'attaquerait une forteresse aussi protegee par la nature.
+
+Cette certitude renforce le mensonge religieux. Si une armee se presente malgre tout devant un tel lieu, alors les habitants peuvent croire que l'evenement releve forcement de la prophetie, d'une folie venue de l'exterieur ou d'un mal absolu.
+
 ## Verite cachee
 
 Le chateau n'a pas ete construit pour proteger un royaume ou une population.
@@ -16,7 +28,7 @@ En l'an 0, des dirigeants religieux ont fonde ce chateau dans un but unique : pr
 
 Pour rendre ce rituel possible, ils ont fait amener des prisonniers au chateau. Ces prisonniers ne sont pas de simples captifs. Leurs descendants devront un jour participer au rituel final.
 
-Le chateau est donc, depuis son origine, une machine religieuse construite pour un objectif cache.
+Le choix du promontoire et de la statue n'est donc pas seulement defensif ou symbolique. Le chateau est, depuis son origine, une machine religieuse construite pour un objectif cache.
 
 ## Les Chanteurs
 
@@ -50,6 +62,8 @@ Les cellules presentes dans les premieres annees du chateau sont les traces dire
 En l'an 666, l'evenement attendu par les dirigeants religieux se produit enfin.
 
 Une armee approche du chateau. Pour les habitants, cela confirme la prophetie : l'ennemi est venu, et le rituel doit les sauver.
+
+L'approche de cette armee est d'autant plus terrifiante qu'elle contredit tout ce que les habitants croyaient savoir du lieu. Le chateau est considere comme quasiment imprenable ; les archives, les prieres de garnison et certains textes civils repetent qu'aucun assaillant rationnel ne choisirait un tel champ de bataille.
 
 Mais la realite est inverse.
 

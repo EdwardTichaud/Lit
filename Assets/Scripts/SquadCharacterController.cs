@@ -1630,6 +1630,7 @@ public partial class SquadCharacterController : MonoBehaviour
         UpdateGroundedState();
         UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
         UpdateCommittedJump(Time.fixedDeltaTime);
+        UpdateNaturalFallAnimation(Time.fixedDeltaTime);
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
         UpdateCommittedJumpAnimation();
@@ -1742,6 +1743,11 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         if (TryApplyCommittedJumpMovement(deltaTime))
+        {
+            return;
+        }
+
+        if (TryApplyNaturalFallLandingMovement(deltaTime))
         {
             return;
         }

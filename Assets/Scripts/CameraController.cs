@@ -65,6 +65,12 @@ public class CameraController : MonoBehaviour
     [SerializeField] private CrpgCameraFocus cameraFocus = new CrpgCameraFocus();
     [SerializeField] private CrpgCameraCollision cameraCollision = new CrpgCameraCollision();
 
+    [Header("Run Speed Effect")]
+    [SerializeField] private RunSpeedCameraEffect runSpeedEffect = new RunSpeedCameraEffect();
+
+    [Header("Fall Speed Effect")]
+    [SerializeField] private FallSpeedCameraEffect fallSpeedEffect = new FallSpeedCameraEffect();
+
     private bool runtimeInitialized;
     private float desiredYaw;
     private float currentYaw;
@@ -79,6 +85,7 @@ public class CameraController : MonoBehaviour
     {
         TryResolveRigReferences();
         ValidateFields();
+        runSpeedEffect?.Initialize(mainCam);
     }
 
     private void OnEnable()
@@ -95,6 +102,12 @@ public class CameraController : MonoBehaviour
     private void OnDisable()
     {
         cameraInput.Unbind();
+        runSpeedEffect?.Cleanup(mainCam);
+    }
+
+    private void OnDestroy()
+    {
+        runSpeedEffect?.Cleanup(mainCam);
     }
 
     private void LateUpdate()
@@ -153,6 +166,7 @@ public class CameraController : MonoBehaviour
         }
 
         UpdateRig(focusPoint, logicalTarget, deltaTime);
+        runSpeedEffect?.UpdateEffect(mainCam, gameplayTarget, deltaTime, fallSpeedEffect);
 
         zoomNormalized = currentZoomNormalized;
     }
@@ -479,6 +493,8 @@ public class CameraController : MonoBehaviour
         cameraInput?.Validate();
         cameraFocus?.Validate();
         cameraCollision?.Validate();
+        runSpeedEffect?.Validate();
+        fallSpeedEffect?.Validate();
     }
 
     private static Transform FindChildRecursive(Transform root, string childName)

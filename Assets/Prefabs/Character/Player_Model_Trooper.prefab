@@ -1200,6 +1200,20 @@ MonoBehaviour:
   idleLandingStateName: Jump_Land
   rollStateName: Jump_Roll
   groundedRecoveryStateName: Locomotion
+  enableNaturalFallAnimation: 1
+  naturalFallStartDelay: 0.12
+  naturalFallStartVerticalSpeed: 1.2
+  naturalLandingMinFallSpeed: 1.5
+  naturalLandingMinFallDuration: 0.08
+  naturalLandingRecoveryDuration: 0.28
+  naturalLandingMovementLockDuration: 0.22
+  naturalLandingStopDamping: 14
+  naturalLandingUnlockNormalizedTime: 0.8
+  forceNaturalFallStateCrossFade: 1
+  naturalFallingCrossFadeDuration: 0.08
+  naturalLandingCrossFadeDuration: 0.06
+  fallingStateName: Falling
+  naturalLandingStateName: Landing
   maxWalkableSlopeAngle: 55
   items: []
   equippedInteractionItems: []
@@ -1233,6 +1247,9 @@ MonoBehaviour:
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
   turnInPlaceAngleThreshold: 60
+  locomotionAnimationLayer: 0
+  locomotionEndRestartInputThreshold: 0.12
+  locomotionEndRestartTransitionDuration: 0.04
   walkMoveSpeed: 5
   moveSpeed: 6.5
   inputResponsiveness: 14

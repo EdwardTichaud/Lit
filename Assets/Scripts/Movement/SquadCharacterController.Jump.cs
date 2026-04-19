@@ -25,6 +25,13 @@ public partial class SquadCharacterController
         Roll = 2,
     }
 
+    private enum NaturalFallAnimationPhase
+    {
+        Grounded = 0,
+        Falling = 1,
+        Landing = 2,
+    }
+
     [Header("Jump Start")]
     [SerializeField, Tooltip("Active le saut a phases engagees et remplace le saut legacy.")]
     private bool enableCommittedJump = true;
@@ -157,6 +164,36 @@ public partial class SquadCharacterController
     [SerializeField, Tooltip("Nom de l'etat Animator de locomotion utilise comme repli quand le saut se termine.")]
     private string groundedRecoveryStateName = "Locomotion";
 
+    [Header("Natural Fall Animation")]
+    [SerializeField, Tooltip("Joue Falling puis Landing quand le personnage tombe sans saut engage.")]
+    private bool enableNaturalFallAnimation = true;
+    [SerializeField, Tooltip("Temps minimal hors sol avant de considerer une vraie chute.")]
+    private float naturalFallStartDelay = 0.12f;
+    [SerializeField, Tooltip("Vitesse verticale descendante minimale pour entrer dans Falling.")]
+    private float naturalFallStartVerticalSpeed = 1.2f;
+    [SerializeField, Tooltip("Vitesse descendante minimale atteinte pendant la chute pour jouer Landing.")]
+    private float naturalLandingMinFallSpeed = 1.5f;
+    [SerializeField, Tooltip("Duree minimale de la phase Falling avant de jouer Landing.")]
+    private float naturalLandingMinFallDuration = 0.08f;
+    [SerializeField, Tooltip("Duree de recuperation apres Landing avant retour locomotion.")]
+    private float naturalLandingRecoveryDuration = 0.28f;
+    [SerializeField, Tooltip("Verrou de mouvement minimal pendant Landing.")]
+    private float naturalLandingMovementLockDuration = 0.22f;
+    [SerializeField, Tooltip("Frein horizontal applique pendant Landing.")]
+    private float naturalLandingStopDamping = 14f;
+    [SerializeField, Range(0f, 1f), Tooltip("Fenetre mini de l'animation Landing avant rendu du controle.")]
+    private float naturalLandingUnlockNormalizedTime = 0.8f;
+    [SerializeField, Tooltip("Force un CrossFade vers Falling/Landing quand une chute naturelle commence ou finit.")]
+    private bool forceNaturalFallStateCrossFade = true;
+    [SerializeField, Tooltip("Duree du CrossFade vers Falling (s).")]
+    private float naturalFallingCrossFadeDuration = 0.08f;
+    [SerializeField, Tooltip("Duree du CrossFade vers Landing (s).")]
+    private float naturalLandingCrossFadeDuration = 0.06f;
+    [SerializeField, Tooltip("Nom de l'etat Animator joue pendant une chute naturelle.")]
+    private string fallingStateName = "Falling";
+    [SerializeField, Tooltip("Nom de l'etat Animator joue quand une chute naturelle touche le sol.")]
+    private string naturalLandingStateName = "Landing";
+
     private CommittedJumpPhase committedJumpPhase;
     private JumpStartContext committedJumpStartContext;
     private CommittedLandingType committedLandingType;
@@ -171,10 +208,17 @@ public partial class SquadCharacterController
     private Vector2 queuedCommittedJumpInput;
     private bool queuedCommittedJumpInputIsWorldSpace;
     private bool hasQueuedCommittedJumpInput;
+    private NaturalFallAnimationPhase naturalFallAnimationPhase;
+    private float naturalAirborneStartTime = float.NegativeInfinity;
+    private float naturalFallPhaseStartTime = float.NegativeInfinity;
+    private float naturalFallPeakDownwardSpeed;
 
     public bool IsJumpCommitted => enableCommittedJump && committedJumpPhase != CommittedJumpPhase.Grounded;
 
-    public bool IsMovementInputSuppressed => inputLockTimer > 0f || scriptedMovementSuppressionCount > 0 || IsJumpCommitted;
+    public bool IsMovementInputSuppressed => inputLockTimer > 0f ||
+                                             scriptedMovementSuppressionCount > 0 ||
+                                             IsJumpCommitted ||
+                                             IsNaturalFallLandingActive;
 
     public int CurrentCommittedJumpPhase => (int)committedJumpPhase;
 
@@ -197,6 +241,7 @@ public partial class SquadCharacterController
         committedLaunchSpeed = 0f;
         committedLockedHorizontalVelocity = Vector3.zero;
         committedRollSpeed = 0f;
+        ResetNaturalFallAnimationRuntime();
         ClearQueuedCommittedJumpInput();
     }
 
@@ -247,6 +292,16 @@ public partial class SquadCharacterController
         rollAnimationExitPadding = Mathf.Max(0f, rollAnimationExitPadding);
         jumpAnimationLayer = Mathf.Max(0, jumpAnimationLayer);
         jumpAnimationCrossFadeDuration = Mathf.Max(0f, jumpAnimationCrossFadeDuration);
+        naturalFallStartDelay = Mathf.Max(0f, naturalFallStartDelay);
+        naturalFallStartVerticalSpeed = Mathf.Max(0f, naturalFallStartVerticalSpeed);
+        naturalLandingMinFallSpeed = Mathf.Max(0f, naturalLandingMinFallSpeed);
+        naturalLandingMinFallDuration = Mathf.Max(0f, naturalLandingMinFallDuration);
+        naturalLandingRecoveryDuration = Mathf.Max(0f, naturalLandingRecoveryDuration);
+        naturalLandingMovementLockDuration = Mathf.Max(0f, naturalLandingMovementLockDuration);
+        naturalLandingStopDamping = Mathf.Max(0f, naturalLandingStopDamping);
+        naturalLandingUnlockNormalizedTime = Mathf.Clamp01(naturalLandingUnlockNormalizedTime);
+        naturalFallingCrossFadeDuration = Mathf.Max(0f, naturalFallingCrossFadeDuration);
+        naturalLandingCrossFadeDuration = Mathf.Max(0f, naturalLandingCrossFadeDuration);
     }
 
     private void RequestCommittedJump()
@@ -355,6 +410,158 @@ public partial class SquadCharacterController
         return false;
     }
 
+    private void UpdateNaturalFallAnimation(float deltaTime)
+    {
+        if (!enableNaturalFallAnimation ||
+            !CanSimulateMovementLocally() ||
+            !ShouldUseRigidbody() ||
+            rigidbodyTarget == null ||
+            scriptedMovementSuppressionCount > 0)
+        {
+            ResetNaturalFallAnimationRuntime();
+            return;
+        }
+
+        if (committedJumpPhase != CommittedJumpPhase.Grounded)
+        {
+            ResetNaturalFallAnimationRuntime();
+            return;
+        }
+
+        float downwardSpeed = Mathf.Max(0f, -rigidbodyTarget.linearVelocity.y);
+        switch (naturalFallAnimationPhase)
+        {
+            case NaturalFallAnimationPhase.Grounded:
+                UpdateNaturalFallGroundedCandidate(downwardSpeed);
+                break;
+
+            case NaturalFallAnimationPhase.Falling:
+                UpdateNaturalFalling(downwardSpeed);
+                break;
+
+            case NaturalFallAnimationPhase.Landing:
+                if (CanExitNaturalLanding())
+                {
+                    FinishNaturalFallAnimation();
+                }
+                break;
+        }
+    }
+
+    private void UpdateNaturalFallGroundedCandidate(float downwardSpeed)
+    {
+        if (isGrounded || Time.time < groundIgnoreUntilTime)
+        {
+            naturalAirborneStartTime = float.NegativeInfinity;
+            naturalFallPeakDownwardSpeed = 0f;
+            return;
+        }
+
+        if (float.IsNegativeInfinity(naturalAirborneStartTime))
+        {
+            naturalAirborneStartTime = Time.time;
+            naturalFallPeakDownwardSpeed = downwardSpeed;
+            return;
+        }
+
+        naturalFallPeakDownwardSpeed = Mathf.Max(naturalFallPeakDownwardSpeed, downwardSpeed);
+        if (Time.time < naturalAirborneStartTime + naturalFallStartDelay ||
+            downwardSpeed < naturalFallStartVerticalSpeed)
+        {
+            return;
+        }
+
+        BeginNaturalFalling();
+    }
+
+    private void UpdateNaturalFalling(float downwardSpeed)
+    {
+        naturalFallPeakDownwardSpeed = Mathf.Max(naturalFallPeakDownwardSpeed, downwardSpeed);
+        if (!isGrounded)
+        {
+            return;
+        }
+
+        if (ShouldPlayNaturalLanding())
+        {
+            BeginNaturalLanding();
+            return;
+        }
+
+        FinishNaturalFallAnimation();
+    }
+
+    private bool TryApplyNaturalFallLandingMovement(float deltaTime)
+    {
+        if (naturalFallAnimationPhase != NaturalFallAnimationPhase.Landing ||
+            !ShouldUseRigidbody() ||
+            rigidbodyTarget == null)
+        {
+            return false;
+        }
+
+        Vector3 nextHorizontal = MoveTowardsWithOptionalSnap(
+            GetCurrentHorizontalVelocity(),
+            Vector3.zero,
+            naturalLandingStopDamping,
+            deltaTime);
+
+        nextHorizontal = ConstrainHorizontalVelocityAgainstWalls(nextHorizontal, deltaTime);
+        rigidbodyTarget.linearVelocity = new Vector3(nextHorizontal.x, -groundedStickVelocity, nextHorizontal.z);
+        currentHorizontalVelocity = nextHorizontal;
+        return true;
+    }
+
+    private void BeginNaturalFalling()
+    {
+        naturalFallAnimationPhase = NaturalFallAnimationPhase.Falling;
+        naturalFallPhaseStartTime = Time.time;
+        CrossFadeNaturalFallState(fallingStateName, airborneStateName, naturalFallingCrossFadeDuration);
+    }
+
+    private void BeginNaturalLanding()
+    {
+        naturalFallAnimationPhase = NaturalFallAnimationPhase.Landing;
+        naturalFallPhaseStartTime = Time.time;
+        SetAnimatorTriggerIfValid(landingTriggerParam);
+        CrossFadeNaturalFallState(naturalLandingStateName, idleLandingStateName, naturalLandingCrossFadeDuration);
+    }
+
+    private bool ShouldPlayNaturalLanding()
+    {
+        float fallDuration = Time.time - naturalFallPhaseStartTime;
+        return fallDuration >= naturalLandingMinFallDuration &&
+               naturalFallPeakDownwardSpeed >= naturalLandingMinFallSpeed;
+    }
+
+    private bool CanExitNaturalLanding()
+    {
+        float minimumDuration = Mathf.Max(naturalLandingRecoveryDuration, naturalLandingMovementLockDuration);
+        if (Time.time < naturalFallPhaseStartTime + minimumDuration)
+        {
+            return false;
+        }
+
+        return HasReachedAnimationWindow(naturalLandingStateName, naturalLandingUnlockNormalizedTime);
+    }
+
+    private void FinishNaturalFallAnimation()
+    {
+        naturalFallAnimationPhase = NaturalFallAnimationPhase.Grounded;
+        naturalAirborneStartTime = float.NegativeInfinity;
+        naturalFallPhaseStartTime = float.NegativeInfinity;
+        naturalFallPeakDownwardSpeed = 0f;
+        CrossFadeToGroundedRecoveryStateIfNeeded();
+    }
+
+    private void ResetNaturalFallAnimationRuntime()
+    {
+        naturalFallAnimationPhase = NaturalFallAnimationPhase.Grounded;
+        naturalAirborneStartTime = float.NegativeInfinity;
+        naturalFallPhaseStartTime = float.NegativeInfinity;
+        naturalFallPeakDownwardSpeed = 0f;
+    }
+
     private void UpdateCommittedJumpAnimation()
     {
         if (animator == null)
@@ -362,18 +569,46 @@ public partial class SquadCharacterController
             return;
         }
 
-        SetAnimatorBoolIfValid(isAirborneParam, committedJumpPhase == CommittedJumpPhase.Airborne);
+        bool naturalFalling = naturalFallAnimationPhase == NaturalFallAnimationPhase.Falling;
+        bool naturalLanding = naturalFallAnimationPhase == NaturalFallAnimationPhase.Landing;
+        bool committedActive = committedJumpPhase != CommittedJumpPhase.Grounded;
+        bool committedAirborne = committedJumpPhase == CommittedJumpPhase.Airborne;
+        CommittedLandingType resolvedLandingType = committedLandingType;
+        if (!committedActive && naturalLanding)
+        {
+            resolvedLandingType = CommittedLandingType.IdleRecovery;
+        }
+
+        CommittedJumpPhase resolvedJumpPhase = committedJumpPhase;
+        if (!committedActive)
+        {
+            if (naturalFalling)
+            {
+                resolvedJumpPhase = CommittedJumpPhase.Airborne;
+            }
+            else if (naturalLanding)
+            {
+                resolvedJumpPhase = CommittedJumpPhase.LandingRecovery;
+            }
+        }
+
+        SetAnimatorBoolIfValid(isAirborneParam, committedAirborne || naturalFalling);
         SetAnimatorBoolIfValid(
             jumpFromMovementParam,
-            committedJumpPhase != CommittedJumpPhase.Grounded && IsMovementStyleJumpContext(committedJumpStartContext));
-        SetAnimatorIntIfValid(landingTypeParam, (int)committedLandingType);
-        SetAnimatorIntIfValid(jumpPhaseParam, (int)committedJumpPhase);
+            committedActive && IsMovementStyleJumpContext(committedJumpStartContext));
+        SetAnimatorIntIfValid(landingTypeParam, (int)resolvedLandingType);
+        SetAnimatorIntIfValid(jumpPhaseParam, (int)resolvedJumpPhase);
     }
 
     private bool ShouldSuppressFootIkForCommittedJump()
     {
-        return committedJumpPhase != CommittedJumpPhase.Grounded;
+        return committedJumpPhase != CommittedJumpPhase.Grounded ||
+               naturalFallAnimationPhase != NaturalFallAnimationPhase.Grounded;
     }
+
+    private bool IsNaturalFallLandingActive =>
+        naturalFallAnimationPhase == NaturalFallAnimationPhase.Landing &&
+        Time.time < naturalFallPhaseStartTime + naturalLandingMovementLockDuration;
 
     private bool CanStartCommittedJump()
     {
@@ -1022,7 +1257,53 @@ public partial class SquadCharacterController
             return;
         }
 
-        animator.CrossFadeInFixedTime(stateName, jumpAnimationCrossFadeDuration, jumpAnimationLayer, 0f);
+        TryCrossFadeJumpState(stateName, jumpAnimationCrossFadeDuration);
+    }
+
+    private void CrossFadeNaturalFallState(string stateName, string fallbackStateName, float transitionDuration)
+    {
+        if (!forceNaturalFallStateCrossFade)
+        {
+            return;
+        }
+
+        if (TryCrossFadeJumpState(stateName, transitionDuration))
+        {
+            return;
+        }
+
+        TryCrossFadeJumpState(fallbackStateName, transitionDuration);
+    }
+
+    private bool TryCrossFadeJumpState(string stateName, float transitionDuration)
+    {
+        if (animator == null ||
+            string.IsNullOrWhiteSpace(stateName) ||
+            jumpAnimationLayer < 0 ||
+            jumpAnimationLayer >= animator.layerCount)
+        {
+            return false;
+        }
+
+        string layerName = animator.GetLayerName(jumpAnimationLayer);
+        int shortStateHash = Animator.StringToHash(stateName);
+        int fullPathStateHash = string.IsNullOrWhiteSpace(layerName)
+            ? shortStateHash
+            : Animator.StringToHash(layerName + "." + stateName);
+        int stateHash = animator.HasState(jumpAnimationLayer, fullPathStateHash)
+            ? fullPathStateHash
+            : shortStateHash;
+        if (!animator.HasState(jumpAnimationLayer, stateHash))
+        {
+            return false;
+        }
+
+        animator.CrossFadeInFixedTime(
+            stateHash,
+            Mathf.Max(0f, transitionDuration),
+            jumpAnimationLayer,
+            0f);
+        return true;
     }
 
     private void CrossFadeToGroundedRecoveryStateIfNeeded()
@@ -1046,12 +1327,14 @@ public partial class SquadCharacterController
         if (!TryGetJumpAnimationStateInfo(takeoffStateName, out _) &&
             !TryGetJumpAnimationStateInfo(airborneStateName, out _) &&
             !TryGetJumpAnimationStateInfo(idleLandingStateName, out _) &&
-            !TryGetJumpAnimationStateInfo(rollStateName, out _))
+            !TryGetJumpAnimationStateInfo(rollStateName, out _) &&
+            !TryGetJumpAnimationStateInfo(fallingStateName, out _) &&
+            !TryGetJumpAnimationStateInfo(naturalLandingStateName, out _))
         {
             return;
         }
 
-        animator.CrossFadeInFixedTime(groundedRecoveryStateName, jumpAnimationCrossFadeDuration, jumpAnimationLayer, 0f);
+        TryCrossFadeJumpState(groundedRecoveryStateName, jumpAnimationCrossFadeDuration);
     }
 
     private void SetAnimatorTriggerIfValid(string parameterName)

@@ -55,19 +55,27 @@ public class LadderController : MonoBehaviour
     private float approachDuration = 0.35f;
     [SerializeField, Tooltip("Vitesse de montee entre le point bas et le point haut.")]
     private float climbSpeed = 1.4f;
+    [SerializeField, Tooltip("Multiplicateur de vitesse applique pendant Ladder_StartToClimb avant le loop.")]
+    private float startClimbSpeedMultiplier = 0.5f;
     [SerializeField, Tooltip("Duree minimale de la phase Ladder_Loop apres Ladder_Start.")]
     private float minimumLoopDuration = 0.1f;
     [SerializeField, Tooltip("Duree du deplacement vers le point de sortie pendant Ladder_End.")]
     private float exitDuration = 0.45f;
+    [SerializeField, Tooltip("Temps dans le clip Ladder_EndToClimb ou le Lerp vertical vers H_Trigger se termine.")]
+    private float ladderEndToClimbLerpEndTime = 1.25f;
+    [SerializeField, Tooltip("Temps dans le clip Ladder_EndToClimb avant de commencer la translation vers H_Exit.")]
+    private float ladderEndToClimbExitMoveStartTime = 2f;
+    [SerializeField, Tooltip("Temps dans le clip Ladder_EndToClimb ou la translation vers H_Exit se termine.")]
+    private float ladderEndToClimbExitMoveEndTime = 3f;
     [SerializeField, Tooltip("Garde la rotation du point d'entree pendant les phases Ladder_Start et Ladder_Loop.")]
     private bool keepEntryRotationDuringClimb = true;
 
     [Header("Root Alignment")]
-    [SerializeField, Tooltip("Compense le root aux pieds: en sortie haute, Ladder_End commence avant que les pieds atteignent le H_Trigger.")]
+    [SerializeField, Tooltip("Autorise un leger recul manuel du debut de Ladder_EndToClimb avant H_Trigger.")]
     private bool offsetHighExitStartByCharacterHeight = true;
-    [SerializeField, Tooltip("Part de la hauteur du personnage utilisee pour reculer le debut de Ladder_End sur l'echelle.")]
-    private float highExitStartHeightMultiplier = 1f;
-    [SerializeField, Tooltip("Offset manuel ajoute au recul du debut de Ladder_End.")]
+    [SerializeField, Tooltip("Compatibilite: ne plus utiliser pour eviter que Ladder_EndToClimb demarre trop bas.")]
+    private float highExitStartHeightMultiplier;
+    [SerializeField, Tooltip("Recul manuel en metres du debut de Ladder_EndToClimb avant H_Trigger.")]
     private float highExitStartExtraOffset;
 
     [Header("Animator")]
@@ -125,8 +133,12 @@ public class LadderController : MonoBehaviour
     {
         approachDuration = Mathf.Max(0f, approachDuration);
         climbSpeed = Mathf.Max(0.01f, climbSpeed);
+        startClimbSpeedMultiplier = Mathf.Max(0f, startClimbSpeedMultiplier);
         minimumLoopDuration = Mathf.Max(0f, minimumLoopDuration);
         exitDuration = Mathf.Max(0f, exitDuration);
+        ladderEndToClimbLerpEndTime = Mathf.Max(0f, ladderEndToClimbLerpEndTime);
+        ladderEndToClimbExitMoveStartTime = Mathf.Max(0f, ladderEndToClimbExitMoveStartTime);
+        ladderEndToClimbExitMoveEndTime = Mathf.Max(ladderEndToClimbExitMoveStartTime, ladderEndToClimbExitMoveEndTime);
         highExitStartHeightMultiplier = Mathf.Max(0f, highExitStartHeightMultiplier);
         highExitStartExtraOffset = Mathf.Max(0f, highExitStartExtraOffset);
         animationLayer = Mathf.Max(0, animationLayer);
@@ -170,6 +182,7 @@ public class LadderController : MonoBehaviour
             return false;
         }
 
+        LadderAnimationSet animationSet = ResolveLadderAnimationSet(route.ExitsAtTop);
         Vector3 ladderEndStartPosition = ResolveLadderEndStartPosition(
             character,
             controller,
@@ -177,10 +190,15 @@ public class LadderController : MonoBehaviour
             route.EntryPoint.position,
             route.TargetPoint.position,
             route.ExitsAtTop);
+        Vector3 ladderLoopEndPosition = ResolveLadderLoopEndPosition(
+            animator,
+            animationSet,
+            route.EntryPoint.position,
+            ladderEndStartPosition,
+            route.ExitsAtTop);
         Quaternion climbRotation = keepEntryRotationDuringClimb
             ? route.EntryPoint.rotation
             : route.TargetPoint.rotation;
-        LadderAnimationSet animationSet = ResolveLadderAnimationSet(route.ExitsAtTop);
 
         activeRoutine = StartCoroutine(UseLadderRoutine(
             controller,
@@ -188,6 +206,7 @@ public class LadderController : MonoBehaviour
             body,
             motionRoot,
             route.EntryPoint,
+            ladderLoopEndPosition,
             ladderEndStartPosition,
             climbRotation,
             route.ExitPoint,
@@ -202,6 +221,7 @@ public class LadderController : MonoBehaviour
         Rigidbody body,
         Transform motionRoot,
         Transform entryPoint,
+        Vector3 ladderLoopEndPosition,
         Vector3 ladderEndStartPosition,
         Quaternion ladderEndStartRotation,
         Transform exitPoint,
@@ -246,9 +266,30 @@ public class LadderController : MonoBehaviour
             }
 
             TriggerOneShotAnimation(animator, animationSet.StartName);
+            yield return WaitUntilAnimationStateIsObserved(animator, animationSet.StartName, ladderStartFallbackDuration);
 
             float startDuration = ResolveAnimationDuration(animator, animationSet.StartName, ladderStartFallbackDuration);
-            float climbDuration = ResolveClimbDuration(entryPoint.position, ladderEndStartPosition, startDuration);
+            float startClipDuration = ResolveAnimationClipLength(animator, animationSet.StartClipReferenceName, startDuration);
+            float startPhaseClimbSpeed = animationSet.ExitsAtTop
+                ? climbSpeed * startClimbSpeedMultiplier
+                : 0f;
+            float startPhaseMoveStartTime = 0f;
+            float startPhaseMoveEndTime = 0f;
+            float startPhaseMoveDistance = 0f;
+            if (!animationSet.ExitsAtTop)
+            {
+                startPhaseMoveStartTime = ResolveMirroredClipMarkerStateTime(
+                    ladderEndToClimbLerpEndTime,
+                    startDuration,
+                    startClipDuration);
+                startPhaseMoveEndTime = Mathf.Max(
+                    startPhaseMoveStartTime,
+                    startDuration - Mathf.Min(Mathf.Max(0f, crossFadeDuration), startDuration * MaxStartToLoopLeadRatio));
+                startPhaseMoveDistance = Mathf.Min(
+                    Vector3.Distance(entryPoint.position, ladderLoopEndPosition),
+                    climbSpeed * ladderEndToClimbLerpEndTime);
+            }
+
             yield return RunClimbPhase(
                 animator,
                 animationSet.StartName,
@@ -257,24 +298,85 @@ public class LadderController : MonoBehaviour
                 body,
                 entryPoint.position,
                 entryPoint.rotation,
-                ladderEndStartPosition,
+                ladderLoopEndPosition,
                 ladderEndStartRotation,
                 startDuration,
-                climbDuration,
+                startPhaseClimbSpeed,
+                startPhaseMoveStartTime,
+                startPhaseMoveEndTime,
+                startPhaseMoveDistance,
                 driveMotion);
 
             SetLoopAnimation(animator, animationSet.LoopName, false);
             TriggerOneShotAnimation(animator, animationSet.EndName);
 
+            yield return WaitUntilAnimationStateIsObserved(animator, animationSet.EndName, ladderEndFallbackDuration);
             float endDuration = ResolveAnimationDuration(animator, animationSet.EndName, ladderEndFallbackDuration);
-            float exitMoveDuration = Mathf.Max(0f, exitDuration);
-            if (driveMotion)
+            float endClipDuration = ResolveAnimationClipLength(animator, animationSet.EndClipReferenceName, endDuration);
+            float exitMoveEndTime = 0f;
+            if (animationSet.ExitsAtTop)
             {
-                yield return MoveToPoint(motionRoot, body, exitPoint.position, exitPoint.rotation, exitMoveDuration);
+                float climbLerpEndTime = ResolveClipMarkerStateTime(
+                    ladderEndToClimbLerpEndTime,
+                    endDuration,
+                    endClipDuration);
+                yield return MoveToPointDuringAnimationStateTimeRange(
+                    animator,
+                    animationSet.EndName,
+                    motionRoot,
+                    body,
+                    ladderEndStartPosition,
+                    ladderEndStartRotation,
+                    0f,
+                    climbLerpEndTime,
+                    endDuration,
+                    driveMotion);
+
+                float exitMoveStartTime = ResolveClipMarkerStateTime(
+                    ladderEndToClimbExitMoveStartTime,
+                    endDuration,
+                    endClipDuration);
+                exitMoveEndTime = ResolveClipMarkerStateTime(
+                    ladderEndToClimbExitMoveEndTime,
+                    endDuration,
+                    endClipDuration);
+                yield return MoveToPointDuringAnimationStateTimeRange(
+                    animator,
+                    animationSet.EndName,
+                    motionRoot,
+                    body,
+                    exitPoint.position,
+                    exitPoint.rotation,
+                    exitMoveStartTime,
+                    exitMoveEndTime,
+                    endDuration,
+                    driveMotion);
             }
             else
             {
-                yield return WaitForFixedDuration(exitMoveDuration);
+                yield return MoveToPointDuringAnimationStateTimeRange(
+                    animator,
+                    animationSet.EndName,
+                    motionRoot,
+                    body,
+                    ladderEndStartPosition,
+                    ladderEndStartRotation,
+                    0f,
+                    endDuration,
+                    endDuration,
+                    driveMotion);
+
+                float exitMoveDuration = Mathf.Max(0f, exitDuration);
+                if (driveMotion)
+                {
+                    yield return MoveToPoint(motionRoot, body, exitPoint.position, exitPoint.rotation, exitMoveDuration);
+                }
+                else
+                {
+                    yield return WaitForFixedDuration(exitMoveDuration);
+                }
+
+                exitMoveEndTime = endDuration + exitMoveDuration;
             }
 
             if (bodyPrepared)
@@ -289,8 +391,7 @@ public class LadderController : MonoBehaviour
                 inputSuppressed = false;
             }
 
-            endDuration = ResolveAnimationDuration(animator, animationSet.EndName, endDuration);
-            float remainingEndDuration = Mathf.Max(0f, endDuration - exitMoveDuration);
+            float remainingEndDuration = Mathf.Max(0f, endDuration - exitMoveEndTime);
             if (remainingEndDuration > 0f)
             {
                 yield return WaitForFixedDuration(remainingEndDuration);
@@ -330,43 +431,195 @@ public class LadderController : MonoBehaviour
         Vector3 endPosition,
         Quaternion endRotation,
         float startDuration,
-        float climbDuration,
+        float startPhaseClimbSpeed,
+        float startPhaseMoveStartTime,
+        float startPhaseMoveEndTime,
+        float startPhaseMoveDistance,
         bool driveMotion)
     {
-        bool loopStarted = false;
-        float duration = Mathf.Max(0.001f, climbDuration);
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        Vector3 loopStartPosition = startPosition;
+        Quaternion loopStartRotation = startRotation;
+        float startElapsed = 0f;
+        while (!ShouldStartLoopAnimation(animator, ladderStartName, startElapsed, startDuration))
         {
-            if (!loopStarted && ShouldStartLoopAnimation(animator, ladderStartName, elapsed, startDuration))
+            if (driveMotion)
             {
-                SetLoopAnimation(animator, ladderLoopName, true);
-                loopStarted = true;
+                TryApplyStartPhaseMotion(
+                    motionRoot,
+                    body,
+                    startPosition,
+                    startRotation,
+                    endPosition,
+                    endRotation,
+                    startElapsed,
+                    startPhaseClimbSpeed,
+                    startPhaseMoveStartTime,
+                    startPhaseMoveEndTime,
+                    startPhaseMoveDistance,
+                    out loopStartPosition,
+                    out loopStartRotation);
             }
 
+            yield return new WaitForFixedUpdate();
+            startElapsed += Time.fixedDeltaTime;
+        }
+
+        if (driveMotion)
+        {
+            TryApplyStartPhaseMotion(
+                motionRoot,
+                body,
+                startPosition,
+                startRotation,
+                endPosition,
+                endRotation,
+                startElapsed,
+                startPhaseClimbSpeed,
+                startPhaseMoveStartTime,
+                startPhaseMoveEndTime,
+                startPhaseMoveDistance,
+                out loopStartPosition,
+                out loopStartRotation);
+        }
+
+        SetLoopAnimation(animator, ladderLoopName, true);
+        yield return WaitUntilLoopAnimationIsPlaying(animator, ladderLoopName);
+
+        float duration = ResolveClimbDuration(loopStartPosition, endPosition);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
             float t = Mathf.Clamp01(elapsed / duration);
             if (driveMotion)
             {
                 ApplyPose(
                     motionRoot,
                     body,
-                    Vector3.Lerp(startPosition, endPosition, t),
-                    Quaternion.Slerp(startRotation, endRotation, t));
+                    Vector3.Lerp(loopStartPosition, endPosition, t),
+                    Quaternion.Slerp(loopStartRotation, endRotation, t));
             }
 
             yield return new WaitForFixedUpdate();
             elapsed += Time.fixedDeltaTime;
         }
 
-        if (!loopStarted)
-        {
-            SetLoopAnimation(animator, ladderLoopName, true);
-        }
-
         if (driveMotion)
         {
             ApplyPose(motionRoot, body, endPosition, endRotation);
+        }
+    }
+
+    private IEnumerator WaitUntilLoopAnimationIsPlaying(Animator animator, string ladderLoopName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(ladderLoopName) || !IsLayerValid(animator))
+        {
+            yield break;
+        }
+
+        if (!HasAnimatorState(animator, ladderLoopName))
+        {
+            yield break;
+        }
+
+        if (IsCurrentAnimatorState(animator, ladderLoopName))
+        {
+            yield break;
+        }
+
+        float timeout = Mathf.Max(0.25f, crossFadeDuration * 3f);
+        float elapsed = 0f;
+        while (elapsed < timeout)
+        {
+            yield return new WaitForFixedUpdate();
+            elapsed += Time.fixedDeltaTime;
+
+            if (IsCurrentAnimatorState(animator, ladderLoopName))
+            {
+                yield break;
+            }
+        }
+
+        if (!CrossFadeStateIfAvailable(animator, ladderLoopName))
+        {
+            yield break;
+        }
+
+        while (animator != null && IsLayerValid(animator) && !IsCurrentAnimatorState(animator, ladderLoopName))
+        {
+            yield return new WaitForFixedUpdate();
+        }
+    }
+
+    private IEnumerator WaitUntilAnimationStateIsObserved(Animator animator, string animationName, float fallbackDuration)
+    {
+        if (animator == null ||
+            string.IsNullOrWhiteSpace(animationName) ||
+            !IsLayerValid(animator) ||
+            !HasAnimatorState(animator, animationName))
+        {
+            yield break;
+        }
+
+        if (TryGetObservedAnimatorStateInfo(animator, animationName, out _, out _))
+        {
+            yield break;
+        }
+
+        float timeout = Mathf.Max(Time.fixedDeltaTime, crossFadeDuration * 3f, Mathf.Min(0.5f, fallbackDuration));
+        float elapsed = 0f;
+        while (elapsed < timeout)
+        {
+            yield return new WaitForFixedUpdate();
+            elapsed += Time.fixedDeltaTime;
+
+            if (TryGetObservedAnimatorStateInfo(animator, animationName, out _, out _))
+            {
+                yield break;
+            }
+        }
+
+        if (!CrossFadeStateIfAvailable(animator, animationName))
+        {
+            yield break;
+        }
+
+        float crossFadeTimeout = Mathf.Max(Time.fixedDeltaTime, crossFadeDuration * 3f, 0.25f);
+        elapsed = 0f;
+        while (elapsed < crossFadeTimeout &&
+               animator != null &&
+               IsLayerValid(animator) &&
+               !TryGetObservedAnimatorStateInfo(animator, animationName, out _, out _))
+        {
+            yield return new WaitForFixedUpdate();
+            elapsed += Time.fixedDeltaTime;
+        }
+    }
+
+    private IEnumerator WaitUntilAnimationStateTime(
+        Animator animator,
+        string animationName,
+        float targetTime,
+        float fallbackDuration)
+    {
+        float clampedTargetTime = Mathf.Max(0f, targetTime);
+        if (clampedTargetTime <= 0f)
+        {
+            yield break;
+        }
+
+        float fallbackElapsed = 0f;
+        while (fallbackElapsed < clampedTargetTime)
+        {
+            if (TryResolveAnimationStateElapsedTime(animator, animationName, fallbackDuration, out float stateElapsedTime))
+            {
+                if (stateElapsedTime >= clampedTargetTime)
+                {
+                    yield break;
+                }
+            }
+
+            yield return new WaitForFixedUpdate();
+            fallbackElapsed += Time.fixedDeltaTime;
         }
     }
 
@@ -386,9 +639,16 @@ public class LadderController : MonoBehaviour
             }
 
             float leadTime = Mathf.Min(Mathf.Max(0f, crossFadeDuration), stateDuration * MaxStartToLoopLeadRatio);
-            float normalizedThreshold = Mathf.Clamp01(1f - (leadTime / stateDuration));
-            return stateInfo.normalizedTime >= normalizedThreshold ||
-                   elapsed >= Mathf.Max(0f, stateDuration - leadTime);
+            if (!IsReverseAnimatorState(stateInfo))
+            {
+                float normalizedThreshold = Mathf.Clamp01(1f - (leadTime / stateDuration));
+                if (stateInfo.normalizedTime >= normalizedThreshold)
+                {
+                    return true;
+                }
+            }
+
+            return elapsed >= Mathf.Max(0f, stateDuration - leadTime);
         }
 
         return elapsed >= Mathf.Max(0f, fallbackStartDuration - crossFadeDuration);
@@ -422,6 +682,67 @@ public class LadderController : MonoBehaviour
         ApplyPose(motionRoot, body, targetPosition, targetRotation);
     }
 
+    private IEnumerator MoveToPointDuringAnimationStateTimeRange(
+        Animator animator,
+        string animationName,
+        Transform motionRoot,
+        Rigidbody body,
+        Vector3 targetPosition,
+        Quaternion targetRotation,
+        float startStateTime,
+        float endStateTime,
+        float fallbackDuration,
+        bool driveMotion)
+    {
+        float clampedStartTime = Mathf.Max(0f, startStateTime);
+        float clampedEndTime = Mathf.Max(0f, endStateTime);
+        if (clampedStartTime > 0f)
+        {
+            yield return WaitUntilAnimationStateTime(animator, animationName, clampedStartTime, fallbackDuration);
+        }
+
+        if (!driveMotion)
+        {
+            yield return WaitUntilAnimationStateTime(animator, animationName, clampedEndTime, fallbackDuration);
+            yield break;
+        }
+
+        if (clampedEndTime <= clampedStartTime)
+        {
+            ApplyPose(motionRoot, body, targetPosition, targetRotation);
+            yield break;
+        }
+
+        Vector3 startPosition = body != null ? body.position : motionRoot.position;
+        Quaternion startRotation = body != null ? body.rotation : motionRoot.rotation;
+        float fallbackElapsed = clampedStartTime;
+        while (fallbackElapsed < clampedEndTime)
+        {
+            float stateElapsedTime = fallbackElapsed;
+            if (TryResolveAnimationStateElapsedTime(animator, animationName, fallbackDuration, out float observedElapsedTime))
+            {
+                stateElapsedTime = observedElapsedTime;
+            }
+
+            if (stateElapsedTime >= clampedEndTime)
+            {
+                break;
+            }
+
+            float t = Mathf.Clamp01((Mathf.Max(stateElapsedTime, clampedStartTime) - clampedStartTime) / (clampedEndTime - clampedStartTime));
+            ApplyPose(
+                motionRoot,
+                body,
+                Vector3.Lerp(startPosition, targetPosition, t),
+                Quaternion.Slerp(startRotation, targetRotation, t));
+
+            yield return new WaitForFixedUpdate();
+            fallbackElapsed += Time.fixedDeltaTime;
+        }
+
+        ApplyPose(motionRoot, body, targetPosition, targetRotation);
+    }
+
     private IEnumerator WaitForFixedDuration(float duration)
     {
         float elapsed = 0f;
@@ -444,10 +765,144 @@ public class LadderController : MonoBehaviour
         motionRoot.SetPositionAndRotation(position, rotation);
     }
 
-    private float ResolveClimbDuration(Vector3 basePosition, Vector3 topPosition, float startDuration)
+    private bool TryApplyStartPhaseMotion(
+        Transform motionRoot,
+        Rigidbody body,
+        Vector3 startPosition,
+        Quaternion startRotation,
+        Vector3 endPosition,
+        Quaternion endRotation,
+        float elapsed,
+        float startPhaseClimbSpeed,
+        float startPhaseMoveStartTime,
+        float startPhaseMoveEndTime,
+        float startPhaseMoveDistance,
+        out Vector3 currentPosition,
+        out Quaternion currentRotation)
+    {
+        currentPosition = startPosition;
+        currentRotation = startRotation;
+        if (startPhaseMoveDistance > 0f && startPhaseMoveEndTime > startPhaseMoveStartTime)
+        {
+            float phaseTime = Mathf.Clamp(elapsed, startPhaseMoveStartTime, startPhaseMoveEndTime);
+            float phaseProgress = Mathf.Clamp01((phaseTime - startPhaseMoveStartTime) / (startPhaseMoveEndTime - startPhaseMoveStartTime));
+            ApplyClimbProgress(
+                motionRoot,
+                body,
+                startPosition,
+                startRotation,
+                endPosition,
+                endRotation,
+                startPhaseMoveDistance * phaseProgress,
+                out currentPosition,
+                out currentRotation);
+            return true;
+        }
+
+        if (startPhaseClimbSpeed <= 0f)
+        {
+            return false;
+        }
+
+        ApplyClimbProgress(
+            motionRoot,
+            body,
+            startPosition,
+            startRotation,
+            endPosition,
+            endRotation,
+            elapsed * startPhaseClimbSpeed,
+            out currentPosition,
+            out currentRotation);
+        return true;
+    }
+
+    private void ApplyClimbProgress(
+        Transform motionRoot,
+        Rigidbody body,
+        Vector3 startPosition,
+        Quaternion startRotation,
+        Vector3 endPosition,
+        Quaternion endRotation,
+        float distance,
+        out Vector3 currentPosition,
+        out Quaternion currentRotation)
+    {
+        float climbDistance = Vector3.Distance(startPosition, endPosition);
+        float progress = climbDistance <= 0.001f
+            ? 1f
+            : Mathf.Clamp01(Mathf.Max(0f, distance) / climbDistance);
+        currentPosition = Vector3.Lerp(startPosition, endPosition, progress);
+        currentRotation = Quaternion.Slerp(startRotation, endRotation, progress);
+        ApplyPose(motionRoot, body, currentPosition, currentRotation);
+    }
+
+    private float ResolveClimbDuration(Vector3 basePosition, Vector3 topPosition)
     {
         float distanceDuration = Vector3.Distance(basePosition, topPosition) / Mathf.Max(0.01f, climbSpeed);
-        return Mathf.Max(0.001f, distanceDuration, startDuration + minimumLoopDuration);
+        return Mathf.Max(0.001f, distanceDuration, minimumLoopDuration);
+    }
+
+    private float ResolveClipMarkerStateTime(float clipTime, float stateDuration, float clipDuration)
+    {
+        float clampedStateDuration = Mathf.Max(0f, stateDuration);
+        float requestedClipTime = Mathf.Max(0f, clipTime);
+        if (clampedStateDuration <= 0f || requestedClipTime <= 0f)
+        {
+            return 0f;
+        }
+
+        float clampedClipDuration = Mathf.Max(0f, clipDuration);
+        if (clampedClipDuration > 0.0001f)
+        {
+            float normalizedTime = Mathf.Clamp01(requestedClipTime / clampedClipDuration);
+            return clampedStateDuration * normalizedTime;
+        }
+
+        return Mathf.Min(requestedClipTime, clampedStateDuration);
+    }
+
+    private float ResolveMirroredClipMarkerStateTime(float clipTime, float stateDuration, float clipDuration)
+    {
+        float clampedStateDuration = Mathf.Max(0f, stateDuration);
+        if (clampedStateDuration <= 0f)
+        {
+            return 0f;
+        }
+
+        float requestedClipTime = Mathf.Max(0f, clipTime);
+        float clampedClipDuration = Mathf.Max(0f, clipDuration);
+        if (clampedClipDuration > 0.0001f)
+        {
+            float normalizedTime = Mathf.Clamp01(requestedClipTime / clampedClipDuration);
+            return clampedStateDuration * (1f - normalizedTime);
+        }
+
+        return Mathf.Max(0f, clampedStateDuration - requestedClipTime);
+    }
+
+    private bool TryResolveAnimationStateElapsedTime(
+        Animator animator,
+        string animationName,
+        float fallbackDuration,
+        out float elapsedTime)
+    {
+        elapsedTime = 0f;
+        if (!TryGetObservedAnimatorStateInfo(animator, animationName, out AnimatorStateInfo stateInfo, out bool isNextState) ||
+            isNextState ||
+            IsReverseAnimatorState(stateInfo))
+        {
+            return false;
+        }
+
+        float duration = ResolveAnimatorStateDuration(stateInfo, fallbackDuration);
+        if (duration <= 0.0001f)
+        {
+            return false;
+        }
+
+        elapsedTime = Mathf.Clamp01(stateInfo.normalizedTime) * duration;
+        return true;
     }
 
     private Vector3 ResolveLadderEndStartPosition(
@@ -470,17 +925,70 @@ public class LadderController : MonoBehaviour
             return targetPosition;
         }
 
-        float characterHeight = ResolveCharacterRootTopHeight(character, controller, motionRoot);
-        float heightOffset = (characterHeight * highExitStartHeightMultiplier) + highExitStartExtraOffset;
-        float clampedOffset = Mathf.Clamp(heightOffset, 0f, Mathf.Max(0f, climbDistance - 0.001f));
+        float clampedOffset = Mathf.Clamp(highExitStartExtraOffset, 0f, Mathf.Max(0f, climbDistance - 0.001f));
         return targetPosition - (climbDirection / climbDistance) * clampedOffset;
+    }
+
+    private Vector3 ResolveLadderLoopEndPosition(
+        Animator animator,
+        LadderAnimationSet animationSet,
+        Vector3 entryPosition,
+        Vector3 targetPosition,
+        bool exitsAtTop)
+    {
+        if (exitsAtTop)
+        {
+            return ResolvePositionBeforeTargetByDistance(
+                entryPosition,
+                targetPosition,
+                climbSpeed * ladderEndToClimbLerpEndTime);
+        }
+
+        float endClipDuration = ResolveAnimationClipLength(
+            animator,
+            animationSet.EndClipReferenceName,
+            ladderEndFallbackDuration);
+        return ResolvePositionBeforeTargetByDistance(
+            entryPosition,
+            targetPosition,
+            climbSpeed * startClimbSpeedMultiplier * endClipDuration);
+    }
+
+    private static Vector3 ResolvePositionBeforeTargetByDistance(Vector3 entryPosition, Vector3 targetPosition, float distanceBeforeTarget)
+    {
+        if (distanceBeforeTarget <= 0f)
+        {
+            return targetPosition;
+        }
+
+        Vector3 climbDirection = targetPosition - entryPosition;
+        float climbDistance = climbDirection.magnitude;
+        if (climbDistance <= 0.001f)
+        {
+            return targetPosition;
+        }
+
+        float clampedDistance = Mathf.Clamp(distanceBeforeTarget, 0f, Mathf.Max(0f, climbDistance - 0.001f));
+        return targetPosition - (climbDirection / climbDistance) * clampedDistance;
     }
 
     private LadderAnimationSet ResolveLadderAnimationSet(bool exitsAtTop)
     {
         return exitsAtTop
-            ? new LadderAnimationSet(ladderUpStartName, ladderUpLoopName, ladderUpEndName)
-            : new LadderAnimationSet(ladderDownStartName, ladderDownLoopName, ladderDownEndName);
+            ? new LadderAnimationSet(
+                ladderUpStartName,
+                ladderUpLoopName,
+                ladderUpEndName,
+                true,
+                ladderUpStartName,
+                ladderUpEndName)
+            : new LadderAnimationSet(
+                ladderDownStartName,
+                ladderDownLoopName,
+                ladderDownEndName,
+                false,
+                ladderUpEndName,
+                ladderUpStartName);
     }
 
     private void EnsureNavMeshLinks()
@@ -721,6 +1229,33 @@ public class LadderController : MonoBehaviour
         return true;
     }
 
+    private bool HasAnimatorState(Animator animator, string stateName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(stateName) || !IsLayerValid(animator))
+        {
+            return false;
+        }
+
+        int shortHash = Animator.StringToHash(stateName);
+        if (animator.HasState(animationLayer, shortHash))
+        {
+            return true;
+        }
+
+        string layerPath = animator.GetLayerName(animationLayer) + "." + stateName;
+        return animator.HasState(animationLayer, Animator.StringToHash(layerPath));
+    }
+
+    private bool IsCurrentAnimatorState(Animator animator, string stateName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(stateName) || !IsLayerValid(animator))
+        {
+            return false;
+        }
+
+        return MatchesAnimatorState(animator, animator.GetCurrentAnimatorStateInfo(animationLayer), stateName);
+    }
+
     private float ResolveAnimationDuration(Animator animator, string animationName, float fallback)
     {
         float duration = Mathf.Max(0f, fallback);
@@ -763,6 +1298,42 @@ public class LadderController : MonoBehaviour
         return duration;
     }
 
+    private float ResolveAnimationClipLength(Animator animator, string animationName, float fallback)
+    {
+        float duration = Mathf.Max(0f, fallback);
+        if (animator == null || animator.runtimeAnimatorController == null || string.IsNullOrWhiteSpace(animationName))
+        {
+            return duration;
+        }
+
+        AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+        if (clips == null)
+        {
+            return duration;
+        }
+
+        string normalizedTarget = NormalizeName(animationName);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AnimationClip clip = clips[i];
+            if (clip == null)
+            {
+                continue;
+            }
+
+            string normalizedClipName = NormalizeName(clip.name);
+            if (!string.Equals(normalizedClipName, normalizedTarget, System.StringComparison.Ordinal) &&
+                (normalizedTarget.Length <= 4 || !normalizedClipName.Contains(normalizedTarget)))
+            {
+                continue;
+            }
+
+            return Mathf.Max(0f, clip.length);
+        }
+
+        return duration;
+    }
+
     private bool TryResolveObservedAnimationDuration(Animator animator, string animationName, out float duration)
     {
         duration = 0f;
@@ -783,6 +1354,11 @@ public class LadderController : MonoBehaviour
         }
 
         return Mathf.Max(0f, fallback);
+    }
+
+    private static bool IsReverseAnimatorState(AnimatorStateInfo stateInfo)
+    {
+        return stateInfo.speed < -0.0001f || stateInfo.speedMultiplier < -0.0001f;
     }
 
     private bool TryGetObservedAnimatorStateInfo(
@@ -1323,16 +1899,28 @@ public class LadderController : MonoBehaviour
 
     private readonly struct LadderAnimationSet
     {
-        public LadderAnimationSet(string startName, string loopName, string endName)
+        public LadderAnimationSet(
+            string startName,
+            string loopName,
+            string endName,
+            bool exitsAtTop,
+            string startClipReferenceName,
+            string endClipReferenceName)
         {
             StartName = startName;
             LoopName = loopName;
             EndName = endName;
+            ExitsAtTop = exitsAtTop;
+            StartClipReferenceName = startClipReferenceName;
+            EndClipReferenceName = endClipReferenceName;
         }
 
         public string StartName { get; }
         public string LoopName { get; }
         public string EndName { get; }
+        public bool ExitsAtTop { get; }
+        public string StartClipReferenceName { get; }
+        public string EndClipReferenceName { get; }
     }
 
     private readonly struct RigidbodyState

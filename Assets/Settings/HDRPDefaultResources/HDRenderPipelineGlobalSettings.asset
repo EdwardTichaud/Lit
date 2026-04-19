@@ -28,7 +28,8 @@ MonoBehaviour:
       m_CustomPostProcessTypesAsString: []
     m_AfterPostProcessCustomPostProcesses:
       m_InjectionPoint: 2
-      m_CustomPostProcessTypesAsString: []
+      m_CustomPostProcessTypesAsString:
+      - RunSpeedPeripheralBlur, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
   beforeTransparentCustomPostProcesses: []
   beforePostProcessCustomPostProcesses: []
   afterPostProcessBlursCustomPostProcesses: []
@@ -575,7 +576,8 @@ MonoBehaviour:
           m_CustomPostProcessTypesAsString: []
         m_AfterPostProcessCustomPostProcesses:
           m_InjectionPoint: 2
-          m_CustomPostProcessTypesAsString: []
+          m_CustomPostProcessTypesAsString:
+          - RunSpeedPeripheralBlur, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     - rid: 4239847802960871438
       type: {class: HDRenderPipelineRuntimeMaterials, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
       data:
