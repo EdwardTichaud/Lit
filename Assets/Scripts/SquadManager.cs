@@ -59,6 +59,12 @@ public class SquadManager : MonoBehaviour
     [SerializeField, Tooltip("Clone les CharacterData a l'execution pour ne pas modifier les assets.")]
     private bool useRuntimeCharacterClones = true;
 
+    [Header("Starter Motor Integration")]
+    [SerializeField, Tooltip("Opt-in local single-player path: route the selected real player through StarterInspiredThirdPersonMotor.")]
+    private bool useStarterMotorForLocalPlayer;
+    [SerializeField, Tooltip("Adds the starter motor compatibility adapter to the selected player at runtime when the opt-in path is enabled.")]
+    private bool autoInstallStarterMotorForLocalPlayer = true;
+
     [Header("Grouping")]
     [SerializeField, Tooltip("Tous les membres sont groupes par defaut.")]
     private bool defaultGrouped = true;
@@ -115,6 +121,7 @@ public class SquadManager : MonoBehaviour
     private readonly HashSet<string> runtimeCharacterIdWarnings = new HashSet<string>();
     private readonly HashSet<CharacterData> runtimeCharacters = new HashSet<CharacterData>();
     private string lastLocalAssignmentRefreshLog = string.Empty;
+    private StarterMotorPlayerIntegration activeStarterMotorIntegration;
 
     void Awake()
     {
@@ -155,6 +162,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
+        DeactivateStarterMotorIntegration();
         InputFocusStack.Pop(this);
     }
 
@@ -166,6 +174,7 @@ public class SquadManager : MonoBehaviour
         }
 
         StopAllCoroutines();
+        DeactivateStarterMotorIntegration();
         LocalPlayerContext.Clear($"SquadManager.Reset:{reason}", LocalPlayerContext.Authority.MultiplayerAssignment);
 
         if (gameObject.activeSelf)
@@ -934,6 +943,8 @@ public class SquadManager : MonoBehaviour
     {
         if (IsMultiplayerActive())
         {
+            DeactivateStarterMotorIntegration();
+
             if (!charactersSelectionOn)
             {
                 jumpRequested = false;
@@ -971,6 +982,8 @@ public class SquadManager : MonoBehaviour
 
         if (charactersSelectionOn)
         {
+            DeactivateStarterMotorIntegration();
+
             jumpRequested = false;
             if (GetSquadUnitCount() == 0)
             {
@@ -1276,6 +1289,21 @@ public class SquadManager : MonoBehaviour
     {
         if (currentCharacter == null)
         {
+            DeactivateStarterMotorIntegration();
+            jumpRequested = false;
+            return;
+        }
+
+        StarterMotorPlayerIntegration starterMotorIntegration = RefreshStarterMotorIntegration();
+        if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
+        {
+            bool inputBlocked = InputFocusStack.HasAnyFocus();
+            starterMotorIntegration.SetMoveInput(inputBlocked ? Vector2.zero : moveInput);
+            if (!inputBlocked && jumpRequested)
+            {
+                starterMotorIntegration.RequestJump();
+            }
+
             jumpRequested = false;
             return;
         }
@@ -1318,6 +1346,12 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
+        StarterMotorPlayerIntegration starterMotorIntegration = currentCharacter.GetComponent<StarterMotorPlayerIntegration>();
+        if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
+        {
+            starterMotorIntegration.Stop();
+        }
+
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
         {
@@ -1342,6 +1376,12 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
+            StarterMotorPlayerIntegration starterMotorIntegration = character.GetComponent<StarterMotorPlayerIntegration>();
+            if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
+            {
+                starterMotorIntegration.Stop();
+            }
+
             SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
             if (controller == null)
             {
@@ -1350,6 +1390,49 @@ public class SquadManager : MonoBehaviour
 
             controller.Stop();
         }
+    }
+
+    private StarterMotorPlayerIntegration RefreshStarterMotorIntegration()
+    {
+        StarterMotorPlayerIntegration target = null;
+        if (useStarterMotorForLocalPlayer && !IsMultiplayerActive() && currentCharacter != null)
+        {
+            target = currentCharacter.GetComponent<StarterMotorPlayerIntegration>();
+            if (target == null && autoInstallStarterMotorForLocalPlayer)
+            {
+                target = currentCharacter.AddComponent<StarterMotorPlayerIntegration>();
+            }
+        }
+
+        if (activeStarterMotorIntegration != null && activeStarterMotorIntegration != target)
+        {
+            activeStarterMotorIntegration.SetStarterMotorActive(false);
+        }
+
+        activeStarterMotorIntegration = target;
+        if (activeStarterMotorIntegration == null)
+        {
+            return null;
+        }
+
+        if (!activeStarterMotorIntegration.SetStarterMotorActive(true))
+        {
+            activeStarterMotorIntegration = null;
+            return null;
+        }
+
+        return activeStarterMotorIntegration;
+    }
+
+    private void DeactivateStarterMotorIntegration()
+    {
+        if (activeStarterMotorIntegration == null)
+        {
+            return;
+        }
+
+        activeStarterMotorIntegration.SetStarterMotorActive(false);
+        activeStarterMotorIntegration = null;
     }
 
     private void HandleTorchToggle()

@@ -251,6 +251,11 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
 
     public void ResetMotionState(bool clearInput = true)
     {
+        ResetMotionState(clearInput, allowGroundSnap: false);
+    }
+
+    private void ResetMotionState(bool clearInput, bool allowGroundSnap)
+    {
         if (clearInput)
         {
             moveInput = Vector2.zero;
@@ -274,7 +279,12 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         landingDampingTimer = 0f;
         landingDampingStrength = 0f;
         lastGroundedTime = Time.time;
-        RefreshGrounding(0f, CollisionFlags.None, allowSnap: false);
+        if (allowGroundSnap)
+        {
+            timeSinceGrounded = 0f;
+        }
+
+        RefreshGrounding(0f, CollisionFlags.None, allowSnap: allowGroundSnap);
         UpdateState();
         UpdateDebugValues();
     }
@@ -311,7 +321,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
             return;
         }
 
-        ResetMotionState(clearInput);
+        ResetMotionState(clearInput, allowGroundSnap: true);
     }
 
     private void Tick(float deltaTime)

@@ -236,6 +236,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private Vector2 moveInput;
     private float inputLockTimer;
     private int scriptedMovementSuppressionCount;
+    private int externalLocomotionDriverLockCount;
     private Vector2 smoothedInput;
     private bool moveInputIsWorldSpace;
     private bool sprintModifierPressed;
@@ -286,6 +287,7 @@ public partial class SquadCharacterController : MonoBehaviour
     public int MaxHp => maxHp;
 
     public bool IsGrounded => isGrounded;
+    public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
 
     public bool TryGetHeadWorldY(out float headWorldY)
     {
@@ -1623,9 +1625,40 @@ public partial class SquadCharacterController : MonoBehaviour
         scriptedMovementSuppressionCount--;
     }
 
+    public void PushExternalLocomotionDriver()
+    {
+        externalLocomotionDriverLockCount = Mathf.Max(0, externalLocomotionDriverLockCount + 1);
+        Stop();
+        ResetCommittedJumpRuntime();
+        ClearScriptDrivenHorizontalVelocity();
+    }
+
+    public void PopExternalLocomotionDriver()
+    {
+        if (externalLocomotionDriverLockCount <= 0)
+        {
+            externalLocomotionDriverLockCount = 0;
+            return;
+        }
+
+        externalLocomotionDriverLockCount--;
+        if (externalLocomotionDriverLockCount <= 0)
+        {
+            Stop();
+        }
+    }
+
     private void FixedUpdate()
     {
         UpdateInputLock(Time.fixedDeltaTime);
+        if (IsExternalLocomotionDriverActive)
+        {
+            UpdateGroundedState();
+            UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
+            ClearScriptDrivenHorizontalVelocity();
+            return;
+        }
+
         SmoothInput(Time.fixedDeltaTime);
         UpdateGroundedState();
         UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
@@ -1660,6 +1693,12 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         if (animator == null)
         {
+            return;
+        }
+
+        if (IsExternalLocomotionDriverActive)
+        {
+            SetFootIkWeights(0f, 0f);
             return;
         }
 

@@ -233,16 +233,7 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
 
         if (motor.IsLadderTraversalActive)
         {
-            debugAnimatorSpeed = 0f;
-            debugMotionSpeed = 0f;
-            debugGrounded = false;
-            debugIsMoving = false;
-            debugAirborne = false;
-            debugFreeFall = false;
-            debugLocomotionTier = 0f;
-            debugJumpPhase = (int)JumpPhase.Grounded;
-            debugLandingType = (int)LandingType.None;
-            debugRootMotionDisabled = animator != null && !animator.applyRootMotion;
+            HoldNeutralForLadder();
             return;
         }
 
@@ -276,6 +267,55 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         wasFreeFalling = freeFall;
 
         UpdateDebugValues(animatorSpeed, motionSpeed, locomotionTier, moving, airborne, freeFall, landingActive);
+    }
+
+    private void HoldNeutralForLadder()
+    {
+        landingVisualTimer = 0f;
+        wasMoving = false;
+        wasFreeFalling = false;
+        jumpSequenceActive = false;
+        lastJumpFromMovement = false;
+
+        SetFloat(speedHash, 0f, 0f, 0f);
+        SetFloat(motionSpeedHash, 0f, 0f, 0f);
+        SetFloat(verticalSpeedHash, 0f, 0f, 0f);
+        SetFloat(locomotionTierHash, 0f, 0f, 0f);
+        SetBool(groundedHash, false);
+        SetBool(isMovingHash, false);
+        SetBool(isAirborneHash, false);
+        SetBool(freeFallHash, false);
+        SetBool(jumpBoolHash, false);
+        SetBool(landingBoolHash, false);
+        SetBool(jumpFromMovementHash, false);
+        SetInt(jumpPhaseHash, (int)JumpPhase.Grounded);
+        SetInt(landingTypeHash, (int)LandingType.None);
+        ResetTrigger(moveStartTriggerHash);
+        ResetTrigger(moveStopTriggerHash);
+        ResetTrigger(jumpTriggerHash);
+        ResetTrigger(landingTriggerHash);
+        ResetTrigger(landingTriggerFallbackHash);
+
+        if (!showDebugValues)
+        {
+            return;
+        }
+
+        debugAnimatorSpeed = 0f;
+        debugMotionSpeed = 0f;
+        debugGrounded = false;
+        debugIsMoving = false;
+        debugAirborne = false;
+        debugFreeFall = false;
+        debugLandingTriggered = false;
+        debugLandingSeverity = StarterInspiredThirdPersonMotor.LandingSeverity.None;
+        debugLocomotionTier = 0f;
+        debugJumpPhase = (int)JumpPhase.Grounded;
+        debugLandingType = (int)LandingType.None;
+        debugRootMotionDisabled = animator != null && !animator.applyRootMotion;
+        debugCurrentStateShortHash = animator != null && animator.layerCount > animatorLayer
+            ? animator.GetCurrentAnimatorStateInfo(animatorLayer).shortNameHash
+            : 0;
     }
 
     private void ConfigureAnimator()
@@ -585,6 +625,14 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         {
             animator.ResetTrigger(hash);
             animator.SetTrigger(hash);
+        }
+    }
+
+    private void ResetTrigger(int hash)
+    {
+        if (HasParameter(hash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(hash);
         }
     }
 

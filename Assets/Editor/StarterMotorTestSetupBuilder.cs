@@ -422,6 +422,9 @@ public static class StarterMotorTestSetupBuilder
         CreateLadderPoint(ladder.transform, "H_Exit", new Vector3(0f, 3f, 1.2f), Quaternion.identity);
         CreateLadderPoint(ladder.transform, "B_Exit", new Vector3(0f, 0f, -1.2f), Quaternion.identity);
 
+        CreateLadderLandingPad(ladder.transform, "LowerLandingPad", new Vector3(0f, -0.05f, -0.6f), new Vector3(3f, 0.1f, 2.4f));
+        CreateLadderLandingPad(ladder.transform, "UpperLandingPad", new Vector3(0f, 2.95f, 1.2f), new Vector3(3f, 0.1f, 2f));
+
         GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
         rail.name = "StarterMotorTestLadder_Rails";
         rail.transform.SetParent(ladder.transform, false);
@@ -435,6 +438,15 @@ public static class StarterMotorTestSetupBuilder
         point.transform.SetParent(parent, false);
         point.transform.localPosition = localPosition;
         point.transform.localRotation = localRotation;
+    }
+
+    private static void CreateLadderLandingPad(Transform parent, string name, Vector3 localPosition, Vector3 localScale)
+    {
+        GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        pad.name = name;
+        pad.transform.SetParent(parent, false);
+        pad.transform.localPosition = localPosition;
+        pad.transform.localScale = localScale;
     }
 
     private static void ValidateForwardMovement(

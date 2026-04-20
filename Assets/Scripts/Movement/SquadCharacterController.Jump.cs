@@ -217,6 +217,7 @@ public partial class SquadCharacterController
 
     public bool IsMovementInputSuppressed => inputLockTimer > 0f ||
                                              scriptedMovementSuppressionCount > 0 ||
+                                             IsExternalLocomotionDriverActive ||
                                              IsJumpCommitted ||
                                              IsNaturalFallLandingActive;
 
