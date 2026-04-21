@@ -316,10 +316,21 @@ public partial class SquadCharacterController : MonoBehaviour
     private void Update()
     {
         // Torche + collisions en runtime.
-        UpdateTorchLifetime(Time.deltaTime);
+        if (!IsExternalLocomotionDriverActive)
+        {
+            UpdateTorchLifetime(Time.deltaTime);
+        }
+
         RefreshCharacterCollisionsIfNeeded();
-        UpdateAudioListenerState(false);
-        UpdateLocalInteractionDetection();
+        if (!IsExternalLocomotionDriverActive)
+        {
+            UpdateAudioListenerState(false);
+        }
+
+        if (!IsExternalLocomotionDriverActive)
+        {
+            UpdateLocalInteractionDetection();
+        }
     }
 
     private void LateUpdate()
@@ -481,6 +492,11 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         SetAudioListenerActive(shouldBeActive);
+    }
+
+    public void RefreshAudioListenerStateForExternalLocomotion()
+    {
+        UpdateAudioListenerState(false);
     }
 
     private void SetAudioListenerActive(bool active)
@@ -2453,6 +2469,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
     {
+        if (TryGetActiveStarterMotorCapsule(out center, out radius, out height))
+        {
+            return true;
+        }
+
         CapsuleCollider capsule = locomotionCapsule;
         if (capsule == null)
         {
@@ -2474,6 +2495,35 @@ public partial class SquadCharacterController : MonoBehaviour
         radius = capsule.radius * maxXZ;
         height = Mathf.Max(capsule.height * absY, radius * 2f);
         center = transform.TransformPoint(capsule.center);
+        return true;
+    }
+
+    private bool TryGetActiveStarterMotorCapsule(out Vector3 center, out float radius, out float height)
+    {
+        center = Vector3.zero;
+        radius = 0f;
+        height = 0f;
+
+        if (!IsExternalLocomotionDriverActive)
+        {
+            return false;
+        }
+
+        StarterMotorPlayerIntegration starterIntegration = GetComponent<StarterMotorPlayerIntegration>();
+        if (starterIntegration == null ||
+            !starterIntegration.TryGetActiveCharacterController(out CharacterController controller) ||
+            controller == null)
+        {
+            return false;
+        }
+
+        Transform controllerTransform = controller.transform;
+        Vector3 scale = controllerTransform.lossyScale;
+        float maxXZ = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+        float absY = Mathf.Abs(scale.y);
+        radius = Mathf.Max(0.01f, controller.radius * maxXZ);
+        height = Mathf.Max(controller.height * absY, radius * 2f);
+        center = controllerTransform.TransformPoint(controller.center);
         return true;
     }
 
@@ -2560,6 +2610,11 @@ public partial class SquadCharacterController : MonoBehaviour
             }
             UpdateTorchAnimationLayerWeight(immediate: true);
         }
+    }
+
+    public void TickTorchLifetimeForExternalLocomotion(float deltaTime)
+    {
+        UpdateTorchLifetime(deltaTime);
     }
 
     private void UpdateTorchLifetime(float deltaTime)

@@ -32,6 +32,11 @@ public partial class SquadCharacterController
         return transform.position + transform.up * Mathf.Max(0f, interactionDetectionHeightOffset);
     }
 
+    public void RefreshLocalInteractionDetectionForExternalLocomotion()
+    {
+        UpdateLocalInteractionDetection();
+    }
+
     private void UpdateLocalInteractionDetection()
     {
         if (!enableCharacterInteractionDetection)

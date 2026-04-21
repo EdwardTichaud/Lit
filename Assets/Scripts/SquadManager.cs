@@ -1350,6 +1350,7 @@ public class SquadManager : MonoBehaviour
         if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
         {
             starterMotorIntegration.Stop();
+            return;
         }
 
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
@@ -1380,6 +1381,7 @@ public class SquadManager : MonoBehaviour
             if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
             {
                 starterMotorIntegration.Stop();
+                continue;
             }
 
             SquadCharacterController controller = character.GetComponent<SquadCharacterController>();

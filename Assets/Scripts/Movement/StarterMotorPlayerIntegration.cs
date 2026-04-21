@@ -40,6 +40,24 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
     public bool IsStarterMotorActive => active;
     public bool CanUseStarterMotor => allowStarterMotorControl && !IsBlockedByMultiplayer();
 
+    public bool TryGetActiveCharacterController(out CharacterController activeCharacterController)
+    {
+        activeCharacterController = null;
+        if (!active)
+        {
+            return false;
+        }
+
+        ResolveReferences();
+        if (characterController == null || !characterController.enabled)
+        {
+            return false;
+        }
+
+        activeCharacterController = characterController;
+        return true;
+    }
+
     private void Reset()
     {
         ResolveReferences();
@@ -49,6 +67,27 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
     {
         ResolveReferences();
         debugStarterMotorActive = active;
+    }
+
+    private void Update()
+    {
+        if (!active || legacyController == null)
+        {
+            return;
+        }
+
+        legacyController.TickTorchLifetimeForExternalLocomotion(Time.deltaTime);
+        legacyController.RefreshAudioListenerStateForExternalLocomotion();
+    }
+
+    private void LateUpdate()
+    {
+        if (!active || legacyController == null)
+        {
+            return;
+        }
+
+        legacyController.RefreshLocalInteractionDetectionForExternalLocomotion();
     }
 
     private void OnDisable()
