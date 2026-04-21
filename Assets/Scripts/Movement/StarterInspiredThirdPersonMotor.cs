@@ -10,6 +10,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         Brake,
         JumpStart,
         Airborne,
+        WallSlide,
         Landing,
         Ladder
     }
@@ -80,6 +81,13 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     [SerializeField, Min(0f)] private float mediumLandingDamping = 26f;
     [SerializeField, Min(0f)] private float heavyLandingDamping = 38f;
 
+    [Header("Airborne Wall Slide")]
+    [SerializeField] private bool enableAirborneWallSlide = true;
+    [SerializeField, Range(0f, 0.95f)] private float wallSlideMaxNormalY = 0.35f;
+    [SerializeField, Min(0f)] private float wallSlideContactMemoryTime = 0.08f;
+    [SerializeField, Min(0f)] private float wallSlideMinDownwardSpeed = 8f;
+    [SerializeField, Min(1f)] private float wallSlideGravityMultiplier = 1.25f;
+
     [Header("Debug")]
     [SerializeField] private bool showDebugValues = true;
     [SerializeField] private bool showDebugGizmos = true;
@@ -101,6 +109,9 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     [SerializeField] private bool debugFreeFall;
     [SerializeField] private bool debugLandingTriggered;
     [SerializeField] private LandingSeverity debugLandingSeverity;
+    [SerializeField] private bool debugWallSliding;
+    [SerializeField] private int debugWallSlideSide;
+    [SerializeField] private Vector3 debugWallSlideNormal;
     [SerializeField] private float debugAirborneTime;
     [SerializeField] private float debugLastGroundedTime;
     [SerializeField] private bool debugLadderTraversalActive;
@@ -129,6 +140,12 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     private float lastGroundedTime;
     private float landingDampingTimer;
     private float landingDampingStrength;
+    private bool wallSliding;
+    private int wallSlideSide;
+    private Vector3 wallSlideNormal;
+    private float wallSlideContactTimer;
+    private bool wallHitThisFrame;
+    private Vector3 wallHitNormal;
     private int ladderTraversalLockCount;
     private Vector3 debugProbeOrigin;
     private float debugProbeDistance;
@@ -151,6 +168,9 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     public bool JumpStarted => jumpStartedThisFrame;
     public bool Airborne => !rawGrounded;
     public bool FreeFall => freeFall;
+    public bool WallSliding => wallSliding;
+    public int WallSlideSide => wallSlideSide;
+    public Vector3 WallSlideNormal => wallSlideNormal;
     public bool LandingTriggered => landingTriggeredThisFrame;
     public LandingSeverity LastLandingSeverity => lastLandingSeverity;
     public float AirborneTime => airborneTime;
@@ -217,6 +237,10 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         lightLandingDamping = Mathf.Max(0f, lightLandingDamping);
         mediumLandingDamping = Mathf.Max(0f, mediumLandingDamping);
         heavyLandingDamping = Mathf.Max(0f, heavyLandingDamping);
+        wallSlideMaxNormalY = Mathf.Clamp(wallSlideMaxNormalY, 0f, 0.95f);
+        wallSlideContactMemoryTime = Mathf.Max(0f, wallSlideContactMemoryTime);
+        wallSlideMinDownwardSpeed = Mathf.Max(0f, wallSlideMinDownwardSpeed);
+        wallSlideGravityMultiplier = Mathf.Max(1f, wallSlideGravityMultiplier);
     }
 
     private void Update()
@@ -278,6 +302,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         airbornePeakDownwardSpeed = 0f;
         landingDampingTimer = 0f;
         landingDampingStrength = 0f;
+        ClearWallSlideState();
         lastGroundedTime = Time.time;
         if (allowGroundSnap)
         {
@@ -360,7 +385,9 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         Vector3 displacement = ResolveGroundAdjustedPlanarDisplacement(deltaTime);
         displacement += Vector3.up * (verticalVelocity * deltaTime);
 
+        ResetWallHitFrame();
         CollisionFlags collisionFlags = characterController.Move(displacement);
+        UpdateWallSlideState(deltaTime, collisionFlags);
         ApplyCollisionFeedback(collisionFlags);
         RefreshGrounding(deltaTime, collisionFlags, allowSnap: true);
         UpdateAirborneAndLanding(deltaTime, wasRawGrounded);
@@ -563,7 +590,8 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
             return;
         }
 
-        verticalVelocity = Mathf.Max(verticalVelocity + gravity * deltaTime, -maxFallSpeed);
+        float gravityScale = wallSliding ? wallSlideGravityMultiplier : 1f;
+        verticalVelocity = Mathf.Max(verticalVelocity + gravity * gravityScale * deltaTime, -maxFallSpeed);
     }
 
     private Vector3 ResolveGroundAdjustedPlanarDisplacement(float deltaTime)
@@ -584,7 +612,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
             verticalVelocity = 0f;
         }
 
-        if ((collisionFlags & CollisionFlags.Below) != 0 && verticalVelocity < 0f)
+        if (!wallSliding && (collisionFlags & CollisionFlags.Below) != 0 && verticalVelocity < 0f)
         {
             verticalVelocity = -groundedStickVelocity;
         }
@@ -605,7 +633,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         }
 
         bool hitWalkableGround = TryProbeGround(groundProbeDistance, out RaycastHit hit);
-        bool belowCollision = (collisionFlags & CollisionFlags.Below) != 0;
+        bool belowCollision = (collisionFlags & CollisionFlags.Below) != 0 && (!wallSliding || hitWalkableGround);
 
         rawGrounded = hitWalkableGround || belowCollision;
         if (hitWalkableGround)
@@ -650,6 +678,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     private bool CanSnapToGround()
     {
         return groundSnapDistance > 0f &&
+               !wallSliding &&
                jumpGroundIgnoreTimer <= 0f &&
                verticalVelocity <= 0f &&
                timeSinceGrounded <= groundedGraceTime;
@@ -766,11 +795,13 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
             return;
         }
 
+        bool landedFromWallSlide = wallSliding;
+        ClearWallSlideState();
         lastGroundedTime = Time.time;
 
         if (!wasRawGrounded)
         {
-            TryTriggerLanding();
+            TryTriggerLanding(landedFromWallSlide);
         }
 
         airborneTime = 0f;
@@ -778,10 +809,16 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         freeFall = false;
     }
 
-    private void TryTriggerLanding()
+    private void TryTriggerLanding(bool forceLanding = false)
     {
         LandingSeverity severity = ResolveLandingSeverity(airbornePeakDownwardSpeed);
-        bool meaningfulLanding = severity != LandingSeverity.None && airborneTime >= landingMinAirborneTime;
+        if (forceLanding && severity == LandingSeverity.None)
+        {
+            severity = LandingSeverity.Light;
+        }
+
+        bool meaningfulLanding = severity != LandingSeverity.None &&
+                                 (forceLanding || airborneTime >= landingMinAirborneTime);
 
         if (!meaningfulLanding)
         {
@@ -852,6 +889,12 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
 
         if (!stableGrounded)
         {
+            if (wallSliding)
+            {
+                currentState = MovementState.WallSlide;
+                return;
+            }
+
             currentState = MovementState.Airborne;
             return;
         }
@@ -889,6 +932,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         lastLandingSeverity = LandingSeverity.None;
         landingDampingTimer = 0f;
         landingDampingStrength = 0f;
+        ClearWallSlideState();
         airborneTime = 0f;
         airbornePeakDownwardSpeed = 0f;
         freeFall = false;
@@ -925,6 +969,9 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         debugFreeFall = freeFall;
         debugLandingTriggered = landingTriggeredThisFrame;
         debugLandingSeverity = lastLandingSeverity;
+        debugWallSliding = wallSliding;
+        debugWallSlideSide = wallSlideSide;
+        debugWallSlideNormal = wallSlideNormal;
         debugAirborneTime = airborneTime;
         debugLastGroundedTime = lastGroundedTime;
         debugLadderTraversalActive = IsLadderTraversalActive;
@@ -957,8 +1004,107 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         Gizmos.color = Color.magenta;
         Gizmos.DrawLine(position + Vector3.up * 0.1f, position + Vector3.up * 0.1f + currentPlanarVelocity);
 
+        if (wallSliding)
+        {
+            Gizmos.DrawLine(position + Vector3.up * 0.35f, position + Vector3.up * 0.35f + wallSlideNormal);
+        }
+
         Gizmos.color = freeFall ? Color.red : Color.yellow;
         Vector3 verticalStart = position + Vector3.up * 0.25f;
         Gizmos.DrawLine(verticalStart, verticalStart + Vector3.up * Mathf.Clamp(verticalVelocity * 0.1f, -2f, 2f));
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (!enableAirborneWallSlide || hit.collider == null || hit.collider.transform.IsChildOf(transform))
+        {
+            return;
+        }
+
+        if (Mathf.Abs(hit.normal.y) > wallSlideMaxNormalY)
+        {
+            return;
+        }
+
+        Vector3 normal = hit.normal;
+        normal.y = 0f;
+        if (normal.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        wallHitThisFrame = true;
+        wallHitNormal = normal.normalized;
+    }
+
+    private void ResetWallHitFrame()
+    {
+        wallHitThisFrame = false;
+        wallHitNormal = Vector3.zero;
+    }
+
+    private void UpdateWallSlideState(float deltaTime, CollisionFlags collisionFlags)
+    {
+        if (!CanEvaluateWallSlide(collisionFlags))
+        {
+            ClearWallSlideState();
+            return;
+        }
+
+        bool hasWallContact = wallHitThisFrame;
+        if (wallHitThisFrame)
+        {
+            wallSlideContactTimer = wallSlideContactMemoryTime;
+            wallSlideNormal = wallHitNormal;
+        }
+        else if (wallSlideContactTimer > 0f)
+        {
+            wallSlideContactTimer = Mathf.Max(0f, wallSlideContactTimer - deltaTime);
+            hasWallContact = wallSlideContactTimer > 0f;
+        }
+
+        if (!hasWallContact || wallSlideNormal.sqrMagnitude <= 0.0001f)
+        {
+            ClearWallSlideState();
+            return;
+        }
+
+        wallSliding = true;
+        wallSlideSide = ResolveWallSlideSide(wallSlideNormal);
+
+        Vector3 planarSlide = Vector3.ProjectOnPlane(currentPlanarVelocity, wallSlideNormal);
+        planarSlide.y = 0f;
+        currentPlanarVelocity = planarSlide;
+
+        float minimumDownwardSpeed = Mathf.Min(Mathf.Max(0f, wallSlideMinDownwardSpeed), maxFallSpeed);
+        if (minimumDownwardSpeed > 0f && verticalVelocity > -minimumDownwardSpeed)
+        {
+            verticalVelocity = -minimumDownwardSpeed;
+        }
+    }
+
+    private bool CanEvaluateWallSlide(CollisionFlags collisionFlags)
+    {
+        return enableAirborneWallSlide &&
+               !stableGrounded &&
+               (collisionFlags & CollisionFlags.Sides) != 0 &&
+               timeSinceGrounded > groundedGraceTime;
+    }
+
+    private int ResolveWallSlideSide(Vector3 normal)
+    {
+        Vector3 wallDirectionFromCharacter = -normal;
+        float sideDot = Vector3.Dot(transform.right, wallDirectionFromCharacter);
+        return sideDot >= 0f ? 1 : -1;
+    }
+
+    private void ClearWallSlideState()
+    {
+        wallSliding = false;
+        wallSlideSide = 0;
+        wallSlideNormal = Vector3.zero;
+        wallSlideContactTimer = 0f;
+        wallHitThisFrame = false;
+        wallHitNormal = Vector3.zero;
     }
 }
