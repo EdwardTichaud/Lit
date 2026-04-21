@@ -15,7 +15,7 @@ MonoBehaviour:
   itemId: item_note_n_1
   itemName: Note
   itemSprite: {fileID: 0}
-  description: "Notes sur les orbes n\xB01"
+  description: "Notes sur la fa\xE7on de se nourrir n\xB01"
   readableKind: 2
   parchmentText: "Je me suis toujours demand\xE9 d'o\xF9 vient l'eau et la nourriture
     que nous consommons. Les anciens nous disent que c'est Iustia qui s'occupe de
@@ -74,4 +74,6 @@ MonoBehaviour:
   buildingLevelConfigs: []
   isHomeChest: 0
   canBreak: 0
-  breakResults: []
+  breakResults:
+  - item: {fileID: 11400000, guid: dcf4dcbde8742dd4e9c0bb7102513fc8, type: 2}
+    quantity: 1

@@ -113,6 +113,10 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     [Tooltip("Message si la destination de depot est pleine.")]
     public string depositNoSpaceMessage = "Pas assez de place dans le coffre.";
 
+    [Header("World UI")]
+    [Tooltip("Affiche le panneau d'information monde/local quand cet objet est detecte. Desactive pour les objets caches.")]
+    public bool showWorldInteractionUi = true;
+
     [Header("Interaction Action Box")]
     [Tooltip("ActionBox utilisee par cet objet interactif. Laisse vide pour auto-detecter.")]
     public GameObject actionBox;
@@ -873,7 +877,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void ForwardDetectedCharacterToRecoverableInfo(GameObject character)
     {
-        if (recoverableWorldInfo == null || !recoverableWorldInfo.isActiveAndEnabled)
+        if (!showWorldInteractionUi || recoverableWorldInfo == null || !recoverableWorldInfo.isActiveAndEnabled)
         {
             return;
         }
@@ -2736,12 +2740,13 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     public void RefreshRecoverableWorldInfo()
     {
         Item displayItem = ResolveRecoverableDisplayItem();
-        bool shouldShow = allowTake && displayItem != null;
+        bool shouldShow = showWorldInteractionUi && allowTake && displayItem != null;
 
         if (!shouldShow)
         {
             if (recoverableWorldInfo != null)
             {
+                recoverableWorldInfo.SetDetectedCharacter(null);
                 recoverableWorldInfo.enabled = false;
             }
 

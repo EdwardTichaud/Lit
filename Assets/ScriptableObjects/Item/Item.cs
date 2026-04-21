@@ -5,6 +5,24 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Item", menuName = "Scriptable Objects/Item")]
 public class Item : ScriptableObject
 {
+    private const string ItemNamePlaceholder = "-ItemName-";
+    private const string DefaultCannotPlaceMessage = "Impossible de placer ici";
+    private const string DefaultCannotPlaceWhileEquippedMessage = "La torche équipée empêche la pose";
+    private const string DefaultCannotDropMessage = "Cet objet ne peut pas être jeté";
+    private const string DefaultCannotUseMessage = "Cet objet ne peut pas être utilisé";
+    private const string DefaultUseFailedMessage = "Echec d'utilisation";
+    private const string DefaultCannotPickupMessage = "Cet objet ne peut pas être récupéré";
+    private const string DefaultCannotDepositMessage = "Cet objet ne pas pas être déposé";
+    private const string DefaultCannotTakeMessage = "Cet item ne peut pas être pris";
+    private const string DefaultCannotBreakMessage = "Cet objet est incassable";
+    private const string DefaultBreakFailedMessage = "Echec de casse";
+    private const string DefaultUseSuccessMessage = ItemNamePlaceholder + " utilisé";
+    private const string DefaultPlaceSuccessMessage = ItemNamePlaceholder + " posé";
+    private const string DefaultDropSuccessMessage = ItemNamePlaceholder + " jeté";
+    private const string DefaultDepositSuccessMessage = ItemNamePlaceholder + " déposé";
+    private const string DefaultTakeSuccessMessage = ItemNamePlaceholder + " pris";
+    private const string DefaultBreakSuccessMessage = ItemNamePlaceholder + " cassé";
+
     public enum PlacementSurfaceMode
     {
         None = 0,
@@ -154,37 +172,37 @@ public class Item : ScriptableObject
 
     [Header("Feedback")]
     [Tooltip("Message si l'item ne peut pas etre pose.")]
-    public string cannotPlaceMessage;
+    public string cannotPlaceMessage = DefaultCannotPlaceMessage;
     [Tooltip("Message si la torche equipee empêche la pose.")]
-    public string cannotPlaceWhileEquippedMessage;
+    public string cannotPlaceWhileEquippedMessage = DefaultCannotPlaceWhileEquippedMessage;
     [Tooltip("Message si l'item ne peut pas etre jete.")]
-    public string cannotDropMessage;
+    public string cannotDropMessage = DefaultCannotDropMessage;
     [Tooltip("Message si l'item ne peut pas etre utilise.")]
-    public string cannotUseMessage;
+    public string cannotUseMessage = DefaultCannotUseMessage;
     [Tooltip("Message si l'utilisation echoue.")]
-    public string useFailedMessage;
+    public string useFailedMessage = DefaultUseFailedMessage;
     [Tooltip("Message si l'item ne peut pas etre ramasse.")]
-    public string cannotPickupMessage;
+    public string cannotPickupMessage = DefaultCannotPickupMessage;
     [Tooltip("Message si l'item ne peut pas etre depose.")]
-    public string cannotDepositMessage;
+    public string cannotDepositMessage = DefaultCannotDepositMessage;
     [Tooltip("Message si l'item ne peut pas etre pris.")]
-    public string cannotTakeMessage;
+    public string cannotTakeMessage = DefaultCannotTakeMessage;
     [Tooltip("Message si l'item ne peut pas etre casse.")]
-    public string cannotBreakMessage;
+    public string cannotBreakMessage = DefaultCannotBreakMessage;
     [Tooltip("Message si la casse echoue.")]
-    public string breakFailedMessage;
+    public string breakFailedMessage = DefaultBreakFailedMessage;
     [Tooltip("Message si l'utilisation reussit.")]
-    public string useSuccessMessage;
+    public string useSuccessMessage = DefaultUseSuccessMessage;
     [Tooltip("Message si la pose reussit.")]
-    public string placeSuccessMessage;
+    public string placeSuccessMessage = DefaultPlaceSuccessMessage;
     [Tooltip("Message si le drop reussit.")]
-    public string dropSuccessMessage;
+    public string dropSuccessMessage = DefaultDropSuccessMessage;
     [Tooltip("Message si le depot reussit.")]
-    public string depositSuccessMessage;
+    public string depositSuccessMessage = DefaultDepositSuccessMessage;
     [Tooltip("Message si la prise reussit.")]
-    public string takeSuccessMessage;
+    public string takeSuccessMessage = DefaultTakeSuccessMessage;
     [Tooltip("Message si la casse reussit.")]
-    public string breakSuccessMessage;
+    public string breakSuccessMessage = DefaultBreakSuccessMessage;
 
     [Header("Building")]
     [Tooltip("Si true, l'item est traite comme un building.")]
@@ -493,7 +511,7 @@ public class Item : ScriptableObject
     {
         if (controller == null)
         {
-            reason = ResolveMessage(cannotUseMessage, "Impossible d'utiliser cet objet.");
+            reason = ResolveMessage(cannotUseMessage, DefaultCannotUseMessage);
             return false;
         }
 
@@ -504,7 +522,7 @@ public class Item : ScriptableObject
 
         if (!CanUse())
         {
-            reason = ResolveMessage(cannotUseMessage, "Impossible d'utiliser cet objet.");
+            reason = ResolveMessage(cannotUseMessage, DefaultCannotUseMessage);
             return false;
         }
 
@@ -537,7 +555,7 @@ public class Item : ScriptableObject
             }
         }
 
-        reason = ResolveMessage(useFailedMessage, "L'utilisation a echoue.");
+        reason = ResolveMessage(useFailedMessage, DefaultUseFailedMessage);
         return false;
     }
 
@@ -545,7 +563,7 @@ public class Item : ScriptableObject
     {
         if (!canBreak || !HasBreakResults())
         {
-            reason = ResolveMessage(cannotBreakMessage, "Impossible de casser cet objet.");
+            reason = ResolveMessage(cannotBreakMessage, DefaultCannotBreakMessage);
             return false;
         }
 
@@ -557,7 +575,7 @@ public class Item : ScriptableObject
     {
         if (controller == null)
         {
-            reason = ResolveMessage(breakFailedMessage, "Impossible de casser cet objet.");
+            reason = ResolveMessage(breakFailedMessage, DefaultBreakFailedMessage);
             return false;
         }
 
@@ -572,38 +590,38 @@ public class Item : ScriptableObject
             return true;
         }
 
-        reason = ResolveMessage(breakFailedMessage, "Impossible de casser cet objet.");
+        reason = ResolveMessage(breakFailedMessage, DefaultBreakFailedMessage);
         return false;
     }
 
     public string GetUseSuccessMessage()
     {
-        return ResolveMessage(useSuccessMessage, "Utilisation reussie.");
+        return ResolveMessage(useSuccessMessage, DefaultUseSuccessMessage);
     }
 
     public string GetPlaceSuccessMessage()
     {
-        return ResolveMessage(placeSuccessMessage, "Objet pose.");
+        return ResolveMessage(placeSuccessMessage, DefaultPlaceSuccessMessage);
     }
 
     public string GetDropSuccessMessage()
     {
-        return ResolveMessage(dropSuccessMessage, "Objet jete.");
+        return ResolveMessage(dropSuccessMessage, DefaultDropSuccessMessage);
     }
 
     public string GetDepositSuccessMessage()
     {
-        return ResolveMessage(depositSuccessMessage, "Objet depose.");
+        return ResolveMessage(depositSuccessMessage, DefaultDepositSuccessMessage);
     }
 
     public string GetTakeSuccessMessage()
     {
-        return ResolveMessage(takeSuccessMessage, "Objet recupere.");
+        return ResolveMessage(takeSuccessMessage, DefaultTakeSuccessMessage);
     }
 
     public string GetBreakSuccessMessage()
     {
-        return ResolveMessage(breakSuccessMessage, "Casse reussie.");
+        return ResolveMessage(breakSuccessMessage, DefaultBreakSuccessMessage);
     }
 
     public bool HasInteractionCapabilities()
@@ -650,7 +668,7 @@ public class Item : ScriptableObject
     {
         if (!allowDepositToContainers)
         {
-            reason = ResolveMessage(cannotDepositMessage, "Impossible de deposer cet objet.");
+            reason = ResolveMessage(cannotDepositMessage, DefaultCannotDepositMessage);
             return false;
         }
 
@@ -667,7 +685,7 @@ public class Item : ScriptableObject
     {
         if (!allowTakeFromContainers)
         {
-            string fallback = "Impossible de ramasser cet objet.";
+            string fallback = DefaultCannotTakeMessage;
             string custom = !string.IsNullOrWhiteSpace(cannotTakeMessage) ? cannotTakeMessage : cannotPickupMessage;
             reason = ResolveMessage(custom, fallback);
             return false;
@@ -686,19 +704,19 @@ public class Item : ScriptableObject
     {
         if (!allowPlaceFromInventory)
         {
-            reason = ResolveMessage(cannotPlaceMessage, "Impossible de poser cet objet.");
+            reason = ResolveMessage(cannotPlaceMessage, DefaultCannotPlaceMessage);
             return false;
         }
 
         if (isTorch && controller != null && controller.IsTorchEquipped)
         {
-            reason = ResolveMessage(cannotPlaceWhileEquippedMessage, "Impossible de poser la torche equipee.");
+            reason = ResolveMessage(cannotPlaceWhileEquippedMessage, DefaultCannotPlaceWhileEquippedMessage);
             return false;
         }
 
         if (ResolveWorldPrefab() == null)
         {
-            reason = ResolveMessage(cannotPlaceMessage, "Impossible de poser cet objet.");
+            reason = ResolveMessage(cannotPlaceMessage, DefaultCannotPlaceMessage);
             return false;
         }
 
@@ -750,19 +768,19 @@ public class Item : ScriptableObject
     {
         if (!allowDropFromInventory)
         {
-            reason = ResolveMessage(cannotDropMessage, "Impossible de jeter cet objet.");
+            reason = ResolveMessage(cannotDropMessage, DefaultCannotDropMessage);
             return false;
         }
 
         if (isTorch)
         {
-            reason = ResolveMessage(cannotDropMessage, "Impossible de jeter cet objet.");
+            reason = ResolveMessage(cannotDropMessage, DefaultCannotDropMessage);
             return false;
         }
 
         if (isBuilding)
         {
-            reason = ResolveMessage(cannotDropMessage, "Impossible de jeter cet objet.");
+            reason = ResolveMessage(cannotDropMessage, DefaultCannotDropMessage);
             return false;
         }
 
@@ -778,7 +796,7 @@ public class Item : ScriptableObject
             return true;
         }
 
-        reason = ResolveMessage(cannotDropMessage, "Impossible de jeter cet objet.");
+        reason = ResolveMessage(cannotDropMessage, DefaultCannotDropMessage);
         return false;
     }
 
@@ -838,18 +856,19 @@ public class Item : ScriptableObject
 
     private string ResolveMessage(string custom, string fallback)
     {
-        if (!string.IsNullOrWhiteSpace(custom))
+        string message = !string.IsNullOrWhiteSpace(custom) ? custom : fallback;
+        return FormatFeedbackMessage(message);
+    }
+
+    private string FormatFeedbackMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message) || !message.Contains(ItemNamePlaceholder))
         {
-            return custom;
+            return message;
         }
 
         string display = !string.IsNullOrWhiteSpace(itemName) ? itemName : name;
-        if (!string.IsNullOrWhiteSpace(display))
-        {
-            return $"{display} : {fallback}";
-        }
-
-        return fallback;
+        return message.Replace(ItemNamePlaceholder, display ?? string.Empty);
     }
 
     private void ConsumeAfterUse(SquadCharacterController controller)

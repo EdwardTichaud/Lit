@@ -63,7 +63,7 @@ public partial class SquadCharacterController
             Mathf.Max(0.1f, interactionDetectionRadius),
             interactionDetectionHits,
             interactionDetectionMask,
-            QueryTriggerInteraction.Ignore);
+            QueryTriggerInteraction.Collide);
 
         interactionDetectionCandidates.Clear();
         interactionDetectionUniqueTargets.Clear();
