@@ -147,6 +147,11 @@ public class TorchColorLinkSystem : MonoBehaviour
             return;
         }
 
+        if (CombatSessionManager.Instance != null && CombatSessionManager.Instance.IsLocalCombatActive())
+        {
+            return;
+        }
+
         if (LocalInputRouter.MoveValue.sqrMagnitude > 0.0001f)
         {
             return;

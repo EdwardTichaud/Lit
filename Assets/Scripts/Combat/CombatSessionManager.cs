@@ -1,0 +1,1988 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
+
+public class CombatSessionManager : NetworkBehaviour
+{
+    private const string BasicAttackAnimationName = "Attack_Base";
+    private const string DefaultPlayerSpawnPointName = "spawnPoint_Player";
+    private const float DeathAnimationTransitionDuration = 0.05f;
+    private const float DefaultBasicAttackAnimationDuration = 0.75f;
+    private const float DefaultDeathAnimationDuration = 1f;
+    private const float PostDeathReturnDelaySeconds = 3f;
+    private const float LocalEnemyLookupMaxDistance = 6f;
+    private static readonly string[] DeathAnimationCandidates = { "Death", "Death_v1", "Death_v2" };
+
+    private enum CombatTurn
+    {
+        None = 0,
+        Enemy = 1,
+        Player = 2,
+        Finished = 3
+    }
+
+    private sealed class RuntimeEnemy
+    {
+        public string DisplayName;
+        public int CurrentHp;
+        public int MaxHp;
+        public int AttackDamage;
+
+        public bool IsAlive => CurrentHp > 0;
+    }
+
+    private sealed class CombatSession
+    {
+        public string SessionId;
+        public string CharacterId;
+        public ulong OwnerClientId;
+        public SquadCharacterController Player;
+        public CombatAggroEnemy SourceEnemy;
+        public Vector3 ReturnPosition;
+        public Quaternion ReturnRotation;
+        public Vector3 EnemyReturnPosition;
+        public Quaternion EnemyReturnRotation;
+        public Vector3 PlayerCombatPosition;
+        public Quaternion PlayerCombatRotation;
+        public Vector3 EnemyCombatPosition;
+        public Quaternion EnemyCombatRotation;
+        public bool HasEnemyPresentation;
+        public List<RuntimeEnemy> Enemies = new List<RuntimeEnemy>();
+        public CombatTurn Turn;
+        public float TurnEndsAt;
+        public float NextEnemyActionAt;
+        public float NextSnapshotAt;
+        public bool PlayerActionLocked;
+        public float PlayerActionEndsAt;
+        public int PendingPlayerAttackDamage;
+        public bool SuppressedMovement;
+        public bool Resolving;
+        public bool ResolutionPlayerVictory;
+        public float ResolutionEndsAt;
+        public bool Finished;
+        public string LastMessage;
+    }
+
+    private sealed class LocalEnemyPresentation
+    {
+        public CombatAggroEnemy Enemy;
+        public Vector3 ReturnPosition;
+        public Quaternion ReturnRotation;
+    }
+
+    private sealed class LocalCombatPresentationState
+    {
+        public string SessionId;
+        public CombatTurn Turn;
+        public bool Resolving;
+        public bool ResolutionPlayerVictory;
+        public bool HasEnemyPresentation;
+        public Vector3 EnemyReturnPosition;
+        public bool PlayerActionLocked;
+        public bool Active => !string.IsNullOrWhiteSpace(SessionId);
+
+        public void Reset()
+        {
+            SessionId = null;
+            Turn = CombatTurn.None;
+            Resolving = false;
+            ResolutionPlayerVictory = false;
+            HasEnemyPresentation = false;
+            EnemyReturnPosition = Vector3.zero;
+            PlayerActionLocked = false;
+        }
+    }
+
+    private sealed class PrayerState
+    {
+        public ulong ClientId;
+        public string CharacterId;
+        public float LastValidationTime;
+    }
+
+    public static CombatSessionManager Instance { get; private set; }
+
+    [Header("Turns")]
+    [SerializeField, Min(1f), Tooltip("Duree maximale d'un tour.")]
+    private float turnDurationSeconds = 30f;
+    [SerializeField, Min(0f), Tooltip("Delai court avant l'action automatique ennemie.")]
+    private float enemyActionDelay = 1f;
+    [SerializeField, Min(1), Tooltip("Degats de base de l'action Attaquer du joueur.")]
+    private int defaultPlayerAttackDamage = 3;
+    [SerializeField, Min(0.05f), Tooltip("Intervalle de rafraichissement du HUD pendant un combat.")]
+    private float snapshotInterval = 0.2f;
+
+    [Header("Arena Scene")]
+    [SerializeField, Tooltip("Spawn point scene du joueur pour les combats. Si vide, cherche un objet nomme 'spawnPoint_Player'.")]
+    private Transform spawnPointPlayer;
+    [SerializeField, Min(1f), Tooltip("Distance a laquelle l'ennemi est place en face du joueur depuis le spawn point.")]
+    private float enemyFacingDistance = 3f;
+
+    [Header("Idoles de Iustia")]
+    [SerializeField, Range(0f, 1f), Tooltip("Reduction de degats accordee par joueur en priere.")]
+    private float prayerDamageReductionPerPlayer = 0.2f;
+    [SerializeField, Range(0f, 1f), Tooltip("Cap de reduction idole. 0.8 signifie au moins 20% des degats passent toujours.")]
+    private float maxPrayerDamageReduction = 0.8f;
+
+    private readonly Dictionary<string, CombatSession> sessionsByCharacterId = new Dictionary<string, CombatSession>();
+    private readonly Dictionary<ulong, CombatSession> sessionsByClientId = new Dictionary<ulong, CombatSession>();
+    private readonly Dictionary<ulong, PrayerState> activePrayersByClientId = new Dictionary<ulong, PrayerState>();
+    private readonly List<CombatSession> tickSessions = new List<CombatSession>();
+    private readonly HashSet<string> locallySuppressedSessions = new HashSet<string>();
+    private readonly Dictionary<string, LocalEnemyPresentation> localEnemyPresentationsBySessionId = new Dictionary<string, LocalEnemyPresentation>();
+    private readonly LocalCombatPresentationState localCombatPresentation = new LocalCombatPresentationState();
+    private int nextSessionId = 1;
+
+    public static CombatSessionManager EnsureInstance()
+    {
+        if (Instance != null)
+        {
+            return Instance;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        Instance = FindFirstObjectByType<CombatSessionManager>();
+#else
+        Instance = FindObjectOfType<CombatSessionManager>();
+#endif
+        if (Instance != null)
+        {
+            return Instance;
+        }
+
+        GameObject host = new GameObject("CombatSessionManager");
+        DontDestroyOnLoad(host);
+        Instance = host.AddComponent<CombatSessionManager>();
+        return Instance;
+    }
+
+    public static bool IsCharacterInCombat(SquadCharacterController controller)
+    {
+        if (controller == null || Instance == null)
+        {
+            return false;
+        }
+
+        return Instance.TryGetSession(controller, out _);
+    }
+
+    public bool IsLocalCombatActive()
+    {
+        if (CanRunAuthority())
+        {
+            return sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) &&
+                   session != null &&
+                   !session.Finished;
+        }
+
+        return localCombatPresentation.Active;
+    }
+
+    public bool TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out bool playerTurn)
+    {
+        player = null;
+        enemy = null;
+        playerTurn = false;
+
+        if (CanRunAuthority())
+        {
+            if (!sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) || session == null || session.Finished)
+            {
+                return false;
+            }
+
+            player = session.Player != null ? session.Player.transform : ResolveControllerForClient(ResolveLocalClientId())?.transform;
+            enemy = session.SourceEnemy != null ? session.SourceEnemy.transform : null;
+            playerTurn = ResolvePresentationTurn(session) == CombatTurn.Player;
+            return player != null && enemy != null;
+        }
+
+        if (!localCombatPresentation.Active)
+        {
+            return false;
+        }
+
+        player = ResolveControllerForClient(ResolveLocalClientId())?.transform;
+        enemy = ResolveLocalCombatEnemyTransform(localCombatPresentation);
+        playerTurn = ResolvePresentationTurn(localCombatPresentation) == CombatTurn.Player;
+        return player != null && enemy != null;
+    }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            if (ShouldReplaceExistingInstance(Instance, this))
+            {
+                Destroy(Instance.gameObject);
+                Instance = this;
+            }
+            else
+            {
+                Destroy(this);
+                return;
+            }
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        Instance = this;
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        ReleaseAllLocalClientMovement();
+        RestoreAllLocalEnemyPresentations();
+        localCombatPresentation.Reset();
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    public override void OnDestroy()
+    {
+        ReleaseAllLocalClientMovement();
+        RestoreAllLocalEnemyPresentations();
+        localCombatPresentation.Reset();
+        base.OnDestroy();
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    private void Update()
+    {
+        if (!CanRunAuthority())
+        {
+            return;
+        }
+
+        ValidatePrayerStates();
+        tickSessions.Clear();
+        foreach (CombatSession session in sessionsByCharacterId.Values)
+        {
+            tickSessions.Add(session);
+        }
+
+        for (int i = 0; i < tickSessions.Count; i++)
+        {
+            TickSession(tickSessions[i]);
+        }
+    }
+
+    public bool TryStartCombat(SquadCharacterController player, CombatAggroEnemy sourceEnemy)
+    {
+        if (!CanRunAuthority() || player == null || player.CurrentHp <= 0)
+        {
+            return false;
+        }
+
+        string characterId = ResolveCharacterId(player);
+        if (string.IsNullOrWhiteSpace(characterId) || sessionsByCharacterId.ContainsKey(characterId))
+        {
+            return false;
+        }
+
+        ulong ownerClientId = ResolveOwnerClientId(player);
+        if (sessionsByClientId.ContainsKey(ownerClientId))
+        {
+            return false;
+        }
+
+        List<RuntimeEnemy> enemies = BuildRuntimeEnemies(sourceEnemy);
+        if (enemies.Count == 0)
+        {
+            return false;
+        }
+
+        StopPrayer(ownerClientId, sendFeedback: false);
+
+        ResolveCombatPositions(
+            player,
+            out Vector3 playerCombatPosition,
+            out Quaternion playerCombatRotation,
+            out Vector3 enemyCombatPosition,
+            out Quaternion enemyCombatRotation);
+
+        CombatSession session = new CombatSession
+        {
+            SessionId = $"combat_{nextSessionId++}",
+            CharacterId = characterId,
+            OwnerClientId = ownerClientId,
+            Player = player,
+            SourceEnemy = sourceEnemy,
+            ReturnPosition = player.transform.position,
+            ReturnRotation = player.transform.rotation,
+            EnemyReturnPosition = sourceEnemy != null ? sourceEnemy.transform.position : Vector3.zero,
+            EnemyReturnRotation = sourceEnemy != null ? sourceEnemy.transform.rotation : Quaternion.identity,
+            PlayerCombatPosition = playerCombatPosition,
+            PlayerCombatRotation = playerCombatRotation,
+            EnemyCombatPosition = enemyCombatPosition,
+            EnemyCombatRotation = enemyCombatRotation,
+            HasEnemyPresentation = sourceEnemy != null,
+            Enemies = enemies,
+            LastMessage = "Combat engage."
+        };
+
+        sessionsByCharacterId[characterId] = session;
+        sessionsByClientId[ownerClientId] = session;
+
+        player.PushScriptedMovementSuppression();
+        session.SuppressedMovement = true;
+        player.Stop();
+
+        MoveCharacterTo(player, session.PlayerCombatPosition, session.PlayerCombatRotation);
+        MoveCombatAggroEnemyTo(sourceEnemy, session.EnemyCombatPosition, session.EnemyCombatRotation);
+
+        SendEnterCombat(session);
+        BeginTurn(session, CombatTurn.Enemy, "L'ennemi ouvre le combat.");
+        return true;
+    }
+
+    public void RequestLocalPlayerAttack()
+    {
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestPlayerAttackServerRpc();
+            return;
+        }
+
+        TryPlayerAttackForClient(ResolveLocalClientId());
+    }
+
+    public void RequestLocalPlayerPass()
+    {
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestPlayerPassServerRpc();
+            return;
+        }
+
+        TryPlayerPassForClient(ResolveLocalClientId(), "Tour passe.");
+    }
+
+    public void NotifyInventoryItemUsed(SquadCharacterController controller)
+    {
+        if (!CanRunAuthority() || controller == null)
+        {
+            return;
+        }
+
+        if (!TryGetSession(controller, out CombatSession session) ||
+            session.Turn != CombatTurn.Player ||
+            session.PlayerActionLocked)
+        {
+            return;
+        }
+
+        BeginTurn(session, CombatTurn.Enemy, "Item utilise. Fin du tour.");
+    }
+
+    public bool CanUseItemNow(SquadCharacterController controller, out string reason)
+    {
+        reason = string.Empty;
+        if (!CanRunAuthority() || controller == null)
+        {
+            return true;
+        }
+
+        if (!TryGetSession(controller, out CombatSession session))
+        {
+            return true;
+        }
+
+        if (!session.Finished && session.Turn == CombatTurn.Player && !session.PlayerActionLocked)
+        {
+            return true;
+        }
+
+        reason = session.Finished
+            ? "Combat termine."
+            : session.PlayerActionLocked
+                ? "Action de combat deja en cours."
+            : "Impossible d'utiliser un item hors du tour joueur.";
+        return false;
+    }
+
+    public void RequestTogglePrayerFromLocal(SquadCharacterController controller, IustiaIdolPrayer idol)
+    {
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestTogglePrayerServerRpc();
+            return;
+        }
+
+        ulong clientId = ResolveLocalClientId();
+        SquadCharacterController resolved = controller != null ? controller : ResolveControllerForClient(clientId);
+        bool shouldStart = !activePrayersByClientId.ContainsKey(clientId);
+        SetPrayerState(clientId, resolved, shouldStart, sendFeedback: true);
+    }
+
+    public void RequestStopPrayerFromLocal()
+    {
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestStopPrayerServerRpc();
+            return;
+        }
+
+        StopPrayer(ResolveLocalClientId(), sendFeedback: true);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPlayerAttackServerRpc(ServerRpcParams rpcParams = default)
+    {
+        TryPlayerAttackForClient(rpcParams.Receive.SenderClientId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPlayerPassServerRpc(ServerRpcParams rpcParams = default)
+    {
+        TryPlayerPassForClient(rpcParams.Receive.SenderClientId, "Tour passe.");
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestTogglePrayerServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        bool shouldStart = !activePrayersByClientId.ContainsKey(clientId);
+        SetPrayerState(clientId, ResolveControllerForClient(clientId), shouldStart, sendFeedback: true);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestStopPrayerServerRpc(ServerRpcParams rpcParams = default)
+    {
+        StopPrayer(rpcParams.Receive.SenderClientId, sendFeedback: true);
+    }
+
+    [ClientRpc]
+    private void EnterCombatClientRpc(
+        string sessionId,
+        Vector3 playerCombatPosition,
+        Quaternion playerCombatRotation,
+        bool hasEnemyPresentation,
+        Vector3 enemyReturnPosition,
+        Quaternion enemyReturnRotation,
+        Vector3 enemyCombatPosition,
+        Quaternion enemyCombatRotation,
+        ClientRpcParams rpcParams = default)
+    {
+        if (!IsServer)
+        {
+            localCombatPresentation.SessionId = sessionId;
+            localCombatPresentation.Turn = CombatTurn.None;
+            localCombatPresentation.Resolving = false;
+            localCombatPresentation.ResolutionPlayerVictory = false;
+            localCombatPresentation.HasEnemyPresentation = hasEnemyPresentation;
+            localCombatPresentation.EnemyReturnPosition = enemyReturnPosition;
+            localCombatPresentation.PlayerActionLocked = false;
+            SuppressLocalClientMovement(sessionId, playerCombatPosition, playerCombatRotation);
+            if (hasEnemyPresentation)
+            {
+                MoveLocalEnemyIntoCombat(sessionId, enemyReturnPosition, enemyReturnRotation, enemyCombatPosition, enemyCombatRotation);
+            }
+        }
+
+        CombatHudController.EnsureInstance();
+    }
+
+    [ClientRpc]
+    private void ExitCombatClientRpc(
+        string sessionId,
+        string message,
+        Vector3 playerReturnPosition,
+        Quaternion playerReturnRotation,
+        int playerHp,
+        int playerMaxHp,
+        bool hasEnemyPresentation,
+        Vector3 enemyReturnPosition,
+        Quaternion enemyReturnRotation,
+        int enemyRemainingHp,
+        bool playerVictory,
+        ClientRpcParams rpcParams = default)
+    {
+        if (!IsServer)
+        {
+            localCombatPresentation.Reset();
+            RestoreLocalClientMovement(sessionId, playerReturnPosition, playerReturnRotation, playerHp, playerMaxHp);
+            RestoreLocalEnemyPresentation(
+                sessionId,
+                hasEnemyPresentation,
+                enemyReturnPosition,
+                enemyReturnRotation,
+                playerVictory,
+                enemyRemainingHp);
+        }
+
+        CombatHudController.HideActive(sessionId);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
+    [ClientRpc]
+    private void CombatSnapshotClientRpc(
+        string sessionId,
+        int turn,
+        float timerRemaining,
+        int playerHp,
+        int playerMaxHp,
+        string enemyName,
+        int enemyHp,
+        int enemyMaxHp,
+        int aliveEnemies,
+        int totalEnemies,
+        int prayerSupportCount,
+        float damageReduction,
+        bool playerActionLocked,
+        string message,
+        ClientRpcParams rpcParams = default)
+    {
+        if (!IsServer && localCombatPresentation.Active && localCombatPresentation.SessionId == sessionId)
+        {
+            CombatTurn snapshotTurn = (CombatTurn)turn;
+            if (snapshotTurn != CombatTurn.None && snapshotTurn != CombatTurn.Finished)
+            {
+                localCombatPresentation.Turn = snapshotTurn;
+            }
+
+            localCombatPresentation.PlayerActionLocked = playerActionLocked;
+        }
+
+        CombatHudController.EnsureInstance().ShowSnapshot(
+            sessionId,
+            (CombatHudController.TurnState)turn,
+            timerRemaining,
+            playerHp,
+            playerMaxHp,
+            enemyName,
+            enemyHp,
+            enemyMaxHp,
+            aliveEnemies,
+            totalEnemies,
+            prayerSupportCount,
+            damageReduction,
+            playerActionLocked,
+            message);
+    }
+
+    [ClientRpc]
+    private void PrayerFeedbackClientRpc(bool active, string message, ClientRpcParams rpcParams = default)
+    {
+        IustiaIdolPrayer.SetLocalPrayerState(active);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
+    private void TickSession(CombatSession session)
+    {
+        if (session == null || session.Finished)
+        {
+            return;
+        }
+
+        if (session.Resolving)
+        {
+            if (Time.time >= session.ResolutionEndsAt)
+            {
+                EndCombat(session, session.ResolutionPlayerVictory, session.LastMessage, notifyClient: true);
+            }
+
+            return;
+        }
+
+        if (session.Player == null)
+        {
+            EndCombat(session, false, "Combat interrompu.", notifyClient: true);
+            return;
+        }
+
+        if (session.PlayerActionLocked)
+        {
+            if (Time.time >= session.PlayerActionEndsAt)
+            {
+                CompleteLockedPlayerAttack(session);
+            }
+
+            return;
+        }
+
+        if (Time.time >= session.NextSnapshotAt)
+        {
+            SendSnapshot(session, session.LastMessage);
+        }
+
+        if (session.Turn == CombatTurn.Enemy && Time.time >= session.NextEnemyActionAt)
+        {
+            ExecuteEnemyTurn(session);
+            return;
+        }
+
+        if (Time.time < session.TurnEndsAt)
+        {
+            return;
+        }
+
+        if (session.Turn == CombatTurn.Player)
+        {
+            TryPlayerPass(session, "Temps ecoule. Tour passe.");
+            return;
+        }
+
+        if (session.Turn == CombatTurn.Enemy)
+        {
+            ExecuteEnemyTurn(session);
+        }
+    }
+
+    private bool TryPlayerAttackForClient(ulong clientId)
+    {
+        if (!sessionsByClientId.TryGetValue(clientId, out CombatSession session))
+        {
+            return false;
+        }
+
+        return TryPlayerAttack(session);
+    }
+
+    private bool TryPlayerPassForClient(ulong clientId, string message)
+    {
+        if (!sessionsByClientId.TryGetValue(clientId, out CombatSession session))
+        {
+            return false;
+        }
+
+        return TryPlayerPass(session, message);
+    }
+
+    private bool TryPlayerAttack(CombatSession session)
+    {
+        if (session == null || session.Finished || session.Turn != CombatTurn.Player || session.PlayerActionLocked)
+        {
+            return false;
+        }
+
+        RuntimeEnemy enemy = GetActiveEnemy(session);
+        if (enemy == null)
+        {
+            BeginCombatResolution(session, true, "Victoire.");
+            return true;
+        }
+
+        session.PlayerActionLocked = true;
+        session.PendingPlayerAttackDamage = ResolvePlayerAttackDamage(session.Player);
+        session.PlayerActionEndsAt = Time.time + PlayPlayerBasicAttackPresentation(session);
+        session.TurnEndsAt = session.PlayerActionEndsAt;
+        session.NextEnemyActionAt = float.PositiveInfinity;
+        session.LastMessage = $"Attaque de base sur {enemy.DisplayName}.";
+        SendSnapshot(session, session.LastMessage);
+        return true;
+    }
+
+    private bool TryPlayerPass(CombatSession session, string message)
+    {
+        if (session == null || session.Finished || session.Turn != CombatTurn.Player || session.PlayerActionLocked)
+        {
+            return false;
+        }
+
+        BeginTurn(session, CombatTurn.Enemy, message);
+        return true;
+    }
+
+    private void CompleteLockedPlayerAttack(CombatSession session)
+    {
+        if (session == null || !session.PlayerActionLocked || session.Finished)
+        {
+            return;
+        }
+
+        session.PlayerActionLocked = false;
+        session.PlayerActionEndsAt = 0f;
+
+        RuntimeEnemy enemy = GetActiveEnemy(session);
+        if (enemy == null)
+        {
+            session.PendingPlayerAttackDamage = 0;
+            BeginCombatResolution(session, true, "Victoire.");
+            return;
+        }
+
+        int damage = Mathf.Max(1, session.PendingPlayerAttackDamage);
+        session.PendingPlayerAttackDamage = 0;
+        int before = enemy.CurrentHp;
+        enemy.CurrentHp = Mathf.Max(0, enemy.CurrentHp - damage);
+        int applied = Mathf.Max(0, before - enemy.CurrentHp);
+
+        if (AreAllEnemiesDefeated(session))
+        {
+            BeginCombatResolution(session, true, $"Victoire. {enemy.DisplayName} subit {applied} degats.");
+            return;
+        }
+
+        BeginTurn(session, CombatTurn.Enemy, $"{enemy.DisplayName} subit {applied} degats.");
+    }
+
+    private void ExecuteEnemyTurn(CombatSession session)
+    {
+        if (session == null || session.Finished || session.Turn != CombatTurn.Enemy)
+        {
+            return;
+        }
+
+        RuntimeEnemy enemy = GetActiveEnemy(session);
+        if (enemy == null)
+        {
+            BeginCombatResolution(session, true, "Victoire.");
+            return;
+        }
+
+        int supportCount = CountPrayerSupport(session);
+        float reduction = ResolvePrayerReduction(supportCount);
+        int rawDamage = Mathf.Max(0, enemy.AttackDamage);
+        int finalDamage = ResolveReducedDamage(rawDamage, reduction);
+        int applied = session.Player.ApplyDamage(finalDamage, "combat");
+
+        string message = $"{enemy.DisplayName} inflige {applied} degats.";
+        if (supportCount > 0)
+        {
+            message = $"{message} Prieres: -{Mathf.RoundToInt(reduction * 100f)}%.";
+        }
+
+        if (session.Player.CurrentHp <= 0)
+        {
+            BeginCombatResolution(session, false, $"Defaite. {message}");
+            return;
+        }
+
+        BeginTurn(session, CombatTurn.Player, message);
+    }
+
+    private void BeginTurn(CombatSession session, CombatTurn turn, string message)
+    {
+        if (session == null || session.Finished || session.Resolving)
+        {
+            return;
+        }
+
+        session.Turn = turn;
+        session.TurnEndsAt = Time.time + Mathf.Max(1f, turnDurationSeconds);
+        session.NextEnemyActionAt = turn == CombatTurn.Enemy
+            ? Time.time + Mathf.Max(0f, enemyActionDelay)
+            : float.PositiveInfinity;
+        session.PlayerActionLocked = false;
+        session.PlayerActionEndsAt = 0f;
+        session.PendingPlayerAttackDamage = 0;
+        session.LastMessage = message ?? string.Empty;
+        SendSnapshot(session, session.LastMessage);
+    }
+
+    private float PlayPlayerBasicAttackPresentation(CombatSession session)
+    {
+        if (session?.Player == null)
+        {
+            return DefaultBasicAttackAnimationDuration;
+        }
+
+        Animator animator = session.Player.GetComponent<Animator>();
+        float duration = ResolveAnimationDuration(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
+        if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
+        {
+            duration = PlayBasicAttackAnimationLocally(session.Player);
+        }
+
+        if (IsNetworkSessionActive() &&
+            IsSpawned &&
+            session.OwnerClientId != ResolveLocalClientId())
+        {
+            PlayPlayerBasicAttackClientRpc(session.SessionId, BuildClientRpcParams(session.OwnerClientId));
+        }
+
+        return Mathf.Max(0.05f, duration);
+    }
+
+    [ClientRpc]
+    private void PlayPlayerBasicAttackClientRpc(string sessionId, ClientRpcParams rpcParams = default)
+    {
+        if (IsServer ||
+            !localCombatPresentation.Active ||
+            localCombatPresentation.SessionId != sessionId)
+        {
+            return;
+        }
+
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        if (controller != null)
+        {
+            PlayBasicAttackAnimationLocally(controller);
+        }
+    }
+
+    private void BeginCombatResolution(CombatSession session, bool playerVictory, string message)
+    {
+        if (session == null || session.Finished || session.Resolving)
+        {
+            return;
+        }
+
+        session.Resolving = true;
+        session.ResolutionPlayerVictory = playerVictory;
+        session.PlayerActionLocked = false;
+        session.PlayerActionEndsAt = 0f;
+        session.PendingPlayerAttackDamage = 0;
+        session.Turn = CombatTurn.Finished;
+        session.TurnEndsAt = Time.time;
+        session.NextEnemyActionAt = float.PositiveInfinity;
+        session.LastMessage = message ?? string.Empty;
+        session.ResolutionEndsAt = Time.time + ResolveCombatResolutionDuration(session, playerVictory);
+
+        SendSnapshot(session, session.LastMessage);
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            CombatResolutionClientRpc(
+                session.SessionId,
+                playerVictory,
+                session.Player != null ? session.Player.CurrentHp : 0,
+                session.Player != null ? session.Player.MaxHp : 1,
+                BuildClientRpcParams(session.OwnerClientId));
+        }
+    }
+
+    [ClientRpc]
+    private void CombatResolutionClientRpc(
+        string sessionId,
+        bool playerVictory,
+        int playerHp,
+        int playerMaxHp,
+        ClientRpcParams rpcParams = default)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        if (localCombatPresentation.Active && localCombatPresentation.SessionId == sessionId)
+        {
+            localCombatPresentation.Resolving = true;
+            localCombatPresentation.ResolutionPlayerVictory = playerVictory;
+        }
+
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        if (controller != null)
+        {
+            controller.SetHealth(playerHp, Mathf.Max(1, playerMaxHp));
+        }
+
+        if (playerVictory)
+        {
+            if (localEnemyPresentationsBySessionId.TryGetValue(sessionId, out LocalEnemyPresentation presentation))
+            {
+                PlayDeathAnimation(presentation.Enemy != null ? presentation.Enemy.ResolveAnimator() : null);
+            }
+
+            return;
+        }
+
+        if (controller != null)
+        {
+            controller.Stop();
+            PlayDeathAnimation(controller.GetComponent<Animator>());
+        }
+    }
+
+    private void EndCombat(CombatSession session, bool playerVictory, string message, bool notifyClient)
+    {
+        if (session == null || session.Finished)
+        {
+            return;
+        }
+
+        session.Finished = true;
+        session.Resolving = false;
+        session.PlayerActionLocked = false;
+        session.PlayerActionEndsAt = 0f;
+        session.PendingPlayerAttackDamage = 0;
+        session.Turn = CombatTurn.Finished;
+        SendSnapshot(session, message);
+
+        int playerHp = session.Player != null ? session.Player.CurrentHp : 0;
+        int playerMaxHp = session.Player != null ? session.Player.MaxHp : 1;
+        int enemyRemainingHp = playerVictory ? 0 : ResolveDisplayedEnemyRemainingHp(session);
+
+        if (session.Player != null)
+        {
+            MoveCharacterTo(session.Player, session.ReturnPosition, session.ReturnRotation);
+            session.Player.SetHealth(playerHp, Mathf.Max(1, playerMaxHp));
+            session.Player.Stop();
+            if (session.SuppressedMovement)
+            {
+                session.Player.PopScriptedMovementSuppression();
+            }
+        }
+
+        if (session.SourceEnemy != null && session.HasEnemyPresentation)
+        {
+            MoveCombatAggroEnemyTo(session.SourceEnemy, session.EnemyReturnPosition, session.EnemyReturnRotation);
+        }
+
+        session.SourceEnemy?.FinalizeCombatResult(playerVictory, enemyRemainingHp);
+        sessionsByCharacterId.Remove(session.CharacterId);
+        sessionsByClientId.Remove(session.OwnerClientId);
+
+        if (notifyClient)
+        {
+            SendExitCombat(session, message, playerVictory, enemyRemainingHp);
+        }
+    }
+
+    private void SendEnterCombat(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            EnterCombatClientRpc(
+                session.SessionId,
+                session.PlayerCombatPosition,
+                session.PlayerCombatRotation,
+                session.HasEnemyPresentation,
+                session.EnemyReturnPosition,
+                session.EnemyReturnRotation,
+                session.EnemyCombatPosition,
+                session.EnemyCombatRotation,
+                BuildClientRpcParams(session.OwnerClientId));
+            return;
+        }
+
+        CombatHudController.EnsureInstance();
+    }
+
+    private void SendExitCombat(CombatSession session, string message, bool playerVictory, int enemyRemainingHp)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            ExitCombatClientRpc(
+                session.SessionId,
+                message,
+                session.ReturnPosition,
+                session.ReturnRotation,
+                session.Player != null ? session.Player.CurrentHp : 0,
+                session.Player != null ? session.Player.MaxHp : 1,
+                session.HasEnemyPresentation,
+                session.EnemyReturnPosition,
+                session.EnemyReturnRotation,
+                enemyRemainingHp,
+                playerVictory,
+                BuildClientRpcParams(session.OwnerClientId));
+            return;
+        }
+
+        CombatHudController.HideActive(session.SessionId);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
+    private void SendSnapshot(CombatSession session, string message)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.NextSnapshotAt = Time.time + Mathf.Max(0.05f, snapshotInterval);
+        RuntimeEnemy enemy = GetActiveEnemy(session);
+        int aliveEnemies = CountAliveEnemies(session);
+        int totalEnemies = session.Enemies != null ? session.Enemies.Count : 0;
+        int supportCount = CountPrayerSupport(session);
+        float reduction = ResolvePrayerReduction(supportCount);
+        float timerRemaining = Mathf.Max(0f, session.TurnEndsAt - Time.time);
+        int turn = (int)session.Turn;
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            CombatSnapshotClientRpc(
+                session.SessionId,
+                turn,
+                timerRemaining,
+                session.Player != null ? session.Player.CurrentHp : 0,
+                session.Player != null ? session.Player.MaxHp : 1,
+                enemy != null ? enemy.DisplayName : "Ennemi",
+                enemy != null ? enemy.CurrentHp : 0,
+                enemy != null ? enemy.MaxHp : 1,
+                aliveEnemies,
+                totalEnemies,
+                supportCount,
+                reduction,
+                session.PlayerActionLocked,
+                message ?? string.Empty,
+                BuildClientRpcParams(session.OwnerClientId));
+            return;
+        }
+
+        CombatHudController.EnsureInstance().ShowSnapshot(
+            session.SessionId,
+            (CombatHudController.TurnState)turn,
+            timerRemaining,
+            session.Player != null ? session.Player.CurrentHp : 0,
+            session.Player != null ? session.Player.MaxHp : 1,
+            enemy != null ? enemy.DisplayName : "Ennemi",
+            enemy != null ? enemy.CurrentHp : 0,
+            enemy != null ? enemy.MaxHp : 1,
+            aliveEnemies,
+            totalEnemies,
+            supportCount,
+            reduction,
+            session.PlayerActionLocked,
+            message ?? string.Empty);
+    }
+
+    private void SetPrayerState(ulong clientId, SquadCharacterController controller, bool active, bool sendFeedback)
+    {
+        if (!active)
+        {
+            StopPrayer(clientId, sendFeedback);
+            return;
+        }
+
+        if (controller == null)
+        {
+            SendPrayerFeedback(clientId, false, "Personnage introuvable.");
+            return;
+        }
+
+        if (TryGetSession(controller, out _))
+        {
+            SendPrayerFeedback(clientId, false, "Impossible de prier en combat.");
+            return;
+        }
+
+        if (!IustiaIdolPrayer.IsAnyIdolInRange(controller))
+        {
+            SendPrayerFeedback(clientId, false, "Aucune Idole de Iustia a portee.");
+            return;
+        }
+
+        activePrayersByClientId[clientId] = new PrayerState
+        {
+            ClientId = clientId,
+            CharacterId = ResolveCharacterId(controller),
+            LastValidationTime = Time.time
+        };
+
+        if (sendFeedback)
+        {
+            SendPrayerFeedback(clientId, true, "Priere a Iustia commencee.");
+        }
+    }
+
+    private void StopPrayer(ulong clientId, bool sendFeedback)
+    {
+        bool removed = activePrayersByClientId.Remove(clientId);
+        if (sendFeedback)
+        {
+            SendPrayerFeedback(clientId, false, removed ? "Priere interrompue." : string.Empty);
+        }
+    }
+
+    private void SendPrayerFeedback(ulong clientId, bool active, string message)
+    {
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            PrayerFeedbackClientRpc(active, message ?? string.Empty, BuildClientRpcParams(clientId));
+            return;
+        }
+
+        IustiaIdolPrayer.SetLocalPrayerState(active);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
+    private void ValidatePrayerStates()
+    {
+        if (activePrayersByClientId.Count == 0)
+        {
+            return;
+        }
+
+        List<ulong> toRemove = null;
+        foreach (KeyValuePair<ulong, PrayerState> pair in activePrayersByClientId)
+        {
+            if (Time.time < pair.Value.LastValidationTime + 0.25f)
+            {
+                continue;
+            }
+
+            SquadCharacterController controller = ResolveControllerForClient(pair.Key);
+            bool valid = controller != null
+                && !TryGetSession(controller, out _)
+                && IustiaIdolPrayer.IsAnyIdolInRange(controller);
+
+            pair.Value.LastValidationTime = Time.time;
+            if (valid)
+            {
+                continue;
+            }
+
+            toRemove ??= new List<ulong>();
+            toRemove.Add(pair.Key);
+        }
+
+        if (toRemove == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < toRemove.Count; i++)
+        {
+            StopPrayer(toRemove[i], sendFeedback: true);
+        }
+    }
+
+    private int CountPrayerSupport(CombatSession session)
+    {
+        if (session == null || activePrayersByClientId.Count == 0)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        foreach (PrayerState state in activePrayersByClientId.Values)
+        {
+            if (state.ClientId == session.OwnerClientId)
+            {
+                continue;
+            }
+
+            count++;
+        }
+
+        return count;
+    }
+
+    private float ResolvePrayerReduction(int supportCount)
+    {
+        return Mathf.Clamp(supportCount * Mathf.Max(0f, prayerDamageReductionPerPlayer), 0f, Mathf.Clamp01(maxPrayerDamageReduction));
+    }
+
+    private int ResolveReducedDamage(int rawDamage, float reduction)
+    {
+        if (rawDamage <= 0)
+        {
+            return 0;
+        }
+
+        int reduced = Mathf.FloorToInt(rawDamage * (1f - Mathf.Clamp01(reduction)));
+        return Mathf.Max(1, reduced);
+    }
+
+    private int ResolvePlayerAttackDamage(SquadCharacterController player)
+    {
+        int modifier = player != null ? global::CharacterData.GetStatModifier(player.GetStatValue(StatType.Strength)) : 0;
+        return Mathf.Max(1, defaultPlayerAttackDamage + modifier);
+    }
+
+    private List<RuntimeEnemy> BuildRuntimeEnemies(CombatAggroEnemy sourceEnemy)
+    {
+        List<CombatEnemyDefinition> definitions = sourceEnemy != null
+            ? sourceEnemy.CreateEnemyDefinitions()
+            : new List<CombatEnemyDefinition> { new CombatEnemyDefinition("Ennemi", 8, 8, 4) };
+
+        List<RuntimeEnemy> enemies = new List<RuntimeEnemy>();
+        for (int i = 0; i < definitions.Count; i++)
+        {
+            CombatEnemyDefinition definition = definitions[i];
+            if (definition == null)
+            {
+                continue;
+            }
+
+            CombatEnemyDefinition runtime = definition.CreateRuntimeCopy(i, definitions.Count);
+            if (runtime.currentHp <= 0)
+            {
+                continue;
+            }
+
+            enemies.Add(new RuntimeEnemy
+            {
+                DisplayName = runtime.displayName,
+                CurrentHp = runtime.currentHp,
+                MaxHp = runtime.maxHp,
+                AttackDamage = runtime.attackDamage
+            });
+        }
+
+        return enemies;
+    }
+
+    private RuntimeEnemy GetActiveEnemy(CombatSession session)
+    {
+        if (session?.Enemies == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < session.Enemies.Count; i++)
+        {
+            RuntimeEnemy enemy = session.Enemies[i];
+            if (enemy != null && enemy.IsAlive)
+            {
+                return enemy;
+            }
+        }
+
+        return null;
+    }
+
+    private bool AreAllEnemiesDefeated(CombatSession session)
+    {
+        return CountAliveEnemies(session) == 0;
+    }
+
+    private int CountAliveEnemies(CombatSession session)
+    {
+        if (session?.Enemies == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < session.Enemies.Count; i++)
+        {
+            if (session.Enemies[i] != null && session.Enemies[i].IsAlive)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private bool TryGetSession(SquadCharacterController controller, out CombatSession session)
+    {
+        session = null;
+        if (controller == null)
+        {
+            return false;
+        }
+
+        string characterId = ResolveCharacterId(controller);
+        return !string.IsNullOrWhiteSpace(characterId) && sessionsByCharacterId.TryGetValue(characterId, out session);
+    }
+
+    private void ResolveCombatPositions(
+        SquadCharacterController player,
+        out Vector3 playerPosition,
+        out Quaternion playerRotation,
+        out Vector3 enemyPosition,
+        out Quaternion enemyRotation)
+    {
+        Transform playerSpawnPoint = ResolvePlayerCombatSpawnPoint();
+        if (playerSpawnPoint != null)
+        {
+            playerPosition = playerSpawnPoint.position;
+            playerRotation = playerSpawnPoint.rotation;
+        }
+        else if (player != null)
+        {
+            playerPosition = player.transform.position;
+            playerRotation = player.transform.rotation;
+        }
+        else
+        {
+            playerPosition = Vector3.zero;
+            playerRotation = Quaternion.identity;
+        }
+
+        Vector3 forward = Vector3.ProjectOnPlane(playerRotation * Vector3.forward, Vector3.up);
+        if (forward.sqrMagnitude <= 0.0001f && player != null)
+        {
+            forward = Vector3.ProjectOnPlane(player.transform.forward, Vector3.up);
+        }
+
+        if (forward.sqrMagnitude <= 0.0001f)
+        {
+            forward = Vector3.forward;
+        }
+
+        enemyPosition = playerPosition + forward.normalized * Mathf.Max(1f, enemyFacingDistance);
+        enemyRotation = ResolveFacingRotation(enemyPosition, playerPosition);
+        playerRotation = ResolveFacingRotation(playerPosition, enemyPosition);
+    }
+
+    private Transform ResolvePlayerCombatSpawnPoint()
+    {
+        if (spawnPointPlayer != null)
+        {
+            return spawnPointPlayer;
+        }
+
+        GameObject namedSpawnPoint = GameObject.Find(DefaultPlayerSpawnPointName);
+        if (namedSpawnPoint != null)
+        {
+            spawnPointPlayer = namedSpawnPoint.transform;
+        }
+
+        return spawnPointPlayer;
+    }
+
+    private static Quaternion ResolveFacingRotation(Vector3 origin, Vector3 target)
+    {
+        Vector3 direction = target - origin;
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            direction = Vector3.forward;
+        }
+
+        return Quaternion.LookRotation(direction.normalized, Vector3.up);
+    }
+
+    private static void MoveCharacterTo(SquadCharacterController controller, Vector3 position, Quaternion rotation)
+    {
+        if (controller == null)
+        {
+            return;
+        }
+
+        MoveTransformTo(controller.transform, position, rotation);
+    }
+
+    private static void MoveCombatAggroEnemyTo(CombatAggroEnemy enemy, Vector3 position, Quaternion rotation)
+    {
+        if (enemy == null)
+        {
+            return;
+        }
+
+        MoveTransformTo(enemy.transform, position, rotation);
+    }
+
+    private static void MoveTransformTo(Transform target, Vector3 position, Quaternion rotation)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Rigidbody body = target.GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.position = position;
+            body.rotation = rotation;
+        }
+
+        target.SetPositionAndRotation(position, rotation);
+    }
+
+    private void SuppressLocalClientMovement(string sessionId, Vector3 combatPosition, Quaternion combatRotation)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) || !locallySuppressedSessions.Add(sessionId))
+        {
+            return;
+        }
+
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        if (controller == null)
+        {
+            return;
+        }
+
+        controller.PushScriptedMovementSuppression();
+        controller.Stop();
+        MoveCharacterTo(controller, combatPosition, combatRotation);
+    }
+
+    private void RestoreLocalClientMovement(
+        string sessionId,
+        Vector3 returnPosition,
+        Quaternion returnRotation,
+        int playerHp,
+        int playerMaxHp)
+    {
+        bool hadSuppression = !string.IsNullOrWhiteSpace(sessionId) && locallySuppressedSessions.Remove(sessionId);
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        if (controller == null)
+        {
+            return;
+        }
+
+        controller.SetHealth(playerHp, Mathf.Max(1, playerMaxHp));
+        MoveCharacterTo(controller, returnPosition, returnRotation);
+        controller.Stop();
+
+        if (hadSuppression)
+        {
+            controller.PopScriptedMovementSuppression();
+        }
+    }
+
+    private void ReleaseAllLocalClientMovement()
+    {
+        if (locallySuppressedSessions.Count == 0)
+        {
+            return;
+        }
+
+        int count = locallySuppressedSessions.Count;
+        locallySuppressedSessions.Clear();
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        if (controller == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            controller.PopScriptedMovementSuppression();
+        }
+
+        controller.Stop();
+    }
+
+    private void MoveLocalEnemyIntoCombat(
+        string sessionId,
+        Vector3 enemyReturnPosition,
+        Quaternion enemyReturnRotation,
+        Vector3 combatPosition,
+        Quaternion combatRotation)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (localEnemyPresentationsBySessionId.TryGetValue(sessionId, out LocalEnemyPresentation existing) && existing.Enemy != null)
+        {
+            MoveCombatAggroEnemyTo(existing.Enemy, combatPosition, combatRotation);
+            return;
+        }
+
+        CombatAggroEnemy enemy = FindLocalEnemyPresentation(enemyReturnPosition);
+        if (enemy == null)
+        {
+            return;
+        }
+
+        localEnemyPresentationsBySessionId[sessionId] = new LocalEnemyPresentation
+        {
+            Enemy = enemy,
+            ReturnPosition = enemyReturnPosition,
+            ReturnRotation = enemyReturnRotation
+        };
+
+        MoveCombatAggroEnemyTo(enemy, combatPosition, combatRotation);
+    }
+
+    private void RestoreLocalEnemyPresentation(
+        string sessionId,
+        bool hasEnemyPresentation,
+        Vector3 enemyReturnPosition,
+        Quaternion enemyReturnRotation,
+        bool playerVictory,
+        int enemyRemainingHp)
+    {
+        CombatAggroEnemy enemy = null;
+        if (localEnemyPresentationsBySessionId.TryGetValue(sessionId, out LocalEnemyPresentation presentation))
+        {
+            enemy = presentation.Enemy;
+            enemyReturnPosition = presentation.ReturnPosition;
+            enemyReturnRotation = presentation.ReturnRotation;
+            localEnemyPresentationsBySessionId.Remove(sessionId);
+        }
+        else if (hasEnemyPresentation)
+        {
+            enemy = FindLocalEnemyPresentation(enemyReturnPosition);
+        }
+
+        if (enemy == null)
+        {
+            return;
+        }
+
+        MoveCombatAggroEnemyTo(enemy, enemyReturnPosition, enemyReturnRotation);
+        enemy.FinalizeCombatResult(playerVictory, enemyRemainingHp);
+    }
+
+    private void RestoreAllLocalEnemyPresentations()
+    {
+        if (localEnemyPresentationsBySessionId.Count == 0)
+        {
+            return;
+        }
+
+        foreach (LocalEnemyPresentation presentation in localEnemyPresentationsBySessionId.Values)
+        {
+            if (presentation?.Enemy == null)
+            {
+                continue;
+            }
+
+            MoveCombatAggroEnemyTo(presentation.Enemy, presentation.ReturnPosition, presentation.ReturnRotation);
+        }
+
+        localEnemyPresentationsBySessionId.Clear();
+    }
+
+    private Transform ResolveLocalCombatEnemyTransform(LocalCombatPresentationState presentation)
+    {
+        if (presentation == null || !presentation.Active)
+        {
+            return null;
+        }
+
+        if (localEnemyPresentationsBySessionId.TryGetValue(presentation.SessionId, out LocalEnemyPresentation tracked) &&
+            tracked != null &&
+            tracked.Enemy != null)
+        {
+            return tracked.Enemy.transform;
+        }
+
+        if (!presentation.HasEnemyPresentation)
+        {
+            return null;
+        }
+
+        CombatAggroEnemy enemy = FindLocalEnemyPresentation(presentation.EnemyReturnPosition);
+        return enemy != null ? enemy.transform : null;
+    }
+
+    private CombatAggroEnemy FindLocalEnemyPresentation(Vector3 expectedPosition)
+    {
+        CombatAggroEnemy[] candidates = Resources.FindObjectsOfTypeAll<CombatAggroEnemy>();
+        CombatAggroEnemy best = null;
+        float bestSqrDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            CombatAggroEnemy candidate = candidates[i];
+            if (candidate == null || !candidate.gameObject.scene.IsValid())
+            {
+                continue;
+            }
+
+            if (IsEnemyAlreadyTrackedLocally(candidate))
+            {
+                continue;
+            }
+
+            float sqrDistance = (candidate.transform.position - expectedPosition).sqrMagnitude;
+            if (sqrDistance >= bestSqrDistance)
+            {
+                continue;
+            }
+
+            best = candidate;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return bestSqrDistance <= LocalEnemyLookupMaxDistance * LocalEnemyLookupMaxDistance ? best : null;
+    }
+
+    private bool IsEnemyAlreadyTrackedLocally(CombatAggroEnemy enemy)
+    {
+        foreach (LocalEnemyPresentation presentation in localEnemyPresentationsBySessionId.Values)
+        {
+            if (presentation != null && presentation.Enemy == enemy)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private SquadCharacterController ResolveControllerForClient(ulong clientId)
+    {
+        if (IsNetworkSessionActive())
+        {
+            Transform root = NetcodePlayerUtils.GetPlayerTransform(clientId);
+            return root != null ? root.GetComponentInChildren<SquadCharacterController>(true) : null;
+        }
+
+        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (localRoot != null)
+        {
+            return localRoot.GetComponentInChildren<SquadCharacterController>(true);
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        return FindFirstObjectByType<SquadCharacterController>();
+#else
+        return FindObjectOfType<SquadCharacterController>();
+#endif
+    }
+
+    private ulong ResolveOwnerClientId(SquadCharacterController controller)
+    {
+        NetworkObject networkObject = controller != null ? controller.GetComponent<NetworkObject>() : null;
+        if (networkObject != null && networkObject.IsSpawned)
+        {
+            return networkObject.OwnerClientId;
+        }
+
+        return ResolveLocalClientId();
+    }
+
+    private ulong ResolveLocalClientId()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager != null && manager.IsListening ? manager.LocalClientId : 0UL;
+    }
+
+    private string ResolveCharacterId(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return string.Empty;
+        }
+
+        NetcodeCharacterIdentity identity = controller.GetComponent<NetcodeCharacterIdentity>();
+        if (identity != null && !string.IsNullOrWhiteSpace(identity.CharacterId))
+        {
+            return identity.CharacterId;
+        }
+
+        string id = NetcodeCharacterIdentity.GetCharacterId(controller.CharacterData);
+        return !string.IsNullOrWhiteSpace(id) ? id : controller.GetInstanceID().ToString();
+    }
+
+    private bool CanRunAuthority()
+    {
+        return !IsNetworkSessionActive() || IsServer;
+    }
+
+    private bool IsNetworkSessionActive()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager != null && manager.IsListening;
+    }
+
+    private static bool ShouldReplaceExistingInstance(CombatSessionManager current, CombatSessionManager candidate)
+    {
+        if (current == null || candidate == null)
+        {
+            return false;
+        }
+
+        bool currentNetworked = current.GetComponent<NetworkObject>() != null;
+        bool candidateNetworked = candidate.GetComponent<NetworkObject>() != null;
+        return candidateNetworked && !currentNetworked;
+    }
+
+    private static CombatTurn ResolvePresentationTurn(CombatSession session)
+    {
+        if (session == null)
+        {
+            return CombatTurn.None;
+        }
+
+        if (session.Resolving)
+        {
+            return session.ResolutionPlayerVictory ? CombatTurn.Player : CombatTurn.Enemy;
+        }
+
+        return session.Turn;
+    }
+
+    private static CombatTurn ResolvePresentationTurn(LocalCombatPresentationState presentation)
+    {
+        if (presentation == null || !presentation.Active)
+        {
+            return CombatTurn.None;
+        }
+
+        if (presentation.Resolving)
+        {
+            return presentation.ResolutionPlayerVictory ? CombatTurn.Player : CombatTurn.Enemy;
+        }
+
+        return presentation.Turn;
+    }
+
+    private float PlayBasicAttackAnimationLocally(SquadCharacterController controller)
+    {
+        if (controller != null)
+        {
+            controller.Stop();
+        }
+
+        Animator animator = controller != null ? controller.GetComponent<Animator>() : null;
+        StarterMotorAnimatorDriver animatorDriver = controller != null
+            ? controller.GetComponent<StarterMotorAnimatorDriver>()
+            : null;
+
+        float duration = PlayNamedAnimation(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
+        if (animatorDriver != null)
+        {
+            StartCoroutine(RestoreAnimatorDriverAfterDelay(animatorDriver, duration));
+        }
+
+        return duration;
+    }
+
+    private IEnumerator RestoreAnimatorDriverAfterDelay(StarterMotorAnimatorDriver animatorDriver, float duration)
+    {
+        if (animatorDriver == null)
+        {
+            yield break;
+        }
+
+        bool wasEnabled = animatorDriver.enabled;
+        if (!wasEnabled)
+        {
+            yield break;
+        }
+
+        animatorDriver.enabled = false;
+        yield return new WaitForSeconds(Mathf.Max(0.05f, duration));
+
+        if (animatorDriver != null)
+        {
+            animatorDriver.enabled = true;
+        }
+    }
+
+    private float ResolveCombatResolutionDuration(CombatSession session, bool playerVictory)
+    {
+        Animator loserAnimator = null;
+        if (playerVictory)
+        {
+            loserAnimator = session?.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null;
+        }
+        else if (session?.Player != null)
+        {
+            loserAnimator = session.Player.GetComponent<Animator>();
+            session.Player.Stop();
+        }
+
+        return Mathf.Max(0f, PlayDeathAnimation(loserAnimator)) + PostDeathReturnDelaySeconds;
+    }
+
+    private float PlayDeathAnimation(Animator animator)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            return 0f;
+        }
+
+        for (int layerIndex = 0; layerIndex < animator.layerCount; layerIndex++)
+        {
+            for (int candidateIndex = 0; candidateIndex < DeathAnimationCandidates.Length; candidateIndex++)
+            {
+                string stateName = DeathAnimationCandidates[candidateIndex];
+                if (!TryCrossFadeAnimatorState(animator, layerIndex, stateName))
+                {
+                    continue;
+                }
+
+                return ResolveAnimationDuration(animator, stateName, DefaultDeathAnimationDuration);
+            }
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+            if (parameter.type != AnimatorControllerParameterType.Trigger ||
+                !string.Equals(parameter.name, "Death", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            animator.ResetTrigger(parameter.name);
+            animator.SetTrigger(parameter.name);
+            return ResolveAnimationDuration(animator, parameter.name, DefaultDeathAnimationDuration);
+        }
+
+        return ResolveAnimationDuration(animator, "Death", DefaultDeathAnimationDuration);
+    }
+
+    private float PlayNamedAnimation(Animator animator, string animationName, float fallbackDuration)
+    {
+        if (animator == null || !animator.isActiveAndEnabled || string.IsNullOrWhiteSpace(animationName))
+        {
+            return fallbackDuration;
+        }
+
+        for (int layerIndex = 0; layerIndex < animator.layerCount; layerIndex++)
+        {
+            if (!TryCrossFadeAnimatorState(animator, layerIndex, animationName))
+            {
+                continue;
+            }
+
+            return ResolveAnimationDuration(animator, animationName, fallbackDuration);
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+            if (parameter.type != AnimatorControllerParameterType.Trigger ||
+                !string.Equals(parameter.name, animationName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            animator.ResetTrigger(parameter.name);
+            animator.SetTrigger(parameter.name);
+            return ResolveAnimationDuration(animator, parameter.name, fallbackDuration);
+        }
+
+        return ResolveAnimationDuration(animator, animationName, fallbackDuration);
+    }
+
+    private static bool TryCrossFadeAnimatorState(Animator animator, int layerIndex, string stateName)
+    {
+        if (animator == null ||
+            string.IsNullOrWhiteSpace(stateName) ||
+            layerIndex < 0 ||
+            layerIndex >= animator.layerCount)
+        {
+            return false;
+        }
+
+        string layerPath = animator.GetLayerName(layerIndex) + "." + stateName;
+        int fullPathHash = Animator.StringToHash(layerPath);
+        if (animator.HasState(layerIndex, fullPathHash))
+        {
+            animator.CrossFadeInFixedTime(fullPathHash, DeathAnimationTransitionDuration, layerIndex, 0f);
+            return true;
+        }
+
+        int shortNameHash = Animator.StringToHash(stateName);
+        if (!animator.HasState(layerIndex, shortNameHash))
+        {
+            return false;
+        }
+
+        animator.CrossFadeInFixedTime(shortNameHash, DeathAnimationTransitionDuration, layerIndex, 0f);
+        return true;
+    }
+
+    private static float ResolveAnimationDuration(Animator animator, string preferredName, float fallbackDuration)
+    {
+        RuntimeAnimatorController controller = animator != null ? animator.runtimeAnimatorController : null;
+        if (controller == null)
+        {
+            return fallbackDuration;
+        }
+
+        AnimationClip[] clips = controller.animationClips;
+        if (clips == null || clips.Length == 0)
+        {
+            return fallbackDuration;
+        }
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AnimationClip clip = clips[i];
+            if (clip == null || string.IsNullOrWhiteSpace(clip.name))
+            {
+                continue;
+            }
+
+            if (!string.Equals(clip.name, preferredName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return Mathf.Max(0.05f, clip.length);
+        }
+
+        if (preferredName.IndexOf("Death", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            for (int i = 0; i < clips.Length; i++)
+            {
+                AnimationClip clip = clips[i];
+                if (clip == null || string.IsNullOrWhiteSpace(clip.name))
+                {
+                    continue;
+                }
+
+                if (clip.name.IndexOf("Death", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
+                return Mathf.Max(0.05f, clip.length);
+            }
+        }
+
+        return fallbackDuration;
+    }
+
+    private int ResolveDisplayedEnemyRemainingHp(CombatSession session)
+    {
+        RuntimeEnemy activeEnemy = GetActiveEnemy(session);
+        if (activeEnemy != null)
+        {
+            return Mathf.Max(0, activeEnemy.CurrentHp);
+        }
+
+        if (session?.Enemies == null || session.Enemies.Count == 0 || session.Enemies[0] == null)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(0, session.Enemies[0].CurrentHp);
+    }
+
+    private ClientRpcParams BuildClientRpcParams(ulong clientId)
+    {
+        return new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { clientId }
+            }
+        };
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        StopPrayer(clientId, sendFeedback: false);
+        if (!sessionsByClientId.TryGetValue(clientId, out CombatSession session))
+        {
+            return;
+        }
+
+        EndCombat(session, false, "Combat interrompu.", notifyClient: false);
+    }
+}

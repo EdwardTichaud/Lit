@@ -13,17 +13,31 @@ public class ItemSceneMarkerEditor : Editor
     private const string DefaultMaisonChestTag = "MaisonChest";
     private const int DefaultMaisonChestCapacity = 100;
 
+    private SerializedProperty assetTypeProperty;
     private SerializedProperty itemProperty;
+    private SerializedProperty enemyProperty;
 
     private void OnEnable()
     {
+        assetTypeProperty = serializedObject.FindProperty("assetType");
         itemProperty = serializedObject.FindProperty("item");
+        enemyProperty = serializedObject.FindProperty("enemy");
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-        EditorGUILayout.PropertyField(itemProperty);
+        EditorGUILayout.PropertyField(assetTypeProperty);
+        ItemSceneMarker.MarkerAssetType assetType = (ItemSceneMarker.MarkerAssetType)assetTypeProperty.enumValueIndex;
+        if (assetType == ItemSceneMarker.MarkerAssetType.Enemy)
+        {
+            EditorGUILayout.PropertyField(enemyProperty);
+        }
+        else
+        {
+            EditorGUILayout.PropertyField(itemProperty);
+        }
+
         serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
@@ -50,6 +64,18 @@ public class ItemSceneMarkerEditor : Editor
         GameObjectUtility.SetParentAndAlign(markerObject, command.context as GameObject);
         Undo.RegisterCreatedObjectUndo(markerObject, "Create Item Scene Marker");
         Undo.AddComponent<ItemSceneMarker>(markerObject);
+        Selection.activeGameObject = markerObject;
+    }
+
+    [MenuItem("Lit/Enemy/Scene Marker", false, 10)]
+    private static void CreateEnemyMarker(MenuCommand command)
+    {
+        GameObject markerObject = new GameObject("EnemySceneMarker");
+        GameObjectUtility.SetParentAndAlign(markerObject, command.context as GameObject);
+        Undo.RegisterCreatedObjectUndo(markerObject, "Create Enemy Scene Marker");
+        ItemSceneMarker marker = Undo.AddComponent<ItemSceneMarker>(markerObject);
+        marker.SetAssetType(ItemSceneMarker.MarkerAssetType.Enemy);
+        EditorUtility.SetDirty(marker);
         Selection.activeGameObject = markerObject;
     }
 
@@ -108,14 +134,28 @@ public class ItemSceneMarkerEditor : Editor
                 continue;
             }
 
-            if (marker.Item == null)
+            if (marker.UsesEnemy)
+            {
+                if (marker.Enemy == null)
+                {
+                    return "Assigne un CharacterData ennemi avant le bake.";
+                }
+
+                if (!marker.Enemy.isEnemy)
+                {
+                    return "Le CharacterData selectionne doit avoir isEnemy active.";
+                }
+            }
+            else if (marker.Item == null)
             {
                 return "Assigne un Item avant le bake.";
             }
 
             if (marker.ResolvePreviewPrefab() == null)
             {
-                return "L'Item selectionne ne resolve aucun prefab de monde.";
+                return marker.UsesEnemy
+                    ? "Le CharacterData ennemi selectionne ne resolve aucun prefab de monde."
+                    : "L'Item selectionne ne resolve aucun prefab de monde.";
             }
         }
 
@@ -147,7 +187,7 @@ public class ItemSceneMarkerEditor : Editor
 
     private static GameObject BakeMarker(ItemSceneMarker marker)
     {
-        if (marker == null || marker.Item == null)
+        if (marker == null)
         {
             return null;
         }
@@ -160,7 +200,7 @@ public class ItemSceneMarkerEditor : Editor
 
         GameObject root = marker.gameObject;
         Undo.RecordObject(root, UndoLabel);
-        root.name = ResolveRootName(marker.Item);
+        root.name = marker.UsesEnemy ? ResolveRootName(marker.Enemy) : ResolveRootName(marker.Item);
 
         GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;
         if (instance == null)
@@ -177,7 +217,11 @@ public class ItemSceneMarkerEditor : Editor
         Undo.RegisterCreatedObjectUndo(instance, UndoLabel);
         AttachModelUnderRoot(root.transform, prefab.transform, instance.transform);
 
-        if (marker.Item.isBuilding)
+        if (marker.UsesEnemy)
+        {
+            ConfigureEnemy(instance, marker.Enemy);
+        }
+        else if (marker.Item.isBuilding)
         {
             ConfigureBuilding(instance, marker.Item);
         }
@@ -478,6 +522,67 @@ public class ItemSceneMarkerEditor : Editor
         else if (item.isHomeChest)
         {
             TryAssignMaisonChestTag(modelRoot, ResolveMaisonChestTag());
+        }
+    }
+
+    private static void ConfigureEnemy(GameObject modelRoot, CharacterData enemy)
+    {
+        if (modelRoot == null || enemy == null)
+        {
+            return;
+        }
+
+        EnemyInfo enemyInfo = CopyComponentToRoot(FindComponentOnRootOrChildren<EnemyInfo>(modelRoot), modelRoot);
+        if (enemyInfo == null)
+        {
+            enemyInfo = EnsureComponent<EnemyInfo>(modelRoot);
+        }
+
+        if (enemyInfo != null)
+        {
+            Undo.RecordObject(enemyInfo, UndoLabel);
+            enemyInfo.SetEnemy(enemy);
+            EditorUtility.SetDirty(enemyInfo);
+        }
+
+        CharacterInfo characterInfo = CopyComponentToRoot(FindComponentOnRootOrChildren<CharacterInfo>(modelRoot), modelRoot);
+        if (characterInfo == null)
+        {
+            characterInfo = EnsureComponent<CharacterInfo>(modelRoot);
+        }
+
+        if (characterInfo != null)
+        {
+            Undo.RecordObject(characterInfo, UndoLabel);
+            characterInfo.SetCharacterData(enemy);
+            EditorUtility.SetDirty(characterInfo);
+        }
+
+        CombatHealth health = CopyComponentToRoot(FindComponentOnRootOrChildren<CombatHealth>(modelRoot), modelRoot);
+        if (health == null)
+        {
+            health = EnsureComponent<CombatHealth>(modelRoot);
+        }
+
+        if (health != null)
+        {
+            Undo.RecordObject(health, UndoLabel);
+            int maxHp = enemy.ResolveMaxHp();
+            health.SetHealth(enemy.ResolveCurrentHp(maxHp), maxHp);
+            EditorUtility.SetDirty(health);
+        }
+
+        CombatAggroEnemy aggro = CopyComponentToRoot(FindComponentOnRootOrChildren<CombatAggroEnemy>(modelRoot), modelRoot);
+        if (aggro == null)
+        {
+            aggro = EnsureComponent<CombatAggroEnemy>(modelRoot);
+        }
+
+        if (aggro != null)
+        {
+            Undo.RecordObject(aggro, UndoLabel);
+            aggro.SetEnemy(enemy);
+            EditorUtility.SetDirty(aggro);
         }
     }
 
@@ -1022,6 +1127,22 @@ public class ItemSceneMarkerEditor : Editor
         }
 
         return "Item";
+    }
+
+    private static string ResolveRootName(CharacterData enemy)
+    {
+        if (enemy == null)
+        {
+            return "Enemy";
+        }
+
+        if (!string.IsNullOrWhiteSpace(enemy.name))
+        {
+            return enemy.name;
+        }
+
+        string displayName = enemy.ResolveDisplayName();
+        return !string.IsNullOrWhiteSpace(displayName) ? displayName : "Enemy";
     }
 
     private static Maison FindMaison()

@@ -1825,7 +1825,7 @@ public partial class SquadCharacterController : MonoBehaviour
             }
         }
 
-        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0)
+        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0 || currentHp <= 0)
         {
             CaptureCurrentRigidbodyHorizontalVelocity();
             return;
@@ -1882,7 +1882,7 @@ public partial class SquadCharacterController : MonoBehaviour
         desiredDirection = Vector3.zero;
         inputMagnitude = 0f;
 
-        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0)
+        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0 || currentHp <= 0)
         {
             return false;
         }

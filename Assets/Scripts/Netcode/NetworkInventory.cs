@@ -176,9 +176,17 @@ public class NetworkInventory : NetworkBehaviour
                 return false;
             }
 
+            CombatSessionManager combatManager = CombatSessionManager.Instance;
+            if (combatManager != null && !combatManager.CanUseItemNow(controller, out string combatReason))
+            {
+                InfoBoxUI.TryShow(combatReason);
+                return false;
+            }
+
             if (controller.TryUseItem(item, out string reason))
             {
                 InfoBoxUI.TryShow(item.GetUseSuccessMessage());
+                CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
                 return true;
             }
 
@@ -382,9 +390,17 @@ public class NetworkInventory : NetworkBehaviour
             return false;
         }
 
+        CombatSessionManager combatManager = CombatSessionManager.Instance;
+        if (combatManager != null && !combatManager.CanUseItemNow(controller, out string combatReason))
+        {
+            feedback = combatReason;
+            return false;
+        }
+
         if (controller.TryUseItem(item, out string reason))
         {
             SyncFromController();
+            CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
             feedback = item.GetUseSuccessMessage();
             return true;
         }

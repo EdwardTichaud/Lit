@@ -19,10 +19,23 @@ public class CharacterData : ScriptableObject
     public string characterName;
     public Sprite portrait;
     public GameObject model;
+    public GameObject worldPrefab;
     public List<Skill> skills;
     public CharacterStats stats = new CharacterStats();
     public List<StarterItemStack> starterItemsWithQuantity = new List<StarterItemStack>();
     public int hp = 10;
+
+    [Header("Combat")]
+    [Tooltip("Indique que ce CharacterData represente un ennemi.")]
+    public bool isEnemy;
+    [Min(0)]
+    [Tooltip("PV au debut du combat. 0 utilise les PV max resolus.")]
+    public int combatCurrentHp;
+    [Min(0)]
+    [Tooltip("Degats bruts infliges pendant le tour ennemi.")]
+    public int attackDamage = 4;
+    [Tooltip("Ennemis additionnels ajoutes a la meme session solo.")]
+    public List<CombatEnemyDefinition> additionalEnemies = new List<CombatEnemyDefinition>();
 
     [Header("Voice Lines")]
     public List<VoiceLineData> voiceLines = new List<VoiceLineData>();
@@ -74,6 +87,66 @@ public class CharacterData : ScriptableObject
 
             return inventoryItems;
         }
+    }
+
+    public GameObject ResolveWorldPrefab()
+    {
+        return worldPrefab != null ? worldPrefab : model;
+    }
+
+    public string ResolveDisplayName()
+    {
+        if (!string.IsNullOrWhiteSpace(characterName))
+        {
+            return characterName;
+        }
+
+        return !string.IsNullOrWhiteSpace(name) ? name : "Ennemi";
+    }
+
+    public int ResolveMaxHp()
+    {
+        return hp > 0 ? hp : 8;
+    }
+
+    public int ResolveCurrentHp(int resolvedMaxHp)
+    {
+        return Mathf.Clamp(combatCurrentHp > 0 ? combatCurrentHp : resolvedMaxHp, 0, Mathf.Max(1, resolvedMaxHp));
+    }
+
+    public CombatEnemyDefinition CreatePrimaryCombatDefinition(CombatHealth healthOverride = null)
+    {
+        int resolvedMaxHp = healthOverride != null ? Mathf.Max(1, healthOverride.MaxHp) : ResolveMaxHp();
+        int resolvedCurrentHp = healthOverride != null && healthOverride.CurrentHp > 0
+            ? Mathf.Clamp(healthOverride.CurrentHp, 0, resolvedMaxHp)
+            : ResolveCurrentHp(resolvedMaxHp);
+
+        return new CombatEnemyDefinition(ResolveDisplayName(), resolvedMaxHp, resolvedCurrentHp, attackDamage);
+    }
+
+    public List<CombatEnemyDefinition> CreateCombatDefinitions(CombatHealth healthOverride = null)
+    {
+        List<CombatEnemyDefinition> result = new List<CombatEnemyDefinition>
+        {
+            CreatePrimaryCombatDefinition(healthOverride)
+        };
+
+        if (additionalEnemies == null)
+        {
+            return result;
+        }
+
+        int total = additionalEnemies.Count + 1;
+        for (int i = 0; i < additionalEnemies.Count; i++)
+        {
+            CombatEnemyDefinition enemy = additionalEnemies[i];
+            if (enemy != null)
+            {
+                result.Add(enemy.CreateRuntimeCopy(result.Count, total));
+            }
+        }
+
+        return result;
     }
 
     public void SetInventory(List<Item> items, int torchSeconds, bool equipped, bool markInitialized = true)

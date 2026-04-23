@@ -23,6 +23,11 @@ public static class CharacterInteractionDetection
         Transform current = collider.transform;
         while (current != null)
         {
+            if (current.TryGetComponent(out IustiaIdolPrayer idol) && idol.isActiveAndEnabled)
+            {
+                return idol;
+            }
+
             if (current.TryGetComponent(out InteractableItem item) && item.isActiveAndEnabled)
             {
                 return item;

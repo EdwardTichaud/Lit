@@ -71,6 +71,30 @@ public class CameraController : MonoBehaviour
     [Header("Fall Speed Effect")]
     [SerializeField] private FallSpeedCameraEffect fallSpeedEffect = new FallSpeedCameraEffect();
 
+    [Header("Combat Camera")]
+    [SerializeField, Tooltip("Active le cadrage special pendant les combats tour par tour.")]
+    private bool combatCameraEnabled = true;
+    [SerializeField, Tooltip("Offset lateral applique quand c'est le tour du joueur. Negatif = epaule gauche.")]
+    private float combatPlayerTurnSideOffset = -1.1f;
+    [SerializeField, Tooltip("Offset lateral applique quand c'est le tour de l'ennemi.")]
+    private float combatEnemyTurnSideOffset = 1.1f;
+    [SerializeField, Min(0.1f), Tooltip("Recul du plan combat par rapport au joueur.")]
+    private float combatDistance = 10f;
+    [SerializeField, Tooltip("Hauteur du point camera au-dessus du joueur.")]
+    private float combatShoulderHeight = 2.05f;
+    [SerializeField, Tooltip("Offset vertical du point vise sur l'ennemi pour compenser son pivot aux pieds.")]
+    private float combatLookAtYOffset = 1f;
+    [SerializeField, Tooltip("Lissage du repositionnement entre deux plans de combat.")]
+    private float combatCameraSharpness = 10f;
+    [SerializeField, Tooltip("Oscillation verticale du mouvement de respiration.")]
+    private float combatBreathVerticalAmplitude = 0.05f;
+    [SerializeField, Tooltip("Oscillation laterale du mouvement de respiration.")]
+    private float combatBreathHorizontalAmplitude = 0.025f;
+    [SerializeField, Tooltip("Oscillation avant/arriere du mouvement de respiration.")]
+    private float combatBreathDepthAmplitude = 0.06f;
+    [SerializeField, Tooltip("Frequence du mouvement de respiration.")]
+    private float combatBreathFrequency = 0.85f;
+
     private bool runtimeInitialized;
     private float desiredYaw;
     private float currentYaw;
@@ -80,6 +104,10 @@ public class CameraController : MonoBehaviour
     private float currentZoomNormalized;
     private float currentDistance;
     private Vector3 currentAnchorPosition;
+    private bool combatCameraRuntimeInitialized;
+    private bool combatCameraWasActive;
+    private Vector3 currentCombatCameraPosition;
+    private Quaternion currentCombatCameraRotation;
 
     private void Awake()
     {
@@ -97,6 +125,8 @@ public class CameraController : MonoBehaviour
         mainCamCurrentTarget = null;
         followOverrideTarget = null;
         runtimeInitialized = false;
+        combatCameraRuntimeInitialized = false;
+        combatCameraWasActive = false;
     }
 
     private void OnDisable()
@@ -121,6 +151,11 @@ public class CameraController : MonoBehaviour
         if (deltaTime <= 0f)
         {
             deltaTime = 1f / 60f;
+        }
+
+        if (TryApplyCombatCamera(deltaTime))
+        {
+            return;
         }
 
         Transform gameplayTarget = ResolveGameplayTarget();
@@ -286,6 +321,66 @@ public class CameraController : MonoBehaviour
         currentZoomNormalized = Mathf.Lerp(currentZoomNormalized, desiredZoomNormalized, t);
     }
 
+    private bool TryApplyCombatCamera(float deltaTime)
+    {
+        if (!combatCameraEnabled)
+        {
+            ResetCombatCameraRuntimeIfNeeded();
+            return false;
+        }
+
+        CombatSessionManager combatManager = CombatSessionManager.Instance;
+        if (combatManager == null ||
+            !combatManager.TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out bool playerTurn))
+        {
+            ResetCombatCameraRuntimeIfNeeded();
+            return false;
+        }
+
+        if (LocalInputRouter.CameraFreeModeActive)
+        {
+            LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
+        }
+
+        cameraFocus.SetFreeCameraMode(false);
+        followOverrideTarget = enemy;
+        mainCamCurrentTarget = enemy;
+        runSpeedEffect?.ResetEffect(mainCam);
+
+        Vector3 desiredPosition = ResolveCombatCameraPosition(player, enemy, playerTurn);
+        Vector3 lookTarget = ResolveCombatLookTarget(enemy);
+        Quaternion desiredRotation = Quaternion.LookRotation((lookTarget - desiredPosition).normalized, Vector3.up);
+
+        if (!combatCameraRuntimeInitialized)
+        {
+            currentCombatCameraPosition = desiredPosition;
+            currentCombatCameraRotation = desiredRotation;
+            combatCameraRuntimeInitialized = true;
+        }
+        else
+        {
+            float combatT = combatCameraSharpness <= 0f ? 1f : 1f - Mathf.Exp(-combatCameraSharpness * deltaTime);
+            currentCombatCameraPosition = Vector3.Lerp(currentCombatCameraPosition, desiredPosition, combatT);
+            currentCombatCameraRotation = Quaternion.Slerp(currentCombatCameraRotation, desiredRotation, combatT);
+        }
+
+        ApplyDirectCameraPose(currentCombatCameraPosition, currentCombatCameraRotation);
+        combatCameraWasActive = true;
+        return true;
+    }
+
+    private void ResetCombatCameraRuntimeIfNeeded()
+    {
+        if (!combatCameraWasActive)
+        {
+            return;
+        }
+
+        combatCameraWasActive = false;
+        combatCameraRuntimeInitialized = false;
+        runtimeInitialized = false;
+    }
+
     private void UpdateRotation(Vector2 orbitDelta, float deltaTime)
     {
         desiredYaw += orbitDelta.x;
@@ -314,6 +409,86 @@ public class CameraController : MonoBehaviour
         }
 
         return worldPan;
+    }
+
+    private Vector3 ResolveCombatCameraPosition(Transform player, Transform enemy, bool playerTurn)
+    {
+        Vector3 playerPosition = player != null ? player.position : Vector3.zero;
+        Vector3 enemyPosition = enemy != null ? enemy.position : playerPosition + Vector3.forward;
+        Vector3 toEnemy = Vector3.ProjectOnPlane(enemyPosition - playerPosition, Vector3.up);
+        if (toEnemy.sqrMagnitude <= 0.0001f)
+        {
+            toEnemy = Vector3.ProjectOnPlane(player != null ? player.forward : Vector3.forward, Vector3.up);
+        }
+
+        if (toEnemy.sqrMagnitude <= 0.0001f)
+        {
+            toEnemy = Vector3.forward;
+        }
+
+        Vector3 forward = toEnemy.normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+        float sideOffset = playerTurn ? combatPlayerTurnSideOffset : combatEnemyTurnSideOffset;
+        Vector3 basePosition = playerPosition
+            + Vector3.up * combatShoulderHeight
+            - forward * combatDistance
+            + right * sideOffset;
+
+        Quaternion baseRotation = Quaternion.LookRotation((ResolveCombatLookTarget(enemy) - basePosition).normalized, Vector3.up);
+        return basePosition + ResolveCombatBreathOffset(baseRotation);
+    }
+
+    private Vector3 ResolveCombatLookTarget(Transform enemy)
+    {
+        return (enemy != null ? enemy.position : Vector3.zero) + Vector3.up * combatLookAtYOffset;
+    }
+
+    private Vector3 ResolveCombatBreathOffset(Quaternion baseRotation)
+    {
+        float phase = Time.unscaledTime * Mathf.Max(0.01f, combatBreathFrequency) * Mathf.PI * 2f;
+        Vector3 localOffset = new Vector3(
+            Mathf.Sin(phase * 0.5f) * combatBreathHorizontalAmplitude,
+            Mathf.Sin(phase) * combatBreathVerticalAmplitude,
+            Mathf.Cos(phase * 0.75f) * combatBreathDepthAmplitude);
+        return baseRotation * localOffset;
+    }
+
+    private void ApplyDirectCameraPose(Vector3 worldPosition, Quaternion worldRotation)
+    {
+        if (cameraAnchor != null)
+        {
+            cameraAnchor.position = worldPosition;
+        }
+
+        Vector3 euler = worldRotation.eulerAngles;
+        float yaw = euler.y;
+        float pitch = NormalizePitchAngle(euler.x);
+
+        currentAnchorPosition = worldPosition;
+        desiredYaw = yaw;
+        currentYaw = yaw;
+        manualPitchOffset = 0f;
+        currentPitch = pitch;
+        currentDistance = 0f;
+
+        if (yawPivot != null)
+        {
+            yawPivot.localPosition = Vector3.zero;
+            yawPivot.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+
+        if (pitchPivot != null)
+        {
+            pitchPivot.localPosition = Vector3.zero;
+            pitchPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
+
+        if (mainCam != null)
+        {
+            Transform camTransform = mainCam.transform;
+            camTransform.localPosition = Vector3.zero;
+            camTransform.localRotation = Quaternion.identity;
+        }
     }
 
     private void UpdateRig(Vector3 focusPoint, Transform ignoredTarget, float deltaTime)
@@ -489,12 +664,29 @@ public class CameraController : MonoBehaviour
         anchorSharpness = Mathf.Max(0f, anchorSharpness);
         obstructionSharpness = Mathf.Max(0f, obstructionSharpness);
         releaseSharpness = Mathf.Max(0f, releaseSharpness);
+        combatDistance = Mathf.Max(0.1f, combatDistance);
+        combatCameraSharpness = Mathf.Max(0f, combatCameraSharpness);
+        combatBreathVerticalAmplitude = Mathf.Max(0f, combatBreathVerticalAmplitude);
+        combatBreathHorizontalAmplitude = Mathf.Max(0f, combatBreathHorizontalAmplitude);
+        combatBreathDepthAmplitude = Mathf.Max(0f, combatBreathDepthAmplitude);
+        combatBreathFrequency = Mathf.Max(0.01f, combatBreathFrequency);
 
         cameraInput?.Validate();
         cameraFocus?.Validate();
         cameraCollision?.Validate();
         runSpeedEffect?.Validate();
         fallSpeedEffect?.Validate();
+    }
+
+    private static float NormalizePitchAngle(float angle)
+    {
+        angle %= 360f;
+        if (angle > 180f)
+        {
+            angle -= 360f;
+        }
+
+        return angle;
     }
 
     private static Transform FindChildRecursive(Transform root, string childName)

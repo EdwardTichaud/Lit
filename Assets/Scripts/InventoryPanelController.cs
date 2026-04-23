@@ -1562,9 +1562,17 @@ public class InventoryPanelController : MonoBehaviour
             return inventory.RequestUseItem(item);
         }
 
+        CombatSessionManager combatManager = CombatSessionManager.Instance;
+        if (combatManager != null && !combatManager.CanUseItemNow(controller, out string combatReason))
+        {
+            ShowActionFeedback(combatReason);
+            return false;
+        }
+
         if (controller.TryUseItem(item, out string reason))
         {
             ShowActionFeedback(item.GetUseSuccessMessage());
+            CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
             return true;
         }
 

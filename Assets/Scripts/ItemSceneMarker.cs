@@ -7,13 +7,36 @@ using UnityEditor;
 [AddComponentMenu("Lit/Item/Scene Marker")]
 public class ItemSceneMarker : MonoBehaviour
 {
+    public enum MarkerAssetType
+    {
+        Item = 0,
+        Enemy = 1
+    }
+
+    [Tooltip("Type de ScriptableObject place par ce marker.")]
+    public MarkerAssetType assetType = MarkerAssetType.Item;
     [Tooltip("Item utilise pour la preview et le bake en scene.")]
     public Item item;
+    [Tooltip("CharacterData ennemi utilise pour la preview et le bake en scene.")]
+    public CharacterData enemy;
 
     public Item Item => item;
+    public CharacterData Enemy => enemy;
+    public bool UsesEnemy => assetType == MarkerAssetType.Enemy;
+    public bool UsesItem => assetType == MarkerAssetType.Item;
+
+    public void SetAssetType(MarkerAssetType type)
+    {
+        assetType = type;
+    }
 
     public GameObject ResolvePreviewPrefab()
     {
+        if (UsesEnemy)
+        {
+            return enemy != null ? enemy.ResolveWorldPrefab() : null;
+        }
+
         return item != null ? item.ResolveWorldPrefab() : null;
     }
 
