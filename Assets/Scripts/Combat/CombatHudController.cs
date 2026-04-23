@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 public class CombatHudController : MonoBehaviour
 {
+    private const string DefaultBattlePanelName = "BattlePanel";
+    private const string DefaultBaseAttackUiName = "BaseAttackUI";
+
     public enum TurnState
     {
         None = 0,
@@ -24,6 +27,9 @@ public class CombatHudController : MonoBehaviour
     private TextMeshProUGUI prayerText;
     private TextMeshProUGUI messageText;
     private TextMeshProUGUI actionsText;
+    [Header("Scene UI")]
+    [SerializeField] private CanvasGroup battlePanelCanvasGroup;
+    [SerializeField] private CanvasGroup baseAttackCanvasGroup;
 
     private string activeSessionId;
     private TurnState currentTurn;
@@ -88,6 +94,11 @@ public class CombatHudController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this)
+        {
+            SetScenePanelVisibility(false, false);
+        }
+
         if (root != null)
         {
             Destroy(root);
@@ -147,6 +158,17 @@ public class CombatHudController : MonoBehaviour
         timerEndsAt = Time.unscaledTime + Mathf.Max(0f, timerRemaining);
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
+        SetScenePanelVisibility(visible, turn == TurnState.Player);
+
+        if (HasScenePanelUi())
+        {
+            if (root != null)
+            {
+                root.SetActive(false);
+            }
+
+            return;
+        }
 
         if (root != null)
         {
@@ -180,6 +202,7 @@ public class CombatHudController : MonoBehaviour
         currentTurn = TurnState.None;
         playerActionLocked = false;
         visible = false;
+        SetScenePanelVisibility(false, false);
         if (root != null)
         {
             root.SetActive(false);
@@ -239,6 +262,17 @@ public class CombatHudController : MonoBehaviour
 
     private void BuildUi()
     {
+        ResolveScenePanelsIfNeeded();
+        if (HasScenePanelUi())
+        {
+            if (root != null)
+            {
+                root.SetActive(false);
+            }
+
+            return;
+        }
+
         if (root != null)
         {
             return;
@@ -287,6 +321,59 @@ public class CombatHudController : MonoBehaviour
         actionsText = CreateText(panel.transform, "Actions", 15, FontStyles.Normal);
 
         root.SetActive(false);
+    }
+
+    private bool HasScenePanelUi()
+    {
+        return battlePanelCanvasGroup != null;
+    }
+
+    private void ResolveScenePanelsIfNeeded()
+    {
+        if (battlePanelCanvasGroup == null)
+        {
+            battlePanelCanvasGroup = FindCanvasGroupByName(DefaultBattlePanelName);
+        }
+
+        if (baseAttackCanvasGroup == null)
+        {
+            baseAttackCanvasGroup = FindCanvasGroupByName(DefaultBaseAttackUiName);
+        }
+    }
+
+    private void SetScenePanelVisibility(bool battleVisible, bool baseAttackVisible)
+    {
+        ResolveScenePanelsIfNeeded();
+        SetCanvasGroupVisible(battlePanelCanvasGroup, battleVisible);
+        SetCanvasGroupVisible(baseAttackCanvasGroup, battleVisible && baseAttackVisible);
+    }
+
+    private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool visible)
+    {
+        if (canvasGroup == null)
+        {
+            return;
+        }
+
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.interactable = visible;
+        canvasGroup.blocksRaycasts = visible;
+    }
+
+    private static CanvasGroup FindCanvasGroupByName(string objectName)
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        GameObject found = GameObject.Find(objectName);
+        if (found != null)
+        {
+            return found.GetComponent<CanvasGroup>();
+        }
+
+        return null;
     }
 
     private static TextMeshProUGUI CreateText(Transform parent, string name, float size, FontStyles style)

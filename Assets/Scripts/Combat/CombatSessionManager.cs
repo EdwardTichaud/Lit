@@ -7,7 +7,9 @@ using UnityEngine;
 public class CombatSessionManager : NetworkBehaviour
 {
     private const string BasicAttackAnimationName = "Attack_Base";
-    private const string DefaultPlayerSpawnPointName = "spawnPoint_Player";
+    private const string DefaultArenaRootName = "Arena";
+    private const string DefaultPlayerSpawnPointName = "SpawnPoint_Player";
+    private const string DefaultEnemySpawnPointName = "SpawnPoint_Enemy";
     private const float DeathAnimationTransitionDuration = 0.05f;
     private const float DefaultBasicAttackAnimationDuration = 0.75f;
     private const float DefaultDeathAnimationDuration = 1f;
@@ -115,10 +117,12 @@ public class CombatSessionManager : NetworkBehaviour
     private float snapshotInterval = 0.2f;
 
     [Header("Arena Scene")]
-    [SerializeField, Tooltip("Spawn point scene du joueur pour les combats. Si vide, cherche un objet nomme 'spawnPoint_Player'.")]
+    [SerializeField, Tooltip("Racine de l'arene de combat dans la scene.")]
+    private Transform arenaRoot;
+    [SerializeField, Tooltip("Spawn point scene du joueur pour les combats. Si vide, cherche 'Arena/SpawnPoint_Player'.")]
     private Transform spawnPointPlayer;
-    [SerializeField, Min(1f), Tooltip("Distance a laquelle l'ennemi est place en face du joueur depuis le spawn point.")]
-    private float enemyFacingDistance = 3f;
+    [SerializeField, Tooltip("Spawn point scene de l'ennemi pour les combats. Si vide, cherche 'Arena/SpawnPoint_Enemy'.")]
+    private Transform spawnPointEnemy;
 
     [Header("Idoles de Iustia")]
     [SerializeField, Range(0f, 1f), Tooltip("Reduction de degats accordee par joueur en priere.")]
@@ -1311,6 +1315,7 @@ public class CombatSessionManager : NetworkBehaviour
         out Quaternion enemyRotation)
     {
         Transform playerSpawnPoint = ResolvePlayerCombatSpawnPoint();
+        Transform enemySpawnPoint = ResolveEnemyCombatSpawnPoint();
         if (playerSpawnPoint != null)
         {
             playerPosition = playerSpawnPoint.position;
@@ -1327,6 +1332,13 @@ public class CombatSessionManager : NetworkBehaviour
             playerRotation = Quaternion.identity;
         }
 
+        if (enemySpawnPoint != null)
+        {
+            enemyPosition = enemySpawnPoint.position;
+            enemyRotation = enemySpawnPoint.rotation;
+            return;
+        }
+
         Vector3 forward = Vector3.ProjectOnPlane(playerRotation * Vector3.forward, Vector3.up);
         if (forward.sqrMagnitude <= 0.0001f && player != null)
         {
@@ -1338,9 +1350,9 @@ public class CombatSessionManager : NetworkBehaviour
             forward = Vector3.forward;
         }
 
-        enemyPosition = playerPosition + forward.normalized * Mathf.Max(1f, enemyFacingDistance);
-        enemyRotation = ResolveFacingRotation(enemyPosition, playerPosition);
+        enemyPosition = playerPosition + forward.normalized * 2f;
         playerRotation = ResolveFacingRotation(playerPosition, enemyPosition);
+        enemyRotation = ResolveFacingRotation(enemyPosition, playerPosition);
     }
 
     private Transform ResolvePlayerCombatSpawnPoint()
@@ -1350,13 +1362,79 @@ public class CombatSessionManager : NetworkBehaviour
             return spawnPointPlayer;
         }
 
-        GameObject namedSpawnPoint = GameObject.Find(DefaultPlayerSpawnPointName);
-        if (namedSpawnPoint != null)
+        Transform arena = ResolveArenaRoot();
+        spawnPointPlayer = FindNamedTransform(arena, DefaultPlayerSpawnPointName);
+        if (spawnPointPlayer == null)
         {
-            spawnPointPlayer = namedSpawnPoint.transform;
+            GameObject namedSpawnPoint = GameObject.Find(DefaultPlayerSpawnPointName);
+            if (namedSpawnPoint != null)
+            {
+                spawnPointPlayer = namedSpawnPoint.transform;
+            }
         }
 
         return spawnPointPlayer;
+    }
+
+    private Transform ResolveEnemyCombatSpawnPoint()
+    {
+        if (spawnPointEnemy != null)
+        {
+            return spawnPointEnemy;
+        }
+
+        Transform arena = ResolveArenaRoot();
+        spawnPointEnemy = FindNamedTransform(arena, DefaultEnemySpawnPointName);
+        if (spawnPointEnemy == null)
+        {
+            GameObject namedSpawnPoint = GameObject.Find(DefaultEnemySpawnPointName);
+            if (namedSpawnPoint != null)
+            {
+                spawnPointEnemy = namedSpawnPoint.transform;
+            }
+        }
+
+        return spawnPointEnemy;
+    }
+
+    private Transform ResolveArenaRoot()
+    {
+        if (arenaRoot != null)
+        {
+            return arenaRoot;
+        }
+
+        GameObject namedArena = GameObject.Find(DefaultArenaRootName);
+        if (namedArena != null)
+        {
+            arenaRoot = namedArena.transform;
+        }
+
+        return arenaRoot;
+    }
+
+    private static Transform FindNamedTransform(Transform root, string targetName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(targetName))
+        {
+            return null;
+        }
+
+        if (string.Equals(root.name, targetName, StringComparison.Ordinal))
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform match = FindNamedTransform(root.GetChild(i), targetName);
+            if (match != null)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     private static Quaternion ResolveFacingRotation(Vector3 origin, Vector3 target)
