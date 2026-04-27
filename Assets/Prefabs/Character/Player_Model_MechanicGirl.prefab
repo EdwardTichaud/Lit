@@ -121,6 +121,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
+  enableAnimationReconciliation: 1
+  locomotionAnimationCorrectionDelay: 0.18
+  airborneAnimationCorrectionDelay: 0.12
+  landingAnimationCorrectionDelay: 0.12
+  transientAnimationCorrectionDelay: 0.05
+  repeatedAnimationCorrectionCooldown: 0.12
+  animationReconciliationCrossFadeDuration: 0.05
+  animationPhaseTimeoutPadding: 0.08
+  priorityAnimationStateNames:
+  - Knowledge_Unlock
+  - Attack
+  - Hurt
+  - Hit
+  - Stun
+  - Dead
+  - Death
+  - Cutscene
+  - Scripted
+  priorityAnimationTags:
+  - Ladder
+  - Attack
+  - Hit
+  - Stun
+  - Death
+  - Cutscene
+  - Scripted
+  logAnimationReconciliation: 0
   enableHeightProbeTraversal: 1
   heightProbeForwardDistance: 10
   heightProbeSampleCount: 24

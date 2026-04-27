@@ -84,6 +84,14 @@ public class Item : ScriptableObject
         public string text;
     }
 
+    [System.Serializable]
+    public class ReadableSentence
+    {
+        [TextArea(2, 8)]
+        [Tooltip("Phrase candidate pour la generation aleatoire.")]
+        public string text;
+    }
+
     [Header("Identity")]
     [Tooltip("Identifiant unique (optionnel).")]
     public string itemId;
@@ -105,6 +113,16 @@ public class Item : ScriptableObject
     public string parchmentText;
     [Tooltip("Pages d'un livre ouvert dans BookPanel.")]
     public List<ReadablePage> bookPages = new List<ReadablePage>();
+    [Tooltip("Genere le contenu lisible a partir d'une selection aleatoire de phrases candidates.")]
+    public bool useRandomSentences;
+    [Tooltip("Phrases candidates disponibles pour generer le contenu lisible.")]
+    public List<ReadableSentence> candidateSentences = new List<ReadableSentence>();
+    [Tooltip("Nombre de phrases a generer. La valeur est automatiquement bornee au nombre de phrases disponibles.")]
+    public int generatedSentenceCount = 1;
+    [Tooltip("Cle optionnelle utilisee pour identifier ce contenu lisible genere de maniere unique.")]
+    public string readableContentId;
+    [Tooltip("Offset optionnel ajoute a la seed de generation pour cette source readable.")]
+    public int readableGenerationSeedOffset;
 
     [Header("Usage")]
     [Tooltip("Peut etre utilise via l'ActionBox.")]
@@ -233,6 +251,21 @@ public class Item : ScriptableObject
     public bool canBreak;
     [Tooltip("Resultats de la casse.")]
     public List<BreakResult> breakResults = new List<BreakResult>();
+
+    private void OnValidate()
+    {
+        if (!useRandomSentences)
+        {
+            if (generatedSentenceCount < 0)
+            {
+                generatedSentenceCount = 0;
+            }
+
+            return;
+        }
+
+        generatedSentenceCount = GetValidatedGeneratedSentenceCount(GetAvailableReadableSentenceCount());
+    }
 
     public bool HasBreakResults()
     {
@@ -464,8 +497,56 @@ public class Item : ScriptableObject
         return readableKind == ReadableKind.Parchment;
     }
 
+    public bool UsesRandomReadableSentences()
+    {
+        return IsReadable() && useRandomSentences && GetValidatedGeneratedSentenceCount() > 0;
+    }
+
+    public void EnsureReadableContentGenerated()
+    {
+        if (UsesRandomReadableSentences())
+        {
+            ReadableContentRuntime.EnsureGenerated(this);
+        }
+    }
+
+    public int GetGeneratedSentenceCount()
+    {
+        return ReadableContentRuntime.GetGeneratedSentenceCount(this);
+    }
+
+    public string GetGeneratedSentence(int index)
+    {
+        return ReadableContentRuntime.GetGeneratedSentence(this, index);
+    }
+
+    public string GetReadableContentKey()
+    {
+        if (!string.IsNullOrWhiteSpace(readableContentId))
+        {
+            return readableContentId.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(itemId))
+        {
+            return $"{itemId.Trim()}|{name}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return name;
+        }
+
+        return itemName ?? string.Empty;
+    }
+
     public int GetBookPageCount()
     {
+        if (UsesRandomReadableSentences())
+        {
+            return ReadableContentRuntime.GetBookPageCount(this);
+        }
+
         if (!IsReadableBook() || bookPages == null || bookPages.Count == 0)
         {
             return 0;
@@ -488,6 +569,11 @@ public class Item : ScriptableObject
 
     public string GetBookPageText(int pageIndex)
     {
+        if (UsesRandomReadableSentences())
+        {
+            return ReadableContentRuntime.GetBookPageText(this, pageIndex);
+        }
+
         if (pageIndex < 0 || bookPages == null || pageIndex >= bookPages.Count)
         {
             return string.Empty;
@@ -499,7 +585,69 @@ public class Item : ScriptableObject
 
     public string GetParchmentText()
     {
+        if (UsesRandomReadableSentences())
+        {
+            return ReadableContentRuntime.GetParchmentText(this);
+        }
+
         return parchmentText ?? string.Empty;
+    }
+
+    internal List<string> CollectReadableSentenceCandidates()
+    {
+        List<string> result = new List<string>();
+        if (candidateSentences == null || candidateSentences.Count == 0)
+        {
+            return result;
+        }
+
+        for (int i = 0; i < candidateSentences.Count; i++)
+        {
+            ReadableSentence candidate = candidateSentences[i];
+            if (candidate == null || string.IsNullOrWhiteSpace(candidate.text))
+            {
+                continue;
+            }
+
+            result.Add(candidate.text.Trim());
+        }
+
+        return result;
+    }
+
+    internal int GetValidatedGeneratedSentenceCount()
+    {
+        return GetValidatedGeneratedSentenceCount(GetAvailableReadableSentenceCount());
+    }
+
+    internal int GetValidatedGeneratedSentenceCount(int availableSentenceCount)
+    {
+        if (availableSentenceCount <= 0)
+        {
+            return 0;
+        }
+
+        return Mathf.Clamp(Mathf.Max(1, generatedSentenceCount), 1, availableSentenceCount);
+    }
+
+    private int GetAvailableReadableSentenceCount()
+    {
+        if (candidateSentences == null || candidateSentences.Count == 0)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < candidateSentences.Count; i++)
+        {
+            ReadableSentence candidate = candidateSentences[i];
+            if (candidate != null && !string.IsNullOrWhiteSpace(candidate.text))
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     public bool TryUse(SquadCharacterController controller)

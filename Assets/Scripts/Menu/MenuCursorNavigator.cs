@@ -213,4 +213,35 @@ public class MenuCursorNavigator : MonoBehaviour
         currentCursorItem = null;
         currentItem = null;
     }
+
+    public void ConfigureRuntime(
+        CursorController runtimeCursor,
+        bool runtimeRequireFocus,
+        bool runtimePushFocusOnEnable,
+        bool runtimeUseInteractInput,
+        bool runtimeUseReturnInput,
+        bool runtimeAllowButtonFallback)
+    {
+        cursor = runtimeCursor;
+        requireFocus = runtimeRequireFocus;
+        pushFocusOnEnable = runtimePushFocusOnEnable;
+        useInteractInput = runtimeUseInteractInput;
+        useReturnInput = runtimeUseReturnInput;
+        allowButtonFallback = runtimeAllowButtonFallback;
+        focusTarget = null;
+    }
+
+    public void ReplaceCancelHandler(UnityAction callback)
+    {
+        if (onCancel == null)
+        {
+            onCancel = new UnityEvent();
+        }
+
+        onCancel.RemoveAllListeners();
+        if (callback != null)
+        {
+            onCancel.AddListener(callback);
+        }
+    }
 }

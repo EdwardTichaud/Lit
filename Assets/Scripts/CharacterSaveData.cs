@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 1;
+    public int dataVersion = 2;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
     public List<CharacterSaveEntry> characters = new List<CharacterSaveEntry>();
@@ -13,6 +13,7 @@ public class CharacterSaveData
     public List<BuiltConstructionData> builtConstructions = new List<BuiltConstructionData>();
     public List<PlayerCharacterBinding> playerBindings = new List<PlayerCharacterBinding>();
     public List<BraseroSaveEntry> braseros = new List<BraseroSaveEntry>();
+    public List<ReadableGeneratedContentData> readableGeneratedContents = new List<ReadableGeneratedContentData>();
 }
 
 // Association playerId -> characterId (continuite multijoueur).
@@ -67,4 +68,14 @@ public class BraseroSaveEntry
 {
     public string braseroId;
     public bool isLit;
+}
+
+[System.Serializable]
+public class ReadableGeneratedContentData
+{
+    public string itemId;
+    public int seed;
+    public List<string> generatedSentences = new List<string>();
+    public List<string> bookPages = new List<string>();
+    public string parchmentText;
 }

@@ -337,6 +337,11 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         UpdateTorchVisualTransition();
         UpdateTorchAnimationLayerWeight();
+
+        if (ShouldRunAnimationReconciliationInLateUpdate())
+        {
+            ReconcileAnimationState(Time.deltaTime);
+        }
     }
 
     private void Awake()
@@ -458,6 +463,7 @@ public partial class SquadCharacterController : MonoBehaviour
         cachedNetworkObject = null;
         CacheNetworkObject();
         ApplyAnimatorSettings();
+        ValidateAnimationReconciliationMappings();
     }
 
     private void UpdateAudioListenerState(bool force)
@@ -1519,6 +1525,13 @@ public partial class SquadCharacterController : MonoBehaviour
         locomotionAnimationLayer = Mathf.Max(0, locomotionAnimationLayer);
         locomotionEndRestartInputThreshold = Mathf.Clamp01(locomotionEndRestartInputThreshold);
         locomotionEndRestartTransitionDuration = Mathf.Max(0f, locomotionEndRestartTransitionDuration);
+        locomotionAnimationCorrectionDelay = Mathf.Max(0f, locomotionAnimationCorrectionDelay);
+        airborneAnimationCorrectionDelay = Mathf.Max(0f, airborneAnimationCorrectionDelay);
+        landingAnimationCorrectionDelay = Mathf.Max(0f, landingAnimationCorrectionDelay);
+        transientAnimationCorrectionDelay = Mathf.Max(0f, transientAnimationCorrectionDelay);
+        repeatedAnimationCorrectionCooldown = Mathf.Max(0f, repeatedAnimationCorrectionCooldown);
+        animationReconciliationCrossFadeDuration = Mathf.Max(0f, animationReconciliationCrossFadeDuration);
+        animationPhaseTimeoutPadding = Mathf.Max(0f, animationPhaseTimeoutPadding);
         movingRotationSpeed = Mathf.Max(0f, movingRotationSpeed);
         movingRotationSpeedThreshold = Mathf.Max(0f, movingRotationSpeedThreshold);
         jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
@@ -1683,6 +1696,10 @@ public partial class SquadCharacterController : MonoBehaviour
         ApplyMovement(Time.fixedDeltaTime);
         UpdateAnimationSpeed();
         UpdateCommittedJumpAnimation();
+        if (ShouldRunAnimationReconciliationInFixedUpdate())
+        {
+            ReconcileAnimationState(Time.fixedDeltaTime);
+        }
     }
 
     private bool IsGroundAhead(Vector3 direction, float lookAheadDistance = -1f)
@@ -1961,38 +1978,10 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool TryCrossFadeLocomotionState(string stateName, float transitionDuration)
     {
-        if (animator == null ||
-            string.IsNullOrWhiteSpace(stateName) ||
-            locomotionAnimationLayer < 0 ||
-            locomotionAnimationLayer >= animator.layerCount)
-        {
-            return false;
-        }
-
-        string layerPath = animator.GetLayerName(locomotionAnimationLayer) + "." + stateName;
-        int fullPathHash = Animator.StringToHash(layerPath);
-        if (animator.HasState(locomotionAnimationLayer, fullPathHash))
-        {
-            animator.CrossFadeInFixedTime(
-                fullPathHash,
-                Mathf.Max(0f, transitionDuration),
-                locomotionAnimationLayer,
-                0f);
-            return true;
-        }
-
-        int shortNameHash = Animator.StringToHash(stateName);
-        if (!animator.HasState(locomotionAnimationLayer, shortNameHash))
-        {
-            return false;
-        }
-
-        animator.CrossFadeInFixedTime(
-            shortNameHash,
-            Mathf.Max(0f, transitionDuration),
+        return TryCrossFadeAnimatorState(
             locomotionAnimationLayer,
-            0f);
-        return true;
+            stateName,
+            transitionDuration);
     }
 
     private static string ResolveLocomotionStartStateName(float locomotionTier)
@@ -3089,17 +3078,20 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void UpdateAnimationSpeed()
     {
-        if (animator == null || string.IsNullOrWhiteSpace(speedParam))
+        if (animator == null)
         {
             return;
         }
 
-        Vector3 velocity = GetCurrentHorizontalVelocity();
-        float rawSpeed = ResolveAnimationPresentationSpeed(velocity);
-        float animSpeed = ResolveAnimatorSpeedValue(rawSpeed);
+        AnimationGameplaySnapshot snapshot = CreateAnimationGameplaySnapshot();
+        if (!string.IsNullOrWhiteSpace(speedParam))
+        {
+            SetSpeed(snapshot.AnimatorSpeed);
+        }
 
-        SetSpeed(animSpeed);
-        UpdateLocomotionAnimatorSignals(rawSpeed, velocity, deltaTime: Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime);
+        UpdateLocomotionAnimatorSignals(
+            snapshot,
+            deltaTime: Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime);
     }
 
     private float ResolveAnimationPresentationSpeed(Vector3 velocity)
@@ -3111,71 +3103,6 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return velocity.magnitude;
-    }
-
-    private void UpdateLocomotionAnimatorSignals(float presentationSpeed, Vector3 velocity, float deltaTime)
-    {
-        Vector3 desiredDirection = ResolveAnimatorDesiredDirection(velocity);
-        Vector3 facingDirection = GetFacingPlanarForward();
-        float signedTurn = 0f;
-
-        if (desiredDirection.sqrMagnitude > 0.0001f)
-        {
-            signedTurn = Mathf.Clamp(
-                Vector3.SignedAngle(facingDirection, desiredDirection, transform.up) / 90f,
-                -1f,
-                1f);
-        }
-
-        if (animationTurnResponsiveness > 0f)
-        {
-            float t = 1f - Mathf.Exp(-animationTurnResponsiveness * deltaTime);
-            smoothedTurnAmount = Mathf.Lerp(smoothedTurnAmount, signedTurn, t);
-        }
-        else
-        {
-            smoothedTurnAmount = signedTurn;
-        }
-
-        SetAnimatorFloatIfValid(turnParam, smoothedTurnAmount);
-
-        bool isMovingNow = presentationSpeed >= animationMovingEnterSpeed
-            ? true
-            : presentationSpeed <= animationMovingExitSpeed
-                ? false
-                : wasMovingForAnimator;
-
-        float locomotionTier = isMovingNow
-            ? ResolveLocomotionTier(presentationSpeed)
-            : lastMovingLocomotionTier;
-        if (isMovingNow)
-        {
-            lastMovingLocomotionTier = locomotionTier;
-        }
-
-        SetAnimatorFloatIfValid(locomotionTierParam, locomotionTier);
-
-        if (isMovingNow != wasMovingForAnimator)
-        {
-            if (isMovingNow)
-            {
-                SetAnimatorTriggerIfValid(moveStartTriggerParam);
-            }
-            else
-            {
-                SetAnimatorTriggerIfValid(moveStopTriggerParam);
-            }
-        }
-
-        SetAnimatorBoolIfValid(isMovingParam, isMovingNow);
-
-        bool shouldTurnInPlace = !isMovingNow &&
-                                 !IsJumpCommitted &&
-                                 desiredDirection.sqrMagnitude > 0.0001f &&
-                                 Mathf.Abs(Vector3.SignedAngle(facingDirection, desiredDirection, transform.up)) >= turnInPlaceAngleThreshold;
-        SetAnimatorBoolIfValid(turnInPlaceParam, shouldTurnInPlace);
-
-        wasMovingForAnimator = isMovingNow;
     }
 
     private float ResolveLocomotionTier(float presentationSpeed)

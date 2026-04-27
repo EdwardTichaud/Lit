@@ -7,6 +7,7 @@ public static class NetcodeTriggerRegistry
     private static readonly Dictionary<uint, HubCompanionSwapTrigger> hubSwapTriggers = new Dictionary<uint, HubCompanionSwapTrigger>();
     private static readonly Dictionary<uint, LabyrinthStartTrigger> labyrinthTriggers = new Dictionary<uint, LabyrinthStartTrigger>();
     private static readonly Dictionary<uint, LadderInteractable> ladderTriggers = new Dictionary<uint, LadderInteractable>();
+    private static readonly Dictionary<uint, ReadableSentencePuzzle> readableSentencePuzzles = new Dictionary<uint, ReadableSentencePuzzle>();
 
     public static void Register(ReturnHomeTrigger trigger, uint id)
     {
@@ -118,5 +119,33 @@ public static class NetcodeTriggerRegistry
     public static bool TryGetLadder(uint id, out LadderInteractable trigger)
     {
         return ladderTriggers.TryGetValue(id, out trigger);
+    }
+
+    public static void Register(ReadableSentencePuzzle trigger, uint id)
+    {
+        if (trigger == null || id == 0u)
+        {
+            return;
+        }
+
+        readableSentencePuzzles[id] = trigger;
+    }
+
+    public static void Unregister(ReadableSentencePuzzle trigger, uint id)
+    {
+        if (trigger == null || id == 0u)
+        {
+            return;
+        }
+
+        if (readableSentencePuzzles.TryGetValue(id, out ReadableSentencePuzzle existing) && existing == trigger)
+        {
+            readableSentencePuzzles.Remove(id);
+        }
+    }
+
+    public static bool TryGetReadableSentencePuzzle(uint id, out ReadableSentencePuzzle trigger)
+    {
+        return readableSentencePuzzles.TryGetValue(id, out trigger);
     }
 }

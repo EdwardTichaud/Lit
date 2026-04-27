@@ -521,6 +521,23 @@ public static class PersistentWorldSceneInstaller
 
             NetcodeRuntimeUtilities.GetOrAdd<PersistentPuzzleElementState>(puzzle.gameObject);
         }
+
+        ReadableSentencePuzzle[] readableSentencePuzzles = root.GetComponentsInChildren<ReadableSentencePuzzle>(true);
+        for (int i = 0; i < readableSentencePuzzles.Length; i++)
+        {
+            ReadableSentencePuzzle puzzle = readableSentencePuzzles[i];
+            if (puzzle == null)
+            {
+                continue;
+            }
+
+            if (EnsurePersistentSceneObject(puzzle.gameObject) == null)
+            {
+                continue;
+            }
+
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentReadableSentencePuzzleState>(puzzle.gameObject);
+        }
     }
 
     private static void PrepareSceneBuildings(GameObject root)

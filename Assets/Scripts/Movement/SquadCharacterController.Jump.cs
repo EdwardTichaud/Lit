@@ -538,12 +538,14 @@ public partial class SquadCharacterController
     private bool CanExitNaturalLanding()
     {
         float minimumDuration = Mathf.Max(naturalLandingRecoveryDuration, naturalLandingMovementLockDuration);
-        if (Time.time < naturalFallPhaseStartTime + minimumDuration)
-        {
-            return false;
-        }
-
-        return HasReachedAnimationWindow(naturalLandingStateName, naturalLandingUnlockNormalizedTime);
+        return HasReachedAnimationGateOrTimedOut(
+            naturalLandingStateName,
+            naturalLandingUnlockNormalizedTime,
+            naturalFallPhaseStartTime,
+            minimumDuration,
+            naturalLandingRecoveryDuration,
+            animationPhaseTimeoutPadding,
+            nameof(NaturalFallAnimationPhase.Landing));
     }
 
     private void FinishNaturalFallAnimation()
@@ -904,12 +906,14 @@ public partial class SquadCharacterController
     private bool CanExitIdleLanding()
     {
         float minimumDuration = Mathf.Max(idleLandingRecoveryDuration, idleLandingMovementLockDuration);
-        if (Time.time < committedJumpPhaseStartTime + minimumDuration)
-        {
-            return false;
-        }
-
-        return HasReachedAnimationWindow(idleLandingStateName, landingUnlockNormalizedTime);
+        return HasReachedAnimationGateOrTimedOut(
+            idleLandingStateName,
+            landingUnlockNormalizedTime,
+            committedJumpPhaseStartTime,
+            minimumDuration,
+            idleLandingRecoveryDuration,
+            animationPhaseTimeoutPadding,
+            nameof(CommittedJumpPhase.LandingRecovery));
     }
 
     private bool CanExitLandingRoll()
@@ -917,16 +921,21 @@ public partial class SquadCharacterController
         if (useRollAnimationDurationForExit &&
             TryGetJumpAnimationElapsedAndDuration(rollStateName, out float elapsedSeconds, out float durationSeconds))
         {
-            return elapsedSeconds >= durationSeconds + rollAnimationExitPadding;
+            if (elapsedSeconds >= durationSeconds + rollAnimationExitPadding)
+            {
+                return true;
+            }
         }
 
         float totalDuration = rollDuration + rollRecoveryDuration;
-        if (Time.time < committedJumpPhaseStartTime + totalDuration)
-        {
-            return false;
-        }
-
-        return HasReachedAnimationWindow(rollStateName, rollEndNormalizedTime);
+        return HasReachedAnimationGateOrTimedOut(
+            rollStateName,
+            rollEndNormalizedTime,
+            committedJumpPhaseStartTime,
+            totalDuration,
+            totalDuration,
+            Mathf.Max(animationPhaseTimeoutPadding, rollAnimationExitPadding),
+            nameof(CommittedJumpPhase.LandingRoll));
     }
 
     private bool ShouldBeginCommittedLanding()
@@ -1278,33 +1287,10 @@ public partial class SquadCharacterController
 
     private bool TryCrossFadeJumpState(string stateName, float transitionDuration)
     {
-        if (animator == null ||
-            string.IsNullOrWhiteSpace(stateName) ||
-            jumpAnimationLayer < 0 ||
-            jumpAnimationLayer >= animator.layerCount)
-        {
-            return false;
-        }
-
-        string layerName = animator.GetLayerName(jumpAnimationLayer);
-        int shortStateHash = Animator.StringToHash(stateName);
-        int fullPathStateHash = string.IsNullOrWhiteSpace(layerName)
-            ? shortStateHash
-            : Animator.StringToHash(layerName + "." + stateName);
-        int stateHash = animator.HasState(jumpAnimationLayer, fullPathStateHash)
-            ? fullPathStateHash
-            : shortStateHash;
-        if (!animator.HasState(jumpAnimationLayer, stateHash))
-        {
-            return false;
-        }
-
-        animator.CrossFadeInFixedTime(
-            stateHash,
-            Mathf.Max(0f, transitionDuration),
+        return TryCrossFadeAnimatorState(
             jumpAnimationLayer,
-            0f);
-        return true;
+            stateName,
+            transitionDuration);
     }
 
     private void CrossFadeToGroundedRecoveryStateIfNeeded()

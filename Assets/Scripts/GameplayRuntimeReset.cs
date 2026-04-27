@@ -25,6 +25,7 @@ public static class GameplayRuntimeReset
         NetcodePlayerSessionRegistry.Clear();
         ConfirmationManager.Dismiss(null, false);
         BuildingRuntimeState.Clear();
+        ReadableContentRuntime.ResetRuntimeState(resolvedReason);
         Zone.ResetRuntimeState();
         TorchVisionSystem.ResetRuntimeState(resolvedReason);
 

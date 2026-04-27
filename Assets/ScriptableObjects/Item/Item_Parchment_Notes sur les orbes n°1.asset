@@ -25,6 +25,10 @@ MonoBehaviour:
     n'ai pas souhait\xE9 reit\xE9rer l'exp\xE9rience avec d'autres orbes mais j'ai
     \xE9t\xE9 \xE9tonn\xE9e de voir qu'ils n\xE9taient pas si fragiles."
   bookPages: []
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableGenerationSeedOffset: 0
   canUse: 1
   canPlace: 0
   isContainer: 0

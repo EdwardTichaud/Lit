@@ -321,6 +321,59 @@ public class WorldInteractionService : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
+    public void RequestReadableSentencePuzzleAttemptServerRpc(uint triggerId, string answer, ServerRpcParams rpcParams = default)
+    {
+        if (!NetcodeTriggerRegistry.TryGetReadableSentencePuzzle(triggerId, out ReadableSentencePuzzle puzzle))
+        {
+            SendReadableSentencePuzzleResultClientRpc(
+                triggerId,
+                (int)ReadableSentencePuzzle.SolveAttemptResult.InvalidConfiguration,
+                BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        GameObject character = ResolvePlayerCharacter(rpcParams);
+        ReadableSentencePuzzle.SolveAttemptResult result = puzzle.ServerTrySubmitAnswer(character, answer ?? string.Empty);
+        SendReadableSentencePuzzleResultClientRpc(triggerId, (int)result, BuildClientRpcParams(rpcParams));
+        if (result == ReadableSentencePuzzle.SolveAttemptResult.Success && puzzle.PlayOnce && puzzle.IsSolved)
+        {
+            BroadcastReadableSentencePuzzleSolvedClientRpc(triggerId);
+        }
+    }
+
+    [ClientRpc]
+    private void SendReadableSentencePuzzleResultClientRpc(uint triggerId, int resultValue, ClientRpcParams rpcParams = default)
+    {
+        if (!NetcodeTriggerRegistry.TryGetReadableSentencePuzzle(triggerId, out ReadableSentencePuzzle puzzle))
+        {
+            return;
+        }
+
+        puzzle.HandleSolveAttemptResult((ReadableSentencePuzzle.SolveAttemptResult)resultValue);
+    }
+
+    [ClientRpc]
+    private void BroadcastReadableSentencePuzzleSolvedClientRpc(uint triggerId)
+    {
+        if (!NetcodeTriggerRegistry.TryGetReadableSentencePuzzle(triggerId, out ReadableSentencePuzzle puzzle))
+        {
+            return;
+        }
+
+        puzzle.HandleSolvedStateReplicated();
+    }
+
+    public void NotifyReadableSentencePuzzleSolved(uint triggerId)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        BroadcastReadableSentencePuzzleSolvedClientRpc(triggerId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     public void RequestCharacterSwitchServerRpc(string characterId, ServerRpcParams rpcParams = default)
     {
         NetcodePlayerSpawner spawner = NetcodePlayerSpawner.Instance;

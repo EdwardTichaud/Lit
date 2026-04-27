@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
-    private const int SaveDataVersion = 1;
+    private const int SaveDataVersion = 2;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -201,6 +201,8 @@ public class CharacterStateStore : MonoBehaviour
         {
             return;
         }
+
+        ReadableContentRuntime.RestoreSaveData(loadedData != null ? loadedData.readableGeneratedContents : null);
 
         if (loadedData == null)
         {
@@ -567,6 +569,7 @@ public class CharacterStateStore : MonoBehaviour
         data.homeItems = BuildHomeItems();
         data.builtConstructions = BuildBuiltConstructions();
         data.braseros = BuildBraseroStates();
+        data.readableGeneratedContents = ReadableContentRuntime.CaptureSaveData();
         AppendPlayerBindings(data);
         return data;
     }
