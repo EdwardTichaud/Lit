@@ -17,24 +17,6 @@ public class CombatSessionManager : NetworkBehaviour
     private const float LocalEnemyLookupMaxDistance = 6f;
     private static readonly string[] DeathAnimationCandidates = { "Death", "Death_v1", "Death_v2" };
 
-    private enum CombatTurn
-    {
-        None = 0,
-        Enemy = 1,
-        Player = 2,
-        Finished = 3
-    }
-
-    private sealed class RuntimeEnemy
-    {
-        public string DisplayName;
-        public int CurrentHp;
-        public int MaxHp;
-        public int AttackDamage;
-
-        public bool IsAlive => CurrentHp > 0;
-    }
-
     private sealed class CombatSession
     {
         public string SessionId;
@@ -51,20 +33,9 @@ public class CombatSessionManager : NetworkBehaviour
         public Vector3 EnemyCombatPosition;
         public Quaternion EnemyCombatRotation;
         public bool HasEnemyPresentation;
-        public List<RuntimeEnemy> Enemies = new List<RuntimeEnemy>();
-        public CombatTurn Turn;
-        public float TurnEndsAt;
-        public float NextEnemyActionAt;
-        public float NextSnapshotAt;
-        public bool PlayerActionLocked;
-        public float PlayerActionEndsAt;
-        public int PendingPlayerAttackDamage;
+        public CombatSessionState State = new CombatSessionState();
+        public List<CombatRuntimeEnemy> Enemies = new List<CombatRuntimeEnemy>();
         public bool SuppressedMovement;
-        public bool Resolving;
-        public bool ResolutionPlayerVictory;
-        public float ResolutionEndsAt;
-        public bool Finished;
-        public string LastMessage;
     }
 
     private sealed class LocalEnemyPresentation
@@ -178,7 +149,7 @@ public class CombatSessionManager : NetworkBehaviour
         {
             return sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) &&
                    session != null &&
-                   !session.Finished;
+                   !session.State.Finished;
         }
 
         return localCombatPresentation.Active;
@@ -192,7 +163,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (CanRunAuthority())
         {
-            if (!sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) || session == null || session.Finished)
+            if (!sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) || session == null || session.State.Finished)
             {
                 return false;
             }
@@ -311,7 +282,7 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
-        List<RuntimeEnemy> enemies = BuildRuntimeEnemies(sourceEnemy);
+        List<CombatRuntimeEnemy> enemies = BuildRuntimeEnemies(sourceEnemy);
         if (enemies.Count == 0)
         {
             return false;
@@ -342,8 +313,7 @@ public class CombatSessionManager : NetworkBehaviour
             EnemyCombatPosition = enemyCombatPosition,
             EnemyCombatRotation = enemyCombatRotation,
             HasEnemyPresentation = sourceEnemy != null,
-            Enemies = enemies,
-            LastMessage = "Combat engage."
+            Enemies = enemies
         };
 
         sessionsByCharacterId[characterId] = session;
@@ -391,8 +361,8 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         if (!TryGetSession(controller, out CombatSession session) ||
-            session.Turn != CombatTurn.Player ||
-            session.PlayerActionLocked)
+            session.State.Turn != CombatTurn.Player ||
+            session.State.PlayerActionLocked)
         {
             return;
         }
@@ -413,16 +383,16 @@ public class CombatSessionManager : NetworkBehaviour
             return true;
         }
 
-        if (!session.Finished && session.Turn == CombatTurn.Player && !session.PlayerActionLocked)
+        if (!session.State.Finished && session.State.Turn == CombatTurn.Player && !session.State.PlayerActionLocked)
         {
             return true;
         }
 
-        reason = session.Finished
+        reason = session.State.Finished
             ? "Combat termine."
-            : session.PlayerActionLocked
+            : session.State.PlayerActionLocked
                 ? "Action de combat deja en cours."
-            : "Impossible d'utiliser un item hors du tour joueur.";
+                : "Impossible d'utiliser un item hors du tour joueur.";
         return false;
     }
 
@@ -478,65 +448,78 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void EnterCombatClientRpc(
-        string sessionId,
-        Vector3 playerCombatPosition,
-        Quaternion playerCombatRotation,
-        bool hasEnemyPresentation,
-        Vector3 enemyReturnPosition,
-        Quaternion enemyReturnRotation,
-        Vector3 enemyCombatPosition,
-        Quaternion enemyCombatRotation,
-        ClientRpcParams rpcParams = default)
+    private void EnterCombatClientRpc(CombatEnterData data, ClientRpcParams rpcParams = default)
     {
         if (!IsServer)
         {
-            localCombatPresentation.SessionId = sessionId;
+            localCombatPresentation.SessionId = data.SessionId.ToString();
             localCombatPresentation.Turn = CombatTurn.None;
             localCombatPresentation.Resolving = false;
             localCombatPresentation.ResolutionPlayerVictory = false;
-            localCombatPresentation.HasEnemyPresentation = hasEnemyPresentation;
-            localCombatPresentation.EnemyReturnPosition = enemyReturnPosition;
+            localCombatPresentation.HasEnemyPresentation = data.HasEnemyPresentation;
+            localCombatPresentation.EnemyReturnPosition = data.EnemyReturnPosition;
             localCombatPresentation.PlayerActionLocked = false;
-            SuppressLocalClientMovement(sessionId, playerCombatPosition, playerCombatRotation);
-            if (hasEnemyPresentation)
-            {
-                MoveLocalEnemyIntoCombat(sessionId, enemyReturnPosition, enemyReturnRotation, enemyCombatPosition, enemyCombatRotation);
-            }
         }
 
         CombatHudController.EnsureInstance();
+        CombatTransitionController.EnsureInstance().PlayEnterTransition(() =>
+        {
+            if (!IsServer)
+            {
+                ApplyLocalEnterCombatPresentation(data);
+            }
+        });
     }
 
     [ClientRpc]
-    private void ExitCombatClientRpc(
-        string sessionId,
-        string message,
-        Vector3 playerReturnPosition,
-        Quaternion playerReturnRotation,
-        int playerHp,
-        int playerMaxHp,
-        bool hasEnemyPresentation,
-        Vector3 enemyReturnPosition,
-        Quaternion enemyReturnRotation,
-        int enemyRemainingHp,
-        bool playerVictory,
-        ClientRpcParams rpcParams = default)
+    private void ExitCombatClientRpc(CombatExitData data, ClientRpcParams rpcParams = default)
     {
-        if (!IsServer)
+        CombatTransitionController.EnsureInstance().PlayExitTransition(() =>
+        {
+            ApplyExitCombatPresentation(data, restoreLocalClient: !IsServer);
+        });
+    }
+
+    private void ApplyLocalEnterCombatPresentation(CombatEnterData data)
+    {
+        string sessionId = data.SessionId.ToString();
+        SuppressLocalClientMovement(sessionId, data.PlayerCombatPosition, data.PlayerCombatRotation);
+        if (!data.HasEnemyPresentation)
+        {
+            return;
+        }
+
+        MoveLocalEnemyIntoCombat(
+            sessionId,
+            data.EnemyReturnPosition,
+            data.EnemyReturnRotation,
+            data.EnemyCombatPosition,
+            data.EnemyCombatRotation);
+    }
+
+    private void ApplyExitCombatPresentation(CombatExitData data, bool restoreLocalClient)
+    {
+        string sessionId = data.SessionId.ToString();
+        if (restoreLocalClient)
         {
             localCombatPresentation.Reset();
-            RestoreLocalClientMovement(sessionId, playerReturnPosition, playerReturnRotation, playerHp, playerMaxHp);
+            RestoreLocalClientMovement(
+                sessionId,
+                data.PlayerReturnPosition,
+                data.PlayerReturnRotation,
+                data.PlayerHp,
+                data.PlayerMaxHp);
             RestoreLocalEnemyPresentation(
                 sessionId,
-                hasEnemyPresentation,
-                enemyReturnPosition,
-                enemyReturnRotation,
-                playerVictory,
-                enemyRemainingHp);
+                data.HasEnemyPresentation,
+                data.EnemyReturnPosition,
+                data.EnemyReturnRotation,
+                data.PlayerVictory,
+                data.EnemyRemainingHp);
         }
 
         CombatHudController.HideActive(sessionId);
+        string message = data.Message.ToString();
         if (!string.IsNullOrWhiteSpace(message))
         {
             InfoBoxUI.TryShow(message);
@@ -544,49 +527,35 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void CombatSnapshotClientRpc(
-        string sessionId,
-        int turn,
-        float timerRemaining,
-        int playerHp,
-        int playerMaxHp,
-        string enemyName,
-        int enemyHp,
-        int enemyMaxHp,
-        int aliveEnemies,
-        int totalEnemies,
-        int prayerSupportCount,
-        float damageReduction,
-        bool playerActionLocked,
-        string message,
-        ClientRpcParams rpcParams = default)
+    private void CombatSnapshotClientRpc(CombatSnapshotData snapshot, ClientRpcParams rpcParams = default)
     {
+        string sessionId = snapshot.SessionId.ToString();
         if (!IsServer && localCombatPresentation.Active && localCombatPresentation.SessionId == sessionId)
         {
-            CombatTurn snapshotTurn = (CombatTurn)turn;
+            CombatTurn snapshotTurn = snapshot.TurnState;
             if (snapshotTurn != CombatTurn.None && snapshotTurn != CombatTurn.Finished)
             {
                 localCombatPresentation.Turn = snapshotTurn;
             }
 
-            localCombatPresentation.PlayerActionLocked = playerActionLocked;
+            localCombatPresentation.PlayerActionLocked = snapshot.PlayerActionLocked;
         }
 
         CombatHudController.EnsureInstance().ShowSnapshot(
             sessionId,
-            (CombatHudController.TurnState)turn,
-            timerRemaining,
-            playerHp,
-            playerMaxHp,
-            enemyName,
-            enemyHp,
-            enemyMaxHp,
-            aliveEnemies,
-            totalEnemies,
-            prayerSupportCount,
-            damageReduction,
-            playerActionLocked,
-            message);
+            (CombatHudController.TurnState)snapshot.TurnState,
+            snapshot.TimerRemaining,
+            snapshot.PlayerHp,
+            snapshot.PlayerMaxHp,
+            snapshot.EnemyName.ToString(),
+            snapshot.EnemyHp,
+            snapshot.EnemyMaxHp,
+            snapshot.AliveEnemies,
+            snapshot.TotalEnemies,
+            snapshot.PrayerSupportCount,
+            snapshot.DamageReduction,
+            snapshot.PlayerActionLocked,
+            snapshot.Message.ToString());
     }
 
     [ClientRpc]
@@ -601,16 +570,16 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void TickSession(CombatSession session)
     {
-        if (session == null || session.Finished)
+        if (session == null || session.State.Finished)
         {
             return;
         }
 
-        if (session.Resolving)
+        if (session.State.Resolving)
         {
-            if (Time.time >= session.ResolutionEndsAt)
+            if (Time.time >= session.State.ResolutionEndsAt)
             {
-                EndCombat(session, session.ResolutionPlayerVictory, session.LastMessage, notifyClient: true);
+                EndCombat(session, session.State.ResolutionPlayerVictory, session.State.LastMessage, notifyClient: true);
             }
 
             return;
@@ -622,9 +591,9 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        if (session.PlayerActionLocked)
+        if (session.State.PlayerActionLocked)
         {
-            if (Time.time >= session.PlayerActionEndsAt)
+            if (Time.time >= session.State.PlayerActionEndsAt)
             {
                 CompleteLockedPlayerAttack(session);
             }
@@ -632,29 +601,29 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        if (Time.time >= session.NextSnapshotAt)
+        if (Time.time >= session.State.NextSnapshotAt)
         {
-            SendSnapshot(session, session.LastMessage);
+            SendSnapshot(session, session.State.LastMessage);
         }
 
-        if (session.Turn == CombatTurn.Enemy && Time.time >= session.NextEnemyActionAt)
+        if (session.State.Turn == CombatTurn.Enemy && Time.time >= session.State.NextEnemyActionAt)
         {
             ExecuteEnemyTurn(session);
             return;
         }
 
-        if (Time.time < session.TurnEndsAt)
+        if (Time.time < session.State.TurnEndsAt)
         {
             return;
         }
 
-        if (session.Turn == CombatTurn.Player)
+        if (session.State.Turn == CombatTurn.Player)
         {
             TryPlayerPass(session, "Temps ecoule. Tour passe.");
             return;
         }
 
-        if (session.Turn == CombatTurn.Enemy)
+        if (session.State.Turn == CombatTurn.Enemy)
         {
             ExecuteEnemyTurn(session);
         }
@@ -682,31 +651,28 @@ public class CombatSessionManager : NetworkBehaviour
 
     private bool TryPlayerAttack(CombatSession session)
     {
-        if (session == null || session.Finished || session.Turn != CombatTurn.Player || session.PlayerActionLocked)
+        if (session == null || !session.State.CanUsePlayerAction())
         {
             return false;
         }
 
-        RuntimeEnemy enemy = GetActiveEnemy(session);
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
         if (enemy == null)
         {
             BeginCombatResolution(session, true, "Victoire.");
             return true;
         }
 
-        session.PlayerActionLocked = true;
-        session.PendingPlayerAttackDamage = ResolvePlayerAttackDamage(session.Player);
-        session.PlayerActionEndsAt = Time.time + PlayPlayerBasicAttackPresentation(session);
-        session.TurnEndsAt = session.PlayerActionEndsAt;
-        session.NextEnemyActionAt = float.PositiveInfinity;
-        session.LastMessage = $"Attaque de base sur {enemy.DisplayName}.";
-        SendSnapshot(session, session.LastMessage);
+        int pendingDamage = ResolvePlayerAttackDamage(session.Player);
+        float actionDuration = PlayPlayerBasicAttackPresentation(session);
+        session.State.BeginPlayerAction(pendingDamage, Time.time, actionDuration, $"Attaque de base sur {enemy.DisplayName}.");
+        SendSnapshot(session, session.State.LastMessage);
         return true;
     }
 
     private bool TryPlayerPass(CombatSession session, string message)
     {
-        if (session == null || session.Finished || session.Turn != CombatTurn.Player || session.PlayerActionLocked)
+        if (session == null || !session.State.CanUsePlayerAction())
         {
             return false;
         }
@@ -717,27 +683,20 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void CompleteLockedPlayerAttack(CombatSession session)
     {
-        if (session == null || !session.PlayerActionLocked || session.Finished)
+        if (session == null || !session.State.PlayerActionLocked || session.State.Finished)
         {
             return;
         }
 
-        session.PlayerActionLocked = false;
-        session.PlayerActionEndsAt = 0f;
-
-        RuntimeEnemy enemy = GetActiveEnemy(session);
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
         if (enemy == null)
         {
-            session.PendingPlayerAttackDamage = 0;
             BeginCombatResolution(session, true, "Victoire.");
             return;
         }
 
-        int damage = Mathf.Max(1, session.PendingPlayerAttackDamage);
-        session.PendingPlayerAttackDamage = 0;
-        int before = enemy.CurrentHp;
-        enemy.CurrentHp = Mathf.Max(0, enemy.CurrentHp - damage);
-        int applied = Mathf.Max(0, before - enemy.CurrentHp);
+        int damage = session.State.ConsumePendingPlayerAttackDamage();
+        int applied = enemy.ApplyDamage(damage);
 
         if (AreAllEnemiesDefeated(session))
         {
@@ -750,12 +709,12 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void ExecuteEnemyTurn(CombatSession session)
     {
-        if (session == null || session.Finished || session.Turn != CombatTurn.Enemy)
+        if (session == null || session.State.Finished || session.State.Turn != CombatTurn.Enemy)
         {
             return;
         }
 
-        RuntimeEnemy enemy = GetActiveEnemy(session);
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
         if (enemy == null)
         {
             BeginCombatResolution(session, true, "Victoire.");
@@ -785,21 +744,13 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void BeginTurn(CombatSession session, CombatTurn turn, string message)
     {
-        if (session == null || session.Finished || session.Resolving)
+        if (session == null || session.State.Finished || session.State.Resolving)
         {
             return;
         }
 
-        session.Turn = turn;
-        session.TurnEndsAt = Time.time + Mathf.Max(1f, turnDurationSeconds);
-        session.NextEnemyActionAt = turn == CombatTurn.Enemy
-            ? Time.time + Mathf.Max(0f, enemyActionDelay)
-            : float.PositiveInfinity;
-        session.PlayerActionLocked = false;
-        session.PlayerActionEndsAt = 0f;
-        session.PendingPlayerAttackDamage = 0;
-        session.LastMessage = message ?? string.Empty;
-        SendSnapshot(session, session.LastMessage);
+        session.State.BeginTurn(turn, Time.time, turnDurationSeconds, enemyActionDelay, message);
+        SendSnapshot(session, session.State.LastMessage);
     }
 
     private float PlayPlayerBasicAttackPresentation(CombatSession session)
@@ -845,23 +796,18 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void BeginCombatResolution(CombatSession session, bool playerVictory, string message)
     {
-        if (session == null || session.Finished || session.Resolving)
+        if (session == null || session.State.Finished || session.State.Resolving)
         {
             return;
         }
 
-        session.Resolving = true;
-        session.ResolutionPlayerVictory = playerVictory;
-        session.PlayerActionLocked = false;
-        session.PlayerActionEndsAt = 0f;
-        session.PendingPlayerAttackDamage = 0;
-        session.Turn = CombatTurn.Finished;
-        session.TurnEndsAt = Time.time;
-        session.NextEnemyActionAt = float.PositiveInfinity;
-        session.LastMessage = message ?? string.Empty;
-        session.ResolutionEndsAt = Time.time + ResolveCombatResolutionDuration(session, playerVictory);
+        session.State.BeginResolution(
+            playerVictory,
+            Time.time,
+            ResolveCombatResolutionDuration(session, playerVictory),
+            message);
 
-        SendSnapshot(session, session.LastMessage);
+        SendSnapshot(session, session.State.LastMessage);
 
         if (IsNetworkSessionActive() && IsSpawned)
         {
@@ -918,17 +864,12 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void EndCombat(CombatSession session, bool playerVictory, string message, bool notifyClient)
     {
-        if (session == null || session.Finished)
+        if (session == null || session.State.Finished)
         {
             return;
         }
 
-        session.Finished = true;
-        session.Resolving = false;
-        session.PlayerActionLocked = false;
-        session.PlayerActionEndsAt = 0f;
-        session.PendingPlayerAttackDamage = 0;
-        session.Turn = CombatTurn.Finished;
+        session.State.Finish();
         SendSnapshot(session, message);
 
         int playerHp = session.Player != null ? session.Player.CurrentHp : 0;
@@ -970,7 +911,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (IsNetworkSessionActive() && IsSpawned)
         {
-            EnterCombatClientRpc(
+            CombatEnterData enterData = new CombatEnterData(
                 session.SessionId,
                 session.PlayerCombatPosition,
                 session.PlayerCombatRotation,
@@ -978,12 +919,13 @@ public class CombatSessionManager : NetworkBehaviour
                 session.EnemyReturnPosition,
                 session.EnemyReturnRotation,
                 session.EnemyCombatPosition,
-                session.EnemyCombatRotation,
-                BuildClientRpcParams(session.OwnerClientId));
+                session.EnemyCombatRotation);
+            EnterCombatClientRpc(enterData, BuildClientRpcParams(session.OwnerClientId));
             return;
         }
 
         CombatHudController.EnsureInstance();
+        CombatTransitionController.EnsureInstance().PlayEnterTransition();
     }
 
     private void SendExitCombat(CombatSession session, string message, bool playerVictory, int enemyRemainingHp)
@@ -995,7 +937,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (IsNetworkSessionActive() && IsSpawned)
         {
-            ExitCombatClientRpc(
+            CombatExitData exitData = new CombatExitData(
                 session.SessionId,
                 message,
                 session.ReturnPosition,
@@ -1006,16 +948,27 @@ public class CombatSessionManager : NetworkBehaviour
                 session.EnemyReturnPosition,
                 session.EnemyReturnRotation,
                 enemyRemainingHp,
-                playerVictory,
-                BuildClientRpcParams(session.OwnerClientId));
+                playerVictory);
+            ExitCombatClientRpc(exitData, BuildClientRpcParams(session.OwnerClientId));
             return;
         }
 
-        CombatHudController.HideActive(session.SessionId);
-        if (!string.IsNullOrWhiteSpace(message))
+        CombatExitData localExitData = new CombatExitData(
+            session.SessionId,
+            message,
+            session.ReturnPosition,
+            session.ReturnRotation,
+            session.Player != null ? session.Player.CurrentHp : 0,
+            session.Player != null ? session.Player.MaxHp : 1,
+            session.HasEnemyPresentation,
+            session.EnemyReturnPosition,
+            session.EnemyReturnRotation,
+            enemyRemainingHp,
+            playerVictory);
+        CombatTransitionController.EnsureInstance().PlayExitTransition(() =>
         {
-            InfoBoxUI.TryShow(message);
-        }
+            ApplyExitCombatPresentation(localExitData, restoreLocalClient: false);
+        });
     }
 
     private void SendSnapshot(CombatSession session, string message)
@@ -1025,18 +978,18 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        session.NextSnapshotAt = Time.time + Mathf.Max(0.05f, snapshotInterval);
-        RuntimeEnemy enemy = GetActiveEnemy(session);
+        session.State.ScheduleNextSnapshot(Time.time, snapshotInterval);
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
         int aliveEnemies = CountAliveEnemies(session);
         int totalEnemies = session.Enemies != null ? session.Enemies.Count : 0;
         int supportCount = CountPrayerSupport(session);
         float reduction = ResolvePrayerReduction(supportCount);
-        float timerRemaining = Mathf.Max(0f, session.TurnEndsAt - Time.time);
-        int turn = (int)session.Turn;
+        float timerRemaining = session.State.GetTimerRemaining(Time.time);
+        CombatTurn turn = session.State.Turn;
 
         if (IsNetworkSessionActive() && IsSpawned)
         {
-            CombatSnapshotClientRpc(
+            CombatSnapshotData snapshot = new CombatSnapshotData(
                 session.SessionId,
                 turn,
                 timerRemaining,
@@ -1049,9 +1002,9 @@ public class CombatSessionManager : NetworkBehaviour
                 totalEnemies,
                 supportCount,
                 reduction,
-                session.PlayerActionLocked,
-                message ?? string.Empty,
-                BuildClientRpcParams(session.OwnerClientId));
+                session.State.PlayerActionLocked,
+                message ?? string.Empty);
+            CombatSnapshotClientRpc(snapshot, BuildClientRpcParams(session.OwnerClientId));
             return;
         }
 
@@ -1068,7 +1021,7 @@ public class CombatSessionManager : NetworkBehaviour
             totalEnemies,
             supportCount,
             reduction,
-            session.PlayerActionLocked,
+            session.State.PlayerActionLocked,
             message ?? string.Empty);
     }
 
@@ -1219,13 +1172,13 @@ public class CombatSessionManager : NetworkBehaviour
         return Mathf.Max(1, defaultPlayerAttackDamage + modifier);
     }
 
-    private List<RuntimeEnemy> BuildRuntimeEnemies(CombatAggroEnemy sourceEnemy)
+    private List<CombatRuntimeEnemy> BuildRuntimeEnemies(CombatAggroEnemy sourceEnemy)
     {
         List<CombatEnemyDefinition> definitions = sourceEnemy != null
             ? sourceEnemy.CreateEnemyDefinitions()
             : new List<CombatEnemyDefinition> { new CombatEnemyDefinition("Ennemi", 8, 8, 4) };
 
-        List<RuntimeEnemy> enemies = new List<RuntimeEnemy>();
+        List<CombatRuntimeEnemy> enemies = new List<CombatRuntimeEnemy>();
         for (int i = 0; i < definitions.Count; i++)
         {
             CombatEnemyDefinition definition = definitions[i];
@@ -1240,19 +1193,17 @@ public class CombatSessionManager : NetworkBehaviour
                 continue;
             }
 
-            enemies.Add(new RuntimeEnemy
-            {
-                DisplayName = runtime.displayName,
-                CurrentHp = runtime.currentHp,
-                MaxHp = runtime.maxHp,
-                AttackDamage = runtime.attackDamage
-            });
+            enemies.Add(new CombatRuntimeEnemy(
+                runtime.displayName,
+                runtime.currentHp,
+                runtime.maxHp,
+                runtime.attackDamage));
         }
 
         return enemies;
     }
 
-    private RuntimeEnemy GetActiveEnemy(CombatSession session)
+    private CombatRuntimeEnemy GetActiveEnemy(CombatSession session)
     {
         if (session?.Enemies == null)
         {
@@ -1261,7 +1212,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         for (int i = 0; i < session.Enemies.Count; i++)
         {
-            RuntimeEnemy enemy = session.Enemies[i];
+            CombatRuntimeEnemy enemy = session.Enemies[i];
             if (enemy != null && enemy.IsAlive)
             {
                 return enemy;
@@ -1790,12 +1741,12 @@ public class CombatSessionManager : NetworkBehaviour
             return CombatTurn.None;
         }
 
-        if (session.Resolving)
+        if (session.State.Resolving)
         {
-            return session.ResolutionPlayerVictory ? CombatTurn.Player : CombatTurn.Enemy;
+            return session.State.ResolutionPlayerVictory ? CombatTurn.Player : CombatTurn.Enemy;
         }
 
-        return session.Turn;
+        return session.State.Turn;
     }
 
     private static CombatTurn ResolvePresentationTurn(LocalCombatPresentationState presentation)
@@ -2028,7 +1979,7 @@ public class CombatSessionManager : NetworkBehaviour
 
     private int ResolveDisplayedEnemyRemainingHp(CombatSession session)
     {
-        RuntimeEnemy activeEnemy = GetActiveEnemy(session);
+        CombatRuntimeEnemy activeEnemy = GetActiveEnemy(session);
         if (activeEnemy != null)
         {
             return Mathf.Max(0, activeEnemy.CurrentHp);

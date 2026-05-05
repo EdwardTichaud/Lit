@@ -9,23 +9,24 @@ Le combat est une contrainte d'exploration, pas un mode de jeu principal. Il res
 - `Enemy` est le ScriptableObject de donnees d'un ennemi placable : prefab de monde, `CharacterData` optionnel, PV, degats et ennemis additionnels.
 - `ItemSceneMarker` peut maintenant etre utilise en mode `Enemy` pour placer et baker un `Enemy` en scene, en ajoutant `EnemyInfo`, `CombatHealth` et `CombatAggroEnemy` sur l'instance.
 - `CombatAggroEnemy` demarre un combat quand un joueur controle entre dans son trigger d'aggro.
-- `CombatSessionManager` gere les sessions, les tours, le timer de 30 secondes, les PV ennemis, le retour du joueur et les RPC Netcode.
+- `CombatSessionManager` orchestre les sessions, les RPC Netcode, la presentation et le retour du joueur. Les transitions de tour sont portees par `CombatSessionState`.
 - Les PV joueur reutilisent `SquadCharacterController.CurrentHp/MaxHp/ApplyDamage`.
 - L'inventaire existant reste utilise via `InventoryPanelController` et `NetworkInventory`. Un item ne peut etre applique en combat que pendant le tour joueur ; si l'usage reussit, `CombatSessionManager.NotifyInventoryItemUsed` termine le tour.
 - `IustiaIdolPrayer` s'accroche aux `Item_Idole de Iustia` et signale les joueurs en priere au manager.
 - `CharacterInteractionDetection` priorise `IustiaIdolPrayer` avant `InteractableItem` pour eviter qu'une idole soit traitee comme un loot quand on veut prier.
 - `NetcodePrefabRegistry` ajoute `CombatSessionManager` au `WorldInteractionService` networke.
+- `CombatHudController` pilote le HUD de combat place dans `Maison.unity` (`BattlePanel`, panneaux PV, timer, message et actions). Le fallback runtime est desactive par defaut.
 
 ## Deroulement
 
 1. Un `CombatAggroEnemy` aggro un joueur controle.
-2. Le manager cree une arene runtime loin du monde d'exploration et y teleporte uniquement ce joueur.
+2. Le manager utilise l'arene de scene configuree (`Arena/SpawnPoint_Player`, `Arena/SpawnPoint_Enemy`) ou des positions de secours proches du joueur, puis y teleporte uniquement ce joueur.
 3. Le mouvement du joueur est suspendu via `PushScriptedMovementSuppression`, cote serveur et cote client local.
 4. Le combat alterne strictement ennemi puis joueur.
 5. Chaque tour a un timer de 30 secondes. Le tour ennemi execute une attaque automatique apres un court delai, avec timer de secours.
 6. Le joueur peut attaquer, passer, ou ouvrir son inventaire et utiliser un item.
 7. Victoire si tous les ennemis runtime tombent a 0 PV. Defaite si le joueur tombe a 0 PV.
-8. Le manager restaure la position d'exploration, libere la suppression de mouvement, detruit l'arene et notifie le HUD.
+8. Le manager restaure la position d'exploration, libere la suppression de mouvement et notifie le HUD.
 
 ## Idoles de Iustia
 
@@ -35,9 +36,9 @@ Un cap configurable `maxPrayerDamageReduction` est defini dans `CombatSessionMan
 
 ## Limites actuelles
 
-- L'arene est une instance runtime simple dans la scene courante, pas une scene additive dediee.
+- L'arene est une zone de scene existante, pas une scene additive dediee ni une instance runtime creee par combat.
 - Les ennemis sont des donnees runtime issues de `CombatAggroEnemy`; il n'y a pas encore d'animation d'ennemi dans l'arene.
-- Le HUD est genere automatiquement si aucune UI dediee n'existe.
+- Le HUD de `Maison.unity` est une UI de scene. Les autres scenes doivent fournir leur propre `CombatHudController` scene si elles declenchent du combat.
 - La victoire peut desactiver l'objet ennemi source cote serveur, mais les prefabs non networkes devront etre ajustes si un visuel client permanent doit disparaitre partout.
 
 ## Test manuel recommande

@@ -1146,18 +1146,21 @@ MonoBehaviour:
   - Scripted
   logAnimationReconciliation: 0
   enableHeightProbeTraversal: 1
-  heightProbeForwardDistance: 10
-  heightProbeSampleCount: 24
-  heightProbeMaxRise: 3.5
-  heightProbeMaxDrop: 3.5
-  heightProbeMaxStepRise: 0.55
-  heightProbeMaxStepDrop: 0.75
-  heightProbeStepSearchExtraDistance: 0.45
+  heightProbeForwardDistance: 1.2
+  heightProbeSampleCount: 8
+  heightProbeMaxRise: 0.35
+  heightProbeMaxDrop: 0.45
+  heightProbeMaxStepRise: 0.32
+  heightProbeMaxStepDrop: 0.45
+  heightProbeStepSearchExtraDistance: 0.22
   enableHeightProbeGroundSnap: 1
   heightProbeVerticalPadding: 0.25
-  heightProbeContactOffset: 0.02
+  heightProbeContactOffset: 0.03
   heightProbeMinRise: 0.03
   heightProbeGroundGraceTime: 0.12
+  heightProbeObstacleStepLimit: 0.35
+  heightProbeStepSurfaceInset: 0.08
+  heightProbeForwardScanLimit: 0.9
   enableCharacterInteractionDetection: 1
   interactionDetectionMask:
     serializedVersion: 2
@@ -1330,6 +1333,8 @@ MonoBehaviour:
   preventWallPenetration: 1
   movementCollisionSkin: 0.03
   movementCollisionWalkableNormalDot: 0.35
+  useLowFrictionLocomotionMaterial: 1
+  overrideExistingLocomotionMaterial: 0
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845

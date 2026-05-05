@@ -125,19 +125,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
+  enableAnimationReconciliation: 1
+  locomotionAnimationCorrectionDelay: 0.18
+  airborneAnimationCorrectionDelay: 0.12
+  landingAnimationCorrectionDelay: 0.12
+  transientAnimationCorrectionDelay: 0.05
+  repeatedAnimationCorrectionCooldown: 0.12
+  animationReconciliationCrossFadeDuration: 0.05
+  animationPhaseTimeoutPadding: 0.08
+  priorityAnimationStateNames:
+  - Knowledge_Unlock
+  - Attack
+  - Hurt
+  - Hit
+  - Stun
+  - Dead
+  - Death
+  - Cutscene
+  - Scripted
+  priorityAnimationTags:
+  - Ladder
+  - Attack
+  - Hit
+  - Stun
+  - Death
+  - Cutscene
+  - Scripted
+  logAnimationReconciliation: 0
   enableHeightProbeTraversal: 1
-  heightProbeForwardDistance: 10
-  heightProbeSampleCount: 24
-  heightProbeMaxRise: 3.5
-  heightProbeMaxDrop: 3.5
-  heightProbeMaxStepRise: 0.55
-  heightProbeMaxStepDrop: 0.75
-  heightProbeStepSearchExtraDistance: 0.45
+  heightProbeForwardDistance: 1.2
+  heightProbeSampleCount: 8
+  heightProbeMaxRise: 0.35
+  heightProbeMaxDrop: 0.45
+  heightProbeMaxStepRise: 0.32
+  heightProbeMaxStepDrop: 0.45
+  heightProbeStepSearchExtraDistance: 0.22
   enableHeightProbeGroundSnap: 1
   heightProbeVerticalPadding: 0.25
-  heightProbeContactOffset: 0.02
+  heightProbeContactOffset: 0.03
   heightProbeMinRise: 0.03
   heightProbeGroundGraceTime: 0.12
+  heightProbeObstacleStepLimit: 0.35
+  heightProbeStepSurfaceInset: 0.08
+  heightProbeForwardScanLimit: 0.9
   enableCharacterInteractionDetection: 1
   interactionDetectionMask:
     serializedVersion: 2
@@ -310,6 +340,8 @@ MonoBehaviour:
   preventWallPenetration: 1
   movementCollisionSkin: 0.03
   movementCollisionWalkableNormalDot: 0.35
+  useLowFrictionLocomotionMaterial: 1
+  overrideExistingLocomotionMaterial: 0
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
 --- !u!114 &9211136743502433845
@@ -374,7 +406,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 1
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 3
 --- !u!136 &880945654765737532
@@ -450,7 +482,7 @@ CharacterController:
   m_Height: 1.8
   m_Radius: 0.45
   m_SlopeLimit: 50
-  m_StepOffset: 0.35
+  m_StepOffset: 0.001
   m_SkinWidth: 0.06
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 0.9, z: 0}
@@ -470,7 +502,8 @@ MonoBehaviour:
   cameraTransform: {fileID: 0}
   autoResolveMainCamera: 1
   inputDeadZone: 0.12
-  maxMoveSpeed: 3.25
+  walkMoveSpeed: 5
+  maxMoveSpeed: 6.5
   acceleration: 11
   deceleration: 14
   idleSpeedThreshold: 0.04
@@ -490,6 +523,14 @@ MonoBehaviour:
   groundProbeStartOffset: 0.08
   maxGroundAngle: 50
   groundedGraceTime: 0.1
+  enableStepTraversal: 1
+  maxStepRise: 0.35
+  maxStepDrop: 0.45
+  minStepRise: 0.03
+  stepSearchDistance: 0.9
+  stepSearchExtraDistance: 0.22
+  stepSurfaceInset: 0.08
+  stepContactOffset: 0.03
   gravity: -24
   maxFallSpeed: 35
   groundedStickVelocity: 2
@@ -498,6 +539,29 @@ MonoBehaviour:
   jumpInputBufferTime: 0.12
   jumpGroundedGraceTime: 0.08
   jumpGroundIgnoreTime: 0.12
+  enableFlight: 1
+  flightTakeoffVerticalSpeed: 6.5
+  flightTakeoffDuration: 0.45
+  flightTakeoffDamping: 16
+  flightCruiseSpeed: 33
+  flightBoostSpeed: 81
+  flightAcceleration: 54
+  flightBoostAcceleration: 126
+  flightDeceleration: 36
+  flightVerticalSpeed: 24
+  flightVerticalAcceleration: 66
+  flightVerticalDeceleration: 54
+  flightVerticalDeadZone: 0.05
+  flightIdleSpeedThreshold: 0.08
+  flightTurnRate: 760
+  flightBoostTurnRate: 460
+  flightExitDownwardVelocity: 1.5
+  flightBoostKickSpeed: 4.5
+  flightGroundContactLandingMinSpeed: 2.75
+  flightGroundContactLandingMinDownwardSpeed: 0.2
+  flightLandingPlanarVelocityRetention: 0.25
+  flightLandingDampingMultiplier: 1
+  flightLandingControlGraceTime: 0.08
   freeFallMinAirborneTime: 0.18
   freeFallMinDownwardSpeed: 1.5
   landingMinAirborneTime: 0.14
@@ -508,6 +572,11 @@ MonoBehaviour:
   lightLandingDamping: 14
   mediumLandingDamping: 26
   heavyLandingDamping: 38
+  enableAirborneWallSlide: 1
+  wallSlideMaxNormalY: 0.35
+  wallSlideContactMemoryTime: 0.08
+  wallSlideMinDownwardSpeed: 8
+  wallSlideGravityMultiplier: 1.25
   showDebugValues: 1
   showDebugGizmos: 1
   debugCurrentState: 0
@@ -526,8 +595,21 @@ MonoBehaviour:
   debugJumpStarted: 0
   debugAirborne: 0
   debugFreeFall: 0
+  debugFlightActive: 0
+  debugFlightBoosting: 0
+  debugFlightBoostStarted: 0
+  debugFlightTakeoffActive: 0
+  debugFlightVerticalInput: 0
+  debugFlightVelocity: {x: 0, y: 0, z: 0}
+  debugFlightNormalizedSpeed: 0
   debugLandingTriggered: 0
   debugLandingSeverity: 0
+  debugWallSliding: 0
+  debugWallSlideSide: 0
+  debugWallSlideNormal: {x: 0, y: 0, z: 0}
+  debugStepTraversalActive: 0
+  debugStepTraversalOffset: 0
+  debugStepTraversalBlocked: 0
   debugAirborneTime: 0
   debugLastGroundedTime: 0
   debugLadderTraversalActive: 0
@@ -547,6 +629,7 @@ MonoBehaviour:
   readKeyboard: 1
   readGamepad: 1
   readJump: 1
+  readFlightControls: 1
 --- !u!114 &110403565620233116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -562,7 +645,7 @@ MonoBehaviour:
   motor: {fileID: 5973160005689361532}
   animator: {fileID: 963045829911085934}
   disableRootMotion: 1
-  motorFullSpeed: 3.25
+  motorFullSpeed: 6.5
   locomotionBlendMax: 3.25
   speedDampTime: 0.05
   motionSpeedDampTime: 0.05
@@ -571,17 +654,40 @@ MonoBehaviour:
   walkTierThreshold: 0.33
   jogTierThreshold: 0.72
   landingVisualHoldTime: 0.34
+  flightLandingVisualHoldTime: 0.16
   crossFadeJumpStates: 1
   jumpCrossFadeDuration: 0.08
   fallCrossFadeDuration: 0.1
   landingCrossFadeDuration: 0.08
   animatorLayer: 0
+  flightFullSpeed: 81
+  flightMoveSpeedThreshold: 0.7
+  flightMoveExitSpeedThreshold: 0.35
+  flightCrossFadeDuration: 0.08
+  flightIdleMotionSpeed: 0.85
+  flightBoostMotionSpeed: 1.45
+  flightTakeoffMotionSpeed: 1
+  flightBoostVisualHoldTime: 0.22
+  flightDashCrossFadeDuration: 0.04
+  flightDashExitNormalizedTime: 0.98
   jumpTakeoffStateName: Jump_Takeoff
   jumpAirborneStateName: Jump_Airborne
   freeFallStateName: Falling
   landingStateName: Landing
   jumpLandingStateName: Jump_Land
   heavyLandingStateName: Landing_Hard
+  wallSlideRightStateName: Slide_Wall_Right
+  wallSlideLeftStateName: Slide_Wall_Left
+  locomotionStateName: Locomotion
+  walkStartStateName: Walk_Start
+  jogtrotStartStateName: Jogtrot_Start
+  runStartStateName: Run_Start
+  walkStopStateName: Walk_Stop
+  jogtrotStopStateName: Jogtrot_Stop
+  runStopStateName: Run_Stop
+  flyingIdleStateName: Flying_Idle
+  flyingMoveStateName: Flying_Loop
+  flyingDashStateName: Flying_Dash
   speedParam: Speed
   motionSpeedParam: MotionSpeed
   groundedParam: Grounded
@@ -600,6 +706,19 @@ MonoBehaviour:
   landingTypeParam: LandingType
   jumpFromMovementParam: JumpFromMovement
   jumpPhaseParam: JumpPhase
+  reconcileAnimatorState: 1
+  airborneResyncDelay: 0.16
+  landingResyncDelay: 0.12
+  locomotionResyncDelay: 0.18
+  idleResyncDelay: 0.28
+  resyncCrossFadeDuration: 0.05
+  oneShotCompatibleNormalizedTime: 1.15
+  interruptStopStatesOnMoveResume: 1
+  interruptStartStatesOnMoveStop: 1
+  stopInterruptCrossFadeDuration: 0.04
+  forceAnimatorStateFromMotor: 1
+  suppressGroundedStartStopTriggersWhenAuthoritative: 1
+  forcedStateCrossFadeDuration: 0.03
   showDebugValues: 1
   debugAnimatorSpeed: 0
   debugMotionSpeed: 0
@@ -607,6 +726,10 @@ MonoBehaviour:
   debugIsMoving: 0
   debugAirborne: 0
   debugFreeFall: 0
+  debugFlying: 0
+  debugFlightSpeed: 0
+  debugWallSliding: 0
+  debugWallSlideSide: 0
   debugJumpTriggered: 0
   debugLandingTriggered: 0
   debugLandingSeverity: 0

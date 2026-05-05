@@ -518,14 +518,9 @@ public class TrouEtroit : MonoBehaviour
 
         if (IsConcaveMeshCollider(primary))
         {
-            Debug.LogWarning("TrouEtroit: MeshCollider concave detecte, ajout d'un BoxCollider Trigger pour l'interaction.", this);
             return CreateBoxTrigger(primary);
         }
 
-        if (!primary.isTrigger)
-        {
-            Debug.LogWarning("TrouEtroit: le collider d'interaction n'etait pas en Trigger. Il a ete force en Trigger.", this);
-        }
         primary.isTrigger = true;
         return primary;
     }

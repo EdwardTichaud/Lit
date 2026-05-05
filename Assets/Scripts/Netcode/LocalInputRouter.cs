@@ -15,6 +15,7 @@ public static class LocalInputRouter
         Inventory,
         LeftShoulder,
         RightShoulder,
+        LocomotionMode,
         Multi,
         Start
     }
@@ -28,6 +29,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> Inventory;
     public static event Action<InputAction.CallbackContext> LeftShoulder;
     public static event Action<InputAction.CallbackContext> RightShoulder;
+    public static event Action<InputAction.CallbackContext> LocomotionMode;
     public static event Action<InputAction.CallbackContext> Multi;
     public static event Action<InputAction.CallbackContext> Start;
     public static event Action CameraRecenter;
@@ -41,6 +43,7 @@ public static class LocalInputRouter
     private static Vector2 cameraPointerDelta;
     private static Vector2 cameraPointerPosition;
     private static float cameraZoomValue;
+    private static float flightVerticalValue;
     private static float cameraPointerScrollValue;
     private static bool cameraOrbitModifierPressed;
     private static bool cameraPanModifierPressed;
@@ -57,6 +60,7 @@ public static class LocalInputRouter
     public static Vector2 CameraPointerDelta => cameraPointerDelta;
     public static Vector2 CameraPointerPosition => cameraPointerPosition;
     public static float CameraZoomValue => cameraZoomValue;
+    public static float FlightVerticalValue => flightVerticalValue;
     public static float CameraPointerScrollValue => cameraPointerScrollValue;
     public static bool CameraOrbitModifierPressed => cameraOrbitModifierPressed;
     public static bool CameraPanModifierPressed => cameraPanModifierPressed;
@@ -137,6 +141,16 @@ public static class LocalInputRouter
         }
 
         cameraZoomValue = value;
+    }
+
+    internal static void SetFlightVerticalValue(float value)
+    {
+        if (JoinSyncSystem.IsGameplayBlocked)
+        {
+            value = 0f;
+        }
+
+        flightVerticalValue = Mathf.Clamp(value, -1f, 1f);
     }
 
     internal static void SetCameraPointerScrollValue(float value)
@@ -291,6 +305,16 @@ public static class LocalInputRouter
         RightShoulder?.Invoke(context);
     }
 
+    internal static void RaiseLocomotionMode(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.LocomotionMode))
+        {
+            return;
+        }
+
+        LocomotionMode?.Invoke(context);
+    }
+
     internal static void RaiseMulti(InputAction.CallbackContext context)
     {
         if (!AllowInput(InputGate.Multi))
@@ -335,6 +359,7 @@ public static class LocalInputRouter
     internal static void ResetMove()
     {
         SetRightShoulderPressed(false);
+        SetFlightVerticalValue(0f);
         SetMoveValue(Vector2.zero);
     }
 
@@ -348,6 +373,7 @@ public static class LocalInputRouter
         cameraPointerDelta = Vector2.zero;
         cameraPointerPosition = Vector2.zero;
         cameraZoomValue = 0f;
+        flightVerticalValue = 0f;
         cameraPointerScrollValue = 0f;
         cameraOrbitModifierPressed = false;
         cameraPanModifierPressed = false;

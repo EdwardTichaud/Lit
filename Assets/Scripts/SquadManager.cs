@@ -106,6 +106,7 @@ public class SquadManager : MonoBehaviour
     private float nextMoveTime;
     private int inputLockCount;
     private bool jumpRequested;
+    private bool locomotionModeRequested;
     private bool toggleTorchRequested;
     private bool takeAllRequested;
     private bool warnedMissingSquadUI;
@@ -149,6 +150,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.LeftShoulder += OnLeftShoulderPerformed;
+        LocalInputRouter.LocomotionMode += OnLocomotionModePerformed;
         LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
     }
 
@@ -160,6 +162,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
+        LocalInputRouter.LocomotionMode -= OnLocomotionModePerformed;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
         DeactivateStarterMotorIntegration();
@@ -1291,13 +1294,28 @@ public class SquadManager : MonoBehaviour
         {
             DeactivateStarterMotorIntegration();
             jumpRequested = false;
+            locomotionModeRequested = false;
             return;
+        }
+
+        bool inputBlocked = InputFocusStack.HasAnyFocus();
+        if (!inputBlocked && locomotionModeRequested && !IsMultiplayerActive())
+        {
+            useStarterMotorForLocalPlayer = true;
         }
 
         StarterMotorPlayerIntegration starterMotorIntegration = RefreshStarterMotorIntegration();
         if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
         {
-            bool inputBlocked = InputFocusStack.HasAnyFocus();
+            if (!inputBlocked && locomotionModeRequested)
+            {
+                starterMotorIntegration.ToggleFlightMode();
+            }
+
+            bool shoulderPressed = !inputBlocked && LocalInputRouter.RightShoulderPressed;
+            starterMotorIntegration.SetBoostInput(shoulderPressed);
+            starterMotorIntegration.SetSprintInput(shoulderPressed);
+            starterMotorIntegration.SetFlightVerticalInput(inputBlocked ? 0f : LocalInputRouter.FlightVerticalValue);
             starterMotorIntegration.SetMoveInput(inputBlocked ? Vector2.zero : moveInput);
             if (!inputBlocked && jumpRequested)
             {
@@ -1305,6 +1323,7 @@ public class SquadManager : MonoBehaviour
             }
 
             jumpRequested = false;
+            locomotionModeRequested = false;
             return;
         }
 
@@ -1312,14 +1331,16 @@ public class SquadManager : MonoBehaviour
         if (controller == null)
         {
             jumpRequested = false;
+            locomotionModeRequested = false;
             return;
         }
 
-        if (InputFocusStack.HasAnyFocus() || controller.IsMovementInputSuppressed)
+        if (inputBlocked || controller.IsMovementInputSuppressed)
         {
             controller.SetSprintModifier(false);
             controller.Move(Vector2.zero);
             jumpRequested = false;
+            locomotionModeRequested = false;
             return;
         }
 
@@ -1337,6 +1358,7 @@ public class SquadManager : MonoBehaviour
         }
 
         jumpRequested = false;
+        locomotionModeRequested = false;
     }
 
     private void StopControlledCharacter()
@@ -1498,6 +1520,16 @@ public class SquadManager : MonoBehaviour
         }
 
         jumpRequested = true;
+    }
+
+    private void OnLocomotionModePerformed(InputAction.CallbackContext context)
+    {
+        if (IsInputLocked())
+        {
+            return;
+        }
+
+        locomotionModeRequested = true;
     }
 
     private void OnTakeAllPerformed(InputAction.CallbackContext context)

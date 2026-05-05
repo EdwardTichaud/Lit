@@ -45,10 +45,17 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
     [SerializeField] private Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
 
     [Header("UI - Feedback")]
+    [SerializeField] private string solvedMessage = "Enigme resolue.";
+    [SerializeField, Min(0f)] private float solvedFeedbackDelay = 2f;
+    [SerializeField, Min(0f)] private float attemptFeedbackDuration = 1f;
     [SerializeField] private string incorrectAnswerMessage = "Ce n'est pas la bonne phrase.";
     [SerializeField] private string sentenceUnavailableMessage = "La phrase demandee n'est pas disponible.";
     [SerializeField] private string alreadySolvedMessage = "Cette enigme a deja ete resolue.";
     [SerializeField] private string invalidConfigurationMessage = "Cette enigme n'est pas configuree correctement.";
+
+    [Header("Audio")]
+    [SerializeField] private AudioClipSO successSfx;
+    [SerializeField] private AudioClipSO failureSfx;
 
     [Header("UI - Parent")]
     [SerializeField] private Transform boxesPanel;
@@ -71,6 +78,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
     private uint netcodeId;
     private bool awaitingServerResponse;
     private bool isSolved;
+    private bool waitingForSolvedFeedbackClose;
+    private bool applySolvedStateAfterFeedbackClose;
+    private bool invokeSolvedEventAfterFeedbackClose;
 
     public bool IsSolved => isSolved;
     public bool PlayOnce => playOnce;
@@ -279,8 +289,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         if (playOnce && isSolved)
         {
             awaitingServerResponse = false;
-            ReadableSentencePuzzleUI.SetInteractable(this, true);
-            ReadableSentencePuzzleUI.SetFeedback(this, alreadySolvedMessage, isError: true);
+            ShowAttemptFailureFeedback(alreadySolvedMessage);
             return;
         }
 
@@ -290,8 +299,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         if (!CanUse(character, requireLocalControl: true, rangePadding: 0f))
         {
             awaitingServerResponse = false;
-            ReadableSentencePuzzleUI.SetInteractable(this, true);
-            ReadableSentencePuzzleUI.SetFeedback(this, invalidConfigurationMessage, isError: true);
+            ShowAttemptFailureFeedback(invalidConfigurationMessage);
             return;
         }
 
@@ -367,9 +375,16 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
 
         if (result == SolveAttemptResult.Success)
         {
-            ReadableSentencePuzzleUI.Dismiss(this);
+            PlayResultSfx(successSfx);
+            bool delayPanelClose = TryShowSolvedFeedbackBeforeDismiss();
             if (!IsNetworked())
             {
+                if (delayPanelClose)
+                {
+                    DeferSolvedStateApply(playOnce && isSolved, invokeLocalEvent: playOnce && isSolved);
+                    return;
+                }
+
                 ApplySolvedState(playOnce && isSolved, invokeLocalEvent: playOnce && isSolved);
                 return;
             }
@@ -383,18 +398,69 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
                 }
                 else
                 {
-                    ApplySolvedState(true, invokeLocalEvent: true);
+                    if (delayPanelClose)
+                    {
+                        DeferSolvedStateApply(true, invokeLocalEvent: true);
+                    }
+                    else
+                    {
+                        ApplySolvedState(true, invokeLocalEvent: true);
+                    }
                 }
             }
             return;
         }
 
-        ReadableSentencePuzzleUI.SetInteractable(this, true);
-        ReadableSentencePuzzleUI.SetFeedback(this, ResolveFailureMessage(result), isError: true);
+        ShowAttemptFailureFeedback(ResolveFailureMessage(result));
+    }
+
+    private void ShowAttemptFailureFeedback(string message)
+    {
+        if (!ReadableSentencePuzzleUI.IsShowingFor(this))
+        {
+            return;
+        }
+
+        PlayResultSfx(failureSfx);
+        ReadableSentencePuzzleUI.BeginFeedback(
+            this,
+            message,
+            isError: true,
+            GetAttemptFeedbackDuration());
+    }
+
+    private void ShowSolvedFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(solvedMessage))
+        {
+            InfoBoxUI.TryShow(solvedMessage);
+        }
+    }
+
+    private void PlayResultSfx(AudioClipSO clip)
+    {
+        if (clip == null || clip.audioClip == null)
+        {
+            return;
+        }
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayClip(clip, transform.position);
+            return;
+        }
+
+        AudioSource.PlayClipAtPoint(clip.audioClip, transform.position, Mathf.Clamp01(clip.volume));
     }
 
     public void HandleSolvedStateReplicated()
     {
+        if (waitingForSolvedFeedbackClose)
+        {
+            DeferSolvedStateApply(true, invokeLocalEvent: true);
+            return;
+        }
+
         ApplySolvedState(true, invokeLocalEvent: true);
     }
 
@@ -506,7 +572,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
     private void ApplySolvedState(bool solved, bool invokeLocalEvent)
     {
         isSolved = solved;
-        if (playOnce && isSolved)
+        if (playOnce && isSolved && !waitingForSolvedFeedbackClose)
         {
             ReadableSentencePuzzleUI.Dismiss(this);
         }
@@ -516,6 +582,72 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         {
             SafeInvoke(onSolved, "client");
         }
+    }
+
+    private bool TryShowSolvedFeedbackBeforeDismiss()
+    {
+        if (string.IsNullOrWhiteSpace(solvedMessage) || !ReadableSentencePuzzleUI.IsShowingFor(this))
+        {
+            ReadableSentencePuzzleUI.Dismiss(this);
+            ShowSolvedFeedback();
+            return false;
+        }
+
+        applySolvedStateAfterFeedbackClose = false;
+        invokeSolvedEventAfterFeedbackClose = false;
+        waitingForSolvedFeedbackClose = ReadableSentencePuzzleUI.BeginFeedbackAndDismiss(
+            this,
+            solvedMessage,
+            isError: false,
+            GetAttemptFeedbackDuration(),
+            OnSolvedFeedbackDismissed);
+
+        if (!waitingForSolvedFeedbackClose)
+        {
+            ReadableSentencePuzzleUI.Dismiss(this);
+            ShowSolvedFeedback();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void OnSolvedFeedbackDismissed()
+    {
+        waitingForSolvedFeedbackClose = false;
+
+        if (!applySolvedStateAfterFeedbackClose)
+        {
+            invokeSolvedEventAfterFeedbackClose = false;
+            return;
+        }
+
+        bool invokeLocalEvent = invokeSolvedEventAfterFeedbackClose;
+        applySolvedStateAfterFeedbackClose = false;
+        invokeSolvedEventAfterFeedbackClose = false;
+        ApplySolvedState(true, invokeLocalEvent);
+    }
+
+    private void DeferSolvedStateApply(bool solved, bool invokeLocalEvent)
+    {
+        if (!waitingForSolvedFeedbackClose)
+        {
+            ApplySolvedState(solved, invokeLocalEvent);
+            return;
+        }
+
+        applySolvedStateAfterFeedbackClose |= solved;
+        invokeSolvedEventAfterFeedbackClose |= invokeLocalEvent;
+    }
+
+    private float GetAttemptFeedbackDuration()
+    {
+        if (attemptFeedbackDuration > 0f)
+        {
+            return attemptFeedbackDuration;
+        }
+
+        return Mathf.Max(0f, solvedFeedbackDelay);
     }
 
     private string ResolveFailureMessage(SolveAttemptResult result)
@@ -603,6 +735,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         currentCharacter = null;
         interactionTarget = null;
         awaitingServerResponse = false;
+        waitingForSolvedFeedbackClose = false;
+        applySolvedStateAfterFeedbackClose = false;
+        invokeSolvedEventAfterFeedbackClose = false;
     }
 
     private GameObject CreateInstance(GameObject source, Transform parent)

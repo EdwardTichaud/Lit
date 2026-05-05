@@ -99,10 +99,12 @@ public static class StarterMotorTestSetupBuilder
         ValidateTinyDropDoesNotTriggerLanding(testCharacter, motor, tickMethod);
         ValidateMediumFallLanding(testCharacter, motor, tickMethod);
         ValidateHighFallLanding(testCharacter, motor, tickMethod);
+        ValidateFlightCruiseAndLandingRecovery(testCharacter, motor, tickMethod);
+        ValidateFlightLandingDoesNotGlide(testCharacter, motor, tickMethod);
         ValidateAnimationDriving(testCharacter, motor, animatorDriver, animator, tickMethod, animationTickMethod);
         ValidateLadderMotorCompatibility(testCharacter, motor, tickMethod);
 
-        Debug.Log("Starter motor validation passed: planar movement, braking, hard reversal, wall collision, grounding, slope grounding, small-drop stability, edge falling, jump, free fall, landing, minimal animation driving and ladder motor suspension behaved correctly.");
+        Debug.Log("Starter motor validation passed: planar movement, braking, hard reversal, wall collision, grounding, slope grounding, small-drop stability, edge falling, jump, free fall, landing, flight cruise/landing recovery, flight landing glide control, minimal animation driving and ladder motor suspension behaved correctly.");
     }
 
     private static void EnsureTestAnimatorController()
@@ -185,6 +187,7 @@ public static class StarterMotorTestSetupBuilder
             body.useGravity = false;
             body.isKinematic = true;
             body.detectCollisions = false;
+            body.interpolation = RigidbodyInterpolation.None;
         }
 
         foreach (CapsuleCollider capsule in root.GetComponents<CapsuleCollider>())
@@ -216,7 +219,7 @@ public static class StarterMotorTestSetupBuilder
         controller.height = 1.8f;
         controller.radius = 0.45f;
         controller.slopeLimit = 50f;
-        controller.stepOffset = 0.35f;
+        controller.stepOffset = 0f;
         controller.skinWidth = 0.06f;
         controller.minMoveDistance = 0f;
     }
@@ -228,7 +231,8 @@ public static class StarterMotorTestSetupBuilder
         serializedMotor.FindProperty("cameraTransform").objectReferenceValue = null;
         serializedMotor.FindProperty("autoResolveMainCamera").boolValue = true;
         serializedMotor.FindProperty("inputDeadZone").floatValue = 0.12f;
-        serializedMotor.FindProperty("maxMoveSpeed").floatValue = 3.25f;
+        serializedMotor.FindProperty("walkMoveSpeed").floatValue = 5f;
+        serializedMotor.FindProperty("maxMoveSpeed").floatValue = 6.5f;
         serializedMotor.FindProperty("acceleration").floatValue = 11f;
         serializedMotor.FindProperty("deceleration").floatValue = 14f;
         serializedMotor.FindProperty("hardReverseAngle").floatValue = 135f;
@@ -242,6 +246,14 @@ public static class StarterMotorTestSetupBuilder
         serializedMotor.FindProperty("groundProbeStartOffset").floatValue = 0.08f;
         serializedMotor.FindProperty("maxGroundAngle").floatValue = 50f;
         serializedMotor.FindProperty("groundedGraceTime").floatValue = 0.1f;
+        serializedMotor.FindProperty("enableStepTraversal").boolValue = true;
+        serializedMotor.FindProperty("maxStepRise").floatValue = 0.35f;
+        serializedMotor.FindProperty("maxStepDrop").floatValue = 0.45f;
+        serializedMotor.FindProperty("minStepRise").floatValue = 0.03f;
+        serializedMotor.FindProperty("stepSearchDistance").floatValue = 0.9f;
+        serializedMotor.FindProperty("stepSearchExtraDistance").floatValue = 0.22f;
+        serializedMotor.FindProperty("stepSurfaceInset").floatValue = 0.08f;
+        serializedMotor.FindProperty("stepContactOffset").floatValue = 0.03f;
         serializedMotor.FindProperty("gravity").floatValue = -24f;
         serializedMotor.FindProperty("maxFallSpeed").floatValue = 35f;
         serializedMotor.FindProperty("groundedStickVelocity").floatValue = 2f;
@@ -250,6 +262,29 @@ public static class StarterMotorTestSetupBuilder
         serializedMotor.FindProperty("jumpInputBufferTime").floatValue = 0.12f;
         serializedMotor.FindProperty("jumpGroundedGraceTime").floatValue = 0.08f;
         serializedMotor.FindProperty("jumpGroundIgnoreTime").floatValue = 0.12f;
+        serializedMotor.FindProperty("enableFlight").boolValue = true;
+        serializedMotor.FindProperty("flightTakeoffVerticalSpeed").floatValue = 6.5f;
+        serializedMotor.FindProperty("flightTakeoffDuration").floatValue = 0.45f;
+        serializedMotor.FindProperty("flightTakeoffDamping").floatValue = 16f;
+        serializedMotor.FindProperty("flightCruiseSpeed").floatValue = 33f;
+        serializedMotor.FindProperty("flightBoostSpeed").floatValue = 81f;
+        serializedMotor.FindProperty("flightAcceleration").floatValue = 54f;
+        serializedMotor.FindProperty("flightBoostAcceleration").floatValue = 126f;
+        serializedMotor.FindProperty("flightDeceleration").floatValue = 36f;
+        serializedMotor.FindProperty("flightVerticalSpeed").floatValue = 24f;
+        serializedMotor.FindProperty("flightVerticalAcceleration").floatValue = 66f;
+        serializedMotor.FindProperty("flightVerticalDeceleration").floatValue = 54f;
+        serializedMotor.FindProperty("flightVerticalDeadZone").floatValue = 0.05f;
+        serializedMotor.FindProperty("flightIdleSpeedThreshold").floatValue = 0.08f;
+        serializedMotor.FindProperty("flightTurnRate").floatValue = 760f;
+        serializedMotor.FindProperty("flightBoostTurnRate").floatValue = 460f;
+        serializedMotor.FindProperty("flightExitDownwardVelocity").floatValue = 1.5f;
+        serializedMotor.FindProperty("flightBoostKickSpeed").floatValue = 4.5f;
+        serializedMotor.FindProperty("flightGroundContactLandingMinSpeed").floatValue = 2.75f;
+        serializedMotor.FindProperty("flightGroundContactLandingMinDownwardSpeed").floatValue = 0.2f;
+        serializedMotor.FindProperty("flightLandingPlanarVelocityRetention").floatValue = 0.25f;
+        serializedMotor.FindProperty("flightLandingDampingMultiplier").floatValue = 1f;
+        serializedMotor.FindProperty("flightLandingControlGraceTime").floatValue = 0.08f;
         serializedMotor.FindProperty("freeFallMinAirborneTime").floatValue = 0.18f;
         serializedMotor.FindProperty("freeFallMinDownwardSpeed").floatValue = 1.5f;
         serializedMotor.FindProperty("landingMinAirborneTime").floatValue = 0.14f;
@@ -260,6 +295,11 @@ public static class StarterMotorTestSetupBuilder
         serializedMotor.FindProperty("lightLandingDamping").floatValue = 14f;
         serializedMotor.FindProperty("mediumLandingDamping").floatValue = 26f;
         serializedMotor.FindProperty("heavyLandingDamping").floatValue = 38f;
+        serializedMotor.FindProperty("enableAirborneWallSlide").boolValue = true;
+        serializedMotor.FindProperty("wallSlideMaxNormalY").floatValue = 0.35f;
+        serializedMotor.FindProperty("wallSlideContactMemoryTime").floatValue = 0.08f;
+        serializedMotor.FindProperty("wallSlideMinDownwardSpeed").floatValue = 8f;
+        serializedMotor.FindProperty("wallSlideGravityMultiplier").floatValue = 1.25f;
         serializedMotor.FindProperty("showDebugValues").boolValue = true;
         serializedMotor.FindProperty("showDebugGizmos").boolValue = true;
         serializedMotor.ApplyModifiedPropertiesWithoutUndo();
@@ -272,6 +312,7 @@ public static class StarterMotorTestSetupBuilder
         serializedBridge.FindProperty("readKeyboard").boolValue = true;
         serializedBridge.FindProperty("readGamepad").boolValue = true;
         serializedBridge.FindProperty("readJump").boolValue = true;
+        serializedBridge.FindProperty("readFlightControls").boolValue = true;
         serializedBridge.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -303,18 +344,32 @@ public static class StarterMotorTestSetupBuilder
         serializedDriver.FindProperty("motor").objectReferenceValue = motor;
         serializedDriver.FindProperty("animator").objectReferenceValue = animator;
         serializedDriver.FindProperty("disableRootMotion").boolValue = true;
-        serializedDriver.FindProperty("motorFullSpeed").floatValue = 3.25f;
+        serializedDriver.FindProperty("motorFullSpeed").floatValue = 6.5f;
         serializedDriver.FindProperty("locomotionBlendMax").floatValue = 3.25f;
         serializedDriver.FindProperty("speedDampTime").floatValue = 0.05f;
         serializedDriver.FindProperty("motionSpeedDampTime").floatValue = 0.05f;
         serializedDriver.FindProperty("movingEnterSpeedThreshold").floatValue = 0.32f;
         serializedDriver.FindProperty("movingExitSpeedThreshold").floatValue = 0.12f;
         serializedDriver.FindProperty("landingVisualHoldTime").floatValue = 0.34f;
+        serializedDriver.FindProperty("flightLandingVisualHoldTime").floatValue = 0.16f;
         serializedDriver.FindProperty("crossFadeJumpStates").boolValue = true;
         serializedDriver.FindProperty("jumpCrossFadeDuration").floatValue = 0.08f;
         serializedDriver.FindProperty("fallCrossFadeDuration").floatValue = 0.1f;
         serializedDriver.FindProperty("landingCrossFadeDuration").floatValue = 0.08f;
         serializedDriver.FindProperty("animatorLayer").intValue = 0;
+        serializedDriver.FindProperty("flightFullSpeed").floatValue = 81f;
+        serializedDriver.FindProperty("flightMoveSpeedThreshold").floatValue = 0.7f;
+        serializedDriver.FindProperty("flightMoveExitSpeedThreshold").floatValue = 0.35f;
+        serializedDriver.FindProperty("flightCrossFadeDuration").floatValue = 0.08f;
+        serializedDriver.FindProperty("flightIdleMotionSpeed").floatValue = 0.85f;
+        serializedDriver.FindProperty("flightBoostMotionSpeed").floatValue = 1.45f;
+        serializedDriver.FindProperty("flightTakeoffMotionSpeed").floatValue = 1f;
+        serializedDriver.FindProperty("flightBoostVisualHoldTime").floatValue = 0.22f;
+        serializedDriver.FindProperty("flightDashCrossFadeDuration").floatValue = 0.04f;
+        serializedDriver.FindProperty("flightDashExitNormalizedTime").floatValue = 0.98f;
+        serializedDriver.FindProperty("flyingIdleStateName").stringValue = "Flying_Idle";
+        serializedDriver.FindProperty("flyingMoveStateName").stringValue = "Flying_Loop";
+        serializedDriver.FindProperty("flyingDashStateName").stringValue = "Flying_Dash";
         serializedDriver.FindProperty("showDebugValues").boolValue = true;
         serializedDriver.ApplyModifiedPropertiesWithoutUndo();
     }
@@ -842,6 +897,118 @@ public static class StarterMotorTestSetupBuilder
         {
             throw new InvalidOperationException(
                 $"Starter motor validation failed: high fall expected Heavy severity, got {observedSeverity}.");
+        }
+    }
+
+    private static void ValidateFlightCruiseAndLandingRecovery(
+        GameObject character,
+        StarterInspiredThirdPersonMotor motor,
+        MethodInfo tickMethod)
+    {
+        ResetCharacter(character, motor, Vector3.zero);
+
+        motor.SetFlightMode(true);
+        TickMotor(motor, tickMethod, 34);
+        if (!motor.FlightActive)
+        {
+            throw new InvalidOperationException("Starter motor flight validation failed: flight did not remain active after takeoff.");
+        }
+
+        float xBeforeCruise = character.transform.position.x;
+        motor.SetMoveInput(Vector2.left);
+        TickMotor(motor, tickMethod, 20);
+        if (!motor.FlightActive)
+        {
+            throw new InvalidOperationException("Starter motor flight validation failed: passive ground contact ended flight during cruise.");
+        }
+
+        if (xBeforeCruise - character.transform.position.x < 0.5f || motor.FlightSpeed <= 2f)
+        {
+            throw new InvalidOperationException(
+                $"Starter motor flight validation failed: cruise movement too small, dx={xBeforeCruise - character.transform.position.x:0.###}, speed={motor.FlightSpeed:0.###}.");
+        }
+
+        ResetCharacter(character, motor, new Vector3(0f, 3f, 0f));
+        motor.SetFlightMode(true);
+        TickMotor(motor, tickMethod, 34);
+        motor.SetMoveInput(Vector2.zero);
+        motor.SetFlightVerticalInput(-1f);
+        bool landedFromFlight = false;
+        for (int i = 0; i < 150; i++)
+        {
+            TickMotor(motor, tickMethod, 1);
+            landedFromFlight |= motor.LandingFromFlightTriggered;
+            if (!motor.FlightActive && motor.StableGrounded)
+            {
+                break;
+            }
+        }
+
+        if (motor.FlightActive || !motor.StableGrounded || !landedFromFlight)
+        {
+            throw new InvalidOperationException(
+                $"Starter motor flight validation failed: descent did not recover grounded locomotion, flight={motor.FlightActive}, stable={motor.StableGrounded}, landedFromFlight={landedFromFlight}.");
+        }
+
+        motor.SetFlightVerticalInput(0f);
+        motor.SetMoveInput(Vector2.left);
+        float xBeforeGroundMove = character.transform.position.x;
+        TickMotor(motor, tickMethod, 60);
+        if (motor.ActualSpeed < 4.8f || character.transform.position.x >= xBeforeGroundMove - 2.5f)
+        {
+            throw new InvalidOperationException(
+                $"Starter motor flight validation failed: grounded walk speed did not recover after flight, speed={motor.ActualSpeed:0.###}, dx={xBeforeGroundMove - character.transform.position.x:0.###}, state={motor.CurrentState}.");
+        }
+
+        motor.SetSprintInput(true);
+        TickMotor(motor, tickMethod, 30);
+        if (motor.ActualSpeed < 6f)
+        {
+            throw new InvalidOperationException(
+                $"Starter motor flight validation failed: grounded sprint speed did not recover after flight, speed={motor.ActualSpeed:0.###}, state={motor.CurrentState}.");
+        }
+    }
+
+    private static void ValidateFlightLandingDoesNotGlide(
+        GameObject character,
+        StarterInspiredThirdPersonMotor motor,
+        MethodInfo tickMethod)
+    {
+        ResetCharacter(character, motor, new Vector3(0f, 3f, 0f));
+
+        motor.SetFlightMode(true);
+        TickMotor(motor, tickMethod, 34);
+        motor.SetMoveInput(Vector2.left);
+        TickMotor(motor, tickMethod, 20);
+        motor.SetFlightVerticalInput(-1f);
+
+        bool landedFromFlight = false;
+        for (int i = 0; i < 180; i++)
+        {
+            TickMotor(motor, tickMethod, 1);
+            landedFromFlight |= motor.LandingFromFlightTriggered;
+            if (!motor.FlightActive && motor.StableGrounded)
+            {
+                break;
+            }
+        }
+
+        if (motor.FlightActive || !motor.StableGrounded || !landedFromFlight)
+        {
+            throw new InvalidOperationException(
+                $"Starter motor flight glide validation failed: moving descent did not land cleanly, flight={motor.FlightActive}, stable={motor.StableGrounded}, landedFromFlight={landedFromFlight}.");
+        }
+
+        motor.SetMoveInput(Vector2.zero);
+        motor.SetFlightVerticalInput(0f);
+        Vector3 positionAfterLanding = character.transform.position;
+        TickMotor(motor, tickMethod, 30);
+
+        float planarDrift = Vector3.ProjectOnPlane(character.transform.position - positionAfterLanding, Vector3.up).magnitude;
+        if (planarDrift > 0.35f || motor.ActualSpeed > 0.45f)
+        {
+            throw new InvalidOperationException(
+                $"Starter motor flight glide validation failed: landing retained too much planar drift, drift={planarDrift:0.###}, speed={motor.ActualSpeed:0.###}, state={motor.CurrentState}.");
         }
     }
 

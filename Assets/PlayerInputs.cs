@@ -181,6 +181,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LocomotionMode"",
+                    ""type"": ""Button"",
+                    ""id"": ""e6d6a6ea-b84e-4a41-8d8e-c99cfeefc037"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -390,6 +399,28 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""RightShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""28834bd9-832b-4a14-b4d6-d2f44fc418ee"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""LocomotionMode"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fdbddc11-3aac-4e3c-a8a5-70e857509a2b"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""LocomotionMode"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -767,6 +798,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_Multi = m_Player.FindAction("Multi", throwIfNotFound: true);
         m_Player_Start = m_Player.FindAction("Start", throwIfNotFound: true);
         m_Player_RightShoulder = m_Player.FindAction("RightShoulder", throwIfNotFound: true);
+        m_Player_LocomotionMode = m_Player.FindAction("LocomotionMode", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_Pan = m_Camera.FindAction("Pan", throwIfNotFound: true);
@@ -870,6 +902,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Multi;
     private readonly InputAction m_Player_Start;
     private readonly InputAction m_Player_RightShoulder;
+    private readonly InputAction m_Player_LocomotionMode;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -921,6 +954,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/RightShoulder".
         /// </summary>
         public InputAction @RightShoulder => m_Wrapper.m_Player_RightShoulder;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/LocomotionMode".
+        /// </summary>
+        public InputAction @LocomotionMode => m_Wrapper.m_Player_LocomotionMode;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -977,6 +1014,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @RightShoulder.started += instance.OnRightShoulder;
             @RightShoulder.performed += instance.OnRightShoulder;
             @RightShoulder.canceled += instance.OnRightShoulder;
+            @LocomotionMode.started += instance.OnLocomotionMode;
+            @LocomotionMode.performed += instance.OnLocomotionMode;
+            @LocomotionMode.canceled += instance.OnLocomotionMode;
         }
 
         /// <summary>
@@ -1018,6 +1058,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @RightShoulder.started -= instance.OnRightShoulder;
             @RightShoulder.performed -= instance.OnRightShoulder;
             @RightShoulder.canceled -= instance.OnRightShoulder;
+            @LocomotionMode.started -= instance.OnLocomotionMode;
+            @LocomotionMode.performed -= instance.OnLocomotionMode;
+            @LocomotionMode.canceled -= instance.OnLocomotionMode;
         }
 
         /// <summary>
@@ -1388,6 +1431,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRightShoulder(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LocomotionMode" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLocomotionMode(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

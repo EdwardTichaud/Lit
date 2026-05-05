@@ -4,6 +4,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class StarterMotorPlayerIntegration : MonoBehaviour
 {
+    private const float MinimumCharacterControllerStepOffset = 0.001f;
+
     [Header("Activation")]
     [SerializeField] private bool allowStarterMotorControl = true;
     [SerializeField] private bool blockDuringMultiplayer = true;
@@ -11,11 +13,13 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
     [Header("References")]
     [SerializeField] private StarterInspiredThirdPersonMotor motor;
     [SerializeField] private StarterMotorAnimatorDriver animatorDriver;
+    [SerializeField] private Animator starterAnimator;
     [SerializeField] private CharacterController characterController;
     [SerializeField] private SquadCharacterController legacyController;
     [SerializeField] private Rigidbody legacyRigidbody;
     [SerializeField] private CapsuleCollider legacyCapsule;
     [SerializeField] private StarterMotorLocalInputBridge localInputBridge;
+    [SerializeField] private StarterMotorFlightFeedback flightFeedback;
 
     [Header("Compatibility")]
     [SerializeField] private bool configureCharacterControllerFromCapsule = true;
@@ -27,7 +31,9 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
     private bool previousCharacterControllerEnabled;
     private bool previousMotorEnabled;
     private bool previousAnimatorDriverEnabled;
+    private AnimatorUpdateMode previousAnimatorUpdateMode;
     private bool previousLocalInputBridgeEnabled;
+    private bool previousFlightFeedbackEnabled;
     private bool previousRigidbodyIsKinematic;
     private bool previousRigidbodyUseGravity;
     private bool previousRigidbodyDetectCollisions;
@@ -39,6 +45,7 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
 
     public bool IsStarterMotorActive => active;
     public bool CanUseStarterMotor => allowStarterMotorControl && !IsBlockedByMultiplayer();
+    public bool FlightActive => active && motor != null && motor.FlightActive;
 
     public bool TryGetActiveCharacterController(out CharacterController activeCharacterController)
     {
@@ -138,6 +145,56 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
         motor.RequestJump();
     }
 
+    public void ToggleFlightMode()
+    {
+        if (!active || motor == null)
+        {
+            return;
+        }
+
+        motor.ToggleFlightMode();
+    }
+
+    public void SetFlightMode(bool enabled)
+    {
+        if (!active || motor == null)
+        {
+            return;
+        }
+
+        motor.SetFlightMode(enabled);
+    }
+
+    public void SetBoostInput(bool boost)
+    {
+        if (!active || motor == null)
+        {
+            return;
+        }
+
+        motor.SetBoostInput(boost);
+    }
+
+    public void SetSprintInput(bool sprint)
+    {
+        if (!active || motor == null)
+        {
+            return;
+        }
+
+        motor.SetSprintInput(sprint);
+    }
+
+    public void SetFlightVerticalInput(float verticalInput)
+    {
+        if (!active || motor == null)
+        {
+            return;
+        }
+
+        motor.SetFlightVerticalInput(verticalInput);
+    }
+
     public void Stop()
     {
         if (motor != null)
@@ -170,7 +227,18 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
             animatorDriver.enabled = false;
         }
 
-        return characterController != null && motor != null && animatorDriver != null;
+        if (flightFeedback == null)
+        {
+            flightFeedback = gameObject.GetComponent<StarterMotorFlightFeedback>();
+            if (flightFeedback == null)
+            {
+                flightFeedback = gameObject.AddComponent<StarterMotorFlightFeedback>();
+            }
+
+            flightFeedback.enabled = false;
+        }
+
+        return characterController != null && motor != null && animatorDriver != null && flightFeedback != null;
     }
 
     private void ApplyActiveState()
@@ -185,6 +253,10 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
 
         if (legacyController != null)
         {
+            motor.ConfigureGroundSpeedProfile(
+                legacyController.WalkMoveSpeed,
+                legacyController.MoveSpeed);
+            animatorDriver.ConfigureGroundSpeedReference(legacyController.MoveSpeed);
             legacyController.PushExternalLocomotionDriver();
             legacyControllerSuppressed = true;
         }
@@ -197,6 +269,7 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
             legacyRigidbody.isKinematic = true;
             legacyRigidbody.detectCollisions = true;
             legacyRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            legacyRigidbody.interpolation = RigidbodyInterpolation.None;
         }
 
         if (disableLegacyCapsuleWhileActive && legacyCapsule != null)
@@ -209,9 +282,26 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
             localInputBridge.enabled = false;
         }
 
+        if (starterAnimator != null)
+        {
+            starterAnimator.updateMode = AnimatorUpdateMode.Normal;
+            starterAnimator.applyRootMotion = false;
+        }
+
         characterController.enabled = true;
+        if (!characterController.enabled)
+        {
+            Debug.LogError(
+                $"Starter motor activation failed on '{name}': CharacterController did not enable.",
+                this);
+            active = true;
+            ApplyInactiveState();
+            return;
+        }
+
         motor.enabled = true;
         animatorDriver.enabled = true;
+        flightFeedback.enabled = true;
         motor.ResetMotionState();
 
         active = true;
@@ -235,6 +325,17 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
         if (animatorDriver != null)
         {
             animatorDriver.enabled = previousAnimatorDriverEnabled;
+        }
+
+        if (starterAnimator != null)
+        {
+            starterAnimator.updateMode = previousAnimatorUpdateMode;
+            starterAnimator.applyRootMotion = false;
+        }
+
+        if (flightFeedback != null)
+        {
+            flightFeedback.enabled = previousFlightFeedbackEnabled;
         }
 
         if (characterController != null)
@@ -281,7 +382,9 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
         previousCharacterControllerEnabled = characterController != null && characterController.enabled;
         previousMotorEnabled = motor != null && motor.enabled;
         previousAnimatorDriverEnabled = animatorDriver != null && animatorDriver.enabled;
+        previousAnimatorUpdateMode = starterAnimator != null ? starterAnimator.updateMode : AnimatorUpdateMode.Normal;
         previousLocalInputBridgeEnabled = localInputBridge != null && localInputBridge.enabled;
+        previousFlightFeedbackEnabled = flightFeedback != null && flightFeedback.enabled;
         previousLegacyCapsuleEnabled = legacyCapsule != null && legacyCapsule.enabled;
 
         if (legacyRigidbody == null)
@@ -313,6 +416,11 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
             animatorDriver = GetComponent<StarterMotorAnimatorDriver>();
         }
 
+        if (starterAnimator == null)
+        {
+            starterAnimator = GetComponent<Animator>();
+        }
+
         if (characterController == null)
         {
             characterController = GetComponent<CharacterController>();
@@ -337,6 +445,11 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
         {
             localInputBridge = GetComponent<StarterMotorLocalInputBridge>();
         }
+
+        if (flightFeedback == null)
+        {
+            flightFeedback = GetComponent<StarterMotorFlightFeedback>();
+        }
     }
 
     private void ConfigureCharacterController()
@@ -360,7 +473,7 @@ public sealed class StarterMotorPlayerIntegration : MonoBehaviour
         }
 
         characterController.slopeLimit = 50f;
-        characterController.stepOffset = 0.35f;
+        characterController.stepOffset = MinimumCharacterControllerStepOffset;
         characterController.skinWidth = 0.06f;
         characterController.minMoveDistance = 0f;
     }

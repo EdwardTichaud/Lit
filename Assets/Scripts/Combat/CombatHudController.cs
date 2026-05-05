@@ -18,22 +18,43 @@ public class CombatHudController : MonoBehaviour
 
     public static CombatHudController Instance { get; private set; }
 
-    private GameObject root;
-    private TextMeshProUGUI titleText;
-    private TextMeshProUGUI turnText;
-    private TextMeshProUGUI timerText;
-    private TextMeshProUGUI playerHpText;
-    private TextMeshProUGUI enemyHpText;
-    private TextMeshProUGUI prayerText;
-    private TextMeshProUGUI messageText;
-    private TextMeshProUGUI actionsText;
     [Header("Scene UI")]
+    [SerializeField] private bool allowRuntimeFallback;
     [SerializeField] private CanvasGroup battlePanelCanvasGroup;
     [SerializeField] private CanvasGroup baseAttackCanvasGroup;
+    [SerializeField] private Image playerHpFillImage;
+    [SerializeField] private Image enemyHpFillImage;
+    [SerializeField] private Image timerFillImage;
+    [SerializeField] private TextMeshProUGUI baseAttackText;
+
+    private GameObject root;
+
+    [Header("Scene Texts")]
+    [SerializeField] private TextMeshProUGUI titleText;
+    [SerializeField] private TextMeshProUGUI turnText;
+    [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private TextMeshProUGUI playerHpText;
+    [SerializeField] private TextMeshProUGUI enemyHpText;
+    [SerializeField] private TextMeshProUGUI prayerText;
+    [SerializeField] private TextMeshProUGUI messageText;
+    [SerializeField] private TextMeshProUGUI actionsText;
+
+    private TextMeshProUGUI runtimeTitleText;
+    private TextMeshProUGUI runtimeTurnText;
+    private TextMeshProUGUI runtimeTimerText;
+    private TextMeshProUGUI runtimePlayerHpText;
+    private TextMeshProUGUI runtimeEnemyHpText;
+    private TextMeshProUGUI runtimePrayerText;
+    private TextMeshProUGUI runtimeMessageText;
+    private TextMeshProUGUI runtimeActionsText;
+    private Image runtimePlayerHpFillImage;
+    private Image runtimeEnemyHpFillImage;
+    private Image runtimeTimerFillImage;
 
     private string activeSessionId;
     private TurnState currentTurn;
     private float timerEndsAt;
+    private float timerDuration = 1f;
     private bool playerActionLocked;
     private bool visible;
 
@@ -153,12 +174,32 @@ public class CombatHudController : MonoBehaviour
         string message)
     {
         BuildUi();
+        TurnState previousTurn = currentTurn;
+        bool previousActionLocked = playerActionLocked;
         activeSessionId = sessionId;
         currentTurn = turn;
-        timerEndsAt = Time.unscaledTime + Mathf.Max(0f, timerRemaining);
+        float sanitizedTimer = Mathf.Max(0f, timerRemaining);
+        if (turn != previousTurn || actionLocked != previousActionLocked || sanitizedTimer > timerDuration)
+        {
+            timerDuration = Mathf.Max(1f, sanitizedTimer);
+        }
+
+        timerEndsAt = Time.unscaledTime + sanitizedTimer;
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
         SetScenePanelVisibility(visible, turn == TurnState.Player);
+        ApplySnapshotToUi(
+            turn,
+            playerHp,
+            playerMaxHp,
+            enemyName,
+            enemyHp,
+            enemyMaxHp,
+            aliveEnemies,
+            totalEnemies,
+            prayerSupportCount,
+            damageReduction,
+            message);
 
         if (HasScenePanelUi())
         {
@@ -174,26 +215,6 @@ public class CombatHudController : MonoBehaviour
         {
             root.SetActive(visible);
         }
-
-        if (!visible)
-        {
-            return;
-        }
-
-        titleText.text = "Combat";
-        turnText.text = turn == TurnState.Player ? "Tour joueur" : "Tour ennemi";
-        playerHpText.text = $"Joueur: {playerHp}/{Mathf.Max(1, playerMaxHp)} PV";
-        enemyHpText.text = $"{enemyName}: {enemyHp}/{Mathf.Max(1, enemyMaxHp)} PV ({aliveEnemies}/{Mathf.Max(1, totalEnemies)})";
-        prayerText.text = prayerSupportCount > 0
-            ? $"Prieres de soutien: {prayerSupportCount} (-{Mathf.RoundToInt(damageReduction * 100f)}% degats)"
-            : "Prieres de soutien: 0";
-        messageText.text = message ?? string.Empty;
-        actionsText.text = turn == TurnState.Player
-            ? playerActionLocked
-                ? "Attaque de base en cours..."
-                : "RightShoulder: attaque de base | Inventaire: utiliser un item | Retour: passer"
-            : "Attente de l'action ennemie";
-        UpdateTimerText();
     }
 
     private void Hide()
@@ -217,7 +238,7 @@ public class CombatHudController : MonoBehaviour
         }
 
         LocalInputRouter.ConsumeInteract();
-        CombatSessionManager.EnsureInstance()?.RequestLocalPlayerAttack();
+        CombatSessionManager.Instance?.RequestLocalPlayerAttack();
     }
 
     private void OnRightShoulder(InputAction.CallbackContext context)
@@ -227,7 +248,7 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        CombatSessionManager.EnsureInstance()?.RequestLocalPlayerAttack();
+        CombatSessionManager.Instance?.RequestLocalPlayerAttack();
     }
 
     private void OnReturn(InputAction.CallbackContext context)
@@ -237,7 +258,7 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        CombatSessionManager.EnsureInstance()?.RequestLocalPlayerPass();
+        CombatSessionManager.Instance?.RequestLocalPlayerPass();
     }
 
     private bool CanSendPlayerAction()
@@ -246,18 +267,20 @@ public class CombatHudController : MonoBehaviour
             && currentTurn == TurnState.Player
             && !playerActionLocked
             && !InputFocusStack.HasAnyFocus()
-            && CombatSessionManager.EnsureInstance() != null;
+            && CombatSessionManager.Instance != null;
     }
 
     private void UpdateTimerText()
     {
-        if (timerText == null)
+        TextMeshProUGUI timer = ActiveTimerText;
+        if (timer == null)
         {
             return;
         }
 
         float remaining = Mathf.Max(0f, timerEndsAt - Time.unscaledTime);
-        timerText.text = $"Timer: {Mathf.CeilToInt(remaining)}s";
+        timer.text = $"Temps: {Mathf.CeilToInt(remaining)} s";
+        SetFill(ActiveTimerFillImage, remaining, timerDuration);
     }
 
     private void BuildUi()
@@ -270,6 +293,11 @@ public class CombatHudController : MonoBehaviour
                 root.SetActive(false);
             }
 
+            return;
+        }
+
+        if (!allowRuntimeFallback)
+        {
             return;
         }
 
@@ -311,14 +339,14 @@ public class CombatHudController : MonoBehaviour
         ContentSizeFitter fitter = panel.GetComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        titleText = CreateText(panel.transform, "Title", 24, FontStyles.Bold);
-        turnText = CreateText(panel.transform, "Turn", 18, FontStyles.Bold);
-        timerText = CreateText(panel.transform, "Timer", 18, FontStyles.Normal);
-        playerHpText = CreateText(panel.transform, "PlayerHp", 17, FontStyles.Normal);
-        enemyHpText = CreateText(panel.transform, "EnemyHp", 17, FontStyles.Normal);
-        prayerText = CreateText(panel.transform, "Prayer", 16, FontStyles.Normal);
-        messageText = CreateText(panel.transform, "Message", 16, FontStyles.Italic);
-        actionsText = CreateText(panel.transform, "Actions", 15, FontStyles.Normal);
+        runtimeTitleText = CreateText(panel.transform, "Title", 24, FontStyles.Bold);
+        runtimeTurnText = CreateText(panel.transform, "Turn", 18, FontStyles.Bold);
+        runtimeTimerText = CreateText(panel.transform, "Timer", 18, FontStyles.Normal);
+        runtimePlayerHpText = CreateText(panel.transform, "PlayerHp", 17, FontStyles.Normal);
+        runtimeEnemyHpText = CreateText(panel.transform, "EnemyHp", 17, FontStyles.Normal);
+        runtimePrayerText = CreateText(panel.transform, "Prayer", 16, FontStyles.Normal);
+        runtimeMessageText = CreateText(panel.transform, "Message", 16, FontStyles.Italic);
+        runtimeActionsText = CreateText(panel.transform, "Actions", 15, FontStyles.Normal);
 
         root.SetActive(false);
     }
@@ -339,16 +367,30 @@ public class CombatHudController : MonoBehaviour
         {
             baseAttackCanvasGroup = FindCanvasGroupByName(DefaultBaseAttackUiName);
         }
+
+        ResolveSceneTextIfNeeded(ref titleText, "CombatTitleText");
+        ResolveSceneTextIfNeeded(ref turnText, "CombatTurnText");
+        ResolveSceneTextIfNeeded(ref timerText, "CombatTimerText");
+        ResolveSceneTextIfNeeded(ref playerHpText, "CombatPlayerHpText");
+        ResolveSceneTextIfNeeded(ref enemyHpText, "CombatEnemyHpText");
+        ResolveSceneTextIfNeeded(ref prayerText, "CombatPrayerText");
+        ResolveSceneTextIfNeeded(ref messageText, "CombatMessageText");
+        ResolveSceneTextIfNeeded(ref actionsText, "CombatActionsText");
+        ResolveSceneTextIfNeeded(ref baseAttackText, "BaseAttack_Text");
+
+        ResolveSceneImageIfNeeded(ref playerHpFillImage, "CombatPlayerHpFill");
+        ResolveSceneImageIfNeeded(ref enemyHpFillImage, "CombatEnemyHpFill");
+        ResolveSceneImageIfNeeded(ref timerFillImage, "CombatTimerFill");
     }
 
     private void SetScenePanelVisibility(bool battleVisible, bool baseAttackVisible)
     {
         ResolveScenePanelsIfNeeded();
-        SetCanvasGroupVisible(battlePanelCanvasGroup, battleVisible);
-        SetCanvasGroupVisible(baseAttackCanvasGroup, battleVisible && baseAttackVisible);
+        SetCanvasGroupVisible(battlePanelCanvasGroup, battleVisible, blocksRaycasts: false);
+        SetCanvasGroupVisible(baseAttackCanvasGroup, battleVisible && baseAttackVisible, blocksRaycasts: false);
     }
 
-    private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool visible)
+    private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool visible, bool blocksRaycasts)
     {
         if (canvasGroup == null)
         {
@@ -356,8 +398,8 @@ public class CombatHudController : MonoBehaviour
         }
 
         canvasGroup.alpha = visible ? 1f : 0f;
-        canvasGroup.interactable = visible;
-        canvasGroup.blocksRaycasts = visible;
+        canvasGroup.interactable = visible && blocksRaycasts;
+        canvasGroup.blocksRaycasts = visible && blocksRaycasts;
     }
 
     private static CanvasGroup FindCanvasGroupByName(string objectName)
@@ -374,6 +416,129 @@ public class CombatHudController : MonoBehaviour
         }
 
         return null;
+    }
+
+    private void ApplySnapshotToUi(
+        TurnState turn,
+        int playerHp,
+        int playerMaxHp,
+        string enemyName,
+        int enemyHp,
+        int enemyMaxHp,
+        int aliveEnemies,
+        int totalEnemies,
+        int prayerSupportCount,
+        float damageReduction,
+        string message)
+    {
+        if (!visible)
+        {
+            return;
+        }
+
+        SetText(ActiveTitleText, "Combat");
+        SetText(ActiveTurnText, ResolveTurnLabel(turn));
+        SetText(ActivePlayerHpText, $"Joueur\n{Mathf.Max(0, playerHp)}/{Mathf.Max(1, playerMaxHp)} PV");
+        SetText(
+            ActiveEnemyHpText,
+            $"{(string.IsNullOrWhiteSpace(enemyName) ? "Ennemi" : enemyName)}\n{Mathf.Max(0, enemyHp)}/{Mathf.Max(1, enemyMaxHp)} PV\nCibles: {Mathf.Max(0, aliveEnemies)}/{Mathf.Max(1, totalEnemies)}");
+        SetText(
+            ActivePrayerText,
+            prayerSupportCount > 0
+                ? $"Soutien: {prayerSupportCount} priere(s), -{Mathf.RoundToInt(damageReduction * 100f)}% degats"
+                : "Soutien: aucune priere active");
+        SetText(ActiveMessageText, string.IsNullOrWhiteSpace(message) ? "Combat en cours." : message);
+        SetText(ActiveActionsText, ResolveActionsLabel(turn));
+        SetText(baseAttackText, playerActionLocked ? "En cours" : "Attaquer");
+        SetFill(ActivePlayerHpFillImage, playerHp, playerMaxHp);
+        SetFill(ActiveEnemyHpFillImage, enemyHp, enemyMaxHp);
+        UpdateTimerText();
+    }
+
+    private string ResolveTurnLabel(TurnState turn)
+    {
+        if (turn == TurnState.Player)
+        {
+            return playerActionLocked ? "Tour joueur - action en cours" : "Tour joueur";
+        }
+
+        if (turn == TurnState.Enemy)
+        {
+            return "Tour ennemi";
+        }
+
+        return "Resolution";
+    }
+
+    private string ResolveActionsLabel(TurnState turn)
+    {
+        if (turn != TurnState.Player)
+        {
+            return "L'ennemi agit. Preparez votre prochaine action.";
+        }
+
+        if (playerActionLocked)
+        {
+            return "Attaque de base en cours.";
+        }
+
+        return "Interagir/RB: attaquer | Inventaire: utiliser un item | Retour: passer";
+    }
+
+    private TextMeshProUGUI ActiveTitleText => titleText != null ? titleText : runtimeTitleText;
+    private TextMeshProUGUI ActiveTurnText => turnText != null ? turnText : runtimeTurnText;
+    private TextMeshProUGUI ActiveTimerText => timerText != null ? timerText : runtimeTimerText;
+    private TextMeshProUGUI ActivePlayerHpText => playerHpText != null ? playerHpText : runtimePlayerHpText;
+    private TextMeshProUGUI ActiveEnemyHpText => enemyHpText != null ? enemyHpText : runtimeEnemyHpText;
+    private TextMeshProUGUI ActivePrayerText => prayerText != null ? prayerText : runtimePrayerText;
+    private TextMeshProUGUI ActiveMessageText => messageText != null ? messageText : runtimeMessageText;
+    private TextMeshProUGUI ActiveActionsText => actionsText != null ? actionsText : runtimeActionsText;
+    private Image ActivePlayerHpFillImage => playerHpFillImage != null ? playerHpFillImage : runtimePlayerHpFillImage;
+    private Image ActiveEnemyHpFillImage => enemyHpFillImage != null ? enemyHpFillImage : runtimeEnemyHpFillImage;
+    private Image ActiveTimerFillImage => timerFillImage != null ? timerFillImage : runtimeTimerFillImage;
+
+    private static void SetText(TextMeshProUGUI text, string value)
+    {
+        if (text != null)
+        {
+            text.text = value ?? string.Empty;
+        }
+    }
+
+    private static void SetFill(Image image, float current, float maximum)
+    {
+        if (image != null)
+        {
+            image.fillAmount = maximum > 0f ? Mathf.Clamp01(current / maximum) : 0f;
+        }
+    }
+
+    private static void ResolveSceneTextIfNeeded(ref TextMeshProUGUI text, string objectName)
+    {
+        if (text != null)
+        {
+            return;
+        }
+
+        GameObject found = GameObject.Find(objectName);
+        if (found != null)
+        {
+            text = found.GetComponent<TextMeshProUGUI>();
+        }
+    }
+
+    private static void ResolveSceneImageIfNeeded(ref Image image, string objectName)
+    {
+        if (image != null)
+        {
+            return;
+        }
+
+        GameObject found = GameObject.Find(objectName);
+        if (found != null)
+        {
+            image = found.GetComponent<Image>();
+        }
     }
 
     private static TextMeshProUGUI CreateText(Transform parent, string name, float size, FontStyles style)

@@ -49,9 +49,7 @@ public class SwingMotion : MonoBehaviour
     {
         if (pivot == null)
         {
-            Debug.LogWarning($"{name}: aucun pivot assigné au script LanternMultiAxisPendulum.");
-            enabled = false;
-            return;
+            pivot = transform.parent != null ? transform.parent : transform;
         }
 
         initialOffset = transform.position - pivot.position;

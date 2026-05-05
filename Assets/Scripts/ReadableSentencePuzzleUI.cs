@@ -1,14 +1,26 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class ReadableSentencePuzzleUI : MonoBehaviour
 {
     private const string ManagerObjectName = "ReadableSentencePuzzleUI";
+    private const string SceneCanvasObjectName = "ReadableSentencePuzzleCanvas";
+    private const string ScenePanelObjectName = "PuzzlePanel";
+    private const string TitleObjectName = "Title";
+    private const string PromptObjectName = "Prompt";
+    private const string FeedbackObjectName = "Feedback";
+    private const string AnswerInputObjectName = "AnswerInput";
+    private const string KeyboardObjectName = "Keyboard";
+    private const string CursorObjectName = "Cursor";
+    private const string SubmitButtonObjectName = "Valider";
+    private const string CancelButtonObjectName = "Annuler";
     private const string RuntimeCanvasObjectName = "ReadableSentencePuzzleCanvas_Auto";
     private const string RootObjectName = "ReadableSentencePuzzle_Root";
     private const string PanelObjectName = "ReadableSentencePuzzle_Panel";
@@ -41,8 +53,14 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
     [SerializeField] private int fallbackSortingOrder = 260;
 
     private readonly List<Button> interactiveButtons = new List<Button>();
+    private readonly Dictionary<Button, UnityAction> sceneButtonBindings = new Dictionary<Button, UnityAction>();
     private PuzzleRequest activeRequest;
     private bool inputLocked;
+    private Coroutine timedFeedbackRoutine;
+    private Action timedFeedbackCallback;
+    private object timedFeedbackOwner;
+    private bool timedFeedbackDismissOnComplete;
+    private bool timedFeedbackPending;
 
     private static ReadableSentencePuzzleUI instance;
 
@@ -55,13 +73,27 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (string.Equals(gameObject.name, ManagerObjectName, StringComparison.Ordinal))
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+
+        ResolveSceneUiReferences();
         WireStaticButtons();
         HideImmediate();
     }
 
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+        }
+    }
+
     private void OnDisable()
     {
+        CancelTimedFeedback(invokeCallback: false);
         ReleaseInputLock();
         HideImmediate();
         activeRequest = null;
@@ -89,7 +121,8 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
             DebugContext = debugContext
         };
 
-        return EnsureInstance().TryShowInternal(request);
+        ReadableSentencePuzzleUI resolvedInstance = EnsureInstance();
+        return resolvedInstance != null && resolvedInstance.TryShowInternal(request);
     }
 
     public static void Dismiss(object owner, bool invokeCancel = false)
@@ -100,6 +133,31 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         instance.DismissInternal(owner, invokeCancel);
+    }
+
+    public static bool IsShowingFor(object owner)
+    {
+        return instance != null && MatchesOwner(instance.activeRequest != null ? instance.activeRequest.Owner : null, owner);
+    }
+
+    public static bool BeginFeedbackAndDismiss(object owner, string message, bool isError, float delaySeconds, Action onDismissed = null)
+    {
+        if (instance == null)
+        {
+            return false;
+        }
+
+        return instance.BeginTimedFeedbackInternal(owner, message, isError, delaySeconds, dismissAfterDelay: true, onDismissed);
+    }
+
+    public static bool BeginFeedback(object owner, string message, bool isError, float delaySeconds, Action onCompleted = null)
+    {
+        if (instance == null)
+        {
+            return false;
+        }
+
+        return instance.BeginTimedFeedbackInternal(owner, message, isError, delaySeconds, dismissAfterDelay: false, onCompleted);
     }
 
     public static void SetInteractable(object owner, bool interactive)
@@ -161,6 +219,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
             return false;
         }
 
+        CancelTimedFeedback(invokeCallback: false);
         activeRequest = request;
         SetRootVisible(true);
         titleText.text = string.IsNullOrWhiteSpace(request.Title) ? "Enigme" : request.Title.Trim();
@@ -186,6 +245,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
             return;
         }
 
+        CancelTimedFeedback(invokeCallback: false);
         PuzzleRequest request = activeRequest;
         HideAndClear();
         if (invokeCancel)
@@ -194,31 +254,471 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
     }
 
-    private bool EnsureUiReferences()
+    private bool BeginTimedFeedbackInternal(object owner, string message, bool isError, float delaySeconds, bool dismissAfterDelay, Action onCompleted)
     {
-        if (rootCanvasGroup != null &&
-            titleText != null &&
-            promptText != null &&
-            feedbackText != null &&
-            inputField != null &&
-            keyboardLayout != null &&
-            keyboardRoot != null &&
-            cursor != null &&
-            navigator != null &&
-            submitButton != null &&
-            cancelButton != null)
-        {
-            return true;
-        }
-
-        if (!createRuntimeFallback)
+        if (activeRequest == null)
         {
             return false;
         }
 
-        CreateRuntimeFallbackUi();
+        if (owner != null && !MatchesOwner(activeRequest.Owner, owner))
+        {
+            return false;
+        }
+
+        CancelTimedFeedback(invokeCallback: false);
+        timedFeedbackPending = true;
+        timedFeedbackDismissOnComplete = dismissAfterDelay;
+        timedFeedbackCallback = onCompleted;
+        timedFeedbackOwner = activeRequest.Owner;
+
+        SetInteractive(false);
+        SetFeedbackInternal(message, isError);
+        ClearInputSelection(clearText: false);
+
+        float resolvedDelay = Mathf.Max(0f, delaySeconds);
+        if (resolvedDelay <= 0f)
+        {
+            CompleteTimedFeedback();
+            return true;
+        }
+
+        timedFeedbackRoutine = StartCoroutine(CompleteFeedbackAfterDelay(resolvedDelay));
+        return true;
+    }
+
+    private bool EnsureUiReferences()
+    {
+        if (!HasResolvedUiReferences())
+        {
+            ResolveSceneUiReferences();
+        }
+
+        if (!HasResolvedUiReferences())
+        {
+            Debug.LogWarning($"[ReadableSentencePuzzleUI] PuzzlePanel/ReadableSentencePuzzleCanvas introuvable ou incomplet. Elements manquants: {DescribeMissingUiReferences()}", this);
+            return false;
+        }
+
         WireStaticButtons();
-        return rootCanvasGroup != null;
+        ConfigureNavigator();
+        return true;
+    }
+
+    private bool HasResolvedUiReferences()
+    {
+        return rootCanvasGroup != null &&
+            titleText != null &&
+            promptText != null &&
+            feedbackText != null &&
+            inputField != null &&
+            submitButton != null &&
+            cancelButton != null;
+    }
+
+    private void ResolveSceneUiReferences()
+    {
+        rootCanvasGroup = rootCanvasGroup != null
+            ? rootCanvasGroup
+            : FindSceneComponentByName<CanvasGroup>(ScenePanelObjectName);
+
+        Transform panelRoot = rootCanvasGroup != null
+            ? rootCanvasGroup.transform
+            : FindSceneTransform(ScenePanelObjectName);
+        Transform canvasRoot = FindSceneTransform(SceneCanvasObjectName);
+
+        if (rootCanvasGroup == null && canvasRoot != null)
+        {
+            rootCanvasGroup = canvasRoot.GetComponentInParent<CanvasGroup>(true);
+        }
+
+        if (rootCanvasGroup == null && panelRoot != null)
+        {
+            rootCanvasGroup = panelRoot.GetComponent<CanvasGroup>();
+            if (rootCanvasGroup == null)
+            {
+                rootCanvasGroup = panelRoot.GetComponentInParent<CanvasGroup>(true);
+            }
+        }
+
+        Transform searchRoot = rootCanvasGroup != null ? rootCanvasGroup.transform : panelRoot;
+        if (searchRoot == null && canvasRoot == null)
+        {
+            return;
+        }
+
+        titleText = ResolveNamedComponent(titleText, TitleObjectName, searchRoot, canvasRoot);
+        promptText = ResolveNamedComponent(promptText, PromptObjectName, searchRoot, canvasRoot);
+        feedbackText = ResolveNamedComponent(feedbackText, FeedbackObjectName, searchRoot, canvasRoot);
+        Transform inputRoot = ResolveNamedTransform(AnswerInputObjectName, searchRoot, canvasRoot);
+        inputField = ResolveInputField(inputField, inputRoot, searchRoot, canvasRoot);
+        inputCaret = inputCaret != null
+            ? inputCaret
+            : ResolveInputCaret(inputField, inputRoot);
+        keyboardLayout = ResolveNamedComponent(keyboardLayout, KeyboardObjectName, searchRoot, canvasRoot);
+        keyboardLayout = ResolveComponentInRoots(keyboardLayout, searchRoot, canvasRoot);
+        keyboardRoot = keyboardRoot != null
+            ? keyboardRoot
+            : ResolveNamedComponent(keyboardRoot, KeyboardObjectName, searchRoot, canvasRoot);
+        if (keyboardRoot == null && keyboardLayout != null)
+        {
+            keyboardRoot = keyboardLayout.transform as RectTransform;
+        }
+
+        cursor = ResolveNamedComponent(cursor, CursorObjectName, searchRoot, canvasRoot);
+        cursor = ResolveComponentInRoots(cursor, searchRoot, canvasRoot);
+        navigator = ResolveComponentInRoots(navigator, searchRoot, canvasRoot);
+        submitButton = ResolveNamedComponent(submitButton, SubmitButtonObjectName, searchRoot, canvasRoot);
+        cancelButton = ResolveNamedComponent(cancelButton, CancelButtonObjectName, searchRoot, canvasRoot);
+
+        interactiveButtons.Clear();
+        Button[] buttons = GetButtonsInRoots(searchRoot, canvasRoot);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+            if (button != null && !interactiveButtons.Contains(button))
+            {
+                interactiveButtons.Add(button);
+            }
+        }
+    }
+
+    private string DescribeMissingUiReferences()
+    {
+        List<string> missing = new List<string>();
+        if (rootCanvasGroup == null)
+        {
+            missing.Add(ScenePanelObjectName);
+        }
+
+        if (titleText == null)
+        {
+            missing.Add(TitleObjectName);
+        }
+
+        if (promptText == null)
+        {
+            missing.Add(PromptObjectName);
+        }
+
+        if (feedbackText == null)
+        {
+            missing.Add(FeedbackObjectName);
+        }
+
+        if (inputField == null)
+        {
+            missing.Add(AnswerInputObjectName);
+        }
+
+        if (submitButton == null)
+        {
+            missing.Add(SubmitButtonObjectName);
+        }
+
+        if (cancelButton == null)
+        {
+            missing.Add(CancelButtonObjectName);
+        }
+
+        return missing.Count == 0 ? "aucun" : string.Join(", ", missing);
+    }
+
+    private void ConfigureNavigator()
+    {
+        if (navigator == null || cursor == null)
+        {
+            return;
+        }
+
+        navigator.ConfigureRuntime(
+            cursor,
+            runtimeRequireFocus: false,
+            runtimePushFocusOnEnable: false,
+            runtimeUseInteractInput: true,
+            runtimeUseReturnInput: true,
+            runtimeAllowButtonFallback: true);
+        navigator.ReplaceCancelHandler(CancelActiveRequest);
+    }
+
+    private static T ResolveNamedComponent<T>(T current, string objectName, params Transform[] roots) where T : Component
+    {
+        if (current != null)
+        {
+            return current;
+        }
+
+        Transform target = ResolveNamedTransform(objectName, roots);
+        if (target == null)
+        {
+            return FindSceneComponentByName<T>(objectName);
+        }
+
+        T component = target.GetComponent<T>();
+        if (component != null)
+        {
+            return component;
+        }
+
+        return target.GetComponentInChildren<T>(true);
+    }
+
+    private static Transform ResolveNamedTransform(string objectName, params Transform[] roots)
+    {
+        for (int i = 0; i < roots.Length; i++)
+        {
+            Transform root = roots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            Transform target = FindChildRecursive(root, objectName);
+            if (target == null)
+            {
+                continue;
+            }
+
+            return target;
+        }
+
+        return FindSceneTransform(objectName);
+    }
+
+    private static T ResolveComponentInRoots<T>(T current, params Transform[] roots) where T : Component
+    {
+        if (current != null)
+        {
+            return current;
+        }
+
+        for (int i = 0; i < roots.Length; i++)
+        {
+            Transform root = roots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            T component = root.GetComponentInChildren<T>(true);
+            if (component != null)
+            {
+                return component;
+            }
+        }
+
+        return null;
+    }
+
+    private static Button[] GetButtonsInRoots(params Transform[] roots)
+    {
+        List<Button> buttons = new List<Button>();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            Transform root = roots[i];
+            if (root == null)
+            {
+                continue;
+            }
+
+            Button[] foundButtons = root.GetComponentsInChildren<Button>(true);
+            for (int j = 0; j < foundButtons.Length; j++)
+            {
+                Button button = foundButtons[j];
+                if (button != null && !buttons.Contains(button))
+                {
+                    buttons.Add(button);
+                }
+            }
+        }
+
+        return buttons.ToArray();
+    }
+
+    private static TMP_InputField ResolveInputField(TMP_InputField current, Transform inputRoot, params Transform[] roots)
+    {
+        if (current != null)
+        {
+            return current;
+        }
+
+        TMP_InputField resolved = null;
+        if (inputRoot != null)
+        {
+            resolved = inputRoot.GetComponent<TMP_InputField>();
+            if (resolved == null)
+            {
+                resolved = inputRoot.GetComponentInChildren<TMP_InputField>(true);
+            }
+
+            if (resolved == null)
+            {
+                resolved = ConfigureExistingSceneInputField(inputRoot);
+            }
+        }
+
+        if (resolved != null)
+        {
+            return resolved;
+        }
+
+        return ResolveComponentInRoots<TMP_InputField>(null, roots);
+    }
+
+    private static MenuInputFieldCaret ResolveInputCaret(TMP_InputField field, Transform inputRoot)
+    {
+        if (field != null)
+        {
+            MenuInputFieldCaret caret = field.GetComponent<MenuInputFieldCaret>();
+            if (caret == null)
+            {
+                caret = field.GetComponentInParent<MenuInputFieldCaret>(true);
+            }
+
+            if (caret != null)
+            {
+                return caret;
+            }
+        }
+
+        return inputRoot != null ? inputRoot.GetComponent<MenuInputFieldCaret>() : null;
+    }
+
+    private static TMP_InputField ConfigureExistingSceneInputField(Transform inputRoot)
+    {
+        if (inputRoot == null)
+        {
+            return null;
+        }
+
+        TMP_InputField field = inputRoot.GetComponent<TMP_InputField>();
+        if (field == null)
+        {
+            field = inputRoot.gameObject.AddComponent<TMP_InputField>();
+        }
+
+        RectTransform textArea = ResolveNamedChildComponent<RectTransform>(inputRoot, "Text Area");
+        if (textArea == null)
+        {
+            textArea = inputRoot as RectTransform;
+        }
+
+        TMP_Text text = ResolveNamedChildComponent<TMP_Text>(inputRoot, "Text");
+        TMP_Text placeholder = ResolveNamedChildComponent<TMP_Text>(inputRoot, "Placeholder");
+        if (text == null)
+        {
+            TMP_Text[] texts = inputRoot.GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                TMP_Text candidate = texts[i];
+                if (candidate == null || candidate == placeholder)
+                {
+                    continue;
+                }
+
+                text = candidate;
+                break;
+            }
+        }
+
+        if (text == null)
+        {
+            return null;
+        }
+
+        field.textViewport = textArea;
+        field.textComponent = text;
+        field.placeholder = placeholder;
+        field.lineType = TMP_InputField.LineType.SingleLine;
+        field.characterLimit = field.characterLimit > 0 ? field.characterLimit : 512;
+        return field;
+    }
+
+    private static T ResolveNamedChildComponent<T>(Transform root, string objectName) where T : Component
+    {
+        if (root == null || string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        Transform target = FindChildRecursive(root, objectName);
+        if (target == null)
+        {
+            return null;
+        }
+
+        T component = target.GetComponent<T>();
+        if (component != null)
+        {
+            return component;
+        }
+
+        return target.GetComponentInChildren<T>(true);
+    }
+
+    private static Transform FindSceneTransform(string objectName)
+    {
+        return FindSceneComponentByName<Transform>(objectName);
+    }
+
+    private static T FindSceneComponentByName<T>(string objectName) where T : Component
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        T[] candidates = Resources.FindObjectsOfTypeAll<T>();
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            T candidate = candidates[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            GameObject candidateObject = candidate.gameObject;
+            if (candidateObject == null ||
+                !candidateObject.scene.IsValid() ||
+                !string.Equals(candidateObject.name, objectName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private static Transform FindChildRecursive(Transform root, string objectName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(child.name, objectName, StringComparison.Ordinal))
+            {
+                return child;
+            }
+
+            Transform nested = FindChildRecursive(child, objectName);
+            if (nested != null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 
     private void CreateRuntimeFallbackUi()
@@ -327,13 +827,138 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         if (inputField != null)
         {
             inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
-            inputField.onSubmit.AddListener(OnInputFieldSubmitted);
         }
+
+        if (submitButton != null)
+        {
+            submitButton.onClick.RemoveListener(SubmitCurrentAnswer);
+            submitButton.onClick.AddListener(SubmitCurrentAnswer);
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.onClick.RemoveListener(CancelActiveRequest);
+            cancelButton.onClick.AddListener(CancelActiveRequest);
+        }
+
+        WireSceneKeyboardButtons();
+    }
+
+    private void WireSceneKeyboardButtons()
+    {
+        if (sceneButtonBindings.Count > 0)
+        {
+            List<Button> staleButtons = null;
+            foreach (KeyValuePair<Button, UnityAction> pair in sceneButtonBindings)
+            {
+                if (pair.Key != null && interactiveButtons.Contains(pair.Key))
+                {
+                    continue;
+                }
+
+                if (pair.Key != null && pair.Value != null)
+                {
+                    pair.Key.onClick.RemoveListener(pair.Value);
+                }
+
+                if (staleButtons == null)
+                {
+                    staleButtons = new List<Button>();
+                }
+
+                staleButtons.Add(pair.Key);
+            }
+
+            if (staleButtons != null)
+            {
+                for (int i = 0; i < staleButtons.Count; i++)
+                {
+                    sceneButtonBindings.Remove(staleButtons[i]);
+                }
+            }
+        }
+
+        for (int i = 0; i < interactiveButtons.Count; i++)
+        {
+            Button button = interactiveButtons[i];
+            if (button == null || button == submitButton || button == cancelButton)
+            {
+                continue;
+            }
+
+            if (sceneButtonBindings.TryGetValue(button, out UnityAction previousAction) && previousAction != null)
+            {
+                button.onClick.RemoveListener(previousAction);
+                sceneButtonBindings.Remove(button);
+            }
+
+            if (!TryCreateSceneKeyboardAction(button, out UnityAction action) || action == null)
+            {
+                continue;
+            }
+
+            button.onClick.AddListener(action);
+            sceneButtonBindings[button] = action;
+        }
+    }
+
+    private bool TryCreateSceneKeyboardAction(Button button, out UnityAction action)
+    {
+        action = null;
+        string command = ResolveSceneButtonCommand(button);
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            return false;
+        }
+
+        switch (command)
+        {
+            case SubmitButtonObjectName:
+            case CancelButtonObjectName:
+                return false;
+            case "Espace":
+                action = () => AppendText(" ");
+                return true;
+            case "Effacer":
+                action = Backspace;
+                return true;
+            case "Vider":
+                action = ClearInput;
+                return true;
+        }
+
+        if (command.Length == 1 && char.IsLetterOrDigit(command[0]))
+        {
+            string value = command;
+            action = () => AppendText(value);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string ResolveSceneButtonCommand(Button button)
+    {
+        if (button == null)
+        {
+            return string.Empty;
+        }
+
+        string name = button.gameObject != null ? button.gameObject.name : string.Empty;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return name.Trim();
+        }
+
+        TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+        return label != null && !string.IsNullOrWhiteSpace(label.text)
+            ? label.text.Trim()
+            : string.Empty;
     }
 
     private void SubmitCurrentAnswer()
     {
-        if (activeRequest == null || !IsInteractive())
+        if (activeRequest == null || timedFeedbackPending || !IsInteractive())
         {
             return;
         }
@@ -344,12 +969,17 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
     private void CancelActiveRequest()
     {
+        if (timedFeedbackPending)
+        {
+            return;
+        }
+
         DismissInternal(activeRequest != null ? activeRequest.Owner : null, invokeCancel: true);
     }
 
     private void OnInputFieldSubmitted(string _)
     {
-        SubmitCurrentAnswer();
+        FocusInputField();
     }
 
     private void AppendText(string value)
@@ -360,6 +990,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         inputField.text += value;
+        inputField.ForceLabelUpdate();
         FocusInputField();
     }
 
@@ -377,6 +1008,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         inputField.text = value.Substring(0, value.Length - 1);
+        inputField.ForceLabelUpdate();
         FocusInputField();
     }
 
@@ -388,6 +1020,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         inputField.text = string.Empty;
+        inputField.ForceLabelUpdate();
         FocusInputField();
     }
 
@@ -403,6 +1036,20 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
             if (interactiveButtons[i] != null)
             {
                 interactiveButtons[i].interactable = interactive;
+            }
+        }
+
+        if (cursor != null)
+        {
+            cursor.allowInput = interactive;
+            if (interactive)
+            {
+                cursor.Refresh();
+            }
+
+            if (cursor.cursor != null)
+            {
+                cursor.cursor.gameObject.SetActive(interactive && cursor.CurrentItem != null);
             }
         }
     }
@@ -436,7 +1083,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
     private void FocusInputField()
     {
-        if (inputField == null)
+        if (inputField == null || !inputField.isActiveAndEnabled || !inputField.interactable)
         {
             return;
         }
@@ -483,16 +1130,97 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
     private void HideAndClear()
     {
-        SetRootVisible(false);
+        CancelTimedFeedback(invokeCallback: false);
+        ClearInputSelection(clearText: true);
+        SetInteractive(false);
         ReleaseInputLock();
         SetFeedbackInternal(string.Empty, isError: false);
+        SetRootVisible(false);
+        activeRequest = null;
+    }
+
+    private void ClearInputSelection(bool clearText)
+    {
         if (inputField != null)
         {
-            inputField.text = string.Empty;
+            if (clearText)
+            {
+                inputField.text = string.Empty;
+            }
+
             inputField.DeactivateInputField();
         }
 
-        activeRequest = null;
+        EventSystem currentEventSystem = EventSystem.current;
+        if (currentEventSystem == null)
+        {
+            return;
+        }
+
+        GameObject selectedObject = currentEventSystem.currentSelectedGameObject;
+        if (selectedObject == null)
+        {
+            return;
+        }
+
+        Transform root = rootCanvasGroup != null ? rootCanvasGroup.transform : transform;
+        if (selectedObject == inputField?.gameObject || selectedObject.transform.IsChildOf(root))
+        {
+            currentEventSystem.SetSelectedGameObject(null);
+        }
+    }
+
+    private IEnumerator CompleteFeedbackAfterDelay(float delaySeconds)
+    {
+        yield return new WaitForSecondsRealtime(delaySeconds);
+        timedFeedbackRoutine = null;
+        CompleteTimedFeedback();
+    }
+
+    private void CompleteTimedFeedback()
+    {
+        Action callback = timedFeedbackCallback;
+        object owner = timedFeedbackOwner;
+        bool dismissAfterDelay = timedFeedbackDismissOnComplete;
+
+        timedFeedbackPending = false;
+        timedFeedbackDismissOnComplete = false;
+        timedFeedbackCallback = null;
+        timedFeedbackOwner = null;
+
+        if (dismissAfterDelay)
+        {
+            DismissInternal(owner, invokeCancel: false);
+        }
+        else if (activeRequest != null && MatchesOwner(activeRequest.Owner, owner))
+        {
+            SetFeedbackInternal(string.Empty, isError: false);
+            SetInteractive(true);
+            FocusInputField();
+            RefreshKeyboardCursor();
+        }
+
+        SafeInvoke(callback);
+    }
+
+    private void CancelTimedFeedback(bool invokeCallback)
+    {
+        if (timedFeedbackRoutine != null)
+        {
+            StopCoroutine(timedFeedbackRoutine);
+            timedFeedbackRoutine = null;
+        }
+
+        Action callback = timedFeedbackCallback;
+        timedFeedbackPending = false;
+        timedFeedbackDismissOnComplete = false;
+        timedFeedbackCallback = null;
+        timedFeedbackOwner = null;
+
+        if (invokeCallback)
+        {
+            SafeInvoke(callback);
+        }
     }
 
     private void HideImmediate()

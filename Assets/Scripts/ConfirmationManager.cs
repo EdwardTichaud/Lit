@@ -37,7 +37,11 @@ public class ConfirmationManager : MonoBehaviour
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (transform.parent == null && string.Equals(gameObject.name, ManagerObjectName, StringComparison.Ordinal))
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+
         HideImmediate();
     }
 

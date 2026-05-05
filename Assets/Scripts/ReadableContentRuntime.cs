@@ -14,15 +14,18 @@ public static class ReadableContentRuntime
     }
 
     private static readonly Dictionary<string, GeneratedReadableContentState> generatedByContentKey = new Dictionary<string, GeneratedReadableContentState>();
+    private static int runtimeSeedSalt = GenerateRuntimeSeedSalt();
 
     public static void ResetRuntimeState(string reason)
     {
         generatedByContentKey.Clear();
+        runtimeSeedSalt = GenerateRuntimeSeedSalt();
     }
 
     public static void RestoreSaveData(List<ReadableGeneratedContentData> savedStates)
     {
         generatedByContentKey.Clear();
+        runtimeSeedSalt = GenerateRuntimeSeedSalt();
         if (savedStates == null || savedStates.Count == 0)
         {
             return;
@@ -254,7 +257,35 @@ public static class ReadableContentRuntime
             {
                 seed = (seed * 397) ^ GetStableHash(sessionKey);
             }
+            else
+            {
+                // Direct scene launches may not have a save/session yet; keep those runs varied.
+                seed = (seed * 397) ^ GetRuntimeSeedSalt();
+            }
 
+            return seed == 0 ? 1 : seed;
+        }
+    }
+
+    private static int GetRuntimeSeedSalt()
+    {
+        if (runtimeSeedSalt == 0)
+        {
+            runtimeSeedSalt = GenerateRuntimeSeedSalt();
+        }
+
+        return runtimeSeedSalt;
+    }
+
+    private static int GenerateRuntimeSeedSalt()
+    {
+        unchecked
+        {
+            long ticks = DateTime.UtcNow.Ticks;
+            int seed = Guid.NewGuid().GetHashCode();
+            seed = (seed * 397) ^ Environment.TickCount;
+            seed = (seed * 397) ^ (int)ticks;
+            seed = (seed * 397) ^ (int)(ticks >> 32);
             return seed == 0 ? 1 : seed;
         }
     }

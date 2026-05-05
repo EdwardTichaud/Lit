@@ -80,6 +80,8 @@ public class SquadAIManager : MonoBehaviour
     [Header("Debug")]
     [SerializeField, Tooltip("Declenche un rebuild au prochain Update.")]
     private bool rebuildNavMeshNow = false;
+    [SerializeField, Tooltip("Affiche un warning quand certains meshes ne peuvent pas etre inclus dans le NavMesh.")]
+    private bool warnUnreadableMeshes;
 
     [Header("Follow")]
     [SerializeField, Tooltip("Follow actif meme en mode selection.")]
@@ -581,7 +583,7 @@ public class SquadAIManager : MonoBehaviour
             }
         }
 
-        if (newWarnings > 0)
+        if (newWarnings > 0 && warnUnreadableMeshes)
         {
             string suffix = sampleNames != null && sampleNames.Count > 0
                 ? $" Ex: {string.Join(", ", sampleNames)}"

@@ -3,32 +3,38 @@ using UnityEngine;
 public partial class SquadCharacterController
 {
     [Header("Height Probe Traversal")]
-    [SerializeField, Tooltip("Autorise la montee d'obstacles en comparant la hauteur du sol actuel avec le profil devant le joueur.")]
+    [SerializeField, Tooltip("Autorise le franchissement explicite des petites marches et le snap descendant du sol.")]
     private bool enableHeightProbeTraversal = true;
-    [SerializeField, Tooltip("Distance maximale scannee devant le joueur pour comparer les hauteurs.")]
-    private float heightProbeForwardDistance = 10f;
-    [SerializeField, Tooltip("Nombre d'echantillons entre le joueur et la distance forward.")]
-    private int heightProbeSampleCount = 24;
-    [SerializeField, Tooltip("Hausse maximale acceptee entre le sol actuel et le support detecte.")]
-    private float heightProbeMaxRise = 3.5f;
-    [SerializeField, Tooltip("Descente maximale acceptee pendant le scan de hauteur.")]
-    private float heightProbeMaxDrop = 3.5f;
-    [SerializeField, Tooltip("Hausse maximale appliquee en une seule correction de marche/obstacle.")]
-    private float heightProbeMaxStepRise = 0.55f;
+    [SerializeField, Tooltip("Distance maximale scannee devant le joueur pour trouver le dessus d'une marche.")]
+    private float heightProbeForwardDistance = 1.2f;
+    [SerializeField, Tooltip("Nombre d'echantillons courts derriere la contremarche detectee.")]
+    private int heightProbeSampleCount = 8;
+    [SerializeField, Tooltip("Hausse maximale autorisee pour une marche marchable.")]
+    private float heightProbeMaxRise = 0.35f;
+    [SerializeField, Tooltip("Descente maximale autorisee pour rester colle aux marches descendantes.")]
+    private float heightProbeMaxDrop = 0.45f;
+    [SerializeField, Tooltip("Hausse maximale appliquee en une seule correction de marche.")]
+    private float heightProbeMaxStepRise = 0.32f;
     [SerializeField, Tooltip("Descente maximale appliquee en une seule correction de marche.")]
-    private float heightProbeMaxStepDrop = 0.75f;
-    [SerializeField, Tooltip("Distance supplementaire scannee derriere l'obstacle detecte.")]
-    private float heightProbeStepSearchExtraDistance = 0.45f;
-    [SerializeField, Tooltip("Recolle le personnage au support apres un deplacement horizontal pour descendre proprement les marches.")]
+    private float heightProbeMaxStepDrop = 0.45f;
+    [SerializeField, Tooltip("Distance supplementaire scannee derriere la contremarche detectee.")]
+    private float heightProbeStepSearchExtraDistance = 0.22f;
+    [SerializeField, Tooltip("Recolle le personnage au support apres un deplacement horizontal pour descendre proprement les marches. Ne sert plus a monter.")]
     private bool enableHeightProbeGroundSnap = true;
     [SerializeField, Tooltip("Marge verticale ajoutee au raycast de comparaison de hauteur.")]
     private float heightProbeVerticalPadding = 0.25f;
     [SerializeField, Tooltip("Offset conserve au-dessus du support trouve.")]
-    private float heightProbeContactOffset = 0.02f;
-    [SerializeField, Tooltip("Hauteur minimale a detecter avant de tenter une correction verticale.")]
+    private float heightProbeContactOffset = 0.03f;
+    [SerializeField, Tooltip("Hauteur minimale a detecter avant de tenter une correction de marche.")]
     private float heightProbeMinRise = 0.03f;
     [SerializeField, Tooltip("Courte grace apres perte du sol pour eviter un blocage sur une bordure.")]
     private float heightProbeGroundGraceTime = 0.12f;
+    [SerializeField, Tooltip("Plafond dur applique aux anciens prefabs pour eviter qu'un obstacle haut soit traite comme une marche.")]
+    private float heightProbeObstacleStepLimit = 0.35f;
+    [SerializeField, Tooltip("Distance ajoutee derriere la contremarche pour chercher un dessus marchable.")]
+    private float heightProbeStepSurfaceInset = 0.08f;
+    [SerializeField, Tooltip("Plafond dur de scan pour eviter de chercher un support loin derriere un obstacle.")]
+    private float heightProbeForwardScanLimit = 0.9f;
 
     private void ValidateHeightProbeTraversalSettings()
     {
@@ -43,6 +49,9 @@ public partial class SquadCharacterController
         heightProbeContactOffset = Mathf.Max(0f, heightProbeContactOffset);
         heightProbeMinRise = Mathf.Max(0f, heightProbeMinRise);
         heightProbeGroundGraceTime = Mathf.Max(0f, heightProbeGroundGraceTime);
+        heightProbeObstacleStepLimit = Mathf.Max(0f, heightProbeObstacleStepLimit);
+        heightProbeStepSurfaceInset = Mathf.Max(0.01f, heightProbeStepSurfaceInset);
+        heightProbeForwardScanLimit = Mathf.Max(0.05f, heightProbeForwardScanLimit);
     }
 
     private bool CanUseHeightProbeTraversal()
@@ -57,11 +66,6 @@ public partial class SquadCharacterController
 
     private void ApplyHeightProbeTraversalOffsetToRigidbody(Vector3 resolvedDisplacement)
     {
-        if (rigidbodyTarget == null)
-        {
-            return;
-        }
-
         Vector3 up = transform.up;
         float verticalOffset = Vector3.Dot(resolvedDisplacement, up);
         if (Mathf.Abs(verticalOffset) <= 0.0001f)
@@ -70,7 +74,18 @@ public partial class SquadCharacterController
         }
 
         heightProbeVerticalOffsetThisStep = verticalOffset;
-        rigidbodyTarget.MovePosition(rigidbodyTarget.position + up * verticalOffset);
+
+        if (rigidbodyTarget == null)
+        {
+            Transform target = motionRoot != null ? motionRoot : transform;
+            target.position += up * verticalOffset;
+            return;
+        }
+
+        // MovePosition is consumed during the physics step; setting the position here
+        // makes the next horizontal velocity solve start above the stair riser.
+        rigidbodyTarget.position += up * verticalOffset;
+        Physics.SyncTransforms();
     }
 
     private bool TryResolveHeightProbeTraversal(
@@ -98,8 +113,7 @@ public partial class SquadCharacterController
 
         Vector3 direction = horizontalDisplacement / horizontalDistance;
         Vector3 currentFootPoint = GetCapsuleFootPoint(basePoint1, basePoint2, radius, up);
-        Vector3 currentSupportPoint = currentFootPoint;
-        if (TrySampleGround(
+        if (!TrySampleGround(
                 currentFootPoint,
                 up,
                 heightProbeVerticalPadding,
@@ -107,15 +121,19 @@ public partial class SquadCharacterController
                 GetGroundSupportMask(),
                 out GroundProbeSample currentSupport))
         {
-            currentSupportPoint = currentSupport.point;
+            return false;
         }
 
         if (!TryFindHeightProbeSupportAhead(
                 currentFootPoint,
-                currentSupportPoint,
+                currentSupport.point,
                 direction,
                 blockingHit.distance,
                 radius,
+                horizontalDistance,
+                basePoint1,
+                basePoint2,
+                blockingMask,
                 out _,
                 out float rise))
         {
@@ -141,6 +159,10 @@ public partial class SquadCharacterController
         Vector3 direction,
         float blockingHitDistance,
         float capsuleRadius,
+        float horizontalDistance,
+        Vector3 basePoint1,
+        Vector3 basePoint2,
+        int blockingMask,
         out GroundProbeSample bestSupport,
         out float bestRise)
     {
@@ -149,15 +171,21 @@ public partial class SquadCharacterController
 
         Vector3 up = transform.up;
         float maxStepRise = GetHeightProbeStepRiseLimit();
+        if (maxStepRise <= 0f)
+        {
+            return false;
+        }
+
         float startDistance = Mathf.Clamp(
-            blockingHitDistance + Mathf.Max(0f, capsuleRadius) + movementCollisionSkin + 0.05f,
+            blockingHitDistance + Mathf.Max(0f, capsuleRadius) + movementCollisionSkin + heightProbeStepSurfaceInset,
             0.05f,
-            heightProbeForwardDistance);
+            GetHeightProbeForwardScanDistance());
         float scanDistance = Mathf.Min(
-            heightProbeForwardDistance,
+            GetHeightProbeForwardScanDistance(),
             startDistance + heightProbeStepSearchExtraDistance);
         int sampleCount = Mathf.Max(1, heightProbeSampleCount);
         int mask = GetGroundSupportMask();
+        float castRadius = Mathf.Max(0.01f, capsuleRadius - movementCollisionSkin);
 
         for (int i = 0; i < sampleCount; i++)
         {
@@ -169,7 +197,7 @@ public partial class SquadCharacterController
                     probeFootPoint,
                     up,
                     heightProbeMaxRise + heightProbeVerticalPadding,
-                    heightProbeMaxDrop + heightProbeVerticalPadding,
+                    heightProbeVerticalPadding + heightProbeContactOffset + 0.05f,
                     mask,
                     out GroundProbeSample sample))
             {
@@ -178,6 +206,21 @@ public partial class SquadCharacterController
 
             float rise = Vector3.Dot(sample.point - currentSupportPoint, up);
             if (rise < heightProbeMinRise || rise > maxStepRise)
+            {
+                continue;
+            }
+
+            float verticalOffset = rise + heightProbeContactOffset;
+            Vector3 raisedPoint1 = basePoint1 + up * verticalOffset;
+            Vector3 raisedPoint2 = basePoint2 + up * verticalOffset;
+            if (TryGetHorizontalBlockingHit(
+                    raisedPoint1,
+                    raisedPoint2,
+                    castRadius,
+                    direction,
+                    horizontalDistance + movementCollisionSkin,
+                    blockingMask,
+                    out _))
             {
                 continue;
             }
@@ -242,13 +285,12 @@ public partial class SquadCharacterController
         }
 
         float supportDelta = Vector3.Dot(targetSupport.point - currentSupport.point, up);
-        if (supportDelta > GetHeightProbeStepRiseLimit() ||
-            supportDelta < -GetHeightProbeStepDropLimit())
+        if (supportDelta >= -heightProbeMinRise)
         {
             return false;
         }
 
-        if (Mathf.Abs(supportDelta) < heightProbeMinRise)
+        if (supportDelta < -GetHeightProbeStepDropLimit())
         {
             return false;
         }
@@ -256,6 +298,11 @@ public partial class SquadCharacterController
         float verticalOffset = Vector3.Dot(
             (targetSupport.point + up * heightProbeContactOffset) - targetFootPoint,
             up);
+        if (verticalOffset >= -heightProbeMinRise)
+        {
+            return false;
+        }
+
         if (Mathf.Abs(verticalOffset) <= 0.0001f)
         {
             return false;
@@ -281,8 +328,8 @@ public partial class SquadCharacterController
         }
 
         return heightProbeMaxStepRise > 0f
-            ? Mathf.Min(heightProbeMaxRise, heightProbeMaxStepRise)
-            : heightProbeMaxRise;
+            ? Mathf.Min(heightProbeMaxRise, heightProbeMaxStepRise, heightProbeObstacleStepLimit)
+            : Mathf.Min(heightProbeMaxRise, heightProbeObstacleStepLimit);
     }
 
     private float GetHeightProbeStepDropLimit()
@@ -295,6 +342,11 @@ public partial class SquadCharacterController
         return heightProbeMaxStepDrop > 0f
             ? Mathf.Min(heightProbeMaxDrop, heightProbeMaxStepDrop)
             : heightProbeMaxDrop;
+    }
+
+    private float GetHeightProbeForwardScanDistance()
+    {
+        return Mathf.Min(heightProbeForwardDistance, heightProbeForwardScanLimit);
     }
 
     private bool IsCapsulePlacementClear(

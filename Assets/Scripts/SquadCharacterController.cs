@@ -232,6 +232,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private float movementCollisionSkin = 0.03f;
     [SerializeField, Range(0f, 1f), Tooltip("Normale minimale consideree comme walkable et ignoree pour le blocage horizontal.")]
     private float movementCollisionWalkableNormalDot = 0.35f;
+    [SerializeField, Tooltip("Applique un materiau sans friction a la capsule de locomotion pour eviter que les contremarches ralentissent le Rigidbody.")]
+    private bool useLowFrictionLocomotionMaterial = true;
+    [SerializeField, Tooltip("Remplace aussi un PhysicMaterial deja assigne sur la capsule de locomotion.")]
+    private bool overrideExistingLocomotionMaterial;
 
     private Vector2 moveInput;
     private float inputLockTimer;
@@ -270,6 +274,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private readonly Collider[] movementOverlapHits = new Collider[8];
     private float footIkWeightCurrent;
     private float heightProbeVerticalOffsetThisStep;
+    private static PhysicsMaterial lowFrictionLocomotionMaterial;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
@@ -288,6 +293,8 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public bool IsGrounded => isGrounded;
     public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
+    public float WalkMoveSpeed => walkMoveSpeed;
+    public float MoveSpeed => moveSpeed;
 
     public bool TryGetHeadWorldY(out float headWorldY)
     {
@@ -2161,9 +2168,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private float ResolveGroundedLocomotionVerticalVelocity(float currentVerticalVelocity)
     {
-        if (heightProbeVerticalOffsetThisStep > 0.0001f)
+        if (Mathf.Abs(heightProbeVerticalOffsetThisStep) > 0.0001f)
         {
-            return Mathf.Max(currentVerticalVelocity, 0f);
+            // La correction de marche place deja la capsule sur son support.
+            // Une vitesse negative ajoute de la friction sur les contremarches; une vitesse positive ressemble a un saut.
+            return Mathf.Min(currentVerticalVelocity, 0f);
         }
 
         return Mathf.Min(currentVerticalVelocity, -groundedStickVelocity);
@@ -3401,6 +3410,58 @@ public partial class SquadCharacterController : MonoBehaviour
         rigidbodyTarget.collisionDetectionMode = rigidbodyTarget.isKinematic
             ? CollisionDetectionMode.ContinuousSpeculative
             : CollisionDetectionMode.ContinuousDynamic;
+
+        if (Application.isPlaying)
+        {
+            ApplyLowFrictionLocomotionMaterial();
+        }
+    }
+
+    private void ApplyLowFrictionLocomotionMaterial()
+    {
+        if (!useLowFrictionLocomotionMaterial)
+        {
+            return;
+        }
+
+        CapsuleCollider capsule = locomotionCapsule;
+        if (capsule == null)
+        {
+            capsule = GetComponent<CapsuleCollider>();
+            locomotionCapsule = capsule;
+        }
+
+        if (capsule == null)
+        {
+            return;
+        }
+
+        if (!overrideExistingLocomotionMaterial && capsule.sharedMaterial != null)
+        {
+            return;
+        }
+
+        capsule.sharedMaterial = GetLowFrictionLocomotionMaterial();
+    }
+
+    private static PhysicsMaterial GetLowFrictionLocomotionMaterial()
+    {
+        if (lowFrictionLocomotionMaterial != null)
+        {
+            return lowFrictionLocomotionMaterial;
+        }
+
+        lowFrictionLocomotionMaterial = new PhysicsMaterial("SquadCharacter_LowFriction")
+        {
+            dynamicFriction = 0f,
+            staticFriction = 0f,
+            bounciness = 0f,
+            frictionCombine = PhysicsMaterialCombine.Minimum,
+            bounceCombine = PhysicsMaterialCombine.Minimum,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+
+        return lowFrictionLocomotionMaterial;
     }
 
     private bool ShouldUseRigidbody()

@@ -47,11 +47,24 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
 
     [Header("Airborne")]
     [SerializeField, Min(0f)] private float landingVisualHoldTime = 0.34f;
+    [SerializeField, Min(0f)] private float flightLandingVisualHoldTime = 0.16f;
     [SerializeField] private bool crossFadeJumpStates = true;
     [SerializeField, Min(0f)] private float jumpCrossFadeDuration = 0.08f;
     [SerializeField, Min(0f)] private float fallCrossFadeDuration = 0.1f;
     [SerializeField, Min(0f)] private float landingCrossFadeDuration = 0.08f;
     [SerializeField] private int animatorLayer = 0;
+
+    [Header("Flight")]
+    [SerializeField, Min(0.01f)] private float flightFullSpeed = 81f;
+    [SerializeField, Min(0f)] private float flightMoveSpeedThreshold = 0.7f;
+    [SerializeField, Min(0f)] private float flightMoveExitSpeedThreshold = 0.35f;
+    [SerializeField, Min(0f)] private float flightCrossFadeDuration = 0.08f;
+    [SerializeField, Min(0f)] private float flightIdleMotionSpeed = 0.85f;
+    [SerializeField, Min(0f)] private float flightBoostMotionSpeed = 1.45f;
+    [SerializeField, Min(0f)] private float flightTakeoffMotionSpeed = 1f;
+    [SerializeField, Min(0f)] private float flightBoostVisualHoldTime = 0.22f;
+    [SerializeField, Min(0f)] private float flightDashCrossFadeDuration = 0.04f;
+    [SerializeField, Range(0.1f, 2f)] private float flightDashExitNormalizedTime = 0.98f;
 
     [Header("State Names")]
     [SerializeField] private string jumpTakeoffStateName = "Jump_Takeoff";
@@ -69,6 +82,9 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     [SerializeField] private string walkStopStateName = "Walk_Stop";
     [SerializeField] private string jogtrotStopStateName = "Jogtrot_Stop";
     [SerializeField] private string runStopStateName = "Run_Stop";
+    [SerializeField] private string flyingIdleStateName = "Flying_Idle";
+    [SerializeField] private string flyingMoveStateName = "Flying_Loop";
+    [SerializeField] private string flyingDashStateName = "Flying_Dash";
 
     [Header("Parameters")]
     [SerializeField] private string speedParam = "Speed";
@@ -113,6 +129,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     [SerializeField] private bool debugIsMoving;
     [SerializeField] private bool debugAirborne;
     [SerializeField] private bool debugFreeFall;
+    [SerializeField] private bool debugFlying;
+    [SerializeField] private float debugFlightSpeed;
     [SerializeField] private bool debugWallSliding;
     [SerializeField] private int debugWallSlideSide;
     [SerializeField] private bool debugJumpTriggered;
@@ -129,9 +147,13 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     private bool wasMoving;
     private bool wasFreeFalling;
     private bool wasWallSliding;
+    private bool wasFlightTakeoff;
+    private bool flightMovingVisual;
     private int lastWallSlideSide;
     private bool jumpSequenceActive;
     private bool lastJumpFromMovement;
+    private float flightBoostVisualTimer;
+    private bool flightDashActive;
     private float lastMovingLocomotionTier = 1f;
     private ReconciliationFamily activeReconciliationFamily = ReconciliationFamily.None;
     private float stateMismatchTimer;
@@ -160,6 +182,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     public bool DebugGrounded => debugGrounded;
     public bool DebugIsMoving => debugIsMoving;
     public bool DebugAirborne => debugAirborne;
+    public bool DebugFlying => debugFlying;
+    public float DebugFlightSpeed => debugFlightSpeed;
     public bool DebugFreeFall => debugFreeFall;
     public bool DebugWallSliding => debugWallSliding;
     public int DebugWallSlideSide => debugWallSlideSide;
@@ -169,6 +193,11 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     public float DebugLocomotionTier => debugLocomotionTier;
     public int DebugJumpPhase => debugJumpPhase;
     public int DebugLandingType => debugLandingType;
+
+    public void ConfigureGroundSpeedReference(float fullSpeed)
+    {
+        motorFullSpeed = Mathf.Max(0.01f, fullSpeed);
+    }
 
     private void Reset()
     {
@@ -205,10 +234,21 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         walkTierThreshold = Mathf.Clamp01(walkTierThreshold);
         jogTierThreshold = Mathf.Clamp(jogTierThreshold, walkTierThreshold, 1f);
         landingVisualHoldTime = Mathf.Max(0f, landingVisualHoldTime);
+        flightLandingVisualHoldTime = Mathf.Max(0f, flightLandingVisualHoldTime);
         jumpCrossFadeDuration = Mathf.Max(0f, jumpCrossFadeDuration);
         fallCrossFadeDuration = Mathf.Max(0f, fallCrossFadeDuration);
         landingCrossFadeDuration = Mathf.Max(0f, landingCrossFadeDuration);
         animatorLayer = Mathf.Max(0, animatorLayer);
+        flightFullSpeed = Mathf.Max(0.01f, flightFullSpeed);
+        flightMoveSpeedThreshold = Mathf.Max(0f, flightMoveSpeedThreshold);
+        flightMoveExitSpeedThreshold = Mathf.Clamp(flightMoveExitSpeedThreshold, 0f, flightMoveSpeedThreshold);
+        flightCrossFadeDuration = Mathf.Max(0f, flightCrossFadeDuration);
+        flightIdleMotionSpeed = Mathf.Max(0f, flightIdleMotionSpeed);
+        flightBoostMotionSpeed = Mathf.Max(flightIdleMotionSpeed, flightBoostMotionSpeed);
+        flightTakeoffMotionSpeed = Mathf.Max(0f, flightTakeoffMotionSpeed);
+        flightBoostVisualHoldTime = Mathf.Max(0f, flightBoostVisualHoldTime);
+        flightDashCrossFadeDuration = Mathf.Max(0f, flightDashCrossFadeDuration);
+        flightDashExitNormalizedTime = Mathf.Clamp(flightDashExitNormalizedTime, 0.1f, 2f);
         airborneResyncDelay = Mathf.Max(0f, airborneResyncDelay);
         landingResyncDelay = Mathf.Max(0f, landingResyncDelay);
         locomotionResyncDelay = Mathf.Max(0f, locomotionResyncDelay);
@@ -231,9 +271,13 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         wasMoving = false;
         wasFreeFalling = false;
         wasWallSliding = false;
+        wasFlightTakeoff = false;
+        flightMovingVisual = false;
         lastWallSlideSide = 0;
         jumpSequenceActive = false;
         lastJumpFromMovement = false;
+        flightBoostVisualTimer = 0f;
+        flightDashActive = false;
         lastMovingLocomotionTier = 1f;
         ResetStateReconciliation();
         debugWallSliding = false;
@@ -292,10 +336,23 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
             return;
         }
 
+        if (motor.FlightActive)
+        {
+            DriveFlight(deltaTime);
+            return;
+        }
+
+        wasFlightTakeoff = false;
+        flightBoostVisualTimer = 0f;
+        flightDashActive = false;
+        flightMovingVisual = false;
+
         UpdateLandingTimer(deltaTime);
         if (motor.LandingTriggered)
         {
-            landingVisualTimer = landingVisualHoldTime;
+            landingVisualTimer = motor.LandingFromFlightTriggered
+                ? flightLandingVisualHoldTime
+                : landingVisualHoldTime;
         }
 
         float actualSpeed = motor.ActualSpeed;
@@ -349,9 +406,13 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         wasMoving = false;
         wasFreeFalling = false;
         wasWallSliding = false;
+        wasFlightTakeoff = false;
+        flightMovingVisual = false;
         lastWallSlideSide = 0;
         jumpSequenceActive = false;
         lastJumpFromMovement = false;
+        flightBoostVisualTimer = 0f;
+        flightDashActive = false;
         ResetStateReconciliation();
 
         SetFloat(speedHash, 0f, 0f, 0f);
@@ -383,6 +444,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         debugGrounded = false;
         debugIsMoving = false;
         debugAirborne = false;
+        debugFlying = false;
+        debugFlightSpeed = 0f;
         debugFreeFall = false;
         debugWallSliding = false;
         debugWallSlideSide = 0;
@@ -390,6 +453,167 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         debugLandingSeverity = StarterInspiredThirdPersonMotor.LandingSeverity.None;
         debugLocomotionTier = 0f;
         debugJumpPhase = (int)JumpPhase.Grounded;
+        debugLandingType = (int)LandingType.None;
+        debugRootMotionDisabled = animator != null && !animator.applyRootMotion;
+        debugCurrentStateShortHash = animator != null && animator.layerCount > animatorLayer
+            ? animator.GetCurrentAnimatorStateInfo(animatorLayer).shortNameHash
+            : 0;
+    }
+
+    private void DriveFlight(float deltaTime)
+    {
+        landingVisualTimer = 0f;
+        wasMoving = false;
+        wasFreeFalling = false;
+        wasWallSliding = false;
+        lastWallSlideSide = 0;
+        jumpSequenceActive = false;
+        lastJumpFromMovement = false;
+        ResetStateReconciliation();
+
+        if (motor.FlightTakeoffActive)
+        {
+            DriveFlightTakeoff(deltaTime);
+            wasFlightTakeoff = true;
+            return;
+        }
+
+        wasFlightTakeoff = false;
+
+        if (flightBoostVisualTimer > 0f)
+        {
+            flightBoostVisualTimer = Mathf.Max(0f, flightBoostVisualTimer - deltaTime);
+        }
+
+        if (motor.FlightBoostStarted)
+        {
+            flightBoostVisualTimer = flightBoostVisualHoldTime;
+        }
+
+        bool flightDashJustStarted = motor.FlightBoostStarted && TryStartFlightDash();
+        bool flightDashVisual = ResolveFlightDashVisual(flightDashJustStarted);
+        float flightSpeed = motor.FlightSpeed;
+        float planarFlightSpeed = Vector3.ProjectOnPlane(motor.FlightVelocity, Vector3.up).magnitude;
+        float normalizedSpeed = Mathf.Clamp01(planarFlightSpeed / flightFullSpeed);
+        float animatorSpeed = normalizedSpeed * locomotionBlendMax;
+        float boostVisualAmount = Mathf.Max(normalizedSpeed, motor.FlightBoostAmount);
+        float motionSpeed = Mathf.Lerp(flightIdleMotionSpeed, flightBoostMotionSpeed, boostVisualAmount);
+        bool boostingVisual = motor.FlightBoosting || flightBoostVisualTimer > 0f;
+        if (boostingVisual || planarFlightSpeed >= flightMoveSpeedThreshold)
+        {
+            flightMovingVisual = true;
+        }
+        else if (planarFlightSpeed <= flightMoveExitSpeedThreshold)
+        {
+            flightMovingVisual = false;
+        }
+
+        bool moving = flightMovingVisual || boostingVisual || flightDashVisual;
+
+        SetFloat(speedHash, animatorSpeed, speedDampTime, deltaTime);
+        SetFloat(motionSpeedHash, motionSpeed, motionSpeedDampTime, deltaTime);
+        SetFloat(verticalSpeedHash, 0f, 0f, deltaTime);
+        SetFloat(locomotionTierHash, 3f, 0f, deltaTime);
+        SetBool(groundedHash, false);
+        SetBool(isMovingHash, moving);
+        SetBool(isAirborneHash, false);
+        SetBool(freeFallHash, false);
+        SetBool(jumpBoolHash, false);
+        SetBool(landingBoolHash, false);
+        SetBool(jumpFromMovementHash, false);
+        SetInt(jumpPhaseHash, (int)JumpPhase.Grounded);
+        SetInt(landingTypeHash, (int)LandingType.None);
+        ResetTrigger(moveStartTriggerHash);
+        ResetTrigger(moveStopTriggerHash);
+        ResetTrigger(jumpTriggerHash);
+        ResetTrigger(landingTriggerHash);
+        ResetTrigger(landingTriggerFallbackHash);
+
+        string flightStateName = flightDashVisual
+            ? ResolveFlightDashStateName()
+            : ResolveFlightStateName(moving || boostingVisual);
+        float flightStateCrossFadeDuration = flightDashVisual
+            ? flightDashCrossFadeDuration
+            : flightCrossFadeDuration;
+        CrossFadeState(flightStateName, flightStateCrossFadeDuration, true);
+
+        if (!showDebugValues)
+        {
+            return;
+        }
+
+        debugAnimatorSpeed = animatorSpeed;
+        debugMotionSpeed = motionSpeed;
+        debugLocomotionTier = 3f;
+        debugGrounded = false;
+        debugIsMoving = moving;
+        debugAirborne = false;
+        debugFlying = true;
+        debugFlightSpeed = flightSpeed;
+        debugFreeFall = false;
+        debugWallSliding = false;
+        debugWallSlideSide = 0;
+        debugLandingTriggered = false;
+        debugLandingSeverity = StarterInspiredThirdPersonMotor.LandingSeverity.None;
+        debugJumpPhase = (int)JumpPhase.Grounded;
+        debugLandingType = (int)LandingType.None;
+        debugRootMotionDisabled = animator != null && !animator.applyRootMotion;
+        debugCurrentStateShortHash = animator != null && animator.layerCount > animatorLayer
+            ? animator.GetCurrentAnimatorStateInfo(animatorLayer).shortNameHash
+            : 0;
+    }
+
+    private void DriveFlightTakeoff(float deltaTime)
+    {
+        flightBoostVisualTimer = 0f;
+        flightDashActive = false;
+        flightMovingVisual = false;
+
+        SetFloat(speedHash, 0f, speedDampTime, deltaTime);
+        SetFloat(motionSpeedHash, flightTakeoffMotionSpeed, motionSpeedDampTime, deltaTime);
+        SetFloat(verticalSpeedHash, 0f, 0f, deltaTime);
+        SetFloat(locomotionTierHash, 0f, 0f, deltaTime);
+        SetBool(groundedHash, false);
+        SetBool(isMovingHash, false);
+        SetBool(isAirborneHash, false);
+        SetBool(freeFallHash, false);
+        SetBool(jumpBoolHash, true);
+        SetBool(landingBoolHash, false);
+        SetBool(jumpFromMovementHash, false);
+        SetInt(jumpPhaseHash, (int)JumpPhase.Takeoff);
+        SetInt(landingTypeHash, (int)LandingType.None);
+        ResetTrigger(moveStartTriggerHash);
+        ResetTrigger(moveStopTriggerHash);
+        ResetTrigger(landingTriggerHash);
+        ResetTrigger(landingTriggerFallbackHash);
+
+        if (!wasFlightTakeoff)
+        {
+            SetTrigger(jumpTriggerHash);
+            debugJumpTriggered = true;
+        }
+
+        CrossFadeState(jumpTakeoffStateName, jumpCrossFadeDuration, true);
+
+        if (!showDebugValues)
+        {
+            return;
+        }
+
+        debugAnimatorSpeed = 0f;
+        debugMotionSpeed = flightTakeoffMotionSpeed;
+        debugLocomotionTier = 0f;
+        debugGrounded = false;
+        debugIsMoving = false;
+        debugAirborne = false;
+        debugFlying = true;
+        debugFlightSpeed = motor.FlightSpeed;
+        debugFreeFall = false;
+        debugWallSliding = false;
+        debugWallSlideSide = 0;
+        debugLandingTriggered = false;
+        debugLandingSeverity = StarterInspiredThirdPersonMotor.LandingSeverity.None;
+        debugJumpPhase = (int)JumpPhase.Takeoff;
         debugLandingType = (int)LandingType.None;
         debugRootMotionDisabled = animator != null && !animator.applyRootMotion;
         debugCurrentStateShortHash = animator != null && animator.layerCount > animatorLayer
@@ -873,6 +1097,105 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         return freeFall ? freeFallStateName : jumpAirborneStateName;
     }
 
+    private string ResolveFlightStateName(bool moving)
+    {
+        string preferredStateName = moving ? flyingMoveStateName : flyingIdleStateName;
+        string fallbackStateName = moving ? flyingIdleStateName : flyingMoveStateName;
+        string legacyPreferredStateName = moving ? "Mixamo_Flying" : "Mixamo_Flying_Idle";
+        string legacyFallbackStateName = moving ? "Mixamo_Flying_Idle" : "Mixamo_Flying";
+
+        if (TryResolveFirstAnimatorState(
+                out string resolvedStateName,
+                preferredStateName,
+                fallbackStateName,
+                legacyPreferredStateName,
+                legacyFallbackStateName))
+        {
+            return resolvedStateName;
+        }
+
+        return preferredStateName;
+    }
+
+    private bool TryStartFlightDash()
+    {
+        if (!HasAnimatorState(ResolveFlightDashStateName()))
+        {
+            return false;
+        }
+
+        flightDashActive = true;
+        return true;
+    }
+
+    private bool ResolveFlightDashVisual(bool justStarted)
+    {
+        if (!flightDashActive)
+        {
+            return false;
+        }
+
+        if (justStarted)
+        {
+            return true;
+        }
+
+        if (!HasAnimatorState(ResolveFlightDashStateName()) || HasFlightDashFinished())
+        {
+            flightDashActive = false;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool HasFlightDashFinished()
+    {
+        if (!TryResolveStateHash(ResolveFlightDashStateName(), out int dashStateHash))
+        {
+            return true;
+        }
+
+        if (animator.IsInTransition(animatorLayer))
+        {
+            AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(animatorLayer);
+            if (MatchesState(nextState, dashStateHash))
+            {
+                return false;
+            }
+        }
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(animatorLayer);
+        return !MatchesState(currentState, dashStateHash) ||
+               currentState.normalizedTime >= flightDashExitNormalizedTime;
+    }
+
+    private string ResolveFlightDashStateName()
+    {
+        if (TryResolveFirstAnimatorState(out string resolvedStateName, flyingDashStateName, "Mixamo_Flying_Dash"))
+        {
+            return resolvedStateName;
+        }
+
+        return flyingDashStateName;
+    }
+
+    private bool TryResolveFirstAnimatorState(out string resolvedStateName, params string[] stateNames)
+    {
+        for (int i = 0; i < stateNames.Length; i++)
+        {
+            string stateName = stateNames[i];
+            if (!string.IsNullOrWhiteSpace(stateName) && HasAnimatorState(stateName))
+            {
+                resolvedStateName = stateName;
+                return true;
+            }
+        }
+
+        resolvedStateName = string.Empty;
+        return false;
+    }
+
     private string ResolveWallSlideStateName(int wallSlideSide)
     {
         string preferredStateName = wallSlideSide < 0 ? wallSlideLeftStateName : wallSlideRightStateName;
@@ -1021,9 +1344,13 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         }
 
         AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(animatorLayer);
-        if (MatchesState(current, stateHash) &&
-            (!animator.IsInTransition(animatorLayer) ||
-             MatchesState(animator.GetNextAnimatorStateInfo(animatorLayer), stateHash)))
+        if (MatchesState(current, stateHash))
+        {
+            return;
+        }
+
+        if (animator.IsInTransition(animatorLayer) &&
+            MatchesState(animator.GetNextAnimatorStateInfo(animatorLayer), stateHash))
         {
             return;
         }
@@ -1239,6 +1566,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         debugGrounded = motor.StableGrounded;
         debugIsMoving = moving;
         debugAirborne = airborne;
+        debugFlying = false;
+        debugFlightSpeed = 0f;
         debugFreeFall = freeFall;
         debugWallSliding = wallSliding;
         debugWallSlideSide = wallSlideSide;

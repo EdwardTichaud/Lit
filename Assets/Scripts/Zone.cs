@@ -12,6 +12,8 @@ public class Zone : MonoBehaviour
     public bool torchConsumes = true;
 
     [Header("Audio")]
+    [Tooltip("Profil audio de zone (musique + ambiance). Prioritaire sur les champs legacy si renseigne.")]
+    public ZoneAudioProfileSO zoneAudioProfile;
     [Tooltip("Joue la musique de zone a l'entree/sortie.")]
     public bool playZoneMusic = true;
     [Tooltip("Clip de musique associe a cette zone.")]
@@ -777,7 +779,7 @@ public class Zone : MonoBehaviour
 
     private void NotifyZoneEnter()
     {
-        if (!playZoneMusic || zoneMusic == null)
+        if (!HasZoneAudio())
         {
             return;
         }
@@ -790,7 +792,7 @@ public class Zone : MonoBehaviour
 
     private void NotifyZoneExit()
     {
-        if (!playZoneMusic || zoneMusic == null)
+        if (!HasZoneAudio())
         {
             return;
         }
@@ -799,6 +801,26 @@ public class Zone : MonoBehaviour
         {
             AudioManager.Instance.RegisterZoneExit(this);
         }
+    }
+
+    public AudioClipSO GetZoneMusicClip()
+    {
+        if (zoneAudioProfile != null && zoneAudioProfile.music != null)
+        {
+            return zoneAudioProfile.music;
+        }
+
+        return playZoneMusic ? zoneMusic : null;
+    }
+
+    public AudioClipSO GetZoneAmbienceClip()
+    {
+        return zoneAudioProfile != null ? zoneAudioProfile.ambience : null;
+    }
+
+    public bool HasZoneAudio()
+    {
+        return GetZoneMusicClip() != null || GetZoneAmbienceClip() != null;
     }
 
     private void ApplyWaitingRotation(GameObject character, Quaternion rotation)

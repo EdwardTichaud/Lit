@@ -49,6 +49,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         playerInputs.Enable();
     }
 
+    private void Update()
+    {
+        LocalInputRouter.SetFlightVerticalValue(ReadFlightVerticalInput());
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
@@ -102,6 +107,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         if (context.performed && shouldProcess)
         {
             LocalInputRouter.RaiseRightShoulder(context);
+        }
+    }
+
+    public void OnLocomotionMode(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseLocomotionMode(context);
         }
     }
 
@@ -253,6 +266,17 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     {
         LocalInputRouter.ResetMove();
         LocalInputRouter.ResetCamera();
+    }
+
+    private static float ReadFlightVerticalInput()
+    {
+        if (!MainMenuInputSettings.AllowsGamepad() || Gamepad.current == null)
+        {
+            return 0f;
+        }
+
+        Gamepad gamepad = Gamepad.current;
+        return gamepad.rightTrigger.ReadValue() - gamepad.leftTrigger.ReadValue();
     }
 
     private static bool ShouldProcess(InputAction.CallbackContext context)

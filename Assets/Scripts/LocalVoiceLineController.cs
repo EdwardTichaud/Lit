@@ -103,6 +103,7 @@ public class LocalVoiceLineController : MonoBehaviour
     private bool isMusicDucked;
 
     private const string TextRootTag = "LocalVoiceLines";
+    private const string TextRootObjectName = "LocalVoiceLines";
 
     private void Awake()
     {
@@ -1035,8 +1036,6 @@ public class LocalVoiceLineController : MonoBehaviour
         }
         catch (UnityException)
         {
-            WarnMissingTextRoot($"tag '{TextRootTag}' non defini.");
-            return;
         }
 
         if (root != null)
@@ -1045,7 +1044,25 @@ public class LocalVoiceLineController : MonoBehaviour
             return;
         }
 
-        WarnMissingTextRoot($"aucun objet avec le tag '{TextRootTag}' dans la scene.");
+        Transform namedRoot = FindSceneTransformByName(TextRootObjectName);
+        if (namedRoot != null)
+        {
+            textRoot = namedRoot;
+            warnedMissingTextRoot = false;
+            return;
+        }
+
+        GameObject createdRoot = new GameObject(TextRootObjectName);
+        try
+        {
+            createdRoot.tag = TextRootTag;
+        }
+        catch (UnityException)
+        {
+        }
+
+        textRoot = createdRoot.transform;
+        warnedMissingTextRoot = false;
     }
 
     private void WarnMissingTextRoot(string message)
@@ -1057,5 +1074,35 @@ public class LocalVoiceLineController : MonoBehaviour
 
         Debug.LogWarning($"{nameof(LocalVoiceLineController)}: {message}", this);
         warnedMissingTextRoot = true;
+    }
+
+    private static Transform FindSceneTransformByName(string objectName)
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        Transform[] candidates = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            Transform candidate = candidates[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            GameObject candidateObject = candidate.gameObject;
+            if (candidateObject == null ||
+                !candidateObject.scene.IsValid() ||
+                !string.Equals(candidateObject.name, objectName, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return null;
     }
 }

@@ -861,6 +861,26 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
 #if UNITY_EDITOR
         panelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (panelPrefab == null)
+        {
+            string[] prefabGuids = AssetDatabase.FindAssets($"{resourceName} t:prefab");
+            for (int i = 0; i < prefabGuids.Length; i++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(prefabGuids[i]);
+                if (string.IsNullOrWhiteSpace(assetPath))
+                {
+                    continue;
+                }
+
+                panelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                if (IsMatchingLocalPanelPrefab(panelPrefab, wantsItemPanel))
+                {
+                    break;
+                }
+
+                panelPrefab = null;
+            }
+        }
 #endif
         if (panelPrefab == null)
         {

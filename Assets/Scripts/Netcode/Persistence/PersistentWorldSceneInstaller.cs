@@ -673,7 +673,7 @@ public static class PersistentWorldSceneInstaller
 
         if (ownNetworkObject == null && parentNetworkObject != null)
         {
-            PersistentWorldDebug.Warn($"Skipping persistent install on '{target.name}' because it is nested under NetworkObject '{parentNetworkObject.name}'.", target);
+            PersistentWorldDebug.Log($"Skipping persistent install on '{target.name}' because it is nested under NetworkObject '{parentNetworkObject.name}'.", target);
             return null;
         }
 
