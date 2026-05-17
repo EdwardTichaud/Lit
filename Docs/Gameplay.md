@@ -59,20 +59,19 @@ logique de level design. Les chiffres sont des repères internes : le joueur peu
 voir des noms de périodes, des états sociaux ou des changements architecturaux
 plutôt que des dates brutes.
 
-Le système global `BraseroTimeManager` existe encore et pilote déjà des années
-par nombre de braseros allumés. Il reste utile pour les scènes existantes.
-Les nouveaux contenus doivent privilégier la notion d'âge temporel 0..666 et
-utiliser les ponts de conversion plutôt que dupliquer le comportement.
+Le système global canonique est `AgeManager`. Le joueur commence en 666 et chaque
+brasero allumé fait reculer l'âge de 111 ans. `BraseroTimeManager` reste seulement
+un pont pour les scènes existantes qui le référencent encore.
 
 ### Torche temporelle - lecture locale
 
-La torche ne fait pas voyager le joueur. Elle lit localement une strate voisine.
+La torche ne fait pas voyager le joueur. Elle révèle localement les objets dont
+la période croise la fenêtre entre l'année courante et 110 ans en avant.
 
-Si une zone est stabilisée à Age333, la torche peut révéler :
+Si l'année courante est 333, la torche peut révéler :
 
-- Age222 ;
-- Age333 ;
-- Age444.
+- les objets visibles en 333 ;
+- les objets dont la période s'étend jusqu'à 443 inclus.
 
 Elle sert à comprendre les transitions : réparation, condamnation, réaffectation,
 mur bouché, fenêtre murée, lit ajouté, brasero déplacé, registre corrigé.

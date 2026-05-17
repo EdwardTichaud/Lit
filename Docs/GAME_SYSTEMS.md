@@ -240,6 +240,8 @@ Les sons sont souvent encapsulés dans des ScriptableObjects. Les zones peuvent 
 **Fichiers principaux** :
 
 - `Assets/Scripts/BraseroTimeManager.cs`
+- `Assets/Scripts/BraseroDisplayManager.cs`
+- `Assets/Scripts/Temporal/AgeManager.cs`
 - `Assets/Scripts/Brasero.cs`
 - `Assets/Scripts/TimePeriodVisibility.cs`
 - `Assets/Scripts/AgeTriggerZone.cs`
@@ -249,12 +251,12 @@ Les sons sont souvent encapsulés dans des ScriptableObjects. Les zones peuvent 
 
 **Fonctionnement général** :
 
-Le projet possède une couche historique par années/braseros et une couche plus récente par `TemporalAge`. Les visions de torche par couleur restent utiles comme lecture secondaire.
+Le projet utilise `AgeManager` comme source canonique d'âge et comme seule liste de braseros. Le joueur commence en 666, chaque brasero allumé recule l'âge de 111 ans, et les torches révèlent localement les objets dont la période croise la fenêtre année courante -> +110 ans. `BraseroDisplayManager` diffuse cet état aux affichages. `BraseroTimeManager` reste un pont de compatibilité tant que des scènes le référencent, sans liste ni recalcul concurrent.
 
 **Points d'attention** :
 
-- Ne pas supprimer les systèmes existants tant que les scènes les référencent.
-- Pour les nouveaux contenus temporels, préférer `TemporalZone` et `TemporalObject`.
+- Ne pas supprimer les ponts de compatibilité tant que les scènes les référencent.
+- Pour les nouveaux contenus temporels, préférer `AgeManager` + `TimePeriodVisibility`, et `BraseroDisplayManager` pour les affichages.
 
 ## Readables, lore et données narratives
 

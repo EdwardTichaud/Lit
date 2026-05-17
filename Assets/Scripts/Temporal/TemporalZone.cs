@@ -1,8 +1,8 @@
 // Role:
 // Represents a gameplay area whose dominant temporal age can change.
 // Usage:
-// Attach to a zone root in a scene. BraseroTemporalController can drive it, and
-// TemporalObject instances can register to react to age changes.
+// Attach to a zone root in a scene. AgeManager is the global age source, and
+// TemporalObject instances can register to react to explicit zone age changes.
 // Responsibilities:
 // Store current/min/max ages, notify listeners, and apply the age to affected objects.
 // Dependencies:

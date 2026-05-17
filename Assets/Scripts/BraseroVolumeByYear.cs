@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-// Change le Volume profile en fonction de l'annee courante.
+// Cible d'affichage: change le Volume profile depuis BraseroDisplayManager.
 [DisallowMultipleComponent]
-public class BraseroVolumeByYear : MonoBehaviour
+public class BraseroVolumeByYear : MonoBehaviour, IBraseroDisplayTarget
 {
     [Serializable]
     public struct YearProfile
@@ -17,14 +17,12 @@ public class BraseroVolumeByYear : MonoBehaviour
     }
 
     [Header("References")]
-    [Tooltip("Manager des braseros.")]
-    public BraseroTimeManager timeManager;
     [Tooltip("Volume cible a piloter.")]
     public Volume targetVolume;
-    [Tooltip("Cherche automatiquement un manager si non assigne.")]
-    public bool autoFindManager = true;
     [Tooltip("Cherche automatiquement un Volume si non assigne.")]
     public bool autoFindVolume = true;
+
+    [Header("Display")]
     [Tooltip("Valeur comparee pour choisir le profil.")]
     public TimePeriodValueMode valueMode = TimePeriodValueMode.YearOffsetFromBase;
 
@@ -40,76 +38,23 @@ public class BraseroVolumeByYear : MonoBehaviour
 
     private void OnEnable()
     {
-        ResolveReferences();
-        Subscribe();
-        ApplyForCurrentYear();
+        ResolveTargetVolume();
+        BraseroDisplayManager.Register(this);
     }
 
     private void OnDisable()
     {
-        Unsubscribe();
+        BraseroDisplayManager.Unregister(this);
     }
 
-    private void ResolveReferences()
+    public void ApplyBraseroDisplay(BraseroDisplaySnapshot snapshot)
     {
-        if (targetVolume == null && autoFindVolume)
-        {
-            targetVolume = GetComponent<Volume>();
-            if (targetVolume == null)
-            {
-                targetVolume = FindObjectOfType<Volume>();
-            }
-        }
-
-        if (timeManager == null && autoFindManager)
-        {
-            timeManager = BraseroTimeManager.ActiveInstance;
-            if (timeManager == null)
-            {
-#if UNITY_2023_1_OR_NEWER
-                timeManager = FindFirstObjectByType<BraseroTimeManager>();
-#else
-                timeManager = FindObjectOfType<BraseroTimeManager>();
-#endif
-            }
-        }
+        ApplyForValue(snapshot.GetComparisonValue(valueMode));
     }
 
-    private void Subscribe()
+    public void ApplyForCurrentYear()
     {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        timeManager.TimeChanged += OnTimeChanged;
-    }
-
-    private void Unsubscribe()
-    {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        timeManager.TimeChanged -= OnTimeChanged;
-    }
-
-    private void OnTimeChanged(int year, int litCount)
-    {
-        int currentValue = timeManager != null ? timeManager.GetComparisonValue(valueMode) : year;
-        ApplyForValue(currentValue);
-    }
-
-    private void ApplyForCurrentYear()
-    {
-        if (timeManager == null)
-        {
-            ApplyForYear(0);
-            return;
-        }
-
-        ApplyForValue(timeManager.GetComparisonValue(valueMode));
+        ApplyBraseroDisplay(BraseroDisplayManager.GetCurrentSnapshot());
     }
 
     public void ApplyForYear(int year)
@@ -119,6 +64,7 @@ public class BraseroVolumeByYear : MonoBehaviour
 
     public void ApplyForValue(int currentValue)
     {
+        ResolveTargetVolume();
         if (targetVolume == null)
         {
             return;
@@ -137,6 +83,26 @@ public class BraseroVolumeByYear : MonoBehaviour
 
         targetVolume.sharedProfile = selected;
         currentProfile = selected;
+    }
+
+    private void ResolveTargetVolume()
+    {
+        if (targetVolume != null || !autoFindVolume)
+        {
+            return;
+        }
+
+        targetVolume = GetComponent<Volume>();
+        if (targetVolume != null)
+        {
+            return;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        targetVolume = FindFirstObjectByType<Volume>();
+#else
+        targetVolume = FindObjectOfType<Volume>();
+#endif
     }
 
     private VolumeProfile SelectProfile(int currentValue)
@@ -167,7 +133,7 @@ public class BraseroVolumeByYear : MonoBehaviour
     {
         if (!Application.isPlaying)
         {
-            ResolveReferences();
+            ResolveTargetVolume();
             ApplyForCurrentYear();
         }
     }

@@ -191,6 +191,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
+        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         InitializeInteractionTrigger();
         RefreshRecoverableWorldInfo();
 

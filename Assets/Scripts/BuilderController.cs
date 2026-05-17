@@ -887,6 +887,7 @@ public class BuilderController : NetworkBehaviour
             return null;
         }
 
+        RuntimeOutlineUtility.EnsureOutlineTargets(instance);
         BuildingInfoInteractable info = instance.GetComponent<BuildingInfoInteractable>();
         if (info == null)
         {

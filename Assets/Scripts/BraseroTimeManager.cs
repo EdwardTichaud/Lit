@@ -1,24 +1,18 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
-// Manager des braseros qui pilote le temps global du chateau.
+// Pont de compatibilite pour les scenes qui referencent encore l'ancien manager.
+// La source canonique de gameplay est AgeManager.
 [DisallowMultipleComponent]
 public class BraseroTimeManager : MonoBehaviour
 {
     public static BraseroTimeManager ActiveInstance { get; private set; }
 
-    [Header("Braseros")]
-    [Tooltip("Si true, collecte automatiquement les braseros dans les enfants.")]
-    public bool autoCollectChildren = true;
-    [Tooltip("Liste des braseros geres par ce manager.")]
-    public List<Brasero> braseros = new List<Brasero>();
-
     [Header("Time")]
-    [Tooltip("Annee de reference (0 par defaut).")]
-    public int baseYear = 0;
-    [Tooltip("Nombre d'annees gagnees par brasero allume. Les nouvelles zones temporelles utilisent 111; certaines scenes existantes peuvent encore serialiser une autre valeur.")]
-    public int yearsPerBrasero = TemporalAgeUtility.StepYears;
+    [Tooltip("Annee de depart. Gardee pour compatibilite, AgeManager utilise 666 par defaut.")]
+    public int baseYear = AgeManager.DefaultStartYear;
+    [Tooltip("Nombre d'annees reculees par brasero allume.")]
+    public int yearsPerBrasero = AgeManager.DefaultYearsPerBrasero;
     [Tooltip("Ecrit un log quand la periode change.")]
     public bool logTimeChanges = false;
 
@@ -27,10 +21,12 @@ public class BraseroTimeManager : MonoBehaviour
     private int litCount;
     [SerializeField, Tooltip("Annee courante calculee.")]
     private int currentYear;
+    private AgeManager activeAgeManager;
 
     public int LitCount => litCount;
     public int CurrentYear => currentYear;
     public int CurrentYearOffset => litCount * yearsPerBrasero;
+    public int TotalCount => GetBraseroCount();
     public TemporalAge CurrentTemporalAge => TemporalAgeUtility.IntToAge(currentYear);
     public TemporalAge CurrentTemporalAgeOffset => TemporalAgeUtility.IntToAge(CurrentYearOffset);
 
@@ -39,19 +35,13 @@ public class BraseroTimeManager : MonoBehaviour
     private void OnEnable()
     {
         ActiveInstance = this;
-
-        if (autoCollectChildren)
-        {
-            RefreshBraseros();
-        }
-
-        Subscribe();
+        BindToAgeManager();
         RecalculateTime(rescanTimePeriodVisibility: true);
     }
 
     private void OnDisable()
     {
-        Unsubscribe();
+        UnsubscribeFromAgeManager();
 
         if (ReferenceEquals(ActiveInstance, this))
         {
@@ -61,70 +51,55 @@ public class BraseroTimeManager : MonoBehaviour
 
     private void OnTransformChildrenChanged()
     {
-        if (!autoCollectChildren)
-        {
-            return;
-        }
-
         RefreshAndResubscribe();
     }
 
     public void RefreshBraseros()
     {
-        if (!autoCollectChildren)
+        AgeManager manager = ResolveAgeManager();
+        if (manager != null)
         {
-            return;
+            manager.RefreshBraseros();
         }
-
-        braseros.Clear();
-        GetComponentsInChildren(true, braseros);
     }
 
     public void RefreshAndResubscribe()
     {
-        Unsubscribe();
-        RefreshBraseros();
-        Subscribe();
+        AgeManager manager = ResolveAgeManager();
+        if (manager != null)
+        {
+            manager.RefreshAndResubscribe();
+            SyncFromAgeManager(manager, notifyChanged: true);
+            return;
+        }
+
         RecalculateTime();
     }
 
     public void RecalculateTime(bool rescanTimePeriodVisibility = true)
     {
-        int previousLitCount = litCount;
-        int previousYear = currentYear;
-        int count = 0;
-        for (int i = 0; i < braseros.Count; i++)
+        if (BindToAgeManager())
         {
-            Brasero brasero = braseros[i];
-            if (brasero == null)
-            {
-                continue;
-            }
-
-            if (brasero.IsLit)
-            {
-                count++;
-            }
+            activeAgeManager.RecalculateAge(rescanTimePeriodVisibility);
+            SyncFromAgeManager(activeAgeManager, notifyChanged: true);
+            return;
         }
 
-        litCount = count;
-        currentYear = baseYear + litCount * yearsPerBrasero;
-        if (logTimeChanges && (previousLitCount != litCount || previousYear != currentYear))
-        {
-            Debug.Log(
-                $"[TimePeriod] litCount={litCount}/{(braseros != null ? braseros.Count : 0)} currentYear={currentYear} yearOffset={CurrentYearOffset}",
-                this);
-        }
-
-        TimeChanged?.Invoke(currentYear, litCount);
-        TimePeriodVisibility.RefreshAllForManager(this, rescanTimePeriodVisibility);
+        SyncDefaultState(notifyChanged: true);
+        BraseroDisplayManager.RefreshAllDisplays();
     }
 
     public void SetAllLit(bool lit)
     {
-        for (int i = 0; i < braseros.Count; i++)
+        AgeManager manager = ResolveAgeManager();
+        if (manager == null || manager.Braseros == null)
         {
-            Brasero brasero = braseros[i];
+            return;
+        }
+
+        for (int i = 0; i < manager.Braseros.Count; i++)
+        {
+            Brasero brasero = manager.Braseros[i];
             if (brasero == null)
             {
                 continue;
@@ -134,41 +109,91 @@ public class BraseroTimeManager : MonoBehaviour
         }
     }
 
-    private void Subscribe()
+    private bool BindToAgeManager()
     {
-        for (int i = 0; i < braseros.Count; i++)
+        AgeManager manager = ResolveAgeManager();
+        if (manager == null)
         {
-            Brasero brasero = braseros[i];
-            if (brasero == null)
-            {
-                continue;
-            }
+            return false;
+        }
 
-            brasero.StateChanged += OnBraseroStateChanged;
+        if (!ReferenceEquals(activeAgeManager, manager))
+        {
+            UnsubscribeFromAgeManager();
+            activeAgeManager = manager;
+            activeAgeManager.AgeChanged += OnAgeManagerChanged;
+        }
+
+        return true;
+    }
+
+    private void UnsubscribeFromAgeManager()
+    {
+        if (activeAgeManager != null)
+        {
+            activeAgeManager.AgeChanged -= OnAgeManagerChanged;
+            activeAgeManager = null;
         }
     }
 
-    private void Unsubscribe()
+    private void OnAgeManagerChanged(AgeManager manager, int previousYear, int currentYearValue)
     {
-        for (int i = 0; i < braseros.Count; i++)
-        {
-            Brasero brasero = braseros[i];
-            if (brasero == null)
-            {
-                continue;
-            }
+        SyncFromAgeManager(manager, notifyChanged: true);
+    }
 
-            brasero.StateChanged -= OnBraseroStateChanged;
+    private void SyncFromAgeManager(AgeManager manager, bool notifyChanged)
+    {
+        if (manager == null)
+        {
+            return;
+        }
+
+        int previousLitCount = litCount;
+        int previousYear = currentYear;
+
+        baseYear = manager.StartYear;
+        yearsPerBrasero = manager.YearsPerBrasero;
+        litCount = manager.LitBrazierCount;
+        currentYear = manager.CurrentYear;
+
+        bool changed = previousLitCount != litCount || previousYear != currentYear;
+        if (logTimeChanges && changed)
+        {
+            Debug.Log(
+                $"[TimePeriod:LegacyBridge] litCount={litCount}/{TotalCount} currentYear={currentYear} yearOffset={CurrentYearOffset}",
+                this);
+        }
+
+        if (notifyChanged && changed)
+        {
+            TimeChanged?.Invoke(currentYear, litCount);
         }
     }
 
-    private void OnBraseroStateChanged(Brasero brasero, bool lit)
+    private void SyncDefaultState(bool notifyChanged)
     {
-        RecalculateTime();
+        int previousLitCount = litCount;
+        int previousYear = currentYear;
+
+        baseYear = AgeManager.DefaultStartYear;
+        yearsPerBrasero = AgeManager.DefaultYearsPerBrasero;
+        litCount = 0;
+        currentYear = AgeManager.DefaultStartYear;
+
+        if (notifyChanged && (previousLitCount != litCount || previousYear != currentYear))
+        {
+            TimeChanged?.Invoke(currentYear, litCount);
+        }
     }
 
     public int GetComparisonValue(TimePeriodValueMode valueMode)
     {
+        AgeManager manager = activeAgeManager != null ? activeAgeManager : AgeManager.ActiveInstance;
+        if (manager != null)
+        {
+            return manager.GetComparisonValue(valueMode);
+        }
+
         switch (valueMode)
         {
             case TimePeriodValueMode.YearOffsetFromBase:
@@ -189,12 +214,33 @@ public class BraseroTimeManager : MonoBehaviour
         }
     }
 
+    private int GetBraseroCount()
+    {
+        AgeManager manager = activeAgeManager != null ? activeAgeManager : AgeManager.ActiveInstance;
+        return manager != null && manager.Braseros != null ? manager.Braseros.Count : 0;
+    }
+
+    private static AgeManager ResolveAgeManager()
+    {
+        if (AgeManager.ActiveInstance != null)
+        {
+            return AgeManager.ActiveInstance;
+        }
+
+        return AgeManager.GetOrCreate();
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (!Application.isPlaying && yearsPerBrasero < 0)
+        if (!Application.isPlaying && yearsPerBrasero < 1)
         {
-            yearsPerBrasero = 0;
+            yearsPerBrasero = AgeManager.DefaultYearsPerBrasero;
+        }
+
+        if (!Application.isPlaying)
+        {
+            baseYear = Mathf.Clamp(baseYear, TemporalAgeUtility.MinYear, TemporalAgeUtility.MaxYear);
         }
     }
 #endif

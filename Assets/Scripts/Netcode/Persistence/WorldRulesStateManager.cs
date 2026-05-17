@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public class WorldRulesStateManager : MonoBehaviour
@@ -12,8 +13,10 @@ public class WorldRulesStateManager : MonoBehaviour
     public const string CurrentTemporalAgeStepKey = "world.time.temporal_age_step";
     public const string ActiveVolumeProfilesKey = "world.environment.active_volume_profiles";
 
+    [SerializeField] private AgeManager ageManager;
     [SerializeField] private BraseroTimeManager braseroTimeManager;
-    [SerializeField] private bool autoResolveBraseroTimeManager = true;
+    [FormerlySerializedAs("autoResolveBraseroTimeManager")]
+    [SerializeField] private bool autoResolveAgeManagers = true;
 
     private readonly Dictionary<string, WorldVariableSnapshot> variables = new Dictionary<string, WorldVariableSnapshot>();
 
@@ -167,14 +170,24 @@ public class WorldRulesStateManager : MonoBehaviour
         ResolveReferences();
         if (braseroTimeManager == null)
         {
-            return;
+            if (ageManager == null)
+            {
+                return;
+            }
         }
 
-        SetInt(BrazierLitCountKey, braseroTimeManager.LitCount);
-        SetInt(BrazierTotalCountKey, braseroTimeManager.braseros != null ? braseroTimeManager.braseros.Count : 0);
-        SetInt(CurrentYearKey, braseroTimeManager.CurrentYear);
-        SetInt(CurrentTemporalAgeKey, TemporalAgeUtility.AgeToInt(braseroTimeManager.CurrentTemporalAge));
-        SetInt(CurrentTemporalAgeStepKey, TemporalAgeUtility.AgeToStep(braseroTimeManager.CurrentTemporalAge));
+        int litCount = ageManager != null ? ageManager.LitBrazierCount : braseroTimeManager.LitCount;
+        int totalCount = ageManager != null
+            ? (ageManager.Braseros != null ? ageManager.Braseros.Count : 0)
+            : braseroTimeManager.TotalCount;
+        int currentYear = ageManager != null ? ageManager.CurrentYear : braseroTimeManager.CurrentYear;
+        TemporalAge currentAge = ageManager != null ? ageManager.CurrentTemporalAge : braseroTimeManager.CurrentTemporalAge;
+
+        SetInt(BrazierLitCountKey, litCount);
+        SetInt(BrazierTotalCountKey, totalCount);
+        SetInt(CurrentYearKey, currentYear);
+        SetInt(CurrentTemporalAgeKey, TemporalAgeUtility.AgeToInt(currentAge));
+        SetInt(CurrentTemporalAgeStepKey, TemporalAgeUtility.AgeToStep(currentAge));
         SetString(ActiveVolumeProfilesKey, DescribeActiveVolumeProfiles());
     }
 
@@ -210,7 +223,25 @@ public class WorldRulesStateManager : MonoBehaviour
 
     private void ResolveReferences()
     {
-        if (braseroTimeManager == null && autoResolveBraseroTimeManager)
+        if (!autoResolveAgeManagers)
+        {
+            return;
+        }
+
+        if (ageManager == null)
+        {
+            ageManager = AgeManager.ActiveInstance;
+            if (ageManager == null)
+            {
+#if UNITY_2023_1_OR_NEWER
+                ageManager = FindFirstObjectByType<AgeManager>();
+#else
+                ageManager = FindObjectOfType<AgeManager>();
+#endif
+            }
+        }
+
+        if (braseroTimeManager == null)
         {
 #if UNITY_2023_1_OR_NEWER
             braseroTimeManager = FindFirstObjectByType<BraseroTimeManager>();
@@ -222,6 +253,12 @@ public class WorldRulesStateManager : MonoBehaviour
 
     private void Subscribe()
     {
+        if (ageManager != null)
+        {
+            ageManager.AgeChanged += OnAgeChanged;
+            return;
+        }
+
         if (braseroTimeManager == null)
         {
             return;
@@ -232,6 +269,11 @@ public class WorldRulesStateManager : MonoBehaviour
 
     private void Unsubscribe()
     {
+        if (ageManager != null)
+        {
+            ageManager.AgeChanged -= OnAgeChanged;
+        }
+
         if (braseroTimeManager == null)
         {
             return;
@@ -241,6 +283,11 @@ public class WorldRulesStateManager : MonoBehaviour
     }
 
     private void OnBraseroTimeChanged(int currentYear, int litCount)
+    {
+        RebuildDerivedBrazierVariables();
+    }
+
+    private void OnAgeChanged(AgeManager manager, int previousYear, int currentYear)
     {
         RebuildDerivedBrazierVariables();
     }

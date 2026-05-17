@@ -14,6 +14,7 @@ public static class WorldPickupUtility
 
         NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(root);
         InteractableItem container = NetcodeRuntimeUtilities.GetOrAdd<InteractableItem>(root);
+        RuntimeOutlineUtility.EnsureOutlineTargets(root);
         Collider interactionCollider = EnsureInteractionColliderInternal(root, container, null);
         if (interactionCollider != null)
         {

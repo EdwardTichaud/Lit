@@ -216,6 +216,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool torchStartsActive = true;
     [SerializeField, Tooltip("Lit l'etat depuis la hierarchie.")]
     private bool initializeTorchFromHierarchy = true;
+    [SerializeField, Tooltip("Ajoute/configure automatiquement la torche temporelle canonique.")]
+    private bool ensureTemporalTorch = true;
+    [SerializeField, Min(0.1f), Tooltip("Rayon de revelation locale de la torche temporelle.")]
+    private float temporalTorchRevealRadius = 5f;
     [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche a l'arret.")]
     private float torchUpperBodyIdleLayerWeight = 0.92f;
     [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche en locomotion rapide.")]
@@ -3040,6 +3044,10 @@ public partial class SquadCharacterController : MonoBehaviour
         if (torchTransform != null)
         {
             ConfigureTorchPhysics(torchTransform);
+            if (ensureTemporalTorch)
+            {
+                TemporalTorch.EnsureOnTorch(torchTransform, this, temporalTorchRevealRadius);
+            }
         }
     }
 

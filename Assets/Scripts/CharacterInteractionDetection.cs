@@ -23,37 +23,37 @@ public static class CharacterInteractionDetection
         Transform current = collider.transform;
         while (current != null)
         {
-            if (current.TryGetComponent(out IustiaIdolPrayer idol) && idol.isActiveAndEnabled)
+            if (current.TryGetComponent(out IustiaIdolPrayer idol) && idol.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(idol))
             {
                 return idol;
             }
 
-            if (current.TryGetComponent(out InteractableItem item) && item.isActiveAndEnabled)
+            if (current.TryGetComponent(out InteractableItem item) && item.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(item))
             {
                 return item;
             }
 
-            if (current.TryGetComponent(out DestructibleObject destructible) && destructible.isActiveAndEnabled)
+            if (current.TryGetComponent(out DestructibleObject destructible) && destructible.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(destructible))
             {
                 return destructible;
             }
 
-            if (current.TryGetComponent(out BuildingInfoInteractable buildingInfo) && buildingInfo.isActiveAndEnabled)
+            if (current.TryGetComponent(out BuildingInfoInteractable buildingInfo) && buildingInfo.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(buildingInfo))
             {
                 return buildingInfo;
             }
 
-            if (current.TryGetComponent(out LadderInteractable ladder) && ladder.isActiveAndEnabled)
+            if (current.TryGetComponent(out LadderInteractable ladder) && ladder.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(ladder))
             {
                 return ladder;
             }
 
-            if (current.TryGetComponent(out Door door) && door.isActiveAndEnabled)
+            if (current.TryGetComponent(out Door door) && door.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(door))
             {
                 return door;
             }
 
-            if (current.TryGetComponent(out ReadableSentencePuzzle readableSentencePuzzle) && readableSentencePuzzle.isActiveAndEnabled)
+            if (current.TryGetComponent(out ReadableSentencePuzzle readableSentencePuzzle) && readableSentencePuzzle.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(readableSentencePuzzle))
             {
                 return readableSentencePuzzle;
             }

@@ -676,17 +676,24 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
 
     private void ValidateWorldRules(PersistentStateContext context)
     {
+        AgeManager ageManager = ResolveAgeManager();
         BraseroTimeManager timeManager = ResolveTimeManager();
-        if (context == null || context.WorldRules == null || timeManager == null)
+        if (context == null || context.WorldRules == null || (ageManager == null && timeManager == null))
         {
             PersistentStateValidation.LogValidation(
                 "world_rules_extended",
                 false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' worldRulesMissing={context == null || context.WorldRules == null} timeManagerMissing={timeManager == null}",
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' worldRulesMissing={context == null || context.WorldRules == null} ageManagerMissing={ageManager == null} timeManagerMissing={timeManager == null}",
                 brasero,
                 context);
             return;
         }
+
+        int expectedLitCount = ageManager != null ? ageManager.LitBrazierCount : timeManager.LitCount;
+        int expectedCurrentYear = ageManager != null ? ageManager.CurrentYear : timeManager.CurrentYear;
+        int expectedTotalCount = ageManager != null
+            ? (ageManager.Braseros != null ? ageManager.Braseros.Count : 0)
+            : timeManager.TotalCount;
 
         bool hasLitCount = context.WorldRules.TryGetInt(WorldRulesStateManager.BrazierLitCountKey, out int litCount);
         bool hasTotalCount = context.WorldRules.TryGetInt(WorldRulesStateManager.BrazierTotalCountKey, out int totalCount);
@@ -694,17 +701,16 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
         bool baseSuccess =
             hasLitCount &&
             hasCurrentYear &&
-            litCount == timeManager.LitCount &&
-            currentYear == timeManager.CurrentYear;
+            litCount == expectedLitCount &&
+            currentYear == expectedCurrentYear;
         PersistentStateValidation.LogValidation(
             "brazier_world_rules",
             baseSuccess,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedLitCount={timeManager.LitCount} actualLitCount={litCount} expectedYear={timeManager.CurrentYear} actualYear={currentYear}",
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedLitCount={expectedLitCount} actualLitCount={litCount} expectedYear={expectedCurrentYear} actualYear={currentYear}",
             brasero,
             context);
 
         bool hasVolumeProfiles = context.WorldRules.TryGetString(WorldRulesStateManager.ActiveVolumeProfilesKey, out string activeVolumeProfiles);
-        int expectedTotalCount = timeManager.braseros != null ? timeManager.braseros.Count : 0;
         string actualVolumeProfiles = context.WorldRules.DescribeActiveVolumeProfiles();
         bool extendedSuccess =
             baseSuccess &&
@@ -726,6 +732,20 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
         return FindFirstObjectByType<BraseroTimeManager>();
 #else
         return FindObjectOfType<BraseroTimeManager>();
+#endif
+    }
+
+    private static AgeManager ResolveAgeManager()
+    {
+        if (AgeManager.ActiveInstance != null)
+        {
+            return AgeManager.ActiveInstance;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        return FindFirstObjectByType<AgeManager>();
+#else
+        return FindObjectOfType<AgeManager>();
 #endif
     }
 }

@@ -53,6 +53,8 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
     private readonly List<Renderer> rendererRemovalBuffer = new List<Renderer>();
     private readonly List<Collider> colliderReleaseBuffer = new List<Collider>();
 
+    public float AgeAmount => ageAmount;
+
     private void Awake()
     {
         sphereCollider = GetComponent<SphereCollider>();
@@ -82,6 +84,19 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
     {
         temporalAge = TemporalAgeUtility.ClampAge(age);
         ageAmount = TemporalAgeUtility.AgeToInt(temporalAge);
+    }
+
+    public void SetAgeAmount(float amount)
+    {
+        ageAmount = Mathf.Clamp(amount, TemporalAgeUtility.MinYear, TemporalAgeUtility.MaxYear);
+        temporalAge = TemporalAgeUtility.IntToAge(Mathf.RoundToInt(ageAmount));
+        useTemporalAgePreset = false;
+    }
+
+    public void SetOwner(SquadCharacterController targetOwner, bool requireEquippedTorch)
+    {
+        owner = targetOwner;
+        requireEquippedTorchOwner = requireEquippedTorch;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -137,6 +152,10 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         deferredReleaseColliders.Remove(other);
 
         Renderer renderer = other.GetComponentInParent<Renderer>();
+        if (renderer == null)
+        {
+            renderer = other.GetComponentInChildren<Renderer>();
+        }
 
         if (renderer == null)
             return;
@@ -149,7 +168,13 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         Material[] runtimeMaterials = renderer.materials;
         LocalRuntimeAgeRestoreRunner.Cancel(runtimeMaterials);
         RendererAgeState state = GetOrCreateRendererAgeState(renderer, runtimeMaterials);
+        bool wasEmpty = state.Colliders.Count == 0;
         state.Colliders.Add(other);
+        if (wasEmpty && state.Colliders.Count > 0)
+        {
+            NotifyLocalReveal(renderer, 1);
+        }
+
         colliderRendererLookup[other] = renderer;
 
         foreach (Material mat in runtimeMaterials)
@@ -330,6 +355,10 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         if (!colliderRendererLookup.TryGetValue(other, out renderer))
         {
             renderer = other.GetComponentInParent<Renderer>();
+            if (renderer == null)
+            {
+                renderer = other.GetComponentInChildren<Renderer>();
+            }
         }
 
         colliderRendererLookup.Remove(other);
@@ -345,6 +374,7 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
             return;
         }
 
+        NotifyLocalReveal(renderer, -1);
         BeginRestoreRendererAgeState(state);
         agedRenderers.Remove(renderer);
     }
@@ -361,6 +391,7 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         rendererRemovalBuffer.Clear();
         foreach (KeyValuePair<Renderer, RendererAgeState> pair in agedRenderers)
         {
+            NotifyLocalReveal(pair.Key, -1);
             BeginRestoreRendererAgeState(pair.Value);
             rendererRemovalBuffer.Add(pair.Key);
         }
@@ -409,6 +440,7 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         rendererRemovalBuffer.Clear();
         foreach (KeyValuePair<Renderer, RendererAgeState> pair in agedRenderers)
         {
+            NotifyLocalReveal(pair.Key, -1);
             RestoreRendererAgeState(pair.Value);
             rendererRemovalBuffer.Add(pair.Key);
         }
@@ -467,6 +499,20 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         );
 
         return sphereCollider.radius * maxScale;
+    }
+
+    private void NotifyLocalReveal(Renderer renderer, int delta)
+    {
+        if (renderer == null || delta == 0)
+        {
+            return;
+        }
+
+        TimePeriodVisibility visibility = renderer.GetComponentInParent<TimePeriodVisibility>(true);
+        if (visibility != null)
+        {
+            visibility.AddLocalRevealSource(this, delta);
+        }
     }
 }
 

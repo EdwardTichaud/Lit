@@ -2,15 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Met a jour des Animator bools "An_XXXX" en fonction de l'annee courante.
+// Cible d'affichage: met a jour des Animator bools "An_XXXX" depuis BraseroDisplayManager.
 [DisallowMultipleComponent]
-public class BraseroAnimatorByYear : MonoBehaviour
+public class BraseroAnimatorByYear : MonoBehaviour, IBraseroDisplayTarget
 {
-    [Header("References")]
-    [Tooltip("Manager des braseros.")]
-    public BraseroTimeManager timeManager;
-    [Tooltip("Cherche automatiquement un manager si non assigne.")]
-    public bool autoFindManager = true;
+    [Header("Display")]
     [Tooltip("Valeur comparee pour choisir le bool d'Animator.")]
     public TimePeriodValueMode valueMode = TimePeriodValueMode.YearOffsetFromBase;
 
@@ -28,30 +24,35 @@ public class BraseroAnimatorByYear : MonoBehaviour
 
     private void OnEnable()
     {
-        ResolveReferences();
         CacheAnimatorsIfNeeded();
-        Subscribe();
-        ApplyForCurrentYear();
+        BraseroDisplayManager.Register(this);
     }
 
     private void OnDisable()
     {
-        Unsubscribe();
+        BraseroDisplayManager.Unregister(this);
     }
 
-    private void ResolveReferences()
+    public void ApplyBraseroDisplay(BraseroDisplaySnapshot snapshot)
     {
-        if (timeManager == null && autoFindManager)
+        ApplyForYear(snapshot.GetComparisonValue(valueMode));
+    }
+
+    public void ApplyForCurrentYear()
+    {
+        ApplyBraseroDisplay(BraseroDisplayManager.GetCurrentSnapshot());
+    }
+
+    public void ApplyForYear(int year)
+    {
+        if (animators == null || animators.Count == 0)
         {
-            timeManager = BraseroTimeManager.ActiveInstance;
-            if (timeManager == null)
-            {
-#if UNITY_2023_1_OR_NEWER
-                timeManager = FindFirstObjectByType<BraseroTimeManager>();
-#else
-                timeManager = FindObjectOfType<BraseroTimeManager>();
-#endif
-            }
+            CacheAnimatorsIfNeeded();
+        }
+
+        for (int i = 0; i < animators.Count; i++)
+        {
+            ApplyForAnimator(animators[i], year);
         }
     }
 
@@ -79,55 +80,6 @@ public class BraseroAnimatorByYear : MonoBehaviour
         if (animator != null)
         {
             animators.Add(animator);
-        }
-    }
-
-    private void Subscribe()
-    {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        timeManager.TimeChanged += OnTimeChanged;
-    }
-
-    private void Unsubscribe()
-    {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        timeManager.TimeChanged -= OnTimeChanged;
-    }
-
-    private void OnTimeChanged(int year, int litCount)
-    {
-        int currentValue = timeManager != null ? timeManager.GetComparisonValue(valueMode) : year;
-        ApplyForYear(currentValue);
-    }
-
-    private void ApplyForCurrentYear()
-    {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        ApplyForYear(timeManager.GetComparisonValue(valueMode));
-    }
-
-    public void ApplyForYear(int year)
-    {
-        if (animators == null || animators.Count == 0)
-        {
-            CacheAnimatorsIfNeeded();
-        }
-
-        for (int i = 0; i < animators.Count; i++)
-        {
-            ApplyForAnimator(animators[i], year);
         }
     }
 
@@ -199,6 +151,11 @@ public class BraseroAnimatorByYear : MonoBehaviour
         if (string.IsNullOrEmpty(parameterPrefix))
         {
             parameterPrefix = "An_";
+        }
+
+        if (!Application.isPlaying)
+        {
+            ApplyForCurrentYear();
         }
     }
 #endif

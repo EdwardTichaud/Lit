@@ -188,17 +188,21 @@ public partial class SquadCharacterController
         {
             currentDetectedInteractable.SetDetectedCharacter(gameObject);
         }
+
+        RuntimeOutlineSelectionManager.SetActiveInteractable(this, currentDetectedInteractable);
     }
 
     private void ClearLocalInteractionTarget()
     {
         if (currentDetectedInteractable == null)
         {
+            RuntimeOutlineSelectionManager.Clear(this);
             return;
         }
 
         currentDetectedInteractable.SetDetectedCharacter(null);
         currentDetectedInteractable = null;
+        RuntimeOutlineSelectionManager.Clear(this);
     }
 
     private bool IsLocalControlledCharacter()

@@ -55,8 +55,8 @@ Les données d'items sont dans `Item` et les assets `Assets/ScriptableObjects/It
 
 Deux couches coexistent :
 
-- couche globale existante : `BraseroTimeManager`, `TimePeriodVisibility`, `AgeTriggerZone` ;
-- couche temporelle légère récente : `TemporalAge`, `TemporalZone`, `TemporalTorch`, `TemporalObject`, `BraseroTemporalController`.
+- couche canonique actuelle : `AgeManager`, `TimePeriodVisibility`, `LocalRuntimeAgeTrigger` ;
+- couche temporelle d'objets : `TemporalAge`, `TemporalZone`, `TemporalTorch`, `TemporalObject`.
 
 Les nouveaux contenus doivent privilégier la couche `Temporal/*` quand il s'agit d'archéologie temporelle, sans casser la couche déjà utilisée par la scène.
 
@@ -128,9 +128,10 @@ La direction actuelle garde le combat comme tension ponctuelle, pas comme boucle
 ### Exemple : brasero et état du monde
 
 1. Un `Brasero` est activé.
-2. `BraseroTimeManager` recalcule l'année globale ou l'état dérivé.
-3. `TimePeriodVisibility` et les systèmes liés mettent à jour les objets visibles.
-4. Les nouveaux contenus peuvent aussi relayer vers `TemporalZone` via `BraseroTemporalController`.
+2. `AgeManager` recalcule l'année canonique depuis 666 en reculant de 111 ans par brasero allumé.
+3. `TimePeriodVisibility` et les torches locales mettent à jour les objets visibles.
+4. `BraseroDisplayManager` diffuse le snapshot d'âge aux affichages UI, Animator et Volume.
+5. `BraseroTimeManager` reste seulement un pont de compatibilité pour les scènes qui le référencent.
 5. En multijoueur, l'état peut être persisté par les systèmes sous `Netcode/Persistence`.
 
 ### Exemple : sauvegarde / chargement

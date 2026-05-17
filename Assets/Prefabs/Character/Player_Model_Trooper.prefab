@@ -1392,6 +1392,8 @@ MonoBehaviour:
   torchBoolParam: Torch
   torchStartsActive: 1
   initializeTorchFromHierarchy: 1
+  ensureTemporalTorch: 1
+  temporalTorchRevealRadius: 5
   torchUpperBodyIdleLayerWeight: 0.85
   torchUpperBodyMovingLayerWeight: 0.25
   torchUpperBodyLayerWeightResponsiveness: 12

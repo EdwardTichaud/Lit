@@ -1,27 +1,15 @@
-// Role:
-// Represents a local temporal reveal source, usually the player's temporal torch.
-// Usage:
-// Attach to a torch object or reveal volume that should expose a neighboring age.
-// Responsibilities:
-// Resolve the target age from the current zone, notify listeners, and optionally
-// feed an existing LocalRuntimeAgeTrigger or shader globals.
-// Dependencies:
-// TemporalZone, TemporalAgeUtility, optional LocalRuntimeAgeTrigger.
-// Precautions:
-// Shader globals are disabled by default because older global age systems may
-// already drive the same materials.
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// Computes the local age revealed by a temporal torch.
+/// AgeManager is the canonical source; the older zone modes remain available for
+/// isolated test setups and scene migration.
 /// </summary>
 [DisallowMultipleComponent]
 public class TemporalTorch : MonoBehaviour
 {
-    /// <summary>
-    /// Which age the torch should reveal relative to its current zone.
-    /// </summary>
     public enum RevealMode
     {
         PreviousAge = 0,
@@ -30,48 +18,106 @@ public class TemporalTorch : MonoBehaviour
         ExplicitAge = 3
     }
 
-    [Header("References")]
-    /// <summary>Zone used as the dominant age reference.</summary>
-    [SerializeField] private TemporalZone currentZone;
-    /// <summary>If true, searches parent objects for a TemporalZone.</summary>
-    [SerializeField] private bool autoFindZoneInParents = true;
-    /// <summary>Optional bridge to the older local shader age trigger.</summary>
-    [SerializeField, Tooltip("Pont optionnel vers le shader d'age local existant.")]
-    private LocalRuntimeAgeTrigger localAgeTrigger;
-    /// <summary>If true, searches children for LocalRuntimeAgeTrigger.</summary>
-    [SerializeField] private bool autoFindLocalAgeTrigger = true;
+    private static readonly HashSet<TemporalTorch> ManagedTorches = new HashSet<TemporalTorch>();
+    private static readonly List<TemporalTorch> RefreshBuffer = new List<TemporalTorch>();
 
-    [Header("Reveal")]
-    /// <summary>Current local reveal mode.</summary>
+    [Header("Age Manager")]
+    [SerializeField, Tooltip("Utilise AgeManager comme source canonique de l'age revele par la torche.")]
+    private bool useAgeManager = true;
+    [SerializeField, Tooltip("Annees revelees devant l'age courant. La valeur canonique est 110.")]
+    private int ageManagerForwardRevealYears = AgeManager.DefaultTorchRevealForwardYears;
+
+    [Header("References")]
+    [SerializeField] private TemporalZone currentZone;
+    [SerializeField] private bool autoFindZoneInParents = true;
+    [SerializeField, Tooltip("Pont vers le shader d'age local existant.")]
+    private LocalRuntimeAgeTrigger localAgeTrigger;
+    [SerializeField] private bool autoFindLocalAgeTrigger = true;
+    [SerializeField, Tooltip("Cree LocalRuntimeAgeTrigger si la torche n'en a pas encore.")]
+    private bool autoCreateLocalAgeTrigger = true;
+    [SerializeField, Tooltip("Owner de torche utilise pour verifier que la torche est equipee.")]
+    private SquadCharacterController owner;
+    [SerializeField, Min(0.1f), Tooltip("Rayon par defaut cree pour la revelation locale si aucun trigger n'existe.")]
+    private float revealRadius = 5f;
+
+    [Header("Fallback Reveal")]
     [SerializeField] private RevealMode revealMode = RevealMode.CurrentAge;
-    /// <summary>Age used when RevealMode is ExplicitAge.</summary>
     [SerializeField] private TemporalAge explicitAge = TemporalAge.Age666;
 
     [Header("Shader Globals")]
-    /// <summary>If true, writes the target age and center to global shader properties.</summary>
-    [SerializeField, Tooltip("Desactive par defaut pour eviter de concurrencer GlobalAgeZone.")]
+    [SerializeField, Tooltip("Desactive par defaut pour eviter de concurrencer AgeManager et LocalRuntimeAgeTrigger.")]
     private bool setShaderGlobals;
-    /// <summary>Global shader float receiving the target year.</summary>
     [SerializeField] private string globalAgeAmountProperty = "_AgeAmount";
-    /// <summary>Global shader vector receiving this torch position.</summary>
     [SerializeField] private string globalAgeCenterProperty = "_AgeCenter";
 
-    /// <summary>Zone currently used by this torch.</summary>
     public TemporalZone CurrentZone => currentZone;
-    /// <summary>Reveal mode currently used by this torch.</summary>
     public RevealMode CurrentRevealMode => revealMode;
-    /// <summary>Resolved temporal age currently revealed by the torch.</summary>
+    public bool UsesAgeManager => useAgeManager;
     public TemporalAge TargetAge { get; private set; } = TemporalAge.Age666;
-    /// <summary>Resolved target year, useful for shaders and debug UI.</summary>
-    public int TargetYear => TemporalAgeUtility.AgeToInt(TargetAge);
+    public int TargetYear { get; private set; } = TemporalAgeUtility.MaxYear;
 
-    /// <summary>Event fired when the resolved target age changes.</summary>
     public event Action<TemporalTorch, TemporalAge> TargetAgeChanged;
+    public event Action<TemporalTorch, int> TargetYearChanged;
+
+    public static void RefreshAllManagedTorches()
+    {
+        RefreshBuffer.Clear();
+        foreach (TemporalTorch torch in ManagedTorches)
+        {
+            if (torch != null)
+            {
+                RefreshBuffer.Add(torch);
+            }
+        }
+
+        for (int i = 0; i < RefreshBuffer.Count; i++)
+        {
+            TemporalTorch torch = RefreshBuffer[i];
+            if (torch != null && torch.isActiveAndEnabled)
+            {
+                torch.RefreshTargetAge();
+            }
+        }
+
+        RefreshBuffer.Clear();
+    }
+
+    public static TemporalTorch EnsureOnTorch(Transform torchTransform, SquadCharacterController torchOwner, float radius)
+    {
+        if (torchTransform == null)
+        {
+            return null;
+        }
+
+        GameObject torchObject = torchTransform.gameObject;
+        LocalRuntimeAgeTrigger ageTrigger = torchObject.GetComponent<LocalRuntimeAgeTrigger>();
+        if (ageTrigger == null)
+        {
+            ageTrigger = torchObject.AddComponent<LocalRuntimeAgeTrigger>();
+        }
+
+        SphereCollider sphere = torchObject.GetComponent<SphereCollider>();
+        if (sphere != null)
+        {
+            sphere.isTrigger = true;
+            sphere.radius = Mathf.Max(0.1f, radius);
+        }
+
+        ageTrigger.SetOwner(torchOwner, requireEquippedTorch: true);
+
+        TemporalTorch temporalTorch = torchObject.GetComponent<TemporalTorch>();
+        if (temporalTorch == null)
+        {
+            temporalTorch = torchObject.AddComponent<TemporalTorch>();
+        }
+
+        temporalTorch.ConfigureManagedTorch(torchOwner, ageTrigger, radius);
+        return temporalTorch;
+    }
 
     private void OnEnable()
     {
-        // Unity calls OnEnable when the torch becomes active.
-        // Subscribe after resolving references so zone age changes refresh the reveal.
+        ManagedTorches.Add(this);
         ResolveReferences();
         Subscribe();
         RefreshTargetAge();
@@ -79,19 +125,39 @@ public class TemporalTorch : MonoBehaviour
 
     private void OnDisable()
     {
-        // Prevent dangling event subscriptions when the torch is disabled or destroyed.
         Unsubscribe();
+        ManagedTorches.Remove(this);
     }
 
     private void OnValidate()
     {
-        // Editor-only convenience: keep auto references visible in the inspector.
+        ageManagerForwardRevealYears = Mathf.Clamp(ageManagerForwardRevealYears, 0, TemporalAgeUtility.MaxYear);
+        revealRadius = Mathf.Max(0.1f, revealRadius);
         ResolveReferences();
     }
 
-    /// <summary>
-    /// Changes the zone used as the dominant age source.
-    /// </summary>
+    public void ConfigureManagedTorch(SquadCharacterController torchOwner, LocalRuntimeAgeTrigger trigger, float radius)
+    {
+        owner = torchOwner;
+        localAgeTrigger = trigger != null ? trigger : localAgeTrigger;
+        revealRadius = Mathf.Max(0.1f, radius);
+        useAgeManager = true;
+        ageManagerForwardRevealYears = AgeManager.DefaultTorchRevealForwardYears;
+
+        if (localAgeTrigger != null)
+        {
+            localAgeTrigger.SetOwner(owner, requireEquippedTorch: true);
+            SphereCollider sphere = localAgeTrigger.GetComponent<SphereCollider>();
+            if (sphere != null)
+            {
+                sphere.isTrigger = true;
+                sphere.radius = revealRadius;
+            }
+        }
+
+        RefreshTargetAge();
+    }
+
     public void SetZone(TemporalZone zone)
     {
         if (currentZone == zone)
@@ -105,64 +171,110 @@ public class TemporalTorch : MonoBehaviour
         RefreshTargetAge();
     }
 
-    /// <summary>
-    /// Changes how the torch resolves its local target age.
-    /// </summary>
-    public void SetRevealMode(RevealMode mode)
+    public void SetUseAgeManager(bool value)
     {
-        revealMode = mode;
+        if (useAgeManager == value)
+        {
+            return;
+        }
+
+        Unsubscribe();
+        useAgeManager = value;
+        Subscribe();
         RefreshTargetAge();
     }
 
-    /// <summary>Reveals the previous age relative to the current zone.</summary>
+    public void SetRevealMode(RevealMode mode)
+    {
+        bool wasUsingAgeManager = useAgeManager;
+        if (wasUsingAgeManager)
+        {
+            Unsubscribe();
+        }
+
+        useAgeManager = false;
+        revealMode = mode;
+        if (wasUsingAgeManager)
+        {
+            Subscribe();
+        }
+
+        RefreshTargetAge();
+    }
+
     public void RevealPreviousAge()
     {
         SetRevealMode(RevealMode.PreviousAge);
     }
 
-    /// <summary>Reveals the current dominant zone age.</summary>
     public void RevealCurrentAge()
     {
         SetRevealMode(RevealMode.CurrentAge);
     }
 
-    /// <summary>Reveals the next age relative to the current zone.</summary>
     public void RevealNextAge()
     {
         SetRevealMode(RevealMode.NextAge);
     }
 
-    /// <summary>
-    /// Reveals a specific age, clamped to the current zone if one exists.
-    /// </summary>
     public void SetExplicitAge(TemporalAge age)
     {
+        bool wasUsingAgeManager = useAgeManager;
+        if (wasUsingAgeManager)
+        {
+            Unsubscribe();
+        }
+
+        useAgeManager = false;
         explicitAge = TemporalAgeUtility.ClampAge(age);
         revealMode = RevealMode.ExplicitAge;
+        if (wasUsingAgeManager)
+        {
+            Subscribe();
+        }
+
         RefreshTargetAge();
     }
 
-    /// <summary>
-    /// Recomputes and applies the age currently revealed by this torch.
-    /// </summary>
     [ContextMenu("Refresh Target Age")]
     public void RefreshTargetAge()
     {
-        TemporalAge previous = TargetAge;
-        TargetAge = ResolveTargetAge();
+        TemporalAge previousAge = TargetAge;
+        int previousYear = TargetYear;
+
+        TargetYear = ResolveTargetYear();
+        TargetAge = TemporalAgeUtility.IntToAge(TargetYear);
         ApplyTargetAge();
 
-        if (previous != TargetAge)
+        if (previousYear != TargetYear)
+        {
+            TargetYearChanged?.Invoke(this, TargetYear);
+        }
+
+        if (previousAge != TargetAge)
         {
             TargetAgeChanged?.Invoke(this, TargetAge);
         }
     }
 
-    private TemporalAge ResolveTargetAge()
+    private int ResolveTargetYear()
+    {
+        if (useAgeManager)
+        {
+            AgeManager manager = AgeManager.GetOrCreate();
+            if (manager != null)
+            {
+                return manager.GetTorchRevealEndYear(ageManagerForwardRevealYears);
+            }
+        }
+
+        return TemporalAgeUtility.AgeToInt(ResolveFallbackTargetAge());
+    }
+
+    private TemporalAge ResolveFallbackTargetAge()
     {
         TemporalAge zoneAge = currentZone != null ? currentZone.CurrentAge : explicitAge;
 
-        // The torch reads a neighboring stratum; it does not move the whole zone.
         switch (revealMode)
         {
             case RevealMode.PreviousAge:
@@ -179,10 +291,9 @@ public class TemporalTorch : MonoBehaviour
 
     private void ApplyTargetAge()
     {
-        // Preferred integration path for the existing local shader bridge.
         if (localAgeTrigger != null)
         {
-            localAgeTrigger.SetTemporalAge(TargetAge);
+            localAgeTrigger.SetAgeAmount(TargetYear);
         }
 
         if (!setShaderGlobals)
@@ -190,7 +301,6 @@ public class TemporalTorch : MonoBehaviour
             return;
         }
 
-        // Optional global shader writes are kept explicit to avoid fighting older systems.
         if (!string.IsNullOrWhiteSpace(globalAgeAmountProperty))
         {
             Shader.SetGlobalFloat(globalAgeAmountProperty, TargetYear);
@@ -209,9 +319,30 @@ public class TemporalTorch : MonoBehaviour
             currentZone = GetComponentInParent<TemporalZone>(true);
         }
 
+        if (owner == null)
+        {
+            owner = GetComponentInParent<SquadCharacterController>(true);
+        }
+
         if (localAgeTrigger == null && autoFindLocalAgeTrigger)
         {
             localAgeTrigger = GetComponentInChildren<LocalRuntimeAgeTrigger>(true);
+        }
+
+        if (localAgeTrigger == null && autoCreateLocalAgeTrigger && Application.isPlaying)
+        {
+            localAgeTrigger = gameObject.AddComponent<LocalRuntimeAgeTrigger>();
+        }
+
+        if (localAgeTrigger != null)
+        {
+            localAgeTrigger.SetOwner(owner, requireEquippedTorch: true);
+            SphereCollider sphere = localAgeTrigger.GetComponent<SphereCollider>();
+            if (sphere != null)
+            {
+                sphere.isTrigger = true;
+                sphere.radius = Mathf.Max(0.1f, revealRadius);
+            }
         }
     }
 
@@ -221,6 +352,17 @@ public class TemporalTorch : MonoBehaviour
         {
             currentZone.AgeChanged += OnZoneAgeChanged;
         }
+
+        if (!useAgeManager)
+        {
+            return;
+        }
+
+        AgeManager manager = AgeManager.GetOrCreate();
+        if (manager != null)
+        {
+            manager.AgeChanged += OnAgeManagerChanged;
+        }
     }
 
     private void Unsubscribe()
@@ -229,10 +371,27 @@ public class TemporalTorch : MonoBehaviour
         {
             currentZone.AgeChanged -= OnZoneAgeChanged;
         }
+
+        AgeManager manager = AgeManager.ActiveInstance;
+        if (manager != null)
+        {
+            manager.AgeChanged -= OnAgeManagerChanged;
+        }
     }
 
     private void OnZoneAgeChanged(TemporalZone zone, TemporalAge previous, TemporalAge current)
     {
-        RefreshTargetAge();
+        if (!useAgeManager)
+        {
+            RefreshTargetAge();
+        }
+    }
+
+    private void OnAgeManagerChanged(AgeManager manager, int previousYear, int currentYear)
+    {
+        if (useAgeManager)
+        {
+            RefreshTargetAge();
+        }
     }
 }

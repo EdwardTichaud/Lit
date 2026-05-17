@@ -230,6 +230,7 @@ public class ItemSceneMarkerEditor : Editor
             ConfigurePickup(instance, marker.Item);
         }
 
+        EnsureOutlineTargetsWithUndo(instance);
         Undo.DestroyObjectImmediate(marker);
         EditorSceneManager.MarkSceneDirty(root.scene);
         return root;
@@ -636,6 +637,27 @@ public class ItemSceneMarkerEditor : Editor
         EditorUtility.CopySerialized(source, destination);
         Undo.DestroyObjectImmediate(source);
         return destination;
+    }
+
+    private static void EnsureOutlineTargetsWithUndo(GameObject root)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || renderer.GetComponent<RuntimeOutlineTarget>() != null)
+            {
+                continue;
+            }
+
+            Undo.AddComponent<RuntimeOutlineTarget>(renderer.gameObject);
+            EditorUtility.SetDirty(renderer.gameObject);
+        }
     }
 
     private static Collider EnsureLegacyInteractionColliderOnModel(GameObject sourceRoot, GameObject modelRoot, Collider sourceCollider)

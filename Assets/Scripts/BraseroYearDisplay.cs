@@ -1,17 +1,13 @@
 using UnityEngine;
 using TMPro;
 
-// Affiche l'annee courante calculee par le BraseroTimeManager.
+// Cible d'affichage: affiche l'annee canonique diffusee par BraseroDisplayManager.
 [DisallowMultipleComponent]
-public class BraseroYearDisplay : MonoBehaviour
+public class BraseroYearDisplay : MonoBehaviour, IBraseroDisplayTarget
 {
     [Header("References")]
-    [Tooltip("Manager des braseros.")]
-    public BraseroTimeManager timeManager;
     [Tooltip("Texte cible (TMP).")]
     public TMP_Text textTarget;
-    [Tooltip("Cherche automatiquement un manager si non assigne.")]
-    public bool autoFindManager = true;
 
     [Header("Format")]
     [Tooltip("Prefixe affiche avant l'annee.")]
@@ -25,67 +21,36 @@ public class BraseroYearDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        ResolveReferences();
-        Subscribe();
-        UpdateText();
+        ResolveTextTarget();
+        BraseroDisplayManager.Register(this);
     }
 
     private void OnDisable()
     {
-        Unsubscribe();
+        BraseroDisplayManager.Unregister(this);
     }
 
-    private void ResolveReferences()
+    public void ApplyBraseroDisplay(BraseroDisplaySnapshot snapshot)
+    {
+        UpdateText(snapshot.CurrentYear, snapshot.LitCount);
+    }
+
+    public void UpdateText()
+    {
+        ApplyBraseroDisplay(BraseroDisplayManager.GetCurrentSnapshot());
+    }
+
+    private void ResolveTextTarget()
     {
         if (textTarget == null)
         {
             textTarget = GetComponentInChildren<TMP_Text>(true);
         }
-
-        if (timeManager == null && autoFindManager)
-        {
-            timeManager = FindObjectOfType<BraseroTimeManager>();
-        }
-    }
-
-    private void Subscribe()
-    {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        timeManager.TimeChanged += OnTimeChanged;
-    }
-
-    private void Unsubscribe()
-    {
-        if (timeManager == null)
-        {
-            return;
-        }
-
-        timeManager.TimeChanged -= OnTimeChanged;
-    }
-
-    private void OnTimeChanged(int year, int litCount)
-    {
-        UpdateText(year, litCount);
-    }
-
-    public void UpdateText()
-    {
-        if (timeManager == null)
-        {
-            UpdateText(0, 0);
-            return;
-        }
-
-        UpdateText(timeManager.CurrentYear, timeManager.LitCount);
     }
 
     private void UpdateText(int year, int litCount)
     {
+        ResolveTextTarget();
         if (textTarget == null)
         {
             return;
@@ -105,7 +70,7 @@ public class BraseroYearDisplay : MonoBehaviour
     {
         if (!Application.isPlaying)
         {
-            ResolveReferences();
+            ResolveTextTarget();
             UpdateText();
         }
     }
