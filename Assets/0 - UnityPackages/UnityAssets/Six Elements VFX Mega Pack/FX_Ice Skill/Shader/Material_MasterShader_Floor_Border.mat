@@ -74,8 +74,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _AddPrecomputedVelocity: 0
-    - _AgeAmount: 666
-    - _AgeRadius: 0
+    - _AgeAmount: 0
+    - _AgeRadius: 2000
     - _AgeSoftness: 0.5
     - _AlphaCutoffEnable: 0
     - _AlphaDstBlend: 0
