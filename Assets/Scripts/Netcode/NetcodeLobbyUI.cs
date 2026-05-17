@@ -173,7 +173,7 @@ public class NetcodeLobbyUI : MonoBehaviour
         {
             ipLayout.flexibleWidth = 1f;
         }
-        CreateButton(ipRow.transform, "Copier", OnCopyPublicIpClicked, 70f);
+        CreateButton(ipRow.transform, "Copier code", OnCopyPublicIpClicked, 95f);
 
         statusText = CreateLabel(panelRoot.transform, "Etat: offline", 12, FontStyle.Normal, TextAnchor.MiddleLeft);
 
@@ -241,27 +241,35 @@ public class NetcodeLobbyUI : MonoBehaviour
 
     private void OnCopyClicked()
     {
-        string code = ResolveCodeFromField(hostCodeInput);
-        if (string.IsNullOrEmpty(code))
+        if (!TryBuildCurrentJoinCode(out string joinCode, out string sessionCode, out string address))
         {
-            code = ResolveOrGenerateHostCode();
+            sessionCode = ResolveOrGenerateHostCode();
             if (hostCodeInput != null)
             {
-                hostCodeInput.SetTextWithoutNotify(code);
+                hostCodeInput.SetTextWithoutNotify(sessionCode);
             }
+
+            joinCode = NetcodeSessionCode.CreateJoinCode(sessionCode, ResolveAdvertisedAddress());
+            address = ResolveAdvertisedAddress();
         }
 
-        GUIUtility.systemCopyBuffer = code;
-        currentHostCode = code;
-        UpdatePortDisplay(code);
-        NetworkManager manager = NetworkManager.Singleton;
-        if (manager != null && manager.IsHost)
+        if (string.IsNullOrWhiteSpace(joinCode))
         {
-            SetStatus($"Code host copie: {code}");
+            SetStatus("Code d'invitation indisponible.");
             return;
         }
 
-        SetStatus($"Code copie: {code}. Clique sur Host pour ouvrir la session.");
+        GUIUtility.systemCopyBuffer = joinCode;
+        currentHostCode = sessionCode;
+        UpdatePortDisplay(sessionCode);
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager != null && manager.IsHost)
+        {
+            SetStatus($"Code d'invitation copie: {joinCode}");
+            return;
+        }
+
+        SetStatus($"Code d'invitation copie pour {address}. Clique sur Host pour ouvrir la session.");
     }
 
     private void OnHostClicked()
@@ -283,8 +291,14 @@ public class NetcodeLobbyUI : MonoBehaviour
         UpdatePortDisplay(endpoint.Code);
         bool started = resolved.StartHostWithSessionEndpoint(endpoint);
         string listenLabel = $"{resolved.SessionListenAddress}:{endpoint.Port}";
+        string joinCode = NetcodeSessionCode.CreateJoinCode(endpoint.Code, ResolveAdvertisedAddress());
+        if (started && !string.IsNullOrWhiteSpace(joinCode))
+        {
+            GUIUtility.systemCopyBuffer = joinCode;
+        }
+
         SetStatus(started
-            ? $"Host lance: code {endpoint.Code}, port {endpoint.Port}, ecoute {listenLabel}."
+            ? $"Host lance: code d'invitation copie {joinCode}. Ecoute {listenLabel}."
             : "Host deja actif.");
         if (started)
         {
@@ -335,14 +349,14 @@ public class NetcodeLobbyUI : MonoBehaviour
 
     private void OnCopyPublicIpClicked()
     {
-        if (string.IsNullOrWhiteSpace(publicIpValue))
+        if (!TryBuildCurrentJoinCode(out string joinCode, out _, out string address))
         {
-            SetStatus("IP publique indisponible.");
+            SetStatus("Code d'invitation indisponible.");
             return;
         }
 
-        GUIUtility.systemCopyBuffer = publicIpValue;
-        SetStatus($"IP copiee: {publicIpValue}");
+        GUIUtility.systemCopyBuffer = joinCode;
+        SetStatus($"Code d'invitation copie pour {address}: {joinCode}");
     }
 
     private void OnMultiPerformed(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -396,6 +410,36 @@ public class NetcodeLobbyUI : MonoBehaviour
         }
 
         return NetcodeSessionCode.Normalize(field.text);
+    }
+
+    private bool TryBuildCurrentJoinCode(out string joinCode, out string sessionCode, out string address)
+    {
+        joinCode = string.Empty;
+        sessionCode = ResolveCodeFromField(hostCodeInput);
+        address = ResolveAdvertisedAddress();
+        if (string.IsNullOrWhiteSpace(sessionCode) || string.IsNullOrWhiteSpace(address))
+        {
+            return false;
+        }
+
+        joinCode = NetcodeSessionCode.CreateJoinCode(sessionCode, address);
+        return !string.IsNullOrWhiteSpace(joinCode);
+    }
+
+    private string ResolveAdvertisedAddress()
+    {
+        if (!string.IsNullOrWhiteSpace(publicIpValue))
+        {
+            return publicIpValue;
+        }
+
+        NetcodeLauncher resolved = ResolveLauncher();
+        if (resolved != null)
+        {
+            return resolved.SessionDefaultJoinAddress;
+        }
+
+        return NetcodeSessionCode.NormalizeAddress(hostLoopbackAddress, "127.0.0.1");
     }
 
     private string ResolveOrGenerateHostCode()

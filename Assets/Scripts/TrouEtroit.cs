@@ -644,6 +644,8 @@ public class TrouEtroit : MonoBehaviour
         {
             squadController.Stop();
         }
+
+        AudioManager.EnsureInstance()?.PlayActionCue(ActionAudioCue.Teleport, destination);
     }
 
     private bool TryGetTransformTeleportDestination(Transform character, out Vector3 destination, out Quaternion rotation)

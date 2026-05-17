@@ -50,6 +50,8 @@ public class SquadManager : MonoBehaviour
     public GameObject currentCharacter;
     [Tooltip("Mode selection de personnages actif.")]
     public bool charactersSelectionOn;
+    [Tooltip("Nom du spawn point de debut en solo.")]
+    public string soloStartSpawnPointName = "OriginSpawnPoint";
     [Tooltip("Nom du spawn point Maison.")]
     public string maisonSpawnPointName = "Maison_SpawnPoint";
     [Tooltip("Reference au composant Maison (auto-resolve si null).")]
@@ -59,11 +61,11 @@ public class SquadManager : MonoBehaviour
     [SerializeField, Tooltip("Clone les CharacterData a l'execution pour ne pas modifier les assets.")]
     private bool useRuntimeCharacterClones = true;
 
-    [Header("Starter Motor Integration")]
-    [SerializeField, Tooltip("Opt-in local single-player path: route the selected real player through StarterInspiredThirdPersonMotor.")]
-    private bool useStarterMotorForLocalPlayer;
-    [SerializeField, Tooltip("Adds the starter motor compatibility adapter to the selected player at runtime when the opt-in path is enabled.")]
-    private bool autoInstallStarterMotorForLocalPlayer = true;
+    [Header("Flight")]
+    [SerializeField, Tooltip("Active le moteur de vol local pour le personnage joueur selectionne.")]
+    private bool useFlightMotorForLocalPlayer;
+    [SerializeField, Tooltip("Ajoute les composants de vol manquants sur le personnage selectionne quand le mode vol est active.")]
+    private bool autoInstallFlightMotorForLocalPlayer = true;
 
     [Header("Grouping")]
     [SerializeField, Tooltip("Tous les membres sont groupes par defaut.")]
@@ -122,7 +124,7 @@ public class SquadManager : MonoBehaviour
     private readonly HashSet<string> runtimeCharacterIdWarnings = new HashSet<string>();
     private readonly HashSet<CharacterData> runtimeCharacters = new HashSet<CharacterData>();
     private string lastLocalAssignmentRefreshLog = string.Empty;
-    private StarterMotorPlayerIntegration activeStarterMotorIntegration;
+    private SquadCharacterController activeFlightMotorController;
 
     void Awake()
     {
@@ -165,7 +167,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.LocomotionMode -= OnLocomotionModePerformed;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
-        DeactivateStarterMotorIntegration();
+        DeactivateFlightMotorController();
         InputFocusStack.Pop(this);
     }
 
@@ -177,7 +179,7 @@ public class SquadManager : MonoBehaviour
         }
 
         StopAllCoroutines();
-        DeactivateStarterMotorIntegration();
+        DeactivateFlightMotorController();
         LocalPlayerContext.Clear($"SquadManager.Reset:{reason}", LocalPlayerContext.Authority.MultiplayerAssignment);
 
         if (gameObject.activeSelf)
@@ -231,14 +233,16 @@ public class SquadManager : MonoBehaviour
             yield break;
         }
 
+        Transform soloStartSpawnPoint = ResolveSoloStartSpawnPoint();
+        if (soloStartSpawnPoint != null)
+        {
+            squadSpawnOrigin = soloStartSpawnPoint;
+        }
+
         for (int i = 0; i < currentSquad.Count; i++)
         {
             CharacterData character = currentSquad[i];
-            Transform spawnPoint = null;
-            if (squadSpawnPoints != null && i < squadSpawnPoints.Count)
-            {
-                spawnPoint = squadSpawnPoints[i];
-            }
+            Transform spawnPoint = ResolveSoloSpawnPoint(i, soloStartSpawnPoint);
 
             GameObject instance = GetOrCreateCharacterInstance(character, spawnPoint, i, false);
             squadCharacters.Add(instance);
@@ -701,6 +705,32 @@ public class SquadManager : MonoBehaviour
         }
     }
 
+    private Transform ResolveSoloStartSpawnPoint()
+    {
+        if (string.IsNullOrWhiteSpace(soloStartSpawnPointName))
+        {
+            return null;
+        }
+
+        GameObject found = GameObject.Find(soloStartSpawnPointName);
+        return found != null ? found.transform : null;
+    }
+
+    private Transform ResolveSoloSpawnPoint(int index, Transform soloStartSpawnPoint)
+    {
+        if (index == 0 && soloStartSpawnPoint != null)
+        {
+            return soloStartSpawnPoint;
+        }
+
+        if (squadSpawnPoints != null && index >= 0 && index < squadSpawnPoints.Count)
+        {
+            return squadSpawnPoints[index];
+        }
+
+        return null;
+    }
+
     private void ApplyPendingRoster()
     {
         if (pendingLoadData == null || pendingCharacterLookup == null)
@@ -755,11 +785,11 @@ public class SquadManager : MonoBehaviour
             bool hasSavedTorchState = entry.torchSeconds > 0 || entry.torchEquipped;
             bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedTorchState;
 
-            bool isLegacySave = pendingLoadData != null && pendingLoadData.dataVersion <= 0;
+            bool isVersionZeroSave = pendingLoadData != null && pendingLoadData.dataVersion <= 0;
             bool hasStarterItems = runtimeCharacter != null
                 && runtimeCharacter.starterItemsWithQuantity != null
                 && runtimeCharacter.starterItemsWithQuantity.Count > 0;
-            if (isLegacySave && hasStarterItems && !hasSavedInventory && !hasSavedTorchState)
+            if (isVersionZeroSave && hasStarterItems && !hasSavedInventory && !hasSavedTorchState)
             {
                 shouldApplyInventory = false;
             }
@@ -946,7 +976,7 @@ public class SquadManager : MonoBehaviour
     {
         if (IsMultiplayerActive())
         {
-            DeactivateStarterMotorIntegration();
+            DeactivateFlightMotorController();
 
             if (!charactersSelectionOn)
             {
@@ -985,7 +1015,7 @@ public class SquadManager : MonoBehaviour
 
         if (charactersSelectionOn)
         {
-            DeactivateStarterMotorIntegration();
+            DeactivateFlightMotorController();
 
             jumpRequested = false;
             if (GetSquadUnitCount() == 0)
@@ -1292,7 +1322,7 @@ public class SquadManager : MonoBehaviour
     {
         if (currentCharacter == null)
         {
-            DeactivateStarterMotorIntegration();
+            DeactivateFlightMotorController();
             jumpRequested = false;
             locomotionModeRequested = false;
             return;
@@ -1301,35 +1331,28 @@ public class SquadManager : MonoBehaviour
         bool inputBlocked = InputFocusStack.HasAnyFocus();
         if (!inputBlocked && locomotionModeRequested && !IsMultiplayerActive())
         {
-            useStarterMotorForLocalPlayer = true;
-        }
-
-        StarterMotorPlayerIntegration starterMotorIntegration = RefreshStarterMotorIntegration();
-        if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
-        {
-            if (!inputBlocked && locomotionModeRequested)
-            {
-                starterMotorIntegration.ToggleFlightMode();
-            }
-
-            bool shoulderPressed = !inputBlocked && LocalInputRouter.RightShoulderPressed;
-            starterMotorIntegration.SetBoostInput(shoulderPressed);
-            starterMotorIntegration.SetSprintInput(shoulderPressed);
-            starterMotorIntegration.SetFlightVerticalInput(inputBlocked ? 0f : LocalInputRouter.FlightVerticalValue);
-            starterMotorIntegration.SetMoveInput(inputBlocked ? Vector2.zero : moveInput);
-            if (!inputBlocked && jumpRequested)
-            {
-                starterMotorIntegration.RequestJump();
-            }
-
-            jumpRequested = false;
-            locomotionModeRequested = false;
-            return;
+            useFlightMotorForLocalPlayer = true;
         }
 
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
         {
+            jumpRequested = false;
+            locomotionModeRequested = false;
+            return;
+        }
+
+        SquadCharacterController flightMotorController = RefreshFlightMotorController(controller);
+        if (flightMotorController != null && flightMotorController.IsFlightMotorActive)
+        {
+            bool shoulderPressed = !inputBlocked && LocalInputRouter.RightShoulderPressed;
+            flightMotorController.ApplyFlightMotorControlInput(
+                inputBlocked ? Vector2.zero : moveInput,
+                shoulderPressed,
+                inputBlocked ? 0f : LocalInputRouter.FlightVerticalValue,
+                !inputBlocked && jumpRequested,
+                !inputBlocked && locomotionModeRequested);
+
             jumpRequested = false;
             locomotionModeRequested = false;
             return;
@@ -1368,16 +1391,15 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
-        StarterMotorPlayerIntegration starterMotorIntegration = currentCharacter.GetComponent<StarterMotorPlayerIntegration>();
-        if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
-        {
-            starterMotorIntegration.Stop();
-            return;
-        }
-
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
         {
+            return;
+        }
+
+        if (controller.IsFlightMotorActive)
+        {
+            controller.StopFlightMotorControl();
             return;
         }
 
@@ -1399,16 +1421,15 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
-            StarterMotorPlayerIntegration starterMotorIntegration = character.GetComponent<StarterMotorPlayerIntegration>();
-            if (starterMotorIntegration != null && starterMotorIntegration.IsStarterMotorActive)
-            {
-                starterMotorIntegration.Stop();
-                continue;
-            }
-
             SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
             if (controller == null)
             {
+                continue;
+            }
+
+            if (controller.IsFlightMotorActive)
+            {
+                controller.StopFlightMotorControl();
                 continue;
             }
 
@@ -1416,47 +1437,43 @@ public class SquadManager : MonoBehaviour
         }
     }
 
-    private StarterMotorPlayerIntegration RefreshStarterMotorIntegration()
+    private SquadCharacterController RefreshFlightMotorController(SquadCharacterController controller)
     {
-        StarterMotorPlayerIntegration target = null;
-        if (useStarterMotorForLocalPlayer && !IsMultiplayerActive() && currentCharacter != null)
+        SquadCharacterController target = null;
+        if (useFlightMotorForLocalPlayer && !IsMultiplayerActive() && controller != null)
         {
-            target = currentCharacter.GetComponent<StarterMotorPlayerIntegration>();
-            if (target == null && autoInstallStarterMotorForLocalPlayer)
-            {
-                target = currentCharacter.AddComponent<StarterMotorPlayerIntegration>();
-            }
+            target = controller;
         }
 
-        if (activeStarterMotorIntegration != null && activeStarterMotorIntegration != target)
+        if (activeFlightMotorController != null && activeFlightMotorController != target)
         {
-            activeStarterMotorIntegration.SetStarterMotorActive(false);
+            activeFlightMotorController.SetFlightMotorActive(false);
         }
 
-        activeStarterMotorIntegration = target;
-        if (activeStarterMotorIntegration == null)
+        activeFlightMotorController = target;
+        if (activeFlightMotorController == null)
         {
             return null;
         }
 
-        if (!activeStarterMotorIntegration.SetStarterMotorActive(true))
+        if (!activeFlightMotorController.SetFlightMotorActive(true, autoInstallFlightMotorForLocalPlayer))
         {
-            activeStarterMotorIntegration = null;
+            activeFlightMotorController = null;
             return null;
         }
 
-        return activeStarterMotorIntegration;
+        return activeFlightMotorController;
     }
 
-    private void DeactivateStarterMotorIntegration()
+    private void DeactivateFlightMotorController()
     {
-        if (activeStarterMotorIntegration == null)
+        if (activeFlightMotorController == null)
         {
             return;
         }
 
-        activeStarterMotorIntegration.SetStarterMotorActive(false);
-        activeStarterMotorIntegration = null;
+        activeFlightMotorController.SetFlightMotorActive(false);
+        activeFlightMotorController = null;
     }
 
     private void HandleTorchToggle()

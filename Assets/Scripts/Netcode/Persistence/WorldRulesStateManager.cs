@@ -8,6 +8,8 @@ public class WorldRulesStateManager : MonoBehaviour
     public const string BrazierLitCountKey = "world.braziers.lit_count";
     public const string BrazierTotalCountKey = "world.braziers.total_count";
     public const string CurrentYearKey = "world.time.current_year";
+    public const string CurrentTemporalAgeKey = "world.time.temporal_age";
+    public const string CurrentTemporalAgeStepKey = "world.time.temporal_age_step";
     public const string ActiveVolumeProfilesKey = "world.environment.active_volume_profiles";
 
     [SerializeField] private BraseroTimeManager braseroTimeManager;
@@ -171,6 +173,8 @@ public class WorldRulesStateManager : MonoBehaviour
         SetInt(BrazierLitCountKey, braseroTimeManager.LitCount);
         SetInt(BrazierTotalCountKey, braseroTimeManager.braseros != null ? braseroTimeManager.braseros.Count : 0);
         SetInt(CurrentYearKey, braseroTimeManager.CurrentYear);
+        SetInt(CurrentTemporalAgeKey, TemporalAgeUtility.AgeToInt(braseroTimeManager.CurrentTemporalAge));
+        SetInt(CurrentTemporalAgeStepKey, TemporalAgeUtility.AgeToStep(braseroTimeManager.CurrentTemporalAge));
         SetString(ActiveVolumeProfilesKey, DescribeActiveVolumeProfiles());
     }
 

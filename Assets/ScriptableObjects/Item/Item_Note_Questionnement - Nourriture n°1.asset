@@ -14,13 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   itemId: item_note_n_1
   itemName: Note
-  itemSprite: {fileID: 0}
+  itemSprite: {fileID: 21300000, guid: 4511a381bfb1cf740931784bbb80e702, type: 3}
   description: "Notes sur la fa\xE7on de se nourrir n\xB01"
   readableKind: 2
   parchmentText: "Je me suis toujours demand\xE9 d'o\xF9 vient l'eau et la nourriture
     que nous consommons. Les anciens nous disent que c'est Iustia qui s'occupe de
     nous mais je n'y crois pas."
   bookPages: []
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableContentId: 
+  readableGenerationSeedOffset: 0
   canUse: 1
   canPlace: 0
   isContainer: 0

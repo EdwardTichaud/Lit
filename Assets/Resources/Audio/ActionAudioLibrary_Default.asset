@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0694ab49b40c6e5fc9010c55c0103689, type: 3}
+  m_Name: ActionAudioLibrary_Default
+  m_EditorClassIdentifier: Assembly-CSharp::ActionAudioLibrarySO
+  uiOpen: {fileID: 11400000, guid: ac8e49b1f3774c22b0e293a29c380907, type: 2}
+  uiClose: {fileID: 11400000, guid: ba6570fa013c4ef48d0ad90f0ab6dd08, type: 2}
+  uiConfirm: {fileID: 11400000, guid: ca13c38d38e04d1c92f7ac6721a9dbb9, type: 2}
+  uiCancel: {fileID: 11400000, guid: a6b141e9d3fb4536b7818e0de311a49f, type: 2}
+  uiInvalid: {fileID: 11400000, guid: 8dc0684d0b5d4856a4b77c2326beb92e, type: 2}
+  inventoryOpen: {fileID: 11400000, guid: a1a1d36fa7014af88d166e4a17eba55d, type: 2}
+  inventoryClose: {fileID: 11400000, guid: 2e66d92a62c149058c6b47ee04009da1, type: 2}
+  inventoryTake: {fileID: 11400000, guid: 528d14cde88f455b83fe97dcadd25160, type: 2}
+  inventoryDeposit: {fileID: 11400000, guid: afef9478cb034b7a98d08a7d0066f3e2, type: 2}
+  inventoryDrop: {fileID: 11400000, guid: ef45a9a66a2444d991e3523a7412a064, type: 2}
+  inventoryPlaceStart: {fileID: 11400000, guid: 91010d2318b84b9a989f75fefb5dbd8e, type: 2}
+  inventoryPlaceConfirm: {fileID: 11400000, guid: d794ccf969d3472b9e3e7702a92499cc, type: 2}
+  inventoryPlaceCancel: {fileID: 11400000, guid: e29a21e3bb1349b3adf010abc47d94ea, type: 2}
+  inventoryUse: {fileID: 11400000, guid: a21d3a3bdfdb40508b64bc8bd6416f32, type: 2}
+  inventoryBreak: {fileID: 11400000, guid: a3a338569aa8458bb0914813fbeb4f87, type: 2}
+  inventoryUnlock: {fileID: 11400000, guid: 3bd4e6035244409e929cf8433a221824, type: 2}
+  inventoryLockpickSuccess: {fileID: 11400000, guid: e8695e073b9f4b55bd828b888a0561bf, type: 2}
+  inventoryLockpickFailure: {fileID: 11400000, guid: 30406c95e32b44f19291143e1d329a23, type: 2}
+  inventoryTrap: {fileID: 11400000, guid: fb51545dc57e48a9829aaf0bcddd46b2, type: 2}
+  inventoryReadOpen: {fileID: 11400000, guid: 1f442dd0e68a4c1d9b6664f2f19d145b, type: 2}
+  inventoryReadPage: {fileID: 11400000, guid: a92fe2badcb14f7587866f37125f90e6, type: 2}
+  inventoryReadClose: {fileID: 11400000, guid: 2379e94b8e5e46f684df7bf2082e898a, type: 2}
+  beaconColorSelect: {fileID: 11400000, guid: 237f49f690ff4f35972392c275bd10c4, type: 2}
+  buildPanelOpen: {fileID: 11400000, guid: d9f068e1e5b547138e0c5759253f9dd1, type: 2}
+  buildPanelClose: {fileID: 11400000, guid: fb7e3c53654046d8984508208a05b785, type: 2}
+  buildPlacementStart: {fileID: 11400000, guid: 3778351bf28d461e864640a5a7c7bf05, type: 2}
+  buildComplete: {fileID: 11400000, guid: 72517a2595e548c29f0b4a5f6c84868d, type: 2}
+  buildUpgrade: {fileID: 11400000, guid: c99eb67a6b8e4818930de9adf6972997, type: 2}
+  craftSuccess: {fileID: 11400000, guid: 5dc5ff07bcc944a7801b57556a50c60c, type: 2}
+  craftFailure: {fileID: 11400000, guid: f4b9ded95fa14b1f8fdd6a9d4acde36f, type: 2}
+  characterDamage: {fileID: 11400000, guid: 599405fc5ae4420e8215c8416dbd5fa1, type: 2}
+  characterHeal: {fileID: 11400000, guid: e9b6eda978c34cb0b9fb88474468b6d6, type: 2}
+  characterDeath: {fileID: 11400000, guid: 39ef928cc81744b2ac786887a6a6176a, type: 2}
+  characterJump: {fileID: 11400000, guid: d97b66c20f2140bfa449b56b1a29afd1, type: 2}
+  characterLand: {fileID: 11400000, guid: ab23e7ffac40469aaf40463797802354, type: 2}
+  torchToggle: {fileID: 11400000, guid: a1f023a1b6274352b4ab018e190846e8, type: 2}
+  ladderUse: {fileID: 11400000, guid: 026d9390a2e341d8a96fd9368b3ce026, type: 2}
+  teleport: {fileID: 11400000, guid: 580b6470d8714f6dadacaf2b0a4b9309, type: 2}
+  returnHome: {fileID: 11400000, guid: 1a814e76e14845c1a26ea51ca4d0c006, type: 2}
+  labyrinthStart: {fileID: 11400000, guid: df5dd2949da949348a0ecc0e9005fb9f, type: 2}
+  skillCheckSuccess: {fileID: 11400000, guid: b85da9864a8d436b9817f2c3b831e0ac, type: 2}
+  skillCheckFailure: {fileID: 11400000, guid: 8e17fee304a14fb885e91d02a4e6629b, type: 2}
+  combatAttack: {fileID: 11400000, guid: a6df225f922c4985b9ebe61bbcac2ba5, type: 2}
+  combatHit: {fileID: 11400000, guid: 545ccbe58f7049febcd203d5baf8af35, type: 2}
+  combatTurn: {fileID: 11400000, guid: e3b13cd15eac499ea87f344d333d2136, type: 2}
+  combatVictory: {fileID: 11400000, guid: 3b654d83b8ab404fb3c80ecbe74b5940, type: 2}
+  combatDefeat: {fileID: 11400000, guid: b61b6438d2bf48c8a4a487a4c4883d5c, type: 2}
+  puzzleSuccess: {fileID: 11400000, guid: 414c24aa6c1048768e9deb4d17f17dac, type: 2}
+  puzzleFailure: {fileID: 11400000, guid: 62bc7cae88704752bf099f9b403988cb, type: 2}
+  destructibleDestroy: {fileID: 11400000, guid: 97a53cc5f3c74f45a8280c0342a41b9d, type: 2}

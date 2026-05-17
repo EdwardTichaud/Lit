@@ -123,6 +123,9 @@ public class Item : ScriptableObject
     public string readableContentId;
     [Tooltip("Offset optionnel ajoute a la seed de generation pour cette source readable.")]
     public int readableGenerationSeedOffset;
+    [Header("Readable Narrative Metadata")]
+    [Tooltip("Metadonnees optionnelles pour classer les readables dans l'enquete temporelle.")]
+    public TemporalReadableMetadata readableMetadata = new TemporalReadableMetadata();
 
     [Header("Usage")]
     [Tooltip("Peut etre utilise via l'ActionBox.")]

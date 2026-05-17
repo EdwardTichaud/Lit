@@ -48,6 +48,11 @@ public static class CharacterInteractionDetection
                 return ladder;
             }
 
+            if (current.TryGetComponent(out Door door) && door.isActiveAndEnabled)
+            {
+                return door;
+            }
+
             if (current.TryGetComponent(out ReadableSentencePuzzle readableSentencePuzzle) && readableSentencePuzzle.isActiveAndEnabled)
             {
                 return readableSentencePuzzle;

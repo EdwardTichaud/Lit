@@ -17,8 +17,8 @@ public class BraseroTimeManager : MonoBehaviour
     [Header("Time")]
     [Tooltip("Annee de reference (0 par defaut).")]
     public int baseYear = 0;
-    [Tooltip("Nombre d'annees gagnees par brasero allume.")]
-    public int yearsPerBrasero = 100;
+    [Tooltip("Nombre d'annees gagnees par brasero allume. Les nouvelles zones temporelles utilisent 111; certaines scenes existantes peuvent encore serialiser une autre valeur.")]
+    public int yearsPerBrasero = TemporalAgeUtility.StepYears;
     [Tooltip("Ecrit un log quand la periode change.")]
     public bool logTimeChanges = false;
 
@@ -31,6 +31,8 @@ public class BraseroTimeManager : MonoBehaviour
     public int LitCount => litCount;
     public int CurrentYear => currentYear;
     public int CurrentYearOffset => litCount * yearsPerBrasero;
+    public TemporalAge CurrentTemporalAge => TemporalAgeUtility.IntToAge(currentYear);
+    public TemporalAge CurrentTemporalAgeOffset => TemporalAgeUtility.IntToAge(CurrentYearOffset);
 
     public event Action<int, int> TimeChanged;
 
@@ -174,6 +176,12 @@ public class BraseroTimeManager : MonoBehaviour
 
             case TimePeriodValueMode.LitBrazierCount:
                 return LitCount;
+
+            case TimePeriodValueMode.TemporalAgeYear:
+                return TemporalAgeUtility.AgeToInt(CurrentTemporalAge);
+
+            case TimePeriodValueMode.TemporalAgeStep:
+                return TemporalAgeUtility.AgeToStep(CurrentTemporalAge);
 
             case TimePeriodValueMode.AbsoluteYear:
             default:

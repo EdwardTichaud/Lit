@@ -551,6 +551,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             SquadCharacterController controller = GetCurrentCharacterController();
             if (TryUnlockWithKey(controller, out bool inventoryChanged))
             {
+                PlayActionAudio(ActionAudioCue.InventoryUnlock);
                 if (inventoryChanged)
                 {
                     SyncNetworkInventoryForCurrentCharacter();
@@ -631,6 +632,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (shown)
         {
+            PlayActionAudio(ActionAudioCue.UiOpen);
             Debug.Log($"[Lockpick] confirmation_shown container='{name}' availableTools={availableTools}", this);
             return;
         }
@@ -662,6 +664,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (TryUnlockWithKey(controller, out bool keyInventoryChanged))
         {
+            PlayActionAudio(ActionAudioCue.InventoryUnlock);
             if (keyInventoryChanged)
             {
                 SyncNetworkInventoryForCurrentCharacter();
@@ -684,6 +687,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
                 SyncNetworkInventoryForCurrentCharacter();
             }
 
+            PlayActionAudio(ActionAudioCue.InventoryLockpickFailure);
             ShowActionFeedback(feedback);
             return;
         }
@@ -699,12 +703,14 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        PlayActionAudio(ActionAudioCue.InventoryLockpickSuccess);
         ShowActionFeedback(feedback);
         CompletePrimaryInteraction();
     }
 
     private void OnLockpickCancelled()
     {
+        PlayActionAudio(ActionAudioCue.UiCancel);
         Debug.Log($"[Lockpick] confirmation_cancelled container='{name}'", this);
     }
 
@@ -895,6 +901,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         settings.OpenPanel();
+        PlayActionAudio(ActionAudioCue.InventoryOpen);
         HideActionBoxImmediate();
         lootOpen = true;
         InputFocusStack.Push(this);
@@ -917,6 +924,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void CloseLoot()
     {
+        if (lootOpen)
+        {
+            PlayActionAudio(ActionAudioCue.InventoryClose);
+        }
+
         HideActionBoxImmediate();
         CloseQuantityBox();
         ResetTakeQuantityState();
@@ -1420,6 +1432,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         HandleEmptyContainer();
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
+        PlayActionAudio(ActionAudioCue.InventoryTake);
         ShowActionFeedback(item.GetTakeSuccessMessage());
         return true;
     }
@@ -1510,6 +1523,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         RebuildLootSlots(null, currentSlotIndex);
         HandleEmptyContainer();
         SyncNetFromLootItems();
+        PlayActionAudio(ActionAudioCue.InventoryBreak);
         ShowBreakFeedback(item.GetBreakSuccessMessage());
         return true;
     }
@@ -2272,6 +2286,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
+        PlayActionAudio(ActionAudioCue.InventoryDeposit);
         ShowActionFeedback(item.GetDepositSuccessMessage());
         return true;
     }
@@ -2549,6 +2564,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         bool showedFeedback = false;
+        bool tookAny = false;
         for (int i = storedItems.Count - 1; i >= 0; i--)
         {
             LootItemEntry entry = storedItems[i];
@@ -2568,6 +2584,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             if (TryAddItemToCurrentCharacter(entry.item, quantity, !showedFeedback))
             {
                 storedItems.RemoveAt(i);
+                tookAny = true;
             }
             else
             {
@@ -2579,6 +2596,10 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         HandleEmptyContainer();
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
+        if (tookAny)
+        {
+            PlayActionAudio(ActionAudioCue.InventoryTake);
+        }
     }
 
     private void HandleEmptyContainer()
@@ -2664,6 +2685,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         HandleEmptyContainer();
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
+        PlayActionAudio(ActionAudioCue.InventoryTake);
         ShowActionFeedback(item.GetTakeSuccessMessage());
         return true;
     }
@@ -2698,7 +2720,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             inventory.SyncFromController();
             HandleEmptyContainer();
             SyncNetFromLootItems();
-            ShowFeedbackClientRpc(representedPickup.GetTakeSuccessMessage(), false, clientRpcParams);
+            ShowFeedbackWithAudioClientRpc(
+                representedPickup.GetTakeSuccessMessage(),
+                false,
+                ActionAudioCue.InventoryTake,
+                clientRpcParams);
             return true;
         }
 
@@ -2733,7 +2759,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         inventory.SyncFromController();
         SyncNetFromLootItems();
         HandleEmptyContainer();
-        ShowFeedbackClientRpc(takeAllSuccessMessage, false, clientRpcParams);
+        ShowFeedbackWithAudioClientRpc(takeAllSuccessMessage, false, ActionAudioCue.InventoryTake, clientRpcParams);
         return true;
     }
 
@@ -3484,6 +3510,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             SetTrapTriggeredState(true);
         }
 
+        PlayActionAudio(ActionAudioCue.InventoryTrap);
         feedback = GetTrapTriggeredFeedback();
         Debug.Log(
             $"[LootTrap] triggered container='{name}' character='{controller.name}' path='{triggerPath}' effect='{trapEffect}' disarmed={disarmTrapAfterTrigger} destination='{destination}'",
@@ -3604,6 +3631,20 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         InfoBoxUI.TryShow(message);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, transform.position);
+        }
     }
 
     private SquadCharacterController GetCurrentCharacterController()
@@ -3757,7 +3798,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
                 if (TryTriggerTrapOnOpen(controller, out string keyTrapFeedback))
                 {
-                    ShowFeedbackClientRpc(keyTrapFeedback, false, BuildClientRpcParams(rpcParams));
+                    ShowFeedbackWithAudioClientRpc(
+                        keyTrapFeedback,
+                        false,
+                        ActionAudioCue.InventoryTrap,
+                        BuildClientRpcParams(rpcParams));
                     return;
                 }
 
@@ -3771,7 +3816,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
             if (!confirmedLockpick)
             {
-                ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+                ShowFeedbackWithAudioClientRpc(
+                    GetMissingKeyFeedback(),
+                    false,
+                    ActionAudioCue.UiInvalid,
+                    BuildClientRpcParams(rpcParams));
                 return;
             }
 
@@ -3790,22 +3839,38 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
             if (!success)
             {
-                ShowFeedbackClientRpc(feedback, false, BuildClientRpcParams(rpcParams));
+                ShowFeedbackWithAudioClientRpc(
+                    feedback,
+                    false,
+                    ActionAudioCue.InventoryLockpickFailure,
+                    BuildClientRpcParams(rpcParams));
                 return;
             }
 
             if (TryTriggerTrapOnOpen(controller, out string openTrapFeedback))
             {
-                ShowFeedbackClientRpc(CombineFeedbackMessages(feedback, openTrapFeedback), false, BuildClientRpcParams(rpcParams));
+                ShowFeedbackWithAudioClientRpc(
+                    CombineFeedbackMessages(feedback, openTrapFeedback),
+                    false,
+                    ActionAudioCue.InventoryTrap,
+                    BuildClientRpcParams(rpcParams));
                 return;
             }
 
-            ShowFeedbackClientRpc(feedback, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                false,
+                ActionAudioCue.InventoryLockpickSuccess,
+                BuildClientRpcParams(rpcParams));
         }
 
         if (TryTriggerTrapOnOpen(controller, out string trapFeedback))
         {
-            ShowFeedbackClientRpc(trapFeedback, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                trapFeedback,
+                false,
+                ActionAudioCue.InventoryTrap,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -3832,7 +3897,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (IsLockedForInteraction())
         {
-            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                GetMissingKeyFeedback(),
+                false,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -3892,7 +3961,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         SyncNetFromLootItems();
         HandleEmptyContainer();
-        ShowFeedbackClientRpc(item.GetTakeSuccessMessage(), false, BuildClientRpcParams(rpcParams));
+        ShowFeedbackWithAudioClientRpc(
+            item.GetTakeSuccessMessage(),
+            false,
+            ActionAudioCue.InventoryTake,
+            BuildClientRpcParams(rpcParams));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -3906,13 +3979,21 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (IsLockedForInteraction())
         {
-            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                GetMissingKeyFeedback(),
+                false,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!allowTake)
         {
-            ShowFeedbackClientRpc(takeBlockedMessage, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                takeBlockedMessage,
+                false,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -3940,7 +4021,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (IsLockedForInteraction())
         {
-            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                GetMissingKeyFeedback(),
+                false,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -3966,7 +4051,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         int remainingCapacity = GetRemainingCapacity();
         if (remainingCapacity <= 0 || quantity > remainingCapacity)
         {
-            ShowFeedbackClientRpc(depositNoSpaceMessage, false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                depositNoSpaceMessage,
+                false,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -4002,7 +4091,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         inventory.SyncFromController();
         SyncNetFromLootItems();
-        ShowFeedbackClientRpc(item.GetDepositSuccessMessage(), false, BuildClientRpcParams(rpcParams));
+        ShowFeedbackWithAudioClientRpc(
+            item.GetDepositSuccessMessage(),
+            false,
+            ActionAudioCue.InventoryDeposit,
+            BuildClientRpcParams(rpcParams));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -4021,7 +4114,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (IsLockedForInteraction())
         {
-            ShowFeedbackClientRpc(GetMissingKeyFeedback(), false, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                GetMissingKeyFeedback(),
+                false,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -4052,7 +4149,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (!item.HasBreakResults())
         {
-            ShowFeedbackClientRpc(breakInvalidMessage, true, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                breakInvalidMessage,
+                true,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
@@ -4063,7 +4164,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             int effectiveRemaining = remaining + 1;
             if (totalResults > effectiveRemaining)
             {
-                ShowFeedbackClientRpc(breakNoSpaceMessage, true, BuildClientRpcParams(rpcParams));
+                ShowFeedbackWithAudioClientRpc(
+                    breakNoSpaceMessage,
+                    true,
+                    ActionAudioCue.UiInvalid,
+                    BuildClientRpcParams(rpcParams));
                 return;
             }
         }
@@ -4077,7 +4182,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         ApplyBreakResults(item);
         SyncNetFromLootItems();
         HandleEmptyContainer();
-        ShowFeedbackClientRpc(item.GetBreakSuccessMessage(), true, BuildClientRpcParams(rpcParams));
+        ShowFeedbackWithAudioClientRpc(
+            item.GetBreakSuccessMessage(),
+            true,
+            ActionAudioCue.InventoryBreak,
+            BuildClientRpcParams(rpcParams));
     }
 
     [ClientRpc]
@@ -4088,6 +4197,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             ClearPendingUnlockAttempt();
         }
 
+        ShowFeedbackLocal(message, isBreak);
+    }
+
+    private void ShowFeedbackLocal(string message, bool isBreak)
+    {
         if (string.IsNullOrWhiteSpace(message))
         {
             return;
@@ -4101,6 +4215,26 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         {
             ShowActionFeedback(message);
         }
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackWithAudioClientRpc(
+        string message,
+        bool isBreak,
+        ActionAudioCue audioCue,
+        ClientRpcParams rpcParams = default)
+    {
+        if (!isBreak)
+        {
+            ClearPendingUnlockAttempt();
+        }
+
+        if (audioCue != ActionAudioCue.None)
+        {
+            PlayActionAudio(audioCue);
+        }
+
+        ShowFeedbackLocal(message, isBreak);
     }
 
     [ClientRpc]

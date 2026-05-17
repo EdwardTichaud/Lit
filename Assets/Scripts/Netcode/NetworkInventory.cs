@@ -185,6 +185,7 @@ public class NetworkInventory : NetworkBehaviour
 
             if (controller.TryUseItem(item, out string reason))
             {
+                PlayActionAudio(ActionAudioCue.InventoryUse);
                 InfoBoxUI.TryShow(item.GetUseSuccessMessage());
                 CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
                 return true;
@@ -197,6 +198,10 @@ public class NetworkInventory : NetworkBehaviour
         if (IsServer)
         {
             bool success = ExecuteUseItem(item, out string feedback);
+            if (success)
+            {
+                PlayActionAudio(ActionAudioCue.InventoryUse);
+            }
             if (!string.IsNullOrWhiteSpace(feedback))
             {
                 InfoBoxUI.TryShow(feedback);
@@ -230,6 +235,7 @@ public class NetworkInventory : NetworkBehaviour
 
             if (item.TryBreak(controller, out string reason))
             {
+                PlayActionAudio(ActionAudioCue.InventoryBreak);
                 InfoBoxUI.TryShow(item.GetBreakSuccessMessage());
                 return true;
             }
@@ -241,6 +247,10 @@ public class NetworkInventory : NetworkBehaviour
         if (IsServer)
         {
             bool success = ExecuteBreakItem(item, out string feedback);
+            if (success)
+            {
+                PlayActionAudio(ActionAudioCue.InventoryBreak);
+            }
             if (!string.IsNullOrWhiteSpace(feedback))
             {
                 InfoBoxUI.TryShow(feedback);
@@ -285,6 +295,7 @@ public class NetworkInventory : NetworkBehaviour
 
             SpawnWorldItem(item, quantity, position, rotation, true, destroyWhenEmpty, true, 0u, false);
             SyncFromController();
+            PlayActionAudio(ActionAudioCue.InventoryDrop);
             InfoBoxUI.TryShow(item.GetDropSuccessMessage());
             return true;
         }
@@ -292,6 +303,10 @@ public class NetworkInventory : NetworkBehaviour
         if (IsServer)
         {
             bool success = ExecuteDropItem(item, quantity, position, rotation, allowDropWithoutPrefab, destroyWhenEmpty, out string feedback);
+            if (success)
+            {
+                PlayActionAudio(ActionAudioCue.InventoryDrop);
+            }
             if (!string.IsNullOrWhiteSpace(feedback))
             {
                 InfoBoxUI.TryShow(feedback);
@@ -344,6 +359,7 @@ public class NetworkInventory : NetworkBehaviour
 
             SpawnWorldItem(item, 1, position, rotation, createLootContainer, destroyWhenEmpty, true, placementColorPacked, usePlacementColor);
             SyncFromController();
+            PlayActionAudio(ActionAudioCue.InventoryPlaceConfirm);
             InfoBoxUI.TryShow(item.GetPlaceSuccessMessage());
             return true;
         }
@@ -362,6 +378,10 @@ public class NetworkInventory : NetworkBehaviour
                 out string feedback);
             if (!string.IsNullOrWhiteSpace(feedback))
             {
+                if (success)
+                {
+                    PlayActionAudio(ActionAudioCue.InventoryPlaceConfirm);
+                }
                 InfoBoxUI.TryShow(feedback);
             }
             return success;
@@ -584,13 +604,19 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecuteUseItem(item, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.InventoryUse,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
         }
     }
 
@@ -610,13 +636,19 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecuteBreakItem(item, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.InventoryBreak,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
         }
     }
 
@@ -636,13 +668,19 @@ public class NetworkInventory : NetworkBehaviour
 
         if (ExecuteDropItem(item, quantity, position, rotation, allowDropWithoutPrefab, destroyWhenEmpty, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.InventoryDrop,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
         }
     }
 
@@ -680,13 +718,19 @@ public class NetworkInventory : NetworkBehaviour
             usePlacementColor,
             out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.InventoryPlaceConfirm,
+                BuildClientRpcParams(rpcParams));
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
         }
     }
 
@@ -699,6 +743,37 @@ public class NetworkInventory : NetworkBehaviour
         }
 
         InfoBoxUI.TryShow(message);
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackWithAudioClientRpc(
+        string message,
+        ActionAudioCue audioCue,
+        ClientRpcParams rpcParams = default)
+    {
+        PlayActionAudio(audioCue);
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            Vector3 position = controller != null ? controller.transform.position : transform.position;
+            manager.PlayActionCue(cue, position);
+        }
     }
 
     private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)

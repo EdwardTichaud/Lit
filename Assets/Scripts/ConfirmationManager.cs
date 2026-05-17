@@ -10,7 +10,7 @@ public class ConfirmationManager : MonoBehaviour
 {
     private const string ManagerObjectName = "ConfirmationManager";
     private const string RootObjectName = "ConfirmationBox_Root";
-    private const string LegacyRootObjectName = "ConfirmationBoxes";
+    private const string PreviousRootObjectName = "ConfirmationBoxes";
     private const string BoxObjectName = "ConfirmationBox";
     private const string RuntimeCanvasObjectName = "ConfirmationCanvas_Auto";
 
@@ -459,13 +459,13 @@ public class ConfirmationManager : MonoBehaviour
             return explicitRoot as RectTransform;
         }
 
-        Transform legacyRoot = FindSceneTransformByName(LegacyRootObjectName);
-        if (legacyRoot != null)
+        Transform previousRoot = FindSceneTransformByName(PreviousRootObjectName);
+        if (previousRoot != null)
         {
-            Transform child = legacyRoot.Find(RootObjectName);
+            Transform child = previousRoot.Find(RootObjectName);
             if (child == null)
             {
-                child = CreateRootChild(legacyRoot);
+                child = CreateRootChild(previousRoot);
             }
 
             return child as RectTransform;

@@ -271,6 +271,7 @@ public static class StarterMotorTestSetupBuilder
         serializedMotor.FindProperty("flightAcceleration").floatValue = 54f;
         serializedMotor.FindProperty("flightBoostAcceleration").floatValue = 126f;
         serializedMotor.FindProperty("flightDeceleration").floatValue = 36f;
+        serializedMotor.FindProperty("flightStopDecelerationMultiplier").floatValue = 3f;
         serializedMotor.FindProperty("flightVerticalSpeed").floatValue = 24f;
         serializedMotor.FindProperty("flightVerticalAcceleration").floatValue = 66f;
         serializedMotor.FindProperty("flightVerticalDeceleration").floatValue = 54f;
@@ -364,11 +365,16 @@ public static class StarterMotorTestSetupBuilder
         serializedDriver.FindProperty("flightIdleMotionSpeed").floatValue = 0.85f;
         serializedDriver.FindProperty("flightBoostMotionSpeed").floatValue = 1.45f;
         serializedDriver.FindProperty("flightTakeoffMotionSpeed").floatValue = 1f;
+        serializedDriver.FindProperty("flightStopMinSpeed").floatValue = 1.2f;
+        serializedDriver.FindProperty("flightStopExitSpeedThreshold").floatValue = 0.35f;
+        serializedDriver.FindProperty("flightStopVisualHoldTime").floatValue = 0.18f;
+        serializedDriver.FindProperty("flightStopCrossFadeDuration").floatValue = 0.05f;
         serializedDriver.FindProperty("flightBoostVisualHoldTime").floatValue = 0.22f;
         serializedDriver.FindProperty("flightDashCrossFadeDuration").floatValue = 0.04f;
         serializedDriver.FindProperty("flightDashExitNormalizedTime").floatValue = 0.98f;
         serializedDriver.FindProperty("flyingIdleStateName").stringValue = "Flying_Idle";
         serializedDriver.FindProperty("flyingMoveStateName").stringValue = "Flying_Loop";
+        serializedDriver.FindProperty("flyingStopStateName").stringValue = "Flying_Stop";
         serializedDriver.FindProperty("flyingDashStateName").stringValue = "Flying_Dash";
         serializedDriver.FindProperty("showDebugValues").boolValue = true;
         serializedDriver.ApplyModifiedPropertiesWithoutUndo();

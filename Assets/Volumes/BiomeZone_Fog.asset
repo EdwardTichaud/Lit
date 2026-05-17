@@ -299,10 +299,10 @@ MonoBehaviour:
     m_Value: 1
   upperHemisphereLuxValue:
     m_OverrideState: 1
-    m_Value: 1.198698
+    m_Value: 0.04027127
   upperHemisphereLuxColor:
     m_OverrideState: 1
-    m_Value: {x: 0.2024637, y: 0.3175365, z: 0.5}
+    m_Value: {x: 0.4767573, y: 0.475726, z: 0.5}
   desiredLuxValue:
     m_OverrideState: 1
     m_Value: 20000
@@ -317,7 +317,7 @@ MonoBehaviour:
     m_Value: 0
   hdriSky:
     m_OverrideState: 1
-    m_Value: {fileID: 8900000, guid: 79317c74f96c96149a0a40ebd2f73569, type: 3}
+    m_Value: {fileID: 8900000, guid: 36812ec8a6e3d3e439743cead4d7cc2e, type: 3}
   distortionMode:
     m_OverrideState: 1
     m_Value: 0
@@ -411,7 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 953beb541740ddc499d005ee80c9ff29, type: 3}
   m_Name: Fog
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   quality:
     m_OverrideState: 0
     m_Value: 3
@@ -419,17 +419,17 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 1
   colorMode:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   color:
-    m_OverrideState: 0
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
   tint:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   maxFogDistance:
     m_OverrideState: 1
-    m_Value: 30
+    m_Value: 500
   mipFogMaxMip:
     m_OverrideState: 0
     m_Value: 0.5
@@ -447,10 +447,10 @@ MonoBehaviour:
     m_Value: 3000
   meanFreePath:
     m_OverrideState: 1
-    m_Value: 15
+    m_Value: 200
   enableVolumetricFog:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   albedo:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -459,7 +459,7 @@ MonoBehaviour:
     m_Value: 0.2
   depthExtent:
     m_OverrideState: 1
-    m_Value: 10
+    m_Value: 30
   denoisingMode:
     m_OverrideState: 1
     m_Value: 2

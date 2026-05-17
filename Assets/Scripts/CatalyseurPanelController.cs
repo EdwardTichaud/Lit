@@ -161,6 +161,7 @@ public class CatalyseurPanelController : MonoBehaviour
         }
 
         panelOpen = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
         RebuildOptions();
@@ -175,6 +176,7 @@ public class CatalyseurPanelController : MonoBehaviour
         }
 
         panelOpen = false;
+        PlayUiActionAudio(ActionAudioCue.UiClose);
         InputFocusStack.Pop(this);
         SetSquadInputLock(false);
         currentBuilding = null;
@@ -569,6 +571,7 @@ public class CatalyseurPanelController : MonoBehaviour
         if (success)
         {
             SyncNetworkInventory(currentController);
+            PlayActionAudio(ActionAudioCue.CraftSuccess);
             if (!string.IsNullOrWhiteSpace(craftSuccessMessage))
             {
                 InfoBoxUI.TryShow(craftSuccessMessage);
@@ -578,7 +581,37 @@ public class CatalyseurPanelController : MonoBehaviour
 
         if (!string.IsNullOrWhiteSpace(craftFailedMessage))
         {
+            PlayActionAudio(ActionAudioCue.CraftFailure);
             InfoBoxUI.TryShow(craftFailedMessage);
+        }
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            Vector3 position = currentBuilding != null ? currentBuilding.transform.position : transform.position;
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
         }
     }
 

@@ -133,8 +133,8 @@ public class CrpgCameraInput
             return false;
         }
 
-        StarterMotorPlayerIntegration integration = localCharacter.GetComponent<StarterMotorPlayerIntegration>();
-        return integration != null && integration.FlightActive;
+        SquadCharacterController controller = localCharacter.GetComponent<SquadCharacterController>();
+        return controller != null && controller.FlightActive;
     }
 
     private void OnCameraRecenter()

@@ -18,6 +18,25 @@ public partial class SquadCharacterController
             $"[Health] damage target='{name}' source='{source ?? "unspecified"}' amount={sanitizedAmount} applied={applied} hpBefore={previousHp} hpAfter={currentHp}",
             this);
 
+        if (applied > 0)
+        {
+            PlayActionAudio(currentHp <= 0 ? ActionAudioCue.CharacterDeath : ActionAudioCue.CharacterDamage);
+        }
+
         return applied;
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, transform.position);
+        }
     }
 }

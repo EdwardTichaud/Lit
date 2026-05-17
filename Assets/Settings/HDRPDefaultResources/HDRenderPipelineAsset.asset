@@ -34,7 +34,7 @@ MonoBehaviour:
     renderingLayerMaskBuffer: 0
     supportWater: 0
     waterSimulationResolution: 128
-    supportWaterExclusion: 0
+    supportWaterExclusion: 1
     supportWaterHorizontalDeformation: 0
     supportWaterDecals: 1
     waterDecalAtlasSize: 1024
@@ -111,7 +111,7 @@ MonoBehaviour:
       maxDirectionalLightsOnScreen: 16
       maxPunctualLightsOnScreen: 512
       maxAreaLightsOnScreen: 64
-      maxCubeReflectionOnScreen: 48
+      maxCubeReflectionOnScreen: 64
       maxPlanarReflectionOnScreen: 16
       maxDecalsOnScreen: 512
       maxLightsPerClusterCell: 8
@@ -381,7 +381,7 @@ MonoBehaviour:
     enableDistortion: 0
     enablePostprocess: 0
     enableOpaqueObjects: 0
-    enableTransparentObjects: 1
+    enableTransparentObjects: 0
     enableRealtimePlanarReflection: 0
     enableMSAA: 0
     enableAsyncCompute: 0
@@ -426,7 +426,7 @@ MonoBehaviour:
     enableDistortion: 0
     enablePostprocess: 0
     enableOpaqueObjects: 0
-    enableTransparentObjects: 1
+    enableTransparentObjects: 0
     enableRealtimePlanarReflection: 0
     enableMSAA: 0
     enableAsyncCompute: 0
@@ -471,7 +471,7 @@ MonoBehaviour:
     enableDistortion: 0
     enablePostprocess: 0
     enableOpaqueObjects: 0
-    enableTransparentObjects: 1
+    enableTransparentObjects: 0
     enableRealtimePlanarReflection: 0
     enableMSAA: 0
     enableAsyncCompute: 0

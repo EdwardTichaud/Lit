@@ -33,7 +33,7 @@ public partial class SquadCharacterController
     }
 
     [Header("Jump Start")]
-    [SerializeField, Tooltip("Active le saut a phases engagees et remplace le saut legacy.")]
+    [SerializeField, Tooltip("Active le saut a phases engagees.")]
     private bool enableCommittedJump = true;
     [SerializeField, Tooltip("Courte anticipation avant la poussee du saut (s).")]
     private float anticipationDuration = 0.08f;
@@ -524,6 +524,7 @@ public partial class SquadCharacterController
     {
         naturalFallAnimationPhase = NaturalFallAnimationPhase.Landing;
         naturalFallPhaseStartTime = Time.time;
+        PlayActionAudio(ActionAudioCue.CharacterLand);
         SetAnimatorTriggerIfValid(landingTriggerParam);
         CrossFadeNaturalFallState(naturalLandingStateName, idleLandingStateName, naturalLandingCrossFadeDuration);
     }
@@ -660,6 +661,7 @@ public partial class SquadCharacterController
         committedLandingType = CommittedLandingType.None;
         ClearQueuedCommittedJumpInput();
         EnterCommittedJumpPhase(CommittedJumpPhase.Takeoff);
+        PlayActionAudio(ActionAudioCue.CharacterJump);
         SetAnimatorTriggerIfValid(jumpTriggerParam);
         CrossFadeJumpStateIfRequested(takeoffStateName);
     }
@@ -769,6 +771,7 @@ public partial class SquadCharacterController
         committedLandingType = shouldRoll
             ? CommittedLandingType.Roll
             : CommittedLandingType.IdleRecovery;
+        PlayActionAudio(ActionAudioCue.CharacterLand);
         SetAnimatorTriggerIfValid(landingTriggerParam);
 
         if (shouldRoll)

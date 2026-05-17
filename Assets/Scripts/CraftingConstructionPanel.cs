@@ -188,6 +188,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         panelOpen = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
         RebuildSlotsSafely();
@@ -203,6 +204,7 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
         panelOpen = false;
+        PlayUiActionAudio(ActionAudioCue.UiClose);
         InputFocusStack.Pop(this);
         SetSquadInputLock(false);
         UnsubscribeBuilder();
@@ -247,12 +249,14 @@ public class CraftingConstructionPanel : MonoBehaviour
 
         if (!HasResources(slot.CraftItem, currentController, out _))
         {
+            PlayActionAudio(ActionAudioCue.CraftFailure);
             InfoBoxUI.TryShow(craftFailedMessage);
             return;
         }
 
         if (!TryConsumeCraftResources(slot.CraftItem, currentController))
         {
+            PlayActionAudio(ActionAudioCue.CraftFailure);
             InfoBoxUI.TryShow(craftFailedMessage);
             return;
         }
@@ -260,8 +264,38 @@ public class CraftingConstructionPanel : MonoBehaviour
         currentController.AddItem(slot.CraftItem, 1);
         SyncNetworkInventory(currentController);
 
+        PlayActionAudio(ActionAudioCue.CraftSuccess);
         InfoBoxUI.TryShow(craftSuccessMessage);
         UpdateRequirements(slot.CraftItem);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            Vector3 position = currentBuilding != null ? currentBuilding.transform.position : transform.position;
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
     }
 
     private void OnReturnPerformed(InputAction.CallbackContext context)

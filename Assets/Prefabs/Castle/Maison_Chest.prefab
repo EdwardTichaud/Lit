@@ -74,6 +74,9 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 6130801948611221116}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 8866593476401788129}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
       insertIndex: -1
@@ -81,15 +84,37 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8384270561318101996}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6130801948611221116}
   m_SourcePrefab: {fileID: 100100000, guid: 366893e57486b7047b941d0d967b9603, type: 3}
 --- !u!1 &4904099126078092212 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 366893e57486b7047b941d0d967b9603, type: 3}
   m_PrefabInstance: {fileID: 5246612193255689957}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6130801948611221116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4904099126078092212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3532529533
+  InScenePlacedSourceGlobalObjectIdHash: 3532529533
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &8866593476401788129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,6 +175,7 @@ MonoBehaviour:
   takeBlockedMessage: Impossible de prendre cet objet.
   takeAllSuccessMessage: "Objets recup\xE9r\xE9s."
   depositNoSpaceMessage: Pas assez de place dans le coffre.
+  showWorldInteractionUi: 1
   actionBox: {fileID: 0}
   actionBoxOffset: {x: 0, y: 0}
   actionBoxFadeDuration: 0.15
@@ -215,31 +241,8 @@ MonoBehaviour:
   closePanelOnExit: 1
   openOnProximity: 1
   consumeInteractOnProximity: 1
---- !u!114 &6130801948611221116
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4904099126078092212}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3761726350
-  InScenePlacedSourceGlobalObjectIdHash: 3532529533
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
+  openPanelRefreshInterval: 0.15
+  logBuildingSyncEvents: 0
 --- !u!64 &7434141378917972205 stripped
 MeshCollider:
   m_CorrespondingSourceObject: {fileID: 3451118302482216456, guid: 366893e57486b7047b941d0d967b9603, type: 3}

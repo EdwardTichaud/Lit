@@ -318,12 +318,14 @@ public class ReturnHomeTrigger : MonoBehaviour
         }
 
         confirmVisible = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         ShowInteraction(false);
     }
 
     private void ConfirmReturnHome()
     {
         confirmVisible = false;
+        PlayUiActionAudio(ActionAudioCue.UiConfirm);
         RefreshCurrentCharacter();
         if (currentCharacter == null)
         {
@@ -360,6 +362,7 @@ public class ReturnHomeTrigger : MonoBehaviour
     private void CancelReturnHome()
     {
         confirmVisible = false;
+        PlayUiActionAudio(ActionAudioCue.UiCancel);
         RefreshCurrentCharacter();
     }
 
@@ -630,6 +633,7 @@ public class ReturnHomeTrigger : MonoBehaviour
 
         if (result == SquadManager.SendHomeResult.Success)
         {
+            PlayActionAudio(ActionAudioCue.ReturnHome);
             charactersInRange.Remove(currentCharacter);
             characterColliderCounts.Remove(currentCharacter);
             currentCharacter = null;
@@ -644,6 +648,35 @@ public class ReturnHomeTrigger : MonoBehaviour
         }
 
         ShowInteraction(true);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            Vector3 position = currentCharacter != null ? currentCharacter.transform.position : transform.position;
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
     }
 
     public SquadManager.SendHomeResult ServerTrySendHome(GameObject character)

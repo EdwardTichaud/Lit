@@ -162,17 +162,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4865652701375795038}
-  m_LocalRotation: {x: 0.47271898, y: -0, z: -0, w: 0.8812133}
-  m_LocalPosition: {x: 0, y: 0, z: -0.14}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalRotation: {x: 0.46174863, y: 0, z: 0, w: 0.8870109}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7912296197160783385}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 56.422, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 55, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1918.1202, y: -1078.4102}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &203721522259438302
@@ -216,6 +216,7 @@ MonoBehaviour:
   effectDescriptionText: {fileID: 0}
   currentLevelText: {fileID: 0}
   currentBonusText: {fileID: 0}
+  itemSpriteImage: {fileID: 0}
   currentLevelFormat: '{0}'
   currentBonusFormat: '{0}'
   faceCamera: 1
@@ -398,7 +399,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: bc3a5198dbbc13749b2cdf1b089e94db, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -406,7 +407,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: fbee7451b97bc5a4690264749d3d3e05, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 34bbcef53d27cda47adda00065799b3f, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

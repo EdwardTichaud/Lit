@@ -108,6 +108,43 @@ public class CameraController : MonoBehaviour
     private bool combatCameraWasActive;
     private Vector3 currentCombatCameraPosition;
     private Quaternion currentCombatCameraRotation;
+    private Component fixedCameraSource;
+    private Transform fixedCameraPoint;
+    private Transform fixedCameraTarget;
+    private Vector3 fixedCameraLookAtOffset;
+    private int fixedCameraPriority = int.MinValue;
+    private float fixedCameraTransitionSharpness = 8f;
+    private bool fixedCameraPoseInitialized;
+    private Vector3 currentFixedCameraPosition;
+    private Quaternion currentFixedCameraRotation = Quaternion.identity;
+
+    public bool FixedCameraActive => fixedCameraSource != null && fixedCameraPoint != null && fixedCameraTarget != null;
+
+    public bool TryGetFixedCameraMovementBasis(out Vector3 forward, out Vector3 right)
+    {
+        forward = Vector3.zero;
+        right = Vector3.zero;
+
+        if (!FixedCameraActive)
+        {
+            return false;
+        }
+
+        Quaternion referenceRotation = fixedCameraPoseInitialized
+            ? currentFixedCameraRotation
+            : mainCam != null ? mainCam.transform.rotation : Quaternion.identity;
+        forward = Vector3.ProjectOnPlane(referenceRotation * Vector3.forward, Vector3.up);
+        right = Vector3.ProjectOnPlane(referenceRotation * Vector3.right, Vector3.up);
+
+        if (forward.sqrMagnitude <= 0.0001f || right.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        forward.Normalize();
+        right.Normalize();
+        return true;
+    }
 
     private void Awake()
     {
@@ -131,6 +168,7 @@ public class CameraController : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearFixedCameraRuntime();
         cameraInput.Unbind();
         runSpeedEffect?.Cleanup(mainCam);
     }
@@ -178,6 +216,12 @@ public class CameraController : MonoBehaviour
 
         bool inputBlocked = InputFocusStack.HasAnyFocusBlockingCamera();
         CrpgCameraInput.FrameState inputState = cameraInput.Collect(inputBlocked, deltaTime);
+
+        if (TryApplyFixedCamera(deltaTime))
+        {
+            zoomNormalized = currentZoomNormalized;
+            return;
+        }
 
         SyncExternalZoomRequest();
         UpdateZoom(inputState.zoomDelta, deltaTime);
@@ -274,6 +318,43 @@ public class CameraController : MonoBehaviour
         followOverrideTarget = cameraFocus.GetTopOverrideTarget();
     }
 
+    public bool TrySetFixedCamera(
+        Component source,
+        Transform cameraPoint,
+        Transform target,
+        Vector3 lookAtOffset,
+        int priority = 0,
+        float transitionSharpness = 8f)
+    {
+        if (source == null || cameraPoint == null || target == null)
+        {
+            return false;
+        }
+
+        if (fixedCameraSource != null && fixedCameraSource != source && priority < fixedCameraPriority)
+        {
+            return false;
+        }
+
+        fixedCameraSource = source;
+        fixedCameraPoint = cameraPoint;
+        fixedCameraTarget = target;
+        fixedCameraLookAtOffset = lookAtOffset;
+        fixedCameraPriority = priority;
+        fixedCameraTransitionSharpness = Mathf.Max(0f, transitionSharpness);
+        return true;
+    }
+
+    public void ReleaseFixedCamera(Component source)
+    {
+        if (source != null && fixedCameraSource != source)
+        {
+            return;
+        }
+
+        ClearFixedCameraRuntime();
+    }
+
     public void RecenterOnCurrentTarget(bool immediate = false)
     {
         Transform gameplayTarget = ResolveGameplayTarget();
@@ -367,6 +448,79 @@ public class CameraController : MonoBehaviour
         ApplyDirectCameraPose(currentCombatCameraPosition, currentCombatCameraRotation);
         combatCameraWasActive = true;
         return true;
+    }
+
+    private bool TryApplyFixedCamera(float deltaTime)
+    {
+        if (fixedCameraSource == null && fixedCameraPoint == null && fixedCameraTarget == null)
+        {
+            return false;
+        }
+
+        if (fixedCameraSource == null || fixedCameraPoint == null || fixedCameraTarget == null)
+        {
+            ClearFixedCameraRuntime();
+            return false;
+        }
+
+        if (!fixedCameraTarget.gameObject.activeInHierarchy)
+        {
+            ClearFixedCameraRuntime();
+            return false;
+        }
+
+        if (LocalInputRouter.CameraFreeModeActive)
+        {
+            LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
+        }
+
+        cameraFocus.SetFreeCameraMode(false);
+        followOverrideTarget = fixedCameraTarget;
+        mainCamCurrentTarget = fixedCameraTarget;
+        runSpeedEffect?.ResetEffect(mainCam);
+
+        Vector3 desiredCameraPosition = fixedCameraPoint.position;
+        Vector3 lookTarget = fixedCameraTarget.position + fixedCameraLookAtOffset;
+        Vector3 lookDirection = lookTarget - desiredCameraPosition;
+        if (lookDirection.sqrMagnitude <= 0.0001f)
+        {
+            lookDirection = fixedCameraPoint.forward;
+        }
+
+        if (lookDirection.sqrMagnitude <= 0.0001f)
+        {
+            lookDirection = Vector3.forward;
+        }
+
+        Quaternion desiredCameraRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        if (!fixedCameraPoseInitialized)
+        {
+            InitializeFixedCameraPose(desiredCameraPosition, desiredCameraRotation);
+        }
+
+        float t = fixedCameraTransitionSharpness <= 0f ? 1f : 1f - Mathf.Exp(-fixedCameraTransitionSharpness * deltaTime);
+        currentFixedCameraPosition = Vector3.Lerp(currentFixedCameraPosition, desiredCameraPosition, t);
+        currentFixedCameraRotation = Quaternion.Slerp(currentFixedCameraRotation, desiredCameraRotation, t);
+
+        ApplyDirectCameraPose(currentFixedCameraPosition, currentFixedCameraRotation);
+        return true;
+    }
+
+    private void InitializeFixedCameraPose(Vector3 fallbackPosition, Quaternion fallbackRotation)
+    {
+        if (mainCam != null)
+        {
+            Transform camTransform = mainCam.transform;
+            currentFixedCameraPosition = camTransform.position;
+            currentFixedCameraRotation = camTransform.rotation;
+        }
+        else
+        {
+            currentFixedCameraPosition = fallbackPosition;
+            currentFixedCameraRotation = fallbackRotation;
+        }
+
+        fixedCameraPoseInitialized = true;
     }
 
     private void ResetCombatCameraRuntimeIfNeeded()
@@ -564,6 +718,17 @@ public class CameraController : MonoBehaviour
         }
 
         runtimeInitialized = true;
+    }
+
+    private void ClearFixedCameraRuntime()
+    {
+        fixedCameraSource = null;
+        fixedCameraPoint = null;
+        fixedCameraTarget = null;
+        fixedCameraLookAtOffset = Vector3.zero;
+        fixedCameraPriority = int.MinValue;
+        fixedCameraTransitionSharpness = 8f;
+        fixedCameraPoseInitialized = false;
     }
 
     private Transform ResolveGameplayTarget()

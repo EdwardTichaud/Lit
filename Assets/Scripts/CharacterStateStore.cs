@@ -234,7 +234,7 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
-        PersistentWorldDebug.Log("host load path restored world state from snapshot; legacy world restore skipped", this);
+        PersistentWorldDebug.Log("host load path restored world state from snapshot; compatibility world restore skipped", this);
     }
 
     private void RequestScreenshotCapture()
@@ -337,14 +337,14 @@ public class CharacterStateStore : MonoBehaviour
 
         if (!adapter.HasSavedWorldSnapshot())
         {
-            PersistentWorldDebug.Log("host load path did not find a world snapshot; using legacy restore", this);
+            PersistentWorldDebug.Log("host load path did not find a world snapshot; using compatibility restore", this);
             return false;
         }
 
         bool applied = adapter.EnsureHostWorldRestoredFromSave("character_state_store_host_load");
         if (!applied)
         {
-            PersistentWorldDebug.Error("host load path world snapshot apply failed; falling back to legacy restore", this);
+            PersistentWorldDebug.Error("host load path world snapshot apply failed; falling back to compatibility restore", this);
             return false;
         }
 
@@ -664,13 +664,13 @@ public class CharacterStateStore : MonoBehaviour
                 lookup[id] = runtimeCharacter;
             }
 
-            AddLegacyCharacterIds(lookup, runtimeCharacter, id);
+            AddAlternateCharacterIds(lookup, runtimeCharacter, id);
         }
 
         return lookup;
     }
 
-    private void AddLegacyCharacterIds(Dictionary<string, CharacterData> lookup, CharacterData character, string primaryId)
+    private void AddAlternateCharacterIds(Dictionary<string, CharacterData> lookup, CharacterData character, string primaryId)
     {
         if (lookup == null || character == null)
         {

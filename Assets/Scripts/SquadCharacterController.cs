@@ -140,12 +140,22 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool useCameraRelative = true;
     [SerializeField, Tooltip("Camera de reference (fallback Main).")]
     private Camera referenceCamera;
+    [SerializeField, Tooltip("Conserve la reference de mouvement tant que l'input est maintenu, notamment pendant les changements de camera fixe.")]
+    private bool preserveFixedCameraMovementContinuity = true;
+    [SerializeField, Range(0f, 180f), Tooltip("Angle d'input qui force la reference de mouvement a se recaler sur la camera active.")]
+    private float fixedCameraMovementInputRefreshAngle = 65f;
+    [SerializeField, Min(0f), Tooltip("Blend optionnel de la reference de mouvement vers la camera active. 0 = reference verrouillee jusqu'au relachement/changement d'input.")]
+    private float fixedCameraMovementReferenceBlendSharpness = 0f;
     [SerializeField, Tooltip("Anime les RB en physics.")]
     private bool animatePhysics = true;
     [SerializeField, Tooltip("Responsivite de rotation appliquee quand le personnage est deja en mouvement.")]
     private float movingRotationSpeed = 16f;
     [SerializeField, Tooltip("Seuil de vitesse a partir duquel la rotation passe en mode mouvement.")]
     private float movingRotationSpeedThreshold = 0.75f;
+    private bool storedMovementReferenceActive;
+    private Vector3 storedForward;
+    private Vector3 storedRight;
+    private Vector2 storedInput;
 
     [Header("Grounding")]
     [SerializeField, Tooltip("Distance du controle sol pour autoriser les etats relies au sol (m).")]
@@ -338,6 +348,8 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             UpdateLocalInteractionDetection();
         }
+
+        TickFlightExternalLocomotion(Time.deltaTime);
     }
 
     private void LateUpdate()
@@ -349,6 +361,9 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             ReconcileAnimationState(Time.deltaTime);
         }
+
+        RefreshFlightExternalLocomotionInteractions();
+        TickFlightFeedback();
     }
 
     private void Awake()
@@ -398,6 +413,7 @@ public partial class SquadCharacterController : MonoBehaviour
         InitializeTorchState();
         ResetCommittedJumpRuntime();
         RefreshAnimationReferences();
+        InitializeFlightFeedback();
     }
 
     private void OnEnable()
@@ -407,13 +423,21 @@ public partial class SquadCharacterController : MonoBehaviour
         CacheNetworkObject();
         RefreshAnimationReferences();
         UpdateAudioListenerState(true);
+        ResolveFlightMotorReferences();
     }
 
     private void OnDisable()
     {
+        SetFlightMotorActive(false);
+        ShutdownFlightFeedback();
         ClearLocalInteractionTarget();
         SetAudioListenerActive(false);
         UnregisterCharacter();
+    }
+
+    private void OnDestroy()
+    {
+        DisposeFlightFeedbackRuntimeObjects();
     }
 
     private void OnTransformChildrenChanged()
@@ -768,6 +792,10 @@ public partial class SquadCharacterController : MonoBehaviour
     public bool HasTorchItem => TorchItem != null;
 
     public bool IsTorchEquipped => torchEquipped;
+
+    public bool IsTorchAgingEffectActive => torchEquipped ||
+                                            torchVisualEquipped ||
+                                            pendingTorchVisualTransition != TorchVisualTransition.None;
 
     public static IReadOnlyList<SquadCharacterController> ActiveCharacters => registeredCharacters;
 
@@ -1521,6 +1549,8 @@ public partial class SquadCharacterController : MonoBehaviour
         inputResponsiveness = Mathf.Max(0f, inputResponsiveness);
         inputReleaseResponsiveness = Mathf.Max(0f, inputReleaseResponsiveness);
         movementInputDeadZone = Mathf.Clamp01(movementInputDeadZone);
+        fixedCameraMovementInputRefreshAngle = Mathf.Clamp(fixedCameraMovementInputRefreshAngle, 0f, 180f);
+        fixedCameraMovementReferenceBlendSharpness = Mathf.Max(0f, fixedCameraMovementReferenceBlendSharpness);
         walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
         runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
         trotPresentationSpeed = Mathf.Clamp(trotPresentationSpeed, walkSpeedThreshold, runSpeedThreshold);
@@ -1561,6 +1591,7 @@ public partial class SquadCharacterController : MonoBehaviour
         ValidateHeightProbeTraversalSettings();
 
         ValidateCommittedJumpSettings();
+        ValidateFlightSettings();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
     }
@@ -1589,6 +1620,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         SetTorchEquipped(!torchEquipped);
+        PlayActionAudio(ActionAudioCue.TorchToggle);
     }
 
     public void ApplyTorchState(int torchSeconds, bool equipTorch)
@@ -1609,12 +1641,17 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         moveInputIsWorldSpace = false;
         moveInput = input;
+        if (input.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
+        {
+            ClearStoredMovementReference();
+        }
     }
 
     public void MoveWorld(Vector2 worldInput)
     {
         moveInputIsWorldSpace = true;
         moveInput = worldInput;
+        ClearStoredMovementReference();
     }
 
     public void SetSprintModifier(bool pressed)
@@ -1633,6 +1670,7 @@ public partial class SquadCharacterController : MonoBehaviour
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
         sprintModifierPressed = false;
+        ClearStoredMovementReference();
         StopHorizontalVelocity();
         wasMovingForAnimator = false;
         smoothedTurnAmount = 0f;
@@ -1799,6 +1837,11 @@ public partial class SquadCharacterController : MonoBehaviour
         float inputMagnitude = ResolveMovementInputMagnitude(effectiveInput);
         bool hasInput = inputMagnitude > 0f;
         Vector3 desiredDirection = Vector3.zero;
+        if (!hasInput && moveInput.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
+        {
+            ClearStoredMovementReference();
+        }
+
         if (hasInput)
         {
             desiredDirection = GetMoveDirection(effectiveInput);
@@ -2467,7 +2510,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
     {
-        if (TryGetActiveStarterMotorCapsule(out center, out radius, out height))
+        if (TryGetActiveFlightMotorCapsule(out center, out radius, out height))
         {
             return true;
         }
@@ -2496,7 +2539,7 @@ public partial class SquadCharacterController : MonoBehaviour
         return true;
     }
 
-    private bool TryGetActiveStarterMotorCapsule(out Vector3 center, out float radius, out float height)
+    private bool TryGetActiveFlightMotorCapsule(out Vector3 center, out float radius, out float height)
     {
         center = Vector3.zero;
         radius = 0f;
@@ -2507,9 +2550,7 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        StarterMotorPlayerIntegration starterIntegration = GetComponent<StarterMotorPlayerIntegration>();
-        if (starterIntegration == null ||
-            !starterIntegration.TryGetActiveCharacterController(out CharacterController controller) ||
+        if (!TryGetActiveFlightCharacterController(out CharacterController controller) ||
             controller == null)
         {
             return false;
@@ -2805,6 +2846,12 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
+        if (pendingTorchVisualTransition == TorchVisualTransition.Unequip &&
+            !IsTorchVisualTransitionAnimationComplete(TorchVisualTransition.Unequip))
+        {
+            return;
+        }
+
         ApplyTorchVisualState(torchEquipped);
         ClearPendingTorchVisualTransition();
     }
@@ -2834,6 +2881,33 @@ public partial class SquadCharacterController : MonoBehaviour
 
         return animator.IsInTransition(layerIndex)
             && MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash);
+    }
+
+    private bool IsTorchVisualTransitionAnimationComplete(TorchVisualTransition transition)
+    {
+        int layerIndex = GetTorchAnimationLayerIndex();
+        if (layerIndex < 0)
+        {
+            return true;
+        }
+
+        int stateHash = transition == TorchVisualTransition.Equip
+            ? TorchEquipStateHash
+            : TorchUnequipStateHash;
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(layerIndex);
+        if (MatchesTorchAnimationState(currentState, stateHash))
+        {
+            return currentState.normalizedTime >= 1f;
+        }
+
+        if (animator.IsInTransition(layerIndex) &&
+            MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash))
+        {
+            return false;
+        }
+
+        return torchVisualTransitionStateObserved;
     }
 
     private int GetTorchAnimationLayerIndex()
@@ -3230,33 +3304,50 @@ public partial class SquadCharacterController : MonoBehaviour
         return root.position;
     }
 
-    private Vector3 GetMoveDirection(Vector2 input)
+    private Vector3 GetMoveDirection(Vector2 input, bool inputRepresentsRawMovement = false)
     {
         if (moveInputIsWorldSpace)
         {
+            ClearStoredMovementReference();
             return new Vector3(input.x, 0f, input.y);
         }
 
         Vector3 move = new Vector3(input.x, 0f, input.y);
         if (!ShouldUseCameraRelativeInput())
         {
+            ClearStoredMovementReference();
             return move;
         }
 
-        Camera cam = ResolveMovementCamera();
-        if (cam == null)
+        if (!TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight, out bool fixedCameraBasis))
         {
+            ClearStoredMovementReference();
             return move;
         }
 
-        Vector3 camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
-        Vector3 camRight = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
+        if (!fixedCameraBasis)
+        {
+            ClearStoredMovementReference();
+            return camRight * input.x + camForward * input.y;
+        }
+
+        if (TryResolveStoredMovementBasis(
+            input,
+            inputRepresentsRawMovement,
+            camForward,
+            camRight,
+            out Vector3 storedMoveForward,
+            out Vector3 storedMoveRight))
+        {
+            return storedMoveRight * input.x + storedMoveForward * input.y;
+        }
+
         return camRight * input.x + camForward * input.y;
     }
 
     public Vector2 GetWorldSpaceInput(Vector2 input)
     {
-        Vector3 direction = GetMoveDirection(input);
+        Vector3 direction = GetMoveDirection(input, inputRepresentsRawMovement: true);
         return new Vector2(direction.x, direction.z);
     }
 
@@ -3275,14 +3366,11 @@ public partial class SquadCharacterController : MonoBehaviour
             return new Vector2(planar.x, planar.z);
         }
 
-        Camera cam = ResolveMovementCamera();
-        if (cam == null)
+        if (!TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight))
         {
             return new Vector2(planar.x, planar.z);
         }
 
-        Vector3 camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
-        Vector3 camRight = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
         float x = Vector3.Dot(planar, camRight);
         float y = Vector3.Dot(planar, camForward);
         return new Vector2(x, y);
@@ -3291,6 +3379,200 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool ShouldUseCameraRelativeInput()
     {
         return useCameraRelative;
+    }
+
+    private bool TryResolveStoredMovementBasis(
+        Vector2 input,
+        bool inputRepresentsRawMovement,
+        Vector3 currentForward,
+        Vector3 currentRight,
+        out Vector3 moveForward,
+        out Vector3 moveRight)
+    {
+        moveForward = currentForward;
+        moveRight = currentRight;
+
+        if (!preserveFixedCameraMovementContinuity)
+        {
+            ClearStoredMovementReference();
+            return false;
+        }
+
+        Vector2 referenceInput = ResolveMovementReferenceInput(input, inputRepresentsRawMovement);
+        float inputMagnitude = referenceInput.magnitude;
+        if (inputMagnitude <= movementInputDeadZone)
+        {
+            ClearStoredMovementReference();
+            return false;
+        }
+
+        Vector2 inputDirection = referenceInput / inputMagnitude;
+        if (!storedMovementReferenceActive)
+        {
+            if (!TryStoreMovementReference(currentForward, currentRight, inputDirection))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            float inputAngle = Vector2.Angle(storedInput, inputDirection);
+            if (inputAngle > fixedCameraMovementInputRefreshAngle)
+            {
+                if (!TryStoreMovementReference(currentForward, currentRight, inputDirection))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                BlendStoredMovementReference(currentForward, currentRight);
+            }
+        }
+
+        moveForward = storedForward;
+        moveRight = storedRight;
+        return storedMovementReferenceActive;
+    }
+
+    private Vector2 ResolveMovementReferenceInput(Vector2 input, bool inputRepresentsRawMovement)
+    {
+        if (inputRepresentsRawMovement)
+        {
+            return input;
+        }
+
+        if (moveInputIsWorldSpace)
+        {
+            return Vector2.zero;
+        }
+
+        return moveInput;
+    }
+
+    private bool TryStoreMovementReference(Vector3 forward, Vector3 right, Vector2 inputDirection)
+    {
+        if (!TryNormalizeMovementBasis(forward, right, out Vector3 normalizedForward, out Vector3 normalizedRight))
+        {
+            ClearStoredMovementReference();
+            return false;
+        }
+
+        storedForward = normalizedForward;
+        storedRight = normalizedRight;
+        storedInput = inputDirection;
+        storedMovementReferenceActive = true;
+        return true;
+    }
+
+    private void BlendStoredMovementReference(Vector3 targetForward, Vector3 targetRight)
+    {
+        if (fixedCameraMovementReferenceBlendSharpness <= 0f)
+        {
+            return;
+        }
+
+        if (!storedMovementReferenceActive)
+        {
+            return;
+        }
+
+        float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
+        if (deltaTime <= 0f)
+        {
+            return;
+        }
+
+        float t = 1f - Mathf.Exp(-fixedCameraMovementReferenceBlendSharpness * deltaTime);
+        Vector3 blendedForward = Vector3.Slerp(storedForward, targetForward, t);
+        Vector3 blendedRight = Vector3.Slerp(storedRight, targetRight, t);
+        if (!TryNormalizeMovementBasis(blendedForward, blendedRight, out Vector3 normalizedForward, out Vector3 normalizedRight))
+        {
+            return;
+        }
+
+        storedForward = normalizedForward;
+        storedRight = normalizedRight;
+    }
+
+    private static bool TryNormalizeMovementBasis(
+        Vector3 forward,
+        Vector3 right,
+        out Vector3 normalizedForward,
+        out Vector3 normalizedRight)
+    {
+        normalizedForward = Vector3.ProjectOnPlane(forward, Vector3.up);
+        normalizedRight = Vector3.zero;
+        if (normalizedForward.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        normalizedForward.Normalize();
+
+        Vector3 projectedRight = Vector3.ProjectOnPlane(right, Vector3.up);
+        normalizedRight = Vector3.Cross(Vector3.up, normalizedForward);
+        if (normalizedRight.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        normalizedRight.Normalize();
+        if (projectedRight.sqrMagnitude > 0.0001f && Vector3.Dot(normalizedRight, projectedRight) < 0f)
+        {
+            normalizedRight = -normalizedRight;
+        }
+
+        return true;
+    }
+
+    private void ClearStoredMovementReference()
+    {
+        storedMovementReferenceActive = false;
+        storedForward = Vector3.zero;
+        storedRight = Vector3.zero;
+        storedInput = Vector2.zero;
+    }
+
+    private bool TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight)
+    {
+        return TryResolveMovementBasis(out camForward, out camRight, out _);
+    }
+
+    private bool TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight, out bool fixedCameraBasis)
+    {
+        camForward = Vector3.zero;
+        camRight = Vector3.zero;
+        fixedCameraBasis = false;
+
+        CameraController controller = ResolveMovementCameraController();
+        if (controller != null && controller.TryGetFixedCameraMovementBasis(out camForward, out camRight))
+        {
+            if (controller.mainCam != null && controller.mainCam.isActiveAndEnabled)
+            {
+                referenceCamera = controller.mainCam;
+            }
+
+            fixedCameraBasis = true;
+            return true;
+        }
+
+        Camera cam = ResolveMovementCamera();
+        if (cam == null)
+        {
+            return false;
+        }
+
+        camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
+        camRight = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up);
+        if (camForward.sqrMagnitude <= 0.0001f || camRight.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        camForward.Normalize();
+        camRight.Normalize();
+        return true;
     }
 
     private Camera ResolveMovementCamera()

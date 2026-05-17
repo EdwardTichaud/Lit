@@ -28,6 +28,10 @@ public class TorchVisionSensitive : MonoBehaviour
 
     [Header("Evaluation")]
     [SerializeField] private Transform distanceReference;
+    [Tooltip("Measure hidden/visible distances from the closest point of the combined object bounds instead of the transform center.")]
+    [SerializeField] private bool evaluateDistanceFromBounds = true;
+    [Tooltip("If no renderer bounds are available, fall back to collider bounds for distance evaluation.")]
+    [SerializeField] private bool useColliderBoundsWhenNoRendererBounds = true;
 
     [Header("Vision")]
     [SerializeField] private VisibilityMode visibilityMode = VisibilityMode.VisibleOnlyWhenVisionMatches;
@@ -56,6 +60,7 @@ public class TorchVisionSensitive : MonoBehaviour
     [SerializeField, Min(0.01f)] private float distanceReferenceGizmoRadius = 0.2f;
 
     private readonly List<Renderer> rendererBuffer = new List<Renderer>();
+    private readonly List<TorchVisionSystem.TorchSourceInfo> torchSourcesBuffer = new List<TorchVisionSystem.TorchSourceInfo>();
     private DissolveRendererData[] cachedRenderers = Array.Empty<DissolveRendererData>();
     private MaterialPropertyBlock propertyBlock;
     private float refreshTimer;
@@ -408,11 +413,8 @@ public class TorchVisionSensitive : MonoBehaviour
         torchInRange = false;
         GetOrderedDistanceThresholds(out float maxRevealDistance, out float fullRevealDistance);
 
-        if (!TorchVisionSystem.TryGetNearestMatchingTorch(
-                vision,
-                GetReferencePosition(),
+        if (!TryGetNearestMatchingTorch(
                 maxRevealDistance,
-                requireTorchEquipped,
                 out TorchVisionSystem.TorchSourceMatch match))
         {
             return 0f;
@@ -443,6 +445,146 @@ public class TorchVisionSensitive : MonoBehaviour
     {
         Transform reference = distanceReference != null ? distanceReference : transform;
         return reference.position;
+    }
+
+    private bool TryGetNearestMatchingTorch(
+        float maxRevealDistance,
+        out TorchVisionSystem.TorchSourceMatch match)
+    {
+        if (evaluateDistanceFromBounds && TryGetEvaluationBounds(out Bounds bounds))
+        {
+            return TryGetNearestMatchingTorchToBounds(bounds, maxRevealDistance, out match);
+        }
+
+        return TorchVisionSystem.TryGetNearestMatchingTorch(
+            vision,
+            GetReferencePosition(),
+            maxRevealDistance,
+            requireTorchEquipped,
+            out match);
+    }
+
+    private bool TryGetNearestMatchingTorchToBounds(
+        Bounds bounds,
+        float maxRevealDistance,
+        out TorchVisionSystem.TorchSourceMatch match)
+    {
+        match = default;
+        TorchVisionSystem.GetTorchSources(torchSourcesBuffer, requireTorchEquipped);
+        if (torchSourcesBuffer.Count == 0)
+        {
+            return false;
+        }
+
+        float bestDistanceSqr = maxRevealDistance > 0f
+            ? maxRevealDistance * maxRevealDistance
+            : float.PositiveInfinity;
+        bool found = false;
+
+        for (int i = 0; i < torchSourcesBuffer.Count; i++)
+        {
+            TorchVisionSystem.TorchSourceInfo source = torchSourcesBuffer[i];
+            if (!IsVisionMatch(vision, source.Vision))
+            {
+                continue;
+            }
+
+            float distanceSqr = bounds.SqrDistance(source.Position);
+            if (distanceSqr > bestDistanceSqr)
+            {
+                continue;
+            }
+
+            bestDistanceSqr = distanceSqr;
+            match = new TorchVisionSystem.TorchSourceMatch(
+                source.Controller,
+                source.Vision,
+                source.Position,
+                Mathf.Sqrt(distanceSqr),
+                source.Receiver);
+            found = true;
+        }
+
+        torchSourcesBuffer.Clear();
+        return found;
+    }
+
+    private bool TryGetEvaluationBounds(out Bounds bounds)
+    {
+        if (TryGetRendererBounds(out bounds))
+        {
+            return true;
+        }
+
+        return useColliderBoundsWhenNoRendererBounds && TryGetColliderBounds(out bounds);
+    }
+
+    private bool TryGetRendererBounds(out Bounds bounds)
+    {
+        bounds = default;
+        bool hasBounds = false;
+
+        if (cachedRenderers != null)
+        {
+            for (int i = 0; i < cachedRenderers.Length; i++)
+            {
+                Renderer renderer = cachedRenderers[i].Renderer;
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                EncapsulateBounds(renderer.bounds, ref bounds, ref hasBounds);
+            }
+        }
+
+        return hasBounds;
+    }
+
+    private bool TryGetColliderBounds(out Bounds bounds)
+    {
+        bounds = default;
+        bool hasBounds = false;
+
+        if (colliders == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null)
+            {
+                continue;
+            }
+
+            EncapsulateBounds(collider.bounds, ref bounds, ref hasBounds);
+        }
+
+        return hasBounds;
+    }
+
+    private static void EncapsulateBounds(Bounds source, ref Bounds combined, ref bool hasBounds)
+    {
+        if (!hasBounds)
+        {
+            combined = source;
+            hasBounds = true;
+            return;
+        }
+
+        combined.Encapsulate(source);
+    }
+
+    private static bool IsVisionMatch(TorchVisionDefinition requiredVision, TorchVisionDefinition activeVision)
+    {
+        if (activeVision == null)
+        {
+            return false;
+        }
+
+        return requiredVision == null || activeVision == requiredVision;
     }
 
     private Color GetFallbackTorchColor()

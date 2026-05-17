@@ -3,7 +3,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 [DefaultExecutionOrder(200)]
-[RequireComponent(typeof(Collider))]
 // Zone generique: musique, torche, et gestion Maison (waiting points + IA).
 public class Zone : MonoBehaviour
 {
@@ -12,7 +11,7 @@ public class Zone : MonoBehaviour
     public bool torchConsumes = true;
 
     [Header("Audio")]
-    [Tooltip("Profil audio de zone (musique + ambiance). Prioritaire sur les champs legacy si renseigne.")]
+    [Tooltip("Profil audio de zone (musique + ambiance). Prioritaire sur les champs audio simples si renseigne.")]
     public ZoneAudioProfileSO zoneAudioProfile;
     [Tooltip("Joue la musique de zone a l'entree/sortie.")]
     public bool playZoneMusic = true;

@@ -28,6 +28,10 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     public Transform informationAnchor;
     [Tooltip("Offset du panel local.")]
     public Vector3 informationOffset = new Vector3(1.75f, 1.6f, 0f);
+    [SerializeField, Tooltip("Force le panel local a rester du cote camera par rapport a l'objet qui l'affiche.")]
+    private bool keepLocalPanelBetweenAnchorAndCamera = true;
+    [SerializeField, Min(0f), Tooltip("Distance minimale vers la camera pour eviter que le panel reste dans ou derriere l'objet.")]
+    private float localPanelCameraSideDistance = 0.45f;
     [Tooltip("Camera utilisee pour placer le panel local en screen space.")]
     public Camera targetCamera;
     [Tooltip("Detruit le panel local a la sortie.")]
@@ -60,6 +64,8 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private bool logBuildingSyncEvents;
 
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
+    private readonly List<Collider> localPanelBoundsColliders = new List<Collider>();
+    private readonly List<Renderer> localPanelBoundsRenderers = new List<Renderer>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
     private bool useSelfTriggerEvents;
@@ -95,7 +101,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private const string DefaultItemLocalPanelPrefabPath = "Assets/Prefabs/UI/LocalItemInformationsPanel.prefab";
     private const string DefaultItemLocalPanelResourcePath = "Prefabs/UI/LocalItemInformationsPanel";
     private const string DefaultItemLocalPanelResourceName = "LocalItemInformationsPanel";
-    private const string DefaultLocalPanelParentName = "LocalsBuildingInformationsPanels";
+    private const string DefaultLocalPanelParentName = "LocalsInformationsPanels";
     private const float VisibilityGateRetryInterval = 0.5f;
 
     public string BuildId => buildId;
@@ -224,6 +230,11 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         }
 
         TrackVisibilityState("update");
+    }
+
+    private void LateUpdate()
+    {
+        UpdateOpenLocalPanelPose();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -650,27 +661,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
         ResolveVisibilityGate();
 
-        if (localPanelParent == null)
-        {
-            if (sharedLocalPanelParent != null)
-            {
-                localPanelParent = sharedLocalPanelParent;
-            }
-            else if (!sharedLocalPanelParentLookupCompleted || resolveLocalPanelPrefab)
-            {
-                GameObject parentObject = GameObject.Find(DefaultLocalPanelParentName);
-                sharedLocalPanelParentLookupCompleted = true;
-                if (parentObject != null)
-                {
-                    localPanelParent = parentObject.transform;
-                    sharedLocalPanelParent = localPanelParent;
-                }
-            }
-        }
-        else if (sharedLocalPanelParent == null)
-        {
-            sharedLocalPanelParent = localPanelParent;
-        }
+        ResolveLocalPanelParent(createIfMissing: Application.isPlaying);
 
         bool wantsItemPanel = ShouldUseItemInformationPanel();
         if (localPanelPrefabResolvedAutomatically && resolvedAutoLocalPanelForItem != wantsItemPanel)
@@ -709,6 +700,127 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         }
 
         runtimeReferencesResolved = targetCamera != null || localInformationPanelPrefab != null || localPanelParent != null || craftingPanel != null;
+    }
+
+    private Transform ResolveLocalPanelParent(bool createIfMissing)
+    {
+        if (IsDefaultLocalPanelParent(localPanelParent))
+        {
+            sharedLocalPanelParent = localPanelParent;
+            return localPanelParent;
+        }
+
+        if (IsDefaultLocalPanelParent(sharedLocalPanelParent))
+        {
+            localPanelParent = sharedLocalPanelParent;
+            return localPanelParent;
+        }
+
+        Transform resolvedParent = null;
+        if (!sharedLocalPanelParentLookupCompleted || createIfMissing)
+        {
+            resolvedParent = FindDefaultLocalPanelParent();
+            sharedLocalPanelParentLookupCompleted = true;
+        }
+
+        if (resolvedParent == null && createIfMissing)
+        {
+            resolvedParent = CreateDefaultLocalPanelParent();
+        }
+
+        if (resolvedParent != null)
+        {
+            localPanelParent = resolvedParent;
+            sharedLocalPanelParent = resolvedParent;
+            return localPanelParent;
+        }
+
+        return localPanelParent;
+    }
+
+    private static bool IsDefaultLocalPanelParent(Transform parent)
+    {
+        return parent != null && parent.name == DefaultLocalPanelParentName;
+    }
+
+    private static Transform FindDefaultLocalPanelParent()
+    {
+        GameObject activeParent = GameObject.Find(DefaultLocalPanelParentName);
+        if (activeParent != null)
+        {
+            return activeParent.transform;
+        }
+
+        Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            Transform candidate = transforms[i];
+            if (candidate == null || candidate.name != DefaultLocalPanelParentName)
+            {
+                continue;
+            }
+
+            if (!candidate.gameObject.scene.IsValid())
+            {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private static Transform CreateDefaultLocalPanelParent()
+    {
+        GameObject parentObject = new GameObject(DefaultLocalPanelParentName, typeof(RectTransform));
+        RectTransform rect = parentObject.GetComponent<RectTransform>();
+
+        Canvas canvas = FindDefaultLocalPanelCanvas();
+        if (canvas != null)
+        {
+            rect.SetParent(canvas.transform, false);
+        }
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(100f, 100f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        return rect;
+    }
+
+    private static Canvas FindDefaultLocalPanelCanvas()
+    {
+#if UNITY_2023_1_OR_NEWER
+        Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+#else
+        Canvas[] canvases = UnityEngine.Object.FindObjectsOfType<Canvas>();
+#endif
+        if (canvases == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas canvas = canvases[i];
+            if (canvas != null && canvas.isRootCanvas && canvas.gameObject.activeInHierarchy)
+            {
+                return canvas;
+            }
+        }
+
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas canvas = canvases[i];
+            if (canvas != null && canvas.gameObject.activeInHierarchy)
+            {
+                return canvas;
+            }
+        }
+
+        return canvases.Length > 0 ? canvases[0] : null;
     }
 
     private void ResolveVisibilityGate()
@@ -931,8 +1043,14 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             return;
         }
 
+        Transform parent = ResolveLocalPanelParent(createIfMissing: true);
         if (localPanelInstance != null)
         {
+            if (parent != null && localPanelInstance.transform.parent != parent)
+            {
+                localPanelInstance.transform.SetParent(parent, true);
+            }
+
             if (!localPanelInstance.IsOpen)
             {
                 UpdateLocalPanelAnchor();
@@ -941,8 +1059,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             return;
         }
 
-        Transform parent = localPanelParent != null ? localPanelParent : null;
-        GameObject instance = Instantiate(localInformationPanelPrefab, parent);
+        GameObject instance = Instantiate(localInformationPanelPrefab, parent, false);
         if (instance == null)
         {
             return;
@@ -996,6 +1113,18 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         localPanelInstance.RefreshPanel();
     }
 
+    private void UpdateOpenLocalPanelPose()
+    {
+        if (localPanelInstance == null ||
+            !localPanelInstance.IsOpen ||
+            localPanelInstance.CurrentBuilding != this)
+        {
+            return;
+        }
+
+        UpdateLocalPanelAnchor(orientToCamera: true);
+    }
+
     private void UpdateLocalPanelAnchor()
     {
         UpdateLocalPanelAnchor(orientToCamera: false);
@@ -1019,8 +1148,8 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             return;
         }
 
-        Vector3 worldPosition = anchor.position + offset;
-        Camera cam = targetCamera != null ? targetCamera : Camera.main;
+        Camera cam = ResolveLocalPanelCamera();
+        Vector3 worldPosition = ResolveLocalPanelWorldPosition(anchor, offset, cam);
         Canvas canvas = panelTransform.GetComponentInParent<Canvas>();
         RectTransform rect = panelTransform as RectTransform;
 
@@ -1061,6 +1190,154 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
                 panelTransform.rotation = Quaternion.LookRotation(toCamera);
             }
         }
+    }
+
+    private Camera ResolveLocalPanelCamera()
+    {
+        if (targetCamera != null && targetCamera.isActiveAndEnabled)
+        {
+            return targetCamera;
+        }
+
+        targetCamera = Camera.main;
+        return targetCamera;
+    }
+
+    private Vector3 ResolveLocalPanelWorldPosition(Transform anchor, Vector3 offset, Camera cam)
+    {
+        Vector3 anchorPosition = anchor.position;
+        if (!keepLocalPanelBetweenAnchorAndCamera || cam == null)
+        {
+            return anchorPosition + offset;
+        }
+
+        Vector3 toCamera = cam.transform.position - anchorPosition;
+        float cameraDistance = toCamera.magnitude;
+        if (cameraDistance <= 0.0001f)
+        {
+            return anchorPosition + offset;
+        }
+
+        Vector3 toCameraDirection = toCamera / cameraDistance;
+        Vector3 right = Vector3.ProjectOnPlane(cam.transform.right, toCameraDirection);
+        if (right.sqrMagnitude <= 0.0001f)
+        {
+            right = Vector3.ProjectOnPlane(Vector3.right, toCameraDirection);
+        }
+
+        if (right.sqrMagnitude <= 0.0001f)
+        {
+            right = Vector3.Cross(Vector3.up, toCameraDirection);
+        }
+
+        if (right.sqrMagnitude <= 0.0001f)
+        {
+            right = Vector3.right;
+        }
+
+        right.Normalize();
+
+        Vector3 up = Vector3.ProjectOnPlane(Vector3.up, toCameraDirection);
+        if (up.sqrMagnitude <= 0.0001f)
+        {
+            up = Vector3.ProjectOnPlane(cam.transform.up, toCameraDirection);
+        }
+
+        if (up.sqrMagnitude <= 0.0001f)
+        {
+            up = Vector3.up;
+        }
+
+        up.Normalize();
+
+        float cameraSideDistance = Mathf.Max(localPanelCameraSideDistance, offset.z);
+        if (TryResolveObjectFrontDistance(anchorPosition, toCameraDirection, out float objectFrontDistance))
+        {
+            cameraSideDistance = Mathf.Max(cameraSideDistance, objectFrontDistance + localPanelCameraSideDistance);
+        }
+
+        cameraSideDistance = Mathf.Min(cameraSideDistance, Mathf.Max(0f, cameraDistance - 0.05f));
+        return anchorPosition
+            + right * offset.x
+            + up * offset.y
+            + toCameraDirection * cameraSideDistance;
+    }
+
+    private bool TryResolveObjectFrontDistance(Vector3 origin, Vector3 direction, out float distance)
+    {
+        distance = 0f;
+        if (!TryResolveLocalPanelObjectBounds(out Bounds bounds))
+        {
+            return false;
+        }
+
+        Vector3 centerOffset = bounds.center - origin;
+        Vector3 extents = bounds.extents;
+        float centerDistance = Vector3.Dot(centerOffset, direction);
+        float projectedExtent =
+            Mathf.Abs(direction.x) * extents.x +
+            Mathf.Abs(direction.y) * extents.y +
+            Mathf.Abs(direction.z) * extents.z;
+
+        distance = centerDistance + projectedExtent;
+        return distance > 0f;
+    }
+
+    private bool TryResolveLocalPanelObjectBounds(out Bounds bounds)
+    {
+        bounds = default;
+        bool hasBounds = false;
+
+        localPanelBoundsColliders.Clear();
+        GetComponentsInChildren(true, localPanelBoundsColliders);
+        for (int i = 0; i < localPanelBoundsColliders.Count; i++)
+        {
+            Collider candidate = localPanelBoundsColliders[i];
+            if (candidate == null || !candidate.enabled || candidate.isTrigger)
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = candidate.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(candidate.bounds);
+            }
+        }
+        localPanelBoundsColliders.Clear();
+
+        if (hasBounds)
+        {
+            return true;
+        }
+
+        localPanelBoundsRenderers.Clear();
+        GetComponentsInChildren(true, localPanelBoundsRenderers);
+        for (int i = 0; i < localPanelBoundsRenderers.Count; i++)
+        {
+            Renderer candidate = localPanelBoundsRenderers[i];
+            if (candidate == null || !candidate.enabled)
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = candidate.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(candidate.bounds);
+            }
+        }
+        localPanelBoundsRenderers.Clear();
+
+        return hasBounds;
     }
 
     private void CloseInfoPanels()

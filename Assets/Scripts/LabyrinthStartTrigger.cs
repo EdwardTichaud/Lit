@@ -16,6 +16,10 @@ public class LabyrinthStartTrigger : MonoBehaviour
     [Tooltip("Offset en world pour la box d'interaction.")]
     public Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
 
+    [Header("Interaction Validation")]
+    [Tooltip("Distance horizontale maximale depuis le centre du trigger pour accepter Interact.")]
+    public float interactionMaxDistance = 2.25f;
+
     [Header("UI - Confirmation")]
     [Tooltip("Panel parent de la confirmation.")]
     public GameObject confirmationPanel;
@@ -94,6 +98,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
     private TMP_Text confirmationMessageText;
     private bool awaitingServerResponse;
     private uint netcodeId;
+    private bool ignoreAsNestedTrigger;
 
     private enum ConfirmationChoice
     {
@@ -104,6 +109,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void Awake()
     {
+        ignoreAsNestedTrigger = HasParentLabyrinthStartTrigger();
         triggerCollider = GetComponent<Collider>();
         isTriggerZone = triggerCollider != null && triggerCollider.isTrigger;
         if (triggerCollider != null && !triggerCollider.isTrigger)
@@ -117,6 +123,11 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void OnEnable()
     {
+        if (ignoreAsNestedTrigger)
+        {
+            return;
+        }
+
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         NetcodeTriggerRegistry.Register(this, netcodeId);
@@ -133,6 +144,11 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void Update()
     {
+        if (ignoreAsNestedTrigger)
+        {
+            return;
+        }
+
         RefreshCurrentCharacter(true);
     }
 
@@ -201,6 +217,11 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (ignoreAsNestedTrigger)
+        {
+            return;
+        }
+
         if (other == null || other.isTrigger)
         {
             return;
@@ -227,6 +248,11 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
+        if (ignoreAsNestedTrigger)
+        {
+            return;
+        }
+
         if (other == null || other.isTrigger)
         {
             return;
@@ -264,11 +290,21 @@ public class LabyrinthStartTrigger : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
-        HandleInteract();
+        if (ignoreAsNestedTrigger || LocalInputRouter.IsInteractConsumed)
+        {
+            return;
+        }
+
+        HandleInteract(true);
     }
 
-    private void HandleInteract()
+    private void HandleInteract(bool consumeRouterInput)
     {
+        if (ignoreAsNestedTrigger || (consumeRouterInput && LocalInputRouter.IsInteractConsumed))
+        {
+            return;
+        }
+
         if (InputFocusStack.HasAnyFocus() && !InputFocusStack.HasFocus(this))
         {
             return;
@@ -280,13 +316,17 @@ public class LabyrinthStartTrigger : MonoBehaviour
             return;
         }
 
-        LocalInputRouter.ConsumeInteract();
+        if (consumeRouterInput && !LocalInputRouter.TryConsumeInteract())
+        {
+            return;
+        }
+
         RequestCentralConfirmation();
     }
 
     private void OnInteract()
     {
-        HandleInteract();
+        HandleInteract(false);
     }
 
     private void OnSouthButton()
@@ -328,12 +368,14 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         confirmVisible = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         ShowInteraction(false);
     }
 
     private void ConfirmStartLabyrinth()
     {
         confirmVisible = false;
+        PlayUiActionAudio(ActionAudioCue.UiConfirm);
         RefreshCurrentCharacter(true);
         if (currentCharacter == null)
         {
@@ -367,6 +409,7 @@ public class LabyrinthStartTrigger : MonoBehaviour
     private void CancelStartLabyrinth()
     {
         confirmVisible = false;
+        PlayUiActionAudio(ActionAudioCue.UiCancel);
         RefreshCurrentCharacter(true);
     }
 
@@ -378,13 +421,16 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         TeleportSquadToSpawn();
+        PlayActionAudio(ActionAudioCue.LabyrinthStart, transform.position);
         ResetUIState();
     }
 
     private void RefreshCurrentCharacter(bool allowShow)
     {
+        PruneInvalidTrackedCharacters();
+
         GameObject controlled = GetControlledCharacter();
-        if (controlled != null && charactersInRange.Contains(controlled))
+        if (controlled != null && charactersInRange.Contains(controlled) && IsCharacterWithinInteractionRange(controlled))
         {
             if (currentCharacter != controlled)
             {
@@ -399,6 +445,78 @@ public class LabyrinthStartTrigger : MonoBehaviour
         currentCharacter = null;
         interactionTarget = null;
         ShowInteraction(false);
+    }
+
+    private void PruneInvalidTrackedCharacters()
+    {
+        for (int i = charactersInRange.Count - 1; i >= 0; i--)
+        {
+            GameObject character = charactersInRange[i];
+            if (character != null && IsCharacterWithinInteractionRange(character))
+            {
+                continue;
+            }
+
+            charactersInRange.RemoveAt(i);
+            if (character != null)
+            {
+                characterColliderCounts.Remove(character);
+            }
+
+            if (character == currentCharacter)
+            {
+                currentCharacter = null;
+                interactionTarget = null;
+            }
+        }
+    }
+
+    private bool IsCharacterWithinInteractionRange(GameObject character)
+    {
+        if (character == null)
+        {
+            return false;
+        }
+
+        if (triggerCollider == null)
+        {
+            return true;
+        }
+
+        Vector3 characterPosition = GetCharacterInteractionPosition(character);
+        Vector3 triggerCenter = triggerCollider.bounds.center;
+        Vector2 horizontalDelta = new Vector2(
+            characterPosition.x - triggerCenter.x,
+            characterPosition.z - triggerCenter.z);
+        float maxDistance = Mathf.Max(0.05f, interactionMaxDistance);
+        return horizontalDelta.sqrMagnitude <= maxDistance * maxDistance;
+    }
+
+    private static Vector3 GetCharacterInteractionPosition(GameObject character)
+    {
+        if (character == null)
+        {
+            return Vector3.zero;
+        }
+
+        SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
+        return controller != null ? controller.GetInteractionOriginWorldPosition() : character.transform.position;
+    }
+
+    private bool HasParentLabyrinthStartTrigger()
+    {
+        Transform parent = transform.parent;
+        while (parent != null)
+        {
+            if (parent.GetComponent<LabyrinthStartTrigger>() != null)
+            {
+                return true;
+            }
+
+            parent = parent.parent;
+        }
+
+        return false;
     }
 
     private static GameObject GetControlledCharacter()
@@ -905,6 +1023,34 @@ public class LabyrinthStartTrigger : MonoBehaviour
         }
 
         Physics.SyncTransforms();
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue, Vector3 position)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
     }
 
     private Transform ResolveSpawnPoint()

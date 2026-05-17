@@ -213,6 +213,7 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        PlayActionAudio(ActionAudioCue.LadderUse);
         LocalInputRouter.ConsumeInteract();
     }
 
@@ -238,7 +239,10 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
         GameObject character = currentCharacter != null
             ? currentCharacter
             : LocalPlayerUtils.GetControlledCharacter();
-        TryStartLadderUse(character, driveMotion: false);
+        if (TryStartLadderUse(character, driveMotion: false))
+        {
+            PlayActionAudio(ActionAudioCue.LadderUse);
+        }
     }
 
     private bool CanUse(GameObject character, bool requireLocalControl, float rangePadding)
@@ -304,6 +308,20 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
         return ladderController;
     }
 
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, transform.position);
+        }
+    }
+
     private void ShowInteraction(bool show)
     {
         if (!show)
@@ -347,10 +365,10 @@ public class LadderInteractable : MonoBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        Text legacyText = instance.GetComponentInChildren<Text>(true);
-        if (legacyText != null)
+        Text fallbackText = instance.GetComponentInChildren<Text>(true);
+        if (fallbackText != null)
         {
-            legacyText.text = interactionText;
+            fallbackText.text = interactionText;
         }
     }
 

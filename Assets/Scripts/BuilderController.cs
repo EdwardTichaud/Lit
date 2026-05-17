@@ -2120,6 +2120,7 @@ public class BuilderController : NetworkBehaviour
 
         if (!ExecuteCraft(info, craftItem, null, out string feedback))
         {
+            PlayActionAudio(ActionAudioCue.CraftFailure, info.transform.position);
             if (!string.IsNullOrWhiteSpace(feedback))
             {
                 InfoBoxUI.TryShow(feedback);
@@ -2127,6 +2128,7 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
+        PlayActionAudio(ActionAudioCue.CraftSuccess, info.transform.position);
         if (!string.IsNullOrWhiteSpace(successMessage))
         {
             InfoBoxUI.TryShow(successMessage);
@@ -2148,6 +2150,7 @@ public class BuilderController : NetworkBehaviour
 
         if (!ExecuteCatalyseurCraft(info, effectIndex, null, out string feedback))
         {
+            PlayActionAudio(ActionAudioCue.CraftFailure, info.transform.position);
             if (!string.IsNullOrWhiteSpace(feedback))
             {
                 InfoBoxUI.TryShow(feedback);
@@ -2155,6 +2158,7 @@ public class BuilderController : NetworkBehaviour
             return;
         }
 
+        PlayActionAudio(ActionAudioCue.CraftSuccess, info.transform.position);
         if (!string.IsNullOrWhiteSpace(successMessage))
         {
             InfoBoxUI.TryShow(successMessage);
@@ -2177,33 +2181,36 @@ public class BuilderController : NetworkBehaviour
         Item building = ResolveBuildingItem(buildingId);
         if (building == null || !building.isBuilding)
         {
-            SendFeedback("Construction invalide.", rpcParams);
+            SendFeedback("Construction invalide.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         if (!IsWithinBuildRange(playerRoot, position))
         {
-            SendFeedback("Trop loin pour construire.", rpcParams);
+            SendFeedback("Trop loin pour construire.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         if (!TryConsumeRequirements(building, controller, useHomeResourcesForBuild, out string reason))
         {
-            SendFeedback(string.IsNullOrWhiteSpace(reason) ? "Ressources insuffisantes." : reason, rpcParams);
+            SendFeedback(
+                string.IsNullOrWhiteSpace(reason) ? "Ressources insuffisantes." : reason,
+                rpcParams,
+                ActionAudioCue.UiInvalid);
             return;
         }
 
         BuildingInfoInteractable info = SpawnNetBuildingInstance(building, position, rotation, 1, nextNetBuildingId++);
         if (info == null)
         {
-            SendFeedback("Construction impossible.", rpcParams);
+            SendFeedback("Construction impossible.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         RegisterBuiltBuilding(building, 1, info);
         ApplyBuildingEffects(building, 0, 1);
         inventory.SyncFromController();
-        SendFeedback(building.GetPlaceSuccessMessage(), rpcParams);
+        SendFeedback(building.GetPlaceSuccessMessage(), rpcParams, ActionAudioCue.BuildComplete);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -2222,20 +2229,20 @@ public class BuilderController : NetworkBehaviour
         BuildingInfoInteractable info = ResolveBuildingInfo(buildingNetworkId, buildingItemId, playerRoot);
         if (info == null)
         {
-            SendFeedback("Batiment introuvable.", rpcParams);
+            SendFeedback("Batiment introuvable.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         if (!IsWithinInteractRange(playerRoot, info))
         {
-            SendFeedback("Trop loin pour ameliorer.", rpcParams);
+            SendFeedback("Trop loin pour ameliorer.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         Item building = info.BuildingItem;
         if (building == null || !building.isBuilding)
         {
-            SendFeedback("Batiment invalide.", rpcParams);
+            SendFeedback("Batiment invalide.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
@@ -2243,26 +2250,29 @@ public class BuilderController : NetworkBehaviour
         int maxLevel = Mathf.Max(1, building.buildingMaxLevel);
         if (currentLevel >= maxLevel)
         {
-            SendFeedback("Niveau maximal atteint.", rpcParams);
+            SendFeedback("Niveau maximal atteint.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         if (!TryConsumeRequirements(building, controller, useHomeResourcesForBuild, out string reason))
         {
-            SendFeedback(string.IsNullOrWhiteSpace(reason) ? "Ressources insuffisantes." : reason, rpcParams);
+            SendFeedback(
+                string.IsNullOrWhiteSpace(reason) ? "Ressources insuffisantes." : reason,
+                rpcParams,
+                ActionAudioCue.UiInvalid);
             return;
         }
 
         int finalLevel = Mathf.Clamp(targetLevel, currentLevel + 1, maxLevel);
         if (!TryUpgradeBuildingInstance(info, finalLevel))
         {
-            SendFeedback("Amelioration impossible.", rpcParams);
+            SendFeedback("Amelioration impossible.", rpcParams, ActionAudioCue.UiInvalid);
             return;
         }
 
         ApplyBuildingEffects(building, currentLevel, finalLevel - currentLevel);
         inventory.SyncFromController();
-        SendFeedback("Amelioration terminee.", rpcParams);
+        SendFeedback("Amelioration terminee.", rpcParams, ActionAudioCue.BuildUpgrade);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -2281,46 +2291,52 @@ public class BuilderController : NetworkBehaviour
         BuildingInfoInteractable info = ResolveBuildingInfo(buildingNetworkId, buildingItemId, playerRoot);
         if (info == null)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         if (!IsWithinInteractRange(playerRoot, info))
         {
-            SendFeedback("Trop loin pour crafter.", rpcParams);
+            SendFeedback("Trop loin pour crafter.", rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         Item craftItem = ItemRegistry.Resolve(craftItemId);
         if (craftItem == null)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         Item building = info.BuildingItem;
         if (building == null || !building.isBuilding)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         List<Item> unlocked = building.GetUnlockedCraftsForLevel(info.Level);
         if (unlocked == null || !unlocked.Contains(craftItem))
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         if (!TryConsumeRequirements(craftItem, controller, useHomeResourcesForCraft, out string reason))
         {
-            SendFeedback(string.IsNullOrWhiteSpace(failedMessage) ? reason : failedMessage, rpcParams);
+            SendFeedback(
+                string.IsNullOrWhiteSpace(failedMessage) ? reason : failedMessage,
+                rpcParams,
+                ActionAudioCue.CraftFailure);
             return;
         }
 
         controller.AddItem(craftItem, 1);
         inventory.SyncFromController();
-        SendFeedback(string.IsNullOrWhiteSpace(successMessage) ? "Craft reussi." : successMessage, rpcParams);
+        SendFeedback(
+            string.IsNullOrWhiteSpace(successMessage) ? "Craft reussi." : successMessage,
+            rpcParams,
+            ActionAudioCue.CraftSuccess);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -2339,45 +2355,51 @@ public class BuilderController : NetworkBehaviour
         BuildingInfoInteractable info = ResolveBuildingInfo(buildingNetworkId, buildingItemId, playerRoot);
         if (info == null)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         if (!IsWithinInteractRange(playerRoot, info))
         {
-            SendFeedback("Trop loin pour crafter.", rpcParams);
+            SendFeedback("Trop loin pour crafter.", rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         Item building = info.BuildingItem;
         if (building == null || building.buildingEffects == null)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         if (effectIndex < 0 || effectIndex >= building.buildingEffects.Count)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         CatalyseurOrbCraftEffect effect = building.buildingEffects[effectIndex] as CatalyseurOrbCraftEffect;
         if (effect == null)
         {
-            SendFeedback(failedMessage, rpcParams);
+            SendFeedback(failedMessage, rpcParams, ActionAudioCue.CraftFailure);
             return;
         }
 
         bool success = effect.ApplyOnInteract(controller, building, info.Level);
         if (!success)
         {
-            SendFeedback(string.IsNullOrWhiteSpace(failedMessage) ? "Craft impossible." : failedMessage, rpcParams);
+            SendFeedback(
+                string.IsNullOrWhiteSpace(failedMessage) ? "Craft impossible." : failedMessage,
+                rpcParams,
+                ActionAudioCue.CraftFailure);
             return;
         }
 
         inventory.SyncFromController();
-        SendFeedback(string.IsNullOrWhiteSpace(successMessage) ? "Craft reussi." : successMessage, rpcParams);
+        SendFeedback(
+            string.IsNullOrWhiteSpace(successMessage) ? "Craft reussi." : successMessage,
+            rpcParams,
+            ActionAudioCue.CraftSuccess);
     }
 
     private bool ExecuteBuild(Item building, Vector3 position, Quaternion rotation, SquadCharacterController controller, out string feedback)
@@ -3108,14 +3130,53 @@ public class BuilderController : NetworkBehaviour
         InfoBoxUI.TryShow(message);
     }
 
-    private void SendFeedback(string message, ServerRpcParams rpcParams)
+    [ClientRpc]
+    private void ShowFeedbackWithAudioClientRpc(
+        string message,
+        ActionAudioCue audioCue,
+        ClientRpcParams rpcParams = default)
+    {
+        if (audioCue != ActionAudioCue.None)
+        {
+            PlayActionAudio(audioCue, transform.position);
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
+    }
+
+    private void SendFeedback(string message, ServerRpcParams rpcParams, ActionAudioCue audioCue = ActionAudioCue.None)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
             return;
         }
 
+        if (audioCue != ActionAudioCue.None)
+        {
+            ShowFeedbackWithAudioClientRpc(message, audioCue, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
         ShowFeedbackClientRpc(message, BuildClientRpcParams(rpcParams));
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue, Vector3 position)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, position);
+        }
     }
 
     private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)

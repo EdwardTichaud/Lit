@@ -627,6 +627,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         settings.OpenPanel();
+        PlayUiActionAudio(ActionAudioCue.InventoryOpen);
         inventoryOpen = true;
         RegisterNetworkInventory();
         InputFocusStack.Push(this);
@@ -639,6 +640,11 @@ public class InventoryPanelController : MonoBehaviour
 
     private void CloseInventory()
     {
+        if (inventoryOpen)
+        {
+            PlayUiActionAudio(ActionAudioCue.InventoryClose);
+        }
+
         InventoryUISettings settings = GetSettings();
         if (settings != null)
         {
@@ -1439,6 +1445,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         actionBoxVisible = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         ResetInventoryNavigation();
         actionBox.SetActive(true);
         actionBox.transform.SetAsLastSibling();
@@ -1457,6 +1464,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         actionBoxVisible = false;
+        PlayUiActionAudio(ActionAudioCue.UiClose);
         ResetActionBoxNavigation();
         ResetInventoryNavigation();
         StopActionBoxFlash();
@@ -1571,11 +1579,13 @@ public class InventoryPanelController : MonoBehaviour
 
         if (controller.TryUseItem(item, out string reason))
         {
+            PlayUiActionAudio(ActionAudioCue.InventoryUse);
             ShowActionFeedback(item.GetUseSuccessMessage());
             CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
             return true;
         }
 
+        PlayUiActionAudio(ActionAudioCue.UiInvalid);
         ShowActionFeedback(reason);
         return false;
     }
@@ -1611,6 +1621,7 @@ public class InventoryPanelController : MonoBehaviour
             SetReadablePanelVisible(parchoPanelCanvasGroup, false);
             UpdateReadableBookPages();
             SetReadablePanelVisible(bookPanelCanvasGroup, true);
+            PlayUiActionAudio(ActionAudioCue.InventoryReadOpen);
             return false;
         }
 
@@ -1627,6 +1638,7 @@ public class InventoryPanelController : MonoBehaviour
             parchoText.text = item.GetParchmentText();
             SetReadablePanelVisible(bookPanelCanvasGroup, false);
             SetReadablePanelVisible(parchoPanelCanvasGroup, true);
+            PlayUiActionAudio(ActionAudioCue.InventoryReadOpen);
             return false;
         }
 
@@ -1635,6 +1647,11 @@ public class InventoryPanelController : MonoBehaviour
 
     private void CloseReadablePanel()
     {
+        if (readablePanelOpen)
+        {
+            PlayUiActionAudio(ActionAudioCue.InventoryReadClose);
+        }
+
         readablePanelOpen = false;
         readablePanelKind = ReadablePanelKind.None;
         readableItem = null;
@@ -1713,6 +1730,7 @@ public class InventoryPanelController : MonoBehaviour
 
         readableBookSpreadStartIndex = nextIndex;
         UpdateReadableBookPages();
+        PlayUiActionAudio(ActionAudioCue.InventoryReadPage);
     }
 
     private void UpdateReadableBookPages()
@@ -1853,6 +1871,7 @@ public class InventoryPanelController : MonoBehaviour
         beaconPanelItem = item;
         beaconColorIndex = FindClosestBeaconColorIndex(beaconPlacementColor);
         beaconColorPanelVisible = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         lastMoveDirection = 0;
         nextMoveTime = 0f;
         SetBeaconColorPanelRootVisible(true);
@@ -2135,6 +2154,7 @@ public class InventoryPanelController : MonoBehaviour
         beaconPlacementColor = GetBeaconColorAt(beaconColorIndex);
         placementHasBeaconColor = true;
         Item item = beaconPanelItem;
+        PlayUiActionAudio(ActionAudioCue.BeaconColorSelect);
         HideBeaconColorPanelImmediate();
         if (item == null)
         {
@@ -2642,10 +2662,12 @@ public class InventoryPanelController : MonoBehaviour
 
         if (item.TryBreak(controller, out string reason))
         {
+            PlayUiActionAudio(ActionAudioCue.InventoryBreak);
             ShowActionFeedback(item.GetBreakSuccessMessage());
             return true;
         }
 
+        PlayUiActionAudio(ActionAudioCue.UiInvalid);
         ShowActionFeedback(reason);
         return false;
     }
@@ -2658,6 +2680,37 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         InfoBoxUI.TryShow(message);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            Vector3 position = GetCurrentCharacterController() != null
+                ? GetCurrentCharacterController().transform.position
+                : transform.position;
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
     }
 
     private void EnsureBreakActionBoxEntry(Transform container)
@@ -2867,6 +2920,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         actionBoxFlashRoutine = StartCoroutine(ActionBoxFlashRoutine());
+        PlayUiActionAudio(ActionAudioCue.UiInvalid);
     }
 
     private IEnumerator ActionBoxFlashRoutine()
@@ -3164,6 +3218,7 @@ public class InventoryPanelController : MonoBehaviour
         placementInstance.transform.SetPositionAndRotation(startPos, startRotation);
         CachePlacementVisuals(placementInstance);
         UpdatePlacementVisuals(IsPlacementValid());
+        PlayActionAudio(ActionAudioCue.InventoryPlaceStart);
         return true;
     }
 
@@ -3545,6 +3600,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         CreateDroppedLootContainer(instance, item, quantity);
+        PlayActionAudio(ActionAudioCue.InventoryDrop);
         ShowActionFeedback(item.GetDropSuccessMessage());
         return true;
     }
@@ -3571,6 +3627,7 @@ public class InventoryPanelController : MonoBehaviour
         {
             if (!string.IsNullOrWhiteSpace(placementInvalidMessage))
             {
+                PlayUiActionAudio(ActionAudioCue.UiInvalid);
                 ShowPlacementFeedback(placementInvalidMessage);
             }
             return;
@@ -3626,6 +3683,7 @@ public class InventoryPanelController : MonoBehaviour
                 return;
             }
 
+            PlayUiActionAudio(ActionAudioCue.UiInvalid);
             return;
         }
 
@@ -3670,6 +3728,7 @@ public class InventoryPanelController : MonoBehaviour
         ReleasePlacementFocus();
         if (placedItem != null)
         {
+            PlayActionAudio(ActionAudioCue.InventoryPlaceConfirm);
             ShowPlacementFeedback(placedItem.GetPlaceSuccessMessage());
         }
     }
@@ -3813,6 +3872,7 @@ public class InventoryPanelController : MonoBehaviour
         }
         SetSquadInputLock(false);
         ReleasePlacementFocus();
+        PlayUiActionAudio(ActionAudioCue.InventoryPlaceCancel);
     }
 
     private void ReleasePlacementFocus()

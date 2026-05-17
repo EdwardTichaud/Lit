@@ -229,7 +229,7 @@ public class NetcodeLauncher : MonoBehaviour
             return false;
         }
 
-        if (!NetcodeSessionCode.TryCreateEndpoint(code, normalizedAddress, sessionBasePort, sessionPortRange, out endpoint))
+        if (!NetcodeSessionCode.TryCreateEndpointFromJoinInput(code, normalizedAddress, sessionBasePort, sessionPortRange, out endpoint))
         {
             error = "Code de session invalide.";
             return false;
@@ -237,6 +237,17 @@ public class NetcodeLauncher : MonoBehaviour
 
         error = string.Empty;
         return true;
+    }
+
+    public bool TryResolveJoinEndpoint(string joinCode, out NetcodeSessionEndpoint endpoint, out string error)
+    {
+        return TryResolveJoinEndpoint(joinCode, string.Empty, out endpoint, out error);
+    }
+
+    public string CreateJoinCode(string sessionCode, string advertisedAddress)
+    {
+        string normalizedAddress = ResolveJoinAddress(advertisedAddress);
+        return NetcodeSessionCode.CreateJoinCode(sessionCode, normalizedAddress);
     }
 
     public string ResolveJoinAddress(string address)

@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
+  m_Name: Item_Book_Tomen_Fairwell
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemId: Item_Book_Tomen_Fairwell
+  itemName: Recueil
+  itemSprite: {fileID: 21300000, guid: 5ee2709b8f6d61148b3db9dfe7fb15e3, type: 3}
+  description: "Un recueil de m\xE9moire."
+  readableKind: 1
+  parchmentText: 
+  bookPages:
+  - text: "An 621, premier mois\nNous avons re\xE7u cette chambre au d\xE9but du
+      premier froid.\nElle est petite, mais le mur garde bien la chaleur.\nElle disait
+      que c\u2019\xE9tait assez pour deux c\u0153urs tranquilles.\nLe brasero fume
+      un peu quand le vent descend du conduit.\nJe lui ai promis de le r\xE9parer
+      avant l\u2019hiver suivant.\nElle riait souvent de mes promesses trop grandes.\nNous
+      priions avec les Esp\xE9rants \xE0 la premi\xE8re veille.\nElle chantait bas,
+      mais toujours juste.\nJe croyais alors que la D\xE9esse entendait mieux les
+      voix modestes.\nJe le crois encore."
+  - text: "An 621, neuvi\xE8me mois\nLa fi\xE8vre est entr\xE9e dans la chambre avant
+      la neige.\nLes Veilleurs nous ont donn\xE9 des linges propres et deux bols
+      de soupe.\nLes M\xE9diateurs ont not\xE9 son nom dans le registre des soins.\nLes
+      pr\xEAtres ont dit que la D\xE9esse prot\xE8ge ceux qui gardent la flamme.\nJ\u2019ai
+      donc gard\xE9 la flamme.\nToute la nuit, toute la suivante, et celle d\u2019apr\xE8s.\nElle
+      m\u2019a demand\xE9 de ne pas avoir peur de son silence.\nJ\u2019ai r\xE9pondu
+      que je n\u2019avais peur de rien tant qu\u2019elle respirait.\nC\u2019\xE9tait
+      un mensonge tendre.\nElle l\u2019a accept\xE9 comme une pri\xE8re."
+  - text: "An 622, deuxi\xE8me mois\nElle est partie avant l\u2019aube.\nLe brasero
+      br\xFBlait encore.\nJe me souviens avoir pens\xE9 que ce n\u2019\xE9tait pas
+      juste.\nOn m\u2019avait appris qu\u2019une flamme gard\xE9e ne laissait pas
+      entrer le mal.\nPourtant le mal \xE9tait rest\xE9 assis \xE0 c\xF4t\xE9 de
+      son lit.\nLes voisins sont venus sans bruit.\nIls ont pli\xE9 ses couvertures
+      comme si elle devait revenir les chercher.\nPersonne n\u2019a demand\xE9 ce
+      que je ferais d\xE9sormais.\nPeut-\xEAtre parce qu\u2019ils le savaient d\xE9j\xE0.\nJe
+      continuerais."
+  - text: "An 622, septi\xE8me mois\nOn m\u2019a laiss\xE9 la chambre.\nC\u2019\xE9tait
+      une bont\xE9, je le sais.\nUn homme seul prend moins de place qu\u2019une famille
+      \xE0 na\xEEtre.\nJe n\u2019ai pas \xE9t\xE9 chass\xE9, ni m\xE9pris\xE9, ni
+      accus\xE9.\nOn m\u2019a seulement oubli\xE9 doucement.\nLes listes de repas
+      portent encore deux marques \xE0 c\xF4t\xE9 de notre porte.\nQuelqu\u2019un
+      barre la seconde chaque semaine.\nJe ne sais pas pourquoi cela me fait plus
+      mal que la maladie.\nJe prie encore avec les Esp\xE9rants.\nMa voix ne trouve
+      plus la sienne."
+  - text: "An 623, quatri\xE8me mois Les enfants du couloir \xE9vitent parfois ma
+      porte. Je crois qu\u2019ils sentent les chambres qui n\u2019attendent personne.
+      Une petite fille m\u2019a demand\xE9 si j\u2019avais perdu ma famille dehors.
+      Je lui ai r\xE9pondu que non, je l\u2019avais perdue ici. Elle n\u2019a pas
+      compris. Moi non plus, peut-\xEAtre. Le ch\xE2teau nous dit que l\u2019ext\xE9rieur
+      prend ce que nous aimons. Mais ma bien-aim\xE9e n\u2019a jamais vu l\u2019ext\xE9rieur.
+      La mer ne l\u2019a pas touch\xE9e. Le vent non plus."
+  - text: "An 624, onzi\xE8me mois\nLes pri\xE8res deviennent plus longues depuis
+      quelques ann\xE9es.\nLes Esp\xE9rants disent que cela renforce les murs.\nLes
+      Fatalistes disent que cela pr\xE9pare les \xE2mes.\nLes M\xE9diateurs disent
+      que les deux phrases peuvent vivre ensemble.\nJe les \xE9coute, mais aucune
+      ne r\xE9chauffe le lit vide.\nJ\u2019entretiens pourtant le brasero avec soin.\nLa
+      pierre garde encore la chaleur du soir.\nParfois je pose ma main dessus jusqu\u2019\xE0
+      me faire mal.\nC\u2019est une mauvaise habitude.\nMais la douleur r\xE9pond
+      plus vite que la D\xE9esse."
+  - text: "An 625, sixi\xE8me mois\nOn m\u2019a propos\xE9 de rejoindre une chambre
+      commune.\nJ\u2019ai refus\xE9 avec politesse.\nIls ont sembl\xE9 soulag\xE9s
+      de ne pas insister.\nMa solitude arrange l\u2019ordre des lits.\nJe ne leur
+      en veux pas.\nChaque famille compte ses couvertures avant l\u2019hiver.\nChaque
+      place libre devient une question pratique.\nJe suis devenu une question pratique.\nJe
+      continue de prier pour eux.\nIl me reste au moins cela."
+  - text: "An 626, troisi\xE8me mois J\u2019ai r\xEAv\xE9 d\u2019elle cette nuit.
+      Elle \xE9tait pr\xE8s de la fen\xEAtre, mais la fen\xEAtre donnait sur une
+      lumi\xE8re que je ne connais pas. Elle m\u2019a dit que le ch\xE2teau \xE9tait
+      trop petit pour contenir tous nos adieux. Au r\xE9veil, le brasero \xE9tait
+      presque \xE9teint. J\u2019ai eu honte de mon n\xE9gligence. Puis j\u2019ai
+      pens\xE9 que personne ne viendrait v\xE9rifier. Cette pens\xE9e m\u2019a fait
+      plus peur que le froid. Quand plus personne ne surveille une flamme, est-elle
+      encore sacr\xE9e ? J\u2019ai ajout\xE9 trois b\xFBches. La chambre est devenue
+      \xE9touffante."
+  - text: "An 627, neuvi\xE8me mois\nLes chants montent plus souvent depuis les salles
+      basses.\nOn dit que l\u2019heure annonc\xE9e approche, mais on dit cela depuis
+      ma naissance.\nLes Esp\xE9rants sourient quand ils ont peur.\nJe reconnais
+      ce sourire maintenant.\nJe l\u2019ai port\xE9 pendant toute sa maladie.\nPeut-\xEAtre
+      que l\u2019espoir n\u2019est pas le contraire du d\xE9sespoir.\nPeut-\xEAtre
+      qu\u2019il en est seulement la forme la plus ob\xE9issante.\nJ\u2019\xE9cris
+      ces mots et je les regrette aussit\xF4t.\nSi la D\xE9esse les lit, qu\u2019elle
+      me pardonne.\nSi elle ne les lit pas, cela ne change rien."
+  - text: "An 628, dernier hiver J\u2019ai plac\xE9 ce livre dans le brasero froid.
+      Ce n\u2019est pas pour le br\xFBler. C\u2019est parce que c\u2019est l\xE0
+      que j\u2019ai le plus veill\xE9. C\u2019est l\xE0 que j\u2019ai cru le plus
+      longtemps. La chambre est propre. Les couvertures sont pli\xE9es. La seconde
+      marque du registre pourra enfin \xEAtre effac\xE9e sans g\xEAne. Je n\u2019ai
+      plus de col\xE8re, seulement une grande fatigue. Si quelqu\u2019un trouve ces
+      pages, qu\u2019il sache que nous avons aim\xE9 ce lieu autant que nous avons
+      pu. Et que parfois, m\xEAme les flammes gard\xE9es ne suffisent pas \xE0 ramener
+      ceux qu\u2019on attend."
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableContentId: 
+  readableGenerationSeedOffset: 0
+  canUse: 1
+  canPlace: 0
+  isContainer: 0
+  worldPrefab: {fileID: 291949331483662408, guid: e6473d72ba392654195434f39826793a, type: 3}
+  isTorch: 0
+  isBeacon: 0
+  allowWallPlacement: 0
+  placementRadiusOverride: 0
+  isWetClay: 0
+  driedReplacementItem: {fileID: 0}
+  preservesWetClay: 0
+  preservedWetClayCapacity: 1
+  isKey: 0
+  keyId: 
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
+  useEffects: []
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: 
+  cannotPlaceWhileEquippedMessage: 
+  cannotDropMessage: 
+  cannotUseMessage: 
+  useFailedMessage: 
+  cannotPickupMessage: 
+  cannotDepositMessage: 
+  cannotTakeMessage: 
+  cannotBreakMessage: 
+  breakFailedMessage: 
+  useSuccessMessage: 
+  placeSuccessMessage: 
+  dropSuccessMessage: 
+  depositSuccessMessage: 
+  takeSuccessMessage: 
+  breakSuccessMessage: 
+  isBuilding: 0
+  isCraftingBuilding: 0
+  availableCrafts: []
+  buildingPrefab: {fileID: 0}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
+  buildingRequirements: []
+  buildingEffects: []
+  buildingLevelConfigs: []
+  isHomeChest: 0
+  canBreak: 0
+  breakResults:
+  - item: {fileID: 11400000, guid: dcf4dcbde8742dd4e9c0bb7102513fc8, type: 2}
+    quantity: 10
+  - item: {fileID: 11400000, guid: a02a75b16500ac64aa818b1bc3354242, type: 2}
+    quantity: 0

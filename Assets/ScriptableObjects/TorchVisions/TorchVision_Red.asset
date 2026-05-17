@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TorchVision_Red
   m_EditorClassIdentifier: Assembly-CSharp::TorchVisionDefinition
   visionId: torchvisionred
-  displayName: "Vision Rouge\xE2tre"
+  displayName: "Vision rouge\xE2tre"
   useDefaultLightSettings: 0
   lightColor: {r: 1, g: 0, b: 0.10208988, a: 1}
   disableColorTemperature: 1

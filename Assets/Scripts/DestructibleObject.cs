@@ -178,6 +178,7 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
         SquadCharacterController controller = GetCurrentCharacterController();
         if (!TryDestroy(controller, out string feedback))
         {
+            PlayUiActionAudio(ActionAudioCue.UiInvalid);
             ShowFeedback(feedback);
             return;
         }
@@ -308,6 +309,10 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
         if (destroySound != null)
         {
             AudioSource.PlayClipAtPoint(destroySound, transform.position);
+        }
+        else
+        {
+            PlayActionAudio(ActionAudioCue.DestructibleDestroy);
         }
 
         if (disableCollidersOnDestroy)
@@ -529,7 +534,7 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
 
         if (!TryDestroy(controller, out string feedback))
         {
-            ShowFeedbackClientRpc(feedback, BuildClientRpcParams(rpcParams));
+            ShowFeedbackWithAudioClientRpc(feedback, ActionAudioCue.UiInvalid, BuildClientRpcParams(rpcParams));
         }
     }
 
@@ -537,6 +542,44 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
     private void ShowFeedbackClientRpc(string message, ClientRpcParams rpcParams = default)
     {
         ShowFeedback(message);
+    }
+
+    [ClientRpc]
+    private void ShowFeedbackWithAudioClientRpc(
+        string message,
+        ActionAudioCue audioCue,
+        ClientRpcParams rpcParams = default)
+    {
+        PlayUiActionAudio(audioCue);
+        ShowFeedback(message);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, transform.position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
     }
 
     private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)

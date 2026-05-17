@@ -52,7 +52,7 @@ public class SquadUISettings : MonoBehaviour
 
     [Header("Squad Panel Visibility")]
     [Tooltip("Garde le panel visible meme quand inactif.")]
-    public bool keepPanelVisibleWhenInactive = true;
+    public bool keepPanelVisibleWhenInactive = false;
     [Tooltip("Alpha applique quand le panel est actif.")]
     public float squadPanelActiveAlpha = 1f;
     [Tooltip("Alpha applique quand le panel est inactif.")]
@@ -125,9 +125,19 @@ public class SquadUISettings : MonoBehaviour
             return;
         }
 
-        if (keepPanelVisibleWhenInactive && !squadPanel.activeSelf)
+        bool shouldShowPanelRoot = visibleOnStart || keepPanelVisibleWhenInactive;
+        if (shouldShowPanelRoot)
         {
-            squadPanel.SetActive(true);
+            GameObject panelRoot = GetSquadPanelCanvasGroupHost();
+            if (panelRoot != null && !panelRoot.activeSelf)
+            {
+                panelRoot.SetActive(true);
+            }
+
+            if (!squadPanel.activeSelf)
+            {
+                squadPanel.SetActive(true);
+            }
         }
 
         CacheBasePanelScale();
@@ -139,11 +149,9 @@ public class SquadUISettings : MonoBehaviour
         }
 
         panelActiveState = visibleOnStart;
-        if (squadPanelSetAlphaToZeroOnStart || keepPanelVisibleWhenInactive || visibleOnStart)
-        {
-            float targetAlpha = GetTargetAlpha(visibleOnStart);
-            SetSquadPanelAlpha(squadPanelCanvasGroup, targetAlpha);
-        }
+        float targetAlpha = GetTargetAlpha(visibleOnStart);
+        SetSquadPanelAlpha(squadPanelCanvasGroup, targetAlpha);
+        SetPanelActiveScale(visibleOnStart);
     }
 
     public void BuildSquadUnits(List<CharacterData> squad)
@@ -337,6 +345,12 @@ public class SquadUISettings : MonoBehaviour
             return;
         }
 
+        GameObject panelRoot = GetSquadPanelCanvasGroupHost();
+        if (panelRoot != null && !panelRoot.activeSelf)
+        {
+            panelRoot.SetActive(true);
+        }
+
         if (!squadPanel.activeSelf)
         {
             squadPanel.SetActive(true);
@@ -407,18 +421,35 @@ public class SquadUISettings : MonoBehaviour
 
     private CanvasGroup GetSquadPanelCanvasGroup()
     {
+        GameObject canvasGroupHost = GetSquadPanelCanvasGroupHost();
+        if (canvasGroupHost == null)
+        {
+            return null;
+        }
+
+        CanvasGroup canvasGroup = canvasGroupHost.GetComponent<CanvasGroup>();
+        if (canvasGroup == null && squadPanelAddCanvasGroupIfMissing)
+        {
+            canvasGroup = canvasGroupHost.AddComponent<CanvasGroup>();
+        }
+
+        return canvasGroup;
+    }
+
+    private GameObject GetSquadPanelCanvasGroupHost()
+    {
         if (squadPanel == null)
         {
             return null;
         }
 
-        CanvasGroup canvasGroup = squadPanel.GetComponent<CanvasGroup>();
-        if (canvasGroup == null && squadPanelAddCanvasGroupIfMissing)
+        Transform panelTransform = squadPanel.transform;
+        if (panelTransform == transform || panelTransform.IsChildOf(transform))
         {
-            canvasGroup = squadPanel.AddComponent<CanvasGroup>();
+            return gameObject;
         }
 
-        return canvasGroup;
+        return squadPanel;
     }
 
     private void CacheBasePanelScale()
@@ -839,10 +870,10 @@ public class SquadUISettings : MonoBehaviour
             tmp.text = textValue;
         }
 
-        Text legacyText = hpRoot.GetComponent<Text>();
-        if (legacyText != null)
+        Text fallbackText = hpRoot.GetComponent<Text>();
+        if (fallbackText != null)
         {
-            legacyText.text = textValue;
+            fallbackText.text = textValue;
         }
 
         Image fill = hpRoot.GetComponent<Image>();

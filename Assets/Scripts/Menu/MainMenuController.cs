@@ -119,6 +119,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private MenuCursorAction joinConfirmAction;
     [SerializeField] private MenuCursorAction joinCancelAction;
     [SerializeField] private RectTransform joinCursorRoot;
+    [SerializeField] private bool useSingleJoinCode = true;
+    [SerializeField, Min(16)] private int joinCodeCharacterLimit = 160;
     [SerializeField] private bool autoFocusJoinInput = true;
     [SerializeField, Range(0.1f, 1f)] private float joinConfirmDisabledAlpha = 0.4f;
     [SerializeField] private string joinInvalidMessage = "Code invalide.";
@@ -484,6 +486,9 @@ public class MainMenuController : MonoBehaviour
             joinStatusText.text = string.Empty;
         }
 
+        ConfigureJoinCodeInputField();
+        SetJoinAddressFieldVisible(!useSingleJoinCode);
+
         if (joinCodeInput != null)
         {
             joinCodeInput.interactable = true;
@@ -499,8 +504,8 @@ public class MainMenuController : MonoBehaviour
 
         if (joinAddressInput != null)
         {
-            joinAddressInput.interactable = true;
-            if (string.IsNullOrWhiteSpace(joinAddressInput.text))
+            joinAddressInput.interactable = !useSingleJoinCode;
+            if (!useSingleJoinCode && string.IsNullOrWhiteSpace(joinAddressInput.text))
             {
                 joinAddressInput.text = string.IsNullOrWhiteSpace(joinAddress) ? hostLoopbackAddress : joinAddress;
             }
@@ -508,6 +513,39 @@ public class MainMenuController : MonoBehaviour
 
         RegisterTextInput(true);
         UpdateCursorTarget();
+    }
+
+    private void ConfigureJoinCodeInputField()
+    {
+        if (joinCodeInput == null)
+        {
+            return;
+        }
+
+        joinCodeInput.contentType = TMP_InputField.ContentType.Standard;
+        joinCodeInput.characterValidation = TMP_InputField.CharacterValidation.None;
+        joinCodeInput.characterLimit = Mathf.Max(joinCodeInput.characterLimit, joinCodeCharacterLimit);
+
+        if (joinCodeInput.placeholder is TMP_Text placeholder)
+        {
+            placeholder.text = useSingleJoinCode ? "Code d'invitation" : "Code";
+        }
+    }
+
+    private void SetJoinAddressFieldVisible(bool visible)
+    {
+        if (joinAddressInput == null)
+        {
+            return;
+        }
+
+        joinAddressInput.interactable = visible;
+
+        Transform fieldRoot = joinAddressInput.transform;
+        Transform rowRoot = fieldRoot.parent != null && fieldRoot.parent != joinPanelGroup.transform
+            ? fieldRoot.parent
+            : fieldRoot;
+        rowRoot.gameObject.SetActive(visible);
     }
 
     private void ShowLoadMenu()
@@ -3360,7 +3398,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        string normalized = NetcodeSessionCode.Normalize(clipboard);
+        string normalized = NetcodeSessionCode.NormalizeJoinInput(clipboard);
         if (!EnsureJoinInputFieldReady())
         {
             return;
@@ -3379,6 +3417,12 @@ public class MainMenuController : MonoBehaviour
 
     private void PasteJoinAddressFromClipboard()
     {
+        if (useSingleJoinCode)
+        {
+            PasteJoinCodeFromClipboard();
+            return;
+        }
+
         if (currentMenu != MenuState.Join)
         {
             return;
@@ -3490,7 +3534,7 @@ public class MainMenuController : MonoBehaviour
         }
         else if (currentMenu == MenuState.Join)
         {
-            if (joinAddressInput != null && joinAddressInput.isFocused)
+            if (!useSingleJoinCode && joinAddressInput != null && joinAddressInput.isFocused)
             {
                 field = joinAddressInput;
             }
@@ -3596,7 +3640,7 @@ public class MainMenuController : MonoBehaviour
 
         if (!isNewGame && isJoinCode)
         {
-            text = NetcodeSessionCode.Normalize(text);
+            text = NetcodeSessionCode.NormalizeJoinInput(text);
             caret = Mathf.Min(caret, text.Length);
         }
 
@@ -3748,7 +3792,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        string normalized = NetcodeSessionCode.Normalize(value);
+        string normalized = NetcodeSessionCode.NormalizeJoinInput(value);
         if (!string.Equals(joinCodeInput.text, normalized, StringComparison.Ordinal))
         {
             joinCodeInput.SetTextWithoutNotify(normalized);
@@ -3780,8 +3824,7 @@ public class MainMenuController : MonoBehaviour
             return false;
         }
 
-        string text = NetcodeSessionCode.Normalize(joinCodeInput.text);
-        return !string.IsNullOrWhiteSpace(text);
+        return NetcodeSessionCode.IsValidJoinInput(joinCodeInput.text);
     }
 
     private void UpdateJoinConfirmState()
@@ -4710,6 +4753,11 @@ public class MainMenuController : MonoBehaviour
 
     private string ResolveJoinAddress()
     {
+        if (useSingleJoinCode)
+        {
+            return NetcodeSessionCode.NormalizeAddress(joinAddress, hostLoopbackAddress);
+        }
+
         string address = joinAddressInput != null ? joinAddressInput.text : string.Empty;
         NetcodeLauncher launcher = ResolveLauncher();
         if (launcher != null)
@@ -4728,7 +4776,7 @@ public class MainMenuController : MonoBehaviour
     private bool TryResolveJoinEndpoint(out NetcodeSessionEndpoint endpoint)
     {
         string code = joinCodeInput != null ? joinCodeInput.text : string.Empty;
-        string address = joinAddressInput != null ? joinAddressInput.text : string.Empty;
+        string address = !useSingleJoinCode && joinAddressInput != null ? joinAddressInput.text : string.Empty;
         NetcodeLauncher launcher = ResolveLauncher();
         if (launcher != null)
         {
@@ -4736,7 +4784,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         string normalizedAddress = ResolveJoinAddress();
-        return NetcodeSessionCode.TryCreateEndpoint(code, normalizedAddress, basePort, portRange, out endpoint);
+        return NetcodeSessionCode.TryCreateEndpointFromJoinInput(code, normalizedAddress, basePort, portRange, out endpoint);
     }
 
     private string BuildJoinFailureMessage(bool timedOut)

@@ -895,7 +895,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1145350410223262720}
+  - {fileID: 514752550600610016}
   m_Father: {fileID: 2233782780378164146}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2255560021713085105
@@ -1145,6 +1145,73 @@ MonoBehaviour:
   - Cutscene
   - Scripted
   logAnimationReconciliation: 0
+  allowFlightControl: 1
+  blockFlightDuringMultiplayer: 1
+  flightMotor: {fileID: 0}
+  flightAnimatorDriver: {fileID: 0}
+  flightCharacterController: {fileID: 0}
+  flightLocalInputBridge: {fileID: 0}
+  configureFlightCharacterControllerFromCapsule: 1
+  disableLegacyCapsuleWhileFlightActive: 1
+  applyFlightProfile: 1
+  flightProfile:
+    enableFlight: 1
+    takeoffVerticalSpeed: 6.5
+    takeoffDuration: 0.45
+    takeoffDamping: 16
+    cruiseSpeed: 33
+    boostSpeed: 81
+    acceleration: 54
+    boostAcceleration: 126
+    deceleration: 36
+    stopDecelerationMultiplier: 3
+    verticalSpeed: 24
+    verticalAcceleration: 66
+    verticalDeceleration: 54
+    verticalDeadZone: 0.05
+    idleSpeedThreshold: 0.08
+    enableIdleFloat: 1
+    idleFloatAmplitude: 0.12
+    idleFloatFrequency: 0.85
+    idleFloatBlendSpeed: 4
+    verticalTiltAngle: 30
+    verticalTiltSpeedThreshold: 0.1
+    turnRate: 760
+    boostTurnRate: 460
+    exitDownwardVelocity: 1.5
+    boostKickSpeed: 4.5
+    groundContactLandingMinSpeed: 2.75
+    groundContactLandingMinDownwardSpeed: 0.2
+    landingPlanarVelocityRetention: 0.25
+    landingDampingMultiplier: 1
+    landingControlGraceTime: 0.08
+  flightLoopAudioSource: {fileID: 0}
+  flightBurstAudioSource: {fileID: 0}
+  flightSpeedLineParticles: {fileID: 0}
+  flightTrails: []
+  flightLeftTrail: {fileID: 0}
+  flightRightTrail: {fileID: 0}
+  flightBoostPrefabSpawnPoint: {fileID: 0}
+  flightLoopClip: {fileID: 0}
+  flightBurstClip: {fileID: 0}
+  flightLoopMinVolume: 0.08
+  flightLoopMaxVolume: 0.34
+  flightLoopMinPitch: 0.8
+  flightLoopMaxPitch: 1.65
+  flightBurstVolume: 0.55
+  flightMinParticleRate: 10
+  flightMaxParticleRate: 115
+  flightMinTrailTime: 0.08
+  flightMaxTrailTime: 0.34
+  flightMinTrailWidth: 0.015
+  flightMaxTrailWidth: 0.115
+  orientFlightParticlesWithVerticalTilt: 1
+  flightBoostPrefab: {fileID: 0}
+  flightBoostPrefabLocalOffset: {x: 0, y: 0, z: 0}
+  flightBoostPrefabEulerOffset: {x: 0, y: 0, z: 0}
+  parentFlightBoostPrefabToSpawnPoint: 0
+  flightBoostPrefabLifetime: 2
+  debugFlightMotorActive: 0
   enableHeightProbeTraversal: 1
   heightProbeForwardDistance: 1.2
   heightProbeSampleCount: 8
@@ -1289,6 +1356,9 @@ MonoBehaviour:
   rotationSpeed: 24
   useCameraRelative: 1
   referenceCamera: {fileID: 0}
+  preserveFixedCameraMovementContinuity: 1
+  fixedCameraMovementInputRefreshAngle: 65
+  fixedCameraMovementReferenceBlendSharpness: 0
   animatePhysics: 1
   movingRotationSpeed: 16
   movingRotationSpeedThreshold: 0.75
@@ -3374,7 +3444,7 @@ Transform:
   - {fileID: 5215024862311484607}
   m_Father: {fileID: 2336527119157392075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &8094423858314853904
+--- !u!1001 &8688839006101680880
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -3382,50 +3452,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1242590319970422489}
     m_Modifications:
-    - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: baseRange
-      value: 5.89897
-      objectReference: {fileID: 0}
-    - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: flameColor.b
-      value: 0.2632954
-      objectReference: {fileID: 0}
-    - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: flameColor.g
-      value: 0.5328215
-      objectReference: {fileID: 0}
-    - target: {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: baseIntensity
-      value: 471.38953
+    - target: {fileID: 4093508691279950427, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Radius
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4632745134331999296, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: owner
       value: 
       objectReference: {fileID: 6731850666202294345}
-    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: m_Range
-      value: 5.89897
-      objectReference: {fileID: 0}
-    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: m_Color.b
-      value: 0.2632954
-      objectReference: {fileID: 0}
-    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: m_Color.g
-      value: 0.5328215
-      objectReference: {fileID: 0}
-    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: m_Intensity
-      value: 471.38953
-      objectReference: {fileID: 0}
-    - target: {fileID: 8001444046699118875, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -0.013314089
-      objectReference: {fileID: 0}
-    - target: {fileID: 8001444046699118875, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -0.019014705
-      objectReference: {fileID: 0}
     - target: {fileID: 8112315056308737700, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: target
       value: 
@@ -3474,14 +3508,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 1149558993221438551, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 545a910e55dc8344d906425675c78d68, type: 3}
---- !u!4 &1145350410223262720 stripped
+--- !u!4 &514752550600610016 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
-  m_PrefabInstance: {fileID: 8094423858314853904}
+  m_PrefabInstance: {fileID: 8688839006101680880}
   m_PrefabAsset: {fileID: 0}

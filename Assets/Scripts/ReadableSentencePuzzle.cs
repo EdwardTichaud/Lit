@@ -710,10 +710,10 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
             return;
         }
 
-        Text legacyText = instance.GetComponentInChildren<Text>(true);
-        if (legacyText != null)
+        Text fallbackText = instance.GetComponentInChildren<Text>(true);
+        if (fallbackText != null)
         {
-            legacyText.text = interactionText;
+            fallbackText.text = interactionText;
         }
     }
 

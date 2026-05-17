@@ -8,6 +8,7 @@ public class AudioManager : MonoBehaviour
     private const string MusicVolumePrefsKey = "settings.audio.music_volume";
     private const string SfxVolumePrefsKey = "settings.audio.sfx_volume";
     private const float DefaultChannelVolume = 1f;
+    private const string DefaultActionAudioLibraryResourcePath = "Audio/ActionAudioLibrary_Default";
 
     private struct ManagedSfxSource
     {
@@ -54,6 +55,14 @@ public class AudioManager : MonoBehaviour
     public float oneShotMinDistance = 1f;
     [Tooltip("Distance max des one-shots.")]
     public float oneShotMaxDistance = 25f;
+
+    [Header("Action Audio")]
+    [Tooltip("Librairie des sons d'actions gameplay/UI.")]
+    public ActionAudioLibrarySO actionAudioLibrary;
+    [Tooltip("Charge la librairie par defaut depuis Resources si aucune reference n'est assignee.")]
+    public bool loadDefaultActionAudioLibrary = true;
+    [Tooltip("Chemin Resources de la librairie audio d'actions par defaut.")]
+    public string defaultActionAudioLibraryResourcePath = DefaultActionAudioLibraryResourcePath;
 
     private AudioSource primarySource;
     private AudioSource secondarySource;
@@ -374,6 +383,43 @@ public class AudioManager : MonoBehaviour
         }
 
         return source;
+    }
+
+    public AudioSource PlayActionCue(ActionAudioCue cue, Vector3 position)
+    {
+        AudioClipSO clip = ResolveActionAudioClip(cue);
+        return PlayClip(clip, position);
+    }
+
+    public AudioSource PlayUiActionCue(ActionAudioCue cue)
+    {
+        AudioClipSO clip = ResolveActionAudioClip(cue);
+        return PlayUiClip(clip);
+    }
+
+    public AudioClipSO ResolveActionAudioClip(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return null;
+        }
+
+        ActionAudioLibrarySO library = ResolveActionAudioLibrary();
+        return library != null ? library.Resolve(cue) : null;
+    }
+
+    private ActionAudioLibrarySO ResolveActionAudioLibrary()
+    {
+        if (actionAudioLibrary != null || !loadDefaultActionAudioLibrary)
+        {
+            return actionAudioLibrary;
+        }
+
+        string resourcePath = string.IsNullOrWhiteSpace(defaultActionAudioLibraryResourcePath)
+            ? DefaultActionAudioLibraryResourcePath
+            : defaultActionAudioLibraryResourcePath.Trim();
+        actionAudioLibrary = Resources.Load<ActionAudioLibrarySO>(resourcePath);
+        return actionAudioLibrary;
     }
 
     private void UpdateZoneAudio()

@@ -807,7 +807,7 @@ public static class PersistentWorldSceneInstaller
     {
         movedToScene = false;
         if (snapshot == null ||
-            !TryGetManagedSingletonDescriptor(snapshot.PersistentId, snapshot.RuntimePrefabId, out string resolvedPersistentId, out string legacyPrefabId, out string singletonName))
+            !TryGetManagedSingletonDescriptor(snapshot.PersistentId, snapshot.RuntimePrefabId, out string resolvedPersistentId, out string previousPrefabIdForLookup, out string singletonName))
         {
             return false;
         }
@@ -830,7 +830,7 @@ public static class PersistentWorldSceneInstaller
         if (changed)
         {
             PersistentWorldDebug.Log(
-                $"singleton snapshot normalized singleton='{singletonName}' persistentId='{resolvedPersistentId}' previousId='{previousPersistentId}' previousKind='{previousKind}' previousPrefab='{previousPrefabId}' legacyPrefab='{legacyPrefabId}' reason='{reason}'",
+                $"singleton snapshot normalized singleton='{singletonName}' persistentId='{resolvedPersistentId}' previousId='{previousPersistentId}' previousKind='{previousKind}' previousPrefab='{previousPrefabId}' previousLookupPrefab='{previousPrefabIdForLookup}' reason='{reason}'",
                 context);
         }
 
@@ -871,20 +871,20 @@ public static class PersistentWorldSceneInstaller
         string persistentId,
         string runtimePrefabId,
         out string resolvedPersistentId,
-        out string legacyPrefabId,
+        out string previousPrefabIdForLookup,
         out string singletonName)
     {
         if (string.Equals(persistentId, KnowledgeManagerPersistentId, StringComparison.Ordinal) ||
             string.Equals(runtimePrefabId, KnowledgeManagerPrefabId, StringComparison.Ordinal))
         {
             resolvedPersistentId = KnowledgeManagerPersistentId;
-            legacyPrefabId = KnowledgeManagerPrefabId;
+            previousPrefabIdForLookup = KnowledgeManagerPrefabId;
             singletonName = nameof(KnowledgeManager);
             return true;
         }
 
         resolvedPersistentId = string.Empty;
-        legacyPrefabId = string.Empty;
+        previousPrefabIdForLookup = string.Empty;
         singletonName = string.Empty;
         return false;
     }

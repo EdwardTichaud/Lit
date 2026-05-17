@@ -697,6 +697,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         int damage = session.State.ConsumePendingPlayerAttackDamage();
         int applied = enemy.ApplyDamage(damage);
+        PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: true));
 
         if (AreAllEnemiesDefeated(session))
         {
@@ -726,6 +727,7 @@ public class CombatSessionManager : NetworkBehaviour
         int rawDamage = Mathf.Max(0, enemy.AttackDamage);
         int finalDamage = ResolveReducedDamage(rawDamage, reduction);
         int applied = session.Player.ApplyDamage(finalDamage, "combat");
+        PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: false));
 
         string message = $"{enemy.DisplayName} inflige {applied} degats.";
         if (supportCount > 0)
@@ -750,6 +752,7 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         session.State.BeginTurn(turn, Time.time, turnDurationSeconds, enemyActionDelay, message);
+        PlayActionAudio(ActionAudioCue.CombatTurn, ResolveCombatAudioPosition(session, preferEnemy: turn == CombatTurn.Enemy));
         SendSnapshot(session, session.State.LastMessage);
     }
 
@@ -807,6 +810,9 @@ public class CombatSessionManager : NetworkBehaviour
             ResolveCombatResolutionDuration(session, playerVictory),
             message);
 
+        PlayActionAudio(
+            playerVictory ? ActionAudioCue.CombatVictory : ActionAudioCue.CombatDefeat,
+            ResolveCombatAudioPosition(session, preferEnemy: playerVictory));
         SendSnapshot(session, session.State.LastMessage);
 
         if (IsNetworkSessionActive() && IsSpawned)
@@ -838,6 +844,10 @@ public class CombatSessionManager : NetworkBehaviour
             localCombatPresentation.Resolving = true;
             localCombatPresentation.ResolutionPlayerVictory = playerVictory;
         }
+
+        AudioManager.EnsureInstance()?.PlayActionCue(
+            playerVictory ? ActionAudioCue.CombatVictory : ActionAudioCue.CombatDefeat,
+            ResolveLocalCombatAudioPosition(playerVictory));
 
         SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
         if (controller != null)
@@ -1764,12 +1774,75 @@ public class CombatSessionManager : NetworkBehaviour
         return presentation.Turn;
     }
 
+    private Vector3 ResolveCombatAudioPosition(CombatSession session, bool preferEnemy)
+    {
+        if (session == null)
+        {
+            return transform.position;
+        }
+
+        if (preferEnemy && session.SourceEnemy != null)
+        {
+            return session.SourceEnemy.transform.position;
+        }
+
+        if (session.Player != null)
+        {
+            return session.Player.transform.position;
+        }
+
+        if (session.SourceEnemy != null)
+        {
+            return session.SourceEnemy.transform.position;
+        }
+
+        return transform.position;
+    }
+
+    private Vector3 ResolveLocalCombatAudioPosition(bool preferEnemy)
+    {
+        if (preferEnemy)
+        {
+            Transform enemy = ResolveLocalCombatEnemyTransform(localCombatPresentation);
+            if (enemy != null)
+            {
+                return enemy.position;
+            }
+        }
+
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        if (controller != null)
+        {
+            return controller.transform.position;
+        }
+
+        return transform.position;
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue, Vector3 position)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
     private float PlayBasicAttackAnimationLocally(SquadCharacterController controller)
     {
         if (controller != null)
         {
             controller.Stop();
         }
+
+        PlayActionAudio(
+            ActionAudioCue.CombatAttack,
+            controller != null ? controller.transform.position : transform.position);
 
         Animator animator = controller != null ? controller.GetComponent<Animator>() : null;
         StarterMotorAnimatorDriver animatorDriver = controller != null

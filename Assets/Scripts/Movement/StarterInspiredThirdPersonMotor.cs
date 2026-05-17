@@ -26,6 +26,105 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         Heavy
     }
 
+    [System.Serializable]
+    public struct FlightProfile
+    {
+        [Tooltip("Autorise le mode vol.")]
+        public bool enableFlight;
+        [Min(0f), Tooltip("Vitesse verticale initiale a l'entree en vol.")]
+        public float takeoffVerticalSpeed;
+        [Min(0f), Tooltip("Duree de la phase de takeoff avant controle complet.")]
+        public float takeoffDuration;
+        [Min(0f), Tooltip("Damping applique pendant le takeoff.")]
+        public float takeoffDamping;
+        [Min(0f), Tooltip("Vitesse de croisiere du vol.")]
+        public float cruiseSpeed;
+        [Min(0f), Tooltip("Vitesse maximale pendant le boost de vol.")]
+        public float boostSpeed;
+        [Min(0f), Tooltip("Acceleration horizontale en vol.")]
+        public float acceleration;
+        [Min(0f), Tooltip("Acceleration horizontale pendant le boost.")]
+        public float boostAcceleration;
+        [Min(0f), Tooltip("Deceleration horizontale sans input.")]
+        public float deceleration;
+        [Min(1f), Tooltip("Multiplicateur de deceleration quand l'input de vol est relache.")]
+        public float stopDecelerationMultiplier;
+        [Min(0f), Tooltip("Vitesse verticale maximale en montee/descente controlee.")]
+        public float verticalSpeed;
+        [Min(0f), Tooltip("Acceleration verticale avec input.")]
+        public float verticalAcceleration;
+        [Min(0f), Tooltip("Deceleration verticale sans input.")]
+        public float verticalDeceleration;
+        [Range(0f, 0.4f), Tooltip("Zone morte de l'input vertical.")]
+        public float verticalDeadZone;
+        [Min(0f), Tooltip("Seuil sous lequel la vitesse de vol est forcee a zero sans input.")]
+        public float idleSpeedThreshold;
+        [Tooltip("Ajoute un flottement vertical leger quand le vol est idle.")]
+        public bool enableIdleFloat;
+        [Min(0f), Tooltip("Amplitude du flottement idle en metres.")]
+        public float idleFloatAmplitude;
+        [Min(0f), Tooltip("Frequence du flottement idle en cycles par seconde.")]
+        public float idleFloatFrequency;
+        [Min(0f), Tooltip("Vitesse de blend du flottement idle.")]
+        public float idleFloatBlendSpeed;
+        [Range(0f, 60f), Tooltip("Inclinaison visuelle maximale en montee/descente de vol.")]
+        public float verticalTiltAngle;
+        [Min(0f), Tooltip("Vitesse verticale minimale avant d'appliquer l'inclinaison de vol.")]
+        public float verticalTiltSpeedThreshold;
+        [Min(0f), Tooltip("Vitesse de rotation en vol normal.")]
+        public float turnRate;
+        [Min(0f), Tooltip("Vitesse de rotation pendant le boost.")]
+        public float boostTurnRate;
+        [Min(0f), Tooltip("Vitesse verticale descendante appliquee en sortie de vol.")]
+        public float exitDownwardVelocity;
+        [Min(0f), Tooltip("Impulsion horizontale ajoutee au demarrage du boost.")]
+        public float boostKickSpeed;
+        [Min(0f), Tooltip("Vitesse minimale retenue pour un atterrissage venant du vol.")]
+        public float groundContactLandingMinSpeed;
+        [Min(0f), Tooltip("Vitesse descendante minimale pour atterrir au contact du sol.")]
+        public float groundContactLandingMinDownwardSpeed;
+        [Range(0f, 1f), Tooltip("Part de vitesse planaire conservee a l'atterrissage.")]
+        public float landingPlanarVelocityRetention;
+        [Range(0f, 1f), Tooltip("Multiplicateur du damping d'atterrissage apres vol.")]
+        public float landingDampingMultiplier;
+        [Min(0f), Tooltip("Grace de controle apres un atterrissage depuis le vol.")]
+        public float landingControlGraceTime;
+
+        public static FlightProfile Default => new FlightProfile
+        {
+            enableFlight = true,
+            takeoffVerticalSpeed = 6.5f,
+            takeoffDuration = 0.45f,
+            takeoffDamping = 16f,
+            cruiseSpeed = 33f,
+            boostSpeed = 81f,
+            acceleration = 54f,
+            boostAcceleration = 126f,
+            deceleration = 36f,
+            stopDecelerationMultiplier = 3f,
+            verticalSpeed = 24f,
+            verticalAcceleration = 66f,
+            verticalDeceleration = 54f,
+            verticalDeadZone = 0.05f,
+            idleSpeedThreshold = 0.08f,
+            enableIdleFloat = true,
+            idleFloatAmplitude = 0.12f,
+            idleFloatFrequency = 0.85f,
+            idleFloatBlendSpeed = 4f,
+            verticalTiltAngle = 30f,
+            verticalTiltSpeedThreshold = 0.1f,
+            turnRate = 760f,
+            boostTurnRate = 460f,
+            exitDownwardVelocity = 1.5f,
+            boostKickSpeed = 4.5f,
+            groundContactLandingMinSpeed = 2.75f,
+            groundContactLandingMinDownwardSpeed = 0.2f,
+            landingPlanarVelocityRetention = 0.25f,
+            landingDampingMultiplier = 1f,
+            landingControlGraceTime = 0.08f
+        };
+    }
+
     [Header("References")]
     [SerializeField] private CharacterController characterController;
     [SerializeField] private Transform cameraTransform;
@@ -93,11 +192,18 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     [SerializeField, Min(0f)] private float flightAcceleration = 54f;
     [SerializeField, Min(0f)] private float flightBoostAcceleration = 126f;
     [SerializeField, Min(0f)] private float flightDeceleration = 36f;
+    [SerializeField, Min(1f)] private float flightStopDecelerationMultiplier = 3f;
     [SerializeField, Min(0f)] private float flightVerticalSpeed = 24f;
     [SerializeField, Min(0f)] private float flightVerticalAcceleration = 66f;
     [SerializeField, Min(0f)] private float flightVerticalDeceleration = 54f;
     [SerializeField, Range(0f, 0.4f)] private float flightVerticalDeadZone = 0.05f;
     [SerializeField, Min(0f)] private float flightIdleSpeedThreshold = 0.08f;
+    [SerializeField] private bool enableFlightIdleFloat = true;
+    [SerializeField, Min(0f)] private float flightIdleFloatAmplitude = 0.12f;
+    [SerializeField, Min(0f)] private float flightIdleFloatFrequency = 0.85f;
+    [SerializeField, Min(0f)] private float flightIdleFloatBlendSpeed = 4f;
+    [SerializeField, Range(0f, 60f)] private float flightVerticalTiltAngle = 30f;
+    [SerializeField, Min(0f)] private float flightVerticalTiltSpeedThreshold = 0.1f;
     [SerializeField, Min(0f)] private float flightTurnRate = 760f;
     [SerializeField, Min(0f)] private float flightBoostTurnRate = 460f;
     [SerializeField, Min(0f)] private float flightExitDownwardVelocity = 1.5f;
@@ -150,6 +256,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     [SerializeField] private bool debugFlightBoosting;
     [SerializeField] private bool debugFlightBoostStarted;
     [SerializeField] private bool debugFlightTakeoffActive;
+    [SerializeField] private float debugFlightIdleFloatWeight;
     [SerializeField] private float debugFlightVerticalInput;
     [SerializeField] private Vector3 debugFlightVelocity;
     [SerializeField] private float debugFlightNormalizedSpeed;
@@ -194,6 +301,10 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     private float flightVerticalInput;
     private float flightTakeoffTimer;
     private Vector3 currentFlightVelocity;
+    private float flightIdleFloatPhase;
+    private float flightIdleFloatWeight;
+    private float flightIdleFloatOffset;
+    private Quaternion flightVisualRotation = Quaternion.identity;
     private float airborneTime;
     private float airbornePeakDownwardSpeed;
     private bool forceLandingAfterFlight;
@@ -224,6 +335,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     public float ActualSpeed => flightActive ? currentFlightVelocity.magnitude : new Vector3(currentPlanarVelocity.x, 0f, currentPlanarVelocity.z).magnitude;
     public Vector3 CurrentPlanarVelocity => currentPlanarVelocity;
     public Vector3 FlightVelocity => currentFlightVelocity;
+    public Quaternion FlightVisualRotation => flightVisualRotation;
     public bool FlightActive => flightActive;
     public bool FlightBoosting => flightActive && flightBoostActive;
     public bool FlightBoostStarted => flightBoostStartedThisFrame;
@@ -277,6 +389,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         }
 
         ConfigureExplicitStepTraversal();
+        flightVisualRotation = transform.rotation;
         lastGroundedTime = Time.time;
         RefreshGrounding(0f, CollisionFlags.None, allowSnap: false);
         UpdateState();
@@ -326,11 +439,17 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         flightAcceleration = Mathf.Max(0f, flightAcceleration);
         flightBoostAcceleration = Mathf.Max(flightAcceleration, flightBoostAcceleration);
         flightDeceleration = Mathf.Max(0f, flightDeceleration);
+        flightStopDecelerationMultiplier = Mathf.Max(1f, flightStopDecelerationMultiplier);
         flightVerticalSpeed = Mathf.Max(0f, flightVerticalSpeed);
         flightVerticalAcceleration = Mathf.Max(0f, flightVerticalAcceleration);
         flightVerticalDeceleration = Mathf.Max(0f, flightVerticalDeceleration);
         flightVerticalDeadZone = Mathf.Clamp(flightVerticalDeadZone, 0f, 0.4f);
         flightIdleSpeedThreshold = Mathf.Max(0f, flightIdleSpeedThreshold);
+        flightIdleFloatAmplitude = Mathf.Max(0f, flightIdleFloatAmplitude);
+        flightIdleFloatFrequency = Mathf.Max(0f, flightIdleFloatFrequency);
+        flightIdleFloatBlendSpeed = Mathf.Max(0f, flightIdleFloatBlendSpeed);
+        flightVerticalTiltAngle = Mathf.Clamp(flightVerticalTiltAngle, 0f, 60f);
+        flightVerticalTiltSpeedThreshold = Mathf.Max(0f, flightVerticalTiltSpeedThreshold);
         flightTurnRate = Mathf.Max(0f, flightTurnRate);
         flightBoostTurnRate = Mathf.Max(0f, flightBoostTurnRate);
         flightExitDownwardVelocity = Mathf.Max(0f, flightExitDownwardVelocity);
@@ -354,6 +473,40 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         wallSlideContactMemoryTime = Mathf.Max(0f, wallSlideContactMemoryTime);
         wallSlideMinDownwardSpeed = Mathf.Max(0f, wallSlideMinDownwardSpeed);
         wallSlideGravityMultiplier = Mathf.Max(1f, wallSlideGravityMultiplier);
+    }
+
+    public static void ClampFlightProfile(ref FlightProfile profile)
+    {
+        profile.takeoffVerticalSpeed = Mathf.Max(0f, profile.takeoffVerticalSpeed);
+        profile.takeoffDuration = Mathf.Max(0f, profile.takeoffDuration);
+        profile.takeoffDamping = Mathf.Max(0f, profile.takeoffDamping);
+        profile.cruiseSpeed = Mathf.Max(0f, profile.cruiseSpeed);
+        profile.boostSpeed = Mathf.Max(profile.cruiseSpeed, profile.boostSpeed);
+        profile.acceleration = Mathf.Max(0f, profile.acceleration);
+        profile.boostAcceleration = Mathf.Max(profile.acceleration, profile.boostAcceleration);
+        profile.deceleration = Mathf.Max(0f, profile.deceleration);
+        profile.stopDecelerationMultiplier = profile.stopDecelerationMultiplier > 0f
+            ? Mathf.Max(1f, profile.stopDecelerationMultiplier)
+            : FlightProfile.Default.stopDecelerationMultiplier;
+        profile.verticalSpeed = Mathf.Max(0f, profile.verticalSpeed);
+        profile.verticalAcceleration = Mathf.Max(0f, profile.verticalAcceleration);
+        profile.verticalDeceleration = Mathf.Max(0f, profile.verticalDeceleration);
+        profile.verticalDeadZone = Mathf.Clamp(profile.verticalDeadZone, 0f, 0.4f);
+        profile.idleSpeedThreshold = Mathf.Max(0f, profile.idleSpeedThreshold);
+        profile.idleFloatAmplitude = Mathf.Max(0f, profile.idleFloatAmplitude);
+        profile.idleFloatFrequency = Mathf.Max(0f, profile.idleFloatFrequency);
+        profile.idleFloatBlendSpeed = Mathf.Max(0f, profile.idleFloatBlendSpeed);
+        profile.verticalTiltAngle = Mathf.Clamp(profile.verticalTiltAngle, 0f, 60f);
+        profile.verticalTiltSpeedThreshold = Mathf.Max(0f, profile.verticalTiltSpeedThreshold);
+        profile.turnRate = Mathf.Max(0f, profile.turnRate);
+        profile.boostTurnRate = Mathf.Max(0f, profile.boostTurnRate);
+        profile.exitDownwardVelocity = Mathf.Max(0f, profile.exitDownwardVelocity);
+        profile.boostKickSpeed = Mathf.Max(0f, profile.boostKickSpeed);
+        profile.groundContactLandingMinSpeed = Mathf.Max(0f, profile.groundContactLandingMinSpeed);
+        profile.groundContactLandingMinDownwardSpeed = Mathf.Max(0f, profile.groundContactLandingMinDownwardSpeed);
+        profile.landingPlanarVelocityRetention = Mathf.Clamp01(profile.landingPlanarVelocityRetention);
+        profile.landingDampingMultiplier = Mathf.Clamp01(profile.landingDampingMultiplier);
+        profile.landingControlGraceTime = Mathf.Max(0f, profile.landingControlGraceTime);
     }
 
     private void Update()
@@ -390,6 +543,42 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
     {
         maxMoveSpeed = Mathf.Max(0f, sprintSpeed);
         walkMoveSpeed = Mathf.Clamp(walkSpeed, 0f, maxMoveSpeed);
+    }
+
+    public void ConfigureFlightProfile(FlightProfile profile)
+    {
+        ClampFlightProfile(ref profile);
+
+        enableFlight = profile.enableFlight;
+        flightTakeoffVerticalSpeed = profile.takeoffVerticalSpeed;
+        flightTakeoffDuration = profile.takeoffDuration;
+        flightTakeoffDamping = profile.takeoffDamping;
+        flightCruiseSpeed = profile.cruiseSpeed;
+        flightBoostSpeed = profile.boostSpeed;
+        flightAcceleration = profile.acceleration;
+        flightBoostAcceleration = profile.boostAcceleration;
+        flightDeceleration = profile.deceleration;
+        flightStopDecelerationMultiplier = profile.stopDecelerationMultiplier;
+        flightVerticalSpeed = profile.verticalSpeed;
+        flightVerticalAcceleration = profile.verticalAcceleration;
+        flightVerticalDeceleration = profile.verticalDeceleration;
+        flightVerticalDeadZone = profile.verticalDeadZone;
+        flightIdleSpeedThreshold = profile.idleSpeedThreshold;
+        enableFlightIdleFloat = profile.enableIdleFloat;
+        flightIdleFloatAmplitude = profile.idleFloatAmplitude;
+        flightIdleFloatFrequency = profile.idleFloatFrequency;
+        flightIdleFloatBlendSpeed = profile.idleFloatBlendSpeed;
+        flightVerticalTiltAngle = profile.verticalTiltAngle;
+        flightVerticalTiltSpeedThreshold = profile.verticalTiltSpeedThreshold;
+        flightTurnRate = profile.turnRate;
+        flightBoostTurnRate = profile.boostTurnRate;
+        flightExitDownwardVelocity = profile.exitDownwardVelocity;
+        flightBoostKickSpeed = profile.boostKickSpeed;
+        flightGroundContactLandingMinSpeed = profile.groundContactLandingMinSpeed;
+        flightGroundContactLandingMinDownwardSpeed = profile.groundContactLandingMinDownwardSpeed;
+        flightLandingPlanarVelocityRetention = profile.landingPlanarVelocityRetention;
+        flightLandingDampingMultiplier = profile.landingDampingMultiplier;
+        flightLandingControlGraceTime = profile.landingControlGraceTime;
     }
 
     public void SetFlightVerticalInput(float verticalInput)
@@ -463,6 +652,8 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         flightVerticalInput = 0f;
         flightTakeoffTimer = 0f;
         currentFlightVelocity = Vector3.zero;
+        ResetFlightIdleFloat();
+        LevelFlightRotationPitch();
         airborneTime = 0f;
         airbornePeakDownwardSpeed = 0f;
         forceLandingAfterFlight = false;
@@ -708,6 +899,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         wasFlightBoostActive = false;
         flightBoostStartedThisFrame = false;
         flightTakeoffTimer = flightTakeoffDuration;
+        ResetFlightIdleFloat();
         forceLandingAfterFlight = false;
         flightLandingControlGraceTimer = 0f;
         flightActive = true;
@@ -733,6 +925,8 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         flightBoostStartedThisFrame = false;
         flightTakeoffTimer = 0f;
         flightActive = false;
+        ResetFlightIdleFloat();
+        LevelFlightRotationPitch();
         timeSinceGrounded = groundedGraceTime + 0.001f;
         airborneTime = Mathf.Max(airborneTime, landingMinAirborneTime);
         airbornePeakDownwardSpeed = Mathf.Max(flightGroundContactLandingMinSpeed, -verticalVelocity);
@@ -787,7 +981,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         Vector3 desiredPlanarVelocity = hasPlanarDirection ? desiredWorldDirection * DesiredSpeed : Vector3.zero;
         float planarRate = hasPlanarDirection
             ? (flightBoostActive ? flightBoostAcceleration : flightAcceleration)
-            : flightDeceleration;
+            : flightDeceleration * flightStopDecelerationMultiplier;
 
         currentPlanarFlightVelocity = Vector3.MoveTowards(
             currentPlanarFlightVelocity,
@@ -804,7 +998,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         float targetVerticalSpeed = processedVerticalInput * flightVerticalSpeed;
         float verticalRate = Mathf.Abs(processedVerticalInput) > 0f
             ? flightVerticalAcceleration
-            : flightVerticalDeceleration;
+            : flightVerticalDeceleration * flightStopDecelerationMultiplier;
         float nextVerticalVelocity = Mathf.MoveTowards(
             currentFlightVelocity.y,
             targetVerticalSpeed,
@@ -812,17 +1006,26 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
 
         currentFlightVelocity = currentPlanarFlightVelocity + Vector3.up * nextVerticalVelocity;
         bool shouldLandOnGroundContact = ShouldLandFromFlightGroundContact(processedVerticalInput, nextVerticalVelocity);
-        if (!hasPlanarDirection &&
-            Mathf.Abs(processedVerticalInput) <= 0.0001f &&
-            currentFlightVelocity.sqrMagnitude <= flightIdleSpeedThreshold * flightIdleSpeedThreshold)
+        bool flightIdleInput = !hasPlanarDirection && Mathf.Abs(processedVerticalInput) <= 0.0001f;
+        float flightIdleSpeedSqr = flightIdleSpeedThreshold * flightIdleSpeedThreshold;
+        if (flightIdleInput && currentFlightVelocity.sqrMagnitude <= flightIdleSpeedSqr)
         {
             currentFlightVelocity = Vector3.zero;
         }
 
+        bool idleFloatRequested =
+            enableFlightIdleFloat &&
+            flightIdleFloatAmplitude > 0f &&
+            flightIdleFloatFrequency > 0f &&
+            flightIdleInput &&
+            currentFlightVelocity.sqrMagnitude <= flightIdleSpeedSqr &&
+            !flightBoostActive;
+        Vector3 idleFloatDisplacement = UpdateFlightIdleFloat(idleFloatRequested, deltaTime);
+
         UpdateFlightRotation(deltaTime);
 
         ResetWallHitFrame();
-        CollisionFlags collisionFlags = characterController.Move(currentFlightVelocity * deltaTime);
+        CollisionFlags collisionFlags = characterController.Move((currentFlightVelocity * deltaTime) + idleFloatDisplacement);
         float impactDownwardSpeed = Mathf.Max(0f, -currentFlightVelocity.y);
         if (TryCompleteFlightGroundContact(collisionFlags, impactDownwardSpeed, shouldLandOnGroundContact))
         {
@@ -862,8 +1065,11 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
             currentFlightVelocity = Vector3.zero;
         }
 
+        Vector3 idleFloatDisplacement = UpdateFlightIdleFloat(active: false, deltaTime);
+        UpdateFlightRotation(deltaTime);
+
         ResetWallHitFrame();
-        CollisionFlags collisionFlags = characterController.Move(currentFlightVelocity * deltaTime);
+        CollisionFlags collisionFlags = characterController.Move((currentFlightVelocity * deltaTime) + idleFloatDisplacement);
         ApplyFlightCollisionFeedback(collisionFlags);
 
         rawGrounded = false;
@@ -888,6 +1094,36 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
 
         float normalizedMagnitude = Mathf.InverseLerp(flightVerticalDeadZone, 1f, Mathf.Clamp01(magnitude));
         return Mathf.Sign(input) * normalizedMagnitude;
+    }
+
+    private Vector3 UpdateFlightIdleFloat(bool active, float deltaTime)
+    {
+        float previousOffset = flightIdleFloatOffset;
+        float targetWeight = active ? 1f : 0f;
+
+        flightIdleFloatWeight = flightIdleFloatBlendSpeed > 0f
+            ? Mathf.MoveTowards(flightIdleFloatWeight, targetWeight, flightIdleFloatBlendSpeed * deltaTime)
+            : targetWeight;
+
+        if (active)
+        {
+            flightIdleFloatPhase += flightIdleFloatFrequency * Mathf.PI * 2f * deltaTime;
+            float fullCycle = Mathf.PI * 2f;
+            if (flightIdleFloatPhase >= fullCycle)
+            {
+                flightIdleFloatPhase -= fullCycle * Mathf.Floor(flightIdleFloatPhase / fullCycle);
+            }
+        }
+
+        flightIdleFloatOffset = Mathf.Sin(flightIdleFloatPhase) * flightIdleFloatAmplitude * flightIdleFloatWeight;
+        return Vector3.up * (flightIdleFloatOffset - previousOffset);
+    }
+
+    private void ResetFlightIdleFloat()
+    {
+        flightIdleFloatPhase = 0f;
+        flightIdleFloatWeight = 0f;
+        flightIdleFloatOffset = 0f;
     }
 
     private bool ShouldLandFromFlightGroundContact(float processedVerticalInput, float verticalSpeed)
@@ -918,6 +1154,8 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         flightBoostStartedThisFrame = false;
         flightTakeoffTimer = 0f;
         flightActive = false;
+        ResetFlightIdleFloat();
+        LevelFlightRotationPitch();
         forceLandingAfterFlight = true;
         airborneTime = Mathf.Max(airborneTime, landingMinAirborneTime);
         airbornePeakDownwardSpeed = Mathf.Max(impactDownwardSpeed, flightGroundContactLandingMinSpeed);
@@ -943,12 +1181,44 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
 
         if (lookDirection.sqrMagnitude <= 0.0001f)
         {
-            return;
+            lookDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
         }
 
-        Quaternion targetRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        if (lookDirection.sqrMagnitude <= 0.0001f)
+        {
+            lookDirection = Vector3.forward;
+        }
+
+        Quaternion yawRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        Quaternion targetRotation = yawRotation * Quaternion.Euler(ResolveFlightVerticalTiltPitch(), 0f, 0f);
         float turnRate = flightBoostActive ? flightBoostTurnRate : flightTurnRate;
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turnRate * deltaTime);
+        flightVisualRotation = transform.rotation;
+    }
+
+    private float ResolveFlightVerticalTiltPitch()
+    {
+        if (flightVerticalTiltAngle <= 0f ||
+            Mathf.Abs(currentFlightVelocity.y) <= flightVerticalTiltSpeedThreshold)
+        {
+            return 0f;
+        }
+
+        return currentFlightVelocity.y > 0f
+            ? -flightVerticalTiltAngle
+            : flightVerticalTiltAngle;
+    }
+
+    private void LevelFlightRotationPitch()
+    {
+        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        if (forward.sqrMagnitude <= 0.0001f)
+        {
+            forward = Vector3.forward;
+        }
+
+        transform.rotation = Quaternion.LookRotation(forward.normalized, Vector3.up);
+        flightVisualRotation = transform.rotation;
     }
 
     private void ApplyFlightCollisionFeedback(CollisionFlags collisionFlags)
@@ -1926,6 +2196,8 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         flightBoostStartedThisFrame = false;
         flightVerticalInput = 0f;
         flightTakeoffTimer = 0f;
+        ResetFlightIdleFloat();
+        LevelFlightRotationPitch();
         forceLandingAfterFlight = false;
         flightLandingControlGraceTimer = 0f;
         currentState = MovementState.Ladder;
@@ -1958,6 +2230,7 @@ public class StarterInspiredThirdPersonMotor : MonoBehaviour
         debugFlightBoosting = FlightBoosting;
         debugFlightBoostStarted = flightBoostStartedThisFrame;
         debugFlightTakeoffActive = FlightTakeoffActive;
+        debugFlightIdleFloatWeight = flightIdleFloatWeight;
         debugFlightVerticalInput = flightVerticalInput;
         debugFlightVelocity = currentFlightVelocity;
         debugFlightNormalizedSpeed = FlightNormalizedSpeed;

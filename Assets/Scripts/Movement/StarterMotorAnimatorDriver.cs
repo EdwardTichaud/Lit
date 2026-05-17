@@ -62,6 +62,10 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     [SerializeField, Min(0f)] private float flightIdleMotionSpeed = 0.85f;
     [SerializeField, Min(0f)] private float flightBoostMotionSpeed = 1.45f;
     [SerializeField, Min(0f)] private float flightTakeoffMotionSpeed = 1f;
+    [SerializeField, Min(0f)] private float flightStopMinSpeed = 1.2f;
+    [SerializeField, Min(0f)] private float flightStopExitSpeedThreshold = 0.35f;
+    [SerializeField, Min(0f)] private float flightStopVisualHoldTime = 0.18f;
+    [SerializeField, Min(0f)] private float flightStopCrossFadeDuration = 0.05f;
     [SerializeField, Min(0f)] private float flightBoostVisualHoldTime = 0.22f;
     [SerializeField, Min(0f)] private float flightDashCrossFadeDuration = 0.04f;
     [SerializeField, Range(0.1f, 2f)] private float flightDashExitNormalizedTime = 0.98f;
@@ -84,6 +88,7 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     [SerializeField] private string runStopStateName = "Run_Stop";
     [SerializeField] private string flyingIdleStateName = "Flying_Idle";
     [SerializeField] private string flyingMoveStateName = "Flying_Loop";
+    [SerializeField] private string flyingStopStateName = "Flying_Stop";
     [SerializeField] private string flyingDashStateName = "Flying_Dash";
 
     [Header("Parameters")]
@@ -153,6 +158,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     private bool jumpSequenceActive;
     private bool lastJumpFromMovement;
     private float flightBoostVisualTimer;
+    private float flightStopVisualTimer;
+    private bool flightStopActive;
     private bool flightDashActive;
     private float lastMovingLocomotionTier = 1f;
     private ReconciliationFamily activeReconciliationFamily = ReconciliationFamily.None;
@@ -246,6 +253,10 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         flightIdleMotionSpeed = Mathf.Max(0f, flightIdleMotionSpeed);
         flightBoostMotionSpeed = Mathf.Max(flightIdleMotionSpeed, flightBoostMotionSpeed);
         flightTakeoffMotionSpeed = Mathf.Max(0f, flightTakeoffMotionSpeed);
+        flightStopMinSpeed = Mathf.Max(0f, flightStopMinSpeed);
+        flightStopExitSpeedThreshold = Mathf.Clamp(flightStopExitSpeedThreshold, 0f, flightMoveSpeedThreshold);
+        flightStopVisualHoldTime = Mathf.Max(0f, flightStopVisualHoldTime);
+        flightStopCrossFadeDuration = Mathf.Max(0f, flightStopCrossFadeDuration);
         flightBoostVisualHoldTime = Mathf.Max(0f, flightBoostVisualHoldTime);
         flightDashCrossFadeDuration = Mathf.Max(0f, flightDashCrossFadeDuration);
         flightDashExitNormalizedTime = Mathf.Clamp(flightDashExitNormalizedTime, 0.1f, 2f);
@@ -277,6 +288,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         jumpSequenceActive = false;
         lastJumpFromMovement = false;
         flightBoostVisualTimer = 0f;
+        flightStopVisualTimer = 0f;
+        flightStopActive = false;
         flightDashActive = false;
         lastMovingLocomotionTier = 1f;
         ResetStateReconciliation();
@@ -344,6 +357,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
 
         wasFlightTakeoff = false;
         flightBoostVisualTimer = 0f;
+        flightStopVisualTimer = 0f;
+        flightStopActive = false;
         flightDashActive = false;
         flightMovingVisual = false;
 
@@ -412,6 +427,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         jumpSequenceActive = false;
         lastJumpFromMovement = false;
         flightBoostVisualTimer = 0f;
+        flightStopVisualTimer = 0f;
+        flightStopActive = false;
         flightDashActive = false;
         ResetStateReconciliation();
 
@@ -494,12 +511,20 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         bool flightDashVisual = ResolveFlightDashVisual(flightDashJustStarted);
         float flightSpeed = motor.FlightSpeed;
         float planarFlightSpeed = Vector3.ProjectOnPlane(motor.FlightVelocity, Vector3.up).magnitude;
+        bool flightHasPlanarInput = motor.InputMagnitude > 0.0001f && motor.DesiredSpeed > 0.0001f;
         float normalizedSpeed = Mathf.Clamp01(planarFlightSpeed / flightFullSpeed);
         float animatorSpeed = normalizedSpeed * locomotionBlendMax;
         float boostVisualAmount = Mathf.Max(normalizedSpeed, motor.FlightBoostAmount);
         float motionSpeed = Mathf.Lerp(flightIdleMotionSpeed, flightBoostMotionSpeed, boostVisualAmount);
         bool boostingVisual = motor.FlightBoosting || flightBoostVisualTimer > 0f;
-        if (boostingVisual || planarFlightSpeed >= flightMoveSpeedThreshold)
+        UpdateFlightStopVisual(deltaTime, flightHasPlanarInput, flightDashVisual, planarFlightSpeed);
+        bool stoppingVisual = flightStopActive && HasAnimatorState(ResolveFlightStopStateName());
+
+        if (stoppingVisual)
+        {
+            flightMovingVisual = false;
+        }
+        else if (boostingVisual || planarFlightSpeed >= flightMoveSpeedThreshold)
         {
             flightMovingVisual = true;
         }
@@ -508,7 +533,7 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
             flightMovingVisual = false;
         }
 
-        bool moving = flightMovingVisual || boostingVisual || flightDashVisual;
+        bool moving = !stoppingVisual && (flightMovingVisual || boostingVisual || flightDashVisual);
 
         SetFloat(speedHash, animatorSpeed, speedDampTime, deltaTime);
         SetFloat(motionSpeedHash, motionSpeed, motionSpeedDampTime, deltaTime);
@@ -529,12 +554,24 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
         ResetTrigger(landingTriggerHash);
         ResetTrigger(landingTriggerFallbackHash);
 
-        string flightStateName = flightDashVisual
-            ? ResolveFlightDashStateName()
-            : ResolveFlightStateName(moving || boostingVisual);
-        float flightStateCrossFadeDuration = flightDashVisual
-            ? flightDashCrossFadeDuration
-            : flightCrossFadeDuration;
+        string flightStateName;
+        float flightStateCrossFadeDuration;
+        if (flightDashVisual)
+        {
+            flightStateName = ResolveFlightDashStateName();
+            flightStateCrossFadeDuration = flightDashCrossFadeDuration;
+        }
+        else if (stoppingVisual)
+        {
+            flightStateName = ResolveFlightStopStateName();
+            flightStateCrossFadeDuration = flightStopCrossFadeDuration;
+        }
+        else
+        {
+            flightStateName = ResolveFlightStateName(moving || boostingVisual);
+            flightStateCrossFadeDuration = flightCrossFadeDuration;
+        }
+
         CrossFadeState(flightStateName, flightStateCrossFadeDuration, true);
 
         if (!showDebugValues)
@@ -566,6 +603,8 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     private void DriveFlightTakeoff(float deltaTime)
     {
         flightBoostVisualTimer = 0f;
+        flightStopVisualTimer = 0f;
+        flightStopActive = false;
         flightDashActive = false;
         flightMovingVisual = false;
 
@@ -1101,20 +1140,83 @@ public sealed class StarterMotorAnimatorDriver : MonoBehaviour
     {
         string preferredStateName = moving ? flyingMoveStateName : flyingIdleStateName;
         string fallbackStateName = moving ? flyingIdleStateName : flyingMoveStateName;
-        string legacyPreferredStateName = moving ? "Mixamo_Flying" : "Mixamo_Flying_Idle";
-        string legacyFallbackStateName = moving ? "Mixamo_Flying_Idle" : "Mixamo_Flying";
+        string mixamoPreferredStateName = moving ? "Mixamo_Flying" : "Mixamo_Flying_Idle";
+        string mixamoFallbackStateName = moving ? "Mixamo_Flying_Idle" : "Mixamo_Flying";
 
         if (TryResolveFirstAnimatorState(
                 out string resolvedStateName,
                 preferredStateName,
                 fallbackStateName,
-                legacyPreferredStateName,
-                legacyFallbackStateName))
+                mixamoPreferredStateName,
+                mixamoFallbackStateName))
         {
             return resolvedStateName;
         }
 
         return preferredStateName;
+    }
+
+    private void UpdateFlightStopVisual(
+        float deltaTime,
+        bool hasPlanarInput,
+        bool flightDashVisual,
+        float planarFlightSpeed)
+    {
+        if (flightStopVisualTimer > 0f)
+        {
+            flightStopVisualTimer = Mathf.Max(0f, flightStopVisualTimer - deltaTime);
+        }
+
+        if (flightStopActive)
+        {
+            if (hasPlanarInput || flightDashVisual)
+            {
+                flightStopActive = false;
+                flightStopVisualTimer = 0f;
+                return;
+            }
+
+            if (flightStopVisualTimer <= 0f && planarFlightSpeed <= flightStopExitSpeedThreshold)
+            {
+                flightStopActive = false;
+                flightMovingVisual = false;
+            }
+
+            return;
+        }
+
+        if (!flightMovingVisual ||
+            hasPlanarInput ||
+            flightDashVisual ||
+            planarFlightSpeed < flightStopMinSpeed)
+        {
+            return;
+        }
+
+        TryStartFlightStop();
+    }
+
+    private bool TryStartFlightStop()
+    {
+        if (!HasAnimatorState(ResolveFlightStopStateName()))
+        {
+            return false;
+        }
+
+        flightStopActive = true;
+        flightStopVisualTimer = flightStopVisualHoldTime;
+        flightMovingVisual = false;
+        return true;
+    }
+
+    private string ResolveFlightStopStateName()
+    {
+        if (TryResolveFirstAnimatorState(out string resolvedStateName, flyingStopStateName, "Mixamo_Flying_Stop"))
+        {
+            return resolvedStateName;
+        }
+
+        return flyingStopStateName;
     }
 
     private bool TryStartFlightDash()

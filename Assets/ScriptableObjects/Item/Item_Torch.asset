@@ -12,14 +12,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
   m_Name: Item_Torch
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemId: torch
   itemName: Torche
-  itemIcon: {fileID: 21300000, guid: 83e594f3f178634449a0662a99ba8147, type: 3}
   itemSprite: {fileID: 21300000, guid: 83e594f3f178634449a0662a99ba8147, type: 3}
-  description: Cette torche est votre seul espoir de survie.
+  description: "Cette torche semble \xEAtre votre seul espoir de survie."
+  readableKind: 0
+  parchmentText: 
+  bookPages: []
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableContentId: 
+  readableGenerationSeedOffset: 0
   canUse: 1
   canPlace: 0
   isContainer: 0
-  worldPrefab: {fileID: 0}
+  worldPrefab: {fileID: 8429578592065255594, guid: 545a910e55dc8344d906425675c78d68, type: 3}
   isTorch: 1
+  isBeacon: 0
+  allowWallPlacement: 0
+  placementRadiusOverride: 0
+  isWetClay: 0
+  driedReplacementItem: {fileID: 0}
+  preservesWetClay: 0
+  preservedWetClayCapacity: 1
+  isKey: 0
+  keyId: 
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
   useEffects:
   - {fileID: 11400000, guid: 4f721c0f1e324828a5608f13f6af77e9, type: 2}
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: Impossible de placer ici
+  cannotPlaceWhileEquippedMessage: "La torche \xE9quip\xE9e emp\xEAche la pose"
+  cannotDropMessage: "Cet objet ne peut pas \xEAtre jet\xE9"
+  cannotUseMessage: "Cet objet ne peut pas \xEAtre utilis\xE9"
+  useFailedMessage: Echec d'utilisation
+  cannotPickupMessage: "Cet objet ne peut pas \xEAtre r\xE9cup\xE9r\xE9"
+  cannotDepositMessage: "Cet objet ne pas pas \xEAtre d\xE9pos\xE9"
+  cannotTakeMessage: "Cet item ne peut pas \xEAtre pris"
+  cannotBreakMessage: Cet objet est incassable
+  breakFailedMessage: Echec de casse
+  useSuccessMessage: "-ItemName- utilis\xE9"
+  placeSuccessMessage: "-ItemName- pos\xE9"
+  dropSuccessMessage: "-ItemName- jet\xE9"
+  depositSuccessMessage: "-ItemName- d\xE9pos\xE9"
+  takeSuccessMessage: -ItemName- pris
+  breakSuccessMessage: "-ItemName- cass\xE9"
+  isBuilding: 0
+  isCraftingBuilding: 0
+  availableCrafts: []
+  buildingPrefab: {fileID: 0}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
+  buildingRequirements: []
+  buildingEffects: []
+  buildingLevelConfigs: []
+  isHomeChest: 0
+  canBreak: 0
+  breakResults: []

@@ -15,6 +15,12 @@ public class RestoreHealthEffect : Effect
 
         int before = controller.CurrentHp;
         controller.SetCurrentHp(controller.CurrentHp + amount);
-        return controller.CurrentHp > before;
+        bool restored = controller.CurrentHp > before;
+        if (restored)
+        {
+            AudioManager.EnsureInstance()?.PlayActionCue(ActionAudioCue.CharacterHeal, controller.transform.position);
+        }
+
+        return restored;
     }
 }

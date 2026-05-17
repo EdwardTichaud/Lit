@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
+  m_Name: "Item_READ_BLUE_015_VoixSousLeChant"
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemId: READ_BLUE_015_VoixSousLeChant
+  itemName: "Écoute derrière le mur"
+  itemSprite: {fileID: 0}
+  description: "Note de novice sans signature."
+  readableKind: 2
+  parchmentText: "Pendant l'hymne, j'ai entendu une autre mesure. Plus lente. Plus humaine. Peut-être seulement mon sang dans mes oreilles. Peut-être une voix qui ne savait plus où aller."
+  bookPages: []
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableContentId: READ_BLUE_015_VoixSousLeChant
+  readableGenerationSeedOffset: 0
+  canUse: 1
+  canPlace: 0
+  isContainer: 0
+  worldPrefab: {fileID: 807492333390481600, guid: 8985ad8f30bf5284980a196ba43c4adf, type: 3}
+  isTorch: 0
+  isBeacon: 0
+  allowWallPlacement: 0
+  placementRadiusOverride: 0
+  isWetClay: 0
+  driedReplacementItem: {fileID: 0}
+  preservesWetClay: 0
+  preservedWetClayCapacity: 1
+  isKey: 0
+  keyId: 
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
+  useEffects: []
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: 
+  cannotPlaceWhileEquippedMessage: 
+  cannotDropMessage: 
+  cannotUseMessage: 
+  useFailedMessage: 
+  cannotPickupMessage: 
+  cannotDepositMessage: 
+  cannotTakeMessage: 
+  cannotBreakMessage: 
+  breakFailedMessage: 
+  useSuccessMessage: 
+  placeSuccessMessage: 
+  dropSuccessMessage: 
+  depositSuccessMessage: 
+  takeSuccessMessage: 
+  breakSuccessMessage: 
+  isBuilding: 0
+  isCraftingBuilding: 0
+  availableCrafts: []
+  buildingPrefab: {fileID: 0}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
+  buildingRequirements: []
+  buildingEffects: []
+  buildingLevelConfigs: []
+  isHomeChest: 0
+  canBreak: 0
+  breakResults: []

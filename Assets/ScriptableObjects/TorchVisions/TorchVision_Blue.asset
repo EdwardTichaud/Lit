@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TorchVision_Blue
   m_EditorClassIdentifier: Assembly-CSharp::TorchVisionDefinition
   visionId: torchvisionblue
-  displayName: "Vision Bleut\xE9e"
+  displayName: "Vision bleut\xE9e"
   useDefaultLightSettings: 0
   lightColor: {r: 0, g: 0.66026163, b: 1, a: 1}
   disableColorTemperature: 1

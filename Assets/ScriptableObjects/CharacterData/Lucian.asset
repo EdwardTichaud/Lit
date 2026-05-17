@@ -17,6 +17,7 @@ MonoBehaviour:
   characterName: Lucian
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
   model: {fileID: 2784444758471557209, guid: ec40bcd1a60509644bb44c721cd362aa, type: 3}
+  worldPrefab: {fileID: 0}
   skills:
   - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
   - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
@@ -30,15 +31,13 @@ MonoBehaviour:
   starterItemsWithQuantity:
   - item: {fileID: 11400000, guid: 032df1e61360739478083aa47db4548f, type: 2}
     quantity: 300
-  - item: {fileID: 11400000, guid: a763255ec4969994fb6662ac56fa33d1, type: 2}
-    quantity: 300
-  - item: {fileID: 11400000, guid: a7d7df4a7b1d0da4e8455ce4f6f0af8d, type: 2}
-    quantity: 300
-  - item: {fileID: 11400000, guid: a5c3f3a9d07349c8ae99536999f1db1c, type: 2}
-    quantity: 300
-  - item: {fileID: 11400000, guid: 4c1f1ce8be50409b86794fc750a5101d, type: 2}
+  - item: {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
     quantity: 300
   hp: 10
+  isEnemy: 0
+  combatCurrentHp: 0
+  attackDamage: 4
+  additionalEnemies: []
   voiceLines: []
   maisonWaitingPoint: 2
   inventoryItems: []

@@ -188,6 +188,8 @@ public class TriggerPairTeleporter : MonoBehaviour
             characterController.enabled = true;
         }
 
+        AudioManager.EnsureInstance()?.PlayActionCue(ActionAudioCue.Teleport, destinationPosition);
+
         if (!stopSquadCharacterAfterTeleport)
         {
             return;
@@ -203,6 +205,7 @@ public class TriggerPairTeleporter : MonoBehaviour
         {
             squadController.Stop();
         }
+
     }
 
     private bool IsPointInsideTrigger(Collider trigger, Vector3 point)

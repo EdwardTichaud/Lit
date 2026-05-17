@@ -28,6 +28,7 @@ public static class SkillCheckSystem
         bool success = data.TryCheckSkill(skill, out roll, out modifier, out total);
         if (skill.requiresRoll)
         {
+            PlayResultAudio(character, success);
             // Affiche le feedback uniquement si un jet est requis.
             ShowFeedback(character, skill, roll, modifier, total, success);
         }
@@ -61,5 +62,19 @@ public static class SkillCheckSystem
 
         // Delegue l'affichage au prefab de feedback.
         anchor.Show(skill, roll, modifier, total, success);
+    }
+
+    private static void PlayResultAudio(GameObject character, bool success)
+    {
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager == null)
+        {
+            return;
+        }
+
+        Vector3 position = character != null ? character.transform.position : Vector3.zero;
+        manager.PlayActionCue(
+            success ? ActionAudioCue.SkillCheckSuccess : ActionAudioCue.SkillCheckFailure,
+            position);
     }
 }

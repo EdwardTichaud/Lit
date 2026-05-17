@@ -499,6 +499,7 @@ public class BuildingPanelController : MonoBehaviour
         }
 
         panelOpen = true;
+        PlayUiActionAudio(ActionAudioCue.BuildPanelOpen);
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
         actionBoxSuppressFrame = Time.frameCount;
@@ -536,6 +537,7 @@ public class BuildingPanelController : MonoBehaviour
 
         suppressPanelDeactivate = keepPanelActive;
         panelOpen = false;
+        PlayUiActionAudio(ActionAudioCue.BuildPanelClose);
         UnsubscribeBuilder();
         InputFocusStack.Pop(this);
         if (!keepInputLock)
@@ -1701,6 +1703,7 @@ public class BuildingPanelController : MonoBehaviour
 
         actionBox.SetActive(true);
         actionBoxVisible = true;
+        PlayUiActionAudio(ActionAudioCue.UiOpen);
         SelectActionBoxIndex(FindFirstAvailableActionIndex(), true);
         ApplyActionBoxVisuals();
         ShowActionBoxCursor();
@@ -1715,6 +1718,7 @@ public class BuildingPanelController : MonoBehaviour
         }
 
         actionBoxVisible = false;
+        PlayUiActionAudio(ActionAudioCue.UiClose);
         actionBoxIndex = -1;
         actionBoxLastDirection = 0;
         actionBoxNextMoveTime = 0f;
@@ -2065,6 +2069,7 @@ public class BuildingPanelController : MonoBehaviour
         SyncNetworkInventory(controller);
         restoreSelectedItem = building;
         RebuildSlotsSafely();
+        PlayActionAudio(ActionAudioCue.BuildUpgrade);
         return true;
     }
 
@@ -2143,6 +2148,7 @@ public class BuildingPanelController : MonoBehaviour
         placementInstance.transform.SetPositionAndRotation(startPos, startRotation);
         CachePlacementVisuals(placementInstance);
         UpdatePlacementVisuals(IsPlacementValid());
+        PlayActionAudio(ActionAudioCue.BuildPlacementStart);
         return true;
     }
 
@@ -2276,6 +2282,7 @@ public class BuildingPanelController : MonoBehaviour
 
         if (!IsPlacementValid())
         {
+            PlayUiActionAudio(ActionAudioCue.UiInvalid);
             ShowPlacementFeedback(placementInvalidMessage);
             return;
         }
@@ -2352,6 +2359,7 @@ public class BuildingPanelController : MonoBehaviour
         InputFocusStack.Pop(this);
         if (placedItem != null)
         {
+            PlayActionAudio(ActionAudioCue.BuildComplete);
             ShowPlacementFeedback(placedItem.GetPlaceSuccessMessage());
         }
     }
@@ -2387,6 +2395,8 @@ public class BuildingPanelController : MonoBehaviour
             restoreSelectedItem = restore;
             OpenPanel(currentBuilder);
         }
+
+        PlayUiActionAudio(ActionAudioCue.InventoryPlaceCancel);
     }
 
     private BuildingInfoInteractable ConfigurePlacedBuilding(GameObject instance, Item building, int level)
@@ -2489,6 +2499,36 @@ public class BuildingPanelController : MonoBehaviour
         }
 
         InfoBoxUI.TryShow(message);
+    }
+
+    private void PlayActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            SquadCharacterController controller = GetCurrentCharacterController();
+            Vector3 position = controller != null ? controller.transform.position : transform.position;
+            manager.PlayActionCue(cue, position);
+        }
+    }
+
+    private void PlayUiActionAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
     }
 
     private BuildingInfoInteractable SpawnBuildingInstance(Item building, int level)
@@ -3146,6 +3186,7 @@ public class BuildingPanelController : MonoBehaviour
             return;
         }
 
+        PlayUiActionAudio(ActionAudioCue.UiInvalid);
         if (actionBoxFlashRoutine != null)
         {
             StopCoroutine(actionBoxFlashRoutine);
