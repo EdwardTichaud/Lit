@@ -9,6 +9,8 @@ TagManager:
   - LocalVoiceLines
   - CraftingConstructionPanel
   - QuantityBox
+  - CinemachineTarget
+  - Fx
   layers:
   - Default
   - TransparentFX
@@ -18,7 +20,7 @@ TagManager:
   - UI
   - Character
   - Stairs
-  - 
+  - RuntimeOutline
   - 
   - 
   - 
@@ -51,18 +53,19 @@ TagManager:
     locked: 0
   m_RenderingLayers:
   - Default
-  - Light Layer 1 - Light Layer 1
-  - Light Layer 2 - Light Layer 2
-  - Light Layer 3 - Light Layer 3
-  - Light Layer 4 - Light Layer 4
-  - Light Layer 5 - Light Layer 5
-  - Light Layer 6 - Light Layer 6
-  - Light Layer 7 - Light Layer 7
-  - Decal Layer default - Decal Layer default
-  - Decal Layer 1 - Decal Layer 1
-  - Decal Layer 2 - Decal Layer 2
-  - Decal Layer 3 - Decal Layer 3
-  - Decal Layer 4 - Decal Layer 4
-  - Decal Layer 5 - Decal Layer 5
-  - Decal Layer 6 - Decal Layer 6
-  - Decal Layer 7 - Decal Layer 7
+  - Light Layer 1 - Light Layer 1 - Light Layer 1 - InteriorOnly - InteriorOnly
+  - Light Layer 2 - Light Layer 2 - Light Layer 2 - ExteriorOnly - ExteriorOnly
+  - Light Layer 3 - Light Layer 3 - Light Layer 3 - LampsOnly - LampsOnly
+  - Light Layer 4 - Light Layer 4 - Light Layer 4 - ReflectionsOnly - ReflectionsOnly
+  - Light Layer 5 - Light Layer 5 - Light Layer 5 - Light Layer 5 - Light Layer 5
+  - Light Layer 6 - Light Layer 6 - Light Layer 6 - Light Layer 6 - Light Layer 6
+  - Light Layer 7 - Light Layer 7 - Light Layer 7 - Light Layer 7 - Light Layer 7
+  - Decal Layer default - Decal Layer default - Decal Layer default - Decal Layer
+    default - Decal Layer default
+  - Decal Layer 1 - Decal Layer 1 - Decal Layer 1 - Decal Layer 1 - Decal Layer 1
+  - Decal Layer 2 - Decal Layer 2 - Decal Layer 2 - Decal Layer 2 - Decal Layer 2
+  - Decal Layer 3 - Decal Layer 3 - Decal Layer 3 - Decal Layer 3 - Decal Layer 3
+  - Decal Layer 4 - Decal Layer 4 - Decal Layer 4 - Decal Layer 4 - Decal Layer 4
+  - Decal Layer 5 - Decal Layer 5 - Decal Layer 5 - Decal Layer 5 - Decal Layer 5
+  - Decal Layer 6 - Decal Layer 6 - Decal Layer 6 - Decal Layer 6 - Decal Layer 6
+  - Decal Layer 7 - Decal Layer 7 - Decal Layer 7 - Decal Layer 7 - Decal Layer 7

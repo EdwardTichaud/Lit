@@ -458,7 +458,7 @@ MonoBehaviour:
   flightCharacterController: {fileID: 0}
   flightLocalInputBridge: {fileID: 0}
   configureFlightCharacterControllerFromCapsule: 1
-  disableLegacyCapsuleWhileFlightActive: 1
+  disableSourceCapsuleWhileFlightActive: 1
   applyFlightProfile: 1
   flightProfile:
     enableFlight: 1

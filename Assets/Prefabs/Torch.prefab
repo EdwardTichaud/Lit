@@ -29388,6 +29388,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   ageAmount: 666
+  useTemporalAgePreset: 0
+  temporalAge: 666
   ageCenterProperty: _AgeCenter
   ageRadiusProperty: _AgeRadius
   ageAmountProperty: _AgeAmount
