@@ -4,6 +4,14 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
+// Role: autorite principale des sessions de combat tour par tour.
+// Usage: singleton scene/runtime appele par CombatAggroEnemy, CombatHudController, items et idoles Iustia.
+// Responsibilities: creer sessions, piloter tours, synchroniser clients Netcode, deplacer presentations, appliquer resultats.
+// Dependencies: Unity Netcode, CombatHudController, CombatTransitionController, SquadCharacterController, CombatAggroEnemy.
+// Precautions: ce script coordonne beaucoup de systemes; privilegier des changements petits et tester solo + host/client.
+/// <summary>
+/// Manager central des combats tour par tour, compatible solo et Netcode.
+/// </summary>
 public class CombatSessionManager : NetworkBehaviour
 {
     private const string BasicAttackAnimationName = "Attack_Base";
@@ -17,45 +25,85 @@ public class CombatSessionManager : NetworkBehaviour
     private const float LocalEnemyLookupMaxDistance = 6f;
     private static readonly string[] DeathAnimationCandidates = { "Death", "Death_v1", "Death_v2" };
 
+    /// <summary>
+    /// Donnees completes d'une session de combat active cote autorite.
+    /// </summary>
     private sealed class CombatSession
     {
+        /// <summary>Identifiant unique de la session.</summary>
         public string SessionId;
+        /// <summary>Identifiant stable du personnage joueur.</summary>
         public string CharacterId;
+        /// <summary>Client proprietaire du personnage joueur.</summary>
         public ulong OwnerClientId;
+        /// <summary>Controleur du personnage joueur engage.</summary>
         public SquadCharacterController Player;
+        /// <summary>Ennemi de monde qui a declenche le combat.</summary>
         public CombatAggroEnemy SourceEnemy;
+        /// <summary>Position ou replacer le joueur apres combat.</summary>
         public Vector3 ReturnPosition;
+        /// <summary>Rotation ou replacer le joueur apres combat.</summary>
         public Quaternion ReturnRotation;
+        /// <summary>Position de retour de l'ennemi source.</summary>
         public Vector3 EnemyReturnPosition;
+        /// <summary>Rotation de retour de l'ennemi source.</summary>
         public Quaternion EnemyReturnRotation;
+        /// <summary>Position du joueur pendant la presentation combat.</summary>
         public Vector3 PlayerCombatPosition;
+        /// <summary>Rotation du joueur pendant la presentation combat.</summary>
         public Quaternion PlayerCombatRotation;
+        /// <summary>Position de l'ennemi pendant la presentation combat.</summary>
         public Vector3 EnemyCombatPosition;
+        /// <summary>Rotation de l'ennemi pendant la presentation combat.</summary>
         public Quaternion EnemyCombatRotation;
+        /// <summary>Indique si un ennemi de scene doit etre deplace/restaure.</summary>
         public bool HasEnemyPresentation;
+        /// <summary>Machine d'etat de la session.</summary>
         public CombatSessionState State = new CombatSessionState();
+        /// <summary>Ennemis runtime encore suivis par cette session.</summary>
         public List<CombatRuntimeEnemy> Enemies = new List<CombatRuntimeEnemy>();
+        /// <summary>Indique si le mouvement joueur a ete supprime par ce combat.</summary>
         public bool SuppressedMovement;
     }
 
+    /// <summary>
+    /// Presentation locale d'un ennemi deplace chez un client non serveur.
+    /// </summary>
     private sealed class LocalEnemyPresentation
     {
+        /// <summary>Ennemi local deplace pour la presentation.</summary>
         public CombatAggroEnemy Enemy;
+        /// <summary>Position de retour locale.</summary>
         public Vector3 ReturnPosition;
+        /// <summary>Rotation de retour locale.</summary>
         public Quaternion ReturnRotation;
     }
 
+    /// <summary>
+    /// Etat minimal conserve par un client pour l'affichage et la camera de combat.
+    /// </summary>
     private sealed class LocalCombatPresentationState
     {
+        /// <summary>Identifiant de la session affichee localement.</summary>
         public string SessionId;
+        /// <summary>Tour affiche localement.</summary>
         public CombatTurn Turn;
+        /// <summary>Indique si la resolution finale est en cours.</summary>
         public bool Resolving;
+        /// <summary>Resultat final connu localement.</summary>
         public bool ResolutionPlayerVictory;
+        /// <summary>Indique si l'ennemi a une presentation locale.</summary>
         public bool HasEnemyPresentation;
+        /// <summary>Position de retour locale de l'ennemi.</summary>
         public Vector3 EnemyReturnPosition;
+        /// <summary>Indique si l'action joueur est bloquee dans le HUD local.</summary>
         public bool PlayerActionLocked;
+        /// <summary>Vrai si une session locale est suivie.</summary>
         public bool Active => !string.IsNullOrWhiteSpace(SessionId);
 
+        /// <summary>
+        /// Reinitialise la presentation locale quand le combat se termine ou que le reseau despawn.
+        /// </summary>
         public void Reset()
         {
             SessionId = null;
@@ -68,36 +116,72 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Etat d'une priere de soutien active pour un client.
+    /// </summary>
     private sealed class PrayerState
     {
+        /// <summary>Client qui maintient la priere.</summary>
         public ulong ClientId;
+        /// <summary>Personnage associe a la priere.</summary>
         public string CharacterId;
+        /// <summary>Dernier moment ou la priere a ete validee.</summary>
         public float LastValidationTime;
     }
 
+    /// <summary>
+    /// Instance singleton active du manager de combat.
+    /// </summary>
     public static CombatSessionManager Instance { get; private set; }
 
     [Header("Turns")]
+    /// <summary>
+    /// Duree maximale d'un tour avant passage automatique.
+    /// </summary>
     [SerializeField, Min(1f), Tooltip("Duree maximale d'un tour.")]
     private float turnDurationSeconds = 30f;
+    /// <summary>
+    /// Delai avant que l'ennemi applique son action automatique.
+    /// </summary>
     [SerializeField, Min(0f), Tooltip("Delai court avant l'action automatique ennemie.")]
     private float enemyActionDelay = 1f;
+    /// <summary>
+    /// Degats de l'attaque de base du joueur.
+    /// </summary>
     [SerializeField, Min(1), Tooltip("Degats de base de l'action Attaquer du joueur.")]
     private int defaultPlayerAttackDamage = 3;
+    /// <summary>
+    /// Intervalle entre deux snapshots HUD/reseau.
+    /// </summary>
     [SerializeField, Min(0.05f), Tooltip("Intervalle de rafraichissement du HUD pendant un combat.")]
     private float snapshotInterval = 0.2f;
 
     [Header("Arena Scene")]
+    /// <summary>
+    /// Racine optionnelle de l'arene de combat.
+    /// </summary>
     [SerializeField, Tooltip("Racine de l'arene de combat dans la scene.")]
     private Transform arenaRoot;
+    /// <summary>
+    /// Point de placement du joueur dans l'arene.
+    /// </summary>
     [SerializeField, Tooltip("Spawn point scene du joueur pour les combats. Si vide, cherche 'Arena/SpawnPoint_Player'.")]
     private Transform spawnPointPlayer;
+    /// <summary>
+    /// Point de placement de l'ennemi dans l'arene.
+    /// </summary>
     [SerializeField, Tooltip("Spawn point scene de l'ennemi pour les combats. Si vide, cherche 'Arena/SpawnPoint_Enemy'.")]
     private Transform spawnPointEnemy;
 
     [Header("Idoles de Iustia")]
+    /// <summary>
+    /// Reduction de degats ajoutee par chaque joueur en priere.
+    /// </summary>
     [SerializeField, Range(0f, 1f), Tooltip("Reduction de degats accordee par joueur en priere.")]
     private float prayerDamageReductionPerPlayer = 0.2f;
+    /// <summary>
+    /// Limite maximale de reduction de degats.
+    /// </summary>
     [SerializeField, Range(0f, 1f), Tooltip("Cap de reduction idole. 0.8 signifie au moins 20% des degats passent toujours.")]
     private float maxPrayerDamageReduction = 0.8f;
 
@@ -110,6 +194,9 @@ public class CombatSessionManager : NetworkBehaviour
     private readonly LocalCombatPresentationState localCombatPresentation = new LocalCombatPresentationState();
     private int nextSessionId = 1;
 
+    /// <summary>
+    /// Retourne le manager existant ou cree un objet runtime minimal.
+    /// </summary>
     public static CombatSessionManager EnsureInstance()
     {
         if (Instance != null)
@@ -133,6 +220,9 @@ public class CombatSessionManager : NetworkBehaviour
         return Instance;
     }
 
+    /// <summary>
+    /// Indique si ce controleur de personnage est deja engage dans un combat.
+    /// </summary>
     public static bool IsCharacterInCombat(SquadCharacterController controller)
     {
         if (controller == null || Instance == null)
@@ -143,6 +233,9 @@ public class CombatSessionManager : NetworkBehaviour
         return Instance.TryGetSession(controller, out _);
     }
 
+    /// <summary>
+    /// Indique si le joueur local est actuellement dans un combat actif.
+    /// </summary>
     public bool IsLocalCombatActive()
     {
         if (CanRunAuthority())
@@ -155,6 +248,9 @@ public class CombatSessionManager : NetworkBehaviour
         return localCombatPresentation.Active;
     }
 
+    /// <summary>
+    /// Retourne les transforms joueur/ennemi utiles a une camera de combat locale.
+    /// </summary>
     public bool TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out bool playerTurn)
     {
         player = null;
@@ -187,6 +283,7 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void Awake()
     {
+        // Unity appelle Awake au chargement; le singleton peut provenir de la scene ou etre cree au runtime.
         if (Instance != null && Instance != this)
         {
             if (ShouldReplaceExistingInstance(Instance, this))
@@ -208,6 +305,7 @@ public class CombatSessionManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        // Netcode appelle OnNetworkSpawn quand l'objet reseau devient actif.
         Instance = this;
         if (IsServer && NetworkManager.Singleton != null)
         {
@@ -217,6 +315,7 @@ public class CombatSessionManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        // Netcode appelle OnNetworkDespawn avant destruction/desactivation reseau; il faut restaurer les presentations locales.
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
         localCombatPresentation.Reset();
@@ -233,6 +332,7 @@ public class CombatSessionManager : NetworkBehaviour
 
     public override void OnDestroy()
     {
+        // Unity appelle OnDestroy; on repete le nettoyage pour couvrir le mode non reseau.
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
         localCombatPresentation.Reset();
@@ -251,6 +351,7 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         ValidatePrayerStates();
+        // On copie les sessions avant iteration car TickSession peut terminer et retirer une session.
         tickSessions.Clear();
         foreach (CombatSession session in sessionsByCharacterId.Values)
         {
@@ -263,6 +364,9 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Tente de demarrer un combat entre un personnage joueur et un ennemi de monde.
+    /// </summary>
     public bool TryStartCombat(SquadCharacterController player, CombatAggroEnemy sourceEnemy)
     {
         if (!CanRunAuthority() || player == null || player.CurrentHp <= 0)
@@ -290,6 +394,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         StopPrayer(ownerClientId, sendFeedback: false);
 
+        // Les positions de combat peuvent venir de l'arene configuree ou de fallbacks proches du combat.
         ResolveCombatPositions(
             player,
             out Vector3 playerCombatPosition,
@@ -319,6 +424,7 @@ public class CombatSessionManager : NetworkBehaviour
         sessionsByCharacterId[characterId] = session;
         sessionsByClientId[ownerClientId] = session;
 
+        // Le mouvement est bloque pendant la session pour eviter que le joueur sorte de la presentation.
         player.PushScriptedMovementSuppression();
         session.SuppressedMovement = true;
         player.Stop();
@@ -331,6 +437,9 @@ public class CombatSessionManager : NetworkBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Demande une attaque du joueur local, en RPC si le client n'est pas autorite.
+    /// </summary>
     public void RequestLocalPlayerAttack()
     {
         if (IsNetworkSessionActive() && IsSpawned && !IsServer)
@@ -342,6 +451,9 @@ public class CombatSessionManager : NetworkBehaviour
         TryPlayerAttackForClient(ResolveLocalClientId());
     }
 
+    /// <summary>
+    /// Demande de passer le tour du joueur local.
+    /// </summary>
     public void RequestLocalPlayerPass()
     {
         if (IsNetworkSessionActive() && IsSpawned && !IsServer)
@@ -353,6 +465,9 @@ public class CombatSessionManager : NetworkBehaviour
         TryPlayerPassForClient(ResolveLocalClientId(), "Tour passe.");
     }
 
+    /// <summary>
+    /// Notifie le combat qu'un item vient d'etre utilise par un personnage.
+    /// </summary>
     public void NotifyInventoryItemUsed(SquadCharacterController controller)
     {
         if (!CanRunAuthority() || controller == null)
@@ -370,6 +485,9 @@ public class CombatSessionManager : NetworkBehaviour
         BeginTurn(session, CombatTurn.Enemy, "Item utilise. Fin du tour.");
     }
 
+    /// <summary>
+    /// Indique si un personnage peut utiliser un item dans l'etat de combat actuel.
+    /// </summary>
     public bool CanUseItemNow(SquadCharacterController controller, out string reason)
     {
         reason = string.Empty;
@@ -396,6 +514,9 @@ public class CombatSessionManager : NetworkBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Demande l'activation ou l'arret de la priere locale associee a une idole.
+    /// </summary>
     public void RequestTogglePrayerFromLocal(SquadCharacterController controller, IustiaIdolPrayer idol)
     {
         if (IsNetworkSessionActive() && IsSpawned && !IsServer)
@@ -410,6 +531,9 @@ public class CombatSessionManager : NetworkBehaviour
         SetPrayerState(clientId, resolved, shouldStart, sendFeedback: true);
     }
 
+    /// <summary>
+    /// Demande l'arret de la priere locale.
+    /// </summary>
     public void RequestStopPrayerFromLocal()
     {
         if (IsNetworkSessionActive() && IsSpawned && !IsServer)
@@ -424,12 +548,14 @@ public class CombatSessionManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestPlayerAttackServerRpc(ServerRpcParams rpcParams = default)
     {
+        // Le serveur valide l'action avec l'identite du client emetteur.
         TryPlayerAttackForClient(rpcParams.Receive.SenderClientId);
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void RequestPlayerPassServerRpc(ServerRpcParams rpcParams = default)
     {
+        // Passer le tour suit le meme chemin de validation que l'attaque.
         TryPlayerPassForClient(rpcParams.Receive.SenderClientId, "Tour passe.");
     }
 
@@ -452,6 +578,7 @@ public class CombatSessionManager : NetworkBehaviour
     {
         if (!IsServer)
         {
+            // Les clients non serveurs conservent un etat minimal pour HUD/camera.
             localCombatPresentation.SessionId = data.SessionId.ToString();
             localCombatPresentation.Turn = CombatTurn.None;
             localCombatPresentation.Resolving = false;
@@ -466,6 +593,7 @@ public class CombatSessionManager : NetworkBehaviour
         {
             if (!IsServer)
             {
+                // Le placement local est execute quand la transition couvre l'ecran.
                 ApplyLocalEnterCombatPresentation(data);
             }
         });

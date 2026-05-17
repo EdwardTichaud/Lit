@@ -3,13 +3,29 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-// Gestionnaire simple des connaissances debloquees.
+// Role: gere les connaissances debloquees pendant la partie.
+// Usage: singleton runtime appele par les voice lines, la sauvegarde et certains objets interactifs.
+// Responsibilities: stocker les connaissances, declencher les effets d'unlock, notifier les autres systemes.
+// Dependencies: KnowledgeSO, AudioManager, SquadManager, PersistentWorldSceneInstaller.
+// Precautions: ne pas changer la semantique de la liste unlockedKnowledge sans verifier la sauvegarde.
+/// <summary>
+/// Gestionnaire runtime des connaissances debloquees par le joueur.
+/// </summary>
 public class KnowledgeManager : MonoBehaviour
 {
+    /// <summary>
+    /// Instance singleton active dans la scene ou conservee entre scenes.
+    /// </summary>
     public static KnowledgeManager Instance { get; private set; }
 
     [Header("Runtime")]
+    /// <summary>
+    /// Liste serialisee des connaissances deja debloquees.
+    /// </summary>
     [SerializeField, Tooltip("Connaissances debloquees.")] private List<KnowledgeSO> unlockedKnowledge = new List<KnowledgeSO>();
+    /// <summary>
+    /// Si vrai, ce manager survit aux chargements de scene.
+    /// </summary>
     [SerializeField, Tooltip("Ne pas detruire au changement de scene.")] private bool dontDestroyOnLoad = true;
 
     [Header("Unlock FX")]
@@ -49,14 +65,27 @@ public class KnowledgeManager : MonoBehaviour
     private readonly HashSet<KnowledgeSO> lookup = new HashSet<KnowledgeSO>();
     private bool lookupReady;
 
+    /// <summary>
+    /// Vue lecture seule des connaissances debloquees.
+    /// </summary>
     public IReadOnlyList<KnowledgeSO> UnlockedKnowledge => unlockedKnowledge;
 
+    /// <summary>
+    /// Signature commune des evenements de connaissance.
+    /// </summary>
     public delegate void KnowledgeEvent(KnowledgeSO knowledge);
+    /// <summary>
+    /// Declenche quand une nouvelle connaissance est ajoutee.
+    /// </summary>
     public event KnowledgeEvent KnowledgeUnlocked;
+    /// <summary>
+    /// Declenche quand une connaissance est retiree.
+    /// </summary>
     public event KnowledgeEvent KnowledgeRemoved;
 
     private void Awake()
     {
+        // Unity appelle Awake au chargement de l'objet; ici on impose une seule instance active.
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -73,6 +102,9 @@ public class KnowledgeManager : MonoBehaviour
         RebuildLookup();
     }
 
+    /// <summary>
+    /// Retourne le manager existant ou en cree un minimal pour les scenes qui n'en possedent pas encore.
+    /// </summary>
     public static KnowledgeManager GetOrCreate()
     {
         if (Instance != null)
@@ -94,6 +126,9 @@ public class KnowledgeManager : MonoBehaviour
         return manager;
     }
 
+    /// <summary>
+    /// Prepare ce manager avant une remise a zero runtime controlee.
+    /// </summary>
     public void PrepareForRuntimeReset(string reason)
     {
         if (Instance == this)
@@ -107,6 +142,9 @@ public class KnowledgeManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Indique si une connaissance est actuellement debloquee.
+    /// </summary>
     public bool HasKnowledge(KnowledgeSO knowledge)
     {
         if (knowledge == null)
@@ -118,6 +156,9 @@ public class KnowledgeManager : MonoBehaviour
         return lookup.Contains(knowledge);
     }
 
+    /// <summary>
+    /// Debloque une connaissance si elle ne l'est pas deja.
+    /// </summary>
     public bool UnlockKnowledge(KnowledgeSO knowledge)
     {
         if (knowledge == null)
@@ -145,6 +186,9 @@ public class KnowledgeManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Retire une connaissance deja debloquee.
+    /// </summary>
     public bool RemoveKnowledge(KnowledgeSO knowledge)
     {
         if (knowledge == null)
@@ -167,6 +211,9 @@ public class KnowledgeManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Efface toutes les connaissances runtime.
+    /// </summary>
     public void ClearKnowledge()
     {
         EnsureLookup();
@@ -177,6 +224,9 @@ public class KnowledgeManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Remplace la liste runtime par les connaissances restaurees depuis la sauvegarde.
+    /// </summary>
     public void RestoreUnlockedKnowledge(IReadOnlyList<KnowledgeSO> restoredKnowledge)
     {
         if (unlockedKnowledge == null)
@@ -220,6 +270,7 @@ public class KnowledgeManager : MonoBehaviour
         lookup.Clear();
         if (unlockedKnowledge != null)
         {
+            // Parcours inverse pour pouvoir supprimer les references nulles sans decalage d'index.
             for (int i = unlockedKnowledge.Count - 1; i >= 0; i--)
             {
                 KnowledgeSO knowledge = unlockedKnowledge[i];
@@ -241,6 +292,7 @@ public class KnowledgeManager : MonoBehaviour
         Transform anchor = ResolveAnchor();
         Vector3 anchorPosition = anchor != null ? anchor.position : transform.position;
 
+        // Les effets sont facultatifs pour permettre a une scene de test d'utiliser uniquement les donnees.
         if (unlockVfxPrefab != null)
         {
             GameObject instance = Instantiate(unlockVfxPrefab, anchorPosition + unlockVfxOffset, Quaternion.identity);
@@ -464,6 +516,7 @@ public class KnowledgeManager : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        // Unity appelle OnValidate dans l'editeur apres modification de l'inspecteur.
         lookupReady = false;
     }
 #endif

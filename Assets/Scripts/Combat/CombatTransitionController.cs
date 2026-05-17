@@ -4,6 +4,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+// Role: affiche une transition visuelle/audio lors de l'entree et sortie de combat.
+// Usage: appele par CombatSessionManager autour du changement de presentation joueur/ennemi.
+// Responsibilities: creer son UI runtime, jouer SFX/musique, executer l'action quand l'ecran est couvert.
+// Dependencies: AudioManager, TMP, Unity UI.
+// Precautions: coveredAction est critique; elle doit etre appelee meme si la transition est interrompue.
+/// <summary>
+/// Controleur singleton des transitions entre exploration et combat.
+/// </summary>
 public sealed class CombatTransitionController : MonoBehaviour
 {
     private const string CombatMusicResourcePath = "CombatTransition/CombatMusic";
@@ -11,12 +19,27 @@ public sealed class CombatTransitionController : MonoBehaviour
     private const string ExitSfxResourcePath = "CombatTransition/CombatExit";
     private const string AccentSfxResourcePath = "CombatTransition/CombatAccent";
 
+    /// <summary>
+    /// Instance singleton de transition de combat.
+    /// </summary>
     public static CombatTransitionController Instance { get; private set; }
 
     [Header("Timing")]
+    /// <summary>
+    /// Duree de la transition d'entree en combat.
+    /// </summary>
     [SerializeField, Min(0.2f)] private float enterDuration = 1.45f;
+    /// <summary>
+    /// Moment normalise ou l'action couverte est executee pendant l'entree.
+    /// </summary>
     [SerializeField, Range(0.05f, 0.95f)] private float enterCoverNormalizedTime = 0.38f;
+    /// <summary>
+    /// Duree de la transition de sortie de combat.
+    /// </summary>
     [SerializeField, Min(0.2f)] private float exitDuration = 1.05f;
+    /// <summary>
+    /// Moment normalise ou l'action couverte est executee pendant la sortie.
+    /// </summary>
     [SerializeField, Range(0.05f, 0.95f)] private float exitCoverNormalizedTime = 0.44f;
 
     [Header("Audio")]
@@ -42,6 +65,9 @@ public sealed class CombatTransitionController : MonoBehaviour
     private int musicOverrideToken;
     private Sprite solidSprite;
 
+    /// <summary>
+    /// Retourne l'instance existante ou cree un controleur runtime minimal.
+    /// </summary>
     public static CombatTransitionController EnsureInstance()
     {
         if (Instance != null)
@@ -65,6 +91,9 @@ public sealed class CombatTransitionController : MonoBehaviour
         return Instance;
     }
 
+    /// <summary>
+    /// Lance la transition d'entree en combat.
+    /// </summary>
     public void PlayEnterTransition(Action coveredAction = null)
     {
         ResolveDefaultAudio();
@@ -79,6 +108,9 @@ public sealed class CombatTransitionController : MonoBehaviour
         StartTransition(EnterRoutine, coveredAction);
     }
 
+    /// <summary>
+    /// Lance la transition de sortie vers l'exploration.
+    /// </summary>
     public void PlayExitTransition(Action coveredAction = null)
     {
         ResolveDefaultAudio();
@@ -95,6 +127,7 @@ public sealed class CombatTransitionController : MonoBehaviour
 
     private void Awake()
     {
+        // Unity appelle Awake au chargement; le singleton doit exister avant les demandes de transition.
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -107,6 +140,7 @@ public sealed class CombatTransitionController : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Si l'objet est detruit pendant une transition, on execute quand meme l'action critique.
         InvokePendingCoveredAction();
         if (Instance == this)
         {
@@ -145,6 +179,7 @@ public sealed class CombatTransitionController : MonoBehaviour
             if (!covered && time >= coverAt)
             {
                 covered = true;
+                // A cet instant l'ecran est cense couvrir le changement de placement.
                 InvokePendingCoveredAction();
             }
 
@@ -177,6 +212,7 @@ public sealed class CombatTransitionController : MonoBehaviour
             if (!covered && time >= coverAt)
             {
                 covered = true;
+                // Meme principe que l'entree: on cache le changement de retour exploration.
                 InvokePendingCoveredAction();
             }
 

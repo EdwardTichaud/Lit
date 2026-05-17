@@ -1,7 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Donnees d'un item utilisees par l'inventaire et le loot.
+// Role: ScriptableObject central de configuration d'un item.
+// Usage: reference par l'inventaire, le loot, les readables, le craft, les containers, le combat et les interactions monde.
+// Responsibilities: stocker les donnees item, resoudre les regles d'utilisation/pose/drop/casse, fournir le contenu lisible.
+// Dependencies: Effect, InteractableItem, SquadCharacterController, ReadableContentRuntime, WorldPickupUtility.
+// Precautions: ce fichier a beaucoup de champs publics serialises; ne pas les renommer sans migration d'assets Unity.
+/// <summary>
+/// Donnees centrales d'un item utilise par les systemes d'inventaire, loot, readable, craft et interaction.
+/// </summary>
 [CreateAssetMenu(fileName = "Item", menuName = "Scriptable Objects/Item")]
 public class Item : ScriptableObject
 {
@@ -23,38 +30,63 @@ public class Item : ScriptableObject
     private const string DefaultTakeSuccessMessage = ItemNamePlaceholder + " pris";
     private const string DefaultBreakSuccessMessage = ItemNamePlaceholder + " cassé";
 
+    /// <summary>
+    /// Types de surfaces acceptees quand l'item est place dans le monde.
+    /// </summary>
     public enum PlacementSurfaceMode
     {
+        /// <summary>Aucune pose supportee.</summary>
         None = 0,
+        /// <summary>Pose uniquement sur surface horizontale.</summary>
         HorizontalOnly = 1,
+        /// <summary>Pose sur surface horizontale ou murale.</summary>
         HorizontalOrWall = 2
     }
 
+    /// <summary>
+    /// Type de document lisible porte par cet item.
+    /// </summary>
     public enum ReadableKind
     {
+        /// <summary>Item non lisible.</summary>
         None = 0,
+        /// <summary>Livre avec pages.</summary>
         Book = 1,
+        /// <summary>Parchemin avec texte continu.</summary>
         Parchment = 2
     }
 
+    /// <summary>
+    /// Resultat donne quand un item est casse.
+    /// </summary>
     [System.Serializable]
     public class BreakResult
     {
+        /// <summary>Item obtenu apres casse.</summary>
         [Tooltip("Item obtenu apres casse.")]
         public Item item;
+        /// <summary>Quantite obtenue.</summary>
         [Tooltip("Quantite obtenue.")]
         public int quantity = 1;
     }
 
+    /// <summary>
+    /// Ressource requise pour construire ou ameliorer un building.
+    /// </summary>
     [System.Serializable]
     public class BuildingRequirement
     {
+        /// <summary>Item requis.</summary>
         [Tooltip("Item requis pour construire/ameliorer.")]
         public Item item;
+        /// <summary>Quantite requise.</summary>
         [Tooltip("Quantite requise par niveau.")]
         public int quantity = 1;
     }
 
+    /// <summary>
+    /// Configuration specifique d'un niveau de building.
+    /// </summary>
     [System.Serializable]
     public class BuildingLevelConfig
     {
@@ -76,17 +108,25 @@ public class Item : ScriptableObject
         public List<Item> unlockedCrafts = new List<Item>();
     }
 
+    /// <summary>
+    /// Page fixe d'un livre lisible.
+    /// </summary>
     [System.Serializable]
     public class ReadablePage
     {
+        /// <summary>Texte affiche sur cette page.</summary>
         [TextArea(8, 20)]
         [Tooltip("Texte affiche sur cette page.")]
         public string text;
     }
 
+    /// <summary>
+    /// Phrase candidate pour la generation aleatoire d'un readable.
+    /// </summary>
     [System.Serializable]
     public class ReadableSentence
     {
+        /// <summary>Phrase candidate utilisee par ReadableContentRuntime.</summary>
         [TextArea(2, 8)]
         [Tooltip("Phrase candidate pour la generation aleatoire.")]
         public string text;
@@ -257,6 +297,7 @@ public class Item : ScriptableObject
 
     private void OnValidate()
     {
+        // Unity appelle OnValidate dans l'editeur; on borne la generation readable avant sauvegarde d'asset.
         if (!useRandomSentences)
         {
             if (generatedSentenceCount < 0)
@@ -270,6 +311,9 @@ public class Item : ScriptableObject
         generatedSentenceCount = GetValidatedGeneratedSentenceCount(GetAvailableReadableSentenceCount());
     }
 
+    /// <summary>
+    /// Indique si la casse de cet item produit au moins un resultat valide.
+    /// </summary>
     public bool HasBreakResults()
     {
         if (!canBreak || breakResults == null || breakResults.Count == 0)
@@ -289,6 +333,9 @@ public class Item : ScriptableObject
         return false;
     }
 
+    /// <summary>
+    /// Indique si au moins une configuration de niveau building est definie.
+    /// </summary>
     public bool HasBuildingLevelConfigs()
     {
         if (buildingLevelConfigs == null || buildingLevelConfigs.Count == 0)
@@ -307,6 +354,9 @@ public class Item : ScriptableObject
         return false;
     }
 
+    /// <summary>
+    /// Indique si les niveaux de building debloquent explicitement des crafts.
+    /// </summary>
     public bool HasCraftUnlocks()
     {
         if (!HasBuildingLevelConfigs())
@@ -326,6 +376,9 @@ public class Item : ScriptableObject
         return false;
     }
 
+    /// <summary>
+    /// Retourne la configuration de niveau la plus pertinente pour un niveau donne.
+    /// </summary>
     public BuildingLevelConfig GetBuildingLevelConfig(int level)
     {
         if (!HasBuildingLevelConfigs())
@@ -339,6 +392,7 @@ public class Item : ScriptableObject
         BuildingLevelConfig lowest = null;
         int lowestLevel = int.MaxValue;
 
+        // On prend d'abord le niveau exact, sinon le plus proche niveau inferieur, sinon le plus bas.
         for (int i = 0; i < buildingLevelConfigs.Count; i++)
         {
             BuildingLevelConfig config = buildingLevelConfigs[i];
@@ -369,6 +423,9 @@ public class Item : ScriptableObject
         return bestBelow != null ? bestBelow : lowest;
     }
 
+    /// <summary>
+    /// Retourne le nombre de slots de craft disponibles a un niveau de building.
+    /// </summary>
     public int GetCraftSlotsForLevel(int level)
     {
         int total = availableCrafts != null ? availableCrafts.Count : 0;
@@ -381,6 +438,9 @@ public class Item : ScriptableObject
         return total;
     }
 
+    /// <summary>
+    /// Retourne les crafts debloques pour un niveau de building.
+    /// </summary>
     public List<Item> GetUnlockedCraftsForLevel(int level)
     {
         List<Item> result = new List<Item>();
@@ -399,6 +459,7 @@ public class Item : ScriptableObject
         {
             int count = GetCraftSlotsForLevel(level);
             int limit = Mathf.Clamp(count, 0, availableCrafts.Count);
+            // Sans liste de crafts par niveau, les premiers slots de availableCrafts font foi.
             for (int i = 0; i < limit; i++)
             {
                 Item craft = availableCrafts[i];
@@ -459,6 +520,9 @@ public class Item : ScriptableObject
         return result;
     }
 
+    /// <summary>
+    /// Retourne les effets de building applicables a un niveau donne.
+    /// </summary>
     public IReadOnlyList<Effect> GetBuildingEffectsForLevel(int level)
     {
         if (!HasBuildingLevelConfigs())
@@ -470,6 +534,9 @@ public class Item : ScriptableObject
         return config != null ? config.effects : null;
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre utilise depuis l'inventaire.
+    /// </summary>
     public bool CanUse()
     {
         if (CanToggleEquipOnUse())
@@ -485,26 +552,41 @@ public class Item : ScriptableObject
         return useEffects != null && useEffects.Count > 0;
     }
 
+    /// <summary>
+    /// Indique si l'item ouvre une interface de lecture.
+    /// </summary>
     public bool IsReadable()
     {
         return readableKind != ReadableKind.None;
     }
 
+    /// <summary>
+    /// Indique si l'item est un livre lisible.
+    /// </summary>
     public bool IsReadableBook()
     {
         return readableKind == ReadableKind.Book;
     }
 
+    /// <summary>
+    /// Indique si l'item est un parchemin lisible.
+    /// </summary>
     public bool IsReadableParchment()
     {
         return readableKind == ReadableKind.Parchment;
     }
 
+    /// <summary>
+    /// Indique si le contenu lisible doit etre genere depuis les phrases candidates.
+    /// </summary>
     public bool UsesRandomReadableSentences()
     {
         return IsReadable() && useRandomSentences && GetValidatedGeneratedSentenceCount() > 0;
     }
 
+    /// <summary>
+    /// Force la generation du contenu readable si necessaire.
+    /// </summary>
     public void EnsureReadableContentGenerated()
     {
         if (UsesRandomReadableSentences())
@@ -513,16 +595,25 @@ public class Item : ScriptableObject
         }
     }
 
+    /// <summary>
+    /// Retourne le nombre de phrases generees.
+    /// </summary>
     public int GetGeneratedSentenceCount()
     {
         return ReadableContentRuntime.GetGeneratedSentenceCount(this);
     }
 
+    /// <summary>
+    /// Retourne une phrase generee par index.
+    /// </summary>
     public string GetGeneratedSentence(int index)
     {
         return ReadableContentRuntime.GetGeneratedSentence(this, index);
     }
 
+    /// <summary>
+    /// Retourne la cle stable utilisee par ReadableContentRuntime pour ce contenu.
+    /// </summary>
     public string GetReadableContentKey()
     {
         if (!string.IsNullOrWhiteSpace(readableContentId))
@@ -543,6 +634,9 @@ public class Item : ScriptableObject
         return itemName ?? string.Empty;
     }
 
+    /// <summary>
+    /// Retourne le nombre de pages affichables pour un livre.
+    /// </summary>
     public int GetBookPageCount()
     {
         if (UsesRandomReadableSentences())
@@ -556,6 +650,7 @@ public class Item : ScriptableObject
         }
 
         int count = bookPages.Count;
+        // Les pages vides finales ne doivent pas creer des pages blanches dans l'UI.
         while (count > 0)
         {
             ReadablePage page = bookPages[count - 1];
@@ -570,6 +665,9 @@ public class Item : ScriptableObject
         return count;
     }
 
+    /// <summary>
+    /// Retourne le texte d'une page de livre.
+    /// </summary>
     public string GetBookPageText(int pageIndex)
     {
         if (UsesRandomReadableSentences())
@@ -586,6 +684,9 @@ public class Item : ScriptableObject
         return page != null ? page.text ?? string.Empty : string.Empty;
     }
 
+    /// <summary>
+    /// Retourne le texte complet d'un parchemin.
+    /// </summary>
     public string GetParchmentText()
     {
         if (UsesRandomReadableSentences())
@@ -596,6 +697,9 @@ public class Item : ScriptableObject
         return parchmentText ?? string.Empty;
     }
 
+    /// <summary>
+    /// Collecte les phrases candidates non vides pour la generation readable.
+    /// </summary>
     internal List<string> CollectReadableSentenceCandidates()
     {
         List<string> result = new List<string>();
@@ -618,11 +722,17 @@ public class Item : ScriptableObject
         return result;
     }
 
+    /// <summary>
+    /// Retourne un nombre de phrases generees valide pour les candidates actuelles.
+    /// </summary>
     internal int GetValidatedGeneratedSentenceCount()
     {
         return GetValidatedGeneratedSentenceCount(GetAvailableReadableSentenceCount());
     }
 
+    /// <summary>
+    /// Retourne un nombre de phrases generees valide pour un nombre de candidates donne.
+    /// </summary>
     internal int GetValidatedGeneratedSentenceCount(int availableSentenceCount)
     {
         if (availableSentenceCount <= 0)
@@ -653,11 +763,17 @@ public class Item : ScriptableObject
         return count;
     }
 
+    /// <summary>
+    /// Tente d'utiliser l'item sans recuperer le message d'echec.
+    /// </summary>
     public bool TryUse(SquadCharacterController controller)
     {
         return TryUse(controller, out _);
     }
 
+    /// <summary>
+    /// Tente d'utiliser l'item et retourne la raison en cas d'echec.
+    /// </summary>
     public bool TryUse(SquadCharacterController controller, out string reason)
     {
         if (controller == null)
@@ -683,6 +799,7 @@ public class Item : ScriptableObject
 
         if (useEffects != null && useEffects.Count > 0)
         {
+            // Chaque effet decide s'il a reellement fait quelque chose; l'item arbitre ensuite le succes global.
             for (int i = 0; i < useEffects.Count; i++)
             {
                 Effect effect = useEffects[i];
@@ -710,6 +827,9 @@ public class Item : ScriptableObject
         return false;
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre casse et retourne un message si non.
+    /// </summary>
     public bool CanBreak(out string reason)
     {
         if (!canBreak || !HasBreakResults())
@@ -722,6 +842,9 @@ public class Item : ScriptableObject
         return true;
     }
 
+    /// <summary>
+    /// Tente de casser l'item via le controleur de personnage.
+    /// </summary>
     public bool TryBreak(SquadCharacterController controller, out string reason)
     {
         if (controller == null)
@@ -745,41 +868,53 @@ public class Item : ScriptableObject
         return false;
     }
 
+    /// <summary>Retourne le message de succes d'utilisation.</summary>
     public string GetUseSuccessMessage()
     {
         return ResolveMessage(useSuccessMessage, DefaultUseSuccessMessage);
     }
 
+    /// <summary>Retourne le message de succes de pose.</summary>
     public string GetPlaceSuccessMessage()
     {
         return ResolveMessage(placeSuccessMessage, DefaultPlaceSuccessMessage);
     }
 
+    /// <summary>Retourne le message de succes de drop.</summary>
     public string GetDropSuccessMessage()
     {
         return ResolveMessage(dropSuccessMessage, DefaultDropSuccessMessage);
     }
 
+    /// <summary>Retourne le message de succes de depot en container.</summary>
     public string GetDepositSuccessMessage()
     {
         return ResolveMessage(depositSuccessMessage, DefaultDepositSuccessMessage);
     }
 
+    /// <summary>Retourne le message de succes de prise depuis un container.</summary>
     public string GetTakeSuccessMessage()
     {
         return ResolveMessage(takeSuccessMessage, DefaultTakeSuccessMessage);
     }
 
+    /// <summary>Retourne le message de succes de casse.</summary>
     public string GetBreakSuccessMessage()
     {
         return ResolveMessage(breakSuccessMessage, DefaultBreakSuccessMessage);
     }
 
+    /// <summary>
+    /// Indique si l'item accorde au moins une capacite d'interaction monde.
+    /// </summary>
     public bool HasInteractionCapabilities()
     {
         return interactionCapabilities != InteractionCapability.None;
     }
 
+    /// <summary>
+    /// Indique si l'item accorde une capacite d'interaction precise.
+    /// </summary>
     public bool GrantsInteractionCapability(InteractionCapability capability)
     {
         if (capability == InteractionCapability.None)
@@ -790,6 +925,9 @@ public class Item : ScriptableObject
         return (interactionCapabilities & capability) == capability;
     }
 
+    /// <summary>
+    /// Indique si cet item est une cle compatible avec une serrure donnee.
+    /// </summary>
     public bool IsMatchingKey(string requiredLockId)
     {
         if (!isKey)
@@ -805,16 +943,25 @@ public class Item : ScriptableObject
         return string.Equals(keyId.Trim(), requiredLockId.Trim(), System.StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Indique si utiliser l'item doit l'equiper ou le desequiper.
+    /// </summary>
     public bool CanToggleEquipOnUse()
     {
         return toggleEquipOnUse && HasInteractionCapabilities();
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre depose dans un container.
+    /// </summary>
     public bool CanDepositToContainer(InteractableItem container)
     {
         return CanDepositToContainer(container, out _);
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre depose dans un container et retourne la raison si non.
+    /// </summary>
     public bool CanDepositToContainer(InteractableItem container, out string reason)
     {
         if (!allowDepositToContainers)
@@ -827,11 +974,17 @@ public class Item : ScriptableObject
         return true;
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre pris depuis un container.
+    /// </summary>
     public bool CanTakeFromContainer(InteractableItem container)
     {
         return CanTakeFromContainer(container, out _);
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre pris depuis un container et retourne la raison si non.
+    /// </summary>
     public bool CanTakeFromContainer(InteractableItem container, out string reason)
     {
         if (!allowTakeFromContainers)
@@ -846,11 +999,17 @@ public class Item : ScriptableObject
         return true;
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre place depuis l'inventaire.
+    /// </summary>
     public bool CanPlaceFromInventory(SquadCharacterController controller)
     {
         return CanPlaceFromInventory(controller, out _);
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre place depuis l'inventaire et retourne la raison si non.
+    /// </summary>
     public bool CanPlaceFromInventory(SquadCharacterController controller, out string reason)
     {
         if (!allowPlaceFromInventory)
@@ -875,6 +1034,9 @@ public class Item : ScriptableObject
         return true;
     }
 
+    /// <summary>
+    /// Retourne le type de surface requis par la pose de cet item.
+    /// </summary>
     public PlacementSurfaceMode GetPlacementSurfaceMode()
     {
         if (isBeacon || allowWallPlacement)
@@ -890,16 +1052,25 @@ public class Item : ScriptableObject
         return PlacementSurfaceMode.None;
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre pose sur un mur.
+    /// </summary>
     public bool SupportsWallPlacement()
     {
         return GetPlacementSurfaceMode() == PlacementSurfaceMode.HorizontalOrWall;
     }
 
+    /// <summary>
+    /// Indique si le placement doit verifier un support physique.
+    /// </summary>
     public bool RequiresPlacementSurfaceSupport()
     {
         return GetPlacementSurfaceMode() != PlacementSurfaceMode.None;
     }
 
+    /// <summary>
+    /// Retourne le rayon de placement specifique ou le fallback fourni.
+    /// </summary>
     public float GetPlacementRadius(float fallbackRadius)
     {
         if (placementRadiusOverride > 0f)
@@ -910,11 +1081,17 @@ public class Item : ScriptableObject
         return Mathf.Max(0f, fallbackRadius);
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre drop instantanement depuis l'inventaire.
+    /// </summary>
     public bool CanInstantDropFromInventory(SquadCharacterController controller, bool allowDropWithoutPrefab)
     {
         return CanInstantDropFromInventory(controller, allowDropWithoutPrefab, out _);
     }
 
+    /// <summary>
+    /// Indique si l'item peut etre drop instantanement et retourne la raison si non.
+    /// </summary>
     public bool CanInstantDropFromInventory(SquadCharacterController controller, bool allowDropWithoutPrefab, out string reason)
     {
         if (!allowDropFromInventory)
@@ -951,6 +1128,9 @@ public class Item : ScriptableObject
         return false;
     }
 
+    /// <summary>
+    /// Indique si le drop doit contourner le mode placement.
+    /// </summary>
     public bool ShouldInstantDropInsteadOfPlacement(SquadCharacterController controller, bool allowDropWithoutPrefab)
     {
         if (!CanInstantDropFromInventory(controller, allowDropWithoutPrefab))
@@ -961,6 +1141,9 @@ public class Item : ScriptableObject
         return !CanPlaceFromInventory(controller);
     }
 
+    /// <summary>
+    /// Retourne le prefab monde a instancier pour cet item.
+    /// </summary>
     public GameObject ResolveWorldPrefab()
     {
         if (isBuilding && buildingPrefab != null)
@@ -981,6 +1164,9 @@ public class Item : ScriptableObject
         return null;
     }
 
+    /// <summary>
+    /// Cree une instance monde de cet item, avec cube fallback si aucun prefab n'existe.
+    /// </summary>
     public GameObject CreateWorldInstance(Vector3 position, Quaternion rotation)
     {
         GameObject prefab = ResolveWorldPrefab();
@@ -995,11 +1181,17 @@ public class Item : ScriptableObject
         return fallback;
     }
 
+    /// <summary>
+    /// Cree ou configure un InteractableItem comme loot droppe.
+    /// </summary>
     public InteractableItem CreateDroppedLootContainer(GameObject instance, int quantity, bool destroyWhenEmpty, bool collectable = true)
     {
         return WorldPickupUtility.CreateOrConfigureDroppedPickup(instance, this, quantity, destroyWhenEmpty, collectable);
     }
 
+    /// <summary>
+    /// Configure un container existant pour representer cet item droppe.
+    /// </summary>
     public void ConfigureDroppedLootContainer(InteractableItem container, int quantity, bool destroyWhenEmpty, bool collectable = true)
     {
         WorldPickupUtility.ConfigureLootContainer(container, this, quantity, destroyWhenEmpty, collectable);

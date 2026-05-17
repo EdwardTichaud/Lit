@@ -3,24 +3,51 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
+// Role: affiche le HUD de combat et route les inputs simples d'action.
+// Usage: appele par CombatSessionManager via snapshots locaux ou reseau.
+// Responsibilities: afficher PV/tour/timer/message, montrer le bouton attaque, transmettre les actions joueur.
+// Dependencies: CombatSessionManager, LocalInputRouter, TMP, Unity UI.
+// Precautions: ce script peut utiliser une UI de scene ou une UI fallback; eviter de renommer les objets attendus.
+/// <summary>
+/// Controleur singleton du HUD de combat.
+/// </summary>
 public class CombatHudController : MonoBehaviour
 {
     private const string DefaultBattlePanelName = "BattlePanel";
     private const string DefaultBaseAttackUiName = "BaseAttackUI";
 
+    /// <summary>
+    /// Etat de tour converti pour l'affichage local du HUD.
+    /// </summary>
     public enum TurnState
     {
+        /// <summary>Aucun combat actif.</summary>
         None = 0,
+        /// <summary>Tour ennemi affiche.</summary>
         Enemy = 1,
+        /// <summary>Tour joueur affiche.</summary>
         Player = 2,
+        /// <summary>Combat termine.</summary>
         Finished = 3
     }
 
+    /// <summary>
+    /// Instance singleton du HUD de combat.
+    /// </summary>
     public static CombatHudController Instance { get; private set; }
 
     [Header("Scene UI")]
+    /// <summary>
+    /// Autorise la creation d'une UI runtime si aucune UI de scene n'est trouvee.
+    /// </summary>
     [SerializeField] private bool allowRuntimeFallback;
+    /// <summary>
+    /// CanvasGroup du panneau principal de combat dans la scene.
+    /// </summary>
     [SerializeField] private CanvasGroup battlePanelCanvasGroup;
+    /// <summary>
+    /// CanvasGroup de l'action attaque de base.
+    /// </summary>
     [SerializeField] private CanvasGroup baseAttackCanvasGroup;
     [SerializeField] private Image playerHpFillImage;
     [SerializeField] private Image enemyHpFillImage;
@@ -58,6 +85,9 @@ public class CombatHudController : MonoBehaviour
     private bool playerActionLocked;
     private bool visible;
 
+    /// <summary>
+    /// Retourne l'instance existante ou cree un HUD runtime minimal.
+    /// </summary>
     public static CombatHudController EnsureInstance()
     {
         if (Instance != null)
@@ -81,6 +111,9 @@ public class CombatHudController : MonoBehaviour
         return Instance;
     }
 
+    /// <summary>
+    /// Masque le HUD si la session active correspond.
+    /// </summary>
     public static void HideActive(string sessionId)
     {
         if (Instance == null)
@@ -98,6 +131,7 @@ public class CombatHudController : MonoBehaviour
 
     private void Awake()
     {
+        // Unity appelle Awake au chargement; on initialise le singleton et l'UI disponible.
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -115,6 +149,7 @@ public class CombatHudController : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Nettoyage des objets runtime et des panneaux de scene.
         if (Instance == this)
         {
             SetScenePanelVisibility(false, false);
@@ -134,6 +169,7 @@ public class CombatHudController : MonoBehaviour
 
     private void OnEnable()
     {
+        // Les inputs sont attaches ici car le composant peut etre reactive entre scenes.
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteract;
         LocalInputRouter.RightShoulder += OnRightShoulder;
@@ -142,6 +178,7 @@ public class CombatHudController : MonoBehaviour
 
     private void OnDisable()
     {
+        // Toujours detacher les inputs pour eviter les actions doublement envoyees.
         LocalInputRouter.Interact -= OnInteract;
         LocalInputRouter.RightShoulder -= OnRightShoulder;
         LocalInputRouter.Return -= OnReturn;
@@ -154,9 +191,13 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
+        // Le timer est derive du temps local entre deux snapshots serveur.
         UpdateTimerText();
     }
 
+    /// <summary>
+    /// Applique un snapshot complet de combat au HUD.
+    /// </summary>
     public void ShowSnapshot(
         string sessionId,
         TurnState turn,
@@ -181,6 +222,7 @@ public class CombatHudController : MonoBehaviour
         float sanitizedTimer = Mathf.Max(0f, timerRemaining);
         if (turn != previousTurn || actionLocked != previousActionLocked || sanitizedTimer > timerDuration)
         {
+            // On remet la duree de reference quand le tour change ou que l'etat d'action evolue.
             timerDuration = Mathf.Max(1f, sanitizedTimer);
         }
 

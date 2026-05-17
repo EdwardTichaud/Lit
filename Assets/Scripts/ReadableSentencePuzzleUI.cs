@@ -7,6 +7,14 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+// Role: panneau UI partage pour les enigmes de phrase lisible.
+// Usage: appele statiquement par ReadableSentencePuzzle; peut utiliser une UI de scene ou creer un fallback runtime.
+// Responsibilities: afficher le prompt, saisir la reponse, gerer clavier virtuel, feedback et verrouillage d'input.
+// Dependencies: TMP, Unity UI, InputFocusStack, CursorController, MenuCursorNavigator.
+// Precautions: modifier les noms d'objets peut casser la resolution automatique de l'UI de scene.
+/// <summary>
+/// Interface utilisateur singleton pour les puzzles demandant une phrase de document lisible.
+/// </summary>
 [DisallowMultipleComponent]
 public class ReadableSentencePuzzleUI : MonoBehaviour
 {
@@ -28,6 +36,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
     [Serializable]
     private sealed class PuzzleRequest
     {
+        // Proprietaire logique du panneau; evite qu'une autre enigme ferme ou modifie l'UI.
         public object Owner;
         public string Title;
         public string Prompt;
@@ -37,10 +46,25 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
     }
 
     [Header("Runtime UI")]
+    /// <summary>
+    /// Groupe canvas racine utilise pour afficher ou masquer le panneau.
+    /// </summary>
     [SerializeField] private CanvasGroup rootCanvasGroup;
+    /// <summary>
+    /// Titre affiche en haut du panneau.
+    /// </summary>
     [SerializeField] private TMP_Text titleText;
+    /// <summary>
+    /// Consigne affichee au joueur.
+    /// </summary>
     [SerializeField] private TMP_Text promptText;
+    /// <summary>
+    /// Message de feedback apres validation.
+    /// </summary>
     [SerializeField] private TMP_Text feedbackText;
+    /// <summary>
+    /// Champ de saisie de la reponse.
+    /// </summary>
     [SerializeField] private TMP_InputField inputField;
     [SerializeField] private MenuInputFieldCaret inputCaret;
     [SerializeField] private GridLayoutGroup keyboardLayout;
@@ -66,6 +90,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
     private void Awake()
     {
+        // Unity appelle Awake au chargement; on conserve une seule UI partagee.
         if (instance != null && instance != this)
         {
             Destroy(gameObject);
@@ -85,6 +110,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Unity appelle OnDestroy quand l'objet disparait; l'instance statique ne doit pas rester invalide.
         if (instance == this)
         {
             instance = null;
@@ -93,6 +119,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
     private void OnDisable()
     {
+        // OnDisable remet l'UI et l'input dans un etat neutre si la scene ou le panneau est desactive.
         CancelTimedFeedback(invokeCallback: false);
         ReleaseInputLock();
         HideImmediate();
@@ -103,6 +130,9 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Affiche le panneau pour un proprietaire donne.
+    /// </summary>
     public static bool TryShow(
         object owner,
         string title,
@@ -125,6 +155,9 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         return resolvedInstance != null && resolvedInstance.TryShowInternal(request);
     }
 
+    /// <summary>
+    /// Ferme le panneau si le proprietaire correspond.
+    /// </summary>
     public static void Dismiss(object owner, bool invokeCancel = false)
     {
         if (instance == null)
@@ -135,11 +168,17 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         instance.DismissInternal(owner, invokeCancel);
     }
 
+    /// <summary>
+    /// Indique si le panneau est actuellement ouvert pour ce proprietaire.
+    /// </summary>
     public static bool IsShowingFor(object owner)
     {
         return instance != null && MatchesOwner(instance.activeRequest != null ? instance.activeRequest.Owner : null, owner);
     }
 
+    /// <summary>
+    /// Affiche un feedback temporaire puis ferme le panneau.
+    /// </summary>
     public static bool BeginFeedbackAndDismiss(object owner, string message, bool isError, float delaySeconds, Action onDismissed = null)
     {
         if (instance == null)
@@ -150,6 +189,9 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         return instance.BeginTimedFeedbackInternal(owner, message, isError, delaySeconds, dismissAfterDelay: true, onDismissed);
     }
 
+    /// <summary>
+    /// Affiche un feedback temporaire sans fermer automatiquement le panneau.
+    /// </summary>
     public static bool BeginFeedback(object owner, string message, bool isError, float delaySeconds, Action onCompleted = null)
     {
         if (instance == null)
@@ -160,6 +202,9 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         return instance.BeginTimedFeedbackInternal(owner, message, isError, delaySeconds, dismissAfterDelay: false, onCompleted);
     }
 
+    /// <summary>
+    /// Active ou desactive les controles de saisie pour le proprietaire courant.
+    /// </summary>
     public static void SetInteractable(object owner, bool interactive)
     {
         if (instance == null || !MatchesOwner(instance.activeRequest != null ? instance.activeRequest.Owner : null, owner))
@@ -170,6 +215,9 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         instance.SetInteractive(interactive);
     }
 
+    /// <summary>
+    /// Met a jour le message de feedback pour le proprietaire courant.
+    /// </summary>
     public static void SetFeedback(object owner, string message, bool isError)
     {
         if (instance == null || !MatchesOwner(instance.activeRequest != null ? instance.activeRequest.Owner : null, owner))
@@ -216,6 +264,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
 
         if (activeRequest != null && !MatchesOwner(activeRequest.Owner, request.Owner))
         {
+            // Une seule enigme peut piloter le panneau a la fois.
             return false;
         }
 
@@ -291,6 +340,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
     {
         if (!HasResolvedUiReferences())
         {
+            // Les references peuvent venir d'une UI placee en scene ou d'un fallback cree au runtime.
             ResolveSceneUiReferences();
         }
 
@@ -1105,6 +1155,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         inputLocked = true;
+        // Le focus empeche les autres systemes de consommer les touches pendant la saisie.
         InputFocusStack.Push(this);
         if (SquadManager.Instance != null)
         {
@@ -1121,6 +1172,7 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
         inputLocked = false;
+        // Toujours liberer le focus quand le panneau se ferme, meme apres une annulation.
         InputFocusStack.Pop(this);
         if (SquadManager.Instance != null)
         {

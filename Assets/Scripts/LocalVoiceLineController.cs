@@ -5,90 +5,190 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
-// Joue des lignes de voix et affiche le texte en world space, avec support des connaissances.
+// Role: joue des lignes de voix locales et affiche leur texte en world space.
+// Usage: attache a un personnage, PNJ ou objet qui doit parler lors d'une interaction.
+// Responsibilities: choisir une ligne selon les connaissances, jouer l'audio, afficher le texte, debloquer des connaissances.
+// Dependencies: VoiceLineData, KnowledgeSO, KnowledgeManager, AudioManager, LocalInputRouter, CharacterData.
+// Precautions: les champs publics peuvent etre references par des prefabs; ne pas les renommer sans migration Unity.
+/// <summary>
+/// Controleur de voice lines locales avec conditions de connaissances et affichage texte.
+/// </summary>
 public class LocalVoiceLineController : MonoBehaviour
 {
+    /// <summary>
+    /// Ligne de voix conditionnelle configuree directement sur ce controleur.
+    /// </summary>
     [System.Serializable]
     public class LocalVoiceLineEntry
     {
+        /// <summary>
+        /// Donnee de voice line jouee quand cette entree est selectionnee.
+        /// </summary>
         [Tooltip("VoiceLineData declenchee par cette entree.")]
         public VoiceLineData voiceLine;
+        /// <summary>
+        /// Connaissances necessaires pour autoriser cette entree.
+        /// </summary>
         [Tooltip("Connaissances requises pour declencher la ligne.")]
         public List<KnowledgeSO> requiredKnowledge = new List<KnowledgeSO>();
+        /// <summary>
+        /// Connaissances debloquees apres lecture reussie de cette entree.
+        /// </summary>
         [Tooltip("Connaissances debloquees lorsque la ligne est declenchee.")]
         public List<KnowledgeSO> unlockKnowledge = new List<KnowledgeSO>();
     }
 
+    /// <summary>
+    /// Strategie utilisee quand plusieurs entrees de voice line sont valides.
+    /// </summary>
     public enum KnowledgeSelectionMode
     {
+        /// <summary>
+        /// Prend la premiere entree valide dans la liste.
+        /// </summary>
         FirstMatch,
+        /// <summary>
+        /// Prend l'entree valide avec le plus de connaissances requises.
+        /// </summary>
         MostSpecific
     }
 
     [Header("Voice Lines")]
     [Tooltip("CharacterData qui contient les voice lines.")]
     private CharacterData characterData;
+    /// <summary>
+    /// Reconstruit automatiquement le dictionnaire des voice lines.
+    /// </summary>
     [Tooltip("Reconstruit le lookup au Awake/OnEnable.")]
     public bool autoBuildLookup = true;
+    /// <summary>
+    /// Tente de trouver le CharacterData via les composants voisins.
+    /// </summary>
     [Tooltip("Auto-resout le CharacterData si manquant.")]
     public bool autoResolveCharacterData = true;
 
     [Header("Voice Lines")]
+    /// <summary>
+    /// Entrees locales avec conditions de connaissances.
+    /// </summary>
     [Tooltip("Liste locale de voice lines (avec conditions de connaissances).")]
     [FormerlySerializedAs("entries")]
     public List<LocalVoiceLineEntry> voiceLines = new List<LocalVoiceLineEntry>();
+    /// <summary>
+    /// Mode de selection applique par <see cref="PlayBestEntry"/>.
+    /// </summary>
     [Tooltip("Mode de selection quand plusieurs lignes sont valides.")]
     public KnowledgeSelectionMode knowledgeSelectionMode = KnowledgeSelectionMode.MostSpecific;
 
     [Header("Interaction")]
+    /// <summary>
+    /// Si vrai, l'input Interact declenche une ligne quand un personnage est a portee.
+    /// </summary>
     [Tooltip("Ecoute l'input Interact pour declencher une ligne.")]
     public bool useInteractInput = false;
+    /// <summary>
+    /// Autorise le fallback par tag Player quand aucun membre de squad n'est trouve.
+    /// </summary>
     [Tooltip("Exige un tag Player si aucun personnage de squad n'est trouve.")]
     public bool requirePlayerTag = true;
+    /// <summary>
+    /// Utilise les bounds du collider pour calculer la zone d'interaction.
+    /// </summary>
     [Tooltip("Utilise le bounds du collider pour estimer le rayon.")]
     public bool useColliderBounds = true;
+    /// <summary>
+    /// Rayon manuel utilise si aucun collider ne sert de reference.
+    /// </summary>
     [Tooltip("Rayon manuel d'interaction.")]
     public float interactionRadius = 1.25f;
+    /// <summary>
+    /// Marge ajoutee au rayon derive du collider.
+    /// </summary>
     [Tooltip("Padding ajoute au rayon du collider.")]
     public float colliderRadiusPadding = 0.1f;
+    /// <summary>
+    /// Temps minimal entre deux interactions.
+    /// </summary>
     [Tooltip("Cooldown entre deux interactions (secondes).")]
     public float interactCooldown = 0f;
 
     [Header("Display")]
+    /// <summary>
+    /// Transform qui sert de point d'ancrage au texte.
+    /// </summary>
     [Tooltip("Point d'ancrage du texte (tete). Laisse vide pour utiliser ce transform.")]
     public Transform textAnchor;
+    /// <summary>
+    /// Offset du texte par rapport a l'ancrage.
+    /// </summary>
     [Tooltip("Offset local du texte.")]
     public Vector3 textOffset = new Vector3(0f, 2f, 0f);
+    /// <summary>
+    /// Prefab optionnel contenant un TMP_Text pour l'affichage.
+    /// </summary>
     [Tooltip("Prefab optionnel contenant un TMP_Text.")]
     public GameObject textPrefab;
     [Tooltip("Reference directe vers le TMP_Text instancie.")]
     [SerializeField] private TMP_Text textTarget;
     [Tooltip("Root des voice lines dans la scene (tag LocalVoiceLines).")]
     [SerializeField] private Transform textRoot;
+    /// <summary>
+    /// Oriente le texte vers la camera principale.
+    /// </summary>
     [Tooltip("Oriente le texte vers la camera.")]
     public bool faceCamera = true;
+    /// <summary>
+    /// Duree d'affichage quand aucune duree audio exploitable n'existe.
+    /// </summary>
     [Tooltip("Duree par defaut d'affichage si pas d'audio valide.")]
     public float fallbackTextDuration = 1.5f;
+    /// <summary>
+    /// Temps ajoute apres la fin du clip audio.
+    /// </summary>
     [Tooltip("Temps ajoute a la duree audio (lecture).")]
     public float extraTextDuration = 0.1f;
+    /// <summary>
+    /// Masque le texte lorsque la lecture est terminee.
+    /// </summary>
     [Tooltip("Masque le texte a la fin.")]
     public bool hideWhenDone = true;
+    /// <summary>
+    /// Utilise le temps non scale pour continuer pendant certaines pauses UI.
+    /// </summary>
     [Tooltip("Utilise le temps non-scale (UI).")]
     public bool useUnscaledTime = false;
 
     [Header("Audio")]
+    /// <summary>
+    /// Utilise AudioManager s'il est present dans la scene.
+    /// </summary>
     [Tooltip("Utilise AudioManager si present.")]
     public bool useAudioManager = true;
+    /// <summary>
+    /// Spatial blend applique par la source locale de fallback.
+    /// </summary>
     [Range(0f, 1f), Tooltip("Spatial blend si AudioManager absent.")]
     public float fallbackSpatialBlend = 1f;
+    /// <summary>
+    /// Distance minimale de la source audio de fallback.
+    /// </summary>
     [Tooltip("Distance min si AudioManager absent.")]
     public float fallbackMinDistance = 1f;
+    /// <summary>
+    /// Distance maximale de la source audio de fallback.
+    /// </summary>
     [Tooltip("Distance max si AudioManager absent.")]
     public float fallbackMaxDistance = 20f;
 
     [Header("Music Ducking")]
+    /// <summary>
+    /// Reduit temporairement la musique pendant la lecture d'une voice line.
+    /// </summary>
     [Tooltip("Reduit la musique pendant une voiceline.")]
     public bool duckMusicDuringVoiceLine = true;
+    /// <summary>
+    /// Multiplicateur de volume musique pendant le ducking.
+    /// </summary>
     [Range(0f, 1f), Tooltip("Multiplicateur applique a la musique pendant une voiceline.")]
     public float musicDuckMultiplier = 0.5f;
 
@@ -107,6 +207,7 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void Awake()
     {
+        // Unity appelle Awake une fois au chargement du composant; on prepare les references cachees.
         EnsureTextTarget();
         ResolveCharacterData();
         if (autoBuildLookup)
@@ -122,6 +223,7 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void OnEnable()
     {
+        // Unity appelle OnEnable a chaque activation; l'abonnement input doit etre refait ici.
         ResolveCharacterData();
         if (autoBuildLookup)
         {
@@ -142,6 +244,7 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void OnDisable()
     {
+        // Unity appelle OnDisable a la desactivation; il faut liberer input/audio pour eviter les callbacks orphelins.
         EndMusicDucking();
         if (!useInteractInput)
         {
@@ -153,6 +256,7 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void LateUpdate()
     {
+        // LateUpdate garde le texte et le son alignes apres le deplacement des personnages.
         UpdateTextTransform();
         UpdateAudioTransform();
     }
@@ -184,6 +288,9 @@ public class LocalVoiceLineController : MonoBehaviour
         TriggerInteraction();
     }
 
+    /// <summary>
+    /// Declenche la meilleure voice line disponible pour l'interaction courante.
+    /// </summary>
     public void TriggerInteraction()
     {
         if (interactCooldown > 0f)
@@ -198,6 +305,9 @@ public class LocalVoiceLineController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Reconstruit le dictionnaire index -> VoiceLineData a partir du CharacterData courant.
+    /// </summary>
     public void RebuildLookup()
     {
         ResolveCharacterData();
@@ -220,6 +330,9 @@ public class LocalVoiceLineController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Joue une voice line par son index dans le CharacterData.
+    /// </summary>
     public bool PlayVoiceLine(int index)
     {
         if (!lookup.TryGetValue(index, out VoiceLineData data) || data == null)
@@ -236,6 +349,9 @@ public class LocalVoiceLineController : MonoBehaviour
         return PlayVoiceLine(data);
     }
 
+    /// <summary>
+    /// Joue une voice line precise, avec support des cues texte si elle en contient.
+    /// </summary>
     public bool PlayVoiceLine(VoiceLineData data)
     {
         if (data == null)
@@ -251,6 +367,9 @@ public class LocalVoiceLineController : MonoBehaviour
         return PlayLine(data.voiceLineText, data.voiceLineAudioClip);
     }
 
+    /// <summary>
+    /// Joue une entree conditionnelle et applique ses connaissances a debloquer.
+    /// </summary>
     public bool PlayEntry(LocalVoiceLineEntry entry)
     {
         if (entry == null)
@@ -272,6 +391,9 @@ public class LocalVoiceLineController : MonoBehaviour
         return played;
     }
 
+    /// <summary>
+    /// Joue une entree locale par index dans la liste serialisee.
+    /// </summary>
     public bool PlayEntry(int index)
     {
         if (voiceLines == null || index < 0 || index >= voiceLines.Count)
@@ -282,6 +404,9 @@ public class LocalVoiceLineController : MonoBehaviour
         return PlayEntry(voiceLines[index]);
     }
 
+    /// <summary>
+    /// Selectionne puis joue l'entree la plus pertinente selon les connaissances du joueur.
+    /// </summary>
     public bool PlayBestEntry()
     {
         LocalVoiceLineEntry entry = SelectEntryForKnowledge();
@@ -293,6 +418,9 @@ public class LocalVoiceLineController : MonoBehaviour
         return PlayEntry(entry);
     }
 
+    /// <summary>
+    /// Affiche un texte et joue le clip associe sans passer par une VoiceLineData.
+    /// </summary>
     public bool PlayLine(string text, AudioClipSO clip)
     {
         EnsureTextTarget();
@@ -787,6 +915,9 @@ public class LocalVoiceLineController : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Joue une voice line aleatoire issue du CharacterData courant.
+    /// </summary>
     public bool PlayRandomVoiceLine()
     {
         List<VoiceLineData> source = GetVoiceLineSource();

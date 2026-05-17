@@ -2,6 +2,14 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
+// Role: detecte un joueur proche et lance une session de combat contre cet ennemi.
+// Usage: attache aux ennemis de scene capables d'aggro.
+// Responsibilities: creer les definitions d'ennemis, demarrer le combat, appliquer le resultat monde.
+// Dependencies: CombatSessionManager, CombatHealth, CharacterData, Netcode.
+// Precautions: ce script peut desactiver l'objet apres victoire; verifier les prefabs avant de changer ce comportement.
+/// <summary>
+/// Ennemi de monde qui peut declencher un combat quand un personnage entre dans son trigger.
+/// </summary>
 [DisallowMultipleComponent]
 public class CombatAggroEnemy : MonoBehaviour
 {
@@ -45,6 +53,7 @@ public class CombatAggroEnemy : MonoBehaviour
 
     private void Reset()
     {
+        // Unity appelle Reset dans l'editeur quand le composant est ajoute ou reinitialise.
         combatHealth = GetComponent<CombatHealth>();
         ResolveCharacterDataReferences();
         EnsureAggroTrigger();
@@ -52,6 +61,7 @@ public class CombatAggroEnemy : MonoBehaviour
 
     private void Awake()
     {
+        // Awake prepare les references avant que les triggers puissent lancer un combat.
         if (combatHealth == null)
         {
             combatHealth = GetComponent<CombatHealth>();
@@ -63,14 +73,19 @@ public class CombatAggroEnemy : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // Unity appelle ceci quand un collider entre dans un trigger de l'ennemi.
         TryAggro(other);
     }
 
     private void OnTriggerStay(Collider other)
     {
+        // OnTriggerStay permet de lancer l'aggro si le cooldown expire pendant que le joueur est deja dans la zone.
         TryAggro(other);
     }
 
+    /// <summary>
+    /// Cree les definitions d'ennemis qui seront copiees dans une session de combat.
+    /// </summary>
     public List<CombatEnemyDefinition> CreateEnemyDefinitions()
     {
         List<CombatEnemyDefinition> result;
@@ -106,6 +121,9 @@ public class CombatAggroEnemy : MonoBehaviour
         return result;
     }
 
+    /// <summary>
+    /// Remplace le CharacterData ennemi et synchronise les champs principaux.
+    /// </summary>
     public void SetEnemy(CharacterData data)
     {
         enemy = data;
@@ -120,6 +138,9 @@ public class CombatAggroEnemy : MonoBehaviour
         attackDamage = Mathf.Max(0, data.attackDamage);
     }
 
+    /// <summary>
+    /// Notifie l'ennemi qu'une session s'est terminee sans forcement recevoir les PV restants.
+    /// </summary>
     public void HandleCombatEnded(bool playerVictory)
     {
         combatInProgress = false;
@@ -141,6 +162,9 @@ public class CombatAggroEnemy : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Applique le resultat final et les PV restants au composant monde.
+    /// </summary>
     public void FinalizeCombatResult(bool playerVictory, int remainingHp)
     {
         combatInProgress = false;
@@ -164,6 +188,9 @@ public class CombatAggroEnemy : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Retourne l'Animator le plus proche pour les transitions de combat.
+    /// </summary>
     public Animator ResolveAnimator()
     {
         Animator animator = GetComponent<Animator>();
@@ -188,6 +215,7 @@ public class CombatAggroEnemy : MonoBehaviour
             return;
         }
 
+        // Le manager refuse si le personnage est deja engage ou si le reseau n'est pas pret.
         CombatSessionManager manager = CombatSessionManager.EnsureInstance();
         if (manager == null || !manager.TryStartCombat(controller, this))
         {
@@ -262,6 +290,7 @@ public class CombatAggroEnemy : MonoBehaviour
             return;
         }
 
+        // Fallback utile pour les prototypes: l'ennemi devient detectable sans prefab de trigger dedie.
         SphereCollider trigger = gameObject.AddComponent<SphereCollider>();
         trigger.isTrigger = true;
         trigger.radius = Mathf.Max(0.1f, aggroRadius);

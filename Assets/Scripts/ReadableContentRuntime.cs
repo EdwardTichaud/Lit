@@ -2,8 +2,19 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Role: garde en memoire le contenu genere des documents lisibles pendant une session.
+// Usage: appele par les items lisibles, les puzzles de phrase et la sauvegarde.
+// Responsibilities: generer des phrases stables, restaurer/capturer l'etat sauvegarde, fournir pages et parchemins.
+// Dependencies: Item, ItemRegistry, ReadableGeneratedContentData, NetcodeLauncher, SaveSessionManager.
+// Precautions: ne pas changer les cles de contenu ou la logique de seed sans migrer les sauvegardes existantes.
+/// <summary>
+/// Cache runtime pour les contenus lisibles generes a partir des donnees d'un <see cref="Item"/>.
+/// </summary>
 public static class ReadableContentRuntime
 {
+    /// <summary>
+    /// Etat interne sauvegardable pour un item lisible deja genere.
+    /// </summary>
     private sealed class GeneratedReadableContentState
     {
         public string contentKey;
@@ -16,12 +27,18 @@ public static class ReadableContentRuntime
     private static readonly Dictionary<string, GeneratedReadableContentState> generatedByContentKey = new Dictionary<string, GeneratedReadableContentState>();
     private static int runtimeSeedSalt = GenerateRuntimeSeedSalt();
 
+    /// <summary>
+    /// Vide le cache de generation et force un nouveau sel runtime pour les lancements hors sauvegarde.
+    /// </summary>
     public static void ResetRuntimeState(string reason)
     {
         generatedByContentKey.Clear();
         runtimeSeedSalt = GenerateRuntimeSeedSalt();
     }
 
+    /// <summary>
+    /// Recharge les contenus lisibles deja generes depuis les donnees de sauvegarde.
+    /// </summary>
     public static void RestoreSaveData(List<ReadableGeneratedContentData> savedStates)
     {
         generatedByContentKey.Clear();
@@ -39,6 +56,7 @@ public static class ReadableContentRuntime
                 continue;
             }
 
+            // Les anciennes sauvegardes peuvent stocker un itemId alors que le systeme actuel prefere la contentKey.
             string contentKey = entry.itemId;
             Item resolvedItem = ResolveItem(entry.itemId);
             if (resolvedItem != null)
@@ -61,6 +79,9 @@ public static class ReadableContentRuntime
         }
     }
 
+    /// <summary>
+    /// Capture les contenus generes afin que la sauvegarde restaure exactement les memes textes.
+    /// </summary>
     public static List<ReadableGeneratedContentData> CaptureSaveData()
     {
         List<ReadableGeneratedContentData> result = new List<ReadableGeneratedContentData>(generatedByContentKey.Count);
@@ -85,11 +106,17 @@ public static class ReadableContentRuntime
         return result;
     }
 
+    /// <summary>
+    /// Force la generation du contenu lisible si l'item est configure pour cela.
+    /// </summary>
     public static bool EnsureGenerated(Item item)
     {
         return TryGetOrGenerateState(item, out _);
     }
 
+    /// <summary>
+    /// Retourne le nombre de pages generees pour un livre lisible.
+    /// </summary>
     public static int GetBookPageCount(Item item)
     {
         return TryGetOrGenerateState(item, out GeneratedReadableContentState state)
@@ -97,6 +124,9 @@ public static class ReadableContentRuntime
             : 0;
     }
 
+    /// <summary>
+    /// Retourne le texte d'une page generee, ou une chaine vide si l'index est invalide.
+    /// </summary>
     public static string GetBookPageText(Item item, int pageIndex)
     {
         if (!TryGetOrGenerateState(item, out GeneratedReadableContentState state))
@@ -112,6 +142,9 @@ public static class ReadableContentRuntime
         return state.bookPages[pageIndex] ?? string.Empty;
     }
 
+    /// <summary>
+    /// Retourne le texte genere pour un parchemin lisible.
+    /// </summary>
     public static string GetParchmentText(Item item)
     {
         return TryGetOrGenerateState(item, out GeneratedReadableContentState state)
@@ -119,6 +152,9 @@ public static class ReadableContentRuntime
             : string.Empty;
     }
 
+    /// <summary>
+    /// Retourne le nombre de phrases generees pour un item lisible.
+    /// </summary>
     public static int GetGeneratedSentenceCount(Item item)
     {
         return TryGetOrGenerateState(item, out GeneratedReadableContentState state)
@@ -126,6 +162,9 @@ public static class ReadableContentRuntime
             : 0;
     }
 
+    /// <summary>
+    /// Retourne une phrase generee par index, ou une chaine vide si elle n'existe pas.
+    /// </summary>
     public static string GetGeneratedSentence(Item item, int index)
     {
         return TryGetGeneratedSentence(item, index, out string sentence)
@@ -133,6 +172,9 @@ public static class ReadableContentRuntime
             : string.Empty;
     }
 
+    /// <summary>
+    /// Tente de recuperer une phrase generee depuis un item.
+    /// </summary>
     public static bool TryGetGeneratedSentence(Item item, int index, out string sentence)
     {
         sentence = string.Empty;
@@ -144,6 +186,9 @@ public static class ReadableContentRuntime
         return TryGetGeneratedSentence(state, index, out sentence);
     }
 
+    /// <summary>
+    /// Tente de recuperer une phrase generee depuis une cle de contenu.
+    /// </summary>
     public static bool TryGetGeneratedSentence(string contentKey, int index, out string sentence)
     {
         sentence = string.Empty;
@@ -218,6 +263,7 @@ public static class ReadableContentRuntime
         }
 
         int seed = ResolveSeed(item, contentKey);
+        // Le shuffle determine quelles phrases deviennent les pages ou le texte du parchemin.
         Shuffle(candidates, new System.Random(seed));
 
         GeneratedReadableContentState state = new GeneratedReadableContentState
@@ -380,6 +426,7 @@ public static class ReadableContentRuntime
 
         unchecked
         {
+            // Hash FNV-1a stable: contrairement a string.GetHashCode(), il ne change pas entre executions.
             uint hash = 2166136261u;
             for (int i = 0; i < value.Length; i++)
             {

@@ -1,5 +1,19 @@
+// Role:
+// Central ScriptableObject mapping gameplay action cues to reusable AudioClipSO assets.
+// Usage:
+// Loaded or assigned by audio/interaction systems to play consistent UI, inventory,
+// character, combat, puzzle, and world feedback sounds.
+// Responsibilities:
+// Keep cue-to-clip lookup data in one place.
+// Dependencies:
+// AudioClipSO.
+// Precautions:
+// Keep enum numeric values stable if save data, settings, or analytics ever store them.
 using UnityEngine;
 
+/// <summary>
+/// Identifiers for common gameplay/UI audio feedback events.
+/// </summary>
 public enum ActionAudioCue
 {
     None = 0,
@@ -55,75 +69,131 @@ public enum ActionAudioCue
     DestructibleDestroy = 110,
 }
 
+/// <summary>
+/// ScriptableObject library resolving ActionAudioCue values to AudioClipSO assets.
+/// </summary>
 [CreateAssetMenu(fileName = "ActionAudioLibrary", menuName = "Scriptable Objects/Audio/Action Audio Library")]
 public class ActionAudioLibrarySO : ScriptableObject
 {
     [Header("UI")]
+    /// <summary>Clip for opening UI panels.</summary>
     public AudioClipSO uiOpen;
+    /// <summary>Clip for closing UI panels.</summary>
     public AudioClipSO uiClose;
+    /// <summary>Clip for confirming UI actions.</summary>
     public AudioClipSO uiConfirm;
+    /// <summary>Clip for cancelling UI actions.</summary>
     public AudioClipSO uiCancel;
+    /// <summary>Clip for invalid UI actions.</summary>
     public AudioClipSO uiInvalid;
 
     [Header("Inventory")]
+    /// <summary>Clip for opening inventory.</summary>
     public AudioClipSO inventoryOpen;
+    /// <summary>Clip for closing inventory.</summary>
     public AudioClipSO inventoryClose;
+    /// <summary>Clip for taking an item.</summary>
     public AudioClipSO inventoryTake;
+    /// <summary>Clip for depositing an item.</summary>
     public AudioClipSO inventoryDeposit;
+    /// <summary>Clip for dropping an item.</summary>
     public AudioClipSO inventoryDrop;
+    /// <summary>Clip for starting item placement.</summary>
     public AudioClipSO inventoryPlaceStart;
+    /// <summary>Clip for confirming item placement.</summary>
     public AudioClipSO inventoryPlaceConfirm;
+    /// <summary>Clip for cancelling item placement.</summary>
     public AudioClipSO inventoryPlaceCancel;
+    /// <summary>Clip for using an item.</summary>
     public AudioClipSO inventoryUse;
+    /// <summary>Clip for breaking or consuming an item.</summary>
     public AudioClipSO inventoryBreak;
+    /// <summary>Clip for unlocking through inventory actions.</summary>
     public AudioClipSO inventoryUnlock;
+    /// <summary>Clip for successful lockpicking.</summary>
     public AudioClipSO inventoryLockpickSuccess;
+    /// <summary>Clip for failed lockpicking.</summary>
     public AudioClipSO inventoryLockpickFailure;
+    /// <summary>Clip for trap feedback.</summary>
     public AudioClipSO inventoryTrap;
+    /// <summary>Clip for opening a readable.</summary>
     public AudioClipSO inventoryReadOpen;
+    /// <summary>Clip for turning a readable page.</summary>
     public AudioClipSO inventoryReadPage;
+    /// <summary>Clip for closing a readable.</summary>
     public AudioClipSO inventoryReadClose;
+    /// <summary>Clip for selecting a beacon color.</summary>
     public AudioClipSO beaconColorSelect;
 
     [Header("Building / Craft")]
+    /// <summary>Clip for opening the building panel.</summary>
     public AudioClipSO buildPanelOpen;
+    /// <summary>Clip for closing the building panel.</summary>
     public AudioClipSO buildPanelClose;
+    /// <summary>Clip for starting building placement.</summary>
     public AudioClipSO buildPlacementStart;
+    /// <summary>Clip for completing building placement.</summary>
     public AudioClipSO buildComplete;
+    /// <summary>Clip for upgrading a building.</summary>
     public AudioClipSO buildUpgrade;
+    /// <summary>Clip for successful crafting.</summary>
     public AudioClipSO craftSuccess;
+    /// <summary>Clip for failed crafting.</summary>
     public AudioClipSO craftFailure;
 
     [Header("Character")]
+    /// <summary>Clip for character damage.</summary>
     public AudioClipSO characterDamage;
+    /// <summary>Clip for character healing.</summary>
     public AudioClipSO characterHeal;
+    /// <summary>Clip for character death.</summary>
     public AudioClipSO characterDeath;
+    /// <summary>Clip for jumping.</summary>
     public AudioClipSO characterJump;
+    /// <summary>Clip for landing.</summary>
     public AudioClipSO characterLand;
+    /// <summary>Clip for toggling the torch.</summary>
     public AudioClipSO torchToggle;
+    /// <summary>Clip for ladder use.</summary>
     public AudioClipSO ladderUse;
+    /// <summary>Clip for teleportation.</summary>
     public AudioClipSO teleport;
+    /// <summary>Clip for returning home.</summary>
     public AudioClipSO returnHome;
+    /// <summary>Clip for starting a labyrinth or expedition step.</summary>
     public AudioClipSO labyrinthStart;
 
     [Header("Skill Checks")]
+    /// <summary>Clip for successful skill checks.</summary>
     public AudioClipSO skillCheckSuccess;
+    /// <summary>Clip for failed skill checks.</summary>
     public AudioClipSO skillCheckFailure;
 
     [Header("Combat")]
+    /// <summary>Clip for player or enemy combat attacks.</summary>
     public AudioClipSO combatAttack;
+    /// <summary>Clip for combat hits.</summary>
     public AudioClipSO combatHit;
+    /// <summary>Clip for combat turn transitions.</summary>
     public AudioClipSO combatTurn;
+    /// <summary>Clip for combat victory.</summary>
     public AudioClipSO combatVictory;
+    /// <summary>Clip for combat defeat.</summary>
     public AudioClipSO combatDefeat;
 
     [Header("Puzzles")]
+    /// <summary>Clip for puzzle success.</summary>
     public AudioClipSO puzzleSuccess;
+    /// <summary>Clip for puzzle failure.</summary>
     public AudioClipSO puzzleFailure;
 
     [Header("World")]
+    /// <summary>Clip for destroying destructible world objects.</summary>
     public AudioClipSO destructibleDestroy;
 
+    /// <summary>
+    /// Returns the clip configured for the given action cue, or null if none is configured.
+    /// </summary>
     public AudioClipSO Resolve(ActionAudioCue cue)
     {
         switch (cue)

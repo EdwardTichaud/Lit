@@ -8,23 +8,52 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
+// Role: interaction qui demande au joueur de recopier une phrase d'un item lisible.
+// Usage: attache a un objet de scene detecte par le systeme d'interaction personnage.
+// Responsibilities: afficher le prompt, valider la reponse, synchroniser l'etat resolu en solo/netcode.
+// Dependencies: ReadableSentenceReference, ReadableSentencePuzzleUI, LocalInputRouter, WorldInteractionService, Netcode.
+// Precautions: ne pas modifier les noms des champs serialises; ils sont probablement relies a des prefabs/scenes.
+/// <summary>
+/// Puzzle de phrase lie a un document lisible genere.
+/// </summary>
 [DisallowMultipleComponent]
 public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteractable
 {
+    /// <summary>
+    /// Resultat normalise d'une tentative de resolution.
+    /// </summary>
     public enum SolveAttemptResult
     {
+        /// <summary>La reponse est correcte.</summary>
         Success = 0,
+        /// <summary>La phrase envoyee ne correspond pas a la phrase attendue.</summary>
         IncorrectAnswer = 1,
+        /// <summary>La phrase cible n'a pas pu etre generee ou retrouvee.</summary>
         SentenceUnavailable = 2,
+        /// <summary>Le puzzle est deja resolu et ne peut etre rejoue.</summary>
         PuzzleAlreadySolved = 3,
+        /// <summary>Le personnage n'est pas autorise ou pas a portee.</summary>
         InvalidCharacter = 4,
+        /// <summary>La configuration de scene est incomplete.</summary>
         InvalidConfiguration = 5
     }
 
     [Header("Reference")]
+    /// <summary>
+    /// Phrase d'item lisible que le joueur doit recopier.
+    /// </summary>
     [SerializeField] private ReadableSentenceReference requiredSentence;
+    /// <summary>
+    /// Titre affiche dans le panneau de puzzle.
+    /// </summary>
     [SerializeField] private string panelTitle = "Enigme";
+    /// <summary>
+    /// Texte de prompt optionnel. Vide, il est genere depuis la reference de phrase.
+    /// </summary>
     [SerializeField, TextArea(2, 4)] private string promptOverride;
+    /// <summary>
+    /// Si vrai, le puzzle reste resolu apres une bonne reponse.
+    /// </summary>
     [SerializeField] private bool playOnce = true;
 
     [Header("Validation")]
@@ -35,8 +64,17 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
     [SerializeField] private bool trimWhitespace = true;
 
     [Header("Interaction")]
+    /// <summary>
+    /// Collider utilise pour mesurer la distance d'interaction.
+    /// </summary>
     [SerializeField] private Collider interactionCollider;
+    /// <summary>
+    /// Distance maximale entre le personnage et le point d'interaction.
+    /// </summary>
     [SerializeField] private float interactionMaxDistance = 2.25f;
+    /// <summary>
+    /// Priorite utilisee si plusieurs interactables sont detectes.
+    /// </summary>
     [SerializeField] private int interactionPriority = 40;
 
     [Header("UI - Interaction")]
@@ -82,22 +120,34 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
     private bool applySolvedStateAfterFeedbackClose;
     private bool invokeSolvedEventAfterFeedbackClose;
 
+    /// <summary>
+    /// Etat resolu local du puzzle.
+    /// </summary>
     public bool IsSolved => isSolved;
+    /// <summary>
+    /// Indique si une seule resolution est autorisee.
+    /// </summary>
     public bool PlayOnce => playOnce;
+    /// <summary>
+    /// Reference vers la phrase attendue.
+    /// </summary>
     public ReadableSentenceReference RequiredSentence => requiredSentence;
 
     private void Reset()
     {
+        // Unity appelle Reset quand le composant est ajoute ou reinitialise dans l'editeur.
         interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
     }
 
     private void OnValidate()
     {
+        // Unity appelle OnValidate dans l'editeur; on garde une distance toujours positive.
         interactionMaxDistance = Mathf.Max(0.1f, interactionMaxDistance);
     }
 
     private void Awake()
     {
+        // Awake cache le collider et l'identifiant stable avant les interactions.
         resolvedInteractionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
         if (interactionCollider == null)
         {
@@ -109,6 +159,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
 
     private void OnEnable()
     {
+        // OnEnable raccorde l'input et enregistre ce puzzle pour les appels Netcode par id stable.
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         NetcodeTriggerRegistry.Register(this, netcodeId);
@@ -116,6 +167,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
 
     private void OnDisable()
     {
+        // OnDisable libere l'input, le registre Netcode et les UI eventuellement ouvertes.
         LocalInputRouter.Interact -= OnInteractPerformed;
         NetcodeTriggerRegistry.Unregister(this, netcodeId);
         ReadableSentencePuzzleUI.Dismiss(this);
@@ -124,6 +176,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
 
     private void LateUpdate()
     {
+        // LateUpdate positionne la bulle d'interaction apres les mouvements de camera/personnage.
         if (interactionBoxInstance == null || !interactionBoxInstance.activeSelf)
         {
             return;
@@ -174,6 +227,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         interactionBoxInstance.transform.rotation = Quaternion.LookRotation(toCamera);
     }
 
+    /// <summary>
+    /// Indique au systeme de detection si ce puzzle peut etre propose au personnage.
+    /// </summary>
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
         return controller != null
@@ -182,6 +238,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
             && (!playOnce || !isSolved);
     }
 
+    /// <summary>
+    /// Retourne le collider utilise pour calculer la detection et la distance.
+    /// </summary>
     public Collider GetInteractionDetectionCollider()
     {
         if (resolvedInteractionCollider == null)
@@ -192,21 +251,33 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         return resolvedInteractionCollider;
     }
 
+    /// <summary>
+    /// Retourne le transform qui sert d'ancre d'interaction.
+    /// </summary>
     public Transform GetInteractionAnchor()
     {
         return transform;
     }
 
+    /// <summary>
+    /// Retourne la distance maximale autorisee pour interagir.
+    /// </summary>
     public float GetInteractionMaxDistance(SquadCharacterController controller)
     {
         return Mathf.Max(0.1f, interactionMaxDistance);
     }
 
+    /// <summary>
+    /// Retourne la priorite d'interaction utilisee par la detection.
+    /// </summary>
     public int GetInteractionPriority(SquadCharacterController controller)
     {
         return interactionPriority;
     }
 
+    /// <summary>
+    /// Recoit le personnage actuellement detecte et affiche/masque l'aide d'interaction.
+    /// </summary>
     public void SetDetectedCharacter(GameObject character)
     {
         if (currentCharacter == character)
@@ -219,12 +290,18 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         ShowInteraction(currentCharacter != null && (!playOnce || !isSolved));
     }
 
+    /// <summary>
+    /// Tente de resoudre la phrase attendue depuis le document lisible reference.
+    /// </summary>
     public bool TryResolveExpectedSentence(out string sentence)
     {
         sentence = string.Empty;
         return requiredSentence.TryGetGeneratedSentence(out sentence);
     }
 
+    /// <summary>
+    /// Construit le texte de consigne affiche dans le panneau du puzzle.
+    /// </summary>
     public string BuildPrompt()
     {
         if (!string.IsNullOrWhiteSpace(promptOverride))
@@ -241,6 +318,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         return $"Entrez la phrase n°{requiredSentence.SentenceNumber} de \"{readableName}\".";
     }
 
+    /// <summary>
+    /// Restaure l'etat resolu sans redeclencher l'evenement local.
+    /// </summary>
     public void RestoreSolvedState(bool solved)
     {
         ApplySolvedState(solved, invokeLocalEvent: false);
@@ -326,6 +406,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         HandleSolveAttemptResult(result);
     }
 
+    /// <summary>
+    /// Valide une tentative de reponse cote serveur ou en mode solo.
+    /// </summary>
     public SolveAttemptResult ServerTrySubmitAnswer(GameObject character, string answer)
     {
         if (!CanUse(character, requireLocalControl: false, rangePadding: 0.35f))
@@ -369,6 +452,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         return SolveAttemptResult.Success;
     }
 
+    /// <summary>
+    /// Applique localement le resultat d'une tentative de resolution.
+    /// </summary>
     public void HandleSolveAttemptResult(SolveAttemptResult result)
     {
         awaitingServerResponse = false;
@@ -377,6 +463,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         {
             PlayResultSfx(successSfx);
             bool delayPanelClose = TryShowSolvedFeedbackBeforeDismiss();
+            // En solo, l'etat peut etre applique immediatement ou apres le feedback UI.
             if (!IsNetworked())
             {
                 if (delayPanelClose)
@@ -394,6 +481,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
                 WorldInteractionService service = WorldInteractionService.Instance;
                 if (service != null)
                 {
+                    // En reseau, le serveur propage l'etat resolu aux clients via le service d'interaction.
                     service.NotifyReadableSentencePuzzleSolved(netcodeId);
                 }
                 else
@@ -453,6 +541,9 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
         AudioSource.PlayClipAtPoint(clip.audioClip, transform.position, Mathf.Clamp01(clip.volume));
     }
 
+    /// <summary>
+    /// Recoit la replication Netcode indiquant que le puzzle est resolu.
+    /// </summary>
     public void HandleSolvedStateReplicated()
     {
         if (waitingForSolvedFeedbackClose)
@@ -520,6 +611,7 @@ public class ReadableSentencePuzzle : MonoBehaviour, ICharacterDetectedInteracta
 
         StringBuilder builder = new StringBuilder(normalized.Length);
         bool previousWasWhitespace = false;
+        // La normalisation doit rester identique cote client et serveur pour eviter les faux refus.
         for (int i = 0; i < normalized.Length; i++)
         {
             char character = normalized[i];
