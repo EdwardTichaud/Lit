@@ -188,7 +188,7 @@ Material:
     - _AORemapMin: 0.658
     - _ATDistance: 1
     - _AddPrecomputedVelocity: 0
-    - _AgeAmount: 0
+    - _AgeAmount: 666
     - _AgeRadius: 2000
     - _AgeSoftness: 0.5
     - _AlbedoAffectEmissive: 0
