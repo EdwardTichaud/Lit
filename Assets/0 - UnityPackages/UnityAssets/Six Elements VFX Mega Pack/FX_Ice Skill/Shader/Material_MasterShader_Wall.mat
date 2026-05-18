@@ -119,7 +119,7 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _SurfaceType: 0
-    - _TilingMultiplier: 1
+    - _TilingMultiplier: 0.15
     - _TimeAmount: 0
     - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
