@@ -33,6 +33,11 @@ public static class CharacterInteractionDetection
                 return item;
             }
 
+            if (current.TryGetComponent(out StabReading stabReading) && stabReading.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(stabReading))
+            {
+                return stabReading;
+            }
+
             if (current.TryGetComponent(out DestructibleObject destructible) && destructible.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(destructible))
             {
                 return destructible;
