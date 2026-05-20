@@ -1,0 +1,2529 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f065649e9720959832f52eac03f9e504, type: 3}
+  m_Name: "DistrictRegistry_REG_PIC_NOIR"
+  m_EditorClassIdentifier: Assembly-CSharp::DistrictRegistry
+  registryId: "REG_PIC_NOIR"
+  districtId: "DIST_PIC_NOIR"
+  districtName: "Quartier du Pic Noir"
+  registryTitle: "Registre des habitants - Quartier du Pic Noir"
+  readableItem: {fileID: 11400000, guid: 39bb36ef5205d0a14d5cde0f20b30ab9, type: 2}
+  itemDescription: "Registre administratif des chambres du Quartier du Pic Noir."
+  coverNote: "Copie de consultation. Les chambres hautes et froides sont relevees par naissance et affectation. Certaines lignes portent des signes de reprise ou de transfert."
+  yearSectionSpan: 40
+  maxEntriesPerPage: 6
+  residents:
+  - residentId: "RES_PICNOIR_0001"
+    firstName: "Brann"
+    lastName: "Sombrepic"
+    birthYear: 181
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-001"
+    events:
+    - year: 181
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-001"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-001"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 193
+      eventType: 9
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-051"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers P-051"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "P-051"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 222
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-001"
+      destinationDistrict: ""
+      cause: "chute"
+      readableTextOverride: "Décès : chute"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-001"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : chute"
+    eventYear: 222
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_SOMBREPIC"
+    lineageId: "LIN_SOMBREPIC"
+    relatedRoomId: "P-001"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0002"
+    firstName: "Liora"
+    lastName: "Rocheveille"
+    birthYear: 188
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-002"
+    events:
+    - year: 188
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-002"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-002"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_ROCHEVEILLE"
+    lineageId: "LIN_ROCHEVEILLE"
+    relatedRoomId: "P-002"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0003"
+    firstName: "Teren"
+    lastName: "Hautegarde"
+    birthYear: 196
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-003"
+    events:
+    - year: 196
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-003"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-003"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 262
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-003"
+      destinationDistrict: ""
+      cause: "froid"
+      readableTextOverride: "Décès : froid"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-003"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : froid"
+    eventYear: 262
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_HAUTEGARDE"
+    lineageId: "LIN_HAUTEGARDE"
+    relatedRoomId: "P-003"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0004"
+    firstName: "Nara"
+    lastName: "Ventecôte"
+    birthYear: 204
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-004"
+    events:
+    - year: 204
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-004"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-004"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 262
+      eventType: 2
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-004"
+      destinationDistrict: "Quartier de la Lune Pleine"
+      cause: ""
+      readableTextOverride: "Déplacée vers Quartier de la Lune Pleine"
+      note: "Destination copiee: Quartier de la Lune Pleine."
+      isNameStruckOut: 0
+      relatedRoomId: "L-004"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacée vers Quartier de la Lune Pleine"
+    eventYear: 262
+    destinationDistrict: "Quartier de la Lune Pleine"
+    isNameStruckOut: 0
+    familyId: "FAM_VENTECÔTE"
+    lineageId: "LIN_VENTECÔTE"
+    relatedRoomId: "P-004"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Lune Pleine."
+  - residentId: "RES_PICNOIR_0005"
+    firstName: "Oren"
+    lastName: "Graverive"
+    birthYear: 212
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-005"
+    events:
+    - year: 212
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-005"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-005"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 243
+      eventType: 3
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-005"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Disparu hors registre"
+      note: "Derniere mention au tour de garde du nord."
+      isNameStruckOut: 0
+      relatedRoomId: "P-005"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 3
+    lastEventText: "Disparu hors registre"
+    eventYear: 243
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_GRAVERIVE"
+    lineageId: "LIN_GRAVERIVE"
+    relatedRoomId: "P-005"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "anomalie"
+    - "disparition"
+    internalNote: "Derniere mention au tour de garde du nord."
+  - residentId: "RES_PICNOIR_0006"
+    firstName: "Ysel"
+    lastName: "Chantefroid"
+    birthYear: 220
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-006"
+    events:
+    - year: 220
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-006"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-006"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 239
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-006"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-006"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 239
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CHANTEFROID"
+    lineageId: "LIN_CHANTEFROID"
+    relatedRoomId: "P-006"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0007"
+    firstName: "Soren"
+    lastName: "Lignombre"
+    birthYear: 228
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-007"
+    events:
+    - year: 228
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-007"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-007"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 297
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-007"
+      destinationDistrict: ""
+      cause: "accident de brasero"
+      readableTextOverride: "Décès : accident de brasero"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-007"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : accident de brasero"
+    eventYear: 297
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_LIGNOMBRE"
+    lineageId: "LIN_LIGNOMBRE"
+    relatedRoomId: "P-007"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0008"
+    firstName: "Mara"
+    lastName: "Pierre-noire"
+    birthYear: 236
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-008"
+    events:
+    - year: 236
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-008"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-008"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 259
+      eventType: 10
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-008"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "P-008"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 283
+      eventType: 2
+      districtId: "DIST_STATUE"
+      districtName: "Quartier de la Statue"
+      habitationNumber: "S-008"
+      destinationDistrict: "Quartier de la Statue"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Statue"
+      note: "Destination copiee: Quartier de la Statue."
+      isNameStruckOut: 0
+      relatedRoomId: "S-008"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Statue"
+    eventYear: 283
+    destinationDistrict: "Quartier de la Statue"
+    isNameStruckOut: 0
+    familyId: "FAM_PIERRE_NOIRE"
+    lineageId: "LIN_PIERRE_NOIRE"
+    relatedRoomId: "P-008"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Statue."
+  - residentId: "RES_PICNOIR_0009"
+    firstName: "Alric"
+    lastName: "Froideseuil"
+    birthYear: 244
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-009"
+    events:
+    - year: 244
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-009"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-009"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FROIDESEUIL"
+    lineageId: "LIN_FROIDESEUIL"
+    relatedRoomId: "P-009"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0010"
+    firstName: "Iselle"
+    lastName: "Murhaut"
+    birthYear: 252
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-010"
+    events:
+    - year: 252
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-010"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-010"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 318
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-010"
+      destinationDistrict: ""
+      cause: "rixe"
+      readableTextOverride: "Décès : rixe"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-010"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : rixe"
+    eventYear: 318
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_MURHAUT"
+    lineageId: "LIN_MURHAUT"
+    relatedRoomId: "P-010"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0011"
+    firstName: "Corvan"
+    lastName: "Noirmur"
+    birthYear: 261
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-011"
+    events:
+    - year: 261
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-011"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-011"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 280
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-011"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-011"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 280
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_NOIRMUR"
+    lineageId: "LIN_NOIRMUR"
+    relatedRoomId: "P-011"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0012"
+    firstName: "Aveline"
+    lastName: "Rochedos"
+    birthYear: 269
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-012"
+    events:
+    - year: 269
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-012"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-012"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 352
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-012"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-012"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 352
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_ROCHEDOS"
+    lineageId: "LIN_ROCHEDOS"
+    relatedRoomId: "P-012"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0013"
+    firstName: "Rovan"
+    lastName: "Gardevent"
+    birthYear: 277
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-013"
+    events:
+    - year: 277
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-013"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-013"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 324
+      eventType: 2
+      districtId: "DIST_UNKNOWN"
+      districtName: "Quartier des Remparts"
+      habitationNumber: "X-013"
+      destinationDistrict: "Quartier des Remparts"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier des Remparts"
+      note: "Destination copiee: Quartier des Remparts."
+      isNameStruckOut: 0
+      relatedRoomId: "X-013"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier des Remparts"
+    eventYear: 324
+    destinationDistrict: "Quartier des Remparts"
+    isNameStruckOut: 0
+    familyId: "FAM_GARDEVENT"
+    lineageId: "LIN_GARDEVENT"
+    relatedRoomId: "P-013"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier des Remparts."
+  - residentId: "RES_PICNOIR_0014"
+    firstName: "Thalie"
+    lastName: "Cendrehaute"
+    birthYear: 285
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-014"
+    events:
+    - year: 285
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-014"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-014"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CENDREHAUTE"
+    lineageId: "LIN_CENDREHAUTE"
+    relatedRoomId: "P-014"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0015"
+    firstName: "Calen"
+    lastName: "Veilleroc"
+    birthYear: 293
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-015"
+    events:
+    - year: 293
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-015"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-015"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 314
+      eventType: 10
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-015"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "P-015"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 334
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-015"
+      destinationDistrict: ""
+      cause: "chute"
+      readableTextOverride: "Décès : chute"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-015"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : chute"
+    eventYear: 334
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VEILLEROC"
+    lineageId: "LIN_VEILLEROC"
+    relatedRoomId: "P-015"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0016"
+    firstName: "Maëlle"
+    lastName: "Hautepierre"
+    birthYear: 302
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-016"
+    events:
+    - year: 302
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-016"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-016"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 318
+      eventType: 9
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-072"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers P-072"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "P-072"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 383
+      eventType: 4
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-016"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Nom rayé"
+      note: "Rature repetee sur deux copies."
+      isNameStruckOut: 1
+      relatedRoomId: "P-016"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 4
+    lastEventText: "Nom rayé"
+    eventYear: 383
+    destinationDistrict: ""
+    isNameStruckOut: 1
+    familyId: "FAM_HAUTEPIERRE"
+    lineageId: "LIN_HAUTEPIERRE"
+    relatedRoomId: "P-016"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "anomalie"
+    - "rature"
+    internalNote: "Rature repetee sur deux copies."
+  - residentId: "RES_PICNOIR_0017"
+    firstName: "Elian"
+    lastName: "Pichier"
+    birthYear: 311
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-017"
+    events:
+    - year: 311
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-017"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-017"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 339
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-017"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-017"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 339
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_PICHIER"
+    lineageId: "LIN_PICHIER"
+    relatedRoomId: "P-017"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0018"
+    firstName: "Sava"
+    lastName: "Ventsombre"
+    birthYear: 320
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-018"
+    events:
+    - year: 320
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-018"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-018"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 367
+      eventType: 2
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-018"
+      destinationDistrict: "Quartier de la Lune Pleine"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Lune Pleine"
+      note: "Destination copiee: Quartier de la Lune Pleine."
+      isNameStruckOut: 0
+      relatedRoomId: "L-018"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Lune Pleine"
+    eventYear: 367
+    destinationDistrict: "Quartier de la Lune Pleine"
+    isNameStruckOut: 0
+    familyId: "FAM_VENTSOMBRE"
+    lineageId: "LIN_VENTSOMBRE"
+    relatedRoomId: "P-018"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Lune Pleine."
+  - residentId: "RES_PICNOIR_0019"
+    firstName: "Noéline"
+    lastName: "Gravechant"
+    birthYear: 329
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-019"
+    events:
+    - year: 329
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-019"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-019"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 412
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-019"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-019"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 412
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_GRAVECHANT"
+    lineageId: "LIN_GRAVECHANT"
+    relatedRoomId: "P-019"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0020"
+    firstName: "Eline"
+    lastName: "Rochefroide"
+    birthYear: 338
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-020"
+    events:
+    - year: 338
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-020"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-020"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_ROCHEFROIDE"
+    lineageId: "LIN_ROCHEFROIDE"
+    relatedRoomId: "P-020"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0021"
+    firstName: "Darian"
+    lastName: "Falaiseveille"
+    birthYear: 347
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-021"
+    events:
+    - year: 347
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-021"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-021"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 368
+      eventType: 9
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-073"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers P-073"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "P-073"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 416
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-021"
+      destinationDistrict: ""
+      cause: "froid"
+      readableTextOverride: "Décès : froid"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-021"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : froid"
+    eventYear: 416
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FALAISEVEILLE"
+    lineageId: "LIN_FALAISEVEILLE"
+    relatedRoomId: "P-021"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0022"
+    firstName: "Vera"
+    lastName: "Noirsel"
+    birthYear: 356
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-022"
+    events:
+    - year: 356
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-022"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-022"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 384
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-022"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-022"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 384
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_NOIRSEL"
+    lineageId: "LIN_NOIRSEL"
+    relatedRoomId: "P-022"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0023"
+    firstName: "Ilan"
+    lastName: "Murmurepic"
+    birthYear: 365
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-023"
+    events:
+    - year: 365
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-023"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-023"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 422
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-023"
+      destinationDistrict: ""
+      cause: "chute"
+      readableTextOverride: "Décès : chute"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-023"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : chute"
+    eventYear: 422
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_MURMUREPIC"
+    lineageId: "LIN_MURMUREPIC"
+    relatedRoomId: "P-023"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0024"
+    firstName: "Orève"
+    lastName: "Pierregarde"
+    birthYear: 374
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-024"
+    events:
+    - year: 374
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-024"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-024"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 432
+      eventType: 2
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-024"
+      destinationDistrict: "Quartier de la Lune Pleine"
+      cause: ""
+      readableTextOverride: "Déplacée vers Quartier de la Lune Pleine"
+      note: "Destination copiee: Quartier de la Lune Pleine."
+      isNameStruckOut: 0
+      relatedRoomId: "L-024"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacée vers Quartier de la Lune Pleine"
+    eventYear: 432
+    destinationDistrict: "Quartier de la Lune Pleine"
+    isNameStruckOut: 0
+    familyId: "FAM_PIERREGARDE"
+    lineageId: "LIN_PIERREGARDE"
+    relatedRoomId: "P-024"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Lune Pleine."
+  - residentId: "RES_PICNOIR_0025"
+    firstName: "Maëlis"
+    lastName: "Ventpierre"
+    birthYear: 383
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-025"
+    events:
+    - year: 383
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-025"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-025"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VENTPIERRE"
+    lineageId: "LIN_VENTPIERRE"
+    relatedRoomId: "P-025"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0026"
+    firstName: "Koran"
+    lastName: "Cavehaute"
+    birthYear: 392
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-026"
+    events:
+    - year: 392
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-026"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-026"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 407
+      eventType: 9
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-083"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers P-083"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "P-083"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 475
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-026"
+      destinationDistrict: ""
+      cause: "accident de treuil"
+      readableTextOverride: "Décès : accident de treuil"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-026"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : accident de treuil"
+    eventYear: 475
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CAVEHAUTE"
+    lineageId: "LIN_CAVEHAUTE"
+    relatedRoomId: "P-026"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0027"
+    firstName: "Sylve"
+    lastName: "Rochecendre"
+    birthYear: 401
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-027"
+    events:
+    - year: 401
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-027"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-027"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 463
+      eventType: 7
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-027"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Statut incomplet"
+      note: "Colonne de destination arrachee."
+      isNameStruckOut: 0
+      relatedRoomId: "P-027"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 7
+    lastEventText: "Statut incomplet"
+    eventYear: 463
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_ROCHECENDRE"
+    lineageId: "LIN_ROCHECENDRE"
+    relatedRoomId: "P-027"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "anomalie"
+    - "statut-incomplet"
+    internalNote: "Colonne de destination arrachee."
+  - residentId: "RES_PICNOIR_0028"
+    firstName: "Aren"
+    lastName: "Gardesel"
+    birthYear: 410
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-028"
+    events:
+    - year: 410
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-028"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-028"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 446
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-028"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-028"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 446
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_GARDESEL"
+    lineageId: "LIN_GARDESEL"
+    relatedRoomId: "P-028"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0029"
+    firstName: "Brenna"
+    lastName: "Picveille"
+    birthYear: 419
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-029"
+    events:
+    - year: 419
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-029"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-029"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 436
+      eventType: 10
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-029"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "P-029"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 460
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-029"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-029"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 460
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_PICVEILLE"
+    lineageId: "LIN_PICVEILLE"
+    relatedRoomId: "P-029"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0030"
+    firstName: "Tovin"
+    lastName: "Noirbrasier"
+    birthYear: 428
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-030"
+    events:
+    - year: 428
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-030"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-030"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_NOIRBRASIER"
+    lineageId: "LIN_NOIRBRASIER"
+    relatedRoomId: "P-030"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0031"
+    firstName: "Nerel"
+    lastName: "Chambrehaute"
+    birthYear: 437
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-031"
+    events:
+    - year: 437
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-031"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-031"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 460
+      eventType: 2
+      districtId: "DIST_SALLES_BASSES"
+      districtName: "Quartier des Salles Basses"
+      habitationNumber: "B-031"
+      destinationDistrict: "Quartier des Salles Basses"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier des Salles Basses"
+      note: "Destination copiee: Quartier des Salles Basses."
+      isNameStruckOut: 0
+      relatedRoomId: "B-031"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier des Salles Basses"
+    eventYear: 460
+    destinationDistrict: "Quartier des Salles Basses"
+    isNameStruckOut: 0
+    familyId: "FAM_CHAMBREHAUTE"
+    lineageId: "LIN_CHAMBREHAUTE"
+    relatedRoomId: "P-031"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier des Salles Basses."
+  - residentId: "RES_PICNOIR_0032"
+    firstName: "Iseult"
+    lastName: "Froidemur"
+    birthYear: 446
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-032"
+    events:
+    - year: 446
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-032"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-032"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 520
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-032"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-032"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 520
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FROIDEMUR"
+    lineageId: "LIN_FROIDEMUR"
+    relatedRoomId: "P-032"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0033"
+    firstName: "Marrec"
+    lastName: "Rochelune"
+    birthYear: 455
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-033"
+    events:
+    - year: 455
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-033"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-033"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 491
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-033"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-033"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 491
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_ROCHELUNE"
+    lineageId: "LIN_ROCHELUNE"
+    relatedRoomId: "P-033"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0034"
+    firstName: "Awen"
+    lastName: "Hautsang"
+    birthYear: 464
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-034"
+    events:
+    - year: 464
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-034"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-034"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 516
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-034"
+      destinationDistrict: ""
+      cause: "chute"
+      readableTextOverride: "Décès : chute"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-034"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : chute"
+    eventYear: 516
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_HAUTSANG"
+    lineageId: "LIN_HAUTSANG"
+    relatedRoomId: "P-034"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0035"
+    firstName: "Roland"
+    lastName: "Veillefaille"
+    birthYear: 473
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-035"
+    events:
+    - year: 473
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-035"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-035"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 544
+      eventType: 2
+      districtId: "DIST_STATUE"
+      districtName: "Quartier de la Statue"
+      habitationNumber: "S-035"
+      destinationDistrict: "Quartier de la Statue"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Statue"
+      note: "Destination copiee: Quartier de la Statue."
+      isNameStruckOut: 0
+      relatedRoomId: "S-035"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Statue"
+    eventYear: 544
+    destinationDistrict: "Quartier de la Statue"
+    isNameStruckOut: 0
+    familyId: "FAM_VEILLEFAILLE"
+    lineageId: "LIN_VEILLEFAILLE"
+    relatedRoomId: "P-035"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Statue."
+  - residentId: "RES_PICNOIR_0036"
+    firstName: "Sélia"
+    lastName: "Sombregarde"
+    birthYear: 482
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-036"
+    events:
+    - year: 482
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-036"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-036"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_SOMBREGARDE"
+    lineageId: "LIN_SOMBREGARDE"
+    relatedRoomId: "P-036"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0037"
+    firstName: "Varan"
+    lastName: "Rivehaute"
+    birthYear: 491
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-037"
+    events:
+    - year: 491
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-037"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-037"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 548
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-037"
+      destinationDistrict: ""
+      cause: "froid"
+      readableTextOverride: "Décès : froid"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-037"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : froid"
+    eventYear: 548
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_RIVEHAUTE"
+    lineageId: "LIN_RIVEHAUTE"
+    relatedRoomId: "P-037"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0038"
+    firstName: "Elwen"
+    lastName: "Cendremur"
+    birthYear: 500
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-038"
+    events:
+    - year: 500
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-038"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-038"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 544
+      eventType: 3
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-038"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Affectation inconnue"
+      note: "Signe de chambre remplace par trois points."
+      isNameStruckOut: 0
+      relatedRoomId: "P-038"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 3
+    lastEventText: "Affectation inconnue"
+    eventYear: 544
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CENDREMUR"
+    lineageId: "LIN_CENDREMUR"
+    relatedRoomId: "P-038"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "anomalie"
+    - "disparition"
+    internalNote: "Signe de chambre remplace par trois points."
+  - residentId: "RES_PICNOIR_0039"
+    firstName: "Nol"
+    lastName: "Picdeveille"
+    birthYear: 509
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-039"
+    events:
+    - year: 509
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-039"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-039"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 558
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-039"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-039"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 558
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_PICDEVEILLE"
+    lineageId: "LIN_PICDEVEILLE"
+    relatedRoomId: "P-039"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0040"
+    firstName: "Keran"
+    lastName: "Ventfaille"
+    birthYear: 518
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-040"
+    events:
+    - year: 518
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-040"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-040"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 601
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-040"
+      destinationDistrict: ""
+      cause: "accident de brasero"
+      readableTextOverride: "Décès : accident de brasero"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-040"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : accident de brasero"
+    eventYear: 601
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VENTFAILLE"
+    lineageId: "LIN_VENTFAILLE"
+    relatedRoomId: "P-040"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0041"
+    firstName: "Aodren"
+    lastName: "Noircouloir"
+    birthYear: 527
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-041"
+    events:
+    - year: 527
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-041"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-041"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 550
+      eventType: 2
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-041"
+      destinationDistrict: "Quartier de la Lune Pleine"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Lune Pleine"
+      note: "Destination copiee: Quartier de la Lune Pleine."
+      isNameStruckOut: 0
+      relatedRoomId: "L-041"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Lune Pleine"
+    eventYear: 550
+    destinationDistrict: "Quartier de la Lune Pleine"
+    isNameStruckOut: 0
+    familyId: "FAM_NOIRCOULOIR"
+    lineageId: "LIN_NOIRCOULOIR"
+    relatedRoomId: "P-041"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Lune Pleine."
+  - residentId: "RES_PICNOIR_0042"
+    firstName: "Milaine"
+    lastName: "Gravehaute"
+    birthYear: 536
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-042"
+    events:
+    - year: 536
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-042"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-042"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_GRAVEHAUTE"
+    lineageId: "LIN_GRAVEHAUTE"
+    relatedRoomId: "P-042"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0043"
+    firstName: "Rostan"
+    lastName: "Selroc"
+    birthYear: 545
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-043"
+    events:
+    - year: 545
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-043"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-043"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 567
+      eventType: 10
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-043"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "P-043"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 586
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-043"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-043"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 586
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_SELROC"
+    lineageId: "LIN_SELROC"
+    relatedRoomId: "P-043"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0044"
+    firstName: "Yvane"
+    lastName: "Faillegarde"
+    birthYear: 554
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-044"
+    events:
+    - year: 554
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-044"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-044"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 603
+      eventType: 5
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-044"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-044"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 603
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FAILLEGARDE"
+    lineageId: "LIN_FAILLEGARDE"
+    relatedRoomId: "P-044"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0045"
+    firstName: "Soline"
+    lastName: "Veillehauteur"
+    birthYear: 563
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-045"
+    events:
+    - year: 563
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-045"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-045"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 601
+      eventType: 4
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-045"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Nom rayé"
+      note: "La chambre reste lisible malgre la rature."
+      isNameStruckOut: 1
+      relatedRoomId: "P-045"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 4
+    lastEventText: "Nom rayé"
+    eventYear: 601
+    destinationDistrict: ""
+    isNameStruckOut: 1
+    familyId: "FAM_VEILLEHAUTEUR"
+    lineageId: "LIN_VEILLEHAUTEUR"
+    relatedRoomId: "P-045"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "anomalie"
+    - "rature"
+    internalNote: "La chambre reste lisible malgre la rature."
+  - residentId: "RES_PICNOIR_0046"
+    firstName: "Hervan"
+    lastName: "Rochechant"
+    birthYear: 572
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-046"
+    events:
+    - year: 572
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-046"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-046"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 585
+      eventType: 9
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-096"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers P-096"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "P-096"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 646
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-046"
+      destinationDistrict: ""
+      cause: "chute"
+      readableTextOverride: "Décès : chute"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-046"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : chute"
+    eventYear: 646
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_ROCHECHANT"
+    lineageId: "LIN_ROCHECHANT"
+    relatedRoomId: "P-046"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0047"
+    firstName: "Léna"
+    lastName: "Sombrevent"
+    birthYear: 581
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-047"
+    events:
+    - year: 581
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-047"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-047"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 615
+      eventType: 2
+      districtId: "DIST_ARCHIVES"
+      districtName: "Quartier des Archives"
+      habitationNumber: "A-047"
+      destinationDistrict: "Quartier des Archives"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier des Archives"
+      note: "Destination copiee: Quartier des Archives."
+      isNameStruckOut: 0
+      relatedRoomId: "A-047"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier des Archives"
+    eventYear: 615
+    destinationDistrict: "Quartier des Archives"
+    isNameStruckOut: 0
+    familyId: "FAM_SOMBREVENT"
+    lineageId: "LIN_SOMBREVENT"
+    relatedRoomId: "P-047"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier des Archives."
+  - residentId: "RES_PICNOIR_0048"
+    firstName: "Briac"
+    lastName: "Hautesel"
+    birthYear: 590
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-048"
+    events:
+    - year: 590
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-048"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-048"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_HAUTESEL"
+    lineageId: "LIN_HAUTESEL"
+    relatedRoomId: "P-048"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0049"
+    firstName: "Ombeline"
+    lastName: "Cendrepic"
+    birthYear: 612
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-049"
+    events:
+    - year: 612
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-049"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-049"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 666
+      eventType: 1
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-049"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "P-049"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 666
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CENDREPIC"
+    lineageId: "LIN_CENDREPIC"
+    relatedRoomId: "P-049"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_PICNOIR_0050"
+    firstName: "Gaël"
+    lastName: "Murligne"
+    birthYear: 640
+    initialDistrictId: "DIST_PIC_NOIR"
+    initialDistrictName: "Quartier du Pic Noir"
+    habitationNumber: "P-050"
+    events:
+    - year: 640
+      eventType: 8
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-050"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "P-050"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    - year: 666
+      eventType: 2
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-050"
+      destinationDistrict: "Quartier de la Lune Pleine"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Lune Pleine"
+      note: "Destination copiee: Quartier de la Lune Pleine."
+      isNameStruckOut: 0
+      relatedRoomId: "L-050"
+      relatedObjectId: ""
+      relatedReadableId: "REG_PIC_NOIR"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Lune Pleine"
+    eventYear: 666
+    destinationDistrict: "Quartier de la Lune Pleine"
+    isNameStruckOut: 0
+    familyId: "FAM_MURLIGNE"
+    lineageId: "LIN_MURLIGNE"
+    relatedRoomId: "P-050"
+    relatedObjectId: ""
+    relatedReadableId: "REG_PIC_NOIR"
+    narrativeTags:
+    - "pic-noir"
+    - "hauteur"
+    - "pierre-noire"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Lune Pleine."

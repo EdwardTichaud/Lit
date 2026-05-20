@@ -179,6 +179,8 @@ Les systèmes réseau et sauvegarde dépendent de IDs stables, de l'ordre d'init
 
 La UI mélange parfois objets de scène, prefabs, fallback runtime et accès par hiérarchie. Tester en Play Mode après chaque changement est obligatoire.
 
+Le `MainMenu` est un cas hybride : la UI reste en Canvas devant la caméra, mais le titre repose sur un décor 3D de scène piloté par `MainMenuTitleDecorController`. Le pointeur `MainMenuPointerCursor` remplace le curseur de sélection forcé du menu principal et reste utilisable à la souris comme à la manette.
+
 ### Assets tiers
 
 Le projet contient beaucoup d'assets importés. Les modifier directement complique les mises à jour, le debug et la maintenance.

@@ -137,12 +137,15 @@ Les items sont des ScriptableObjects. Les effets d'items sont souvent des classe
 
 **Fonctionnement général** :
 
-La UI peut être placée en scène, instanciée depuis prefab, ou créée en fallback runtime. Les menus utilisent des curseurs et handlers spécifiques pour manette/clavier.
+La UI peut être placée en scène, instanciée depuis prefab, ou créée en fallback runtime. Le `MainMenu` utilise maintenant un pointeur visible commun souris/manette au lieu d'un curseur de sélection forcé. Ce pointeur est piloté par `MainMenuPointerCursor`, éclaire le décor 3D via une torche, et déclenche les `CursorIntercation` du décor pour afficher une `Outline`.
+
+Le décor du titre est un vrai décor de scène, pas une texture. `MainMenuTitleDecorController` lit la dernière sauvegarde sous `Application.persistentDataPath/Saves`, utilise `meta.json` et `CharacterState.json`, puis active les variantes de décor selon la progression détectée.
 
 **Points d'attention** :
 
 - Beaucoup de références UI sont assignées dans l'inspecteur.
 - Tester avec souris, clavier et manette si possible.
+- Après une modification structurelle du MainMenu, relancer `Lit/MainMenu/Install Title Decor` si le décor/pointeur doit être régénéré dans la scène.
 - Ne pas modifier la hiérarchie UI sans vérifier les scripts qui cherchent des enfants par index ou nom.
 
 ## Sauvegarde et sessions

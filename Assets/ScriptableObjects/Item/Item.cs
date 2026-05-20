@@ -166,6 +166,11 @@ public class Item : ScriptableObject
     [Header("Readable Narrative Metadata")]
     [Tooltip("Metadonnees optionnelles pour classer les readables dans l'enquete temporelle.")]
     public TemporalReadableMetadata readableMetadata = new TemporalReadableMetadata();
+    [Header("Temporal District Registry")]
+    [Tooltip("Source de donnees optionnelle pour generer ce livre selon l'age temporel actif.")]
+    public DistrictRegistry temporalDistrictRegistry;
+    [Tooltip("Si actif, l'ouverture du livre reconstruit ses pages selon l'age dominant ou local disponible.")]
+    public bool refreshTemporalDistrictRegistryOnRead = true;
 
     [Header("Usage")]
     [Tooltip("Peut etre utilise via l'ActionBox.")]

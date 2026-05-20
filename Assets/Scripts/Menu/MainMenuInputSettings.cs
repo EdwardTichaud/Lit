@@ -12,7 +12,8 @@ public static class MainMenuInputSettings
         Gamepad = 1
     }
 
-    private const string InputModePrefKey = "Lit.InputMode";
+    private const string InputModePrefKey = "Lit.InputMode.v2";
+    private const string LegacyInputModePrefKey = "Lit.InputMode";
     private static bool initialized;
     private static InputMode currentMode;
 
@@ -33,10 +34,21 @@ public static class MainMenuInputSettings
     {
         if (!PlayerPrefs.HasKey(InputModePrefKey))
         {
-            return InputMode.Gamepad;
+            if (PlayerPrefs.HasKey(LegacyInputModePrefKey))
+            {
+                PlayerPrefs.DeleteKey(LegacyInputModePrefKey);
+                PlayerPrefs.Save();
+            }
+
+            return InputMode.Automatic;
         }
 
-        int savedValue = PlayerPrefs.GetInt(InputModePrefKey, (int)InputMode.Gamepad);
+        int savedValue = PlayerPrefs.GetInt(InputModePrefKey, (int)InputMode.Automatic);
+        if (savedValue == (int)InputMode.Automatic)
+        {
+            return InputMode.Automatic;
+        }
+
         if (savedValue == (int)InputMode.Gamepad)
         {
             return InputMode.Gamepad;
@@ -47,7 +59,7 @@ public static class MainMenuInputSettings
             return InputMode.KeyboardMouse;
         }
 
-        return InputMode.Gamepad;
+        return InputMode.Automatic;
     }
 
     public static bool SetMode(InputMode mode)

@@ -2161,6 +2161,10 @@ public class MainMenuController : MonoBehaviour
         Transform optionsRoot = CreateOptionsItemsRoot(root.transform);
         CreateDisplayModeRow(template, optionsRoot, "Fenetre", MainMenuDisplayModeAction.DisplayModeOption.Windowed);
         CreateDisplayModeRow(template, optionsRoot, "PleinEcran", MainMenuDisplayModeAction.DisplayModeOption.Fullscreen);
+        CreateOptionsHeaderRow(template, optionsRoot, "ModeEntree", "Mode d'entree");
+        CreateInputModeRow(template, optionsRoot, "Automatique", MainMenuInputSettings.InputMode.Automatic);
+        CreateInputModeRow(template, optionsRoot, "ClavierSouris", MainMenuInputSettings.InputMode.KeyboardMouse);
+        CreateInputModeRow(template, optionsRoot, "Gamepad", MainMenuInputSettings.InputMode.Gamepad);
         CreateOptionsBackRow(template, optionsRoot);
 
         return group;
@@ -2327,6 +2331,12 @@ public class MainMenuController : MonoBehaviour
         {
             Transform header = CreateOptionsHeaderRow(headerTemplate, optionsRoot, "ModeEntree", "Mode d'entree");
             InsertOptionsRowBeforeBack(optionsRoot, header);
+        }
+
+        if (FindInHierarchy(optionsRoot, "Automatique") == null)
+        {
+            Transform automatic = CreateInputModeRow(rowTemplate, optionsRoot, "Automatique", MainMenuInputSettings.InputMode.Automatic);
+            InsertOptionsRowBeforeBack(optionsRoot, automatic);
         }
 
         if (FindInHierarchy(optionsRoot, "ClavierSouris") == null)

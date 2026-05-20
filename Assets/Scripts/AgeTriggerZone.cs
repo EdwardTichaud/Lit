@@ -52,6 +52,8 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
     private readonly HashSet<Collider> deferredReleaseColliders = new HashSet<Collider>();
     private readonly List<Renderer> rendererRemovalBuffer = new List<Renderer>();
     private readonly List<Collider> colliderReleaseBuffer = new List<Collider>();
+    private readonly Dictionary<ITemporalReactable, int> localReactableCounts = new Dictionary<ITemporalReactable, int>();
+    private readonly List<ITemporalReactable> temporalReactableBuffer = new List<ITemporalReactable>();
 
     public float AgeAmount => ageAmount;
 
@@ -193,6 +195,7 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         }
 
         renderer.materials = runtimeMaterials;
+        RefreshTemporalReactables(renderer);
     }
 
     private bool CanApplyAge()
@@ -513,6 +516,91 @@ public class LocalRuntimeAgeTrigger : MonoBehaviour
         {
             visibility.AddLocalRevealSource(this, delta);
         }
+
+        NotifyTemporalReactables(renderer, delta);
+    }
+
+    private void NotifyTemporalReactables(Renderer renderer, int delta)
+    {
+        CollectTemporalReactables(renderer);
+        int snappedYear = GetSnappedTemporalYear();
+
+        for (int i = 0; i < temporalReactableBuffer.Count; i++)
+        {
+            ITemporalReactable reactable = temporalReactableBuffer[i];
+            localReactableCounts.TryGetValue(reactable, out int count);
+
+            if (delta > 0)
+            {
+                count += delta;
+                localReactableCounts[reactable] = count;
+                if (count == delta)
+                {
+                    reactable.ApplyLocalTemporalAge(this, snappedYear);
+                }
+                else
+                {
+                    reactable.UpdateLocalTemporalAge(this, snappedYear);
+                }
+
+                continue;
+            }
+
+            count += delta;
+            if (count <= 0)
+            {
+                localReactableCounts.Remove(reactable);
+                reactable.ClearLocalTemporalAge(this);
+            }
+            else
+            {
+                localReactableCounts[reactable] = count;
+                reactable.UpdateLocalTemporalAge(this, snappedYear);
+            }
+        }
+
+        temporalReactableBuffer.Clear();
+    }
+
+    private void RefreshTemporalReactables(Renderer renderer)
+    {
+        CollectTemporalReactables(renderer);
+        int snappedYear = GetSnappedTemporalYear();
+
+        for (int i = 0; i < temporalReactableBuffer.Count; i++)
+        {
+            ITemporalReactable reactable = temporalReactableBuffer[i];
+            if (localReactableCounts.ContainsKey(reactable))
+            {
+                reactable.UpdateLocalTemporalAge(this, snappedYear);
+            }
+        }
+
+        temporalReactableBuffer.Clear();
+    }
+
+    private void CollectTemporalReactables(Renderer renderer)
+    {
+        temporalReactableBuffer.Clear();
+        if (renderer == null)
+        {
+            return;
+        }
+
+        MonoBehaviour[] behaviours = renderer.GetComponentsInParent<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is ITemporalReactable reactable && !temporalReactableBuffer.Contains(reactable))
+            {
+                temporalReactableBuffer.Add(reactable);
+            }
+        }
+    }
+
+    private int GetSnappedTemporalYear()
+    {
+        TemporalAge snappedAge = TemporalAgeUtility.IntToAge(Mathf.RoundToInt(ageAmount));
+        return TemporalAgeUtility.AgeToInt(snappedAge);
     }
 }
 

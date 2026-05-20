@@ -7,7 +7,7 @@
 The game is intended to support multiplayer (up to 4 players, one player per character). All systems and gameplay features should remain compatible with this constraint.
 
 **Scenes**
-- `Assets/Scenes/MainMenu.unity`: Entry point and full menu flow (title card, game options, solo/multi, load, new game, virtual keyboard).
+- `Assets/Scenes/MainMenu.unity`: Entry point and full menu flow (3D title decor, game options, solo/multi, load, new game, virtual keyboard).
 - `Assets/Scenes/Maison.unity`: Gameplay scene used for runtime testing and pause menu flow.
 
 **Main Menu Flow**
@@ -23,9 +23,10 @@ The main menu is entirely driven by `MainMenuController`.
 - `MainMenu_Loading`: Loading overlay while a scene is loading.
 
 **UI Navigation**
-UI navigation is cursor-driven and gamepad-friendly.
-- `CursorController`: Handles selection and movement inside a layout.
-- `MenuCursorNavigator`: Routes `Interact`/`Return` to focused items.
+The MainMenu uses a mouse-style pointer even when a gamepad is connected.
+- `MainMenuPointerCursor`: Drives the visible pointer from mouse or gamepad, projects a torch light into the 3D decor, and sends gamepad pointer clicks to UI.
+- `CursorIntercation`: Marks 3D title-decor clue objects; hovering them with the pointer enables an `Outline`.
+- `MainMenuTitleDecorController`: Reads the latest save metadata/state and toggles title-decor variants.
 - `MenuCursorAction`: Executes menu actions.
 - `InputFocusStack`: Ensures only the top-most open panel receives input.
 - `LocalInputRouter`: Central routing of input actions with debounce.
@@ -77,3 +78,5 @@ Multiplayer uses Netcode for GameObjects.
 Legacy menu flow and load manager scripts were removed:
 - `MainMenuSceneFlow`
 - `MainMenuLoadManager`
+
+The old forced MainMenu selection cursor is replaced by the pointer/torch setup installed through `Lit/MainMenu/Install Title Decor`.

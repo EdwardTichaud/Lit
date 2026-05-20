@@ -1603,6 +1603,8 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        DistrictRegistryReadable.RefreshReadableItemForCurrentTemporalContext(item);
+
         HideActionBoxImmediate();
         readableItem = item;
         readableBookSpreadStartIndex = 0;
@@ -1666,6 +1668,11 @@ public class InventoryPanelController : MonoBehaviour
         if (!readablePanelOpen || readablePanelKind != ReadablePanelKind.Book || readableItem == null)
         {
             return;
+        }
+
+        if (DistrictRegistryReadable.RefreshReadableItemForCurrentTemporalContext(readableItem))
+        {
+            UpdateReadableBookPages();
         }
 
         InventoryUISettings settings = GetSettings();

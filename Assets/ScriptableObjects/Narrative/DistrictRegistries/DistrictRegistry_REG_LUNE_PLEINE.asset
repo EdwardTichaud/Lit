@@ -1,0 +1,2542 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f065649e9720959832f52eac03f9e504, type: 3}
+  m_Name: "DistrictRegistry_REG_LUNE_PLEINE"
+  m_EditorClassIdentifier: Assembly-CSharp::DistrictRegistry
+  registryId: "REG_LUNE_PLEINE"
+  districtId: "DIST_LUNE_PLEINE"
+  districtName: "Quartier de la Lune Pleine"
+  registryTitle: "Registre des habitants - Quartier de la Lune Pleine"
+  readableItem: {fileID: 11400000, guid: 899705c6bad1b257ae5f606324755d40, type: 2}
+  itemDescription: "Registre administratif des chambres du Quartier de la Lune Pleine."
+  coverNote: "Copie de consultation. Les chambres ouvertes sur la lune immobile sont relevees par foyer, brasero et naissance. Les annotations de marge ne sont pas toutes reprises."
+  yearSectionSpan: 40
+  maxEntriesPerPage: 6
+  residents:
+  - residentId: "RES_LUNE_0001"
+    firstName: "Aveline"
+    lastName: "Veillelune"
+    birthYear: 182
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-001"
+    events:
+    - year: 182
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-001"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-001"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 194
+      eventType: 9
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-051"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers L-051"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "L-051"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 223
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-001"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-001"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 223
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VEILLELUNE"
+    lineageId: "LIN_VEILLELUNE"
+    relatedRoomId: "L-001"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0002"
+    firstName: "Corvan"
+    lastName: "Braisecœur"
+    birthYear: 189
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-002"
+    events:
+    - year: 189
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-002"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-002"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_BRAISECŒUR"
+    lineageId: "LIN_BRAISECŒUR"
+    relatedRoomId: "L-002"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0003"
+    firstName: "Iselle"
+    lastName: "Nacrelune"
+    birthYear: 197
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-003"
+    events:
+    - year: 197
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-003"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-003"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 263
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-003"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-003"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 263
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_NACRELUNE"
+    lineageId: "LIN_NACRELUNE"
+    relatedRoomId: "L-003"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0004"
+    firstName: "Maëlle"
+    lastName: "Douceflamme"
+    birthYear: 205
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-004"
+    events:
+    - year: 205
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-004"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-004"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 254
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-004"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-004"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 254
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_DOUCEFLAMME"
+    lineageId: "LIN_DOUCEFLAMME"
+    relatedRoomId: "L-004"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0005"
+    firstName: "Soren"
+    lastName: "Clairbrasier"
+    birthYear: 213
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-005"
+    events:
+    - year: 213
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-005"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-005"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 296
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-005"
+      destinationDistrict: ""
+      cause: "accident de brasero"
+      readableTextOverride: "Décès : accident de brasero"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-005"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : accident de brasero"
+    eventYear: 296
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CLAIRBRASIER"
+    lineageId: "LIN_CLAIRBRASIER"
+    relatedRoomId: "L-005"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0006"
+    firstName: "Noéline"
+    lastName: "Selmur"
+    birthYear: 221
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-006"
+    events:
+    - year: 221
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-006"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-006"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 244
+      eventType: 2
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-006"
+      destinationDistrict: "Quartier du Pic Noir"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier du Pic Noir"
+      note: "Destination copiee: Quartier du Pic Noir."
+      isNameStruckOut: 0
+      relatedRoomId: "P-006"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier du Pic Noir"
+    eventYear: 244
+    destinationDistrict: "Quartier du Pic Noir"
+    isNameStruckOut: 0
+    familyId: "FAM_SELMUR"
+    lineageId: "LIN_SELMUR"
+    relatedRoomId: "L-006"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier du Pic Noir."
+  - residentId: "RES_LUNE_0007"
+    firstName: "Elian"
+    lastName: "Lunargent"
+    birthYear: 229
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-007"
+    events:
+    - year: 229
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-007"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-007"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_LUNARGENT"
+    lineageId: "LIN_LUNARGENT"
+    relatedRoomId: "L-007"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0008"
+    firstName: "Nara"
+    lastName: "Foyerbas"
+    birthYear: 237
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-008"
+    events:
+    - year: 237
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-008"
+      destinationDistrict: ""
+      cause: "mort-né"
+      readableTextOverride: "Décès : mort-né"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-008"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 237
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-008"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-008"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : mort-né"
+    eventYear: 237
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FOYERBAS"
+    lineageId: "LIN_FOYERBAS"
+    relatedRoomId: "L-008"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0009"
+    firstName: "Liora"
+    lastName: "Pierrechaude"
+    birthYear: 245
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-009"
+    events:
+    - year: 245
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-009"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-009"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 283
+      eventType: 4
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-009"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Nom rayé"
+      note: "Rature nette, encre plus sombre que la ligne."
+      isNameStruckOut: 1
+      relatedRoomId: "L-009"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 4
+    lastEventText: "Nom rayé"
+    eventYear: 283
+    destinationDistrict: ""
+    isNameStruckOut: 1
+    familyId: "FAM_PIERRECHAUDE"
+    lineageId: "LIN_PIERRECHAUDE"
+    relatedRoomId: "L-009"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "anomalie"
+    - "rature"
+    internalNote: "Rature nette, encre plus sombre que la ligne."
+  - residentId: "RES_LUNE_0010"
+    firstName: "Calen"
+    lastName: "Mereloin"
+    birthYear: 253
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-010"
+    events:
+    - year: 253
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-010"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-010"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 319
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-010"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-010"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 319
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_MERELOIN"
+    lineageId: "LIN_MERELOIN"
+    relatedRoomId: "L-010"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0011"
+    firstName: "Thalie"
+    lastName: "Cendrelit"
+    birthYear: 262
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-011"
+    events:
+    - year: 262
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-011"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-011"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 285
+      eventType: 2
+      districtId: "DIST_STATUE"
+      districtName: "Quartier de la Statue"
+      habitationNumber: "S-011"
+      destinationDistrict: "Quartier de la Statue"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Statue"
+      note: "Destination copiee: Quartier de la Statue."
+      isNameStruckOut: 0
+      relatedRoomId: "S-011"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Statue"
+    eventYear: 285
+    destinationDistrict: "Quartier de la Statue"
+    isNameStruckOut: 0
+    familyId: "FAM_CENDRELIT"
+    lineageId: "LIN_CENDRELIT"
+    relatedRoomId: "L-011"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Statue."
+  - residentId: "RES_LUNE_0012"
+    firstName: "Oren"
+    lastName: "Murmurecendre"
+    birthYear: 270
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-012"
+    events:
+    - year: 270
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-012"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-012"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 298
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-012"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-012"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 298
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_MURMURECENDRE"
+    lineageId: "LIN_MURMURECENDRE"
+    relatedRoomId: "L-012"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0013"
+    firstName: "Ysel"
+    lastName: "Cœurdesel"
+    birthYear: 278
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-013"
+    events:
+    - year: 278
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-013"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-013"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 330
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-013"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-013"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 330
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CŒURDESEL"
+    lineageId: "LIN_CŒURDESEL"
+    relatedRoomId: "L-013"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0014"
+    firstName: "Eline"
+    lastName: "Chantelueur"
+    birthYear: 286
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-014"
+    events:
+    - year: 286
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-014"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-014"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CHANTELUEUR"
+    lineageId: "LIN_CHANTELUEUR"
+    relatedRoomId: "L-014"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0015"
+    firstName: "Rovan"
+    lastName: "Fleurdesel"
+    birthYear: 294
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-015"
+    events:
+    - year: 294
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-015"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-015"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 315
+      eventType: 10
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-015"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "L-015"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 335
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-015"
+      destinationDistrict: ""
+      cause: "chute de coursive"
+      readableTextOverride: "Décès : chute de coursive"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-015"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : chute de coursive"
+    eventYear: 335
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FLEURDESEL"
+    lineageId: "LIN_FLEURDESEL"
+    relatedRoomId: "L-015"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0016"
+    firstName: "Mara"
+    lastName: "Rivelune"
+    birthYear: 303
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-016"
+    events:
+    - year: 303
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-016"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-016"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 322
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-016"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-016"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 322
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_RIVELUNE"
+    lineageId: "LIN_RIVELUNE"
+    relatedRoomId: "L-016"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0017"
+    firstName: "Teren"
+    lastName: "Braserive"
+    birthYear: 312
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-017"
+    events:
+    - year: 312
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-017"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-017"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 346
+      eventType: 2
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-017"
+      destinationDistrict: "Quartier du Pic Noir"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier du Pic Noir"
+      note: "Destination copiee: Quartier du Pic Noir."
+      isNameStruckOut: 0
+      relatedRoomId: "P-017"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier du Pic Noir"
+    eventYear: 346
+    destinationDistrict: "Quartier du Pic Noir"
+    isNameStruckOut: 0
+    familyId: "FAM_BRASERIVE"
+    lineageId: "LIN_BRASERIVE"
+    relatedRoomId: "L-017"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier du Pic Noir."
+  - residentId: "RES_LUNE_0018"
+    firstName: "Sava"
+    lastName: "Gardeflamme"
+    birthYear: 321
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-018"
+    events:
+    - year: 321
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-018"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-018"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 395
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-018"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-018"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 395
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_GARDEFLAMME"
+    lineageId: "LIN_GARDEFLAMME"
+    relatedRoomId: "L-018"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0019"
+    firstName: "Alric"
+    lastName: "Nacresel"
+    birthYear: 330
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-019"
+    events:
+    - year: 330
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-019"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-019"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_NACRESEL"
+    lineageId: "LIN_NACRESEL"
+    relatedRoomId: "L-019"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0020"
+    firstName: "Brann"
+    lastName: "Veillebrasier"
+    birthYear: 339
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-020"
+    events:
+    - year: 339
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-020"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-020"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 412
+      eventType: 3
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-020"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Disparu hors registre"
+      note: "Absent des rationnements deux saisons plus tard."
+      isNameStruckOut: 0
+      relatedRoomId: "L-020"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 3
+    lastEventText: "Disparu hors registre"
+    eventYear: 412
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VEILLEBRASIER"
+    lineageId: "LIN_VEILLEBRASIER"
+    relatedRoomId: "L-020"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "anomalie"
+    - "disparition"
+    internalNote: "Absent des rationnements deux saisons plus tard."
+  - residentId: "RES_LUNE_0021"
+    firstName: "Iria"
+    lastName: "Lignelune"
+    birthYear: 348
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-021"
+    events:
+    - year: 348
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-021"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-021"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 369
+      eventType: 9
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-073"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers L-073"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "L-073"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 417
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-021"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-021"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 417
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_LIGNELUNE"
+    lineageId: "LIN_LIGNELUNE"
+    relatedRoomId: "L-021"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0022"
+    firstName: "Solenn"
+    lastName: "Claireveille"
+    birthYear: 357
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-022"
+    events:
+    - year: 357
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-022"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-022"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 376
+      eventType: 10
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-022"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "L-022"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 391
+      eventType: 2
+      districtId: "DIST_SALLES_BASSES"
+      districtName: "Quartier des Salles Basses"
+      habitationNumber: "B-022"
+      destinationDistrict: "Quartier des Salles Basses"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier des Salles Basses"
+      note: "Destination copiee: Quartier des Salles Basses."
+      isNameStruckOut: 0
+      relatedRoomId: "B-022"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier des Salles Basses"
+    eventYear: 391
+    destinationDistrict: "Quartier des Salles Basses"
+    isNameStruckOut: 0
+    familyId: "FAM_CLAIREVEILLE"
+    lineageId: "LIN_CLAIREVEILLE"
+    relatedRoomId: "L-022"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier des Salles Basses."
+  - residentId: "RES_LUNE_0023"
+    firstName: "Naël"
+    lastName: "Mer-de-Cendre"
+    birthYear: 366
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-023"
+    events:
+    - year: 366
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-023"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-023"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 402
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-023"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-023"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 402
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_MER_DE_CENDRE"
+    lineageId: "LIN_MER_DE_CENDRE"
+    relatedRoomId: "L-023"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0024"
+    firstName: "Veyra"
+    lastName: "Selsonge"
+    birthYear: 375
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-024"
+    events:
+    - year: 375
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-024"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-024"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 441
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-024"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-024"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 441
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_SELSONGE"
+    lineageId: "LIN_SELSONGE"
+    relatedRoomId: "L-024"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0025"
+    firstName: "Erian"
+    lastName: "Côteflamme"
+    birthYear: 384
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-025"
+    events:
+    - year: 384
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-025"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-025"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CÔTEFLAMME"
+    lineageId: "LIN_CÔTEFLAMME"
+    relatedRoomId: "L-025"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0026"
+    firstName: "Lysandre"
+    lastName: "Lueurmur"
+    birthYear: 393
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-026"
+    events:
+    - year: 393
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-026"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-026"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 408
+      eventType: 9
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-083"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers L-083"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "L-083"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 476
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-026"
+      destinationDistrict: ""
+      cause: "fièvre lente"
+      readableTextOverride: "Décès : fièvre lente"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-026"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : fièvre lente"
+    eventYear: 476
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_LUEURMUR"
+    lineageId: "LIN_LUEURMUR"
+    relatedRoomId: "L-026"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0027"
+    firstName: "Meline"
+    lastName: "Chambreclair"
+    birthYear: 402
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-027"
+    events:
+    - year: 402
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-027"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-027"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 430
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-027"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-027"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 430
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CHAMBRECLAIR"
+    lineageId: "LIN_CHAMBRECLAIR"
+    relatedRoomId: "L-027"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0028"
+    firstName: "Orsan"
+    lastName: "Riveprière"
+    birthYear: 411
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-028"
+    events:
+    - year: 411
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-028"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-028"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 458
+      eventType: 2
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-028"
+      destinationDistrict: "Quartier du Pic Noir"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier du Pic Noir"
+      note: "Destination copiee: Quartier du Pic Noir."
+      isNameStruckOut: 0
+      relatedRoomId: "P-028"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier du Pic Noir"
+    eventYear: 458
+    destinationDistrict: "Quartier du Pic Noir"
+    isNameStruckOut: 0
+    familyId: "FAM_RIVEPRIÈRE"
+    lineageId: "LIN_RIVEPRIÈRE"
+    relatedRoomId: "L-028"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier du Pic Noir."
+  - residentId: "RES_LUNE_0029"
+    firstName: "Joran"
+    lastName: "Foyerdoux"
+    birthYear: 421
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-029"
+    events:
+    - year: 421
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-029"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-029"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 438
+      eventType: 10
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-029"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "L-029"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 462
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-029"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-029"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 462
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_FOYERDOUX"
+    lineageId: "LIN_FOYERDOUX"
+    relatedRoomId: "L-029"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0030"
+    firstName: "Ariane"
+    lastName: "Veilleseuil"
+    birthYear: 430
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-030"
+    events:
+    - year: 430
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-030"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-030"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 473
+      eventType: 7
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-030"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Statut incomplet"
+      note: "La marge porte seulement une marque de veille."
+      isNameStruckOut: 0
+      relatedRoomId: "L-030"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 7
+    lastEventText: "Statut incomplet"
+    eventYear: 473
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VEILLESEUIL"
+    lineageId: "LIN_VEILLESEUIL"
+    relatedRoomId: "L-030"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "anomalie"
+    - "statut-incomplet"
+    internalNote: "La marge porte seulement une marque de veille."
+  - residentId: "RES_LUNE_0031"
+    firstName: "Talia"
+    lastName: "Lunevoile"
+    birthYear: 439
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-031"
+    events:
+    - year: 439
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-031"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-031"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_LUNEVOILE"
+    lineageId: "LIN_LUNEVOILE"
+    relatedRoomId: "L-031"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0032"
+    firstName: "Malo"
+    lastName: "Chantemer"
+    birthYear: 448
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-032"
+    events:
+    - year: 448
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-032"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-032"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 522
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-032"
+      destinationDistrict: ""
+      cause: "accident de brasero"
+      readableTextOverride: "Décès : accident de brasero"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-032"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : accident de brasero"
+    eventYear: 522
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CHANTEMER"
+    lineageId: "LIN_CHANTEMER"
+    relatedRoomId: "L-032"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0033"
+    firstName: "Cyrielle"
+    lastName: "Pierrelune"
+    birthYear: 457
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-033"
+    events:
+    - year: 457
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-033"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-033"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 504
+      eventType: 2
+      districtId: "DIST_STATUE"
+      districtName: "Quartier de la Statue"
+      habitationNumber: "S-033"
+      destinationDistrict: "Quartier de la Statue"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier de la Statue"
+      note: "Destination copiee: Quartier de la Statue."
+      isNameStruckOut: 0
+      relatedRoomId: "S-033"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier de la Statue"
+    eventYear: 504
+    destinationDistrict: "Quartier de la Statue"
+    isNameStruckOut: 0
+    familyId: "FAM_PIERRELUNE"
+    lineageId: "LIN_PIERRELUNE"
+    relatedRoomId: "L-033"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier de la Statue."
+  - residentId: "RES_LUNE_0034"
+    firstName: "Evran"
+    lastName: "Braisebasse"
+    birthYear: 466
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-034"
+    events:
+    - year: 466
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-034"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-034"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 515
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-034"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-034"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 515
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_BRAISEBASSE"
+    lineageId: "LIN_BRAISEBASSE"
+    relatedRoomId: "L-034"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0035"
+    firstName: "Lénaïs"
+    lastName: "Nacremur"
+    birthYear: 475
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-035"
+    events:
+    - year: 475
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-035"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-035"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 544
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-035"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-035"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 544
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_NACREMUR"
+    lineageId: "LIN_NACREMUR"
+    relatedRoomId: "L-035"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0036"
+    firstName: "Romy"
+    lastName: "Selveille"
+    birthYear: 484
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-036"
+    events:
+    - year: 484
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-036"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-036"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_SELVEILLE"
+    lineageId: "LIN_SELVEILLE"
+    relatedRoomId: "L-036"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0037"
+    firstName: "Iven"
+    lastName: "Rivesel"
+    birthYear: 493
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-037"
+    events:
+    - year: 493
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-037"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-037"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 531
+      eventType: 4
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-037"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Nom rayé"
+      note: "Le nom de famille reste lisible sous la rature."
+      isNameStruckOut: 1
+      relatedRoomId: "L-037"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 4
+    lastEventText: "Nom rayé"
+    eventYear: 531
+    destinationDistrict: ""
+    isNameStruckOut: 1
+    familyId: "FAM_RIVESEL"
+    lineageId: "LIN_RIVESEL"
+    relatedRoomId: "L-037"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "anomalie"
+    - "rature"
+    internalNote: "Le nom de famille reste lisible sous la rature."
+  - residentId: "RES_LUNE_0038"
+    firstName: "Soline"
+    lastName: "Clairfoyer"
+    birthYear: 502
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-038"
+    events:
+    - year: 502
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-038"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-038"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 568
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-038"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-038"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 568
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CLAIRFOYER"
+    lineageId: "LIN_CLAIRFOYER"
+    relatedRoomId: "L-038"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0039"
+    firstName: "Gaël"
+    lastName: "Murmurelune"
+    birthYear: 511
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-039"
+    events:
+    - year: 511
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-039"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-039"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 569
+      eventType: 2
+      districtId: "DIST_ARCHIVES"
+      districtName: "Quartier des Archives"
+      habitationNumber: "A-039"
+      destinationDistrict: "Quartier des Archives"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier des Archives"
+      note: "Destination copiee: Quartier des Archives."
+      isNameStruckOut: 0
+      relatedRoomId: "A-039"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier des Archives"
+    eventYear: 569
+    destinationDistrict: "Quartier des Archives"
+    isNameStruckOut: 0
+    familyId: "FAM_MURMURELUNE"
+    lineageId: "LIN_MURMURELUNE"
+    relatedRoomId: "L-039"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier des Archives."
+  - residentId: "RES_LUNE_0040"
+    firstName: "Yrie"
+    lastName: "Braisechant"
+    birthYear: 520
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-040"
+    events:
+    - year: 520
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-040"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-040"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 581
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-040"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-040"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 581
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_BRAISECHANT"
+    lineageId: "LIN_BRAISECHANT"
+    relatedRoomId: "L-040"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0041"
+    firstName: "Nolwenn"
+    lastName: "Merclaire"
+    birthYear: 529
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-041"
+    events:
+    - year: 529
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-041"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-041"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 548
+      eventType: 9
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-095"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers L-095"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "L-095"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 581
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-041"
+      destinationDistrict: ""
+      cause: "rixe mineure"
+      readableTextOverride: "Décès : rixe mineure"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-041"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : rixe mineure"
+    eventYear: 581
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_MERCLAIRE"
+    lineageId: "LIN_MERCLAIRE"
+    relatedRoomId: "L-041"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0042"
+    firstName: "Arven"
+    lastName: "Veillecendre"
+    birthYear: 538
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-042"
+    events:
+    - year: 538
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-042"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-042"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_VEILLECENDRE"
+    lineageId: "LIN_VEILLECENDRE"
+    relatedRoomId: "L-042"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0043"
+    firstName: "Mirel"
+    lastName: "Doucesel"
+    birthYear: 547
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-043"
+    events:
+    - year: 547
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-043"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-043"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 569
+      eventType: 10
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-043"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "L-043"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 588
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-043"
+      destinationDistrict: ""
+      cause: "maladie"
+      readableTextOverride: "Décès : maladie"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-043"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : maladie"
+    eventYear: 588
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_DOUCESEL"
+    lineageId: "LIN_DOUCESEL"
+    relatedRoomId: "L-043"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0044"
+    firstName: "Thaïs"
+    lastName: "Foyerhaut"
+    birthYear: 556
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-044"
+    events:
+    - year: 556
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-044"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-044"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 614
+      eventType: 2
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-044"
+      destinationDistrict: "Quartier du Pic Noir"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier du Pic Noir"
+      note: "Destination copiee: Quartier du Pic Noir."
+      isNameStruckOut: 0
+      relatedRoomId: "P-044"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier du Pic Noir"
+    eventYear: 614
+    destinationDistrict: "Quartier du Pic Noir"
+    isNameStruckOut: 0
+    familyId: "FAM_FOYERHAUT"
+    lineageId: "LIN_FOYERHAUT"
+    relatedRoomId: "L-044"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier du Pic Noir."
+  - residentId: "RES_LUNE_0045"
+    firstName: "Eloi"
+    lastName: "Lunembrasée"
+    birthYear: 565
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-045"
+    events:
+    - year: 565
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-045"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-045"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 626
+      eventType: 5
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-045"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Chambre réattribuée"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-045"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 5
+    lastEventText: "Chambre réattribuée"
+    eventYear: 626
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_LUNEMBRASÉE"
+    lineageId: "LIN_LUNEMBRASÉE"
+    relatedRoomId: "L-045"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "chambre-reattribuee"
+    internalNote: ""
+  - residentId: "RES_LUNE_0046"
+    firstName: "Kaëla"
+    lastName: "Cendreprière"
+    birthYear: 574
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-046"
+    events:
+    - year: 574
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-046"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-046"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 587
+      eventType: 9
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-096"
+      destinationDistrict: ""
+      cause: "révision de travée"
+      readableTextOverride: "Chambre déplacée vers L-096"
+      note: "Correction de chambre antérieure à l’événement final."
+      isNameStruckOut: 0
+      relatedRoomId: "L-096"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 618
+      eventType: 3
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-046"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Affectation inconnue"
+      note: "Renvoi vers un registre manquant."
+      isNameStruckOut: 0
+      relatedRoomId: "L-046"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 3
+    lastEventText: "Affectation inconnue"
+    eventYear: 618
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CENDREPRIÈRE"
+    lineageId: "LIN_CENDREPRIÈRE"
+    relatedRoomId: "L-046"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "anomalie"
+    - "disparition"
+    internalNote: "Renvoi vers un registre manquant."
+  - residentId: "RES_LUNE_0047"
+    firstName: "Sibylle"
+    lastName: "Selargent"
+    birthYear: 583
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-047"
+    events:
+    - year: 583
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-047"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-047"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 666
+      eventType: 1
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-047"
+      destinationDistrict: ""
+      cause: "vieillesse"
+      readableTextOverride: "Décès : vieillesse"
+      note: ""
+      isNameStruckOut: 0
+      relatedRoomId: "L-047"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 1
+    lastEventText: "Décès : vieillesse"
+    eventYear: 666
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_SELARGENT"
+    lineageId: "LIN_SELARGENT"
+    relatedRoomId: "L-047"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deces"
+    internalNote: ""
+  - residentId: "RES_LUNE_0048"
+    firstName: "Luan"
+    lastName: "Lueurcôte"
+    birthYear: 592
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-048"
+    events:
+    - year: 592
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-048"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-048"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 639
+      eventType: 2
+      districtId: "DIST_CITERNES"
+      districtName: "Quartier des Citernes"
+      habitationNumber: "C-048"
+      destinationDistrict: "Quartier des Citernes"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier des Citernes"
+      note: "Destination copiee: Quartier des Citernes."
+      isNameStruckOut: 0
+      relatedRoomId: "C-048"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier des Citernes"
+    eventYear: 639
+    destinationDistrict: "Quartier des Citernes"
+    isNameStruckOut: 0
+    familyId: "FAM_LUEURCÔTE"
+    lineageId: "LIN_LUEURCÔTE"
+    relatedRoomId: "L-048"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier des Citernes."
+  - residentId: "RES_LUNE_0049"
+    firstName: "Seren"
+    lastName: "Chambreveille"
+    birthYear: 610
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-049"
+    events:
+    - year: 610
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-049"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-049"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 6
+    lastEventText: "Aucun événement enregistré"
+    eventYear: 0
+    destinationDistrict: ""
+    isNameStruckOut: 0
+    familyId: "FAM_CHAMBREVEILLE"
+    lineageId: "LIN_CHAMBREVEILLE"
+    relatedRoomId: "L-049"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "sans-evenement"
+    internalNote: ""
+  - residentId: "RES_LUNE_0050"
+    firstName: "Maïa"
+    lastName: "Clairsel"
+    birthYear: 636
+    initialDistrictId: "DIST_LUNE_PLEINE"
+    initialDistrictName: "Quartier de la Lune Pleine"
+    habitationNumber: "L-050"
+    events:
+    - year: 636
+      eventType: 8
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-050"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: ""
+      note: "Naissance et attribution initiale de chambre."
+      isNameStruckOut: 0
+      relatedRoomId: "L-050"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 656
+      eventType: 10
+      districtId: "DIST_LUNE_PLEINE"
+      districtName: "Quartier de la Lune Pleine"
+      habitationNumber: "L-050"
+      destinationDistrict: ""
+      cause: ""
+      readableTextOverride: "Note marginale : copie reprise"
+      note: "La main du registre change sur cette ligne."
+      isNameStruckOut: 0
+      relatedRoomId: "L-050"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    - year: 666
+      eventType: 2
+      districtId: "DIST_PIC_NOIR"
+      districtName: "Quartier du Pic Noir"
+      habitationNumber: "P-050"
+      destinationDistrict: "Quartier du Pic Noir"
+      cause: ""
+      readableTextOverride: "Déplacé vers Quartier du Pic Noir"
+      note: "Destination copiee: Quartier du Pic Noir."
+      isNameStruckOut: 0
+      relatedRoomId: "P-050"
+      relatedObjectId: ""
+      relatedReadableId: "REG_LUNE_PLEINE"
+    lastEventType: 2
+    lastEventText: "Déplacé vers Quartier du Pic Noir"
+    eventYear: 666
+    destinationDistrict: "Quartier du Pic Noir"
+    isNameStruckOut: 0
+    familyId: "FAM_CLAIRSEL"
+    lineageId: "LIN_CLAIRSEL"
+    relatedRoomId: "L-050"
+    relatedObjectId: ""
+    relatedReadableId: "REG_LUNE_PLEINE"
+    narrativeTags:
+    - "lune-pleine"
+    - "esperants"
+    - "braseros"
+    - "deplacement"
+    internalNote: "Destination copiee: Quartier du Pic Noir."
