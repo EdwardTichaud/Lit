@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-// Affiche des messages courts (fallbacks, infos) avec fondu.
+// Affiche des messages courts (fallbacks, infos). Par defaut, le joueur ferme avec Interact.
 public class InfoBoxUI : MonoBehaviour
 {
     public static InfoBoxUI Instance { get; private set; }
@@ -18,6 +20,8 @@ public class InfoBoxUI : MonoBehaviour
     [Header("Behavior")]
     [Tooltip("Duree par defaut d'affichage.")]
     public float defaultDuration = 1.2f;
+    [Tooltip("Si actif, l'InfoBox ne se ferme jamais toute seule et attend l'input Interact.")]
+    public bool requireInteractToClose = true;
     [Tooltip("Duree du fondu.")]
     public float fadeDuration = 0.25f;
     [Tooltip("Masque le texte quand il est vide.")]
@@ -39,6 +43,9 @@ public class InfoBoxUI : MonoBehaviour
     private LayoutSnapshot savedLayout;
     private bool layoutSaved;
     private bool restoreLayoutAfterHide;
+    private bool isShowing;
+    private int shownFrame = -1;
+    private Action onHiddenCallback;
 
     private struct LayoutSnapshot
     {
@@ -81,6 +88,16 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         InitializeCanvasGroup();
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+    }
+
+    private void OnDisable()
+    {
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        InputFocusStack.Pop(this);
+        isShowing = false;
+        InvokeAndClearHiddenCallback();
     }
 
     public static bool TryShow(string message)
@@ -89,6 +106,11 @@ public class InfoBoxUI : MonoBehaviour
     }
 
     public static bool TryShow(string message, float duration)
+    {
+        return TryShow(message, duration, null);
+    }
+
+    public static bool TryShow(string message, float duration, Action onHidden)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -111,7 +133,7 @@ public class InfoBoxUI : MonoBehaviour
             ui = runner.AddComponent<InfoBoxUI>();
         }
 
-        return ui.ShowMessage(message, duration);
+        return ui.ShowMessage(message, duration, onHidden);
     }
 
     public static bool TryShowTopLeft(string message, float duration = 0f)
@@ -168,12 +190,17 @@ public class InfoBoxUI : MonoBehaviour
 
     public bool ShowMessage(string message, float duration)
     {
+        return ShowMessage(message, duration, null);
+    }
+
+    public bool ShowMessage(string message, float duration, Action onHidden)
+    {
         if (string.IsNullOrWhiteSpace(message))
         {
             return false;
         }
 
-        // Prepare l'UI puis lance la coroutine de fade.
+        // Prepare l'UI. Les infobox restent visibles jusqu'a Interact pour ne pas couper une information.
         ResolveReferences();
         if (infoText == null)
         {
@@ -183,8 +210,15 @@ public class InfoBoxUI : MonoBehaviour
         if (hideRoutine != null)
         {
             StopCoroutine(hideRoutine);
+            hideRoutine = null;
+            InvokeAndClearHiddenCallback();
+        }
+        else if (isShowing)
+        {
+            InvokeAndClearHiddenCallback();
         }
 
+        onHiddenCallback = onHidden;
         RestoreLayoutIfNeeded();
         SetVisible(true);
         infoText.text = message;
@@ -192,8 +226,19 @@ public class InfoBoxUI : MonoBehaviour
         InitializeCanvasGroup();
         SetCanvasAlpha(0f);
 
-        float wait = duration > 0f ? duration : defaultDuration;
-        hideRoutine = StartCoroutine(ShowAndHideRoutine(wait));
+        isShowing = true;
+        shownFrame = Time.frameCount;
+        InputFocusStack.Push(this);
+
+        if (requireInteractToClose)
+        {
+            hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
+        }
+        else
+        {
+            float wait = duration > 0f ? duration : defaultDuration;
+            hideRoutine = StartCoroutine(ShowAndHideRoutine(wait));
+        }
 
         return true;
     }
@@ -252,7 +297,99 @@ public class InfoBoxUI : MonoBehaviour
             SetVisible(false);
         }
 
+        isShowing = false;
+        InputFocusStack.Pop(this);
         hideRoutine = null;
+        InvokeAndClearHiddenCallback();
+    }
+
+    private IEnumerator ShowUntilManualDismissRoutine()
+    {
+        float fadeIn = Mathf.Max(0f, fadeDuration);
+        if (fadeIn > 0f)
+        {
+            yield return FadeAlpha(0f, 1f, fadeIn);
+        }
+        else
+        {
+            SetCanvasAlpha(1f);
+        }
+
+        hideRoutine = null;
+    }
+
+    private void OnInteractPerformed(InputAction.CallbackContext context)
+    {
+        if (!requireInteractToClose || !isShowing || !InputFocusStack.HasFocus(this))
+        {
+            return;
+        }
+
+        // Evite de fermer dans le meme event Interact que celui qui vient d'ouvrir l'InfoBox.
+        if (Time.frameCount == shownFrame)
+        {
+            return;
+        }
+
+        if (!LocalInputRouter.TryConsumeInteract())
+        {
+            return;
+        }
+
+        HideManually();
+    }
+
+    private void HideManually()
+    {
+        if (!isShowing)
+        {
+            return;
+        }
+
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+        }
+
+        isShowing = false;
+        InputFocusStack.Pop(this);
+        hideRoutine = StartCoroutine(HideManualRoutine());
+    }
+
+    private IEnumerator HideManualRoutine()
+    {
+        float fadeOut = Mathf.Max(0f, fadeDuration);
+        if (fadeOut > 0f)
+        {
+            yield return FadeAlpha(GetCanvasAlpha(), 0f, fadeOut);
+        }
+        else
+        {
+            SetCanvasAlpha(0f);
+        }
+
+        if (hideWhenEmpty && infoText != null)
+        {
+            infoText.text = string.Empty;
+        }
+
+        RestoreLayoutIfNeeded();
+
+        if (setInactiveOnHide)
+        {
+            SetVisible(false);
+        }
+
+        hideRoutine = null;
+        InvokeAndClearHiddenCallback();
+    }
+
+    private void InvokeAndClearHiddenCallback()
+    {
+        Action callback = onHiddenCallback;
+        onHiddenCallback = null;
+        callback?.Invoke();
     }
 
     private void ResolveReferences()
@@ -463,6 +600,12 @@ public class InfoBoxUI : MonoBehaviour
         group.alpha = alpha;
         group.interactable = false;
         group.blocksRaycasts = false;
+    }
+
+    private float GetCanvasAlpha()
+    {
+        CanvasGroup group = GetCanvasGroup();
+        return group != null ? group.alpha : 0f;
     }
 
     private IEnumerator FadeAlpha(float from, float to, float duration)

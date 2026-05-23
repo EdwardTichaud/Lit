@@ -8,6 +8,8 @@ La direction actuelle privilégie :
 
 - exploration et observation ;
 - registres, lignées et objets transmis ;
+- connaissances persistantes comme mémoire de l'enquête ;
+- fantômes apaisés par les connaissances découvertes, pas par des réponses libres ;
 - transformation des lieux selon les âges ;
 - systèmes simples et maintenables par un développeur solo ;
 - combat conservé comme tension ponctuelle, pas comme boucle principale.
@@ -16,7 +18,9 @@ Les documents de design principaux sont :
 
 - [Lore.md](Lore.md) pour le monde, les courants religieux et la structure narrative ;
 - [Gameplay.md](Gameplay.md) pour les piliers jouables ;
-- [NarrativeData.md](NarrativeData.md) pour les données de registres, lignées et objets transmis ;
+- [NarrativeData.md](NarrativeData.md) pour les données de registres, lignées,
+  objets transmis et connaissances ;
+- [CameraObstruction.md](CameraObstruction.md) pour la caméra, les murs obstruants et la vignette ;
 - [TurnBasedCombat.md](TurnBasedCombat.md) pour le combat conservé.
 
 ## Version Unity

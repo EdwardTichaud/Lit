@@ -69,8 +69,20 @@ Les readables passent principalement par `Item` et les données associées. Les 
 - `FamilyRecord`
 - `RegistryEntry`
 - `TransgenerationalObjectRecord`
+- `KnowledgeSO`
+- `KnowledgeRequirement`
+- `GhostData`
 
-Ces structures sont volontairement simples.
+Ces structures sont volontairement simples. La possession des connaissances passe
+par `KnowledgeManager`, et la sauvegarde/late join par le provider existant
+`PersistentKnowledgeState`. L'état propre à un fantôme de scène, comme "ce
+souvenir a déjà été compris", passe par `PersistentGhostState`.
+
+Les réponses libres (`ReadableSentencePuzzle`) sont maintenant une couche legacy.
+Les nouveaux fantômes doivent utiliser `GhostController` et des réactions
+conditionnées par `KnowledgeRequirement`. Les requirements peuvent exprimer une
+connaissance précise, une catégorie, un tag, ou un seuil de connaissances par
+catégorie/tag pour les compréhensions implicites.
 
 ### UI
 

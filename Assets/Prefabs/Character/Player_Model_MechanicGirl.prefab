@@ -750,6 +750,7 @@ MonoBehaviour:
   fallbackTextDuration: 1.5
   extraTextDuration: 0.1
   hideWhenDone: 1
+  requireInteractToDismissText: 1
   useUnscaledTime: 0
   useAudioManager: 1
   fallbackSpatialBlend: 1

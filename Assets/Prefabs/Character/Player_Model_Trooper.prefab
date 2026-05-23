@@ -1440,6 +1440,7 @@ MonoBehaviour:
   fallbackTextDuration: 1.5
   extraTextDuration: 0.1
   hideWhenDone: 1
+  requireInteractToDismissText: 1
   useUnscaledTime: 0
   useAudioManager: 1
   fallbackSpatialBlend: 1
@@ -3466,6 +3467,18 @@ PrefabInstance:
       propertyPath: owner
       value: 
       objectReference: {fileID: 6731850666202294345}
+    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Range
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Intensity
+      value: 198.94368
+      objectReference: {fileID: 0}
+    - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8112315056308737700, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: target
       value: 

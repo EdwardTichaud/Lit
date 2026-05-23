@@ -10,12 +10,17 @@ public static class FabHdrpMaterialRepair
     private static readonly string[] TargetRoots =
     {
         "Assets/0 - UnityPackages/Fab/Dungeon_Environment",
+        "Assets/0 - UnityPackages/Fab/MedCastle",
         "Assets/0 - UnityPackages/Fab/MedievalRuins_ScansFactory",
         "Assets/ScansFactory/MedievalRuins"
     };
 
-    private static readonly HashSet<string> BrokenMedievalShaderGraphs = new HashSet<string>(StringComparer.Ordinal)
+    private static readonly HashSet<string> BrokenFabShaderGraphs = new HashSet<string>(StringComparer.Ordinal)
     {
+        "Shader Graphs/ShaderGraph_MasterShader",
+        "Shader Graphs/MasterShader",
+        "Shader Graphs/MasterPainterOpaque",
+        "Shader Graphs/LeavesShader",
         "Shader Graphs/S_Base",
         "Shader Graphs/S_BaseMasked",
         "Shader Graphs/S_BaseMaskedTranslucent",
@@ -151,8 +156,13 @@ public static class FabHdrpMaterialRepair
             return true;
         }
 
-        if (path.IndexOf("MedievalRuins", StringComparison.OrdinalIgnoreCase) >= 0 &&
-            BrokenMedievalShaderGraphs.Contains(shaderName))
+        if (IsKnownFabMaterialRoot(path) && BrokenFabShaderGraphs.Contains(shaderName))
+        {
+            return true;
+        }
+
+        if (path.IndexOf("/MedCastle/", StringComparison.OrdinalIgnoreCase) >= 0 &&
+            shaderName.StartsWith("Shader Graphs/", StringComparison.Ordinal))
         {
             return true;
         }
@@ -402,18 +412,24 @@ public static class FabHdrpMaterialRepair
 
     private static bool NameSuggestsDoubleSided(string path)
     {
-        return ContainsAny(path, "Cobweb", "SpiderWeb", "Branch", "Leaf", "Grass", "Fern", "Plant", "Burdock", "Nettle");
+        return ContainsAny(path, "Cobweb", "SpiderWeb", "Branch", "Branches", "Leaf", "Leaves", "Grass", "Fern", "Plant", "Burdock", "Nettle", "Straw", "Hay");
     }
 
     private static bool NameSuggestsAlphaClip(string path)
     {
-        return ContainsAny(path, "Cobweb", "SpiderWeb", "Branch", "Leaf", "Grass", "Fern", "Plant", "Burdock", "Nettle");
+        return ContainsAny(path, "Cobweb", "SpiderWeb", "Branch", "Branches", "Leaf", "Leaves", "Grass", "Fern", "Plant", "Burdock", "Nettle", "Straw", "Hay");
     }
 
     private static bool NameSuggestsUnlit(string path, string shaderName)
     {
         return ContainsAny(path, "Particle", "Fire", "Smoke", "LightRay", "Sky") ||
                shaderName.IndexOf("Unlit", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool IsKnownFabMaterialRoot(string path)
+    {
+        return path.IndexOf("/MedCastle/", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               path.IndexOf("MedievalRuins", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static bool ContainsAny(string value, params string[] fragments)

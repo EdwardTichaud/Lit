@@ -54,6 +54,9 @@ Unity génère `PlayerInputs.cs` depuis `Assets/PlayerInputs.inputactions`. Les 
 **Fichiers principaux** :
 
 - `Assets/Scripts/CameraController.cs`
+- `Assets/Scripts/CameraLineOfSightObstructionDetector.cs`
+- `Assets/Scripts/CameraObstacleFader.cs`
+- `Assets/Scripts/CameraObstructionVignetteController.cs`
 - `Assets/Scripts/CrpgCameraCollision.cs`
 - `Assets/Scripts/CrpgCameraFocus.cs`
 - `Assets/Scripts/CrpgCameraInput.cs`
@@ -66,7 +69,11 @@ Unity génère `PlayerInputs.cs` depuis `Assets/PlayerInputs.inputactions`. Les 
 
 - La caméra dépend souvent du personnage local et de l'état de gameplay.
 - Les réglages sont sensibles au ressenti joueur.
-- Tester les collisions caméra, les zones fixes et les transitions combat.
+- L'obstruction type BG3 est visuelle : la caméra ne se rapproche pas des murs par défaut, le système fade/masque les renderers obstruants et pilote une vignette HDRP runtime avec overlay UI de secours.
+- Le centre de la vignette suit la position écran du personnage, calculée à partir des bounds de ses renderers quand possible pour s'adapter à sa hauteur.
+- Dans `Maison.unity`, `CameraSystem` porte explicitement les composants d'obstruction. Le mask initial utilise `Default`, `Ground`, `Stairs` et `CameraObstruction`; les objets à ignorer peuvent utiliser le tag `CameraNonObstructing`.
+- Tester les obstacles caméra, les zones fixes et les transitions combat.
+- Voir aussi `Docs/CameraObstruction.md`.
 
 ## Interactions monde
 
@@ -248,6 +255,9 @@ Les sons sont souvent encapsulés dans des ScriptableObjects. Les zones peuvent 
 - `Assets/Scripts/Brasero.cs`
 - `Assets/Scripts/TimePeriodVisibility.cs`
 - `Assets/Scripts/AgeTriggerZone.cs`
+- `Assets/Scripts/SceneLightOcclusionEnforcer.cs`
+- `Assets/Scripts/TorchLightReceiver.cs`
+- `Assets/Scripts/FlickeringLight.cs`
 - `Assets/Scripts/TorchVisionSystem.cs`
 - `Assets/Scripts/TorchVisionSensitive.cs`
 - `Assets/Scripts/Temporal/*`
@@ -260,24 +270,68 @@ Le projet utilise `AgeManager` comme source canonique d'âge et comme seule list
 
 - Ne pas supprimer les ponts de compatibilité tant que les scènes les référencent.
 - Pour les nouveaux contenus temporels, préférer `AgeManager` + `TimePeriodVisibility`, et `BraseroDisplayManager` pour les affichages.
+- Les lumières de torche et de décor doivent garder des ombres temps réel. `SceneLightOcclusionEnforcer` force les lumières sans ombres à passer en `Soft Shadows` et s'assure que les renderers de décor des layers `Default`, `Ground`, `Stairs` et `CameraObstruction` castent/receivent les ombres.
 
 ## Readables, lore et données narratives
 
-**Rôle** : afficher textes lisibles, fragments narratifs, registres et données de lignées.
+**Rôle** : afficher textes lisibles, fragments narratifs, registres, données de lignées et connaissances persistantes.
 
 **Fichiers principaux** :
 
 - `Assets/ScriptableObjects/Item/Item.cs`
+- `Assets/ScriptableObjects/Knowledge/KnowledgeSO.cs`
+- `Assets/Scripts/KnowledgeManager.cs`
+- `Assets/Scripts/KnowledgeTypes.cs`
+- `Assets/Scripts/KnowledgeUnlockTrigger.cs`
+- `Assets/Scripts/GhostController.cs`
+- `Assets/Scripts/VisualEffects/GhostDissolveController.cs`
+- `Assets/Scripts/Netcode/Persistence/PersistentGhostState.cs`
 - `Assets/Scripts/ReadableSentencePuzzle.cs`
 - `Assets/Scripts/ReadableSentencePuzzleUI.cs`
 - `Assets/Scripts/ReadableContentRuntime.cs`
 - `Assets/Scripts/NarrativeData/*`
 - `Docs/NarrativeData.md`
 
+**Knowledge-driven narrative** :
+
+Le chemin principal des nouvelles interactions narratives passe par `KnowledgeSO`
+et `KnowledgeManager`. Les readables peuvent débloquer des connaissances via
+`Item.knowledgeUnlockedOnRead`, les lieux ou anomalies via `KnowledgeUnlockTrigger`,
+et les fantômes via `GhostData.reactions` + `KnowledgeRequirement`.
+
+Quand plusieurs réactions de fantôme sont disponibles, `GhostController` peut
+afficher une liste d'options générée depuis les connaissances possédées. L'état
+"compris" d'un fantôme est sauvegardé par `PersistentGhostState`, tandis que les
+faits appris restent sauvegardés globalement par `PersistentKnowledgeState`.
+
+Les réactions peuvent déclencher des effets de scène via `triggerEffectIds`.
+Le cas `GhostData_Luc` utilise `luc_dissolve` : si le joueur possède
+`Knowledge_JonLocation`, parler à Luc utilise la réaction correspondante et le
+`GhostController` déclenche le dissolve des GameObjects configurés dans
+`dissolveEffectRules`.
+
+Par défaut, les fantômes pilotés par `GhostController` peuvent aussi utiliser un
+dissolve de proximité : hors rayon, ils restent à dissolve amount max ; quand le
+personnage contrôlé entre dans la zone, ils lerp vers `0` en `1` seconde par
+défaut.
+
+Pour les connaissances implicites, `KnowledgeRequirement` supporte des seuils
+par catégorie ou par tag : par exemple demander au moins trois connaissances
+taguées `quartier_lune_pleine`.
+
+`ReadableSentencePuzzle` reste un système legacy de réponse textuelle libre pour
+les contenus déjà posés. Ne pas l'utiliser comme modèle principal pour les nouveaux
+fantômes.
+
 **Points d'attention** :
 
 - Les textes sont souvent dans des assets `Item`.
 - Les nouvelles métadonnées sont optionnelles pour ne pas casser les items existants.
+- Les connaissances sont persistées par `PersistentKnowledgeState`; ne pas créer
+  de sauvegarde parallèle pour les mêmes faits.
+- Les fantômes de scène avec `GhostController` doivent aussi avoir un
+  `PersistentNetworkObject`; `PersistentWorldSceneInstaller` ajoute le provider
+  de sauvegarde automatiquement lors de la préparation de scène.
 
 ## Construction, bâtiments et décor
 

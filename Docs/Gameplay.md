@@ -30,9 +30,11 @@ doit simplement pas prendre le pas sur l'enquête temporelle et humaine.
 3. Changer l'âge dominant avec un brasero quand la zone le permet.
 4. Utiliser la torche temporelle pour révéler localement l'âge précédent ou suivant.
 5. Comparer les traces : objets, murs, lits, portes, registres, réparations, noms.
-6. Relier ces indices à des lignées, des chambres, des courants religieux ou des
+6. Rencontrer des fantômes piégés dans le temps et utiliser les connaissances
+   découvertes pour leur répondre.
+7. Relier ces indices à des lignées, des chambres, des courants religieux ou des
    transformations humaines.
-7. Consolider une compréhension narrative ou spatiale qui ouvre la suite.
+8. Consolider une compréhension narrative ou spatiale qui ouvre la suite.
 
 Cette boucle doit rester lisible pour un solo dev : peu de systèmes lourds, beaucoup
 de réutilisation de composants simples, et des données faciles à maintenir.
@@ -111,7 +113,59 @@ Certains noms sont rayés, déplacés, absents ou réattribués. La résolution 
 souvent de la comparaison entre un registre officiel, un objet trouvé et une
 modification de chambre.
 
-### 2. Lignées
+### 2. Fantômes piégés dans le temps
+
+Certains fantômes ne sont pas des ennemis ni des donneurs de quêtes classiques.
+Ils sont des fragments de personnes restées bloquées dans une question, un regret
+ou une scène inachevée. Leur apparition doit ouvrir une enquête courte qui force
+le joueur à relire le château plutôt qu'à suivre un marqueur.
+
+Principe :
+
+- le fantôme apparaît dans un lieu chargé et pose une question incomplète ;
+- le joueur doit retrouver la personne, le lieu, l'événement ou le destin évoqué ;
+- la réponse vient des registres, des chambres, des objets transmis et des strates
+  temporelles ;
+- utiliser une connaissance pertinente libère le fantôme, révèle une information
+  utile ou ouvre la suite de l'histoire.
+
+Exemple : un fantôme apparaît devant le joueur et murmure "Jon, où es-tu ?". Le
+joueur doit retrouver qui est Jon, où il a été affecté, déplacé ou déclaré mort,
+et ce qui lui est arrivé en croisant les registres, les chambres et les traces
+matérielles. La bonne réponse n'est pas un simple nom à trouver : elle doit
+confirmer une histoire humaine.
+
+Le joueur ne tape pas de réponse libre. Le système regarde les connaissances déjà
+découvertes et propose ou déclenche les réactions disponibles. Si plusieurs
+preuves sont possibles, le fantôme peut ouvrir une petite liste d'options issues
+des connaissances du joueur. Pour l'instant, chaque fantôme correspond à une
+enquête fixe et lisible. La rejouabilité de ce système sera traitée plus tard,
+quand la base du jeu sera plus solide.
+
+### Knowledge-driven narrative
+
+Les connaissances deviennent la mémoire persistante de l'enquête. Le joueur les
+débloque en lisant, observant, trouvant un objet, entrant dans un lieu, consultant
+un registre, écoutant un fantôme ou remarquant une contradiction temporelle.
+
+Une connaissance peut ensuite :
+
+- rendre disponible une réaction de fantôme ;
+- servir de preuve dans une interaction ;
+- débloquer une ligne de voix conditionnelle ;
+- permettre une lecture plus précise d'un registre, d'une chambre ou d'une lignée ;
+- déclencher une progression narrative.
+
+Les connaissances implicites restent volontairement simples : une interaction
+peut demander plusieurs connaissances d'une même catégorie ou plusieurs
+connaissances portant un même tag. Cela permet de représenter "le joueur comprend
+ce quartier" sans créer un second système de déduction.
+
+Le système de saisie de phrase libre reste legacy pour les énigmes existantes
+(`ReadableSentencePuzzle`). Il ne doit plus être le modèle principal pour les
+nouveaux fantômes.
+
+### 3. Lignées
 
 Le joueur reconstruit des familles en reliant :
 
@@ -125,7 +179,7 @@ Le joueur reconstruit des familles en reliant :
 Les lignées ne doivent pas devenir un arbre généalogique exhaustif obligatoire.
 Elles servent à rendre le château humain et à donner du poids aux absences.
 
-### 3. Objets transgénérationnels
+### 4. Objets transgénérationnels
 
 Certains objets traversent plusieurs âges :
 
@@ -141,7 +195,7 @@ Le joueur peut retrouver le même objet chez plusieurs descendants ou dans plusi
 lore abstrait : un bol fêlé transmis pendant quatre générations raconte plus qu'un
 discours.
 
-### 4. Transformations humaines
+### 5. Transformations humaines
 
 Le château doit évoluer par usages humains autant que par rituel.
 

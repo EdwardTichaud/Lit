@@ -1604,6 +1604,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         DistrictRegistryReadable.RefreshReadableItemForCurrentTemporalContext(item);
+        UnlockReadableKnowledge(item);
 
         HideActionBoxImmediate();
         readableItem = item;
@@ -1645,6 +1646,20 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void UnlockReadableKnowledge(Item item)
+    {
+        if (item == null || item.knowledgeUnlockedOnRead == null || item.knowledgeUnlockedOnRead.Count == 0)
+        {
+            return;
+        }
+
+        KnowledgeManager manager = KnowledgeManager.GetOrCreate();
+        if (manager != null)
+        {
+            manager.UnlockKnowledgeList(item.knowledgeUnlockedOnRead);
+        }
     }
 
     private void CloseReadablePanel()

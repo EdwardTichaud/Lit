@@ -15,8 +15,8 @@ public sealed class DecorCullable : MonoBehaviour
     [SerializeField] private bool autoCollectTargets = true;
     [SerializeField] private bool disableRenderers = true;
     [SerializeField] private bool disableLights = true;
-    [SerializeField] private bool disableLightShadows = true;
-    [SerializeField] private bool disableHdrpContactShadows = true;
+    [SerializeField] private bool disableLightShadows = false;
+    [SerializeField] private bool disableHdrpContactShadows = false;
     [SerializeField] private bool pauseParticles = true;
     [SerializeField] private bool disableCollidersWhenCulled = false;
     [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
@@ -460,12 +460,19 @@ public sealed class DecorCullable : MonoBehaviour
                 continue;
             }
 
-            if (disableLightShadows)
+            // Shadows are required so walls can occlude point lights and torches.
+            // Keep the serialized legacy flags for scene compatibility, but never
+            // turn shadows off here; the light can still be distance-culled.
+            if (disableLightShadows && target.shadows == LightShadows.None)
             {
-                target.shadows = LightShadows.None;
+                target.shadows = LightShadows.Soft;
+            }
+            else if (target.shadows == LightShadows.None)
+            {
+                target.shadows = LightShadows.Soft;
             }
 
-            if (!disableHdrpContactShadows)
+            if (disableHdrpContactShadows)
             {
                 continue;
             }
@@ -477,7 +484,7 @@ public sealed class DecorCullable : MonoBehaviour
             }
 
             hdLight.useContactShadow.useOverride = true;
-            hdLight.useContactShadow.@override = false;
+            hdLight.useContactShadow.@override = true;
         }
     }
 

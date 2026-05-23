@@ -56,6 +56,15 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float obstructionSharpness = 18f;
     [SerializeField] private float releaseSharpness = 10f;
 
+    [Header("Obstruction Visibility")]
+    [SerializeField, Tooltip("Ancien comportement : rapproche/repositionne physiquement la camera pour eviter les murs. Desactive par defaut pour conserver une camera type BG3.")]
+    private bool allowLegacyObstacleRepositioning = false;
+    [SerializeField, Tooltip("Installe au runtime les composants qui rendent les obstacles lisibles sans deplacer la camera.")]
+    private bool obstructionVisibilityEnabled = true;
+    [SerializeField, Tooltip("Ajoute les composants d'obstruction manquants sur ce rig au demarrage.")]
+    private bool autoCreateObstructionVisibilityComponents = true;
+    [SerializeField] private CameraLineOfSightObstructionDetector obstructionDetector;
+
     [Header("Trigger-Driven Zoom Test")]
     [SerializeField, Tooltip("Desactive le focus auto et le clamp collision pour tester un zoom pilote manuellement.")]
     private bool triggerDrivenZoomTestMode = true;
@@ -119,6 +128,7 @@ public class CameraController : MonoBehaviour
     private Quaternion currentFixedCameraRotation = Quaternion.identity;
 
     public bool FixedCameraActive => fixedCameraSource != null && fixedCameraPoint != null && fixedCameraTarget != null;
+    public Camera MainCamera => mainCam;
 
     public bool TryGetFixedCameraMovementBasis(out Vector3 forward, out Vector3 right)
     {
@@ -150,6 +160,7 @@ public class CameraController : MonoBehaviour
     {
         TryResolveRigReferences();
         ValidateFields();
+        InitializeObstructionVisibility();
         runSpeedEffect?.Initialize(mainCam);
     }
 
@@ -184,6 +195,8 @@ public class CameraController : MonoBehaviour
         {
             return;
         }
+
+        InitializeObstructionVisibility();
 
         float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 1f / 60f;
         if (deltaTime <= 0f)
@@ -652,7 +665,9 @@ public class CameraController : MonoBehaviour
         Vector3 desiredAnchorPosition = focusPoint + Vector3.up * desiredPivotHeight;
 
         Quaternion rigRotation = Quaternion.Euler(0f, currentYaw, 0f) * Quaternion.Euler(currentPitch, 0f, 0f);
-        CrpgCameraCollision.SolveResult solve = triggerDrivenZoomTestMode
+        // Obstructions are handled visually by default; the legacy solver is kept only as an opt-in.
+        bool useLegacyCollisionSolver = !triggerDrivenZoomTestMode && allowLegacyObstacleRepositioning;
+        CrpgCameraCollision.SolveResult solve = !useLegacyCollisionSolver
             ? new CrpgCameraCollision.SolveResult
             {
                 anchorPosition = desiredAnchorPosition,
@@ -741,6 +756,12 @@ public class CameraController : MonoBehaviour
         return LocalPlayerContext.LocalCharacterRoot;
     }
 
+    public bool TryGetGameplayTarget(out Transform gameplayTarget)
+    {
+        gameplayTarget = ResolveGameplayTarget();
+        return gameplayTarget != null;
+    }
+
     private Vector3 ResolveFocusPoint(Transform logicalTarget, bool usingOverride)
     {
         if (logicalTarget == null)
@@ -800,6 +821,41 @@ public class CameraController : MonoBehaviour
         }
 
         return mainCam != null && cameraAnchor != null && yawPivot != null && pitchPivot != null;
+    }
+
+    private void InitializeObstructionVisibility()
+    {
+        if (!obstructionVisibilityEnabled || !Application.isPlaying)
+        {
+            return;
+        }
+
+        if (obstructionDetector == null)
+        {
+            obstructionDetector = GetComponent<CameraLineOfSightObstructionDetector>();
+        }
+
+        if (obstructionDetector == null && autoCreateObstructionVisibilityComponents)
+        {
+            obstructionDetector = gameObject.AddComponent<CameraLineOfSightObstructionDetector>();
+        }
+
+        if (obstructionDetector == null)
+        {
+            return;
+        }
+
+        if (autoCreateObstructionVisibilityComponents && GetComponent<CameraObstacleFader>() == null)
+        {
+            gameObject.AddComponent<CameraObstacleFader>();
+        }
+
+        if (autoCreateObstructionVisibilityComponents && GetComponent<CameraObstructionVignetteController>() == null)
+        {
+            gameObject.AddComponent<CameraObstructionVignetteController>();
+        }
+
+        obstructionDetector.Configure(mainCam, this);
     }
 
     private void OnValidate()

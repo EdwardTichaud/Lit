@@ -39,6 +39,7 @@ public static class PersistentWorldSceneInstaller
             PrepareSceneBraziers(root);
             PrepareSceneContainers(root);
             PrepareScenePuzzles(root);
+            PrepareSceneGhosts(root);
             PrepareSceneBuildings(root);
             PrepareSceneInteractables(root);
             PrepareSceneCharacters(root);
@@ -331,6 +332,11 @@ public static class PersistentWorldSceneInstaller
         {
             NetcodeRuntimeUtilities.GetOrAdd<PersistentKnowledgeState>(target);
         }
+
+        if (target.GetComponent<GhostController>() != null)
+        {
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentGhostState>(target);
+        }
     }
 
     public static string BuildCharacterPersistentId(string characterId)
@@ -570,6 +576,26 @@ public static class PersistentWorldSceneInstaller
             }
 
             NetcodeRuntimeUtilities.GetOrAdd<PersistentBuildingState>(building.gameObject);
+        }
+    }
+
+    private static void PrepareSceneGhosts(GameObject root)
+    {
+        GhostController[] ghosts = root.GetComponentsInChildren<GhostController>(true);
+        for (int i = 0; i < ghosts.Length; i++)
+        {
+            GhostController ghost = ghosts[i];
+            if (ghost == null)
+            {
+                continue;
+            }
+
+            if (EnsurePersistentSceneObject(ghost.gameObject) == null)
+            {
+                continue;
+            }
+
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentGhostState>(ghost.gameObject);
         }
     }
 

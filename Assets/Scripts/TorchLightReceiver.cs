@@ -12,15 +12,15 @@ public class TorchLightReceiver : MonoBehaviour
     [Header("Shadowing")]
     [SerializeField] private bool configureTorchShadowing = true;
     [SerializeField] private LightRenderMode renderMode = LightRenderMode.ForcePixel;
-    [SerializeField] private LightShadows shadowMode = LightShadows.None;
+    [SerializeField] private LightShadows shadowMode = LightShadows.Soft;
     [SerializeField, Range(0f, 1f)] private float shadowStrength = 1f;
-    [SerializeField, Range(0f, 0.2f)] private float shadowBias = 0.02f;
-    [SerializeField, Range(0f, 0.5f)] private float shadowNormalBias = 0.08f;
-    [SerializeField, Min(0.01f)] private float shadowNearPlane = 0.05f;
+    [SerializeField, Range(0f, 0.2f)] private float shadowBias = 0.005f;
+    [SerializeField, Range(0f, 0.5f)] private float shadowNormalBias = 0.03f;
+    [SerializeField, Min(0.01f)] private float shadowNearPlane = 0.02f;
     [SerializeField, Min(128)] private int hdrpShadowResolution = 1024;
-    [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.1f;
-    [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.2f;
-    [SerializeField] private bool enableHdrpContactShadows = false;
+    [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.03f;
+    [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.1f;
+    [SerializeField] private bool enableHdrpContactShadows = true;
 
     [Header("Owner")]
     [SerializeField] private SquadCharacterController owner;
@@ -97,6 +97,11 @@ public class TorchLightReceiver : MonoBehaviour
     {
         CacheLight();
         CacheOwner();
+        if (shadowMode == LightShadows.None)
+        {
+            shadowMode = LightShadows.Soft;
+        }
+
         shadowStrength = Mathf.Clamp01(shadowStrength);
         shadowBias = Mathf.Clamp(shadowBias, 0f, 0.2f);
         shadowNormalBias = Mathf.Clamp(shadowNormalBias, 0f, 0.5f);
@@ -143,7 +148,7 @@ public class TorchLightReceiver : MonoBehaviour
         }
 
         targetLight.renderMode = renderMode;
-        targetLight.shadows = shadowMode;
+        targetLight.shadows = shadowMode == LightShadows.None ? LightShadows.Soft : shadowMode;
         targetLight.shadowStrength = shadowStrength;
         targetLight.shadowBias = shadowBias;
         targetLight.shadowNormalBias = shadowNormalBias;

@@ -3,11 +3,13 @@
 // Usage:
 // Referenced by KnowledgeManager and knowledge/readable systems.
 // Responsibilities:
-// Store stable identity, display title, and description.
+// Store stable identity, display title, description, and lightweight narrative links.
 // Dependencies:
 // UnityEditor in OnValidate for asset GUID synchronization.
 // Precautions:
 // uniqueId/knowledgeId may be used for persistence. Do not regenerate existing IDs casually.
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -32,8 +34,55 @@ public class KnowledgeSO : ScriptableObject
     [TextArea]
     public string description;
 
+    [Header("Classification")]
+    /// <summary>Main investigation category used by requirements and future UI filters.</summary>
+    public KnowledgeCategory category = KnowledgeCategory.Unknown;
+    /// <summary>Primary way this knowledge is normally discovered.</summary>
+    public KnowledgeSourceType sourceType = KnowledgeSourceType.Unknown;
+    /// <summary>Narrative weight used by future UI and progression filters.</summary>
+    public KnowledgeImportance importance = KnowledgeImportance.Useful;
+    /// <summary>Freeform tags used for implicit requirements and cross-system filtering.</summary>
+    public List<string> tags = new List<string>();
+
+    [Header("Narrative Links")]
+    /// <summary>District ID linked to this knowledge, if any.</summary>
+    public string districtId;
+    /// <summary>Room or chamber ID linked to this knowledge, if any.</summary>
+    public string roomId;
+    /// <summary>Person/inhabitant record ID linked to this knowledge, if any.</summary>
+    public string personId;
+    /// <summary>Lineage ID linked to this knowledge, if any.</summary>
+    public string lineageId;
+    /// <summary>Object ID linked to this knowledge, if any.</summary>
+    public string objectId;
+    /// <summary>Readable item that can expose this knowledge, if any.</summary>
+    public Item readableItem;
+    /// <summary>Temporal age most closely associated with this knowledge.</summary>
+    public TemporalAge associatedAge = TemporalAge.Age666;
+
     /// <summary>Stable internal ID, normally the asset GUID in editor.</summary>
     public string UniqueId => uniqueId;
+
+    public bool HasTag(string tag)
+    {
+        if (string.IsNullOrWhiteSpace(tag) || tags == null)
+        {
+            return false;
+        }
+
+        string trimmed = tag.Trim();
+        for (int i = 0; i < tags.Count; i++)
+        {
+            string candidate = tags[i];
+            if (!string.IsNullOrWhiteSpace(candidate) &&
+                string.Equals(candidate.Trim(), trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 #if UNITY_EDITOR
     private void OnValidate()

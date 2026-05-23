@@ -49,7 +49,7 @@ public static class MainMenuTitleSceneInstaller
 
         Light ambientLight = CreatePointLight("MainMenu_Decor_Ambient", decorRoot.transform, new Vector3(0f, 2.3f, 6f), 9f, 0.35f, new Color(0.38f, 0.42f, 0.5f, 1f));
         Light accentLight = CreatePointLight("MainMenu_Decor_ProgressLight", decorRoot.transform, new Vector3(0f, 1.2f, 7.2f), 5f, 1.2f, new Color(1f, 0.75f, 0.42f, 1f));
-        Light torchLight = CreateSpotLight("MainMenu_CursorTorch", decorRoot.transform, 25f, 6.5f, 24f, new Color(1f, 0.78f, 0.45f, 1f));
+        Light torchLight = CreatePointLight("MainMenu_CursorTorch", decorRoot.transform, Vector3.zero, 6.5f, 25f, new Color(1f, 0.78f, 0.45f, 1f));
 
         MainMenuTitleDecorController decorController = decorRoot.AddComponent<MainMenuTitleDecorController>();
         AssignObject(decorController, "noSaveRoot", noSaveRoot);
@@ -190,6 +190,7 @@ public static class MainMenuTitleSceneInstaller
         AssignObject(pointer, "cursorVisual", rect);
         AssignObject(pointer, "decorCamera", camera);
         AssignObject(pointer, "torchLight", torchLight);
+        AssignObject(pointer, "torchBoundsRoot", torchLight != null ? torchLight.transform.parent : null);
         AssignFloat(pointer, "gamepadSpeed", 1150f);
         AssignFloat(pointer, "worldRayDistance", 80f);
         return cursor;
@@ -410,20 +411,6 @@ public static class MainMenuTitleSceneInstaller
         light.type = LightType.Point;
         light.range = range;
         light.intensity = intensity;
-        light.color = color;
-        return light;
-    }
-
-    private static Light CreateSpotLight(string name, Transform parent, float range, float intensity, float angle, Color color)
-    {
-        GameObject obj = new GameObject(name);
-        obj.transform.SetParent(parent, false);
-        Light light = obj.AddComponent<Light>();
-        light.type = LightType.Spot;
-        light.range = range;
-        light.intensity = intensity;
-        light.spotAngle = angle;
-        light.innerSpotAngle = Mathf.Max(1f, angle * 0.45f);
         light.color = color;
         return light;
     }

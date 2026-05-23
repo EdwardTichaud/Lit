@@ -120,10 +120,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""ToggleTorch"",
+                    ""name"": ""Munin"",
                     ""type"": ""Button"",
                     ""id"": ""fd1fcec9-25eb-4274-8289-07bb178bd0f1"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -186,6 +186,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""name"": ""LocomotionMode"",
                     ""type"": ""Button"",
                     ""id"": ""e6d6a6ea-b84e-4a41-8d8e-c99cfeefc037"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwitchTarget"",
+                    ""type"": ""Button"",
+                    ""id"": ""7c83ea3e-8385-43f9-920c-950a799c6c3c"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -310,7 +319,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
-                    ""action"": ""ToggleTorch"",
+                    ""action"": ""Munin"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -421,6 +430,28 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""LocomotionMode"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""782cfcd2-4675-415b-b0f9-3556222a4573"",
+                    ""path"": ""<Gamepad>/dpad/left"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchTarget"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""57e406f7-2877-4ab3-9101-db2e879bb4ad"",
+                    ""path"": ""<Gamepad>/dpad/right"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchTarget"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -791,7 +822,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_LeftShoulder = m_Player.FindAction("LeftShoulder", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
-        m_Player_ToggleTorch = m_Player.FindAction("ToggleTorch", throwIfNotFound: true);
+        m_Player_Munin = m_Player.FindAction("Munin", throwIfNotFound: true);
         m_Player_TakeAll = m_Player.FindAction("TakeAll", throwIfNotFound: true);
         m_Player_Return = m_Player.FindAction("Return", throwIfNotFound: true);
         m_Player_Inventory = m_Player.FindAction("Inventory", throwIfNotFound: true);
@@ -799,6 +830,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_Start = m_Player.FindAction("Start", throwIfNotFound: true);
         m_Player_RightShoulder = m_Player.FindAction("RightShoulder", throwIfNotFound: true);
         m_Player_LocomotionMode = m_Player.FindAction("LocomotionMode", throwIfNotFound: true);
+        m_Player_SwitchTarget = m_Player.FindAction("SwitchTarget", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_Pan = m_Camera.FindAction("Pan", throwIfNotFound: true);
@@ -895,7 +927,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Move;
     private readonly InputAction m_Player_LeftShoulder;
     private readonly InputAction m_Player_Interact;
-    private readonly InputAction m_Player_ToggleTorch;
+    private readonly InputAction m_Player_Munin;
     private readonly InputAction m_Player_TakeAll;
     private readonly InputAction m_Player_Return;
     private readonly InputAction m_Player_Inventory;
@@ -903,6 +935,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Start;
     private readonly InputAction m_Player_RightShoulder;
     private readonly InputAction m_Player_LocomotionMode;
+    private readonly InputAction m_Player_SwitchTarget;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -927,9 +960,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Interact => m_Wrapper.m_Player_Interact;
         /// <summary>
-        /// Provides access to the underlying input action "Player/ToggleTorch".
+        /// Provides access to the underlying input action "Player/Munin".
         /// </summary>
-        public InputAction @ToggleTorch => m_Wrapper.m_Player_ToggleTorch;
+        public InputAction @Munin => m_Wrapper.m_Player_Munin;
         /// <summary>
         /// Provides access to the underlying input action "Player/TakeAll".
         /// </summary>
@@ -958,6 +991,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/LocomotionMode".
         /// </summary>
         public InputAction @LocomotionMode => m_Wrapper.m_Player_LocomotionMode;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/SwitchTarget".
+        /// </summary>
+        public InputAction @SwitchTarget => m_Wrapper.m_Player_SwitchTarget;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -993,9 +1030,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
-            @ToggleTorch.started += instance.OnToggleTorch;
-            @ToggleTorch.performed += instance.OnToggleTorch;
-            @ToggleTorch.canceled += instance.OnToggleTorch;
+            @Munin.started += instance.OnMunin;
+            @Munin.performed += instance.OnMunin;
+            @Munin.canceled += instance.OnMunin;
             @TakeAll.started += instance.OnTakeAll;
             @TakeAll.performed += instance.OnTakeAll;
             @TakeAll.canceled += instance.OnTakeAll;
@@ -1017,6 +1054,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LocomotionMode.started += instance.OnLocomotionMode;
             @LocomotionMode.performed += instance.OnLocomotionMode;
             @LocomotionMode.canceled += instance.OnLocomotionMode;
+            @SwitchTarget.started += instance.OnSwitchTarget;
+            @SwitchTarget.performed += instance.OnSwitchTarget;
+            @SwitchTarget.canceled += instance.OnSwitchTarget;
         }
 
         /// <summary>
@@ -1037,9 +1077,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
-            @ToggleTorch.started -= instance.OnToggleTorch;
-            @ToggleTorch.performed -= instance.OnToggleTorch;
-            @ToggleTorch.canceled -= instance.OnToggleTorch;
+            @Munin.started -= instance.OnMunin;
+            @Munin.performed -= instance.OnMunin;
+            @Munin.canceled -= instance.OnMunin;
             @TakeAll.started -= instance.OnTakeAll;
             @TakeAll.performed -= instance.OnTakeAll;
             @TakeAll.canceled -= instance.OnTakeAll;
@@ -1061,6 +1101,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LocomotionMode.started -= instance.OnLocomotionMode;
             @LocomotionMode.performed -= instance.OnLocomotionMode;
             @LocomotionMode.canceled -= instance.OnLocomotionMode;
+            @SwitchTarget.started -= instance.OnSwitchTarget;
+            @SwitchTarget.performed -= instance.OnSwitchTarget;
+            @SwitchTarget.canceled -= instance.OnSwitchTarget;
         }
 
         /// <summary>
@@ -1383,12 +1426,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnInteract(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "ToggleTorch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Munin" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnToggleTorch(InputAction.CallbackContext context);
+        void OnMunin(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "TakeAll" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
@@ -1438,6 +1481,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLocomotionMode(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SwitchTarget" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSwitchTarget(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

@@ -153,6 +153,11 @@ public class LocalVoiceLineController : MonoBehaviour
     [Tooltip("Masque le texte a la fin.")]
     public bool hideWhenDone = true;
     /// <summary>
+    /// Garde le texte visible jusqu'a l'input Interact, meme si l'audio est termine.
+    /// </summary>
+    [Tooltip("Si actif, le texte reste visible jusqu'a Interact.")]
+    public bool requireInteractToDismissText = true;
+    /// <summary>
     /// Utilise le temps non scale pour continuer pendant certaines pauses UI.
     /// </summary>
     [Tooltip("Utilise le temps non-scale (UI).")]
@@ -201,6 +206,8 @@ public class LocalVoiceLineController : MonoBehaviour
     private Collider interactionCollider;
     private float nextInteractTime;
     private bool isMusicDucked;
+    private bool textVisible;
+    private int textShownFrame = -1;
 
     private const string TextRootTag = "LocalVoiceLines";
     private const string TextRootObjectName = "LocalVoiceLines";
@@ -230,7 +237,7 @@ public class LocalVoiceLineController : MonoBehaviour
             RebuildLookup();
         }
 
-        if (useInteractInput)
+        if (useInteractInput || requireInteractToDismissText)
         {
             if (interactionCollider == null)
             {
@@ -246,12 +253,8 @@ public class LocalVoiceLineController : MonoBehaviour
     {
         // Unity appelle OnDisable a la desactivation; il faut liberer input/audio pour eviter les callbacks orphelins.
         EndMusicDucking();
-        if (!useInteractInput)
-        {
-            return;
-        }
-
         LocalInputRouter.Interact -= OnInteractPerformed;
+        ReleaseTextInputFocus();
     }
 
     private void LateUpdate()
@@ -263,6 +266,21 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        if (requireInteractToDismissText && textVisible && InputFocusStack.HasFocus(this))
+        {
+            if (Time.frameCount == textShownFrame)
+            {
+                return;
+            }
+
+            if (LocalInputRouter.TryConsumeInteract())
+            {
+                DismissCurrentText(stopAudio: true);
+            }
+
+            return;
+        }
+
         if (!useInteractInput)
         {
             return;
@@ -435,7 +453,7 @@ public class LocalVoiceLineController : MonoBehaviour
         SetTextVisible(true);
 
         float duration = ResolveTextDuration(clip);
-        displayRoutine = StartCoroutine(HideAfterDelay(duration));
+        displayRoutine = StartCoroutine(CompleteLineAfterDelay(duration));
 
         BeginMusicDucking();
         PlayAudio(clip);
@@ -539,7 +557,7 @@ public class LocalVoiceLineController : MonoBehaviour
             yield return null;
         }
 
-        if (hideWhenDone)
+        if (hideWhenDone && !requireInteractToDismissText)
         {
             SetTextVisible(false);
         }
@@ -579,6 +597,21 @@ public class LocalVoiceLineController : MonoBehaviour
 
     private void SetTextVisible(bool visible)
     {
+        if (visible)
+        {
+            textVisible = true;
+            textShownFrame = Time.frameCount;
+            if (requireInteractToDismissText)
+            {
+                InputFocusStack.Push(this);
+            }
+        }
+        else
+        {
+            textVisible = false;
+            ReleaseTextInputFocus();
+        }
+
         Transform root = GetTextInstanceRoot();
         if (root != null && root.gameObject != null)
         {
@@ -732,7 +765,7 @@ public class LocalVoiceLineController : MonoBehaviour
         return duration;
     }
 
-    private IEnumerator HideAfterDelay(float duration)
+    private IEnumerator CompleteLineAfterDelay(float duration)
     {
         float time = 0f;
         while (time < duration)
@@ -741,21 +774,35 @@ public class LocalVoiceLineController : MonoBehaviour
             yield return null;
         }
 
-        if (hideWhenDone)
+        if (hideWhenDone && !requireInteractToDismissText)
         {
-            Transform root = GetTextInstanceRoot();
-            if (root != null && root.gameObject != null)
-            {
-                root.gameObject.SetActive(false);
-            }
-            else if (textTarget != null && textTarget.gameObject != null)
-            {
-                textTarget.gameObject.SetActive(false);
-            }
+            SetTextVisible(false);
         }
 
         EndMusicDucking();
         displayRoutine = null;
+    }
+
+    private void DismissCurrentText(bool stopAudio)
+    {
+        if (displayRoutine != null)
+        {
+            StopCoroutine(displayRoutine);
+            displayRoutine = null;
+        }
+
+        if (stopAudio && activeSource != null && activeSource.isPlaying)
+        {
+            activeSource.Stop();
+        }
+
+        SetTextVisible(false);
+        EndMusicDucking();
+    }
+
+    private void ReleaseTextInputFocus()
+    {
+        InputFocusStack.Pop(this);
     }
 
     private void PlayAudio(AudioClipSO clip)

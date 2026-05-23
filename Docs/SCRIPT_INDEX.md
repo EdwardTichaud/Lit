@@ -46,7 +46,7 @@ Il ne remplace pas la lecture du code : le rôle, les dépendances et le risque 
 
 ## Index des scripts projet
 
-Nombre de scripts indexés : **241**.
+Nombre de scripts indexés : **250**.
 
 | Script | Classe principale | Rôle | Dépendances | Scènes ou prefabs probablement concernés | Risque |
 |---|---|---|---|---|---|
@@ -84,6 +84,9 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/BuildingPanelController.cs` | `BuildingPanelController` | Contrôleur de comportement ou d interface. | Netcode, UI, Input, Audio, Inventory, Physics | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/BuildingRuntimeState.cs` | `BuildingRuntimeState` | Interface utilisateur ou feedback visuel. | ScriptableObject | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/CameraController.cs` | `CameraController` | Contrôleur de comportement ou d interface. | Combat | Scènes (Assets/Scenes/Maison.unity) | élevé |
+| `Assets/Scripts/CameraLineOfSightObstructionDetector.cs` | `CameraLineOfSightObstructionDetector` | Détecte les murs entre caméra et personnage sans déplacer le rig caméra. | Physics, Camera | Ajouté runtime par `CameraController` ou manuellement sur le rig caméra | moyen |
+| `Assets/Scripts/CameraObstacleFader.cs` | `CameraObstacleFader` | Applique/restaure le fade visuel des obstacles caméra via `MaterialPropertyBlock`. | Rendering | Ajouté runtime par `CameraController` ou manuellement sur le rig caméra | moyen |
+| `Assets/Scripts/CameraObstructionVignetteController.cs` | `CameraObstructionVignetteController` | Pilote une vignette HDRP runtime quand un obstacle masque le joueur. | HDRP, Volume | Ajouté runtime par `CameraController` ou manuellement sur le rig caméra | moyen |
 | `Assets/Scripts/CastleRoamingMonster.cs` | `CastleRoamingMonster` | Comportement ou donnée spécifique au projet. | Netcode, Persistence, NavMesh, Physics | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/CatalyseurOrbCraftEffect.cs` | `CatalyseurOrbCraftEffect` | Effet appliqué par un item, une action ou un état de gameplay. | ScriptableObject | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/CatalyseurPanelController.cs` | `CatalyseurPanelController` | Contrôleur de comportement ou d interface. | Netcode, UI, Input, Audio, Inventory | Appelé par code ou ajouté runtime | élevé |
@@ -129,6 +132,7 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/FlickeringLight.cs` | `FlickeringLight` | Comportement ou donnée spécifique au projet. | Unity | Scènes/Prefabs (Assets/Prefabs/Puzzle/TreasureFinder.prefab, Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/FollowTarget.cs` | `FollowTarget` | Comportement ou donnée spécifique au projet. | Unity | Scènes/Prefabs (3 fichiers) | moyen |
 | `Assets/Scripts/GameplayRuntimeReset.cs` | `GameplayRuntimeReset` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
+| `Assets/Scripts/GhostController.cs` | `GhostController` | Lie un fantôme de scène à GhostData, propose des réactions selon les connaissances possédées et marque le souvenir compris. | ScriptableObject, UI, Input, Physics | Ajouté manuellement sur un GameObject de scène | moyen |
 | `Assets/Scripts/GlobalAgeZone.cs` | `GlobalAgeZone` | Pont shader global legacy, désactivé par défaut au profit d'AgeManager et LocalRuntimeAgeTrigger. | Unity | Scènes existantes | faible |
 | `Assets/Scripts/HiddenRoom/HiddenRoomBootstrap.cs` | `HiddenRoomBootstrap` | Salle cachée, portail ou téléportation dédiée. | Physics | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/HiddenRoom/HiddenRoomPortalRenderer.cs` | `HiddenRoomPortalRenderer` | Salle cachée, portail ou téléportation dédiée. | Unity | Appelé par code ou ajouté runtime | moyen |
@@ -151,6 +155,8 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/ItemPassiveEffectSystem.cs` | `ItemPassiveEffectSystem` | Effet appliqué par un item, une action ou un état de gameplay. | Inventory | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/ItemSceneMarker.cs` | `ItemSceneMarker` | Comportement ou donnée spécifique au projet. | Editor, ScriptableObject, Inventory, Physics | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/KnowledgeManager.cs` | `KnowledgeManager` | Manager central qui coordonne un système runtime. | UI, Audio | Scènes (Assets/Scenes/Maison.unity) | élevé |
+| `Assets/Scripts/KnowledgeTypes.cs` | `KnowledgeCategory` | Vocabulaire et conditions réutilisables pour le système de connaissances. | ScriptableObject | Appelé par code ou ajouté runtime | faible |
+| `Assets/Scripts/KnowledgeUnlockTrigger.cs` | `KnowledgeUnlockTrigger` | Débloque des connaissances depuis un événement de scène, un trigger ou une observation. | ScriptableObject, Physics | Ajouté manuellement sur un GameObject de scène | moyen |
 | `Assets/Scripts/LabyrinthStartTrigger.cs` | `LabyrinthStartTrigger` | Comportement ou donnée spécifique au projet. | Netcode, UI, Input, Audio, Physics | Scènes/Prefabs (Assets/Prefabs/Ray_v2.prefab, Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/LadderController.cs` | `LadderController` | Contrôleur de comportement ou d interface. | NavMesh, Physics | Scènes (Assets/Scenes/StarterMotorTest.unity) | élevé |
 | `Assets/Scripts/LadderInteractable.cs` | `LadderInteractable` | Interaction entre le joueur et un objet du monde. | Netcode, UI, Input, Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | élevé |
@@ -194,6 +200,7 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/Movement/StarterMotorAnimatorDriver.cs *(origine incertaine)*` | `StarterMotorAnimatorDriver` | Locomotion, animation, saut, vol ou probing du personnage. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/Movement/StarterMotorLocalInputBridge.cs *(origine incertaine)*` | `StarterMotorLocalInputBridge` | Locomotion, animation, saut, vol ou probing du personnage. | Input | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/NarrativeData/FamilyRecord.cs` | `FamilyRecordStatus` | Définit des valeurs partagées utilisées par d autres scripts. | ScriptableObject, Temporal | Appelé par code ou ajouté runtime | faible |
+| `Assets/Scripts/NarrativeData/GhostData.cs` | `GhostData` | Données narratives de fantôme temporel, question, réactions Knowledge et indices. | ScriptableObject, Temporal | Assets ScriptableObject | faible |
 | `Assets/Scripts/NarrativeData/LineageRecord.cs` | `LineageRecord` | Structure de données narrative : registres, lignées, objets transmis. | ScriptableObject | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/NarrativeData/RegistryEntry.cs` | `RegistryEntryType` | Définit des valeurs partagées utilisées par d autres scripts. | ScriptableObject, Temporal | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/NarrativeData/TemporalReadableMetadata.cs` | `ReligiousCurrent` | Définit des valeurs partagées utilisées par d autres scripts. | Temporal | Appelé par code ou ajouté runtime | faible |
@@ -231,6 +238,7 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/Netcode/Persistence/NetworkObjectRegistry.cs` | `NetworkObjectRegistry` | Persistance du monde, snapshots, providers ou reconstruction late join. | Netcode, Persistence | Créé ou appelé runtime par Netcode | élevé |
 | `Assets/Scripts/Netcode/Persistence/PersistenceModels.cs` | `PersistentObjectKind` | Définit des valeurs partagées utilisées par d autres scripts. | Netcode, Persistence | Créé ou appelé runtime par Netcode | élevé |
 | `Assets/Scripts/Netcode/Persistence/PersistentGameplayStateProviders.cs` | `PersistentContainerState` | Persistance du monde, snapshots, providers ou reconstruction late join. | Netcode, Persistence | Créé ou appelé runtime par Netcode | élevé |
+| `Assets/Scripts/Netcode/Persistence/PersistentGhostState.cs` | `PersistentGhostState` | Persiste l'état compris d'un fantôme knowledge-driven. | Netcode, Persistence | Ajouté automatiquement par PersistentWorldSceneInstaller | élevé |
 | `Assets/Scripts/Netcode/Persistence/PersistentNetworkObject.cs` | `PersistentNetworkObject` | Persistance du monde, snapshots, providers ou reconstruction late join. | Editor, Netcode, Persistence | Créé ou appelé runtime par Netcode | élevé |
 | `Assets/Scripts/Netcode/Persistence/PersistentReadableSentencePuzzleState.cs` | `PersistentReadableSentencePuzzleState` | Persistance du monde, snapshots, providers ou reconstruction late join. | Netcode, Persistence | Créé ou appelé runtime par Netcode | élevé |
 | `Assets/Scripts/Netcode/Persistence/PersistentWorldDebug.cs` | `PersistentWorldDebug` | Persistance du monde, snapshots, providers ou reconstruction late join. | Netcode, Persistence | Créé ou appelé runtime par Netcode | élevé |
@@ -256,6 +264,7 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/RunSpeedCameraEffect.cs` | `RunSpeedCameraEffect` | Effet appliqué par un item, une action ou un état de gameplay. | ScriptableObject | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/RunSpeedPeripheralBlur.cs` | `RunSpeedPeripheralBlur` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/Sablier.cs` | `Sablier` | Comportement ou donnée spécifique au projet. | Persistence | Appelé par code ou ajouté runtime | élevé |
+| `Assets/Scripts/SceneLightOcclusionEnforcer.cs` | `SceneLightOcclusionEnforcer` | Force les lumières de scène à caster des ombres pour éviter que torches et lampes éclairent à travers les murs. | HDRP, Rendering | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/Skill.cs` | `StatType` | Définit des valeurs partagées utilisées par d autres scripts. | ScriptableObject | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/SkillCheckFeedback.cs` | `SkillCheckFeedback` | Comportement ou donnée spécifique au projet. | UI | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/SkillCheckFeedbackAnchor.cs` | `SkillCheckFeedbackAnchor` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
@@ -287,6 +296,7 @@ Nombre de scripts indexés : **241**.
 | `Assets/Scripts/TriggerPairTeleporter.cs` | `TriggerPairTeleporter` | Comportement ou donnée spécifique au projet. | Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/TrouEtroit.cs` | `TrouEtroit` | Comportement ou donnée spécifique au projet. | UI, Input, Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/TwoLeverPuzzle.cs` | `TwoLeverPuzzle` | Objet interactif de scène. | Audio | Scènes (Assets/Scenes/Maison.unity) | élevé |
+| `Assets/Scripts/VisualEffects/GhostDissolveController.cs` | `GhostDissolveController` | Pilote le dissolve shader/VFX des fantômes, y compris l'apparition de proximité. | VFX, Physics | Ajouté runtime par GhostController ou manuellement sur un fantôme | moyen |
 | `Assets/Scripts/WaterMotion.cs` | `WaterMotion` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/WorldPickupUtility.cs` | `WorldPickupUtility` | Comportement ou donnée spécifique au projet. | Netcode, Physics | Appelé par code ou ajouté runtime | élevé |
 | `Assets/Scripts/WorldPlacementUtility.cs` | `WorldPlacementUtility` | Comportement ou donnée spécifique au projet. | Physics | Appelé par code ou ajouté runtime | moyen |

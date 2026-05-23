@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -157,6 +158,101 @@ public class KnowledgeManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Indique si une connaissance avec cet ID public est actuellement debloquee.
+    /// </summary>
+    public bool HasKnowledgeId(string knowledgeId)
+    {
+        if (string.IsNullOrWhiteSpace(knowledgeId))
+        {
+            return false;
+        }
+
+        EnsureLookup();
+        string trimmedId = knowledgeId.Trim();
+        for (int i = 0; i < unlockedKnowledge.Count; i++)
+        {
+            KnowledgeSO knowledge = unlockedKnowledge[i];
+            if (knowledge == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(knowledge.knowledgeId, trimmedId, StringComparison.Ordinal) ||
+                string.Equals(knowledge.UniqueId, trimmedId, StringComparison.Ordinal) ||
+                string.Equals(knowledge.name, trimmedId, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Indique si au moins une connaissance debloquee appartient a cette categorie.
+    /// </summary>
+    public bool HasKnowledgeInCategory(KnowledgeCategory category)
+    {
+        return CountKnowledgeInCategory(category) > 0;
+    }
+
+    /// <summary>
+    /// Compte les connaissances debloquees appartenant a cette categorie.
+    /// </summary>
+    public int CountKnowledgeInCategory(KnowledgeCategory category)
+    {
+        if (category == KnowledgeCategory.Unknown)
+        {
+            return 0;
+        }
+
+        EnsureLookup();
+        int count = 0;
+        for (int i = 0; i < unlockedKnowledge.Count; i++)
+        {
+            KnowledgeSO knowledge = unlockedKnowledge[i];
+            if (knowledge != null && knowledge.category == category)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Indique si au moins une connaissance debloquee porte ce tag.
+    /// </summary>
+    public bool HasKnowledgeWithTag(string tag)
+    {
+        return CountKnowledgeWithTag(tag) > 0;
+    }
+
+    /// <summary>
+    /// Compte les connaissances debloquees portant ce tag.
+    /// </summary>
+    public int CountKnowledgeWithTag(string tag)
+    {
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            return 0;
+        }
+
+        EnsureLookup();
+        int count = 0;
+        for (int i = 0; i < unlockedKnowledge.Count; i++)
+        {
+            KnowledgeSO knowledge = unlockedKnowledge[i];
+            if (knowledge != null && knowledge.HasTag(tag))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
     /// Debloque une connaissance si elle ne l'est pas deja.
     /// </summary>
     public bool UnlockKnowledge(KnowledgeSO knowledge)
@@ -184,6 +280,28 @@ public class KnowledgeManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Debloque plusieurs connaissances et retourne le nombre de nouvelles entrees.
+    /// </summary>
+    public int UnlockKnowledgeList(IReadOnlyList<KnowledgeSO> knowledgeList)
+    {
+        if (knowledgeList == null || knowledgeList.Count == 0)
+        {
+            return 0;
+        }
+
+        int unlockedCount = 0;
+        for (int i = 0; i < knowledgeList.Count; i++)
+        {
+            if (UnlockKnowledge(knowledgeList[i]))
+            {
+                unlockedCount++;
+            }
+        }
+
+        return unlockedCount;
     }
 
     /// <summary>

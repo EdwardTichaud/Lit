@@ -34,10 +34,10 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "ToggleTorch",
+                    "name": "Munin",
                     "type": "Button",
                     "id": "fd1fcec9-25eb-4274-8289-07bb178bd0f1",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -100,6 +100,15 @@
                     "name": "LocomotionMode",
                     "type": "Button",
                     "id": "e6d6a6ea-b84e-4a41-8d8e-c99cfeefc037",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SwitchTarget",
+                    "type": "Button",
+                    "id": "7c83ea3e-8385-43f9-920c-950a799c6c3c",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -224,7 +233,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
-                    "action": "ToggleTorch",
+                    "action": "Munin",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -335,6 +344,28 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "LocomotionMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "782cfcd2-4675-415b-b0f9-3556222a4573",
+                    "path": "<Gamepad>/dpad/left",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchTarget",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "57e406f7-2877-4ab3-9101-db2e879bb4ad",
+                    "path": "<Gamepad>/dpad/right",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchTarget",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

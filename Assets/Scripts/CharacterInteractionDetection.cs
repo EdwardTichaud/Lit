@@ -63,6 +63,11 @@ public static class CharacterInteractionDetection
                 return readableSentencePuzzle;
             }
 
+            if (current.TryGetComponent(out GhostController ghost) && ghost.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(ghost))
+            {
+                return ghost;
+            }
+
             current = current.parent;
         }
 
