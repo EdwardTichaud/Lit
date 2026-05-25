@@ -34,15 +34,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Munin",
-                    "type": "Button",
-                    "id": "fd1fcec9-25eb-4274-8289-07bb178bd0f1",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "TakeAll",
                     "type": "Button",
                     "id": "6dd250b0-e1bc-4c93-858a-89992aad7031",
@@ -106,9 +97,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "SwitchTarget",
+                    "name": "TriggerMunin",
                     "type": "Button",
-                    "id": "7c83ea3e-8385-43f9-920c-950a799c6c3c",
+                    "id": "111345cd-be72-451f-852f-4119bbeff9ae",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -228,17 +219,6 @@
                 },
                 {
                     "name": "",
-                    "id": "1abd66c6-11de-4ed5-a3a8-522ebb5549a1",
-                    "path": "<Gamepad>/buttonWest",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Munin",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "81bc4455-a6ec-4973-914a-5b06a452f491",
                     "path": "<Gamepad>/buttonNorth",
                     "interactions": "",
@@ -349,23 +329,12 @@
                 },
                 {
                     "name": "",
-                    "id": "782cfcd2-4675-415b-b0f9-3556222a4573",
-                    "path": "<Gamepad>/dpad/left",
+                    "id": "9103f1f2-fd10-43eb-9be4-85bb3fc2bcd6",
+                    "path": "<Gamepad>/buttonWest",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "SwitchTarget",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "57e406f7-2877-4ab3-9101-db2e879bb4ad",
-                    "path": "<Gamepad>/dpad/right",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SwitchTarget",
+                    "action": "TriggerMunin",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

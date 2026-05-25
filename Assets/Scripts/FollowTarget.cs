@@ -12,6 +12,8 @@ public class FollowTarget : MonoBehaviour
     private bool followPosition = true;
     [SerializeField, Tooltip("Suivre la rotation.")]
     private bool followRotation = true;
+    [SerializeField, Tooltip("Regarder la cible.")]
+    private bool lookAtTarget = true;
 
     [Header("Offset")]
     [SerializeField, Tooltip("Offset de position.")]
@@ -20,6 +22,8 @@ public class FollowTarget : MonoBehaviour
     private Vector3 rotationOffsetEuler = Vector3.zero;
     [SerializeField, Tooltip("Offset en espace local de la cible.")]
     private bool offsetInTargetSpace = true;
+    [SerializeField, Tooltip("Offset du LookAt.")]
+    private Vector3 lookAtOffset = Vector3.zero;
 
     [Header("Update")]
     [SerializeField, Tooltip("Applique le follow en LateUpdate.")]
@@ -51,6 +55,11 @@ public class FollowTarget : MonoBehaviour
         if (followRotation)
         {
             transform.rotation = target.rotation * Quaternion.Euler(rotationOffsetEuler);
+        }
+
+        if(lookAtTarget)
+        {
+            transform.LookAt(target.position + (Vector3)lookAtOffset);
         }
 
         if (followPosition)

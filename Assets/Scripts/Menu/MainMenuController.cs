@@ -220,7 +220,7 @@ public class MainMenuController : MonoBehaviour
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
-        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
+        LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
         RegisterJoinTransportFailureCallback(true);
         RefreshSessions();
 
@@ -234,7 +234,7 @@ public class MainMenuController : MonoBehaviour
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
-        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
+        LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
         RegisterJoinTransportFailureCallback(false);
         InputFocusStack.Pop(this);
         RegisterTextInput(false);
@@ -318,7 +318,7 @@ public class MainMenuController : MonoBehaviour
         HandleBackAction();
     }
 
-    private void OnToggleTorchPerformed(InputAction.CallbackContext context)
+    private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
     {
         if (titleCardIntroInputLocked)
         {

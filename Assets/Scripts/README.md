@@ -40,7 +40,7 @@ La source de donnees est separee de l'affichage:
   deplacement, rature, disparition, deces, correction de chambre ou note.
 - L'`Item` readable contient les pages generees pour l'UI actuelle.
 - `DistrictRegistryReadable` est le pont runtime entre les donnees, l'`Item`,
-  `TemporalZone`, `AgeManager`/braseros et la torche temporelle.
+  `TemporalZone` et `AgeManager`/Braseros anciens.
 
 Assets initiaux:
 
@@ -71,12 +71,10 @@ Regles temporelles:
 
 Priorite des sources temporelles:
 
-1. Si la torche temporelle influence le registre via `LocalRuntimeAgeTrigger`,
-   `DistrictRegistryReadable` utilise l'age local revele.
-2. Sinon, le registre utilise l'age dominant de `TemporalZone` quand elle est
+1. Le registre utilise l'age dominant de `TemporalZone` quand elle est
    presente et preferee.
-3. Sinon, il utilise l'age canonique d'`AgeManager`, donc les braseros.
-4. En dernier recours, il utilise `fallbackAge` (`Age666` par defaut).
+2. Sinon, il utilise l'age canonique d'`AgeManager`, donc les Braseros anciens.
+3. En dernier recours, il utilise `fallbackAge` (`Age666` par defaut).
 
 `InventoryPanelController` appelle
 `DistrictRegistryReadable.RefreshReadableItemForCurrentTemporalContext` avant

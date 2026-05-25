@@ -12,6 +12,7 @@ TagManager:
   - CinemachineTarget
   - Fx
   - CameraNonObstructing
+  - Munin
   layers:
   - Default
   - TransparentFX

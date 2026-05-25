@@ -120,15 +120,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Munin"",
-                    ""type"": ""Button"",
-                    ""id"": ""fd1fcec9-25eb-4274-8289-07bb178bd0f1"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""TakeAll"",
                     ""type"": ""Button"",
                     ""id"": ""6dd250b0-e1bc-4c93-858a-89992aad7031"",
@@ -192,9 +183,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""SwitchTarget"",
+                    ""name"": ""TriggerMunin"",
                     ""type"": ""Button"",
-                    ""id"": ""7c83ea3e-8385-43f9-920c-950a799c6c3c"",
+                    ""id"": ""111345cd-be72-451f-852f-4119bbeff9ae"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -314,17 +305,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""1abd66c6-11de-4ed5-a3a8-522ebb5549a1"",
-                    ""path"": ""<Gamepad>/buttonWest"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""Munin"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""81bc4455-a6ec-4973-914a-5b06a452f491"",
                     ""path"": ""<Gamepad>/buttonNorth"",
                     ""interactions"": """",
@@ -435,23 +415,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""782cfcd2-4675-415b-b0f9-3556222a4573"",
-                    ""path"": ""<Gamepad>/dpad/left"",
+                    ""id"": ""9103f1f2-fd10-43eb-9be4-85bb3fc2bcd6"",
+                    ""path"": ""<Gamepad>/buttonWest"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""SwitchTarget"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""57e406f7-2877-4ab3-9101-db2e879bb4ad"",
-                    ""path"": ""<Gamepad>/dpad/right"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SwitchTarget"",
+                    ""action"": ""TriggerMunin"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -822,7 +791,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_LeftShoulder = m_Player.FindAction("LeftShoulder", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
-        m_Player_Munin = m_Player.FindAction("Munin", throwIfNotFound: true);
         m_Player_TakeAll = m_Player.FindAction("TakeAll", throwIfNotFound: true);
         m_Player_Return = m_Player.FindAction("Return", throwIfNotFound: true);
         m_Player_Inventory = m_Player.FindAction("Inventory", throwIfNotFound: true);
@@ -830,7 +798,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_Start = m_Player.FindAction("Start", throwIfNotFound: true);
         m_Player_RightShoulder = m_Player.FindAction("RightShoulder", throwIfNotFound: true);
         m_Player_LocomotionMode = m_Player.FindAction("LocomotionMode", throwIfNotFound: true);
-        m_Player_SwitchTarget = m_Player.FindAction("SwitchTarget", throwIfNotFound: true);
+        m_Player_TriggerMunin = m_Player.FindAction("TriggerMunin", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_Pan = m_Camera.FindAction("Pan", throwIfNotFound: true);
@@ -927,7 +895,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Move;
     private readonly InputAction m_Player_LeftShoulder;
     private readonly InputAction m_Player_Interact;
-    private readonly InputAction m_Player_Munin;
     private readonly InputAction m_Player_TakeAll;
     private readonly InputAction m_Player_Return;
     private readonly InputAction m_Player_Inventory;
@@ -935,7 +902,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Start;
     private readonly InputAction m_Player_RightShoulder;
     private readonly InputAction m_Player_LocomotionMode;
-    private readonly InputAction m_Player_SwitchTarget;
+    private readonly InputAction m_Player_TriggerMunin;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -959,10 +926,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Interact".
         /// </summary>
         public InputAction @Interact => m_Wrapper.m_Player_Interact;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Munin".
-        /// </summary>
-        public InputAction @Munin => m_Wrapper.m_Player_Munin;
         /// <summary>
         /// Provides access to the underlying input action "Player/TakeAll".
         /// </summary>
@@ -992,9 +955,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @LocomotionMode => m_Wrapper.m_Player_LocomotionMode;
         /// <summary>
-        /// Provides access to the underlying input action "Player/SwitchTarget".
+        /// Provides access to the underlying input action "Player/TriggerMunin".
         /// </summary>
-        public InputAction @SwitchTarget => m_Wrapper.m_Player_SwitchTarget;
+        public InputAction @TriggerMunin => m_Wrapper.m_Player_TriggerMunin;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1030,9 +993,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
-            @Munin.started += instance.OnMunin;
-            @Munin.performed += instance.OnMunin;
-            @Munin.canceled += instance.OnMunin;
             @TakeAll.started += instance.OnTakeAll;
             @TakeAll.performed += instance.OnTakeAll;
             @TakeAll.canceled += instance.OnTakeAll;
@@ -1054,9 +1014,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LocomotionMode.started += instance.OnLocomotionMode;
             @LocomotionMode.performed += instance.OnLocomotionMode;
             @LocomotionMode.canceled += instance.OnLocomotionMode;
-            @SwitchTarget.started += instance.OnSwitchTarget;
-            @SwitchTarget.performed += instance.OnSwitchTarget;
-            @SwitchTarget.canceled += instance.OnSwitchTarget;
+            @TriggerMunin.started += instance.OnTriggerMunin;
+            @TriggerMunin.performed += instance.OnTriggerMunin;
+            @TriggerMunin.canceled += instance.OnTriggerMunin;
         }
 
         /// <summary>
@@ -1077,9 +1037,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
-            @Munin.started -= instance.OnMunin;
-            @Munin.performed -= instance.OnMunin;
-            @Munin.canceled -= instance.OnMunin;
             @TakeAll.started -= instance.OnTakeAll;
             @TakeAll.performed -= instance.OnTakeAll;
             @TakeAll.canceled -= instance.OnTakeAll;
@@ -1101,9 +1058,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LocomotionMode.started -= instance.OnLocomotionMode;
             @LocomotionMode.performed -= instance.OnLocomotionMode;
             @LocomotionMode.canceled -= instance.OnLocomotionMode;
-            @SwitchTarget.started -= instance.OnSwitchTarget;
-            @SwitchTarget.performed -= instance.OnSwitchTarget;
-            @SwitchTarget.canceled -= instance.OnSwitchTarget;
+            @TriggerMunin.started -= instance.OnTriggerMunin;
+            @TriggerMunin.performed -= instance.OnTriggerMunin;
+            @TriggerMunin.canceled -= instance.OnTriggerMunin;
         }
 
         /// <summary>
@@ -1426,13 +1383,6 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnInteract(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Munin" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnMunin(InputAction.CallbackContext context);
-        /// <summary>
         /// Method invoked when associated input action "TakeAll" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -1482,12 +1432,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLocomotionMode(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "SwitchTarget" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "TriggerMunin" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSwitchTarget(InputAction.CallbackContext context);
+        void OnTriggerMunin(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

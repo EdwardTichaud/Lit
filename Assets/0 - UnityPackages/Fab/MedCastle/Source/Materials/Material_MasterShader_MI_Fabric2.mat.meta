@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abc00000000010095724209151167156
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308772
+  packageName: Medieval Castle (URP)
+  packageVersion: 1.0
+  assetPath: Assets/MedCastle/Source/Materials/MI_Fabric2.mat
+  uploadId: 726537

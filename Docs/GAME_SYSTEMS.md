@@ -144,7 +144,7 @@ Les items sont des ScriptableObjects. Les effets d'items sont souvent des classe
 
 **Fonctionnement général** :
 
-La UI peut être placée en scène, instanciée depuis prefab, ou créée en fallback runtime. Le `MainMenu` utilise maintenant un pointeur visible commun souris/manette au lieu d'un curseur de sélection forcé. Ce pointeur est piloté par `MainMenuPointerCursor`, éclaire le décor 3D via une torche, et déclenche les `CursorIntercation` du décor pour afficher une `Outline`.
+La UI peut être placée en scène, instanciée depuis prefab, ou créée en fallback runtime. Le `MainMenu` utilise maintenant un pointeur visible commun souris/manette au lieu d'un curseur de sélection forcé. Ce pointeur est piloté par `MainMenuPointerCursor`, éclaire le décor 3D via une torche, et déclenche les `CursorIntercation` du décor pour afficher le contour runtime HDRP existant.
 
 Le décor du titre est un vrai décor de scène, pas une texture. `MainMenuTitleDecorController` lit la dernière sauvegarde sous `Application.persistentDataPath/Saves`, utilise `meta.json` et `CharacterState.json`, puis active les variantes de décor selon la progression détectée.
 
@@ -243,33 +243,49 @@ Les sons sont souvent encapsulés dans des ScriptableObjects. Les zones peuvent 
 - Ne pas déplacer les assets chargés via `Resources.Load` sans adapter le chemin.
 - Tester les transitions de zone et les voix.
 
-## Temps, strates et torche
+## Temps, strates et Braseros anciens
 
-**Rôle** : représenter les états temporels, les visions de torche et les objets visibles selon une période.
+**Rôle** : représenter l'âge global du monde et les objets visibles selon une période.
 
 **Fichiers principaux** :
 
-- `Assets/Scripts/BraseroTimeManager.cs`
 - `Assets/Scripts/BraseroDisplayManager.cs`
 - `Assets/Scripts/Temporal/AgeManager.cs`
 - `Assets/Scripts/Brasero.cs`
 - `Assets/Scripts/TimePeriodVisibility.cs`
-- `Assets/Scripts/AgeTriggerZone.cs`
 - `Assets/Scripts/SceneLightOcclusionEnforcer.cs`
 - `Assets/Scripts/TorchLightReceiver.cs`
+- `Assets/Scripts/DissolveRevealSystem.cs`
+- `Assets/Scripts/DissolveRevealTarget.cs`
+- `Assets/Scripts/MasterShaderDissolveController.cs`
 - `Assets/Scripts/FlickeringLight.cs`
-- `Assets/Scripts/TorchVisionSystem.cs`
-- `Assets/Scripts/TorchVisionSensitive.cs`
 - `Assets/Scripts/Temporal/*`
 
 **Fonctionnement général** :
 
-Le projet utilise `AgeManager` comme source canonique d'âge et comme seule liste de braseros. Le joueur commence en 666, chaque brasero allumé recule l'âge de 111 ans, et les torches révèlent localement les objets dont la période croise la fenêtre année courante -> +110 ans. `BraseroDisplayManager` diffuse cet état aux affichages. `BraseroTimeManager` reste un pont de compatibilité tant que des scènes le référencent, sans liste ni recalcul concurrent.
+Le projet utilise `AgeManager` comme source canonique d'âge. Le joueur commence en 666, et chaque `Brasero` marqué `ancientBrasero` et allumé recule l'âge de 100 ans. Les torches, Munin et les braseros classiques ne changent plus l'âge du monde. `BraseroDisplayManager` diffuse cet état aux affichages, et `AgeManager` applique `_AgeAmount` aux renderers compatibles via `MaterialPropertyBlock`.
+
+La révélation/disparition visuelle des items par lumière passe par `DissolveRevealSystem` et `DissolveRevealTarget`. Ce système pilote `_DissolveAmount` sur les matériaux compatibles avec une transition par défaut de 0,5 seconde et reste séparé du système temporel. Les portes peuvent aussi exiger une flamme active proche avant d'être détectées/interactives.
+
+Pour un objet spécial ou un prop qui doit se dissoudre sans passer par la logique de lumière, `MasterShaderDissolveController` pilote les mêmes propriétés via `MaterialPropertyBlock`.
+
+Le MasterShader HDRP expose le dissolve standardisé :
+
+- `_DissolveAmount`
+- `_DissolveTexture`
+- `_DissolveSoftness`
+- `_DissolveEdgeColor`
+- `_DissolveEdgeWidth`
+- `_DissolveEdgeIntensity`
+
+`_AgeAmount` mélange uniquement `BaseTexture` et `OldTexture`. `_DissolveAmount` contrôle uniquement la visibilité finale en alpha clip HDRP.
 
 **Points d'attention** :
 
-- Ne pas supprimer les ponts de compatibilité tant que les scènes les référencent.
+- Pour ajouter une source temporelle, activer `ancientBrasero` sur un objet qui possède déjà `Brasero`.
 - Pour les nouveaux contenus temporels, préférer `AgeManager` + `TimePeriodVisibility`, et `BraseroDisplayManager` pour les affichages.
+- Les torches peuvent révéler des items par dissolve, mais ne doivent pas écrire `AgeAmount`.
+- Les braseros classiques ne doivent pas écouter `Interact`; l'allumage passe par `ToggleTorch`.
 - Les lumières de torche et de décor doivent garder des ombres temps réel. `SceneLightOcclusionEnforcer` force les lumières sans ombres à passer en `Soft Shadows` et s'assure que les renderers de décor des layers `Default`, `Ground`, `Stairs` et `CameraObstruction` castent/receivent les ombres.
 
 ## Readables, lore et données narratives

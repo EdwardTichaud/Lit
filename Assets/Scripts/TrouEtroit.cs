@@ -25,16 +25,8 @@ public class TrouEtroit : MonoBehaviour
     public bool includeInactiveRenderers = true;
 
     [Header("Glow")]
-    [Tooltip("Outline utilise pour le glow.")]
-    public Outline outline;
-    [Tooltip("Cree un Outline si manquant.")]
+    [Tooltip("Cree des RuntimeOutlineTarget si manquants.")]
     public bool createOutlineIfMissing = true;
-    [Tooltip("Couleur du glow.")]
-    public Color glowColor = Color.white;
-    [Tooltip("Epaisseur du glow.")]
-    public float glowWidth = 6f;
-    [Tooltip("Mode d'outline.")]
-    public Outline.Mode glowMode = Outline.Mode.OutlineAll;
 
     [Header("UI - Interaction")]
     [Tooltip("Prefab/objet UI d'interaction.")]
@@ -71,6 +63,7 @@ public class TrouEtroit : MonoBehaviour
     private bool detected;
     private Renderer[] cachedRenderers;
     private bool[] cachedRendererStates;
+    private readonly List<RuntimeOutlineTarget> glowTargets = new List<RuntimeOutlineTarget>();
     private Transform interactionTarget;
     private GameObject interactionBoxInstance;
     private Canvas interactionCanvas;
@@ -98,6 +91,7 @@ public class TrouEtroit : MonoBehaviour
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
 
+        SetGlow(false);
         ResetUIState();
     }
 
@@ -299,30 +293,19 @@ public class TrouEtroit : MonoBehaviour
 
     private void UpdateGlow()
     {
-        if (!detected)
-        {
-            if (outline != null)
-            {
-                outline.enabled = false;
-            }
-            return;
-        }
+        SetGlow(detected);
+    }
 
-        if (outline == null && createOutlineIfMissing)
+    private void SetGlow(bool visible)
+    {
+        RuntimeOutlineUtility.CollectOutlineTargets(this, glowTargets, createOutlineIfMissing);
+        for (int i = 0; i < glowTargets.Count; i++)
         {
-            outline = GetComponentInChildren<Outline>(true);
-            if (outline == null)
+            RuntimeOutlineTarget target = glowTargets[i];
+            if (target != null)
             {
-                outline = gameObject.AddComponent<Outline>();
+                target.SetOutlined(visible);
             }
-        }
-
-        if (outline != null)
-        {
-            outline.OutlineColor = glowColor;
-            outline.OutlineWidth = glowWidth;
-            outline.OutlineMode = glowMode;
-            outline.enabled = true;
         }
     }
 

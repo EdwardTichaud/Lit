@@ -9,7 +9,7 @@ public static class LocalInputRouter
     {
         Jump,
         Interact,
-        ToggleTorch,
+        TriggerMunin,
         TakeAll,
         Return,
         Inventory,
@@ -23,7 +23,7 @@ public static class LocalInputRouter
     public static event Action<Vector2> Move;
     public static event Action<InputAction.CallbackContext> Jump;
     public static event Action<InputAction.CallbackContext> Interact;
-    public static event Action<InputAction.CallbackContext> ToggleTorch;
+    public static event Action<InputAction.CallbackContext> TriggerMunin;
     public static event Action<InputAction.CallbackContext> TakeAll;
     public static event Action<InputAction.CallbackContext> Return;
     public static event Action<InputAction.CallbackContext> Inventory;
@@ -51,6 +51,7 @@ public static class LocalInputRouter
     private static bool rightShoulderPressed;
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
     private static bool interactConsumed;
+    private static bool triggerMuninConsumed;
 
     public static float InputDebounceSeconds { get; set; } = 0.15f;
 
@@ -67,6 +68,7 @@ public static class LocalInputRouter
     public static bool CameraFreeModeActive => cameraFreeModeActive;
     public static bool RightShoulderPressed => rightShoulderPressed;
     internal static bool IsInteractConsumed => interactConsumed;
+    internal static bool IsTriggerMuninConsumed => triggerMuninConsumed;
 
     public static void EnsureInitialized()
     {
@@ -250,13 +252,31 @@ public static class LocalInputRouter
         return true;
     }
 
-    internal static void RaiseToggleTorch(InputAction.CallbackContext context)
+    internal static void ConsumeTriggerMunin()
     {
-        if (!AllowInput(InputGate.ToggleTorch))
+        triggerMuninConsumed = true;
+    }
+
+    internal static bool TryConsumeTriggerMunin()
+    {
+        if (triggerMuninConsumed)
+        {
+            return false;
+        }
+
+        triggerMuninConsumed = true;
+        return true;
+    }
+
+    internal static void RaiseTriggerMunin(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.TriggerMunin))
         {
             return;
         }
-        ToggleTorch?.Invoke(context);
+
+        triggerMuninConsumed = false;
+        TriggerMunin?.Invoke(context);
     }
 
     internal static void RaiseTakeAll(InputAction.CallbackContext context)

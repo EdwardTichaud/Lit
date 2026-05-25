@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 // Objet interactif en monde: contenu, verrouillage, pieges et UI d'interaction.
 [RequireComponent(typeof(NetworkObject))]
-public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
+public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver
 {
     public enum InteractableCategory
     {
@@ -117,6 +117,14 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     [Tooltip("Affiche le panneau d'information monde/local quand cet objet est detecte. Desactive pour les objets caches.")]
     public bool showWorldInteractionUi = true;
 
+    [Header("Light Influence")]
+    [SerializeField, Tooltip("Si actif, cet item n'est detectable/interactif que dans une zone d'influence allumee.")]
+    private bool requireLitInfluenceForInteraction = true;
+    [SerializeField, Tooltip("Autorise les braseros allumes a rendre cet item interactif.")]
+    private bool reactToBraseroInfluence = true;
+    [SerializeField, Tooltip("Autorise les torches allumees a rendre cet item interactif.")]
+    private bool reactToTorchInfluence = true;
+
     [Header("Interaction Action Box")]
     [Tooltip("ActionBox utilisee par cet objet interactif. Laisse vide pour auto-detecter.")]
     public GameObject actionBox;
@@ -174,6 +182,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private Coroutine actionBoxFadeRoutine;
     private bool actionBoxVisible;
     private readonly List<ActionBoxEntry> actionBoxEntries = new List<ActionBoxEntry>();
+    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
 
     private readonly NetworkList<NetItemStack> netLootItems = new NetworkList<NetItemStack>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -206,7 +215,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
-        return controller != null && isActiveAndEnabled;
+        return controller != null && isActiveAndEnabled && CanInteractInCurrentInfluence();
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -231,6 +240,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public void SetDetectedCharacter(GameObject character)
     {
+        if (character != null && !CanInteractInCurrentInfluence())
+        {
+            character = null;
+        }
+
         if (currentCharacter == character)
         {
             ForwardDetectedCharacterToRecoverableInfo(character);
@@ -254,7 +268,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
-        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
+        LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
     }
 
     private void OnDisable()
@@ -262,7 +276,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
-        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
+        LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
 
         InputFocusStack.Pop(this);
         CloseLoot();
@@ -273,6 +287,40 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         depositInventoryOpen = false;
         unlockAttemptInProgress = false;
         ConfirmationManager.Dismiss(this);
+        activeLitInfluenceSourceIds.Clear();
+    }
+
+    public void OnLitInfluenceEnter(LitInfluenceInfo info)
+    {
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        {
+            return;
+        }
+
+        activeLitInfluenceSourceIds.Add(info.SourceId);
+    }
+
+    public void OnLitInfluenceStay(LitInfluenceInfo info)
+    {
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        {
+            return;
+        }
+
+        activeLitInfluenceSourceIds.Add(info.SourceId);
+    }
+
+    public void OnLitInfluenceExit(LitInfluenceInfo info)
+    {
+        if (info.SourceId == 0 || !activeLitInfluenceSourceIds.Remove(info.SourceId))
+        {
+            return;
+        }
+
+        if (!CanInteractInCurrentInfluence())
+        {
+            HandleLitInfluenceLostForInteraction();
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -383,6 +431,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        if (!CanInteractInCurrentInfluence())
+        {
+            return;
+        }
+
         UpdateCurrentCharacter();
         if (currentCharacter != null)
         {
@@ -401,6 +454,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private void OnTakeAllPerformed(InputAction.CallbackContext context)
     {
         if (!HasInputFocus())
+        {
+            return;
+        }
+
+        if (!CanInteractInCurrentInfluence())
         {
             return;
         }
@@ -445,7 +503,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         CloseLoot();
     }
 
-    private void OnToggleTorchPerformed(InputAction.CallbackContext context)
+    private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
     {
         if (!HasInputFocus())
         {
@@ -462,6 +520,12 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        if (!CanInteractInCurrentInfluence())
+        {
+            return;
+        }
+
+        LocalInputRouter.ConsumeTriggerMunin();
         HideActionBox();
 
         UpdateCurrentCharacter();
@@ -484,6 +548,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void HandleInteract()
     {
+        if (!CanInteractInCurrentInfluence())
+        {
+            return;
+        }
+
         if (!lootOpen && InputFocusStack.HasAnyFocus())
         {
             return;
@@ -890,6 +959,44 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         recoverableWorldInfo.SetDetectedCharacter(character);
+    }
+
+    private bool CanInteractInCurrentInfluence()
+    {
+        return !requireLitInfluenceForInteraction || activeLitInfluenceSourceIds.Count > 0;
+    }
+
+    private bool ShouldReactToLitInfluence(LitInfluenceInfo info)
+    {
+        switch (info.SourceKind)
+        {
+            case LitInfluenceSourceKind.Brasero:
+                return reactToBraseroInfluence;
+
+            case LitInfluenceSourceKind.Torch:
+                return reactToTorchInfluence;
+
+            default:
+                return false;
+        }
+    }
+
+    private void HandleLitInfluenceLostForInteraction()
+    {
+        GameObject previousCharacter = currentCharacter;
+        currentCharacter = null;
+        ForwardDetectedCharacterToRecoverableInfo(null);
+
+        if (lootOpen)
+        {
+            CloseLoot();
+            return;
+        }
+
+        if (previousCharacter != null)
+        {
+            HandleCharacterNoLongerInRange();
+        }
     }
 
     private void OpenLoot()

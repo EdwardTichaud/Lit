@@ -13,6 +13,7 @@ public class CharacterSaveData
     public List<BuiltConstructionData> builtConstructions = new List<BuiltConstructionData>();
     public List<PlayerCharacterBinding> playerBindings = new List<PlayerCharacterBinding>();
     public List<BraseroSaveEntry> braseros = new List<BraseroSaveEntry>();
+    public List<TorchSaveEntry> torches = new List<TorchSaveEntry>();
     public List<ReadableGeneratedContentData> readableGeneratedContents = new List<ReadableGeneratedContentData>();
 }
 
@@ -34,6 +35,9 @@ public class CharacterSaveEntry
     public Quaternion rotation;
     public int torchSeconds;
     public bool torchEquipped;
+    public bool muninChargesInitialized;
+    public int muninCharges;
+    public int muninMaxCharges;
     public List<ItemStackData> items = new List<ItemStackData>();
     public bool itemsInitialized;
     public List<string> skillIds = new List<string>();
@@ -67,6 +71,14 @@ public class BuiltConstructionData
 public class BraseroSaveEntry
 {
     public string braseroId;
+    public bool isLit;
+}
+
+// Sauvegarde de l'etat d'une torche de monde.
+[System.Serializable]
+public class TorchSaveEntry
+{
+    public string torchId;
     public bool isLit;
 }
 

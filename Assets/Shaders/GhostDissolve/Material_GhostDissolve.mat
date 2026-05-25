@@ -88,8 +88,8 @@ Material:
     - _DoubleSidedNormalMode: 2
     - _DstBlend: 10
     - _DstBlend2: 10
-    - _EdgeIntensity: 5.5
-    - _EdgeWidth: 0.15
+    - _DissolveEdgeIntensity: 5.5
+    - _DissolveEdgeWidth: 0.15
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _ExcludeFromTUAndAA: 0
@@ -101,7 +101,7 @@ Material:
     - _MaterialTypeMask: 2
     - _Metallic: 0.787
     - _NoiseInfluence: 0.7
-    - _NoiseScale: 2
+    - _DissolveNoiseScale: 2
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _RayTracing: 0
@@ -141,7 +141,7 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _DissolveDirection: {r: 0, g: 1, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: 1, a: 0}
-    - _EdgeColor: {r: 5.855522, g: 12.770307, b: 16.121698, a: 0.78039217}
+    - _DissolveEdgeColor: {r: 5.855522, g: 12.770307, b: 16.121698, a: 0.78039217}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GhostTint: {r: 5.855522, g: 12.770307, b: 16.121698, a: 0.78039217}
   m_BuildTextureStacks: []

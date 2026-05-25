@@ -168,8 +168,8 @@ Material:
     - _DetailNormalMapScale: 1
     - _Dissolve: 1.99
     - _DissolveAmount: 0
-    - _DissolveScale: 40
-    - _DissolveWidth: 0.1
+    - _DissolveNoiseScale: 40
+    - _DissolveEdgeWidth: 0.1
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
@@ -246,7 +246,7 @@ Material:
     - Color_b7e7841110874cdfabddcd2d57990895: {r: 0.1090798, g: 0.759119, b: 3.303558, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 0}
-    - _DissolveColor: {r: 0.1488074, g: 0.8084016, b: 1.660377, a: 0}
+    - _DissolveEdgeColor: {r: 0.1488074, g: 0.8084016, b: 1.660377, a: 0}
     - _DistortionSpeedXYPowerZ: {r: 0, g: 0, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}

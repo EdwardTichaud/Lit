@@ -109,7 +109,7 @@ public class SquadManager : MonoBehaviour
     private int inputLockCount;
     private bool jumpRequested;
     private bool locomotionModeRequested;
-    private bool toggleTorchRequested;
+    private bool triggerMuninRequested;
     private bool takeAllRequested;
     private bool warnedMissingSquadUI;
     private bool warnedMissingMaison;
@@ -148,7 +148,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Jump += OnJumpPerformed;
         LocalInputRouter.Interact += OnInteractPerformed;
-        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
+        LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.LeftShoulder += OnLeftShoulderPerformed;
@@ -160,7 +160,7 @@ public class SquadManager : MonoBehaviour
     {
         LocalInputRouter.Jump -= OnJumpPerformed;
         LocalInputRouter.Interact -= OnInteractPerformed;
-        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
+        LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
@@ -781,6 +781,7 @@ public class SquadManager : MonoBehaviour
             }
 
             CharacterData runtimeCharacter = GetRuntimeCharacter(character);
+            ApplyMuninChargeStateToCharacterData(runtimeCharacter, entry);
             bool hasSavedInventory = entry.items != null && entry.items.Count > 0;
             bool hasSavedTorchState = entry.torchSeconds > 0 || entry.torchEquipped;
             bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedTorchState;
@@ -847,6 +848,7 @@ public class SquadManager : MonoBehaviour
             {
                 controller.BindCharacterData(runtimeCharacter, true);
             }
+            ApplyMuninChargeStateToInstance(instance, entry);
 
             if (entry.inSquad)
             {
@@ -873,6 +875,40 @@ public class SquadManager : MonoBehaviour
         pendingCharacterLookup = null;
         pendingItemLookup = null;
         pendingSkillLookup = null;
+    }
+
+    private static void ApplyMuninChargeStateToCharacterData(CharacterData character, CharacterSaveEntry entry)
+    {
+        if (character == null || entry == null || !entry.muninChargesInitialized)
+        {
+            return;
+        }
+
+        int maxCharges = Mathf.Max(0, entry.muninMaxCharges);
+        character.muninMaxCharges = maxCharges;
+        character.muninChargesRemaining = Mathf.Clamp(entry.muninCharges, 0, maxCharges);
+        character.muninChargesInitialized = true;
+    }
+
+    private static void ApplyMuninChargeStateToInstance(GameObject instance, CharacterSaveEntry entry)
+    {
+        if (instance == null || entry == null || !entry.muninChargesInitialized)
+        {
+            return;
+        }
+
+        MuninController munin = instance.GetComponentInChildren<MuninController>(true);
+        if (munin == null)
+        {
+            return;
+        }
+
+        if (entry.muninMaxCharges > 0)
+        {
+            munin.SetMaxCharges(entry.muninMaxCharges, false);
+        }
+
+        munin.SetCharges(entry.muninCharges);
     }
 
     private List<Item> BuildItemsFromEntry(CharacterSaveEntry entry)
@@ -1032,7 +1068,7 @@ public class SquadManager : MonoBehaviour
         {
             UpdateLeaderGroupFromCurrent();
             HandleControlledCharacterMovement();
-            HandleTorchToggle();
+            HandleMuninTrigger();
         }
     }
 
@@ -1476,18 +1512,28 @@ public class SquadManager : MonoBehaviour
         activeFlightMotorController = null;
     }
 
-    private void HandleTorchToggle()
+    private void HandleMuninTrigger()
     {
         if (currentCharacter == null)
         {
             return;
         }
 
-        if (!toggleTorchRequested)
+        if (!triggerMuninRequested)
         {
             return;
         }
-        toggleTorchRequested = false;
+        triggerMuninRequested = false;
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            return;
+        }
+
+        if (!LocalInputRouter.TryConsumeTriggerMunin())
+        {
+            return;
+        }
 
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
@@ -1495,7 +1541,7 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
-        controller.ToggleTorch();
+        controller.TriggerMunin();
     }
 
     private void HandleGroupingInputs()
@@ -1515,18 +1561,21 @@ public class SquadManager : MonoBehaviour
             SetGrouped(currentCursorIndex, false);
         }
 
-        if (toggleTorchRequested)
+        if (triggerMuninRequested)
         {
-            SetGrouped(currentCursorIndex, true);
+            if (LocalInputRouter.TryConsumeTriggerMunin())
+            {
+                SetGrouped(currentCursorIndex, true);
+            }
         }
 
         takeAllRequested = false;
-        toggleTorchRequested = false;
+        triggerMuninRequested = false;
     }
 
-    private void OnToggleTorchPerformed(InputAction.CallbackContext context)
+    private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
     {
-        toggleTorchRequested = true;
+        triggerMuninRequested = true;
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext context)
@@ -2263,6 +2312,9 @@ public class SquadManager : MonoBehaviour
         clone.torchSecondsRemaining = 0;
         clone.torchEquipped = false;
         clone.inventoryInitialized = false;
+        clone.muninChargesRemaining = 0;
+        clone.muninMaxCharges = 0;
+        clone.muninChargesInitialized = false;
 
         runtimeCharacterMap[character] = clone;
         runtimeCharacters.Add(clone);

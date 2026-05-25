@@ -23,8 +23,7 @@ public static class DecorCullingTools
         "Lever",
         "PersistentNetworkObject",
         "ReturnHomeTrigger",
-        "TorchVisionSensitive",
-        "TreasureFinder",
+        "DissolveRevealTarget",
         "TrouEtroit",
         "Zone"
     };

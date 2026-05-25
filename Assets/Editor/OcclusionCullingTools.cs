@@ -34,8 +34,7 @@ public static class OcclusionCullingTools
         "PersistentNetworkObject",
         "ReturnHomeTrigger",
         "SquadCharacterController",
-        "TorchVisionSensitive",
-        "TreasureFinder",
+        "DissolveRevealTarget",
         "TrouEtroit",
         "Zone"
     };

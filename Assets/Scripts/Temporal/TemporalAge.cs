@@ -1,7 +1,7 @@
 // Role:
 // Defines the internal temporal age grid used by the current archaeology gameplay.
 // Usage:
-// Shared by TemporalZone, TemporalObject, TemporalTorch, narrative metadata, and
+// Shared by TemporalZone, TemporalObject, AgeManager, narrative metadata, and
 // bridges to older year-based systems.
 // Responsibilities:
 // Keep all conversions between enum values, years, and 111-year steps in one place.

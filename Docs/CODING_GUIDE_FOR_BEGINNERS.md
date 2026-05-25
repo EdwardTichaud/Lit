@@ -5,7 +5,7 @@ Ce guide explique comment modifier le projet sans casser Unity, les scènes ou l
 ## Règles de base
 
 1. Ne modifie jamais `Packages/`, `Library/`, `Temp/`, `Obj/`, `Build/`, `Logs/` ou `UserSettings/`.
-2. Ne modifie pas les assets tiers dans `Assets/0 - UnityPackages/`, `Assets/TextMesh Pro/`, `Assets/Sketchfab For Unity/`, `Assets/QuickOutline/` ou `Assets/TutorialInfo/`.
+2. Ne modifie pas les assets tiers dans `Assets/0 - UnityPackages/`, `Assets/TextMesh Pro/`, `Assets/Sketchfab For Unity/` ou `Assets/TutorialInfo/`.
 3. Ne modifie pas `Assets/PlayerInputs.cs` : il est généré automatiquement.
 4. Ne renomme pas une classe Unity sans renommer le fichier de la même manière.
 5. Ne renomme pas un champ public ou `[SerializeField]` sans savoir où il est utilisé dans les scènes/prefabs.
@@ -41,7 +41,6 @@ Exemples :
 - `Item`
 - `CharacterData`
 - `AudioClipSO`
-- `TorchVisionDefinition`
 - `ZoneAudioProfileSO`
 
 À vérifier avant modification :

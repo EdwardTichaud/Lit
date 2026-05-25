@@ -7866,12 +7866,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 231835641}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
-  visibilityMode: 1
-  vision: {fileID: 11400000, guid: d00296f4b79dcf142be4d07050976745, type: 2}
-  requireTorchEquipped: 1
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
+  requireActiveRevealSource: 1
   fadeDuration: 1
   includeChildren: 1
   affectRenderers: 1
@@ -25100,12 +25098,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 684536713}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
-  visibilityMode: 1
-  vision: {fileID: 11400000, guid: 62c5835581e799746afc22a84f962e57, type: 2}
-  requireTorchEquipped: 1
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
+  requireActiveRevealSource: 1
   fadeDuration: 1
   includeChildren: 1
   affectRenderers: 1
@@ -79392,12 +79388,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1968264237}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
-  visibilityMode: 1
-  vision: {fileID: 11400000, guid: 62c5835581e799746afc22a84f962e57, type: 2}
-  requireTorchEquipped: 1
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
+  requireActiveRevealSource: 1
   fadeDuration: 1
   includeChildren: 1
   affectRenderers: 1
@@ -89418,7 +89412,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2021545420}
-  - component: {fileID: 2021545421}
   - component: {fileID: 2021545422}
   m_Layer: 0
   m_Name: BraseroManager
@@ -89443,24 +89436,6 @@ Transform:
   - {fileID: 1553333756}
   m_Father: {fileID: 977601052}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2021545421
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2021545419}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bebbc7bf2162bac4a8bb8659b22af6c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BraseroTimeManager
-  autoCollectChildren: 1
-  braseros: []
-  baseYear: 500
-  yearsPerBrasero: 100
-  litCount: 0
-  currentYear: 0
 --- !u!114 &2021545422
 MonoBehaviour:
   m_ObjectHideFlags: 0

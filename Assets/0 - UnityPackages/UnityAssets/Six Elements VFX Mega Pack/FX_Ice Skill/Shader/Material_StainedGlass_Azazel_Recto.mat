@@ -64,8 +64,8 @@ Material:
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
     - _DissolveAmount: 0
-    - _DissolveScale: 100
-    - _DissolveWidth: 0
+    - _DissolveNoiseScale: 100
+    - _DissolveEdgeWidth: 0
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
@@ -115,7 +115,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _DissolveColor: {r: 5.9921556, g: 0, b: 0, a: 1}
+    - _DissolveEdgeColor: {r: 5.9921556, g: 0, b: 0, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -11,13 +11,6 @@ public class RandomDriftReturn : MonoBehaviour
         GameObject     // le GameObject qui porte ce composant
     }
 
-    public enum TorchColorRequirement
-    {
-        AnyEquippedTorch,
-        SpecificVision,
-        DefaultTorch
-    }
-
     public enum AutoTriggerBoundsSource
     {
         RenderersThenColliders,
@@ -48,18 +41,6 @@ public class RandomDriftReturn : MonoBehaviour
 
     [Tooltip("Si true, le retour n'est autorise que si le personnage detecte porte une torche valide.")]
     public bool requireMatchingTorch = true;
-
-    [Tooltip("Condition de couleur de torche requise.")]
-    public TorchColorRequirement torchRequirement = TorchColorRequirement.SpecificVision;
-
-    [Tooltip("TorchVision requise si la condition est SpecificVision.")]
-    public TorchVisionDefinition requiredTorchVision;
-
-    [Tooltip("Secours: si TorchVisionSystem ne donne pas de vision, compare la couleur reelle du TorchLightReceiver.")]
-    public bool allowTorchLightColorFallback = true;
-
-    [Tooltip("Tolerance de comparaison couleur RGB pour le fallback par couleur de lumiere.")]
-    [Range(0f, 1f)] public float torchColorTolerance = 0.04f;
 
     [Tooltip("Affiche dans la console pourquoi un personnage est accepte/refuse.")]
     public bool debugTorchDetection;
@@ -140,8 +121,6 @@ public class RandomDriftReturn : MonoBehaviour
         if (dureeRetour < 0f) dureeRetour = 0f;
         if (driftSpeed < 0f) driftSpeed = 0f;
         if (rotationResiduelleDegPerSec < 0f) rotationResiduelleDegPerSec = 0f;
-        if (torchColorTolerance < 0f) torchColorTolerance = 0f;
-        if (torchColorTolerance > 1f) torchColorTolerance = 1f;
         if (debugLogInterval < 0.1f) debugLogInterval = 0.1f;
         autoTriggerPadding.x = Mathf.Max(0f, autoTriggerPadding.x);
         autoTriggerPadding.y = Mathf.Max(0f, autoTriggerPadding.y);
@@ -783,129 +762,7 @@ public class RandomDriftReturn : MonoBehaviour
             return false;
         }
 
-        TorchVisionDefinition activeVision = TorchVisionSystem.GetVisionFor(controller);
-        switch (torchRequirement)
-        {
-            case TorchColorRequirement.AnyEquippedTorch:
-                return true;
-
-            case TorchColorRequirement.DefaultTorch:
-                if (activeVision == null)
-                {
-                    return true;
-                }
-
-                rejection = $"active vision is '{GetVisionLabel(activeVision)}', expected default torch.";
-                return false;
-
-            case TorchColorRequirement.SpecificVision:
-                if (requiredTorchVision == null)
-                {
-                    rejection = "no required TorchVisionDefinition assigned.";
-                    return false;
-                }
-
-                if (IsVisionMatch(requiredTorchVision, activeVision))
-                {
-                    return true;
-                }
-
-                if (allowTorchLightColorFallback
-                    && !requiredTorchVision.useDefaultLightSettings
-                    && TryGetTorchLightColor(controller, out Color torchColor, out string colorSource))
-                {
-                    if (IsColorMatch(requiredTorchVision.lightColor, torchColor))
-                    {
-                        return true;
-                    }
-
-                    rejection = $"active vision is '{GetVisionLabel(activeVision)}', expected '{GetVisionLabel(requiredTorchVision)}'. Torch light '{colorSource}' color is {FormatColor(torchColor)}.";
-                    return false;
-                }
-
-                rejection = $"active vision is '{GetVisionLabel(activeVision)}', expected '{GetVisionLabel(requiredTorchVision)}'.";
-                return false;
-
-            default:
-                rejection = "unsupported torch requirement.";
-                return false;
-        }
-    }
-
-    private bool TryGetTorchLightColor(SquadCharacterController controller, out Color color, out string sourceName)
-    {
-        color = Color.white;
-        sourceName = null;
-        if (controller == null)
-        {
-            return false;
-        }
-
-        TorchLightReceiver[] receivers = controller.GetComponentsInChildren<TorchLightReceiver>(true);
-        for (int i = 0; i < receivers.Length; i++)
-        {
-            TorchLightReceiver receiver = receivers[i];
-            if (receiver == null)
-            {
-                continue;
-            }
-
-            color = receiver.CurrentTorchColor;
-            sourceName = receiver.name;
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool IsColorMatch(Color expected, Color actual)
-    {
-        float tolerance = Mathf.Max(0f, torchColorTolerance);
-        return Mathf.Abs(expected.r - actual.r) <= tolerance
-            && Mathf.Abs(expected.g - actual.g) <= tolerance
-            && Mathf.Abs(expected.b - actual.b) <= tolerance;
-    }
-
-    private static bool IsVisionMatch(TorchVisionDefinition requiredVision, TorchVisionDefinition activeVision)
-    {
-        if (requiredVision == null || activeVision == null)
-        {
-            return false;
-        }
-
-        if (requiredVision == activeVision)
-        {
-            return true;
-        }
-
-        return !string.IsNullOrWhiteSpace(requiredVision.visionId)
-            && !string.IsNullOrWhiteSpace(activeVision.visionId)
-            && string.Equals(requiredVision.visionId, activeVision.visionId, System.StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string GetVisionLabel(TorchVisionDefinition vision)
-    {
-        if (vision == null)
-        {
-            return "none";
-        }
-
-        if (!string.IsNullOrWhiteSpace(vision.displayName))
-        {
-            return vision.displayName;
-        }
-
-        if (!string.IsNullOrWhiteSpace(vision.visionId))
-        {
-            return vision.visionId;
-        }
-
-        return vision.name;
-    }
-
-    private static string FormatColor(Color color)
-    {
-        return $"({color.r:0.###}, {color.g:0.###}, {color.b:0.###})";
+        return true;
     }
 
     private void DebugTorch(string message)

@@ -10,7 +10,7 @@ using Unity.Netcode;
 [RequireComponent(typeof(SphereCollider))]
 [RequireComponent(typeof(NetworkObject))]
 [DisallowMultipleComponent]
-public class Brasero : NetworkBehaviour
+public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
 {
     [Header("State")]
     [SerializeField, Tooltip("Etat du brasero au demarrage.")]
@@ -20,31 +20,33 @@ public class Brasero : NetworkBehaviour
 
     public bool IsLit => isLit;
     public string BraseroId => braseroId;
+    public bool IsAncientBrasero => ancientBrasero;
 
     public event Action<Brasero, bool> StateChanged;
 
     [Header("Visuals")]
-    [Tooltip("Racine activee quand le brasero est allume.")]
-    public GameObject litRoot;
-    [Tooltip("Racine activee quand le brasero est eteint.")]
-    public GameObject unlitRoot;
+    [SerializeField, Tooltip("GameObject enfant Flame active quand le brasero est allume.")]
+    private GameObject flameObject;
     [Tooltip("Lumiere de flamme optionnelle.")]
     public Light flameLight;
-    [Tooltip("Prefabs de flamme optionnels.")]
-    [FormerlySerializedAs("flameParticles")]
-    public GameObject[] flamePrefabs;
-    [Tooltip("Offset local applique lors de l'instanciation des flammes.")]
-    public Vector3 flamePrefabsOffset = Vector3.zero;
-    [Tooltip("Burst de flamme optionnel instancie lors de l'allumage.")]
-    public GameObject flameBurst;
-    [Tooltip("Offset local applique lors de l'instanciation du burst de flamme.")]
-    public Vector3 flameBurstOffset = Vector3.zero;
     [Tooltip("Objets actives quand le brasero est allume.")]
     public GameObject[] activateWhenLitTargets = Array.Empty<GameObject>();
 
     [Header("Interaction")]
-    [Tooltip("Ecoute l'input Interact pour allumer/eteindre.")]
-    public bool useInteractInput = true;
+    [Tooltip("Legacy: les braseros ne doivent plus ecouter Interact. L'allumage passe par TriggerMunin.")]
+    public bool useInteractInput = false;
+    [SerializeField, FormerlySerializedAs("useToggleTorchInput"), Tooltip("Ecoute TriggerMunin quand le brasero est cible par le personnage local.")]
+    private bool useTriggerMuninInput = true;
+    [SerializeField, Tooltip("Affiche un dialogue d'etat avec Interact sans allumer/eteindre.")]
+    private bool showStateDialogueOnInteract = true;
+    [SerializeField, Tooltip("Message affiche avec Interact quand le brasero est allume.")]
+    private string litStateMessage = "Le brasero est allume.";
+    [SerializeField, Tooltip("Message affiche avec Interact quand le brasero est eteint.")]
+    private string unlitStateMessage = "Le brasero est eteint.";
+    [SerializeField, Min(0.05f), Tooltip("Distance maximale propre a Interact. TriggerMunin continue d'utiliser le collider trigger.")]
+    private float interactMaxDistance = 1f;
+    [SerializeField, Tooltip("Priorite de selection si plusieurs interactions sont proches.")]
+    private int interactionPriority = 80;
     [Tooltip("Rayon du trigger d'interaction.")]
     public float interactionRadius = 2f;
     [Tooltip("Centre local du trigger d'interaction.")]
@@ -53,20 +55,24 @@ public class Brasero : NetworkBehaviour
     [SerializeField, Tooltip("Collider d'interaction (auto).")]
     private SphereCollider interactionTrigger;
 
-    [Header("Animation")]
-    [Tooltip("Animator d'interaction optionnel. Laisse vide pour utiliser celui du personnage.")]
-    [FormerlySerializedAs("braseroAnimator")]
-    public Animator interactionAnimatorOverride;
-    [Tooltip("Nom du state joue lors de l'interaction.")]
-    public string interactionStateName = "Brasero_Light";
-    [Tooltip("Duree de lock si l'animation n'est pas resolue.")]
-    public float interactionFallbackLock = 1f;
+    [Header("Influence")]
+    [SerializeField, Tooltip("Zone d'information active seulement quand le brasero est allume.")]
+    private LitInfluenceSource litInfluence = new LitInfluenceSource(6f);
+
+    [Header("Age")]
+    [SerializeField, FormerlySerializedAs("drivesAgeManager"), Tooltip("Si actif, ce brasero allume compte dans l'AgeManager comme brasero ancien.")]
+    private bool ancientBrasero;
 
     [Header("Flame Emission")]
     [Tooltip("Duree du fondu d'emission (allumage/extinction).")]
     public float emissionFadeDuration = 1f;
 
-    private GameObject[] flameInstances;
+    [Header("Munin")]
+    [SerializeField, FormerlySerializedAs("muninTransform"), Tooltip("Controleur de Munin. Laisse vide pour utiliser celui du personnage detecte.")]
+    private MuninController muninController;
+    [SerializeField, Tooltip("Offset local depuis l'ancre du brasero pour la destination de Munin.")]
+    private Vector3 muninTargetOffset = Vector3.zero;
+
     private readonly List<ParticleSystem> flameParticleSystems = new List<ParticleSystem>();
     private readonly Dictionary<ParticleSystem, EmissionBase> emissionBases = new Dictionary<ParticleSystem, EmissionBase>();
     private Coroutine emissionRoutine;
@@ -77,6 +83,7 @@ public class Brasero : NetworkBehaviour
     private Coroutine interactionRoutine;
     private bool squadInputLocked;
     private bool interactionInProgress;
+    private MuninController activeMuninController;
     private NetworkVariable<bool> netIsLit = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private void Reset()
@@ -89,9 +96,54 @@ public class Brasero : NetworkBehaviour
 
     private void Awake()
     {
+        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         EnsureInteractionTrigger();
         EnsureId();
+    }
 
+    public bool CanBeDetectedBy(SquadCharacterController controller)
+    {
+        return controller != null
+            && isActiveAndEnabled
+            && (useTriggerMuninInput || useInteractInput || showStateDialogueOnInteract)
+            && interactionTrigger != null
+            && interactionTrigger.enabled
+            && interactionTrigger.isTrigger;
+    }
+
+    public Collider GetInteractionDetectionCollider()
+    {
+        return interactionTrigger != null ? interactionTrigger : GetComponent<Collider>();
+    }
+
+    public Transform GetInteractionAnchor()
+    {
+        if (flameLight != null)
+        {
+            return flameLight.transform;
+        }
+
+        if (flameObject != null)
+        {
+            return flameObject.transform;
+        }
+
+        return transform;
+    }
+
+    public float GetInteractionMaxDistance(SquadCharacterController controller)
+    {
+        return Mathf.Max(0.1f, interactionRadius);
+    }
+
+    public int GetInteractionPriority(SquadCharacterController controller)
+    {
+        return interactionPriority;
+    }
+
+    public void SetDetectedCharacter(GameObject character)
+    {
+        currentCharacter = character;
     }
 
     private void EnsureId()
@@ -132,27 +184,45 @@ public class Brasero : NetworkBehaviour
     {
         ApplyVisuals(true);
 
-        if (!useInteractInput)
+        if (useInteractInput || useTriggerMuninInput || showStateDialogueOnInteract)
         {
-            return;
+            LocalInputRouter.EnsureInitialized();
         }
 
-        LocalInputRouter.EnsureInitialized();
-        LocalInputRouter.Interact += OnInteractPerformed;
+        if (useInteractInput || showStateDialogueOnInteract)
+        {
+            LocalInputRouter.Interact += OnInteractPerformed;
+        }
+
+        if (useTriggerMuninInput)
+        {
+            LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
+        }
+
+        UpdateLitInfluence(true);
+        NotifyAgeManagerDriverAvailabilityChanged();
     }
 
     private void OnDisable()
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
+        LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
 
+        ClearLitInfluence();
+        NotifyAgeManagerDriverAvailabilityChanged();
         StopEmissionRoutine();
         StopInteractionRoutine();
         ResetInteractionState();
     }
 
+    private void Update()
+    {
+        UpdateLitInfluence(false);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
-        if (!useInteractInput)
+        if (!useInteractInput && !useTriggerMuninInput && !showStateDialogueOnInteract)
         {
             return;
         }
@@ -162,7 +232,7 @@ public class Brasero : NetworkBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (!useInteractInput)
+        if (!useInteractInput && !useTriggerMuninInput && !showStateDialogueOnInteract)
         {
             return;
         }
@@ -204,16 +274,6 @@ public class Brasero : NetworkBehaviour
 
     private void ApplyVisuals(bool immediate)
     {
-        if (litRoot != null)
-        {
-            litRoot.SetActive(isLit);
-        }
-
-        if (unlitRoot != null)
-        {
-            unlitRoot.SetActive(!isLit);
-        }
-
         if (flameLight != null)
         {
             flameLight.enabled = isLit;
@@ -248,27 +308,32 @@ public class Brasero : NetworkBehaviour
 
     private void UpdateFlameVisuals(bool immediate)
     {
-        EnsureFlameInstances();
-        CollectFlameParticleSystems();
-
-        if (flameInstances == null || flameInstances.Length == 0)
+        if (!Application.isPlaying)
         {
+            // Ne pas modifier les modules d'emission depuis OnValidate: Unity serialise ces valeurs dans la scene.
+            SetFlameVisualRootsActive(isLit);
             return;
         }
 
         if (isLit)
         {
-            SetFlameInstancesActive(true);
+            SetFlameVisualRootsActive(true);
+        }
+
+        CollectFlameParticleSystems();
+
+        if (isLit)
+        {
             EnsureFlameParticlesPlaying();
         }
 
-        if (immediate || !Application.isPlaying)
+        if (immediate)
         {
             StopEmissionRoutine();
             SetEmissionFactor(isLit ? 1f : 0f);
             if (!isLit)
             {
-                SetFlameInstancesActive(false);
+                SetFlameVisualRootsActive(false);
             }
 
             return;
@@ -277,67 +342,13 @@ public class Brasero : NetworkBehaviour
         StartEmissionTransition(isLit ? 1f : 0f, emissionFadeDuration, !isLit);
     }
 
-    private void EnsureFlameInstances()
-    {
-        if (flamePrefabs == null || flamePrefabs.Length == 0)
-        {
-            flameInstances = null;
-            return;
-        }
-
-        if (flameInstances == null || flameInstances.Length != flamePrefabs.Length)
-        {
-            flameInstances = new GameObject[flamePrefabs.Length];
-        }
-
-        for (int i = 0; i < flamePrefabs.Length; i++)
-        {
-            GameObject prefab = flamePrefabs[i];
-            if (prefab == null)
-            {
-                flameInstances[i] = null;
-                continue;
-            }
-
-            if (prefab.scene.IsValid() && prefab.scene.isLoaded)
-            {
-                flameInstances[i] = prefab;
-                continue;
-            }
-
-            if (!Application.isPlaying || !isLit)
-            {
-                continue;
-            }
-
-            if (flameInstances[i] != null)
-            {
-                continue;
-            }
-
-            Transform parent = litRoot != null ? litRoot.transform : transform;
-            Vector3 spawnPosition = parent.position + parent.rotation * flamePrefabsOffset;
-            flameInstances[i] = Instantiate(prefab, spawnPosition, parent.rotation, parent);
-        }
-    }
-
     private void CollectFlameParticleSystems()
     {
         flameParticleSystems.Clear();
-        if (flameInstances == null)
-        {
-            return;
-        }
 
-        for (int i = 0; i < flameInstances.Length; i++)
+        if (flameObject != null)
         {
-            GameObject flame = flameInstances[i];
-            if (flame == null)
-            {
-                continue;
-            }
-
-            flame.GetComponentsInChildren(true, flameParticleSystems);
+            AddFlameParticleSystems(flameObject);
         }
 
         for (int i = flameParticleSystems.Count - 1; i >= 0; i--)
@@ -373,25 +384,31 @@ public class Brasero : NetworkBehaviour
         }
     }
 
-    private void SetFlameInstancesActive(bool active)
+    private void AddFlameParticleSystems(GameObject root)
     {
-        if (flameInstances == null)
+        if (root == null)
         {
             return;
         }
 
-        for (int i = 0; i < flameInstances.Length; i++)
+        ParticleSystem[] systems = root.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < systems.Length; i++)
         {
-            GameObject flame = flameInstances[i];
-            if (flame == null)
+            ParticleSystem system = systems[i];
+            if (system == null || flameParticleSystems.Contains(system))
             {
                 continue;
             }
 
-            if (flame.activeSelf != active)
-            {
-                flame.SetActive(active);
-            }
+            flameParticleSystems.Add(system);
+        }
+    }
+
+    private void SetFlameVisualRootsActive(bool active)
+    {
+        if (flameObject != null && flameObject.activeSelf != active)
+        {
+            flameObject.SetActive(active);
         }
     }
 
@@ -403,7 +420,7 @@ public class Brasero : NetworkBehaviour
         {
             if (deactivateAfter && target <= 0f)
             {
-                SetFlameInstancesActive(false);
+                SetFlameVisualRootsActive(false);
             }
 
             return;
@@ -421,7 +438,7 @@ public class Brasero : NetworkBehaviour
             SetEmissionFactor(target);
             if (deactivateAfter && target <= 0f)
             {
-                SetFlameInstancesActive(false);
+                SetFlameVisualRootsActive(false);
             }
 
             return;
@@ -446,7 +463,7 @@ public class Brasero : NetworkBehaviour
 
         if (deactivateAfter && target <= 0f)
         {
-            SetFlameInstancesActive(false);
+            SetFlameVisualRootsActive(false);
         }
 
         emissionRoutine = null;
@@ -498,7 +515,60 @@ public class Brasero : NetworkBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
-        if (!useInteractInput)
+        if (!useInteractInput && !showStateDialogueOnInteract)
+        {
+            return;
+        }
+
+        if (LocalInputRouter.IsInteractConsumed || InputFocusStack.HasAnyFocus())
+        {
+            return;
+        }
+
+        if (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked())
+        {
+            return;
+        }
+
+        GameObject character = ResolveCurrentInteractionCharacter();
+        if (character == null)
+        {
+            return;
+        }
+
+        if (!IsCharacterWithinInteractDistance(character.transform))
+        {
+            return;
+        }
+
+        currentCharacter = character;
+        if (!LocalInputRouter.TryConsumeInteract())
+        {
+            return;
+        }
+
+        if (showStateDialogueOnInteract)
+        {
+            ShowStateDialogue();
+            return;
+        }
+
+        if (interactionInProgress)
+        {
+            return;
+        }
+
+        StartInteraction();
+    }
+
+    private void ShowStateDialogue()
+    {
+        InfoBoxUI.TryShow(isLit ? litStateMessage : unlitStateMessage);
+    }
+
+    private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
+    {
+        if (!useTriggerMuninInput)
         {
             return;
         }
@@ -513,26 +583,16 @@ public class Brasero : NetworkBehaviour
             return;
         }
 
-        if (!IsLocalCharacterInRange())
+        GameObject character = ResolveCurrentInteractionCharacter();
+        if (character == null)
         {
             return;
         }
 
-        LocalInputRouter.ConsumeInteract();
+        currentCharacter = character;
+        LocalInputRouter.ConsumeTriggerMunin();
 
         if (interactionInProgress)
-        {
-            return;
-        }
-
-        if (IsNetworked())
-        {
-            RequestInteractServerRpc();
-            return;
-        }
-
-        RefreshCurrentCharacter();
-        if (currentCharacter == null)
         {
             return;
         }
@@ -744,58 +804,60 @@ public class Brasero : NetworkBehaviour
     private IEnumerator HandleInteractionRoutine()
     {
         interactionInProgress = true;
+        SetSquadInputLock(true);
 
-        Toggle();
-
-        bool playedAnimation = false;
-        float lockDuration = 0f;
-        Animator animator = ResolveInteractionAnimator();
-        if (animator != null && !string.IsNullOrWhiteSpace(interactionStateName))
+        MuninController munin = ResolveMuninController();
+        if (munin != null)
         {
-            int stateHash = Animator.StringToHash(interactionStateName);
-            if (animator.HasState(0, stateHash))
+            if (!munin.TryConsumeCharge())
             {
-                playedAnimation = true;
-                SetSquadInputLock(true);
-                animator.Play(stateHash, 0, 0f);
-                yield return null;
-                lockDuration = ResolveStateDuration(animator, stateHash);
+                SetSquadInputLock(false);
+                interactionInProgress = false;
+                interactionRoutine = null;
+                yield break;
             }
-            else
-            {
-                Debug.LogWarning($"Brasero: Animator state '{interactionStateName}' introuvable.", this);
-            }
+
+            activeMuninController = munin;
+            Vector3 targetPosition = ResolveMuninTargetPosition();
+            yield return munin.MoveToWorldAndBack(targetPosition, ToggleFromInteraction);
+            activeMuninController = null;
+        }
+        else
+        {
+            ToggleFromInteraction();
         }
 
-        if (playedAnimation)
-        {
-            if (lockDuration <= 0f)
-            {
-                lockDuration = Mathf.Max(0f, interactionFallbackLock);
-            }
-
-            if (lockDuration > 0f)
-            {
-                yield return new WaitForSeconds(lockDuration);
-            }
-
-            SetSquadInputLock(false);
-        }
-
+        SetSquadInputLock(false);
         interactionInProgress = false;
         interactionRoutine = null;
     }
 
-    private bool IsLocalCharacterInRange()
+    private GameObject ResolveCurrentInteractionCharacter()
     {
-        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
-        if (localRoot != null)
+        if (currentCharacter != null && IsCharacterInRange(currentCharacter.transform))
         {
-            return IsCharacterInRange(localRoot);
+            return currentCharacter;
         }
 
         RefreshCurrentCharacter();
-        return currentCharacter != null;
+        if (currentCharacter != null && IsCharacterInRange(currentCharacter.transform))
+        {
+            return currentCharacter;
+        }
+
+        GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
+        if (controlled != null && IsCharacterInRange(controlled.transform))
+        {
+            return controlled;
+        }
+
+        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (localRoot != null && IsCharacterInRange(localRoot))
+        {
+            return localRoot.gameObject;
+        }
+
+        return null;
     }
 
     private bool IsCharacterInRange(Transform characterRoot)
@@ -805,10 +867,31 @@ public class Brasero : NetworkBehaviour
             return false;
         }
 
+        if (interactionTrigger != null && interactionTrigger.enabled && interactionTrigger.isTrigger)
+        {
+            return CharacterInteractionDetection.IsCharacterInsideInteractionCollider(characterRoot, interactionTrigger);
+        }
+
         Vector3 center = transform.TransformPoint(interactionCenter);
         float radius = Mathf.Max(0f, interactionRadius);
         float distanceSqr = (characterRoot.position - center).sqrMagnitude;
         return distanceSqr <= radius * radius;
+    }
+
+    private bool IsCharacterWithinInteractDistance(Transform characterRoot)
+    {
+        if (characterRoot == null)
+        {
+            return false;
+        }
+
+        Transform anchor = GetInteractionAnchor();
+        Vector3 targetPosition = anchor != null ? anchor.position : transform.TransformPoint(interactionCenter);
+        Vector3 delta = characterRoot.position - targetPosition;
+        delta.y = 0f;
+
+        float distance = Mathf.Max(0.05f, interactMaxDistance);
+        return delta.sqrMagnitude <= distance * distance;
     }
 
     private void OnNetLitChanged(bool previous, bool current)
@@ -820,10 +903,7 @@ public class Brasero : NetworkBehaviour
     {
         isLit = lit;
         ApplyVisuals(!Application.isPlaying);
-        if (isLit)
-        {
-            SpawnFlameBurst();
-        }
+        UpdateLitInfluence(true);
         StateChanged?.Invoke(this, isLit);
     }
 
@@ -840,14 +920,38 @@ public class Brasero : NetworkBehaviour
             return;
         }
 
-        bool wasLit = isLit;
         isLit = lit;
         ApplyVisuals(!Application.isPlaying);
-        if (!wasLit && isLit)
-        {
-            SpawnFlameBurst();
-        }
+        UpdateLitInfluence(true);
         StateChanged?.Invoke(this, isLit);
+    }
+
+    private void UpdateLitInfluence(bool force)
+    {
+        EnsureLitInfluence();
+        litInfluence.Tick(this, LitInfluenceSourceKind.Brasero, isLit, force);
+    }
+
+    private void ClearLitInfluence()
+    {
+        if (litInfluence != null)
+        {
+            litInfluence.Clear(this, LitInfluenceSourceKind.Brasero);
+        }
+    }
+
+    private void NotifyAgeManagerDriverAvailabilityChanged()
+    {
+        if (!Application.isPlaying || !ancientBrasero)
+        {
+            return;
+        }
+
+        AgeManager manager = AgeManager.ActiveInstance;
+        if (manager != null)
+        {
+            manager.RefreshAndResubscribe();
+        }
     }
 
     private bool IsNetworked()
@@ -867,71 +971,49 @@ public class Brasero : NetworkBehaviour
         SetLitServer(!isLit);
     }
 
-    private Animator ResolveInteractionAnimator()
+    private void ToggleFromInteraction()
     {
-        Animator animator = null;
-
-        if (currentCharacter != null)
+        if (IsNetworked())
         {
-            animator = currentCharacter.GetComponent<Animator>();
-            if (animator == null)
+            if (IsServer)
             {
-                animator = currentCharacter.GetComponentInChildren<Animator>(true);
+                SetLitServer(!isLit);
             }
+            else
+            {
+                RequestInteractServerRpc();
+            }
+
+            return;
         }
 
-        if (animator != null)
-        {
-            return animator;
-        }
-
-        if (interactionAnimatorOverride != null)
-        {
-            return interactionAnimatorOverride;
-        }
-
-        return null;
+        SetLitInternal(!isLit);
     }
 
-    private float ResolveStateDuration(Animator animator, int stateHash)
+    private MuninController ResolveMuninController()
     {
-        if (animator == null)
+        if (muninController != null)
         {
-            return 0f;
+            return muninController;
         }
 
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        if (!IsStateMatch(stateInfo, stateHash))
+        if (currentCharacter == null)
         {
-            AnimatorStateInfo nextInfo = animator.GetNextAnimatorStateInfo(0);
-            if (IsStateMatch(nextInfo, stateHash))
-            {
-                stateInfo = nextInfo;
-            }
+            return null;
         }
 
-        if (!IsStateMatch(stateInfo, stateHash))
-        {
-            return 0f;
-        }
-
-        if (stateInfo.loop)
-        {
-            return 0f;
-        }
-
-        float speed = Mathf.Abs(stateInfo.speed * animator.speed);
-        if (speed <= 0.0001f)
-        {
-            speed = 1f;
-        }
-
-        return Mathf.Max(0f, stateInfo.length / speed);
+        return currentCharacter.GetComponentInChildren<MuninController>(true);
     }
 
-    private static bool IsStateMatch(AnimatorStateInfo stateInfo, int stateHash)
+    private Vector3 ResolveMuninTargetPosition()
     {
-        return stateInfo.shortNameHash == stateHash || stateInfo.fullPathHash == stateHash;
+        Transform anchor = GetInteractionAnchor();
+        if (anchor == null)
+        {
+            return transform.position + transform.rotation * muninTargetOffset;
+        }
+
+        return anchor.position + anchor.rotation * muninTargetOffset;
     }
 
     private void SetSquadInputLock(bool locked)
@@ -972,6 +1054,11 @@ public class Brasero : NetworkBehaviour
 
         interactionInProgress = false;
         SetSquadInputLock(false);
+        if (activeMuninController != null)
+        {
+            activeMuninController.CancelManualMotion();
+            activeMuninController = null;
+        }
     }
 
     private void EnsureInteractionTrigger()
@@ -1004,72 +1091,30 @@ public class Brasero : NetworkBehaviour
         interactionTrigger.center = interactionCenter;
     }
 
-    private void SpawnFlameBurst()
+    private void EnsureLitInfluence()
     {
-        if (!Application.isPlaying || flameBurst == null)
+        if (litInfluence == null)
         {
-            return;
+            litInfluence = new LitInfluenceSource(6f);
         }
-
-        Transform spawn = transform;
-        if (flameLight != null)
-        {
-            spawn = flameLight.transform;
-        }
-        else if (litRoot != null)
-        {
-            spawn = litRoot.transform;
-        }
-        Vector3 spawnPosition = spawn.position + spawn.rotation * flameBurstOffset;
-        Instantiate(flameBurst, spawnPosition, spawn.rotation, spawn);
     }
 
 #if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        DrawOffsetGizmos();
-    }
-
     private void OnValidate()
     {
         EnsureId();
         EnsureInteractionTrigger();
+        EnsureLitInfluence();
         if (!Application.isPlaying)
         {
             ApplyVisuals(true);
         }
     }
 
-    private void DrawOffsetGizmos()
+    private void OnDrawGizmosSelected()
     {
-        Transform flameParent = litRoot != null ? litRoot.transform : transform;
-        Vector3 flameBase = flameParent.position;
-        Vector3 flameOffsetWorld = flameParent.rotation * flamePrefabsOffset;
-        Vector3 flamePosition = flameBase + flameOffsetWorld;
-
-        Transform burstParent = transform;
-        if (flameLight != null)
-        {
-            burstParent = flameLight.transform;
-        }
-        else if (litRoot != null)
-        {
-            burstParent = litRoot.transform;
-        }
-
-        Vector3 burstBase = burstParent.position;
-        Vector3 burstOffsetWorld = burstParent.rotation * flameBurstOffset;
-        Vector3 burstPosition = burstBase + burstOffsetWorld;
-
-        const float markerSize = 0.08f;
-
-        Gizmos.color = new Color(1f, 0.55f, 0.1f, 1f);
-        Gizmos.DrawLine(flameBase, flamePosition);
-        Gizmos.DrawSphere(flamePosition, markerSize);
-
-        Gizmos.color = new Color(1f, 0.2f, 0.2f, 1f);
-        Gizmos.DrawLine(burstBase, burstPosition);
-        Gizmos.DrawSphere(burstPosition, markerSize);
+        EnsureLitInfluence();
+        litInfluence.DrawGizmos(transform, isLit);
     }
 #endif
 

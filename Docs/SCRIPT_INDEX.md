@@ -8,7 +8,7 @@ Il ne remplace pas la lecture du code : le rôle, les dépendances et le risque 
 
 - Inclus : scripts sous `Assets/Scripts/`, `Assets/Editor/` et scripts de données sous `Assets/ScriptableObjects/`.
 - Exclu : `Packages/`, `Library/`, `Temp/`, `Obj/`, `Build/`, `Logs/`, `UserSettings/`.
-- Exclu : dossiers externes repérés sous `Assets/0 - UnityPackages/`, `Assets/TextMesh Pro/`, `Assets/Sketchfab For Unity/`, `Assets/QuickOutline/`, `Assets/TutorialInfo/`.
+- Exclu : dossiers externes repérés sous `Assets/0 - UnityPackages/`, `Assets/TextMesh Pro/`, `Assets/Sketchfab For Unity/`, `Assets/TutorialInfo/`.
 - Exclu : `Assets/PlayerInputs.cs`, car il est généré automatiquement par Unity Input System.
 - Origine incertaine : scripts dans le projet mais probablement inspirés d un outil, d un asset externe ou d un prototype technique. Les lire avant modification.
 
@@ -25,7 +25,6 @@ Il ne remplace pas la lecture du code : le rôle, les dépendances et le risque 
 |---|---:|---|
 | `Assets/PlayerInputs.cs` | 1 | Auto-généré par Unity Input System. Ne pas modifier. |
 | `Assets/0 - UnityPackages/` | 109 | Asset tiers, plugin, exemples ou package importé. |
-| `Assets/QuickOutline/` | 1 | Asset tiers, plugin, exemples ou package importé. |
 | `Assets/Sketchfab For Unity/` | 11 | Asset tiers, plugin, exemples ou package importé. |
 | `Assets/TextMesh Pro/` | 34 | Asset tiers, plugin, exemples ou package importé. |
 | `Assets/TutorialInfo/` | 2 | Asset tiers, plugin, exemples ou package importé. |
@@ -46,7 +45,7 @@ Il ne remplace pas la lecture du code : le rôle, les dépendances et le risque 
 
 ## Index des scripts projet
 
-Nombre de scripts indexés : **250**.
+Nombre de scripts indexés : **251**.
 
 | Script | Classe principale | Rôle | Dépendances | Scènes ou prefabs probablement concernés | Risque |
 |---|---|---|---|---|---|
@@ -67,16 +66,16 @@ Nombre de scripts indexés : **250**.
 | `Assets/ScriptableObjects/Knowledge/KnowledgeSO.cs` | `KnowledgeSO` | Données de connaissance ou entrée narrative débloquable. | ScriptableObject | Assets ScriptableObject | faible |
 | `Assets/ScriptableObjects/VoiceLine/VoiceLineData.cs` | `VoiceLineData` | Données de ligne vocale. | Audio, ScriptableObject | ScriptableObjects (Assets/ScriptableObjects/VoiceLine/VoiceLine_Builder_Que voulez-vous.asset, Assets/ScriptableObjects/VoiceLine/VoiceLine_HistoricStone_AuCommencement.asset) | faible |
 | `Assets/Scripts/ActionAudioLibrarySO.cs` | `ActionAudioCue` | Définit des valeurs partagées utilisées par d autres scripts. | Audio, ScriptableObject, Inventory | Appelé par code ou ajouté runtime | faible |
-| `Assets/Scripts/AgeTriggerZone.cs` | `LocalRuntimeAgeTrigger` | Comportement ou donnée spécifique au projet. | Temporal, Physics | Appelé par code ou ajouté runtime | moyen |
-| `Assets/Scripts/ApplyTorchVisionEffect.cs` | `ApplyTorchVisionEffect` | Effet appliqué par un item, une action ou un état de gameplay. | ScriptableObject | ScriptableObjects (4 fichiers) | faible |
+| `Assets/Scripts/DissolveRevealSystem.cs` | `DissolveRevealSystem` | Registre runtime des sources lumineuses capables de révéler des items par dissolve. | Rendering | Appelé par code ou ajouté runtime | moyen |
+| `Assets/Scripts/DissolveRevealTarget.cs` | `DissolveRevealTarget` | Pilote `_DissolveAmount` sur les matériaux d'un item selon la proximité des sources lumineuses. | Rendering, Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
+| `Assets/Scripts/MasterShaderDissolveController.cs` | `MasterShaderDissolveController` | Contrôleur optionnel de `_DissolveAmount` pour les matériaux du MasterShader via `MaterialPropertyBlock`. | Rendering | Ajouté runtime ou manuellement sur un objet à dissoudre | moyen |
 | `Assets/Scripts/AudioClipSO.cs` | `AudioClipSO` | Audio, musique, ambiance ou voix. | Audio, ScriptableObject | ScriptableObjects (62 fichiers) | faible |
 | `Assets/Scripts/AudioManager.cs` | `AudioManager` | Manager central qui coordonne un système runtime. | Audio | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/BeaconMarker.cs` | `BeaconMarker` | Comportement ou donnée spécifique au projet. | Physics | Prefabs (Assets/Prefabs/BeaconMarker.prefab) | moyen |
-| `Assets/Scripts/Brasero.cs` | `Brasero` | Objet interactif de scène. | Netcode, Input, Physics | Scènes (Assets/Scenes/Maison.unity) | élevé |
+| `Assets/Scripts/Brasero.cs` | `Brasero` | Objet interactif de lumière/allumage. Seuls ceux dont `ancientBrasero` est actif modifient le temps. | Netcode, Input, Physics | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/BraseroAnimatorByYear.cs` | `BraseroAnimatorByYear` | Cible d'affichage Animator pilotee par BraseroDisplayManager. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/BraseroDisplayManager.cs` | `BraseroDisplayManager` | Diffuse l'etat canonique des braseros aux affichages UI, Animator et Volume. | Temporal, UI | Créé ou appelé runtime | élevé |
 | `Assets/Scripts/BraseroRotationEffect.cs` | `BraseroRotationEffect` | Effet appliqué par un item, une action ou un état de gameplay. | Unity | Appelé par code ou ajouté runtime | élevé |
-| `Assets/Scripts/BraseroTimeManager.cs` | `BraseroTimeManager` | Pont de compatibilité legacy, synchronisé depuis AgeManager sans liste de braseros propre. | Temporal | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/BraseroVolumeByYear.cs` | `BraseroVolumeByYear` | Cible d'affichage Volume pilotee par BraseroDisplayManager. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/BraseroYearDisplay.cs` | `BraseroYearDisplay` | Cible d'affichage texte pilotee par BraseroDisplayManager. | UI | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/BuilderController.cs` | `BuilderController` | Contrôleur de comportement ou d interface. | Netcode, Input, Audio, Inventory, Physics | Prefabs (Assets/Prefabs/Character/Builder_Model_Trooper.prefab) | élevé |
@@ -129,11 +128,10 @@ Nombre de scripts indexés : **250**.
 | `Assets/Scripts/Environment/EnvironmentZone.cs` | `EnvironmentZone` | Gestion d environnement, zones et état runtime associé. | Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/FallSpeedCameraEffect.cs` | `FallSpeedCameraEffect` | Effet appliqué par un item, une action ou un état de gameplay. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/FixedCameraPointTrigger.cs` | `FixedCameraPointTrigger` | Comportement ou donnée spécifique au projet. | Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
-| `Assets/Scripts/FlickeringLight.cs` | `FlickeringLight` | Comportement ou donnée spécifique au projet. | Unity | Scènes/Prefabs (Assets/Prefabs/Puzzle/TreasureFinder.prefab, Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/FollowTarget.cs` | `FollowTarget` | Comportement ou donnée spécifique au projet. | Unity | Scènes/Prefabs (3 fichiers) | moyen |
 | `Assets/Scripts/GameplayRuntimeReset.cs` | `GameplayRuntimeReset` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/GhostController.cs` | `GhostController` | Lie un fantôme de scène à GhostData, propose des réactions selon les connaissances possédées et marque le souvenir compris. | ScriptableObject, UI, Input, Physics | Ajouté manuellement sur un GameObject de scène | moyen |
-| `Assets/Scripts/GlobalAgeZone.cs` | `GlobalAgeZone` | Pont shader global legacy, désactivé par défaut au profit d'AgeManager et LocalRuntimeAgeTrigger. | Unity | Scènes existantes | faible |
+| `Assets/Scripts/GlobalAgeZone.cs` | `GlobalAgeZone` | Pont shader global optionnel, désactivé par défaut au profit d'AgeManager. | Unity | Scènes existantes | faible |
 | `Assets/Scripts/HiddenRoom/HiddenRoomBootstrap.cs` | `HiddenRoomBootstrap` | Salle cachée, portail ou téléportation dédiée. | Physics | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/HiddenRoom/HiddenRoomPortalRenderer.cs` | `HiddenRoomPortalRenderer` | Salle cachée, portail ou téléportation dédiée. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/HiddenRoom/HiddenRoomPortalTeleporter.cs` | `HiddenRoomPortalTeleporter` | Salle cachée, portail ou téléportation dédiée. | Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
@@ -277,22 +275,16 @@ Nombre de scripts indexés : **250**.
 | `Assets/Scripts/SquadManager.cs` | `SquadManager` | Manager central qui coordonne un système runtime. | Netcode, UI, Input, ScriptableObject, Inventory | Appelé par code ou ajouté runtime | élevé |
 | `Assets/Scripts/SquadUISettings.cs` | `SquadUISettings` | Interface utilisateur ou feedback visuel. | Netcode, UI | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/SwingMotion.cs` | `SwingMotion` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
-| `Assets/Scripts/Temporal/AgeManager.cs` | `AgeManager` | Manager central qui coordonne l'âge canonique, les braseros et la fenêtre de torche. | Temporal | Créé ou appelé runtime | élevé |
+| `Assets/Scripts/Temporal/AgeManager.cs` | `AgeManager` | Manager central qui calcule l'âge global depuis les braseros anciens allumés. | Temporal | Créé ou appelé runtime | élevé |
 | `Assets/Scripts/Temporal/HumanModificationTag.cs` | `HumanModificationTag` | Définit des valeurs partagées utilisées par d autres scripts. | Temporal | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/Temporal/TemporalAge.cs` | `TemporalAge` | Définit des valeurs partagées utilisées par d autres scripts. | Temporal | Appelé par code ou ajouté runtime | faible |
-| `Assets/Scripts/Temporal/TemporalObject.cs` | `TemporalState` | Système temporel léger : âges, zones, torche ou objets à états. | Temporal, Physics | Appelé par code ou ajouté runtime | faible |
-| `Assets/Scripts/Temporal/TemporalTorch.cs` | `TemporalTorch` | Configure la torche locale pour révéler la fenêtre temporelle fournie par AgeManager. | Temporal | Appelé par code ou ajouté runtime | moyen |
-| `Assets/Scripts/Temporal/TemporalZone.cs` | `TemporalAgeChangedEvent` | Système temporel léger : âges, zones, torche ou objets à états. | Temporal | Appelé par code ou ajouté runtime | faible |
+| `Assets/Scripts/Temporal/TemporalObject.cs` | `TemporalState` | Système temporel léger : âges, zones et objets à états. | Temporal, Physics | Appelé par code ou ajouté runtime | faible |
+| `Assets/Scripts/Temporal/TemporalZone.cs` | `TemporalAgeChangedEvent` | Système temporel léger : âges, zones et objets à états. | Temporal | Appelé par code ou ajouté runtime | faible |
 | `Assets/Scripts/TimePeriodValueMode.cs` | `TimePeriodValueMode` | Définit des valeurs partagées utilisées par d autres scripts. | Temporal | Appelé par code ou ajouté runtime | moyen |
-| `Assets/Scripts/TimePeriodVisibility.cs` | `TimePeriodVisibility` | Rend un objet visible selon une période inclusive et la révélation locale de torche. | Temporal | Scènes (Assets/Scenes/Maison.unity) | élevé |
+| `Assets/Scripts/TimePeriodVisibility.cs` | `TimePeriodVisibility` | Rend un objet visible selon une période inclusive de l'âge global. | Temporal | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/ToggleTorchEffect.cs` | `ToggleTorchEffect` | Effet appliqué par un item, une action ou un état de gameplay. | ScriptableObject | ScriptableObjects (Assets/ScriptableObjects/Effect/ToggleTorchEffect.asset) | faible |
-| `Assets/Scripts/TorchColorLinkSystem.cs` | `TorchColorLinkSystem` | Comportement ou donnée spécifique au projet. | Input, Combat | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/TorchEffect.cs` | `TorchEffect` | Effet appliqué par un item, une action ou un état de gameplay. | ScriptableObject | ScriptableObjects (Assets/ScriptableObjects/Effect/TorchEffect.asset) | faible |
 | `Assets/Scripts/TorchLightReceiver.cs` | `TorchLightReceiver` | Comportement ou donnée spécifique au projet. | Unity | Scènes/Prefabs (3 fichiers) | moyen |
-| `Assets/Scripts/TorchVisionDefinition.cs` | `TorchVisionDefinition` | Comportement ou donnée spécifique au projet. | ScriptableObject | ScriptableObjects (4 fichiers) | faible |
-| `Assets/Scripts/TorchVisionSensitive.cs` | `TorchVisionSensitive` | Comportement ou donnée spécifique au projet. | Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
-| `Assets/Scripts/TorchVisionSystem.cs` | `TorchVisionSystem` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
-| `Assets/Scripts/TreasureFinder.cs` | `TreasureFinder` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/TriggerPairTeleporter.cs` | `TriggerPairTeleporter` | Comportement ou donnée spécifique au projet. | Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/TrouEtroit.cs` | `TrouEtroit` | Comportement ou donnée spécifique au projet. | UI, Input, Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | moyen |
 | `Assets/Scripts/TwoLeverPuzzle.cs` | `TwoLeverPuzzle` | Objet interactif de scène. | Audio | Scènes (Assets/Scenes/Maison.unity) | élevé |

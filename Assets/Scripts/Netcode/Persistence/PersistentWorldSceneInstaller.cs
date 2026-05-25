@@ -37,6 +37,7 @@ public static class PersistentWorldSceneInstaller
             }
 
             PrepareSceneBraziers(root);
+            PrepareSceneTorches(root);
             PrepareSceneContainers(root);
             PrepareScenePuzzles(root);
             PrepareSceneGhosts(root);
@@ -318,6 +319,11 @@ public static class PersistentWorldSceneInstaller
             NetcodeRuntimeUtilities.GetOrAdd<PersistentBrazierState>(target);
         }
 
+        if (target.GetComponent<Torch>() != null)
+        {
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentTorchState>(target);
+        }
+
         if (target.GetComponent<InteractableItem>() != null && target.GetComponentInParent<BuildingInfoInteractable>(true) == null)
         {
             NetcodeRuntimeUtilities.GetOrAdd<PersistentContainerState>(target);
@@ -481,6 +487,26 @@ public static class PersistentWorldSceneInstaller
             }
 
             NetcodeRuntimeUtilities.GetOrAdd<PersistentBrazierState>(brazier.gameObject);
+        }
+    }
+
+    private static void PrepareSceneTorches(GameObject root)
+    {
+        Torch[] torches = root.GetComponentsInChildren<Torch>(true);
+        for (int i = 0; i < torches.Length; i++)
+        {
+            Torch torch = torches[i];
+            if (torch == null)
+            {
+                continue;
+            }
+
+            if (EnsurePersistentSceneObject(torch.gameObject) == null)
+            {
+                continue;
+            }
+
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentTorchState>(torch.gameObject);
         }
     }
 

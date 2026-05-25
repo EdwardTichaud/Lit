@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -7,17 +8,14 @@ using UnityEngine.Events;
 public class CursorIntercation : MonoBehaviour
 {
     [Header("Outline")]
-    [SerializeField] private Outline outline;
     [SerializeField] private bool createOutlineIfMissing = true;
-    [SerializeField] private Color outlineColor = new Color(1f, 0.82f, 0.35f, 1f);
-    [SerializeField, Range(0f, 10f)] private float outlineWidth = 4f;
-    [SerializeField] private Outline.Mode outlineMode = Outline.Mode.OutlineAll;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onCursorEnter;
     [SerializeField] private UnityEvent onCursorExit;
     [SerializeField] private UnityEvent onCursorClick;
 
+    private readonly List<RuntimeOutlineTarget> outlineTargets = new List<RuntimeOutlineTarget>();
     private bool hovered;
 
     private void Awake()
@@ -58,33 +56,18 @@ public class CursorIntercation : MonoBehaviour
     private void ConfigureOutline(bool visible)
     {
         ResolveOutline();
-        if (outline == null)
+        for (int i = 0; i < outlineTargets.Count; i++)
         {
-            return;
+            RuntimeOutlineTarget target = outlineTargets[i];
+            if (target != null)
+            {
+                target.SetOutlined(visible);
+            }
         }
-
-        outline.OutlineMode = outlineMode;
-        outline.OutlineColor = outlineColor;
-        outline.OutlineWidth = outlineWidth;
-        outline.enabled = visible;
     }
 
     private void ResolveOutline()
     {
-        if (outline != null || !createOutlineIfMissing)
-        {
-            return;
-        }
-
-        outline = GetComponent<Outline>();
-        if (outline == null)
-        {
-            outline = GetComponentInChildren<Outline>(true);
-        }
-
-        if (outline == null && Application.isPlaying)
-        {
-            outline = gameObject.AddComponent<Outline>();
-        }
+        RuntimeOutlineUtility.CollectOutlineTargets(this, outlineTargets, createOutlineIfMissing && Application.isPlaying);
     }
 }

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abc00000000015929377112111528352
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308772
+  packageName: Medieval Castle (URP)
+  packageVersion: 1.0
+  assetPath: Assets/MedCastle/Source/Materials/MI_TreeLogs.mat
+  uploadId: 726537

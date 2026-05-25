@@ -160,13 +160,7 @@ public class BraseroDisplayManager : MonoBehaviour
     public static BraseroDisplaySnapshot GetCurrentSnapshot()
     {
         AgeManager ageManager = ResolveAgeManager();
-        if (ageManager != null)
-        {
-            return FromAgeManager(ageManager);
-        }
-
-        BraseroTimeManager timeManager = ResolveLegacyTimeManager();
-        return timeManager != null ? FromTimeManager(timeManager) : BraseroDisplaySnapshot.Default();
+        return ageManager != null ? FromAgeManager(ageManager) : BraseroDisplaySnapshot.Default();
     }
 
     public static BraseroDisplayManager GetOrCreate()
@@ -218,29 +212,15 @@ public class BraseroDisplayManager : MonoBehaviour
 
     private static BraseroDisplaySnapshot FromAgeManager(AgeManager manager)
     {
-        int totalCount = manager.Braseros != null ? manager.Braseros.Count : 0;
         return new BraseroDisplaySnapshot(
             true,
             manager.CurrentYear,
             manager.LitBrazierCount,
-            totalCount,
+            manager.TotalAgeDrivingBraseroCount,
             manager.StartYear,
             manager.YearsPerBrasero,
             manager.CurrentTemporalAge,
             manager.CurrentTemporalAgeStep);
-    }
-
-    private static BraseroDisplaySnapshot FromTimeManager(BraseroTimeManager manager)
-    {
-        return new BraseroDisplaySnapshot(
-            true,
-            manager.CurrentYear,
-            manager.LitCount,
-            manager.TotalCount,
-            manager.baseYear,
-            manager.yearsPerBrasero,
-            manager.CurrentTemporalAge,
-            TemporalAgeUtility.AgeToStep(manager.CurrentTemporalAge));
     }
 
     private static void ApplyToTarget(IBraseroDisplayTarget target, BraseroDisplaySnapshot snapshot)
@@ -262,20 +242,6 @@ public class BraseroDisplayManager : MonoBehaviour
         return FindFirstObjectByType<AgeManager>();
 #else
         return FindObjectOfType<AgeManager>();
-#endif
-    }
-
-    private static BraseroTimeManager ResolveLegacyTimeManager()
-    {
-        if (BraseroTimeManager.ActiveInstance != null)
-        {
-            return BraseroTimeManager.ActiveInstance;
-        }
-
-#if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<BraseroTimeManager>();
-#else
-        return FindObjectOfType<BraseroTimeManager>();
 #endif
     }
 

@@ -51,14 +51,20 @@ Les interactions passent par des composants de scène :
 
 Les données d'items sont dans `Item` et les assets `Assets/ScriptableObjects/Item/`.
 
-### Temps, braseros et strates
+### Temps, Braseros anciens et strates
 
-Deux couches coexistent :
+Le vieillissement est global. La source canonique est `AgeManager`, qui compte uniquement les `Brasero` dont `ancientBrasero` est actif et qui sont allumés. Un `Brasero` classique reste une source de lumière, mais il ne change pas l'âge du monde et n'écoute plus `Interact`.
 
-- couche canonique actuelle : `AgeManager`, `TimePeriodVisibility`, `LocalRuntimeAgeTrigger` ;
-- couche temporelle d'objets : `TemporalAge`, `TemporalZone`, `TemporalTorch`, `TemporalObject`.
+La couche temporelle active est :
 
-Les nouveaux contenus doivent privilégier la couche `Temporal/*` quand il s'agit d'archéologie temporelle, sans casser la couche déjà utilisée par la scène.
+- `AgeManager` ;
+- `Brasero` avec `ancientBrasero` ;
+- `TimePeriodVisibility` ;
+- `TemporalAge`, `TemporalZone`, `TemporalObject`.
+
+Munin, les torches et les braseros classiques ne pilotent plus `AgeAmount`, `_AgeCenter` ou un rayon de vieillissement. Toute variation d'âge vient des braseros anciens. `AgeManager` pousse `_AgeAmount` au runtime via `MaterialPropertyBlock` pour éviter les instances de matériaux.
+
+Le dissolve du MasterShader est une couche de visibilité finale. `_DissolveAmount` ne lit jamais `_AgeAmount`, et `_AgeAmount` ne lit jamais `_DissolveAmount`.
 
 ### Readables, registres et données narratives
 
@@ -137,13 +143,12 @@ La direction actuelle garde le combat comme tension ponctuelle, pas comme boucle
 5. `InventoryPanelController` met à jour l'interface.
 6. En multijoueur, `NetworkInventory` et `WorldInteractionService` valident les actions côté serveur.
 
-### Exemple : brasero et état du monde
+### Exemple : Brasero ancien et état du monde
 
-1. Un `Brasero` est activé.
-2. `AgeManager` recalcule l'année canonique depuis 666 en reculant de 111 ans par brasero allumé.
-3. `TimePeriodVisibility` et les torches locales mettent à jour les objets visibles.
+1. Un `Brasero` dont `ancientBrasero` est actif est activé.
+2. `AgeManager` recalcule l'année canonique depuis 666 en reculant de 100 ans par Brasero ancien allumé.
+3. `TimePeriodVisibility` met à jour les objets visibles selon l'âge global.
 4. `BraseroDisplayManager` diffuse le snapshot d'âge aux affichages UI, Animator et Volume.
-5. `BraseroTimeManager` reste seulement un pont de compatibilité pour les scènes qui le référencent.
 5. En multijoueur, l'état peut être persisté par les systèmes sous `Netcode/Persistence`.
 
 ### Exemple : sauvegarde / chargement

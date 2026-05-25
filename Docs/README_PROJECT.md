@@ -46,7 +46,6 @@ Assets/
   0 - UnityPackages/      Assets importés, à ne pas modifier sans raison.
   TextMesh Pro/           Package/exemples TextMesh Pro, à ignorer.
   Sketchfab For Unity/    Plugin Sketchfab, à ignorer.
-  QuickOutline/           Asset externe probable, à ignorer.
 Docs/
   Documentation projet, architecture et guides de maintenance.
 Packages/
@@ -97,7 +96,6 @@ Ne pas modifier directement :
 - `Assets/0 - UnityPackages/`
 - `Assets/TextMesh Pro/`
 - `Assets/Sketchfab For Unity/`
-- `Assets/QuickOutline/`
 - `Assets/TutorialInfo/`
 - `Assets/PlayerInputs.cs` car il est auto-généré par l'Input System.
 

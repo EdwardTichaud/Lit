@@ -27,7 +27,7 @@ public static class GameplayRuntimeReset
         BuildingRuntimeState.Clear();
         ReadableContentRuntime.ResetRuntimeState(resolvedReason);
         Zone.ResetRuntimeState();
-        TorchVisionSystem.ResetRuntimeState(resolvedReason);
+        DissolveRevealSystem.ResetRuntimeState();
 
         if (NetcodePlayerSpawner.Instance != null)
         {

@@ -44,8 +44,7 @@ MonoBehaviour:
   allowDropFromInventory: 1
   allowPlaceFromInventory: 1
   allowInstantDropWithoutPrefab: 1
-  useEffects:
-  - {fileID: 11400000, guid: ab38e126b83c4004eaf69e865d0eb696, type: 2}
+  useEffects: []
   requireAllUseEffects: 0
   consumeOnUse: 1
   consumeQuantity: 1

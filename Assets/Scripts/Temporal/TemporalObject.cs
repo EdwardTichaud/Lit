@@ -2,12 +2,12 @@
 // Allows a scene object to change visual/interactive state depending on a temporal age.
 // Usage:
 // Attach to props, doors, traces, meshes, or readable objects that should vary by
-// TemporalZone age or by a local TemporalTorch reveal.
+// TemporalZone age.
 // Responsibilities:
 // Match configured TemporalState ranges, switch roots/meshes/materials, and enable
 // or disable colliders/behaviours without requiring a custom script per prop.
 // Dependencies:
-// TemporalAgeUtility, TemporalZone, TemporalTorch, HumanModificationTag.
+// TemporalAgeUtility, TemporalZone, HumanModificationTag.
 // Precautions:
 // This component can activate/deactivate scene objects. Test each configured state
 // in Play Mode after changing ranges or references.
@@ -73,7 +73,7 @@ public class TemporalState
 }
 
 /// <summary>
-/// Applies temporal states to a scene object based on zone age, torch age, or manual age.
+/// Applies temporal states to a scene object based on zone age or manual age.
 /// </summary>
 [DisallowMultipleComponent]
 public class TemporalObject : MonoBehaviour
@@ -83,12 +83,7 @@ public class TemporalObject : MonoBehaviour
     [SerializeField] private TemporalZone zone;
     /// <summary>If true, searches parent objects for a TemporalZone.</summary>
     [SerializeField] private bool autoFindZoneInParents = true;
-    /// <summary>Optional local torch age source.</summary>
-    [SerializeField] private TemporalTorch localTorch;
-    /// <summary>If true, local torch age overrides zone age.</summary>
-    [SerializeField, Tooltip("Si une torche locale est renseignee, elle prime sur l'age dominant.")]
-    private bool preferLocalTorch = true;
-    /// <summary>If true, ignores zone and torch and uses manualAge.</summary>
+    /// <summary>If true, ignores zone and uses manualAge.</summary>
     [SerializeField] private bool useManualAge;
     /// <summary>Manual fallback age used for tests or isolated objects.</summary>
     [SerializeField] private TemporalAge manualAge = TemporalAge.Age666;
@@ -105,8 +100,6 @@ public class TemporalObject : MonoBehaviour
 
     /// <summary>Dominant zone currently connected to this object.</summary>
     public TemporalZone Zone => zone;
-    /// <summary>Local torch currently connected to this object.</summary>
-    public TemporalTorch LocalTorch => localTorch;
     /// <summary>Temporal states configured on this object.</summary>
     public IReadOnlyList<TemporalState> States => states;
     /// <summary>Human modification tags attached to this object.</summary>
@@ -147,7 +140,7 @@ public class TemporalObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Resolves the active age from manual, torch, or zone sources and applies it.
+    /// Resolves the active age from manual or zone sources and applies it.
     /// </summary>
     public void ApplyResolvedAge()
     {
@@ -179,18 +172,13 @@ public class TemporalObject : MonoBehaviour
     }
 
     /// <summary>
-    /// Chooses the age source in priority order: manual, local torch, zone, fallback.
+    /// Chooses the age source in priority order: manual, zone, fallback.
     /// </summary>
     public TemporalAge ResolveAge()
     {
         if (useManualAge)
         {
             return manualAge;
-        }
-
-        if (preferLocalTorch && localTorch != null)
-        {
-            return localTorch.TargetAge;
         }
 
         if (zone != null)
@@ -272,10 +260,6 @@ public class TemporalObject : MonoBehaviour
             zone = GetComponentInParent<TemporalZone>(true);
         }
 
-        if (localTorch == null)
-        {
-            localTorch = GetComponentInParent<TemporalTorch>(true);
-        }
     }
 
     private void Subscribe()
@@ -285,10 +269,6 @@ public class TemporalObject : MonoBehaviour
             zone.AgeChanged += OnZoneAgeChanged;
         }
 
-        if (localTorch != null)
-        {
-            localTorch.TargetAgeChanged += OnTorchTargetAgeChanged;
-        }
     }
 
     private void Unsubscribe()
@@ -298,27 +278,13 @@ public class TemporalObject : MonoBehaviour
             zone.AgeChanged -= OnZoneAgeChanged;
         }
 
-        if (localTorch != null)
-        {
-            localTorch.TargetAgeChanged -= OnTorchTargetAgeChanged;
-        }
     }
 
     private void OnZoneAgeChanged(TemporalZone temporalZone, TemporalAge previous, TemporalAge current)
     {
-        // If a local torch is preferred, zone changes are ignored until the torch is absent.
-        if (!useManualAge && (!preferLocalTorch || localTorch == null))
+        if (!useManualAge)
         {
             ApplyAge(current);
-        }
-    }
-
-    private void OnTorchTargetAgeChanged(TemporalTorch torch, TemporalAge targetAge)
-    {
-        // The torch only drives this object when local reveal has priority.
-        if (!useManualAge && preferLocalTorch)
-        {
-            ApplyAge(targetAge);
         }
     }
 

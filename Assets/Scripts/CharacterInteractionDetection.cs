@@ -58,6 +58,16 @@ public static class CharacterInteractionDetection
                 return door;
             }
 
+            if (current.TryGetComponent(out Torch torch) && torch.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(torch))
+            {
+                return torch;
+            }
+
+            if (current.TryGetComponent(out Brasero brasero) && brasero.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(brasero))
+            {
+                return brasero;
+            }
+
             if (current.TryGetComponent(out ReadableSentencePuzzle readableSentencePuzzle) && readableSentencePuzzle.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(readableSentencePuzzle))
             {
                 return readableSentencePuzzle;
@@ -129,7 +139,10 @@ public static class CharacterInteractionDetection
                 return point;
             }
 
-            return collider.bounds.center;
+            // Certaines portes de scene utilisent des MeshColliders non convexes,
+            // sans closest point precis. Le centre des bounds les rendait trop
+            // faciles a rejeter alors que le joueur etait contre la surface.
+            return collider.bounds.ClosestPoint(origin);
         }
 
         return anchor != null ? anchor.position : origin;
@@ -148,12 +161,104 @@ public static class CharacterInteractionDetection
         return (point - origin).sqrMagnitude <= distance * distance;
     }
 
+    public static bool UsesTriggerInteractionZone(ICharacterDetectedInteractable target)
+    {
+        return target is Torch || target is Brasero;
+    }
+
+    public static bool IsCharacterInsideInteractionCollider(Transform characterRoot, Collider interactionCollider)
+    {
+        if (characterRoot == null || !IsUsableCollider(interactionCollider, true))
+        {
+            return false;
+        }
+
+        Vector3 origin = GetCharacterOrigin(characterRoot);
+        if (IsPointInsideCollider(interactionCollider, origin) ||
+            IsPointInsideCollider(interactionCollider, characterRoot.position))
+        {
+            return true;
+        }
+
+        Collider[] characterColliders = characterRoot.GetComponentsInChildren<Collider>(false);
+        for (int i = 0; i < characterColliders.Length; i++)
+        {
+            Collider characterCollider = characterColliders[i];
+            if (!IsUsableCharacterCollider(characterCollider))
+            {
+                continue;
+            }
+
+            if (CollidersOverlap(interactionCollider, characterCollider))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool IsPointInsideCollider(Collider collider, Vector3 point)
+    {
+        if (!IsUsableCollider(collider, true))
+        {
+            return false;
+        }
+
+        if (!SupportsClosestPoint(collider))
+        {
+            return collider.bounds.Contains(point);
+        }
+
+        Vector3 closest = collider.ClosestPoint(point);
+        return (closest - point).sqrMagnitude <= 0.0001f;
+    }
+
     private static bool IsUsableCollider(Collider collider, bool allowTrigger)
     {
         return collider != null
             && collider.enabled
             && collider.gameObject.activeInHierarchy
             && (allowTrigger || !collider.isTrigger);
+    }
+
+    private static bool IsUsableCharacterCollider(Collider collider)
+    {
+        return collider != null
+            && collider.enabled
+            && collider.gameObject.activeInHierarchy
+            && !collider.isTrigger;
+    }
+
+    private static bool CollidersOverlap(Collider interactionCollider, Collider characterCollider)
+    {
+        if (interactionCollider == null || characterCollider == null)
+        {
+            return false;
+        }
+
+        bool penetrates = Physics.ComputePenetration(
+            interactionCollider,
+            interactionCollider.transform.position,
+            interactionCollider.transform.rotation,
+            characterCollider,
+            characterCollider.transform.position,
+            characterCollider.transform.rotation,
+            out _,
+            out _);
+        if (penetrates)
+        {
+            return true;
+        }
+
+        Vector3 characterClosestPoint = characterCollider.ClosestPoint(interactionCollider.bounds.center);
+        if (IsPointInsideCollider(interactionCollider, characterClosestPoint))
+        {
+            return true;
+        }
+
+        Vector3 interactionClosestPoint = interactionCollider.ClosestPoint(characterCollider.bounds.center);
+        return SupportsClosestPoint(characterCollider) && IsPointInsideCollider(characterCollider, interactionClosestPoint);
     }
 
     private static bool TryGetClosestPoint(Collider collider, Vector3 origin, out Vector3 point)

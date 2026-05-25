@@ -41,4 +41,9 @@ MonoBehaviour:
     notes: 
   missingKnowledgeLine: "Il manque encore un \xE9l\xE9ment pour comprendre ce souvenir."
   evidence: []
+  dissolveTargetGameObjectIds:
+  - 7f8c1457474e40a085c9d3acdef714d3
+  includeChildrenInDissolveTargets: 1
+  addDissolveControllerIfMissing: 1
+  dissolveTargetDurationOverride: -1
   notes: 

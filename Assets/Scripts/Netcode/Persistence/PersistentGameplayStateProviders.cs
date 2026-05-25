@@ -677,23 +677,20 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
     private void ValidateWorldRules(PersistentStateContext context)
     {
         AgeManager ageManager = ResolveAgeManager();
-        BraseroTimeManager timeManager = ResolveTimeManager();
-        if (context == null || context.WorldRules == null || (ageManager == null && timeManager == null))
+        if (context == null || context.WorldRules == null || ageManager == null)
         {
             PersistentStateValidation.LogValidation(
                 "world_rules_extended",
                 false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' worldRulesMissing={context == null || context.WorldRules == null} ageManagerMissing={ageManager == null} timeManagerMissing={timeManager == null}",
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' worldRulesMissing={context == null || context.WorldRules == null} ageManagerMissing={ageManager == null}",
                 brasero,
                 context);
             return;
         }
 
-        int expectedLitCount = ageManager != null ? ageManager.LitBrazierCount : timeManager.LitCount;
-        int expectedCurrentYear = ageManager != null ? ageManager.CurrentYear : timeManager.CurrentYear;
-        int expectedTotalCount = ageManager != null
-            ? (ageManager.Braseros != null ? ageManager.Braseros.Count : 0)
-            : timeManager.TotalCount;
+        int expectedLitCount = ageManager.LitBrazierCount;
+        int expectedCurrentYear = ageManager.CurrentYear;
+        int expectedTotalCount = ageManager.TotalAgeDrivingBraseroCount;
 
         bool hasLitCount = context.WorldRules.TryGetInt(WorldRulesStateManager.BrazierLitCountKey, out int litCount);
         bool hasTotalCount = context.WorldRules.TryGetInt(WorldRulesStateManager.BrazierTotalCountKey, out int totalCount);
@@ -726,15 +723,6 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
             context);
     }
 
-    private static BraseroTimeManager ResolveTimeManager()
-    {
-#if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<BraseroTimeManager>();
-#else
-        return FindObjectOfType<BraseroTimeManager>();
-#endif
-    }
-
     private static AgeManager ResolveAgeManager()
     {
         if (AgeManager.ActiveInstance != null)
@@ -747,6 +735,79 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
 #else
         return FindObjectOfType<AgeManager>();
 #endif
+    }
+}
+
+[DisallowMultipleComponent]
+public class PersistentTorchState : MonoBehaviour, IPersistentStateProvider
+{
+    [Serializable]
+    private sealed class TorchStateData
+    {
+        public bool IsLit;
+    }
+
+    [SerializeField] private Torch torch;
+
+    public string ProviderId => "torch";
+
+    private void Awake()
+    {
+        if (torch == null)
+        {
+            torch = GetComponent<Torch>();
+        }
+    }
+
+    public byte[] CaptureState(PersistentStateContext context)
+    {
+        if (torch == null)
+        {
+            PersistentStateValidation.LogValidation(
+                "torch_state",
+                false,
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' torchMissing=true capture=true",
+                this,
+                context);
+            return Array.Empty<byte>();
+        }
+
+        return PersistentStateJson.ToBytes(new TorchStateData
+        {
+            IsLit = torch.IsLit
+        });
+    }
+
+    public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
+    {
+        if (phase != PersistentApplyPhase.ApplyGameplayState)
+        {
+            return;
+        }
+
+        if (torch == null)
+        {
+            PersistentStateValidation.LogValidation(
+                "torch_state",
+                false,
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' torchMissing=true apply=true phase='{phase}'",
+                this,
+                context);
+            return;
+        }
+
+        if (!PersistentStateJson.TryFromBytes(state, ProviderId, torch, context, out TorchStateData data))
+        {
+            return;
+        }
+
+        torch.SetLit(data.IsLit);
+        PersistentStateValidation.LogValidation(
+            "torch_state",
+            torch.IsLit == data.IsLit,
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(torch)}' expectedLit={data.IsLit} actualLit={torch.IsLit}",
+            torch,
+            context);
     }
 }
 

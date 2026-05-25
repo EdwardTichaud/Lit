@@ -38,6 +38,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private static readonly int TorchLocomotionStateHash = Animator.StringToHash("Torch_Locomotion");
     private static readonly int TorchOffStateHash = Animator.StringToHash("Torch_Off");
     private static readonly int TorchUnequipStateHash = Animator.StringToHash("Torch_Unequip");
+    private const bool CharacterTorchSystemEnabled = false;
 
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
@@ -204,7 +205,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool footIkUseCollisionMatrixMask = true;
 
     [Header("Torch")]
-    [SerializeField, Tooltip("Autorise ToggleTorch via input.")]
+    [SerializeField, Tooltip("Autorise TriggerMunin a allumer/eteindre la torche.")]
     private bool allowTorchToggle = true;
     [SerializeField, Tooltip("Nom du parent de la torche.")]
     private string torchParentName = "Stuff";
@@ -216,10 +217,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool torchStartsActive = true;
     [SerializeField, Tooltip("Lit l'etat depuis la hierarchie.")]
     private bool initializeTorchFromHierarchy = true;
-    [SerializeField, Tooltip("Ajoute/configure automatiquement la torche temporelle canonique.")]
-    private bool ensureTemporalTorch = true;
-    [SerializeField, Min(0.1f), Tooltip("Rayon de revelation locale de la torche temporelle.")]
-    private float temporalTorchRevealRadius = 5f;
     [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche a l'arret.")]
     private float torchUpperBodyIdleLayerWeight = 0.92f;
     [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche en locomotion rapide.")]
@@ -265,6 +262,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private float lastGroundedTime = float.NegativeInfinity;
     private float groundIgnoreUntilTime;
     private Transform torchTransform;
+    private MuninController syncedMuninChargeController;
     private bool torchInitialized;
     private bool torchEquipped;
     private bool torchVisualEquipped;
@@ -441,12 +439,15 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void OnDestroy()
     {
+        BindMuninChargeController(null);
         DisposeFlightFeedbackRuntimeObjects();
     }
 
     private void OnTransformChildrenChanged()
     {
         MarkCollidersDirty();
+        BindMuninChargeController();
+        ApplyMuninChargeStateFromCharacterData();
     }
 
     private void OnTransformParentChanged()
@@ -566,6 +567,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (characterData == null)
         {
+            BindMuninChargeController(null);
             return;
         }
 
@@ -608,6 +610,9 @@ public partial class SquadCharacterController : MonoBehaviour
 
             LoadInventoryFromCharacterData();
         }
+
+        BindMuninChargeController();
+        ApplyMuninChargeStateFromCharacterData();
     }
 
     private bool ShouldForceStarterItems(CharacterData data, out string reason)
@@ -789,22 +794,24 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
-    public int TorchSecondsRemaining => Mathf.Max(0, torchSecondsRemaining);
+    public int TorchSecondsRemaining => CharacterTorchSystemEnabled ? Mathf.Max(0, torchSecondsRemaining) : 0;
 
-    public Item TorchItem => GetTorchItem();
+    public Item TorchItem => CharacterTorchSystemEnabled ? GetTorchItem() : null;
 
-    public bool HasTorchItem => TorchItem != null;
+    public bool HasTorchItem => CharacterTorchSystemEnabled && TorchItem != null;
 
-    public bool IsTorchEquipped => torchEquipped;
-
-    public bool IsTorchAgingEffectActive => torchEquipped ||
-                                            torchVisualEquipped ||
-                                            pendingTorchVisualTransition != TorchVisualTransition.None;
+    public bool IsTorchEquipped => CharacterTorchSystemEnabled && torchEquipped;
 
     public static IReadOnlyList<SquadCharacterController> ActiveCharacters => registeredCharacters;
 
     public void ResetTorchToMax(int maxSeconds, bool ensureTorchItem = true)
     {
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            return;
+        }
+
         int target = maxSeconds > 0 ? maxSeconds : startingTorchSeconds;
         if (target <= 0)
         {
@@ -877,6 +884,14 @@ public partial class SquadCharacterController : MonoBehaviour
         items.AddRange(newItems);
         NormalizeReactiveInventoryItems();
         ApplyEquippedInteractionItems(newEquippedInteractionItems);
+
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            SyncInteractionEquipmentToCharacterData();
+            return;
+        }
+
         torchSecondsRemaining = Mathf.Max(0, torchSeconds);
         InitializeTorchState();
         if (HasTorchItem && torchSecondsRemaining > 0)
@@ -1499,8 +1514,8 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        characterData.torchSecondsRemaining = Mathf.Max(0, torchSecondsRemaining);
-        characterData.torchEquipped = torchEquipped;
+        characterData.torchSecondsRemaining = CharacterTorchSystemEnabled ? Mathf.Max(0, torchSecondsRemaining) : 0;
+        characterData.torchEquipped = CharacterTorchSystemEnabled && torchEquipped;
         characterData.inventoryInitialized = true;
     }
 
@@ -1513,6 +1528,73 @@ public partial class SquadCharacterController : MonoBehaviour
 
         EnsureEquippedInteractionList();
         characterData.inventoryInitialized = true;
+    }
+
+    private void BindMuninChargeController()
+    {
+        BindMuninChargeController(GetComponentInChildren<MuninController>(true));
+    }
+
+    private void BindMuninChargeController(MuninController munin)
+    {
+        if (syncedMuninChargeController == munin)
+        {
+            return;
+        }
+
+        if (syncedMuninChargeController != null)
+        {
+            syncedMuninChargeController.ChargesChanged -= OnMuninChargesChanged;
+        }
+
+        syncedMuninChargeController = munin;
+        if (syncedMuninChargeController != null)
+        {
+            syncedMuninChargeController.ChargesChanged += OnMuninChargesChanged;
+        }
+    }
+
+    private void ApplyMuninChargeStateFromCharacterData()
+    {
+        if (characterData == null || syncedMuninChargeController == null)
+        {
+            return;
+        }
+
+        if (characterData.muninChargesInitialized)
+        {
+            if (characterData.muninMaxCharges > 0)
+            {
+                syncedMuninChargeController.SetMaxCharges(characterData.muninMaxCharges, false);
+            }
+
+            syncedMuninChargeController.SetCharges(characterData.muninChargesRemaining);
+            return;
+        }
+
+        SyncMuninChargesToCharacterData();
+    }
+
+    private void OnMuninChargesChanged(MuninController munin, int current, int max)
+    {
+        if (munin != syncedMuninChargeController)
+        {
+            return;
+        }
+
+        SyncMuninChargesToCharacterData();
+    }
+
+    private void SyncMuninChargesToCharacterData()
+    {
+        if (characterData == null || syncedMuninChargeController == null)
+        {
+            return;
+        }
+
+        characterData.muninChargesRemaining = syncedMuninChargeController.ChargesRemaining;
+        characterData.muninMaxCharges = syncedMuninChargeController.MaxCharges;
+        characterData.muninChargesInitialized = true;
     }
 
     private void SyncTorchStateToCharacterDataIfChanged(int prevSeconds, bool prevEquipped)
@@ -1602,6 +1684,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void ToggleTorch()
     {
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            return;
+        }
+
         if (!allowTorchToggle)
         {
             return;
@@ -1627,8 +1715,19 @@ public partial class SquadCharacterController : MonoBehaviour
         PlayActionAudio(ActionAudioCue.TorchToggle);
     }
 
+    public void TriggerMunin()
+    {
+        DisableCharacterTorchState();
+    }
+
     public void ApplyTorchState(int torchSeconds, bool equipTorch)
     {
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            return;
+        }
+
         torchSecondsRemaining = Mathf.Max(0, torchSeconds);
 
         if (HasTorchItem && torchSecondsRemaining > 0)
@@ -2605,6 +2704,12 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureTorchCached();
         ClearPendingTorchVisualTransition();
 
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            return;
+        }
+
         if (torchTransform == null)
         {
             return;
@@ -2662,6 +2767,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void UpdateTorchLifetime(float deltaTime)
     {
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            return;
+        }
+
         int prevSeconds = torchSecondsRemaining;
         bool prevEquipped = torchEquipped;
 
@@ -2712,6 +2823,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void AddTorchSeconds(int seconds)
     {
+        if (!CharacterTorchSystemEnabled)
+        {
+            DisableCharacterTorchState();
+            return;
+        }
+
         if (seconds <= 0)
         {
             return;
@@ -2749,7 +2866,26 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private bool IsTorchItem(Item item)
     {
-        return item != null && item.isTorch;
+        return CharacterTorchSystemEnabled && item != null && item.isTorch;
+    }
+
+    private void DisableCharacterTorchState()
+    {
+        torchSecondsRemaining = 0;
+        torchDrainTimer = 0f;
+        torchEquipped = false;
+        EnsureTorchCached();
+        ApplyTorchVisualState(false);
+        ClearPendingTorchVisualTransition();
+
+        if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
+        {
+            animator.SetBool(torchBoolParam, false);
+            SyncTorchAnimationStateImmediate();
+        }
+
+        UpdateTorchAnimationLayerWeight(immediate: true);
+        SyncTorchStateToCharacterData();
     }
 
     private void SetTorchEquipped(bool equipped)
@@ -3044,10 +3180,6 @@ public partial class SquadCharacterController : MonoBehaviour
         if (torchTransform != null)
         {
             ConfigureTorchPhysics(torchTransform);
-            if (ensureTemporalTorch)
-            {
-                TemporalTorch.EnsureOnTorch(torchTransform, this, temporalTorchRevealRadius);
-            }
         }
     }
 

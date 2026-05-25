@@ -63,9 +63,9 @@ public class GhostDissolveController : MonoBehaviour
 
     [Header("Shader Property Names")]
     [SerializeField] private string dissolveAmountProperty = "_DissolveAmount";
-    [SerializeField] private string noiseScaleProperty = "_NoiseScale";
-    [SerializeField] private string edgeWidthProperty = "_EdgeWidth";
-    [SerializeField] private string edgeColorProperty = "_EdgeColor";
+    [SerializeField] private string noiseScaleProperty = "_DissolveNoiseScale";
+    [SerializeField] private string edgeWidthProperty = "_DissolveEdgeWidth";
+    [SerializeField] private string edgeColorProperty = "_DissolveEdgeColor";
     [SerializeField] private string ghostAlphaProperty = "_GhostAlpha";
     [SerializeField] private string dissolveWorldMinYProperty = "_DissolveWorldMinY";
     [SerializeField] private string dissolveWorldHeightProperty = "_DissolveWorldHeight";
@@ -121,7 +121,7 @@ public class GhostDissolveController : MonoBehaviour
     [SerializeField] private string vfxDissolveMinYProperty = "DissolveWorldMinY";
     [SerializeField] private string vfxDissolveHeightProperty = "DissolveWorldHeight";
     [SerializeField] private string vfxDissolveDirectionProperty = "DissolveDirection";
-    [SerializeField] private string vfxEdgeColorProperty = "EdgeColor";
+    [SerializeField] private string vfxEdgeColorProperty = "DissolveEdgeColor";
     [SerializeField] private string vfxSpawnRateMultiplierProperty = "SpawnRateMultiplier";
     [SerializeField] private string vfxNormalizedTimeProperty = "DissolveNormalizedTime";
 

@@ -18263,13 +18263,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 136035438}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
   distanceReference: {fileID: 136035439}
-  visibilityMode: 1
-  vision: {fileID: 11400000, guid: b695f2c881ad419b92268177eb1b3c35, type: 2}
-  requireTorchEquipped: 1
+  requireActiveRevealSource: 1
   hiddenDistance: 5
   fullyVisibleDistance: 2
   visualRoot: {fileID: 136035439}
@@ -24863,13 +24861,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 231835641}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
   distanceReference: {fileID: 231835643}
-  visibilityMode: 1
-  vision: {fileID: 11400000, guid: d00296f4b79dcf142be4d07050976745, type: 2}
-  requireTorchEquipped: 1
+  requireActiveRevealSource: 1
   hiddenDistance: 5
   fullyVisibleDistance: 2
   visualRoot: {fileID: 231835643}
@@ -94110,13 +94106,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 850668426}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
   distanceReference: {fileID: 850668427}
-  visibilityMode: 1
-  vision: {fileID: 11400000, guid: d00296f4b79dcf142be4d07050976745, type: 2}
-  requireTorchEquipped: 1
+  requireActiveRevealSource: 1
   hiddenDistance: 5
   fullyVisibleDistance: 2
   visualRoot: {fileID: 850668427}
@@ -216403,7 +216397,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1520833552}
-  - component: {fileID: 1520833551}
   m_Layer: 0
   m_Name: OrbesManager
   m_TagString: Untagged
@@ -216411,29 +216404,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1520833551
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1520833550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c6a72cc989446c09cefa27b42d806f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchColorLinkSystem
-  includeDefaultTorchColor: 0
-  linkMaterial: {fileID: 2100000, guid: f8f453a530d07fa4b90120cb35a86050, type: 2}
-  lineWidth: 0.045
-  lineAlpha: 0.92
-  dontDestroyOnLoad: 1
-  treasureFinderPrefab: {fileID: 1000000000000000001, guid: a74c783e543c48b09516988a7120f6cd, type: 3}
-  violetVision: {fileID: 11400000, guid: b695f2c881ad419b92268177eb1b3c35, type: 2}
-  intersectionMergeDistance: 0.75
-  endpointIntersectionEpsilon: 0.02
-  lineIntersectionEpsilon: 0.0001
-  violetVisionId: torchvisionviolet
 --- !u!4 &1520833552
 Transform:
   m_ObjectHideFlags: 0
@@ -341980,7 +341950,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2021545420}
-  - component: {fileID: 2021545421}
   m_Layer: 0
   m_Name: BraseroManager
   m_TagString: Untagged
@@ -342005,25 +341974,6 @@ Transform:
   - {fileID: 1459324607}
   m_Father: {fileID: 977601052}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2021545421
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2021545419}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bebbc7bf2162bac4a8bb8659b22af6c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BraseroTimeManager
-  autoCollectChildren: 1
-  braseros: []
-  baseYear: 500
-  yearsPerBrasero: 100
-  logTimeChanges: 0
-  litCount: 0
-  currentYear: 0
 --- !u!1 &2023297513
 GameObject:
   m_ObjectHideFlags: 0
@@ -348220,13 +348170,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 3594700329211387789}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45b5b86c1cf4e9c48bb1cbf57f50802b, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e01f659e1364e2d8890f4b9bfa21856, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TorchVisionSensitive
+  m_EditorClassIdentifier: Assembly-CSharp::DissolveRevealTarget
   distanceReference: {fileID: 0}
-  visibilityMode: 2
-  vision: {fileID: 11400000, guid: 62c5835581e799746afc22a84f962e57, type: 2}
-  requireTorchEquipped: 1
+  requireActiveRevealSource: 1
   hiddenDistance: 8
   fullyVisibleDistance: 3
   visualRoot: {fileID: 0}

@@ -30,15 +30,13 @@ public class TimePeriodVisibility : MonoBehaviour
     [Header("References")]
     [SerializeField, Tooltip("AgeManager canonique a ecouter. Laisse vide pour utiliser celui de la scene.")]
     private AgeManager ageManager;
-    [SerializeField, Tooltip("Ancien manager garde comme fallback pendant la migration.")]
-    private BraseroTimeManager timeManager;
     [SerializeField, Tooltip("Cherche automatiquement un manager actif si aucun n'est assigne.")]
     private bool autoFindManager = true;
     [SerializeField, Tooltip("Objet a piloter. Si vide, le composant pilote son propre GameObject.")]
     private GameObject targetObject;
 
     [Header("Rule")]
-    [SerializeField, Tooltip("Compare l'annee absolue, l'offset depuis le depart, le nombre de braseros ou l'age temporel.")]
+    [SerializeField, Tooltip("Compare l'annee absolue, l'offset depuis le depart, le nombre de Braseros anciens ou l'age temporel.")]
     private TimePeriodValueMode valueMode = TimePeriodValueMode.AbsoluteYear;
     [SerializeField, Tooltip("Choisit entre une plage continue et une liste de valeurs exactes.")]
     private RuleMode ruleMode = RuleMode.Range;
@@ -55,25 +53,17 @@ public class TimePeriodVisibility : MonoBehaviour
     [SerializeField, Tooltip("Valeurs exactes autorisees quand RuleMode = AllowedValues.")]
     private List<int> allowedValues = new List<int>();
 
-    [Header("Torch Reveal")]
-    [SerializeField, Tooltip("Autorise une torche locale a reveler cet objet si sa periode croise la fenetre Age courant -> +110 ans.")]
-    private bool includeTorchRevealWindow = true;
-
     [Header("Application")]
-    [SerializeField, Tooltip("RenderersOnly garde l'objet actif pour les triggers de torche; GameObjectActive conserve l'ancien comportement.")]
+    [SerializeField, Tooltip("RenderersOnly garde l'objet actif; GameObjectActive conserve l'ancien comportement.")]
     private VisibilityApplicationMode applicationMode = VisibilityApplicationMode.RenderersOnly;
 
     [Header("Diagnostics")]
     [SerializeField, Tooltip("Ecrit un log quand ce composant applique un changement de visibilite.")]
     private bool logStateChanges = false;
 
-    private readonly Dictionary<LocalRuntimeAgeTrigger, int> localRevealSourceCounts = new Dictionary<LocalRuntimeAgeTrigger, int>();
-    private readonly List<LocalRuntimeAgeTrigger> staleRevealSources = new List<LocalRuntimeAgeTrigger>();
-
     private bool hasAppliedVisibility;
     private bool lastVisibleState = true;
     private int lastAppliedValue = int.MinValue;
-    private int lastRevealSourceCount = -1;
     private bool warnedMissingManager;
     private bool warnedMissingTarget;
 
@@ -135,58 +125,10 @@ public class TimePeriodVisibility : MonoBehaviour
         }
     }
 
-    public static void RefreshAllForManager(BraseroTimeManager manager, bool rescanScene)
-    {
-        if (manager == null)
-        {
-            return;
-        }
-
-        AgeManager activeAgeManager = AgeManager.ActiveInstance;
-        if (activeAgeManager != null)
-        {
-            RefreshAllForAgeManager(activeAgeManager, rescanScene);
-            return;
-        }
-
-        RefreshRegisteredInstances(rescanScene);
-        for (int i = 0; i < RefreshBuffer.Count; i++)
-        {
-            TimePeriodVisibility instance = RefreshBuffer[i];
-            if (instance != null)
-            {
-                instance.RefreshForLegacyManager(manager);
-            }
-        }
-    }
-
-    public void AddLocalRevealSource(LocalRuntimeAgeTrigger source, int delta)
-    {
-        if (source == null || delta == 0)
-        {
-            return;
-        }
-
-        localRevealSourceCounts.TryGetValue(source, out int count);
-        count += delta;
-        if (count <= 0)
-        {
-            localRevealSourceCounts.Remove(source);
-        }
-        else
-        {
-            localRevealSourceCounts[source] = count;
-        }
-
-        RefreshForCurrentPeriod();
-    }
-
     [ContextMenu("Refresh For Current Period")]
     public void RefreshForCurrentPeriod()
     {
         ResolveReferences();
-        RemoveStaleRevealSources();
-
         AgeManager resolvedAgeManager = ResolveAgeManager();
         if (resolvedAgeManager != null)
         {
@@ -195,20 +137,11 @@ public class TimePeriodVisibility : MonoBehaviour
             return;
         }
 
-        BraseroTimeManager legacyManager = ResolveLegacyTimeManager();
-        if (legacyManager == null)
+        if (!warnedMissingManager && (!autoFindManager || logStateChanges))
         {
-            if (!warnedMissingManager && (!autoFindManager || logStateChanges))
-            {
-                Debug.LogWarning($"[TimePeriod] No AgeManager or BraseroTimeManager found for '{name}'.", this);
-                warnedMissingManager = true;
-            }
-
-            return;
+            Debug.LogWarning($"[TimePeriod] No AgeManager found for '{name}'.", this);
+            warnedMissingManager = true;
         }
-
-        warnedMissingManager = false;
-        ApplyForLegacyManager(legacyManager, force: true);
     }
 
     private void RefreshForAgeManager(AgeManager manager)
@@ -222,29 +155,10 @@ public class TimePeriodVisibility : MonoBehaviour
         ApplyForAgeManager(manager, force: false);
     }
 
-    private void RefreshForLegacyManager(BraseroTimeManager manager)
-    {
-        if (!ShouldReactTo(manager))
-        {
-            return;
-        }
-
-        warnedMissingManager = false;
-        ApplyForLegacyManager(manager, force: false);
-    }
-
     private void ApplyForAgeManager(AgeManager manager, bool force)
     {
         int currentValue = manager.GetComparisonValue(valueMode);
-        bool matches = IsRuleMatched(currentValue);
-        bool localRevealMatches = HasLocalRevealSources() && MatchesTorchRevealWindow(manager);
-        ApplyVisibility(currentValue, matches || localRevealMatches, force, "AgeManager");
-    }
-
-    private void ApplyForLegacyManager(BraseroTimeManager manager, bool force)
-    {
-        int currentValue = manager.GetComparisonValue(valueMode);
-        ApplyVisibility(currentValue, IsRuleMatched(currentValue), force, "BraseroTimeManager");
+        ApplyVisibility(currentValue, IsRuleMatched(currentValue), force, "AgeManager");
     }
 
     private void ApplyVisibility(int currentValue, bool matches, bool force, string source)
@@ -264,14 +178,12 @@ public class TimePeriodVisibility : MonoBehaviour
         warnedMissingTarget = false;
 
         bool shouldBeVisible = matchBehavior == MatchBehavior.VisibleWhenMatched ? matches : !matches;
-        int revealSourceCount = GetLocalRevealSourceCount();
         bool targetAlreadyMatches = IsTargetAlreadyInState(target, shouldBeVisible);
 
         if (!force
             && hasAppliedVisibility
             && lastAppliedValue == currentValue
             && lastVisibleState == shouldBeVisible
-            && lastRevealSourceCount == revealSourceCount
             && targetAlreadyMatches)
         {
             return;
@@ -282,14 +194,13 @@ public class TimePeriodVisibility : MonoBehaviour
         if (logStateChanges)
         {
             Debug.Log(
-                $"[TimePeriod] source={source} target='{target.name}' valueMode={valueMode} currentValue={currentValue} ruleMode={ruleMode} visible={shouldBeVisible} localRevealSources={revealSourceCount}",
+                $"[TimePeriod] source={source} target='{target.name}' valueMode={valueMode} currentValue={currentValue} ruleMode={ruleMode} visible={shouldBeVisible}",
                 this);
         }
 
         hasAppliedVisibility = true;
         lastAppliedValue = currentValue;
         lastVisibleState = shouldBeVisible;
-        lastRevealSourceCount = revealSourceCount;
     }
 
     private bool IsRuleMatched(int currentValue)
@@ -336,107 +247,6 @@ public class TimePeriodVisibility : MonoBehaviour
         }
 
         return false;
-    }
-
-    private bool MatchesTorchRevealWindow(AgeManager manager)
-    {
-        if (!includeTorchRevealWindow || manager == null)
-        {
-            return false;
-        }
-
-        if (valueMode == TimePeriodValueMode.LitBrazierCount)
-        {
-            return false;
-        }
-
-        manager.GetTorchRevealComparisonWindow(valueMode, out int windowMin, out int windowMax);
-
-        switch (ruleMode)
-        {
-            case RuleMode.AllowedValues:
-                return AnyAllowedValueInRange(windowMin, windowMax);
-
-            case RuleMode.Range:
-            default:
-                return ConfiguredRangeOverlaps(windowMin, windowMax);
-        }
-    }
-
-    private bool AnyAllowedValueInRange(int windowMin, int windowMax)
-    {
-        if (allowedValues == null || allowedValues.Count == 0)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < allowedValues.Count; i++)
-        {
-            int value = allowedValues[i];
-            if (value >= windowMin && value <= windowMax)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private bool ConfiguredRangeOverlaps(int windowMin, int windowMax)
-    {
-        int configuredMin = useMinValue ? minValue : int.MinValue;
-        int configuredMax = useMaxValue ? maxValue : int.MaxValue;
-        if (configuredMax < configuredMin)
-        {
-            int swap = configuredMin;
-            configuredMin = configuredMax;
-            configuredMax = swap;
-        }
-
-        return configuredMin <= windowMax && configuredMax >= windowMin;
-    }
-
-    private bool HasLocalRevealSources()
-    {
-        RemoveStaleRevealSources();
-        return localRevealSourceCounts.Count > 0;
-    }
-
-    private int GetLocalRevealSourceCount()
-    {
-        RemoveStaleRevealSources();
-        int count = 0;
-        foreach (KeyValuePair<LocalRuntimeAgeTrigger, int> entry in localRevealSourceCounts)
-        {
-            count += Mathf.Max(0, entry.Value);
-        }
-
-        return count;
-    }
-
-    private void RemoveStaleRevealSources()
-    {
-        if (localRevealSourceCounts.Count == 0)
-        {
-            return;
-        }
-
-        staleRevealSources.Clear();
-        foreach (KeyValuePair<LocalRuntimeAgeTrigger, int> entry in localRevealSourceCounts)
-        {
-            LocalRuntimeAgeTrigger source = entry.Key;
-            if (source == null || !source.isActiveAndEnabled)
-            {
-                staleRevealSources.Add(source);
-            }
-        }
-
-        for (int i = 0; i < staleRevealSources.Count; i++)
-        {
-            localRevealSourceCounts.Remove(staleRevealSources[i]);
-        }
-
-        staleRevealSources.Clear();
     }
 
     private bool IsTargetAlreadyInState(GameObject target, bool visible)
@@ -517,9 +327,7 @@ public class TimePeriodVisibility : MonoBehaviour
         return behaviour != null
             && behaviour != this
             && !(behaviour is TimePeriodVisibility)
-            && !(behaviour is AgeManager)
-            && !(behaviour is BraseroTimeManager)
-            && !(behaviour is LocalRuntimeAgeTrigger);
+            && !(behaviour is AgeManager);
     }
 
     private bool ShouldReactTo(AgeManager manager)
@@ -540,27 +348,6 @@ public class TimePeriodVisibility : MonoBehaviour
         }
 
         ageManager = manager;
-        return true;
-    }
-
-    private bool ShouldReactTo(BraseroTimeManager manager)
-    {
-        if (manager == null)
-        {
-            return false;
-        }
-
-        if (timeManager != null)
-        {
-            return ReferenceEquals(timeManager, manager);
-        }
-
-        if (!autoFindManager)
-        {
-            return false;
-        }
-
-        timeManager = manager;
         return true;
     }
 
@@ -590,36 +377,9 @@ public class TimePeriodVisibility : MonoBehaviour
         return ageManager;
     }
 
-    private BraseroTimeManager ResolveLegacyTimeManager()
-    {
-        if (timeManager != null)
-        {
-            return timeManager;
-        }
-
-        if (!autoFindManager)
-        {
-            return null;
-        }
-
-        timeManager = BraseroTimeManager.ActiveInstance;
-        if (timeManager != null)
-        {
-            return timeManager;
-        }
-
-#if UNITY_2023_1_OR_NEWER
-        timeManager = FindFirstObjectByType<BraseroTimeManager>();
-#else
-        timeManager = FindObjectOfType<BraseroTimeManager>();
-#endif
-        return timeManager;
-    }
-
     private void ResolveReferences()
     {
         ResolveAgeManager();
-        ResolveLegacyTimeManager();
     }
 
     private static void RefreshRegisteredInstances(bool rescanScene)

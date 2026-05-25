@@ -142,6 +142,11 @@ public static class PersistentWorldDebug
             return nameof(Brasero);
         }
 
+        if (gameObject.GetComponent<Torch>() != null)
+        {
+            return nameof(Torch);
+        }
+
         if (gameObject.GetComponent<TwoLeverPuzzle>() != null)
         {
             return nameof(TwoLeverPuzzle);

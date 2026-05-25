@@ -38,9 +38,9 @@ void GhostDissolveHDRP_float(
     float4 BaseColor,
     float4 GhostTint,
     float DissolveAmount,
-    float NoiseScale,
-    float EdgeWidth,
-    float4 EdgeColor,
+    float DissolveNoiseScale,
+    float DissolveEdgeWidth,
+    float4 DissolveEdgeColor,
     float GhostAlpha,
     float DissolveWorldMinY,
     float DissolveWorldHeight,
@@ -49,7 +49,7 @@ void GhostDissolveHDRP_float(
     float NoiseInfluence,
     float FresnelPower,
     float FresnelIntensity,
-    float EdgeIntensity,
+    float DissolveEdgeIntensity,
     float AlphaClipThreshold,
     out float3 OutBaseColor,
     out float OutAlpha,
@@ -57,8 +57,8 @@ void GhostDissolveHDRP_float(
     out float3 OutEmission)
 {
     float safeHeight = max(DissolveWorldHeight, 0.0001);
-    float safeScale = max(NoiseScale, 0.0001);
-    float safeEdge = max(EdgeWidth, 0.0001);
+    float safeScale = max(DissolveNoiseScale, 0.0001);
+    float safeEdge = max(DissolveEdgeWidth, 0.0001);
     float directionLength = dot(abs(DissolveDirection), float3(1.0, 1.0, 1.0));
     float3 direction = directionLength > 0.0001 ? normalize(DissolveDirection) : float3(0.0, 1.0, 0.0);
 
@@ -85,7 +85,7 @@ void GhostDissolveHDRP_float(
     OutBaseColor = ghostColor * (0.45 + fresnel * 0.35);
     OutAlpha = saturate(BaseColor.a * GhostAlpha * visibility);
     OutAlphaClipThreshold = AlphaClipThreshold;
-    OutEmission = GhostTint.rgb * fresnel + EdgeColor.rgb * edgeMask * EdgeIntensity;
+    OutEmission = GhostTint.rgb * fresnel + DissolveEdgeColor.rgb * edgeMask * DissolveEdgeIntensity;
 }
 
 void GhostDissolveHDRP_half(
@@ -94,9 +94,9 @@ void GhostDissolveHDRP_half(
     half4 BaseColor,
     half4 GhostTint,
     half DissolveAmount,
-    half NoiseScale,
-    half EdgeWidth,
-    half4 EdgeColor,
+    half DissolveNoiseScale,
+    half DissolveEdgeWidth,
+    half4 DissolveEdgeColor,
     half GhostAlpha,
     half DissolveWorldMinY,
     half DissolveWorldHeight,
@@ -105,7 +105,7 @@ void GhostDissolveHDRP_half(
     half NoiseInfluence,
     half FresnelPower,
     half FresnelIntensity,
-    half EdgeIntensity,
+    half DissolveEdgeIntensity,
     half AlphaClipThreshold,
     out half3 OutBaseColor,
     out half OutAlpha,
@@ -123,9 +123,9 @@ void GhostDissolveHDRP_half(
         BaseColor,
         GhostTint,
         DissolveAmount,
-        NoiseScale,
-        EdgeWidth,
-        EdgeColor,
+        DissolveNoiseScale,
+        DissolveEdgeWidth,
+        DissolveEdgeColor,
         GhostAlpha,
         DissolveWorldMinY,
         DissolveWorldHeight,
@@ -134,7 +134,7 @@ void GhostDissolveHDRP_half(
         NoiseInfluence,
         FresnelPower,
         FresnelIntensity,
-        EdgeIntensity,
+        DissolveEdgeIntensity,
         AlphaClipThreshold,
         baseColor,
         alpha,

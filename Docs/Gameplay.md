@@ -28,7 +28,7 @@ doit simplement pas prendre le pas sur l'enquête temporelle et humaine.
 1. Entrer dans une zone du château.
 2. Observer son état dominant.
 3. Changer l'âge dominant avec un brasero quand la zone le permet.
-4. Utiliser la torche temporelle pour révéler localement l'âge précédent ou suivant.
+4. Utiliser la lumière pour révéler certains items par dissolve, sans changer l'âge.
 5. Comparer les traces : objets, murs, lits, portes, registres, réparations, noms.
 6. Rencontrer des fantômes piégés dans le temps et utiliser les connaissances
    découvertes pour leur répondre.
@@ -62,25 +62,19 @@ voir des noms de périodes, des états sociaux ou des changements architecturaux
 plutôt que des dates brutes.
 
 Le système global canonique est `AgeManager`. Le joueur commence en 666 et chaque
-brasero allumé fait reculer l'âge de 111 ans. `BraseroTimeManager` reste seulement
-un pont pour les scènes existantes qui le référencent encore.
+`Brasero` marqué `ancientBrasero` et allumé fait reculer l'âge de 100 ans. Les torches, Munin et les
+braseros classiques restent des sources de lumière/interactions, mais ne changent
+plus `AgeAmount`. Les braseros classiques ne sont plus activés par `Interact`.
+`AgeManager` est le driver runtime de `_AgeAmount` pour les matériaux compatibles.
 
-### Torche temporelle - lecture locale
+### Lumière et dissolve d'items
 
-La torche ne fait pas voyager le joueur. Elle révèle localement les objets dont
-la période croise la fenêtre entre l'année courante et 110 ans en avant.
-
-Si l'année courante est 333, la torche peut révéler :
-
-- les objets visibles en 333 ;
-- les objets dont la période s'étend jusqu'à 443 inclus.
-
-Elle sert à comprendre les transitions : réparation, condamnation, réaffectation,
-mur bouché, fenêtre murée, lit ajouté, brasero déplacé, registre corrigé.
-
-Les visions de torche par couleur restent une couche de perception secondaire.
-Elles peuvent servir le langage visuel et religieux, mais ne doivent pas devenir
-quatre arbres de pouvoirs à étendre sans limite.
+La révélation par lumière est séparée du temps. Les sources lumineuses
+enregistrées par `TorchLightReceiver` alimentent `DissolveRevealSystem`, puis les
+objets avec `DissolveRevealTarget` deviennent visibles ou disparaissent via
+`_DissolveAmount`. Cette logique ne modifie pas l'âge global. Le dissolve utilise
+les propriétés standard `_DissolveTexture`, `_DissolveSoftness`,
+`_DissolveEdgeColor`, `_DissolveEdgeWidth` et `_DissolveEdgeIntensity`.
 
 ### Objets temporels
 

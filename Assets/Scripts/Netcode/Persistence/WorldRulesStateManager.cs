@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public class WorldRulesStateManager : MonoBehaviour
@@ -14,8 +13,6 @@ public class WorldRulesStateManager : MonoBehaviour
     public const string ActiveVolumeProfilesKey = "world.environment.active_volume_profiles";
 
     [SerializeField] private AgeManager ageManager;
-    [SerializeField] private BraseroTimeManager braseroTimeManager;
-    [FormerlySerializedAs("autoResolveBraseroTimeManager")]
     [SerializeField] private bool autoResolveAgeManagers = true;
 
     private readonly Dictionary<string, WorldVariableSnapshot> variables = new Dictionary<string, WorldVariableSnapshot>();
@@ -168,20 +165,15 @@ public class WorldRulesStateManager : MonoBehaviour
     public void RebuildDerivedBrazierVariables()
     {
         ResolveReferences();
-        if (braseroTimeManager == null)
+        if (ageManager == null)
         {
-            if (ageManager == null)
-            {
-                return;
-            }
+            return;
         }
 
-        int litCount = ageManager != null ? ageManager.LitBrazierCount : braseroTimeManager.LitCount;
-        int totalCount = ageManager != null
-            ? (ageManager.Braseros != null ? ageManager.Braseros.Count : 0)
-            : braseroTimeManager.TotalCount;
-        int currentYear = ageManager != null ? ageManager.CurrentYear : braseroTimeManager.CurrentYear;
-        TemporalAge currentAge = ageManager != null ? ageManager.CurrentTemporalAge : braseroTimeManager.CurrentTemporalAge;
+        int litCount = ageManager.LitBrazierCount;
+        int totalCount = ageManager.TotalAgeDrivingBraseroCount;
+        int currentYear = ageManager.CurrentYear;
+        TemporalAge currentAge = ageManager.CurrentTemporalAge;
 
         SetInt(BrazierLitCountKey, litCount);
         SetInt(BrazierTotalCountKey, totalCount);
@@ -240,15 +232,6 @@ public class WorldRulesStateManager : MonoBehaviour
 #endif
             }
         }
-
-        if (braseroTimeManager == null)
-        {
-#if UNITY_2023_1_OR_NEWER
-            braseroTimeManager = FindFirstObjectByType<BraseroTimeManager>();
-#else
-            braseroTimeManager = FindObjectOfType<BraseroTimeManager>();
-#endif
-        }
     }
 
     private void Subscribe()
@@ -256,15 +239,7 @@ public class WorldRulesStateManager : MonoBehaviour
         if (ageManager != null)
         {
             ageManager.AgeChanged += OnAgeChanged;
-            return;
         }
-
-        if (braseroTimeManager == null)
-        {
-            return;
-        }
-
-        braseroTimeManager.TimeChanged += OnBraseroTimeChanged;
     }
 
     private void Unsubscribe()
@@ -273,18 +248,6 @@ public class WorldRulesStateManager : MonoBehaviour
         {
             ageManager.AgeChanged -= OnAgeChanged;
         }
-
-        if (braseroTimeManager == null)
-        {
-            return;
-        }
-
-        braseroTimeManager.TimeChanged -= OnBraseroTimeChanged;
-    }
-
-    private void OnBraseroTimeChanged(int currentYear, int litCount)
-    {
-        RebuildDerivedBrazierVariables();
     }
 
     private void OnAgeChanged(AgeManager manager, int previousYear, int currentYear)

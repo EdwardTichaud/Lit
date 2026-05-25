@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public class TorchLightReceiver : MonoBehaviour
@@ -26,54 +27,23 @@ public class TorchLightReceiver : MonoBehaviour
     [SerializeField] private SquadCharacterController owner;
     [SerializeField] private bool searchOwnerInParents = true;
 
-    [Header("Static Source")]
-    [SerializeField] private bool registerAsWorldTorchSource;
-    [SerializeField] private TorchVisionDefinition worldVision;
-    [SerializeField] private bool worldTorchCountsAsEquipped = true;
+    [Header("Dissolve Reveal Source")]
+    [FormerlySerializedAs("registerAsWorldTorchSource")]
+    [SerializeField] private bool registerAsWorldRevealSource;
+    [FormerlySerializedAs("worldTorchCountsAsEquipped")]
+    [SerializeField] private bool worldSourceCountsAsActive = true;
+    [SerializeField] private Color revealColor = Color.white;
 
     private Color defaultColor;
     private bool defaultUseColorTemperature;
     private float defaultColorTemperature;
     private bool hasDefault;
-    private Color currentTorchColor = Color.white;
     private HDAdditionalLightData targetHdLight;
 
     public SquadCharacterController Owner => owner;
     public bool ControlsShadowing => configureTorchShadowing;
-
-    public Color CurrentTorchColor
-    {
-        get
-        {
-            CacheLight();
-
-            if (hasDefault)
-            {
-                return currentTorchColor;
-            }
-
-            TorchVisionDefinition vision = GetActiveVision();
-            if (vision != null && !vision.useDefaultLightSettings)
-            {
-                return vision.lightColor;
-            }
-
-            return hasDefault ? defaultColor : Color.white;
-        }
-    }
-
-    public Vector3 TorchWorldPosition
-    {
-        get
-        {
-            if (targetLight != null)
-            {
-                return targetLight.transform.position;
-            }
-
-            return transform.position;
-        }
-    }
+    public Color CurrentTorchColor => targetLight != null ? targetLight.color : revealColor;
+    public Vector3 TorchWorldPosition => targetLight != null ? targetLight.transform.position : transform.position;
 
     private void Awake()
     {
@@ -87,10 +57,13 @@ public class TorchLightReceiver : MonoBehaviour
         CacheLight();
         CacheOwner();
         ApplyShadowing();
-        TorchVisionSystem.GetOrCreate();
-        TorchVisionSystem.RegisterTorchSource(this);
-        TorchVisionSystem.VisionChanged += OnVisionChanged;
-        ApplyVision(GetActiveVision());
+        ApplyRevealColor();
+        DissolveRevealSystem.RegisterSource(this);
+    }
+
+    private void OnDisable()
+    {
+        DissolveRevealSystem.UnregisterSource(this);
     }
 
     private void OnValidate()
@@ -110,13 +83,38 @@ public class TorchLightReceiver : MonoBehaviour
         hdrpNormalBias = Mathf.Clamp01(hdrpNormalBias);
         hdrpSlopeBias = Mathf.Clamp01(hdrpSlopeBias);
         ApplyShadowing();
-        ApplyVision(GetActiveVision());
+        ApplyRevealColor();
     }
 
-    private void OnDisable()
+    public void ConfigureWorldRevealSource(bool countsAsActive = true, Color? color = null)
     {
-        TorchVisionSystem.UnregisterTorchSource(this);
-        TorchVisionSystem.VisionChanged -= OnVisionChanged;
+        registerAsWorldRevealSource = true;
+        worldSourceCountsAsActive = countsAsActive;
+        if (color.HasValue)
+        {
+            revealColor = color.Value;
+        }
+
+        CacheLight();
+        ApplyRevealColor();
+    }
+
+    public bool TryGetRevealSourceInfo(out DissolveRevealSourceInfo info)
+    {
+        CacheOwner();
+        CacheLight();
+
+        bool active = owner != null
+            ? owner.IsTorchEquipped
+            : registerAsWorldRevealSource && worldSourceCountsAsActive;
+
+        if (targetLight != null && !targetLight.enabled)
+        {
+            active = false;
+        }
+
+        info = new DissolveRevealSourceInfo(this, owner, TorchWorldPosition, CurrentTorchColor, active);
+        return owner != null || registerAsWorldRevealSource || targetLight != null;
     }
 
     private void CacheLight()
@@ -136,7 +134,11 @@ public class TorchLightReceiver : MonoBehaviour
         defaultColor = targetLight.color;
         defaultUseColorTemperature = targetLight.useColorTemperature;
         defaultColorTemperature = targetLight.colorTemperature;
-        currentTorchColor = defaultColor;
+        if (revealColor == Color.white)
+        {
+            revealColor = defaultColor;
+        }
+
         hasDefault = true;
     }
 
@@ -169,99 +171,28 @@ public class TorchLightReceiver : MonoBehaviour
 
     private void CacheOwner()
     {
-        if (owner != null)
-        {
-            return;
-        }
-
-        if (searchOwnerInParents)
+        if (owner == null && searchOwnerInParents)
         {
             owner = GetComponentInParent<SquadCharacterController>(true);
         }
     }
 
-    private TorchVisionDefinition GetOwnerVision()
-    {
-        if (owner == null)
-        {
-            return null;
-        }
-
-        return TorchVisionSystem.GetVisionFor(owner);
-    }
-
-    private TorchVisionDefinition GetActiveVision()
-    {
-        TorchVisionDefinition ownerVision = GetOwnerVision();
-        if (ownerVision != null || owner != null)
-        {
-            return ownerVision;
-        }
-
-        return registerAsWorldTorchSource ? worldVision : null;
-    }
-
-    public void ConfigureWorldTorchSource(TorchVisionDefinition vision, bool countsAsEquipped = true)
-    {
-        registerAsWorldTorchSource = vision != null;
-        worldVision = vision;
-        worldTorchCountsAsEquipped = countsAsEquipped;
-        CacheLight();
-        ApplyVision(GetActiveVision());
-    }
-
-    public bool TryGetTorchSourceInfo(
-        out SquadCharacterController controller,
-        out TorchVisionDefinition vision,
-        out bool torchEquipped,
-        out Vector3 position)
-    {
-        CacheOwner();
-        CacheLight();
-
-        controller = owner;
-        vision = GetActiveVision();
-        torchEquipped = owner != null
-            ? owner.IsTorchEquipped
-            : registerAsWorldTorchSource && worldTorchCountsAsEquipped;
-        position = TorchWorldPosition;
-
-        return controller != null || (registerAsWorldTorchSource && vision != null);
-    }
-
-    private void OnVisionChanged(SquadCharacterController controller, TorchVisionDefinition previous, TorchVisionDefinition current)
-    {
-        if (controller != owner)
-        {
-            return;
-        }
-
-        ApplyVision(current);
-    }
-
-    private void ApplyVision(TorchVisionDefinition vision)
+    private void ApplyRevealColor()
     {
         if (targetLight == null)
         {
             return;
         }
 
-        if (vision == null || vision.useDefaultLightSettings)
+        if (hasDefault && revealColor == Color.white)
         {
-            currentTorchColor = hasDefault ? defaultColor : Color.white;
-
-            if (hasDefault)
-            {
-                targetLight.color = defaultColor;
-                targetLight.useColorTemperature = defaultUseColorTemperature;
-                targetLight.colorTemperature = defaultColorTemperature;
-            }
+            targetLight.color = defaultColor;
+            targetLight.useColorTemperature = defaultUseColorTemperature;
+            targetLight.colorTemperature = defaultColorTemperature;
             return;
         }
 
-        currentTorchColor = vision.lightColor;
-        targetLight.color = vision.lightColor;
-
+        targetLight.color = revealColor;
         if (disableColorTemperatureWhenColored)
         {
             targetLight.useColorTemperature = false;

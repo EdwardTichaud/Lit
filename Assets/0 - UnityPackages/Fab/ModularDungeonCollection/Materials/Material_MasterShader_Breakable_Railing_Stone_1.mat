@@ -148,6 +148,7 @@ Material:
     - _BlendMode: 0
     - _BrokenDissolveAgeInfluence: 0
     - _BrokenDissolveEndAge: 666
+    - _BrokenDissolveNoiseScale: 1
     - _BrokenDissolvePercent: 0
     - _BrokenDissolveScale: 0.05
     - _BrokenDissolveSeed: 0

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abc00000000006322922229658684910
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308772
+  packageName: Medieval Castle (URP)
+  packageVersion: 1.0
+  assetPath: Assets/MedCastle/Source/Materials/MI_EaveLargeSmall.mat
+  uploadId: 726537

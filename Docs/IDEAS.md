@@ -55,12 +55,12 @@ Contenus utiles :
 
 ### Première zone de comparaison temporelle
 
-Objectif : montrer clairement le trio `TemporalZone` / brasero / torche.
+Objectif : montrer clairement le trio `TemporalZone` / Brasero ancien / lumière révélatrice.
 
 Contenus utiles :
 
-- état dominant contrôlé par un brasero ;
-- torche révélant l'âge précédent ou suivant ;
+- état dominant contrôlé par un Brasero ancien ;
+- lumière révélant certains items par dissolve sans changer l'âge ;
 - mur condamné visible à un âge mais pas à l'autre ;
 - registre qui donne une raison administrative ;
 - objet transmis qui confirme l'histoire humaine.
@@ -77,9 +77,9 @@ Les âges internes actifs sont :
 - Age555 ;
 - Age666.
 
-Les braseros stabilisent l'âge dominant d'une zone. La torche lit localement
-l'âge précédent, courant ou suivant. Le joueur ne voyage pas dans le temps : il
-lit les strates du château.
+Les Braseros anciens stabilisent l'âge dominant d'une zone. Les torches et Munin
+révèlent des éléments par lumière/dissolve, mais ne modifient pas l'âge. Le
+joueur ne voyage pas dans le temps : il lit les strates du château.
 
 Les chiffres sont des repères de production. En jeu, ils peuvent être remplacés
 par des noms de périodes, des états sociaux ou des changements architecturaux.
@@ -100,8 +100,8 @@ objet récurrent valent mieux qu'une grande explication frontale.
 
 ## Systèmes existants à garder stables
 
-Le projet contient déjà du Netcode, des readables, des visions de torche, des
-braseros et des systèmes de persistance. Les nouveaux contenus doivent s'appuyer
+Le projet contient déjà du Netcode, des readables, des Braseros anciens, de la
+révélation par dissolve et des systèmes de persistance. Les nouveaux contenus doivent s'appuyer
 sur ces bases quand c'est raisonnable.
 
 Le combat tour par tour est aussi conservé pour le moment. Sa documentation de

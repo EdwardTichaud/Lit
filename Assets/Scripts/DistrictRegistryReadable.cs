@@ -1,16 +1,14 @@
 // Role:
 // Runtime bridge between DistrictRegistry data, the existing Item/BookPanel
-// readable flow, and the temporal systems driven by braseros and torch reveal.
+// readable flow, and the temporal systems driven by braseros anciens.
 // Usage:
 // Add this to a register prop, assign a DistrictRegistry, and use the registry's
 // readable Item in the existing readable/inventory flow.
 // Responsibilities:
 // Resolve the effective temporal year, rebuild the assigned Item pages only when
-// the year changes, and give local torch influence priority over the dominant
-// zone/brasero age.
+// the year changes, and use the dominant zone/brasero ancien age.
 // Dependencies:
-// DistrictRegistry, Item, TemporalZone, AgeManager, BraseroTimeManager,
-// LocalRuntimeAgeTrigger, InventoryPanelController.
+// DistrictRegistry, Item, TemporalZone, AgeManager, InventoryPanelController.
 // Precautions:
 // This mutates ScriptableObject Item pages at runtime. That is intentional so the
 // old BookPanel and page-turning code stay unchanged. Do not store per-save facts
@@ -23,7 +21,7 @@ using UnityEngine;
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Narrative/District Registry Readable")]
-public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
+public class DistrictRegistryReadable : MonoBehaviour
 {
     private static readonly List<DistrictRegistryReadable> ActiveReadables = new List<DistrictRegistryReadable>();
     private static readonly Dictionary<Item, int> LastAppliedYearByItem = new Dictionary<Item, int>();
@@ -44,22 +42,13 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
     [SerializeField, Tooltip("Âge de secours si aucune source temporelle n'existe dans la scène.")]
     private TemporalAge fallbackAge = TemporalAge.Age666;
 
-    [Header("Local Torch Priority")]
-    [SerializeField, Tooltip("Si une torche locale influence ce registre, son âge prime sur la zone/les braseros.")]
-    private bool preferLocalTorch = true;
-
     [Header("Runtime")]
     [SerializeField, Tooltip("Reconstruit les pages dès l'activation.")]
     private bool refreshOnEnable = true;
     [SerializeField, Tooltip("Logs de diagnostic lors des reconstructions de pages.")]
     private bool logRefreshes;
 
-    private readonly Dictionary<LocalRuntimeAgeTrigger, int> localSourceYears = new Dictionary<LocalRuntimeAgeTrigger, int>();
-    private readonly List<LocalRuntimeAgeTrigger> staleLocalSources = new List<LocalRuntimeAgeTrigger>();
-
-    private LocalRuntimeAgeTrigger currentLocalSource;
     private AgeManager subscribedAgeManager;
-    private BraseroTimeManager subscribedLegacyManager;
     private int lastAppliedYear = int.MinValue;
 
     public DistrictRegistry Registry => registry;
@@ -116,8 +105,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
     {
         ActiveReadables.Remove(this);
         Unsubscribe();
-        localSourceYears.Clear();
-        currentLocalSource = null;
     }
 
     private void OnValidate()
@@ -126,50 +113,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
         {
             readableItem = registry.readableItem;
         }
-    }
-
-    /// <summary>
-    /// Local torch influence has priority. When the torch exits, the readable
-    /// falls back to its dominant age source automatically.
-    /// </summary>
-    public void ApplyLocalTemporalAge(LocalRuntimeAgeTrigger source, int year)
-    {
-        if (source == null)
-        {
-            return;
-        }
-
-        currentLocalSource = source;
-        localSourceYears[source] = SnapYearToTemporalAge(year);
-        RefreshReadableItem(force: false);
-    }
-
-    public void UpdateLocalTemporalAge(LocalRuntimeAgeTrigger source, int year)
-    {
-        if (source == null || !localSourceYears.ContainsKey(source))
-        {
-            return;
-        }
-
-        currentLocalSource = source;
-        localSourceYears[source] = SnapYearToTemporalAge(year);
-        RefreshReadableItem(force: false);
-    }
-
-    public void ClearLocalTemporalAge(LocalRuntimeAgeTrigger source)
-    {
-        if (source == null)
-        {
-            return;
-        }
-
-        localSourceYears.Remove(source);
-        if (currentLocalSource == source)
-        {
-            currentLocalSource = null;
-        }
-
-        RefreshReadableItem(force: false);
     }
 
     [ContextMenu("Refresh Readable Item")]
@@ -268,31 +211,7 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
 
     private int ResolveEffectiveYear()
     {
-        RemoveStaleLocalSources();
-        if (preferLocalTorch && TryGetCurrentLocalYear(out int localYear))
-        {
-            return localYear;
-        }
-
         return ResolveDominantYear();
-    }
-
-    private bool TryGetCurrentLocalYear(out int year)
-    {
-        if (currentLocalSource != null && localSourceYears.TryGetValue(currentLocalSource, out year))
-        {
-            return true;
-        }
-
-        foreach (KeyValuePair<LocalRuntimeAgeTrigger, int> entry in localSourceYears)
-        {
-            currentLocalSource = entry.Key;
-            year = entry.Value;
-            return true;
-        }
-
-        year = 0;
-        return false;
     }
 
     private int ResolveDominantYear()
@@ -313,12 +232,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
             return TemporalAgeUtility.AgeToInt(zone.CurrentAge);
         }
 
-        BraseroTimeManager legacyManager = BraseroTimeManager.ActiveInstance;
-        if (legacyManager != null)
-        {
-            return TemporalAgeUtility.AgeToInt(legacyManager.CurrentTemporalAge);
-        }
-
         return TemporalAgeUtility.AgeToInt(fallbackAge);
     }
 
@@ -328,12 +241,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
         if (manager != null)
         {
             return manager.CurrentYear;
-        }
-
-        BraseroTimeManager legacyManager = BraseroTimeManager.ActiveInstance;
-        if (legacyManager != null)
-        {
-            return TemporalAgeUtility.AgeToInt(legacyManager.CurrentTemporalAge);
         }
 
         return TemporalAgeUtility.MaxYear;
@@ -352,11 +259,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
             subscribedAgeManager.AgeChanged += OnAgeManagerChanged;
         }
 
-        subscribedLegacyManager = BraseroTimeManager.ActiveInstance;
-        if (subscribedLegacyManager != null)
-        {
-            subscribedLegacyManager.TimeChanged += OnLegacyTimeChanged;
-        }
     }
 
     private void Unsubscribe()
@@ -372,11 +274,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
             subscribedAgeManager = null;
         }
 
-        if (subscribedLegacyManager != null)
-        {
-            subscribedLegacyManager.TimeChanged -= OnLegacyTimeChanged;
-            subscribedLegacyManager = null;
-        }
     }
 
     private void OnZoneAgeChanged(TemporalZone temporalZone, TemporalAge previous, TemporalAge current)
@@ -387,41 +284,6 @@ public class DistrictRegistryReadable : MonoBehaviour, ITemporalReactable
     private void OnAgeManagerChanged(AgeManager manager, int previousYear, int currentYear)
     {
         RefreshReadableItem(force: false);
-    }
-
-    private void OnLegacyTimeChanged(int currentYear, int litCount)
-    {
-        RefreshReadableItem(force: false);
-    }
-
-    private void RemoveStaleLocalSources()
-    {
-        if (localSourceYears.Count == 0)
-        {
-            return;
-        }
-
-        staleLocalSources.Clear();
-        foreach (KeyValuePair<LocalRuntimeAgeTrigger, int> entry in localSourceYears)
-        {
-            LocalRuntimeAgeTrigger source = entry.Key;
-            if (source == null || !source.isActiveAndEnabled)
-            {
-                staleLocalSources.Add(source);
-            }
-        }
-
-        for (int i = 0; i < staleLocalSources.Count; i++)
-        {
-            LocalRuntimeAgeTrigger source = staleLocalSources[i];
-            localSourceYears.Remove(source);
-            if (currentLocalSource == source)
-            {
-                currentLocalSource = null;
-            }
-        }
-
-        staleLocalSources.Clear();
     }
 
     private static int SnapYearToTemporalAge(int year)

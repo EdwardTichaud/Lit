@@ -17,7 +17,17 @@ public partial class SquadCharacterController
     [SerializeField, Tooltip("Bonus de score applique a la cible deja selectionnee pour limiter le clignotement.")]
     private float interactionCurrentTargetBonus = 0.15f;
 
-    private readonly Collider[] interactionDetectionHits = new Collider[32];
+    [Header("Munin Reaction")]
+    [SerializeField, Tooltip("Fait reagir Munin quand une cible allumable/eteignable est detectee.")]
+    private bool enableMuninInteractionReaction = true;
+    [SerializeField, Range(0f, 1f), Tooltip("Reaction de proximite quand une torche est a portee.")]
+    private float muninTorchProximityReactionIntensity = 0.45f;
+    [SerializeField, Range(0f, 1f), Tooltip("Reaction de proximite quand un brasero est a portee.")]
+    private float muninBraseroProximityReactionIntensity = 1f;
+
+    private const int InteractionDetectionHitCapacity = 128;
+
+    private readonly Collider[] interactionDetectionHits = new Collider[InteractionDetectionHitCapacity];
     private readonly List<ICharacterDetectedInteractable> interactionDetectionCandidates = new List<ICharacterDetectedInteractable>(16);
     private readonly HashSet<Object> interactionDetectionUniqueTargets = new HashSet<Object>();
     private ICharacterDetectedInteractable currentDetectedInteractable;
@@ -117,8 +127,10 @@ public partial class SquadCharacterController
             forward.Normalize();
         }
 
-        ICharacterDetectedInteractable best = null;
-        float bestScore = float.NegativeInfinity;
+        ICharacterDetectedInteractable bestDirect = null;
+        ICharacterDetectedInteractable bestTriggerZone = null;
+        float bestDirectScore = float.NegativeInfinity;
+        float bestTriggerZoneScore = float.NegativeInfinity;
 
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
         {
@@ -130,18 +142,27 @@ public partial class SquadCharacterController
 
             Collider collider = candidate.GetInteractionDetectionCollider();
             Transform anchor = candidate.GetInteractionAnchor();
+            bool usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
+            if (usesTriggerZone &&
+                (collider == null ||
+                !collider.isTrigger ||
+                !CharacterInteractionDetection.IsCharacterInsideInteractionCollider(transform, collider)))
+            {
+                continue;
+            }
+
             Vector3 point = CharacterInteractionDetection.GetInteractionPoint(collider, anchor, origin);
             Vector3 toPoint = point - origin;
             float distance = toPoint.magnitude;
             float maxDistance = Mathf.Max(0.05f, candidate.GetInteractionMaxDistance(this));
-            if (distance > maxDistance)
+            if (!usesTriggerZone && distance > maxDistance)
             {
                 continue;
             }
 
             Vector3 flatDirection = new Vector3(toPoint.x, 0f, toPoint.z);
             float forwardDot = 1f;
-            if (flatDirection.sqrMagnitude > 0.0001f)
+            if (!usesTriggerZone && flatDirection.sqrMagnitude > 0.0001f)
             {
                 forwardDot = Vector3.Dot(flatDirection.normalized, forward);
                 if (forwardDot < interactionMinimumForwardDot)
@@ -160,14 +181,25 @@ public partial class SquadCharacterController
                 score += interactionCurrentTargetBonus * 100f;
             }
 
-            if (score > bestScore)
+            // Les torches/braseros utilisent une grande zone trigger pour Munin.
+            // Une cible directe valide, comme une porte, doit rester prioritaire
+            // quand le joueur est vraiment devant elle.
+            if (usesTriggerZone)
             {
-                bestScore = score;
-                best = candidate;
+                if (score > bestTriggerZoneScore)
+                {
+                    bestTriggerZoneScore = score;
+                    bestTriggerZone = candidate;
+                }
+            }
+            else if (score > bestDirectScore)
+            {
+                bestDirectScore = score;
+                bestDirect = candidate;
             }
         }
 
-        return best;
+        return bestDirect != null ? bestDirect : bestTriggerZone;
     }
 
     private void ApplyLocalInteractionTarget(ICharacterDetectedInteractable target)
@@ -189,6 +221,7 @@ public partial class SquadCharacterController
             currentDetectedInteractable.SetDetectedCharacter(gameObject);
         }
 
+        UpdateMuninInteractionReaction(currentDetectedInteractable);
         RuntimeOutlineSelectionManager.SetActiveInteractable(this, currentDetectedInteractable);
     }
 
@@ -196,13 +229,64 @@ public partial class SquadCharacterController
     {
         if (currentDetectedInteractable == null)
         {
+            UpdateMuninInteractionReaction(null);
             RuntimeOutlineSelectionManager.Clear(this);
             return;
         }
 
         currentDetectedInteractable.SetDetectedCharacter(null);
         currentDetectedInteractable = null;
+        UpdateMuninInteractionReaction(null);
         RuntimeOutlineSelectionManager.Clear(this);
+    }
+
+    private void UpdateMuninInteractionReaction(ICharacterDetectedInteractable target)
+    {
+        MuninController munin = ResolveMuninReactionController();
+        if (munin == null)
+        {
+            return;
+        }
+
+        if (!enableMuninInteractionReaction)
+        {
+            munin.ClearProximityReaction();
+            return;
+        }
+
+        float intensity = ResolveMuninReactionIntensity(target);
+        if (intensity <= 0f)
+        {
+            munin.ClearProximityReaction();
+            return;
+        }
+
+        munin.SetProximityReaction(intensity);
+    }
+
+    private float ResolveMuninReactionIntensity(ICharacterDetectedInteractable target)
+    {
+        if (target == null)
+        {
+            return 0f;
+        }
+
+        if (target is Torch)
+        {
+            return muninTorchProximityReactionIntensity;
+        }
+
+        if (target is Brasero)
+        {
+            return muninBraseroProximityReactionIntensity;
+        }
+
+        return 0f;
+    }
+
+    private MuninController ResolveMuninReactionController()
+    {
+        return GetComponentInChildren<MuninController>(true);
     }
 
     private bool IsLocalControlledCharacter()

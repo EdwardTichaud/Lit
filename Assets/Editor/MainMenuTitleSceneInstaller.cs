@@ -135,22 +135,10 @@ public static class MainMenuTitleSceneInstaller
             interaction = target.AddComponent<CursorIntercation>();
         }
 
-        Outline outline = target.GetComponent<Outline>();
-        if (outline == null)
-        {
-            outline = target.AddComponent<Outline>();
-        }
-
-        outline.OutlineMode = Outline.Mode.OutlineAll;
-        outline.OutlineColor = new Color(1f, 0.82f, 0.35f, 1f);
-        outline.OutlineWidth = 5f;
-        outline.enabled = false;
+        RuntimeOutlineUtility.EnsureOutlineTargets(target);
 
         SerializedObject serialized = new SerializedObject(interaction);
-        serialized.FindProperty("outline").objectReferenceValue = outline;
         serialized.FindProperty("createOutlineIfMissing").boolValue = true;
-        serialized.FindProperty("outlineColor").colorValue = new Color(1f, 0.82f, 0.35f, 1f);
-        serialized.FindProperty("outlineWidth").floatValue = 5f;
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 

@@ -7,14 +7,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.occasoftware.outline-objects": {
-      "version": "file:com.occasoftware.outline-objects",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.render-pipelines.universal": "14.0.7"
-      }
-    },
     "com.unity.2d.animation": {
       "version": "12.0.3",
       "depth": 1,
@@ -324,24 +316,6 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.render-pipelines.core": "17.2.0"
-      }
-    },
-    "com.unity.render-pipelines.universal": {
-      "version": "17.2.0",
-      "depth": 1,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.render-pipelines.core": "17.2.0",
-        "com.unity.shadergraph": "17.2.0",
-        "com.unity.render-pipelines.universal-config": "17.0.3"
-      }
-    },
-    "com.unity.render-pipelines.universal-config": {
-      "version": "17.0.3",
-      "depth": 2,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.render-pipelines.core": "17.0.3"
       }
     },
     "com.unity.rendering.light-transport": {

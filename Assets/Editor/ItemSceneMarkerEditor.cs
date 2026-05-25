@@ -294,11 +294,11 @@ public class ItemSceneMarkerEditor : Editor
             }
         }
 
-        TorchVisionSensitive sourceTorchVision = root.GetComponent<TorchVisionSensitive>();
-        if (sourceTorchVision != null)
+        DissolveRevealTarget sourceRevealTarget = root.GetComponent<DissolveRevealTarget>();
+        if (sourceRevealTarget != null)
         {
-            TorchVisionSensitive destinationTorchVision = CopyComponentToRoot(sourceTorchVision, modelRoot);
-            ConfigureTorchVisionSensitive(destinationTorchVision, modelRoot);
+            DissolveRevealTarget destinationRevealTarget = CopyComponentToRoot(sourceRevealTarget, modelRoot);
+            ConfigureDissolveRevealTarget(destinationRevealTarget, modelRoot);
         }
 
         if (sourceCollider != null)
@@ -324,7 +324,7 @@ public class ItemSceneMarkerEditor : Editor
 
         if (root.GetComponent<InteractableItem>() == null
             && root.GetComponent<BuildingInfoInteractable>() == null
-            && root.GetComponent<TorchVisionSensitive>() == null
+            && root.GetComponent<DissolveRevealTarget>() == null
             && root.GetComponent<NetworkObject>() == null
             && root.GetComponent<Collider>() == null)
         {
@@ -798,7 +798,7 @@ public class ItemSceneMarkerEditor : Editor
         return hasBounds;
     }
 
-    private static void ConfigureTorchVisionSensitive(TorchVisionSensitive component, GameObject modelRoot)
+    private static void ConfigureDissolveRevealTarget(DissolveRevealTarget component, GameObject modelRoot)
     {
         if (component == null || modelRoot == null)
         {

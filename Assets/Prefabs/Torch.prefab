@@ -269,9 +269,9 @@ MonoBehaviour:
   enableHdrpContactShadows: 0
   owner: {fileID: 0}
   searchOwnerInParents: 1
-  registerAsWorldTorchSource: 0
-  worldVision: {fileID: 0}
-  worldTorchCountsAsEquipped: 1
+  registerAsWorldRevealSource: 0
+  worldSourceCountsAsActive: 1
+  revealColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &4474029171847269005
 GameObject:
   m_ObjectHideFlags: 0
@@ -29320,133 +29320,6 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!1 &8200962962721972532
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2453371297010221027}
-  - component: {fileID: 4093508691279950427}
-  - component: {fileID: 2844449018823303588}
-  - component: {fileID: 2641108218505315019}
-  m_Layer: 0
-  m_Name: AgeModifier
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2453371297010221027
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8200962962721972532}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9200908729908273680}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &4093508691279950427
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8200962962721972532}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 5
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2844449018823303588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8200962962721972532}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af7e7142bec6b3343afb18cae6a4e4c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  ageAmount: 666
-  useTemporalAgePreset: 0
-  temporalAge: 666
-  ageCenterProperty: _AgeCenter
-  ageRadiusProperty: _AgeRadius
-  ageAmountProperty: _AgeAmount
-  requireEquippedTorchOwner: 1
-  owner: {fileID: 0}
-  restoreDuration: 1.5
-  restoreCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!54 &2641108218505315019
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8200962962721972532}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 1
 --- !u!1 &8429578592065255594
 GameObject:
   m_ObjectHideFlags: 0
@@ -29482,7 +29355,6 @@ Transform:
   m_Children:
   - {fileID: 2159766556192267134}
   - {fileID: 8001444046699118875}
-  - {fileID: 2453371297010221027}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 49.388, y: 92.369, z: 77.287}
 --- !u!33 &5197129954926931381
@@ -29578,7 +29450,9 @@ MonoBehaviour:
   target: {fileID: 0}
   followPosition: 1
   followRotation: 1
+  lookAtTarget: 1
   positionOffset: {x: -0.09, y: 0.03, z: 0.01}
   rotationOffsetEuler: {x: -90, y: 0, z: 0}
   offsetInTargetSpace: 1
+  lookAtOffset: {x: 0, y: 0, z: 0}
   useLateUpdate: 1

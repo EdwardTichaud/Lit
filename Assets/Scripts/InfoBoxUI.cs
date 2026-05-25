@@ -331,11 +331,10 @@ public class InfoBoxUI : MonoBehaviour
             return;
         }
 
-        if (!LocalInputRouter.TryConsumeInteract())
-        {
-            return;
-        }
-
+        // L'InfoBox possede le focus a ce stade. Elle doit donc pouvoir se fermer
+        // meme si un autre listener Interact, appele plus tot dans l'ordre d'event,
+        // a deja marque l'input comme consomme.
+        LocalInputRouter.ConsumeInteract();
         HideManually();
     }
 

@@ -87,6 +87,14 @@ public class CharacterData : ScriptableObject
     /// <summary>Indique si l'inventaire runtime a deja ete initialise.</summary>
     public bool inventoryInitialized;
 
+    [Header("Munin (Runtime)")]
+    /// <summary>Charges runtime restantes de Munin.</summary>
+    public int muninChargesRemaining;
+    /// <summary>Maximum runtime de charges de Munin.</summary>
+    public int muninMaxCharges = 3;
+    /// <summary>Indique si un etat runtime de charges Munin a ete applique.</summary>
+    public bool muninChargesInitialized;
+
     /// <summary>
     /// Identifiant stable derive du GUID d'asset quand disponible.
     /// </summary>

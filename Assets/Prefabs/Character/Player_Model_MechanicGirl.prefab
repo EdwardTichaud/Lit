@@ -546,6 +546,9 @@ MonoBehaviour:
   interactionMinimumForwardDot: -0.35
   interactionDetectionHeightOffset: 0.9
   interactionCurrentTargetBonus: 0.15
+  enableMuninInteractionReaction: 1
+  muninTorchProximityReactionIntensity: 0.45
+  muninBraseroProximityReactionIntensity: 1
   enableCommittedJump: 1
   anticipationDuration: 0.08
   impulseDelay: 0.02
@@ -702,8 +705,6 @@ MonoBehaviour:
   torchBoolParam: Torch
   torchStartsActive: 1
   initializeTorchFromHierarchy: 1
-  ensureTemporalTorch: 1
-  temporalTorchRevealRadius: 5
   torchUpperBodyIdleLayerWeight: 0.92
   torchUpperBodyMovingLayerWeight: 0.76
   torchUpperBodyLayerWeightResponsiveness: 10

@@ -10,7 +10,7 @@ Script path:
 
 Main behavior:
 
-- Drives `_DissolveAmount`, `_NoiseScale`, `_EdgeWidth`, `_EdgeColor`, `_GhostAlpha` through `MaterialPropertyBlock`.
+- Drives `_DissolveAmount`, `_DissolveNoiseScale`, `_DissolveEdgeWidth`, `_DissolveEdgeColor`, `_GhostAlpha` through `MaterialPropertyBlock`.
 - Applies properties to every material slot on every collected `SkinnedMeshRenderer` and `MeshRenderer`.
 - Computes character world bounds and sends `_DissolveWorldMinY`, `_DissolveWorldHeight`, `_DissolveDirection`.
 - Supports multiple VFX Graph instances through `DustVfxBinding`.
@@ -22,7 +22,7 @@ Main behavior:
 Created assets:
 
 - `Assets/Shaders/GhostDissolve/SG_GhostDissolve_HDRP.shadergraph`
-- `Assets/Shaders/GhostDissolve/M_GhostDissolve_HDRP.mat`
+- `Assets/Shaders/GhostDissolve/Material_GhostDissolve.mat`
 - `Assets/Shaders/GhostDissolve/GhostDissolveHDRP.hlsl`
 - Graph type: HDRP Lit Shader Graph
 - Graph Inspector / Target Settings:
@@ -56,9 +56,9 @@ Required by script:
 | Reference | Type | Default | Notes |
 | --- | --- | ---: | --- |
 | `_DissolveAmount` | Float | -0.08 | Animated to 1.12 |
-| `_NoiseScale` | Float | 2.75 | Large world noise scale |
-| `_EdgeWidth` | Float | 0.055 | Width of glowing ash edge |
-| `_EdgeColor` | HDR Color | (0.35, 0.95, 1, 1) | Cyan edge glow |
+| `_DissolveNoiseScale` | Float | 2.75 | Large world noise scale |
+| `_DissolveEdgeWidth` | Float | 0.055 | Width of glowing ash edge |
+| `_DissolveEdgeColor` | HDR Color | (0.35, 0.95, 1, 1) | Cyan edge glow |
 | `_GhostAlpha` | Float | 0.68 | Overall transparent character alpha |
 
 Recommended extra properties:
@@ -69,7 +69,7 @@ Recommended extra properties:
 | `_GhostTint` | Color | (0.25, 0.9, 1, 0.78) |
 | `_FresnelPower` | Float | 2.2 |
 | `_FresnelIntensity` | Float | 1.9 |
-| `_EdgeIntensity` | Float | 5.5 |
+| `_DissolveEdgeIntensity` | Float | 5.5 |
 | `_FineNoiseMultiplier` | Float | 5.5 |
 | `_NoiseInfluence` | Float | 0.32 |
 | `_AlphaClipThreshold` | Float | 0.08 |
@@ -83,7 +83,7 @@ Implemented graph layout:
 
 1. `Position` node set to World -> `GhostDissolveHDRP` custom function `PositionWS`.
 2. `Normal Vector` node set to World -> `GhostDissolveHDRP` custom function `NormalWS`.
-3. `_BaseColor`, `_GhostTint`, `_DissolveAmount`, `_NoiseScale`, `_EdgeWidth`, `_EdgeColor`, `_GhostAlpha`, `_DissolveWorldMinY`, `_DissolveWorldHeight`, `_DissolveDirection`, `_FineNoiseMultiplier`, `_NoiseInfluence`, `_FresnelPower`, `_FresnelIntensity`, `_EdgeIntensity`, `_AlphaClipThreshold` -> matching `GhostDissolveHDRP` inputs.
+3. `_BaseColor`, `_GhostTint`, `_DissolveAmount`, `_DissolveNoiseScale`, `_DissolveEdgeWidth`, `_DissolveEdgeColor`, `_GhostAlpha`, `_DissolveWorldMinY`, `_DissolveWorldHeight`, `_DissolveDirection`, `_FineNoiseMultiplier`, `_NoiseInfluence`, `_FresnelPower`, `_FresnelIntensity`, `_DissolveEdgeIntensity`, `_AlphaClipThreshold` -> matching `GhostDissolveHDRP` inputs.
 4. `GhostDissolveHDRP.OutBaseColor` -> Lit Master Stack `Base Color`.
 5. `GhostDissolveHDRP.OutEmission` -> Lit Master Stack `Emission`.
 6. `GhostDissolveHDRP.OutAlpha` -> Lit Master Stack `Alpha`.
@@ -103,10 +103,10 @@ Equivalent logic inside `GhostDissolveHDRP.hlsl`:
 6. `Split` Position and use XZ as a `Vector2`.
 7. Large world-space value noise:
    - UV = World XZ
-   - Scale = `_NoiseScale`
+   - Scale = `_DissolveNoiseScale`
 8. Fine world-space value noise:
    - UV = World XZ
-   - Scale = `_NoiseScale * _FineNoiseMultiplier`
+   - Scale = `_DissolveNoiseScale * _FineNoiseMultiplier`
 9. `Multiply` large by 0.7.
 10. `Multiply` fine by 0.3.
 11. `Add` large and fine.
@@ -122,7 +122,7 @@ Visibility and edge:
    - Output = `visibleMask`
 2. `Subtract`: `dissolveField - _DissolveAmount`.
 3. `Absolute`.
-4. `Divide` by `Max(_EdgeWidth, 0.001)`.
+4. `Divide` by `Max(_DissolveEdgeWidth, 0.001)`.
 5. `Saturate`.
 6. `One Minus`.
 7. `Multiply` by `visibleMask`. This is `edgeMask`.
@@ -141,7 +141,7 @@ Fresnel and emission:
    - View Dir = World View Direction
    - Power = `_FresnelPower`
 2. Fresnel * `_GhostTint` * `_FresnelIntensity`.
-3. `edgeMask` * `_EdgeColor` * `_EdgeIntensity`.
+3. `edgeMask` * `_DissolveEdgeColor` * `_DissolveEdgeIntensity`.
 4. Add Fresnel emission and edge emission.
 5. Connect to Emission.
 6. In HDRP material settings, enable emission contribution to bloom through the color intensity, not by adding point lights.
@@ -172,11 +172,11 @@ Exposed properties:
 | `DissolveDirection` | Vector3 | (0, 1, 0) |
 | `DissolveNormalizedTime` | Float | 0 |
 | `SpawnRateMultiplier` | Float | 1 |
-| `EdgeColor` | Vector4/Color | cyan |
+| `DissolveEdgeColor` | Vector4/Color | cyan |
 | `BandWidth` | Float | 0.09 |
 | `BaseSpawnRate` | Float | 2200 |
 | `DustSpeed` | Float | 0.75 |
-| `NoiseScale` | Float | 2.75 |
+| `DissolveNoiseScale` | Float | 2.75 |
 
 ### Contexts and Blocks
 
@@ -207,7 +207,7 @@ Initialize Particle:
   - plus up * random(0.25, 0.9)
   - plus random tangent drift * 0.2
 - Set Color:
-  - lerp dark ash `(0.22, 0.22, 0.2)` to `EdgeColor.rgb`, random 0 to 0.35.
+  - lerp dark ash `(0.22, 0.22, 0.2)` to `DissolveEdgeColor.rgb`, random 0 to 0.35.
 
 Update Particle:
 
@@ -232,7 +232,7 @@ Output Particle Quad:
   - Use Unlit for dark ash and color it manually.
   - Use Lit only if dust must catch strong local lights; it is more expensive and can look noisy.
 - Optional second output:
-  - Additive tiny cyan motes, lifetime 0.4 to 1.1, spawn rate 10% of ash, color from `EdgeColor`.
+  - Additive tiny cyan motes, lifetime 0.4 to 1.1, spawn rate 10% of ash, color from `DissolveEdgeColor`.
 
 For multiple SkinnedMeshRenderers, add one child VFX object per sampled renderer and create one `DustVfxBinding` for each.
 
@@ -276,7 +276,7 @@ On `GhostDissolveController`:
 
 On each character material:
 
-- Use `M_GhostDissolve_HDRP` or a material using `SG_GhostDissolve_HDRP`.
+- Use `Material_GhostDissolve` or a material using `SG_GhostDissolve_HDRP`.
 - Tune `_BaseColor` and `_GhostTint` per character/material slot.
 - Do not instantiate materials in code.
 - If the character has several material slots, assign a compatible material to every slot that must dissolve.
@@ -359,7 +359,7 @@ Collider trigger:
 ## Common Pitfalls
 
 - Transparent sorting: HDRP transparent meshes still sort per renderer, not per triangle. Use Transparent Depth Prepass/Postpass and split huge overlapping character meshes when needed.
-- HDRP bloom/exposure: high `_EdgeIntensity` can blow out under automatic exposure. Clamp edge intensity per scene lighting setup.
+- HDRP bloom/exposure: high `_DissolveEdgeIntensity` can blow out under automatic exposure. Clamp edge intensity per scene lighting setup.
 - Alpha clip threshold: keep it near 0.001 so fading does not clip the whole ghost early.
 - Skinned mesh bounds: enable `Update When Offscreen` on important SkinnedMeshRenderers if the dissolve can happen off camera or during large poses.
 - VFX Graph source: each VFX Graph Skinned Mesh property samples one renderer. Multi-renderer characters need multiple VFX bindings.
@@ -372,11 +372,11 @@ Collider trigger:
 - Duration: 2.8 seconds.
 - `_DissolveAmount`: -0.08 to 1.12.
 - `_GhostAlpha`: 0.68 to 0.0.
-- `_NoiseScale`: 2.75.
+- `_DissolveNoiseScale`: 2.75.
 - `_FineNoiseMultiplier`: 5.7.
 - `_NoiseInfluence`: 0.28.
-- `_EdgeWidth`: 0.055.
-- `_EdgeIntensity`: 4.0.
+- `_DissolveEdgeWidth`: 0.055.
+- `_DissolveEdgeIntensity`: 4.0.
 - `_FresnelPower`: 4.5.
 - `_FresnelIntensity`: 1.4.
 - Edge color: HDR `(0.35, 0.95, 1.0, 1.0)`.

@@ -1,13 +1,15 @@
+using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
-public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarget
+public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarget, ILitInfluenceReceiver
 {
     public enum DoorMotionMode
     {
@@ -58,6 +60,26 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
     [SerializeField, Tooltip("Priorite de selection si plusieurs interactions sont proches.")]
     private int interactionPriority = 45;
 
+    [Header("Influence")]
+    [SerializeField, FormerlySerializedAs("requireActiveFlameForInteraction"), Tooltip("Si true, la porte reste bloquee hors zone d'influence d'une torche ou d'un brasero allume.")]
+    private bool requireLitInfluenceForInteraction = true;
+    [SerializeField, Tooltip("La porte reagit a la zone d'influence des braseros allumes.")]
+    private bool reactToBraseroInfluence = true;
+    [SerializeField, Tooltip("La porte reagit a la zone d'influence des torches allumees.")]
+    private bool reactToTorchInfluence = true;
+
+    [Header("Key")]
+    [SerializeField, Tooltip("Identifiant de serrure. Vide = cette porte n'a pas besoin de cle.")]
+    private string lockId;
+    [SerializeField, Tooltip("Consomme la cle compatible quand la porte s'ouvre.")]
+    private bool consumeKeyOnUse;
+    [SerializeField, Tooltip("Message affiche si le personnage n'a pas la cle requise.")]
+    private string missingKeyMessage = "Il faut une cl\u00e9 pour ouvrir cette porte.";
+    [SerializeField, Tooltip("Message affiche si la cle est compatible mais que la porte est hors influence.")]
+    private string keyCompatibleButFrozenMessage = "La cl\u00e9 semble \u00eatre compatible mais la porte reste fig\u00e9e";
+    [SerializeField, Tooltip("Message affiche si la porte sans cle est hors influence.")]
+    private string frozenDoorMessage = "La porte semble fig\u00e9e.";
+
     [Header("Interaction UI")]
     [SerializeField, Tooltip("Affiche une InteractionBox quand la porte est ciblee.")]
     private bool showInteractionUi = true;
@@ -69,6 +91,8 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
     private string closeInteractionText = "Fermer";
     [SerializeField, Tooltip("Texte quand la porte est verrouillee.")]
     private string lockedInteractionText = "Verrouille";
+    [SerializeField, Tooltip("Texte quand la porte est hors zone d'influence.")]
+    private string frozenInteractionText = "Fig\u00e9e";
     [SerializeField, Tooltip("Offset en world pour la box d'interaction.")]
     private Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
     [SerializeField, Tooltip("Parent des boxes UI.")]
@@ -121,6 +145,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
     private float currentOpenAmount;
     private bool wasInteractedOnce;
     private bool initialized;
+    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
 
     public bool IsOpen => isOpen;
     public bool IsLocked => locked;
@@ -133,6 +158,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
 
     private void Awake()
     {
+        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         InitializeRuntime();
     }
 
@@ -170,6 +196,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
             LocalInputRouter.Interact -= OnInteractPerformed;
         }
 
+        activeLitInfluenceSourceIds.Clear();
         ResetInteractionUi();
     }
 
@@ -205,6 +232,8 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
+        // La detection reste volontairement active hors influence: l'interaction
+        // doit pouvoir expliquer au joueur que la porte est figee.
         return controller != null
             && isActiveAndEnabled
             && useInteractInput
@@ -348,16 +377,21 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
             return;
         }
 
-        if (!CanOpenWith(character))
+        if (TryGetInteractionBlockMessage(character, nextOpen, out string blockMessage))
         {
-            PlaySfx(lockedSfx);
-            onLockedInteract?.Invoke();
+            HandleBlockedInteraction(blockMessage);
             return;
         }
 
         if (IsNetworked() && !IsServer)
         {
             RequestInteractServerRpc(nextOpen);
+            return;
+        }
+
+        if (!TryConsumeRequiredKey(character, nextOpen))
+        {
+            HandleBlockedInteraction(missingKeyMessage);
             return;
         }
 
@@ -470,18 +504,136 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
 
     private bool CanOpenWith(GameObject character)
     {
-        if (locked)
-        {
-            return false;
-        }
+        return CanOpenWith(character, opening: true);
+    }
 
-        if (requiredCapability == InteractionCapability.None)
+    private bool CanOpenWith(GameObject character, bool opening)
+    {
+        return !TryGetInteractionBlockMessage(character, opening, out _);
+    }
+
+    private bool TryGetInteractionBlockMessage(GameObject character, bool opening, out string message)
+    {
+        message = null;
+
+        if (locked)
         {
             return true;
         }
 
         SquadCharacterController controller = ResolveCharacterController(character);
-        return controller != null && controller.HasEquippedInteractionCapability(requiredCapability);
+        bool needsKey = opening && RequiresKey();
+        bool hasRequiredKey = !needsKey || (controller != null && controller.HasMatchingKey(lockId));
+        if (needsKey && !hasRequiredKey)
+        {
+            message = missingKeyMessage;
+            return true;
+        }
+
+        if (!HasRequiredLitInfluence())
+        {
+            message = needsKey ? keyCompatibleButFrozenMessage : frozenDoorMessage;
+            return true;
+        }
+
+        if (requiredCapability != InteractionCapability.None &&
+            (controller == null || !controller.HasEquippedInteractionCapability(requiredCapability)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryConsumeRequiredKey(GameObject character, bool opening)
+    {
+        if (!opening || !RequiresKey() || !consumeKeyOnUse)
+        {
+            return true;
+        }
+
+        SquadCharacterController controller = ResolveCharacterController(character);
+        return controller != null && controller.TryUseMatchingKey(lockId, consumeKeyOnUse, out _);
+    }
+
+    private bool RequiresKey()
+    {
+        return !string.IsNullOrWhiteSpace(lockId);
+    }
+
+    private bool HasRequiredLitInfluence()
+    {
+        return !requireLitInfluenceForInteraction || activeLitInfluenceSourceIds.Count > 0;
+    }
+
+    private bool IsFrozenByMissingInfluence()
+    {
+        return requireLitInfluenceForInteraction && activeLitInfluenceSourceIds.Count == 0;
+    }
+
+    private void HandleBlockedInteraction(string message)
+    {
+        PlaySfx(lockedSfx);
+        onLockedInteract?.Invoke();
+
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
+    public void OnLitInfluenceEnter(LitInfluenceInfo info)
+    {
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        {
+            return;
+        }
+
+        if (activeLitInfluenceSourceIds.Add(info.SourceId))
+        {
+            RefreshInteractionText();
+        }
+    }
+
+    public void OnLitInfluenceStay(LitInfluenceInfo info)
+    {
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        {
+            return;
+        }
+
+        if (activeLitInfluenceSourceIds.Add(info.SourceId))
+        {
+            RefreshInteractionText();
+        }
+    }
+
+    public void OnLitInfluenceExit(LitInfluenceInfo info)
+    {
+        if (info.SourceId == 0)
+        {
+            return;
+        }
+
+        if (activeLitInfluenceSourceIds.Remove(info.SourceId))
+        {
+            RefreshInteractionText();
+        }
+    }
+
+    private bool ShouldReactToLitInfluence(LitInfluenceInfo info)
+    {
+        switch (info.SourceKind)
+        {
+            case LitInfluenceSourceKind.Brasero:
+                return reactToBraseroInfluence;
+
+            case LitInfluenceSourceKind.Torch:
+                return reactToTorchInfluence;
+
+            default:
+                return false;
+        }
     }
 
     private static SquadCharacterController ResolveCharacterController(GameObject character)
@@ -623,7 +775,11 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
     private void RequestInteractServerRpc(bool nextOpen, ServerRpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (playerRoot == null || !IsCharacterTransformInRange(playerRoot) || !CanOpenWith(playerRoot.gameObject))
+        GameObject character = playerRoot != null ? playerRoot.gameObject : null;
+        if (playerRoot == null ||
+            !IsCharacterTransformInRange(playerRoot) ||
+            !CanOpenWith(character, nextOpen) ||
+            !TryConsumeRequiredKey(character, nextOpen))
         {
             return;
         }
@@ -637,7 +793,11 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
     private void RequestSetOpenServerRpc(bool open, ServerRpcParams rpcParams = default)
     {
         Transform playerRoot = NetcodePlayerUtils.GetPlayerTransform(rpcParams.Receive.SenderClientId);
-        if (playerRoot == null || !IsCharacterTransformInRange(playerRoot) || !CanOpenWith(playerRoot.gameObject))
+        GameObject character = playerRoot != null ? playerRoot.gameObject : null;
+        if (playerRoot == null ||
+            !IsCharacterTransformInRange(playerRoot) ||
+            !CanOpenWith(character, open) ||
+            !TryConsumeRequiredKey(character, open))
         {
             return;
         }
@@ -727,6 +887,11 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
         if (locked)
         {
             return lockedInteractionText;
+        }
+
+        if (IsFrozenByMissingInfluence())
+        {
+            return frozenInteractionText;
         }
 
         if (interactMode == DoorInteractMode.CloseOnly)

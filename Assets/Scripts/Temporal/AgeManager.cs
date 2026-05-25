@@ -9,46 +9,51 @@ using UnityEngine;
 public class AgeManager : MonoBehaviour
 {
     public const int DefaultStartYear = TemporalAgeUtility.MaxYear;
-    public const int DefaultYearsPerBrasero = TemporalAgeUtility.StepYears;
-    public const int DefaultTorchRevealForwardYears = TemporalAgeUtility.StepYears - 1;
+    public const int DefaultYearsPerBrasero = 100;
 
     public static AgeManager ActiveInstance { get; private set; }
 
-    [Header("Braseros")]
-    [SerializeField, Tooltip("Collecte automatiquement les braseros de la scene chargee.")]
-    private bool autoCollectSceneBraseros = true;
-    [SerializeField, Tooltip("Inclut les braseros inactifs dans le calcul, utile pour les objets caches au demarrage.")]
-    private bool includeInactiveBraseros = true;
-    [SerializeField, Tooltip("Liste de braseros pilotes par l'AgeManager.")]
-    private List<Brasero> braseros = new List<Brasero>();
+    [Header("Ancient Braseros")]
+    [SerializeField, Tooltip("Collecte automatiquement les Braseros anciens de la scene chargee.")]
+    private bool autoCollectSceneAncientBraseros = true;
+    [SerializeField, Tooltip("Inclut les Braseros anciens inactifs dans le calcul, utile pour les objets caches au demarrage.")]
+    private bool includeInactiveAncientBraseros = true;
+    [SerializeField, Tooltip("Seuls ces Braseros anciens pilotent l'AgeManager.")]
+    private List<Brasero> ancientBraseros = new List<Brasero>();
 
     [Header("Age")]
     [SerializeField, Tooltip("Annee de depart du joueur.")]
     private int startYear = DefaultStartYear;
-    [SerializeField, Tooltip("Annees reculees par brasero allume.")]
+    [SerializeField, Tooltip("Annees reculees par Brasero allume qui pilote l'age.")]
     private int yearsPerBrasero = DefaultYearsPerBrasero;
-    [SerializeField, Tooltip("Nombre d'annees revelees devant l'age courant par la torche.")]
-    private int torchRevealForwardYears = DefaultTorchRevealForwardYears;
     [SerializeField, Tooltip("Ecrit un log quand l'age change.")]
     private bool logAgeChanges;
 
+    [Header("Master Shader Runtime")]
+    [SerializeField, Tooltip("Pousse l'age global vers _AgeAmount sans instancier les materiaux.")]
+    private bool driveMasterShaderAgeAmount = true;
+    [SerializeField] private string masterShaderAgeAmountProperty = "_AgeAmount";
+    [SerializeField, Tooltip("Inclut les renderers inactifs pour que les objets reveles plus tard aient deja le bon age.")]
+    private bool includeInactiveMasterShaderRenderers = true;
+
     [Header("State")]
-    [SerializeField, Tooltip("Nombre de braseros allumes.")]
+    [SerializeField, Tooltip("Nombre de Braseros qui pilotent l'age et sont allumes.")]
     private int litBrazierCount;
     [SerializeField, Tooltip("Annee courante canonique.")]
     private int currentYear = DefaultStartYear;
 
     private readonly HashSet<Brasero> subscribedBraseros = new HashSet<Brasero>();
+    private MaterialPropertyBlock shaderAgePropertyBlock;
+    private int masterShaderAgeAmountPropertyId;
 
-    public IReadOnlyList<Brasero> Braseros => braseros;
+    public IReadOnlyList<Brasero> Braseros => ancientBraseros;
+    public IReadOnlyList<Brasero> AncientBraseros => ancientBraseros;
+    public int TotalAgeDrivingBraseroCount => CountAncientBraseros();
     public int LitBrazierCount => litBrazierCount;
     public int CurrentYear => currentYear;
     public int CurrentYearOffsetFromStart => Mathf.Max(0, startYear - currentYear);
     public int StartYear => startYear;
     public int YearsPerBrasero => yearsPerBrasero;
-    public int TorchRevealForwardYears => torchRevealForwardYears;
-    public int TorchRevealStartYear => CurrentYear;
-    public int TorchRevealEndYear => GetTorchRevealEndYear(torchRevealForwardYears);
     public TemporalAge CurrentTemporalAge => TemporalAgeUtility.IntToAge(currentYear);
     public int CurrentTemporalAgeStep => TemporalAgeUtility.AgeToStep(CurrentTemporalAge);
 
@@ -92,6 +97,7 @@ public class AgeManager : MonoBehaviour
             ActiveInstance = this;
         }
 
+        CacheShaderPropertyIds();
         RefreshAndResubscribe();
     }
 
@@ -109,8 +115,8 @@ public class AgeManager : MonoBehaviour
     {
         startYear = Mathf.Clamp(startYear, TemporalAgeUtility.MinYear, TemporalAgeUtility.MaxYear);
         yearsPerBrasero = Mathf.Max(1, yearsPerBrasero);
-        torchRevealForwardYears = Mathf.Clamp(torchRevealForwardYears, 0, TemporalAgeUtility.MaxYear);
         currentYear = ClampYear(currentYear);
+        CacheShaderPropertyIds();
     }
 
     public void RefreshAndResubscribe()
@@ -123,21 +129,21 @@ public class AgeManager : MonoBehaviour
 
     public void RefreshBraseros()
     {
-        RemoveMissingBraseros();
+        RemoveMissingAncientBraseros();
 
-        if (!autoCollectSceneBraseros)
+        if (!autoCollectSceneAncientBraseros)
         {
             return;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Brasero[] sceneBraseros = includeInactiveBraseros
+        Brasero[] sceneBraseros = includeInactiveAncientBraseros
             ? FindObjectsByType<Brasero>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             : FindObjectsByType<Brasero>(FindObjectsSortMode.None);
 #else
-        Brasero[] sceneBraseros = FindObjectsOfType<Brasero>(includeInactiveBraseros);
+        Brasero[] sceneBraseros = FindObjectsOfType<Brasero>(includeInactiveAncientBraseros);
 #endif
-        AddBraseros(sceneBraseros);
+        AddAncientBraseros(sceneBraseros);
     }
 
     public void RecalculateAge(bool rescanTimePeriodVisibility = true)
@@ -152,7 +158,7 @@ public class AgeManager : MonoBehaviour
         if (logAgeChanges && changed)
         {
             Debug.Log(
-                $"[AgeManager] litBraseros={litBrazierCount}/{(braseros != null ? braseros.Count : 0)} currentYear={currentYear} torchWindow={TorchRevealStartYear}-{TorchRevealEndYear}",
+                $"[AgeManager] litBraseros={litBrazierCount}/{TotalAgeDrivingBraseroCount} currentYear={currentYear}",
                 this);
         }
 
@@ -162,8 +168,8 @@ public class AgeManager : MonoBehaviour
         }
 
         TimePeriodVisibility.RefreshAllForAgeManager(this, rescanTimePeriodVisibility);
-        TemporalTorch.RefreshAllManagedTorches();
         BraseroDisplayManager.RefreshAllDisplays();
+        ApplyShaderAgeAmountToScene();
     }
 
     public int CalculateYearForLitCount(int litCount)
@@ -172,27 +178,9 @@ public class AgeManager : MonoBehaviour
         return ClampYear(startYear - count * yearsPerBrasero);
     }
 
-    public int GetTorchRevealEndYear(int forwardYears)
-    {
-        return ClampYear(currentYear + Mathf.Max(0, forwardYears));
-    }
-
     public bool IsYearInCurrentAge(int year)
     {
         return ClampYear(year) == currentYear;
-    }
-
-    public bool IsYearInTorchRevealWindow(int year)
-    {
-        int value = ClampYear(year);
-        return value >= TorchRevealStartYear && value <= TorchRevealEndYear;
-    }
-
-    public bool DoesYearRangeOverlapTorchRevealWindow(int minYear, int maxYear)
-    {
-        int min = Mathf.Min(minYear, maxYear);
-        int max = Mathf.Max(minYear, maxYear);
-        return min <= TorchRevealEndYear && max >= TorchRevealStartYear;
     }
 
     public int GetComparisonValue(TimePeriodValueMode valueMode)
@@ -217,54 +205,83 @@ public class AgeManager : MonoBehaviour
         }
     }
 
-    public void GetTorchRevealComparisonWindow(TimePeriodValueMode valueMode, out int minValue, out int maxValue)
+    public void ApplyShaderAgeAmountToScene()
     {
-        int start = TorchRevealStartYear;
-        int end = TorchRevealEndYear;
-
-        switch (valueMode)
+        if (!CanDriveMasterShaderAgeAmount())
         {
-            case TimePeriodValueMode.YearOffsetFromBase:
-                minValue = Mathf.Min(startYear - start, startYear - end);
-                maxValue = Mathf.Max(startYear - start, startYear - end);
-                return;
-
-            case TimePeriodValueMode.TemporalAgeStep:
-                minValue = Mathf.Min(
-                    TemporalAgeUtility.AgeToStep(TemporalAgeUtility.IntToAge(start)),
-                    TemporalAgeUtility.AgeToStep(TemporalAgeUtility.IntToAge(end)));
-                maxValue = Mathf.Max(
-                    TemporalAgeUtility.AgeToStep(TemporalAgeUtility.IntToAge(start)),
-                    TemporalAgeUtility.AgeToStep(TemporalAgeUtility.IntToAge(end)));
-                return;
-
-            case TimePeriodValueMode.LitBrazierCount:
-                minValue = maxValue = LitBrazierCount;
-                return;
-
-            case TimePeriodValueMode.TemporalAgeYear:
-            case TimePeriodValueMode.AbsoluteYear:
-            default:
-                minValue = Mathf.Min(start, end);
-                maxValue = Mathf.Max(start, end);
-                return;
+            return;
         }
+
+#if UNITY_2023_1_OR_NEWER
+        Renderer[] renderers = includeInactiveMasterShaderRenderers
+            ? FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            : FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+#else
+        Renderer[] renderers = FindObjectsOfType<Renderer>(includeInactiveMasterShaderRenderers);
+#endif
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            ApplyShaderAgeToRenderer(renderers[i]);
+        }
+    }
+
+    public void ApplyShaderAgeToRenderer(Renderer renderer)
+    {
+        if (!CanDriveMasterShaderAgeAmount() || renderer == null)
+        {
+            return;
+        }
+
+        if (!RendererHasProperty(renderer, masterShaderAgeAmountPropertyId))
+        {
+            return;
+        }
+
+        if (shaderAgePropertyBlock == null)
+        {
+            shaderAgePropertyBlock = new MaterialPropertyBlock();
+        }
+
+        // AgeAmount and DissolveAmount intentionally share the same MPB surface:
+        // each driver only writes its own property so ageing never changes visibility.
+        renderer.GetPropertyBlock(shaderAgePropertyBlock);
+        shaderAgePropertyBlock.SetFloat(masterShaderAgeAmountPropertyId, currentYear);
+        renderer.SetPropertyBlock(shaderAgePropertyBlock);
     }
 
     private int CountLitBraseros()
     {
         int count = 0;
-        if (braseros == null)
+
+        if (ancientBraseros != null)
         {
-            return count;
+            for (int i = 0; i < ancientBraseros.Count; i++)
+            {
+                Brasero brasero = ancientBraseros[i];
+                if (brasero != null && brasero.IsAncientBrasero && brasero.IsLit)
+                {
+                    count++;
+                }
+            }
         }
 
-        for (int i = 0; i < braseros.Count; i++)
+        return count;
+    }
+
+    private int CountAncientBraseros()
+    {
+        int count = 0;
+
+        if (ancientBraseros != null)
         {
-            Brasero brasero = braseros[i];
-            if (brasero != null && brasero.IsLit)
+            for (int i = 0; i < ancientBraseros.Count; i++)
             {
-                count++;
+                Brasero brasero = ancientBraseros[i];
+                if (brasero != null && brasero.IsAncientBrasero)
+                {
+                    count++;
+                }
             }
         }
 
@@ -273,21 +290,15 @@ public class AgeManager : MonoBehaviour
 
     private void SubscribeToBraseros()
     {
-        if (braseros == null)
+        if (ancientBraseros == null)
         {
             return;
         }
 
-        for (int i = 0; i < braseros.Count; i++)
+        for (int i = 0; i < ancientBraseros.Count; i++)
         {
-            Brasero brasero = braseros[i];
-            if (brasero == null || subscribedBraseros.Contains(brasero))
-            {
-                continue;
-            }
-
-            brasero.StateChanged += OnBraseroStateChanged;
-            subscribedBraseros.Add(brasero);
+            Brasero brasero = ancientBraseros[i];
+            SubscribeToBrasero(brasero);
         }
     }
 
@@ -309,7 +320,18 @@ public class AgeManager : MonoBehaviour
         RecalculateAge();
     }
 
-    private void AddBraseros(IList<Brasero> source)
+    private void SubscribeToBrasero(Brasero brasero)
+    {
+        if (brasero == null || !brasero.IsAncientBrasero || subscribedBraseros.Contains(brasero))
+        {
+            return;
+        }
+
+        brasero.StateChanged += OnBraseroStateChanged;
+        subscribedBraseros.Add(brasero);
+    }
+
+    private void AddAncientBraseros(IList<Brasero> source)
     {
         if (source == null)
         {
@@ -318,11 +340,11 @@ public class AgeManager : MonoBehaviour
 
         for (int i = 0; i < source.Count; i++)
         {
-            AddBrasero(source[i]);
+            AddAncientBrasero(source[i]);
         }
     }
 
-    private void AddBraseros(Brasero[] source)
+    private void AddAncientBraseros(Brasero[] source)
     {
         if (source == null)
         {
@@ -331,40 +353,41 @@ public class AgeManager : MonoBehaviour
 
         for (int i = 0; i < source.Length; i++)
         {
-            AddBrasero(source[i]);
+            AddAncientBrasero(source[i]);
         }
     }
 
-    private void AddBrasero(Brasero brasero)
+    private void AddAncientBrasero(Brasero brasero)
     {
-        if (brasero == null)
+        if (brasero == null || !brasero.IsAncientBrasero)
         {
             return;
         }
 
-        if (braseros == null)
+        if (ancientBraseros == null)
         {
-            braseros = new List<Brasero>();
+            ancientBraseros = new List<Brasero>();
         }
 
-        if (!braseros.Contains(brasero))
+        if (!ancientBraseros.Contains(brasero))
         {
-            braseros.Add(brasero);
+            ancientBraseros.Add(brasero);
         }
     }
 
-    private void RemoveMissingBraseros()
+    private void RemoveMissingAncientBraseros()
     {
-        if (braseros == null || braseros.Count == 0)
+        if (ancientBraseros == null || ancientBraseros.Count == 0)
         {
             return;
         }
 
-        for (int i = braseros.Count - 1; i >= 0; i--)
+        for (int i = ancientBraseros.Count - 1; i >= 0; i--)
         {
-            if (braseros[i] == null)
+            Brasero brasero = ancientBraseros[i];
+            if (brasero == null || !brasero.IsAncientBrasero)
             {
-                braseros.RemoveAt(i);
+                ancientBraseros.RemoveAt(i);
             }
         }
     }
@@ -372,5 +395,37 @@ public class AgeManager : MonoBehaviour
     private static int ClampYear(int year)
     {
         return Mathf.Clamp(year, TemporalAgeUtility.MinYear, TemporalAgeUtility.MaxYear);
+    }
+
+    private void CacheShaderPropertyIds()
+    {
+        masterShaderAgeAmountPropertyId = string.IsNullOrWhiteSpace(masterShaderAgeAmountProperty)
+            ? 0
+            : Shader.PropertyToID(masterShaderAgeAmountProperty);
+    }
+
+    private bool CanDriveMasterShaderAgeAmount()
+    {
+        return driveMasterShaderAgeAmount && masterShaderAgeAmountPropertyId != 0;
+    }
+
+    private static bool RendererHasProperty(Renderer renderer, int propertyId)
+    {
+        Material[] materials = renderer != null ? renderer.sharedMaterials : null;
+        if (materials == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < materials.Length; i++)
+        {
+            Material material = materials[i];
+            if (material != null && material.HasProperty(propertyId))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -118,11 +118,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
-    public void OnToggleTorch(InputAction.CallbackContext context)
+    public void OnTriggerMunin(InputAction.CallbackContext context)
     {
         if (context.performed && ShouldProcess(context))
         {
-            LocalInputRouter.RaiseToggleTorch(context);
+            LocalInputRouter.RaiseTriggerMunin(context);
         }
     }
 

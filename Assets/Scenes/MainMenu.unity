@@ -17609,9 +17609,9 @@ MonoBehaviour:
   edgeColor: {r: 0.35, g: 0.95, b: 1, a: 1}
   dissolveDirection: {x: 0, y: 1, z: 0}
   dissolveAmountProperty: _DissolveAmount
-  noiseScaleProperty: _NoiseScale
-  edgeWidthProperty: _EdgeWidth
-  edgeColorProperty: _EdgeColor
+  noiseScaleProperty: _DissolveNoiseScale
+  edgeWidthProperty: _DissolveEdgeWidth
+  edgeColorProperty: _DissolveEdgeColor
   ghostAlphaProperty: _GhostAlpha
   dissolveWorldMinYProperty: _DissolveWorldMinY
   dissolveWorldHeightProperty: _DissolveWorldHeight
@@ -26109,7 +26109,6 @@ GameObject:
   - component: {fileID: 8325400904811378329}
   - component: {fileID: 5452878853398649877}
   - component: {fileID: 8325400904811378331}
-  - component: {fileID: 8325400904811378330}
   m_Layer: 0
   m_Name: MiniChest
   m_TagString: Untagged
@@ -31770,24 +31769,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &8325400904811378330
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7532613919958947660}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Outline
-  outlineMode: 0
-  outlineColor: {r: 1, g: 1, b: 1, a: 1}
-  outlineWidth: 5
-  precomputeOutline: 0
-  bakeKeys: []
-  bakeValues: []
 --- !u!114 &8325400904811378331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31800,11 +31781,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1c9f6a15ad349c7b1da772d524a62f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CursorIntercation
-  outline: {fileID: 8325400904811378330}
   createOutlineIfMissing: 1
-  outlineColor: {r: 1, g: 1, b: 1, a: 1}
-  outlineWidth: 5
-  outlineMode: 0
   onCursorEnter:
     m_PersistentCalls:
       m_Calls: []

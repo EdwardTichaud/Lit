@@ -1,17 +1,17 @@
 using UnityEngine;
 
-// Ancien pont shader global. Il est conserve pour ne pas casser les scenes qui
-// le referencent, mais la logique canonique passe par AgeManager et les torches
-// locales via LocalRuntimeAgeTrigger.
+// Optional shader global bridge for spatial data only. The canonical gameplay age
+// and _AgeAmount runtime value come from AgeManager, driven only by braseros anciens.
 public class GlobalAgeZone : MonoBehaviour
 {
     public float radius = 5f;
     public float softness = 2f;
+    [Tooltip("Legacy preview value. _AgeAmount is driven by AgeManager at runtime.")]
     [Range(0f, 666f)] public float amount = AgeManager.DefaultStartYear;
 
-    [SerializeField, Tooltip("Desactive par defaut: les torches locales ecrivent les materiaux concernes.")]
+    [SerializeField, Tooltip("Desactive par defaut: AgeManager pilote le gameplay temporel et _AgeAmount.")]
     private bool writeShaderGlobals;
-    [SerializeField, Tooltip("Si les globals sont actifs, utilise l'age courant d'AgeManager.")]
+    [SerializeField, Tooltip("Conserve pour compatibilite scene; _AgeAmount n'est plus ecrit ici.")]
     private bool useAgeManager = true;
 
     private void Update()
@@ -21,15 +21,8 @@ public class GlobalAgeZone : MonoBehaviour
             return;
         }
 
-        float resolvedAmount = amount;
-        if (useAgeManager && AgeManager.ActiveInstance != null)
-        {
-            resolvedAmount = AgeManager.ActiveInstance.CurrentYear;
-        }
-
         Shader.SetGlobalVector("_AgeCenter", transform.position);
         Shader.SetGlobalFloat("_AgeRadius", radius);
         Shader.SetGlobalFloat("_AgeSoftness", softness);
-        Shader.SetGlobalFloat("_AgeAmount", resolvedAmount);
     }
 }

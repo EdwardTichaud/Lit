@@ -80,7 +80,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private string lastPresentationLogSignature = string.Empty;
     private string presentationOrigin = "unknown";
     private string lastWorldUiBindingFailureReason = string.Empty;
-    private TorchVisionSensitive visibilityGate;
+    private DissolveRevealTarget visibilityGate;
     private bool targetCameraLookupCompleted;
     private bool visibilityGateLookupCompleted;
     private bool attemptedAutoLocalPanelResolution;
@@ -838,15 +838,15 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
             return;
         }
 
-        visibilityGate = GetComponent<TorchVisionSensitive>();
+        visibilityGate = GetComponent<DissolveRevealTarget>();
         if (visibilityGate == null)
         {
-            visibilityGate = GetComponentInParent<TorchVisionSensitive>(true);
+            visibilityGate = GetComponentInParent<DissolveRevealTarget>(true);
         }
 
         if (visibilityGate == null)
         {
-            visibilityGate = GetComponentInChildren<TorchVisionSensitive>(true);
+            visibilityGate = GetComponentInChildren<DissolveRevealTarget>(true);
         }
 
         if (visibilityGate != null)
@@ -859,7 +859,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         Transform scope = transform.parent;
         while (scope != null)
         {
-            TorchVisionSensitive[] candidates = scope.GetComponentsInChildren<TorchVisionSensitive>(true);
+            DissolveRevealTarget[] candidates = scope.GetComponentsInChildren<DissolveRevealTarget>(true);
             visibilityGate = SelectClosestVisibilityGate(candidates);
             if (visibilityGate != null)
             {
@@ -890,20 +890,20 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         nextVisibilityGateLookupTime = 0f;
     }
 
-    private TorchVisionSensitive SelectClosestVisibilityGate(TorchVisionSensitive[] candidates)
+    private DissolveRevealTarget SelectClosestVisibilityGate(DissolveRevealTarget[] candidates)
     {
         if (candidates == null || candidates.Length == 0)
         {
             return null;
         }
 
-        TorchVisionSensitive best = null;
+        DissolveRevealTarget best = null;
         int bestHierarchyDistance = int.MaxValue;
         float bestWorldDistance = float.PositiveInfinity;
 
         for (int i = 0; i < candidates.Length; i++)
         {
-            TorchVisionSensitive candidate = candidates[i];
+            DissolveRevealTarget candidate = candidates[i];
             if (candidate == null)
             {
                 continue;

@@ -14,6 +14,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     private Vector2 lastSentMove;
     private bool wantsRun;
     private bool lastSentRun;
+    private bool triggerMuninRequested;
     private float nextSendTime;
 
     private void Awake()
@@ -60,19 +61,20 @@ public class NetworkCharacterInput : NetworkBehaviour
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Move += OnMoveChanged;
         LocalInputRouter.Jump += OnJump;
-        LocalInputRouter.ToggleTorch += OnToggleTorch;
+        LocalInputRouter.TriggerMunin += OnTriggerMunin;
     }
 
     private void UnregisterInput()
     {
         LocalInputRouter.Move -= OnMoveChanged;
         LocalInputRouter.Jump -= OnJump;
-        LocalInputRouter.ToggleTorch -= OnToggleTorch;
+        LocalInputRouter.TriggerMunin -= OnTriggerMunin;
         rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
         wantsRun = false;
         lastSentRun = false;
+        triggerMuninRequested = false;
         if (controller != null)
         {
             controller.SetSprintModifier(false);
@@ -86,6 +88,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            triggerMuninRequested = false;
             return;
         }
 
@@ -94,6 +97,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            triggerMuninRequested = false;
             if (controller != null)
             {
                 controller.SetSprintModifier(false);
@@ -116,6 +120,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            triggerMuninRequested = false;
             controller.SetSprintModifier(false);
             if (lastSentMove != Vector2.zero || lastSentRun)
             {
@@ -135,6 +140,8 @@ public class NetworkCharacterInput : NetworkBehaviour
         pendingMove = controller != null
             ? controller.GetWorldSpaceInput(rawMoveInput)
             : rawMoveInput;
+
+        HandleTriggerMuninRequest();
 
         if (Time.time < nextSendTime &&
             (pendingMove - lastSentMove).sqrMagnitude < 0.0001f &&
@@ -171,7 +178,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             : value;
     }
 
-    private void OnToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    private void OnTriggerMunin(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
@@ -183,7 +190,23 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        ToggleTorchServerRpc();
+        triggerMuninRequested = true;
+    }
+
+    private void HandleTriggerMuninRequest()
+    {
+        if (!triggerMuninRequested)
+        {
+            return;
+        }
+
+        triggerMuninRequested = false;
+        if (!LocalInputRouter.TryConsumeTriggerMunin())
+        {
+            return;
+        }
+
+        TriggerMuninServerRpc();
     }
 
     private void OnJump(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -322,7 +345,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void ToggleTorchServerRpc()
+    private void TriggerMuninServerRpc()
     {
         if (controller == null)
         {
@@ -334,7 +357,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        controller.ToggleTorch();
+        controller.TriggerMunin();
         UpdateTorchClientRpc(controller.IsTorchEquipped, controller.TorchSecondsRemaining);
     }
 
