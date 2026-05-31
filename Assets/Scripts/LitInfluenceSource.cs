@@ -82,6 +82,27 @@ public class LitInfluenceSource
         return owner != null ? owner.TransformPoint(center) : center;
     }
 
+    public bool TouchesCollider(Transform owner, Collider targetCollider, Vector3 fallbackPoint)
+    {
+        if (!enabled || radius <= 0f)
+        {
+            return false;
+        }
+
+        Vector3 worldCenter = GetWorldCenter(owner);
+        float sqrRadius = radius * radius;
+        if (targetCollider != null)
+        {
+            Vector3 closestPoint = targetCollider.ClosestPoint(worldCenter);
+            if ((closestPoint - worldCenter).sqrMagnitude <= sqrRadius)
+            {
+                return true;
+            }
+        }
+
+        return (fallbackPoint - worldCenter).sqrMagnitude <= sqrRadius;
+    }
+
     public void Tick(MonoBehaviour owner, LitInfluenceSourceKind sourceKind, bool isLit, bool force = false)
     {
         if (!Application.isPlaying)

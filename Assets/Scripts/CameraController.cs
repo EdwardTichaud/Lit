@@ -64,6 +64,7 @@ public class CameraController : MonoBehaviour
     [SerializeField, Tooltip("Ajoute les composants d'obstruction manquants sur ce rig au demarrage.")]
     private bool autoCreateObstructionVisibilityComponents = true;
     [SerializeField] private CameraLineOfSightObstructionDetector obstructionDetector;
+    [SerializeField] private PlayerVisibilityMaskController visibilityMaskController;
 
     [Header("Trigger-Driven Zoom Test")]
     [SerializeField, Tooltip("Desactive le focus auto et le clamp collision pour tester un zoom pilote manuellement.")]
@@ -243,8 +244,12 @@ public class CameraController : MonoBehaviour
         Vector3 focusPoint;
         if (triggerDrivenZoomTestMode)
         {
-            cameraFocus.SnapTo(logicalFocusPoint);
-            focusPoint = logicalFocusPoint;
+            focusPoint = cameraFocus.Update(
+                logicalFocusPoint,
+                Vector3.zero,
+                recenterRequested: false,
+                toggleFreeCameraRequested: false,
+                deltaTime);
         }
         else
         {
@@ -845,17 +850,21 @@ public class CameraController : MonoBehaviour
             return;
         }
 
-        if (autoCreateObstructionVisibilityComponents && GetComponent<CameraObstacleFader>() == null)
+        if (visibilityMaskController == null)
         {
-            gameObject.AddComponent<CameraObstacleFader>();
+            visibilityMaskController = GetComponent<PlayerVisibilityMaskController>();
         }
 
-        if (autoCreateObstructionVisibilityComponents && GetComponent<CameraObstructionVignetteController>() == null)
+        if (visibilityMaskController == null && autoCreateObstructionVisibilityComponents)
         {
-            gameObject.AddComponent<CameraObstructionVignetteController>();
+            visibilityMaskController = gameObject.AddComponent<PlayerVisibilityMaskController>();
         }
 
         obstructionDetector.Configure(mainCam, this);
+        if (visibilityMaskController != null)
+        {
+            visibilityMaskController.Configure(mainCam, this, obstructionDetector);
+        }
     }
 
     private void OnValidate()

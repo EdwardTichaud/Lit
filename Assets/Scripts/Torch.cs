@@ -78,6 +78,7 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     private Coroutine interactionRoutine;
     private float currentEmissionFactor = -1f;
     private GameObject currentCharacter;
+    private GameObject detectedCharacter;
     private bool squadInputLocked;
     private bool interactionInProgress;
     private MuninController activeMuninController;
@@ -200,7 +201,19 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
 
     public void SetDetectedCharacter(GameObject character)
     {
-        currentCharacter = character;
+        detectedCharacter = character;
+        if (character != null)
+        {
+            currentCharacter = character;
+        }
+    }
+
+    public bool ProvidesLitInfluenceTo(Collider targetCollider, Vector3 fallbackPoint)
+    {
+        EnsureLitInfluence();
+        return isLit
+            && litInfluence != null
+            && litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
     }
 
     public void SetLit(bool lit)
@@ -538,7 +551,7 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        GameObject character = ResolveCurrentInteractionCharacter();
+        GameObject character = ResolveDetectedInteractionCharacter();
         if (character == null)
         {
             return;
@@ -581,14 +594,18 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        GameObject character = ResolveCurrentInteractionCharacter();
+        GameObject character = ResolveDetectedInteractionCharacter();
         if (character == null)
         {
             return;
         }
 
         currentCharacter = character;
-        LocalInputRouter.ConsumeTriggerMunin();
+        if (!LocalInputRouter.TryConsumeTriggerMunin())
+        {
+            return;
+        }
+
         StartInteraction();
     }
 
@@ -753,6 +770,7 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
         charactersInRange.Clear();
         characterColliderCounts.Clear();
         currentCharacter = null;
+        detectedCharacter = null;
     }
 
     private void StartInteraction()
@@ -819,6 +837,16 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
         if (localRoot != null && IsCharacterInRange(localRoot))
         {
             return localRoot.gameObject;
+        }
+
+        return null;
+    }
+
+    private GameObject ResolveDetectedInteractionCharacter()
+    {
+        if (detectedCharacter != null && IsCharacterInRange(detectedCharacter.transform))
+        {
+            return detectedCharacter;
         }
 
         return null;

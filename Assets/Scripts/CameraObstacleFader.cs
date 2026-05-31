@@ -10,17 +10,14 @@ public sealed class CameraObstacleFader : MonoBehaviour
         public MaterialPropertyBlock propertyBlock;
         public float currentAmount;
         public float targetAmount;
-        public bool capturedRendererEnabled;
-        public bool originalRendererEnabled;
-        public bool originalForceRenderingOff;
         public bool hasBaseColor;
         public bool supportsShaderFade;
         public Color baseColor;
     }
 
     [Header("Fade")]
-    [SerializeField, Tooltip("Applique les valeurs de fade aux renderers obstruants. Les shaders doivent lire les proprietes ci-dessous pour afficher une vraie transparence/dither.")]
-    private bool fadeEnabled = true;
+    [SerializeField, Tooltip("Compatibilite legacy uniquement. Desactive par defaut: le masque HDRP remplace le fade des obstacles.")]
+    private bool fadeEnabled = false;
     [SerializeField, Range(0f, 1f), Tooltip("Valeur envoyee aux renderers obstruants.")]
     private float obstructedFadeAmount = 1f;
     [SerializeField, Range(0f, 1f), Tooltip("Valeur restauree quand le renderer n'obstrue plus la vue.")]
@@ -39,12 +36,6 @@ public sealed class CameraObstacleFader : MonoBehaviour
     private bool writeBaseColorAlpha = false;
     [SerializeField, Tooltip("Nom de la couleur principale HDRP/ShaderGraph si writeBaseColorAlpha est actif.")]
     private string baseColorProperty = "_BaseColor";
-
-    [Header("Opaque Fallback")]
-    [SerializeField, Tooltip("Secours radical : desactive temporairement le Renderer si aucun material ne semble supporter les proprietes d'obstruction.")]
-    private bool hideRendererFallback = true;
-    [SerializeField, Range(0f, 1f)]
-    private float hideRendererThreshold = 0.65f;
 
     private readonly Dictionary<Renderer, RendererFadeState> states = new Dictionary<Renderer, RendererFadeState>();
     private readonly List<Renderer> stateKeys = new List<Renderer>(32);
@@ -73,7 +64,6 @@ public sealed class CameraObstacleFader : MonoBehaviour
         clearFadeAmount = Mathf.Clamp01(clearFadeAmount);
         fadeInSpeed = Mathf.Max(0f, fadeInSpeed);
         fadeOutSpeed = Mathf.Max(0f, fadeOutSpeed);
-        hideRendererThreshold = Mathf.Clamp01(hideRendererThreshold);
         CacheShaderPropertyIds();
     }
 
@@ -157,10 +147,7 @@ public sealed class CameraObstacleFader : MonoBehaviour
             renderer = renderer,
             propertyBlock = new MaterialPropertyBlock(),
             currentAmount = clearFadeAmount,
-            targetAmount = clearFadeAmount,
-            capturedRendererEnabled = true,
-            originalRendererEnabled = renderer.enabled,
-            originalForceRenderingOff = renderer.forceRenderingOff
+            targetAmount = clearFadeAmount
         };
 
         Material sharedMaterial = renderer.sharedMaterial;
@@ -257,11 +244,6 @@ public sealed class CameraObstacleFader : MonoBehaviour
 
         renderer.SetPropertyBlock(state.propertyBlock);
 
-        if (hideRendererFallback && !state.supportsShaderFade && state.capturedRendererEnabled)
-        {
-            // Keeps the player visible while old opaque materials are migrated to a proper obstruction shader.
-            renderer.forceRenderingOff = state.originalForceRenderingOff || amount >= hideRendererThreshold;
-        }
     }
 
     private void RestoreStateImmediate(RendererFadeState state)
@@ -272,11 +254,6 @@ public sealed class CameraObstacleFader : MonoBehaviour
         }
 
         ApplyFadeAmount(state, clearFadeAmount);
-        if (hideRendererFallback && !state.supportsShaderFade && state.capturedRendererEnabled)
-        {
-            state.renderer.enabled = state.originalRendererEnabled;
-            state.renderer.forceRenderingOff = state.originalForceRenderingOff;
-        }
     }
 
     private void CacheShaderPropertyIds()

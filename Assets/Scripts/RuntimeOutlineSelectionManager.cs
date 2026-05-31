@@ -6,6 +6,9 @@ public static class RuntimeOutlineSelectionManager
     private static readonly List<RuntimeOutlineTarget> ActiveTargets = new List<RuntimeOutlineTarget>();
     private static readonly List<RuntimeOutlineTarget> CandidateTargets = new List<RuntimeOutlineTarget>();
     private static Object activeOwner;
+    private static ICharacterDetectedInteractable activeInteractable;
+
+    public static ICharacterDetectedInteractable ActiveInteractable => activeInteractable;
 
     public static void SetActiveInteractable(ICharacterDetectedInteractable interactable)
     {
@@ -15,6 +18,12 @@ public static class RuntimeOutlineSelectionManager
     public static void SetActiveInteractable(Object owner, ICharacterDetectedInteractable interactable)
     {
         SetActiveComponent(owner, interactable as Component);
+        activeInteractable = interactable;
+    }
+
+    public static bool IsActiveInteractable(ICharacterDetectedInteractable interactable)
+    {
+        return interactable != null && ReferenceEquals(activeInteractable, interactable);
     }
 
     public static void SetActiveComponent(Component component)
@@ -24,6 +33,7 @@ public static class RuntimeOutlineSelectionManager
 
     public static void SetActiveComponent(Object owner, Component component)
     {
+        activeInteractable = null;
         CandidateTargets.Clear();
         RuntimeOutlineUtility.CollectOutlineTargets(component, CandidateTargets, ensureTargets: true);
         SetActiveTargets(owner, CandidateTargets);
@@ -31,6 +41,7 @@ public static class RuntimeOutlineSelectionManager
 
     public static void Clear()
     {
+        activeInteractable = null;
         SetActiveTargets(null, null);
     }
 
@@ -41,6 +52,7 @@ public static class RuntimeOutlineSelectionManager
             return;
         }
 
+        activeInteractable = null;
         SetActiveTargets(owner, null);
     }
 

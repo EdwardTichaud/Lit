@@ -80,6 +80,7 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     private readonly List<GameObject> charactersInRange = new List<GameObject>();
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
+    private GameObject detectedCharacter;
     private Coroutine interactionRoutine;
     private bool squadInputLocked;
     private bool interactionInProgress;
@@ -143,7 +144,19 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
 
     public void SetDetectedCharacter(GameObject character)
     {
-        currentCharacter = character;
+        detectedCharacter = character;
+        if (character != null)
+        {
+            currentCharacter = character;
+        }
+    }
+
+    public bool ProvidesLitInfluenceTo(Collider targetCollider, Vector3 fallbackPoint)
+    {
+        EnsureLitInfluence();
+        return isLit
+            && litInfluence != null
+            && litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
     }
 
     private void EnsureId()
@@ -530,7 +543,7 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        GameObject character = ResolveCurrentInteractionCharacter();
+        GameObject character = ResolveDetectedInteractionCharacter();
         if (character == null)
         {
             return;
@@ -583,14 +596,17 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        GameObject character = ResolveCurrentInteractionCharacter();
+        GameObject character = ResolveDetectedInteractionCharacter();
         if (character == null)
         {
             return;
         }
 
         currentCharacter = character;
-        LocalInputRouter.ConsumeTriggerMunin();
+        if (!LocalInputRouter.TryConsumeTriggerMunin())
+        {
+            return;
+        }
 
         if (interactionInProgress)
         {
@@ -789,6 +805,7 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
         charactersInRange.Clear();
         characterColliderCounts.Clear();
         currentCharacter = null;
+        detectedCharacter = null;
     }
 
     private void StartInteraction()
@@ -855,6 +872,16 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
         if (localRoot != null && IsCharacterInRange(localRoot))
         {
             return localRoot.gameObject;
+        }
+
+        return null;
+    }
+
+    private GameObject ResolveDetectedInteractionCharacter()
+    {
+        if (detectedCharacter != null && IsCharacterInRange(detectedCharacter.transform))
+        {
+            return detectedCharacter;
         }
 
         return null;

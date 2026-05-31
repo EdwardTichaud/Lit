@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35ca9331b07343df9e35e9cc4e08678b, type: 3}
+  m_Name: Fear_FacialPreset
+  m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionPreset
+  emotion: 1
+  mode: 1
+  fadeInDuration: 0.12
+  holdDuration: 0.55
+  fadeOutDuration: 0.2
+  returnToPreviousPassiveExpression: 1
+  blendShapes:
+  - blendShapeName: Eye_Widen_L
+    weight: 75
+  - blendShapeName: Eye_Widen_R
+    weight: 75
+  - blendShapeName: Eye_LowerLid_Down_L
+    weight: 35
+  - blendShapeName: Eye_LowerLid_Down_R
+    weight: 35
+  - blendShapeName: Brow_Raise_In_L
+    weight: 70
+  - blendShapeName: Brow_Raise_In_R
+    weight: 70
+  - blendShapeName: Brow_Raise_Outer_L
+    weight: 45
+  - blendShapeName: Brow_Raise_Outer_R
+    weight: 45
+  - blendShapeName: Mouth_Corner_Depress_L
+    weight: 35
+  - blendShapeName: Mouth_Corner_Depress_R
+    weight: 35
+  - blendShapeName: Mouth_Stretch_L
+    weight: 25
+  - blendShapeName: Mouth_Stretch_R
+    weight: 25

@@ -118,6 +118,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
+    public void OnSwitchTarget(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseSwitchTarget(context);
+        }
+    }
+
     public void OnTriggerMunin(InputAction.CallbackContext context)
     {
         if (context.performed && ShouldProcess(context))

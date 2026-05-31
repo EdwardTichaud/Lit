@@ -33,6 +33,10 @@ public sealed class CameraLineOfSightObstructionDetector : MonoBehaviour
     private float minimumRendererBoundsSize = 0.2f;
 
     [Header("Outputs")]
+    [SerializeField, Tooltip("Compatibilite legacy uniquement. Laisser desactive pour ne pas modifier les renderers des obstacles.")]
+    private bool driveLegacyObstacleFader;
+    [SerializeField, Tooltip("Compatibilite legacy uniquement. Laisser desactive: le nouveau masque HDRP remplace cette vignette.")]
+    private bool driveLegacyVignette;
     [SerializeField] private CameraObstacleFader obstacleFader;
     [SerializeField] private CameraObstructionVignetteController vignetteController;
 
@@ -110,12 +114,12 @@ public sealed class CameraLineOfSightObstructionDetector : MonoBehaviour
             obstructionActive = nextActive;
         }
 
-        if (obstacleFader != null)
+        if (driveLegacyObstacleFader && obstacleFader != null)
         {
             obstacleFader.ApplyObstructions(rawObstructed ? obstructingRenderers : null, deltaTime);
         }
 
-        if (vignetteController != null)
+        if (driveLegacyVignette && vignetteController != null)
         {
             if (TryResolveTargetViewportCenter(out Vector2 viewportCenter))
             {
@@ -151,6 +155,26 @@ public sealed class CameraLineOfSightObstructionDetector : MonoBehaviour
         }
 
         ResolveReferences();
+    }
+
+    public void ApplyVisibilityMaskSettings(VisibilityMaskSettings maskSettings)
+    {
+        if (maskSettings == null)
+        {
+            return;
+        }
+
+        obstacleLayerMask = maskSettings.ObstacleLayers;
+    }
+
+    public bool TryGetTargetViewportCenter(out Vector2 viewportCenter)
+    {
+        return TryResolveTargetViewportCenter(out viewportCenter);
+    }
+
+    public bool TryGetLineOfSight(out Vector3 from, out Vector3 to, out Transform targetTransform)
+    {
+        return TryResolveLineOfSight(out from, out to, out targetTransform);
     }
 
     private void PerformObstructionCheck()
@@ -273,7 +297,7 @@ public sealed class CameraLineOfSightObstructionDetector : MonoBehaviour
         for (int i = 0; i < targetRendererBuffer.Count; i++)
         {
             Renderer renderer = targetRendererBuffer[i];
-            if (renderer == null || !renderer.enabled)
+            if (renderer == null)
             {
                 continue;
             }
@@ -404,7 +428,7 @@ public sealed class CameraLineOfSightObstructionDetector : MonoBehaviour
 
     private bool ShouldIgnoreRenderer(Renderer renderer)
     {
-        if (renderer == null || !renderer.enabled)
+        if (renderer == null)
         {
             return true;
         }

@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35ca9331b07343df9e35e9cc4e08678b, type: 3}
+  m_Name: Surprise_FacialPreset
+  m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionPreset
+  emotion: 4
+  mode: 1
+  fadeInDuration: 0.08
+  holdDuration: 0.45
+  fadeOutDuration: 0.2
+  returnToPreviousPassiveExpression: 1
+  blendShapes:
+  - blendShapeName: Eye_Widen_L
+    weight: 85
+  - blendShapeName: Eye_Widen_R
+    weight: 85
+  - blendShapeName: Eye_UpperLid_Up_L
+    weight: 65
+  - blendShapeName: Eye_UpperLid_Up_R
+    weight: 65
+  - blendShapeName: Brow_Raise_In_L
+    weight: 60
+  - blendShapeName: Brow_Raise_In_R
+    weight: 60
+  - blendShapeName: Brow_Raise_Outer_L
+    weight: 60
+  - blendShapeName: Brow_Raise_Outer_R
+    weight: 60
+  - blendShapeName: Mouth_Funnel_UL
+    weight: 30
+  - blendShapeName: Mouth_Funnel_UR
+    weight: 30
+  - blendShapeName: Mouth_Funnel_DL
+    weight: 35
+  - blendShapeName: Mouth_Funnel_DR
+    weight: 35
+  - blendShapeName: Mouth_LowerLip_Depress_L
+    weight: 35
+  - blendShapeName: Mouth_LowerLip_Depress_R
+    weight: 35

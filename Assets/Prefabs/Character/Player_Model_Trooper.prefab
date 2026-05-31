@@ -234,7 +234,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1182102302926149551}
   - component: {fileID: 4581525178676173886}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Trooper_000
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -303,6 +303,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -560,7 +561,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3973018639196747553}
   - component: {fileID: 5555187267186799902}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Trooper_003
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -629,6 +630,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -1328,6 +1330,10 @@ MonoBehaviour:
   animator: {fileID: 963045829911085934}
   rigidbodyTarget: {fileID: -8769395688154957966}
   motionRoot: {fileID: 2233782780378164146}
+  facialExpressionController: {fileID: 0}
+  forceIdleFacialExpressionWhileMoving: 1
+  facialMovementInputThreshold: 0.08
+  facialMovementIdleFadeDuration: 0.08
   speedParam: Speed
   speedDampTime: 0.06
   useSpeedDamping: 1
@@ -2972,7 +2978,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5932470736684030316}
   - component: {fileID: 6421664135047152617}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Trooper_002
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3041,6 +3047,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -3464,10 +3471,22 @@ PrefabInstance:
       propertyPath: m_Radius
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4474029171847269005, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4629526202705887584, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 4632745134331999296, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: owner
       value: 
       objectReference: {fileID: 6731850666202294345}
+    - target: {fileID: 5044348180196338633, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 5139858888524539557, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_Range
       value: 4
@@ -3480,6 +3499,18 @@ PrefabInstance:
       propertyPath: m_Lightmapping
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 5390510657870630339, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7106335262889122852, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7932193296782602446, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 8112315056308737700, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: target
       value: 
@@ -3487,6 +3518,10 @@ PrefabInstance:
     - target: {fileID: 8429578592065255594, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_Name
       value: Torch
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429578592065255594, guid: 545a910e55dc8344d906425675c78d68, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 9200908729908273680, guid: 545a910e55dc8344d906425675c78d68, type: 3}
       propertyPath: m_LocalPosition.x

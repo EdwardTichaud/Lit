@@ -24,7 +24,7 @@ TagManager:
   - Stairs
   - RuntimeOutline
   - CameraObstruction
-  - 
+  - Clothes
   - 
   - 
   - 
@@ -71,3 +71,4 @@ TagManager:
   - Decal Layer 5 - Decal Layer 5 - Decal Layer 5 - Decal Layer 5 - Decal Layer 5
   - Decal Layer 6 - Decal Layer 6 - Decal Layer 6 - Decal Layer 6 - Decal Layer 6
   - Decal Layer 7 - Decal Layer 7 - Decal Layer 7 - Decal Layer 7 - Decal Layer 7
+  m_MigratedRenderPipelines: []

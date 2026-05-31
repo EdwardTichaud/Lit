@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public partial class SquadCharacterController
 {
@@ -29,8 +30,10 @@ public partial class SquadCharacterController
 
     private readonly Collider[] interactionDetectionHits = new Collider[InteractionDetectionHitCapacity];
     private readonly List<ICharacterDetectedInteractable> interactionDetectionCandidates = new List<ICharacterDetectedInteractable>(16);
+    private readonly List<ICharacterDetectedInteractable> switchTargetCandidates = new List<ICharacterDetectedInteractable>(8);
     private readonly HashSet<Object> interactionDetectionUniqueTargets = new HashSet<Object>();
     private ICharacterDetectedInteractable currentDetectedInteractable;
+    private ICharacterDetectedInteractable manualSwitchedInteractable;
 
     public Vector3 GetInteractionOriginWorldPosition()
     {
@@ -68,6 +71,14 @@ public partial class SquadCharacterController
         }
 
         Vector3 origin = GetInteractionOriginWorldPosition();
+        RefreshInteractionDetectionCandidates(origin);
+
+        ICharacterDetectedInteractable bestTarget = SelectBestInteractionTarget(origin);
+        ApplyLocalInteractionTarget(bestTarget);
+    }
+
+    private void RefreshInteractionDetectionCandidates(Vector3 origin)
+    {
         int hitCount = Physics.OverlapSphereNonAlloc(
             origin,
             Mathf.Max(0.1f, interactionDetectionRadius),
@@ -104,28 +115,25 @@ public partial class SquadCharacterController
 
             interactionDetectionCandidates.Add(target);
         }
-
-        ICharacterDetectedInteractable bestTarget = SelectBestInteractionTarget(origin);
-        ApplyLocalInteractionTarget(bestTarget);
     }
 
     private ICharacterDetectedInteractable SelectBestInteractionTarget(Vector3 origin)
     {
         if (interactionDetectionCandidates.Count == 0)
         {
+            manualSwitchedInteractable = null;
             return null;
         }
 
-        Vector3 forward = transform.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.0001f)
+        Vector3 forward = ResolveInteractionForward();
+
+        if (IsSwitchableInteractionTarget(manualSwitchedInteractable) &&
+            TryEvaluateInteractionCandidate(manualSwitchedInteractable, origin, forward, out _, out _))
         {
-            forward = Vector3.forward;
+            return manualSwitchedInteractable;
         }
-        else
-        {
-            forward.Normalize();
-        }
+
+        manualSwitchedInteractable = null;
 
         ICharacterDetectedInteractable bestDirect = null;
         ICharacterDetectedInteractable bestTriggerZone = null;
@@ -135,55 +143,16 @@ public partial class SquadCharacterController
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
         {
             ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
-            if (!(candidate is Object unityCandidate) || unityCandidate == null)
+            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, out bool usesTriggerZone, out float score))
             {
                 continue;
             }
 
-            Collider collider = candidate.GetInteractionDetectionCollider();
-            Transform anchor = candidate.GetInteractionAnchor();
-            bool usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
-            if (usesTriggerZone &&
-                (collider == null ||
-                !collider.isTrigger ||
-                !CharacterInteractionDetection.IsCharacterInsideInteractionCollider(transform, collider)))
-            {
-                continue;
-            }
-
-            Vector3 point = CharacterInteractionDetection.GetInteractionPoint(collider, anchor, origin);
-            Vector3 toPoint = point - origin;
-            float distance = toPoint.magnitude;
-            float maxDistance = Mathf.Max(0.05f, candidate.GetInteractionMaxDistance(this));
-            if (!usesTriggerZone && distance > maxDistance)
-            {
-                continue;
-            }
-
-            Vector3 flatDirection = new Vector3(toPoint.x, 0f, toPoint.z);
-            float forwardDot = 1f;
-            if (!usesTriggerZone && flatDirection.sqrMagnitude > 0.0001f)
-            {
-                forwardDot = Vector3.Dot(flatDirection.normalized, forward);
-                if (forwardDot < interactionMinimumForwardDot)
-                {
-                    continue;
-                }
-            }
-
-            float normalizedDistance = distance / maxDistance;
-            float score = candidate.GetInteractionPriority(this) * 1000f
-                - normalizedDistance * 100f
-                + forwardDot * 10f;
-
-            if (candidate == currentDetectedInteractable)
+            if (ReferenceEquals(candidate, currentDetectedInteractable))
             {
                 score += interactionCurrentTargetBonus * 100f;
             }
 
-            // Les torches/braseros utilisent une grande zone trigger pour Munin.
-            // Une cible directe valide, comme une porte, doit rester prioritaire
-            // quand le joueur est vraiment devant elle.
             if (usesTriggerZone)
             {
                 if (score > bestTriggerZoneScore)
@@ -200,6 +169,189 @@ public partial class SquadCharacterController
         }
 
         return bestDirect != null ? bestDirect : bestTriggerZone;
+    }
+
+    private void OnSwitchTargetPerformed(InputAction.CallbackContext context)
+    {
+        if (!enableCharacterInteractionDetection ||
+            !isActiveAndEnabled ||
+            !IsLocalControlledCharacter() ||
+            InputFocusStack.HasAnyFocus())
+        {
+            return;
+        }
+
+        if (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked())
+        {
+            return;
+        }
+
+        Vector3 origin = GetInteractionOriginWorldPosition();
+        RefreshInteractionDetectionCandidates(origin);
+
+        if (!TrySelectNextSwitchTarget(origin, out ICharacterDetectedInteractable nextTarget))
+        {
+            return;
+        }
+
+        manualSwitchedInteractable = nextTarget;
+        ApplyLocalInteractionTarget(nextTarget);
+    }
+
+    private bool TrySelectNextSwitchTarget(Vector3 origin, out ICharacterDetectedInteractable nextTarget)
+    {
+        nextTarget = null;
+        switchTargetCandidates.Clear();
+
+        Vector3 forward = ResolveInteractionForward();
+        for (int i = 0; i < interactionDetectionCandidates.Count; i++)
+        {
+            ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
+            if (!IsSwitchableInteractionTarget(candidate))
+            {
+                continue;
+            }
+
+            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, out _, out _))
+            {
+                continue;
+            }
+
+            switchTargetCandidates.Add(candidate);
+        }
+
+        if (switchTargetCandidates.Count == 0)
+        {
+            manualSwitchedInteractable = null;
+            return false;
+        }
+
+        switchTargetCandidates.Sort((left, right) => CompareSwitchTargetCandidates(left, right, origin, forward));
+
+        int currentIndex = FindSwitchTargetCandidateIndex(currentDetectedInteractable);
+        if (currentIndex < 0)
+        {
+            currentIndex = FindSwitchTargetCandidateIndex(manualSwitchedInteractable);
+        }
+
+        nextTarget = currentIndex >= 0
+            ? switchTargetCandidates[(currentIndex + 1) % switchTargetCandidates.Count]
+            : switchTargetCandidates[0];
+
+        return nextTarget != null;
+    }
+
+    private int CompareSwitchTargetCandidates(
+        ICharacterDetectedInteractable left,
+        ICharacterDetectedInteractable right,
+        Vector3 origin,
+        Vector3 forward)
+    {
+        TryEvaluateInteractionCandidate(left, origin, forward, out _, out float leftScore);
+        TryEvaluateInteractionCandidate(right, origin, forward, out _, out float rightScore);
+
+        int scoreComparison = rightScore.CompareTo(leftScore);
+        if (scoreComparison != 0)
+        {
+            return scoreComparison;
+        }
+
+        int leftId = left is Object leftObject && leftObject != null ? leftObject.GetInstanceID() : 0;
+        int rightId = right is Object rightObject && rightObject != null ? rightObject.GetInstanceID() : 0;
+        return leftId.CompareTo(rightId);
+    }
+
+    private int FindSwitchTargetCandidateIndex(ICharacterDetectedInteractable target)
+    {
+        if (target == null)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < switchTargetCandidates.Count; i++)
+        {
+            if (ReferenceEquals(switchTargetCandidates[i], target))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private bool TryEvaluateInteractionCandidate(
+        ICharacterDetectedInteractable candidate,
+        Vector3 origin,
+        Vector3 forward,
+        out bool usesTriggerZone,
+        out float score)
+    {
+        usesTriggerZone = false;
+        score = float.NegativeInfinity;
+
+        if (!(candidate is Object unityCandidate) || unityCandidate == null)
+        {
+            return false;
+        }
+
+        if (!candidate.CanBeDetectedBy(this))
+        {
+            return false;
+        }
+
+        Collider collider = candidate.GetInteractionDetectionCollider();
+        Transform anchor = candidate.GetInteractionAnchor();
+        usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
+        if (usesTriggerZone &&
+            (collider == null ||
+            !collider.isTrigger ||
+            !CharacterInteractionDetection.IsCharacterInsideInteractionCollider(transform, collider)))
+        {
+            return false;
+        }
+
+        Vector3 point = CharacterInteractionDetection.GetInteractionPoint(collider, anchor, origin);
+        Vector3 toPoint = point - origin;
+        float distance = toPoint.magnitude;
+        float maxDistance = Mathf.Max(0.05f, candidate.GetInteractionMaxDistance(this));
+        if (!usesTriggerZone && distance > maxDistance)
+        {
+            return false;
+        }
+
+        Vector3 flatDirection = new Vector3(toPoint.x, 0f, toPoint.z);
+        float forwardDot = 1f;
+        if (!usesTriggerZone && flatDirection.sqrMagnitude > 0.0001f)
+        {
+            forwardDot = Vector3.Dot(flatDirection.normalized, forward);
+            if (forwardDot < interactionMinimumForwardDot)
+            {
+                return false;
+            }
+        }
+
+        float normalizedDistance = distance / maxDistance;
+        score = candidate.GetInteractionPriority(this) * 1000f
+            - normalizedDistance * 100f
+            + forwardDot * 10f;
+        return true;
+    }
+
+    private Vector3 ResolveInteractionForward()
+    {
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f)
+        {
+            return Vector3.forward;
+        }
+
+        return forward.normalized;
+    }
+
+    private static bool IsSwitchableInteractionTarget(ICharacterDetectedInteractable target)
+    {
+        return target is Torch || target is Brasero;
     }
 
     private void ApplyLocalInteractionTarget(ICharacterDetectedInteractable target)
@@ -227,6 +379,8 @@ public partial class SquadCharacterController
 
     private void ClearLocalInteractionTarget()
     {
+        manualSwitchedInteractable = null;
+
         if (currentDetectedInteractable == null)
         {
             UpdateMuninInteractionReaction(null);

@@ -11,6 +11,11 @@ public interface ICharacterDetectedInteractable
     void SetDetectedCharacter(GameObject character);
 }
 
+public interface ILocalInteractHandler
+{
+    bool TryHandleLocalInteract();
+}
+
 public static class CharacterInteractionDetection
 {
     public static ICharacterDetectedInteractable ResolveTarget(Collider collider)

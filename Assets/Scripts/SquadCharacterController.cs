@@ -72,6 +72,16 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Transform racine utilise pour le mouvement.")]
     private Transform motionRoot;
 
+    [Header("Facial")]
+    [SerializeField, Tooltip("Controleur facial a neutraliser pendant la locomotion.")]
+    private FacialExpressionController facialExpressionController;
+    [SerializeField, Tooltip("Force l'expression Idle/Neutre quand le personnage se deplace.")]
+    private bool forceIdleFacialExpressionWhileMoving = true;
+    [SerializeField, Range(0f, 1f), Tooltip("Seuil d'input a partir duquel le mouvement force une expression neutre.")]
+    private float facialMovementInputThreshold = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Duree de fade vers Idle quand le mouvement reprend le controle du visage.")]
+    private float facialMovementIdleFadeDuration = 0.08f;
+
     [Header("Animator Params")]
     [SerializeField, Tooltip("Nom du parametre Speed dans l'Animator.")]
     private string speedParam = "Speed";
@@ -326,6 +336,7 @@ public partial class SquadCharacterController : MonoBehaviour
         rigidbodyTarget = GetComponent<Rigidbody>();
         locomotionCapsule = GetComponent<CapsuleCollider>();
         motionRoot = transform;
+        ResolveFacialExpressionController();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
         InitializeTorchState();
@@ -395,6 +406,7 @@ public partial class SquadCharacterController : MonoBehaviour
             motionRoot = transform;
         }
 
+        ResolveFacialExpressionController();
         CacheAudioListener();
         CacheNetworkObject();
         EnsureDynamicMeshCollidersSafe();
@@ -426,10 +438,12 @@ public partial class SquadCharacterController : MonoBehaviour
         RefreshAnimationReferences();
         UpdateAudioListenerState(true);
         ResolveFlightMotorReferences();
+        LocalInputRouter.SwitchTarget += OnSwitchTargetPerformed;
     }
 
     private void OnDisable()
     {
+        LocalInputRouter.SwitchTarget -= OnSwitchTargetPerformed;
         SetFlightMotorActive(false);
         ShutdownFlightFeedback();
         ClearLocalInteractionTarget();
@@ -1629,6 +1643,9 @@ public partial class SquadCharacterController : MonoBehaviour
             motionRoot = transform;
         }
 
+        ResolveFacialExpressionController();
+        facialMovementInputThreshold = Mathf.Clamp01(facialMovementInputThreshold);
+        facialMovementIdleFadeDuration = Mathf.Max(0f, facialMovementIdleFadeDuration);
         walkMoveSpeed = Mathf.Max(0f, walkMoveSpeed);
         moveSpeed = Mathf.Max(0f, moveSpeed);
         walkMoveSpeed = Mathf.Min(walkMoveSpeed, moveSpeed);
@@ -1744,6 +1761,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         moveInputIsWorldSpace = false;
         moveInput = input;
+        ApplyMovementFacialNeutral(ResolveMovementInputMagnitude(input));
         if (input.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
         {
             ClearStoredMovementReference();
@@ -1754,6 +1772,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         moveInputIsWorldSpace = true;
         moveInput = worldInput;
+        ApplyMovementFacialNeutral(ResolveMovementInputMagnitude(worldInput));
         ClearStoredMovementReference();
     }
 
@@ -2160,6 +2179,8 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
+        ApplyMovementFacialNeutral(inputMagnitude);
+
         float targetSpeed = ResolveCurrentTargetMoveSpeed() * inputMagnitude;
         Vector3 desiredHorizontalVelocity = desiredDirection * targetSpeed;
         Vector3 resolvedVelocity = ConstrainHorizontalVelocityAgainstWalls(desiredHorizontalVelocity, deltaTime);
@@ -2184,6 +2205,50 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Transform target = motionRoot != null ? motionRoot : transform;
         target.position += currentHorizontalVelocity * Mathf.Max(0f, deltaTime);
+    }
+
+    private void ApplyMovementFacialNeutral(float inputMagnitude)
+    {
+        if (!forceIdleFacialExpressionWhileMoving || inputMagnitude < facialMovementInputThreshold)
+        {
+            return;
+        }
+
+        ResolveFacialExpressionController();
+        if (facialExpressionController == null)
+        {
+            return;
+        }
+
+        if (facialExpressionController.CurrentPassiveEmotion == FacialEmotion.Idle &&
+            !facialExpressionController.IsPlayingOneShot)
+        {
+            return;
+        }
+
+        facialExpressionController.ForceIdleExpression(facialMovementIdleFadeDuration);
+    }
+
+    private void ResolveFacialExpressionController()
+    {
+        if (facialExpressionController != null)
+        {
+            return;
+        }
+
+        facialExpressionController = GetComponent<FacialExpressionController>();
+        if (facialExpressionController != null)
+        {
+            return;
+        }
+
+        facialExpressionController = GetComponentInChildren<FacialExpressionController>(true);
+        if (facialExpressionController != null)
+        {
+            return;
+        }
+
+        facialExpressionController = GetComponentInParent<FacialExpressionController>();
     }
 
     private void ClearScriptDrivenHorizontalVelocity()

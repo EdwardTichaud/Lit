@@ -16,6 +16,7 @@ public static class LocalInputRouter
         LeftShoulder,
         RightShoulder,
         LocomotionMode,
+        SwitchTarget,
         Multi,
         Start
     }
@@ -30,6 +31,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> LeftShoulder;
     public static event Action<InputAction.CallbackContext> RightShoulder;
     public static event Action<InputAction.CallbackContext> LocomotionMode;
+    public static event Action<InputAction.CallbackContext> SwitchTarget;
     public static event Action<InputAction.CallbackContext> Multi;
     public static event Action<InputAction.CallbackContext> Start;
     public static event Action CameraRecenter;
@@ -217,6 +219,13 @@ public static class LocalInputRouter
         }
 
         interactConsumed = false;
+        if (RuntimeOutlineSelectionManager.ActiveInteractable is ILocalInteractHandler activeHandler &&
+            activeHandler.TryHandleLocalInteract())
+        {
+            interactConsumed = true;
+            return;
+        }
+
         Interact?.Invoke(context);
         if (interactConsumed || InputFocusStack.HasAnyFocus())
         {
@@ -333,6 +342,16 @@ public static class LocalInputRouter
         }
 
         LocomotionMode?.Invoke(context);
+    }
+
+    internal static void RaiseSwitchTarget(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.SwitchTarget))
+        {
+            return;
+        }
+
+        SwitchTarget?.Invoke(context);
     }
 
     internal static void RaiseMulti(InputAction.CallbackContext context)

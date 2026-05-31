@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35ca9331b07343df9e35e9cc4e08678b, type: 3}
+  m_Name: Laugh_FacialPreset
+  m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionPreset
+  emotion: 3
+  mode: 1
+  fadeInDuration: 0.14
+  holdDuration: 0.65
+  fadeOutDuration: 0.22
+  returnToPreviousPassiveExpression: 1
+  blendShapes:
+  - blendShapeName: Mouth_Corner_Pull_L
+    weight: 75
+  - blendShapeName: Mouth_Corner_Pull_R
+    weight: 75
+  - blendShapeName: Mouth_Corner_Up_L
+    weight: 45
+  - blendShapeName: Mouth_Corner_Up_R
+    weight: 45
+  - blendShapeName: Mouth_Dimple_L
+    weight: 35
+  - blendShapeName: Mouth_Dimple_R
+    weight: 35
+  - blendShapeName: Eye_Cheek_Raise_L
+    weight: 50
+  - blendShapeName: Eye_Cheek_Raise_R
+    weight: 50
+  - blendShapeName: Eye_Squint_Inner_L
+    weight: 30
+  - blendShapeName: Eye_Squint_Inner_R
+    weight: 30
+  - blendShapeName: Mouth_LowerLip_Depress_L
+    weight: 20
+  - blendShapeName: Mouth_LowerLip_Depress_R
+    weight: 20

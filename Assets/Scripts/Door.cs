@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
-public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarget, ILitInfluenceReceiver
+public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler, ILeverTarget, ILitInfluenceReceiver
 {
     public enum DoorMotionMode
     {
@@ -361,38 +361,51 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
             return;
         }
 
+        if (!RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        {
+            return;
+        }
+
+        if (TryHandleLocalInteract())
+        {
+            LocalInputRouter.ConsumeInteract();
+        }
+    }
+
+    public bool TryHandleLocalInteract()
+    {
+        if (!useInteractInput || InputFocusStack.HasAnyFocus())
+        {
+            return false;
+        }
+
         GameObject character = ResolveInteractionCharacter();
         if (character == null)
         {
-            return;
+            return false;
         }
 
         if (!TryResolveNextInteractionState(out bool nextOpen))
         {
-            return;
-        }
-
-        if (!LocalInputRouter.TryConsumeInteract())
-        {
-            return;
+            return false;
         }
 
         if (TryGetInteractionBlockMessage(character, nextOpen, out string blockMessage))
         {
             HandleBlockedInteraction(blockMessage);
-            return;
+            return true;
         }
 
         if (IsNetworked() && !IsServer)
         {
             RequestInteractServerRpc(nextOpen);
-            return;
+            return true;
         }
 
         if (!TryConsumeRequiredKey(character, nextOpen))
         {
             HandleBlockedInteraction(missingKeyMessage);
-            return;
+            return true;
         }
 
         wasInteractedOnce = true;
@@ -401,6 +414,8 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
         {
             netIsOpen.Value = isOpen;
         }
+
+        return true;
     }
 
     private bool TryResolveNextInteractionState(out bool nextOpen)
@@ -563,12 +578,61 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILeverTarg
 
     private bool HasRequiredLitInfluence()
     {
-        return !requireLitInfluenceForInteraction || activeLitInfluenceSourceIds.Count > 0;
+        return !requireLitInfluenceForInteraction
+            || activeLitInfluenceSourceIds.Count > 0
+            || HasDirectLitInfluence();
     }
 
     private bool IsFrozenByMissingInfluence()
     {
-        return requireLitInfluenceForInteraction && activeLitInfluenceSourceIds.Count == 0;
+        return requireLitInfluenceForInteraction
+            && activeLitInfluenceSourceIds.Count == 0
+            && !HasDirectLitInfluence();
+    }
+
+    private bool HasDirectLitInfluence()
+    {
+        Collider targetCollider = GetInteractionDetectionCollider();
+        Vector3 fallbackPoint = ResolveLitInfluenceProbePoint(targetCollider);
+
+        if (reactToBraseroInfluence)
+        {
+            Brasero[] braseros = UnityEngine.Object.FindObjectsByType<Brasero>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < braseros.Length; i++)
+            {
+                Brasero brasero = braseros[i];
+                if (brasero != null && brasero.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (reactToTorchInfluence)
+        {
+            Torch[] torches = UnityEngine.Object.FindObjectsByType<Torch>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < torches.Length; i++)
+            {
+                Torch torch = torches[i];
+                if (torch != null && torch.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private Vector3 ResolveLitInfluenceProbePoint(Collider targetCollider)
+    {
+        if (targetCollider != null)
+        {
+            return targetCollider.bounds.center;
+        }
+
+        Transform anchor = GetInteractionAnchor();
+        return anchor != null ? anchor.position : transform.position;
     }
 
     private void HandleBlockedInteraction(string message)
