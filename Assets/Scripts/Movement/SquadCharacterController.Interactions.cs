@@ -17,6 +17,8 @@ public partial class SquadCharacterController
     private float interactionDetectionHeightOffset = 0.9f;
     [SerializeField, Tooltip("Bonus de score applique a la cible deja selectionnee pour limiter le clignotement.")]
     private float interactionCurrentTargetBonus = 0.15f;
+    [SerializeField, Tooltip("Exige qu'au moins une partie de l'objet soit visible par la camera et non cachee par un collider.")]
+    private bool requireInteractionTargetVisibleByCamera = true;
 
     [Header("Munin Reaction")]
     [SerializeField, Tooltip("Fait reagir Munin quand une cible allumable/eteignable est detectee.")]
@@ -126,9 +128,12 @@ public partial class SquadCharacterController
         }
 
         Vector3 forward = ResolveInteractionForward();
+        Camera interactionCamera = requireInteractionTargetVisibleByCamera
+            ? CharacterInteractionDetection.ResolveInteractionCamera()
+            : null;
 
         if (IsSwitchableInteractionTarget(manualSwitchedInteractable) &&
-            TryEvaluateInteractionCandidate(manualSwitchedInteractable, origin, forward, out _, out _))
+            TryEvaluateInteractionCandidate(manualSwitchedInteractable, origin, forward, interactionCamera, out _, out _))
         {
             return manualSwitchedInteractable;
         }
@@ -143,7 +148,7 @@ public partial class SquadCharacterController
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
         {
             ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
-            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, out bool usesTriggerZone, out float score))
+            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, interactionCamera, out bool usesTriggerZone, out float score))
             {
                 continue;
             }
@@ -204,6 +209,9 @@ public partial class SquadCharacterController
         switchTargetCandidates.Clear();
 
         Vector3 forward = ResolveInteractionForward();
+        Camera interactionCamera = requireInteractionTargetVisibleByCamera
+            ? CharacterInteractionDetection.ResolveInteractionCamera()
+            : null;
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
         {
             ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
@@ -212,7 +220,7 @@ public partial class SquadCharacterController
                 continue;
             }
 
-            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, out _, out _))
+            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, interactionCamera, out _, out _))
             {
                 continue;
             }
@@ -226,7 +234,7 @@ public partial class SquadCharacterController
             return false;
         }
 
-        switchTargetCandidates.Sort((left, right) => CompareSwitchTargetCandidates(left, right, origin, forward));
+        switchTargetCandidates.Sort((left, right) => CompareSwitchTargetCandidates(left, right, origin, forward, interactionCamera));
 
         int currentIndex = FindSwitchTargetCandidateIndex(currentDetectedInteractable);
         if (currentIndex < 0)
@@ -245,10 +253,11 @@ public partial class SquadCharacterController
         ICharacterDetectedInteractable left,
         ICharacterDetectedInteractable right,
         Vector3 origin,
-        Vector3 forward)
+        Vector3 forward,
+        Camera interactionCamera)
     {
-        TryEvaluateInteractionCandidate(left, origin, forward, out _, out float leftScore);
-        TryEvaluateInteractionCandidate(right, origin, forward, out _, out float rightScore);
+        TryEvaluateInteractionCandidate(left, origin, forward, interactionCamera, out _, out float leftScore);
+        TryEvaluateInteractionCandidate(right, origin, forward, interactionCamera, out _, out float rightScore);
 
         int scoreComparison = rightScore.CompareTo(leftScore);
         if (scoreComparison != 0)
@@ -283,6 +292,7 @@ public partial class SquadCharacterController
         ICharacterDetectedInteractable candidate,
         Vector3 origin,
         Vector3 forward,
+        Camera interactionCamera,
         out bool usesTriggerZone,
         out float score)
     {
@@ -328,6 +338,17 @@ public partial class SquadCharacterController
             {
                 return false;
             }
+        }
+
+        if (requireInteractionTargetVisibleByCamera &&
+            !CharacterInteractionDetection.IsInteractionTargetVisibleFromCamera(
+                candidate,
+                collider,
+                anchor,
+                interactionCamera,
+                transform))
+        {
+            return false;
         }
 
         float normalizedDistance = distance / maxDistance;

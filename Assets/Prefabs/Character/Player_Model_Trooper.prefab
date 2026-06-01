@@ -1238,6 +1238,7 @@ MonoBehaviour:
   interactionMinimumForwardDot: -0.35
   interactionDetectionHeightOffset: 0.9
   interactionCurrentTargetBonus: 0.15
+  requireInteractionTargetVisibleByCamera: 1
   enableMuninInteractionReaction: 1
   muninTorchProximityReactionIntensity: 0.45
   muninBraseroProximityReactionIntensity: 1

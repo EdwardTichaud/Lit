@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // Contrat minimal pour une cible d'interaction resolue par le personnage local.
@@ -18,6 +19,16 @@ public interface ILocalInteractHandler
 
 public static class CharacterInteractionDetection
 {
+    private const float VisibilityRaycastSkin = 0.03f;
+    private const float VisibilityViewportEpsilon = 0.001f;
+    private const int VisibilitySampleCapacity = 16;
+    private const int VisibilityRaycastHitCapacity = 32;
+
+    private static readonly Plane[] visibilityFrustumPlanes = new Plane[6];
+    private static readonly Vector3[] visibilitySamplePoints = new Vector3[VisibilitySampleCapacity];
+    private static readonly RaycastHit[] visibilityRaycastHits = new RaycastHit[VisibilityRaycastHitCapacity];
+    private static readonly List<Renderer> visibilityRenderers = new List<Renderer>(16);
+
     public static ICharacterDetectedInteractable ResolveTarget(Collider collider)
     {
         if (collider == null)
@@ -166,6 +177,55 @@ public static class CharacterInteractionDetection
         return (point - origin).sqrMagnitude <= distance * distance;
     }
 
+    public static Camera ResolveInteractionCamera()
+    {
+        Camera mainCamera = Camera.main;
+        return mainCamera != null && mainCamera.isActiveAndEnabled ? mainCamera : null;
+    }
+
+    public static bool IsInteractionTargetVisibleFromCamera(
+        ICharacterDetectedInteractable target,
+        Collider collider,
+        Transform anchor,
+        Camera camera,
+        Transform characterRoot)
+    {
+        if (!(target is Component targetComponent) || targetComponent == null || camera == null || !camera.isActiveAndEnabled)
+        {
+            return false;
+        }
+
+        if (!TryResolveVisibilityBounds(targetComponent, collider, anchor, camera, out Bounds bounds))
+        {
+            return false;
+        }
+
+        GeometryUtility.CalculateFrustumPlanes(camera, visibilityFrustumPlanes);
+        if (!GeometryUtility.TestPlanesAABB(visibilityFrustumPlanes, bounds))
+        {
+            return false;
+        }
+
+        Transform targetRoot = targetComponent.transform;
+        Vector3 cameraPosition = camera.transform.position;
+        int sampleCount = FillVisibilitySamplePoints(bounds, cameraPosition, visibilitySamplePoints);
+        for (int i = 0; i < sampleCount; i++)
+        {
+            Vector3 samplePoint = visibilitySamplePoints[i];
+            if (!IsPointInsideCameraViewport(camera, samplePoint))
+            {
+                continue;
+            }
+
+            if (HasUnblockedCameraRay(camera, samplePoint, targetRoot, characterRoot))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static bool UsesTriggerInteractionZone(ICharacterDetectedInteractable target)
     {
         return target is Torch || target is Brasero;
@@ -264,6 +324,180 @@ public static class CharacterInteractionDetection
 
         Vector3 interactionClosestPoint = interactionCollider.ClosestPoint(characterCollider.bounds.center);
         return SupportsClosestPoint(characterCollider) && IsPointInsideCollider(characterCollider, interactionClosestPoint);
+    }
+
+    private static bool TryResolveVisibilityBounds(
+        Component target,
+        Collider collider,
+        Transform anchor,
+        Camera camera,
+        out Bounds bounds)
+    {
+        bounds = new Bounds(Vector3.zero, Vector3.zero);
+        bool hasBounds = false;
+        bool hasRenderer = false;
+
+        visibilityRenderers.Clear();
+        target.GetComponentsInChildren<Renderer>(false, visibilityRenderers);
+        for (int i = 0; i < visibilityRenderers.Count; i++)
+        {
+            Renderer renderer = visibilityRenderers[i];
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            hasRenderer = true;
+            if (!renderer.enabled ||
+                renderer.forceRenderingOff ||
+                !renderer.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            if (!IsLayerVisibleToCamera(camera, renderer.gameObject.layer))
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+        visibilityRenderers.Clear();
+
+        if (!hasBounds && hasRenderer)
+        {
+            return false;
+        }
+
+        if (!hasBounds && IsUsableCollider(collider, true))
+        {
+            bounds = collider.bounds;
+            hasBounds = true;
+        }
+
+        if (!hasBounds && anchor != null)
+        {
+            bounds = new Bounds(anchor.position, Vector3.one * 0.1f);
+            hasBounds = true;
+        }
+
+        if (hasBounds && bounds.size == Vector3.zero)
+        {
+            bounds.size = Vector3.one * 0.1f;
+        }
+
+        return hasBounds;
+    }
+
+    private static int FillVisibilitySamplePoints(Bounds bounds, Vector3 cameraPosition, Vector3[] points)
+    {
+        if (points == null || points.Length < VisibilitySampleCapacity)
+        {
+            return 0;
+        }
+
+        Vector3 center = bounds.center;
+        Vector3 extents = bounds.extents;
+        Vector3 min = bounds.min;
+        Vector3 max = bounds.max;
+
+        int index = 0;
+        points[index++] = center;
+        points[index++] = bounds.ClosestPoint(cameraPosition);
+
+        points[index++] = new Vector3(min.x, min.y, min.z);
+        points[index++] = new Vector3(max.x, min.y, min.z);
+        points[index++] = new Vector3(min.x, max.y, min.z);
+        points[index++] = new Vector3(max.x, max.y, min.z);
+        points[index++] = new Vector3(min.x, min.y, max.z);
+        points[index++] = new Vector3(max.x, min.y, max.z);
+        points[index++] = new Vector3(min.x, max.y, max.z);
+        points[index++] = new Vector3(max.x, max.y, max.z);
+
+        points[index++] = center + new Vector3(extents.x, 0f, 0f);
+        points[index++] = center - new Vector3(extents.x, 0f, 0f);
+        points[index++] = center + new Vector3(0f, extents.y, 0f);
+        points[index++] = center - new Vector3(0f, extents.y, 0f);
+        points[index++] = center + new Vector3(0f, 0f, extents.z);
+        points[index++] = center - new Vector3(0f, 0f, extents.z);
+
+        return index;
+    }
+
+    private static bool IsPointInsideCameraViewport(Camera camera, Vector3 point)
+    {
+        Vector3 viewportPoint = camera.WorldToViewportPoint(point);
+        return viewportPoint.z >= camera.nearClipPlane
+            && viewportPoint.z <= camera.farClipPlane
+            && viewportPoint.x >= -VisibilityViewportEpsilon
+            && viewportPoint.x <= 1f + VisibilityViewportEpsilon
+            && viewportPoint.y >= -VisibilityViewportEpsilon
+            && viewportPoint.y <= 1f + VisibilityViewportEpsilon;
+    }
+
+    private static bool HasUnblockedCameraRay(
+        Camera camera,
+        Vector3 samplePoint,
+        Transform targetRoot,
+        Transform characterRoot)
+    {
+        Vector3 cameraPosition = camera.transform.position;
+        Vector3 toSample = samplePoint - cameraPosition;
+        float distance = toSample.magnitude;
+        if (distance <= VisibilityRaycastSkin)
+        {
+            return true;
+        }
+
+        int occlusionMask = camera.cullingMask & Physics.DefaultRaycastLayers;
+        if (occlusionMask == 0)
+        {
+            occlusionMask = Physics.DefaultRaycastLayers;
+        }
+
+        int hitCount = Physics.RaycastNonAlloc(
+            cameraPosition,
+            toSample / distance,
+            visibilityRaycastHits,
+            distance - VisibilityRaycastSkin,
+            occlusionMask,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = visibilityRaycastHits[i].collider;
+            if (hitCollider == null ||
+                IsColliderUnderRoot(hitCollider, targetRoot) ||
+                IsColliderUnderRoot(hitCollider, characterRoot))
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsColliderUnderRoot(Collider collider, Transform root)
+    {
+        return collider != null
+            && root != null
+            && collider.transform != null
+            && (collider.transform == root || collider.transform.IsChildOf(root));
+    }
+
+    private static bool IsLayerVisibleToCamera(Camera camera, int layer)
+    {
+        return camera != null && (camera.cullingMask & (1 << layer)) != 0;
     }
 
     private static bool TryGetClosestPoint(Collider collider, Vector3 origin, out Vector3 point)
