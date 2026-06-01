@@ -56,15 +56,9 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float obstructionSharpness = 18f;
     [SerializeField] private float releaseSharpness = 10f;
 
-    [Header("Obstruction Visibility")]
+    [Header("Legacy Collision")]
     [SerializeField, Tooltip("Ancien comportement : rapproche/repositionne physiquement la camera pour eviter les murs. Desactive par defaut pour conserver une camera type BG3.")]
     private bool allowLegacyObstacleRepositioning = false;
-    [SerializeField, Tooltip("Installe au runtime les composants qui rendent les obstacles lisibles sans deplacer la camera.")]
-    private bool obstructionVisibilityEnabled = true;
-    [SerializeField, Tooltip("Ajoute les composants d'obstruction manquants sur ce rig au demarrage.")]
-    private bool autoCreateObstructionVisibilityComponents = true;
-    [SerializeField] private CameraLineOfSightObstructionDetector obstructionDetector;
-    [SerializeField] private PlayerVisibilityMaskController visibilityMaskController;
 
     [Header("Trigger-Driven Zoom Test")]
     [SerializeField, Tooltip("Desactive le focus auto et le clamp collision pour tester un zoom pilote manuellement.")]
@@ -161,7 +155,6 @@ public class CameraController : MonoBehaviour
     {
         TryResolveRigReferences();
         ValidateFields();
-        InitializeObstructionVisibility();
         runSpeedEffect?.Initialize(mainCam);
     }
 
@@ -196,8 +189,6 @@ public class CameraController : MonoBehaviour
         {
             return;
         }
-
-        InitializeObstructionVisibility();
 
         float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 1f / 60f;
         if (deltaTime <= 0f)
@@ -826,45 +817,6 @@ public class CameraController : MonoBehaviour
         }
 
         return mainCam != null && cameraAnchor != null && yawPivot != null && pitchPivot != null;
-    }
-
-    private void InitializeObstructionVisibility()
-    {
-        if (!obstructionVisibilityEnabled || !Application.isPlaying)
-        {
-            return;
-        }
-
-        if (obstructionDetector == null)
-        {
-            obstructionDetector = GetComponent<CameraLineOfSightObstructionDetector>();
-        }
-
-        if (obstructionDetector == null && autoCreateObstructionVisibilityComponents)
-        {
-            obstructionDetector = gameObject.AddComponent<CameraLineOfSightObstructionDetector>();
-        }
-
-        if (obstructionDetector == null)
-        {
-            return;
-        }
-
-        if (visibilityMaskController == null)
-        {
-            visibilityMaskController = GetComponent<PlayerVisibilityMaskController>();
-        }
-
-        if (visibilityMaskController == null && autoCreateObstructionVisibilityComponents)
-        {
-            visibilityMaskController = gameObject.AddComponent<PlayerVisibilityMaskController>();
-        }
-
-        obstructionDetector.Configure(mainCam, this);
-        if (visibilityMaskController != null)
-        {
-            visibilityMaskController.Configure(mainCam, this, obstructionDetector);
-        }
     }
 
     private void OnValidate()

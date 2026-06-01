@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4549783860717671751}
   - component: {fileID: 5769309916759911821}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Flight_Trail_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -161,7 +161,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4935708366942636872}
   - component: {fileID: 7267373595369754781}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Flight_Trail_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -351,7 +351,7 @@ GameObject:
   - component: {fileID: 880945654765737532}
   - component: {fileID: 2272791694640596917}
   - component: {fileID: 3281333903003229964}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Player_Model_MechanicGirl
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -851,7 +851,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3387296976044038359}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Flight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -920,7 +920,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3917050594962542366}
   - component: {fileID: 2793583741567286860}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Flight_Trail_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1071,7 +1071,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6414792646257714515}
   - component: {fileID: 6979491885954159899}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Flight_Trail_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}

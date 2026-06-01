@@ -21,6 +21,14 @@ public class MuninIndependentFollower : MonoBehaviour
     private Vector3 baseOffset = new Vector3(0.7f, 2.3f, 0f);
     [SerializeField, Min(0.01f), Tooltip("Temps d'amortissement du suivi principal.")]
     private float followSmoothTime = 0.22f;
+    [SerializeField, Min(0f), Tooltip("Anticipe legerement la vitesse horizontale du joueur pour eviter le retard visible en sprint.")]
+    private float targetVelocityLeadTime = 0.08f;
+    [SerializeField, Range(0.1f, 0.98f), Tooltip("Ratio de la distance max a partir duquel Munin accelere son rattrapage.")]
+    private float catchUpDistanceRatio = 0.88f;
+    [SerializeField, Range(0.05f, 1f), Tooltip("Multiplicateur du smooth time pendant le rattrapage. Plus bas = rattrapage plus rapide.")]
+    private float catchUpSmoothTimeMultiplier = 0.45f;
+    [SerializeField, Min(0f), Tooltip("Lissage de la vitesse cible utilisee pour l'anticipation.")]
+    private float targetVelocitySharpness = 12f;
     [SerializeField, Min(0f), Tooltip("Distance maximale autorisee entre Munin et le joueur. 0 desactive la limite.")]
     private float maxDistanceFromTarget = 3f;
     [SerializeField, Min(0f), Tooltip("Distance minimale optionnelle pour eviter que Munin traverse le centre du joueur.")]
@@ -68,6 +76,11 @@ public class MuninIndependentFollower : MonoBehaviour
     private Vector3 smoothVelocity;
     private Vector3 currentWorldPosition;
     private bool hasCurrentWorldPosition;
+    private Transform velocityTarget;
+    private Rigidbody targetRigidbody;
+    private Vector3 lastTargetPosition;
+    private Vector3 smoothedTargetVelocity;
+    private bool hasLastTargetPosition;
     private Quaternion keptWorldRotation = Quaternion.identity;
     private bool hasKeptWorldRotation;
     private Vector3 driftSeed;
@@ -95,6 +108,7 @@ public class MuninIndependentFollower : MonoBehaviour
         ResolveDefaultTarget();
         InitializeRandomSeeds();
         CaptureWorldPose();
+        ResetTargetVelocityTracking();
         ScheduleNextSpasm();
     }
 
@@ -102,6 +116,7 @@ public class MuninIndependentFollower : MonoBehaviour
     {
         ResolveDefaultTarget();
         CaptureWorldPose();
+        ResetTargetVelocityTracking();
         if (spasmCooldownRemaining <= 0f)
         {
             ScheduleNextSpasm();
@@ -130,7 +145,8 @@ public class MuninIndependentFollower : MonoBehaviour
         }
 
         float deltaTime = Mathf.Max(0f, Time.deltaTime);
-        Vector3 targetPosition = ResolveBaseTargetPosition() + EvaluateDrift() + EvaluateSpasm(deltaTime);
+        Vector3 targetPosition = ResolveFollowTargetPosition(deltaTime);
+        float effectiveSmoothTime = ResolveEffectiveFollowSmoothTime();
 
         // Le calcul reste base sur la derniere position monde controlee par ce script.
         // Ainsi, la rotation du parent ne pollue pas le SmoothDamp entre deux frames.
@@ -138,14 +154,23 @@ public class MuninIndependentFollower : MonoBehaviour
             currentWorldPosition,
             targetPosition,
             ref smoothVelocity,
-            followSmoothTime,
+            effectiveSmoothTime,
             Mathf.Infinity,
             deltaTime);
 
         Vector3 constrainedPosition = ConstrainDistanceFromTarget(nextPosition);
         if ((constrainedPosition - nextPosition).sqrMagnitude > 0.000001f)
         {
-            smoothVelocity = Vector3.zero;
+            Vector3 radial = constrainedPosition - targetPlayer.position;
+            if (radial.sqrMagnitude > 0.0001f)
+            {
+                smoothVelocity = Vector3.ProjectOnPlane(smoothVelocity, radial.normalized);
+            }
+            else
+            {
+                smoothVelocity = Vector3.zero;
+            }
+
             nextPosition = constrainedPosition;
         }
 
@@ -169,6 +194,7 @@ public class MuninIndependentFollower : MonoBehaviour
     {
         targetPlayer = target;
         CaptureWorldPose();
+        ResetTargetVelocityTracking();
     }
 
     public void SetState(FollowState newState)
@@ -254,6 +280,90 @@ public class MuninIndependentFollower : MonoBehaviour
             Random.Range(10f, 1000f),
             Random.Range(10f, 1000f),
             Random.Range(10f, 1000f));
+    }
+
+    private Vector3 ResolveFollowTargetPosition(float deltaTime)
+    {
+        Vector3 targetPosition = ResolveBaseTargetPosition();
+        if (targetVelocityLeadTime > 0f)
+        {
+            Vector3 targetVelocity = Vector3.ProjectOnPlane(ResolveTargetVelocity(deltaTime), Vector3.up);
+            targetPosition += targetVelocity * targetVelocityLeadTime;
+        }
+
+        return targetPosition + EvaluateDrift() + EvaluateSpasm(deltaTime);
+    }
+
+    private Vector3 ResolveTargetVelocity(float deltaTime)
+    {
+        if (targetPlayer == null)
+        {
+            ResetTargetVelocityTracking();
+            return Vector3.zero;
+        }
+
+        if (velocityTarget != targetPlayer)
+        {
+            velocityTarget = targetPlayer;
+            targetRigidbody = targetPlayer.GetComponent<Rigidbody>();
+            lastTargetPosition = targetPlayer.position;
+            hasLastTargetPosition = true;
+            smoothedTargetVelocity = targetRigidbody != null ? targetRigidbody.linearVelocity : Vector3.zero;
+            return smoothedTargetVelocity;
+        }
+
+        Vector3 rawVelocity = Vector3.zero;
+        if (targetRigidbody != null)
+        {
+            rawVelocity = targetRigidbody.linearVelocity;
+        }
+        else if (hasLastTargetPosition && deltaTime > 0.0001f)
+        {
+            rawVelocity = (targetPlayer.position - lastTargetPosition) / deltaTime;
+        }
+
+        lastTargetPosition = targetPlayer.position;
+        hasLastTargetPosition = true;
+
+        if (targetVelocitySharpness <= 0f || deltaTime <= 0f)
+        {
+            smoothedTargetVelocity = rawVelocity;
+        }
+        else
+        {
+            float t = 1f - Mathf.Exp(-targetVelocitySharpness * deltaTime);
+            smoothedTargetVelocity = Vector3.Lerp(smoothedTargetVelocity, rawVelocity, t);
+        }
+
+        return smoothedTargetVelocity;
+    }
+
+    private void ResetTargetVelocityTracking()
+    {
+        velocityTarget = null;
+        targetRigidbody = null;
+        lastTargetPosition = Vector3.zero;
+        smoothedTargetVelocity = Vector3.zero;
+        hasLastTargetPosition = false;
+    }
+
+    private float ResolveEffectiveFollowSmoothTime()
+    {
+        if (maxDistanceFromTarget <= 0f || targetPlayer == null || !hasCurrentWorldPosition)
+        {
+            return followSmoothTime;
+        }
+
+        float distance = (currentWorldPosition - targetPlayer.position).magnitude;
+        float catchUpStart = maxDistanceFromTarget * catchUpDistanceRatio;
+        if (distance <= catchUpStart)
+        {
+            return followSmoothTime;
+        }
+
+        float catchUpAmount = Mathf.InverseLerp(catchUpStart, maxDistanceFromTarget, distance);
+        float catchUpSmoothTime = followSmoothTime * catchUpSmoothTimeMultiplier;
+        return Mathf.Lerp(followSmoothTime, catchUpSmoothTime, catchUpAmount);
     }
 
     private Vector3 ResolveBaseTargetPosition()
@@ -400,6 +510,10 @@ public class MuninIndependentFollower : MonoBehaviour
     private void ValidateSettings()
     {
         followSmoothTime = Mathf.Max(0.01f, followSmoothTime);
+        targetVelocityLeadTime = Mathf.Max(0f, targetVelocityLeadTime);
+        catchUpDistanceRatio = Mathf.Clamp(catchUpDistanceRatio, 0.1f, 0.98f);
+        catchUpSmoothTimeMultiplier = Mathf.Clamp(catchUpSmoothTimeMultiplier, 0.05f, 1f);
+        targetVelocitySharpness = Mathf.Max(0f, targetVelocitySharpness);
         maxDistanceFromTarget = Mathf.Max(0f, maxDistanceFromTarget);
         minDistanceFromTarget = Mathf.Max(0f, minDistanceFromTarget);
         driftAmplitude = Mathf.Max(0f, driftAmplitude);

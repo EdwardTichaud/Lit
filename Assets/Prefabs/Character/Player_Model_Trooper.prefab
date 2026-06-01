@@ -234,7 +234,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1182102302926149551}
   - component: {fileID: 4581525178676173886}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Trooper_000
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -561,7 +561,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3973018639196747553}
   - component: {fileID: 5555187267186799902}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Trooper_003
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1045,7 +1045,7 @@ GameObject:
   - component: {fileID: 880945654765737532}
   - component: {fileID: 2272791694640596917}
   - component: {fileID: 3281333903003229964}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Player_Model_Trooper
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -2978,7 +2978,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5932470736684030316}
   - component: {fileID: 6421664135047152617}
-  m_Layer: 6
+  m_Layer: 12
   m_Name: Trooper_002
   m_TagString: Untagged
   m_Icon: {fileID: 0}

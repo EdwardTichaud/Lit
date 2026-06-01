@@ -25,9 +25,9 @@ TagManager:
   - RuntimeOutline
   - CameraObstruction
   - Clothes
-  - 
-  - 
-  - 
+  - Obstacle
+  - Player
+  - XRayEnvironment
   - 
   - 
   - 
