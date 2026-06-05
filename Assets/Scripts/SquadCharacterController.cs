@@ -315,6 +315,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public bool IsGrounded => isGrounded;
     public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
+    public bool IsCharacterTorchSystemEnabled => CharacterTorchSystemEnabled;
     public float WalkMoveSpeed => walkMoveSpeed;
     public float MoveSpeed => moveSpeed;
 
@@ -346,7 +347,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private void Update()
     {
         // Torche + collisions en runtime.
-        if (!IsExternalLocomotionDriverActive)
+        if (CharacterTorchSystemEnabled && !IsExternalLocomotionDriverActive)
         {
             UpdateTorchLifetime(Time.deltaTime);
         }
@@ -1759,6 +1760,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Move(Vector2 input)
     {
+        if (TryForwardMoveToUcc(input, isWorldSpace: false))
+        {
+            return;
+        }
+
         moveInputIsWorldSpace = false;
         moveInput = input;
         ApplyMovementFacialNeutral(ResolveMovementInputMagnitude(input));
@@ -1770,6 +1776,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void MoveWorld(Vector2 worldInput)
     {
+        if (TryForwardMoveToUcc(worldInput, isWorldSpace: true))
+        {
+            return;
+        }
+
         moveInputIsWorldSpace = true;
         moveInput = worldInput;
         ApplyMovementFacialNeutral(ResolveMovementInputMagnitude(worldInput));
@@ -1779,15 +1790,23 @@ public partial class SquadCharacterController : MonoBehaviour
     public void SetSprintModifier(bool pressed)
     {
         sprintModifierPressed = pressed;
+        TryForwardSprintToUcc(pressed);
     }
 
     public void Jump()
     {
+        if (TryForwardJumpToUcc())
+        {
+            return;
+        }
+
         RequestCommittedJump();
     }
 
     public void Stop()
     {
+        TryForwardStopToUcc();
+
         moveInputIsWorldSpace = false;
         moveInput = Vector2.zero;
         smoothedInput = Vector2.zero;
@@ -2784,11 +2803,7 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             torchEquipped = false;
             ApplyTorchVisualState(false);
-            if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
-            {
-                animator.SetBool(torchBoolParam, false);
-                SyncTorchAnimationStateImmediate();
-            }
+            SetTorchAnimatorBool(false, true);
             UpdateTorchAnimationLayerWeight(immediate: true);
             return;
         }
@@ -2804,11 +2819,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         ApplyTorchVisualState(torchEquipped);
 
-        if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
-        {
-            animator.SetBool(torchBoolParam, torchEquipped);
-            SyncTorchAnimationStateImmediate();
-        }
+        SetTorchAnimatorBool(torchEquipped, true);
 
         UpdateTorchAnimationLayerWeight(immediate: true);
 
@@ -2816,17 +2827,18 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             torchEquipped = false;
             ApplyTorchVisualState(false);
-            if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
-            {
-                animator.SetBool(torchBoolParam, false);
-                SyncTorchAnimationStateImmediate();
-            }
+            SetTorchAnimatorBool(false, true);
             UpdateTorchAnimationLayerWeight(immediate: true);
         }
     }
 
     public void TickTorchLifetimeForExternalLocomotion(float deltaTime)
     {
+        if (!CharacterTorchSystemEnabled)
+        {
+            return;
+        }
+
         UpdateTorchLifetime(deltaTime);
     }
 
@@ -2943,11 +2955,7 @@ public partial class SquadCharacterController : MonoBehaviour
         ApplyTorchVisualState(false);
         ClearPendingTorchVisualTransition();
 
-        if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
-        {
-            animator.SetBool(torchBoolParam, false);
-            SyncTorchAnimationStateImmediate();
-        }
+        SetTorchAnimatorBool(false, true);
 
         UpdateTorchAnimationLayerWeight(immediate: true);
         SyncTorchStateToCharacterData();
@@ -2963,10 +2971,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         torchEquipped = equipped;
 
-        if (animator != null && !string.IsNullOrWhiteSpace(torchBoolParam))
-        {
-            animator.SetBool(torchBoolParam, torchEquipped);
-        }
+        SetTorchAnimatorBool(torchEquipped, false);
 
         QueueTorchVisualTransition(equipped);
         UpdateTorchAnimationLayerWeight(immediate: true);
@@ -3064,7 +3069,21 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool CanDelayTorchVisualTransition()
     {
         return GetTorchAnimationLayerIndex() >= 0
-            && !string.IsNullOrWhiteSpace(torchBoolParam);
+            && HasAnimatorParameter(torchBoolParam, AnimatorControllerParameterType.Bool);
+    }
+
+    private void SetTorchAnimatorBool(bool value, bool syncImmediate)
+    {
+        if (!HasAnimatorParameter(torchBoolParam, AnimatorControllerParameterType.Bool))
+        {
+            return;
+        }
+
+        animator.SetBool(torchBoolParam, value);
+        if (syncImmediate)
+        {
+            SyncTorchAnimationStateImmediate();
+        }
     }
 
     private bool IsTorchAnimationStateActive(TorchVisualTransition transition)

@@ -538,18 +538,6 @@ MonoBehaviour:
   heightProbeObstacleStepLimit: 0.35
   heightProbeStepSurfaceInset: 0.08
   heightProbeForwardScanLimit: 0.9
-  enableCharacterInteractionDetection: 1
-  interactionDetectionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  interactionDetectionRadius: 2.25
-  interactionMinimumForwardDot: -0.35
-  interactionDetectionHeightOffset: 0.9
-  interactionCurrentTargetBonus: 0.15
-  requireInteractionTargetVisibleByCamera: 1
-  enableMuninInteractionReaction: 1
-  muninTorchProximityReactionIntensity: 0.45
-  muninBraseroProximityReactionIntensity: 1
   enableCommittedJump: 1
   anticipationDuration: 0.08
   impulseDelay: 0.02
@@ -626,6 +614,18 @@ MonoBehaviour:
   fallingStateName: Falling
   naturalLandingStateName: Landing
   maxWalkableSlopeAngle: 55
+  enableCharacterInteractionDetection: 1
+  interactionDetectionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  interactionDetectionRadius: 2.25
+  interactionMinimumForwardDot: -0.35
+  interactionDetectionHeightOffset: 0.9
+  interactionCurrentTargetBonus: 0.15
+  requireInteractionTargetVisibleByCamera: 1
+  enableMuninInteractionReaction: 1
+  muninTorchProximityReactionIntensity: 0.45
+  muninBraseroProximityReactionIntensity: 1
   items: []
   equippedInteractionItems: []
   startingTorchSeconds: 300

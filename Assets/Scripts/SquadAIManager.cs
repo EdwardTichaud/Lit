@@ -1247,6 +1247,23 @@ public class SquadAIManager : MonoBehaviour
             destination = hit.position;
         }
 
+        LitUccFollowerBridge uccFollower = follower.GetComponent<LitUccFollowerBridge>();
+        if (uccFollower != null && uccFollower.TryTeleport(destination))
+        {
+            state.lastPosition = destination;
+            state.lastProgressTime = Time.time;
+            return true;
+        }
+
+        LitOpsiveLocomotionBridge uccBridge = follower.GetComponent<LitOpsiveLocomotionBridge>();
+        if (uccBridge != null && uccBridge.SetExternalPositionAndRotation(destination, follower.transform.rotation, stopActiveAbilities: true))
+        {
+            uccBridge.StopBridgeInput();
+            state.lastPosition = destination;
+            state.lastProgressTime = Time.time;
+            return true;
+        }
+
         Rigidbody rb = follower.GetComponent<Rigidbody>();
         if (rb != null)
         {

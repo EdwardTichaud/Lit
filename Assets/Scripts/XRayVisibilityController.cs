@@ -19,14 +19,20 @@ public sealed class XRayVisibilityController : MonoBehaviour
     [Header("Detection")]
     [SerializeField] private LayerMask obstacleDetectionMask;
     [SerializeField] private string obstacleLayerName = "Obstacle";
+    [SerializeField, Tooltip("Layers supplementaires conserves pour les anciens objets de scene qui ont ete serialises sur un layer maintenant non nomme.")]
+    private int[] legacyObstacleLayerIndices = { 19 };
     [SerializeField] private bool useSphereCast = true;
     [SerializeField] private float sphereCastRadius = 0.25f;
     [SerializeField] private int maxHits = 32;
+    [SerializeField, Tooltip("Ignore les objets qui participent deja aux interactions ou a l'Outline runtime, afin de ne pas casser leur layer temporaire.")]
+    private bool ignoreInteractableAndOutlineObstacles = true;
 
     [Header("Renderer Occlusion")]
-    [SerializeField, Tooltip("Si actif, le masque XRay ne s'active que lorsque tous les points testes du SkinnedMeshRenderer sont caches.")]
+    [SerializeField, Tooltip("Si actif, le masque XRay utilise plusieurs points du SkinnedMeshRenderer au lieu du seul pivot joueur.")]
     private bool requireFullRendererOcclusion = true;
     [SerializeField, Range(1, 13)] private int rendererOcclusionSampleCount = 9;
+    [SerializeField, Range(0.1f, 1f), Tooltip("Part des points du renderer qui doivent etre masques avant d'activer le XRay.")]
+    private float rendererOcclusionRequiredSampleRatio = 0.5f;
     [SerializeField, Range(0.25f, 1f)] private float boundsSampleScale = 0.85f;
     [SerializeField, Min(0f), Tooltip("Rayon optionnel pour les tests de visibilite du renderer. 0 = raycast fin.")]
     private float visibilityProbeRadius = 0f;
@@ -36,6 +42,8 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool debugDraw = true;
+    [SerializeField, Tooltip("Log si aucune cible joueur n'est trouvee. Desactive par defaut car la squad peut etre instanciee apres XRayCam.")]
+    private bool warnWhenPlayerTargetMissing;
 
     private const QueryTriggerInteraction TriggerInteraction = QueryTriggerInteraction.Ignore;
 
@@ -53,6 +61,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
     private int cachedMaxHits;
     private bool warnedMissingReferences;
     private bool warnedMissingRenderer;
+    private bool warnedMissingPlayer;
     private Transform ignoredPlayerRoot;
 
     private static readonly Vector2[] RendererSampleOffsets =
@@ -127,15 +136,12 @@ public sealed class XRayVisibilityController : MonoBehaviour
             maskFollower = GetComponentInChildren<XRayMaskFollower>(true);
         }
 
-        if (playerTarget == null)
-        {
-            playerTarget = FindPlayerTargetByLayer();
-        }
+        RefreshPlayerTarget();
     }
 
     private bool HasRequiredReferences()
     {
-        if (mainCamera != null && maskFollower != null && playerTarget != null)
+        if (mainCamera != null && maskFollower != null && IsUsablePlayerTarget(playerTarget))
         {
             warnedMissingReferences = false;
             return true;
@@ -193,6 +199,128 @@ public sealed class XRayVisibilityController : MonoBehaviour
         hitBuffer = new RaycastHit[cachedMaxHits];
     }
 
+    private void RefreshPlayerTarget()
+    {
+        Transform controlledTarget = ResolveControlledCharacterTarget();
+        if (controlledTarget != null)
+        {
+            AssignPlayerTarget(controlledTarget, "personnage local controle");
+            return;
+        }
+
+        if (IsUsablePlayerTarget(playerTarget))
+        {
+            warnedMissingPlayer = false;
+            return;
+        }
+
+        AssignPlayerTarget(FindPlayerTargetInScene(), "detection scene");
+    }
+
+    private Transform ResolveControlledCharacterTarget()
+    {
+        GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
+        if (controlled == null || !controlled.activeInHierarchy)
+        {
+            return null;
+        }
+
+        SquadCharacterController controller = controlled.GetComponent<SquadCharacterController>();
+        if (controller == null)
+        {
+            controller = controlled.GetComponentInParent<SquadCharacterController>();
+        }
+
+        return controller != null ? controller.transform : controlled.transform;
+    }
+
+    private void AssignPlayerTarget(Transform newTarget, string source)
+    {
+        if (newTarget == null)
+        {
+            if (!IsUsablePlayerTarget(playerTarget))
+            {
+                RestoreAllLayers();
+                playerTarget = null;
+                playerRenderer = null;
+                ignoredPlayerRoot = null;
+            }
+
+            if (warnWhenPlayerTargetMissing && !warnedMissingPlayer)
+            {
+                Debug.LogWarning($"[XRay] Aucun player target actif trouve pour {name}.");
+                warnedMissingPlayer = true;
+            }
+
+            return;
+        }
+
+        warnedMissingPlayer = false;
+
+        if (playerTarget == newTarget)
+        {
+            return;
+        }
+
+        RestoreAllLayers();
+        playerTarget = newTarget;
+        playerRenderer = null;
+        ignoredPlayerRoot = null;
+        warnedMissingRenderer = false;
+
+        Debug.Log($"[XRay] Player target detecte automatiquement ({source}): {newTarget.name}.");
+    }
+
+    private bool IsUsablePlayerTarget(Transform candidate)
+    {
+        return candidate != null && candidate.gameObject.activeInHierarchy;
+    }
+
+    private Transform FindPlayerTargetInScene()
+    {
+        Transform taggedPlayer = FindTaggedPlayerTarget();
+        if (taggedPlayer != null)
+        {
+            return taggedPlayer;
+        }
+
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            SquadCharacterController controller = controllers[i];
+            if (controller != null && controller.gameObject.activeInHierarchy)
+            {
+                return controller.transform;
+            }
+        }
+
+        return FindPlayerTargetByLayer();
+    }
+
+    private Transform FindTaggedPlayerTarget()
+    {
+        GameObject[] taggedPlayers = GameObject.FindGameObjectsWithTag("Player");
+        Transform fallback = null;
+
+        for (int i = 0; i < taggedPlayers.Length; i++)
+        {
+            GameObject candidate = taggedPlayers[i];
+            if (candidate == null || !candidate.activeInHierarchy)
+            {
+                continue;
+            }
+
+            if (candidate.TryGetComponent(out SquadCharacterController _))
+            {
+                return candidate.transform;
+            }
+
+            fallback ??= candidate.transform;
+        }
+
+        return fallback;
+    }
+
     private Transform FindPlayerTargetByLayer()
     {
         int layer = LayerMask.NameToLayer(playerLayerName);
@@ -216,19 +344,11 @@ public sealed class XRayVisibilityController : MonoBehaviour
             Transform parent = candidate.parent;
             if (parent == null || parent.gameObject.layer != layer)
             {
-                Debug.Log($"[XRay] Player target detecte automatiquement: {candidate.name}.");
                 return candidate;
             }
         }
 
-        if (fallback != null)
-        {
-            Debug.Log($"[XRay] Player target detecte automatiquement: {fallback.name}.");
-            return fallback;
-        }
-
-        Debug.LogWarning($"[XRay] Aucun objet actif trouve sur le layer '{playerLayerName}'.");
-        return null;
+        return fallback;
     }
 
     private void ConfigureMaskFollower()
@@ -240,6 +360,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
         maskFollower.SetMainCamera(mainCamera);
         maskFollower.SetTarget(playerTarget);
+        maskFollower.WorldOffset = targetOffset;
     }
 
     private void DetectObstacles()
@@ -261,9 +382,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
             return;
         }
 
-        Vector3 origin = mainCamera.transform.position;
-        Vector3 target = playerTarget.position + targetOffset;
-        TryCollectOccludingHits(origin, target, useSphereCast ? sphereCastRadius : 0f, currentObstacles, out _);
+        DetectCenterLineOcclusion();
     }
 
     private void DetectFullRendererOcclusion()
@@ -274,10 +393,11 @@ public sealed class XRayVisibilityController : MonoBehaviour
             {
                 Debug.LogWarning(
                     $"[XRay] Aucun SkinnedMeshRenderer cible trouve pour {name}. " +
-                    $"Assigne playerRenderer ou verifie le nom '{preferredSkinnedMeshRendererName}'.");
+                    $"Assigne playerRenderer ou verifie le nom '{preferredSkinnedMeshRendererName}'. Fallback sur le pivot joueur.");
                 warnedMissingRenderer = true;
             }
 
+            DetectCenterLineOcclusion();
             return;
         }
 
@@ -286,11 +406,18 @@ public sealed class XRayVisibilityController : MonoBehaviour
         Bounds bounds = playerRenderer.bounds;
         if (bounds.size.sqrMagnitude <= 0.0001f)
         {
+            DetectCenterLineOcclusion();
             return;
         }
 
         Vector3 origin = mainCamera.transform.position;
         int sampleCount = Mathf.Clamp(rendererOcclusionSampleCount, 1, RendererSampleOffsets.Length);
+        int requiredOccludedSamples = Mathf.Clamp(
+            Mathf.CeilToInt(sampleCount * rendererOcclusionRequiredSampleRatio),
+            1,
+            sampleCount);
+        int occludedSampleCount = 0;
+
         rendererOcclusionCounts.Clear();
         sampleObstacles.Clear();
 
@@ -307,10 +434,10 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
             if (!occluded)
             {
-                currentObstacles.Clear();
-                return;
+                continue;
             }
 
+            occludedSampleCount++;
             foreach (GameObject obstacle in sampleObstacles)
             {
                 if (rendererOcclusionCounts.TryGetValue(obstacle, out int count))
@@ -324,13 +451,26 @@ public sealed class XRayVisibilityController : MonoBehaviour
             }
         }
 
+        if (occludedSampleCount < requiredOccludedSamples)
+        {
+            currentObstacles.Clear();
+            return;
+        }
+
         foreach (KeyValuePair<GameObject, int> pair in rendererOcclusionCounts)
         {
-            if (pair.Key != null && pair.Value >= sampleCount)
+            if (pair.Key != null && pair.Value > 0)
             {
                 currentObstacles.Add(pair.Key);
             }
         }
+    }
+
+    private void DetectCenterLineOcclusion()
+    {
+        Vector3 origin = mainCamera.transform.position;
+        Vector3 target = playerTarget.position + targetOffset;
+        TryCollectOccludingHits(origin, target, useSphereCast ? sphereCastRadius : 0f, currentObstacles, out _);
     }
 
     private bool TryCollectOccludingHits(
@@ -352,9 +492,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
         direction /= distance;
 
-        int effectiveMask = obstacleLayer >= 0
-            ? obstacleDetectionMask.value | (1 << obstacleLayer)
-            : obstacleDetectionMask.value;
+        int effectiveMask = BuildEffectiveObstacleMask();
 
         int hitCount = radius > 0f
             ? Physics.SphereCastNonAlloc(origin, radius, direction, hitBuffer, distance, effectiveMask, TriggerInteraction)
@@ -371,7 +509,10 @@ public sealed class XRayVisibilityController : MonoBehaviour
             }
 
             GameObject obstacle = ResolveLayerChangeTarget(hitCollider);
-            if (obstacle == null || obstacle.layer == playerLayer)
+            if (obstacle == null ||
+                obstacle.layer == playerLayer ||
+                IsTransformUnderIgnoredRoot(obstacle.transform) ||
+                ShouldIgnoreObstacle(hitCollider, obstacle))
             {
                 continue;
             }
@@ -386,6 +527,60 @@ public sealed class XRayVisibilityController : MonoBehaviour
         }
 
         return occluded;
+    }
+
+    private int BuildEffectiveObstacleMask()
+    {
+        int effectiveMask = obstacleDetectionMask.value;
+
+        if (obstacleLayer >= 0)
+        {
+            effectiveMask |= 1 << obstacleLayer;
+        }
+
+        if (legacyObstacleLayerIndices != null)
+        {
+            for (int i = 0; i < legacyObstacleLayerIndices.Length; i++)
+            {
+                int layer = legacyObstacleLayerIndices[i];
+                if (layer >= 0 && layer <= 31)
+                {
+                    effectiveMask |= 1 << layer;
+                }
+            }
+        }
+
+        if (playerLayer >= 0)
+        {
+            effectiveMask &= ~(1 << playerLayer);
+        }
+
+        return effectiveMask;
+    }
+
+    private bool ShouldIgnoreObstacle(Collider hitCollider, GameObject obstacle)
+    {
+        if (!ignoreInteractableAndOutlineObstacles)
+        {
+            return false;
+        }
+
+        if (CharacterInteractionDetection.ResolveTarget(hitCollider) != null)
+        {
+            return true;
+        }
+
+        return HasRuntimeOutlineTarget(hitCollider, obstacle);
+    }
+
+    private static bool HasRuntimeOutlineTarget(Collider hitCollider, GameObject obstacle)
+    {
+        if (hitCollider != null && hitCollider.GetComponentInParent<RuntimeOutlineTarget>() != null)
+        {
+            return true;
+        }
+
+        return obstacle != null && obstacle.GetComponentInChildren<RuntimeOutlineTarget>(true) != null;
     }
 
     private GameObject ResolveLayerChangeTarget(Collider hitCollider)
@@ -581,6 +776,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
         maxHits = Mathf.Clamp(maxHits, 1, 256);
         sphereCastRadius = Mathf.Max(0.01f, sphereCastRadius);
         rendererOcclusionSampleCount = Mathf.Clamp(rendererOcclusionSampleCount, 1, RendererSampleOffsets.Length);
+        rendererOcclusionRequiredSampleRatio = Mathf.Clamp(rendererOcclusionRequiredSampleRatio, 0.1f, 1f);
         boundsSampleScale = Mathf.Clamp(boundsSampleScale, 0.25f, 1f);
         visibilityProbeRadius = Mathf.Max(0f, visibilityProbeRadius);
     }
@@ -597,18 +793,43 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
     private void UpdateIgnoredPlayerRoot()
     {
-        ignoredPlayerRoot = playerTarget;
-        if (ignoredPlayerRoot == null)
+        ignoredPlayerRoot = ResolvePlayerRoot(playerTarget);
+    }
+
+    private Transform ResolvePlayerRoot(Transform candidate)
+    {
+        if (candidate == null)
         {
-            return;
+            return null;
         }
 
-        while (ignoredPlayerRoot.parent != null &&
-               (ignoredPlayerRoot.parent.gameObject.layer == playerLayer ||
-                ignoredPlayerRoot.parent.CompareTag("Player")))
+        SquadCharacterController controller = candidate.GetComponentInParent<SquadCharacterController>();
+        if (controller != null)
         {
-            ignoredPlayerRoot = ignoredPlayerRoot.parent;
+            return controller.transform;
         }
+
+        Transform root = candidate;
+        Transform current = candidate;
+        while (current != null)
+        {
+            if (IsPlayerMarker(current))
+            {
+                root = current;
+            }
+
+            current = current.parent;
+        }
+
+        return root;
+    }
+
+    private bool IsPlayerMarker(Transform candidate)
+    {
+        return candidate != null &&
+               (candidate.CompareTag("Player") ||
+                candidate.gameObject.layer == playerLayer ||
+                candidate.GetComponent<SquadCharacterController>() != null);
     }
 
     private SkinnedMeshRenderer FindPlayerRenderer()

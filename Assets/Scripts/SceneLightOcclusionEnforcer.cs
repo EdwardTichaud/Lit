@@ -8,7 +8,8 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
 {
     [Header("Runtime")]
     [SerializeField] private bool enforceOnEnable = true;
-    [SerializeField] private bool enforceContinuously = true;
+    [SerializeField, Tooltip("Desactive par defaut: scanner toutes les lumieres et tous les renderers en continu est couteux. Active seulement pour du debug ou des scenes qui spawnent du decor/lumieres dynamiques.")]
+    private bool enforceContinuously = false;
     [SerializeField, Min(0.1f)] private float refreshInterval = 1f;
     [SerializeField] private bool includeInactiveLights = true;
 

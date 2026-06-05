@@ -7,6 +7,20 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.opsive.shared": {
+      "version": "file:com.opsive.shared",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.opsive.ultimatecharactercontroller": {
+      "version": "file:com.opsive.ultimatecharactercontroller",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.opsive.shared": "2.0.0"
+      }
+    },
     "com.unity.2d.animation": {
       "version": "14.0.4",
       "depth": 1,
@@ -326,7 +340,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.render-pipelines.core": "17.2.0"
+        "com.unity.render-pipelines.core": "17.4.0"
       }
     },
     "com.unity.searcher": {

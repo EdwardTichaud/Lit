@@ -99,7 +99,7 @@ public class StabReading : MonoBehaviour, ICharacterDetectedInteractable
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
-        CloseReadingPanel(playAudio: false);
+        CloseReadingPanel(playAudio: false, resolveMissingReferences: false);
         DestroyInteractionInstance();
         currentCharacter = null;
     }
@@ -320,10 +320,14 @@ public class StabReading : MonoBehaviour, ICharacterDetectedInteractable
         return current;
     }
 
-    private void SetReadingPanelVisible(bool visible)
+    private void SetReadingPanelVisible(bool visible, bool resolveMissingReferences = true)
     {
-        ResolveStabPanel();
-        ResolvePanelCanvasGroup();
+        if (resolveMissingReferences || stabPanel != null)
+        {
+            ResolveStabPanel();
+            ResolvePanelCanvasGroup();
+        }
+
         if (stabPanel == null)
         {
             return;
@@ -350,11 +354,11 @@ public class StabReading : MonoBehaviour, ICharacterDetectedInteractable
         stabPanel.SetActive(visible);
     }
 
-    private void CloseReadingPanel(bool playAudio)
+    private void CloseReadingPanel(bool playAudio, bool resolveMissingReferences = true)
     {
         bool wasOpen = readingOpen;
         readingOpen = false;
-        SetReadingPanelVisible(false);
+        SetReadingPanelVisible(false, resolveMissingReferences);
         InputFocusStack.Pop(this);
         if (wasOpen && playAudio)
         {

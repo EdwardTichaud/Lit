@@ -5,6 +5,10 @@ using UnityEngine.Rendering.HighDefinition;
 [DisallowMultipleComponent]
 public sealed class DecorCullable : MonoBehaviour
 {
+    [Header("Runtime")]
+    [SerializeField, Tooltip("Ancien culling decoratif. Laisse desactive pour eviter que des renderers disparaissent/reapparaissent quand la camera bouge.")]
+    private bool enableRuntimeCulling = false;
+
     [Header("Bounds")]
     [SerializeField] private Transform boundsRoot;
     [SerializeField] private bool includeInactiveChildren = true;
@@ -35,6 +39,7 @@ public sealed class DecorCullable : MonoBehaviour
     private bool isRegistered;
 
     public bool IsCulled => isCulled;
+    public bool RuntimeCullingEnabled => enableRuntimeCulling;
 
     internal BoundingSphere CurrentBoundingSphere
     {
@@ -115,18 +120,19 @@ public sealed class DecorCullable : MonoBehaviour
             return;
         }
 
+        if (!enableRuntimeCulling)
+        {
+            RestoreRuntimeVisibilityState();
+            return;
+        }
+
         DecorCullingManager.Register(this);
         isRegistered = true;
     }
 
     private void OnDisable()
     {
-        if (isCulled || isLightDistanceCulled)
-        {
-            isLightDistanceCulled = false;
-            ApplyVisibleState();
-            isCulled = false;
-        }
+        RestoreRuntimeVisibilityState();
 
         if (isRegistered)
         {
@@ -148,6 +154,17 @@ public sealed class DecorCullable : MonoBehaviour
         {
             ApplyLightPerformanceSettings();
             boundsDirty = true;
+        }
+
+        if (Application.isPlaying && !enableRuntimeCulling)
+        {
+            if (isRegistered)
+            {
+                DecorCullingManager.Unregister(this);
+                isRegistered = false;
+            }
+
+            RestoreRuntimeVisibilityState();
         }
     }
 
@@ -246,6 +263,12 @@ public sealed class DecorCullable : MonoBehaviour
 
     internal void SetCulled(bool culled)
     {
+        if (!enableRuntimeCulling)
+        {
+            RestoreRuntimeVisibilityState();
+            return;
+        }
+
         if (isCulled == culled)
         {
             return;
@@ -266,6 +289,12 @@ public sealed class DecorCullable : MonoBehaviour
 
     internal void SetLightDistanceCulled(bool culled)
     {
+        if (!enableRuntimeCulling)
+        {
+            RestoreRuntimeVisibilityState();
+            return;
+        }
+
         if (!disableLights || targetLights == null || targetLights.Length == 0)
         {
             isLightDistanceCulled = false;
@@ -295,6 +324,18 @@ public sealed class DecorCullable : MonoBehaviour
                 ApplyLightVisibleState();
             }
         }
+    }
+
+    private void RestoreRuntimeVisibilityState()
+    {
+        if (!isCulled && !isLightDistanceCulled)
+        {
+            return;
+        }
+
+        isLightDistanceCulled = false;
+        ApplyVisibleState();
+        isCulled = false;
     }
 
     private void CaptureTargetStates(bool captureLights = true)

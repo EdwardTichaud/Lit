@@ -38,7 +38,7 @@ public sealed class DecorCullingManager : MonoBehaviour
 
     public static void Register(DecorCullable cullable)
     {
-        if (cullable == null)
+        if (cullable == null || !cullable.RuntimeCullingEnabled)
         {
             return;
         }
@@ -149,6 +149,11 @@ public sealed class DecorCullingManager : MonoBehaviour
 
     private void RegisterInternal(DecorCullable cullable)
     {
+        if (cullable == null || !cullable.RuntimeCullingEnabled)
+        {
+            return;
+        }
+
         if (cullableIndices.ContainsKey(cullable))
         {
             return;

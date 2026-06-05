@@ -86,6 +86,7 @@ public class BraseroDisplayManager : MonoBehaviour
     private static readonly HashSet<IBraseroDisplayTarget> RegisteredTargets = new HashSet<IBraseroDisplayTarget>();
     private static readonly List<IBraseroDisplayTarget> RefreshBuffer = new List<IBraseroDisplayTarget>();
     private static readonly List<IBraseroDisplayTarget> RemovalBuffer = new List<IBraseroDisplayTarget>();
+    private static bool isApplicationQuitting;
 
     [SerializeField, Tooltip("Ecrit un log quand les affichages de braseros sont rafraichis.")]
     private bool logRefreshes;
@@ -165,6 +166,11 @@ public class BraseroDisplayManager : MonoBehaviour
 
     public static BraseroDisplayManager GetOrCreate()
     {
+        if (isApplicationQuitting)
+        {
+            return null;
+        }
+
         if (ActiveInstance != null)
         {
             return ActiveInstance;
@@ -190,6 +196,16 @@ public class BraseroDisplayManager : MonoBehaviour
         return host.AddComponent<BraseroDisplayManager>();
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        ActiveInstance = null;
+        RegisteredTargets.Clear();
+        RefreshBuffer.Clear();
+        RemovalBuffer.Clear();
+        isApplicationQuitting = false;
+    }
+
     private void OnEnable()
     {
         if (ActiveInstance != null && ActiveInstance != this)
@@ -208,6 +224,11 @@ public class BraseroDisplayManager : MonoBehaviour
         {
             ActiveInstance = null;
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        isApplicationQuitting = true;
     }
 
     private static BraseroDisplaySnapshot FromAgeManager(AgeManager manager)

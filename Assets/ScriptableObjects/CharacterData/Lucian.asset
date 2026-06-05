@@ -45,3 +45,6 @@ MonoBehaviour:
   torchSecondsRemaining: 0
   torchEquipped: 0
   inventoryInitialized: 0
+  muninChargesRemaining: 0
+  muninMaxCharges: 3
+  muninChargesInitialized: 0

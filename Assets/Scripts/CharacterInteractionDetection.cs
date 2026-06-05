@@ -94,10 +94,43 @@ public static class CharacterInteractionDetection
                 return ghost;
             }
 
+            if (TryResolveGenericInteractable(current, out ICharacterDetectedInteractable genericTarget))
+            {
+                return genericTarget;
+            }
+
             current = current.parent;
         }
 
         return null;
+    }
+
+    private static bool TryResolveGenericInteractable(Transform current, out ICharacterDetectedInteractable target)
+    {
+        target = null;
+        if (current == null)
+        {
+            return false;
+        }
+
+        MonoBehaviour[] behaviours = current.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            MonoBehaviour behaviour = behaviours[i];
+            if (behaviour == null || !behaviour.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            if (behaviour is ICharacterDetectedInteractable interactable &&
+                TimePeriodVisibility.IsVisibleFor(behaviour))
+            {
+                target = interactable;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static Collider ResolveInteractionCollider(Component owner, Collider preferred)

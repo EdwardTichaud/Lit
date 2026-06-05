@@ -1378,6 +1378,11 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
+        if (controller.HasUccLocomotionBridge)
+        {
+            useFlightMotorForLocalPlayer = false;
+        }
+
         SquadCharacterController flightMotorController = RefreshFlightMotorController(controller);
         if (flightMotorController != null && flightMotorController.IsFlightMotorActive)
         {
@@ -1409,6 +1414,11 @@ public class SquadManager : MonoBehaviour
 
         controller.SetSprintModifier(sprintRequested);
         controller.Move(rawMoveInput);
+
+        if (locomotionModeRequested && controller.TryToggleUccHeightChange())
+        {
+            locomotionModeRequested = false;
+        }
 
         if (jumpRequested)
         {

@@ -5,6 +5,18 @@ using UnityEngine;
 public class CrpgCameraFocus
 {
     [SerializeField] private float followSharpness = 8f;
+    [SerializeField, Tooltip("Sharpness used when the followed target is moving fast. Lower values add more camera lag/smoothing.")]
+    private float highSpeedFollowSharpness = 4.25f;
+    [SerializeField, Tooltip("Target horizontal speed where extra follow smoothing starts.")]
+    private float highSpeedSmoothingStart = 4.5f;
+    [SerializeField, Tooltip("Target horizontal speed where extra follow smoothing reaches full strength.")]
+    private float highSpeedSmoothingFull = 7f;
+    [SerializeField, Tooltip("Maximum distance the smoothed focus can lag behind the followed target.")]
+    private float maxFollowLagDistance = 2.25f;
+    [SerializeField, Tooltip("Distance above which the focus snaps to a new target instead of smoothing, mostly for teleports or scene changes.")]
+    private float followSnapDistance = 12f;
+    [SerializeField, Tooltip("Smoothing applied to the estimated target speed used by the adaptive follow.")]
+    private float targetSpeedSharpness = 10f;
     [SerializeField] private float freePanSharpness = 12f;
     [Header("Free Camera")]
     [SerializeField] private float freeCameraMaxDistance = 20f;
@@ -21,6 +33,9 @@ public class CrpgCameraFocus
     private bool freeCameraModeActive;
     private Vector3 desiredFocusPoint;
     private Vector3 currentFocusPoint;
+    private Vector3 lastTargetFocusPoint;
+    private bool hasLastTargetFocusPoint;
+    private float smoothedTargetSpeed;
 
     public Vector3 CurrentFocusPoint => currentFocusPoint;
     public bool FollowActive => followActive;
@@ -29,6 +44,12 @@ public class CrpgCameraFocus
     public void Validate()
     {
         followSharpness = Mathf.Max(0f, followSharpness);
+        highSpeedFollowSharpness = Mathf.Max(0f, highSpeedFollowSharpness);
+        highSpeedSmoothingStart = Mathf.Max(0f, highSpeedSmoothingStart);
+        highSpeedSmoothingFull = Mathf.Max(highSpeedSmoothingStart + 0.01f, highSpeedSmoothingFull);
+        maxFollowLagDistance = Mathf.Max(0f, maxFollowLagDistance);
+        followSnapDistance = Mathf.Max(0f, followSnapDistance);
+        targetSpeedSharpness = Mathf.Max(0f, targetSpeedSharpness);
         freePanSharpness = Mathf.Max(0f, freePanSharpness);
         freeCameraMaxDistance = Mathf.Max(0f, freeCameraMaxDistance);
         freeCameraSoftZone = Mathf.Clamp(freeCameraSoftZone, 0f, freeCameraMaxDistance);
@@ -42,6 +63,9 @@ public class CrpgCameraFocus
         freeCameraModeActive = false;
         desiredFocusPoint = Vector3.zero;
         currentFocusPoint = Vector3.zero;
+        lastTargetFocusPoint = Vector3.zero;
+        hasLastTargetFocusPoint = false;
+        smoothedTargetSpeed = 0f;
     }
 
     public void SnapTo(Vector3 point)
@@ -51,6 +75,9 @@ public class CrpgCameraFocus
         freeCameraModeActive = false;
         desiredFocusPoint = point;
         currentFocusPoint = point;
+        lastTargetFocusPoint = point;
+        hasLastTargetFocusPoint = true;
+        smoothedTargetSpeed = 0f;
     }
 
     public void SetFreeCameraMode(bool active)
@@ -127,6 +154,7 @@ public class CrpgCameraFocus
         {
             freeCameraModeActive = false;
             followActive = true;
+            ResetTargetSpeed(targetFocusPoint);
         }
 
         bool suppressPanForFrame = recenterRequested || (toggleFreeCameraRequested && !freeCameraModeActive);
@@ -138,14 +166,22 @@ public class CrpgCameraFocus
 
         if (followActive)
         {
+            UpdateTargetSpeed(targetFocusPoint, deltaTime);
             desiredFocusPoint = targetFocusPoint;
         }
         else if (freeCameraModeActive)
         {
+            ResetTargetSpeed(targetFocusPoint);
             desiredFocusPoint = ClampFreeCameraPoint(desiredFocusPoint, targetFocusPoint);
         }
 
-        float sharpness = followActive ? followSharpness : freePanSharpness;
+        if (ShouldSnapToFollowTarget(targetFocusPoint))
+        {
+            SnapTo(targetFocusPoint);
+            return currentFocusPoint;
+        }
+
+        float sharpness = followActive ? ResolveFollowSharpness() : freePanSharpness;
         if (sharpness <= 0f)
         {
             currentFocusPoint = desiredFocusPoint;
@@ -156,7 +192,65 @@ public class CrpgCameraFocus
             currentFocusPoint = Vector3.Lerp(currentFocusPoint, desiredFocusPoint, t);
         }
 
+        ClampFollowLag();
         return currentFocusPoint;
+    }
+
+    private void UpdateTargetSpeed(Vector3 targetFocusPoint, float deltaTime)
+    {
+        if (!hasLastTargetFocusPoint || deltaTime <= 0f)
+        {
+            ResetTargetSpeed(targetFocusPoint);
+            return;
+        }
+
+        Vector3 delta = targetFocusPoint - lastTargetFocusPoint;
+        lastTargetFocusPoint = targetFocusPoint;
+
+        Vector3 planarDelta = Vector3.ProjectOnPlane(delta, Vector3.up);
+        float rawSpeed = planarDelta.magnitude / deltaTime;
+        float t = targetSpeedSharpness <= 0f ? 1f : 1f - Mathf.Exp(-targetSpeedSharpness * deltaTime);
+        smoothedTargetSpeed = Mathf.Lerp(smoothedTargetSpeed, rawSpeed, t);
+    }
+
+    private void ResetTargetSpeed(Vector3 targetFocusPoint)
+    {
+        lastTargetFocusPoint = targetFocusPoint;
+        hasLastTargetFocusPoint = true;
+        smoothedTargetSpeed = 0f;
+    }
+
+    private float ResolveFollowSharpness()
+    {
+        float speedWeight = Mathf.InverseLerp(highSpeedSmoothingStart, highSpeedSmoothingFull, smoothedTargetSpeed);
+        return Mathf.Lerp(followSharpness, highSpeedFollowSharpness, speedWeight);
+    }
+
+    private bool ShouldSnapToFollowTarget(Vector3 targetFocusPoint)
+    {
+        if (!followActive || followSnapDistance <= 0f)
+        {
+            return false;
+        }
+
+        return Vector3.Distance(currentFocusPoint, targetFocusPoint) > followSnapDistance;
+    }
+
+    private void ClampFollowLag()
+    {
+        if (!followActive || maxFollowLagDistance <= 0f)
+        {
+            return;
+        }
+
+        Vector3 lag = currentFocusPoint - desiredFocusPoint;
+        float lagDistance = lag.magnitude;
+        if (lagDistance <= maxFollowLagDistance || lagDistance <= 0.0001f)
+        {
+            return;
+        }
+
+        currentFocusPoint = desiredFocusPoint + lag.normalized * maxFollowLagDistance;
     }
 
     private Vector3 ClampFreeCameraPoint(Vector3 point, Vector3 center)

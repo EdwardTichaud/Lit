@@ -43,8 +43,10 @@ public class AgeManager : MonoBehaviour
     private int currentYear = DefaultStartYear;
 
     private readonly HashSet<Brasero> subscribedBraseros = new HashSet<Brasero>();
+    private readonly List<Renderer> shaderAgeRenderers = new List<Renderer>();
     private MaterialPropertyBlock shaderAgePropertyBlock;
     private int masterShaderAgeAmountPropertyId;
+    private bool shaderAgeRendererCacheDirty = true;
 
     public IReadOnlyList<Brasero> Braseros => ancientBraseros;
     public IReadOnlyList<Brasero> AncientBraseros => ancientBraseros;
@@ -104,6 +106,8 @@ public class AgeManager : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeFromBraseros();
+        shaderAgeRenderers.Clear();
+        shaderAgeRendererCacheDirty = true;
 
         if (ReferenceEquals(ActiveInstance, this))
         {
@@ -117,6 +121,7 @@ public class AgeManager : MonoBehaviour
         yearsPerBrasero = Mathf.Max(1, yearsPerBrasero);
         currentYear = ClampYear(currentYear);
         CacheShaderPropertyIds();
+        shaderAgeRendererCacheDirty = true;
     }
 
     public void RefreshAndResubscribe()
@@ -212,6 +217,30 @@ public class AgeManager : MonoBehaviour
             return;
         }
 
+        EnsureShaderAgeRendererCache();
+        for (int i = shaderAgeRenderers.Count - 1; i >= 0; i--)
+        {
+            Renderer renderer = shaderAgeRenderers[i];
+            if (renderer == null)
+            {
+                shaderAgeRenderers.RemoveAt(i);
+                continue;
+            }
+
+            ApplyShaderAgePropertyBlock(renderer);
+        }
+    }
+
+    public void RefreshShaderAgeRendererCache()
+    {
+        shaderAgeRendererCacheDirty = false;
+        shaderAgeRenderers.Clear();
+
+        if (!CanDriveMasterShaderAgeAmount())
+        {
+            return;
+        }
+
 #if UNITY_2023_1_OR_NEWER
         Renderer[] renderers = includeInactiveMasterShaderRenderers
             ? FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None)
@@ -222,7 +251,11 @@ public class AgeManager : MonoBehaviour
 
         for (int i = 0; i < renderers.Length; i++)
         {
-            ApplyShaderAgeToRenderer(renderers[i]);
+            Renderer renderer = renderers[i];
+            if (RendererHasProperty(renderer, masterShaderAgeAmountPropertyId))
+            {
+                shaderAgeRenderers.Add(renderer);
+            }
         }
     }
 
@@ -234,6 +267,24 @@ public class AgeManager : MonoBehaviour
         }
 
         if (!RendererHasProperty(renderer, masterShaderAgeAmountPropertyId))
+        {
+            return;
+        }
+
+        ApplyShaderAgePropertyBlock(renderer);
+    }
+
+    private void EnsureShaderAgeRendererCache()
+    {
+        if (shaderAgeRendererCacheDirty)
+        {
+            RefreshShaderAgeRendererCache();
+        }
+    }
+
+    private void ApplyShaderAgePropertyBlock(Renderer renderer)
+    {
+        if (renderer == null)
         {
             return;
         }

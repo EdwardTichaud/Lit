@@ -32,6 +32,12 @@ public partial class SquadCharacterController
 
         if (applied > 0)
         {
+            LitUccDamageBridge uccDamageBridge = GetComponent<LitUccDamageBridge>();
+            if (uccDamageBridge != null)
+            {
+                uccDamageBridge.NotifyDamageApplied(applied, currentHp <= 0, source);
+            }
+
             PlayActionAudio(currentHp <= 0 ? ActionAudioCue.CharacterDeath : ActionAudioCue.CharacterDamage);
         }
 

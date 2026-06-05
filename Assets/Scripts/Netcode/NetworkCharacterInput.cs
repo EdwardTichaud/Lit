@@ -14,6 +14,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     private Vector2 lastSentMove;
     private bool wantsRun;
     private bool lastSentRun;
+    private bool locomotionModeRequested;
     private bool triggerMuninRequested;
     private float nextSendTime;
 
@@ -61,6 +62,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Move += OnMoveChanged;
         LocalInputRouter.Jump += OnJump;
+        LocalInputRouter.LocomotionMode += OnLocomotionMode;
         LocalInputRouter.TriggerMunin += OnTriggerMunin;
     }
 
@@ -68,12 +70,14 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         LocalInputRouter.Move -= OnMoveChanged;
         LocalInputRouter.Jump -= OnJump;
+        LocalInputRouter.LocomotionMode -= OnLocomotionMode;
         LocalInputRouter.TriggerMunin -= OnTriggerMunin;
         rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
         wantsRun = false;
         lastSentRun = false;
+        locomotionModeRequested = false;
         triggerMuninRequested = false;
         if (controller != null)
         {
@@ -88,6 +92,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            locomotionModeRequested = false;
             triggerMuninRequested = false;
             return;
         }
@@ -97,6 +102,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            locomotionModeRequested = false;
             triggerMuninRequested = false;
             if (controller != null)
             {
@@ -120,6 +126,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            locomotionModeRequested = false;
             triggerMuninRequested = false;
             controller.SetSprintModifier(false);
             if (lastSentMove != Vector2.zero || lastSentRun)
@@ -142,6 +149,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             : rawMoveInput;
 
         HandleTriggerMuninRequest();
+        HandleLocomotionModeRequest();
 
         if (Time.time < nextSendTime &&
             (pendingMove - lastSentMove).sqrMagnitude < 0.0001f &&
@@ -193,6 +201,21 @@ public class NetworkCharacterInput : NetworkBehaviour
         triggerMuninRequested = true;
     }
 
+    private void OnLocomotionMode(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    {
+        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
+        {
+            return;
+        }
+
+        if (!context.performed || IsGameplayInputBlocked())
+        {
+            return;
+        }
+
+        locomotionModeRequested = true;
+    }
+
     private void HandleTriggerMuninRequest()
     {
         if (!triggerMuninRequested)
@@ -207,6 +230,23 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         TriggerMuninServerRpc();
+    }
+
+    private void HandleLocomotionModeRequest()
+    {
+        if (!locomotionModeRequested)
+        {
+            return;
+        }
+
+        locomotionModeRequested = false;
+        if (ShouldUseHostLocalMovePath())
+        {
+            ApplyHostLocalLocomotionMode();
+            return;
+        }
+
+        ToggleLocomotionModeServerRpc();
     }
 
     private void OnJump(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -310,6 +350,19 @@ public class NetworkCharacterInput : NetworkBehaviour
         controller.Jump();
     }
 
+    private void ApplyHostLocalLocomotionMode()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller != null)
+        {
+            controller.TryToggleUccHeightChange();
+        }
+    }
+
     [ServerRpc]
     private void SubmitMoveServerRpc(Vector2 input, bool runPressed)
     {
@@ -342,6 +395,20 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         controller.QueueCommittedJumpInput(worldInput, isWorldSpace: true);
         controller.Jump();
+    }
+
+    [ServerRpc]
+    private void ToggleLocomotionModeServerRpc()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        if (controller != null)
+        {
+            controller.TryToggleUccHeightChange();
+        }
     }
 
     [ServerRpc]

@@ -72,6 +72,12 @@ public partial class SquadCharacterController
             return;
         }
 
+        if (!CanUseLitInteractionsWithUcc())
+        {
+            ClearLocalInteractionTarget();
+            return;
+        }
+
         Vector3 origin = GetInteractionOriginWorldPosition();
         RefreshInteractionDetectionCandidates(origin);
 
@@ -191,6 +197,12 @@ public partial class SquadCharacterController
             return;
         }
 
+        if (!CanUseLitInteractionsWithUcc())
+        {
+            ClearLocalInteractionTarget();
+            return;
+        }
+
         Vector3 origin = GetInteractionOriginWorldPosition();
         RefreshInteractionDetectionCandidates(origin);
 
@@ -305,6 +317,11 @@ public partial class SquadCharacterController
         }
 
         if (!candidate.CanBeDetectedBy(this))
+        {
+            return false;
+        }
+
+        if (!CanUseLitInteractableWithUcc(candidate))
         {
             return false;
         }
