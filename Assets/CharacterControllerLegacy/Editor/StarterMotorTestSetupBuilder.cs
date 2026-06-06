@@ -7,10 +7,12 @@ using UnityEngine.SceneManagement;
 
 public static class StarterMotorTestSetupBuilder
 {
-    private const string SourcePrefabPath = "Assets/Prefabs/Character/Player_Model_MechanicGirl.prefab";
-    private const string TestPrefabPath = "Assets/Prefabs/Character/Player_Model_MechanicGirl_StarterMotorTest.prefab";
+    private const string SourcePrefabPath = "Assets/Prefabs/Character/Player_Model_Lucian.prefab";
+    private const string GeneratedFolderPath = "Assets/CharacterControllerLegacy/Generated";
+    private const string TestPrefabPath = GeneratedFolderPath + "/Player_Model_Lucian_StarterMotorTest.prefab";
     private const string TestScenePath = "Assets/CharacterControllerLegacy/Scenes/StarterMotorTest.unity";
     private const string TestAnimatorControllerPath = "Assets/Animations/Player_Model_StarterMotorTest.controller";
+    private const string TestCharacterName = "Player_Model_Lucian_StarterMotorTest";
 
     [MenuItem("Tools/Movement/Create Starter Motor Test Setup")]
     public static void BuildFromMenu()
@@ -32,7 +34,7 @@ public static class StarterMotorTestSetupBuilder
     {
         EditorSceneManager.OpenScene(TestScenePath, OpenSceneMode.Single);
 
-        GameObject testCharacter = GameObject.Find("Player_Model_MechanicGirl_StarterMotorTest");
+        GameObject testCharacter = GameObject.Find(TestCharacterName);
         if (testCharacter == null)
         {
             throw new InvalidOperationException("Starter motor validation failed: test character not found.");
@@ -120,6 +122,7 @@ public static class StarterMotorTestSetupBuilder
 
     private static void CreateOrUpdateTestPrefab()
     {
+        EnsureGeneratedFolder();
         if (!AssetDatabase.CopyAsset(SourcePrefabPath, TestPrefabPath) &&
             AssetDatabase.LoadAssetAtPath<GameObject>(TestPrefabPath) == null)
         {
@@ -130,7 +133,7 @@ public static class StarterMotorTestSetupBuilder
         GameObject root = PrefabUtility.LoadPrefabContents(TestPrefabPath);
         try
         {
-            root.name = "Player_Model_MechanicGirl_StarterMotorTest";
+            root.name = TestCharacterName;
             DisableOldRuntimeFlow(root);
 
             CharacterController controller = root.GetComponent<CharacterController>();
@@ -170,6 +173,14 @@ public static class StarterMotorTestSetupBuilder
         finally
         {
             PrefabUtility.UnloadPrefabContents(root);
+        }
+    }
+
+    private static void EnsureGeneratedFolder()
+    {
+        if (!AssetDatabase.IsValidFolder(GeneratedFolderPath))
+        {
+            AssetDatabase.CreateFolder("Assets/CharacterControllerLegacy", "Generated");
         }
     }
 

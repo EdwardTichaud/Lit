@@ -121,9 +121,9 @@ public class InfoBoxUI : MonoBehaviour
         if (ui == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            ui = FindFirstObjectByType<InfoBoxUI>();
+            ui = FindAnyObjectByType<InfoBoxUI>();
 #else
-            ui = FindObjectOfType<InfoBoxUI>();
+            ui = FindAnyObjectByType<InfoBoxUI>();
 #endif
         }
 
@@ -152,9 +152,9 @@ public class InfoBoxUI : MonoBehaviour
         if (ui == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            ui = FindFirstObjectByType<InfoBoxUI>();
+            ui = FindAnyObjectByType<InfoBoxUI>();
 #else
-            ui = FindObjectOfType<InfoBoxUI>();
+            ui = FindAnyObjectByType<InfoBoxUI>();
 #endif
         }
 
@@ -174,9 +174,9 @@ public class InfoBoxUI : MonoBehaviour
         if (ui == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            ui = FindFirstObjectByType<InfoBoxUI>();
+            ui = FindAnyObjectByType<InfoBoxUI>();
 #else
-            ui = FindObjectOfType<InfoBoxUI>();
+            ui = FindAnyObjectByType<InfoBoxUI>();
 #endif
         }
 

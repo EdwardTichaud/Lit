@@ -113,7 +113,7 @@ public class KnowledgeManager : MonoBehaviour
             return Instance;
         }
 
-        KnowledgeManager existing = FindObjectOfType<KnowledgeManager>();
+        KnowledgeManager existing = FindAnyObjectByType<KnowledgeManager>();
         if (existing != null)
         {
             Instance = existing;

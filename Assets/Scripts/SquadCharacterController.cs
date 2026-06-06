@@ -188,32 +188,6 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Utilise la matrice de collision du layer pour la detection du sol.")]
     private bool voidUseCollisionMatrixMask = true;
 
-    [Header("Foot IK")]
-    [SerializeField, Tooltip("Active l'IK des pieds pour stabiliser l'ancrage au sol.")]
-    private bool enableFootIk = true;
-    [SerializeField, Tooltip("Poids max de l'IK (0-1).")]
-    private float footIkWeight = 1f;
-    [SerializeField, Tooltip("Poids position IK (0-1).")]
-    private float footIkPositionWeight = 1f;
-    [SerializeField, Tooltip("Poids rotation IK (0-1).")]
-    private float footIkRotationWeight = 1f;
-    [SerializeField, Tooltip("Poids rotation IK applique uniquement a l'Idle pour eviter de vriller les jambes tout en gardant les appuis stables.")]
-    private float footIkIdleRotationWeight = 0.2f;
-    [SerializeField, Tooltip("Vitesse max pour activer l'IK (m/s).")]
-    private float footIkSpeedThreshold = 0.15f;
-    [SerializeField, Tooltip("Vitesse de blend du poids IK.")]
-    private float footIkBlendSpeed = 10f;
-    [SerializeField, Tooltip("Offset vertical des pieds (m).")]
-    private float footIkHeightOffset = 0.02f;
-    [SerializeField, Tooltip("Raycast vers le haut pour trouver le sol (m).")]
-    private float footIkRaycastUp = 0.25f;
-    [SerializeField, Tooltip("Raycast vers le bas pour trouver le sol (m).")]
-    private float footIkRaycastDown = 0.6f;
-    [SerializeField, Tooltip("LayerMask utilise pour l'IK des pieds.")]
-    private LayerMask footIkLayerMask = ~0;
-    [SerializeField, Tooltip("Utilise la matrice de collision du layer pour l'IK.")]
-    private bool footIkUseCollisionMatrixMask = true;
-
     [Header("Torch")]
     [SerializeField, Tooltip("Autorise TriggerMunin a allumer/eteindre la torche.")]
     private bool allowTorchToggle = true;
@@ -294,7 +268,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private NetworkObject cachedNetworkObject;
     private readonly RaycastHit[] movementCastHits = new RaycastHit[8];
     private readonly Collider[] movementOverlapHits = new Collider[8];
-    private float footIkWeightCurrent;
     private float heightProbeVerticalOffsetThisStep;
     private static PhysicsMaterial lowFrictionLocomotionMaterial;
 
@@ -312,6 +285,8 @@ public partial class SquadCharacterController : MonoBehaviour
     public int CurrentHp => currentHp;
 
     public int MaxHp => maxHp;
+
+    public event System.Action<SquadCharacterController> HealthChanged;
 
     public bool IsGrounded => isGrounded;
     public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
@@ -745,6 +720,8 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void NotifyHealthChanged()
     {
+        HealthChanged?.Invoke(this);
+
         SquadManager manager = SquadManager.Instance;
         if (manager != null)
         {
@@ -1678,15 +1655,6 @@ public partial class SquadCharacterController : MonoBehaviour
         jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
         jumpGroundCheckRadiusScale = Mathf.Clamp(jumpGroundCheckRadiusScale, 0.1f, 1.5f);
         groundedStickVelocity = Mathf.Max(0f, groundedStickVelocity);
-        footIkWeight = Mathf.Clamp01(footIkWeight);
-        footIkPositionWeight = Mathf.Clamp01(footIkPositionWeight);
-        footIkRotationWeight = Mathf.Clamp01(footIkRotationWeight);
-        footIkIdleRotationWeight = Mathf.Clamp01(footIkIdleRotationWeight);
-        footIkSpeedThreshold = Mathf.Max(0f, footIkSpeedThreshold);
-        footIkBlendSpeed = Mathf.Max(0f, footIkBlendSpeed);
-        footIkHeightOffset = Mathf.Max(0f, footIkHeightOffset);
-        footIkRaycastUp = Mathf.Max(0.02f, footIkRaycastUp);
-        footIkRaycastDown = Mathf.Max(0.02f, footIkRaycastDown);
         voidCheckDistance = Mathf.Max(0f, voidCheckDistance);
         voidCheckDepth = Mathf.Max(0.02f, voidCheckDepth);
         maxWalkableSlopeAngle = Mathf.Clamp(maxWalkableSlopeAngle, 0f, 89f);
@@ -1906,60 +1874,6 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return GetCollisionMatrixMask();
-    }
-
-    private void OnAnimatorIK(int layerIndex)
-    {
-        if (animator == null)
-        {
-            return;
-        }
-
-        if (IsExternalLocomotionDriverActive)
-        {
-            SetFootIkWeights(0f, 0f);
-            return;
-        }
-
-        if (!enableFootIk)
-        {
-            SetFootIkWeights(0f, 0f);
-            return;
-        }
-
-        if (ShouldSuppressFootIkForCommittedJump())
-        {
-            SetFootIkWeights(0f, 0f);
-            return;
-        }
-
-        if (!isGrounded)
-        {
-            SetFootIkWeights(0f, 0f);
-            return;
-        }
-
-        float speed = GetCurrentHorizontalVelocity().magnitude;
-        float targetWeight = speed <= footIkSpeedThreshold ? footIkWeight : 0f;
-        if (footIkBlendSpeed > 0f)
-        {
-            footIkWeightCurrent = Mathf.MoveTowards(footIkWeightCurrent, targetWeight, footIkBlendSpeed * Time.deltaTime);
-        }
-        else
-        {
-            footIkWeightCurrent = targetWeight;
-        }
-
-        if (footIkWeightCurrent <= 0.0001f)
-        {
-            SetFootIkWeights(0f, 0f);
-            return;
-        }
-
-        int mask = GetFootIkMask();
-        float rotationWeight = ResolveFootIkRotationWeight(speed);
-        ApplyFootIk(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot, mask, footIkWeightCurrent, rotationWeight);
-        ApplyFootIk(AvatarIKGoal.RightFoot, HumanBodyBones.RightFoot, mask, footIkWeightCurrent, rotationWeight);
     }
 
     private void UpdateInputLock(float deltaTime)
@@ -2600,84 +2514,6 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return TryProbeGroundedSupport(probeDistance, probeRadius, out _, out _);
-    }
-
-    private void SetFootIkWeights(float positionWeight, float rotationWeight)
-    {
-        animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, positionWeight);
-        animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, rotationWeight);
-        animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, positionWeight);
-        animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, rotationWeight);
-    }
-
-    private float ResolveFootIkRotationWeight(float speed)
-    {
-        float movingRotationWeight = Mathf.Clamp01(footIkRotationWeight);
-        float idleRotationWeight = Mathf.Clamp01(Mathf.Min(footIkIdleRotationWeight, movingRotationWeight));
-        if (walkSpeedThreshold <= 0f)
-        {
-            return movingRotationWeight;
-        }
-
-        float t = Mathf.Clamp01(speed / walkSpeedThreshold);
-        return Mathf.Lerp(idleRotationWeight, movingRotationWeight, t);
-    }
-
-    private void ApplyFootIk(AvatarIKGoal goal, HumanBodyBones bone, int mask, float baseWeight, float rotationWeightScale)
-    {
-        Transform boneTransform = animator.GetBoneTransform(bone);
-        if (boneTransform == null)
-        {
-            animator.SetIKPositionWeight(goal, 0f);
-            animator.SetIKRotationWeight(goal, 0f);
-            return;
-        }
-
-        Vector3 up = transform.up;
-        Vector3 origin = boneTransform.position + up * footIkRaycastUp;
-        float maxDistance = footIkRaycastUp + footIkRaycastDown;
-
-        if (!Physics.Raycast(origin, -up, out RaycastHit hit, maxDistance, mask, QueryTriggerInteraction.Ignore))
-        {
-            animator.SetIKPositionWeight(goal, 0f);
-            animator.SetIKRotationWeight(goal, 0f);
-            return;
-        }
-
-        if (Vector3.Dot(hit.normal, up) <= 0.1f)
-        {
-            animator.SetIKPositionWeight(goal, 0f);
-            animator.SetIKRotationWeight(goal, 0f);
-            return;
-        }
-
-        float positionWeight = baseWeight * footIkPositionWeight;
-        float rotationWeight = baseWeight * rotationWeightScale;
-        Vector3 footPosition = hit.point + up * footIkHeightOffset;
-
-        Vector3 forward = Vector3.ProjectOnPlane(boneTransform.forward, hit.normal);
-        if (forward.sqrMagnitude < 0.0001f)
-        {
-            forward = Vector3.ProjectOnPlane(transform.forward, hit.normal);
-        }
-        forward.Normalize();
-
-        Quaternion footRotation = Quaternion.LookRotation(forward, hit.normal);
-
-        animator.SetIKPositionWeight(goal, positionWeight);
-        animator.SetIKRotationWeight(goal, rotationWeight);
-        animator.SetIKPosition(goal, footPosition);
-        animator.SetIKRotation(goal, footRotation);
-    }
-
-    private int GetFootIkMask()
-    {
-        if (!footIkUseCollisionMatrixMask)
-        {
-            return footIkLayerMask;
-        }
-
-        return GetCollisionMatrixMask();
     }
 
     private int GetCollisionMatrixMask()
@@ -3821,9 +3657,9 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+        Camera[] cameras = FindObjectsByType<Camera>();
 #else
-        Camera[] cameras = FindObjectsOfType<Camera>();
+        Camera[] cameras = FindObjectsByType<Camera>();
 #endif
         if (cameras != null)
         {
@@ -3850,9 +3686,9 @@ public partial class SquadCharacterController : MonoBehaviour
             : transform;
 
 #if UNITY_2023_1_OR_NEWER
-        CameraController[] controllers = FindObjectsByType<CameraController>(FindObjectsSortMode.None);
+        CameraController[] controllers = FindObjectsByType<CameraController>();
 #else
-        CameraController[] controllers = FindObjectsOfType<CameraController>();
+        CameraController[] controllers = FindObjectsByType<CameraController>();
 #endif
         if (controllers == null || controllers.Length == 0)
         {

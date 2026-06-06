@@ -731,9 +731,9 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
         }
 
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<AgeManager>();
+        return FindAnyObjectByType<AgeManager>();
 #else
-        return FindObjectOfType<AgeManager>();
+        return FindAnyObjectByType<AgeManager>();
 #endif
     }
 }
@@ -1077,9 +1077,9 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
         }
 
 #if UNITY_2023_1_OR_NEWER
-        builderController = FindFirstObjectByType<BuilderController>(FindObjectsInactive.Include);
+        builderController = FindAnyObjectByType<BuilderController>(FindObjectsInactive.Include);
 #else
-        builderController = FindObjectOfType<BuilderController>(true);
+        builderController = FindAnyObjectByType<BuilderController>(FindObjectsInactive.Include);
 #endif
         if (builderController != null)
         {

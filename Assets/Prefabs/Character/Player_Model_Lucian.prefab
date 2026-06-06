@@ -2014,7 +2014,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2307505761705550780}
   - component: {fileID: 8978048841286798698}
-  m_Layer: 0
+  m_Layer: 30
   m_Name: LitUccLookSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2046,7 +2046,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 90272729eb4f4266a8fe5a3a4914b320, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLookSource
   eventTarget: {fileID: 2784444758471557209}
   lookTransform: {fileID: 0}
@@ -2233,6 +2233,12 @@ GameObject:
   - component: {fileID: 8246669574063202957}
   - component: {fileID: 5959914393103543773}
   - component: {fileID: 2760402342699511360}
+  - component: {fileID: 9118197817539862428}
+  - component: {fileID: 7388209704611396571}
+  - component: {fileID: 6167225484597321654}
+  - component: {fileID: 4817604968123456789}
+  - component: {fileID: 9095812728330429394}
+  - component: {fileID: 6800918242508772571}
   m_Layer: 31
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -2290,7 +2296,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 1
-  m_WarningMessage: 
+  m_WarningMessage:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -2305,7 +2311,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d482e64f4c70ee4fae5f379165d46a4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
   characterData: {fileID: 0}
 --- !u!114 &6731850666202294345
@@ -2318,7 +2324,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
   enableAnimationReconciliation: 1
   locomotionAnimationCorrectionDelay: 0.18
@@ -2515,6 +2521,7 @@ MonoBehaviour:
   interactionDetectionHeightOffset: 0.9
   interactionCurrentTargetBonus: 0.15
   requireInteractionTargetVisibleByCamera: 1
+  interactionCameraVisibilityGraceSeconds: 0.15
   enableMuninInteractionReaction: 1
   muninTorchProximityReactionIntensity: 0.45
   muninBraseroProximityReactionIntensity: 1
@@ -2582,20 +2589,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   voidUseCollisionMatrixMask: 1
-  enableFootIk: 1
-  footIkWeight: 1
-  footIkPositionWeight: 1
-  footIkRotationWeight: 1
-  footIkIdleRotationWeight: 0.2
-  footIkSpeedThreshold: 1.45
-  footIkBlendSpeed: 10
-  footIkHeightOffset: 0.02
-  footIkRaycastUp: 0.25
-  footIkRaycastDown: 0.6
-  footIkLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  footIkUseCollisionMatrixMask: 1
   allowTorchToggle: 1
   torchParentName: Stuff
   torchChildName: Torch
@@ -2627,7 +2620,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 08b329bae7eedab4b9964a7a02f4169b, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LocalVoiceLineController
   autoBuildLookup: 1
   autoResolveCharacterData: 1
@@ -2745,7 +2738,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c535bd3b52bb464aa89f95a9e6254968, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionController
   faceRenderer: {fileID: 2772251632162136425}
   preferredRendererName: CC_Base_Body
@@ -2781,7 +2774,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a455d33385e24ba283d9021fc6aff2c3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::FacialExpressionDebugger
   controller: {fileID: 8659240772369093202}
 --- !u!114 &9146667740977371504
@@ -2794,7 +2787,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 232d5fad763e23a43a9ad6c3cc277046, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.CharacterLayerManager
   m_States:
   - m_Name: Default
@@ -2820,7 +2813,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f7d1f5b9e5460c4996ae3369dcfa65f, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.AnimatorMonitor
   m_States:
   - m_Name: Default
@@ -2848,7 +2841,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8980fd57bf57a0e40a1083404b213fd5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion
   m_States:
   - m_Name: MoveTowards
@@ -2946,8 +2939,8 @@ MonoBehaviour:
   m_MovingStateName: Moving
   m_AirborneStateName: Airborne
   m_MovementTypeFullName: Opsive.UltimateCharacterController.ThirdPersonController.Character.MovementTypes.Adventure
-  m_FirstPersonMovementTypeFullName: 
-  m_ThirdPersonMovementTypeFullName: 
+  m_FirstPersonMovementTypeFullName:
+  m_ThirdPersonMovementTypeFullName:
   m_MovementTypes:
   - rid: 2938102941717364748
   m_Abilities:
@@ -3013,13 +3006,13 @@ MonoBehaviour:
         m_AbilityStopper:
           rid: -2
         m_AttributeModifier:
-          m_AttributeName: 
+          m_AttributeName:
           m_Amount: 0
           m_AutoUpdate: 0
           m_AutoUpdateStartDelay: 1
           m_AutoUpdateInterval: 0.1
           m_AutoUpdateDuration: -1
-        m_State: 
+        m_State:
         m_StateAppendItemIdentifierName: 0
         m_AbilityIndexParameter: 1
         m_StartAudioClipSet:
@@ -3037,15 +3030,15 @@ MonoBehaviour:
         m_DetectVerticalCollisions: 0
         m_DetectGroundCollisions: 0
         m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
+        m_StartEffectName:
         m_StartEffectIndex: -1
         m_AllowEquippedSlotsMask: -1
         m_AllowItemDefinitions: []
         m_ImmediateUnequip: 0
         m_ReequipSlots: 1
-        m_AbilityMessageText: 
+        m_AbilityMessageText:
         m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
+        m_InspectorDescription:
         m_MinCeilingJumpHeight: 0.05
         m_GroundedGracePeriod: 0.05
         m_PreventSlopeLimitJump: 1
@@ -3089,13 +3082,13 @@ MonoBehaviour:
         m_AbilityStopper:
           rid: -2
         m_AttributeModifier:
-          m_AttributeName: 
+          m_AttributeName:
           m_Amount: 0
           m_AutoUpdate: 0
           m_AutoUpdateStartDelay: 1
           m_AutoUpdateInterval: 0.1
           m_AutoUpdateDuration: -1
-        m_State: 
+        m_State:
         m_StateAppendItemIdentifierName: 0
         m_AbilityIndexParameter: 2
         m_StartAudioClipSet:
@@ -3113,15 +3106,15 @@ MonoBehaviour:
         m_DetectVerticalCollisions: 0
         m_DetectGroundCollisions: 0
         m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
+        m_StartEffectName:
         m_StartEffectIndex: -1
         m_AllowEquippedSlotsMask: -1
         m_AllowItemDefinitions: []
         m_ImmediateUnequip: 0
         m_ReequipSlots: 1
-        m_AbilityMessageText: 
+        m_AbilityMessageText:
         m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
+        m_InspectorDescription:
         m_MinFallHeight: 0.2
         m_LandSurfaceImpact: {fileID: 0}
         m_MinSurfaceImpactVelocity: -4
@@ -3148,7 +3141,7 @@ MonoBehaviour:
         m_AbilityStopper:
           rid: -2
         m_AttributeModifier:
-          m_AttributeName: 
+          m_AttributeName:
           m_Amount: 0
           m_AutoUpdate: 0
           m_AutoUpdateStartDelay: 1
@@ -3172,15 +3165,15 @@ MonoBehaviour:
         m_DetectVerticalCollisions: 0
         m_DetectGroundCollisions: 0
         m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
+        m_StartEffectName:
         m_StartEffectIndex: -1
         m_AllowEquippedSlotsMask: -1
         m_AllowItemDefinitions: []
         m_ImmediateUnequip: 0
         m_ReequipSlots: 1
-        m_AbilityMessageText: 
+        m_AbilityMessageText:
         m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
+        m_InspectorDescription:
         m_InputMultiplier: 1
         m_InactiveTimeout: 1
         m_MovingTargetDistanceTimeout: 3.4028235e+38
@@ -3208,7 +3201,7 @@ MonoBehaviour:
         m_AbilityStopper:
           rid: -2
         m_AttributeModifier:
-          m_AttributeName: 
+          m_AttributeName:
           m_Amount: 0
           m_AutoUpdate: 0
           m_AutoUpdateStartDelay: 1
@@ -3232,15 +3225,15 @@ MonoBehaviour:
         m_DetectVerticalCollisions: 0
         m_DetectGroundCollisions: 0
         m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
+        m_StartEffectName:
         m_StartEffectIndex: -1
         m_AllowEquippedSlotsMask: -1
         m_AllowItemDefinitions: []
         m_ImmediateUnequip: 0
         m_ReequipSlots: 1
-        m_AbilityMessageText: 
+        m_AbilityMessageText:
         m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
+        m_InspectorDescription:
         m_SpeedChangeMultiplier: 2
         m_MinSpeedChangeValue: -2
         m_MaxSpeedChangeValue: 2
@@ -3267,7 +3260,7 @@ MonoBehaviour:
         m_AbilityStopper:
           rid: -2
         m_AttributeModifier:
-          m_AttributeName: 
+          m_AttributeName:
           m_Amount: 0
           m_AutoUpdate: 0
           m_AutoUpdateStartDelay: 1
@@ -3291,15 +3284,15 @@ MonoBehaviour:
         m_DetectVerticalCollisions: 0
         m_DetectGroundCollisions: 0
         m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
+        m_StartEffectName:
         m_StartEffectIndex: -1
         m_AllowEquippedSlotsMask: -1
         m_AllowItemDefinitions: []
         m_ImmediateUnequip: 0
         m_ReequipSlots: 1
-        m_AbilityMessageText: 
+        m_AbilityMessageText:
         m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
+        m_InspectorDescription:
         m_ConcurrentAbility: 1
         m_Height: 1
         m_CapsuleColliderHeightAdjustment: -0.4
@@ -3314,7 +3307,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ab006db972ba3a14db5be7a062d0ca4e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotionHandler
   m_States:
   - m_Name: Default
@@ -3333,7 +3326,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9715d853ca324ad09de5e76ded242cf9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsivePlayerInput
   m_States:
   - m_Name: Default
@@ -3368,7 +3361,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 113a12078d144b4c86b6e74a3c94edab, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLocomotionBridge
   squadController: {fileID: 0}
   locomotion: {fileID: 0}
@@ -3376,10 +3369,12 @@ MonoBehaviour:
   playerInput: {fileID: 0}
   lookSource: {fileID: 0}
   animator: {fileID: 0}
+  animatorMonitor: {fileID: 0}
   driveFromSquadFacade: 1
   overrideOpsiveHandlerInput: 1
   orientLookSourceFromMovement: 1
   configureRigidbodyForOpsive: 1
+  autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
   jumpRetryWindow: 0.15
   warnWhenJumpRejected: 1
@@ -3390,6 +3385,253 @@ MonoBehaviour:
   turnParam: Turn
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
+--- !u!114 &9118197817539862428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b8e1e24bb3b92b08901633a8a939431, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LitUccInteractionBridge
+  locomotionBridge: {fileID: 0}
+  locomotion: {fileID: 0}
+  requireGroundedForLitInteractions: 1
+  allowWhileHeightChange: 1
+  allowWhileSpeedChange: 1
+  allowWhileFall: 0
+  allowWhileJump: 0
+  blockWhileItemAbilityActive: 1
+--- !u!114 &7388209704611396571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c67821cbfd0dde1b7548992f43e658a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LitUccDamageBridge
+  locomotion: {fileID: 0}
+  squadController: {fileID: 6731850666202294345}
+  combatHealth: {fileID: 0}
+  attributeManager: {fileID: 9095812728330429394}
+  characterHealth: {fileID: 6800918242508772571}
+  healthAttributeName: Health
+  mirrorLitHealthToOpsiveAttributes: 1
+  raiseOpsiveDamageEvent: 1
+  raiseOpsiveDeathEvent: 1
+  startImpactKnockBackOnDamage: 0
+  impactKnockBackResponseId: 0
+  defaultForceMagnitude: 3
+--- !u!114 &6167225484597321654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a444ed75bc114f6a7513720fd094a58b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LitUccFollowerBridge
+  locomotionBridge: {fileID: 0}
+--- !u!114 &4817604968123456789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2f0dc0d141852c4fa74c5aeee60f7c3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.CharacterIK
+  m_States:
+  - m_Name: Default
+    m_Preset: {fileID: 0}
+    m_BlockList: []
+    m_Default: 1
+  m_DebugDrawLookRay: 0
+  m_BaseLayerIndex: 0
+  m_UpperBodyLayerIndex: 4
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 268435401
+  m_LookAtOffset: {x: 0, y: 0, z: 0}
+  m_LookAtBodyWeight: 0
+  m_LookAtHeadWeight: 0
+  m_LookAtEyesWeight: 0
+  m_LookAtClampWeight: 0.35
+  m_LookAtAdjustmentSpeed: 0.5
+  m_ActiveLookAtStateName: LookAt
+  m_LookAtWeightAdjustmentSpeed: 0.2
+  m_HipsPositionAdjustmentSpeed: 4
+  m_HipsPositionOffset: 0
+  m_FootOffsetAdjustment: 0.005
+  m_FootWeightActiveAdjustmentSpeed: 10
+  m_FootWeightInactiveAdjustmentSpeed: 2
+  m_OverrideFootIKWeight: -1
+  m_UpperArmWeight: 0
+  m_UpperArmAdjustmentSpeed: 10
+  m_HandWeight: 0
+  m_IndividualHandWeightsInitialized: 1
+  m_LeftHandWeight: 0
+  m_RightHandWeight: 0
+  m_LeftElbowWeight: 0
+  m_RightElbowWeight: 0
+  m_HandAdjustmentSpeed: 10
+  m_HandPositionOffset: {x: 0, y: 0, z: 0}
+  m_LeftHandPositionSpring:
+    m_Stiffness: 0.2
+    m_Damping: 0
+    m_VelocityFadeInLength: 1
+    m_MaxSoftForceFrames: 120
+    m_MinVelocity: 0.00001
+    m_MaxVelocity: 10000
+    m_MinValue: {x: -10000, y: -10000, z: -10000}
+    m_MaxValue: {x: 10000, y: 10000, z: 10000}
+  m_LeftHandRotationSpring:
+    m_Stiffness: 0.2
+    m_Damping: 0.05
+    m_VelocityFadeInLength: 1
+    m_MaxSoftForceFrames: 120
+    m_MinVelocity: 0.00001
+    m_MaxVelocity: 10000
+    m_MinValue: {x: -10000, y: -10000, z: -10000}
+    m_MaxValue: {x: 10000, y: 10000, z: 10000}
+  m_RightHandPositionSpring:
+    m_Stiffness: 0.2
+    m_Damping: 0
+    m_VelocityFadeInLength: 1
+    m_MaxSoftForceFrames: 120
+    m_MinVelocity: 0.00001
+    m_MaxVelocity: 10000
+    m_MinValue: {x: -10000, y: -10000, z: -10000}
+    m_MaxValue: {x: 10000, y: 10000, z: 10000}
+  m_RightHandRotationSpring:
+    m_Stiffness: 0.2
+    m_Damping: 0.05
+    m_VelocityFadeInLength: 1
+    m_MaxSoftForceFrames: 120
+    m_MinVelocity: 0.00001
+    m_MaxVelocity: 10000
+    m_MinValue: {x: -10000, y: -10000, z: -10000}
+    m_MaxValue: {x: 10000, y: 10000, z: 10000}
+--- !u!114 &9095812728330429394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df200e1d8fe84c94c8197ca6755a89d7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Traits.CharacterAttributeManager
+  m_Attributes:
+  - m_States:
+    - m_Name: Default
+      m_Preset: {fileID: 0}
+      m_BlockList: []
+      m_Default: 1
+    m_Name: Health
+    m_MinValue: 0
+    m_MaxValue: 10
+    m_Value: 10
+    m_AutoUpdateValueType: 0
+    m_UpdateWhenInactive: 0
+    m_AutoUpdateStartDelay: 1
+    m_AutoUpdateInterval: 0.1
+    m_AutoUpdateAmount: 0.2
+--- !u!114 &6800918242508772571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d6607657a78e5445a5e47d0ad348e2d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Traits.CharacterHealth
+  m_States:
+  - m_Name: Default
+    m_Preset: {fileID: 0}
+    m_BlockList: []
+    m_Default: 1
+  m_Invincible: 1
+  m_TimeInvincibleAfterSpawn: 0
+  m_HealthAttributeName: Health
+  m_ShieldAttributeName:
+  m_Hitboxes: []
+  m_MaxHitboxCollisionCount: 10
+  m_SpawnedObjectsOnDeath: []
+  m_DestroyedObjectsOnDeath: []
+  m_DeactivateOnDeath: 0
+  m_DeactivateOnDeathDelay: 0
+  m_DeathLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  m_TakeDamageAudioClipSet:
+    m_AudioConfig: {fileID: 0}
+    m_AudioClips: []
+  m_HealAudioClipSet:
+    m_AudioConfig: {fileID: 0}
+    m_AudioClips: []
+  m_DeathAudioClipSet:
+    m_AudioConfig: {fileID: 0}
+    m_AudioClips: []
+  m_DamagePopupManagerID: -1
+  m_OnDamageEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_OnHealEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_OnDeathEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ApplyFallDamage: 0
+  m_MinFallDamageHeight: 3
+  m_MinFallDamage: 1
+  m_MaxFallDamage: 50
+  m_DeathHeight: 20
+  m_DamageCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_DamagedEffectName:
+  m_DamagedEffectIndex: -1
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0
@@ -5240,7 +5482,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 353e9ad4ce84b54499ff9ac86b926c6e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.Identifiers.CharacterColliderBaseIdentifier
 --- !u!1 &5609033288012161105
 GameObject:
@@ -5600,7 +5842,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 39053520c101c914d90d3f9f07b3292a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.Character.CapsuleColliderPositioner
   m_States:
   - m_Name: Default
@@ -5629,7 +5871,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6e458a25b435dd4086faf6dce3b39e6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Opsive.UltimateCharacterController::Opsive.UltimateCharacterController.SurfaceSystem.SurfaceIdentifier
   m_SurfaceType: {fileID: 0}
   m_AllowDecals: 0
@@ -6614,11 +6856,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4541460597810118928, guid: f2d2626363965204cb3debb7c5aca20b, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: cce81a3da9513314b92f69958d8b17a9, type: 2}
     - target: {fileID: -4541460597810118928, guid: f2d2626363965204cb3debb7c5aca20b, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 1b029391cc7a7be4ab2ecd4a712c4198, type: 2}
     - target: {fileID: -3591886281852097759, guid: f2d2626363965204cb3debb7c5aca20b, type: 3}
       propertyPath: m_Layer
@@ -9546,12 +9788,12 @@ Cloth:
   m_SphereColliders: []
   m_SelfCollisionDistance: 0
   m_SelfCollisionStiffness: 0.2
-  m_SelfAndInterCollisionIndices: 
+  m_SelfAndInterCollisionIndices:
   m_VirtualParticleWeights:
   - {x: 0.33333334, y: 0.33333334, z: 0.33333334}
   - {x: 0.6666667, y: 0.16666667, z: 0.16666667}
   - {x: 0.5, y: 0.5, z: 0}
-  m_VirtualParticleIndices: 
+  m_VirtualParticleIndices:
 --- !u!1001 &1863678104540209195
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9626,7 +9868,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8225100841752711206, guid: ce62ee29c2971fb44ad9914445e8052f, type: 3}
       propertyPath: targetPlayer
-      value: 
+      value:
       objectReference: {fileID: 2233782780378164146}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

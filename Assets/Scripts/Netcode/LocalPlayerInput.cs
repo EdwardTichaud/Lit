@@ -17,7 +17,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             return;
         }
 
-        Instance = Object.FindFirstObjectByType<LocalPlayerInput>();
+        Instance = Object.FindAnyObjectByType<LocalPlayerInput>();
         if (Instance != null)
         {
             return;

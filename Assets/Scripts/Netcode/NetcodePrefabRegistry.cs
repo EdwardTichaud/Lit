@@ -397,9 +397,9 @@ public static class NetcodePrefabRegistry
         if (existing == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            existing = Object.FindFirstObjectByType<CombatSessionManager>();
+            existing = Object.FindAnyObjectByType<CombatSessionManager>();
 #else
-            existing = Object.FindObjectOfType<CombatSessionManager>();
+            existing = Object.FindAnyObjectByType<CombatSessionManager>();
 #endif
         }
 

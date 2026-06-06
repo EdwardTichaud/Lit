@@ -187,9 +187,9 @@ public class WorldRulesStateManager : MonoBehaviour
     {
         List<string> values = new List<string>();
 #if UNITY_2023_1_OR_NEWER
-        BraseroVolumeByYear[] managers = FindObjectsByType<BraseroVolumeByYear>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        BraseroVolumeByYear[] managers = FindObjectsByType<BraseroVolumeByYear>(FindObjectsInactive.Include);
 #else
-        BraseroVolumeByYear[] managers = FindObjectsOfType<BraseroVolumeByYear>(true);
+        BraseroVolumeByYear[] managers = FindObjectsByType<BraseroVolumeByYear>(FindObjectsInactive.Include);
 #endif
         if (managers == null)
         {
@@ -226,9 +226,9 @@ public class WorldRulesStateManager : MonoBehaviour
             if (ageManager == null)
             {
 #if UNITY_2023_1_OR_NEWER
-                ageManager = FindFirstObjectByType<AgeManager>();
+                ageManager = FindAnyObjectByType<AgeManager>();
 #else
-                ageManager = FindObjectOfType<AgeManager>();
+                ageManager = FindAnyObjectByType<AgeManager>();
 #endif
             }
         }

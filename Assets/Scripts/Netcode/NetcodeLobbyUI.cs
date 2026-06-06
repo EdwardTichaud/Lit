@@ -462,9 +462,9 @@ public class NetcodeLobbyUI : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        launcher = FindFirstObjectByType<NetcodeLauncher>();
+        launcher = FindAnyObjectByType<NetcodeLauncher>();
 #else
-        launcher = FindObjectOfType<NetcodeLauncher>();
+        launcher = FindAnyObjectByType<NetcodeLauncher>();
 #endif
         return launcher;
     }
@@ -580,9 +580,9 @@ public class NetcodeLobbyUI : MonoBehaviour
     private void EnsureEventSystem()
     {
 #if UNITY_2023_1_OR_NEWER
-        if (FindFirstObjectByType<EventSystem>() != null)
+        if (FindAnyObjectByType<EventSystem>() != null)
 #else
-        if (FindObjectOfType<EventSystem>() != null)
+        if (FindAnyObjectByType<EventSystem>() != null)
 #endif
         {
             return;

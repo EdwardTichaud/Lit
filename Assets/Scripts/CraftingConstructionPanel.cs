@@ -1206,9 +1206,9 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindFirstObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #else
-        cachedMaison = FindObjectOfType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #endif
 
         return cachedMaison;
@@ -1463,9 +1463,9 @@ public class CraftingConstructionPanel : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #else
-        return FindObjectOfType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #endif
     }
 

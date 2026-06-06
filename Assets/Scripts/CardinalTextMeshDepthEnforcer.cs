@@ -73,7 +73,7 @@ public static class CardinalTextMeshDepthEnforcer
             return;
         }
 
-        TextMesh[] textMeshes = Object.FindObjectsByType<TextMesh>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        TextMesh[] textMeshes = Object.FindObjectsByType<TextMesh>(FindObjectsInactive.Include);
         for (int i = 0; i < textMeshes.Length; i++)
         {
             ApplyToTextMesh(textMeshes[i], shader);

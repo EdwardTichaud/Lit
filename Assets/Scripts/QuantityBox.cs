@@ -104,9 +104,9 @@ public class QuantityBox : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Instance = FindFirstObjectByType<QuantityBox>(FindObjectsInactive.Include);
+        Instance = FindAnyObjectByType<QuantityBox>(FindObjectsInactive.Include);
 #else
-        Instance = FindObjectOfType<QuantityBox>();
+        Instance = FindAnyObjectByType<QuantityBox>();
 #endif
         return Instance;
     }

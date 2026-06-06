@@ -4981,9 +4981,9 @@ public class MainMenuController : MonoBehaviour
     {
         NetcodeLauncher launcher = null;
 #if UNITY_2023_1_OR_NEWER
-        launcher = FindFirstObjectByType<NetcodeLauncher>();
+        launcher = FindAnyObjectByType<NetcodeLauncher>();
 #else
-        launcher = FindObjectOfType<NetcodeLauncher>();
+        launcher = FindAnyObjectByType<NetcodeLauncher>();
 #endif
         return launcher;
     }

@@ -95,9 +95,9 @@ public static class GameplayRuntimeReset
     private static T FindComponent<T>() where T : Object
     {
 #if UNITY_2023_1_OR_NEWER
-        return Object.FindFirstObjectByType<T>(FindObjectsInactive.Include);
+        return Object.FindAnyObjectByType<T>(FindObjectsInactive.Include);
 #else
-        return Object.FindObjectOfType<T>(true);
+        return Object.FindAnyObjectByType<T>(FindObjectsInactive.Include);
 #endif
     }
 }

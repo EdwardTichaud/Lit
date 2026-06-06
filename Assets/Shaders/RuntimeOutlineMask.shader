@@ -15,6 +15,7 @@ Shader "Hidden/HDRP/RuntimeOutlineMask"
 
             ZWrite Off
             ZTest LEqual
+            Offset -1, -1
             Cull Back
 
             HLSLPROGRAM

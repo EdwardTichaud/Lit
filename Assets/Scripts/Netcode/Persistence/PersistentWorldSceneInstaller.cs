@@ -167,11 +167,11 @@ public static class PersistentWorldSceneInstaller
 #if UNITY_2023_1_OR_NEWER
         KnowledgeManager manager = KnowledgeManager.Instance != null
             ? KnowledgeManager.Instance
-            : UnityEngine.Object.FindFirstObjectByType<KnowledgeManager>(FindObjectsInactive.Include);
+            : UnityEngine.Object.FindAnyObjectByType<KnowledgeManager>(FindObjectsInactive.Include);
 #else
         KnowledgeManager manager = KnowledgeManager.Instance != null
             ? KnowledgeManager.Instance
-            : UnityEngine.Object.FindObjectOfType<KnowledgeManager>(true);
+            : UnityEngine.Object.FindAnyObjectByType<KnowledgeManager>(FindObjectsInactive.Include);
 #endif
         if (manager != null)
         {

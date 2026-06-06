@@ -145,7 +145,7 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             controller = GetComponentInParent<PausePanelController>(true);
             if (controller == null)
             {
-                controller = FindObjectOfType<PausePanelController>(true);
+                controller = FindAnyObjectByType<PausePanelController>(FindObjectsInactive.Include);
             }
         }
 
@@ -259,13 +259,13 @@ public class PauseAudioOption : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             return AudioManager.Instance;
         }
 
-        AudioManager manager = FindFirstObjectByType<AudioManager>();
+        AudioManager manager = FindAnyObjectByType<AudioManager>();
         if (manager != null)
         {
             return manager;
         }
 
-        return FindObjectOfType<AudioManager>(true);
+        return FindAnyObjectByType<AudioManager>(FindObjectsInactive.Include);
     }
 
     private void ResetHoldState()

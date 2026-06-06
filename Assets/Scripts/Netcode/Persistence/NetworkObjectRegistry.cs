@@ -245,9 +245,9 @@ public class NetworkObjectRegistry : MonoBehaviour
         PruneNullEntries();
 
 #if UNITY_2023_1_OR_NEWER
-        PersistentNetworkObject[] found = FindObjectsByType<PersistentNetworkObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        PersistentNetworkObject[] found = FindObjectsByType<PersistentNetworkObject>(FindObjectsInactive.Include);
 #else
-        PersistentNetworkObject[] found = FindObjectsOfType<PersistentNetworkObject>(true);
+        PersistentNetworkObject[] found = FindObjectsByType<PersistentNetworkObject>(FindObjectsInactive.Include);
 #endif
         if (found == null)
         {

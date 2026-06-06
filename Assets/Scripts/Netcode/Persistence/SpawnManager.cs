@@ -603,9 +603,9 @@ public class SpawnManager : MonoBehaviour
     private static Transform ResolveBuildingParent()
     {
 #if UNITY_2023_1_OR_NEWER
-        BuilderController builderController = FindFirstObjectByType<BuilderController>();
+        BuilderController builderController = FindAnyObjectByType<BuilderController>();
 #else
-        BuilderController builderController = FindObjectOfType<BuilderController>();
+        BuilderController builderController = FindAnyObjectByType<BuilderController>();
 #endif
         if (builderController == null)
         {
@@ -657,9 +657,9 @@ public class SpawnManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        PersistentNetworkObject[] found = FindObjectsByType<PersistentNetworkObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        PersistentNetworkObject[] found = FindObjectsByType<PersistentNetworkObject>(FindObjectsInactive.Include);
 #else
-        PersistentNetworkObject[] found = FindObjectsOfType<PersistentNetworkObject>(true);
+        PersistentNetworkObject[] found = FindObjectsByType<PersistentNetworkObject>(FindObjectsInactive.Include);
 #endif
         if (found == null)
         {

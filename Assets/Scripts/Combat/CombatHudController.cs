@@ -96,9 +96,9 @@ public class CombatHudController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Instance = FindFirstObjectByType<CombatHudController>();
+        Instance = FindAnyObjectByType<CombatHudController>();
 #else
-        Instance = FindObjectOfType<CombatHudController>();
+        Instance = FindAnyObjectByType<CombatHudController>();
 #endif
         if (Instance != null)
         {

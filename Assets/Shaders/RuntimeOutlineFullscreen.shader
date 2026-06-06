@@ -20,29 +20,20 @@ Shader "Hidden/HDRP/RuntimeOutlineFullscreen"
     {
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
 
-        float depth = LoadCameraDepth(varyings.positionCS.xy);
-        PositionInputs posInput = GetPositionInput(
-            varyings.positionCS.xy,
-            _ScreenSize.zw,
-            depth,
-            UNITY_MATRIX_I_VP,
-            UNITY_MATRIX_V
-        );
-
-        float2 uv = posInput.positionNDC;
+        float2 uv = varyings.positionCS.xy * _ScreenSize.zw;
         float2 pixel = _ScreenSize.zw * _Thickness;
 
-        float center = SampleCustomColor(uv).r;
+        float center = CustomPassSampleCustomColor(uv).r;
 
         float around = 0;
-        around = max(around, SampleCustomColor(uv + float2( pixel.x, 0)).r);
-        around = max(around, SampleCustomColor(uv + float2(-pixel.x, 0)).r);
-        around = max(around, SampleCustomColor(uv + float2(0,  pixel.y)).r);
-        around = max(around, SampleCustomColor(uv + float2(0, -pixel.y)).r);
-        around = max(around, SampleCustomColor(uv + float2( pixel.x,  pixel.y)).r);
-        around = max(around, SampleCustomColor(uv + float2(-pixel.x,  pixel.y)).r);
-        around = max(around, SampleCustomColor(uv + float2( pixel.x, -pixel.y)).r);
-        around = max(around, SampleCustomColor(uv + float2(-pixel.x, -pixel.y)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2( pixel.x, 0)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2(-pixel.x, 0)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2(0,  pixel.y)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2(0, -pixel.y)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2( pixel.x,  pixel.y)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2(-pixel.x,  pixel.y)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2( pixel.x, -pixel.y)).r);
+        around = max(around, CustomPassSampleCustomColor(uv + float2(-pixel.x, -pixel.y)).r);
 
         float edge = saturate(around - center);
 

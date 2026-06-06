@@ -86,7 +86,7 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
     private void ConfigureSceneLights()
     {
         FindObjectsInactive inactiveMode = includeInactiveLights ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
-        Light[] sceneLights = Object.FindObjectsByType<Light>(inactiveMode, FindObjectsSortMode.None);
+        Light[] sceneLights = Object.FindObjectsByType<Light>(inactiveMode);
         for (int i = 0; i < sceneLights.Length; i++)
         {
             ConfigureLight(sceneLights[i]);
@@ -161,7 +161,7 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
     private void ConfigureSceneShadowCasters()
     {
         FindObjectsInactive inactiveMode = includeInactiveRenderers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
-        Renderer[] sceneRenderers = Object.FindObjectsByType<Renderer>(inactiveMode, FindObjectsSortMode.None);
+        Renderer[] sceneRenderers = Object.FindObjectsByType<Renderer>(inactiveMode);
         int layerMask = wallShadowCasterLayers.value;
         for (int i = 0; i < sceneRenderers.Length; i++)
         {

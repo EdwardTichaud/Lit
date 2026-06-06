@@ -1170,9 +1170,9 @@ public class ItemSceneMarkerEditor : Editor
     private static Maison FindMaison()
     {
 #if UNITY_2023_1_OR_NEWER
-        return Object.FindFirstObjectByType<Maison>();
+        return Object.FindAnyObjectByType<Maison>();
 #else
-        return Object.FindObjectOfType<Maison>();
+        return Object.FindAnyObjectByType<Maison>();
 #endif
     }
 

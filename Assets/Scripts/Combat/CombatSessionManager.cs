@@ -205,9 +205,9 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Instance = FindFirstObjectByType<CombatSessionManager>();
+        Instance = FindAnyObjectByType<CombatSessionManager>();
 #else
-        Instance = FindObjectOfType<CombatSessionManager>();
+        Instance = FindAnyObjectByType<CombatSessionManager>();
 #endif
         if (Instance != null)
         {
@@ -1809,9 +1809,9 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<SquadCharacterController>();
+        return FindAnyObjectByType<SquadCharacterController>();
 #else
-        return FindObjectOfType<SquadCharacterController>();
+        return FindAnyObjectByType<SquadCharacterController>();
 #endif
     }
 

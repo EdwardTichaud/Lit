@@ -157,9 +157,9 @@ public class CharacterStateStore : MonoBehaviour
     private void SaveWorldSnapshot()
     {
 #if UNITY_2023_1_OR_NEWER
-        WorldSaveAdapter adapter = FindFirstObjectByType<WorldSaveAdapter>();
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #else
-        WorldSaveAdapter adapter = FindObjectOfType<WorldSaveAdapter>();
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #endif
         if (adapter == null)
         {
@@ -327,9 +327,9 @@ public class CharacterStateStore : MonoBehaviour
     private bool TryApplyLoadedWorldSnapshot()
     {
 #if UNITY_2023_1_OR_NEWER
-        WorldSaveAdapter adapter = FindFirstObjectByType<WorldSaveAdapter>();
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #else
-        WorldSaveAdapter adapter = FindObjectOfType<WorldSaveAdapter>();
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #endif
         if (adapter == null)
         {
@@ -766,9 +766,9 @@ public class CharacterStateStore : MonoBehaviour
         Dictionary<string, Item> lookup = new Dictionary<string, Item>();
 
 #if UNITY_2023_1_OR_NEWER
-        BuilderController[] builders = FindObjectsByType<BuilderController>(FindObjectsSortMode.None);
+        BuilderController[] builders = FindObjectsByType<BuilderController>();
 #else
-        BuilderController[] builders = FindObjectsOfType<BuilderController>();
+        BuilderController[] builders = FindObjectsByType<BuilderController>();
 #endif
         if (builders != null)
         {
@@ -1096,9 +1096,9 @@ public class CharacterStateStore : MonoBehaviour
     {
         List<BraseroSaveEntry> results = new List<BraseroSaveEntry>();
 #if UNITY_2023_1_OR_NEWER
-        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
 #else
-        Brasero[] braseros = FindObjectsOfType<Brasero>(true);
+        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
 #endif
         if (braseros == null || braseros.Length == 0)
         {
@@ -1162,9 +1162,9 @@ public class CharacterStateStore : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
 #else
-        Brasero[] braseros = FindObjectsOfType<Brasero>(true);
+        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
 #endif
         if (braseros == null || braseros.Length == 0)
         {
@@ -1196,9 +1196,9 @@ public class CharacterStateStore : MonoBehaviour
     {
         List<TorchSaveEntry> results = new List<TorchSaveEntry>();
 #if UNITY_2023_1_OR_NEWER
-        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
 #else
-        Torch[] torches = FindObjectsOfType<Torch>(true);
+        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
 #endif
         if (torches == null || torches.Length == 0)
         {
@@ -1262,9 +1262,9 @@ public class CharacterStateStore : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
 #else
-        Torch[] torches = FindObjectsOfType<Torch>(true);
+        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
 #endif
         if (torches == null || torches.Length == 0)
         {
@@ -1297,9 +1297,9 @@ public class CharacterStateStore : MonoBehaviour
         List<BuiltConstructionData> results = new List<BuiltConstructionData>();
 
 #if UNITY_2023_1_OR_NEWER
-        BuilderController[] builders = FindObjectsByType<BuilderController>(FindObjectsSortMode.None);
+        BuilderController[] builders = FindObjectsByType<BuilderController>();
 #else
-        BuilderController[] builders = FindObjectsOfType<BuilderController>();
+        BuilderController[] builders = FindObjectsByType<BuilderController>();
 #endif
         bool usedBuilder = false;
         if (builders != null && builders.Length > 0)
@@ -1415,9 +1415,9 @@ public class CharacterStateStore : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-        BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
         if (infos == null || infos.Length == 0)
         {
@@ -1516,9 +1516,9 @@ public class CharacterStateStore : MonoBehaviour
         if (builder == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            existingInfos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+            existingInfos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-            existingInfos = FindObjectsOfType<BuildingInfoInteractable>();
+            existingInfos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
         }
 
@@ -1676,9 +1676,9 @@ public class CharacterStateStore : MonoBehaviour
     private BuilderController GetBuilderController()
     {
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #else
-        return FindObjectOfType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #endif
     }
 
@@ -1822,9 +1822,9 @@ public class CharacterStateStore : MonoBehaviour
         if (maison == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            maison = FindFirstObjectByType<Maison>();
+            maison = FindAnyObjectByType<Maison>();
 #else
-            maison = FindObjectOfType<Maison>();
+            maison = FindAnyObjectByType<Maison>();
 #endif
         }
 
@@ -1855,9 +1855,9 @@ public class CharacterStateStore : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        squadManager = FindFirstObjectByType<SquadManager>();
+        squadManager = FindAnyObjectByType<SquadManager>();
 #else
-        squadManager = FindObjectOfType<SquadManager>();
+        squadManager = FindAnyObjectByType<SquadManager>();
 #endif
         return squadManager;
     }

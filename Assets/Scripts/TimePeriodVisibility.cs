@@ -370,9 +370,9 @@ public class TimePeriodVisibility : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        ageManager = FindFirstObjectByType<AgeManager>();
+        ageManager = FindAnyObjectByType<AgeManager>();
 #else
-        ageManager = FindObjectOfType<AgeManager>();
+        ageManager = FindAnyObjectByType<AgeManager>();
 #endif
         return ageManager;
     }
@@ -414,9 +414,9 @@ public class TimePeriodVisibility : MonoBehaviour
     private static void RegisterSceneInstances()
     {
 #if UNITY_2023_1_OR_NEWER
-        TimePeriodVisibility[] sceneInstances = FindObjectsByType<TimePeriodVisibility>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        TimePeriodVisibility[] sceneInstances = FindObjectsByType<TimePeriodVisibility>(FindObjectsInactive.Include);
 #else
-        TimePeriodVisibility[] sceneInstances = FindObjectsOfType<TimePeriodVisibility>(true);
+        TimePeriodVisibility[] sceneInstances = FindObjectsByType<TimePeriodVisibility>(FindObjectsInactive.Include);
 #endif
         if (sceneInstances == null)
         {

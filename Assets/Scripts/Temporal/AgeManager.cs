@@ -69,9 +69,9 @@ public class AgeManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        AgeManager existing = FindFirstObjectByType<AgeManager>();
+        AgeManager existing = FindAnyObjectByType<AgeManager>();
 #else
-        AgeManager existing = FindObjectOfType<AgeManager>();
+        AgeManager existing = FindAnyObjectByType<AgeManager>();
 #endif
         if (existing != null)
         {
@@ -143,10 +143,12 @@ public class AgeManager : MonoBehaviour
 
 #if UNITY_2023_1_OR_NEWER
         Brasero[] sceneBraseros = includeInactiveAncientBraseros
-            ? FindObjectsByType<Brasero>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-            : FindObjectsByType<Brasero>(FindObjectsSortMode.None);
+            ? FindObjectsByType<Brasero>(FindObjectsInactive.Include)
+            : FindObjectsByType<Brasero>();
 #else
-        Brasero[] sceneBraseros = FindObjectsOfType<Brasero>(includeInactiveAncientBraseros);
+        Brasero[] sceneBraseros = includeInactiveAncientBraseros
+            ? FindObjectsByType<Brasero>(FindObjectsInactive.Include)
+            : FindObjectsByType<Brasero>();
 #endif
         AddAncientBraseros(sceneBraseros);
     }
@@ -243,10 +245,12 @@ public class AgeManager : MonoBehaviour
 
 #if UNITY_2023_1_OR_NEWER
         Renderer[] renderers = includeInactiveMasterShaderRenderers
-            ? FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-            : FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            ? FindObjectsByType<Renderer>(FindObjectsInactive.Include)
+            : FindObjectsByType<Renderer>();
 #else
-        Renderer[] renderers = FindObjectsOfType<Renderer>(includeInactiveMasterShaderRenderers);
+        Renderer[] renderers = includeInactiveMasterShaderRenderers
+            ? FindObjectsByType<Renderer>(FindObjectsInactive.Include)
+            : FindObjectsByType<Renderer>();
 #endif
 
         for (int i = 0; i < renderers.Length; i++)

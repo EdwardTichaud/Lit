@@ -347,9 +347,9 @@ public class Zone : MonoBehaviour
         else
         {
 #if UNITY_2023_1_OR_NEWER
-            BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+            BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-            BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+            BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
             if (infos != null)
             {
@@ -379,9 +379,9 @@ public class Zone : MonoBehaviour
     private BuilderController GetBuilderControllerForTorch()
     {
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #else
-        return FindObjectOfType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #endif
     }
 

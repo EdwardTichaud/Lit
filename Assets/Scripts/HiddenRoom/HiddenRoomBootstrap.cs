@@ -452,9 +452,9 @@ public class HiddenRoomBootstrap : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+        Camera[] cameras = FindObjectsByType<Camera>();
 #else
-        Camera[] cameras = FindObjectsOfType<Camera>();
+        Camera[] cameras = FindObjectsByType<Camera>();
 #endif
         for (int i = 0; i < cameras.Length; i++)
         {
@@ -498,9 +498,9 @@ public class HiddenRoomBootstrap : MonoBehaviour
     private CameraController FindCameraController()
     {
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<CameraController>();
+        return FindAnyObjectByType<CameraController>();
 #else
-        return FindObjectOfType<CameraController>();
+        return FindAnyObjectByType<CameraController>();
 #endif
     }
 

@@ -283,9 +283,9 @@ public class SquadManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>(FindObjectsSortMode.None);
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>();
 #else
-        SquadCharacterController[] controllers = FindObjectsOfType<SquadCharacterController>();
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>();
 #endif
         if (controllers == null)
         {
@@ -418,9 +418,9 @@ public class SquadManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>(FindObjectsSortMode.None);
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>();
 #else
-        SquadCharacterController[] controllers = FindObjectsOfType<SquadCharacterController>();
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>();
 #endif
         for (int i = 0; i < controllers.Length; i++)
         {
@@ -2726,9 +2726,9 @@ public class SquadManager : MonoBehaviour
         if (maison == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            maison = FindFirstObjectByType<Maison>();
+            maison = FindAnyObjectByType<Maison>();
 #else
-            maison = FindObjectOfType<Maison>();
+            maison = FindAnyObjectByType<Maison>();
 #endif
         }
 

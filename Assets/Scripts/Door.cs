@@ -597,7 +597,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
         if (reactToBraseroInfluence)
         {
-            Brasero[] braseros = UnityEngine.Object.FindObjectsByType<Brasero>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Brasero[] braseros = UnityEngine.Object.FindObjectsByType<Brasero>(FindObjectsInactive.Exclude);
             for (int i = 0; i < braseros.Length; i++)
             {
                 Brasero brasero = braseros[i];
@@ -610,7 +610,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
         if (reactToTorchInfluence)
         {
-            Torch[] torches = UnityEngine.Object.FindObjectsByType<Torch>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Torch[] torches = UnityEngine.Object.FindObjectsByType<Torch>(FindObjectsInactive.Exclude);
             for (int i = 0; i < torches.Length; i++)
             {
                 Torch torch = torches[i];

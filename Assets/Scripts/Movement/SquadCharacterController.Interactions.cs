@@ -19,6 +19,8 @@ public partial class SquadCharacterController
     private float interactionCurrentTargetBonus = 0.15f;
     [SerializeField, Tooltip("Exige qu'au moins une partie de l'objet soit visible par la camera et non cachee par un collider.")]
     private bool requireInteractionTargetVisibleByCamera = true;
+    [SerializeField, Min(0f), Tooltip("Temps de maintien de la cible courante quand le test camera perd brievement la visibilite.")]
+    private float interactionCameraVisibilityGraceSeconds = 0.15f;
 
     [Header("Munin Reaction")]
     [SerializeField, Tooltip("Fait reagir Munin quand une cible allumable/eteignable est detectee.")]
@@ -36,6 +38,7 @@ public partial class SquadCharacterController
     private readonly HashSet<Object> interactionDetectionUniqueTargets = new HashSet<Object>();
     private ICharacterDetectedInteractable currentDetectedInteractable;
     private ICharacterDetectedInteractable manualSwitchedInteractable;
+    private float currentTargetLastCameraVisibleTime = float.NegativeInfinity;
 
     public Vector3 GetInteractionOriginWorldPosition()
     {
@@ -358,12 +361,11 @@ public partial class SquadCharacterController
         }
 
         if (requireInteractionTargetVisibleByCamera &&
-            !CharacterInteractionDetection.IsInteractionTargetVisibleFromCamera(
+            !IsInteractionCandidateVisibleFromCamera(
                 candidate,
                 collider,
                 anchor,
-                interactionCamera,
-                transform))
+                interactionCamera))
         {
             return false;
         }
@@ -373,6 +375,37 @@ public partial class SquadCharacterController
             - normalizedDistance * 100f
             + forwardDot * 10f;
         return true;
+    }
+
+    private bool IsInteractionCandidateVisibleFromCamera(
+        ICharacterDetectedInteractable candidate,
+        Collider collider,
+        Transform anchor,
+        Camera interactionCamera)
+    {
+        bool visible = CharacterInteractionDetection.IsInteractionTargetVisibleFromCamera(
+            candidate,
+            collider,
+            anchor,
+            interactionCamera,
+            transform);
+        if (visible)
+        {
+            if (ReferenceEquals(candidate, currentDetectedInteractable))
+            {
+                currentTargetLastCameraVisibleTime = Time.unscaledTime;
+            }
+
+            return true;
+        }
+
+        if (!ReferenceEquals(candidate, currentDetectedInteractable) ||
+            interactionCameraVisibilityGraceSeconds <= 0f)
+        {
+            return false;
+        }
+
+        return Time.unscaledTime - currentTargetLastCameraVisibleTime <= interactionCameraVisibilityGraceSeconds;
     }
 
     private Vector3 ResolveInteractionForward()
@@ -405,6 +438,9 @@ public partial class SquadCharacterController
         }
 
         currentDetectedInteractable = target;
+        currentTargetLastCameraVisibleTime = currentDetectedInteractable != null
+            ? Time.unscaledTime
+            : float.NegativeInfinity;
 
         if (currentDetectedInteractable != null)
         {
@@ -421,6 +457,7 @@ public partial class SquadCharacterController
 
         if (currentDetectedInteractable == null)
         {
+            currentTargetLastCameraVisibleTime = float.NegativeInfinity;
             UpdateMuninInteractionReaction(null);
             RuntimeOutlineSelectionManager.Clear(this);
             return;
@@ -428,6 +465,7 @@ public partial class SquadCharacterController
 
         currentDetectedInteractable.SetDetectedCharacter(null);
         currentDetectedInteractable = null;
+        currentTargetLastCameraVisibleTime = float.NegativeInfinity;
         UpdateMuninInteractionReaction(null);
         RuntimeOutlineSelectionManager.Clear(this);
     }

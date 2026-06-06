@@ -688,9 +688,9 @@ public class JoinSyncSystem : MonoBehaviour
     private static int CountReadyRuntimeCharacters()
     {
 #if UNITY_2023_1_OR_NEWER
-        NetcodeCharacterIdentity[] identities = UnityEngine.Object.FindObjectsByType<NetcodeCharacterIdentity>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        NetcodeCharacterIdentity[] identities = UnityEngine.Object.FindObjectsByType<NetcodeCharacterIdentity>(FindObjectsInactive.Include);
 #else
-        NetcodeCharacterIdentity[] identities = UnityEngine.Object.FindObjectsOfType<NetcodeCharacterIdentity>(true);
+        NetcodeCharacterIdentity[] identities = UnityEngine.Object.FindObjectsByType<NetcodeCharacterIdentity>(FindObjectsInactive.Include);
 #endif
         if (identities == null)
         {
@@ -852,27 +852,27 @@ public class JoinSyncSystem : MonoBehaviour
         if (worldStateManager == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            worldStateManager = FindFirstObjectByType<WorldStateManager>();
+            worldStateManager = FindAnyObjectByType<WorldStateManager>();
 #else
-            worldStateManager = FindObjectOfType<WorldStateManager>();
+            worldStateManager = FindAnyObjectByType<WorldStateManager>();
 #endif
         }
 
         if (worldSaveAdapter == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            worldSaveAdapter = FindFirstObjectByType<WorldSaveAdapter>();
+            worldSaveAdapter = FindAnyObjectByType<WorldSaveAdapter>();
 #else
-            worldSaveAdapter = FindObjectOfType<WorldSaveAdapter>();
+            worldSaveAdapter = FindAnyObjectByType<WorldSaveAdapter>();
 #endif
         }
 
         if (syncOverlay == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            syncOverlay = FindFirstObjectByType<PersistentWorldSyncOverlay>();
+            syncOverlay = FindAnyObjectByType<PersistentWorldSyncOverlay>();
 #else
-            syncOverlay = FindObjectOfType<PersistentWorldSyncOverlay>();
+            syncOverlay = FindAnyObjectByType<PersistentWorldSyncOverlay>();
 #endif
         }
     }

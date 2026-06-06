@@ -344,7 +344,7 @@ public class VirtualKeyboardCursorController : MonoBehaviour
             return;
         }
 
-        controller = FindObjectOfType<MainMenuController>(true);
+        controller = FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
     }
 
     private RectTransform FindKeysRoot()

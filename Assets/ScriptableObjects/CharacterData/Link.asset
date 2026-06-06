@@ -16,7 +16,7 @@ MonoBehaviour:
   characterId: link
   characterName: Link
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
-  model: {fileID: 2784444758471557209, guid: a62de66dcee3add42a61aa6ee79a13a7, type: 3}
+  model: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
   skills:
   - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
   - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}

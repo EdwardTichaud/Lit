@@ -28,7 +28,7 @@ Les documents de design principaux sont :
 Le projet est actuellement ouvert avec :
 
 ```text
-Unity 6000.2.6f2
+Unity 6000.4.9f1
 ```
 
 La version exacte est déclarée dans `ProjectSettings/ProjectVersion.txt`.
@@ -128,3 +128,19 @@ Ordre recommandé :
 - Préférer une petite modification testable à une grosse refonte.
 - Toujours tester dans Unity après une modification de script.
 - Si un système est difficile à comprendre, ajouter une note documentaire avant de refactorer.
+
+## Règles de purification du repo
+
+- Traiter Ultimate Character Controller comme la cible par défaut pour la locomotion, les abilities, l'input personnage, la caméra personnage et les interactions personnage.
+- Garder les scripts `Assets/Scripts/OpsiveIntegration/` comme couche de transition tant que tous les prefabs/scènes ne sont pas pleinement UCC.
+- Ne supprimer un script Unity que si son GUID n'apparait dans aucune scène, prefab ou asset, et si son nom de type n'est utilisé par aucun autre script.
+- Ne pas supprimer automatiquement les scripts déclenchés par `[RuntimeInitializeOnLoadMethod]`, `[InitializeOnLoad]`, `[MenuItem]` ou `[CreateAssetMenu]`: ils peuvent être actifs sans référence visible dans une scène.
+- Ne pas consolider deux classes qui se ressemblent si elles ne sont pas des doublons exacts. Les fusions de responsabilités sont des refactors, pas de la purification.
+- Ne jamais purifier directement `Packages/`, `Assets/0 - UnityPackages/`, `Assets/TextMesh Pro/`, `Assets/Sketchfab For Unity/` ou des assets vendeur sans revue manuelle.
+- Après chaque lot de suppressions, lancer Unity en batchmode et vérifier que la compilation sort avec le code `0`.
+
+Commande de validation utilisée pour cette passe :
+
+```bash
+timeout 240s "/mnt/c/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Unity.exe" -batchmode -quit -projectPath "C:\Users\pierr\git\Lit" -logFile -
+```

@@ -64,9 +64,9 @@ public sealed class DecorCullingManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        instance = FindFirstObjectByType<DecorCullingManager>();
+        instance = FindAnyObjectByType<DecorCullingManager>();
 #else
-        instance = FindObjectOfType<DecorCullingManager>();
+        instance = FindAnyObjectByType<DecorCullingManager>();
 #endif
         if (instance != null)
         {

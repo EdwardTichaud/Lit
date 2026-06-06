@@ -177,9 +177,9 @@ public class BraseroDisplayManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        BraseroDisplayManager existing = FindFirstObjectByType<BraseroDisplayManager>();
+        BraseroDisplayManager existing = FindAnyObjectByType<BraseroDisplayManager>();
 #else
-        BraseroDisplayManager existing = FindObjectOfType<BraseroDisplayManager>();
+        BraseroDisplayManager existing = FindAnyObjectByType<BraseroDisplayManager>();
 #endif
         if (existing != null)
         {
@@ -260,9 +260,9 @@ public class BraseroDisplayManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<AgeManager>();
+        return FindAnyObjectByType<AgeManager>();
 #else
-        return FindObjectOfType<AgeManager>();
+        return FindAnyObjectByType<AgeManager>();
 #endif
     }
 

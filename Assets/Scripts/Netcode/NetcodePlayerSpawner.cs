@@ -360,9 +360,9 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>(FindObjectsSortMode.None);
+        SquadCharacterController[] controllers = FindObjectsByType<SquadCharacterController>();
 #else
-        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsOfType<SquadCharacterController>();
+        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsByType<SquadCharacterController>();
 #endif
         if (controllers == null)
         {
@@ -703,9 +703,9 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<CharacterStateStore>();
+        return FindAnyObjectByType<CharacterStateStore>();
 #else
-        return UnityEngine.Object.FindObjectOfType<CharacterStateStore>();
+        return UnityEngine.Object.FindAnyObjectByType<CharacterStateStore>();
 #endif
     }
 

@@ -113,7 +113,7 @@ public class PauseCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnte
         controller = GetComponentInParent<PausePanelController>(true);
         if (controller == null)
         {
-            controller = FindObjectOfType<PausePanelController>(true);
+            controller = FindAnyObjectByType<PausePanelController>(FindObjectsInactive.Include);
         }
 
         return controller != null;

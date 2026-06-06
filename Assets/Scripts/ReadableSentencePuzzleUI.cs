@@ -236,9 +236,9 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        instance = FindFirstObjectByType<ReadableSentencePuzzleUI>(FindObjectsInactive.Include);
+        instance = FindAnyObjectByType<ReadableSentencePuzzleUI>(FindObjectsInactive.Include);
 #else
-        instance = FindObjectOfType<ReadableSentencePuzzleUI>(true);
+        instance = FindAnyObjectByType<ReadableSentencePuzzleUI>(FindObjectsInactive.Include);
 #endif
         if (instance != null)
         {
@@ -342,6 +342,11 @@ public class ReadableSentencePuzzleUI : MonoBehaviour
         {
             // Les references peuvent venir d'une UI placee en scene ou d'un fallback cree au runtime.
             ResolveSceneUiReferences();
+        }
+
+        if (!HasResolvedUiReferences() && createRuntimeFallback)
+        {
+            CreateRuntimeFallbackUi();
         }
 
         if (!HasResolvedUiReferences())

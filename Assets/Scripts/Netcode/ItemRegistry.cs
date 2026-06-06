@@ -53,10 +53,10 @@ public class ItemRegistry : MonoBehaviour
 
         if (items == null || items.Count == 0)
         {
-            CharacterStateStore store = FindFirstObjectByType<CharacterStateStore>();
+            CharacterStateStore store = FindAnyObjectByType<CharacterStateStore>();
             if (store == null)
             {
-                store = FindObjectOfType<CharacterStateStore>();
+                store = FindAnyObjectByType<CharacterStateStore>();
             }
 
             if (store != null && store.allItems != null)

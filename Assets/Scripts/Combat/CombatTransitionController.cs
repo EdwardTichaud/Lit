@@ -76,9 +76,9 @@ public sealed class CombatTransitionController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Instance = FindFirstObjectByType<CombatTransitionController>();
+        Instance = FindAnyObjectByType<CombatTransitionController>();
 #else
-        Instance = FindObjectOfType<CombatTransitionController>();
+        Instance = FindAnyObjectByType<CombatTransitionController>();
 #endif
         if (Instance != null)
         {

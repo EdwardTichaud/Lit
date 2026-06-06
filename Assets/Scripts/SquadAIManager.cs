@@ -277,7 +277,7 @@ public class SquadAIManager : MonoBehaviour
             return new Bounds(center, navMeshBoundsSize);
         }
 
-        Collider[] colliders = Object.FindObjectsByType<Collider>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Collider[] colliders = Object.FindObjectsByType<Collider>(FindObjectsInactive.Exclude);
         bool hasBounds = false;
         Bounds bounds = new Bounds(center, Vector3.zero);
         int mask = navMeshLayerMask.value;

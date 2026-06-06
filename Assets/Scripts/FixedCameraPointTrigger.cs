@@ -330,7 +330,7 @@ public class FixedCameraPointTrigger : MonoBehaviour
             cameraController = mainCamera.GetComponentInParent<CameraController>();
 
         if (cameraController == null)
-            cameraController = FindFirstObjectByType<CameraController>();
+            cameraController = FindAnyObjectByType<CameraController>();
 
         return cameraController;
     }

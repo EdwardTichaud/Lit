@@ -418,9 +418,9 @@ public class NetcodeLauncher : MonoBehaviour
     private static void TryRestoreHostWorldBeforeStart()
     {
 #if UNITY_2023_1_OR_NEWER
-        WorldSaveAdapter adapter = FindFirstObjectByType<WorldSaveAdapter>();
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #else
-        WorldSaveAdapter adapter = FindObjectOfType<WorldSaveAdapter>();
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
 #endif
         if (adapter == null || !adapter.HasSavedWorldSnapshot())
         {

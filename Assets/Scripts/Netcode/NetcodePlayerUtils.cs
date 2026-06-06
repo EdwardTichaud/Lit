@@ -299,9 +299,9 @@ public static class NetcodePlayerUtils
         }
 
 #if UNITY_2023_1_OR_NEWER
-        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsByType<SquadCharacterController>(UnityEngine.FindObjectsSortMode.None);
+        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsByType<SquadCharacterController>();
 #else
-        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsOfType<SquadCharacterController>();
+        SquadCharacterController[] controllers = UnityEngine.Object.FindObjectsByType<SquadCharacterController>();
 #endif
         for (int i = 0; i < controllers.Length; i++)
         {

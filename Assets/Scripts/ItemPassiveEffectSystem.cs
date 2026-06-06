@@ -100,7 +100,7 @@ public class ItemPassiveEffectSystem : MonoBehaviour
             return;
         }
 
-        SquadCharacterController[] found = FindObjectsByType<SquadCharacterController>(FindObjectsSortMode.None);
+        SquadCharacterController[] found = FindObjectsByType<SquadCharacterController>();
         for (int i = 0; i < found.Length; i++)
         {
             if (found[i] != null)
@@ -150,11 +150,11 @@ public class ItemPassiveEffectSystem : MonoBehaviour
     {
 #if UNITY_2023_1_OR_NEWER
         FindObjectsInactive inactiveFlag = includeInactiveContainers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
-        InteractableItem[] containers = FindObjectsByType<InteractableItem>(inactiveFlag, FindObjectsSortMode.None);
+        InteractableItem[] containers = FindObjectsByType<InteractableItem>(inactiveFlag);
 #else
         InteractableItem[] containers = includeInactiveContainers
-            ? FindObjectsOfType<InteractableItem>(true)
-            : FindObjectsOfType<InteractableItem>();
+            ? FindObjectsByType<InteractableItem>(FindObjectsInactive.Include)
+            : FindObjectsByType<InteractableItem>();
 #endif
 
         for (int i = 0; i < containers.Length; i++)
@@ -192,9 +192,9 @@ public class ItemPassiveEffectSystem : MonoBehaviour
     private void CollectBuildingSources()
     {
 #if UNITY_2023_1_OR_NEWER
-        BuildingInfoInteractable[] buildings = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+        BuildingInfoInteractable[] buildings = FindObjectsByType<BuildingInfoInteractable>();
 #else
-        BuildingInfoInteractable[] buildings = FindObjectsOfType<BuildingInfoInteractable>();
+        BuildingInfoInteractable[] buildings = FindObjectsByType<BuildingInfoInteractable>();
 #endif
         for (int i = 0; i < buildings.Length; i++)
         {

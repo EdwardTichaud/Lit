@@ -4376,9 +4376,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
 #if UNITY_2023_1_OR_NEWER
-        linkedInventoryPanelController = FindFirstObjectByType<InventoryPanelController>();
+        linkedInventoryPanelController = FindAnyObjectByType<InventoryPanelController>();
 #else
-        linkedInventoryPanelController = FindFirstObjectByType<InventoryPanelController>();
+        linkedInventoryPanelController = FindAnyObjectByType<InventoryPanelController>();
 #endif
         return linkedInventoryPanelController;
     }

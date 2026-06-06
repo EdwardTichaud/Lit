@@ -99,9 +99,9 @@ public class BraseroVolumeByYear : MonoBehaviour, IBraseroDisplayTarget
         }
 
 #if UNITY_2023_1_OR_NEWER
-        targetVolume = FindFirstObjectByType<Volume>();
+        targetVolume = FindAnyObjectByType<Volume>();
 #else
-        targetVolume = FindObjectOfType<Volume>();
+        targetVolume = FindAnyObjectByType<Volume>();
 #endif
     }
 

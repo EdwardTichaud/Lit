@@ -108,7 +108,7 @@ public class HiddenRoomPortalTeleporter : MonoBehaviour
         if (bootstrap == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            bootstrap = FindFirstObjectByType<HiddenRoomBootstrap>(FindObjectsInactive.Include);
+            bootstrap = FindAnyObjectByType<HiddenRoomBootstrap>(FindObjectsInactive.Include);
 #else
             bootstrap = FindSceneBootstrap();
 #endif

@@ -94,9 +94,9 @@ public class AudioManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Instance = FindFirstObjectByType<AudioManager>();
+        Instance = FindAnyObjectByType<AudioManager>();
 #else
-        Instance = FindObjectOfType<AudioManager>();
+        Instance = FindAnyObjectByType<AudioManager>();
 #endif
         if (Instance != null)
         {

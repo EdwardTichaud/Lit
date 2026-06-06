@@ -441,9 +441,9 @@ public static class ReadableContentRuntime
     private static T FindComponent<T>() where T : UnityEngine.Object
     {
 #if UNITY_2023_1_OR_NEWER
-        return UnityEngine.Object.FindFirstObjectByType<T>(FindObjectsInactive.Include);
+        return UnityEngine.Object.FindAnyObjectByType<T>(FindObjectsInactive.Include);
 #else
-        return UnityEngine.Object.FindObjectOfType<T>(true);
+        return UnityEngine.Object.FindAnyObjectByType<T>(FindObjectsInactive.Include);
 #endif
     }
 }

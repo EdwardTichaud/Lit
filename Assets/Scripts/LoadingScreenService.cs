@@ -94,9 +94,9 @@ public sealed class LoadingScreenService : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        instance = FindFirstObjectByType<LoadingScreenService>();
+        instance = FindAnyObjectByType<LoadingScreenService>();
 #else
-        instance = FindObjectOfType<LoadingScreenService>();
+        instance = FindAnyObjectByType<LoadingScreenService>();
 #endif
         if (instance != null)
         {

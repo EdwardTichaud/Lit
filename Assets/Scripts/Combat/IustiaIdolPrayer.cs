@@ -232,9 +232,9 @@ public sealed class IustiaIdolPrayerAutoInstaller : MonoBehaviour
     private static void CreateRuntimeInstaller()
     {
 #if UNITY_2023_1_OR_NEWER
-        if (FindFirstObjectByType<IustiaIdolPrayerAutoInstaller>() != null)
+        if (FindAnyObjectByType<IustiaIdolPrayerAutoInstaller>() != null)
 #else
-        if (FindObjectOfType<IustiaIdolPrayerAutoInstaller>() != null)
+        if (FindAnyObjectByType<IustiaIdolPrayerAutoInstaller>() != null)
 #endif
         {
             return;
@@ -265,9 +265,9 @@ public sealed class IustiaIdolPrayerAutoInstaller : MonoBehaviour
     private static void InstallInScene()
     {
 #if UNITY_2023_1_OR_NEWER
-        InteractableItem[] items = FindObjectsByType<InteractableItem>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        InteractableItem[] items = FindObjectsByType<InteractableItem>(FindObjectsInactive.Exclude);
 #else
-        InteractableItem[] items = FindObjectsOfType<InteractableItem>();
+        InteractableItem[] items = FindObjectsByType<InteractableItem>();
 #endif
         if (items == null)
         {

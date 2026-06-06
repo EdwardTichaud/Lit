@@ -429,18 +429,18 @@ public class WorldSaveAdapter : MonoBehaviour
         if (worldStateManager == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            worldStateManager = FindFirstObjectByType<WorldStateManager>();
+            worldStateManager = FindAnyObjectByType<WorldStateManager>();
 #else
-            worldStateManager = FindObjectOfType<WorldStateManager>();
+            worldStateManager = FindAnyObjectByType<WorldStateManager>();
 #endif
         }
 
         if (registry == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            registry = FindFirstObjectByType<NetworkObjectRegistry>();
+            registry = FindAnyObjectByType<NetworkObjectRegistry>();
 #else
-            registry = FindObjectOfType<NetworkObjectRegistry>();
+            registry = FindAnyObjectByType<NetworkObjectRegistry>();
 #endif
         }
     }

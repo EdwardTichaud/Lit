@@ -368,13 +368,13 @@ public class PausePanelController : MonoBehaviour
             return CharacterStateStore.Instance;
         }
 
-        CharacterStateStore store = FindFirstObjectByType<CharacterStateStore>();
+        CharacterStateStore store = FindAnyObjectByType<CharacterStateStore>();
         if (store != null)
         {
             return store;
         }
 
-        store = FindObjectOfType<CharacterStateStore>();
+        store = FindAnyObjectByType<CharacterStateStore>();
         if (store != null)
         {
             return store;
@@ -1037,7 +1037,7 @@ public class PausePanelController : MonoBehaviour
             SquadManager manager = SquadManager.Instance;
             if (manager == null)
             {
-                manager = FindObjectOfType<SquadManager>();
+                manager = FindAnyObjectByType<SquadManager>();
             }
 
             if (manager != null)
@@ -1056,7 +1056,7 @@ public class PausePanelController : MonoBehaviour
             SquadManager manager = SquadManager.Instance;
             if (manager == null)
             {
-                manager = FindObjectOfType<SquadManager>();
+                manager = FindAnyObjectByType<SquadManager>();
             }
 
             if (manager != null)

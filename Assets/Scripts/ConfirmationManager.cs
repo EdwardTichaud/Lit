@@ -116,9 +116,9 @@ public class ConfirmationManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        instance = FindFirstObjectByType<ConfirmationManager>(FindObjectsInactive.Include);
+        instance = FindAnyObjectByType<ConfirmationManager>(FindObjectsInactive.Include);
 #else
-        instance = FindObjectOfType<ConfirmationManager>();
+        instance = FindAnyObjectByType<ConfirmationManager>();
 #endif
         if (instance != null)
         {
@@ -784,9 +784,9 @@ public class ConfirmationManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
 #else
-        Transform[] transforms = FindObjectsOfType<Transform>(true);
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include);
 #endif
         for (int i = 0; i < transforms.Length; i++)
         {

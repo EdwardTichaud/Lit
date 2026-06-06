@@ -278,7 +278,7 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         PausePanelController pausePanel = GetComponentInParent<PausePanelController>(true);
         if (pausePanel == null)
         {
-            pausePanel = FindObjectOfType<PausePanelController>(true);
+            pausePanel = FindAnyObjectByType<PausePanelController>(FindObjectsInactive.Include);
         }
 
         if (pausePanel == null)
@@ -311,7 +311,7 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         controller = GetComponentInParent<MainMenuController>();
         if (controller == null)
         {
-            controller = FindObjectOfType<MainMenuController>(true);
+            controller = FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
         }
 
         return controller != null;

@@ -66,9 +66,9 @@ public static class MainMenuTitleSceneInstaller
         });
         decorController.RefreshDecor();
 
-        Camera mainCamera = Camera.main != null ? Camera.main : Object.FindObjectOfType<Camera>();
+        Camera mainCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
         ConfigureCamera(mainCamera);
-        Canvas mainCanvas = Object.FindObjectOfType<Canvas>();
+        Canvas mainCanvas = Object.FindAnyObjectByType<Canvas>();
         GameObject pointerCursor = InstallPointerCursor(mainCanvas, mainCamera, torchLight);
         pointerCursor.transform.SetAsLastSibling();
 
@@ -238,13 +238,13 @@ public static class MainMenuTitleSceneInstaller
         DestroyObjectByName("VirtualKeyboardCursor");
         DestroyObjectByName("MainMenu_VirtualKeyboardCursor");
 
-        MenuCursorLink[] links = Object.FindObjectsOfType<MenuCursorLink>(true);
+        MenuCursorLink[] links = Object.FindObjectsByType<MenuCursorLink>(FindObjectsInactive.Include);
         for (int i = 0; i < links.Length; i++)
         {
             Object.DestroyImmediate(links[i]);
         }
 
-        CursorController[] cursors = Object.FindObjectsOfType<CursorController>(true);
+        CursorController[] cursors = Object.FindObjectsByType<CursorController>(FindObjectsInactive.Include);
         for (int i = 0; i < cursors.Length; i++)
         {
             if (cursors[i] != null && IsInMainMenuScene(cursors[i].gameObject))
@@ -253,7 +253,7 @@ public static class MainMenuTitleSceneInstaller
             }
         }
 
-        MenuCursorNavigator[] navigators = Object.FindObjectsOfType<MenuCursorNavigator>(true);
+        MenuCursorNavigator[] navigators = Object.FindObjectsByType<MenuCursorNavigator>(FindObjectsInactive.Include);
         for (int i = 0; i < navigators.Length; i++)
         {
             if (navigators[i] != null && IsInMainMenuScene(navigators[i].gameObject))
@@ -265,7 +265,7 @@ public static class MainMenuTitleSceneInstaller
 
     private static void ClearLegacyCursorReferences()
     {
-        MainMenuController controller = Object.FindObjectOfType<MainMenuController>(true);
+        MainMenuController controller = Object.FindAnyObjectByType<MainMenuController>(FindObjectsInactive.Include);
         if (controller == null)
         {
             return;
@@ -447,7 +447,7 @@ public static class MainMenuTitleSceneInstaller
 
     private static void DestroyObjectByName(string name)
     {
-        GameObject[] all = Object.FindObjectsOfType<GameObject>(true);
+        GameObject[] all = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
         for (int i = 0; i < all.Length; i++)
         {
             if (all[i] != null && all[i].name == name && IsInMainMenuScene(all[i]))

@@ -20,9 +20,9 @@ public class NetcodeBootstrap : MonoBehaviour
     {
         NetcodeBootstrap existing = null;
 #if UNITY_2023_1_OR_NEWER
-        existing = FindFirstObjectByType<NetcodeBootstrap>();
+        existing = FindAnyObjectByType<NetcodeBootstrap>();
 #else
-        existing = FindObjectOfType<NetcodeBootstrap>();
+        existing = FindAnyObjectByType<NetcodeBootstrap>();
 #endif
         if (existing != null)
         {
@@ -134,9 +134,9 @@ public class NetcodeBootstrap : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        NetworkManager existing = FindFirstObjectByType<NetworkManager>();
+        NetworkManager existing = FindAnyObjectByType<NetworkManager>();
 #else
-        NetworkManager existing = FindObjectOfType<NetworkManager>();
+        NetworkManager existing = FindAnyObjectByType<NetworkManager>();
 #endif
         if (existing != null)
         {

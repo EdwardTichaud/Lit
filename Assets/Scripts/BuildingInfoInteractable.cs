@@ -470,9 +470,9 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         if (panel == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            panel = FindFirstObjectByType<CraftingConstructionPanel>();
+            panel = FindAnyObjectByType<CraftingConstructionPanel>();
 #else
-            panel = FindObjectOfType<CraftingConstructionPanel>();
+            panel = FindAnyObjectByType<CraftingConstructionPanel>();
 #endif
         }
 
@@ -794,9 +794,9 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     private static Canvas FindDefaultLocalPanelCanvas()
     {
 #if UNITY_2023_1_OR_NEWER
-        Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>();
 #else
-        Canvas[] canvases = UnityEngine.Object.FindObjectsOfType<Canvas>();
+        Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>();
 #endif
         if (canvases == null)
         {

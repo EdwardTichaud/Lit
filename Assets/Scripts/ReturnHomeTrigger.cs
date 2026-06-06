@@ -618,9 +618,9 @@ public class ReturnHomeTrigger : MonoBehaviour
                 if (inventory == null)
                 {
 #if UNITY_2023_1_OR_NEWER
-                    inventory = FindFirstObjectByType<InventoryPanelController>();
+                    inventory = FindAnyObjectByType<InventoryPanelController>();
 #else
-                    inventory = FindObjectOfType<InventoryPanelController>();
+                    inventory = FindAnyObjectByType<InventoryPanelController>();
 #endif
                 }
                 if (inventory != null)

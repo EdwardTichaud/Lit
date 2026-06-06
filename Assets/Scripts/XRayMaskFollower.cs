@@ -228,7 +228,7 @@ public sealed class XRayMaskFollower : MonoBehaviour
 
         if (globalVolume == null)
         {
-            Volume[] volumes = FindObjectsByType<Volume>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Volume[] volumes = FindObjectsByType<Volume>(FindObjectsInactive.Include);
             for (int i = 0; i < volumes.Length; i++)
             {
                 if (volumes[i] != null && volumes[i].name == "GlobalVolume")

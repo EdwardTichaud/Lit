@@ -3079,9 +3079,9 @@ public class InventoryPanelController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        placementCameraController = FindFirstObjectByType<CameraController>();
+        placementCameraController = FindAnyObjectByType<CameraController>();
 #else
-        placementCameraController = FindObjectOfType<CameraController>();
+        placementCameraController = FindAnyObjectByType<CameraController>();
 #endif
         return placementCameraController;
     }
@@ -3564,9 +3564,9 @@ public class InventoryPanelController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindFirstObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #else
-        cachedMaison = FindObjectOfType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #endif
 
         return cachedMaison;
@@ -3799,9 +3799,9 @@ public class InventoryPanelController : MonoBehaviour
     private BuilderController GetBuilderController()
     {
 #if UNITY_2023_1_OR_NEWER
-        return FindFirstObjectByType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #else
-        return FindObjectOfType<BuilderController>();
+        return FindAnyObjectByType<BuilderController>();
 #endif
     }
 

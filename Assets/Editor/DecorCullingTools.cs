@@ -40,9 +40,9 @@ public static class DecorCullingTools
     public static void CreateManagerInScene()
     {
 #if UNITY_2023_1_OR_NEWER
-        DecorCullingManager existing = UnityEngine.Object.FindFirstObjectByType<DecorCullingManager>();
+        DecorCullingManager existing = UnityEngine.Object.FindAnyObjectByType<DecorCullingManager>();
 #else
-        DecorCullingManager existing = UnityEngine.Object.FindObjectOfType<DecorCullingManager>();
+        DecorCullingManager existing = UnityEngine.Object.FindAnyObjectByType<DecorCullingManager>();
 #endif
         if (existing != null)
         {

@@ -451,9 +451,9 @@ public class BuildingPanelController : MonoBehaviour
         if (builder == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            builder = FindFirstObjectByType<BuilderController>();
+            builder = FindAnyObjectByType<BuilderController>();
 #else
-            builder = FindObjectOfType<BuilderController>();
+            builder = FindAnyObjectByType<BuilderController>();
 #endif
         }
 
@@ -2242,9 +2242,9 @@ public class BuildingPanelController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        placementCameraController = FindFirstObjectByType<CameraController>();
+        placementCameraController = FindAnyObjectByType<CameraController>();
 #else
-        placementCameraController = FindObjectOfType<CameraController>();
+        placementCameraController = FindAnyObjectByType<CameraController>();
 #endif
         return placementCameraController;
     }
@@ -2413,9 +2413,9 @@ public class BuildingPanelController : MonoBehaviour
         else
         {
 #if UNITY_2023_1_OR_NEWER
-            BuilderController builder = FindFirstObjectByType<BuilderController>();
+            BuilderController builder = FindAnyObjectByType<BuilderController>();
 #else
-            BuilderController builder = FindObjectOfType<BuilderController>();
+            BuilderController builder = FindAnyObjectByType<BuilderController>();
 #endif
             if (builder != null)
             {
@@ -2563,9 +2563,9 @@ public class BuildingPanelController : MonoBehaviour
         else
         {
 #if UNITY_2023_1_OR_NEWER
-            BuilderController builder = FindFirstObjectByType<BuilderController>();
+            BuilderController builder = FindAnyObjectByType<BuilderController>();
 #else
-            BuilderController builder = FindObjectOfType<BuilderController>();
+            BuilderController builder = FindAnyObjectByType<BuilderController>();
 #endif
             if (builder != null)
             {
@@ -3052,9 +3052,9 @@ public class BuildingPanelController : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindFirstObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #else
-        cachedMaison = FindObjectOfType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #endif
 
         return cachedMaison;

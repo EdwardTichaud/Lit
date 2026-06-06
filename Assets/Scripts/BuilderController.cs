@@ -530,9 +530,9 @@ public class BuilderController : NetworkBehaviour
         if (panel == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            panel = FindFirstObjectByType<BuildingPanelController>();
+            panel = FindAnyObjectByType<BuildingPanelController>();
 #else
-            panel = FindObjectOfType<BuildingPanelController>();
+            panel = FindAnyObjectByType<BuildingPanelController>();
 #endif
         }
 
@@ -660,9 +660,9 @@ public class BuilderController : NetworkBehaviour
             }
 
 #if UNITY_2023_1_OR_NEWER
-            BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+            BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-            BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+            BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
             if (infos == null)
             {
@@ -747,9 +747,9 @@ public class BuilderController : NetworkBehaviour
         EnsureAvailableBuildings();
 
 #if UNITY_2023_1_OR_NEWER
-        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-        BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
         int added = 0;
         Transform root = ResolveBuildingsRoot();
@@ -1364,9 +1364,9 @@ public class BuilderController : NetworkBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-        BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
         if (infos == null || infos.Length == 0)
         {
@@ -2624,9 +2624,9 @@ public class BuilderController : NetworkBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>(FindObjectsSortMode.None);
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #else
-        BuildingInfoInteractable[] infos = FindObjectsOfType<BuildingInfoInteractable>();
+        BuildingInfoInteractable[] infos = FindObjectsByType<BuildingInfoInteractable>();
 #endif
         if (infos == null)
         {
@@ -3064,9 +3064,9 @@ public class BuilderController : NetworkBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        cachedMaison = FindFirstObjectByType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #else
-        cachedMaison = FindObjectOfType<Maison>();
+        cachedMaison = FindAnyObjectByType<Maison>();
 #endif
 
         return cachedMaison;

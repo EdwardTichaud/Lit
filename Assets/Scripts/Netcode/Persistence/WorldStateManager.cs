@@ -212,9 +212,9 @@ public class WorldStateManager : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        NetcodeCharacterIdentity[] identities = FindObjectsByType<NetcodeCharacterIdentity>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        NetcodeCharacterIdentity[] identities = FindObjectsByType<NetcodeCharacterIdentity>(FindObjectsInactive.Include);
 #else
-        NetcodeCharacterIdentity[] identities = FindObjectsOfType<NetcodeCharacterIdentity>(true);
+        NetcodeCharacterIdentity[] identities = FindObjectsByType<NetcodeCharacterIdentity>(FindObjectsInactive.Include);
 #endif
         if (identities == null)
         {
@@ -889,27 +889,27 @@ public class WorldStateManager : MonoBehaviour
         if (registry == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            registry = FindFirstObjectByType<NetworkObjectRegistry>();
+            registry = FindAnyObjectByType<NetworkObjectRegistry>();
 #else
-            registry = FindObjectOfType<NetworkObjectRegistry>();
+            registry = FindAnyObjectByType<NetworkObjectRegistry>();
 #endif
         }
 
         if (spawnManager == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            spawnManager = FindFirstObjectByType<SpawnManager>();
+            spawnManager = FindAnyObjectByType<SpawnManager>();
 #else
-            spawnManager = FindObjectOfType<SpawnManager>();
+            spawnManager = FindAnyObjectByType<SpawnManager>();
 #endif
         }
 
         if (worldRulesStateManager == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            worldRulesStateManager = FindFirstObjectByType<WorldRulesStateManager>();
+            worldRulesStateManager = FindAnyObjectByType<WorldRulesStateManager>();
 #else
-            worldRulesStateManager = FindObjectOfType<WorldRulesStateManager>();
+            worldRulesStateManager = FindAnyObjectByType<WorldRulesStateManager>();
 #endif
         }
     }

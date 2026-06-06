@@ -119,7 +119,6 @@ public class CursorController : MonoBehaviour
     private int cachedChildCount = -1;
     private RectTransform cachedParent;
     private LayoutKind layoutKind = LayoutKind.Unknown;
-    private bool isUpdatingCursor;
     private Vector3 cursorTargetPosition;
     private Vector2 cursorTargetSize;
     private bool cursorHasTarget;
@@ -765,7 +764,6 @@ public class CursorController : MonoBehaviour
 
     private void UpdateCursorVisual()
     {
-        isUpdatingCursor = true;
         RectTransform target = CurrentItem;
         if (target == null)
         {
@@ -773,7 +771,6 @@ public class CursorController : MonoBehaviour
             cursorDirty = false;
             cursorHasTarget = false;
             cursorInitialized = false;
-            isUpdatingCursor = false;
             return;
         }
 
@@ -781,7 +778,6 @@ public class CursorController : MonoBehaviour
         if (rect == null)
         {
             cursorDirty = false;
-            isUpdatingCursor = false;
             return;
         }
 
@@ -838,7 +834,6 @@ public class CursorController : MonoBehaviour
         lastParticleTarget = target;
 
         cursorDirty = false;
-        isUpdatingCursor = false;
     }
 
     private void HideCursor()

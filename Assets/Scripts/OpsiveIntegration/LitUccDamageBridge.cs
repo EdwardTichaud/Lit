@@ -1,14 +1,21 @@
 using Opsive.Shared.Events;
 using Opsive.UltimateCharacterController.Character;
 using Opsive.UltimateCharacterController.Character.Abilities;
+using Opsive.UltimateCharacterController.Traits;
 using UnityEngine;
 
-// Forwards Lit-owned health changes into UCC presentation events.
+// Forwards Lit-owned health into UCC presentation events and mirrored attributes.
 [DisallowMultipleComponent]
 public class LitUccDamageBridge : MonoBehaviour
 {
     [SerializeField] private UltimateCharacterLocomotion locomotion;
+    [SerializeField] private SquadCharacterController squadController;
     [SerializeField] private CombatHealth combatHealth;
+    [SerializeField] private CharacterAttributeManager attributeManager;
+    [SerializeField] private CharacterHealth characterHealth;
+    [SerializeField] private string healthAttributeName = "Health";
+    [SerializeField, Tooltip("Keep UCC CharacterHealth/AttributeManager mirrored from Lit health without making UCC authoritative.")]
+    private bool mirrorLitHealthToOpsiveAttributes = true;
     [SerializeField, Tooltip("Raise UCC OnHealthDamage so DamageVisualization and similar abilities can react.")]
     private bool raiseOpsiveDamageEvent = true;
     [SerializeField, Tooltip("Raise UCC OnDeath when Lit health reaches zero.")]
@@ -20,16 +27,21 @@ public class LitUccDamageBridge : MonoBehaviour
 
     private int lastCombatHealthValue;
     private bool combatHealthInitialized;
+    private SquadCharacterController subscribedSquadController;
 
     private void Awake()
     {
         ResolveReferences();
         CacheCombatHealth();
+        MirrorLitHealthToOpsiveAttributes();
     }
 
     private void OnEnable()
     {
         ResolveReferences();
+        SubscribeSquadHealth();
+        MirrorLitHealthToOpsiveAttributes();
+
         if (combatHealth != null)
         {
             CacheCombatHealth();
@@ -39,6 +51,8 @@ public class LitUccDamageBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        UnsubscribeSquadHealth();
+
         if (combatHealth != null)
         {
             combatHealth.HealthChanged -= OnCombatHealthChanged;
@@ -119,6 +133,21 @@ public class LitUccDamageBridge : MonoBehaviour
         {
             combatHealth = GetComponent<CombatHealth>();
         }
+
+        if (squadController == null)
+        {
+            squadController = GetComponent<SquadCharacterController>();
+        }
+
+        if (attributeManager == null)
+        {
+            attributeManager = GetComponent<CharacterAttributeManager>();
+        }
+
+        if (characterHealth == null)
+        {
+            characterHealth = GetComponent<CharacterHealth>();
+        }
     }
 
     private void CacheCombatHealth()
@@ -158,6 +187,60 @@ public class LitUccDamageBridge : MonoBehaviour
         Vector3 position = ResolveDamagePosition(null);
         Vector3 force = ResolveDamageForce(null);
         NotifyDamageApplied(appliedDamage, health.IsDead, position, force, null, null);
+    }
+
+    private void SubscribeSquadHealth()
+    {
+        if (subscribedSquadController == squadController)
+        {
+            return;
+        }
+
+        UnsubscribeSquadHealth();
+
+        if (squadController != null)
+        {
+            subscribedSquadController = squadController;
+            subscribedSquadController.HealthChanged += OnSquadHealthChanged;
+        }
+    }
+
+    private void UnsubscribeSquadHealth()
+    {
+        if (subscribedSquadController != null)
+        {
+            subscribedSquadController.HealthChanged -= OnSquadHealthChanged;
+            subscribedSquadController = null;
+        }
+    }
+
+    private void OnSquadHealthChanged(SquadCharacterController controller)
+    {
+        MirrorLitHealthToOpsiveAttributes();
+    }
+
+    private void MirrorLitHealthToOpsiveAttributes()
+    {
+        if (!mirrorLitHealthToOpsiveAttributes || squadController == null || attributeManager == null)
+        {
+            return;
+        }
+
+        Opsive.UltimateCharacterController.Traits.Attribute healthAttribute =
+            attributeManager.GetAttribute(healthAttributeName);
+        if (healthAttribute == null)
+        {
+            return;
+        }
+
+        healthAttribute.MaxValue = Mathf.Max(1, squadController.MaxHp);
+        healthAttribute.Value = Mathf.Clamp(squadController.CurrentHp, 0, squadController.MaxHp);
+
+        if (characterHealth != null)
+        {
+            characterHealth.HealthAttributeName = healthAttributeName;
+            characterHealth.HealthValue = healthAttribute.Value;
+        }
     }
 
     private Vector3 ResolveDamagePosition(GameObject attacker)
