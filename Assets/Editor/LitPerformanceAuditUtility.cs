@@ -14,7 +14,6 @@ public static class LitPerformanceAuditUtility
         "Assets/0 - UnityPackages/Fab",
         "Assets/0 - UnityPackages/UnityAssets/StarterAssets",
         "Assets/0 - UnityPackages/UnityAssets/GalaxyBox2",
-        "Assets/CharacterControllerLegacy",
         "Assets/WorldMaterialsFree",
         "Assets/Audio",
         "Assets/Lucian_CC5_Embed"

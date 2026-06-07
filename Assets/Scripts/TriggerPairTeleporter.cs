@@ -135,7 +135,10 @@ public class TriggerPairTeleporter : MonoBehaviour
         }
 
         ResolveDestinationPose(destinationEndpoint, out Vector3 destinationPosition, out Quaternion destinationRotation);
-        TeleportTraveler(travelerRoot, destinationPosition, destinationRotation);
+        if (!TeleportTraveler(travelerRoot, destinationPosition, destinationRotation))
+        {
+            return;
+        }
 
         teleportCooldownUntilByTraveler[travelerRoot] = Time.unscaledTime + cooldownSeconds;
 
@@ -149,63 +152,27 @@ public class TriggerPairTeleporter : MonoBehaviour
         }
     }
 
-    private void TeleportTraveler(Transform travelerRoot, Vector3 destinationPosition, Quaternion destinationRotation)
+    private bool TeleportTraveler(Transform travelerRoot, Vector3 destinationPosition, Quaternion destinationRotation)
     {
-        Rigidbody rigidbodyTarget = travelerRoot.GetComponent<Rigidbody>();
-        if (rigidbodyTarget == null)
-        {
-            rigidbodyTarget = travelerRoot.GetComponentInChildren<Rigidbody>(true);
-        }
-
-        CharacterController characterController = travelerRoot.GetComponent<CharacterController>();
-        if (characterController == null)
-        {
-            characterController = travelerRoot.GetComponentInChildren<CharacterController>(true);
-        }
-
-        bool controllerWasEnabled = characterController != null && characterController.enabled;
-        if (controllerWasEnabled)
-        {
-            characterController.enabled = false;
-        }
-
-        if (rigidbodyTarget != null)
-        {
-            rigidbodyTarget.position = destinationPosition;
-            rigidbodyTarget.rotation = destinationRotation;
-#if UNITY_6000_0_OR_NEWER
-            rigidbodyTarget.linearVelocity = Vector3.zero;
-#else
-            rigidbodyTarget.velocity = Vector3.zero;
-#endif
-            rigidbodyTarget.angularVelocity = Vector3.zero;
-        }
-
-        travelerRoot.SetPositionAndRotation(destinationPosition, destinationRotation);
-
-        if (controllerWasEnabled)
-        {
-            characterController.enabled = true;
-        }
-
-        AudioManager.EnsureInstance()?.PlayActionCue(ActionAudioCue.Teleport, destinationPosition);
-
-        if (!stopSquadCharacterAfterTeleport)
-        {
-            return;
-        }
-
         SquadCharacterController squadController = travelerRoot.GetComponent<SquadCharacterController>();
         if (squadController == null)
         {
             squadController = travelerRoot.GetComponentInChildren<SquadCharacterController>(true);
         }
 
-        if (squadController != null)
+        if (squadController == null ||
+            !squadController.TrySetUccExternalPositionAndRotation(destinationPosition, destinationRotation, stopActiveAbilities: true))
+        {
+            return false;
+        }
+
+        AudioManager.EnsureInstance()?.PlayActionCue(ActionAudioCue.Teleport, destinationPosition);
+        if (stopSquadCharacterAfterTeleport)
         {
             squadController.Stop();
         }
 
+        return true;
     }
 
     private bool IsPointInsideTrigger(Collider trigger, Vector3 point)

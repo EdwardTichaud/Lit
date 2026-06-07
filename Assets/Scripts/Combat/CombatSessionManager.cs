@@ -1545,7 +1545,10 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        MoveTransformTo(controller.transform, position, rotation);
+        if (!controller.TrySetUccExternalPositionAndRotation(position, rotation, stopActiveAbilities: true))
+        {
+            return;
+        }
     }
 
     private static void MoveCombatAggroEnemyTo(CombatAggroEnemy enemy, Vector3 position, Quaternion rotation)
@@ -1973,39 +1976,7 @@ public class CombatSessionManager : NetworkBehaviour
             controller != null ? controller.transform.position : transform.position);
 
         Animator animator = controller != null ? controller.GetComponent<Animator>() : null;
-        StarterMotorAnimatorDriver animatorDriver = controller != null
-            ? controller.GetComponent<StarterMotorAnimatorDriver>()
-            : null;
-
-        float duration = PlayNamedAnimation(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
-        if (animatorDriver != null)
-        {
-            StartCoroutine(RestoreAnimatorDriverAfterDelay(animatorDriver, duration));
-        }
-
-        return duration;
-    }
-
-    private IEnumerator RestoreAnimatorDriverAfterDelay(StarterMotorAnimatorDriver animatorDriver, float duration)
-    {
-        if (animatorDriver == null)
-        {
-            yield break;
-        }
-
-        bool wasEnabled = animatorDriver.enabled;
-        if (!wasEnabled)
-        {
-            yield break;
-        }
-
-        animatorDriver.enabled = false;
-        yield return new WaitForSeconds(Mathf.Max(0.05f, duration));
-
-        if (animatorDriver != null)
-        {
-            animatorDriver.enabled = true;
-        }
+        return PlayNamedAnimation(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
     }
 
     private float ResolveCombatResolutionDuration(CombatSession session, bool playerVictory)

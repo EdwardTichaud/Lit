@@ -175,15 +175,19 @@ public class LadderController : MonoBehaviour
 
         SquadCharacterController controller = ResolveCharacterController(character);
         LitOpsiveLocomotionBridge uccBridge = ResolveUccBridge(character, controller);
-        StarterInspiredThirdPersonMotor starterMotor = uccBridge != null ? null : ResolveStarterMotor(character);
+        if (controller != null && uccBridge == null)
+        {
+            return false;
+        }
+
         Animator animator = ResolveCharacterAnimator(character, controller);
-        Rigidbody body = starterMotor != null || uccBridge != null ? null : ResolveCharacterRigidbody(character, controller);
-        Transform motionRoot = ResolveCharacterMotionRoot(character, uccBridge, starterMotor, controller, body);
+        Rigidbody body = uccBridge != null || controller != null ? null : ResolveCharacterRigidbody(character, controller);
+        Transform motionRoot = ResolveCharacterMotionRoot(character, uccBridge, controller, body);
         if (motionRoot == null)
         {
             return false;
         }
-        ScriptedMotionTarget motionTarget = new ScriptedMotionTarget(uccBridge, starterMotor, motionRoot, body);
+        ScriptedMotionTarget motionTarget = new ScriptedMotionTarget(uccBridge, motionRoot, body);
 
         LadderAnimationSet animationSet = ResolveLadderAnimationSet(route.ExitsAtTop);
         Vector3 ladderEndStartPosition = ResolveLadderEndStartPosition(
@@ -232,7 +236,6 @@ public class LadderController : MonoBehaviour
         bool inputSuppressed = false;
         bool uccPrepared = false;
         bool bodyPrepared = false;
-        bool starterMotorPrepared = false;
         bool animatorRootMotionPrepared = false;
         bool previousApplyRootMotion = false;
         RigidbodyState bodyState = default;
@@ -256,13 +259,7 @@ public class LadderController : MonoBehaviour
                 uccPrepared = true;
             }
 
-            if (motionTarget.StarterMotor != null)
-            {
-                motionTarget.StarterMotor.BeginLadderTraversal();
-                starterMotorPrepared = true;
-            }
-
-            if (controller != null && motionTarget.StarterMotor == null)
+            if (controller != null)
             {
                 controller.PushScriptedMovementSuppression();
                 inputSuppressed = true;
@@ -394,12 +391,6 @@ public class LadderController : MonoBehaviour
                 exitMoveEndTime = endDuration + exitMoveDuration;
             }
 
-            if (starterMotorPrepared && motionTarget.StarterMotor != null)
-            {
-                motionTarget.StarterMotor.EndLadderTraversal();
-                starterMotorPrepared = false;
-            }
-
             if (uccPrepared && motionTarget.UccBridge != null)
             {
                 motionTarget.UccBridge.EndScriptedTraversal();
@@ -427,11 +418,6 @@ public class LadderController : MonoBehaviour
         finally
         {
             SetLoopAnimation(animator, animationSet.LoopName, false);
-
-            if (starterMotorPrepared && motionTarget.StarterMotor != null)
-            {
-                motionTarget.StarterMotor.EndLadderTraversal();
-            }
 
             if (uccPrepared && motionTarget.UccBridge != null)
             {
@@ -788,12 +774,6 @@ public class LadderController : MonoBehaviour
         if (motionTarget.UccBridge != null)
         {
             motionTarget.UccBridge.ApplyScriptedTraversalPose(position, rotation);
-            return;
-        }
-
-        if (motionTarget.StarterMotor != null)
-        {
-            motionTarget.StarterMotor.ApplyLadderPose(position, rotation);
             return;
         }
 
@@ -1746,28 +1726,6 @@ public class LadderController : MonoBehaviour
         return null;
     }
 
-    private static StarterInspiredThirdPersonMotor ResolveStarterMotor(GameObject character)
-    {
-        if (character == null)
-        {
-            return null;
-        }
-
-        StarterInspiredThirdPersonMotor motor = character.GetComponent<StarterInspiredThirdPersonMotor>();
-        if (motor != null)
-        {
-            return motor;
-        }
-
-        motor = character.GetComponentInChildren<StarterInspiredThirdPersonMotor>(true);
-        if (motor != null)
-        {
-            return motor;
-        }
-
-        return character.GetComponentInParent<StarterInspiredThirdPersonMotor>();
-    }
-
     private static Animator ResolveCharacterAnimator(GameObject character, SquadCharacterController controller)
     {
         Animator animator = controller != null ? controller.GetComponent<Animator>() : null;
@@ -1958,18 +1916,12 @@ public class LadderController : MonoBehaviour
     private static Transform ResolveCharacterMotionRoot(
         GameObject character,
         LitOpsiveLocomotionBridge uccBridge,
-        StarterInspiredThirdPersonMotor starterMotor,
         SquadCharacterController controller,
         Rigidbody body)
     {
         if (uccBridge != null)
         {
             return uccBridge.transform;
-        }
-
-        if (starterMotor != null)
-        {
-            return starterMotor.transform;
         }
 
         if (body != null)
@@ -1992,11 +1944,6 @@ public class LadderController : MonoBehaviour
             return motionTarget.UccBridge.transform.position;
         }
 
-        if (motionTarget.StarterMotor != null)
-        {
-            return motionTarget.StarterMotor.transform.position;
-        }
-
         if (motionTarget.Body != null)
         {
             return motionTarget.Body.position;
@@ -2010,11 +1957,6 @@ public class LadderController : MonoBehaviour
         if (motionTarget.UccBridge != null)
         {
             return motionTarget.UccBridge.transform.rotation;
-        }
-
-        if (motionTarget.StarterMotor != null)
-        {
-            return motionTarget.StarterMotor.transform.rotation;
         }
 
         if (motionTarget.Body != null)
@@ -2038,18 +1980,15 @@ public class LadderController : MonoBehaviour
     {
         public ScriptedMotionTarget(
             LitOpsiveLocomotionBridge uccBridge,
-            StarterInspiredThirdPersonMotor starterMotor,
             Transform motionRoot,
             Rigidbody body)
         {
             UccBridge = uccBridge;
-            StarterMotor = starterMotor;
             MotionRoot = motionRoot;
             Body = body;
         }
 
         public LitOpsiveLocomotionBridge UccBridge { get; }
-        public StarterInspiredThirdPersonMotor StarterMotor { get; }
         public Transform MotionRoot { get; }
         public Rigidbody Body { get; }
     }

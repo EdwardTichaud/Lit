@@ -1139,11 +1139,10 @@ public class SquadAIManager : MonoBehaviour
 
         if (useLeaderVelocityForFormation)
         {
-            Rigidbody rb = leader.GetComponent<Rigidbody>();
-            if (rb != null)
+            LitOpsiveLocomotionBridge uccBridge = leader.GetComponent<LitOpsiveLocomotionBridge>();
+            if (uccBridge != null && uccBridge.IsDriving)
             {
-                Vector3 velocity = rb.linearVelocity;
-                velocity.y = 0f;
+                Vector3 velocity = uccBridge.PlanarVelocity;
                 if (velocity.sqrMagnitude > 0.01f)
                 {
                     return velocity.normalized;
@@ -1264,21 +1263,7 @@ public class SquadAIManager : MonoBehaviour
             return true;
         }
 
-        Rigidbody rb = follower.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.position = destination;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-        else
-        {
-            follower.transform.position = destination;
-        }
-
-        state.lastPosition = destination;
-        state.lastProgressTime = Time.time;
-        return true;
+        return false;
     }
 
     private void UpdateFollowerProgress(GameObject follower)

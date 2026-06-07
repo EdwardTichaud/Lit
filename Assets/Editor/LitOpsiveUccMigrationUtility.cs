@@ -6,7 +6,9 @@ using Opsive.UltimateCharacterController.Character.Identifiers;
 using Opsive.UltimateCharacterController.Traits;
 using Opsive.UltimateCharacterController.Utility.Builders;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class LitOpsiveUccMigrationUtility
 {
@@ -96,18 +98,40 @@ public static class LitOpsiveUccMigrationUtility
     {
         List<string> warnings = new List<string>();
         List<string> errors = ValidateLucianUccSetupInternal(warnings);
+        errors.AddRange(ValidateAllSquadUccSetupInternal(warnings, skipPrefabPath: LucianPrefabPath));
         if (warnings.Count > 0)
         {
-            Debug.LogWarning("Lucian UCC setup validation warnings:\n- " + string.Join("\n- ", warnings));
+            Debug.LogWarning("UCC setup validation warnings:\n- " + string.Join("\n- ", warnings));
         }
 
         if (errors.Count == 0)
         {
-            Debug.Log("Lucian UCC setup validation passed.");
+            Debug.Log("Lucian and Squad UCC setup validation passed.");
             return;
         }
 
-        string message = "Lucian UCC setup validation failed:\n- " + string.Join("\n- ", errors);
+        string message = "UCC setup validation failed:\n- " + string.Join("\n- ", errors);
+        Debug.LogError(message);
+        throw new InvalidOperationException(message);
+    }
+
+    [MenuItem(MenuRoot + "Validate Squad UCC Setup")]
+    public static void ValidateSquadUccSetup()
+    {
+        List<string> warnings = new List<string>();
+        List<string> errors = ValidateAllSquadUccSetupInternal(warnings);
+        if (warnings.Count > 0)
+        {
+            Debug.LogWarning("Squad UCC setup validation warnings:\n- " + string.Join("\n- ", warnings));
+        }
+
+        if (errors.Count == 0)
+        {
+            Debug.Log("Squad UCC setup validation passed.");
+            return;
+        }
+
+        string message = "Squad UCC setup validation failed:\n- " + string.Join("\n- ", errors);
         Debug.LogError(message);
         throw new InvalidOperationException(message);
     }
@@ -257,7 +281,7 @@ public static class LitOpsiveUccMigrationUtility
         ConfigureAnimatorMonitor(character.GetComponent<AnimatorMonitor>());
         EnsureLookSource(character);
         ConfigureCharacterIk(character);
-        ConfigureCharacterHealthMirror(character);
+        ConfigureCharacterHealthAuthority(character);
 
         LitOpsiveLocomotionBridge bridge = character.GetComponent<LitOpsiveLocomotionBridge>();
         if (bridge == null)
@@ -268,7 +292,7 @@ public static class LitOpsiveUccMigrationUtility
         ConfigureBridgeAnimatorMode(bridge, driveLitAnimatorParameters: useLucianAnimatorController);
         ConfigureBridgeCompanionMode(bridge, autoInstallCompanionBridges: false);
         EnsureExplicitCompanionBridges(character);
-        ConfigureDamageBridgeHealthMirror(character);
+        ConfigureDamageBridgeHealthAuthority(character);
     }
 
     private static void ConfigureLocomotionAnimationMode(UltimateCharacterLocomotion locomotion, bool useRootMotionPosition)
@@ -489,7 +513,7 @@ public static class LitOpsiveUccMigrationUtility
         EditorUtility.SetDirty(characterIk);
     }
 
-    private static void ConfigureCharacterHealthMirror(GameObject character)
+    private static void ConfigureCharacterHealthAuthority(GameObject character)
     {
         CharacterAttributeManager attributeManager = EnsureComponent<CharacterAttributeManager>(character);
         int maxHealth = ResolveCharacterMaxHealth(character);
@@ -499,7 +523,7 @@ public static class LitOpsiveUccMigrationUtility
         characterHealth.HealthAttributeName = UccHealthAttributeName;
         characterHealth.ShieldAttributeName = string.Empty;
         characterHealth.ApplyFallDamage = false;
-        characterHealth.Invincible = true;
+        characterHealth.Invincible = false;
         characterHealth.TimeInvincibleAfterSpawn = 0f;
         characterHealth.DeactivateOnDeath = false;
         EditorUtility.SetDirty(characterHealth);
@@ -567,7 +591,7 @@ public static class LitOpsiveUccMigrationUtility
         EditorUtility.SetDirty(attributeManager);
     }
 
-    private static void ConfigureDamageBridgeHealthMirror(GameObject character)
+    private static void ConfigureDamageBridgeHealthAuthority(GameObject character)
     {
         LitUccDamageBridge damageBridge = character.GetComponent<LitUccDamageBridge>();
         if (damageBridge == null)
@@ -580,7 +604,9 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedObjectReference(serializedObject, "attributeManager", character.GetComponent<CharacterAttributeManager>());
         SetSerializedObjectReference(serializedObject, "characterHealth", character.GetComponent<CharacterHealth>());
         SetSerializedString(serializedObject, "healthAttributeName", UccHealthAttributeName);
-        SetSerializedBool(serializedObject, "mirrorLitHealthToOpsiveAttributes", true);
+        SetSerializedBool(serializedObject, "characterHealthIsAuthority", true);
+        SetSerializedBool(serializedObject, "syncSquadHealthFromCharacterHealth", true);
+        SetSerializedBool(serializedObject, "mirrorLitHealthToOpsiveAttributes", false);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(damageBridge);
     }
@@ -729,12 +755,123 @@ public static class LitOpsiveUccMigrationUtility
             errors.Add($"Lucian CharacterData model should be '{LucianPrefabPath}' but is '{modelPath}'.");
         }
 
-        ValidateUccPrefab(LucianPrefabPath, "Player_Model_Lucian prefab", errors, warnings);
+        ValidateUccPrefab(LucianPrefabPath, "Player_Model_Lucian prefab", errors, warnings, LucianAnimatorControllerPath);
 
         return errors;
     }
 
-    private static void ValidateUccPrefab(string prefabPath, string label, List<string> errors, List<string> warnings)
+    private static List<string> ValidateAllSquadUccSetupInternal(List<string> warnings, string skipPrefabPath = null)
+    {
+        List<string> errors = new List<string>();
+        ValidateSquadUccPrefabs(errors, warnings, skipPrefabPath);
+        ValidateSquadUccScenes(errors, warnings);
+        return errors;
+    }
+
+    private static void ValidateSquadUccPrefabs(List<string> errors, List<string> warnings, string skipPrefabPath)
+    {
+        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
+        for (int i = 0; i < prefabGuids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(prefabGuids[i]);
+            if (string.IsNullOrEmpty(path) ||
+                string.Equals(path, skipPrefabPath, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            GameObject contents = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                SquadCharacterController[] controllers = contents.GetComponentsInChildren<SquadCharacterController>(true);
+                for (int j = 0; j < controllers.Length; j++)
+                {
+                    SquadCharacterController controller = controllers[j];
+                    if (controller == null)
+                    {
+                        continue;
+                    }
+
+                    string label = $"Prefab {path}/{GetHierarchyPath(controller.transform)}";
+                    ValidateUccCharacter(controller.gameObject, label, errors, warnings, expectedAnimatorControllerPath: null);
+                }
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+    }
+
+    private static void ValidateSquadUccScenes(List<string> errors, List<string> warnings)
+    {
+        string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets" });
+        for (int i = 0; i < sceneGuids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(sceneGuids[i]);
+            if (string.IsNullOrEmpty(path))
+            {
+                continue;
+            }
+
+            Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+            try
+            {
+                GameObject[] roots = scene.GetRootGameObjects();
+                for (int j = 0; j < roots.Length; j++)
+                {
+                    SquadCharacterController[] controllers = roots[j].GetComponentsInChildren<SquadCharacterController>(true);
+                    for (int k = 0; k < controllers.Length; k++)
+                    {
+                        SquadCharacterController controller = controllers[k];
+                        if (controller == null)
+                        {
+                            continue;
+                        }
+
+                        string label = $"Scene {path}/{GetHierarchyPath(controller.transform)}";
+                        ValidateUccCharacter(controller.gameObject, label, errors, warnings, expectedAnimatorControllerPath: null);
+                    }
+                }
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, removeScene: true);
+            }
+        }
+    }
+
+    private static string GetHierarchyPath(Transform transform)
+    {
+        if (transform == null)
+        {
+            return "<null>";
+        }
+
+        List<string> parts = new List<string>();
+        Transform current = transform;
+        while (current != null)
+        {
+            parts.Add(current.name);
+            current = current.parent;
+        }
+
+        parts.Reverse();
+        return string.Join("/", parts);
+    }
+
+    private static void ValidateUccPrefab(
+        string prefabPath,
+        string label,
+        List<string> errors,
+        List<string> warnings,
+        string expectedAnimatorControllerPath)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab == null)
@@ -746,94 +883,7 @@ public static class LitOpsiveUccMigrationUtility
         GameObject contents = PrefabUtility.LoadPrefabContents(prefabPath);
         try
         {
-            ValidateComponent<SquadCharacterController>(contents, errors);
-            ValidateComponent<UltimateCharacterLocomotion>(contents, errors);
-            ValidateComponent<UltimateCharacterLocomotionHandler>(contents, errors);
-            ValidateComponent<LitOpsivePlayerInput>(contents, errors);
-            ValidateComponent<LitOpsiveLocomotionBridge>(contents, errors);
-            ValidateComponent<LitUccInteractionBridge>(contents, errors);
-            ValidateComponent<LitUccDamageBridge>(contents, errors);
-            ValidateComponent<LitUccFollowerBridge>(contents, errors);
-            ValidateComponent<CharacterAttributeManager>(contents, errors);
-            ValidateComponent<CharacterHealth>(contents, errors);
-            ValidateNoComponent<StarterInspiredThirdPersonMotor>(contents, label, errors);
-            ValidateNoComponent<StarterMotorAnimatorDriver>(contents, label, errors);
-            ValidateNoComponent<StarterMotorLocalInputBridge>(contents, label, errors);
-            ValidateAnimatorController(contents, label, errors, LucianAnimatorControllerPath);
-            ValidateCharacterIkMigration(contents, label, errors);
-            ValidateCharacterHealthMigration(contents, label, errors);
-            ValidateSingleUccColliderGroup(contents, label, errors);
-
-            LitOpsiveLookSource lookSource = contents.GetComponentInChildren<LitOpsiveLookSource>(true);
-            if (lookSource == null)
-            {
-                errors.Add($"Missing LitOpsiveLookSource in {label} children.");
-            }
-            else if (lookSource.EventTarget != contents)
-            {
-                errors.Add($"LitOpsiveLookSource EventTarget does not point to the {label} root.");
-            }
-
-            UltimateCharacterLocomotion locomotion = contents.GetComponent<UltimateCharacterLocomotion>();
-            if (locomotion != null)
-            {
-                ValidateLocomotionAnimationMode(locomotion, label, errors, expectedRootMotionPosition: false);
-                ValidateSingleAbility<Jump>(locomotion, errors);
-                ValidateSingleAbility<Fall>(locomotion, errors);
-                ValidateSingleAbility<MoveTowards>(locomotion, errors);
-                ValidateSingleAbility<SpeedChange>(locomotion, errors);
-                ValidateSingleAbility<HeightChange>(locomotion, errors);
-            }
-
-            AnimatorMonitor animatorMonitor = contents.GetComponent<AnimatorMonitor>();
-            if (animatorMonitor == null)
-            {
-                errors.Add($"Missing AnimatorMonitor in {label}.");
-            }
-            else
-            {
-                ValidateAnimatorMonitor(animatorMonitor, label, errors);
-            }
-
-            LitOpsiveLocomotionBridge bridge = contents.GetComponent<LitOpsiveLocomotionBridge>();
-            if (bridge != null)
-            {
-                ValidateBridgeBoolean(bridge, "driveFromSquadFacade", true, errors);
-                ValidateBridgeBoolean(bridge, "overrideOpsiveHandlerInput", true, errors);
-                ValidateBridgeBoolean(bridge, "orientLookSourceFromMovement", true, errors);
-                ValidateBridgeBoolean(bridge, "configureRigidbodyForOpsive", true, errors);
-                ValidateBridgeBoolean(bridge, "autoInstallCompanionBridges", false, errors);
-                ValidateBridgeBoolean(bridge, "driveLitLocomotionAnimatorParameters", true, errors);
-            }
-
-            LitUccDamageBridge damageBridge = contents.GetComponent<LitUccDamageBridge>();
-            if (damageBridge != null)
-            {
-                ValidateBridgeBoolean(damageBridge, "mirrorLitHealthToOpsiveAttributes", true, errors);
-                ValidateBridgeObjectReference(damageBridge, "squadController", contents.GetComponent<SquadCharacterController>(), errors);
-                ValidateBridgeObjectReference(damageBridge, "attributeManager", contents.GetComponent<CharacterAttributeManager>(), errors);
-                ValidateBridgeObjectReference(damageBridge, "characterHealth", contents.GetComponent<CharacterHealth>(), errors);
-                ValidateBridgeString(damageBridge, "healthAttributeName", UccHealthAttributeName, errors);
-            }
-
-            Component[] components = contents.GetComponentsInChildren<Component>(true);
-            for (int i = 0; i < components.Length; i++)
-            {
-                Component component = components[i];
-                if (component == null)
-                {
-                    errors.Add($"{label} contains a missing script reference.");
-                    continue;
-                }
-
-                Type type = component.GetType();
-                if (type.Name == "CameraController" &&
-                    type.FullName != null &&
-                    type.FullName.StartsWith("Opsive.", StringComparison.Ordinal))
-                {
-                    errors.Add($"Unexpected Opsive camera controller component found in {label}: {type.FullName}.");
-                }
-            }
+            ValidateUccCharacter(contents, label, errors, warnings, expectedAnimatorControllerPath);
         }
         finally
         {
@@ -841,19 +891,133 @@ public static class LitOpsiveUccMigrationUtility
         }
     }
 
-    private static void ValidateComponent<T>(GameObject character, List<string> errors) where T : Component
+    private static void ValidateUccCharacter(
+        GameObject character,
+        string label,
+        List<string> errors,
+        List<string> warnings,
+        string expectedAnimatorControllerPath)
     {
-        if (character.GetComponent<T>() == null)
+        ValidateComponent<SquadCharacterController>(character, label, errors);
+        ValidateComponent<UltimateCharacterLocomotion>(character, label, errors);
+        ValidateComponent<UltimateCharacterLocomotionHandler>(character, label, errors);
+        ValidateComponent<LitOpsivePlayerInput>(character, label, errors);
+        ValidateComponent<LitOpsiveLocomotionBridge>(character, label, errors);
+        ValidateComponent<LitUccInteractionBridge>(character, label, errors);
+        ValidateComponent<LitUccDamageBridge>(character, label, errors);
+        ValidateComponent<LitUccFollowerBridge>(character, label, errors);
+        ValidateComponent<CharacterAttributeManager>(character, label, errors);
+        ValidateComponent<CharacterHealth>(character, label, errors);
+        ValidateNoComponentByTypeName(character, label, "StarterInspiredThirdPersonMotor", errors);
+        ValidateNoComponentByTypeName(character, label, "StarterMotorAnimatorDriver", errors);
+        ValidateNoComponentByTypeName(character, label, "StarterMotorLocalInputBridge", errors);
+        if (!string.IsNullOrEmpty(expectedAnimatorControllerPath))
         {
-            errors.Add($"Missing required component: {typeof(T).Name}.");
+            ValidateAnimatorController(character, label, errors, expectedAnimatorControllerPath);
+        }
+
+        ValidateCharacterIkMigration(character, label, errors);
+        ValidateCharacterHealthMigration(character, label, errors);
+        ValidateSingleUccColliderGroup(character, label, errors);
+
+        LitOpsiveLookSource lookSource = character.GetComponentInChildren<LitOpsiveLookSource>(true);
+        if (lookSource == null)
+        {
+            errors.Add($"{label} is missing LitOpsiveLookSource in children.");
+        }
+        else if (lookSource.EventTarget != character)
+        {
+            errors.Add($"{label} LitOpsiveLookSource EventTarget does not point to the character root.");
+        }
+
+        UltimateCharacterLocomotion locomotion = character.GetComponent<UltimateCharacterLocomotion>();
+        if (locomotion != null)
+        {
+            ValidateLocomotionAnimationMode(locomotion, label, errors, expectedRootMotionPosition: false);
+            ValidateSingleAbility<Jump>(locomotion, label, errors);
+            ValidateSingleAbility<Fall>(locomotion, label, errors);
+            ValidateSingleAbility<MoveTowards>(locomotion, label, errors);
+            ValidateSingleAbility<SpeedChange>(locomotion, label, errors);
+            ValidateSingleAbility<HeightChange>(locomotion, label, errors);
+        }
+
+        AnimatorMonitor animatorMonitor = character.GetComponent<AnimatorMonitor>();
+        if (animatorMonitor == null)
+        {
+            errors.Add($"{label} is missing AnimatorMonitor.");
+        }
+        else
+        {
+            ValidateAnimatorMonitor(animatorMonitor, label, errors);
+        }
+
+        LitOpsiveLocomotionBridge bridge = character.GetComponent<LitOpsiveLocomotionBridge>();
+        if (bridge != null)
+        {
+            ValidateBridgeBoolean(bridge, label, "driveFromSquadFacade", true, errors);
+            ValidateBridgeBoolean(bridge, label, "overrideOpsiveHandlerInput", true, errors);
+            ValidateBridgeBoolean(bridge, label, "orientLookSourceFromMovement", true, errors);
+            ValidateBridgeBoolean(bridge, label, "configureRigidbodyForOpsive", true, errors);
+            ValidateBridgeBoolean(bridge, label, "autoInstallCompanionBridges", false, errors);
+            ValidateBridgeBoolean(bridge, label, "driveLitLocomotionAnimatorParameters", true, errors);
+        }
+
+        LitUccDamageBridge damageBridge = character.GetComponent<LitUccDamageBridge>();
+        if (damageBridge != null)
+        {
+            ValidateBridgeBoolean(damageBridge, label, "characterHealthIsAuthority", true, errors);
+            ValidateBridgeBoolean(damageBridge, label, "syncSquadHealthFromCharacterHealth", true, errors);
+            ValidateBridgeBoolean(damageBridge, label, "mirrorLitHealthToOpsiveAttributes", false, errors);
+            ValidateBridgeObjectReference(damageBridge, label, "squadController", character.GetComponent<SquadCharacterController>(), errors);
+            ValidateBridgeObjectReference(damageBridge, label, "attributeManager", character.GetComponent<CharacterAttributeManager>(), errors);
+            ValidateBridgeObjectReference(damageBridge, label, "characterHealth", character.GetComponent<CharacterHealth>(), errors);
+            ValidateBridgeString(damageBridge, label, "healthAttributeName", UccHealthAttributeName, errors);
+        }
+
+        Component[] components = character.GetComponentsInChildren<Component>(true);
+        for (int i = 0; i < components.Length; i++)
+        {
+            Component component = components[i];
+            if (component == null)
+            {
+                errors.Add($"{label} contains a missing script reference.");
+                continue;
+            }
+
+            Type type = component.GetType();
+            if (type.Name == "CameraController" &&
+                type.FullName != null &&
+                type.FullName.StartsWith("Opsive.", StringComparison.Ordinal))
+            {
+                errors.Add($"{label} contains an unexpected Opsive camera controller component: {type.FullName}.");
+            }
         }
     }
 
-    private static void ValidateNoComponent<T>(GameObject character, string label, List<string> errors) where T : Component
+    private static void ValidateComponent<T>(GameObject character, string label, List<string> errors) where T : Component
     {
-        if (character.GetComponent<T>() != null)
+        if (character.GetComponent<T>() == null)
         {
-            errors.Add($"{label} should not carry legacy Starter motor component: {typeof(T).Name}.");
+            errors.Add($"{label} is missing required component: {typeof(T).Name}.");
+        }
+    }
+
+    private static void ValidateNoComponentByTypeName(GameObject character, string label, string typeName, List<string> errors)
+    {
+        Component[] components = character.GetComponentsInChildren<Component>(true);
+        for (int i = 0; i < components.Length; i++)
+        {
+            Component component = components[i];
+            if (component == null)
+            {
+                continue;
+            }
+
+            Type type = component.GetType();
+            if (string.Equals(type.Name, typeName, StringComparison.Ordinal))
+            {
+                errors.Add($"{label} should not carry legacy Starter motor component: {typeName}.");
+            }
         }
     }
 
@@ -945,22 +1109,22 @@ public static class LitOpsiveUccMigrationUtility
 
         if (!string.IsNullOrEmpty(characterHealth.ShieldAttributeName))
         {
-            errors.Add($"{label} CharacterHealth shield attribute should be empty during Lit-owned health mirroring.");
+            errors.Add($"{label} CharacterHealth shield attribute should be empty while CharacterHealth owns squad health.");
         }
 
         if (characterHealth.ApplyFallDamage)
         {
-            errors.Add($"{label} CharacterHealth fall damage should stay disabled while Lit owns health.");
+            errors.Add($"{label} CharacterHealth fall damage should stay disabled until fall damage has been routed through the squad health policy.");
         }
 
-        if (!characterHealth.Invincible)
+        if (characterHealth.Invincible)
         {
-            errors.Add($"{label} CharacterHealth should be invincible while it is mirror-only.");
+            errors.Add($"{label} CharacterHealth should not be invincible when it is the health authority.");
         }
 
         if (characterHealth.DeactivateOnDeath)
         {
-            errors.Add($"{label} CharacterHealth should not deactivate the character while Lit owns death flow.");
+            errors.Add($"{label} CharacterHealth should not deactivate the character while Lit still owns character lifetime.");
         }
     }
 
@@ -1002,16 +1166,16 @@ public static class LitOpsiveUccMigrationUtility
         }
     }
 
-    private static void ValidateSingleAbility<T>(UltimateCharacterLocomotion locomotion, List<string> errors) where T : Ability
+    private static void ValidateSingleAbility<T>(UltimateCharacterLocomotion locomotion, string label, List<string> errors) where T : Ability
     {
         T[] abilities = locomotion.GetAbilities<T>();
         if (abilities == null || abilities.Length == 0)
         {
-            errors.Add($"Missing required UCC ability: {typeof(T).Name}.");
+            errors.Add($"{label} is missing required UCC ability: {typeof(T).Name}.");
         }
         else if (abilities.Length > 1)
         {
-            errors.Add($"Duplicate required UCC ability: {typeof(T).Name} appears {abilities.Length} times.");
+            errors.Add($"{label} has duplicate required UCC ability: {typeof(T).Name} appears {abilities.Length} times.");
         }
     }
 
@@ -1070,40 +1234,41 @@ public static class LitOpsiveUccMigrationUtility
         }
     }
 
-    private static void ValidateBridgeBoolean(UnityEngine.Object target, string propertyName, bool expected, List<string> errors)
+    private static void ValidateBridgeBoolean(UnityEngine.Object target, string label, string propertyName, bool expected, List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
         SerializedProperty property = serializedObject.FindProperty(propertyName);
         if (property == null)
         {
-            errors.Add($"Bridge serialized property missing: {propertyName}.");
+            errors.Add($"{label} bridge serialized property missing: {propertyName}.");
             return;
         }
 
         if (property.boolValue != expected)
         {
-            errors.Add($"Bridge property '{propertyName}' should be {expected}.");
+            errors.Add($"{label} bridge property '{propertyName}' should be {expected}.");
         }
     }
 
-    private static void ValidateBridgeString(UnityEngine.Object target, string propertyName, string expected, List<string> errors)
+    private static void ValidateBridgeString(UnityEngine.Object target, string label, string propertyName, string expected, List<string> errors)
     {
         SerializedObject serializedObject = new SerializedObject(target);
         SerializedProperty property = serializedObject.FindProperty(propertyName);
         if (property == null)
         {
-            errors.Add($"Bridge serialized property missing: {propertyName}.");
+            errors.Add($"{label} bridge serialized property missing: {propertyName}.");
             return;
         }
 
         if (!string.Equals(property.stringValue, expected, StringComparison.Ordinal))
         {
-            errors.Add($"Bridge property '{propertyName}' should be '{expected}' but is '{property.stringValue}'.");
+            errors.Add($"{label} bridge property '{propertyName}' should be '{expected}' but is '{property.stringValue}'.");
         }
     }
 
     private static void ValidateBridgeObjectReference(
         UnityEngine.Object target,
+        string label,
         string propertyName,
         UnityEngine.Object expected,
         List<string> errors)
@@ -1112,7 +1277,7 @@ public static class LitOpsiveUccMigrationUtility
         SerializedProperty property = serializedObject.FindProperty(propertyName);
         if (property == null)
         {
-            errors.Add($"Bridge serialized property missing: {propertyName}.");
+            errors.Add($"{label} bridge serialized property missing: {propertyName}.");
             return;
         }
 
@@ -1122,7 +1287,7 @@ public static class LitOpsiveUccMigrationUtility
             string currentName = property.objectReferenceValue != null
                 ? property.objectReferenceValue.GetType().Name
                 : "<null>";
-            errors.Add($"Bridge property '{propertyName}' should reference {expectedName} but references {currentName}.");
+            errors.Add($"{label} bridge property '{propertyName}' should reference {expectedName} but references {currentName}.");
         }
     }
 }

@@ -179,16 +179,6 @@ public sealed class RunSpeedCameraEffect
             return;
         }
 
-        StarterInspiredThirdPersonMotor flightMotor = target.GetComponent<StarterInspiredThirdPersonMotor>();
-        if (flightMotor != null && flightMotor.FlightActive)
-        {
-            horizontalSpeed = Mathf.Min(flightMotor.FlightSpeed, maxTrackedSpeed);
-            trackedTarget = target;
-            lastTargetPosition = target.position;
-            hasLastTargetPosition = true;
-            return;
-        }
-
         if (target != trackedTarget)
         {
             trackedTarget = target;

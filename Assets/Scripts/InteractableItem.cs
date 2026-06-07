@@ -3647,32 +3647,15 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             ? trapTeleportTarget.rotation
             : characterRoot.transform.rotation;
 
-        CharacterController characterController = controller != null ? controller.GetComponent<CharacterController>() : null;
-        Rigidbody rigidbody = characterRoot.GetComponent<Rigidbody>();
-
-        if (characterController != null)
+        if (!controller.TrySetUccExternalPositionAndRotation(destination, rotation, stopActiveAbilities: true))
         {
-            characterController.enabled = false;
-        }
-
-        if (rigidbody != null)
-        {
-            rigidbody.position = destination;
-            rigidbody.rotation = rotation;
-            rigidbody.linearVelocity = Vector3.zero;
-            rigidbody.angularVelocity = Vector3.zero;
-        }
-
-        characterRoot.transform.SetPositionAndRotation(destination, rotation);
-
-        if (characterController != null)
-        {
-            characterController.enabled = true;
+            Debug.LogWarning($"[LootTrap] teleport_trap_skipped container='{name}' reason='ucc_locomotion_unavailable'", this);
+            return false;
         }
 
         controller.Stop();
         Physics.SyncTransforms();
-        RemoveTeleportedCharacterFromRange(characterRoot != null ? characterRoot.transform : null);
+        RemoveTeleportedCharacterFromRange(characterRoot.transform);
         UpdateCurrentCharacter();
         return true;
     }

@@ -118,54 +118,19 @@ public class HiddenRoomBootstrap : MonoBehaviour
             return false;
         }
 
-        Rigidbody rigidbodyTarget = travelerRoot.GetComponent<Rigidbody>();
-        if (rigidbodyTarget == null)
-        {
-            rigidbodyTarget = travelerRoot.GetComponentInChildren<Rigidbody>(true);
-        }
-
-        CharacterController characterController = travelerRoot.GetComponent<CharacterController>();
-        if (characterController == null)
-        {
-            characterController = travelerRoot.GetComponentInChildren<CharacterController>(true);
-        }
-
-        bool controllerWasEnabled = characterController != null && characterController.enabled;
-        if (controllerWasEnabled)
-        {
-            characterController.enabled = false;
-        }
-
-        if (rigidbodyTarget != null)
-        {
-            rigidbodyTarget.position = destinationAnchor.position;
-            rigidbodyTarget.rotation = destinationAnchor.rotation;
-#if UNITY_6000_0_OR_NEWER
-            rigidbodyTarget.linearVelocity = Vector3.zero;
-#else
-            rigidbodyTarget.velocity = Vector3.zero;
-#endif
-            rigidbodyTarget.angularVelocity = Vector3.zero;
-        }
-
-        travelerRoot.SetPositionAndRotation(destinationAnchor.position, destinationAnchor.rotation);
-
-        if (controllerWasEnabled)
-        {
-            characterController.enabled = true;
-        }
-
         SquadCharacterController squadController = travelerRoot.GetComponent<SquadCharacterController>();
         if (squadController == null)
         {
             squadController = travelerRoot.GetComponentInChildren<SquadCharacterController>(true);
         }
 
-        if (squadController != null)
+        if (squadController == null ||
+            !squadController.TrySetUccExternalPositionAndRotation(destinationAnchor.position, destinationAnchor.rotation, stopActiveAbilities: true))
         {
-            squadController.Stop();
+            return false;
         }
 
+        squadController.Stop();
         lastTeleportedRoot = travelerRoot;
         lastTeleportTime = Time.unscaledTime;
         lastKnownPlayerInside = sourceTeleporter == exteriorPortalTeleporter;

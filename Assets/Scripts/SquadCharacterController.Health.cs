@@ -2,9 +2,9 @@ using UnityEngine;
 
 // Role: extension partielle de SquadCharacterController pour les degats et sons de sante.
 // Usage: appelee par le combat, les dangers et tout systeme qui retire des PV a un personnage.
-// Responsibilities: nettoyer le montant, modifier les PV via SetCurrentHp, jouer le cue audio approprie.
+// Responsibilities: nettoyer le montant, router vers CharacterHealth quand UCC est l'autorite, jouer le cue audio approprie.
 // Dependencies: SquadCharacterController, AudioManager, ActionAudioCue.
-// Precautions: ne pas dupliquer la logique de SetCurrentHp ici; cette methode doit rester un point d'entree simple.
+// Precautions: ne pas dupliquer la logique de CharacterHealth ici; cette methode doit rester un point d'entree simple.
 /// <summary>
 /// Partie sante/degats du controleur de personnage de squad.
 /// </summary>
@@ -21,27 +21,41 @@ public partial class SquadCharacterController
             return 0;
         }
 
+        LitUccDamageBridge uccDamageBridge = GetComponent<LitUccDamageBridge>();
+        if (uccDamageBridge != null
+            && uccDamageBridge.TryApplyDamageToAuthority(sanitizedAmount, source, out int authorityApplied))
+        {
+            return authorityApplied;
+        }
+
         int previousHp = currentHp;
-        SetCurrentHp(currentHp - sanitizedAmount);
+        SetCurrentHpLocal(currentHp - sanitizedAmount);
         int applied = Mathf.Max(0, previousHp - currentHp);
 
-        // Log volontairement detaille: il aide a diagnostiquer les pertes de PV pendant les tests de combat.
-        Debug.Log(
-            $"[Health] damage target='{name}' source='{source ?? "unspecified"}' amount={sanitizedAmount} applied={applied} hpBefore={previousHp} hpAfter={currentHp}",
-            this);
+        RecordDamageApplied(sanitizedAmount, applied, previousHp, currentHp, source);
 
         if (applied > 0)
         {
-            LitUccDamageBridge uccDamageBridge = GetComponent<LitUccDamageBridge>();
             if (uccDamageBridge != null)
             {
                 uccDamageBridge.NotifyDamageApplied(applied, currentHp <= 0, source);
             }
-
-            PlayActionAudio(currentHp <= 0 ? ActionAudioCue.CharacterDeath : ActionAudioCue.CharacterDamage);
         }
 
         return applied;
+    }
+
+    internal void RecordDamageApplied(int requestedAmount, int appliedAmount, int previousHp, int newHp, string source = null)
+    {
+        // Log volontairement detaille: il aide a diagnostiquer les pertes de PV pendant les tests de combat.
+        Debug.Log(
+            $"[Health] damage target='{name}' source='{source ?? "unspecified"}' amount={requestedAmount} applied={appliedAmount} hpBefore={previousHp} hpAfter={newHp}",
+            this);
+
+        if (appliedAmount > 0)
+        {
+            PlayActionAudio(newHp <= 0 ? ActionAudioCue.CharacterDeath : ActionAudioCue.CharacterDamage);
+        }
     }
 
     private void PlayActionAudio(ActionAudioCue cue)

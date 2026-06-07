@@ -266,11 +266,6 @@ public class NetworkCharacterInput : NetworkBehaviour
             controller = GetComponent<SquadCharacterController>();
         }
 
-        if (controller != null && controller.IsJumpCommitted)
-        {
-            return;
-        }
-
         Vector2 jumpWorldInput = pendingMove;
         if (jumpWorldInput == Vector2.zero && rawMoveInput != Vector2.zero && controller != null)
         {
@@ -346,7 +341,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        controller.QueueCommittedJumpInput(worldInput, isWorldSpace: true);
+        controller.QueueUccJumpInput(worldInput, isWorldSpace: true);
         controller.Jump();
     }
 
@@ -393,7 +388,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        controller.QueueCommittedJumpInput(worldInput, isWorldSpace: true);
+        controller.QueueUccJumpInput(worldInput, isWorldSpace: true);
         controller.Jump();
     }
 

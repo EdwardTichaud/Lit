@@ -2326,192 +2326,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4672c78295744f641ab46010b2847614, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::SquadCharacterController
-  enableAnimationReconciliation: 1
-  locomotionAnimationCorrectionDelay: 0.18
-  airborneAnimationCorrectionDelay: 0.12
-  landingAnimationCorrectionDelay: 0.12
-  transientAnimationCorrectionDelay: 0.05
-  repeatedAnimationCorrectionCooldown: 0.12
-  animationReconciliationCrossFadeDuration: 0.05
-  animationPhaseTimeoutPadding: 0.08
-  priorityAnimationStateNames:
-  - Knowledge_Unlock
-  - Attack
-  - Hurt
-  - Hit
-  - Stun
-  - Dead
-  - Death
-  - Cutscene
-  - Scripted
-  priorityAnimationTags:
-  - Ladder
-  - Attack
-  - Hit
-  - Stun
-  - Death
-  - Cutscene
-  - Scripted
-  logAnimationReconciliation: 0
-  allowFlightControl: 1
-  blockFlightDuringMultiplayer: 1
-  flightMotor: {fileID: 0}
-  flightAnimatorDriver: {fileID: 0}
-  flightCharacterController: {fileID: 0}
-  flightLocalInputBridge: {fileID: 0}
-  configureFlightCharacterControllerFromCapsule: 1
-  disableSourceCapsuleWhileFlightActive: 1
-  applyFlightProfile: 1
-  flightProfile:
-    enableFlight: 1
-    takeoffVerticalSpeed: 6.5
-    takeoffDuration: 0.45
-    takeoffDamping: 16
-    cruiseSpeed: 33
-    boostSpeed: 81
-    acceleration: 54
-    boostAcceleration: 126
-    deceleration: 36
-    stopDecelerationMultiplier: 3
-    verticalSpeed: 24
-    verticalAcceleration: 66
-    verticalDeceleration: 54
-    verticalDeadZone: 0.05
-    idleSpeedThreshold: 0.08
-    enableIdleFloat: 1
-    idleFloatAmplitude: 0.12
-    idleFloatFrequency: 0.85
-    idleFloatBlendSpeed: 4
-    verticalTiltAngle: 30
-    verticalTiltSpeedThreshold: 0.1
-    turnRate: 760
-    boostTurnRate: 460
-    exitDownwardVelocity: 1.5
-    boostKickSpeed: 4.5
-    groundContactLandingMinSpeed: 2.75
-    groundContactLandingMinDownwardSpeed: 0.2
-    landingPlanarVelocityRetention: 0.25
-    landingDampingMultiplier: 1
-    landingControlGraceTime: 0.08
-  flightLoopAudioSource: {fileID: 0}
-  flightBurstAudioSource: {fileID: 0}
-  flightSpeedLineParticles: {fileID: 0}
-  flightTrails: []
-  flightLeftTrail: {fileID: 0}
-  flightRightTrail: {fileID: 0}
-  flightBoostPrefabSpawnPoint: {fileID: 0}
-  flightLoopClip: {fileID: 0}
-  flightBurstClip: {fileID: 0}
-  flightLoopMinVolume: 0.08
-  flightLoopMaxVolume: 0.34
-  flightLoopMinPitch: 0.8
-  flightLoopMaxPitch: 1.65
-  flightBurstVolume: 0.55
-  flightMinParticleRate: 10
-  flightMaxParticleRate: 115
-  flightMinTrailTime: 0.08
-  flightMaxTrailTime: 0.34
-  flightMinTrailWidth: 0.015
-  flightMaxTrailWidth: 0.115
-  orientFlightParticlesWithVerticalTilt: 1
-  flightBoostPrefab: {fileID: 0}
-  flightBoostPrefabLocalOffset: {x: 0, y: 0, z: 0}
-  flightBoostPrefabEulerOffset: {x: 0, y: 0, z: 0}
-  parentFlightBoostPrefabToSpawnPoint: 0
-  flightBoostPrefabLifetime: 2
-  debugFlightMotorActive: 0
-  enableHeightProbeTraversal: 1
-  heightProbeForwardDistance: 1.2
-  heightProbeSampleCount: 8
-  heightProbeMaxRise: 0.35
-  heightProbeMaxDrop: 0.45
-  heightProbeMaxStepRise: 0.32
-  heightProbeMaxStepDrop: 0.45
-  heightProbeStepSearchExtraDistance: 0.22
-  enableHeightProbeGroundSnap: 1
-  heightProbeVerticalPadding: 0.25
-  heightProbeContactOffset: 0.03
-  heightProbeMinRise: 0.03
-  heightProbeGroundGraceTime: 0.12
-  heightProbeObstacleStepLimit: 0.35
-  heightProbeStepSurfaceInset: 0.08
-  heightProbeForwardScanLimit: 0.9
-  enableCommittedJump: 1
-  anticipationDuration: 0.07
-  impulseDelay: 0.02
-  useAnimationTimedImpulse: 1
-  takeoffImpulseNormalizedTime: 0.18
-  verticalImpulse: 7
-  minimumJumpTravelDistance: 3
-  minimumJumpTravelSpeedSafety: 1.15
-  idleLockedForwardSpeed: 0
-  movingJumpThreshold: 0.8
-  movingTakeoffMinLaunchSpeed: 5.25
-  movingJumpMinSpeedForRoll: 4.5
-  movingJumpSpeedMultiplier: 1.05
-  maxLockedForwardSpeed: 6.5
-  takeoffHorizontalAcceleration: 30
-  takeoffMomentumBrakeDuration: 0.08
-  takeoffMomentumBrakeDamping: 32
-  idleTakeoffForwardImpulse: 0
-  movingTakeoffForwardImpulse: 3
-  forwardAssistTakeoffForwardImpulse: 3
-  forwardAssistInputThreshold: 0.3
-  forwardAssistMinDot: 0.6
-  forwardAssistLaunchSpeed: 4.5
-  jumpCoyoteTime: 0.08
-  jumpCooldown: 0.12
-  jumpGroundIgnoreTime: 0.1
-  gravityMultiplier: 1.05
-  fallMultiplier: 2
-  maxFallSpeed: 22
-  landingContactProbeDistance: 0.025
-  landingContactRadiusScale: 0.55
-  landingContactMaxUpwardVelocity: 0.1
-  idleLandingRecoveryDuration: 0.34
-  idleLandingMovementLockDuration: 0.32
-  idleLandingStopDamping: 20
-  landingUnlockNormalizedTime: 0.82
-  rollApproachForwardSpeed: 4.8
-  rollApproachAcceleration: 24
-  rollForwardSpeed: 5.2
-  rollDistance: 2
-  rollDuration: 0.42
-  rollRecoveryDuration: 0
-  rollRecoveryDamping: 0
-  rollEndNormalizedTime: 0.92
-  useRollAnimationDurationForExit: 1
-  rollAnimationExitPadding: 0
-  forceJumpStateCrossFade: 0
-  jumpAnimationLayer: 0
-  jumpAnimationCrossFadeDuration: 0.06
-  jumpTriggerParam: JumpTrigger
-  isAirborneParam: IsAirborne
-  landingTypeParam: LandingType
-  jumpFromMovementParam: JumpFromMovement
-  rollTriggerParam: RollTrigger
-  landingTriggerParam: LandTrigger
-  jumpPhaseParam: JumpPhase
-  takeoffStateName: Jump_Takeoff
-  airborneStateName: Jump_Airborne
-  idleLandingStateName: Jump_Land
-  rollStateName: Jump_Roll
-  groundedRecoveryStateName: Locomotion
-  enableNaturalFallAnimation: 1
-  naturalFallStartDelay: 0.12
-  naturalFallStartVerticalSpeed: 1.2
-  naturalLandingMinFallSpeed: 1.5
-  naturalLandingMinFallDuration: 0.08
-  naturalLandingRecoveryDuration: 0.28
-  naturalLandingMovementLockDuration: 0.22
-  naturalLandingStopDamping: 14
-  naturalLandingUnlockNormalizedTime: 0.8
-  forceNaturalFallStateCrossFade: 1
-  naturalFallingCrossFadeDuration: 0.08
-  naturalLandingCrossFadeDuration: 0.06
-  fallingStateName: Falling
-  naturalLandingStateName: Landing
-  maxWalkableSlopeAngle: 55
   enableCharacterInteractionDetection: 1
   interactionDetectionMask:
     serializedVersion: 2
@@ -2545,50 +2359,19 @@ MonoBehaviour:
   speedParam: Speed
   speedDampTime: 0.06
   useSpeedDamping: 1
-  walkSpeedThreshold: 1.35
-  runSpeedThreshold: 3.25
-  idleAnimValue: 0
-  walkAnimValue: 1.35
-  runAnimValue: 3.25
-  trotPresentationSpeed: 2.5
-  animationMovingExitSpeed: 0.05
-  animationMovingEnterSpeed: 0.12
-  animationTurnResponsiveness: 10
   isMovingParam: IsMoving
-  moveStartTriggerParam: MoveStartTrigger
-  moveStopTriggerParam: MoveStopTrigger
   locomotionTierParam: LocomotionTier
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
-  turnInPlaceAngleThreshold: 60
-  locomotionAnimationLayer: 0
-  locomotionEndRestartInputThreshold: 0.12
-  locomotionEndRestartTransitionDuration: 0.04
   walkMoveSpeed: 5
   moveSpeed: 6.5
-  inputResponsiveness: 14
-  inputReleaseResponsiveness: 36
   movementInputDeadZone: 0.08
-  rotateToInput: 1
-  rotationSpeed: 24
   useCameraRelative: 1
   referenceCamera: {fileID: 0}
   preserveFixedCameraMovementContinuity: 1
   fixedCameraMovementInputRefreshAngle: 65
   fixedCameraMovementReferenceBlendSharpness: 0
   animatePhysics: 1
-  movingRotationSpeed: 16
-  movingRotationSpeedThreshold: 0.75
-  jumpGroundCheckDistance: 0.18
-  jumpGroundCheckRadiusScale: 0.9
-  groundedStickVelocity: 2
-  enableVoidDetection: 1
-  voidCheckDistance: 0.35
-  voidCheckDepth: 4
-  voidGroundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  voidUseCollisionMatrixMask: 1
   allowTorchToggle: 1
   torchParentName: Stuff
   torchChildName: Torch
@@ -2603,9 +2386,6 @@ MonoBehaviour:
   ignoreCharacterCollisions: 1
   ignoreCharacterTriggerColliders: 1
   collisionRefreshInterval: 0.5
-  preventWallPenetration: 1
-  movementCollisionSkin: 0.03
-  movementCollisionWalkableNormalDot: 0.35
   useLowFrictionLocomotionMaterial: 1
   overrideExistingLocomotionMaterial: 0
   audioListener: {fileID: 0}
@@ -3423,7 +3203,9 @@ MonoBehaviour:
   attributeManager: {fileID: 9095812728330429394}
   characterHealth: {fileID: 6800918242508772571}
   healthAttributeName: Health
-  mirrorLitHealthToOpsiveAttributes: 1
+  characterHealthIsAuthority: 1
+  syncSquadHealthFromCharacterHealth: 1
+  mirrorLitHealthToOpsiveAttributes: 0
   raiseOpsiveDamageEvent: 1
   raiseOpsiveDeathEvent: 1
   startImpactKnockBackOnDamage: 0
@@ -3569,7 +3351,7 @@ MonoBehaviour:
     m_Preset: {fileID: 0}
     m_BlockList: []
     m_Default: 1
-  m_Invincible: 1
+  m_Invincible: 0
   m_TimeInvincibleAfterSpawn: 0
   m_HealthAttributeName: Health
   m_ShieldAttributeName:

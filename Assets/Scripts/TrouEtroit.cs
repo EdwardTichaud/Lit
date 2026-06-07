@@ -599,35 +599,15 @@ public class TrouEtroit : MonoBehaviour
             rotation = targetRotation;
         }
 
-        Rigidbody rb = character.GetComponent<Rigidbody>();
-        CharacterController controller = character.GetComponent<CharacterController>();
-
-        if (controller != null)
-        {
-            controller.enabled = false;
-        }
-
-        if (rb != null)
-        {
-            rb.position = destination;
-            rb.rotation = rotation;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        t.SetPositionAndRotation(destination, rotation);
-
-        if (controller != null)
-        {
-            controller.enabled = true;
-        }
-
         SquadCharacterController squadController = character.GetComponent<SquadCharacterController>();
-        if (squadController != null)
+        if (squadController == null ||
+            !squadController.TrySetUccExternalPositionAndRotation(destination, rotation, stopActiveAbilities: true))
         {
-            squadController.Stop();
+            Debug.LogWarning($"[TrouEtroit] teleport_skipped character='{character.name}' reason='ucc_locomotion_unavailable'", this);
+            return;
         }
 
+        squadController.Stop();
         AudioManager.EnsureInstance()?.PlayActionCue(ActionAudioCue.Teleport, destination);
     }
 

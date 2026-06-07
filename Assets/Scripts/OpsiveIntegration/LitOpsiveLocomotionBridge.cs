@@ -1,3 +1,4 @@
+using System.Collections;
 using Opsive.Shared.Events;
 using Opsive.UltimateCharacterController.Character;
 using Opsive.UltimateCharacterController.Character.Abilities;
@@ -23,7 +24,7 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private AnimatorMonitor animatorMonitor;
 
     [Header("Bridge")]
-    [SerializeField, Tooltip("When enabled, SquadCharacterController stops driving Rigidbody movement and forwards locomotion commands here.")]
+    [SerializeField, Tooltip("When enabled, SquadCharacterController forwards locomotion commands to UCC and keeps Lit simulation disabled.")]
     private bool driveFromSquadFacade = true;
     [SerializeField, Tooltip("Feed movement directly into UltimateCharacterLocomotionHandler.OverrideInput.")]
     private bool overrideOpsiveHandlerInput = true;
@@ -69,6 +70,7 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool hasLastPosition;
     private int scriptedTraversalLockCount;
     private bool scriptedTraversalInputDisabled;
+    private Coroutine externalImpulseLockRoutine;
     private Ability[] scriptedTraversalAbilities;
     private bool[] scriptedTraversalAbilityEnabledStates;
     private ItemAbility[] scriptedTraversalItemAbilities;
@@ -82,6 +84,10 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
+    public bool Grounded => locomotion != null && locomotion.Grounded;
+    public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
+    public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
+    public Vector3 WorldPosition => locomotion != null ? locomotion.transform.position : Vector3.zero;
     public bool CanDriveScriptedTraversal
     {
         get
@@ -323,15 +329,12 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     public void ApplyScriptedTraversalPose(Vector3 position, Quaternion rotation)
     {
         ResolveReferences();
-        if (locomotion != null)
+        if (locomotion == null)
         {
-            locomotion.SetPositionAndRotation(position, rotation, false, false);
-        }
-        else
-        {
-            transform.SetPositionAndRotation(position, rotation);
+            return;
         }
 
+        locomotion.SetPositionAndRotation(position, rotation, false, false);
         lastPosition = position;
         hasLastPosition = true;
     }
@@ -339,18 +342,41 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool SetExternalPositionAndRotation(Vector3 position, Quaternion rotation, bool stopActiveAbilities)
     {
         ResolveReferences();
-        if (locomotion != null)
+        if (!IsDriving || locomotion == null)
         {
-            locomotion.SetPositionAndRotation(position, rotation, false, stopActiveAbilities);
-        }
-        else
-        {
-            transform.SetPositionAndRotation(position, rotation);
+            return false;
         }
 
+        locomotion.SetPositionAndRotation(position, rotation, false, stopActiveAbilities);
         lastPosition = position;
         hasLastPosition = true;
         ForceZeroInput();
+        return true;
+    }
+
+    public bool AddExternalImpulse(Vector3 worldImpulse, ForceMode forceMode, float lockInputForSeconds)
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || worldImpulse.sqrMagnitude <= 0f)
+        {
+            return false;
+        }
+
+        bool scaleByMass = forceMode != ForceMode.VelocityChange && forceMode != ForceMode.Acceleration;
+        locomotion.AddForce(worldImpulse, 1, scaleByMass);
+
+        if (lockInputForSeconds > 0f)
+        {
+            BeginExternalLock(disableGameplayInput: false, stopActiveAbilities: false);
+            if (externalImpulseLockRoutine != null)
+            {
+                StopCoroutine(externalImpulseLockRoutine);
+                EndExternalLock();
+            }
+
+            externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockAfter(lockInputForSeconds));
+        }
+
         return true;
     }
 
@@ -383,6 +409,12 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
             EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", true);
             externalLockInputDisabled = false;
             scriptedTraversalInputDisabled = false;
+        }
+
+        if (externalImpulseLockRoutine != null)
+        {
+            StopCoroutine(externalImpulseLockRoutine);
+            externalImpulseLockRoutine = null;
         }
 
         externalLockCount = 0;
@@ -424,6 +456,13 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
             }
             squadController.RefreshLocalInteractionDetectionForExternalLocomotion();
         }
+    }
+
+    private IEnumerator EndExternalImpulseLockAfter(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        externalImpulseLockRoutine = null;
+        EndExternalLock();
     }
 
     private void ForceZeroInput()

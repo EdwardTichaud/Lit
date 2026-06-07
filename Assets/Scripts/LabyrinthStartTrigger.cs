@@ -1226,33 +1226,15 @@ public class LabyrinthStartTrigger : MonoBehaviour
             return;
         }
 
-        Rigidbody rb = character.GetComponent<Rigidbody>();
-        CharacterController controller = character.GetComponent<CharacterController>();
-        if (controller != null)
-        {
-            controller.enabled = false;
-        }
-
-        if (rb != null)
-        {
-            rb.position = position;
-            rb.rotation = rotation;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        character.transform.SetPositionAndRotation(position, rotation);
-
-        if (controller != null)
-        {
-            controller.enabled = true;
-        }
-
         SquadCharacterController squadController = character.GetComponent<SquadCharacterController>();
-        if (squadController != null)
+        if (squadController == null ||
+            !squadController.TrySetUccExternalPositionAndRotation(position, rotation, stopActiveAbilities: true))
         {
-            squadController.Stop();
+            Debug.LogWarning($"[LabyrinthStartTrigger] teleport_skipped character='{character.name}' reason='ucc_locomotion_unavailable'", this);
+            return;
         }
+
+        squadController.Stop();
     }
 
     private void SpawnTeleportVfx(Vector3 position, Quaternion rotation)

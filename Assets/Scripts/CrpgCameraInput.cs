@@ -107,10 +107,7 @@ public class CrpgCameraInput
             state.orbitDelta += new Vector2(
                 orbitInput.x * gamepadOrbitSensitivity * deltaTime,
                 orbitInput.y * gamepadPitchSensitivity * deltaTime * pitchDirection);
-            if (!ShouldSuppressGamepadZoomForFlight())
-            {
-                state.zoomDelta -= LocalInputRouter.CameraZoomValue * (gamepadZoomSensitivity * deltaTime);
-            }
+            state.zoomDelta -= LocalInputRouter.CameraZoomValue * (gamepadZoomSensitivity * deltaTime);
         }
 
         state.recenterRequested = recenterRequested;
@@ -118,23 +115,6 @@ public class CrpgCameraInput
         recenterRequested = false;
         toggleFreeCameraRequested = false;
         return state;
-    }
-
-    private static bool ShouldSuppressGamepadZoomForFlight()
-    {
-        if (Mathf.Abs(LocalInputRouter.FlightVerticalValue) <= 0.05f)
-        {
-            return false;
-        }
-
-        Transform localCharacter = LocalPlayerContext.LocalCharacterRoot;
-        if (localCharacter == null)
-        {
-            return false;
-        }
-
-        SquadCharacterController controller = localCharacter.GetComponent<SquadCharacterController>();
-        return controller != null && controller.FlightActive;
     }
 
     private void OnCameraRecenter()

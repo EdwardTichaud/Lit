@@ -61,12 +61,6 @@ public class SquadManager : MonoBehaviour
     [SerializeField, Tooltip("Clone les CharacterData a l'execution pour ne pas modifier les assets.")]
     private bool useRuntimeCharacterClones = true;
 
-    [Header("Flight")]
-    [SerializeField, Tooltip("Active le moteur de vol local pour le personnage joueur selectionne.")]
-    private bool useFlightMotorForLocalPlayer;
-    [SerializeField, Tooltip("Ajoute les composants de vol manquants sur le personnage selectionne quand le mode vol est active.")]
-    private bool autoInstallFlightMotorForLocalPlayer = true;
-
     [Header("Grouping")]
     [SerializeField, Tooltip("Tous les membres sont groupes par defaut.")]
     private bool defaultGrouped = true;
@@ -124,8 +118,6 @@ public class SquadManager : MonoBehaviour
     private readonly HashSet<string> runtimeCharacterIdWarnings = new HashSet<string>();
     private readonly HashSet<CharacterData> runtimeCharacters = new HashSet<CharacterData>();
     private string lastLocalAssignmentRefreshLog = string.Empty;
-    private SquadCharacterController activeFlightMotorController;
-
     void Awake()
     {
         if (Instance == null)
@@ -167,7 +159,6 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.LocomotionMode -= OnLocomotionModePerformed;
         LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
 
-        DeactivateFlightMotorController();
         InputFocusStack.Pop(this);
     }
 
@@ -179,7 +170,6 @@ public class SquadManager : MonoBehaviour
         }
 
         StopAllCoroutines();
-        DeactivateFlightMotorController();
         LocalPlayerContext.Clear($"SquadManager.Reset:{reason}", LocalPlayerContext.Authority.MultiplayerAssignment);
 
         if (gameObject.activeSelf)
@@ -682,8 +672,25 @@ public class SquadManager : MonoBehaviour
             instance.transform.SetParent(parent, true);
         }
 
-        instance.transform.SetPositionAndRotation(position, rotation);
+        TrySetCharacterPositionAndRotation(instance, position, rotation);
         instance.SetActive(true);
+    }
+
+    private static bool TrySetCharacterPositionAndRotation(GameObject instance, Vector3 position, Quaternion rotation)
+    {
+        if (instance == null)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = instance.GetComponent<SquadCharacterController>();
+        if (controller == null)
+        {
+            controller = instance.GetComponentInChildren<SquadCharacterController>(true);
+        }
+
+        return controller != null &&
+            controller.TrySetUccExternalPositionAndRotation(position, rotation, stopActiveAbilities: true);
     }
 
     private void EnsureSpawnOrigin()
@@ -1012,8 +1019,6 @@ public class SquadManager : MonoBehaviour
     {
         if (IsMultiplayerActive())
         {
-            DeactivateFlightMotorController();
-
             if (!charactersSelectionOn)
             {
                 jumpRequested = false;
@@ -1051,8 +1056,6 @@ public class SquadManager : MonoBehaviour
 
         if (charactersSelectionOn)
         {
-            DeactivateFlightMotorController();
-
             jumpRequested = false;
             if (GetSquadUnitCount() == 0)
             {
@@ -1358,42 +1361,15 @@ public class SquadManager : MonoBehaviour
     {
         if (currentCharacter == null)
         {
-            DeactivateFlightMotorController();
             jumpRequested = false;
             locomotionModeRequested = false;
             return;
         }
 
         bool inputBlocked = InputFocusStack.HasAnyFocus();
-        if (!inputBlocked && locomotionModeRequested && !IsMultiplayerActive())
-        {
-            useFlightMotorForLocalPlayer = true;
-        }
-
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
         {
-            jumpRequested = false;
-            locomotionModeRequested = false;
-            return;
-        }
-
-        if (controller.HasUccLocomotionBridge)
-        {
-            useFlightMotorForLocalPlayer = false;
-        }
-
-        SquadCharacterController flightMotorController = RefreshFlightMotorController(controller);
-        if (flightMotorController != null && flightMotorController.IsFlightMotorActive)
-        {
-            bool shoulderPressed = !inputBlocked && LocalInputRouter.RightShoulderPressed;
-            flightMotorController.ApplyFlightMotorControlInput(
-                inputBlocked ? Vector2.zero : moveInput,
-                shoulderPressed,
-                inputBlocked ? 0f : LocalInputRouter.FlightVerticalValue,
-                !inputBlocked && jumpRequested,
-                !inputBlocked && locomotionModeRequested);
-
             jumpRequested = false;
             locomotionModeRequested = false;
             return;
@@ -1422,7 +1398,7 @@ public class SquadManager : MonoBehaviour
 
         if (jumpRequested)
         {
-            controller.QueueCommittedJumpInput(worldMoveInput, isWorldSpace: true);
+            controller.QueueUccJumpInput(worldMoveInput, isWorldSpace: true);
             controller.Jump();
         }
 
@@ -1440,12 +1416,6 @@ public class SquadManager : MonoBehaviour
         SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
         if (controller == null)
         {
-            return;
-        }
-
-        if (controller.IsFlightMotorActive)
-        {
-            controller.StopFlightMotorControl();
             return;
         }
 
@@ -1473,53 +1443,8 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
-            if (controller.IsFlightMotorActive)
-            {
-                controller.StopFlightMotorControl();
-                continue;
-            }
-
             controller.Stop();
         }
-    }
-
-    private SquadCharacterController RefreshFlightMotorController(SquadCharacterController controller)
-    {
-        SquadCharacterController target = null;
-        if (useFlightMotorForLocalPlayer && !IsMultiplayerActive() && controller != null)
-        {
-            target = controller;
-        }
-
-        if (activeFlightMotorController != null && activeFlightMotorController != target)
-        {
-            activeFlightMotorController.SetFlightMotorActive(false);
-        }
-
-        activeFlightMotorController = target;
-        if (activeFlightMotorController == null)
-        {
-            return null;
-        }
-
-        if (!activeFlightMotorController.SetFlightMotorActive(true, autoInstallFlightMotorForLocalPlayer))
-        {
-            activeFlightMotorController = null;
-            return null;
-        }
-
-        return activeFlightMotorController;
-    }
-
-    private void DeactivateFlightMotorController()
-    {
-        if (activeFlightMotorController == null)
-        {
-            return;
-        }
-
-        activeFlightMotorController.SetFlightMotorActive(false);
-        activeFlightMotorController = null;
     }
 
     private void HandleMuninTrigger()
@@ -2243,13 +2168,14 @@ public class SquadManager : MonoBehaviour
                 instance.transform.SetParent(parent, true);
             }
 
-            instance.transform.SetPositionAndRotation(position, rotation);
+            TrySetCharacterPositionAndRotation(instance, position, rotation);
+
             return;
         }
 
         if (squadSpawnOrigin != null)
         {
-            instance.transform.SetPositionAndRotation(squadSpawnOrigin.position, squadSpawnOrigin.rotation);
+            TrySetCharacterPositionAndRotation(instance, squadSpawnOrigin.position, squadSpawnOrigin.rotation);
         }
     }
 

@@ -4,25 +4,10 @@ using UnityEngine;
 
 // Controle le mouvement et l'inventaire runtime d'un personnage de la squad.
 [RequireComponent(typeof(Animator), typeof(Rigidbody))]
+[RequireComponent(typeof(LitOpsiveLocomotionBridge))]
 public partial class SquadCharacterController : MonoBehaviour
 {
     private const float WalkLocomotionTier = 1f;
-    private const float JogtrotLocomotionTier = 2f;
-    private const float RunLocomotionTier = 3f;
-    private const string WalkStartStateName = "Walk_Start";
-    private const string JogtrotStartStateName = "Jogtrot_Start";
-    private const string RunStartStateName = "Run_Start";
-    private static readonly int[] LocomotionEndStateHashes =
-    {
-        Animator.StringToHash("Walk_Stop"),
-        Animator.StringToHash("Jogtrot_Stop"),
-        Animator.StringToHash("Run_Stop"),
-        Animator.StringToHash("Walk_End"),
-        Animator.StringToHash("Wal_End"),
-        Animator.StringToHash("Jogtrot_End"),
-        Animator.StringToHash("Jojtrot_End"),
-        Animator.StringToHash("Run_End")
-    };
 
     private enum TorchVisualTransition
     {
@@ -90,63 +75,23 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Utilise un damping sur Speed.")]
     private bool useSpeedDamping = false;
 
-    [Header("Animation")]
-    [SerializeField, Tooltip("Vitesse gameplay a laquelle la phase de marche atteint son plein poids dans le blend tree.")]
-    private float walkSpeedThreshold = 1.35f;
-    [SerializeField, Tooltip("Vitesse gameplay a laquelle la phase de course atteint son plein poids dans le blend tree.")]
-    private float runSpeedThreshold = 3.25f;
-    [SerializeField, Tooltip("Valeur Speed pour idle.")]
-    private float idleAnimValue = 0f;
-    [SerializeField, Tooltip("Valeur Speed du blend tree correspondant au palier marche.")]
-    private float walkAnimValue = 1.35f;
-    [SerializeField, Tooltip("Valeur Speed du blend tree correspondant au palier course.")]
-    private float runAnimValue = 3.25f;
-    [SerializeField, Tooltip("Vitesse nominale envoyee a l'Animator quand le personnage atteint son trot max sans sprint. Permet d'augmenter la vitesse gameplay reelle sans pousser le blend tree sur le clip de sprint.")]
-    private float trotPresentationSpeed = 2.5f;
-
     [Header("Animation Feel")]
-    [SerializeField, Tooltip("Seuil bas utilise pour couper les etats de locomotion optionnels de l'Animator.")]
-    private float animationMovingExitSpeed = 0.12f;
-    [SerializeField, Tooltip("Seuil haut utilise pour declencher les etats de locomotion optionnels de l'Animator.")]
-    private float animationMovingEnterSpeed = 0.32f;
-    [SerializeField, Tooltip("Responsivite du float de turn optionnel expose a l'Animator.")]
-    private float animationTurnResponsiveness = 10f;
     [SerializeField, Tooltip("Nom du bool optionnel pour distinguer idle et locomotion.")]
     private string isMovingParam = "IsMoving";
-    [SerializeField, Tooltip("Nom du trigger optionnel emis au depart du mouvement.")]
-    private string moveStartTriggerParam = "MoveStartTrigger";
-    [SerializeField, Tooltip("Nom du trigger optionnel emis a l'arret du mouvement.")]
-    private string moveStopTriggerParam = "MoveStopTrigger";
     [SerializeField, Tooltip("Nom du float optionnel qui selectionne le Start/Stop locomotion: 1=Walk, 2=Jogtrot, 3=Run.")]
     private string locomotionTierParam = "LocomotionTier";
     [SerializeField, Tooltip("Nom du float optionnel signe (-1..1) mesurant le besoin de rotation.")]
     private string turnParam = "Turn";
     [SerializeField, Tooltip("Nom du bool optionnel actif quand un pivot sur place est pertinent.")]
     private string turnInPlaceParam = "TurnInPlace";
-    [SerializeField, Tooltip("Angle minimal avant d'annoncer un pivot sur place (deg).")]
-    private float turnInPlaceAngleThreshold = 60f;
-    [SerializeField, Tooltip("Layer Animator contenant la locomotion base.")]
-    private int locomotionAnimationLayer;
-    [SerializeField, Tooltip("Seuil d'input qui autorise l'interruption directe d'une animation Walk/Jogtrot/Run_End.")]
-    private float locomotionEndRestartInputThreshold = 0.12f;
-    [SerializeField, Tooltip("Duree du crossfade quand un input relance la locomotion depuis une animation End.")]
-    private float locomotionEndRestartTransitionDuration = 0.04f;
 
     [Header("Movement")]
     [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
     private float walkMoveSpeed = 5f;
     [SerializeField, Tooltip("Vitesse de deplacement.")]
     private float moveSpeed = 6.5f;
-    [SerializeField, Tooltip("Lissage de l'input.")]
-    private float inputResponsiveness = 14f;
-    [SerializeField, Tooltip("Lissage utilise quand le stick revient dans la zone morte.")]
-    private float inputReleaseResponsiveness = 36f;
     [SerializeField, Range(0f, 1f), Tooltip("Zone morte gameplay de la locomotion InPlace.")]
     private float movementInputDeadZone = 0.08f;
-    [SerializeField, Tooltip("Tourne vers la direction d'input.")]
-    private bool rotateToInput = true;
-    [SerializeField, Tooltip("Vitesse de rotation.")]
-    private float rotationSpeed = 24f;
     [SerializeField, Tooltip("Deplacement relatif a la camera.")]
     private bool useCameraRelative = true;
     [SerializeField, Tooltip("Camera de reference (fallback Main).")]
@@ -159,34 +104,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private float fixedCameraMovementReferenceBlendSharpness = 0f;
     [SerializeField, Tooltip("Anime les RB en physics.")]
     private bool animatePhysics = true;
-    [SerializeField, Tooltip("Responsivite de rotation appliquee quand le personnage est deja en mouvement.")]
-    private float movingRotationSpeed = 16f;
-    [SerializeField, Tooltip("Seuil de vitesse a partir duquel la rotation passe en mode mouvement.")]
-    private float movingRotationSpeedThreshold = 0.75f;
     private bool storedMovementReferenceActive;
     private Vector3 storedForward;
     private Vector3 storedRight;
     private Vector2 storedInput;
-
-    [Header("Grounding")]
-    [SerializeField, Tooltip("Distance du controle sol pour autoriser les etats relies au sol (m).")]
-    private float jumpGroundCheckDistance = 0.18f;
-    [SerializeField, Tooltip("Multiplicateur du rayon capsule pour le controle sol.")]
-    private float jumpGroundCheckRadiusScale = 0.9f;
-    [SerializeField, Tooltip("Petite vitesse verticale negative pour rester plaque au sol.")]
-    private float groundedStickVelocity = 2f;
-
-    [Header("Void Detection")]
-    [SerializeField, Tooltip("Active la detection du vide pour eviter les chutes hors du monde.")]
-    private bool enableVoidDetection = true;
-    [SerializeField, Tooltip("Distance horizontale de controle devant le personnage (m).")]
-    private float voidCheckDistance = 0.35f;
-    [SerializeField, Tooltip("Profondeur du raycast vers le sol (m).")]
-    private float voidCheckDepth = 4f;
-    [SerializeField, Tooltip("LayerMask utilise pour detecter le sol.")]
-    private LayerMask voidGroundMask = ~0;
-    [SerializeField, Tooltip("Utilise la matrice de collision du layer pour la detection du sol.")]
-    private bool voidUseCollisionMatrixMask = true;
 
     [Header("Torch")]
     [SerializeField, Tooltip("Autorise TriggerMunin a allumer/eteindre la torche.")]
@@ -221,30 +142,15 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool ignoreCharacterTriggerColliders = true;
     [SerializeField, Tooltip("Intervalle de refresh des collisions.")]
     private float collisionRefreshInterval = 0.5f;
-    [SerializeField, Tooltip("Empeche les deplacements pilotes par le controller de traverser les obstacles.")]
-    private bool preventWallPenetration = true;
-    [SerializeField, Tooltip("Marge conservee avant un obstacle lors du sweep de mouvement (m).")]
-    private float movementCollisionSkin = 0.03f;
-    [SerializeField, Range(0f, 1f), Tooltip("Normale minimale consideree comme walkable et ignoree pour le blocage horizontal.")]
-    private float movementCollisionWalkableNormalDot = 0.35f;
     [SerializeField, Tooltip("Applique un materiau sans friction a la capsule de locomotion pour eviter que les contremarches ralentissent le Rigidbody.")]
     private bool useLowFrictionLocomotionMaterial = true;
     [SerializeField, Tooltip("Remplace aussi un PhysicMaterial deja assigne sur la capsule de locomotion.")]
     private bool overrideExistingLocomotionMaterial;
 
-    private Vector2 moveInput;
-    private float inputLockTimer;
     private int scriptedMovementSuppressionCount;
     private int externalLocomotionDriverLockCount;
-    private Vector2 smoothedInput;
-    private bool moveInputIsWorldSpace;
     private bool sprintModifierPressed;
-    private Vector3 currentHorizontalVelocity;
-    private Vector3 lastObservedWorldPosition;
-    private bool hasObservedWorldPosition;
     private bool isGrounded;
-    private float lastGroundedTime = float.NegativeInfinity;
-    private float groundIgnoreUntilTime;
     private Transform torchTransform;
     private MuninController syncedMuninChargeController;
     private bool torchInitialized;
@@ -258,17 +164,11 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool collidersDirty = true;
     private readonly List<Collider> cachedColliders = new List<Collider>();
     private CapsuleCollider locomotionCapsule;
-    private bool wasMovingForAnimator;
-    private float smoothedTurnAmount;
-    private float lastMovingLocomotionTier = WalkLocomotionTier;
     [Header("Audio")]
     [SerializeField] private AudioListener audioListener;
     [SerializeField] private bool searchAudioListenerInChildren = true;
     private bool audioListenerActive;
     private NetworkObject cachedNetworkObject;
-    private readonly RaycastHit[] movementCastHits = new RaycastHit[8];
-    private readonly Collider[] movementOverlapHits = new Collider[8];
-    private float heightProbeVerticalOffsetThisStep;
     private static PhysicsMaterial lowFrictionLocomotionMaterial;
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
@@ -286,9 +186,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public int MaxHp => maxHp;
 
+    public bool IsMovementInputSuppressed => scriptedMovementSuppressionCount > 0 || currentHp <= 0;
+
     public event System.Action<SquadCharacterController> HealthChanged;
 
-    public bool IsGrounded => isGrounded;
+    public bool IsGrounded => TryGetUccGrounded(out bool uccGrounded) && uccGrounded;
     public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
     public bool IsCharacterTorchSystemEnabled => CharacterTorchSystemEnabled;
     public float WalkMoveSpeed => walkMoveSpeed;
@@ -316,7 +218,6 @@ public partial class SquadCharacterController : MonoBehaviour
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
         InitializeTorchState();
-        ResetCommittedJumpRuntime();
     }
 
     private void Update()
@@ -338,21 +239,12 @@ public partial class SquadCharacterController : MonoBehaviour
             UpdateLocalInteractionDetection();
         }
 
-        TickFlightExternalLocomotion(Time.deltaTime);
     }
 
     private void LateUpdate()
     {
         UpdateTorchVisualTransition();
         UpdateTorchAnimationLayerWeight();
-
-        if (ShouldRunAnimationReconciliationInLateUpdate())
-        {
-            ReconcileAnimationState(Time.deltaTime);
-        }
-
-        RefreshFlightExternalLocomotionInteractions();
-        TickFlightFeedback();
     }
 
     private void Awake()
@@ -369,7 +261,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         if (rigidbodyTarget == null)
         {
-            Debug.LogError("SquadCharacterController requires a Rigidbody for in-place scripted locomotion.", this);
+            Debug.LogError("SquadCharacterController requires a Rigidbody for the UCC character stack.", this);
         }
 
         if (locomotionCapsule == null)
@@ -401,9 +293,7 @@ public partial class SquadCharacterController : MonoBehaviour
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
         InitializeTorchState();
-        ResetCommittedJumpRuntime();
         RefreshAnimationReferences();
-        InitializeFlightFeedback();
     }
 
     private void OnEnable()
@@ -413,15 +303,12 @@ public partial class SquadCharacterController : MonoBehaviour
         CacheNetworkObject();
         RefreshAnimationReferences();
         UpdateAudioListenerState(true);
-        ResolveFlightMotorReferences();
         LocalInputRouter.SwitchTarget += OnSwitchTargetPerformed;
     }
 
     private void OnDisable()
     {
         LocalInputRouter.SwitchTarget -= OnSwitchTargetPerformed;
-        SetFlightMotorActive(false);
-        ShutdownFlightFeedback();
         ClearLocalInteractionTarget();
         SetAudioListenerActive(false);
         UnregisterCharacter();
@@ -430,7 +317,6 @@ public partial class SquadCharacterController : MonoBehaviour
     private void OnDestroy()
     {
         BindMuninChargeController(null);
-        DisposeFlightFeedbackRuntimeObjects();
     }
 
     private void OnTransformChildrenChanged()
@@ -489,7 +375,6 @@ public partial class SquadCharacterController : MonoBehaviour
         cachedNetworkObject = null;
         CacheNetworkObject();
         ApplyAnimatorSettings();
-        ValidateAnimationReconciliationMappings();
     }
 
     private void UpdateAudioListenerState(bool force)
@@ -659,28 +544,69 @@ public partial class SquadCharacterController : MonoBehaviour
     public void InitializeHealthFromCharacterData(bool resetCurrent)
     {
         int dataHp = characterData != null ? characterData.hp : maxHp;
-        maxHp = Mathf.Max(1, dataHp);
-        if (resetCurrent)
-        {
-            currentHp = maxHp;
-        }
-
+        int resolvedMaxHp = Mathf.Max(1, dataHp);
+        int resolvedCurrentHp = resetCurrent ? resolvedMaxHp : currentHp;
         if (clampHpToMax)
         {
-            currentHp = Mathf.Clamp(currentHp, 0, maxHp);
+            resolvedCurrentHp = Mathf.Clamp(resolvedCurrentHp, 0, resolvedMaxHp);
         }
 
-        NotifyHealthChanged();
+        SetHealth(resolvedCurrentHp, resolvedMaxHp);
     }
 
     public void SetHealth(int current, int max)
     {
-        maxHp = Mathf.Max(1, max);
-        currentHp = Mathf.Clamp(current, 0, maxHp);
-        NotifyHealthChanged();
+        LitUccDamageBridge uccDamageBridge = GetComponent<LitUccDamageBridge>();
+        if (uccDamageBridge != null && uccDamageBridge.TrySetAuthorityHealth(current, max))
+        {
+            return;
+        }
+
+        SetHealthLocal(current, max);
     }
 
     public void SetCurrentHp(int value)
+    {
+        LitUccDamageBridge uccDamageBridge = GetComponent<LitUccDamageBridge>();
+        if (uccDamageBridge != null && uccDamageBridge.TrySetAuthorityCurrentHealth(value))
+        {
+            return;
+        }
+
+        SetCurrentHpLocal(value);
+    }
+
+    public void SetMaxHp(int value, bool keepCurrent = true)
+    {
+        LitUccDamageBridge uccDamageBridge = GetComponent<LitUccDamageBridge>();
+        if (uccDamageBridge != null && uccDamageBridge.TrySetAuthorityMaxHealth(value, keepCurrent))
+        {
+            return;
+        }
+
+        SetMaxHpLocal(value, keepCurrent);
+    }
+
+    internal void SetHealthFromAuthority(int current, int max)
+    {
+        SetHealthLocal(current, max);
+    }
+
+    private void SetHealthLocal(int current, int max)
+    {
+        int resolvedMaxHp = Mathf.Max(1, max);
+        int resolvedCurrentHp = Mathf.Clamp(current, 0, resolvedMaxHp);
+        if (resolvedMaxHp == maxHp && resolvedCurrentHp == currentHp)
+        {
+            return;
+        }
+
+        maxHp = resolvedMaxHp;
+        currentHp = resolvedCurrentHp;
+        NotifyHealthChanged();
+    }
+
+    private void SetCurrentHpLocal(int value)
     {
         int clamped = clampHpToMax ? Mathf.Clamp(value, 0, maxHp) : Mathf.Max(0, value);
         if (clamped == currentHp)
@@ -692,7 +618,7 @@ public partial class SquadCharacterController : MonoBehaviour
         NotifyHealthChanged();
     }
 
-    public void SetMaxHp(int value, bool keepCurrent = true)
+    private void SetMaxHpLocal(int value, bool keepCurrent)
     {
         int clamped = Mathf.Max(1, value);
         if (clamped == maxHp && keepCurrent)
@@ -1627,43 +1553,10 @@ public partial class SquadCharacterController : MonoBehaviour
         walkMoveSpeed = Mathf.Max(0f, walkMoveSpeed);
         moveSpeed = Mathf.Max(0f, moveSpeed);
         walkMoveSpeed = Mathf.Min(walkMoveSpeed, moveSpeed);
-        inputResponsiveness = Mathf.Max(0f, inputResponsiveness);
-        inputReleaseResponsiveness = Mathf.Max(0f, inputReleaseResponsiveness);
         movementInputDeadZone = Mathf.Clamp01(movementInputDeadZone);
         fixedCameraMovementInputRefreshAngle = Mathf.Clamp(fixedCameraMovementInputRefreshAngle, 0f, 180f);
         fixedCameraMovementReferenceBlendSharpness = Mathf.Max(0f, fixedCameraMovementReferenceBlendSharpness);
-        walkSpeedThreshold = Mathf.Max(0f, walkSpeedThreshold);
-        runSpeedThreshold = Mathf.Max(walkSpeedThreshold, runSpeedThreshold);
-        trotPresentationSpeed = Mathf.Clamp(trotPresentationSpeed, walkSpeedThreshold, runSpeedThreshold);
         speedDampTime = Mathf.Max(0f, speedDampTime);
-        animationMovingExitSpeed = Mathf.Max(0f, animationMovingExitSpeed);
-        animationMovingEnterSpeed = Mathf.Max(animationMovingExitSpeed, animationMovingEnterSpeed);
-        animationTurnResponsiveness = Mathf.Max(0f, animationTurnResponsiveness);
-        turnInPlaceAngleThreshold = Mathf.Clamp(turnInPlaceAngleThreshold, 0f, 180f);
-        locomotionAnimationLayer = Mathf.Max(0, locomotionAnimationLayer);
-        locomotionEndRestartInputThreshold = Mathf.Clamp01(locomotionEndRestartInputThreshold);
-        locomotionEndRestartTransitionDuration = Mathf.Max(0f, locomotionEndRestartTransitionDuration);
-        locomotionAnimationCorrectionDelay = Mathf.Max(0f, locomotionAnimationCorrectionDelay);
-        airborneAnimationCorrectionDelay = Mathf.Max(0f, airborneAnimationCorrectionDelay);
-        landingAnimationCorrectionDelay = Mathf.Max(0f, landingAnimationCorrectionDelay);
-        transientAnimationCorrectionDelay = Mathf.Max(0f, transientAnimationCorrectionDelay);
-        repeatedAnimationCorrectionCooldown = Mathf.Max(0f, repeatedAnimationCorrectionCooldown);
-        animationReconciliationCrossFadeDuration = Mathf.Max(0f, animationReconciliationCrossFadeDuration);
-        animationPhaseTimeoutPadding = Mathf.Max(0f, animationPhaseTimeoutPadding);
-        movingRotationSpeed = Mathf.Max(0f, movingRotationSpeed);
-        movingRotationSpeedThreshold = Mathf.Max(0f, movingRotationSpeedThreshold);
-        jumpGroundCheckDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
-        jumpGroundCheckRadiusScale = Mathf.Clamp(jumpGroundCheckRadiusScale, 0.1f, 1.5f);
-        groundedStickVelocity = Mathf.Max(0f, groundedStickVelocity);
-        voidCheckDistance = Mathf.Max(0f, voidCheckDistance);
-        voidCheckDepth = Mathf.Max(0.02f, voidCheckDepth);
-        maxWalkableSlopeAngle = Mathf.Clamp(maxWalkableSlopeAngle, 0f, 89f);
-        movementCollisionSkin = Mathf.Max(0.001f, movementCollisionSkin);
-        movementCollisionWalkableNormalDot = Mathf.Clamp01(movementCollisionWalkableNormalDot);
-        ValidateHeightProbeTraversalSettings();
-
-        ValidateCommittedJumpSettings();
-        ValidateFlightSettings();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
     }
@@ -1728,31 +1621,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Move(Vector2 input)
     {
-        if (TryForwardMoveToUcc(input, isWorldSpace: false))
-        {
-            return;
-        }
-
-        moveInputIsWorldSpace = false;
-        moveInput = input;
-        ApplyMovementFacialNeutral(ResolveMovementInputMagnitude(input));
-        if (input.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
-        {
-            ClearStoredMovementReference();
-        }
+        TryForwardMoveToUcc(input, isWorldSpace: false);
     }
 
     public void MoveWorld(Vector2 worldInput)
     {
-        if (TryForwardMoveToUcc(worldInput, isWorldSpace: true))
-        {
-            return;
-        }
-
-        moveInputIsWorldSpace = true;
-        moveInput = worldInput;
-        ApplyMovementFacialNeutral(ResolveMovementInputMagnitude(worldInput));
-        ClearStoredMovementReference();
+        TryForwardMoveToUcc(worldInput, isWorldSpace: true);
     }
 
     public void SetSprintModifier(bool pressed)
@@ -1763,30 +1637,20 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Jump()
     {
-        if (TryForwardJumpToUcc())
-        {
-            return;
-        }
-
-        RequestCommittedJump();
+        TryForwardJumpToUcc();
     }
 
     public void Stop()
     {
         TryForwardStopToUcc();
 
-        moveInputIsWorldSpace = false;
-        moveInput = Vector2.zero;
-        smoothedInput = Vector2.zero;
+        ResetUccLocomotionIntent();
         sprintModifierPressed = false;
         ClearStoredMovementReference();
         StopHorizontalVelocity();
-        wasMovingForAnimator = false;
-        smoothedTurnAmount = 0f;
-        lastMovingLocomotionTier = WalkLocomotionTier;
         SetAnimatorBoolIfValid(isMovingParam, false);
         SetAnimatorBoolIfValid(turnInPlaceParam, false);
-        SetAnimatorFloatIfValid(locomotionTierParam, lastMovingLocomotionTier);
+        SetAnimatorFloatIfValid(locomotionTierParam, WalkLocomotionTier);
         SetAnimatorFloatIfValid(turnParam, 0f);
         SetSpeed(0f);
     }
@@ -1812,7 +1676,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         externalLocomotionDriverLockCount = Mathf.Max(0, externalLocomotionDriverLockCount + 1);
         Stop();
-        ResetCommittedJumpRuntime();
         ClearScriptDrivenHorizontalVelocity();
     }
 
@@ -1833,311 +1696,15 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        UpdateInputLock(Time.fixedDeltaTime);
         if (IsExternalLocomotionDriverActive)
         {
             UpdateGroundedState();
-            UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
             ClearScriptDrivenHorizontalVelocity();
             return;
         }
 
-        SmoothInput(Time.fixedDeltaTime);
         UpdateGroundedState();
-        UpdateObservedHorizontalVelocity(Time.fixedDeltaTime);
-        UpdateCommittedJump(Time.fixedDeltaTime);
-        UpdateNaturalFallAnimation(Time.fixedDeltaTime);
-        ApplyMovement(Time.fixedDeltaTime);
-        UpdateAnimationSpeed();
-        UpdateCommittedJumpAnimation();
-        if (ShouldRunAnimationReconciliationInFixedUpdate())
-        {
-            ReconcileAnimationState(Time.fixedDeltaTime);
-        }
-    }
-
-    private bool IsGroundAhead(Vector3 direction, float lookAheadDistance = -1f)
-    {
-        if (direction.sqrMagnitude < 0.01f || !isGrounded)
-        {
-            return true;
-        }
-
-        return HasGroundSupportAhead(direction, lookAheadDistance);
-    }
-
-    private int GetVoidGroundMask()
-    {
-        if (!voidUseCollisionMatrixMask)
-        {
-            return voidGroundMask;
-        }
-
-        return GetCollisionMatrixMask();
-    }
-
-    private void UpdateInputLock(float deltaTime)
-    {
-        if (inputLockTimer <= 0f)
-        {
-            return;
-        }
-
-        inputLockTimer = Mathf.Max(0f, inputLockTimer - deltaTime);
-    }
-
-    private void ApplyMovement(float deltaTime)
-    {
-        Vector2 effectiveInput = smoothedInput;
-        float inputMagnitude = ResolveMovementInputMagnitude(effectiveInput);
-        bool hasInput = inputMagnitude > 0f;
-        Vector3 desiredDirection = Vector3.zero;
-        if (!hasInput && moveInput.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
-        {
-            ClearStoredMovementReference();
-        }
-
-        if (hasInput)
-        {
-            desiredDirection = GetMoveDirection(effectiveInput);
-            if (desiredDirection.sqrMagnitude > 0.0001f)
-            {
-                desiredDirection = desiredDirection.normalized;
-            }
-        }
-
-        float lookAheadDistance = ResolveCurrentTargetMoveSpeed() * inputMagnitude * Mathf.Max(0f, deltaTime);
-        if (enableVoidDetection && hasInput && !IsGroundAhead(desiredDirection, lookAheadDistance))
-        {
-            hasInput = false;
-            inputMagnitude = 0f;
-            StopHorizontalVelocity();
-        }
-
-        if (!CanSimulateMovementLocally())
-        {
-            return;
-        }
-
-        if (TryApplyCommittedJumpMovement(deltaTime))
-        {
-            return;
-        }
-
-        if (TryApplyNaturalFallLandingMovement(deltaTime))
-        {
-            return;
-        }
-
-        if (IsLocomotionEndAnimationActive())
-        {
-            if (TryRestartLocomotionFromEndAnimation(
-                    deltaTime,
-                    out Vector3 restartDirection,
-                    out float restartInputMagnitude))
-            {
-                desiredDirection = restartDirection;
-                inputMagnitude = restartInputMagnitude;
-                hasInput = true;
-            }
-            else
-            {
-                StopHorizontalVelocity();
-                return;
-            }
-        }
-
-        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0 || currentHp <= 0)
-        {
-            CaptureCurrentRigidbodyHorizontalVelocity();
-            return;
-        }
-
-        // Les clips restent in-place: le gameplay pilote le deplacement, l'Animator ne fait que presenter la pose.
-        HandleGroundedLocomotionIntent(desiredDirection, inputMagnitude, deltaTime);
-    }
-
-    private bool CanSimulateMovementLocally()
-    {
-        NetworkManager manager = NetworkManager.Singleton;
-        return manager == null || !manager.IsListening || manager.IsServer;
-    }
-
-    private bool IsLocomotionEndAnimationActive()
-    {
-        if (animator == null ||
-            !animator.isActiveAndEnabled ||
-            locomotionAnimationLayer < 0 ||
-            locomotionAnimationLayer >= animator.layerCount)
-        {
-            return false;
-        }
-
-        if (MatchesLocomotionEndAnimationState(animator.GetCurrentAnimatorStateInfo(locomotionAnimationLayer)))
-        {
-            return true;
-        }
-
-        return animator.IsInTransition(locomotionAnimationLayer) &&
-               MatchesLocomotionEndAnimationState(animator.GetNextAnimatorStateInfo(locomotionAnimationLayer));
-    }
-
-    private static bool MatchesLocomotionEndAnimationState(AnimatorStateInfo stateInfo)
-    {
-        int shortNameHash = stateInfo.shortNameHash;
-        for (int i = 0; i < LocomotionEndStateHashes.Length; i++)
-        {
-            if (shortNameHash == LocomotionEndStateHashes[i])
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private bool TryRestartLocomotionFromEndAnimation(
-        float deltaTime,
-        out Vector3 desiredDirection,
-        out float inputMagnitude)
-    {
-        desiredDirection = Vector3.zero;
-        inputMagnitude = 0f;
-
-        if (inputLockTimer > 0f || scriptedMovementSuppressionCount > 0 || currentHp <= 0)
-        {
-            return false;
-        }
-
-        if (!TryResolveLocomotionRestartIntent(out desiredDirection, out inputMagnitude))
-        {
-            return false;
-        }
-
-        float lookAheadDistance = ResolveCurrentTargetMoveSpeed() * inputMagnitude * Mathf.Max(0f, deltaTime);
-        if (enableVoidDetection && !IsGroundAhead(desiredDirection, lookAheadDistance))
-        {
-            return false;
-        }
-
-        TriggerLocomotionRestartFromEnd(inputMagnitude, desiredDirection);
-        return true;
-    }
-
-    private bool TryResolveLocomotionRestartIntent(out Vector3 desiredDirection, out float inputMagnitude)
-    {
-        Vector2 restartInput = smoothedInput;
-        if (moveInput.sqrMagnitude > restartInput.sqrMagnitude)
-        {
-            restartInput = moveInput;
-        }
-
-        inputMagnitude = ResolveMovementInputMagnitude(restartInput);
-        if (inputMagnitude <= locomotionEndRestartInputThreshold)
-        {
-            desiredDirection = Vector3.zero;
-            return false;
-        }
-
-        desiredDirection = GetMoveDirection(restartInput);
-        if (desiredDirection.sqrMagnitude <= 0.0001f)
-        {
-            desiredDirection = Vector3.zero;
-            return false;
-        }
-
-        desiredDirection.Normalize();
-        return true;
-    }
-
-    private void TriggerLocomotionRestartFromEnd(float inputMagnitude, Vector3 desiredDirection)
-    {
-        float presentationSpeed = inputMagnitude * ResolveCurrentTargetPresentationSpeed();
-        float locomotionTier = ResolveLocomotionTier(presentationSpeed);
-
-        lastMovingLocomotionTier = locomotionTier;
-        wasMovingForAnimator = true;
-
-        SetAnimatorFloatIfValid(locomotionTierParam, locomotionTier);
-        SetAnimatorBoolIfValid(isMovingParam, true);
-        SetAnimatorBoolIfValid(turnInPlaceParam, false);
-
-        Vector3 facingDirection = GetFacingPlanarForward();
-        smoothedTurnAmount = desiredDirection.sqrMagnitude > 0.0001f
-            ? Mathf.Clamp(Vector3.SignedAngle(facingDirection, desiredDirection, transform.up) / 90f, -1f, 1f)
-            : 0f;
-        SetAnimatorFloatIfValid(turnParam, smoothedTurnAmount);
-        SetSpeed(ResolveAnimatorSpeedValue(presentationSpeed));
-
-        ResetAnimatorTriggerIfValid(moveStopTriggerParam);
-        SetAnimatorTriggerIfValid(moveStartTriggerParam);
-        TryCrossFadeLocomotionStartState(locomotionTier);
-    }
-
-    private bool TryCrossFadeLocomotionStartState(float locomotionTier)
-    {
-        return TryCrossFadeLocomotionState(
-            ResolveLocomotionStartStateName(locomotionTier),
-            locomotionEndRestartTransitionDuration);
-    }
-
-    private bool TryCrossFadeLocomotionState(string stateName, float transitionDuration)
-    {
-        return TryCrossFadeAnimatorState(
-            locomotionAnimationLayer,
-            stateName,
-            transitionDuration);
-    }
-
-    private static string ResolveLocomotionStartStateName(float locomotionTier)
-    {
-        if (locomotionTier >= (JogtrotLocomotionTier + RunLocomotionTier) * 0.5f)
-        {
-            return RunStartStateName;
-        }
-
-        if (locomotionTier >= (WalkLocomotionTier + JogtrotLocomotionTier) * 0.5f)
-        {
-            return JogtrotStartStateName;
-        }
-
-        return WalkStartStateName;
-    }
-
-    private void HandleGroundedLocomotionIntent(Vector3 desiredDirection, float inputMagnitude, float deltaTime)
-    {
-        if (inputMagnitude <= 0f || desiredDirection.sqrMagnitude <= 0.0001f)
-        {
-            ClearScriptDrivenHorizontalVelocity();
-            return;
-        }
-
-        ApplyMovementFacialNeutral(inputMagnitude);
-
-        float targetSpeed = ResolveCurrentTargetMoveSpeed() * inputMagnitude;
-        Vector3 desiredHorizontalVelocity = desiredDirection * targetSpeed;
-        Vector3 resolvedVelocity = ConstrainHorizontalVelocityAgainstWalls(desiredHorizontalVelocity, deltaTime);
-        currentHorizontalVelocity = Vector3.ProjectOnPlane(resolvedVelocity, transform.up);
-
-        RotateTowardsDesiredDirection(desiredDirection, deltaTime, currentHorizontalVelocity.magnitude);
-
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
-        {
-            Vector3 velocity = rigidbodyTarget.linearVelocity;
-            float verticalVelocity = isGrounded
-                ? ResolveGroundedLocomotionVerticalVelocity(velocity.y)
-                : velocity.y;
-
-            rigidbodyTarget.WakeUp();
-            rigidbodyTarget.linearVelocity = new Vector3(
-                currentHorizontalVelocity.x,
-                verticalVelocity,
-                currentHorizontalVelocity.z);
-            return;
-        }
-
-        Transform target = motionRoot != null ? motionRoot : transform;
-        target.position += currentHorizontalVelocity * Mathf.Max(0f, deltaTime);
+        ClearScriptDrivenHorizontalVelocity();
     }
 
     private void ApplyMovementFacialNeutral(float inputMagnitude)
@@ -2186,358 +1753,25 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void ClearScriptDrivenHorizontalVelocity()
     {
-        currentHorizontalVelocity = Vector3.zero;
-
-        if (ShouldUseRigidbody() && rigidbodyTarget != null && !rigidbodyTarget.isKinematic)
-        {
-            Vector3 velocity = rigidbodyTarget.linearVelocity;
-            rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
-        }
-    }
-
-    private void CaptureCurrentRigidbodyHorizontalVelocity()
-    {
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
-        {
-            Vector3 velocity = rigidbodyTarget.linearVelocity;
-            currentHorizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
-            return;
-        }
-
-        currentHorizontalVelocity = Vector3.zero;
-    }
-
-    private void UpdateObservedHorizontalVelocity(float deltaTime)
-    {
-        Vector3 worldPosition = GetWorldPosition();
-        if (!hasObservedWorldPosition || deltaTime <= 0f)
-        {
-            lastObservedWorldPosition = worldPosition;
-            hasObservedWorldPosition = true;
-            return;
-        }
-
-        Vector3 delta = worldPosition - lastObservedWorldPosition;
-        lastObservedWorldPosition = worldPosition;
-
-        if (CanSimulateMovementLocally())
-        {
-            return;
-        }
-
-        if (delta.sqrMagnitude > 4f)
-        {
-            currentHorizontalVelocity = Vector3.zero;
-            return;
-        }
-
-        currentHorizontalVelocity = Vector3.ProjectOnPlane(delta / deltaTime, transform.up);
-    }
-
-    private void RotateTowardsDesiredDirection(Vector3 desiredDirection, float deltaTime, float horizontalSpeed)
-    {
-        if (!rotateToInput || desiredDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        float rotationResponsiveness = rotationSpeed;
-        if (horizontalSpeed >= movingRotationSpeedThreshold && movingRotationSpeed > 0f)
-        {
-            rotationResponsiveness = movingRotationSpeed;
-        }
-
-        Quaternion targetRotation = Quaternion.LookRotation(desiredDirection, transform.up);
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
-        {
-            rigidbodyTarget.MoveRotation(
-                Quaternion.Slerp(rigidbodyTarget.rotation, targetRotation, rotationResponsiveness * deltaTime));
-            return;
-        }
-
-        Transform target = motionRoot != null ? motionRoot : transform;
-        target.rotation = Quaternion.Slerp(target.rotation, targetRotation, rotationResponsiveness * deltaTime);
     }
 
     private void StopHorizontalVelocity()
     {
-        currentHorizontalVelocity = Vector3.zero;
-
-        if (ShouldUseRigidbody() && rigidbodyTarget != null && !rigidbodyTarget.isKinematic)
-        {
-            Vector3 velocity = rigidbodyTarget.linearVelocity;
-            rigidbodyTarget.linearVelocity = new Vector3(0f, velocity.y, 0f);
-        }
-    }
-
-    private float ResolveCurrentTargetMoveSpeed()
-    {
-        float sprintSpeed = Mathf.Max(0f, moveSpeed);
-        float walkingSpeed = Mathf.Clamp(walkMoveSpeed, 0f, sprintSpeed);
-        return sprintModifierPressed ? sprintSpeed : walkingSpeed;
-    }
-
-    private float ResolveCurrentTargetPresentationSpeed()
-    {
-        float sprintPresentationSpeed = Mathf.Max(runSpeedThreshold, 0.0001f);
-        float trotSpeed = Mathf.Clamp(trotPresentationSpeed, 0f, sprintPresentationSpeed);
-        return sprintModifierPressed ? sprintPresentationSpeed : trotSpeed;
-    }
-
-    private float ResolveCurrentMoveSpeedScale()
-    {
-        float sprintSpeed = Mathf.Max(0.0001f, moveSpeed);
-        return Mathf.Clamp01(ResolveCurrentTargetMoveSpeed() / sprintSpeed);
-    }
-
-    private float ScaleConfiguredLocomotionSpeed(float speed)
-    {
-        return Mathf.Max(0f, speed) * ResolveCurrentMoveSpeedScale();
-    }
-
-    private Vector3 ConstrainHorizontalVelocityAgainstWalls(Vector3 desiredHorizontalVelocity, float deltaTime)
-    {
-        heightProbeVerticalOffsetThisStep = 0f;
-
-        if (!preventWallPenetration || deltaTime <= 0f)
-        {
-            return desiredHorizontalVelocity;
-        }
-
-        Vector3 desiredDisplacement = desiredHorizontalVelocity * deltaTime;
-        Vector3 safeDisplacement = ResolveSafeHorizontalDisplacement(desiredDisplacement);
-        ApplyHeightProbeTraversalOffsetToRigidbody(safeDisplacement);
-        return Vector3.ProjectOnPlane(safeDisplacement, transform.up) / deltaTime;
-    }
-
-    private float ResolveGroundedLocomotionVerticalVelocity(float currentVerticalVelocity)
-    {
-        if (Mathf.Abs(heightProbeVerticalOffsetThisStep) > 0.0001f)
-        {
-            // La correction de marche place deja la capsule sur son support.
-            // Une vitesse negative ajoute de la friction sur les contremarches; une vitesse positive ressemble a un saut.
-            return Mathf.Min(currentVerticalVelocity, 0f);
-        }
-
-        return Mathf.Min(currentVerticalVelocity, -groundedStickVelocity);
-    }
-
-    private Vector3 ResolveSafeHorizontalDisplacement(Vector3 desiredDisplacement)
-    {
-        Vector3 up = transform.up;
-        Vector3 flattenedDisplacement = Vector3.ProjectOnPlane(desiredDisplacement, up);
-        if (!preventWallPenetration || flattenedDisplacement.sqrMagnitude <= 0.00000001f)
-        {
-            return flattenedDisplacement;
-        }
-
-        if (!TryGetMovementCapsule(out Vector3 point1, out Vector3 point2, out float radius))
-        {
-            return flattenedDisplacement;
-        }
-
-        int mask = GetMovementBlockingMask();
-        if (mask == 0)
-        {
-            return flattenedDisplacement;
-        }
-
-        float castRadius = Mathf.Max(0.01f, radius - movementCollisionSkin);
-        Vector3 accumulated = Vector3.zero;
-        Vector3 remaining = flattenedDisplacement;
-
-        for (int i = 0; i < 2; i++)
-        {
-            float distance = remaining.magnitude;
-            if (distance <= 0.0001f)
-            {
-                break;
-            }
-
-            Vector3 direction = remaining / distance;
-            Vector3 castPoint1 = point1 + accumulated;
-            Vector3 castPoint2 = point2 + accumulated;
-            if (!TryGetHorizontalBlockingHit(castPoint1, castPoint2, castRadius, direction, distance + movementCollisionSkin, mask, out RaycastHit hit))
-            {
-                accumulated += remaining;
-                break;
-            }
-
-            if (TryResolveHeightProbeTraversal(castPoint1, castPoint2, radius, remaining, mask, hit, out Vector3 stepDisplacement))
-            {
-                accumulated += stepDisplacement;
-                break;
-            }
-
-            float allowedDistance = Mathf.Max(0f, hit.distance - movementCollisionSkin);
-            if (allowedDistance > 0f)
-            {
-                accumulated += direction * Mathf.Min(allowedDistance, distance);
-            }
-
-            Vector3 consumed = direction * Mathf.Min(distance, Mathf.Max(0f, hit.distance));
-            Vector3 leftover = remaining - consumed;
-            Vector3 slide = Vector3.ProjectOnPlane(leftover, hit.normal);
-            slide = Vector3.ProjectOnPlane(slide, up);
-            if (slide.sqrMagnitude <= 0.00000001f || Vector3.Dot(slide, remaining) <= 0f)
-            {
-                break;
-            }
-
-            remaining = slide;
-        }
-
-        if (TryResolveHeightProbeGroundSnap(point1, point2, radius, accumulated, mask, out Vector3 snappedDisplacement))
-        {
-            return snappedDisplacement;
-        }
-
-        return accumulated;
-    }
-
-    private bool TryGetMovementCapsule(out Vector3 point1, out Vector3 point2, out float radius)
-    {
-        Vector3 up = transform.up;
-        if (TryGetLocomotionCapsule(out Vector3 center, out float capsuleRadius, out float height))
-        {
-            float segmentHalf = Mathf.Max(0f, (height * 0.5f) - capsuleRadius);
-            point1 = center + up * segmentHalf;
-            point2 = center - up * segmentHalf;
-            radius = capsuleRadius;
-            return true;
-        }
-
-        point1 = Vector3.zero;
-        point2 = Vector3.zero;
-        radius = 0f;
-        return false;
-    }
-
-    private int GetMovementBlockingMask()
-    {
-        return GetCollisionMatrixMask();
-    }
-
-    private bool TryGetHorizontalBlockingHit(
-        Vector3 point1,
-        Vector3 point2,
-        float radius,
-        Vector3 direction,
-        float distance,
-        int mask,
-        out RaycastHit hit)
-    {
-        hit = default;
-        if (mask == 0 || distance <= 0.0001f)
-        {
-            return false;
-        }
-
-        int hitCount = Physics.CapsuleCastNonAlloc(
-            point1,
-            point2,
-            radius,
-            direction,
-            movementCastHits,
-            distance,
-            mask,
-            QueryTriggerInteraction.Ignore);
-        float bestDistance = float.PositiveInfinity;
-        int bestIndex = -1;
-        Vector3 up = transform.up;
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = movementCastHits[i].collider;
-            if (col == null || IsSelfCollider(col))
-            {
-                continue;
-            }
-
-            if (Vector3.Dot(movementCastHits[i].normal, up) >= movementCollisionWalkableNormalDot)
-            {
-                continue;
-            }
-
-            float hitDistance = movementCastHits[i].distance;
-            if (hitDistance < bestDistance)
-            {
-                bestDistance = hitDistance;
-                bestIndex = i;
-            }
-        }
-
-        if (bestIndex < 0)
-        {
-            return false;
-        }
-
-        hit = movementCastHits[bestIndex];
-        return true;
-    }
-
-    private struct GroundProbeSample
-    {
-        public Vector3 point;
-        public Vector3 normal;
-        public Collider collider;
     }
 
     private void UpdateGroundedState()
     {
-        if (Time.time < groundIgnoreUntilTime)
+        if (TryGetUccGrounded(out bool uccGrounded))
         {
-            isGrounded = false;
+            isGrounded = uccGrounded;
             return;
         }
 
-        if (!ShouldUseRigidbody())
-        {
-            isGrounded = false;
-            return;
-        }
-
-        isGrounded = CheckRigidbodyGrounded();
-        if (isGrounded)
-        {
-            lastGroundedTime = Time.time;
-        }
-    }
-
-    private bool CheckRigidbodyGrounded()
-    {
-        float probeDistance = Mathf.Max(0.02f, jumpGroundCheckDistance);
-        float probeRadius = 0.05f;
-        if (TryBuildGroundProbeContext(out GroundProbeContext probeContext))
-        {
-            probeRadius = Mathf.Max(0.05f, probeContext.radius * jumpGroundCheckRadiusScale);
-        }
-
-        return TryProbeGroundedSupport(probeDistance, probeRadius, out _, out _);
-    }
-
-    private int GetCollisionMatrixMask()
-    {
-        int mask = 0;
-        int layer = gameObject.layer;
-        for (int i = 0; i < 32; i++)
-        {
-            if (!Physics.GetIgnoreLayerCollision(layer, i))
-            {
-                mask |= 1 << i;
-            }
-        }
-
-        return mask;
+        isGrounded = false;
     }
 
     private bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
     {
-        if (TryGetActiveFlightMotorCapsule(out center, out radius, out height))
-        {
-            return true;
-        }
-
         CapsuleCollider capsule = locomotionCapsule;
         if (capsule == null)
         {
@@ -2559,33 +1793,6 @@ public partial class SquadCharacterController : MonoBehaviour
         radius = capsule.radius * maxXZ;
         height = Mathf.Max(capsule.height * absY, radius * 2f);
         center = transform.TransformPoint(capsule.center);
-        return true;
-    }
-
-    private bool TryGetActiveFlightMotorCapsule(out Vector3 center, out float radius, out float height)
-    {
-        center = Vector3.zero;
-        radius = 0f;
-        height = 0f;
-
-        if (!IsExternalLocomotionDriverActive)
-        {
-            return false;
-        }
-
-        if (!TryGetActiveFlightCharacterController(out CharacterController controller) ||
-            controller == null)
-        {
-            return false;
-        }
-
-        Transform controllerTransform = controller.transform;
-        Vector3 scale = controllerTransform.lossyScale;
-        float maxXZ = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
-        float absY = Mathf.Abs(scale.y);
-        radius = Mathf.Max(0.01f, controller.radius * maxXZ);
-        height = Mathf.Max(controller.height * absY, radius * 2f);
-        center = controllerTransform.TransformPoint(controller.center);
         return true;
     }
 
@@ -3176,33 +2383,6 @@ public partial class SquadCharacterController : MonoBehaviour
         return null;
     }
 
-    private void SmoothInput(float deltaTime)
-    {
-        float responsiveness = ShouldUseInputReleaseSmoothing()
-            ? inputReleaseResponsiveness
-            : inputResponsiveness;
-
-        if (responsiveness <= 0f)
-        {
-            smoothedInput = moveInput;
-            return;
-        }
-
-        float t = 1f - Mathf.Exp(-responsiveness * deltaTime);
-        smoothedInput = Vector2.Lerp(smoothedInput, moveInput, t);
-        if (moveInput.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone &&
-            smoothedInput.sqrMagnitude <= movementInputDeadZone * movementInputDeadZone)
-        {
-            smoothedInput = Vector2.zero;
-        }
-    }
-
-    private bool ShouldUseInputReleaseSmoothing()
-    {
-        float deadZoneSqr = movementInputDeadZone * movementInputDeadZone;
-        return moveInput.sqrMagnitude <= deadZoneSqr && smoothedInput.sqrMagnitude > deadZoneSqr;
-    }
-
     private float ResolveMovementInputMagnitude(Vector2 input)
     {
         float magnitude = Mathf.Clamp01(input.magnitude);
@@ -3219,159 +2399,28 @@ public partial class SquadCharacterController : MonoBehaviour
         return Mathf.InverseLerp(movementInputDeadZone, 1f, magnitude);
     }
 
-    private void UpdateAnimationSpeed()
-    {
-        if (animator == null)
-        {
-            return;
-        }
-
-        AnimationGameplaySnapshot snapshot = CreateAnimationGameplaySnapshot();
-        if (!string.IsNullOrWhiteSpace(speedParam))
-        {
-            SetSpeed(snapshot.AnimatorSpeed);
-        }
-
-        UpdateLocomotionAnimatorSignals(
-            snapshot,
-            deltaTime: Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime);
-    }
-
-    private float ResolveAnimationPresentationSpeed(Vector3 velocity)
-    {
-        float inputMagnitude = ResolveMovementInputMagnitude(smoothedInput);
-        if (inputMagnitude > 0f)
-        {
-            return inputMagnitude * ResolveCurrentTargetPresentationSpeed();
-        }
-
-        return velocity.magnitude;
-    }
-
-    private float ResolveLocomotionTier(float presentationSpeed)
-    {
-        float speed = Mathf.Max(0f, presentationSpeed);
-        float jogThreshold = Mathf.Lerp(walkSpeedThreshold, trotPresentationSpeed, 0.5f);
-        float runThreshold = Mathf.Lerp(trotPresentationSpeed, runSpeedThreshold, 0.5f);
-
-        if (speed >= runThreshold)
-        {
-            return RunLocomotionTier;
-        }
-
-        if (speed >= jogThreshold)
-        {
-            return JogtrotLocomotionTier;
-        }
-
-        return WalkLocomotionTier;
-    }
-
-    private Vector3 ResolveAnimatorDesiredDirection(Vector3 velocity)
-    {
-        Vector3 desiredDirection = Vector3.zero;
-
-        if (ResolveMovementInputMagnitude(smoothedInput) > 0f)
-        {
-            desiredDirection = GetMoveDirection(smoothedInput);
-        }
-        else if (velocity.sqrMagnitude > 0.0001f)
-        {
-            desiredDirection = velocity;
-        }
-
-        desiredDirection.y = 0f;
-        if (desiredDirection.sqrMagnitude > 0.0001f)
-        {
-            desiredDirection.Normalize();
-        }
-
-        return desiredDirection;
-    }
-
-    private Vector3 GetFacingPlanarForward()
-    {
-        Transform target = motionRoot != null ? motionRoot : transform;
-        Vector3 forward = target.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude <= 0.0001f)
-        {
-            return Vector3.forward;
-        }
-
-        return forward.normalized;
-    }
-
-    private float ResolveAnimatorSpeedValue(float rawSpeed)
-    {
-        float animSpeed = Mathf.Max(0f, rawSpeed);
-        return ResolveContinuousAnimatorSpeed(animSpeed);
-    }
-
-    private float ResolveContinuousAnimatorSpeed(float rawSpeed)
-    {
-        // En locomotion continue, on remappe la vitesse gameplay vers l'echelle
-        // attendue par le blend tree pour garder Walk/Run coherents.
-        if (walkSpeedThreshold <= 0f)
-        {
-            return Mathf.Min(rawSpeed, runAnimValue);
-        }
-
-        if (rawSpeed <= walkSpeedThreshold)
-        {
-            float walkT = Mathf.InverseLerp(0f, walkSpeedThreshold, rawSpeed);
-            return Mathf.Lerp(idleAnimValue, walkAnimValue, walkT);
-        }
-
-        if (runSpeedThreshold <= walkSpeedThreshold)
-        {
-            return runAnimValue;
-        }
-
-        if (rawSpeed <= runSpeedThreshold)
-        {
-            float runT = Mathf.InverseLerp(walkSpeedThreshold, runSpeedThreshold, rawSpeed);
-            return Mathf.Lerp(walkAnimValue, runAnimValue, runT);
-        }
-
-        return runAnimValue;
-    }
-
     private Vector3 GetCurrentHorizontalVelocity()
     {
-        if (!CanSimulateMovementLocally())
+        if (TryGetUccPlanarVelocity(out Vector3 uccPlanarVelocity))
         {
-            return currentHorizontalVelocity;
+            return uccPlanarVelocity;
         }
 
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
-        {
-            Vector3 velocity = rigidbodyTarget.linearVelocity;
-            return new Vector3(velocity.x, 0f, velocity.z);
-        }
-
-        return currentHorizontalVelocity;
+        return Vector3.zero;
     }
 
     private Vector3 GetWorldPosition()
     {
-        if (ShouldUseRigidbody() && rigidbodyTarget != null)
+        if (TryGetUccWorldPosition(out Vector3 uccWorldPosition))
         {
-            return rigidbodyTarget.position;
+            return uccWorldPosition;
         }
 
-        Transform root = motionRoot != null ? motionRoot : transform;
-        return root.position;
+        return Vector3.zero;
     }
 
     private Vector3 GetMoveDirection(Vector2 input, bool inputRepresentsRawMovement = false)
     {
-        if (moveInputIsWorldSpace)
-        {
-            ClearStoredMovementReference();
-            return new Vector3(input.x, 0f, input.y);
-        }
-
         Vector3 move = new Vector3(input.x, 0f, input.y);
         if (!ShouldUseCameraRelativeInput())
         {
@@ -3497,17 +2546,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private Vector2 ResolveMovementReferenceInput(Vector2 input, bool inputRepresentsRawMovement)
     {
-        if (inputRepresentsRawMovement)
-        {
-            return input;
-        }
-
-        if (moveInputIsWorldSpace)
-        {
-            return Vector2.zero;
-        }
-
-        return moveInput;
+        return input;
     }
 
     private bool TryStoreMovementReference(Vector3 forward, Vector3 right, Vector2 inputDirection)
@@ -3806,25 +2845,10 @@ public partial class SquadCharacterController : MonoBehaviour
         return lowFrictionLocomotionMaterial;
     }
 
-    private bool ShouldUseRigidbody()
-    {
-        return rigidbodyTarget != null;
-    }
-
     public void AddImpulse(Vector3 worldImpulse, float lockInputForSeconds = -1f)
     {
-        if (rigidbodyTarget == null)
-        {
-            return;
-        }
-
-        rigidbodyTarget.AddForce(worldImpulse, knockbackForceMode);
-
         float duration = lockInputForSeconds < 0f ? inputLockTime : lockInputForSeconds;
-        if (duration > 0f)
-        {
-            inputLockTimer = Mathf.Max(inputLockTimer, duration);
-        }
+        TryAddImpulseToUcc(worldImpulse, knockbackForceMode, duration);
     }
 
     private void RegisterCharacter()
