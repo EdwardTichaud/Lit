@@ -1,11 +1,9 @@
 using System.Collections.Generic;
-using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
-using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
@@ -80,26 +78,6 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
     [SerializeField, Tooltip("Message affiche si la porte sans cle est hors influence.")]
     private string frozenDoorMessage = "La porte semble fig\u00e9e.";
 
-    [Header("Interaction UI")]
-    [SerializeField, Tooltip("Affiche une InteractionBox quand la porte est ciblee.")]
-    private bool showInteractionUi = true;
-    [SerializeField, Tooltip("Prefab/objet UI d'interaction optionnel.")]
-    private GameObject interactionBox;
-    [SerializeField, Tooltip("Texte quand la porte peut etre ouverte.")]
-    private string openInteractionText = "Ouvrir";
-    [SerializeField, Tooltip("Texte quand la porte peut etre fermee.")]
-    private string closeInteractionText = "Fermer";
-    [SerializeField, Tooltip("Texte quand la porte est verrouillee.")]
-    private string lockedInteractionText = "Verrouille";
-    [SerializeField, Tooltip("Texte quand la porte est hors zone d'influence.")]
-    private string frozenInteractionText = "Fig\u00e9e";
-    [SerializeField, Tooltip("Offset en world pour la box d'interaction.")]
-    private Vector3 interactionOffset = new Vector3(0f, 2f, 0f);
-    [SerializeField, Tooltip("Parent des boxes UI.")]
-    private Transform boxesPanel;
-    [SerializeField, Tooltip("Camera UI/world pour positionner l'interaction box.")]
-    private Camera targetCamera;
-
     [Header("Collision")]
     [SerializeField, Tooltip("Colliders bloquants a desactiver quand la porte est suffisamment ouverte.")]
     private Collider[] blockingColliders;
@@ -137,8 +115,6 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         NetworkVariableWritePermission.Server);
 
     private GameObject currentCharacter;
-    private GameObject interactionBoxInstance;
-    private Canvas interactionCanvas;
     private Collider resolvedInteractionCollider;
     private Vector3 closedLocalPosition;
     private Quaternion closedLocalRotation;
@@ -197,18 +173,13 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         }
 
         activeLitInfluenceSourceIds.Clear();
-        ResetInteractionUi();
+        currentCharacter = null;
     }
 
     private void Update()
     {
         InitializeRuntime();
         TickMotion(Time.deltaTime);
-    }
-
-    private void LateUpdate()
-    {
-        UpdateInteractionUiPosition();
     }
 
     public override void OnNetworkSpawn()
@@ -267,13 +238,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
 
     public void SetDetectedCharacter(GameObject character)
     {
-        if (currentCharacter == character)
-        {
-            return;
-        }
-
         currentCharacter = character;
-        ShowInteraction(currentCharacter != null && showInteractionUi);
     }
 
     public void HandleLeverStateChanged(Lever lever, bool active)
@@ -293,7 +258,6 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
     public void SetLocked(bool value)
     {
         locked = value;
-        RefreshInteractionText();
     }
 
     public void Toggle()
@@ -653,10 +617,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
             return;
         }
 
-        if (activeLitInfluenceSourceIds.Add(info.SourceId))
-        {
-            RefreshInteractionText();
-        }
+        activeLitInfluenceSourceIds.Add(info.SourceId);
     }
 
     public void OnLitInfluenceStay(LitInfluenceInfo info)
@@ -666,10 +627,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
             return;
         }
 
-        if (activeLitInfluenceSourceIds.Add(info.SourceId))
-        {
-            RefreshInteractionText();
-        }
+        activeLitInfluenceSourceIds.Add(info.SourceId);
     }
 
     public void OnLitInfluenceExit(LitInfluenceInfo info)
@@ -679,10 +637,7 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
             return;
         }
 
-        if (activeLitInfluenceSourceIds.Remove(info.SourceId))
-        {
-            RefreshInteractionText();
-        }
+        activeLitInfluenceSourceIds.Remove(info.SourceId);
     }
 
     private bool ShouldReactToLitInfluence(LitInfluenceInfo info)
@@ -760,8 +715,6 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         {
             PlaySfx(isOpen ? openSfx : closeSfx);
         }
-
-        RefreshInteractionText();
     }
 
     private void TickMotion(float deltaTime)
@@ -893,190 +846,5 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         }
 
         AudioSource.PlayClipAtPoint(clip.audioClip, transform.position, Mathf.Clamp01(clip.volume));
-    }
-
-    private void ShowInteraction(bool show)
-    {
-        if (!show)
-        {
-            DestroyInteractionInstance();
-            return;
-        }
-
-        if (interactionBoxInstance == null)
-        {
-            interactionBoxInstance = CreateInstance(interactionBox, boxesPanel);
-            if (interactionBoxInstance == null)
-            {
-                interactionBoxInstance = CreateFallbackInteractionBox(boxesPanel);
-            }
-
-            if (interactionBoxInstance != null)
-            {
-                interactionCanvas = interactionBoxInstance.GetComponentInParent<Canvas>();
-            }
-        }
-
-        RefreshInteractionText();
-        if (interactionBoxInstance != null)
-        {
-            interactionBoxInstance.SetActive(true);
-        }
-    }
-
-    private void RefreshInteractionText()
-    {
-        if (interactionBoxInstance == null)
-        {
-            return;
-        }
-
-        string text = ResolveInteractionText();
-        TMP_Text tmp = interactionBoxInstance.GetComponentInChildren<TMP_Text>(true);
-        if (tmp != null)
-        {
-            tmp.text = text;
-            return;
-        }
-
-        Text fallbackText = interactionBoxInstance.GetComponentInChildren<Text>(true);
-        if (fallbackText != null)
-        {
-            fallbackText.text = text;
-        }
-    }
-
-    private string ResolveInteractionText()
-    {
-        if (locked)
-        {
-            return lockedInteractionText;
-        }
-
-        if (IsFrozenByMissingInfluence())
-        {
-            return frozenInteractionText;
-        }
-
-        if (interactMode == DoorInteractMode.CloseOnly)
-        {
-            return closeInteractionText;
-        }
-
-        if (interactMode == DoorInteractMode.OpenOnly)
-        {
-            return openInteractionText;
-        }
-
-        if (isOpen)
-        {
-            return closeInteractionText;
-        }
-
-        return openInteractionText;
-    }
-
-    private void UpdateInteractionUiPosition()
-    {
-        if (interactionBoxInstance == null || !interactionBoxInstance.activeSelf)
-        {
-            return;
-        }
-
-        Camera cam = targetCamera != null ? targetCamera : Camera.main;
-        Transform anchor = GetInteractionAnchor();
-        if (cam == null || anchor == null)
-        {
-            return;
-        }
-
-        Vector3 worldPosition = anchor.position + interactionOffset;
-        Canvas canvas = interactionCanvas != null ? interactionCanvas : interactionBoxInstance.GetComponentInParent<Canvas>();
-        if (canvas != null && canvas.renderMode != RenderMode.WorldSpace)
-        {
-            RectTransform rect = interactionBoxInstance.GetComponent<RectTransform>();
-            if (rect == null)
-            {
-                return;
-            }
-
-            Vector3 screenPos = cam.WorldToScreenPoint(worldPosition);
-            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                rect.position = screenPos;
-                return;
-            }
-
-            RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-            Camera uiCamera = canvas.worldCamera != null ? canvas.worldCamera : cam;
-            if (canvasRect != null &&
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPos, uiCamera, out Vector2 localPoint))
-            {
-                rect.localPosition = localPoint;
-            }
-
-            return;
-        }
-
-        interactionBoxInstance.transform.position = worldPosition;
-        Vector3 toCamera = interactionBoxInstance.transform.position - cam.transform.position;
-        if (toCamera.sqrMagnitude > 0.0001f)
-        {
-            interactionBoxInstance.transform.rotation = Quaternion.LookRotation(toCamera);
-        }
-    }
-
-    private GameObject CreateInstance(GameObject source, Transform parent)
-    {
-        if (source == null)
-        {
-            return null;
-        }
-
-        return parent != null ? Instantiate(source, parent) : Instantiate(source);
-    }
-
-    private GameObject CreateFallbackInteractionBox(Transform parent)
-    {
-        GameObject instance = new GameObject("DoorInteractionBox", typeof(RectTransform), typeof(Canvas), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(GraphicRaycaster));
-        if (parent != null)
-        {
-            instance.transform.SetParent(parent, false);
-        }
-
-        RectTransform rect = instance.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(240f, 50f);
-        rect.localScale = Vector3.one * 0.03f;
-
-        Canvas canvas = instance.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.sortingOrder = 100;
-
-        TextMeshProUGUI label = instance.GetComponent<TextMeshProUGUI>();
-        label.text = ResolveInteractionText();
-        label.fontSize = 18f;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
-        label.raycastTarget = false;
-
-        return instance;
-    }
-
-    private void ResetInteractionUi()
-    {
-        DestroyInteractionInstance();
-        currentCharacter = null;
-    }
-
-    private void DestroyInteractionInstance()
-    {
-        if (interactionBoxInstance == null)
-        {
-            return;
-        }
-
-        Destroy(interactionBoxInstance);
-        interactionBoxInstance = null;
-        interactionCanvas = null;
     }
 }
