@@ -13,6 +13,9 @@ TagManager:
   - Fx
   - CameraNonObstructing
   - Munin
+  - Light
+  - Brasero
+  - Torch
   layers:
   - Default
   - TransparentFX
@@ -28,7 +31,7 @@ TagManager:
   - Obstacle
   - Player
   - XRayEnvironment
-  - Light
+  - 
   - 
   - 
   - 
