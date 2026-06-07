@@ -631,6 +631,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111101"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "BaseColor",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "BaseColor",
@@ -663,6 +666,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111102"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "GhostTint",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "GhostTint",
@@ -695,6 +701,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111103"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveAmount",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveAmount",
@@ -712,8 +721,9 @@
     "m_customAttributes": [],
     "m_Value": 0.0,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
-        "x": -0.20000000298023225,
+        "x": -0.019999999552965165,
         "y": 1.2000000476837159
     },
     "m_SliderType": 0,
@@ -735,6 +745,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111104"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveNoiseScale",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveNoiseScale",
@@ -752,8 +765,9 @@
     "m_customAttributes": [],
     "m_Value": 2.75,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
-        "x": 0.10000000149011612,
+        "x": 0.0010000000474974514,
         "y": 12.0
     },
     "m_SliderType": 0,
@@ -775,6 +789,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111105"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveEdgeWidth",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveEdgeWidth",
@@ -792,6 +809,7 @@
     "m_customAttributes": [],
     "m_Value": 0.054999999701976779,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0010000000474974514,
         "y": 0.20000000298023225
@@ -815,6 +833,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111106"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveEdgeColor",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveEdgeColor",
@@ -847,6 +868,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111107"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "GhostAlpha",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "GhostAlpha",
@@ -864,6 +888,7 @@
     "m_customAttributes": [],
     "m_Value": 0.6800000071525574,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 1.0
@@ -887,6 +912,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111108"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveWorldMinY",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveWorldMinY",
@@ -904,6 +932,7 @@
     "m_customAttributes": [],
     "m_Value": 0.0,
     "m_FloatType": 0,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 1.0
@@ -927,6 +956,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111109"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveWorldHeight",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveWorldHeight",
@@ -944,6 +976,7 @@
     "m_customAttributes": [],
     "m_Value": 2.0,
     "m_FloatType": 0,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 1.0
@@ -967,6 +1000,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-11111111110a"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveDirection",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveDirection",
@@ -997,6 +1033,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-11111111110b"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "FineNoiseMultiplier",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "FineNoiseMultiplier",
@@ -1014,6 +1053,7 @@
     "m_customAttributes": [],
     "m_Value": 5.5,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 1.0,
         "y": 12.0
@@ -1037,6 +1077,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-11111111110c"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "NoiseInfluence",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "NoiseInfluence",
@@ -1054,6 +1097,7 @@
     "m_customAttributes": [],
     "m_Value": 0.3199999928474426,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 0.699999988079071
@@ -1077,6 +1121,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-11111111110d"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "FresnelPower",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "FresnelPower",
@@ -1094,6 +1141,7 @@
     "m_customAttributes": [],
     "m_Value": 2.200000047683716,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.20000000298023225,
         "y": 8.0
@@ -1117,6 +1165,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-11111111110e"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "FresnelIntensity",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "FresnelIntensity",
@@ -1134,6 +1185,7 @@
     "m_customAttributes": [],
     "m_Value": 1.899999976158142,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 6.0
@@ -1157,6 +1209,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-11111111110f"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "DissolveEdgeIntensity",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "DissolveEdgeIntensity",
@@ -1174,6 +1229,7 @@
     "m_customAttributes": [],
     "m_Value": 5.5,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 20.0
@@ -1197,6 +1253,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111110"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "Smoothness",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Smoothness",
@@ -1214,6 +1273,7 @@
     "m_customAttributes": [],
     "m_Value": 0.18000000715255738,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 1.0
@@ -1237,6 +1297,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111111"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "Metallic",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Metallic",
@@ -1254,6 +1317,7 @@
     "m_customAttributes": [],
     "m_Value": 0.0,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 1.0
@@ -1277,6 +1341,9 @@
     "m_Guid": {
         "m_GuidSerialized": "11111111-1111-4111-8111-111111111112"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "AlphaClipThreshold",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "AlphaClipThreshold",
@@ -1294,6 +1361,7 @@
     "m_customAttributes": [],
     "m_Value": 0.07999999821186066,
     "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
     "m_RangeValues": {
         "x": 0.0,
         "y": 1.0
@@ -2617,7 +2685,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2632,7 +2701,8 @@
     "m_StageCapability": 3,
     "m_Value": 2.75,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2647,7 +2717,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.054999999701976779,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2687,7 +2758,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.6800000071525574,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2702,7 +2774,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2717,7 +2790,8 @@
     "m_StageCapability": 3,
     "m_Value": 2.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2755,7 +2829,8 @@
     "m_StageCapability": 3,
     "m_Value": 5.5,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2770,7 +2845,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.3199999928474426,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2785,7 +2861,8 @@
     "m_StageCapability": 3,
     "m_Value": 2.200000047683716,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2800,7 +2877,8 @@
     "m_StageCapability": 3,
     "m_Value": 1.899999976158142,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2815,7 +2893,8 @@
     "m_StageCapability": 3,
     "m_Value": 5.5,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2830,7 +2909,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.18000000715255738,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2845,7 +2925,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2860,7 +2941,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.07999999821186066,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2971,7 +3053,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -2986,7 +3069,8 @@
     "m_StageCapability": 3,
     "m_Value": 2.75,
     "m_DefaultValue": 2.75,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3001,7 +3085,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.054999999701976779,
     "m_DefaultValue": 0.054999999701976779,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3041,7 +3126,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.6800000071525574,
     "m_DefaultValue": 0.6800000071525574,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3056,7 +3142,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3071,7 +3158,8 @@
     "m_StageCapability": 3,
     "m_Value": 2.0,
     "m_DefaultValue": 2.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3109,7 +3197,8 @@
     "m_StageCapability": 3,
     "m_Value": 5.5,
     "m_DefaultValue": 5.5,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3124,7 +3213,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.3199999928474426,
     "m_DefaultValue": 0.3199999928474426,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3139,7 +3229,8 @@
     "m_StageCapability": 3,
     "m_Value": 2.200000047683716,
     "m_DefaultValue": 2.200000047683716,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3154,7 +3245,8 @@
     "m_StageCapability": 3,
     "m_Value": 1.899999976158142,
     "m_DefaultValue": 1.899999976158142,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3169,7 +3261,8 @@
     "m_StageCapability": 3,
     "m_Value": 5.5,
     "m_DefaultValue": 5.5,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3184,7 +3277,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.07999999821186066,
     "m_DefaultValue": 0.07999999821186066,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3222,7 +3316,8 @@
     "m_StageCapability": 2,
     "m_Value": 1.0,
     "m_DefaultValue": 1.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3237,7 +3332,8 @@
     "m_StageCapability": 2,
     "m_Value": 0.07999999821186066,
     "m_DefaultValue": 0.07999999821186066,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3407,7 +3503,8 @@
     "m_StageCapability": 2,
     "m_Value": 0.18000000715255738,
     "m_DefaultValue": 0.5,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3422,7 +3519,8 @@
     "m_StageCapability": 2,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3437,7 +3535,8 @@
     "m_StageCapability": 2,
     "m_Value": 1.0,
     "m_DefaultValue": 1.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -3452,7 +3551,8 @@
     "m_StageCapability": 2,
     "m_Value": 0.07999999821186066,
     "m_DefaultValue": 0.5,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {

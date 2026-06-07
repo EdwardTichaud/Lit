@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using Unity.Netcode;
 
-// Brasero: source de lumiere qui peut etre allumee ou eteinte.
+// Brasero: source de lumiere qui peut etre allumée ou éteinte.
 [RequireComponent(typeof(SphereCollider))]
 [RequireComponent(typeof(NetworkObject))]
 [DisallowMultipleComponent]
@@ -25,11 +25,11 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     public event Action<Brasero, bool> StateChanged;
 
     [Header("Visuals")]
-    [SerializeField, Tooltip("GameObject enfant Flame active quand le brasero est allume.")]
+    [SerializeField, Tooltip("GameObject enfant Flame active quand le brasero est allumé.")]
     private GameObject flameObject;
     [Tooltip("Lumiere de flamme optionnelle.")]
     public Light flameLight;
-    [Tooltip("Objets actives quand le brasero est allume.")]
+    [Tooltip("Objets actives quand le brasero est allumé.")]
     public GameObject[] activateWhenLitTargets = Array.Empty<GameObject>();
 
     [Header("Interaction")]
@@ -37,12 +37,12 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     public bool useInteractInput = false;
     [SerializeField, FormerlySerializedAs("useToggleTorchInput"), Tooltip("Ecoute TriggerMunin quand le brasero est cible par le personnage local.")]
     private bool useTriggerMuninInput = true;
-    [SerializeField, Tooltip("Affiche un dialogue d'etat avec Interact sans allumer/eteindre.")]
+    [SerializeField, Tooltip("Affiche un dialogue d'etat avec Interact sans allumér/éteindre.")]
     private bool showStateDialogueOnInteract = true;
-    [SerializeField, Tooltip("Message affiche avec Interact quand le brasero est allume.")]
-    private string litStateMessage = "Le brasero est allume.";
-    [SerializeField, Tooltip("Message affiche avec Interact quand le brasero est eteint.")]
-    private string unlitStateMessage = "Le brasero est eteint.";
+    [SerializeField, Tooltip("Message affiche avec Interact quand le brasero est allumé.")]
+    private string litStateMessage = "Le brasero est allumé.";
+    [SerializeField, Tooltip("Message affiche avec Interact quand le brasero est éteint.")]
+    private string unlitStateMessage = "Le brasero est éteint.";
     [SerializeField, Min(0.05f), Tooltip("Distance maximale propre a Interact. TriggerMunin continue d'utiliser le collider trigger.")]
     private float interactMaxDistance = 1f;
     [SerializeField, Tooltip("Priorite de selection si plusieurs interactions sont proches.")]
@@ -56,11 +56,11 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     private SphereCollider interactionTrigger;
 
     [Header("Influence")]
-    [SerializeField, Tooltip("Zone d'information active seulement quand le brasero est allume.")]
+    [SerializeField, Tooltip("Zone d'information active seulement quand le brasero est allumé.")]
     private LitInfluenceSource litInfluence = new LitInfluenceSource(6f);
 
     [Header("Age")]
-    [SerializeField, FormerlySerializedAs("drivesAgeManager"), Tooltip("Si actif, ce brasero allume compte dans l'AgeManager comme brasero ancien.")]
+    [SerializeField, FormerlySerializedAs("drivesAgeManager"), Tooltip("Si actif, ce brasero allumé compte dans l'AgeManager comme brasero ancien.")]
     private bool ancientBrasero;
 
     [Header("Flame Emission")]
