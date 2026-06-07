@@ -32,22 +32,21 @@ Material:
   - _DISABLE_DECALS
   - _DISABLE_SSR
   - _DISABLE_SSR_TRANSPARENT
-  - _DOUBLESIDED_ON
-  - _ENABLE_FOG_ON_TRANSPARENT
-  - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords:
   - _ZWRITE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 1
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: 2450
   stringTagMap:
     MotionVector: User
-    RenderType: Transparent
+    RenderType: TransparentCutout
   disabledShaderPasses:
   - TransparentBackface
   - RayTracingPrepass
   - MOTIONVECTORS
+  - TransparentDepthPrepass
+  - TransparentDepthPostpass
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -67,50 +66,50 @@ Material:
     m_Ints: []
     m_Floats:
     - _AddPrecomputedVelocity: 0
-    - _AlphaClipThreshold: 0.185
+    - _AlphaClipThreshold: 0.15
     - _AlphaCutoff: 0.08
     - _AlphaCutoffEnable: 1
     - _AlphaCutoffPostpass: 0.08
     - _AlphaCutoffPrepass: 0.08
     - _AlphaCutoffShadow: 0.08
-    - _AlphaDstBlend: 10
+    - _AlphaDstBlend: 0
     - _AlphaSrcBlend: 1
     - _BlendMode: 0
     - _ConservativeDepthOffsetEnable: 0
-    - _CullMode: 0
-    - _CullModeForward: 0
+    - _CullMode: 2
+    - _CullModeForward: 2
     - _DepthOffsetEnable: 0
-    - _DissolveAmount: 0.191
+    - _DissolveAmount: 0.22
+    - _DissolveEdgeIntensity: 1
+    - _DissolveEdgeWidth: 0.008
+    - _DissolveNoiseScale: 1.58
     - _DissolveWorldHeight: 2
     - _DissolveWorldMinY: 0
-    - _DoubleSidedEnable: 1
-    - _DoubleSidedGIMode: 0
+    - _DoubleSidedEnable: 0
+    - _DoubleSidedGIMode: 3
     - _DoubleSidedNormalMode: 2
-    - _DstBlend: 10
-    - _DstBlend2: 10
-    - _DissolveEdgeIntensity: 5.5
-    - _DissolveEdgeWidth: 0.15
+    - _DstBlend: 0
+    - _DstBlend2: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _ExcludeFromTUAndAA: 0
     - _FineNoiseMultiplier: 12
     - _FresnelIntensity: 2.2
     - _FresnelPower: 2.2
-    - _GhostAlpha: 0.8
+    - _GhostAlpha: 0.25
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0.787
     - _NoiseInfluence: 0.7
-    - _DissolveNoiseScale: 2
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
     - _RefractionModel: 0
-    - _RenderQueueType: 4
+    - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Smoothness: 0.289
+    - _Smoothness: 0.25
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 0
@@ -123,7 +122,7 @@ Material:
     - _StencilWriteMaskGBuffer: 15
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
-    - _SurfaceType: 1
+    - _SurfaceType: 0
     - _TransmissionEnable: 0
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 0
@@ -133,15 +132,15 @@ Material:
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
     - _UseShadowThreshold: 0
-    - _ZTestDepthEqualForOpaque: 4
+    - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 3
     - _ZTestTransparent: 4
-    - _ZWrite: 0
+    - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _DissolveDirection: {r: 0, g: 1, b: 0, a: 0}
+    - _DissolveEdgeColor: {r: 181.01933, g: 86.818665, b: 0, a: 0.78039217}
     - _DoubleSidedConstants: {r: 1, g: 1, b: 1, a: 0}
-    - _DissolveEdgeColor: {r: 5.855522, g: 12.770307, b: 16.121698, a: 0.78039217}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GhostTint: {r: 5.855522, g: 12.770307, b: 16.121698, a: 0.78039217}
   m_BuildTextureStacks: []

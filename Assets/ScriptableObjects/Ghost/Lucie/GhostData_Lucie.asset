@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c342623c95244b90ad99b3c2d719de59, type: 3}
+  m_Name: GhostData_Lucie
+  m_EditorClassIdentifier: Assembly-CSharp::GhostData
+  ghostId: ghost_lucie
+  displayName: Luciue
+  apparitionAge: 666
+  apparitionLocationId: 
+  targetId: 
+  targetDisplayName: 
+  expectedAnswerType: 5
+  apparitionLine: 
+  question: 
+  knowledgeUnlockedOnListen: []
+  reactions:
+  - optionText: Ah!
+    requirement:
+      requiredKnowledge:
+      - {fileID: 11400000, guid: 422f055239c3a104ea7445057bc960df, type: 2}
+      anyKnowledge: []
+      requiredCategories: 
+      requiredTags: []
+      requiredCategoryCounts: []
+      requiredTagCounts: []
+    priority: 100
+    responseLine: Alors... Ca veut dire qu'il... va bien?
+    marksGhostUnderstood: 1
+    unlockKnowledge: []
+    triggerEffectIds:
+    - luc_dissolve
+    notes: 
+  missingKnowledgeLine: "Il manque encore un \xE9l\xE9ment pour comprendre ce souvenir."
+  evidence: []
+  dissolveTargetGameObjectIds:
+  - 7f8c1457474e40a085c9d3acdef714d3
+  includeChildrenInDissolveTargets: 1
+  addDissolveControllerIfMissing: 1
+  dissolveTargetDurationOverride: -1
+  notes: 
