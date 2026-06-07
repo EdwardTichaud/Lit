@@ -5,7 +5,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Torch: source de lumiere de monde allumee/eteinte par Munin.
+// Torch: source de lumiere de monde allumée/éteinte par Munin.
 [RequireComponent(typeof(SphereCollider))]
 [RequireComponent(typeof(NetworkObject))]
 [DisallowMultipleComponent]
@@ -23,7 +23,7 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     public event Action<Torch, bool> StateChanged;
 
     [Header("Visuals")]
-    [SerializeField, Tooltip("GameObject de flamme active quand la torche est allumee.")]
+    [SerializeField, Tooltip("GameObject de flamme active quand la torche est allumée.")]
     private GameObject flameObject;
     [SerializeField, Tooltip("Lumiere de flamme optionnelle.")]
     private Light flameLight;
@@ -31,7 +31,7 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     private bool configureRevealSource = true;
     [SerializeField, Tooltip("Receiver de lumiere optionnel. Si vide, cherche dans les enfants.")]
     private TorchLightReceiver torchLightReceiver;
-    [Tooltip("Objets actives quand la torche est allumee.")]
+    [Tooltip("Objets actives quand la torche est allumée.")]
     public GameObject[] activateWhenLitTargets = Array.Empty<GameObject>();
 
     [Header("Interaction")]
@@ -41,10 +41,10 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     private bool useTriggerMuninInput = true;
     [SerializeField, Tooltip("Affiche un dialogue d'etat avec Interact sans allumer/eteindre.")]
     private bool showStateDialogueOnInteract = true;
-    [SerializeField, Tooltip("Message affiche avec Interact quand la torche est allumee.")]
-    private string litStateMessage = "La torche est allumee.";
-    [SerializeField, Tooltip("Message affiche avec Interact quand la torche est eteinte.")]
-    private string unlitStateMessage = "La torche est eteinte.";
+    [SerializeField, Tooltip("Message affiche avec Interact quand la torche est allumée.")]
+    private string litStateMessage = "La torche est allumée.";
+    [SerializeField, Tooltip("Message affiche avec Interact quand la torche est éteinte.")]
+    private string unlitStateMessage = "La torche est éteinte.";
     [SerializeField, Min(0.05f), Tooltip("Distance maximale propre a Interact. TriggerMunin continue d'utiliser le collider trigger.")]
     private float interactMaxDistance = 1f;
     [SerializeField, Tooltip("Priorite de selection si plusieurs interactions sont proches.")]
@@ -57,7 +57,7 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     private SphereCollider interactionTrigger;
 
     [Header("Influence")]
-    [SerializeField, Tooltip("Zone d'information active seulement quand la torche est allumee.")]
+    [SerializeField, Tooltip("Zone d'information active seulement quand la torche est allumée.")]
     private LitInfluenceSource litInfluence = new LitInfluenceSource(4f);
 
     [Header("Flame Emission")]

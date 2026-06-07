@@ -1,0 +1,353 @@
+using System;
+using System.Collections;
+using TMPro;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+// Affiche les dialogues narratifs dans le DialoguePanel de la scene.
+public class DialoguePanelUI : MonoBehaviour
+{
+    public static DialoguePanelUI Instance { get; private set; }
+
+    [Header("References")]
+    [Tooltip("Root du DialoguePanel.")]
+    public GameObject dialoguePanelRoot;
+    [Tooltip("Texte affiche dans le panel.")]
+    public TMP_Text dialogueText;
+
+    [Header("Behavior")]
+    [Tooltip("Duree par defaut si le panel ne demande pas Interact pour fermer.")]
+    public float defaultDuration = 1.5f;
+    [Tooltip("Si actif, le DialoguePanel reste ouvert jusqu'a l'input Interact.")]
+    public bool requireInteractToClose = true;
+    [Tooltip("Duree du fondu.")]
+    public float fadeDuration = 0.25f;
+    [Tooltip("Vide le texte quand le panel se ferme.")]
+    public bool clearWhenHidden = true;
+    [Tooltip("Auto-resout les references au Awake/OnEnable.")]
+    public bool autoFindOnAwake = true;
+
+    private const string DialoguePanelObjectName = "DialoguePanel";
+    private const string DialogueTextObjectName = "DialogueBox_Text";
+
+    private CanvasGroup canvasGroup;
+    private Coroutine hideRoutine;
+    private bool isShowing;
+    private int shownFrame = -1;
+    private Action onHiddenCallback;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        if (autoFindOnAwake)
+        {
+            ResolveReferences();
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (autoFindOnAwake)
+        {
+            ResolveReferences();
+        }
+
+        LocalInputRouter.EnsureInitialized();
+        LocalInputRouter.Interact += OnInteractPerformed;
+    }
+
+    private void OnDisable()
+    {
+        LocalInputRouter.Interact -= OnInteractPerformed;
+        InputFocusStack.Pop(this);
+        isShowing = false;
+        InvokeAndClearHiddenCallback();
+    }
+
+    public static bool TryShow(string message, float duration = 0f)
+    {
+        return TryShow(message, duration, null);
+    }
+
+    public static bool TryShow(string message, float duration, Action onHidden)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        DialoguePanelUI ui = Instance;
+        if (ui == null)
+        {
+#if UNITY_2023_1_OR_NEWER
+            ui = FindAnyObjectByType<DialoguePanelUI>();
+#else
+            ui = FindObjectOfType<DialoguePanelUI>();
+#endif
+        }
+
+        if (ui == null)
+        {
+            GameObject runner = new GameObject("DialoguePanelUI_Runtime");
+            ui = runner.AddComponent<DialoguePanelUI>();
+        }
+
+        return ui.ShowMessage(message, duration, onHidden);
+    }
+
+    public bool ShowMessage(string message, float duration, Action onHidden)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        ResolveReferences();
+        if (dialogueText == null)
+        {
+            return false;
+        }
+
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+            InvokeAndClearHiddenCallback();
+        }
+        else if (isShowing)
+        {
+            InvokeAndClearHiddenCallback();
+        }
+
+        onHiddenCallback = onHidden;
+        dialogueText.text = message;
+        SetVisible(true);
+
+        isShowing = true;
+        shownFrame = Time.frameCount;
+        InputFocusStack.Push(this);
+
+        if (requireInteractToClose)
+        {
+            hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
+        }
+        else
+        {
+            float wait = duration > 0f ? duration : defaultDuration;
+            hideRoutine = StartCoroutine(ShowAndHideRoutine(wait));
+        }
+
+        return true;
+    }
+
+    private IEnumerator ShowUntilManualDismissRoutine()
+    {
+        yield return FadeIn();
+        hideRoutine = null;
+    }
+
+    private IEnumerator ShowAndHideRoutine(float duration)
+    {
+        yield return FadeIn();
+
+        float time = 0f;
+        float hold = Mathf.Max(0f, duration);
+        while (time < hold)
+        {
+            time += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        yield return HideRoutine();
+    }
+
+    private IEnumerator FadeIn()
+    {
+        EnsureCanvasGroup();
+        float fade = Mathf.Max(0f, fadeDuration);
+        if (fade <= 0f)
+        {
+            SetCanvasAlpha(1f);
+            yield break;
+        }
+
+        float time = 0f;
+        while (time < fade)
+        {
+            time += Time.unscaledDeltaTime;
+            SetCanvasAlpha(Mathf.Clamp01(time / fade));
+            yield return null;
+        }
+
+        SetCanvasAlpha(1f);
+    }
+
+    private void OnInteractPerformed(InputAction.CallbackContext context)
+    {
+        if (!requireInteractToClose || !isShowing || !InputFocusStack.HasFocus(this))
+        {
+            return;
+        }
+
+        if (Time.frameCount == shownFrame)
+        {
+            return;
+        }
+
+        LocalInputRouter.ConsumeInteract();
+        HideManually();
+    }
+
+    private void HideManually()
+    {
+        if (!isShowing)
+        {
+            return;
+        }
+
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+        }
+
+        hideRoutine = StartCoroutine(HideRoutine());
+    }
+
+    private IEnumerator HideRoutine()
+    {
+        float fade = Mathf.Max(0f, fadeDuration);
+        float startAlpha = GetCanvasAlpha();
+        if (fade > 0f)
+        {
+            float time = 0f;
+            while (time < fade)
+            {
+                time += Time.unscaledDeltaTime;
+                SetCanvasAlpha(Mathf.Lerp(startAlpha, 0f, Mathf.Clamp01(time / fade)));
+                yield return null;
+            }
+        }
+
+        SetCanvasAlpha(0f);
+        if (clearWhenHidden && dialogueText != null)
+        {
+            dialogueText.text = string.Empty;
+        }
+
+        isShowing = false;
+        InputFocusStack.Pop(this);
+        hideRoutine = null;
+        InvokeAndClearHiddenCallback();
+    }
+
+    private void ResolveReferences()
+    {
+        if (dialogueText == null)
+        {
+            GameObject textObject = GameObject.Find(DialogueTextObjectName);
+            if (textObject != null)
+            {
+                dialogueText = textObject.GetComponent<TMP_Text>();
+            }
+        }
+
+        if (dialoguePanelRoot == null)
+        {
+            GameObject panelObject = GameObject.Find(DialoguePanelObjectName);
+            if (panelObject != null)
+            {
+                dialoguePanelRoot = panelObject;
+            }
+            else if (dialogueText != null)
+            {
+                dialoguePanelRoot = FindRootByName(dialogueText.transform, DialoguePanelObjectName);
+            }
+        }
+
+        EnsureCanvasGroup();
+    }
+
+    private GameObject FindRootByName(Transform start, string objectName)
+    {
+        Transform current = start;
+        while (current != null)
+        {
+            if (string.Equals(current.name, objectName, StringComparison.Ordinal))
+            {
+                return current.gameObject;
+            }
+
+            current = current.parent;
+        }
+
+        return null;
+    }
+
+    private void EnsureCanvasGroup()
+    {
+        if (canvasGroup != null)
+        {
+            return;
+        }
+
+        if (dialoguePanelRoot == null)
+        {
+            return;
+        }
+
+        canvasGroup = dialoguePanelRoot.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = dialoguePanelRoot.AddComponent<CanvasGroup>();
+        }
+    }
+
+    private void SetVisible(bool visible)
+    {
+        if (dialoguePanelRoot != null && !dialoguePanelRoot.activeSelf)
+        {
+            dialoguePanelRoot.SetActive(true);
+        }
+
+        EnsureCanvasGroup();
+        SetCanvasAlpha(visible ? 1f : 0f);
+        if (canvasGroup != null)
+        {
+            canvasGroup.interactable = visible;
+            canvasGroup.blocksRaycasts = visible;
+        }
+
+        if (dialogueText != null && !dialogueText.gameObject.activeSelf)
+        {
+            dialogueText.gameObject.SetActive(true);
+        }
+    }
+
+    private float GetCanvasAlpha()
+    {
+        EnsureCanvasGroup();
+        return canvasGroup != null ? canvasGroup.alpha : 1f;
+    }
+
+    private void SetCanvasAlpha(float alpha)
+    {
+        EnsureCanvasGroup();
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = Mathf.Clamp01(alpha);
+        }
+    }
+
+    private void InvokeAndClearHiddenCallback()
+    {
+        Action callback = onHiddenCallback;
+        onHiddenCallback = null;
+        callback?.Invoke();
+    }
+}

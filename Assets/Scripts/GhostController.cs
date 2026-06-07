@@ -7,7 +7,7 @@
 // Expose ghost text, detect available knowledge reactions, unlock new knowledge,
 // and mark the ghost understood when a reaction succeeds.
 // Dependencies:
-// GhostData, KnowledgeManager, CharacterInteractionDetection, LocalInputRouter, InfoBoxUI.
+// GhostData, KnowledgeManager, CharacterInteractionDetection, LocalInputRouter, DialoguePanelUI.
 // Precautions:
 // This controller does not replace LocalVoiceLineController. Use voice lines for
 // audio/subtitle delivery, and this component for knowledge-based interaction state.
@@ -187,8 +187,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
     private Camera targetCamera;
 
     [Header("Feedback")]
-    [SerializeField, Tooltip("Duree d'affichage InfoBox. 0 utilise la duree par defaut.")]
+    [SerializeField, Tooltip("Duree d'affichage du feedback. 0 utilise la duree par defaut.")]
     private float feedbackDuration = 0f;
+    [SerializeField, Tooltip("Affiche les dialogues de fantome dans DialoguePanel au lieu d'InfoBox.")]
+    private bool useDialoguePanelForFeedback = true;
     [SerializeField, Tooltip("Texte affiche si playOnce est actif et que le fantome est deja compris.")]
     private string alreadyUnderstoodMessage = "Ce souvenir a deja ete compris.";
     [SerializeField, Tooltip("Prefixe optionnel devant la reponse du joueur.")]
@@ -436,7 +438,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
 
         if (playOnce && isUnderstood)
         {
-            InfoBoxUI.TryShow(alreadyUnderstoodMessage, feedbackDuration);
+            ShowGhostFeedback(alreadyUnderstoodMessage);
             return false;
         }
 
@@ -451,7 +453,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         int availableCount = GetAvailableReactions(availableReactionBuffer);
         if (availableCount == 0)
         {
-            InfoBoxUI.TryShow(BuildMissingKnowledgeFeedback(), feedbackDuration);
+            ShowGhostFeedback(BuildMissingKnowledgeFeedback());
             onNoKnowledgeReactionAvailable.Invoke();
             return false;
         }
@@ -486,9 +488,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         }
 
         TriggerDissolveEffects(reaction, manager);
-        bool feedbackShown = InfoBoxUI.TryShow(
+        bool feedbackShown = ShowGhostFeedback(
             BuildReactionFeedback(reaction),
-            feedbackDuration,
             marksGhostUnderstood ? CompleteUnderstoodAfterSolvedDialogue : null);
         onKnowledgeReactionUsed.Invoke();
 
@@ -854,6 +855,26 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         }
 
         return JoinFeedbackLines(ghostData.apparitionLine, option, response);
+    }
+
+    private bool ShowGhostFeedback(string message)
+    {
+        return ShowGhostFeedback(message, null);
+    }
+
+    private bool ShowGhostFeedback(string message, System.Action onHidden)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        if (useDialoguePanelForFeedback && DialoguePanelUI.TryShow(message, feedbackDuration, onHidden))
+        {
+            return true;
+        }
+
+        return InfoBoxUI.TryShow(message, feedbackDuration, onHidden);
     }
 
     private void ShowReactionChoiceUi(List<GhostKnowledgeReaction> reactions)
