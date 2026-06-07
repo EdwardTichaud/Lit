@@ -82,7 +82,6 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     private GameObject currentCharacter;
     private GameObject detectedCharacter;
     private Coroutine interactionRoutine;
-    private bool squadInputLocked;
     private bool interactionInProgress;
     private MuninController activeMuninController;
     private NetworkVariable<bool> netIsLit = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -821,14 +820,11 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     private IEnumerator HandleInteractionRoutine()
     {
         interactionInProgress = true;
-        SetSquadInputLock(true);
-
         MuninController munin = ResolveMuninController();
         if (munin != null)
         {
-            if (!munin.TryConsumeCharge())
+            if (munin.IsMoving || !munin.TryConsumeCharge())
             {
-                SetSquadInputLock(false);
                 interactionInProgress = false;
                 interactionRoutine = null;
                 yield break;
@@ -844,7 +840,6 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
             ToggleFromInteraction();
         }
 
-        SetSquadInputLock(false);
         interactionInProgress = false;
         interactionRoutine = null;
     }
@@ -1043,34 +1038,6 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
         return anchor.position + anchor.rotation * muninTargetOffset;
     }
 
-    private void SetSquadInputLock(bool locked)
-    {
-        if (SquadManager.Instance == null)
-        {
-            return;
-        }
-
-        if (locked)
-        {
-            if (squadInputLocked)
-            {
-                return;
-            }
-
-            SquadManager.Instance.SetInputLocked(true);
-            squadInputLocked = true;
-            return;
-        }
-
-        if (!squadInputLocked)
-        {
-            return;
-        }
-
-        SquadManager.Instance.SetInputLocked(false);
-        squadInputLocked = false;
-    }
-
     private void StopInteractionRoutine()
     {
         if (interactionRoutine != null)
@@ -1080,7 +1047,6 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         interactionInProgress = false;
-        SetSquadInputLock(false);
         if (activeMuninController != null)
         {
             activeMuninController.CancelManualMotion();

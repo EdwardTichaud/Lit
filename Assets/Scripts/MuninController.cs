@@ -97,6 +97,14 @@ public class MuninController : MonoBehaviour
     private float reactionPulseElapsed;
     private float reactionPulseDuration;
 
+    private struct ManualReturnPose
+    {
+        public Transform parent;
+        public Vector3 localPosition;
+        public Vector3 worldPosition;
+        public Quaternion worldRotation;
+    }
+
     public bool IsMoving { get; private set; }
     public string MuninTag => muninTag;
     public bool ChargesEnabled => chargesEnabled;
@@ -173,16 +181,18 @@ public class MuninController : MonoBehaviour
         IsMoving = true;
         SuspendFollowTargets();
 
-        Vector3 originalPosition = transform.position;
-        Quaternion originalRotation = transform.rotation;
+        ManualReturnPose returnPose = CaptureManualReturnPose();
+        Vector3 originalPosition = returnPose.worldPosition;
+        Quaternion originalRotation = returnPose.worldRotation;
         Quaternion targetRotation = originalRotation;
         float outboundDuration = GetMoveDuration(originalPosition, targetPosition);
-        float returnDuration = GetMoveDuration(targetPosition, originalPosition);
 
         yield return LerpTo(originalPosition, originalRotation, targetPosition, targetRotation, outboundDuration);
         onArrived?.Invoke();
         SetSuspendedIndependentFollowersState(MuninIndependentFollower.FollowState.Returning);
-        yield return LerpTo(targetPosition, targetRotation, originalPosition, originalRotation, returnDuration);
+        ResolveManualReturnPose(returnPose, out Vector3 returnPosition, out _);
+        float returnDuration = GetMoveDuration(targetPosition, returnPosition);
+        yield return LerpToDynamicReturn(targetPosition, targetRotation, returnPose, returnDuration);
 
         RestoreFollowTargets();
         IsMoving = false;
@@ -560,6 +570,62 @@ public class MuninController : MonoBehaviour
         }
 
         transform.SetPositionAndRotation(toPosition, toRotation);
+    }
+
+    private IEnumerator LerpToDynamicReturn(
+        Vector3 fromPosition,
+        Quaternion fromRotation,
+        ManualReturnPose returnPose,
+        float duration)
+    {
+        if (duration <= 0f)
+        {
+            ResolveManualReturnPose(returnPose, out Vector3 immediatePosition, out Quaternion immediateRotation);
+            transform.SetPositionAndRotation(immediatePosition, immediateRotation);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            ResolveManualReturnPose(returnPose, out Vector3 targetPosition, out Quaternion targetRotation);
+            float t = Mathf.Clamp01(elapsed / duration);
+            transform.SetPositionAndRotation(
+                Vector3.Lerp(fromPosition, targetPosition, t),
+                Quaternion.Slerp(fromRotation, targetRotation, t));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        ResolveManualReturnPose(returnPose, out Vector3 finalPosition, out Quaternion finalRotation);
+        transform.SetPositionAndRotation(finalPosition, finalRotation);
+    }
+
+    private ManualReturnPose CaptureManualReturnPose()
+    {
+        return new ManualReturnPose
+        {
+            parent = transform.parent,
+            localPosition = transform.localPosition,
+            worldPosition = transform.position,
+            worldRotation = transform.rotation
+        };
+    }
+
+    private static void ResolveManualReturnPose(
+        ManualReturnPose returnPose,
+        out Vector3 position,
+        out Quaternion rotation)
+    {
+        if (returnPose.parent != null)
+        {
+            position = returnPose.parent.TransformPoint(returnPose.localPosition);
+            rotation = returnPose.worldRotation;
+            return;
+        }
+
+        position = returnPose.worldPosition;
+        rotation = returnPose.worldRotation;
     }
 
     private float GetMoveDuration(Vector3 fromPosition, Vector3 toPosition)

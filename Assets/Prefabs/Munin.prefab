@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1612958845561018085}
   - component: {fileID: 8225100841752711206}
   - component: {fileID: 8225100841752711200}
-  m_Layer: 0
+  m_Layer: 30
   m_Name: Munin
   m_TagString: Munin
   m_Icon: {fileID: 0}
@@ -87,7 +87,7 @@ MonoBehaviour:
   followTargets: []
   independentFollowers:
   - {fileID: 8225100841752711206}
-  movementSpeed: 10
+  movementSpeed: 20
   lifeMotionEnabled: 1
   lifeMotionTarget: {fileID: 7711196784186356881}
   autoResolveLifeMotionTarget: 1
@@ -124,7 +124,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 172018627547959620, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 278974290391432598, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -170,9 +170,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Munin_Flame
       objectReference: {fileID: 0}
+    - target: {fileID: 278974290391432599, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
+      propertyPath: m_Layer
+      value: 30
+      objectReference: {fileID: 0}
     - target: {fileID: 3804320590291610968, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 5278389027223934819, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
       propertyPath: m_InnerSpotAngle
@@ -201,6 +205,10 @@ PrefabInstance:
     - target: {fileID: 6411167676801556583, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
       propertyPath: m_InnerSpotPercent
       value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6437568067220109783, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}
+      propertyPath: m_Layer
+      value: 30
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7780092600000000012, guid: 57db11b4d10e0eb43a3c2539cd5a603d, type: 3}

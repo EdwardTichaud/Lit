@@ -79,7 +79,6 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     private float currentEmissionFactor = -1f;
     private GameObject currentCharacter;
     private GameObject detectedCharacter;
-    private bool squadInputLocked;
     private bool interactionInProgress;
     private MuninController activeMuninController;
     private NetworkVariable<bool> netIsLit = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -786,14 +785,11 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     private IEnumerator HandleInteractionRoutine()
     {
         interactionInProgress = true;
-        SetSquadInputLock(true);
-
         MuninController munin = ResolveMuninController();
         if (munin != null)
         {
-            if (!munin.TryConsumeCharge())
+            if (munin.IsMoving || !munin.TryConsumeCharge())
             {
-                SetSquadInputLock(false);
                 interactionInProgress = false;
                 interactionRoutine = null;
                 yield break;
@@ -809,7 +805,6 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
             ToggleFromInteraction();
         }
 
-        SetSquadInputLock(false);
         interactionInProgress = false;
         interactionRoutine = null;
     }
@@ -994,34 +989,6 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
         return anchor.position + anchor.rotation * muninTargetOffset;
     }
 
-    private void SetSquadInputLock(bool locked)
-    {
-        if (SquadManager.Instance == null)
-        {
-            return;
-        }
-
-        if (locked)
-        {
-            if (squadInputLocked)
-            {
-                return;
-            }
-
-            SquadManager.Instance.SetInputLocked(true);
-            squadInputLocked = true;
-            return;
-        }
-
-        if (!squadInputLocked)
-        {
-            return;
-        }
-
-        SquadManager.Instance.SetInputLocked(false);
-        squadInputLocked = false;
-    }
-
     private void StopInteractionRoutine()
     {
         if (interactionRoutine != null)
@@ -1031,7 +998,6 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         interactionInProgress = false;
-        SetSquadInputLock(false);
         if (activeMuninController != null)
         {
             activeMuninController.CancelManualMotion();
