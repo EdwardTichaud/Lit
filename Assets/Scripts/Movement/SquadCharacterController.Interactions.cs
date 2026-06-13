@@ -92,7 +92,7 @@ public partial class SquadCharacterController
     {
         int hitCount = Physics.OverlapSphereNonAlloc(
             origin,
-            Mathf.Max(0.1f, interactionDetectionRadius),
+            ResolveInteractionDetectionRadius(),
             interactionDetectionHits,
             interactionDetectionMask,
             QueryTriggerInteraction.Collide);
@@ -332,18 +332,23 @@ public partial class SquadCharacterController
         Collider collider = candidate.GetInteractionDetectionCollider();
         Transform anchor = candidate.GetInteractionAnchor();
         usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
-        if (usesTriggerZone &&
-            (collider == null ||
-            !collider.isTrigger ||
-            !CharacterInteractionDetection.IsCharacterInsideInteractionCollider(transform, collider)))
-        {
-            return false;
-        }
-
         Vector3 point = CharacterInteractionDetection.GetInteractionPoint(collider, anchor, origin);
         Vector3 toPoint = point - origin;
         float distance = toPoint.magnitude;
-        float maxDistance = Mathf.Max(0.05f, candidate.GetInteractionMaxDistance(this));
+        float maxDistance = ResolveInteractionMaxDistance(candidate);
+        if (usesTriggerZone)
+        {
+            bool inTrigger = collider != null &&
+                             collider.isTrigger &&
+                             CharacterInteractionDetection.IsCharacterInsideInteractionCollider(transform, collider);
+            bool inMuninDistance = IsMuninLightInteractionTarget(candidate) &&
+                                   CharacterInteractionDetection.IsCharacterWithinRange(transform, collider, anchor, maxDistance);
+            if (!inTrigger && !inMuninDistance)
+            {
+                return false;
+            }
+        }
+
         if (!usesTriggerZone && distance > maxDistance)
         {
             return false;
@@ -418,6 +423,35 @@ public partial class SquadCharacterController
         }
 
         return forward.normalized;
+    }
+
+    private float ResolveInteractionDetectionRadius()
+    {
+        float radius = Mathf.Max(0.1f, interactionDetectionRadius);
+        MuninController munin = ResolveMuninReactionController();
+        if (munin != null && munin.OverridesLightSourceDetectionDistance)
+        {
+            radius = Mathf.Max(radius, munin.MaxLightSourceDetectionDistance);
+        }
+
+        return radius;
+    }
+
+    private float ResolveInteractionMaxDistance(ICharacterDetectedInteractable candidate)
+    {
+        float maxDistance = Mathf.Max(0.05f, candidate.GetInteractionMaxDistance(this));
+        MuninController munin = ResolveMuninReactionController();
+        if (munin != null && munin.TryGetLightSourceDetectionDistance(candidate, out float muninDistance))
+        {
+            maxDistance = Mathf.Max(maxDistance, muninDistance);
+        }
+
+        return maxDistance;
+    }
+
+    private static bool IsMuninLightInteractionTarget(ICharacterDetectedInteractable target)
+    {
+        return target is Torch || target is Brasero;
     }
 
     private static bool IsSwitchableInteractionTarget(ICharacterDetectedInteractable target)

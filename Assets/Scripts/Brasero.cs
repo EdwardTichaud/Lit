@@ -137,7 +137,14 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
 
     public float GetInteractionMaxDistance(SquadCharacterController controller)
     {
-        return Mathf.Max(0.1f, interactionRadius);
+        float distance = Mathf.Max(0.1f, interactionRadius);
+        MuninController munin = controller != null ? MuninController.FindForCharacter(controller.gameObject) : null;
+        if (munin != null && munin.TryGetLightSourceDetectionDistance(this, out float muninDistance))
+        {
+            distance = Mathf.Max(distance, muninDistance);
+        }
+
+        return distance;
     }
 
     public int GetInteractionPriority(SquadCharacterController controller)
@@ -895,13 +902,17 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
 
         if (interactionTrigger != null && interactionTrigger.enabled && interactionTrigger.isTrigger)
         {
-            return CharacterInteractionDetection.IsCharacterInsideInteractionCollider(characterRoot, interactionTrigger);
+            if (CharacterInteractionDetection.IsCharacterInsideInteractionCollider(characterRoot, interactionTrigger))
+            {
+                return true;
+            }
         }
 
-        Vector3 center = transform.TransformPoint(interactionCenter);
-        float radius = Mathf.Max(0f, interactionRadius);
-        float distanceSqr = (characterRoot.position - center).sqrMagnitude;
-        return distanceSqr <= radius * radius;
+        return CharacterInteractionDetection.IsCharacterWithinRange(
+            characterRoot,
+            interactionTrigger != null ? interactionTrigger : GetComponent<Collider>(),
+            GetInteractionAnchor(),
+            ResolveInteractionDistanceForCharacter(characterRoot));
     }
 
     private bool IsCharacterWithinInteractDistance(Transform characterRoot)
@@ -1029,6 +1040,23 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         return currentCharacter.GetComponentInChildren<MuninController>(true);
+    }
+
+    private float ResolveInteractionDistanceForCharacter(Transform characterRoot)
+    {
+        float distance = Mathf.Max(0.1f, interactionRadius);
+        MuninController munin = characterRoot != null ? MuninController.FindForCharacter(characterRoot.gameObject) : null;
+        if (munin == null)
+        {
+            munin = ResolveMuninController();
+        }
+
+        if (munin != null && munin.TryGetLightSourceDetectionDistance(this, out float muninDistance))
+        {
+            distance = Mathf.Max(distance, muninDistance);
+        }
+
+        return distance;
     }
 
     private Vector3 ResolveMuninTargetPosition()

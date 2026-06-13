@@ -9,14 +9,74 @@ public class MuninController : MonoBehaviour
 {
     public const string DefaultTag = "Munin";
 
+    public enum FollowState
+    {
+        Following,
+        MovingToTarget,
+        Returning,
+        Disabled
+    }
+
     [SerializeField, Tooltip("Tag utilise pour identifier Munin dans le personnage.")]
     private string muninTag = DefaultTag;
     [SerializeField, Tooltip("Collecte automatiquement les scripts de follow sous Munin.")]
     private bool autoCollectFollowTargets = true;
     [SerializeField, Tooltip("FollowTarget a suspendre pendant les mouvements manuels.")]
     private FollowTarget[] followTargets = Array.Empty<FollowTarget>();
-    [SerializeField, Tooltip("Follow independant de Munin a suspendre pendant les mouvements manuels.")]
-    private MuninIndependentFollower[] independentFollowers = Array.Empty<MuninIndependentFollower>();
+
+    [Header("Independent Follow")]
+    [SerializeField, Tooltip("Transform du joueur autour duquel Munin doit rester. Laisse vide pour utiliser le SquadCharacterController parent, puis le parent direct.")]
+    private Transform targetPlayer;
+    [SerializeField, Tooltip("Offset de base autour du joueur. En world space par defaut pour eviter que Munin tourne avec le joueur.")]
+    private Vector3 baseOffset = new Vector3(0.7f, 2.3f, 0f);
+    [SerializeField, Min(0.01f), Tooltip("Temps d'amortissement du suivi principal.")]
+    private float followSmoothTime = 0.22f;
+    [SerializeField, Min(0f), Tooltip("Anticipe legerement la vitesse horizontale du joueur pour eviter le retard visible en sprint.")]
+    private float targetVelocityLeadTime = 0.08f;
+    [SerializeField, Range(0.1f, 0.98f), Tooltip("Ratio de la distance max a partir duquel Munin accelere son rattrapage.")]
+    private float catchUpDistanceRatio = 0.88f;
+    [SerializeField, Range(0.05f, 1f), Tooltip("Multiplicateur du smooth time pendant le rattrapage. Plus bas = rattrapage plus rapide.")]
+    private float catchUpSmoothTimeMultiplier = 0.45f;
+    [SerializeField, Min(0f), Tooltip("Lissage de la vitesse cible utilisee pour l'anticipation.")]
+    private float targetVelocitySharpness = 12f;
+    [SerializeField, Min(0f), Tooltip("Distance maximale autorisee entre Munin et le joueur. 0 desactive la limite.")]
+    private float maxDistanceFromTarget = 3f;
+    [SerializeField, Min(0f), Tooltip("Distance minimale optionnelle pour eviter que Munin traverse le centre du joueur.")]
+    private float minDistanceFromTarget = 0.45f;
+
+    [Header("Follow Drift")]
+    [SerializeField, Min(0f), Tooltip("Amplitude de la derive organique autour de la position cible.")]
+    private float driftAmplitude = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Frequence du bruit de derive. Plus haut = variations plus rapides.")]
+    private float driftFrequency = 0.75f;
+    [SerializeField, Min(0f), Tooltip("Vitesse globale de lecture de la derive.")]
+    private float driftSpeed = 1f;
+    [SerializeField, Tooltip("Multiplicateur par axe pour orienter la derive. Mettre un axe a 0 pour le bloquer.")]
+    private Vector3 driftAxisMultiplier = Vector3.one;
+
+    [Header("Follow Spasms")]
+    [SerializeField, Min(0f), Tooltip("Amplitude maximale des micro-spasmes du suivi. Garder faible pour eviter un rendu jitter.")]
+    private float followSpasmAmplitude = 0.035f;
+    [SerializeField, Min(0f), Tooltip("Vibrations internes pendant un spasme de suivi. Le cooldown controle leur rarete.")]
+    private float followSpasmFrequency = 1.25f;
+    [SerializeField, Min(0.01f), Tooltip("Duree d'une impulsion de spasme de suivi.")]
+    private float followSpasmDuration = 0.12f;
+    [SerializeField, Range(0f, 1f), Tooltip("Variation aleatoire de direction, amplitude et duree des spasmes de suivi.")]
+    private float followSpasmRandomness = 0.45f;
+    [SerializeField, Min(0f), Tooltip("Cooldown minimum entre deux spasmes de suivi.")]
+    private float followSpasmCooldownMin = 1.6f;
+    [SerializeField, Min(0f), Tooltip("Cooldown maximum entre deux spasmes de suivi.")]
+    private float followSpasmCooldownMax = 4.5f;
+
+    [Header("Follow Movement")]
+    [SerializeField, Tooltip("Ignore la rotation du joueur pour calculer l'offset cible.")]
+    private bool ignoreTargetRotation = true;
+    [SerializeField, Tooltip("Applique baseOffset en world space. Si faux, l'offset peut suivre la rotation du joueur.")]
+    private bool useWorldSpaceOffset = true;
+    [SerializeField, Tooltip("Conserve la rotation monde initiale de Munin pour compenser la rotation du parent.")]
+    private bool keepWorldRotation = true;
+    [SerializeField, Tooltip("Dessine les limites de distance et la position cible dans la Scene view.")]
+    private bool drawFollowGizmos;
 
     [Header("Manual Movement")]
     [Min(0.01f), Tooltip("Vitesse de deplacement manuel de Munin vers un brasero ou une torche, en unites Unity par seconde.")]
@@ -70,6 +130,16 @@ public class MuninController : MonoBehaviour
     [SerializeField, Min(0.01f), Tooltip("Duree utilisee pour un pulse de reaction sans duree explicite.")]
     private float defaultReactionPulseDuration = 0.45f;
 
+    [Header("Light Source Detection")]
+    [SerializeField, Tooltip("Si actif, Munin remplace la portee d'Outline/action des torches et braseros du personnage.")]
+    private bool overrideLightSourceDetectionDistance = true;
+    [SerializeField, Min(0.1f), Tooltip("Distance d'Outline et d'action TriggerMunin pour les torches.")]
+    private float torchDetectionDistance = 4f;
+    [SerializeField, Min(0.1f), Tooltip("Distance d'Outline et d'action TriggerMunin pour les braseros.")]
+    private float braseroDetectionDistance = 4.5f;
+    [SerializeField, Tooltip("Dessine les distances de detection torche/brasero autour de la cible suivie.")]
+    private bool drawLightDetectionGizmos = true;
+
     [Header("Charges")]
     [SerializeField, Tooltip("Active la consommation de charges quand Munin allume ou eteint une source.")]
     private bool chargesEnabled = true;
@@ -81,7 +151,6 @@ public class MuninController : MonoBehaviour
     private float noChargeReactionPulseDuration = 0.35f;
 
     private readonly List<FollowTarget> disabledFollowTargets = new List<FollowTarget>();
-    private readonly List<MuninIndependentFollower> suspendedIndependentFollowers = new List<MuninIndependentFollower>();
     private Transform resolvedLifeMotionTarget;
     private Vector3 baseLifeLocalPosition;
     private Quaternion baseLifeLocalRotation = Quaternion.identity;
@@ -96,6 +165,26 @@ public class MuninController : MonoBehaviour
     private float reactionPulseIntensity;
     private float reactionPulseElapsed;
     private float reactionPulseDuration;
+    private bool suspendedIndependentFollow;
+    private FollowState followState = FollowState.Following;
+    private Vector3 smoothVelocity;
+    private Vector3 currentWorldPosition;
+    private bool hasCurrentWorldPosition;
+    private Transform velocityTarget;
+    private Rigidbody targetRigidbody;
+    private Vector3 lastTargetPosition;
+    private Vector3 smoothedTargetVelocity;
+    private bool hasLastTargetPosition;
+    private Quaternion keptWorldRotation = Quaternion.identity;
+    private bool hasKeptWorldRotation;
+    private Vector3 driftSeed;
+    private float followSpasmCooldownRemaining;
+    private bool followSpasmActive;
+    private float followSpasmElapsed;
+    private float currentFollowSpasmDuration;
+    private float currentFollowSpasmMagnitude;
+    private Vector3 currentFollowSpasmDirection = Vector3.up;
+    private Vector3 currentFollowSpasmOffset;
 
     private struct ManualReturnPose
     {
@@ -111,6 +200,15 @@ public class MuninController : MonoBehaviour
     public int MaxCharges => Mathf.Max(0, maxCharges);
     public int ChargesRemaining => chargesEnabled ? Mathf.Clamp(currentCharges, 0, MaxCharges) : MaxCharges;
     public bool HasAvailableCharge => !chargesEnabled || ChargesRemaining > 0;
+    public Transform TargetPlayer => targetPlayer;
+    public FollowState State => followState;
+    public bool IsFollowing => followState == FollowState.Following && enabled && isActiveAndEnabled;
+    public bool OverridesLightSourceDetectionDistance => overrideLightSourceDetectionDistance;
+    public float TorchDetectionDistance => Mathf.Max(0.1f, torchDetectionDistance);
+    public float BraseroDetectionDistance => Mathf.Max(0.1f, braseroDetectionDistance);
+    public float MaxLightSourceDetectionDistance => overrideLightSourceDetectionDistance
+        ? Mathf.Max(TorchDetectionDistance, BraseroDetectionDistance)
+        : 0f;
 
     public event Action<MuninController, int, int> ChargesChanged;
     public event Action<MuninController> ChargeUseRejected;
@@ -118,17 +216,36 @@ public class MuninController : MonoBehaviour
     private void Reset()
     {
         RefreshFollowTargets();
+        ResolveDefaultTarget();
+        CaptureWorldPose();
     }
 
     private void Awake()
     {
         ValidateSettings();
         RefreshFollowTargets();
+        ResolveDefaultTarget();
+        InitializeRandomSeeds();
+        CaptureWorldPose();
+        ResetTargetVelocityTracking();
+        ScheduleNextFollowSpasm();
         ResolveLifeMotionTarget();
+    }
+
+    private void OnEnable()
+    {
+        ResolveDefaultTarget();
+        CaptureWorldPose();
+        ResetTargetVelocityTracking();
+        if (followSpasmCooldownRemaining <= 0f)
+        {
+            ScheduleNextFollowSpasm();
+        }
     }
 
     private void LateUpdate()
     {
+        ApplyIndependentFollow();
         ApplyLifeMotion();
     }
 
@@ -189,7 +306,7 @@ public class MuninController : MonoBehaviour
 
         yield return LerpTo(originalPosition, originalRotation, targetPosition, targetRotation, outboundDuration);
         onArrived?.Invoke();
-        SetSuspendedIndependentFollowersState(MuninIndependentFollower.FollowState.Returning);
+        SetFollowState(FollowState.Returning);
         ResolveManualReturnPose(returnPose, out Vector3 returnPosition, out _);
         float returnDuration = GetMoveDuration(targetPosition, returnPosition);
         yield return LerpToDynamicReturn(targetPosition, targetRotation, returnPose, returnDuration);
@@ -301,7 +418,6 @@ public class MuninController : MonoBehaviour
         }
 
         followTargets = GetComponentsInChildren<FollowTarget>(true);
-        independentFollowers = GetComponentsInChildren<MuninIndependentFollower>(true);
     }
 
     private void SuspendFollowTargets()
@@ -320,16 +436,10 @@ public class MuninController : MonoBehaviour
             disabledFollowTargets.Add(followTarget);
         }
 
-        for (int i = 0; i < independentFollowers.Length; i++)
+        if (IsFollowing)
         {
-            MuninIndependentFollower follower = independentFollowers[i];
-            if (follower == null || !follower.IsFollowing)
-            {
-                continue;
-            }
-
-            follower.BeginExternalMotion(MuninIndependentFollower.FollowState.MovingToTarget);
-            suspendedIndependentFollowers.Add(follower);
+            BeginExternalMotion(FollowState.MovingToTarget);
+            suspendedIndependentFollow = true;
         }
     }
 
@@ -346,28 +456,432 @@ public class MuninController : MonoBehaviour
 
         disabledFollowTargets.Clear();
 
-        for (int i = 0; i < suspendedIndependentFollowers.Count; i++)
+        if (suspendedIndependentFollow)
         {
-            MuninIndependentFollower follower = suspendedIndependentFollowers[i];
-            if (follower != null)
-            {
-                follower.EndExternalMotion();
-            }
+            EndExternalMotion();
         }
 
-        suspendedIndependentFollowers.Clear();
+        suspendedIndependentFollow = false;
     }
 
-    private void SetSuspendedIndependentFollowersState(MuninIndependentFollower.FollowState state)
+    public bool TryGetLightSourceDetectionDistance(ICharacterDetectedInteractable target, out float distance)
     {
-        for (int i = 0; i < suspendedIndependentFollowers.Count; i++)
+        distance = 0f;
+        if (!overrideLightSourceDetectionDistance || target == null)
         {
-            MuninIndependentFollower follower = suspendedIndependentFollowers[i];
-            if (follower != null)
+            return false;
+        }
+
+        if (target is Torch)
+        {
+            distance = TorchDetectionDistance;
+            return true;
+        }
+
+        if (target is Brasero)
+        {
+            distance = BraseroDetectionDistance;
+            return true;
+        }
+
+        return false;
+    }
+
+    public static MuninController FindForCharacter(GameObject character)
+    {
+        if (character == null)
+        {
+            return null;
+        }
+
+        MuninController controller = character.GetComponentInChildren<MuninController>(true);
+        if (controller != null)
+        {
+            return controller;
+        }
+
+        return character.GetComponentInParent<MuninController>(true);
+    }
+
+    public void SetTargetPlayer(Transform target)
+    {
+        targetPlayer = target;
+        CaptureWorldPose();
+        ResetTargetVelocityTracking();
+    }
+
+    public void SetFollowState(FollowState newState)
+    {
+        followState = newState;
+        if (followState == FollowState.Following)
+        {
+            CaptureWorldPose();
+        }
+        else
+        {
+            smoothVelocity = Vector3.zero;
+        }
+    }
+
+    public void SetFollowingEnabled(bool followingEnabled)
+    {
+        SetFollowState(followingEnabled ? FollowState.Following : FollowState.Disabled);
+    }
+
+    public void BeginExternalMotion(FollowState externalState = FollowState.MovingToTarget)
+    {
+        if (externalState == FollowState.Following)
+        {
+            externalState = FollowState.MovingToTarget;
+        }
+
+        SetFollowState(externalState);
+    }
+
+    public void EndExternalMotion(bool resumeFollowing = true)
+    {
+        CaptureWorldPose();
+        SetFollowState(resumeFollowing ? FollowState.Following : FollowState.Disabled);
+    }
+
+    public void RecaptureWorldPose()
+    {
+        CaptureWorldPose();
+    }
+
+    private void ApplyIndependentFollow()
+    {
+        if (followState != FollowState.Following)
+        {
+            return;
+        }
+
+        if (targetPlayer == null)
+        {
+            ResolveDefaultTarget();
+            if (targetPlayer == null)
             {
-                follower.BeginExternalMotion(state);
+                return;
             }
         }
+
+        if (!hasCurrentWorldPosition)
+        {
+            CaptureWorldPose();
+        }
+
+        float deltaTime = Mathf.Max(0f, Time.deltaTime);
+        Vector3 targetPosition = ResolveFollowTargetPosition(deltaTime);
+        float effectiveSmoothTime = ResolveEffectiveFollowSmoothTime();
+
+        Vector3 nextPosition = Vector3.SmoothDamp(
+            currentWorldPosition,
+            targetPosition,
+            ref smoothVelocity,
+            effectiveSmoothTime,
+            Mathf.Infinity,
+            deltaTime);
+
+        Vector3 constrainedPosition = ConstrainDistanceFromTarget(nextPosition);
+        if ((constrainedPosition - nextPosition).sqrMagnitude > 0.000001f)
+        {
+            Vector3 radial = constrainedPosition - targetPlayer.position;
+            if (radial.sqrMagnitude > 0.0001f)
+            {
+                smoothVelocity = Vector3.ProjectOnPlane(smoothVelocity, radial.normalized);
+            }
+            else
+            {
+                smoothVelocity = Vector3.zero;
+            }
+
+            nextPosition = constrainedPosition;
+        }
+
+        transform.position = nextPosition;
+        currentWorldPosition = nextPosition;
+        hasCurrentWorldPosition = true;
+
+        if (keepWorldRotation)
+        {
+            if (!hasKeptWorldRotation)
+            {
+                keptWorldRotation = transform.rotation;
+                hasKeptWorldRotation = true;
+            }
+
+            transform.rotation = keptWorldRotation;
+        }
+    }
+
+    private void CaptureWorldPose()
+    {
+        currentWorldPosition = transform.position;
+        hasCurrentWorldPosition = true;
+        smoothVelocity = Vector3.zero;
+
+        if (keepWorldRotation)
+        {
+            keptWorldRotation = transform.rotation;
+            hasKeptWorldRotation = true;
+        }
+    }
+
+    private void ResolveDefaultTarget()
+    {
+        if (targetPlayer != null)
+        {
+            return;
+        }
+
+        SquadCharacterController controller = GetComponentInParent<SquadCharacterController>();
+        if (controller != null)
+        {
+            targetPlayer = controller.transform;
+            return;
+        }
+
+        if (transform.parent != null)
+        {
+            targetPlayer = transform.parent;
+        }
+    }
+
+    private void InitializeRandomSeeds()
+    {
+        if (driftSeed.sqrMagnitude > 0.0001f)
+        {
+            return;
+        }
+
+        driftSeed = new Vector3(
+            UnityEngine.Random.Range(10f, 1000f),
+            UnityEngine.Random.Range(10f, 1000f),
+            UnityEngine.Random.Range(10f, 1000f));
+    }
+
+    private Vector3 ResolveFollowTargetPosition(float deltaTime)
+    {
+        Vector3 targetPosition = ResolveBaseTargetPosition();
+        if (targetVelocityLeadTime > 0f)
+        {
+            Vector3 targetVelocity = Vector3.ProjectOnPlane(ResolveTargetVelocity(deltaTime), Vector3.up);
+            targetPosition += targetVelocity * targetVelocityLeadTime;
+        }
+
+        return targetPosition + EvaluateDrift() + EvaluateFollowSpasm(deltaTime);
+    }
+
+    private Vector3 ResolveTargetVelocity(float deltaTime)
+    {
+        if (targetPlayer == null)
+        {
+            ResetTargetVelocityTracking();
+            return Vector3.zero;
+        }
+
+        if (velocityTarget != targetPlayer)
+        {
+            velocityTarget = targetPlayer;
+            targetRigidbody = targetPlayer.GetComponent<Rigidbody>();
+            lastTargetPosition = targetPlayer.position;
+            hasLastTargetPosition = true;
+            smoothedTargetVelocity = targetRigidbody != null ? targetRigidbody.linearVelocity : Vector3.zero;
+            return smoothedTargetVelocity;
+        }
+
+        Vector3 rawVelocity = Vector3.zero;
+        if (targetRigidbody != null)
+        {
+            rawVelocity = targetRigidbody.linearVelocity;
+        }
+        else if (hasLastTargetPosition && deltaTime > 0.0001f)
+        {
+            rawVelocity = (targetPlayer.position - lastTargetPosition) / deltaTime;
+        }
+
+        lastTargetPosition = targetPlayer.position;
+        hasLastTargetPosition = true;
+
+        if (targetVelocitySharpness <= 0f || deltaTime <= 0f)
+        {
+            smoothedTargetVelocity = rawVelocity;
+        }
+        else
+        {
+            float t = 1f - Mathf.Exp(-targetVelocitySharpness * deltaTime);
+            smoothedTargetVelocity = Vector3.Lerp(smoothedTargetVelocity, rawVelocity, t);
+        }
+
+        return smoothedTargetVelocity;
+    }
+
+    private void ResetTargetVelocityTracking()
+    {
+        velocityTarget = null;
+        targetRigidbody = null;
+        lastTargetPosition = Vector3.zero;
+        smoothedTargetVelocity = Vector3.zero;
+        hasLastTargetPosition = false;
+    }
+
+    private float ResolveEffectiveFollowSmoothTime()
+    {
+        if (maxDistanceFromTarget <= 0f || targetPlayer == null || !hasCurrentWorldPosition)
+        {
+            return followSmoothTime;
+        }
+
+        float distance = (currentWorldPosition - targetPlayer.position).magnitude;
+        float catchUpStart = maxDistanceFromTarget * catchUpDistanceRatio;
+        if (distance <= catchUpStart)
+        {
+            return followSmoothTime;
+        }
+
+        float catchUpAmount = Mathf.InverseLerp(catchUpStart, maxDistanceFromTarget, distance);
+        float catchUpSmoothTime = followSmoothTime * catchUpSmoothTimeMultiplier;
+        return Mathf.Lerp(followSmoothTime, catchUpSmoothTime, catchUpAmount);
+    }
+
+    private Vector3 ResolveBaseTargetPosition()
+    {
+        return targetPlayer.position + ResolveBaseOffset(targetPlayer);
+    }
+
+    private Vector3 ResolveBaseOffset(Transform target)
+    {
+        if (target == null)
+        {
+            return baseOffset;
+        }
+
+        if (useWorldSpaceOffset || ignoreTargetRotation)
+        {
+            return baseOffset;
+        }
+
+        return target.rotation * baseOffset;
+    }
+
+    private Vector3 EvaluateDrift()
+    {
+        if (driftAmplitude <= 0f || driftFrequency <= 0f || driftSpeed <= 0f)
+        {
+            return Vector3.zero;
+        }
+
+        float t = Time.time * driftSpeed * driftFrequency;
+        Vector3 noise = new Vector3(
+            Mathf.PerlinNoise(driftSeed.x, t) * 2f - 1f,
+            Mathf.PerlinNoise(driftSeed.y, t + 17.31f) * 2f - 1f,
+            Mathf.PerlinNoise(driftSeed.z, t + 43.73f) * 2f - 1f);
+
+        return Vector3.Scale(noise, driftAxisMultiplier) * driftAmplitude;
+    }
+
+    private Vector3 EvaluateFollowSpasm(float deltaTime)
+    {
+        if (followSpasmAmplitude <= 0f)
+        {
+            currentFollowSpasmOffset = Vector3.zero;
+            return currentFollowSpasmOffset;
+        }
+
+        if (!followSpasmActive)
+        {
+            followSpasmCooldownRemaining -= deltaTime;
+            if (followSpasmCooldownRemaining <= 0f)
+            {
+                StartFollowSpasm();
+            }
+        }
+
+        if (!followSpasmActive)
+        {
+            currentFollowSpasmOffset = Vector3.zero;
+            return currentFollowSpasmOffset;
+        }
+
+        followSpasmElapsed += deltaTime;
+        float normalized = currentFollowSpasmDuration > 0f ? Mathf.Clamp01(followSpasmElapsed / currentFollowSpasmDuration) : 1f;
+        float envelope = Mathf.Sin(normalized * Mathf.PI);
+        float vibration = Mathf.Lerp(
+            0.65f,
+            1f,
+            Mathf.Abs(Mathf.Sin(normalized * Mathf.PI * 2f * Mathf.Max(0.1f, followSpasmFrequency))));
+
+        currentFollowSpasmOffset = currentFollowSpasmDirection * currentFollowSpasmMagnitude * envelope * vibration;
+
+        if (normalized >= 1f)
+        {
+            followSpasmActive = false;
+            currentFollowSpasmOffset = Vector3.zero;
+            ScheduleNextFollowSpasm();
+        }
+
+        return currentFollowSpasmOffset;
+    }
+
+    private void StartFollowSpasm()
+    {
+        Vector3 direction = UnityEngine.Random.insideUnitSphere;
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = Vector3.up;
+        }
+
+        float randomAmplitude = Mathf.Lerp(1f, UnityEngine.Random.Range(0.45f, 1.25f), followSpasmRandomness);
+        float randomDuration = Mathf.Lerp(1f, UnityEngine.Random.Range(0.75f, 1.35f), followSpasmRandomness);
+
+        currentFollowSpasmDirection = direction.normalized;
+        currentFollowSpasmMagnitude = followSpasmAmplitude * randomAmplitude;
+        currentFollowSpasmDuration = Mathf.Max(0.01f, followSpasmDuration * randomDuration);
+        followSpasmElapsed = 0f;
+        followSpasmActive = true;
+    }
+
+    private void ScheduleNextFollowSpasm()
+    {
+        float min = Mathf.Min(followSpasmCooldownMin, followSpasmCooldownMax);
+        float max = Mathf.Max(followSpasmCooldownMin, followSpasmCooldownMax);
+        followSpasmCooldownRemaining = max > min ? UnityEngine.Random.Range(min, max) : min;
+    }
+
+    private Vector3 ConstrainDistanceFromTarget(Vector3 position)
+    {
+        if (targetPlayer == null)
+        {
+            return position;
+        }
+
+        Vector3 fromTarget = position - targetPlayer.position;
+        float distance = fromTarget.magnitude;
+        if (maxDistanceFromTarget > 0f && distance > maxDistanceFromTarget)
+        {
+            fromTarget = fromTarget / distance * maxDistanceFromTarget;
+            position = targetPlayer.position + fromTarget;
+            distance = maxDistanceFromTarget;
+        }
+
+        if (minDistanceFromTarget > 0f && distance < minDistanceFromTarget)
+        {
+            Vector3 direction = distance > 0.0001f ? fromTarget / distance : GetFallbackOffsetDirection();
+            position = targetPlayer.position + direction * minDistanceFromTarget;
+        }
+
+        return position;
+    }
+
+    private Vector3 GetFallbackOffsetDirection()
+    {
+        Vector3 offset = ResolveBaseOffset(targetPlayer);
+        if (offset.sqrMagnitude > 0.0001f)
+        {
+            return offset.normalized;
+        }
+
+        return Vector3.up;
     }
 
     private void ApplyLifeMotion()
@@ -674,6 +1188,44 @@ public class MuninController : MonoBehaviour
     {
         ValidateSettings();
         RefreshFollowTargets();
+        ResolveDefaultTarget();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Transform target = targetPlayer != null ? targetPlayer : transform.parent;
+        Vector3 detectionCenter = target != null ? target.position : transform.position;
+
+        if (drawFollowGizmos && target != null)
+        {
+            Vector3 baseTargetPosition = target.position + ResolveBaseOffset(target);
+
+            Gizmos.color = new Color(0.3f, 0.8f, 1f, 0.85f);
+            Gizmos.DrawWireSphere(baseTargetPosition, 0.08f);
+
+            if (maxDistanceFromTarget > 0f)
+            {
+                Gizmos.color = new Color(0.3f, 0.8f, 1f, 0.25f);
+                Gizmos.DrawWireSphere(target.position, maxDistanceFromTarget);
+            }
+
+            if (minDistanceFromTarget > 0f)
+            {
+                Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.35f);
+                Gizmos.DrawWireSphere(target.position, minDistanceFromTarget);
+            }
+        }
+
+        if (!drawLightDetectionGizmos || !overrideLightSourceDetectionDistance)
+        {
+            return;
+        }
+
+        Gizmos.color = new Color(1f, 0.55f, 0.15f, 0.35f);
+        Gizmos.DrawWireSphere(detectionCenter, TorchDetectionDistance);
+
+        Gizmos.color = new Color(0.4f, 0.9f, 1f, 0.35f);
+        Gizmos.DrawWireSphere(detectionCenter, BraseroDetectionDistance);
     }
 #endif
 
@@ -687,6 +1239,22 @@ public class MuninController : MonoBehaviour
         breathingFrequency = Mathf.Max(0.01f, breathingFrequency);
         breathingPhaseOffset = Mathf.Repeat(breathingPhaseOffset, 1f);
         movementSpeed = Mathf.Max(0.01f, movementSpeed);
+        followSmoothTime = Mathf.Max(0.01f, followSmoothTime);
+        targetVelocityLeadTime = Mathf.Max(0f, targetVelocityLeadTime);
+        catchUpDistanceRatio = Mathf.Clamp(catchUpDistanceRatio, 0.1f, 0.98f);
+        catchUpSmoothTimeMultiplier = Mathf.Clamp(catchUpSmoothTimeMultiplier, 0.05f, 1f);
+        targetVelocitySharpness = Mathf.Max(0f, targetVelocitySharpness);
+        maxDistanceFromTarget = Mathf.Max(0f, maxDistanceFromTarget);
+        minDistanceFromTarget = Mathf.Max(0f, minDistanceFromTarget);
+        driftAmplitude = Mathf.Max(0f, driftAmplitude);
+        driftFrequency = Mathf.Max(0f, driftFrequency);
+        driftSpeed = Mathf.Max(0f, driftSpeed);
+        followSpasmAmplitude = Mathf.Max(0f, followSpasmAmplitude);
+        followSpasmFrequency = Mathf.Max(0f, followSpasmFrequency);
+        followSpasmDuration = Mathf.Max(0.01f, followSpasmDuration);
+        followSpasmRandomness = Mathf.Clamp01(followSpasmRandomness);
+        followSpasmCooldownMin = Mathf.Max(0f, followSpasmCooldownMin);
+        followSpasmCooldownMax = Mathf.Max(followSpasmCooldownMin, followSpasmCooldownMax);
         spasmChancePerSecond = Mathf.Max(0f, spasmChancePerSecond);
         minSpasmDuration = Mathf.Max(0.01f, minSpasmDuration);
         maxSpasmDuration = Mathf.Max(minSpasmDuration, maxSpasmDuration);
@@ -695,6 +1263,8 @@ public class MuninController : MonoBehaviour
         reactionBreathingAmplitudeMultiplier = Mathf.Max(0f, reactionBreathingAmplitudeMultiplier);
         reactionSpasmChanceMultiplier = Mathf.Max(0f, reactionSpasmChanceMultiplier);
         defaultReactionPulseDuration = Mathf.Max(0.01f, defaultReactionPulseDuration);
+        torchDetectionDistance = Mathf.Max(0.1f, torchDetectionDistance);
+        braseroDetectionDistance = Mathf.Max(0.1f, braseroDetectionDistance);
         maxCharges = Mathf.Max(0, maxCharges);
         currentCharges = Mathf.Clamp(currentCharges, 0, maxCharges);
         noChargeReactionPulseDuration = Mathf.Max(0.01f, noChargeReactionPulseDuration);

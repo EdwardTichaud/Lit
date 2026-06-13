@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1612958845561018085}
-  - component: {fileID: 8225100841752711206}
   - component: {fileID: 8225100841752711200}
   m_Layer: 30
   m_Name: Munin
@@ -34,42 +33,6 @@ Transform:
   - {fileID: 7711196784186356881}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 73.072, y: -90, z: 0}
---- !u!114 &8225100841752711206
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3808817168452292636}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7b1d764c7ee4ef2a4e0dc0d1e2e5f42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MuninIndependentFollower
-  targetPlayer: {fileID: 0}
-  baseOffset: {x: 0.7, y: 2.3, z: 0}
-  followSmoothTime: 0.22
-  targetVelocityLeadTime: 0.08
-  catchUpDistanceRatio: 0.88
-  catchUpSmoothTimeMultiplier: 0.45
-  targetVelocitySharpness: 12
-  maxDistanceFromTarget: 3
-  minDistanceFromTarget: 0.45
-  driftAmplitude: 0.08
-  driftFrequency: 0.75
-  driftSpeed: 1
-  driftAxisMultiplier: {x: 1, y: 1, z: 1}
-  spasmAmplitude: 0.035
-  spasmFrequency: 1.25
-  spasmDuration: 0.12
-  spasmRandomness: 0.45
-  spasmCooldownMin: 1.6
-  spasmCooldownMax: 4.5
-  ignoreTargetRotation: 1
-  useWorldSpaceOffset: 1
-  keepWorldRotation: 1
-  drawDebugGizmos: 0
-  state: 0
 --- !u!114 &8225100841752711200
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -85,8 +48,29 @@ MonoBehaviour:
   muninTag: Munin
   autoCollectFollowTargets: 1
   followTargets: []
-  independentFollowers:
-  - {fileID: 8225100841752711206}
+  targetPlayer: {fileID: 0}
+  baseOffset: {x: 0.7, y: 2.3, z: 0}
+  followSmoothTime: 0.22
+  targetVelocityLeadTime: 0.08
+  catchUpDistanceRatio: 0.88
+  catchUpSmoothTimeMultiplier: 0.45
+  targetVelocitySharpness: 12
+  maxDistanceFromTarget: 3
+  minDistanceFromTarget: 0.45
+  driftAmplitude: 0.08
+  driftFrequency: 0.75
+  driftSpeed: 1
+  driftAxisMultiplier: {x: 1, y: 1, z: 1}
+  followSpasmAmplitude: 0.035
+  followSpasmFrequency: 1.25
+  followSpasmDuration: 0.12
+  followSpasmRandomness: 0.45
+  followSpasmCooldownMin: 1.6
+  followSpasmCooldownMax: 4.5
+  ignoreTargetRotation: 1
+  useWorldSpaceOffset: 1
+  keepWorldRotation: 1
+  drawFollowGizmos: 0
   movementSpeed: 20
   lifeMotionEnabled: 1
   lifeMotionTarget: {fileID: 7711196784186356881}
@@ -110,6 +94,10 @@ MonoBehaviour:
   reactionBreathingAmplitudeMultiplier: 1.35
   reactionSpasmChanceMultiplier: 3
   defaultReactionPulseDuration: 0.45
+  overrideLightSourceDetectionDistance: 1
+  torchDetectionDistance: 4
+  braseroDetectionDistance: 4.5
+  drawLightDetectionGizmos: 1
   chargesEnabled: 1
   maxCharges: 3
   currentCharges: 3
