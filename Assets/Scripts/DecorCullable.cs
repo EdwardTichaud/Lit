@@ -20,6 +20,10 @@ public sealed class DecorCullable : MonoBehaviour
     [SerializeField] private bool disableRenderers = true;
     [SerializeField] private bool disableLights = true;
     [SerializeField] private bool disableLightShadows = false;
+    [SerializeField, Tooltip("Active seulement pour les sources qui doivent absolument etre bloquees par la geometrie proche.")]
+    private bool forceLightShadowsForOcclusion = false;
+    [SerializeField] private LightShadows occlusionShadowMode = LightShadows.Soft;
+    [SerializeField] private bool enableHdrpContactShadowsForOcclusion = false;
     [SerializeField] private bool disableHdrpContactShadows = false;
     [SerializeField] private bool pauseParticles = true;
     [SerializeField] private bool disableCollidersWhenCulled = false;
@@ -145,6 +149,10 @@ public sealed class DecorCullable : MonoBehaviour
     {
         boundsPadding = Mathf.Max(0f, boundsPadding);
         minimumBoundsRadius = Mathf.Max(0.05f, minimumBoundsRadius);
+        if (occlusionShadowMode == LightShadows.None)
+        {
+            occlusionShadowMode = LightShadows.Soft;
+        }
 
         if (!Application.isPlaying && autoCollectTargets)
         {
@@ -501,21 +509,13 @@ public sealed class DecorCullable : MonoBehaviour
                 continue;
             }
 
-            // Shadows are required so walls can occlude point lights and torches.
-            // Keep the serialized legacy flags for scene compatibility, but never
-            // turn shadows off here; the light can still be distance-culled.
-            if (disableLightShadows && target.shadows == LightShadows.None)
+            if (disableLightShadows)
             {
-                target.shadows = LightShadows.Soft;
+                target.shadows = LightShadows.None;
             }
-            else if (target.shadows == LightShadows.None)
+            else if (forceLightShadowsForOcclusion && target.shadows == LightShadows.None)
             {
-                target.shadows = LightShadows.Soft;
-            }
-
-            if (disableHdrpContactShadows)
-            {
-                continue;
+                target.shadows = occlusionShadowMode;
             }
 
             HDAdditionalLightData hdLight = target.GetComponent<HDAdditionalLightData>();
@@ -524,8 +524,12 @@ public sealed class DecorCullable : MonoBehaviour
                 continue;
             }
 
+            bool shouldEnableContactShadows = !disableLightShadows &&
+                                             !disableHdrpContactShadows &&
+                                             enableHdrpContactShadowsForOcclusion &&
+                                             target.shadows != LightShadows.None;
             hdLight.useContactShadow.useOverride = true;
-            hdLight.useContactShadow.@override = true;
+            hdLight.useContactShadow.@override = shouldEnableContactShadows;
         }
     }
 

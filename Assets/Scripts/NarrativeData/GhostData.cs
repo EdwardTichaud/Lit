@@ -131,6 +131,8 @@ public class GhostData : ScriptableObject
     public TemporalAge apparitionAge = TemporalAge.Age666;
     /// <summary>Stable room, district, or scene location ID where this ghost can appear.</summary>
     public string apparitionLocationId;
+    /// <summary>Prefab used by scene markers to preview and bake this apparition.</summary>
+    public GameObject worldPrefab;
 
     [Header("Investigation")]
     /// <summary>Stable ID of the person, object, place, or event searched by this ghost.</summary>
@@ -175,4 +177,9 @@ public class GhostData : ScriptableObject
     /// <summary>Freeform notes about the ghost's purpose in the zone or story.</summary>
     [TextArea]
     public string notes;
+
+    public GameObject ResolveWorldPrefab()
+    {
+        return worldPrefab;
+    }
 }

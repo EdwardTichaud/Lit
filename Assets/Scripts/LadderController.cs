@@ -6,6 +6,7 @@ using UnityEngine;
 public class LadderController : MonoBehaviour
 {
     private const float MaxStartToLoopLeadRatio = 0.4f;
+    private const string AutoAnchorRootName = "__LadderAutoRoute";
 
     private static readonly string[] BasePointNames =
     {
@@ -49,6 +50,28 @@ public class LadderController : MonoBehaviour
     private Transform ladderExit;
     [SerializeField, Tooltip("Point de sortie bas. Si vide, le script cherche B_Exit/BottomExit/BaseExit dans les enfants.")]
     private Transform bottomExit;
+
+    [Header("Auto Geometry")]
+    [SerializeField, Tooltip("Construit automatiquement les points bas/haut depuis les colliders/renderers enfants quand les points explicites manquent.")]
+    private bool autoBuildRouteFromGeometry = true;
+    [SerializeField, Tooltip("Axe local de l'echelle. Laisse Vector3.up pour les echelles verticales classiques.")]
+    private Vector3 localClimbAxis = Vector3.up;
+    [SerializeField, Tooltip("Direction locale du cote accessible de l'echelle.")]
+    private Vector3 localApproachNormal = Vector3.back;
+    [SerializeField, Min(0f), Tooltip("Distance du personnage devant la surface de l'echelle pendant la grimpe.")]
+    private float climbSurfaceOffset = 0.35f;
+    [SerializeField, Min(0f), Tooltip("Petit retrait applique aux extremites automatiques pour eviter de placer le personnage exactement au bord du mesh.")]
+    private float endpointInset = 0.08f;
+    [SerializeField, Min(0.1f), Tooltip("Hauteur minimale necessaire pour accepter une echelle auto-detectee.")]
+    private float minimumAutoHeight = 0.75f;
+    [SerializeField, Min(0f), Tooltip("Distance de sortie en haut, dans la direction accessible.")]
+    private float topExitForwardOffset = 0.85f;
+    [SerializeField, Min(0f), Tooltip("Offset vertical ajoute a la sortie haute.")]
+    private float topExitUpOffset = 0.05f;
+    [SerializeField, Min(0f), Tooltip("Distance de sortie en bas, dans la direction accessible.")]
+    private float bottomExitForwardOffset = 0.65f;
+    [SerializeField, Tooltip("Inclut les colliders trigger dans le calcul automatique de l'echelle.")]
+    private bool includeTriggerCollidersInAutoGeometry;
 
     [Header("Motion")]
     [SerializeField, Tooltip("Duree de placement du personnage sur le point bas.")]
@@ -114,6 +137,11 @@ public class LadderController : MonoBehaviour
 
     private Coroutine activeRoutine;
     private readonly List<NavMeshLink> managedNavMeshLinks = new List<NavMeshLink>();
+    private Transform autoAnchorRoot;
+    private Transform autoBottomPoint;
+    private Transform autoTopPoint;
+    private Transform autoTopExitPoint;
+    private Transform autoBottomExitPoint;
 
     public bool IsBusy => activeRoutine != null;
 
@@ -145,6 +173,22 @@ public class LadderController : MonoBehaviour
         ladderStartFallbackDuration = Mathf.Max(0f, ladderStartFallbackDuration);
         ladderEndFallbackDuration = Mathf.Max(0f, ladderEndFallbackDuration);
         crossFadeDuration = Mathf.Max(0f, crossFadeDuration);
+        if (localClimbAxis.sqrMagnitude <= 0.0001f)
+        {
+            localClimbAxis = Vector3.up;
+        }
+
+        if (localApproachNormal.sqrMagnitude <= 0.0001f)
+        {
+            localApproachNormal = Vector3.back;
+        }
+
+        climbSurfaceOffset = Mathf.Max(0f, climbSurfaceOffset);
+        endpointInset = Mathf.Max(0f, endpointInset);
+        minimumAutoHeight = Mathf.Max(0.1f, minimumAutoHeight);
+        topExitForwardOffset = Mathf.Max(0f, topExitForwardOffset);
+        topExitUpOffset = Mathf.Max(0f, topExitUpOffset);
+        bottomExitForwardOffset = Mathf.Max(0f, bottomExitForwardOffset);
         navMeshLinkWidth = Mathf.Max(0.05f, navMeshLinkWidth);
         navMeshLinkArea = Mathf.Max(0, navMeshLinkArea);
     }
@@ -1054,32 +1098,20 @@ public class LadderController : MonoBehaviour
 
     private Transform ResolveNavMeshTopEndpoint()
     {
-        if (ladderExit != null)
+        if (!TryResolveLadderEndpoints(out LadderEndpoints endpoints))
         {
-            return ladderExit;
+            return null;
         }
 
-        return ladderTop;
+        return endpoints.TopExitPoint;
     }
 
     private List<Transform> CollectNavMeshBaseEndpoints()
     {
         List<Transform> endpoints = new List<Transform>();
-        if (ladderBases != null)
+        if (TryResolveLadderEndpoints(out LadderEndpoints ladderEndpoints) && ladderEndpoints.BottomExitPoint != null)
         {
-            for (int i = 0; i < ladderBases.Length; i++)
-            {
-                Transform ladderBase = ladderBases[i];
-                if (ladderBase != null && !endpoints.Contains(ladderBase))
-                {
-                    endpoints.Add(ladderBase);
-                }
-            }
-        }
-
-        if (endpoints.Count == 0 && bottomExit != null)
-        {
-            endpoints.Add(bottomExit);
+            endpoints.Add(ladderEndpoints.BottomExitPoint);
         }
 
         return endpoints;
@@ -1490,9 +1522,72 @@ public class LadderController : MonoBehaviour
     private bool TryResolveLadderRoute(Vector3 characterPosition, out LadderRoute route)
     {
         route = default;
+        if (!TryResolveLadderEndpoints(out LadderEndpoints endpoints))
+        {
+            Debug.LogWarning("LadderController: aucun trajet d'echelle valide. Ajoute des points B_Trigger/H_Trigger ou des colliders/renderers d'echelle.", this);
+            return false;
+        }
 
-        Transform bottomPoint = ResolveNearestBase(characterPosition);
+        Transform routeBottomPoint = ResolveExplicitBottomPoint(characterPosition, useNearest: true);
+        if (routeBottomPoint == null)
+        {
+            routeBottomPoint = endpoints.BottomPoint;
+        }
+
+        bool useTopEntry = IsTopEntryCloser(characterPosition, routeBottomPoint, endpoints.TopExitPoint);
+        if (useTopEntry)
+        {
+            route = new LadderRoute(
+                endpoints.TopPoint,
+                routeBottomPoint,
+                endpoints.BottomExitPoint,
+                false);
+            return true;
+        }
+
+        route = new LadderRoute(
+            routeBottomPoint,
+            endpoints.TopPoint,
+            endpoints.TopExitPoint,
+            true);
+        return true;
+    }
+
+    private bool TryResolveLadderEndpoints(out LadderEndpoints endpoints)
+    {
+        endpoints = default;
+        ResolvePointReferencesIfNeeded();
+
+        AutoLadderGeometry geometry = default;
+        bool hasAutoGeometry = autoBuildRouteFromGeometry && TryResolveAutoLadderGeometry(out geometry);
+        Transform bottomPoint = ResolveExplicitBottomPoint(Vector3.zero, useNearest: false);
         Transform topPoint = ladderTop;
+        Transform topExitPoint = ladderExit;
+        Transform bottomExitPoint = bottomExit;
+
+        if (hasAutoGeometry)
+        {
+            UpdateAutoRouteAnchors(geometry);
+            if (bottomPoint == null)
+            {
+                bottomPoint = autoBottomPoint;
+            }
+
+            if (topPoint == null)
+            {
+                topPoint = autoTopPoint;
+            }
+
+            if (topExitPoint == null)
+            {
+                topExitPoint = autoTopExitPoint;
+            }
+
+            if (bottomExitPoint == null)
+            {
+                bottomExitPoint = autoBottomExitPoint;
+            }
+        }
 
         if (bottomPoint == null)
         {
@@ -1501,27 +1596,329 @@ public class LadderController : MonoBehaviour
 
         if (topPoint == null)
         {
-            Debug.LogWarning("LadderController: point haut ladder_top/H_Trigger introuvable.", this);
             return false;
         }
 
-        bool useTopEntry = IsTopEntryCloser(characterPosition, bottomPoint, topPoint);
-        if (useTopEntry)
+        if (topExitPoint == null)
         {
-            route = new LadderRoute(
-                topPoint,
-                bottomPoint,
-                bottomExit != null ? bottomExit : bottomPoint,
-                false);
-            return true;
+            topExitPoint = topPoint;
         }
 
-        route = new LadderRoute(
-            bottomPoint,
-            topPoint,
-            ladderExit != null ? ladderExit : topPoint,
-            true);
+        if (bottomExitPoint == null)
+        {
+            bottomExitPoint = bottomPoint;
+        }
+
+        endpoints = new LadderEndpoints(bottomPoint, topPoint, bottomExitPoint, topExitPoint);
         return true;
+    }
+
+    private Transform ResolveExplicitBottomPoint(Vector3 characterPosition, bool useNearest)
+    {
+        if (ladderBases == null || ladderBases.Length == 0)
+        {
+            return null;
+        }
+
+        Transform fallback = null;
+        Transform nearest = null;
+        float nearestDistance = float.PositiveInfinity;
+        for (int i = 0; i < ladderBases.Length; i++)
+        {
+            Transform candidate = ladderBases[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            if (fallback == null)
+            {
+                fallback = candidate;
+            }
+
+            if (!useNearest)
+            {
+                continue;
+            }
+
+            float distance = (candidate.position - characterPosition).sqrMagnitude;
+            if (distance >= nearestDistance)
+            {
+                continue;
+            }
+
+            nearest = candidate;
+            nearestDistance = distance;
+        }
+
+        return useNearest && nearest != null ? nearest : fallback;
+    }
+
+    private bool TryResolveAutoLadderGeometry(out AutoLadderGeometry geometry)
+    {
+        geometry = default;
+
+        Vector3 axis = ResolveWorldClimbAxis();
+        Vector3 normal = ResolveWorldApproachNormal(axis);
+        Vector3 side = Vector3.Cross(axis, normal);
+        if (side.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        side.Normalize();
+        normal = Vector3.Cross(side, axis).normalized;
+
+        float minAxis = float.PositiveInfinity;
+        float maxAxis = float.NegativeInfinity;
+        float minSide = float.PositiveInfinity;
+        float maxSide = float.NegativeInfinity;
+        float minNormal = float.PositiveInfinity;
+        float maxNormal = float.NegativeInfinity;
+        bool hasBounds = false;
+
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider candidate = colliders[i];
+            if (candidate == null || !candidate.enabled)
+            {
+                continue;
+            }
+
+            if (candidate.isTrigger && !includeTriggerCollidersInAutoGeometry)
+            {
+                continue;
+            }
+
+            if (IsRuntimeGeneratedTransform(candidate.transform))
+            {
+                continue;
+            }
+
+            EncapsulateProjectedBounds(
+                candidate.bounds,
+                axis,
+                side,
+                normal,
+                ref minAxis,
+                ref maxAxis,
+                ref minSide,
+                ref maxSide,
+                ref minNormal,
+                ref maxNormal,
+                ref hasBounds);
+        }
+
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer candidate = renderers[i];
+            if (candidate == null || !candidate.enabled || IsRuntimeGeneratedTransform(candidate.transform))
+            {
+                continue;
+            }
+
+            EncapsulateProjectedBounds(
+                candidate.bounds,
+                axis,
+                side,
+                normal,
+                ref minAxis,
+                ref maxAxis,
+                ref minSide,
+                ref maxSide,
+                ref minNormal,
+                ref maxNormal,
+                ref hasBounds);
+        }
+
+        if (!hasBounds)
+        {
+            return false;
+        }
+
+        float height = maxAxis - minAxis;
+        if (height < minimumAutoHeight)
+        {
+            return false;
+        }
+
+        float inset = Mathf.Min(endpointInset, Mathf.Max(0f, height * 0.45f));
+        float centerSide = (minSide + maxSide) * 0.5f;
+        float frontNormal = maxNormal + climbSurfaceOffset;
+        Vector3 basePoint = side * centerSide + normal * frontNormal;
+        Vector3 bottomPosition = basePoint + axis * (minAxis + inset);
+        Vector3 topPosition = basePoint + axis * (maxAxis - inset);
+        Quaternion climbRotation = Quaternion.LookRotation(-normal, axis);
+
+        geometry = new AutoLadderGeometry(
+            bottomPosition,
+            topPosition,
+            bottomPosition + normal * bottomExitForwardOffset,
+            topPosition + normal * topExitForwardOffset + axis * topExitUpOffset,
+            climbRotation);
+        return true;
+    }
+
+    private Vector3 ResolveWorldClimbAxis()
+    {
+        Vector3 axis = transform.TransformDirection(localClimbAxis);
+        if (axis.sqrMagnitude <= 0.0001f)
+        {
+            axis = Vector3.up;
+        }
+
+        return axis.normalized;
+    }
+
+    private Vector3 ResolveWorldApproachNormal(Vector3 axis)
+    {
+        Vector3 normal = transform.TransformDirection(localApproachNormal);
+        normal = Vector3.ProjectOnPlane(normal, axis);
+        if (normal.sqrMagnitude > 0.0001f)
+        {
+            return normal.normalized;
+        }
+
+        normal = Vector3.ProjectOnPlane(transform.forward, axis);
+        if (normal.sqrMagnitude > 0.0001f)
+        {
+            return normal.normalized;
+        }
+
+        normal = Vector3.Cross(axis, transform.right);
+        if (normal.sqrMagnitude > 0.0001f)
+        {
+            return normal.normalized;
+        }
+
+        return Vector3.forward;
+    }
+
+    private static void EncapsulateProjectedBounds(
+        Bounds bounds,
+        Vector3 axis,
+        Vector3 side,
+        Vector3 normal,
+        ref float minAxis,
+        ref float maxAxis,
+        ref float minSide,
+        ref float maxSide,
+        ref float minNormal,
+        ref float maxNormal,
+        ref bool hasBounds)
+    {
+        Vector3 center = bounds.center;
+        Vector3 extents = bounds.extents;
+        for (int x = -1; x <= 1; x += 2)
+        {
+            for (int y = -1; y <= 1; y += 2)
+            {
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    Vector3 point = center + new Vector3(extents.x * x, extents.y * y, extents.z * z);
+                    float axisProjection = Vector3.Dot(point, axis);
+                    float sideProjection = Vector3.Dot(point, side);
+                    float normalProjection = Vector3.Dot(point, normal);
+                    minAxis = Mathf.Min(minAxis, axisProjection);
+                    maxAxis = Mathf.Max(maxAxis, axisProjection);
+                    minSide = Mathf.Min(minSide, sideProjection);
+                    maxSide = Mathf.Max(maxSide, sideProjection);
+                    minNormal = Mathf.Min(minNormal, normalProjection);
+                    maxNormal = Mathf.Max(maxNormal, normalProjection);
+                    hasBounds = true;
+                }
+            }
+        }
+    }
+
+    private void UpdateAutoRouteAnchors(AutoLadderGeometry geometry)
+    {
+        autoBottomPoint = GetOrCreateAutoRouteAnchor(autoBottomPoint, "Auto_B_Trigger");
+        autoTopPoint = GetOrCreateAutoRouteAnchor(autoTopPoint, "Auto_H_Trigger");
+        autoBottomExitPoint = GetOrCreateAutoRouteAnchor(autoBottomExitPoint, "Auto_B_Exit");
+        autoTopExitPoint = GetOrCreateAutoRouteAnchor(autoTopExitPoint, "Auto_H_Exit");
+
+        ApplyAutoRouteAnchor(autoBottomPoint, geometry.BottomPoint, geometry.ClimbRotation);
+        ApplyAutoRouteAnchor(autoTopPoint, geometry.TopPoint, geometry.ClimbRotation);
+        ApplyAutoRouteAnchor(autoBottomExitPoint, geometry.BottomExitPoint, geometry.ClimbRotation);
+        ApplyAutoRouteAnchor(autoTopExitPoint, geometry.TopExitPoint, geometry.ClimbRotation);
+    }
+
+    private Transform GetOrCreateAutoRouteAnchor(Transform current, string anchorName)
+    {
+        if (current != null)
+        {
+            return current;
+        }
+
+        Transform root = GetOrCreateAutoRouteAnchorRoot();
+        Transform existing = root.Find(anchorName);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        GameObject anchorObject = new GameObject(anchorName);
+        Transform anchor = anchorObject.transform;
+        anchor.SetParent(root, false);
+        anchor.localPosition = Vector3.zero;
+        anchor.localRotation = Quaternion.identity;
+        anchor.localScale = Vector3.one;
+        return anchor;
+    }
+
+    private Transform GetOrCreateAutoRouteAnchorRoot()
+    {
+        if (autoAnchorRoot != null)
+        {
+            return autoAnchorRoot;
+        }
+
+        Transform existing = transform.Find(AutoAnchorRootName);
+        if (existing != null)
+        {
+            autoAnchorRoot = existing;
+            return autoAnchorRoot;
+        }
+
+        GameObject rootObject = new GameObject(AutoAnchorRootName);
+        autoAnchorRoot = rootObject.transform;
+        autoAnchorRoot.SetParent(transform, false);
+        autoAnchorRoot.localPosition = Vector3.zero;
+        autoAnchorRoot.localRotation = Quaternion.identity;
+        autoAnchorRoot.localScale = Vector3.one;
+        return autoAnchorRoot;
+    }
+
+    private static void ApplyAutoRouteAnchor(Transform anchor, Vector3 position, Quaternion rotation)
+    {
+        if (anchor != null)
+        {
+            anchor.SetPositionAndRotation(position, rotation);
+        }
+    }
+
+    private bool IsRuntimeGeneratedTransform(Transform candidate)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        Transform current = candidate;
+        while (current != null && current != transform)
+        {
+            if (current == autoAnchorRoot || current.name == AutoAnchorRootName || current.name == "__LadderNavMeshLinks")
+            {
+                return true;
+            }
+
+            current = current.parent;
+        }
+
+        return false;
     }
 
     private static bool IsTopEntryCloser(Vector3 characterPosition, Transform bottomPoint, Transform topPoint)
@@ -1539,36 +1936,6 @@ public class LadderController : MonoBehaviour
         float bottomDistance = (bottomPoint.position - characterPosition).sqrMagnitude;
         float topDistance = (topPoint.position - characterPosition).sqrMagnitude;
         return topDistance < bottomDistance;
-    }
-
-    private Transform ResolveNearestBase(Vector3 characterPosition)
-    {
-        if (ladderBases == null || ladderBases.Length == 0)
-        {
-            return null;
-        }
-
-        Transform nearest = null;
-        float nearestDistance = float.PositiveInfinity;
-        for (int i = 0; i < ladderBases.Length; i++)
-        {
-            Transform candidate = ladderBases[i];
-            if (candidate == null)
-            {
-                continue;
-            }
-
-            float distance = (candidate.position - characterPosition).sqrMagnitude;
-            if (distance >= nearestDistance)
-            {
-                continue;
-            }
-
-            nearest = candidate;
-            nearestDistance = distance;
-        }
-
-        return nearest;
     }
 
     private Transform[] FindMatchingChildren(string[] aliases)
@@ -1991,6 +2358,45 @@ public class LadderController : MonoBehaviour
         public LitOpsiveLocomotionBridge UccBridge { get; }
         public Transform MotionRoot { get; }
         public Rigidbody Body { get; }
+    }
+
+    private readonly struct LadderEndpoints
+    {
+        public LadderEndpoints(Transform bottomPoint, Transform topPoint, Transform bottomExitPoint, Transform topExitPoint)
+        {
+            BottomPoint = bottomPoint;
+            TopPoint = topPoint;
+            BottomExitPoint = bottomExitPoint;
+            TopExitPoint = topExitPoint;
+        }
+
+        public Transform BottomPoint { get; }
+        public Transform TopPoint { get; }
+        public Transform BottomExitPoint { get; }
+        public Transform TopExitPoint { get; }
+    }
+
+    private readonly struct AutoLadderGeometry
+    {
+        public AutoLadderGeometry(
+            Vector3 bottomPoint,
+            Vector3 topPoint,
+            Vector3 bottomExitPoint,
+            Vector3 topExitPoint,
+            Quaternion climbRotation)
+        {
+            BottomPoint = bottomPoint;
+            TopPoint = topPoint;
+            BottomExitPoint = bottomExitPoint;
+            TopExitPoint = topExitPoint;
+            ClimbRotation = climbRotation;
+        }
+
+        public Vector3 BottomPoint { get; }
+        public Vector3 TopPoint { get; }
+        public Vector3 BottomExitPoint { get; }
+        public Vector3 TopExitPoint { get; }
+        public Quaternion ClimbRotation { get; }
     }
 
     private readonly struct LadderRoute

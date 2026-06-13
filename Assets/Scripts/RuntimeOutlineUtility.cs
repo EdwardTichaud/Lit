@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface IRuntimeOutlineVisibilityGate
+{
+    bool AllowsRuntimeOutline { get; }
+}
+
 public static class RuntimeOutlineUtility
 {
     public static int EnsureOutlineTargets(GameObject root)
@@ -40,6 +45,11 @@ public static class RuntimeOutlineUtility
 
         results.Clear();
         if (owner == null)
+        {
+            return;
+        }
+
+        if (owner is IRuntimeOutlineVisibilityGate visibilityGate && !visibilityGate.AllowsRuntimeOutline)
         {
             return;
         }

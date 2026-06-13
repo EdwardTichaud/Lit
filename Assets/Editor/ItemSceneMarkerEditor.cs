@@ -16,12 +16,14 @@ public class ItemSceneMarkerEditor : Editor
     private SerializedProperty assetTypeProperty;
     private SerializedProperty itemProperty;
     private SerializedProperty enemyProperty;
+    private SerializedProperty ghostProperty;
 
     private void OnEnable()
     {
         assetTypeProperty = serializedObject.FindProperty("assetType");
         itemProperty = serializedObject.FindProperty("item");
         enemyProperty = serializedObject.FindProperty("enemy");
+        ghostProperty = serializedObject.FindProperty("ghost");
     }
 
     public override void OnInspectorGUI()
@@ -32,6 +34,10 @@ public class ItemSceneMarkerEditor : Editor
         if (assetType == ItemSceneMarker.MarkerAssetType.Enemy)
         {
             EditorGUILayout.PropertyField(enemyProperty);
+        }
+        else if (assetType == ItemSceneMarker.MarkerAssetType.Ghost)
+        {
+            EditorGUILayout.PropertyField(ghostProperty);
         }
         else
         {
@@ -75,6 +81,18 @@ public class ItemSceneMarkerEditor : Editor
         Undo.RegisterCreatedObjectUndo(markerObject, "Create Enemy Scene Marker");
         ItemSceneMarker marker = Undo.AddComponent<ItemSceneMarker>(markerObject);
         marker.SetAssetType(ItemSceneMarker.MarkerAssetType.Enemy);
+        EditorUtility.SetDirty(marker);
+        Selection.activeGameObject = markerObject;
+    }
+
+    [MenuItem("Lit/Ghost/Scene Marker", false, 10)]
+    private static void CreateGhostMarker(MenuCommand command)
+    {
+        GameObject markerObject = new GameObject("GhostSceneMarker");
+        GameObjectUtility.SetParentAndAlign(markerObject, command.context as GameObject);
+        Undo.RegisterCreatedObjectUndo(markerObject, "Create Ghost Scene Marker");
+        ItemSceneMarker marker = Undo.AddComponent<ItemSceneMarker>(markerObject);
+        marker.SetAssetType(ItemSceneMarker.MarkerAssetType.Ghost);
         EditorUtility.SetDirty(marker);
         Selection.activeGameObject = markerObject;
     }
@@ -146,6 +164,13 @@ public class ItemSceneMarkerEditor : Editor
                     return "Le CharacterData selectionne doit avoir isEnemy active.";
                 }
             }
+            else if (marker.UsesGhost)
+            {
+                if (marker.Ghost == null)
+                {
+                    return "Assigne un GhostData avant le bake.";
+                }
+            }
             else if (marker.Item == null)
             {
                 return "Assigne un Item avant le bake.";
@@ -153,9 +178,17 @@ public class ItemSceneMarkerEditor : Editor
 
             if (marker.ResolvePreviewPrefab() == null)
             {
-                return marker.UsesEnemy
-                    ? "Le CharacterData ennemi selectionne ne resolve aucun prefab de monde."
-                    : "L'Item selectionne ne resolve aucun prefab de monde.";
+                if (marker.UsesEnemy)
+                {
+                    return "Le CharacterData ennemi selectionne ne resolve aucun prefab de monde.";
+                }
+
+                if (marker.UsesGhost)
+                {
+                    return "Le GhostData selectionne ne resolve aucun prefab de monde.";
+                }
+
+                return "L'Item selectionne ne resolve aucun prefab de monde.";
             }
         }
 
@@ -200,7 +233,7 @@ public class ItemSceneMarkerEditor : Editor
 
         GameObject root = marker.gameObject;
         Undo.RecordObject(root, UndoLabel);
-        root.name = marker.UsesEnemy ? ResolveRootName(marker.Enemy) : ResolveRootName(marker.Item);
+        root.name = ResolveRootName(marker);
 
         GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;
         if (instance == null)
@@ -220,6 +253,10 @@ public class ItemSceneMarkerEditor : Editor
         if (marker.UsesEnemy)
         {
             ConfigureEnemy(instance, marker.Enemy);
+        }
+        else if (marker.UsesGhost)
+        {
+            ConfigureGhost(instance, marker.Ghost);
         }
         else if (marker.Item.isBuilding)
         {
@@ -585,6 +622,43 @@ public class ItemSceneMarkerEditor : Editor
             aggro.SetEnemy(enemy);
             EditorUtility.SetDirty(aggro);
         }
+    }
+
+    private static void ConfigureGhost(GameObject modelRoot, GhostData ghost)
+    {
+        if (modelRoot == null || ghost == null)
+        {
+            return;
+        }
+
+        GhostController sourceGhost = FindComponentOnRootOrChildren<GhostController>(modelRoot);
+        Collider sourceCollider = sourceGhost != null ? sourceGhost.GetInteractionDetectionCollider() : null;
+        Collider interactionCollider = EnsureInteractionColliderOnRoot(modelRoot, sourceCollider);
+
+        GhostController controller = CopyComponentToRoot(sourceGhost, modelRoot);
+        if (controller == null)
+        {
+            controller = EnsureComponent<GhostController>(modelRoot);
+        }
+
+        if (controller == null)
+        {
+            return;
+        }
+
+        Undo.RecordObject(controller, UndoLabel);
+        controller.SetGhostData(ghost);
+
+        SerializedObject serializedController = new SerializedObject(controller);
+        serializedController.Update();
+        SerializedProperty interactionColliderProperty = serializedController.FindProperty("interactionCollider");
+        if (interactionColliderProperty != null)
+        {
+            interactionColliderProperty.objectReferenceValue = interactionCollider;
+        }
+
+        serializedController.ApplyModifiedProperties();
+        EditorUtility.SetDirty(controller);
     }
 
     private static T FindComponentOnRootOrChildren<T>(GameObject root) where T : Component
@@ -1165,6 +1239,41 @@ public class ItemSceneMarkerEditor : Editor
 
         string displayName = enemy.ResolveDisplayName();
         return !string.IsNullOrWhiteSpace(displayName) ? displayName : "Enemy";
+    }
+
+    private static string ResolveRootName(GhostData ghost)
+    {
+        if (ghost == null)
+        {
+            return "Ghost";
+        }
+
+        if (!string.IsNullOrWhiteSpace(ghost.name))
+        {
+            return ghost.name;
+        }
+
+        return !string.IsNullOrWhiteSpace(ghost.displayName) ? ghost.displayName : "Ghost";
+    }
+
+    private static string ResolveRootName(ItemSceneMarker marker)
+    {
+        if (marker == null)
+        {
+            return "SceneMarker";
+        }
+
+        if (marker.UsesEnemy)
+        {
+            return ResolveRootName(marker.Enemy);
+        }
+
+        if (marker.UsesGhost)
+        {
+            return ResolveRootName(marker.Ghost);
+        }
+
+        return ResolveRootName(marker.Item);
     }
 
     private static Maison FindMaison()

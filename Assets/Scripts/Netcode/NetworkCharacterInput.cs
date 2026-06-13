@@ -14,6 +14,8 @@ public class NetworkCharacterInput : NetworkBehaviour
     private Vector2 lastSentMove;
     private bool wantsRun;
     private bool lastSentRun;
+    private float flightVerticalInput;
+    private float lastSentFlightVerticalInput;
     private bool locomotionModeRequested;
     private bool triggerMuninRequested;
     private float nextSendTime;
@@ -53,7 +55,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     {
         if (IsOwner && IsAssignedToLocalClient())
         {
-            SubmitMove(Vector2.zero, false);
+            SubmitMove(Vector2.zero, false, 0f);
         }
     }
 
@@ -77,6 +79,8 @@ public class NetworkCharacterInput : NetworkBehaviour
         lastSentMove = Vector2.zero;
         wantsRun = false;
         lastSentRun = false;
+        flightVerticalInput = 0f;
+        lastSentFlightVerticalInput = 0f;
         locomotionModeRequested = false;
         triggerMuninRequested = false;
         if (controller != null)
@@ -92,6 +96,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            flightVerticalInput = 0f;
             locomotionModeRequested = false;
             triggerMuninRequested = false;
             return;
@@ -102,15 +107,16 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            flightVerticalInput = 0f;
             locomotionModeRequested = false;
             triggerMuninRequested = false;
             if (controller != null)
             {
                 controller.SetSprintModifier(false);
             }
-            if (lastSentMove != Vector2.zero || lastSentRun)
+            if (lastSentMove != Vector2.zero || lastSentRun || Mathf.Abs(lastSentFlightVerticalInput) > 0.0001f)
             {
-                SubmitMove(Vector2.zero, false);
+                SubmitMove(Vector2.zero, false, 0f);
             }
 
             return;
@@ -126,12 +132,13 @@ public class NetworkCharacterInput : NetworkBehaviour
             rawMoveInput = Vector2.zero;
             pendingMove = Vector2.zero;
             wantsRun = false;
+            flightVerticalInput = 0f;
             locomotionModeRequested = false;
             triggerMuninRequested = false;
             controller.SetSprintModifier(false);
-            if (lastSentMove != Vector2.zero || lastSentRun)
+            if (lastSentMove != Vector2.zero || lastSentRun || Mathf.Abs(lastSentFlightVerticalInput) > 0.0001f)
             {
-                SubmitMove(Vector2.zero, false);
+                SubmitMove(Vector2.zero, false, 0f);
             }
 
             return;
@@ -139,6 +146,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         rawMoveInput = LocalInputRouter.MoveValue;
         wantsRun = LocalInputRouter.RightShoulderPressed;
+        flightVerticalInput = LocalInputRouter.FlightVerticalValue;
         if (controller != null)
         {
             controller.SetSprintModifier(wantsRun);
@@ -153,12 +161,13 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         if (Time.time < nextSendTime &&
             (pendingMove - lastSentMove).sqrMagnitude < 0.0001f &&
-            wantsRun == lastSentRun)
+            wantsRun == lastSentRun &&
+            Mathf.Abs(flightVerticalInput - lastSentFlightVerticalInput) < 0.0001f)
         {
             return;
         }
 
-        SubmitMove(pendingMove, wantsRun);
+        SubmitMove(pendingMove, wantsRun, flightVerticalInput);
     }
 
     private void OnMoveChanged(Vector2 value)
@@ -246,7 +255,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        ToggleLocomotionModeServerRpc();
+        ToggleLocomotionModeServerRpc(flightVerticalInput);
     }
 
     private void OnJump(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -288,7 +297,7 @@ public class NetworkCharacterInput : NetworkBehaviour
                (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked());
     }
 
-    private void SubmitMove(Vector2 value, bool runPressed)
+    private void SubmitMove(Vector2 value, bool runPressed, float verticalInput)
     {
         if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient())
         {
@@ -297,15 +306,16 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         lastSentMove = value;
         lastSentRun = runPressed;
+        lastSentFlightVerticalInput = verticalInput;
         nextSendTime = Time.time + Mathf.Max(0.01f, sendInterval);
 
         if (ShouldUseHostLocalMovePath())
         {
-            ApplyHostLocalMove(rawMoveInput, runPressed);
+            ApplyHostLocalMove(rawMoveInput, runPressed, verticalInput);
             return;
         }
 
-        SubmitMoveServerRpc(value, runPressed);
+        SubmitMoveServerRpc(value, runPressed, verticalInput);
     }
 
     private bool ShouldUseHostLocalMovePath()
@@ -313,7 +323,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         return IsServer && IsOwner && IsSpawned && IsAssignedToLocalClient();
     }
 
-    private void ApplyHostLocalMove(Vector2 input, bool runPressed)
+    private void ApplyHostLocalMove(Vector2 input, bool runPressed, float verticalInput)
     {
         if (controller == null)
         {
@@ -327,6 +337,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         controller.SetSprintModifier(runPressed);
         controller.Move(input);
+        controller.TrySetUccFlightInput(controller.GetWorldSpaceInput(input), true, runPressed, verticalInput);
     }
 
     private void ApplyHostLocalJump(Vector2 worldInput)
@@ -354,12 +365,16 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         if (controller != null)
         {
-            controller.TryToggleUccHeightChange();
+            bool handled = controller.TryToggleUccFlightMode(flightVerticalInput);
+            if (!handled)
+            {
+                controller.TryToggleUccHeightChange();
+            }
         }
     }
 
     [ServerRpc]
-    private void SubmitMoveServerRpc(Vector2 input, bool runPressed)
+    private void SubmitMoveServerRpc(Vector2 input, bool runPressed, float verticalInput)
     {
         if (controller == null)
         {
@@ -373,6 +388,7 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         controller.SetSprintModifier(runPressed);
         controller.MoveWorld(input);
+        controller.TrySetUccFlightInput(input, true, runPressed, verticalInput);
     }
 
     [ServerRpc]
@@ -393,7 +409,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void ToggleLocomotionModeServerRpc()
+    private void ToggleLocomotionModeServerRpc(float verticalInput)
     {
         if (controller == null)
         {
@@ -402,7 +418,11 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         if (controller != null)
         {
-            controller.TryToggleUccHeightChange();
+            bool handled = controller.TryToggleUccFlightMode(verticalInput);
+            if (!handled)
+            {
+                controller.TryToggleUccHeightChange();
+            }
         }
     }
 

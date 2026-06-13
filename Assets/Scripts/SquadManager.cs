@@ -1387,11 +1387,14 @@ public class SquadManager : MonoBehaviour
         Vector2 rawMoveInput = moveInput;
         Vector2 worldMoveInput = controller.GetWorldSpaceInput(rawMoveInput);
         bool sprintRequested = LocalInputRouter.RightShoulderPressed;
+        float flightVerticalInput = LocalInputRouter.FlightVerticalValue;
 
         controller.SetSprintModifier(sprintRequested);
         controller.Move(rawMoveInput);
+        controller.TrySetUccFlightInput(worldMoveInput, true, sprintRequested, flightVerticalInput);
 
-        if (locomotionModeRequested && controller.TryToggleUccHeightChange())
+        if (locomotionModeRequested &&
+            (controller.TryToggleUccFlightMode(flightVerticalInput) || controller.TryToggleUccHeightChange()))
         {
             locomotionModeRequested = false;
         }

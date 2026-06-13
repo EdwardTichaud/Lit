@@ -76,8 +76,8 @@ public class GhostDissolveController : MonoBehaviour
     [SerializeField, Min(0f)] private float startDelay = 0f;
     [SerializeField] private bool useUnscaledTime = false;
     [SerializeField] private bool interruptAndRestart = true;
-    [SerializeField] private float startDissolveAmount = -0.08f;
-    [SerializeField] private float finalDissolveAmount = 1.12f;
+    [SerializeField, Range(0f, 1f)] private float startDissolveAmount = 1f;
+    [SerializeField, Range(0f, 1f)] private float finalDissolveAmount = 0f;
     [SerializeField, Range(0f, 1f)] private float startGhostAlpha = 0.68f;
     [SerializeField, Range(0f, 1f)] private float finalGhostAlpha = 0f;
     [SerializeField] private AnimationCurve dissolveCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -174,6 +174,7 @@ public class GhostDissolveController : MonoBehaviour
 
     private void Awake()
     {
+        NormalizeDissolveAmountConfiguration();
         CachePropertyIds();
         RebuildRendererCache();
         RebuildVfxCache();
@@ -325,6 +326,7 @@ public class GhostDissolveController : MonoBehaviour
 
     public void SetDissolveAmount(float amount)
     {
+        amount = Mathf.Clamp01(amount);
         NormalizedTime = Mathf.InverseLerp(startDissolveAmount, finalDissolveAmount, amount);
         CurrentDissolveAmount = amount;
         CurrentGhostAlpha = EvaluateGhostAlphaForAmount(amount);
@@ -333,6 +335,7 @@ public class GhostDissolveController : MonoBehaviour
 
     public void LerpDissolveAmount(float targetAmount, float duration)
     {
+        targetAmount = Mathf.Clamp01(targetAmount);
         if (!StopActiveRoutineIfAllowed())
         {
             return;
@@ -348,7 +351,7 @@ public class GhostDissolveController : MonoBehaviour
             return;
         }
 
-        isAppearing = targetAmount < CurrentDissolveAmount;
+        isAppearing = targetAmount > CurrentDissolveAmount;
         dissolveRoutine = StartCoroutine(DissolveAmountRoutine(CurrentDissolveAmount, targetAmount, Mathf.Max(0.01f, duration)));
     }
 
@@ -645,6 +648,8 @@ public class GhostDissolveController : MonoBehaviour
 
     private IEnumerator DissolveAmountRoutine(float startAmount, float targetAmount, float duration)
     {
+        startAmount = Mathf.Clamp01(startAmount);
+        targetAmount = Mathf.Clamp01(targetAmount);
         float elapsed = 0f;
         while (elapsed < duration)
         {
@@ -978,6 +983,18 @@ public class GhostDissolveController : MonoBehaviour
         return Mathf.Lerp(startGhostAlpha, finalGhostAlpha, EvaluateCurve(ghostFadeCurve, amount01));
     }
 
+    private void NormalizeDissolveAmountConfiguration()
+    {
+        if (startDissolveAmount < finalDissolveAmount)
+        {
+            startDissolveAmount = 1f;
+            finalDissolveAmount = 0f;
+        }
+
+        startDissolveAmount = Mathf.Clamp01(startDissolveAmount);
+        finalDissolveAmount = Mathf.Clamp01(finalDissolveAmount);
+    }
+
     private static bool IsUsableBounds(Bounds bounds)
     {
         Vector3 size = bounds.size;
@@ -998,6 +1015,7 @@ public class GhostDissolveController : MonoBehaviour
 
     private void OnValidate()
     {
+        NormalizeDissolveAmountConfiguration();
         dissolveDuration = Mathf.Max(0.01f, dissolveDuration);
         startDelay = Mathf.Max(0f, startDelay);
         noiseScale = Mathf.Max(0f, noiseScale);

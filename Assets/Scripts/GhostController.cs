@@ -154,7 +154,7 @@ public class GhostDissolveEffectRule
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Narrative/Ghost Controller")]
-public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
+public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver, IRuntimeOutlineVisibilityGate
 {
     [Header("Data")]
     /// <summary>Ghost investigation data assigned to this scene object.</summary>
@@ -219,20 +219,34 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
     private bool enableProximityDissolve = true;
     [SerializeField, Tooltip("Targets affected by proximity reveal. Empty means this GameObject.")]
     private List<GameObject> proximityDissolveTargets = new List<GameObject>();
-    [SerializeField, Tooltip("Collider trigger used as the reveal zone. Empty uses the interaction collider, then proximityDistance as fallback.")]
-    private Collider proximityTriggerCollider;
-    [SerializeField, Min(0.1f), Tooltip("Fallback reveal radius when no proximity trigger collider is available.")]
-    private float proximityDistance = 2.25f;
+    [Min(0.1f), Tooltip("Radius used by the ghost proximity sphere detection.")]
+    public float proximitySpherecastRadius = 6f;
+    [SerializeField, Tooltip("Layers queried by the proximity sphere detection.")]
+    private LayerMask proximitySpherecastLayerMask = ~0;
+    [SerializeField, Tooltip("Trigger handling used by the proximity sphere detection.")]
+    private QueryTriggerInteraction proximitySpherecastTriggerInteraction = QueryTriggerInteraction.Collide;
     [SerializeField, Min(0f), Tooltip("Inner distance from the ghost anchor where the ghost is fully visible.")]
     private float proximityFullyVisibleDistance = 0f;
     [SerializeField, Min(0f), Tooltip("Optional dissolve follow speed. 0 applies distance changes immediately.")]
     private float proximityDissolveFollowSpeed = 0f;
-    [SerializeField, Tooltip("Dissolve amount applied when a character is close.")]
-    private float proximityVisibleDissolveAmount = 0f;
-    [SerializeField, Tooltip("Dissolve amount applied when no character is close.")]
-    private float proximityHiddenDissolveAmount = 1.12f;
+    [SerializeField, Range(0f, 1f), Tooltip("Dissolve visibility applied when a character is close. 0 is invisible, 1 is fully visible.")]
+    private float proximityVisibleDissolveAmount = 1f;
+    [SerializeField, Range(0f, 1f), Tooltip("Dissolve visibility applied when no character is close. 0 is invisible, 1 is fully visible.")]
+    private float proximityHiddenDissolveAmount = 0f;
     [SerializeField, Tooltip("Add GhostDissolveController to proximity targets if none exists.")]
     private bool addProximityDissolveControllerIfMissing = true;
+    [SerializeField, Tooltip("Draw the proximity sphere detection radius when the ghost is selected.")]
+    private bool drawProximitySpherecastGizmo = true;
+
+    [Header("Light Influence")]
+    [SerializeField, Tooltip("Si actif, ce fantome n'apparait et ne reagit que dans une zone d'influence allumee.")]
+    private bool requireLitInfluenceForAppearance;
+    [SerializeField, Tooltip("Autorise les braseros allumes a reveler ce fantome.")]
+    private bool reactToBraseroInfluence = true;
+    [SerializeField, Tooltip("Autorise les torches allumees a reveler ce fantome.")]
+    private bool reactToTorchInfluence = true;
+    [SerializeField, Tooltip("Verifie directement les sources allumees si le scan d'influence n'a pas encore notifie ce fantome.")]
+    private bool useDirectLitInfluenceFallback = true;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onGhostDataChanged = new UnityEvent();
@@ -245,6 +259,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
     private readonly List<GhostKnowledgeReaction> choiceReactionBuffer = new List<GhostKnowledgeReaction>();
     private readonly List<Button> reactionChoiceButtons = new List<Button>();
     private readonly List<GhostDissolveController> proximityDissolveControllers = new List<GhostDissolveController>();
+    private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
+    private static readonly Collider[] ProximitySpherecastHits = new Collider[32];
 
     private GameObject currentCharacter;
     private GameObject interactionBoxInstance;
@@ -253,11 +269,22 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
     private Transform reactionChoiceContentRoot;
     private Collider resolvedInteractionCollider;
     private bool isUnderstood;
+    private bool hasAppearedToPlayer;
+    private bool isRevealedToPlayer;
     private float currentProximityDissolveAmount = float.NaN;
+    private bool proximityDissolveControllersResolved;
+    private int litInfluenceCacheFrame = -1;
+    private bool cachedDirectLitInfluence;
+    private int controlledRevealCacheFrame = -1;
+    private bool cachedControlledReveal;
+    private float cachedControlledRevealDistance01 = 1f;
 
     public GhostData Data => ghostData;
     public bool HasData => ghostData != null;
     public bool IsUnderstood => isUnderstood;
+    public bool HasAppearedToPlayer => hasAppearedToPlayer;
+    public bool IsRevealedToPlayer => isRevealedToPlayer;
+    public bool AllowsRuntimeOutline => hasAppearedToPlayer && isRevealedToPlayer && CanAppearAtAll();
 
     private void Reset()
     {
@@ -266,6 +293,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
 
     private void Awake()
     {
+        NormalizeProximityDissolveConfiguration();
         RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         resolvedInteractionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
         if (interactionCollider == null)
@@ -279,8 +307,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
+        proximityDissolveControllersResolved = false;
+        InvalidateRevealCaches();
         ResolveProximityDissolveControllers();
-        ApplyProximityDissolveAmount(ResolveProximityDissolveAmount(), instant: true);
+        RefreshRevealState(instantDissolve: true);
     }
 
     private void OnDisable()
@@ -290,12 +320,56 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         CloseReactionChoiceUi();
         DestroyInteractionInstance();
         currentCharacter = null;
+        activeLitInfluenceSourceIds.Clear();
+        InvalidateRevealCaches();
+        ApplyRevealState(false, markAppeared: false);
+        if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        {
+            RuntimeOutlineSelectionManager.Clear();
+        }
     }
 
     private void LateUpdate()
     {
+        RefreshRevealState(instantDissolve: false);
         UpdateInteractionUiPosition();
-        UpdateProximityDissolve();
+    }
+
+    private void OnValidate()
+    {
+        NormalizeProximityDissolveConfiguration();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!drawProximitySpherecastGizmo || !enableProximityDissolve)
+        {
+            return;
+        }
+
+        Vector3 anchorPosition = transform.position;
+        Transform anchor = GetInteractionAnchor();
+        if (anchor != null)
+        {
+            anchorPosition = anchor.position;
+        }
+
+        float radius = Mathf.Max(0.1f, proximitySpherecastRadius);
+        Color previousColor = Gizmos.color;
+
+        Gizmos.color = new Color(0.25f, 0.85f, 1f, 0.08f);
+        Gizmos.DrawSphere(anchorPosition, radius);
+        Gizmos.color = new Color(0.25f, 0.85f, 1f, 0.85f);
+        Gizmos.DrawWireSphere(anchorPosition, radius);
+
+        float fullyVisibleRadius = Mathf.Min(Mathf.Max(0f, proximityFullyVisibleDistance), radius);
+        if (fullyVisibleRadius > 0.01f)
+        {
+            Gizmos.color = new Color(0.1f, 1f, 0.45f, 0.7f);
+            Gizmos.DrawWireSphere(anchorPosition, fullyVisibleRadius);
+        }
+
+        Gizmos.color = previousColor;
     }
 
     public void SetGhostData(GhostData data)
@@ -308,12 +382,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         ghostData = data;
         isUnderstood = false;
         currentProximityDissolveAmount = float.NaN;
+        hasAppearedToPlayer = false;
+        ApplyRevealState(false, markAppeared: false);
+        InvalidateRevealCaches();
         onGhostDataChanged.Invoke();
     }
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
-        return controller != null && isActiveAndEnabled && ghostData != null && (!playOnce || !isUnderstood);
+        return TryEvaluateRevealForController(controller, out _);
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -349,7 +426,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         }
 
         currentCharacter = character;
-        ShowInteraction(currentCharacter != null && showInteractionUi && (!playOnce || !isUnderstood));
+        RefreshRevealStateForCharacter(character, updateDissolve: false, instantDissolve: false);
+        ShowInteraction(ShouldShowInteractionFor(character));
     }
 
     public string GetDisplayName()
@@ -518,46 +596,87 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         }
     }
 
-    private void UpdateProximityDissolve()
+    private void RefreshRevealState(bool instantDissolve)
     {
-        if (!enableProximityDissolve || ghostData == null || playOnce && isUnderstood)
+        bool revealed = TryEvaluateControlledCharacterReveal(out float distance01);
+        ApplyRevealState(revealed, markAppeared: true);
+
+        if (!enableProximityDissolve)
         {
             return;
         }
 
-        ApplyProximityDissolveAmount(ResolveProximityDissolveAmount(), instant: false);
+        float targetAmount = revealed
+            ? Mathf.Lerp(proximityVisibleDissolveAmount, proximityHiddenDissolveAmount, Mathf.Clamp01(distance01))
+            : proximityHiddenDissolveAmount;
+        ApplyProximityDissolveAmount(targetAmount, instantDissolve);
     }
 
-    private float ResolveProximityDissolveAmount()
+    private void RefreshRevealStateForCharacter(GameObject character, bool updateDissolve, bool instantDissolve)
     {
-        if (!enableProximityDissolve || ghostData == null)
+        SquadCharacterController controller = ResolveCharacterController(character);
+        bool revealed = TryEvaluateRevealForController(controller, out float distance01);
+        ApplyRevealState(revealed, markAppeared: true);
+
+        if (!updateDissolve || !enableProximityDissolve)
         {
-            return proximityHiddenDissolveAmount;
+            return;
+        }
+
+        float targetAmount = revealed
+            ? Mathf.Lerp(proximityVisibleDissolveAmount, proximityHiddenDissolveAmount, Mathf.Clamp01(distance01))
+            : proximityHiddenDissolveAmount;
+        ApplyProximityDissolveAmount(targetAmount, instantDissolve);
+    }
+
+    private bool TryEvaluateControlledCharacterReveal(out float distance01)
+    {
+        if (controlledRevealCacheFrame == Time.frameCount)
+        {
+            distance01 = cachedControlledRevealDistance01;
+            return cachedControlledReveal;
         }
 
         GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
-        if (controlled == null)
-        {
-            return proximityHiddenDissolveAmount;
-        }
-
-        Vector3 characterPosition = ResolveCharacterProximityPosition(controlled);
-        if (!TryResolveProximityDistance01(characterPosition, out float distance01))
-        {
-            return proximityHiddenDissolveAmount;
-        }
-
-        return Mathf.Lerp(
-            proximityVisibleDissolveAmount,
-            proximityHiddenDissolveAmount,
-            Mathf.Clamp01(distance01));
+        SquadCharacterController controller = ResolveCharacterController(controlled);
+        cachedControlledReveal = TryEvaluateRevealForController(controller, out cachedControlledRevealDistance01);
+        controlledRevealCacheFrame = Time.frameCount;
+        distance01 = cachedControlledRevealDistance01;
+        return cachedControlledReveal;
     }
 
-    private static Vector3 ResolveCharacterProximityPosition(GameObject character)
+    private bool TryEvaluateRevealForController(SquadCharacterController controller, out float distance01)
+    {
+        distance01 = 1f;
+        if (!CanAttemptRevealForController(controller))
+        {
+            return false;
+        }
+
+        if (!enableProximityDissolve)
+        {
+            distance01 = 0f;
+            return true;
+        }
+
+        return TryResolveProximityDistance01(controller, out distance01);
+    }
+
+    private bool CanAttemptRevealForController(SquadCharacterController controller)
+    {
+        return controller != null && CanAppearAtAll() && HasRequiredLitInfluence();
+    }
+
+    private bool CanAppearAtAll()
+    {
+        return isActiveAndEnabled && ghostData != null && (!playOnce || !isUnderstood);
+    }
+
+    private static SquadCharacterController ResolveCharacterController(GameObject character)
     {
         if (character == null)
         {
-            return Vector3.zero;
+            return null;
         }
 
         SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
@@ -566,38 +685,27 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
             controller = character.GetComponentInChildren<SquadCharacterController>(true);
         }
 
-        return controller != null ? controller.GetInteractionOriginWorldPosition() : character.transform.position;
+        return controller;
     }
 
-    private bool TryResolveProximityDistance01(Vector3 characterPosition, out float distance01)
+    private bool TryResolveProximityDistance01(SquadCharacterController controller, out float distance01)
     {
         distance01 = 1f;
-
-        Transform anchor = GetInteractionAnchor();
-        Vector3 anchorPosition = anchor != null ? anchor.position : transform.position;
-        Collider trigger = ResolveProximityTriggerCollider();
-        if (trigger != null)
-        {
-            if (!IsPositionInsideCollider(trigger, characterPosition))
-            {
-                return false;
-            }
-
-            float maxDistance = ResolveColliderDistanceFromAnchor(trigger, anchorPosition, characterPosition);
-            distance01 = Mathf.InverseLerp(
-                Mathf.Max(0f, proximityFullyVisibleDistance),
-                Mathf.Max(0.001f, maxDistance),
-                Vector3.Distance(anchorPosition, characterPosition));
-            return true;
-        }
-
-        float fallbackDistance = Mathf.Max(0.1f, proximityDistance);
-        float distance = Vector3.Distance(anchorPosition, characterPosition);
-        if (distance > fallbackDistance)
+        if (controller == null)
         {
             return false;
         }
 
+        Transform anchor = GetInteractionAnchor();
+        Vector3 anchorPosition = anchor != null ? anchor.position : transform.position;
+        float fallbackDistance = Mathf.Max(0.1f, proximitySpherecastRadius);
+        if (!IsControllerInsideProximitySphere(controller, anchorPosition, fallbackDistance))
+        {
+            return false;
+        }
+
+        Vector3 characterPosition = controller.GetInteractionOriginWorldPosition();
+        float distance = Vector3.Distance(anchorPosition, characterPosition);
         distance01 = Mathf.InverseLerp(
             Mathf.Max(0f, proximityFullyVisibleDistance),
             fallbackDistance,
@@ -605,57 +713,67 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         return true;
     }
 
-    private Collider ResolveProximityTriggerCollider()
+    private bool IsControllerInsideProximitySphere(SquadCharacterController controller, Vector3 anchorPosition, float radius)
     {
-        if (IsUsableProximityCollider(proximityTriggerCollider))
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            anchorPosition,
+            radius,
+            ProximitySpherecastHits,
+            proximitySpherecastLayerMask,
+            proximitySpherecastTriggerInteraction);
+
+        bool hasCharacterCollider = false;
+        for (int i = 0; i < hitCount; i++)
         {
-            return proximityTriggerCollider;
+            Collider hit = ProximitySpherecastHits[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            if (!IsColliderPartOfController(hit, controller))
+            {
+                continue;
+            }
+
+            hasCharacterCollider = true;
+            break;
         }
 
-        if (IsUsableProximityCollider(interactionCollider) && interactionCollider.isTrigger)
+        ClearProximitySpherecastHitBuffer(hitCount);
+        if (hasCharacterCollider)
         {
-            return interactionCollider;
+            return true;
         }
 
-        Collider interaction = GetInteractionDetectionCollider();
-        return IsUsableProximityCollider(interaction) && interaction.isTrigger ? interaction : null;
+        // Keep reveal robust for character prefabs whose interaction origin is valid
+        // but whose colliders are disabled, filtered, or absent at this frame.
+        Vector3 characterPosition = controller.GetInteractionOriginWorldPosition();
+        return (characterPosition - anchorPosition).sqrMagnitude <= radius * radius;
     }
 
-    private static bool IsUsableProximityCollider(Collider collider)
+    private static bool IsColliderPartOfController(Collider collider, SquadCharacterController controller)
     {
-        return collider != null && collider.enabled && collider.gameObject.activeInHierarchy;
-    }
-
-    private static bool IsPositionInsideCollider(Collider collider, Vector3 position)
-    {
-        if (collider == null)
+        if (collider == null || controller == null)
         {
             return false;
         }
 
-        Vector3 closest = collider.ClosestPoint(position);
-        return (closest - position).sqrMagnitude <= 0.0001f;
+        Transform colliderTransform = collider.transform;
+        Transform controllerTransform = controller.transform;
+        return colliderTransform.root == controllerTransform.root ||
+               colliderTransform == controllerTransform ||
+               colliderTransform.IsChildOf(controllerTransform) ||
+               controllerTransform.IsChildOf(colliderTransform);
     }
 
-    private float ResolveColliderDistanceFromAnchor(Collider collider, Vector3 anchorPosition, Vector3 characterPosition)
+    private static void ClearProximitySpherecastHitBuffer(int hitCount)
     {
-        if (collider == null)
+        int clampedHitCount = Mathf.Min(hitCount, ProximitySpherecastHits.Length);
+        for (int i = 0; i < clampedHitCount; i++)
         {
-            return Mathf.Max(0.1f, proximityDistance);
+            ProximitySpherecastHits[i] = null;
         }
-
-        Vector3 direction = characterPosition - anchorPosition;
-        if (direction.sqrMagnitude <= 0.0001f)
-        {
-            return Mathf.Max(0.1f, proximityDistance);
-        }
-
-        Bounds bounds = collider.bounds;
-        float probeDistance = Mathf.Max(0.1f, bounds.extents.magnitude + Vector3.Distance(anchorPosition, bounds.center) + 0.1f);
-        Vector3 boundaryProbe = anchorPosition + direction.normalized * probeDistance;
-        Vector3 boundaryPoint = collider.ClosestPoint(boundaryProbe);
-        float resolvedDistance = Vector3.Distance(anchorPosition, boundaryPoint);
-        return Mathf.Max(0.1f, resolvedDistance);
     }
 
     private void ApplyProximityDissolveAmount(float targetAmount, bool instant)
@@ -682,7 +800,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
 
         currentProximityDissolveAmount = nextAmount;
 
-        ResolveProximityDissolveControllers();
+        EnsureProximityDissolveControllersResolved();
         for (int i = 0; i < proximityDissolveControllers.Count; i++)
         {
             GhostDissolveController dissolve = proximityDissolveControllers[i];
@@ -700,8 +818,17 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         }
     }
 
+    private void EnsureProximityDissolveControllersResolved()
+    {
+        if (!proximityDissolveControllersResolved)
+        {
+            ResolveProximityDissolveControllers();
+        }
+    }
+
     private void ResolveProximityDissolveControllers()
     {
+        proximityDissolveControllersResolved = true;
         proximityDissolveControllers.Clear();
         if (proximityDissolveTargets != null && proximityDissolveTargets.Count > 0)
         {
@@ -744,6 +871,190 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
                 proximityDissolveControllers.Add(controller);
             }
         }
+    }
+
+    private void ApplyRevealState(bool revealed, bool markAppeared)
+    {
+        if (revealed && markAppeared)
+        {
+            MarkAppearedToPlayer();
+        }
+
+        if (isRevealedToPlayer == revealed)
+        {
+            return;
+        }
+
+        isRevealedToPlayer = revealed;
+        if (!revealed)
+        {
+            HandleRevealLost();
+        }
+    }
+
+    private void MarkAppearedToPlayer()
+    {
+        hasAppearedToPlayer = true;
+    }
+
+    private void HandleRevealLost()
+    {
+        if (currentCharacter != null)
+        {
+            currentCharacter = null;
+        }
+
+        ShowInteraction(false);
+        if (reactionChoicePanelInstance != null)
+        {
+            CloseReactionChoiceUi();
+        }
+
+        if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        {
+            RuntimeOutlineSelectionManager.Clear();
+        }
+    }
+
+    private bool ShouldShowInteractionFor(GameObject character)
+    {
+        if (character == null || !showInteractionUi)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = ResolveCharacterController(character);
+        return CanBeDetectedBy(controller);
+    }
+
+    private bool HasRequiredLitInfluence()
+    {
+        if (!requireLitInfluenceForAppearance)
+        {
+            return true;
+        }
+
+        if (activeLitInfluenceSourceIds.Count > 0)
+        {
+            return true;
+        }
+
+        if (!useDirectLitInfluenceFallback)
+        {
+            return false;
+        }
+
+        if (litInfluenceCacheFrame == Time.frameCount)
+        {
+            return cachedDirectLitInfluence;
+        }
+
+        cachedDirectLitInfluence = HasDirectLitInfluence();
+        litInfluenceCacheFrame = Time.frameCount;
+        return cachedDirectLitInfluence;
+    }
+
+    private bool HasDirectLitInfluence()
+    {
+        Collider targetCollider = GetInteractionDetectionCollider();
+        Vector3 fallbackPoint = ResolveLitInfluenceProbePoint(targetCollider);
+
+        if (reactToBraseroInfluence)
+        {
+            IReadOnlyList<Brasero> braseros = LitInfluenceSourceFrameCache.ActiveBraseros;
+            for (int i = 0; i < braseros.Count; i++)
+            {
+                Brasero brasero = braseros[i];
+                if (brasero != null && brasero.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (reactToTorchInfluence)
+        {
+            IReadOnlyList<Torch> torches = LitInfluenceSourceFrameCache.ActiveTorches;
+            for (int i = 0; i < torches.Count; i++)
+            {
+                Torch torch = torches[i];
+                if (torch != null && torch.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private Vector3 ResolveLitInfluenceProbePoint(Collider targetCollider)
+    {
+        if (targetCollider != null)
+        {
+            return targetCollider.bounds.center;
+        }
+
+        Transform anchor = GetInteractionAnchor();
+        return anchor != null ? anchor.position : transform.position;
+    }
+
+    public void OnLitInfluenceEnter(LitInfluenceInfo info)
+    {
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        {
+            return;
+        }
+
+        activeLitInfluenceSourceIds.Add(info.SourceId);
+        InvalidateRevealCaches();
+    }
+
+    public void OnLitInfluenceStay(LitInfluenceInfo info)
+    {
+        if (!ShouldReactToLitInfluence(info) || info.SourceId == 0)
+        {
+            return;
+        }
+
+        activeLitInfluenceSourceIds.Add(info.SourceId);
+        InvalidateRevealCaches();
+    }
+
+    public void OnLitInfluenceExit(LitInfluenceInfo info)
+    {
+        if (info.SourceId == 0)
+        {
+            return;
+        }
+
+        activeLitInfluenceSourceIds.Remove(info.SourceId);
+        InvalidateRevealCaches();
+        if (!HasRequiredLitInfluence())
+        {
+            ApplyRevealState(false, markAppeared: false);
+        }
+    }
+
+    private bool ShouldReactToLitInfluence(LitInfluenceInfo info)
+    {
+        switch (info.SourceKind)
+        {
+            case LitInfluenceSourceKind.Brasero:
+                return reactToBraseroInfluence;
+
+            case LitInfluenceSourceKind.Torch:
+                return reactToTorchInfluence;
+
+            default:
+                return false;
+        }
+    }
+
+    private void InvalidateRevealCaches()
+    {
+        litInfluenceCacheFrame = -1;
+        controlledRevealCacheFrame = -1;
     }
 
     public void RestoreUnderstoodState(bool understood)
@@ -820,6 +1131,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
         }
 
         if (requireLocalControl && !IsSameCharacter(LocalPlayerUtils.GetControlledCharacter(), character))
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = ResolveCharacterController(character);
+        if (!CanBeDetectedBy(controller))
         {
             return false;
         }
@@ -1145,7 +1462,22 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
     private void ApplyUnderstoodState(bool understood, bool invokeEvent)
     {
         isUnderstood = understood;
-        ShowInteraction(currentCharacter != null && showInteractionUi && (!playOnce || !isUnderstood));
+        InvalidateRevealCaches();
+        if (playOnce && isUnderstood)
+        {
+            ApplyRevealState(false, markAppeared: false);
+            if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+            {
+                RuntimeOutlineSelectionManager.Clear();
+            }
+
+            ShowInteraction(false);
+        }
+        else
+        {
+            ShowInteraction(ShouldShowInteractionFor(currentCharacter));
+        }
+
         if (understood && invokeEvent)
         {
             onGhostUnderstood.Invoke();
@@ -1402,5 +1734,77 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable
     private static bool IsSameCharacter(GameObject a, GameObject b)
     {
         return a != null && b != null && a.transform.root == b.transform.root;
+    }
+
+    private void NormalizeProximityDissolveConfiguration()
+    {
+        proximitySpherecastRadius = Mathf.Max(0.1f, proximitySpherecastRadius);
+        proximityFullyVisibleDistance = Mathf.Clamp(proximityFullyVisibleDistance, 0f, proximitySpherecastRadius);
+
+        if (proximityVisibleDissolveAmount < proximityHiddenDissolveAmount)
+        {
+            proximityVisibleDissolveAmount = 1f;
+            proximityHiddenDissolveAmount = 0f;
+        }
+
+        proximityVisibleDissolveAmount = Mathf.Clamp01(proximityVisibleDissolveAmount);
+        proximityHiddenDissolveAmount = Mathf.Clamp01(proximityHiddenDissolveAmount);
+    }
+
+    private static class LitInfluenceSourceFrameCache
+    {
+        private static readonly List<Torch> activeTorches = new List<Torch>();
+        private static readonly List<Brasero> activeBraseros = new List<Brasero>();
+        private static int cacheFrame = -1;
+
+        public static IReadOnlyList<Torch> ActiveTorches
+        {
+            get
+            {
+                Refresh();
+                return activeTorches;
+            }
+        }
+
+        public static IReadOnlyList<Brasero> ActiveBraseros
+        {
+            get
+            {
+                Refresh();
+                return activeBraseros;
+            }
+        }
+
+        private static void Refresh()
+        {
+            if (cacheFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            cacheFrame = Time.frameCount;
+            activeTorches.Clear();
+            activeBraseros.Clear();
+
+            Torch[] torches = UnityEngine.Object.FindObjectsByType<Torch>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < torches.Length; i++)
+            {
+                Torch torch = torches[i];
+                if (torch != null && torch.isActiveAndEnabled && torch.IsLit)
+                {
+                    activeTorches.Add(torch);
+                }
+            }
+
+            Brasero[] braseros = UnityEngine.Object.FindObjectsByType<Brasero>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < braseros.Length; i++)
+            {
+                Brasero brasero = braseros[i];
+                if (brasero != null && brasero.isActiveAndEnabled && brasero.IsLit)
+                {
+                    activeBraseros.Add(brasero);
+                }
+            }
+        }
     }
 }

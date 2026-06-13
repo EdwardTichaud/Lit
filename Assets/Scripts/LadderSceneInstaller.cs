@@ -3,6 +3,8 @@ using UnityEngine.SceneManagement;
 
 public static class LadderSceneInstaller
 {
+    private const float StackedLadderMaxHorizontalSize = 2.5f;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Initialize()
     {
@@ -81,7 +83,7 @@ public static class LadderSceneInstaller
 
         if (HasDescendantLadderCandidate(candidate))
         {
-            return false;
+            return IsStackedLadderContainer(candidate);
         }
 
         return candidate.GetComponentInChildren<Collider>(true) != null ||
@@ -131,12 +133,60 @@ public static class LadderSceneInstaller
         return false;
     }
 
-    private static bool IsLadderContainer(Transform candidate)
+    private static bool IsStackedLadderContainer(Transform candidate)
     {
-        return candidate != null &&
-               IsLadderName(candidate.name.ToLowerInvariant()) &&
-               !HasLocalLadderGeometry(candidate) &&
-               HasDescendantLadderCandidate(candidate);
+        if (candidate == null || IsBroadLadderCollectionName(candidate.name))
+        {
+            return false;
+        }
+
+        Transform[] children = candidate.GetComponentsInChildren<Transform>(true);
+        int segmentCount = 0;
+        Bounds combined = default;
+        bool hasBounds = false;
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+            if (child == null || child == candidate || !IsLadderName(child.name.ToLowerInvariant()))
+            {
+                continue;
+            }
+
+            if (!TryCalculateBounds(child, out Bounds childBounds))
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                combined = childBounds;
+                hasBounds = true;
+            }
+            else
+            {
+                combined.Encapsulate(childBounds);
+            }
+
+            segmentCount++;
+        }
+
+        if (!hasBounds || segmentCount < 2)
+        {
+            return false;
+        }
+
+        float horizontalSize = Mathf.Max(combined.size.x, combined.size.z);
+        float allowedHorizontalSize = Mathf.Max(StackedLadderMaxHorizontalSize, combined.size.y * 0.35f);
+        return combined.size.y > horizontalSize && horizontalSize <= allowedHorizontalSize;
+    }
+
+    private static bool IsBroadLadderCollectionName(string objectName)
+    {
+        string normalizedName = NormalizeName(objectName);
+        return normalizedName == "ladders" ||
+               normalizedName == "echelles" ||
+               normalizedName == "laddergroup" ||
+               normalizedName == "laddercollection";
     }
 
     private static bool HasLadderInteractableInParent(Transform candidate)
@@ -144,7 +194,7 @@ public static class LadderSceneInstaller
         Transform parent = candidate.parent;
         while (parent != null)
         {
-            if (parent.GetComponent<LadderInteractable>() != null && !IsLadderContainer(parent))
+            if (parent.GetComponent<LadderInteractable>() != null)
             {
                 return true;
             }
@@ -155,6 +205,21 @@ public static class LadderSceneInstaller
         return false;
     }
 
+    private static string NormalizeName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return value
+            .Replace("_", string.Empty)
+            .Replace("-", string.Empty)
+            .Replace(" ", string.Empty)
+            .Replace(".", string.Empty)
+            .ToLowerInvariant();
+    }
+
     private static void ConfigureLadderInteraction(LadderInteractable ladder)
     {
         if (ladder == null)
@@ -162,9 +227,14 @@ public static class LadderSceneInstaller
             return;
         }
 
+        if (ladder.ladderController == null)
+        {
+            ladder.ladderController = ResolveOrCreateLadderController(ladder);
+        }
+
         if (ladder.interactionCollider == null)
         {
-            ladder.interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(ladder, null);
+            ladder.interactionCollider = FindLocalInteractionCollider(ladder);
         }
 
         if (ladder.interactionCollider == null && TryCalculateBounds(ladder.transform, out Bounds colliderBounds))
@@ -173,6 +243,68 @@ public static class LadderSceneInstaller
             FitBoxColliderToWorldBounds(box, colliderBounds);
             ladder.interactionCollider = box;
         }
+
+        if (ladder.interactionCollider == null)
+        {
+            ladder.interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(ladder, null);
+        }
+    }
+
+    private static Collider FindLocalInteractionCollider(LadderInteractable ladder)
+    {
+        if (ladder == null)
+        {
+            return null;
+        }
+
+        Collider[] colliders = ladder.GetComponents<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider != null && collider.enabled && !collider.isTrigger)
+            {
+                return collider;
+            }
+        }
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider != null && collider.enabled)
+            {
+                return collider;
+            }
+        }
+
+        return null;
+    }
+
+    private static LadderController ResolveOrCreateLadderController(LadderInteractable ladder)
+    {
+        if (ladder == null)
+        {
+            return null;
+        }
+
+        LadderController controller = ladder.GetComponent<LadderController>();
+        if (controller != null)
+        {
+            return controller;
+        }
+
+        controller = ladder.GetComponentInParent<LadderController>();
+        if (controller != null)
+        {
+            return controller;
+        }
+
+        controller = ladder.GetComponentInChildren<LadderController>(true);
+        if (controller != null)
+        {
+            return controller;
+        }
+
+        return ladder.gameObject.AddComponent<LadderController>();
     }
 
     private static bool TryCalculateBounds(Transform root, out Bounds bounds)

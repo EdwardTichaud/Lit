@@ -39,6 +39,29 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     private float jumpRetryWindow = 0.15f;
     [SerializeField, Tooltip("Log a diagnostic warning when UCC keeps rejecting a jump request.")]
     private bool warnWhenJumpRejected = true;
+    [SerializeField, Tooltip("Apply a direct UCC force if the migrated Jump ability is missing or refuses a grounded jump request.")]
+    private bool useJumpForceFallback = true;
+    [SerializeField, Min(0f), Tooltip("Velocity-style upward force used by the Lit fallback jump path.")]
+    private float jumpFallbackVelocity = 7f;
+
+    [Header("Flight")]
+    [SerializeField, Tooltip("Restores the pre-UCC LocomotionMode flight toggle through a lightweight UCC ability.")]
+    private bool enableUccFlight = true;
+    [SerializeField, Min(0f)] private float flightTakeoffVerticalSpeed = 6.5f;
+    [SerializeField, Min(0f)] private float flightTakeoffDuration = 0.45f;
+    [SerializeField, Min(0f)] private float flightTakeoffDamping = 16f;
+    [SerializeField, Min(0f)] private float flightCruiseSpeed = 33f;
+    [SerializeField, Min(0f)] private float flightBoostSpeed = 81f;
+    [SerializeField, Min(0f)] private float flightAcceleration = 54f;
+    [SerializeField, Min(0f)] private float flightBoostAcceleration = 126f;
+    [SerializeField, Min(0f)] private float flightDeceleration = 36f;
+    [SerializeField, Min(0f)] private float flightVerticalSpeed = 24f;
+    [SerializeField, Min(0f)] private float flightVerticalAcceleration = 66f;
+    [SerializeField, Min(0f)] private float flightVerticalDeceleration = 54f;
+    [SerializeField, Range(0f, 0.4f)] private float flightVerticalDeadZone = 0.05f;
+    [SerializeField, Min(0f)] private float flightIdleSpeedThreshold = 0.08f;
+    [SerializeField, Min(0f)] private float flightTurnRate = 760f;
+    [SerializeField, Min(0f)] private float flightBoostTurnRate = 460f;
 
     [Header("Animator Compatibility")]
     [SerializeField, Tooltip("Only enable for legacy Lit animator controllers. UCC animator controllers should be driven by AnimatorMonitor parameters.")]
@@ -61,10 +84,12 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool warnedMissingSpeedChange;
     private bool warnedMissingHeightChange;
     private bool warnedJumpRejected;
+    private bool warnedFlightStartRejected;
     private bool hasPendingJump;
     private float pendingJumpUntil;
     private Vector2 pendingJumpWorldInput;
     private bool pendingJumpHasWorldInput;
+    private LitUccFlightAbility flightAbility;
     private Vector3 lastPlanarDirection = Vector3.forward;
     private Vector3 lastPosition;
     private bool hasLastPosition;
@@ -84,6 +109,7 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
+    public bool IsFlightActive => flightAbility != null && flightAbility.IsActive;
     public bool Grounded => locomotion != null && locomotion.Grounded;
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
@@ -144,6 +170,11 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
             return false;
         }
 
+        if (IsFlightActive)
+        {
+            return false;
+        }
+
         if (hasWorldInput && worldInput.sqrMagnitude > movementDeadZone * movementDeadZone)
         {
             ApplyWorldMoveInput(worldInput);
@@ -157,12 +188,22 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
         Jump jump = locomotion != null ? locomotion.GetAbility<Jump>() : null;
         if (jump == null)
         {
+            if (TryApplyJumpForceFallback(worldInput, hasWorldInput))
+            {
+                return true;
+            }
+
             WarnOnce(ref warnedMissingJump, "UCC Jump ability is missing on this character. Add standard movement abilities with the Lit/Opsive UCC migration tool or Opsive Character Manager.");
             ClearPendingJump();
             return false;
         }
 
         if (TryStartJumpAbility(jump))
+        {
+            return true;
+        }
+
+        if (TryApplyJumpForceFallback(worldInput, hasWorldInput))
         {
             return true;
         }
@@ -175,6 +216,7 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     {
         ApplyWorldMoveInput(Vector2.zero);
         SetSprintModifier(false);
+        StopFlightAbilityIfActive();
     }
 
     public bool ToggleHeightChange()
@@ -204,6 +246,67 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         return locomotion.TryStartAbility(heightChange);
+    }
+
+    public bool ToggleFlightMode(float verticalInput)
+    {
+        return SetFlightMode(!IsFlightActive, verticalInput);
+    }
+
+    public bool SetFlightMode(bool active, float verticalInput)
+    {
+        ResolveReferences();
+
+        if (!enableUccFlight || !IsDriving || IsInputSuppressedByUcc)
+        {
+            return false;
+        }
+
+        if (!EnsureFlightAbility())
+        {
+            return false;
+        }
+
+        ConfigureFlightAbility();
+        flightAbility.SetInput(currentWorldMoveInput, sprintPressed, verticalInput);
+        if (!active)
+        {
+            return StopFlightAbilityIfActive();
+        }
+
+        if (flightAbility.IsActive)
+        {
+            return true;
+        }
+
+        ClearPendingJump();
+        if (locomotion.TryStartAbility(flightAbility, ignorePriority: true))
+        {
+            warnedFlightStartRejected = false;
+            return true;
+        }
+
+        WarnOnce(ref warnedFlightStartRejected, $"UCC Flight was requested on '{name}' but UltimateCharacterLocomotion rejected LitUccFlightAbility. ActiveAbilities={ResolveActiveAbilityLabel()}.");
+        return false;
+    }
+
+    public bool SetFlightInput(Vector2 worldInput, bool boost, float verticalInput)
+    {
+        ResolveReferences();
+
+        if (!enableUccFlight || !IsDriving || IsInputSuppressedByUcc)
+        {
+            return false;
+        }
+
+        if (!EnsureFlightAbility())
+        {
+            return false;
+        }
+
+        ConfigureFlightAbility();
+        flightAbility.SetInput(worldInput, boost, verticalInput);
+        return flightAbility.IsActive;
     }
 
     public bool BeginExternalLock(bool disableGameplayInput = true, bool stopActiveAbilities = false)
@@ -474,6 +577,11 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             playerInput.SetMovementOverride(Vector2.zero, IsDriving || IsInputSuppressedByUcc);
             playerInput.SetSprintOverride(false, IsDriving || IsInputSuppressedByUcc);
+        }
+
+        if (flightAbility != null)
+        {
+            flightAbility.SetInput(Vector2.zero, false, 0f);
         }
 
         if (overrideOpsiveHandlerInput && locomotionHandler != null)
@@ -797,6 +905,11 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (Time.time > pendingJumpUntil)
         {
+            if (TryApplyJumpForceFallback(pendingJumpWorldInput, pendingJumpHasWorldInput))
+            {
+                return;
+            }
+
             ClearPendingJump();
             WarnJumpRejected();
             return;
@@ -810,12 +923,107 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
         Jump jump = locomotion != null ? locomotion.GetAbility<Jump>() : null;
         if (jump == null)
         {
+            if (TryApplyJumpForceFallback(pendingJumpWorldInput, pendingJumpHasWorldInput))
+            {
+                return;
+            }
+
             WarnOnce(ref warnedMissingJump, "UCC Jump ability is missing on this character. Add standard movement abilities with the Lit/Opsive UCC migration tool or Opsive Character Manager.");
             ClearPendingJump();
             return;
         }
 
-        TryStartJumpAbility(jump);
+        if (!TryStartJumpAbility(jump))
+        {
+            TryApplyJumpForceFallback(pendingJumpWorldInput, pendingJumpHasWorldInput);
+        }
+    }
+
+    private bool TryApplyJumpForceFallback(Vector2 worldInput, bool hasWorldInput)
+    {
+        if (!useJumpForceFallback ||
+            jumpFallbackVelocity <= 0f ||
+            locomotion == null ||
+            !locomotion.Grounded ||
+            IsFlightActive)
+        {
+            return false;
+        }
+
+        if (hasWorldInput && worldInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            ApplyWorldMoveInput(worldInput);
+        }
+
+        locomotion.GravityAccumulation = 0f;
+        locomotion.AddForce(transform.up * jumpFallbackVelocity, 1, false);
+        warnedJumpRejected = false;
+        ClearPendingJump();
+        return true;
+    }
+
+    private bool EnsureFlightAbility()
+    {
+        if (!enableUccFlight || locomotion == null)
+        {
+            return false;
+        }
+
+        flightAbility = locomotion.GetAbility<LitUccFlightAbility>();
+        if (flightAbility != null)
+        {
+            ConfigureFlightAbility();
+            return true;
+        }
+
+        Ability[] abilities = locomotion.Abilities;
+        int length = abilities != null ? abilities.Length : 0;
+        Ability[] nextAbilities = new Ability[length + 1];
+        if (length > 0)
+        {
+            System.Array.Copy(abilities, nextAbilities, length);
+        }
+
+        flightAbility = new LitUccFlightAbility();
+        nextAbilities[length] = flightAbility;
+        locomotion.Abilities = nextAbilities;
+        ConfigureFlightAbility();
+        return flightAbility != null;
+    }
+
+    private void ConfigureFlightAbility()
+    {
+        if (flightAbility == null)
+        {
+            return;
+        }
+
+        flightAbility.Configure(
+            flightTakeoffVerticalSpeed,
+            flightTakeoffDuration,
+            flightTakeoffDamping,
+            flightCruiseSpeed,
+            flightBoostSpeed,
+            flightAcceleration,
+            flightBoostAcceleration,
+            flightDeceleration,
+            flightVerticalSpeed,
+            flightVerticalAcceleration,
+            flightVerticalDeceleration,
+            flightVerticalDeadZone,
+            flightIdleSpeedThreshold,
+            flightTurnRate,
+            flightBoostTurnRate);
+    }
+
+    private bool StopFlightAbilityIfActive()
+    {
+        if (flightAbility == null || !flightAbility.IsActive)
+        {
+            return true;
+        }
+
+        return locomotion != null && locomotion.TryStopAbility(flightAbility, true);
     }
 
     private void ClearPendingJump()

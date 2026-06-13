@@ -10,7 +10,8 @@ public class ItemSceneMarker : MonoBehaviour
     public enum MarkerAssetType
     {
         Item = 0,
-        Enemy = 1
+        Enemy = 1,
+        Ghost = 2
     }
 
     [Tooltip("Type de ScriptableObject place par ce marker.")]
@@ -19,11 +20,15 @@ public class ItemSceneMarker : MonoBehaviour
     public Item item;
     [Tooltip("CharacterData ennemi utilise pour la preview et le bake en scene.")]
     public CharacterData enemy;
+    [Tooltip("GhostData utilise pour la preview et le bake en scene.")]
+    public GhostData ghost;
 
     public Item Item => item;
     public CharacterData Enemy => enemy;
+    public GhostData Ghost => ghost;
     public bool UsesEnemy => assetType == MarkerAssetType.Enemy;
     public bool UsesItem => assetType == MarkerAssetType.Item;
+    public bool UsesGhost => assetType == MarkerAssetType.Ghost;
 
     public void SetAssetType(MarkerAssetType type)
     {
@@ -35,6 +40,11 @@ public class ItemSceneMarker : MonoBehaviour
         if (UsesEnemy)
         {
             return enemy != null ? enemy.ResolveWorldPrefab() : null;
+        }
+
+        if (UsesGhost)
+        {
+            return ghost != null ? ghost.ResolveWorldPrefab() : null;
         }
 
         return item != null ? item.ResolveWorldPrefab() : null;

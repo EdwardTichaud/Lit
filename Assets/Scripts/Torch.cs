@@ -19,6 +19,8 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
 
     public bool IsLit => isLit;
     public string TorchId => torchId;
+    public IReadOnlyList<GameObject> CommonLightActivationOrder => commonLightActivationOrder;
+    public Color FlameColor => LitFlameColorUtility.ResolveFlameColor(flameLight, flameObject, Color.white);
 
     public event Action<Torch, bool> StateChanged;
 
@@ -59,6 +61,8 @@ public class Torch : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Influence")]
     [SerializeField, Tooltip("Zone d'information active seulement quand la torche est allumée.")]
     private LitInfluenceSource litInfluence = new LitInfluenceSource(4f);
+    [SerializeField, Tooltip("Ordre d allumage des lights communes taggees Light quand cette torche les influence.")]
+    private List<GameObject> commonLightActivationOrder = new List<GameObject>();
 
     [Header("Flame Emission")]
     [Tooltip("Duree du fondu d'emission (allumage/extinction).")]

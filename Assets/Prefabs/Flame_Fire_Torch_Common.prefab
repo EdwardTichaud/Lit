@@ -4880,7 +4880,6 @@ GameObject:
   - component: {fileID: 652809537018247060}
   - component: {fileID: 5278389027223934819}
   - component: {fileID: 6411167676801556583}
-  - component: {fileID: 3509030300982643549}
   m_Layer: 0
   m_Name: Point Light
   m_TagString: Untagged
@@ -4897,7 +4896,7 @@ Transform:
   m_GameObject: {fileID: 6437568067220109783}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.012558934, y: 0, z: 0.0050436193}
+  m_LocalPosition: {x: 0.003934488, y: 0, z: 0.023071377}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4914,8 +4913,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 8.259359
-  m_Range: 9.666841
+  m_Intensity: 7.1639895
+  m_Range: 9.297738
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -4926,7 +4925,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.0966684
+    m_NearPlane: 0.09297738
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -5109,45 +5108,3 @@ MonoBehaviour:
   m_AreaLightEmissiveMeshShadowCastingMode: 0
   m_AreaLightEmissiveMeshMotionVectorGenerationMode: 0
   m_AreaLightEmissiveMeshLayer: -1
---- !u!114 &3509030300982643549
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6437568067220109783}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f3e10f1710d75e43bf63af34beedf4e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
-  targetLight: {fileID: 5278389027223934819}
-  searchInChildren: 1
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncTorchReceiverColor: 1
-  deferShadowingToTorchReceiver: 1
-  baseIntensity: 7.753548
-  baseRange: 9.453134
-  emberColor: {r: 1, g: 1, b: 1, a: 1}
-  flameColor: {r: 1, g: 1, b: 1, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 7.5
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 0
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 0

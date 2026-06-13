@@ -21,6 +21,8 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     public bool IsLit => isLit;
     public string BraseroId => braseroId;
     public bool IsAncientBrasero => ancientBrasero;
+    public IReadOnlyList<GameObject> CommonLightActivationOrder => commonLightActivationOrder;
+    public Color FlameColor => LitFlameColorUtility.ResolveFlameColor(flameLight, flameObject, Color.white);
 
     public event Action<Brasero, bool> StateChanged;
 
@@ -58,6 +60,8 @@ public class Brasero : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Influence")]
     [SerializeField, Tooltip("Zone d'information active seulement quand le brasero est allumé.")]
     private LitInfluenceSource litInfluence = new LitInfluenceSource(6f);
+    [SerializeField, Tooltip("Ordre d allumage des lights communes taggees Light quand ce brasero les influence.")]
+    private List<GameObject> commonLightActivationOrder = new List<GameObject>();
 
     [Header("Age")]
     [SerializeField, FormerlySerializedAs("drivesAgeManager"), Tooltip("Si actif, ce brasero allumé compte dans l'AgeManager comme brasero ancien.")]

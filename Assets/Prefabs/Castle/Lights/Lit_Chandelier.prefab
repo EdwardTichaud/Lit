@@ -4861,7 +4861,7 @@ Transform:
   m_GameObject: {fileID: 1202760654144429227}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -3, z: 0}
+  m_LocalPosition: {x: 0, y: -6.5599976, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -5347,7 +5347,7 @@ Transform:
   m_GameObject: {fileID: 6582820953214122612}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -3.5599976, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -5457,7 +5457,7 @@ Transform:
   m_GameObject: {fileID: 7387945463228875751}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -3.56, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5478,6 +5478,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3497028872376494746}
+  - component: {fileID: 8443970647998153521}
   m_Layer: 0
   m_Name: Lit_Chandelier
   m_TagString: Untagged
@@ -5503,6 +5504,29 @@ Transform:
   - {fileID: 1788347204001616365}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8443970647998153521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8266977117595964457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3da667ba86e9a2a448bb782a9a479882, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SwingMotion
+  pivot: {fileID: 3497028872376494746}
+  axisA: {x: 1, y: 0, z: 0}
+  angleA: 1.5
+  speedA: 1.1
+  axisB: {x: 0, y: 0, z: 1}
+  angleB: 1
+  speedB: 1.7
+  phaseOffsetB: 0.8
+  organicMotion: 1
+  organicAmount: 0.15
+  randomStartOffset: 1
 --- !u!1 &8377091686669562590
 GameObject:
   m_ObjectHideFlags: 0
@@ -5514,7 +5538,6 @@ GameObject:
   - component: {fileID: 386882293331314224}
   - component: {fileID: 2313909221726894386}
   - component: {fileID: 431186085935407292}
-  - component: {fileID: 2980785753605152105}
   m_Layer: 0
   m_Name: Point Light
   m_TagString: Untagged
@@ -5531,7 +5554,7 @@ Transform:
   m_GameObject: {fileID: 8377091686669562590}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.018834203, y: 0, z: -0.0063372897}
+  m_LocalPosition: {x: 0.0036160192, y: 0, z: -0.020716866}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5548,8 +5571,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 8.649363
-  m_Range: 9.816871
+  m_Intensity: 7.161972
+  m_Range: 9
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -5560,7 +5583,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.005
     m_NormalBias: 0.03
-    m_NearPlane: 0.09845899
+    m_NearPlane: 0.09368244
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -5743,48 +5766,6 @@ MonoBehaviour:
   m_AreaLightEmissiveMeshShadowCastingMode: 0
   m_AreaLightEmissiveMeshMotionVectorGenerationMode: 0
   m_AreaLightEmissiveMeshLayer: -1
---- !u!114 &2980785753605152105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8377091686669562590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f3e10f1710d75e43bf63af34beedf4e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FlickeringLight
-  targetLight: {fileID: 2313909221726894386}
-  searchInChildren: 1
-  forcePointLight: 1
-  useCurrentLightAsBase: 1
-  syncTorchReceiverColor: 1
-  deferShadowingToTorchReceiver: 1
-  baseIntensity: 8.259359
-  baseRange: 9.666841
-  emberColor: {r: 1, g: 1, b: 1, a: 1}
-  flameColor: {r: 1, g: 1, b: 1, a: 1}
-  intensityVariation: 0.24
-  rangeVariation: 0.08
-  colorVariation: 0.45
-  flickerSpeed: 7.5
-  burstStrength: 0.12
-  runtimeUpdateInterval: 0.05
-  animateLocalPosition: 1
-  swayAmplitude: 0.015
-  swaySpeed: 1.6
-  configureCandleShadowing: 0
-  renderMode: 1
-  shadowMode: 2
-  shadowStrength: 1
-  shadowBias: 0.005
-  shadowNormalBias: 0.03
-  shadowNearPlane: 0.02
-  hdrpShadowResolution: 1024
-  hdrpNormalBias: 0.03
-  hdrpSlopeBias: 0.1
-  enableHdrpContactShadows: 0
 --- !u!1 &8747311438080290514
 GameObject:
   m_ObjectHideFlags: 0

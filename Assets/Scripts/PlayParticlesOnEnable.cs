@@ -16,6 +16,11 @@ public class PlayParticlesOnEnable : MonoBehaviour
             CacheParticleSystems();
         }
 
+        if (LitInfluenceParticleSystemController.TryRegisterAndApply(particleSystems))
+        {
+            return;
+        }
+
         foreach (var ps in particleSystems)
         {
             if (ps == null)

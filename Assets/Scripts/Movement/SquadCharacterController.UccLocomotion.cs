@@ -10,6 +10,7 @@ public partial class SquadCharacterController
 
     public bool HasUccLocomotionBridge => GetUccLocomotionBridge() != null;
     public bool IsUccLocomotionActive => TryGetActiveUccLocomotionBridge(out _);
+    public bool IsUccFlightActive => TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge) && bridge.IsFlightActive;
 
     public void QueueUccJumpInput(Vector2 input, bool isWorldSpace)
     {
@@ -86,6 +87,27 @@ public partial class SquadCharacterController
         }
 
         return bridge.ToggleHeightChange();
+    }
+
+    public bool TryToggleUccFlightMode(float verticalInput)
+    {
+        if (!TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge))
+        {
+            return false;
+        }
+
+        return bridge.ToggleFlightMode(verticalInput);
+    }
+
+    public bool TrySetUccFlightInput(Vector2 input, bool isWorldSpace, bool boost, float verticalInput)
+    {
+        if (!TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge))
+        {
+            return false;
+        }
+
+        Vector2 worldInput = isWorldSpace ? input : GetWorldSpaceInput(input);
+        return bridge.SetFlightInput(worldInput, boost, verticalInput);
     }
 
     public bool TryBeginUccExternalLock(bool disableGameplayInput = true, bool stopActiveAbilities = false)

@@ -8,12 +8,24 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
 {
     [Header("Runtime")]
     [SerializeField] private bool enforceOnEnable = true;
+    [SerializeField, Tooltip("Laisse desactive pour eviter que l'inspecteur modifie les lights/renderers en edit mode.")]
+    private bool enforceInEditMode = false;
     [SerializeField, Tooltip("Desactive par defaut: scanner toutes les lumieres et tous les renderers en continu est couteux. Active seulement pour du debug ou des scenes qui spawnent du decor/lumieres dynamiques.")]
     private bool enforceContinuously = false;
     [SerializeField, Min(0.1f)] private float refreshInterval = 1f;
     [SerializeField] private bool includeInactiveLights = true;
 
     [Header("Light Shadows")]
+    [SerializeField] private bool configureLightShadows = true;
+    [SerializeField, Tooltip("Si desactive, ce composant n'allume jamais les ombres d'une light qui les avait coupees. Il ajuste seulement les lights deja shadowed.")]
+    private bool enableMissingLightShadows = false;
+    [SerializeField, Min(0)] private int maxMissingLightShadowsEnabledPerPass = 12;
+    [SerializeField] private LayerMask lightShadowLayers = ~0;
+    [SerializeField] private bool includePointLights = true;
+    [SerializeField] private bool includeSpotLights = true;
+    [SerializeField] private bool includeDirectionalLights = false;
+    [SerializeField] private bool includeAreaLights = false;
+    [SerializeField] private bool skipBakedLights = true;
     [SerializeField] private LightShadows shadowModeWhenMissing = LightShadows.Soft;
     [SerializeField] private bool forcePixelRenderMode = true;
     [SerializeField, Range(0f, 1f)] private float shadowStrength = 1f;
@@ -68,7 +80,7 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
     private void OnValidate()
     {
         ValidateFields();
-        if (!Application.isPlaying && enforceOnEnable)
+        if (!Application.isPlaying && enforceInEditMode && enforceOnEnable)
         {
             EnforceNow();
         }
@@ -85,17 +97,23 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
 
     private void ConfigureSceneLights()
     {
+        if (!configureLightShadows)
+        {
+            return;
+        }
+
         FindObjectsInactive inactiveMode = includeInactiveLights ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
         Light[] sceneLights = Object.FindObjectsByType<Light>(inactiveMode);
+        int missingShadowsEnabled = 0;
         for (int i = 0; i < sceneLights.Length; i++)
         {
-            ConfigureLight(sceneLights[i]);
+            ConfigureLight(sceneLights[i], ref missingShadowsEnabled);
         }
     }
 
-    private void ConfigureLight(Light targetLight)
+    private void ConfigureLight(Light targetLight, ref int missingShadowsEnabled)
     {
-        if (targetLight == null)
+        if (targetLight == null || !ShouldConfigureLight(targetLight))
         {
             return;
         }
@@ -107,6 +125,11 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
 
         if (targetLight.shadows == LightShadows.None)
         {
+            if (!CanEnableMissingShadows(ref missingShadowsEnabled))
+            {
+                return;
+            }
+
             targetLight.shadows = resolvedShadowMode;
             changed = true;
         }
@@ -158,6 +181,50 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
         }
     }
 
+    private bool ShouldConfigureLight(Light targetLight)
+    {
+        if ((lightShadowLayers.value & (1 << targetLight.gameObject.layer)) == 0)
+        {
+            return false;
+        }
+
+        if (skipBakedLights && targetLight.lightmapBakeType == LightmapBakeType.Baked)
+        {
+            return false;
+        }
+
+        switch (targetLight.type)
+        {
+            case LightType.Point:
+                return includePointLights;
+            case LightType.Spot:
+                return includeSpotLights;
+            case LightType.Directional:
+                return includeDirectionalLights;
+            case LightType.Rectangle:
+            case LightType.Disc:
+                return includeAreaLights;
+            default:
+                return false;
+        }
+    }
+
+    private bool CanEnableMissingShadows(ref int missingShadowsEnabled)
+    {
+        if (!enableMissingLightShadows || maxMissingLightShadowsEnabledPerPass < 1)
+        {
+            return false;
+        }
+
+        if (missingShadowsEnabled >= maxMissingLightShadowsEnabledPerPass)
+        {
+            return false;
+        }
+
+        missingShadowsEnabled++;
+        return true;
+    }
+
     private void ConfigureSceneShadowCasters()
     {
         FindObjectsInactive inactiveMode = includeInactiveRenderers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
@@ -201,6 +268,7 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
     private void ValidateFields()
     {
         refreshInterval = Mathf.Max(0.1f, refreshInterval);
+        maxMissingLightShadowsEnabledPerPass = Mathf.Max(0, maxMissingLightShadowsEnabledPerPass);
         if (shadowModeWhenMissing == LightShadows.None)
         {
             shadowModeWhenMissing = LightShadows.Soft;

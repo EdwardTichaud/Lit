@@ -13,6 +13,13 @@ public class CameraController : MonoBehaviour
     [Tooltip("Pivot de rotation verticale.")]
     [SerializeField] private Transform pitchPivot;
 
+    [Header("Startup Reset")]
+    [SerializeField, Tooltip("Reinitialise le Transform local de CameraSystem au lancement du jeu.")]
+    private bool resetTransformOnPlay = true;
+    [SerializeField] private Vector3 launchLocalPosition = Vector3.zero;
+    [SerializeField] private Vector3 launchLocalEulerAngles = Vector3.zero;
+    [SerializeField] private Vector3 launchLocalScale = Vector3.one;
+
     [Header("Compatibility")]
     [Tooltip("Cible logique courante resolue par la camera.")]
     public Transform mainCamCurrentTarget;
@@ -121,6 +128,7 @@ public class CameraController : MonoBehaviour
     private bool fixedCameraPoseInitialized;
     private Vector3 currentFixedCameraPosition;
     private Quaternion currentFixedCameraRotation = Quaternion.identity;
+    private bool launchTransformResetApplied;
 
     public bool FixedCameraActive => fixedCameraSource != null && fixedCameraPoint != null && fixedCameraTarget != null;
     public Camera MainCamera => mainCam;
@@ -153,6 +161,7 @@ public class CameraController : MonoBehaviour
 
     private void Awake()
     {
+        ApplyLaunchTransformReset();
         TryResolveRigReferences();
         ValidateFields();
         runSpeedEffect?.Initialize(mainCam);
@@ -160,6 +169,7 @@ public class CameraController : MonoBehaviour
 
     private void OnEnable()
     {
+        ApplyLaunchTransformReset();
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: true);
         cameraInput.Bind();
@@ -826,6 +836,11 @@ public class CameraController : MonoBehaviour
 
     private void ValidateFields()
     {
+        if (launchLocalScale == Vector3.zero)
+        {
+            launchLocalScale = Vector3.one;
+        }
+
         zoomNormalized = Mathf.Clamp01(zoomNormalized);
         zoomInSpeed = Mathf.Max(0f, zoomInSpeed);
         zoomOutSpeed = Mathf.Max(0f, zoomOutSpeed);
@@ -858,6 +873,19 @@ public class CameraController : MonoBehaviour
         cameraCollision?.Validate();
         runSpeedEffect?.Validate();
         fallSpeedEffect?.Validate();
+    }
+
+    private void ApplyLaunchTransformReset()
+    {
+        if (!Application.isPlaying || !resetTransformOnPlay || launchTransformResetApplied)
+        {
+            return;
+        }
+
+        transform.localPosition = launchLocalPosition;
+        transform.localRotation = Quaternion.Euler(launchLocalEulerAngles);
+        transform.localScale = launchLocalScale == Vector3.zero ? Vector3.one : launchLocalScale;
+        launchTransformResetApplied = true;
     }
 
     private static float NormalizePitchAngle(float angle)

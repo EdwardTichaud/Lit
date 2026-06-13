@@ -71,11 +71,14 @@ void GhostDissolveHDRP_float(
     float fineNoise = LitGhostValueNoise3D(animatedPosition * safeScale * max(FineNoiseMultiplier, 1.0) + 17.23);
     float layeredNoise = lerp(largeNoise, fineNoise, 0.38);
 
+    float visibility = saturate(DissolveAmount);
+
+    // DissolveAmount is now a direct visibility factor: 0 invisible, 1 visible.
+    // The noisy field only drives the emissive edge so alpha stays linear.
     float dissolveField = saturate(gradient + (layeredNoise - 0.5) * NoiseInfluence);
-    float threshold = lerp(-0.35 - safeEdge, 1.2 + safeEdge, saturate(DissolveAmount));
-    float visibility = smoothstep(threshold - safeEdge, threshold + safeEdge, dissolveField);
-    float edgeMask = 1.0 - saturate(abs(dissolveField - threshold) / safeEdge);
-    edgeMask *= saturate(1.0 - DissolveAmount) * visibility;
+    float edgeCenter = 1.0 - visibility;
+    float edgeMask = 1.0 - saturate(abs(dissolveField - edgeCenter) / safeEdge);
+    edgeMask *= visibility * (1.0 - visibility);
 
     float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - PositionWS);
     float fresnel = pow(saturate(1.0 - dot(normalize(NormalWS), viewDir)), max(FresnelPower, 0.0001)) * FresnelIntensity;
@@ -84,7 +87,7 @@ void GhostDissolveHDRP_float(
     float3 ghostColor = lerp(BaseColor.rgb, GhostTint.rgb, ghostMix);
     OutBaseColor = ghostColor * (0.45 + fresnel * 0.35);
     OutAlpha = saturate(BaseColor.a * GhostAlpha * visibility);
-    OutAlphaClipThreshold = AlphaClipThreshold;
+    OutAlphaClipThreshold = 0.0001;
     OutEmission = GhostTint.rgb * fresnel + DissolveEdgeColor.rgb * edgeMask * DissolveEdgeIntensity;
 }
 
