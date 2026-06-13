@@ -32,6 +32,23 @@ public static class SceneHierarchyOrganizer
         typeof(MovementLabDoor)
     };
 
+    private static readonly HashSet<string> RootOnlyComponentNames = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "AudioManager",
+        "KnowledgeManager",
+        "SquadManager",
+        "ConfirmationManager",
+        "InfoBoxUI",
+        "ReadableSentencePuzzleUI",
+        "LoadingScreenService",
+        "SaveSessionManager",
+        "ItemPassiveEffectSystem",
+        "NetcodeBootstrap",
+        "NetcodeLobbyUI",
+        "LocalPlayerInput",
+        "CombatHudController"
+    };
+
     private sealed class RoomBucket
     {
         public readonly string Name;
@@ -76,6 +93,12 @@ public static class SceneHierarchyOrganizer
         ValidateMaisonHierarchy();
     }
 
+    [MenuItem("Lit/Scenes/Repair Maison Root Objects")]
+    public static void RepairMaisonRootObjectsMenu()
+    {
+        RepairMaisonRootObjects();
+    }
+
     public static void OrganizeMaisonHierarchy()
     {
         Scene scene = OpenMaisonScene();
@@ -99,6 +122,19 @@ public static class SceneHierarchyOrganizer
         Debug.Log(validation.Format());
     }
 
+    public static void RepairMaisonRootObjects()
+    {
+        Scene scene = OpenMaisonScene();
+        int repairedRootOnlyObjects = RepairRootOnlySceneObjects(scene);
+        if (repairedRootOnlyObjects > 0)
+        {
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        Debug.Log($"Maison hierarchy root object repair: repairedRootOnlyObjects={repairedRootOnlyObjects}");
+    }
+
     private static Scene OpenMaisonScene()
     {
         Scene activeScene = SceneManager.GetActiveScene();
@@ -117,8 +153,10 @@ public static class SceneHierarchyOrganizer
             throw new InvalidOperationException("Scene not loaded.");
         }
 
+        int repairedRootOnlyObjects = dryRun ? CountNestedRootOnlySceneObjects(scene) : RepairRootOnlySceneObjects(scene);
+
         List<GameObject> initialRoots = scene.GetRootGameObjects()
-            .Where(root => root != null && root.name != OrganizerRootName)
+            .Where(root => root != null && root.name != OrganizerRootName && !ShouldRemainSceneRoot(root))
             .ToList();
 
         Transform organizerRoot = dryRun ? null : EnsureRoot(scene, OrganizerRootName);
@@ -138,7 +176,8 @@ public static class SceneHierarchyOrganizer
         {
             RootCount = initialRoots.Count,
             RoomMarkerCount = markers.Count,
-            RoomCount = dryRun ? CountDistinctRoomNames(markers) : buckets.Count
+            RoomCount = dryRun ? CountDistinctRoomNames(markers) : buckets.Count,
+            RepairedRootOnlyObjects = repairedRootOnlyObjects
         };
 
         if (dryRun)
@@ -203,6 +242,7 @@ public static class SceneHierarchyOrganizer
         List<GameObject> rootsToOrganize = scene.GetRootGameObjects()
             .Where(root => root != null &&
                            root.name != OrganizerRootName &&
+                           !ShouldRemainSceneRoot(root) &&
                            !protectedTransforms.Contains(root.transform))
             .ToList();
 
@@ -257,6 +297,100 @@ public static class SceneHierarchyOrganizer
 
             stats.Add(ClassifyObject(root));
         }
+    }
+
+    private static int CountNestedRootOnlySceneObjects(Scene scene)
+    {
+        return FindNestedRootOnlySceneObjects(scene).Count;
+    }
+
+    private static int RepairRootOnlySceneObjects(Scene scene)
+    {
+        List<Transform> rootOnlyObjects = FindNestedRootOnlySceneObjects(scene);
+        for (int i = 0; i < rootOnlyObjects.Count; i++)
+        {
+            Transform rootOnlyObject = rootOnlyObjects[i];
+            if (rootOnlyObject == null || rootOnlyObject.parent == null)
+            {
+                continue;
+            }
+
+            Undo.SetTransformParent(rootOnlyObject, null, "Repair root-only scene object");
+            rootOnlyObject.SetParent(null, worldPositionStays: true);
+            SceneManager.MoveGameObjectToScene(rootOnlyObject.gameObject, scene);
+        }
+
+        return rootOnlyObjects.Count;
+    }
+
+    private static List<Transform> FindNestedRootOnlySceneObjects(Scene scene)
+    {
+        HashSet<Transform> matches = new HashSet<Transform>();
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
+        {
+            GameObject root = roots[rootIndex];
+            if (root == null)
+            {
+                continue;
+            }
+
+            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+            for (int transformIndex = 0; transformIndex < transforms.Length; transformIndex++)
+            {
+                Transform current = transforms[transformIndex];
+                if (current == null || current.parent == null)
+                {
+                    continue;
+                }
+
+                if (HasRootOnlyComponent(current.gameObject))
+                {
+                    matches.Add(current);
+                }
+            }
+        }
+
+        return matches
+            .Where(transform => transform != null)
+            .OrderBy(transform => GetDepth(transform))
+            .ToList();
+    }
+
+    private static bool ShouldRemainSceneRoot(GameObject root)
+    {
+        return root != null && HasRootOnlyComponent(root);
+    }
+
+    private static bool HasRootOnlyComponent(GameObject gameObject)
+    {
+        if (gameObject == null)
+        {
+            return false;
+        }
+
+        MonoBehaviour[] behaviours = gameObject.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (IsRootOnlyComponent(behaviours[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsRootOnlyComponent(MonoBehaviour behaviour)
+    {
+        if (behaviour == null)
+        {
+            return false;
+        }
+
+        Type type = behaviour.GetType();
+        return RootOnlyComponentNames.Contains(type.Name) ||
+               (!string.IsNullOrEmpty(type.FullName) && RootOnlyComponentNames.Contains(type.FullName));
     }
 
     private static List<RoomMarker> CollectRoomMarkers(List<GameObject> roots)
@@ -521,6 +655,11 @@ public static class SceneHierarchyOrganizer
             return;
         }
 
+        if (target.parent != null)
+        {
+            return;
+        }
+
         if (IsUnderOrganizer(target))
         {
             return;
@@ -746,7 +885,6 @@ public static class SceneHierarchyOrganizer
             lower.Contains("canvas") ||
             lower.Contains("ui") ||
             lower.Contains("eventsystem") ||
-            lower.Contains("spawn") ||
             lower.Contains("post") ||
             lower.Contains("volume") ||
             lower.Contains("navmesh") ||
@@ -1424,6 +1562,7 @@ public static class SceneHierarchyOrganizer
         public int LightCount;
         public int GhostCount;
         public int MarkersMoved;
+        public int RepairedRootOnlyObjects;
         public string RoomNames;
         public string RootBreakdown;
 
@@ -1450,7 +1589,8 @@ public static class SceneHierarchyOrganizer
         {
             string summary = $"{title}: roots={RootCount}, roomMarkers={RoomMarkerCount}, rooms={RoomCount}, " +
                              $"geometry={GeometryCount}, interactables={InteractableCount}, lights={LightCount}, " +
-                             $"ghosts={GhostCount}, markersMoved={MarkersMoved}";
+                             $"ghosts={GhostCount}, markersMoved={MarkersMoved}, " +
+                             $"repairedRootOnlyObjects={RepairedRootOnlyObjects}";
 
             if (!string.IsNullOrWhiteSpace(RoomNames))
             {

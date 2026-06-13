@@ -92,16 +92,50 @@ public static class PersistentWorldDebug
             return "<null>";
         }
 
-        string path = target.name;
+        string path = GetHierarchySegment(target);
         Transform current = target.parent;
         while (current != null)
         {
-            path = $"{current.name}/{path}";
+            path = $"{GetHierarchySegment(current)}/{path}";
             current = current.parent;
         }
 
         string sceneName = target.gameObject.scene.IsValid() ? target.gameObject.scene.name : "NoScene";
         return $"{sceneName}:{path}";
+    }
+
+    private static string GetHierarchySegment(Transform target)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        Transform parent = target.parent;
+        if (parent == null)
+        {
+            return target.name;
+        }
+
+        int sameNameCount = 0;
+        int sameNameIndex = 0;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform sibling = parent.GetChild(i);
+            if (sibling == null || sibling.name != target.name)
+            {
+                continue;
+            }
+
+            if (sibling == target)
+            {
+                sameNameIndex = sameNameCount;
+            }
+
+            sameNameCount++;
+        }
+
+        return sameNameCount > 1 ? $"{target.name}#{sameNameIndex}" : target.name;
     }
 
     public static string DescribePersistentObjectType(PersistentNetworkObject persistentObject)

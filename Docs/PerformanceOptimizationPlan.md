@@ -2,6 +2,7 @@
 
 ## Immediate Changes Applied
 
+- Added an opt-in visibility optimization architecture documented in `Docs/VisibilityOptimization.md`: global manager, per-object proxies, camera-player visibility protection, and room light zones.
 - Disabled the legacy `DecorCullable` runtime culling by default. It was toggling `Renderer.enabled` based on camera/frustum distance and could cause visible pop-in/pop-out.
 - Prevented `DecorCullingManager` from registering disabled `DecorCullable` components.
 - Changed `SceneLightOcclusionEnforcer` so it no longer scans every `Light` and `Renderer` continuously by default.

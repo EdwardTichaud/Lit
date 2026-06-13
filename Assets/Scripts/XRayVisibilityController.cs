@@ -39,6 +39,8 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
     [Header("Layer Change")]
     [SerializeField] private bool applyToChildren = false;
+    [SerializeField, Tooltip("Signale les obstacles XRay au systeme global de visibilité pour qu'il ne coupe pas leurs renderers.")]
+    private bool protectCameraFadeRenderersFromCulling = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugDraw = true;
@@ -315,7 +317,10 @@ public sealed class XRayVisibilityController : MonoBehaviour
                 return candidate.transform;
             }
 
-            fallback ??= candidate.transform;
+            if (fallback == null)
+            {
+                fallback = candidate.transform;
+            }
         }
 
         return fallback;
@@ -340,7 +345,10 @@ public sealed class XRayVisibilityController : MonoBehaviour
                 continue;
             }
 
-            fallback ??= candidate;
+            if (fallback == null)
+            {
+                fallback = candidate;
+            }
             Transform parent = candidate.parent;
             if (parent == null || parent.gameObject.layer != layer)
             {
@@ -560,6 +568,16 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
     private bool ShouldIgnoreObstacle(Collider hitCollider, GameObject obstacle)
     {
+        CameraVisibilityObstacle marker = hitCollider != null
+            ? hitCollider.GetComponentInParent<CameraVisibilityObstacle>()
+            : obstacle != null
+                ? obstacle.GetComponentInParent<CameraVisibilityObstacle>()
+                : null;
+        if (marker != null && !marker.UsableByCameraFade)
+        {
+            return true;
+        }
+
         if (!ignoreInteractableAndOutlineObstacles)
         {
             return false;
@@ -647,6 +665,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
 
             SaveOriginalLayers(obstacle);
             SetLayer(obstacle, obstacleLayer);
+            RegisterProtectedObstacle(obstacle);
         }
 
         foreach (GameObject obstacle in previousObstacles)
@@ -656,6 +675,81 @@ public sealed class XRayVisibilityController : MonoBehaviour
                 RestoreLayer(obstacle);
             }
         }
+    }
+
+    private void RegisterProtectedObstacle(GameObject obstacle)
+    {
+        if (!protectCameraFadeRenderersFromCulling || obstacle == null)
+        {
+            return;
+        }
+
+        GameObject protectionRoot = ResolveProtectionRoot(obstacle);
+        CameraVisibilityObstacle marker = protectionRoot != null
+            ? protectionRoot.GetComponent<CameraVisibilityObstacle>()
+            : null;
+        if (marker != null && !marker.NeverCullWhenBetweenCameraAndPlayer)
+        {
+            return;
+        }
+
+        bool includeChildren = marker != null ? marker.IncludeChildRenderers : applyToChildren;
+        CameraVisibilityProtection.RegisterObstacle(protectionRoot != null ? protectionRoot : obstacle, this, includeChildren);
+    }
+
+    private void UnregisterProtectedObstacle(GameObject obstacle)
+    {
+        if (!protectCameraFadeRenderersFromCulling || obstacle == null)
+        {
+            return;
+        }
+
+        GameObject protectionRoot = ResolveProtectionRoot(obstacle);
+        CameraVisibilityObstacle marker = protectionRoot != null
+            ? protectionRoot.GetComponent<CameraVisibilityObstacle>()
+            : null;
+        bool includeChildren = marker != null ? marker.IncludeChildRenderers : applyToChildren;
+        if (IsProtectionRootStillCurrent(protectionRoot != null ? protectionRoot : obstacle, obstacle))
+        {
+            return;
+        }
+
+        CameraVisibilityProtection.UnregisterObstacle(protectionRoot != null ? protectionRoot : obstacle, this, includeChildren);
+    }
+
+    private static GameObject ResolveProtectionRoot(GameObject obstacle)
+    {
+        if (obstacle == null)
+        {
+            return null;
+        }
+
+        CameraVisibilityObstacle marker = obstacle.GetComponentInParent<CameraVisibilityObstacle>();
+        return marker != null ? marker.gameObject : obstacle;
+    }
+
+    private bool IsProtectionRootStillCurrent(GameObject protectionRoot, GameObject obstacleBeingRestored)
+    {
+        if (protectionRoot == null)
+        {
+            return false;
+        }
+
+        foreach (GameObject currentObstacle in currentObstacles)
+        {
+            if (currentObstacle == null || currentObstacle == obstacleBeingRestored)
+            {
+                continue;
+            }
+
+            GameObject currentProtectionRoot = ResolveProtectionRoot(currentObstacle);
+            if ((currentProtectionRoot != null ? currentProtectionRoot : currentObstacle) == protectionRoot)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void SaveOriginalLayers(GameObject root)
@@ -714,6 +808,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
                 originalLayers.Remove(root);
             }
 
+            UnregisterProtectedObstacle(root);
             return;
         }
 
@@ -731,6 +826,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
         }
 
         transformBuffer.Clear();
+        UnregisterProtectedObstacle(root);
     }
 
     private void RestoreAllLayers()
@@ -746,6 +842,7 @@ public sealed class XRayVisibilityController : MonoBehaviour
         originalLayers.Clear();
         currentObstacles.Clear();
         previousObstacles.Clear();
+        CameraVisibilityProtection.ClearOwner(this);
     }
 
     private void HideMask()

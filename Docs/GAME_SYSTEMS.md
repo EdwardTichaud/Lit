@@ -75,6 +75,25 @@ Unity génère `PlayerInputs.cs` depuis `Assets/PlayerInputs.inputactions`. Les 
 - Tester les obstacles caméra, les zones fixes et les transitions combat.
 - Voir aussi `Docs/CameraObstruction.md`.
 
+## Optimisation visibilité et rendu
+
+**Rôle** : réduire le coût de rendu sans couper les logiques de gameplay.
+
+**Fichiers principaux** :
+
+- `Assets/Scripts/VisibilityOptimization/VisibilityOptimizationManager.cs`
+- `Assets/Scripts/VisibilityOptimization/OptimizableObject.cs`
+- `Assets/Scripts/VisibilityOptimization/CameraVisibilityProtection.cs`
+- `Assets/Scripts/VisibilityOptimization/CameraVisibilityObstacle.cs`
+- `Assets/Scripts/VisibilityOptimization/RoomLightZoneController.cs`
+
+**Points d'attention** :
+
+- Le système est opt-in par objet et ne fait pas de `SetActive(false)`.
+- Le XRay/caméra-joueur reste prioritaire : les renderers protégés ne sont pas culled.
+- Les scripts ne sont pausés que s'ils implémentent explicitement les interfaces de visibilité.
+- Voir `Docs/VisibilityOptimization.md`.
+
 ## Interactions monde
 
 **Rôle** : permettre au joueur d'utiliser des objets de scène.
@@ -375,15 +394,21 @@ fantômes.
 
 - `Assets/Scripts/Zone.cs`
 - `Assets/Scripts/Environment/*`
+- `Assets/Scripts/SnowRuntimeEffects.cs`
 - `Assets/Scripts/Maison.cs`
 - `Assets/Scripts/MaisonWaitingPoint.cs`
 - `Assets/Scripts/HubZone.cs`
 - `Assets/Scripts/HubRosterManager.cs`
 
+**Neige et VFX runtime** :
+
+`SnowRuntimeEffects` se crée automatiquement en Play Mode, suit le personnage contrôlé localement, sample la surface sous lui, lit `_SnowAmount` sur les matériaux compatibles, puis pilote un `ParticleSystem` runtime de scintillement et un émetteur d'empreintes. Voir [SnowRuntimeEffects.md](SnowRuntimeEffects.md).
+
 **Points d'attention** :
 
 - Les zones peuvent impacter audio, torche, IA et état de personnages.
 - Tester les triggers en scène.
+- Les effets de neige dépendent à la fois du collider physique, du layer raycasté et des propriétés shader `_SnowAmount`, `_SnowTopThreshold` et `_SnowBlendSoftness`.
 
 ## Outils Editor
 
