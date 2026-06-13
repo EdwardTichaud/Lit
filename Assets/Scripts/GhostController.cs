@@ -238,6 +238,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     [SerializeField, Tooltip("Draw the proximity sphere detection radius when the ghost is selected.")]
     private bool drawProximitySpherecastGizmo = true;
 
+    [Header("Runtime Outline")]
+    [SerializeField, Range(0f, 1f), Tooltip("Outline is allowed only when the current ghost dissolve amount is below this threshold.")]
+    private float outlineVisibleDissolveThreshold = 0.5f;
+    [SerializeField, Tooltip("When enabled, lower dissolve values are considered visible for runtime outlines.")]
+    private bool outlineVisibleBelowDissolveThreshold = true;
+
     [Header("Light Influence")]
     [SerializeField, Tooltip("Si actif, ce fantome n'apparait et ne reagit que dans une zone d'influence allumee.")]
     private bool requireLitInfluenceForAppearance;
@@ -284,7 +290,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     public bool IsUnderstood => isUnderstood;
     public bool HasAppearedToPlayer => hasAppearedToPlayer;
     public bool IsRevealedToPlayer => isRevealedToPlayer;
-    public bool AllowsRuntimeOutline => hasAppearedToPlayer && isRevealedToPlayer && CanAppearAtAll();
+    public bool AllowsRuntimeOutline => hasAppearedToPlayer && isRevealedToPlayer && CanAppearAtAll() && HasVisibleRuntimeOutlineDissolve();
 
     private void Reset()
     {
@@ -332,6 +338,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private void LateUpdate()
     {
         RefreshRevealState(instantDissolve: false);
+        RefreshRuntimeOutlineVisibility();
         UpdateInteractionUiPosition();
     }
 
@@ -816,6 +823,63 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
                 }
             }
         }
+    }
+
+    private void RefreshRuntimeOutlineVisibility()
+    {
+        if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        {
+            RuntimeOutlineSelectionManager.RefreshActiveInteractable();
+        }
+    }
+
+    private bool HasVisibleRuntimeOutlineDissolve()
+    {
+        if (TryAnyProximityDissolveControllerVisible(out bool visible))
+        {
+            return visible;
+        }
+
+        if (!float.IsNaN(currentProximityDissolveAmount))
+        {
+            return IsRuntimeOutlineDissolveVisible(currentProximityDissolveAmount);
+        }
+
+        return !enableProximityDissolve;
+    }
+
+    private bool TryAnyProximityDissolveControllerVisible(out bool visible)
+    {
+        visible = false;
+        EnsureProximityDissolveControllersResolved();
+
+        bool hasController = false;
+        for (int i = 0; i < proximityDissolveControllers.Count; i++)
+        {
+            GhostDissolveController dissolve = proximityDissolveControllers[i];
+            if (dissolve == null)
+            {
+                continue;
+            }
+
+            hasController = true;
+            if (IsRuntimeOutlineDissolveVisible(dissolve.CurrentDissolveAmount))
+            {
+                visible = true;
+                return true;
+            }
+        }
+
+        return hasController;
+    }
+
+    private bool IsRuntimeOutlineDissolveVisible(float dissolveAmount)
+    {
+        float clampedAmount = Mathf.Clamp01(dissolveAmount);
+        float clampedThreshold = Mathf.Clamp01(outlineVisibleDissolveThreshold);
+        return outlineVisibleBelowDissolveThreshold
+            ? clampedAmount < clampedThreshold
+            : clampedAmount > clampedThreshold;
     }
 
     private void EnsureProximityDissolveControllersResolved()
@@ -1749,6 +1813,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
         proximityVisibleDissolveAmount = Mathf.Clamp01(proximityVisibleDissolveAmount);
         proximityHiddenDissolveAmount = Mathf.Clamp01(proximityHiddenDissolveAmount);
+        outlineVisibleDissolveThreshold = Mathf.Clamp01(outlineVisibleDissolveThreshold);
     }
 
     private static class LitInfluenceSourceFrameCache

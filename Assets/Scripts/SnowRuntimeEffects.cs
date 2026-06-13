@@ -4,25 +4,15 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-4500)]
+[System.Obsolete("Use SnowManager in the scene instead.")]
 public sealed class SnowRuntimeEffects : MonoBehaviour
 {
-    private const string RootName = "Snow Runtime Effects";
-
-    private static SnowRuntimeEffects instance;
     private static bool initialized;
-
-    [Header("Binding")]
-    [SerializeField, Min(0.05f)] private float characterRefreshInterval = 0.25f;
-
-    private SnowSparkleController sparkleController;
-    private GameObject currentCharacter;
-    private float nextCharacterRefreshTime;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
-        instance = null;
         initialized = false;
     }
 
@@ -40,114 +30,22 @@ public sealed class SnowRuntimeEffects : MonoBehaviour
             initialized = true;
         }
 
-        EnsureInstance();
+        SnowManager.RefreshActiveManagers(force: true);
     }
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        SnowRuntimeEffects controller = EnsureInstance();
-        if (controller == null)
-        {
-            return;
-        }
-
-        controller.currentCharacter = null;
-        controller.nextCharacterRefreshTime = 0f;
-        controller.RefreshControlledCharacter(force: true);
-    }
-
-    private static SnowRuntimeEffects EnsureInstance()
-    {
-        if (!Application.isPlaying)
-        {
-            return null;
-        }
-
-        if (instance != null)
-        {
-            return instance;
-        }
-
-        instance = FindAnyObjectByType<SnowRuntimeEffects>(FindObjectsInactive.Include);
-        if (instance != null)
-        {
-            DontDestroyOnLoad(instance.gameObject);
-            instance.EnsureSparkleController();
-            return instance;
-        }
-
-        GameObject controllerObject = new GameObject(RootName)
-        {
-            hideFlags = HideFlags.HideAndDontSave
-        };
-        DontDestroyOnLoad(controllerObject);
-        instance = controllerObject.AddComponent<SnowRuntimeEffects>();
-        return instance;
+        SnowManager.RefreshActiveManagers(force: true);
     }
 
     private void Awake()
     {
-        if (instance != null && instance != this)
+        if (GetComponent<SnowManager>() == null)
         {
-            Destroy(gameObject);
-            return;
+            gameObject.AddComponent<SnowManager>();
         }
 
-        instance = this;
-        DontDestroyOnLoad(gameObject);
-        EnsureSparkleController();
-    }
-
-    private void Update()
-    {
-        RefreshControlledCharacter(force: false);
-    }
-
-    private void EnsureSparkleController()
-    {
-        if (sparkleController != null)
-        {
-            return;
-        }
-
-        sparkleController = GetComponent<SnowSparkleController>();
-        if (sparkleController == null)
-        {
-            sparkleController = gameObject.AddComponent<SnowSparkleController>();
-        }
-    }
-
-    private void RefreshControlledCharacter(bool force)
-    {
-        if (!force && Time.time < nextCharacterRefreshTime)
-        {
-            return;
-        }
-
-        nextCharacterRefreshTime = Time.time + characterRefreshInterval;
-
-        GameObject controlledCharacter = LocalPlayerUtils.GetControlledCharacter();
-        if (!force && controlledCharacter == currentCharacter)
-        {
-            return;
-        }
-
-        currentCharacter = controlledCharacter;
-        EnsureSparkleController();
-        sparkleController.SetTarget(controlledCharacter != null ? controlledCharacter.transform : null);
-
-        if (controlledCharacter == null)
-        {
-            return;
-        }
-
-        SnowFootprintEmitter emitter = controlledCharacter.GetComponent<SnowFootprintEmitter>();
-        if (emitter == null)
-        {
-            emitter = controlledCharacter.AddComponent<SnowFootprintEmitter>();
-        }
-
-        emitter.SetControlledCharacterOnly(true);
+        enabled = false;
     }
 }
 
@@ -158,6 +56,12 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
     private static Mesh footprintMesh;
     private static Material footprintMaterial;
     private static Transform footprintRoot;
+
+    private SnowManager manager;
+    private Mesh configuredFootprintMesh;
+    private Material configuredFootprintMaterial;
+    private Transform configuredFootprintRoot;
+    private bool emitFootprints = true;
 
     [Header("Surface Detection")]
     [SerializeField] private LayerMask groundMask = ~0;
@@ -179,6 +83,8 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
     [SerializeField, Min(0.01f)] private float footprintWidth = 0.17f;
     [SerializeField, Min(0.01f)] private float footprintLength = 0.42f;
     [SerializeField, Min(0f)] private float surfaceOffset = 0.012f;
+    [SerializeField] private Color lowSnowColor = new Color(0.20f, 0.25f, 0.30f, 0.12f);
+    [SerializeField] private Color highSnowColor = new Color(0.08f, 0.12f, 0.16f, 0.42f);
 
     private readonly List<FootprintInstance> footprints = new List<FootprintInstance>();
     private Vector3 lastPosition;
@@ -193,9 +99,69 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
         controlledCharacterOnly = value;
     }
 
+    public void ApplySettings(SnowManager owner)
+    {
+        manager = owner;
+        if (manager == null)
+        {
+            emitFootprints = false;
+            return;
+        }
+
+        SnowManager.SurfaceSamplingSettings surfaceSettings = manager.FootprintSurface;
+        SnowManager.FootprintSettings footprintSettings = manager.Footprints;
+
+        groundMask = surfaceSettings.GroundMask;
+        raycastHeight = surfaceSettings.RaycastHeight;
+        raycastDistance = surfaceSettings.RaycastDistance;
+        minimumGroundNormalY = surfaceSettings.MinimumGroundNormalY;
+        fallbackSnowAmount = surfaceSettings.FallbackSnowAmount;
+
+        minimumSnowAmount = footprintSettings.MinimumSnowAmount;
+        controlledCharacterOnly = footprintSettings.ControlledCharacterOnly;
+        requireGrounded = footprintSettings.RequireGrounded;
+        stepDistance = footprintSettings.StepDistance;
+        minimumStepInterval = footprintSettings.MinimumStepInterval;
+        maxFootprints = footprintSettings.MaxFootprints;
+        footprintLifetime = footprintSettings.Lifetime;
+        lateralFootOffset = footprintSettings.LateralFootOffset;
+        forwardFootOffset = footprintSettings.ForwardFootOffset;
+        footprintWidth = footprintSettings.Width;
+        footprintLength = footprintSettings.Length;
+        surfaceOffset = footprintSettings.SurfaceOffset;
+        lowSnowColor = footprintSettings.LowSnowColor;
+        highSnowColor = footprintSettings.HighSnowColor;
+        emitFootprints = manager.FootprintsEnabled;
+
+        Mesh newMesh = manager.GetFootprintMesh();
+        Material newMaterial = manager.GetFootprintMaterial();
+        Transform newRoot = manager.GetFootprintRoot();
+        bool resourcesChanged = newMesh != configuredFootprintMesh || newMaterial != configuredFootprintMaterial;
+        bool rootChanged = newRoot != configuredFootprintRoot;
+
+        configuredFootprintMesh = newMesh;
+        configuredFootprintMaterial = newMaterial;
+        configuredFootprintRoot = newRoot;
+
+        if (resourcesChanged)
+        {
+            ApplyResourcesToFootprints();
+        }
+
+        if (rootChanged)
+        {
+            ReparentFootprints();
+        }
+    }
+
     private void OnEnable()
     {
         EnsureSharedResources();
+        if (manager == null && SnowManager.Instance != null)
+        {
+            ApplySettings(SnowManager.Instance);
+        }
+
         squadController = GetComponent<SquadCharacterController>();
         lastPosition = transform.position;
         hasLastPosition = true;
@@ -204,6 +170,11 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
     private void Update()
     {
         UpdateFootprintFades();
+
+        if (!emitFootprints)
+        {
+            return;
+        }
 
         if (controlledCharacterOnly && !IsControlledCharacter())
         {
@@ -302,10 +273,7 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
         surfaceForward = Quaternion.AngleAxis(leftFootNext ? -4f : 4f, sample.Normal) * surfaceForward;
 
         float snowT = Mathf.InverseLerp(minimumSnowAmount, 1f, sample.SnowAmount);
-        Color footprintColor = Color.Lerp(
-            new Color(0.20f, 0.25f, 0.30f, 0.12f),
-            new Color(0.08f, 0.12f, 0.16f, 0.42f),
-            snowT);
+        Color footprintColor = Color.Lerp(lowSnowColor, highSnowColor, snowT);
         float width = footprintWidth * Mathf.Lerp(0.75f, 1.08f, snowT);
         float length = footprintLength * Mathf.Lerp(0.85f, 1.12f, snowT);
 
@@ -367,7 +335,7 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
     private FootprintInstance CreateFootprintInstance()
     {
         EnsureSharedResources();
-        Transform parent = GetFootprintRoot();
+        Transform parent = ResolveFootprintRoot();
         GameObject footprintObject = new GameObject("Snow Footprint")
         {
             hideFlags = HideFlags.DontSave
@@ -376,14 +344,14 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
         footprintObject.SetActive(false);
 
         MeshFilter filter = footprintObject.AddComponent<MeshFilter>();
-        filter.sharedMesh = footprintMesh;
+        filter.sharedMesh = ResolveFootprintMesh();
 
         MeshRenderer renderer = footprintObject.AddComponent<MeshRenderer>();
-        renderer.sharedMaterial = footprintMaterial;
+        renderer.sharedMaterial = ResolveFootprintMaterial();
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
 
-        return new FootprintInstance(footprintObject, renderer);
+        return new FootprintInstance(footprintObject, filter, renderer);
     }
 
     private void UpdateFootprintFades()
@@ -441,9 +409,49 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
         }
     }
 
+    private Mesh ResolveFootprintMesh()
+    {
+        EnsureSharedResources();
+        return configuredFootprintMesh != null ? configuredFootprintMesh : footprintMesh;
+    }
+
+    private Material ResolveFootprintMaterial()
+    {
+        EnsureSharedResources();
+        return configuredFootprintMaterial != null ? configuredFootprintMaterial : footprintMaterial;
+    }
+
+    private Transform ResolveFootprintRoot()
+    {
+        return configuredFootprintRoot != null ? configuredFootprintRoot : GetFootprintRoot();
+    }
+
+    private void ApplyResourcesToFootprints()
+    {
+        Mesh mesh = ResolveFootprintMesh();
+        Material material = ResolveFootprintMaterial();
+        for (int i = 0; i < footprints.Count; i++)
+        {
+            footprints[i].ApplyResources(mesh, material);
+        }
+    }
+
+    private void ReparentFootprints()
+    {
+        Transform parent = ResolveFootprintRoot();
+        for (int i = 0; i < footprints.Count; i++)
+        {
+            if (footprints[i].Root != null)
+            {
+                footprints[i].Root.transform.SetParent(parent, worldPositionStays: true);
+            }
+        }
+    }
+
     private sealed class FootprintInstance
     {
         public readonly GameObject Root;
+        private readonly MeshFilter filter;
         private readonly MeshRenderer renderer;
         private readonly MaterialPropertyBlock propertyBlock;
 
@@ -451,11 +459,25 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
         public float Lifetime;
         public Color BaseColor;
 
-        public FootprintInstance(GameObject root, MeshRenderer renderer)
+        public FootprintInstance(GameObject root, MeshFilter filter, MeshRenderer renderer)
         {
             Root = root;
+            this.filter = filter;
             this.renderer = renderer;
             propertyBlock = new MaterialPropertyBlock();
+        }
+
+        public void ApplyResources(Mesh mesh, Material material)
+        {
+            if (filter != null)
+            {
+                filter.sharedMesh = mesh;
+            }
+
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = material;
+            }
         }
 
         public void ApplyColor(Color color)
@@ -474,6 +496,8 @@ internal sealed class SnowFootprintEmitter : MonoBehaviour
 
 internal sealed class SnowSparkleController : MonoBehaviour
 {
+    private SnowManager manager;
+
     [Header("Surface Detection")]
     [SerializeField] private LayerMask groundMask = ~0;
     [SerializeField, Min(0f)] private float raycastHeight = 1.3f;
@@ -482,19 +506,83 @@ internal sealed class SnowSparkleController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float fallbackSnowAmount;
 
     [Header("Particles")]
+    [SerializeField] private bool particlesEnabled = true;
+    [SerializeField] private Material particleMaterial;
+    [SerializeField, Min(1)] private int maxParticles = 220;
     [SerializeField, Min(0f)] private float followHeight = 0.4f;
     [SerializeField, Min(0.1f)] private float shapeRadius = 3.5f;
     [SerializeField, Min(0.1f)] private float shapeHeight = 0.8f;
     [SerializeField, Min(0f)] private float maxEmissionRate = 46f;
     [SerializeField, Min(0f)] private float amountSmoothTime = 0.2f;
+    [SerializeField, Min(0.01f)] private float minLifetime = 0.35f;
+    [SerializeField, Min(0.01f)] private float maxLifetime = 1.4f;
+    [SerializeField, Min(0f)] private float minStartSpeed = 0.01f;
+    [SerializeField, Min(0f)] private float maxStartSpeed = 0.18f;
+    [SerializeField, Min(0.001f)] private float minStartSize = 0.012f;
+    [SerializeField, Min(0.001f)] private float maxStartSize = 0.045f;
+    [SerializeField, Range(0f, 1f)] private float minAlpha = 0.015f;
+    [SerializeField, Range(0f, 1f)] private float maxAlpha = 0.55f;
+    [SerializeField, Min(0f)] private float minIntensity = 0.6f;
+    [SerializeField, Min(0f)] private float maxIntensity = 2.8f;
 
     private Transform target;
     private ParticleSystem sparkleSystem;
     private ParticleSystem.EmissionModule emissionModule;
     private ParticleSystem.MainModule mainModule;
     private ParticleSystem.ShapeModule shapeModule;
+    private Material runtimeParticleMaterial;
     private float smoothedSnowAmount;
     private float snowAmountVelocity;
+
+    public void ApplySettings(SnowManager owner)
+    {
+        manager = owner;
+        if (manager == null)
+        {
+            particlesEnabled = false;
+            SetTarget(null);
+            if (sparkleSystem != null)
+            {
+                ApplySnowAmount(0f);
+            }
+            return;
+        }
+
+        SnowManager.SurfaceSamplingSettings surfaceSettings = manager.ParticleSurface;
+        SnowManager.ParticleSettings particleSettings = manager.Particles;
+
+        groundMask = surfaceSettings.GroundMask;
+        raycastHeight = surfaceSettings.RaycastHeight;
+        raycastDistance = surfaceSettings.RaycastDistance;
+        minimumGroundNormalY = surfaceSettings.MinimumGroundNormalY;
+        fallbackSnowAmount = surfaceSettings.FallbackSnowAmount;
+
+        particlesEnabled = manager.ParticlesEnabled;
+        particleMaterial = manager.GetParticleMaterial();
+        maxParticles = particleSettings.MaxParticles;
+        followHeight = particleSettings.FollowHeight;
+        shapeRadius = particleSettings.ShapeRadius;
+        shapeHeight = particleSettings.ShapeHeight;
+        maxEmissionRate = particleSettings.MaxEmissionRate;
+        amountSmoothTime = particleSettings.AmountSmoothTime;
+        minLifetime = particleSettings.MinLifetime;
+        maxLifetime = particleSettings.MaxLifetime;
+        minStartSpeed = particleSettings.MinStartSpeed;
+        maxStartSpeed = particleSettings.MaxStartSpeed;
+        minStartSize = particleSettings.MinStartSize;
+        maxStartSize = particleSettings.MaxStartSize;
+        minAlpha = particleSettings.MinAlpha;
+        maxAlpha = particleSettings.MaxAlpha;
+        minIntensity = particleSettings.MinIntensity;
+        maxIntensity = particleSettings.MaxIntensity;
+
+        EnsureParticleSystem();
+        ApplyParticleSystemSettings();
+        if (!particlesEnabled)
+        {
+            ApplySnowAmount(0f);
+        }
+    }
 
     public void SetTarget(Transform newTarget)
     {
@@ -514,7 +602,12 @@ internal sealed class SnowSparkleController : MonoBehaviour
     private void OnEnable()
     {
         EnsureParticleSystem();
-        if (!sparkleSystem.isPlaying)
+        if (manager == null && SnowManager.Instance != null)
+        {
+            ApplySettings(SnowManager.Instance);
+        }
+
+        if (particlesEnabled && !sparkleSystem.isPlaying)
         {
             sparkleSystem.Play();
         }
@@ -523,6 +616,13 @@ internal sealed class SnowSparkleController : MonoBehaviour
     private void Update()
     {
         EnsureParticleSystem();
+        ApplyParticleSystemSettings();
+
+        if (!particlesEnabled)
+        {
+            ApplySnowAmount(0f);
+            return;
+        }
 
         float targetAmount = SampleTargetSnowAmount();
         smoothedSnowAmount = Mathf.SmoothDamp(
@@ -564,8 +664,8 @@ internal sealed class SnowSparkleController : MonoBehaviour
         snowAmount = Mathf.Clamp01(snowAmount);
         float visibleAmount = snowAmount;
         float emissionRate = Mathf.Lerp(0f, maxEmissionRate, visibleAmount);
-        float alpha = Mathf.Lerp(0.015f, 0.55f, visibleAmount);
-        float intensity = Mathf.Lerp(0.6f, 2.8f, visibleAmount);
+        float alpha = Mathf.Lerp(minAlpha, maxAlpha, visibleAmount);
+        float intensity = Mathf.Lerp(minIntensity, maxIntensity, visibleAmount);
         Color startColor = new Color(intensity, intensity, intensity * 1.05f, alpha);
 
         emissionModule.rateOverTime = new ParticleSystem.MinMaxCurve(emissionRate);
@@ -605,10 +705,6 @@ internal sealed class SnowSparkleController : MonoBehaviour
         mainModule.loop = true;
         mainModule.playOnAwake = true;
         mainModule.simulationSpace = ParticleSystemSimulationSpace.World;
-        mainModule.maxParticles = 220;
-        mainModule.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 1.4f);
-        mainModule.startSpeed = new ParticleSystem.MinMaxCurve(0.01f, 0.18f);
-        mainModule.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.045f);
         mainModule.gravityModifier = 0f;
 
         emissionModule = sparkleSystem.emission;
@@ -617,8 +713,6 @@ internal sealed class SnowSparkleController : MonoBehaviour
         shapeModule = sparkleSystem.shape;
         shapeModule.enabled = true;
         shapeModule.shapeType = ParticleSystemShapeType.Box;
-        shapeModule.scale = new Vector3(shapeRadius * 2f, shapeHeight, shapeRadius * 2f);
-        shapeModule.position = Vector3.up * (shapeHeight * 0.5f);
 
         ParticleSystem.ColorOverLifetimeModule colorOverLifetime = sparkleSystem.colorOverLifetime;
         colorOverLifetime.enabled = true;
@@ -640,11 +734,48 @@ internal sealed class SnowSparkleController : MonoBehaviour
 
         ParticleSystemRenderer renderer = sparkleSystem.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
-        renderer.sharedMaterial = SnowRuntimeUtility.CreateTransparentRuntimeMaterial(
-            "Runtime Snow Sparkle Material",
-            Color.white,
-            additive: true);
         renderer.sortingFudge = 0.25f;
+        ApplyParticleSystemSettings();
+    }
+
+    private void ApplyParticleSystemSettings()
+    {
+        if (sparkleSystem == null)
+        {
+            return;
+        }
+
+        mainModule.maxParticles = maxParticles;
+        mainModule.startLifetime = new ParticleSystem.MinMaxCurve(minLifetime, maxLifetime);
+        mainModule.startSpeed = new ParticleSystem.MinMaxCurve(minStartSpeed, maxStartSpeed);
+        mainModule.startSize = new ParticleSystem.MinMaxCurve(minStartSize, maxStartSize);
+
+        shapeModule.scale = new Vector3(shapeRadius * 2f, shapeHeight, shapeRadius * 2f);
+        shapeModule.position = Vector3.up * (shapeHeight * 0.5f);
+
+        ParticleSystemRenderer renderer = sparkleSystem.GetComponent<ParticleSystemRenderer>();
+        if (renderer != null)
+        {
+            renderer.sharedMaterial = ResolveParticleMaterial();
+        }
+    }
+
+    private Material ResolveParticleMaterial()
+    {
+        if (particleMaterial != null)
+        {
+            return particleMaterial;
+        }
+
+        if (runtimeParticleMaterial == null)
+        {
+            runtimeParticleMaterial = SnowRuntimeUtility.CreateTransparentRuntimeMaterial(
+                "Runtime Snow Sparkle Material",
+                Color.white,
+                additive: true);
+        }
+
+        return runtimeParticleMaterial;
     }
 }
 

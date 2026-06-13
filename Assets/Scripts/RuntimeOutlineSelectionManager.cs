@@ -26,6 +26,18 @@ public static class RuntimeOutlineSelectionManager
         return interactable != null && ReferenceEquals(activeInteractable, interactable);
     }
 
+    public static void RefreshActiveInteractable()
+    {
+        if (activeInteractable == null)
+        {
+            return;
+        }
+
+        CandidateTargets.Clear();
+        RuntimeOutlineUtility.CollectOutlineTargets(activeInteractable as Component, CandidateTargets, ensureTargets: true);
+        SetActiveTargets(activeOwner, CandidateTargets);
+    }
+
     public static void SetActiveComponent(Component component)
     {
         SetActiveComponent(null, component);
