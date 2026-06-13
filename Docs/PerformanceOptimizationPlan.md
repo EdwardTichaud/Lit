@@ -3,8 +3,7 @@
 ## Immediate Changes Applied
 
 - Added an opt-in visibility optimization architecture documented in `Docs/VisibilityOptimization.md`: global manager, per-object proxies, camera-player visibility protection, and room light zones.
-- Disabled the legacy `DecorCullable` runtime culling by default. It was toggling `Renderer.enabled` based on camera/frustum distance and could cause visible pop-in/pop-out.
-- Prevented `DecorCullingManager` from registering disabled `DecorCullable` components.
+- Migrated the existing decoration visibility setup to `OptimizableObject` and removed the old dedicated decor culling implementation.
 - Changed `SceneLightOcclusionEnforcer` so it no longer scans every `Light` and `Renderer` continuously by default.
 - Updated the existing `Maison` scene instance of `SceneLightOcclusionEnforcer` to `enforceContinuously: false`.
 - Cached `AgeManager` renderers that support `_AgeAmount`, avoiding repeated material-property scans across all scene renderers on every age recalculation.
@@ -24,7 +23,7 @@
 ### Runtime CPU
 
 - `SceneLightOcclusionEnforcer` was scanning all scene lights and renderers every second.
-- `DecorCullable` was present hundreds of times in `Maison`, `Bridge`, and `BridgeCross`; it could disable/enable renderers at runtime.
+- Visibility optimization now covers many decoration roots in `Maison`, `Bridge`, and `BridgeCross`; profile thresholds carefully to avoid visible pop-in/pop-out.
 - `AgeManager` scanned all renderers and all materials to apply `_AgeAmount`.
 - Several systems rely on global scene searches: `CharacterStateStore`, `BuilderController`, `BuildingInfoInteractable`, `SquadManager`, `ItemPassiveEffectSystem`.
 - Many interaction/world UI scripts update positions in `LateUpdate`; this should be limited to visible/active UI only.
@@ -50,7 +49,7 @@
 
 ### P0: Stabilize Runtime Cost
 
-- Keep `DecorCullable` disabled unless a specific object genuinely needs it.
+- Keep visibility optimization profiles conservative and tune per category before broadening culling distances.
 - Keep `SceneLightOcclusionEnforcer.enforceContinuously` disabled. Use `EnforceNow` manually or once on scene load.
 - Profile `Maison` in a Development Build with Deep Profiling off. Capture CPU Timeline, Rendering, Memory, and GPU where possible.
 - Record baselines: frame time, main thread, render thread, batches, set pass calls, shadow casters, realtime lights, texture memory.

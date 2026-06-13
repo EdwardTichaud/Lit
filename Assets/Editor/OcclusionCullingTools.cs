@@ -23,7 +23,6 @@ public static class OcclusionCullingTools
         "BuilderController",
         "BuildingInfoInteractable",
         "CharacterController",
-        "DecorCullingManager",
         "DestructibleObject",
         "HubCompanionSwapTrigger",
         "InteractableItem",
@@ -298,7 +297,7 @@ public static class OcclusionCullingTools
                 }
 
                 Type type = behaviour.GetType();
-                if (type == typeof(DecorCullable))
+                if (type == typeof(OptimizableObject))
                 {
                     continue;
                 }

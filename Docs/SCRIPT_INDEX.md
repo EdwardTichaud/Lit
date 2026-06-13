@@ -45,13 +45,12 @@ Il ne remplace pas la lecture du code : le rôle, les dépendances et le risque 
 
 ## Index des scripts projet
 
-Nombre de scripts indexés : **251**.
+Nombre de scripts indexés : **248**.
 
 | Script | Classe principale | Rôle | Dépendances | Scènes ou prefabs probablement concernés | Risque |
 |---|---|---|---|---|---|
 | `Assets/Editor/CharacterDataIdAssigner.cs` | `CharacterDataIdAssigner` | Outil Editor pour automatiser une tâche de production dans Unity. | Editor | Unity Editor uniquement | moyen |
 | `Assets/Editor/CombatSceneUiInstaller.cs` | `CombatSceneUiInstaller` | Outil Editor pour automatiser une tâche de production dans Unity. | Editor, UI, Combat | Unity Editor uniquement | moyen |
-| `Assets/Editor/DecorCullingTools.cs` | `DecorCullingTools` | Outil Editor pour automatiser une tâche de production dans Unity. | Editor, Netcode | Unity Editor uniquement | élevé |
 | `Assets/Editor/FabHdrpMaterialRepair.cs *(origine incertaine)*` | `FabHdrpMaterialRepair` | Outil Editor pour automatiser une tâche de production dans Unity. | Editor, Persistence | Unity Editor uniquement | élevé |
 | `Assets/Editor/GlbToFbxConverterWindow.cs *(origine incertaine)*` | `GlbToFbxConverterWindow` | Outil Editor pour automatiser une tâche de production dans Unity. | Editor, UI | Unity Editor uniquement | moyen |
 | `Assets/Editor/HiddenRoomSceneInstaller.cs` | `HiddenRoomSceneInstaller` | Outil Editor pour automatiser une tâche de production dans Unity. | Editor | Unity Editor uniquement | moyen |
@@ -116,8 +115,6 @@ Nombre de scripts indexés : **251**.
 | `Assets/Scripts/CrpgCameraFocus.cs *(origine incertaine)*` | `CrpgCameraFocus` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/CrpgCameraInput.cs *(origine incertaine)*` | `CrpgCameraInput` | Comportement ou donnée spécifique au projet. | Unity | Appelé par code ou ajouté runtime | moyen |
 | `Assets/Scripts/CursorController.cs` | `CursorController` | Contrôleur de comportement ou d interface. | UI, Input, Audio | Scènes/Prefabs (4 fichiers) | élevé |
-| `Assets/Scripts/DecorCullable.cs` | `DecorCullable` | Comportement ou donnée spécifique au projet. | Physics | Scènes/Prefabs (4 fichiers) | moyen |
-| `Assets/Scripts/DecorCullingManager.cs` | `DecorCullingManager` | Manager central qui coordonne un système runtime. | Unity | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/DestructibleObject.cs` | `DestructibleObject` | Comportement ou donnée spécifique au projet. | Netcode, Input, Audio, Physics | Appelé par code ou ajouté runtime | élevé |
 | `Assets/Scripts/Door.cs` | `Door` | Objet interactif de scène. | Netcode, UI, Input, Audio, Physics | Scènes (Assets/Scenes/Maison.unity) | élevé |
 | `Assets/Scripts/EchoPassiveEffect.cs` | `EchoPassiveEffect` | Effet appliqué par un item, une action ou un état de gameplay. | Audio, ScriptableObject | Appelé par code ou ajouté runtime | faible |

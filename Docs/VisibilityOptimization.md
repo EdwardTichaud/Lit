@@ -12,7 +12,7 @@ Audit rapide de `Assets/Scenes/Maison.unity` par lecture YAML hors Unity :
 - 49 lights ;
 - environ 103 déclarations `Update`, `LateUpdate` ou `FixedUpdate` dans les scripts du projet.
 
-Le projet possède déjà des systèmes proches (`DecorCullingManager`, `DecorCullable`, obstruction caméra/XRay), mais ils ne doivent pas devenir un culling brutal global. Le nouveau système est donc opt-in par objet.
+Le système remplace l'ancien culling décor par une optimisation opt-in par objet, avec une séparation claire entre rendu, lights et éventuelles pauses de scripts compatibles. L'obstruction caméra/XRay reste traitée comme une protection prioritaire.
 
 ## Architecture
 

@@ -378,13 +378,11 @@ fantômes.
 - `Assets/Scripts/BuildingInfoInteractable.cs`
 - `Assets/Scripts/BuildingPanelController.cs`
 - `Assets/Scripts/BuildingRuntimeState.cs`
-- `Assets/Scripts/DecorCullable.cs`
-- `Assets/Scripts/DecorCullingManager.cs`
 
 **Points d'attention** :
 
 - Le build est lié à l'inventaire et parfois au Netcode.
-- Le décor peut avoir beaucoup d'instances en scène.
+- Le décor peut avoir beaucoup d'instances en scène ; l'optimisation de visibilité est documentée dans la section dédiée.
 
 ## Environnement et zones
 
