@@ -3158,6 +3158,24 @@ MonoBehaviour:
   movementDeadZone: 0.08
   jumpRetryWindow: 0.15
   warnWhenJumpRejected: 1
+  useJumpForceFallback: 1
+  jumpFallbackVelocity: 7
+  enableUccFlight: 1
+  flightTakeoffVerticalSpeed: 6.5
+  flightTakeoffDuration: 0.45
+  flightTakeoffDamping: 16
+  flightCruiseSpeed: 33
+  flightBoostSpeed: 81
+  flightAcceleration: 54
+  flightBoostAcceleration: 126
+  flightDeceleration: 36
+  flightVerticalSpeed: 24
+  flightVerticalAcceleration: 66
+  flightVerticalDeceleration: 54
+  flightVerticalDeadZone: 0.05
+  flightIdleSpeedThreshold: 0.08
+  flightTurnRate: 760
+  flightBoostTurnRate: 460
   driveLitLocomotionAnimatorParameters: 1
   speedParam: Speed
   isMovingParam: IsMoving

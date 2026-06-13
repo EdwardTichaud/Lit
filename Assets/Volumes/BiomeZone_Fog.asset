@@ -274,13 +274,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b8bcdf71d7fafa419fca1ed162f5fc9, type: 3}
   m_Name: ColorAdjustments
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   postExposure:
     m_OverrideState: 1
     m_Value: 0
   contrast:
     m_OverrideState: 1
-    m_Value: -35
+    m_Value: 0
   colorFilter:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -464,7 +464,7 @@ MonoBehaviour:
     m_Value: 0
   color:
     m_OverrideState: 1
-    m_Value: {r: 0.13207549, g: 0.13207549, b: 0.13207549, a: 1}
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
   tint:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -488,7 +488,7 @@ MonoBehaviour:
     m_Value: 3000
   meanFreePath:
     m_OverrideState: 1
-    m_Value: 20
+    m_Value: 15
   enableVolumetricFog:
     m_OverrideState: 1
     m_Value: 1
@@ -500,13 +500,13 @@ MonoBehaviour:
     m_Value: 0.2
   depthExtent:
     m_OverrideState: 1
-    m_Value: 30
+    m_Value: 10
   denoisingMode:
     m_OverrideState: 1
     m_Value: 2
   anisotropy:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 0.45
   sliceDistributionUniformity:
     m_OverrideState: 1
     m_Value: 0.75
