@@ -1,21 +1,88 @@
 using System.Collections;
-using System.Reflection;
-using Opsive.UltimateCharacterController.Camera;
 using Opsive.UltimateCharacterController.Character;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UccCameraController = Opsive.UltimateCharacterController.Camera.CameraController;
 
 [DefaultExecutionOrder(100)]
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CameraController))]
+[RequireComponent(typeof(UccCameraController))]
 public class LitUccCameraCharacterBinder : MonoBehaviour
 {
-    [SerializeField] private CameraController cameraController;
+    [SerializeField] private UccCameraController cameraController;
     [SerializeField] private bool bindOnEnable = true;
     [SerializeField] private bool subscribeToLocalPlayerContext = true;
+    [SerializeField] private bool subscribeToCameraRecenter = true;
+    [SerializeField] private bool snapCameraOnBind = true;
     [SerializeField, Min(0f)] private float retryInterval = 0.1f;
+
+    private static bool sceneHookRegistered;
 
     private Coroutine bindRoutine;
     private Transform boundCharacter;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        sceneHookRegistered = false;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void InstallSceneCameraBinders()
+    {
+        RegisterSceneHook();
+        InstallBindersInLoadedScenes();
+    }
+
+    private static void RegisterSceneHook()
+    {
+        if (sceneHookRegistered)
+        {
+            return;
+        }
+
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        sceneHookRegistered = true;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        InstallBindersInScene(scene);
+    }
+
+    private static void InstallBindersInLoadedScenes()
+    {
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            InstallBindersInScene(SceneManager.GetSceneAt(i));
+        }
+    }
+
+    private static void InstallBindersInScene(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded)
+        {
+            return;
+        }
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            UccCameraController[] controllers = roots[i].GetComponentsInChildren<UccCameraController>(true);
+            for (int j = 0; j < controllers.Length; j++)
+            {
+                UccCameraController controller = controllers[j];
+                if (controller == null || controller.GetComponent<LitUccCameraCharacterBinder>() != null)
+                {
+                    continue;
+                }
+
+                controller.gameObject.AddComponent<LitUccCameraCharacterBinder>();
+            }
+        }
+    }
 
     private void Reset() => ResolveCameraController();
 
@@ -28,10 +95,19 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     private void OnEnable()
     {
         if (subscribeToLocalPlayerContext)
+        {
             LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
+        }
+
+        if (subscribeToCameraRecenter)
+        {
+            LocalInputRouter.CameraRecenter += OnCameraRecenter;
+        }
 
         if (bindOnEnable)
+        {
             QueueBind();
+        }
     }
 
     private void Start() => QueueBind();
@@ -39,7 +115,14 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     private void OnDisable()
     {
         if (subscribeToLocalPlayerContext)
+        {
             LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
+        }
+
+        if (subscribeToCameraRecenter)
+        {
+            LocalInputRouter.CameraRecenter -= OnCameraRecenter;
+        }
 
         if (bindRoutine != null)
         {
@@ -51,6 +134,14 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     private void OnLocalCharacterChanged(Transform characterRoot)
     {
         QueueBind(characterRoot);
+    }
+
+    private void OnCameraRecenter()
+    {
+        if (!SnapCameraToBoundCharacter())
+        {
+            QueueBind();
+        }
     }
 
     private void QueueBind(Transform preferredCharacter = null)
@@ -115,45 +206,28 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
         GameObject characterObject = character.gameObject;
 
-        if (boundCharacter == character && GetCameraCharacter() == characterObject)
-            return true;
-
-        SetInitCharacterOnAwake(false);
-        SetCameraCharacter(characterObject);
-
-        boundCharacter = character;
-        return GetCameraCharacter() == characterObject;
-    }
-
-    private GameObject GetCameraCharacter()
-    {
-        var type = cameraController.GetType();
-
-        var property = type.GetProperty("Character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (property != null)
-            return property.GetValue(cameraController) as GameObject;
-
-        var field = type.GetField("m_Character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (field != null)
-            return field.GetValue(cameraController) as GameObject;
-
-        return null;
-    }
-
-    private void SetCameraCharacter(GameObject character)
-    {
-        var type = cameraController.GetType();
-
-        var property = type.GetProperty("Character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (property != null)
+        if (boundCharacter == character && IsCameraBoundAndInitialized(characterObject))
         {
-            property.SetValue(cameraController, character);
-            return;
+            SnapCameraToBoundCharacter();
+            return true;
         }
 
-        var field = type.GetField("m_Character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (field != null)
-            field.SetValue(cameraController, character);
+        SetInitCharacterOnAwake(false);
+        SetCameraCharacter(characterObject, forceReinitialize: !IsCameraBoundAndInitialized(characterObject));
+
+        boundCharacter = character;
+        SnapCameraToBoundCharacter();
+        return IsCameraBoundAndInitialized(characterObject);
+    }
+
+    private void SetCameraCharacter(GameObject character, bool forceReinitialize)
+    {
+        if (forceReinitialize && cameraController.Character == character)
+        {
+            cameraController.Character = null;
+        }
+
+        cameraController.Character = character;
     }
 
     private void SetInitCharacterOnAwake(bool value)
@@ -161,18 +235,32 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
         if (cameraController == null)
             return;
 
-        var type = cameraController.GetType();
+        cameraController.InitCharacterOnAwake = value;
+    }
 
-        var property = type.GetProperty("InitCharacterOnAwake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (property != null)
+    private bool IsCameraBoundAndInitialized(GameObject character)
+    {
+        return cameraController != null
+            && cameraController.Character == character
+            && cameraController.CharacterTransform != null
+            && cameraController.CharacterLocomotion != null
+            && cameraController.CharacterRigidbody != null
+            && cameraController.enabled;
+    }
+
+    private bool SnapCameraToBoundCharacter()
+    {
+        if (!snapCameraOnBind
+            || cameraController == null
+            || cameraController.Character == null
+            || cameraController.CharacterRigidbody == null
+            || cameraController.ActiveViewType == null)
         {
-            property.SetValue(cameraController, value);
-            return;
+            return false;
         }
 
-        var field = type.GetField("m_InitCharacterOnAwake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (field != null)
-            field.SetValue(cameraController, value);
+        cameraController.PositionImmediately(true);
+        return true;
     }
 
     private static bool IsValidCharacter(Transform character)
@@ -183,7 +271,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     private void ResolveCameraController()
     {
         if (cameraController == null)
-            cameraController = GetComponent<CameraController>();
+            cameraController = GetComponent<UccCameraController>();
     }
 
     private static GameObject FindTaggedPlayer()
