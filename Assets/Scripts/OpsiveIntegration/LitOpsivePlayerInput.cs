@@ -6,6 +6,9 @@ using OpsivePlayerInput = Opsive.Shared.Input.PlayerInput;
 // Bridges the project's LocalInputRouter into Opsive's input abstraction.
 public class LitOpsivePlayerInput : OpsivePlayerInput
 {
+    private const float MouseOrbitSensitivity = 0.06f;
+    private const float GamepadOrbitDegreesPerSecond = 75f;
+
     private static readonly string[] JumpNames = { "jump" };
     private static readonly string[] SprintNames = { "changespeeds", "changespeed", "sprint", "run", "rightshoulder" };
     private static readonly string[] CrouchNames = { "crouch", "heightchange", "locomotionmode" };
@@ -159,8 +162,28 @@ public class LitOpsivePlayerInput : OpsivePlayerInput
 
     public override Vector2 GetLookVector(bool smoothed)
     {
-        // The current project camera remains authoritative for now.
-        return Vector2.zero;
+        if (!fallbackToLocalInputRouter || InputFocusStack.HasAnyFocusBlockingCamera())
+        {
+            return Vector2.zero;
+        }
+
+        Vector2 look = Vector2.zero;
+        if (MainMenuInputSettings.AllowsKeyboardMouse() && LocalInputRouter.CameraOrbitModifierPressed)
+        {
+            Vector2 pointerDelta = LocalInputRouter.CameraPointerDelta;
+            look += new Vector2(pointerDelta.x, -pointerDelta.y) * MouseOrbitSensitivity;
+        }
+
+        if (MainMenuInputSettings.AllowsGamepad())
+        {
+            Vector2 orbitInput = LocalInputRouter.CameraOrbitValue;
+            if (orbitInput.sqrMagnitude > 0.0001f)
+            {
+                look += new Vector2(orbitInput.x, -orbitInput.y) * (GamepadOrbitDegreesPerSecond * Time.unscaledDeltaTime);
+            }
+        }
+
+        return Vector2.Scale(look, m_LookSensitivity) * m_LookSensitivityMultiplier;
     }
 
     private Vector2 ResolveMovement()

@@ -203,7 +203,7 @@ public class BuildingPanelController : MonoBehaviour
     private Collider placementGroundCollider;
     private readonly WorldPlacementUtility.PreviewCaches placementPreviewCaches = new WorldPlacementUtility.PreviewCaches();
     private Item placementRestoreItem;
-    private CameraController placementCameraController;
+    private Camera placementCameraCache;
 
     public bool IsOpen => panelOpen;
 
@@ -2234,42 +2234,37 @@ public class BuildingPanelController : MonoBehaviour
             out resolvedRotation);
     }
 
-    private CameraController ResolvePlacementCamera()
+    private Camera ResolvePlacementCamera()
     {
-        if (placementCameraController != null)
+        if (placementCamera != null && placementCamera.isActiveAndEnabled)
         {
-            return placementCameraController;
+            placementCameraCache = placementCamera;
+            return placementCamera;
         }
 
-#if UNITY_2023_1_OR_NEWER
-        placementCameraController = FindAnyObjectByType<CameraController>();
-#else
-        placementCameraController = FindAnyObjectByType<CameraController>();
-#endif
-        return placementCameraController;
+        if (placementCameraCache != null && placementCameraCache.isActiveAndEnabled)
+        {
+            return placementCameraCache;
+        }
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null && mainCamera.isActiveAndEnabled)
+        {
+            placementCameraCache = mainCamera;
+            return mainCamera;
+        }
+
+        return null;
     }
 
     private void SetPlacementCameraOverride(Transform target)
     {
-        if (target == null)
-        {
-            return;
-        }
-
-        CameraController controller = ResolvePlacementCamera();
-        if (controller != null)
-        {
-            controller.SetFollowOverride(target);
-        }
+        placementCamera = ResolvePlacementCamera();
     }
 
     private void ClearPlacementCameraOverride(Transform target)
     {
-        CameraController controller = ResolvePlacementCamera();
-        if (controller != null)
-        {
-            controller.ClearFollowOverride(target);
-        }
+        placementCameraCache = placementCamera != null && placementCamera.isActiveAndEnabled ? placementCamera : null;
     }
 
     private void TryConfirmPlacement()

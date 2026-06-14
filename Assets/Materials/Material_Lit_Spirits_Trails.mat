@@ -139,7 +139,7 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 0
     m_Colors:
-    - Color_f7dcf8948cca48f88e00e61573f3b532: {r: 0, g: 0, b: 0, a: 0}
+    - Color_f7dcf8948cca48f88e00e61573f3b532: {r: 1, g: 1, b: 1, a: 0}
     - Vector2_8f79e7842dca4c50b489b84a02028a04: {r: 1, g: 1, b: 0, a: 0}
     - Vector2_8ff1125f7c234658bfac45e7c874fe95: {r: 0, g: 0, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}

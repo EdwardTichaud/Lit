@@ -1,8 +1,9 @@
 using Opsive.Shared.Events;
+using Opsive.UltimateCharacterController.Camera;
 using Opsive.UltimateCharacterController.Character;
 using UnityEngine;
 
-// Look source used while the project camera remains outside Opsive.
+// Fallback look source used until the UCC gameplay camera attaches to the character.
 [DefaultExecutionOrder(-1000)]
 public class LitOpsiveLookSource : MonoBehaviour, ILookSource
 {
@@ -36,6 +37,11 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
     {
         ResolveDefaults();
         if (eventTarget == null)
+        {
+            return;
+        }
+
+        if (HasGameplayCameraLookSource())
         {
             return;
         }
@@ -146,7 +152,7 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
 
     private void OnDisable()
     {
-        if (attached && eventTarget != null)
+        if (attached && eventTarget != null && IsAttachedToCharacter())
         {
             EventHandler.ExecuteEvent<ILookSource>(eventTarget, "OnCharacterAttachLookSource", null);
         }
@@ -170,5 +176,16 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
                 lookTransform = animator.GetBoneTransform(HumanBodyBones.Head);
             }
         }
+    }
+
+    private bool HasGameplayCameraLookSource()
+    {
+        if (eventTarget == null)
+        {
+            return false;
+        }
+
+        UltimateCharacterLocomotion locomotion = eventTarget.GetComponent<UltimateCharacterLocomotion>();
+        return locomotion != null && locomotion.LookSource is CameraController;
     }
 }

@@ -11,7 +11,7 @@ public class HiddenRoomBootstrap : MonoBehaviour
     private const float PortalSurfaceOffset = 0.015f;
 
     [Header("Optional Explicit References")]
-    [Tooltip("Camera joueur explicite. Laisse vide pour utiliser Camera.main puis CameraController.")]
+    [Tooltip("Camera joueur explicite. Laisse vide pour utiliser Camera.main.")]
     [SerializeField] private Camera playerCamera;
     [Tooltip("Racine joueur explicite. Laisse vide pour utiliser LocalPlayerUtils puis SquadManager.")]
     [SerializeField] private Transform playerRoot;
@@ -410,12 +410,6 @@ public class HiddenRoomBootstrap : MonoBehaviour
             return mainCamera;
         }
 
-        CameraController controller = FindCameraController();
-        if (controller != null && controller.mainCam != null && controller.mainCam.isActiveAndEnabled && controller.mainCam != sharedPortalCamera)
-        {
-            return controller.mainCam;
-        }
-
 #if UNITY_2023_1_OR_NEWER
         Camera[] cameras = FindObjectsByType<Camera>();
 #else
@@ -451,22 +445,7 @@ public class HiddenRoomBootstrap : MonoBehaviour
             return SquadManager.Instance.currentCharacter.transform;
         }
 
-        CameraController controller = FindCameraController();
-        if (controller != null && controller.mainCamCurrentTarget != null)
-        {
-            return controller.mainCamCurrentTarget;
-        }
-
-        return null;
-    }
-
-    private CameraController FindCameraController()
-    {
-#if UNITY_2023_1_OR_NEWER
-        return FindAnyObjectByType<CameraController>();
-#else
-        return FindAnyObjectByType<CameraController>();
-#endif
+        return LocalPlayerContext.LocalCharacterRoot;
     }
 
     private MeshRenderer EnsurePortalSurface(Transform parent, string name, Vector3 localPosition, Quaternion localRotation)

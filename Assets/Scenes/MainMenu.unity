@@ -10836,7 +10836,6 @@ GameObject:
   - component: {fileID: 2011687466}
   - component: {fileID: 2011687465}
   - component: {fileID: 2011687468}
-  - component: {fileID: 2011687469}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -11057,27 +11056,6 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
---- !u!114 &2011687469
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2011687464}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 104faf43172709db642efe5e6d6b0e47, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraBreathingEffect
-  target: {fileID: 2011687467}
-  effectEnabled: 1
-  intensity: 0.1
-  frequency: 0.3
-  phaseOffset: 0
-  useUnscaledTime: 1
-  positionAmplitude: {x: 0.015, y: 0.035, z: 0.02}
-  rotationAmplitude: {x: 0.2, y: 0.08, z: 0.12}
-  resetOffsetOnDisable: 1
 --- !u!1 &2023031050
 GameObject:
   m_ObjectHideFlags: 0

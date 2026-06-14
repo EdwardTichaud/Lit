@@ -385,13 +385,8 @@ public static class LocalInputRouter
 
     internal static void RaiseCameraToggleFreeMode()
     {
-        if (JoinSyncSystem.IsGameplayBlocked)
-        {
-            return;
-        }
-
-        bool nextState = !cameraFreeModeActive;
-        SetCameraFreeModeActive(nextState, suppressImmediateCharacterMove: !nextState);
+        // Free camera was part of the archived custom camera stack. UCC owns gameplay camera motion now.
+        SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
         CameraToggleFreeMode?.Invoke();
     }
 
