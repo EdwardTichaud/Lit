@@ -9602,18 +9602,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1242590319970422489}
     m_Modifications:
-    - target: {fileID: 4258097831601814902, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.13
-      objectReference: {fileID: 0}
-    - target: {fileID: 4258097831601814902, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.13
-      objectReference: {fileID: 0}
-    - target: {fileID: 4258097831601814902, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.13
-      objectReference: {fileID: 0}
+    - target: {fileID: 1894658953683459710, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
+      propertyPath: targetPlayer
+      value: 
+      objectReference: {fileID: 2233782780378164146}
     - target: {fileID: 4258097831601814902, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -9661,85 +9653,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8758297420699082699, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      insertIndex: 1
-      addedObject: {fileID: 8014740395282368473}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
---- !u!1 &2061500966831224271 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8758297420699082699, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-  m_PrefabInstance: {fileID: 7282414248245094916}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &8014740395282368473
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2061500966831224271}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74b0d3b078324a3e8d891d5f9099b741, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MuninController
-  muninTag: Munin
-  autoCollectFollowTargets: 1
-  followTargets: []
-  targetPlayer: {fileID: 2233782780378164146}
-  baseOffset: {x: 0.7, y: 2.3, z: 0}
-  followSmoothTime: 0.22
-  targetVelocityLeadTime: 0.08
-  catchUpDistanceRatio: 0.88
-  catchUpSmoothTimeMultiplier: 0.45
-  targetVelocitySharpness: 12
-  maxDistanceFromTarget: 3
-  minDistanceFromTarget: 0.45
-  driftAmplitude: 0.08
-  driftFrequency: 0.75
-  driftSpeed: 1
-  driftAxisMultiplier: {x: 1, y: 1, z: 1}
-  followSpasmAmplitude: 0.035
-  followSpasmFrequency: 1.25
-  followSpasmDuration: 0.12
-  followSpasmRandomness: 0.45
-  followSpasmCooldownMin: 1.6
-  followSpasmCooldownMax: 4.5
-  ignoreTargetRotation: 1
-  useWorldSpaceOffset: 1
-  keepWorldRotation: 1
-  drawFollowGizmos: 0
-  movementSpeed: 20
-  lifeMotionEnabled: 1
-  lifeMotionTarget: {fileID: 0}
-  autoResolveLifeMotionTarget: 1
-  breathingFrequency: 0.31
-  breathingPhaseOffset: 0
-  breathingPositionAmplitude: {x: 0.3, y: 0.2, z: 0.1}
-  breathingRotationAmplitude: {x: 1.25, y: 0.45, z: 1}
-  breathingScaleAmplitude: {x: 0.015, y: 0.025, z: 0.015}
-  spasmChancePerSecond: 0.2
-  spasmPositionAmplitude: {x: 0.025, y: 0.04, z: 0.025}
-  spasmRotationAmplitude: {x: 7, y: 5, z: 7}
-  minSpasmDuration: 0.08
-  maxSpasmDuration: 0.22
-  reactionEnabled: 1
-  reactionBlendSpeed: 8
-  reactionFrequency: 1.8
-  reactionPositionAmplitude: {x: 0.02, y: 0.07, z: 0.02}
-  reactionRotationAmplitude: {x: 6, y: 3, z: 6}
-  reactionScaleAmplitude: {x: 0.025, y: 0.06, z: 0.025}
-  reactionBreathingAmplitudeMultiplier: 1.35
-  reactionSpasmChanceMultiplier: 3
-  defaultReactionPulseDuration: 0.45
-  overrideLightSourceDetectionDistance: 1
-  torchDetectionDistance: 4
-  braseroDetectionDistance: 4.5
-  drawLightDetectionGizmos: 1
-  chargesEnabled: 1
-  maxCharges: 3
-  currentCharges: 3
-  noChargeReactionPulseDuration: 0.35
 --- !u!4 &6775551591263557490 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4258097831601814902, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
