@@ -51,7 +51,7 @@ public class SquadManager : MonoBehaviour
     [Tooltip("Mode selection de personnages actif.")]
     public bool charactersSelectionOn;
     [Tooltip("Nom du spawn point de debut en solo.")]
-    public string soloStartSpawnPointName = "OriginSpawnPoint";
+    public string soloStartSpawnPointName = "00_SoloSpawnPoint";
     [Tooltip("Nom du spawn point Maison.")]
     public string maisonSpawnPointName = "Maison_SpawnPoint";
     [Tooltip("Reference au composant Maison (auto-resolve si null).")]
@@ -123,6 +123,11 @@ public class SquadManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            if (transform.parent != null)
+            {
+                transform.SetParent(null, true);
+            }
+
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -630,6 +635,10 @@ public class SquadManager : MonoBehaviour
             controller.BindCharacterData(character, true);
         }
 
+        // UCC maintient ses propres caches de simulation. Resynchroniser la
+        // pose après le bind garantit le point de spawn authored.
+        TrySetCharacterPositionAndRotation(instance, position, rotation);
+
         CompanionRecord record = GetOrCreateRecord(character);
         record.instance = instance;
         return instance;
@@ -714,13 +723,37 @@ public class SquadManager : MonoBehaviour
 
     private Transform ResolveSoloStartSpawnPoint()
     {
-        if (string.IsNullOrWhiteSpace(soloStartSpawnPointName))
+        if (!string.IsNullOrWhiteSpace(soloStartSpawnPointName))
         {
-            return null;
+            GameObject configured = GameObject.Find(soloStartSpawnPointName);
+            if (configured != null)
+            {
+                return configured.transform;
+            }
         }
 
-        GameObject found = GameObject.Find(soloStartSpawnPointName);
-        return found != null ? found.transform : null;
+        string[] fallbackNames =
+        {
+            "00_SoloSpawnPoint",
+            "00_SoloFirstSpawnPoint",
+            "OriginSpawnPoint"
+        };
+
+        for (int i = 0; i < fallbackNames.Length; i++)
+        {
+            if (fallbackNames[i] == soloStartSpawnPointName)
+            {
+                continue;
+            }
+
+            GameObject fallback = GameObject.Find(fallbackNames[i]);
+            if (fallback != null)
+            {
+                return fallback.transform;
+            }
+        }
+
+        return null;
     }
 
     private Transform ResolveSoloSpawnPoint(int index, Transform soloStartSpawnPoint)
@@ -1262,6 +1295,7 @@ public class SquadManager : MonoBehaviour
         if (IsMultiplayerActive())
         {
             currentCharacter = LocalPlayerUtils.GetControlledCharacter();
+            RefreshSquadAudioListeners();
             UpdateCrownPosition();
             return;
         }
@@ -1269,6 +1303,7 @@ public class SquadManager : MonoBehaviour
         if (squadCharacters == null || squadCharacters.Count == 0)
         {
             currentCharacter = null;
+            RefreshSquadAudioListeners();
             UpdateCrownPosition();
             SyncSingleplayerLocalCharacterContext();
             return;
@@ -1287,14 +1322,39 @@ public class SquadManager : MonoBehaviour
         if (currentCursorIndex < 0 || currentCursorIndex >= squadCharacters.Count)
         {
             currentCharacter = null;
+            RefreshSquadAudioListeners();
             UpdateCrownPosition();
             SyncSingleplayerLocalCharacterContext();
             return;
         }
 
         currentCharacter = squadCharacters[currentCursorIndex];
+        RefreshSquadAudioListeners();
         UpdateCrownPosition();
         SyncSingleplayerLocalCharacterContext();
+    }
+
+    private void RefreshSquadAudioListeners()
+    {
+        if (squadCharacters == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < squadCharacters.Count; i++)
+        {
+            GameObject character = squadCharacters[i];
+            if (character == null)
+            {
+                continue;
+            }
+
+            SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
+            if (controller != null)
+            {
+                controller.RefreshAudioListenerStateForExternalLocomotion();
+            }
+        }
     }
 
     private void SyncSingleplayerLocalCharacterContext()

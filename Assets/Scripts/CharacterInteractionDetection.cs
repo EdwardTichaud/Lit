@@ -126,7 +126,10 @@ public static class CharacterInteractionDetection
         return false;
     }
 
-    public static Collider ResolveInteractionCollider(Component owner, Collider preferred)
+    public static Collider ResolveInteractionCollider(
+        Component owner,
+        Collider preferred,
+        bool allowRuntimeFallback = true)
     {
         if (IsUsableCollider(preferred, false))
         {
@@ -163,7 +166,10 @@ public static class CharacterInteractionDetection
             return preferred;
         }
 
-        if (Application.isPlaying && owner != null && TryCreateFallbackInteractionCollider(owner, out Collider fallback))
+        if (allowRuntimeFallback &&
+            Application.isPlaying &&
+            owner != null &&
+            TryCreateFallbackInteractionCollider(owner, out Collider fallback))
         {
             return fallback;
         }

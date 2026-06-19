@@ -92,7 +92,10 @@ public class MuninChargeReward : MonoBehaviour, ICharacterDetectedInteractable, 
     protected virtual void Reset()
     {
         interactionAnchor = transform;
-        interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
+        interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(
+            this,
+            interactionCollider,
+            allowRuntimeFallback: false);
         RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
@@ -523,7 +526,10 @@ public class MuninChargeReward : MonoBehaviour, ICharacterDetectedInteractable, 
         interactionMaxDistance = Mathf.Max(0.1f, interactionMaxDistance);
         feedbackDuration = Mathf.Max(0f, feedbackDuration);
         interactionAnchor = interactionAnchor != null ? interactionAnchor : transform;
-        interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
+        interactionCollider = CharacterInteractionDetection.ResolveInteractionCollider(
+            this,
+            interactionCollider,
+            allowRuntimeFallback: false);
     }
 #endif
 }

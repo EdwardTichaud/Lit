@@ -96,6 +96,11 @@ public class KnowledgeManager : MonoBehaviour
         Instance = this;
         if (dontDestroyOnLoad)
         {
+            if (transform.parent != null)
+            {
+                transform.SetParent(null, true);
+            }
+
             DontDestroyOnLoad(gameObject);
         }
 

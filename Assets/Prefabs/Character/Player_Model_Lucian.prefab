@@ -2291,11 +2291,11 @@ Animator:
   m_Avatar: {fileID: 9000000, guid: db19a32c9d8c08a4681098e8b4cd781f, type: 3}
   m_Controller: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
   m_CullingMode: 0
-  m_UpdateMode: 1
+  m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_AnimatePhysics: 1
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -2371,7 +2371,7 @@ MonoBehaviour:
   preserveFixedCameraMovementContinuity: 1
   fixedCameraMovementInputRefreshAngle: 65
   fixedCameraMovementReferenceBlendSharpness: 0
-  animatePhysics: 1
+  animatePhysics: 0
   allowFlameToggle: 1
   flameParentName: Stuff
   flameChildName: Flame
@@ -2473,7 +2473,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.5
   m_Height: 1.8

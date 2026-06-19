@@ -175,13 +175,6 @@ public sealed class SnowManager : MonoBehaviour
     private void OnValidate()
     {
         ClampSettings();
-        if (!Application.isPlaying)
-        {
-            return;
-        }
-
-        ApplySettingsToControllers();
-        RefreshControlledCharacter(force: true);
     }
 
     private void Update()

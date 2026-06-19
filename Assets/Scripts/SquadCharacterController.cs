@@ -102,8 +102,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private float fixedCameraMovementInputRefreshAngle = 65f;
     [SerializeField, Min(0f), Tooltip("Blend optionnel de la reference de mouvement vers la camera active. 0 = reference verrouillee jusqu'au relachement/changement d'input.")]
     private float fixedCameraMovementReferenceBlendSharpness = 0f;
-    [SerializeField, Tooltip("Anime les RB en physics.")]
-    private bool animatePhysics = true;
+    [SerializeField, Tooltip("Utilise le FixedUpdate de l'Animator. Laisser désactivé avec UCC, qui lisse déjà la simulation physique.")]
+    private bool animatePhysics;
     private bool storedMovementReferenceActive;
     private Vector3 storedForward;
     private Vector3 storedRight;
@@ -399,7 +399,8 @@ public partial class SquadCharacterController : MonoBehaviour
             SquadManager manager = SquadManager.Instance;
             if (manager != null && manager.currentCharacter != null)
             {
-                shouldBeActive = transform.IsChildOf(manager.currentCharacter.transform);
+                Transform currentRoot = manager.currentCharacter.transform;
+                shouldBeActive = transform == currentRoot || transform.IsChildOf(currentRoot);
             }
         }
 

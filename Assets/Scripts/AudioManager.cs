@@ -122,6 +122,11 @@ public class AudioManager : MonoBehaviour
 
         if (dontDestroyOnLoad)
         {
+            if (transform.parent != null)
+            {
+                transform.SetParent(null, true);
+            }
+
             DontDestroyOnLoad(gameObject);
         }
     }
