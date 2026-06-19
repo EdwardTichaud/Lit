@@ -125,6 +125,8 @@ MonoBehaviour:
   flameObject: {fileID: 62136207090779188}
   flameLight: {fileID: 978710310134188699}
   activateWhenLitTargets: []
+  configureRevealSource: 1
+  flameLightReceiver: {fileID: 0}
   useInteractInput: 0
   useTriggerMuninInput: 1
   showStateDialogueOnInteract: 1

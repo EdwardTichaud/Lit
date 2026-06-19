@@ -15,6 +15,7 @@ TagManager:
   - Munin
   - Light
   - Flame
+  - Foyer
   layers:
   - Default
   - TransparentFX
