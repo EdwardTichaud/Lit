@@ -234,6 +234,8 @@ public partial class SquadCharacterController : MonoBehaviour
             UpdateAudioListenerState(false);
         }
 
+        UpdateSittingState();
+
         if (!IsExternalLocomotionDriverActive)
         {
             UpdateLocalInteractionDetection();
@@ -294,6 +296,7 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureRigidbodyCollisionSafety();
         InitializeFlameState();
         RefreshAnimationReferences();
+        InitializeSittingState();
     }
 
     private void OnEnable()
@@ -303,12 +306,14 @@ public partial class SquadCharacterController : MonoBehaviour
         CacheNetworkObject();
         RefreshAnimationReferences();
         UpdateAudioListenerState(true);
+        ResetSittingIdleTimer();
         LocalInputRouter.SwitchTarget += OnSwitchTargetPerformed;
     }
 
     private void OnDisable()
     {
         LocalInputRouter.SwitchTarget -= OnSwitchTargetPerformed;
+        CancelSittingState();
         ClearLocalInteractionTarget();
         SetAudioListenerActive(false);
         UnregisterCharacter();
@@ -1558,6 +1563,7 @@ public partial class SquadCharacterController : MonoBehaviour
         fixedCameraMovementInputRefreshAngle = Mathf.Clamp(fixedCameraMovementInputRefreshAngle, 0f, 180f);
         fixedCameraMovementReferenceBlendSharpness = Mathf.Max(0f, fixedCameraMovementReferenceBlendSharpness);
         speedDampTime = Mathf.Max(0f, speedDampTime);
+        ValidateSittingSettings();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
     }

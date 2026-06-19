@@ -2363,6 +2363,10 @@ MonoBehaviour:
   locomotionTierParam: LocomotionTier
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
+  enableIdleSitting: 1
+  idleSecondsBeforeSitting: 10
+  sittingParam: IsSitting
+  standUpMovementUnlockFallback: 1.5
   walkMoveSpeed: 5
   moveSpeed: 6.5
   movementInputDeadZone: 0.08

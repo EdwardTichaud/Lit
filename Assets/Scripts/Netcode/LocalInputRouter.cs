@@ -54,6 +54,8 @@ public static class LocalInputRouter
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
     private static bool interactConsumed;
     private static bool triggerMuninConsumed;
+    private static float lastGameplayActivityTime = float.NegativeInfinity;
+    private static uint gameplayActivityVersion;
 
     public static float InputDebounceSeconds { get; set; } = 0.15f;
 
@@ -69,6 +71,8 @@ public static class LocalInputRouter
     public static bool CameraPanModifierPressed => cameraPanModifierPressed;
     public static bool CameraFreeModeActive => cameraFreeModeActive;
     public static bool RightShoulderPressed => rightShoulderPressed;
+    public static float LastGameplayActivityTime => lastGameplayActivityTime;
+    public static uint GameplayActivityVersion => gameplayActivityVersion;
     internal static bool IsInteractConsumed => interactConsumed;
     internal static bool IsTriggerMuninConsumed => triggerMuninConsumed;
 
@@ -79,6 +83,11 @@ public static class LocalInputRouter
             return;
         }
 
+        if (float.IsNegativeInfinity(lastGameplayActivityTime))
+        {
+            lastGameplayActivityTime = Time.unscaledTime;
+        }
+
         LocalPlayerInput.EnsureInstance();
     }
 
@@ -87,6 +96,11 @@ public static class LocalInputRouter
         if (JoinSyncSystem.IsGameplayBlocked)
         {
             value = Vector2.zero;
+        }
+
+        if (value.sqrMagnitude > 0.0001f)
+        {
+            NotifyGameplayActivity();
         }
 
         rawMoveValue = value;
@@ -124,6 +138,11 @@ public static class LocalInputRouter
             value = Vector2.zero;
         }
 
+        if (value.sqrMagnitude > 0.0001f)
+        {
+            NotifyGameplayActivity();
+        }
+
         cameraPanValue = value;
     }
 
@@ -132,6 +151,11 @@ public static class LocalInputRouter
         if (JoinSyncSystem.IsGameplayBlocked)
         {
             value = Vector2.zero;
+        }
+
+        if (value.sqrMagnitude > 0.0001f)
+        {
+            NotifyGameplayActivity();
         }
 
         cameraOrbitValue = value;
@@ -144,6 +168,11 @@ public static class LocalInputRouter
             value = 0f;
         }
 
+        if (Mathf.Abs(value) > 0.0001f)
+        {
+            NotifyGameplayActivity();
+        }
+
         cameraZoomValue = value;
     }
 
@@ -152,6 +181,11 @@ public static class LocalInputRouter
         if (JoinSyncSystem.IsGameplayBlocked)
         {
             value = 0f;
+        }
+
+        if (Mathf.Abs(value) > 0.0001f)
+        {
+            NotifyGameplayActivity();
         }
 
         flightVerticalValue = Mathf.Clamp(value, -1f, 1f);
@@ -164,6 +198,11 @@ public static class LocalInputRouter
             value = 0f;
         }
 
+        if (Mathf.Abs(value) > 0.0001f)
+        {
+            NotifyGameplayActivity();
+        }
+
         cameraPointerScrollValue = value;
     }
 
@@ -174,27 +213,49 @@ public static class LocalInputRouter
             value = Vector2.zero;
         }
 
+        if (value.sqrMagnitude > 0.0001f)
+        {
+            NotifyGameplayActivity();
+        }
+
         cameraPointerDelta = value;
     }
 
     internal static void SetCameraPointerPosition(Vector2 value)
     {
+        if ((value - cameraPointerPosition).sqrMagnitude > 0.01f)
+        {
+            NotifyGameplayActivity();
+        }
+
         cameraPointerPosition = value;
     }
 
     internal static void SetCameraOrbitModifierPressed(bool value)
     {
         cameraOrbitModifierPressed = value && !JoinSyncSystem.IsGameplayBlocked;
+        if (cameraOrbitModifierPressed)
+        {
+            NotifyGameplayActivity();
+        }
     }
 
     internal static void SetCameraPanModifierPressed(bool value)
     {
         cameraPanModifierPressed = value && !JoinSyncSystem.IsGameplayBlocked;
+        if (cameraPanModifierPressed)
+        {
+            NotifyGameplayActivity();
+        }
     }
 
     internal static void SetRightShoulderPressed(bool value)
     {
         rightShoulderPressed = value && !JoinSyncSystem.IsGameplayBlocked;
+        if (rightShoulderPressed)
+        {
+            NotifyGameplayActivity();
+        }
     }
 
     internal static Vector2 ConsumeCameraPointerDelta()
@@ -379,6 +440,7 @@ public static class LocalInputRouter
             return;
         }
 
+        NotifyGameplayActivity();
         SetCameraFreeModeActive(false, suppressImmediateCharacterMove: true);
         CameraRecenter?.Invoke();
     }
@@ -386,6 +448,7 @@ public static class LocalInputRouter
     internal static void RaiseCameraToggleFreeMode()
     {
         // Free camera was part of the archived custom camera stack. UCC owns gameplay camera motion now.
+        NotifyGameplayActivity();
         SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
         CameraToggleFreeMode?.Invoke();
     }
@@ -424,6 +487,7 @@ public static class LocalInputRouter
         float debounce = InputDebounceSeconds;
         if (debounce <= 0f)
         {
+            NotifyGameplayActivity();
             return true;
         }
 
@@ -434,6 +498,18 @@ public static class LocalInputRouter
         }
 
         lastInputTimes[gate] = now;
+        NotifyGameplayActivity();
         return true;
+    }
+
+    private static void NotifyGameplayActivity()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        lastGameplayActivityTime = Time.unscaledTime;
+        gameplayActivityVersion++;
     }
 }

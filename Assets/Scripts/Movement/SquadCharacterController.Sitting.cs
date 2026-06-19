@@ -1,0 +1,250 @@
+using UnityEngine;
+
+public partial class SquadCharacterController
+{
+    private static readonly int SitDownStateHash = Animator.StringToHash("Sit_Down");
+    private static readonly int SittingIdleStateHash = Animator.StringToHash("Sitting_Idle");
+    private static readonly int StandUpStateHash = Animator.StringToHash("Stand_Up");
+
+    [Header("Idle Sitting")]
+    [SerializeField, Tooltip("Assied automatiquement le personnage local apres une periode sans input.")]
+    private bool enableIdleSitting = true;
+    [SerializeField, Min(0f), Tooltip("Duree sans mouvement ni camera avant l'assise automatique.")]
+    private float idleSecondsBeforeSitting = 10f;
+    [SerializeField, Tooltip("Nom du bool qui pilote le cycle assis/debout dans l'Animator.")]
+    private string sittingParam = "IsSitting";
+    [SerializeField, Min(0.1f), Tooltip("Secours pour rendre le mouvement si l'etat Stand_Up ne peut pas etre observe.")]
+    private float standUpMovementUnlockFallback = 1.5f;
+
+    private bool sittingRequested;
+    private bool sittingMovementSuppressionActive;
+    private bool waitingForStandUpCompletion;
+    private bool observedStandUpState;
+    private float standUpRequestedAt;
+    private float sittingIdleTrackingStartedAt;
+    private uint sittingActivityVersion;
+
+    public bool IsSittingRequested => sittingRequested;
+    public bool IsInSittingCycle => sittingRequested || sittingMovementSuppressionActive;
+
+    public bool CanToggleSitting => IsInSittingCycle || CanEnterSitting();
+
+    public bool TryToggleSitting()
+    {
+        return TrySetSitting(!IsInSittingCycle);
+    }
+
+    public bool TrySetSitting(bool shouldSit)
+    {
+        if (shouldSit)
+        {
+            if (sittingRequested)
+            {
+                return true;
+            }
+
+            if (!CanEnterSitting())
+            {
+                return false;
+            }
+
+            Stop();
+            if (!sittingMovementSuppressionActive)
+            {
+                PushScriptedMovementSuppression();
+                sittingMovementSuppressionActive = true;
+            }
+
+            sittingRequested = true;
+            waitingForStandUpCompletion = false;
+            observedStandUpState = false;
+            sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+            SetAnimatorBoolIfValid(sittingParam, true);
+            return true;
+        }
+
+        if (!IsInSittingCycle)
+        {
+            return true;
+        }
+
+        sittingRequested = false;
+        sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+        SetAnimatorBoolIfValid(sittingParam, false);
+
+        if (!sittingMovementSuppressionActive ||
+            !HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool))
+        {
+            ReleaseSittingMovementSuppression();
+            return true;
+        }
+
+        waitingForStandUpCompletion = true;
+        observedStandUpState = false;
+        standUpRequestedAt = Time.unscaledTime;
+        return true;
+    }
+
+    private void InitializeSittingState()
+    {
+        sittingRequested = false;
+        waitingForStandUpCompletion = false;
+        observedStandUpState = false;
+        sittingIdleTrackingStartedAt = Time.unscaledTime;
+        sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+        SetAnimatorBoolIfValid(sittingParam, false);
+    }
+
+    private void ResetSittingIdleTimer()
+    {
+        sittingIdleTrackingStartedAt = Time.unscaledTime;
+        sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+    }
+
+    private void UpdateSittingState()
+    {
+        if (waitingForStandUpCompletion)
+        {
+            UpdateStandUpCompletion();
+        }
+
+        if (!IsLocalControlledCharacter())
+        {
+            ResetSittingIdleTimer();
+            return;
+        }
+
+        if (sittingRequested)
+        {
+            if (LocalInputRouter.GameplayActivityVersion != sittingActivityVersion)
+            {
+                TrySetSitting(false);
+            }
+
+            return;
+        }
+
+        if (!enableIdleSitting ||
+            sittingMovementSuppressionActive ||
+            InputFocusStack.HasAnyFocus() ||
+            !CanEnterSitting())
+        {
+            ResetSittingIdleTimer();
+            return;
+        }
+
+        float lastActivity = Mathf.Max(
+            sittingIdleTrackingStartedAt,
+            LocalInputRouter.LastGameplayActivityTime);
+        if (Time.unscaledTime - lastActivity >= idleSecondsBeforeSitting)
+        {
+            TrySetSitting(true);
+        }
+    }
+
+    private bool CanEnterSitting()
+    {
+        if (!isActiveAndEnabled ||
+            animator == null ||
+            currentHp <= 0 ||
+            IsUccFlightActive ||
+            !HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool))
+        {
+            return false;
+        }
+
+        if (IsExternalLocomotionDriverActive && !IsUccLocomotionActive)
+        {
+            return false;
+        }
+
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        if (bridge != null && bridge.IsInputSuppressedByUcc)
+        {
+            return false;
+        }
+
+        if (LocalInputRouter.MoveValue.sqrMagnitude > movementInputDeadZone * movementInputDeadZone)
+        {
+            return false;
+        }
+
+        return !IsUccLocomotionActive || IsGrounded;
+    }
+
+    private void UpdateStandUpCompletion()
+    {
+        if (!sittingMovementSuppressionActive)
+        {
+            waitingForStandUpCompletion = false;
+            return;
+        }
+
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            ReleaseSittingMovementSuppression();
+            return;
+        }
+
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        AnimatorStateInfo next = animator.IsInTransition(0)
+            ? animator.GetNextAnimatorStateInfo(0)
+            : default;
+
+        observedStandUpState |= IsState(current, StandUpStateHash) || IsState(next, StandUpStateHash);
+
+        bool currentIsSitting = IsSittingState(current);
+        bool nextIsSitting = animator.IsInTransition(0) && IsSittingState(next);
+        if (observedStandUpState &&
+            !animator.IsInTransition(0) &&
+            !currentIsSitting &&
+            !nextIsSitting)
+        {
+            ReleaseSittingMovementSuppression();
+            return;
+        }
+
+        if (Time.unscaledTime - standUpRequestedAt >= standUpMovementUnlockFallback)
+        {
+            ReleaseSittingMovementSuppression();
+        }
+    }
+
+    private static bool IsSittingState(AnimatorStateInfo state)
+    {
+        return IsState(state, SitDownStateHash) ||
+               IsState(state, SittingIdleStateHash) ||
+               IsState(state, StandUpStateHash);
+    }
+
+    private static bool IsState(AnimatorStateInfo state, int shortNameHash)
+    {
+        return state.shortNameHash == shortNameHash;
+    }
+
+    private void ReleaseSittingMovementSuppression()
+    {
+        waitingForStandUpCompletion = false;
+        observedStandUpState = false;
+        if (sittingMovementSuppressionActive)
+        {
+            sittingMovementSuppressionActive = false;
+            PopScriptedMovementSuppression();
+        }
+
+        ResetSittingIdleTimer();
+    }
+
+    private void CancelSittingState()
+    {
+        sittingRequested = false;
+        SetAnimatorBoolIfValid(sittingParam, false);
+        ReleaseSittingMovementSuppression();
+    }
+
+    private void ValidateSittingSettings()
+    {
+        idleSecondsBeforeSitting = Mathf.Max(0f, idleSecondsBeforeSitting);
+        standUpMovementUnlockFallback = Mathf.Max(0.1f, standUpMovementUnlockFallback);
+    }
+}
