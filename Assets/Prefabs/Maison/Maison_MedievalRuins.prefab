@@ -58459,7 +58459,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4137480983044205364}
   m_Layer: 0
-  m_Name: Torches
+  m_Name: Flames
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -90566,7 +90566,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (41)
+      value: FlameWithFire_LowLight (41)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -93024,7 +93024,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (47)
+      value: FlameWithFire_LowLight (47)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -95514,7 +95514,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (39)
+      value: FlameWithFire_LowLight (39)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -97792,7 +97792,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (40)
+      value: FlameWithFire_LowLight (40)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -105492,7 +105492,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (45)
+      value: FlameWithFire_LowLight (45)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -105830,7 +105830,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (43)
+      value: FlameWithFire_LowLight (43)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -108366,7 +108366,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (42)
+      value: FlameWithFire_LowLight (42)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -114950,7 +114950,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (44)
+      value: FlameWithFire_LowLight (44)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -122358,7 +122358,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1367430108005928729, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_Name
-      value: TorchWithFire_LowLight (46)
+      value: FlameWithFire_LowLight (46)
       objectReference: {fileID: 0}
     - target: {fileID: 4192311831655648309, guid: 7277d9ccbc07a1a4db8fe7886638c58b, type: 3}
       propertyPath: m_LocalPosition.x

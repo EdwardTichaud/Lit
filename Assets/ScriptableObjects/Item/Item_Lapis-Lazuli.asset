@@ -20,7 +20,7 @@ MonoBehaviour:
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 0}
-  isTorch: 0
+  isFlame: 0
   isBuilding: 0
   buildingPrefab: {fileID: 0}
   buildingMaxLevel: 10

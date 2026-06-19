@@ -22,7 +22,7 @@ MonoBehaviour:
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 0}
-  isTorch: 0
+  isFlame: 0
   useEffects:
   - {fileID: 11400000, guid: 518919cfbea9e4946ac5a84343bcdfbc, type: 2}
   canBreak: 1

@@ -4846,7 +4846,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1788347204001616365}
   m_Layer: 0
-  m_Name: Flame_Fire_Torch_Common
+  m_Name: Flame_Fire_Flame_Common
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

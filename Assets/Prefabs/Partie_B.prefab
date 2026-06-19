@@ -20076,7 +20076,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -26720,7 +26720,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (1)
+      value: COMP_Column_01_base_flame (1)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -37984,7 +37984,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -41138,7 +41138,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (2)
+      value: P_PROP_flame_wall_dungeon (2)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -45115,7 +45115,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon
+      value: P_PROP_flame_standing_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -49815,7 +49815,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon
+      value: P_PROP_flame_standing_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -50835,7 +50835,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (1)
+      value: COMP_Column_01_base_flame (1)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -52411,7 +52411,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (1)
+      value: P_PROP_flame_wall_dungeon (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -67371,7 +67371,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_IsActive
@@ -73465,7 +73465,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (6)
+      value: COMP_Column_01_base_flame (6)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -76504,7 +76504,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (3)
+      value: COMP_Column_01_base_flame (3)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -78202,7 +78202,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier
+      value: COMP_Column_01_base_flame
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -78780,7 +78780,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (4)
+      value: COMP_Column_01_base_flame (4)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -80032,7 +80032,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (4)
+      value: COMP_Column_01_base_flame (4)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -81300,7 +81300,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (5)
+      value: P_PROP_flame_wall_dungeon (5)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -89750,7 +89750,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (7)
+      value: P_PROP_flame_wall_dungeon (7)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -99486,7 +99486,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon
+      value: P_PROP_flame_standing_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -122014,7 +122014,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon
+      value: P_PROP_flame_standing_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -135646,7 +135646,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier
+      value: COMP_Column_01_base_flame
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -137422,7 +137422,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3376407561442034324, guid: 1ce2df2cf165aaa48b22a9707a5205b7, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_02
+      value: COMP_PROP_flame_dungeon_02
       objectReference: {fileID: 0}
     - target: {fileID: 6069414630958415312, guid: 1ce2df2cf165aaa48b22a9707a5205b7, type: 3}
       propertyPath: m_Range
@@ -140428,7 +140428,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -147882,7 +147882,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7681162980337958704, guid: c4448e04ce08a784294c04b8c2b95bde, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03
+      value: COMP_PROP_flame_dungeon_03
       objectReference: {fileID: 0}
     - target: {fileID: 7681162980337958707, guid: c4448e04ce08a784294c04b8c2b95bde, type: 3}
       propertyPath: m_RootOrder
@@ -158077,7 +158077,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (2)
+      value: COMP_Column_01_base_flame (2)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -159653,7 +159653,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon (1)
+      value: P_PROP_flame_standing_dungeon (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -171665,7 +171665,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -173338,7 +173338,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -176032,7 +176032,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (7)
+      value: COMP_Column_01_base_flame (7)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -184631,7 +184631,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (1)
+      value: P_PROP_flame_wall_dungeon (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -187725,7 +187725,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (5)
+      value: COMP_Column_01_base_flame (5)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -189733,7 +189733,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (3)
+      value: COMP_Column_01_base_flame (3)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -198649,7 +198649,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (1)
+      value: P_PROP_flame_wall_dungeon (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -198803,7 +198803,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (1)
+      value: COMP_Column_01_base_flame (1)
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -203481,7 +203481,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (4)
+      value: COMP_Column_01_base_flame (4)
       objectReference: {fileID: 0}
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_IsActive
@@ -205999,7 +205999,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (2)
+      value: P_PROP_flame_wall_dungeon (2)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -212676,7 +212676,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (3)
+      value: P_PROP_flame_wall_dungeon (3)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -213760,7 +213760,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -218722,7 +218722,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3376407561442034324, guid: 1ce2df2cf165aaa48b22a9707a5205b7, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_02
+      value: COMP_PROP_flame_dungeon_02
       objectReference: {fileID: 0}
     - target: {fileID: 7207607508510877784, guid: 1ce2df2cf165aaa48b22a9707a5205b7, type: 3}
       propertyPath: m_IsActive
@@ -251009,7 +251009,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7681162980337958704, guid: c4448e04ce08a784294c04b8c2b95bde, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03
+      value: COMP_PROP_flame_dungeon_03
       objectReference: {fileID: 0}
     - target: {fileID: 7681162980337958707, guid: c4448e04ce08a784294c04b8c2b95bde, type: 3}
       propertyPath: m_RootOrder
@@ -256673,7 +256673,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -264913,7 +264913,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (2)
+      value: P_PROP_flame_wall_dungeon (2)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -271258,7 +271258,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon (4)
+      value: P_PROP_flame_wall_dungeon (4)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -276530,7 +276530,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier
+      value: COMP_Column_01_base_flame
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder
@@ -285952,7 +285952,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier (1)
+      value: COMP_Column_01_base_flame (1)
       objectReference: {fileID: 0}
     - target: {fileID: 4813813965256757688, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_IsActive
@@ -297862,7 +297862,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon (2)
+      value: P_PROP_flame_standing_dungeon (2)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -302884,7 +302884,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7806556917065765174, guid: d7e7e04511647bf498d49c85544af79f, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_standing_dungeon (1)
+      value: P_PROP_flame_standing_dungeon (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -304776,7 +304776,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3376407561442034324, guid: 1ce2df2cf165aaa48b22a9707a5205b7, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_02 (1)
+      value: COMP_PROP_flame_dungeon_02 (1)
       objectReference: {fileID: 0}
     - target: {fileID: 6069414630958415312, guid: 1ce2df2cf165aaa48b22a9707a5205b7, type: 3}
       propertyPath: m_Range
@@ -317443,7 +317443,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8374007595148082773, guid: da2878453be8dd54c87958e5b4d31f2b, type: 3}
       propertyPath: m_Name
-      value: P_PROP_torch_wall_dungeon
+      value: P_PROP_flame_wall_dungeon
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -318723,7 +318723,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3924468155775857604, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_Name
-      value: COMP_Column_01_base_brazier
+      value: COMP_Column_01_base_flame
       objectReference: {fileID: 0}
     - target: {fileID: 7800682161890312924, guid: 2ef8986a7bb510349b05e25a6c45f867, type: 3}
       propertyPath: m_RootOrder

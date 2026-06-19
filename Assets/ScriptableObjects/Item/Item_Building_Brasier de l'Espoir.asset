@@ -21,7 +21,7 @@ MonoBehaviour:
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 0}
-  isTorch: 0
+  isFlame: 0
   isBuilding: 1
   buildingPrefab: {fileID: 6904748207930431409, guid: ce6a87dd56a58964ba8b2ea39bb52f6c, type: 3}
   buildingMaxLevel: 10

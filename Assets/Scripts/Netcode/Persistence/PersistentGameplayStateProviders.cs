@@ -598,78 +598,78 @@ public class PersistentPuzzleElementState : MonoBehaviour, IPersistentStateProvi
 }
 
 [DisallowMultipleComponent]
-public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
+public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
 {
     [Serializable]
-    private sealed class BrazierStateData
+    private sealed class FlameStateData
     {
         public bool IsLit;
     }
 
-    [SerializeField] private Brasero brasero;
+    [SerializeField] private Flame flame;
 
-    public string ProviderId => "brazier";
+    public string ProviderId => "flame";
 
     private void Awake()
     {
-        if (brasero == null)
+        if (flame == null)
         {
-            brasero = GetComponent<Brasero>();
+            flame = GetComponent<Flame>();
         }
     }
 
     public byte[] CaptureState(PersistentStateContext context)
     {
-        if (brasero == null)
+        if (flame == null)
         {
             PersistentStateValidation.LogValidation(
-                "brazier_world_rules",
+                "flame_world_rules",
                 false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' brazierMissing=true capture=true",
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' flameMissing=true capture=true",
                 this,
                 context);
             return Array.Empty<byte>();
         }
 
-        return PersistentStateJson.ToBytes(new BrazierStateData
+        return PersistentStateJson.ToBytes(new FlameStateData
         {
-            IsLit = brasero.IsLit
+            IsLit = flame.IsLit
         });
     }
 
     public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
     {
-        if (brasero == null)
+        if (flame == null)
         {
             PersistentStateValidation.LogValidation(
-                "brazier_world_rules",
+                "flame_world_rules",
                 false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' brazierMissing=true apply=true phase='{phase}'",
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' flameMissing=true apply=true phase='{phase}'",
                 this,
                 context);
             return;
         }
 
-        if (!PersistentStateJson.TryFromBytes(state, ProviderId, brasero, context, out BrazierStateData data))
+        if (!PersistentStateJson.TryFromBytes(state, ProviderId, flame, context, out FlameStateData data))
         {
             return;
         }
 
         if (phase == PersistentApplyPhase.ApplyGameplayState)
         {
-            brasero.SetLit(data.IsLit);
+            flame.SetLit(data.IsLit);
             PersistentStateValidation.LogValidation(
-                "brazier_world_rules",
-                brasero.IsLit == data.IsLit,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedLit={data.IsLit} actualLit={brasero.IsLit}",
-                brasero,
+                "flame_world_rules",
+                flame.IsLit == data.IsLit,
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(flame)}' expectedLit={data.IsLit} actualLit={flame.IsLit}",
+                flame,
                 context);
             return;
         }
 
         if (phase == PersistentApplyPhase.FinalizeReferences)
         {
-            context.WorldRules?.RebuildDerivedBrazierVariables();
+            context.WorldRules?.RebuildDerivedFlameVariables();
             ValidateWorldRules(context);
         }
     }
@@ -682,18 +682,18 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
             PersistentStateValidation.LogValidation(
                 "world_rules_extended",
                 false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' worldRulesMissing={context == null || context.WorldRules == null} ageManagerMissing={ageManager == null}",
-                brasero,
+                $"persistentId='{PersistentStateValidation.ResolvePersistentId(flame)}' worldRulesMissing={context == null || context.WorldRules == null} ageManagerMissing={ageManager == null}",
+                flame,
                 context);
             return;
         }
 
-        int expectedLitCount = ageManager.LitBrazierCount;
+        int expectedLitCount = ageManager.LitAncientFlameCount;
         int expectedCurrentYear = ageManager.CurrentYear;
-        int expectedTotalCount = ageManager.TotalAgeDrivingBraseroCount;
+        int expectedTotalCount = ageManager.TotalAncientFlameCount;
 
-        bool hasLitCount = context.WorldRules.TryGetInt(WorldRulesStateManager.BrazierLitCountKey, out int litCount);
-        bool hasTotalCount = context.WorldRules.TryGetInt(WorldRulesStateManager.BrazierTotalCountKey, out int totalCount);
+        bool hasLitCount = context.WorldRules.TryGetInt(WorldRulesStateManager.FlameLitCountKey, out int litCount);
+        bool hasTotalCount = context.WorldRules.TryGetInt(WorldRulesStateManager.FlameTotalCountKey, out int totalCount);
         bool hasCurrentYear = context.WorldRules.TryGetInt(WorldRulesStateManager.CurrentYearKey, out int currentYear);
         bool baseSuccess =
             hasLitCount &&
@@ -701,10 +701,10 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
             litCount == expectedLitCount &&
             currentYear == expectedCurrentYear;
         PersistentStateValidation.LogValidation(
-            "brazier_world_rules",
+            "flame_world_rules",
             baseSuccess,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedLitCount={expectedLitCount} actualLitCount={litCount} expectedYear={expectedCurrentYear} actualYear={currentYear}",
-            brasero,
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(flame)}' expectedLitCount={expectedLitCount} actualLitCount={litCount} expectedYear={expectedCurrentYear} actualYear={currentYear}",
+            flame,
             context);
 
         bool hasVolumeProfiles = context.WorldRules.TryGetString(WorldRulesStateManager.ActiveVolumeProfilesKey, out string activeVolumeProfiles);
@@ -718,8 +718,8 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
         PersistentStateValidation.LogValidation(
             "world_rules_extended",
             extendedSuccess,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(brasero)}' expectedTotalBraziers={expectedTotalCount} actualTotalBraziers={totalCount} expectedVolumeProfiles='{actualVolumeProfiles}' actualVolumeProfiles='{activeVolumeProfiles}'",
-            brasero,
+            $"persistentId='{PersistentStateValidation.ResolvePersistentId(flame)}' expectedTotalFlames={expectedTotalCount} actualTotalFlames={totalCount} expectedVolumeProfiles='{actualVolumeProfiles}' actualVolumeProfiles='{activeVolumeProfiles}'",
+            flame,
             context);
     }
 
@@ -735,79 +735,6 @@ public class PersistentBrazierState : MonoBehaviour, IPersistentStateProvider
 #else
         return FindAnyObjectByType<AgeManager>();
 #endif
-    }
-}
-
-[DisallowMultipleComponent]
-public class PersistentTorchState : MonoBehaviour, IPersistentStateProvider
-{
-    [Serializable]
-    private sealed class TorchStateData
-    {
-        public bool IsLit;
-    }
-
-    [SerializeField] private Torch torch;
-
-    public string ProviderId => "torch";
-
-    private void Awake()
-    {
-        if (torch == null)
-        {
-            torch = GetComponent<Torch>();
-        }
-    }
-
-    public byte[] CaptureState(PersistentStateContext context)
-    {
-        if (torch == null)
-        {
-            PersistentStateValidation.LogValidation(
-                "torch_state",
-                false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' torchMissing=true capture=true",
-                this,
-                context);
-            return Array.Empty<byte>();
-        }
-
-        return PersistentStateJson.ToBytes(new TorchStateData
-        {
-            IsLit = torch.IsLit
-        });
-    }
-
-    public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
-    {
-        if (phase != PersistentApplyPhase.ApplyGameplayState)
-        {
-            return;
-        }
-
-        if (torch == null)
-        {
-            PersistentStateValidation.LogValidation(
-                "torch_state",
-                false,
-                $"persistentId='{PersistentStateValidation.ResolvePersistentId(this)}' provider='{ProviderId}' torchMissing=true apply=true phase='{phase}'",
-                this,
-                context);
-            return;
-        }
-
-        if (!PersistentStateJson.TryFromBytes(state, ProviderId, torch, context, out TorchStateData data))
-        {
-            return;
-        }
-
-        torch.SetLit(data.IsLit);
-        PersistentStateValidation.LogValidation(
-            "torch_state",
-            torch.IsLit == data.IsLit,
-            $"persistentId='{PersistentStateValidation.ResolvePersistentId(torch)}' expectedLit={data.IsLit} actualLit={torch.IsLit}",
-            torch,
-            context);
     }
 }
 
@@ -863,6 +790,11 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
 
     public byte[] CaptureState(PersistentStateContext context)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return Array.Empty<byte>();
+        }
+
         if (building == null)
         {
             PersistentStateValidation.LogValidation(
@@ -925,6 +857,11 @@ public class PersistentBuildingState : MonoBehaviour, IPersistentStateProvider
 
     public void ApplyState(byte[] state, PersistentApplyPhase phase, PersistentStateContext context)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         if (building == null)
         {
             PersistentStateValidation.LogValidation(

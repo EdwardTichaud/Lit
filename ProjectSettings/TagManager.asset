@@ -14,8 +14,7 @@ TagManager:
   - CameraNonObstructing
   - Munin
   - Light
-  - Brasero
-  - Torch
+  - Flame
   layers:
   - Default
   - TransparentFX

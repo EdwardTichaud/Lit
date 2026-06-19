@@ -21,7 +21,7 @@ MonoBehaviour:
   canPlace: 1
   isContainer: 1
   worldPrefab: {fileID: 8233203517142235914, guid: ef6f1e9248e84604b818bc86ca1edf54, type: 3}
-  isTorch: 0
+  isFlame: 0
   canBreak: 1
   breakResults:
   - item: {fileID: 11400000, guid: 0d0e70bd6452fb24da4785d4f1a0b421, type: 2}

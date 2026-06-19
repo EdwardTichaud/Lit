@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
-    private const int SaveDataVersion = 2;
+    private const int SaveDataVersion = 3;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -230,8 +230,7 @@ public class CharacterStateStore : MonoBehaviour
         {
             ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
             ApplyHomeItems(loadedData, itemLookup);
-            ApplyBraseroStates(loadedData);
-            ApplyTorchStates(loadedData);
+            ApplyFlameStates(loadedData);
             return;
         }
 
@@ -486,8 +485,8 @@ public class CharacterStateStore : MonoBehaviour
                 inSquad = manager.currentSquad != null && manager.currentSquad.Contains(character),
                 position = instance != null ? instance.transform.position : Vector3.zero,
                 rotation = instance != null ? instance.transform.rotation : Quaternion.identity,
-                torchSeconds = 0,
-                torchEquipped = false,
+                flameSeconds = 0,
+                flameEquipped = false,
                 muninChargesInitialized = character != null && character.muninChargesInitialized,
                 muninCharges = character != null ? character.muninChargesRemaining : 0,
                 muninMaxCharges = character != null ? character.muninMaxCharges : 0,
@@ -496,13 +495,13 @@ public class CharacterStateStore : MonoBehaviour
             };
 
             SquadCharacterController controller = instance != null ? instance.GetComponent<SquadCharacterController>() : null;
-            int torchSeconds = character != null ? character.torchSecondsRemaining : 0;
-            bool torchEquipped = character != null && character.torchEquipped;
+            int flameSeconds = character != null ? character.flameSecondsRemaining : 0;
+            bool flameEquipped = character != null && character.flameEquipped;
             IReadOnlyList<Item> items = character != null ? character.InventoryItems : null;
             if (controller != null)
             {
-                torchSeconds = controller.TorchSecondsRemaining;
-                torchEquipped = controller.IsTorchEquipped;
+                flameSeconds = controller.FlameSecondsRemaining;
+                flameEquipped = controller.IsFlameEquipped;
                 items = controller.Items;
                 MuninController munin = controller.GetComponentInChildren<MuninController>(true);
                 if (munin != null)
@@ -513,8 +512,8 @@ public class CharacterStateStore : MonoBehaviour
                 }
             }
 
-            entry.torchSeconds = torchSeconds;
-            entry.torchEquipped = torchEquipped;
+            entry.flameSeconds = flameSeconds;
+            entry.flameEquipped = flameEquipped;
 
             Dictionary<Item, int> counts = new Dictionary<Item, int>();
             if (items != null)
@@ -578,9 +577,10 @@ public class CharacterStateStore : MonoBehaviour
         }
 
         data.homeItems = BuildHomeItems();
-        data.builtConstructions = BuildBuiltConstructions();
-        data.braseros = BuildBraseroStates();
-        data.torches = BuildTorchStates();
+        data.builtConstructions = LegacyBuildingPersistenceMigration.ResolveCharacterSaveData(
+            loadedData,
+            LegacyBuildingSystem.Enabled ? BuildBuiltConstructions() : null);
+        data.flames = BuildFlameStates();
         data.readableGeneratedContents = ReadableContentRuntime.CaptureSaveData();
         AppendPlayerBindings(data);
         return data;
@@ -1092,68 +1092,68 @@ public class CharacterStateStore : MonoBehaviour
         }
     }
 
-    private List<BraseroSaveEntry> BuildBraseroStates()
+    private List<FlameSaveEntry> BuildFlameStates()
     {
-        List<BraseroSaveEntry> results = new List<BraseroSaveEntry>();
+        List<FlameSaveEntry> results = new List<FlameSaveEntry>();
 #if UNITY_2023_1_OR_NEWER
-        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
+        Flame[] flames = FindObjectsByType<Flame>(FindObjectsInactive.Include);
 #else
-        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
+        Flame[] flames = FindObjectsByType<Flame>(FindObjectsInactive.Include);
 #endif
-        if (braseros == null || braseros.Length == 0)
+        if (flames == null || flames.Length == 0)
         {
             return results;
         }
 
         HashSet<string> usedIds = new HashSet<string>();
-        for (int i = 0; i < braseros.Length; i++)
+        for (int i = 0; i < flames.Length; i++)
         {
-            Brasero brasero = braseros[i];
-            if (brasero == null)
+            Flame flame = flames[i];
+            if (flame == null)
             {
                 continue;
             }
 
-            string id = brasero.BraseroId;
+            string id = flame.FlameId;
             if (string.IsNullOrWhiteSpace(id))
             {
-                Debug.LogWarning("CharacterStateStore: brasero sans ID, ignore pour la sauvegarde.", brasero);
+                Debug.LogWarning("CharacterStateStore: flame sans ID, ignore pour la sauvegarde.", flame);
                 continue;
             }
 
             if (!usedIds.Add(id))
             {
-                Debug.LogWarning($"CharacterStateStore: braseroId duplique '{id}', ignore.", brasero);
+                Debug.LogWarning($"CharacterStateStore: flameId duplique '{id}', ignore.", flame);
                 continue;
             }
 
-            results.Add(new BraseroSaveEntry
+            results.Add(new FlameSaveEntry
             {
-                braseroId = id,
-                isLit = brasero.IsLit
+                flameId = id,
+                isLit = flame.IsLit
             });
         }
 
         return results;
     }
 
-    private void ApplyBraseroStates(CharacterSaveData data)
+    private void ApplyFlameStates(CharacterSaveData data)
     {
-        if (data == null || data.braseros == null || data.braseros.Count == 0)
+        if (data == null || data.flames == null || data.flames.Count == 0)
         {
             return;
         }
 
         Dictionary<string, bool> states = new Dictionary<string, bool>();
-        for (int i = 0; i < data.braseros.Count; i++)
+        for (int i = 0; i < data.flames.Count; i++)
         {
-            BraseroSaveEntry entry = data.braseros[i];
-            if (entry == null || string.IsNullOrWhiteSpace(entry.braseroId))
+            FlameSaveEntry entry = data.flames[i];
+            if (entry == null || string.IsNullOrWhiteSpace(entry.flameId))
             {
                 continue;
             }
 
-            states[entry.braseroId] = entry.isLit;
+            states[entry.flameId] = entry.isLit;
         }
 
         if (states.Count == 0)
@@ -1162,24 +1162,24 @@ public class CharacterStateStore : MonoBehaviour
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
+        Flame[] flames = FindObjectsByType<Flame>(FindObjectsInactive.Include);
 #else
-        Brasero[] braseros = FindObjectsByType<Brasero>(FindObjectsInactive.Include);
+        Flame[] flames = FindObjectsByType<Flame>(FindObjectsInactive.Include);
 #endif
-        if (braseros == null || braseros.Length == 0)
+        if (flames == null || flames.Length == 0)
         {
             return;
         }
 
-        for (int i = 0; i < braseros.Length; i++)
+        for (int i = 0; i < flames.Length; i++)
         {
-            Brasero brasero = braseros[i];
-            if (brasero == null)
+            Flame flame = flames[i];
+            if (flame == null)
             {
                 continue;
             }
 
-            string id = brasero.BraseroId;
+            string id = flame.FlameId;
             if (string.IsNullOrWhiteSpace(id))
             {
                 continue;
@@ -1187,107 +1187,7 @@ public class CharacterStateStore : MonoBehaviour
 
             if (states.TryGetValue(id, out bool lit))
             {
-                brasero.SetLit(lit);
-            }
-        }
-    }
-
-    private List<TorchSaveEntry> BuildTorchStates()
-    {
-        List<TorchSaveEntry> results = new List<TorchSaveEntry>();
-#if UNITY_2023_1_OR_NEWER
-        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
-#else
-        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
-#endif
-        if (torches == null || torches.Length == 0)
-        {
-            return results;
-        }
-
-        HashSet<string> usedIds = new HashSet<string>();
-        for (int i = 0; i < torches.Length; i++)
-        {
-            Torch torch = torches[i];
-            if (torch == null)
-            {
-                continue;
-            }
-
-            string id = torch.TorchId;
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                Debug.LogWarning("CharacterStateStore: torche sans ID, ignoree pour la sauvegarde.", torch);
-                continue;
-            }
-
-            if (!usedIds.Add(id))
-            {
-                Debug.LogWarning($"CharacterStateStore: torchId duplique '{id}', ignore.", torch);
-                continue;
-            }
-
-            results.Add(new TorchSaveEntry
-            {
-                torchId = id,
-                isLit = torch.IsLit
-            });
-        }
-
-        return results;
-    }
-
-    private void ApplyTorchStates(CharacterSaveData data)
-    {
-        if (data == null || data.torches == null || data.torches.Count == 0)
-        {
-            return;
-        }
-
-        Dictionary<string, bool> states = new Dictionary<string, bool>();
-        for (int i = 0; i < data.torches.Count; i++)
-        {
-            TorchSaveEntry entry = data.torches[i];
-            if (entry == null || string.IsNullOrWhiteSpace(entry.torchId))
-            {
-                continue;
-            }
-
-            states[entry.torchId] = entry.isLit;
-        }
-
-        if (states.Count == 0)
-        {
-            return;
-        }
-
-#if UNITY_2023_1_OR_NEWER
-        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
-#else
-        Torch[] torches = FindObjectsByType<Torch>(FindObjectsInactive.Include);
-#endif
-        if (torches == null || torches.Length == 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < torches.Length; i++)
-        {
-            Torch torch = torches[i];
-            if (torch == null)
-            {
-                continue;
-            }
-
-            string id = torch.TorchId;
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                continue;
-            }
-
-            if (states.TryGetValue(id, out bool lit))
-            {
-                torch.SetLit(lit);
+                flame.SetLit(lit);
             }
         }
     }
@@ -1498,6 +1398,11 @@ public class CharacterStateStore : MonoBehaviour
 
     private void ApplyBuiltConstructions(CharacterSaveData data, Dictionary<string, Item> itemLookup, Dictionary<string, Item> buildingLookup)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         if (data == null || data.builtConstructions == null || itemLookup == null)
         {
             return;

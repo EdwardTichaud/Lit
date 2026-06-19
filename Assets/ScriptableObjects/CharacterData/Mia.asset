@@ -43,6 +43,6 @@ MonoBehaviour:
   maisonWaitingPoint: 4
   inventoryItems: []
   equippedInteractionItems: []
-  torchSecondsRemaining: 0
-  torchEquipped: 0
+  flameSecondsRemaining: 0
+  flameEquipped: 0
   inventoryInitialized: 0

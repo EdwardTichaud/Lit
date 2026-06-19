@@ -17,6 +17,9 @@ public class WorldStateManager : MonoBehaviour
 
     public bool LastApplySucceeded => LastApplyResult != null && LastApplyResult.Succeeded;
 
+    private readonly List<PersistentObjectSnapshot> preservedLegacyBuildingSnapshots =
+        new List<PersistentObjectSnapshot>();
+
     private void Awake()
     {
         ResolveReferences();
@@ -31,7 +34,7 @@ public class WorldStateManager : MonoBehaviour
         ResolveReferences();
         int liveSingletonCount = PersistentWorldSceneInstaller.EnsureLiveManagedSingletons(this, resolvedCaptureReason);
         registry?.RefreshSceneObjects();
-        worldRulesStateManager?.RebuildDerivedBrazierVariables();
+        worldRulesStateManager?.RebuildDerivedFlameVariables();
 
         WorldSnapshot snapshot = new WorldSnapshot
         {
@@ -42,6 +45,9 @@ public class WorldStateManager : MonoBehaviour
         CapturePlayers(snapshot);
         CapturePersistentObjects(snapshot);
         CaptureWorldRules(snapshot);
+        LegacyBuildingPersistenceMigration.MergeLegacyWorldSnapshots(
+            snapshot,
+            preservedLegacyBuildingSnapshots);
         int normalizedSingletonCount = PersistentWorldSceneInstaller.NormalizeManagedSingletonSnapshots(snapshot, this, resolvedCaptureReason);
         SortSnapshot(snapshot);
         AuditSnapshot(snapshot, resolvedCaptureReason, "scene-export", "runtime-export");
@@ -70,6 +76,13 @@ public class WorldStateManager : MonoBehaviour
         }
 
         ResolveReferences();
+        preservedLegacyBuildingSnapshots.Clear();
+        if (!LegacyBuildingSystem.Enabled && LegacyBuildingSystem.PreserveLegacyWorldSnapshots)
+        {
+            preservedLegacyBuildingSnapshots.AddRange(
+                LegacyBuildingPersistenceMigration.CaptureLegacyWorldSnapshots(snapshot));
+        }
+
         int normalizedSingletonCount = PersistentWorldSceneInstaller.NormalizeManagedSingletonSnapshots(snapshot, this, "apply snapshot");
         int ensuredSingletonCount = PersistentWorldSceneInstaller.EnsureManagedSingletonsForSnapshot(snapshot, this, "apply snapshot");
         registry?.RefreshSceneObjects();
@@ -374,6 +387,11 @@ public class WorldStateManager : MonoBehaviour
         for (int i = 0; i < snapshots.Count; i++)
         {
             PersistentObjectSnapshot objectSnapshot = snapshots[i];
+            if (LegacyBuildingSystem.ShouldSkipRuntimeSnapshot(objectSnapshot))
+            {
+                continue;
+            }
+
             if (objectSnapshot == null || string.IsNullOrWhiteSpace(objectSnapshot.PersistentId))
             {
                 if (objectSnapshot != null)
@@ -448,7 +466,7 @@ public class WorldStateManager : MonoBehaviour
         ApplyGameplayState(snapshot.RuntimeObjects, context, PersistentApplyPhase.FinalizeReferences, result);
         try
         {
-            worldRulesStateManager?.RebuildDerivedBrazierVariables();
+            worldRulesStateManager?.RebuildDerivedFlameVariables();
         }
         catch (Exception ex)
         {
@@ -477,6 +495,11 @@ public class WorldStateManager : MonoBehaviour
         for (int i = 0; i < snapshots.Count; i++)
         {
             PersistentObjectSnapshot objectSnapshot = snapshots[i];
+            if (LegacyBuildingSystem.ShouldSkipRuntimeSnapshot(objectSnapshot))
+            {
+                continue;
+            }
+
             if (objectSnapshot == null || string.IsNullOrWhiteSpace(objectSnapshot.PersistentId))
             {
                 if (objectSnapshot != null)
@@ -617,6 +640,11 @@ public class WorldStateManager : MonoBehaviour
         for (int i = 0; i < snapshot.RuntimeObjects.Count; i++)
         {
             PersistentObjectSnapshot objectSnapshot = snapshot.RuntimeObjects[i];
+            if (LegacyBuildingSystem.ShouldSkipRuntimeSnapshot(objectSnapshot))
+            {
+                continue;
+            }
+
             if (objectSnapshot == null || string.IsNullOrWhiteSpace(objectSnapshot.PersistentId))
             {
                 if (objectSnapshot != null)

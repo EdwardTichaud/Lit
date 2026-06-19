@@ -9,29 +9,29 @@ public partial class SquadCharacterController : MonoBehaviour
 {
     private const float WalkLocomotionTier = 1f;
 
-    private enum TorchVisualTransition
+    private enum FlameVisualTransition
     {
         None,
         Equip,
         Unequip
     }
 
-    private const string TorchAnimationLayerName = "Upper Body Torch";
-    private const float TorchAnimationStateFallbackDelay = 0.2f;
-    private const float TorchAnimationVisualDelay = 0.5f;
-    private static readonly int TorchEquipStateHash = Animator.StringToHash("Torch_Equip");
-    private static readonly int TorchLocomotionStateHash = Animator.StringToHash("Torch_Locomotion");
-    private static readonly int TorchOffStateHash = Animator.StringToHash("Torch_Off");
-    private static readonly int TorchUnequipStateHash = Animator.StringToHash("Torch_Unequip");
-    private const bool CharacterTorchSystemEnabled = false;
+    private const string FlameAnimationLayerName = "Upper Body Flame";
+    private const float FlameAnimationStateFallbackDelay = 0.2f;
+    private const float FlameAnimationVisualDelay = 0.5f;
+    private static readonly int FlameEquipStateHash = Animator.StringToHash("Flame_Equip");
+    private static readonly int FlameLocomotionStateHash = Animator.StringToHash("Flame_Locomotion");
+    private static readonly int FlameOffStateHash = Animator.StringToHash("Flame_Off");
+    private static readonly int FlameUnequipStateHash = Animator.StringToHash("Flame_Unequip");
+    private const bool CharacterFlameSystemEnabled = false;
 
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
     [SerializeField, HideInInspector] private List<Item> equippedInteractionItems = new List<Item>();
-    [SerializeField, Tooltip("Duree initiale de la torche (secondes).")]
-    private int startingTorchSeconds = 300;
-    [SerializeField, Tooltip("Duree restante de la torche (secondes).")]
-    private int torchSecondsRemaining = 300;
+    [SerializeField, Tooltip("Duree initiale de la flamme (secondes).")]
+    private int startingFlameSeconds = 300;
+    [SerializeField, Tooltip("Duree restante de la flamme (secondes).")]
+    private int flameSecondsRemaining = 300;
     [SerializeField, Tooltip("Active les logs du flux d'initialisation d'inventaire.")]
     private bool logInventoryInitialization = true;
 
@@ -109,25 +109,25 @@ public partial class SquadCharacterController : MonoBehaviour
     private Vector3 storedRight;
     private Vector2 storedInput;
 
-    [Header("Torch")]
-    [SerializeField, Tooltip("Autorise TriggerMunin a allumer/eteindre la torche.")]
-    private bool allowTorchToggle = true;
-    [SerializeField, Tooltip("Nom du parent de la torche.")]
-    private string torchParentName = "Stuff";
-    [SerializeField, Tooltip("Nom du child de la torche.")]
-    private string torchChildName = "Torch";
-    [SerializeField, Tooltip("Parametre bool de torche.")]
-    private string torchBoolParam = "Torch";
-    [SerializeField, Tooltip("Torche active au demarrage.")]
-    private bool torchStartsActive = true;
+    [Header("Flame")]
+    [SerializeField, Tooltip("Autorise TriggerMunin a allumer/eteindre la flamme.")]
+    private bool allowFlameToggle = true;
+    [SerializeField, Tooltip("Nom du parent de la flamme.")]
+    private string flameParentName = "Stuff";
+    [SerializeField, Tooltip("Nom du child de la flamme.")]
+    private string flameChildName = "Flame";
+    [SerializeField, Tooltip("Parametre bool de flamme.")]
+    private string flameBoolParam = "Flame";
+    [SerializeField, Tooltip("Flamme active au demarrage.")]
+    private bool flameStartsActive = true;
     [SerializeField, Tooltip("Lit l'etat depuis la hierarchie.")]
-    private bool initializeTorchFromHierarchy = true;
-    [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche a l'arret.")]
-    private float torchUpperBodyIdleLayerWeight = 0.92f;
-    [SerializeField, Range(0f, 1f), Tooltip("Poids du layer torche en locomotion rapide.")]
-    private float torchUpperBodyMovingLayerWeight = 0.76f;
-    [SerializeField, Tooltip("Vitesse de lissage du poids du layer torche.")]
-    private float torchUpperBodyLayerWeightResponsiveness = 10f;
+    private bool initializeFlameFromHierarchy = true;
+    [SerializeField, Range(0f, 1f), Tooltip("Poids du layer flamme a l'arret.")]
+    private float flameUpperBodyIdleLayerWeight = 0.92f;
+    [SerializeField, Range(0f, 1f), Tooltip("Poids du layer flamme en locomotion rapide.")]
+    private float flameUpperBodyMovingLayerWeight = 0.76f;
+    [SerializeField, Tooltip("Vitesse de lissage du poids du layer flamme.")]
+    private float flameUpperBodyLayerWeightResponsiveness = 10f;
 
     [Header("External Forces")]
     [SerializeField, Tooltip("Temps de blocage input apres une force externe.")]
@@ -151,15 +151,15 @@ public partial class SquadCharacterController : MonoBehaviour
     private int externalLocomotionDriverLockCount;
     private bool sprintModifierPressed;
     private bool isGrounded;
-    private Transform torchTransform;
+    private Transform flameTransform;
     private MuninController syncedMuninChargeController;
-    private bool torchInitialized;
-    private bool torchEquipped;
-    private bool torchVisualEquipped;
-    private TorchVisualTransition pendingTorchVisualTransition;
-    private bool torchVisualTransitionStateObserved;
-    private float torchVisualTransitionTimer;
-    private float torchDrainTimer;
+    private bool flameInitialized;
+    private bool flameEquipped;
+    private bool flameVisualEquipped;
+    private FlameVisualTransition pendingFlameVisualTransition;
+    private bool flameVisualTransitionStateObserved;
+    private float flameVisualTransitionTimer;
+    private float flameDrainTimer;
     private float nextCollisionRefreshTime;
     private bool collidersDirty = true;
     private readonly List<Collider> cachedColliders = new List<Collider>();
@@ -192,7 +192,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public bool IsGrounded => TryGetUccGrounded(out bool uccGrounded) && uccGrounded;
     public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
-    public bool IsCharacterTorchSystemEnabled => CharacterTorchSystemEnabled;
+    public bool IsCharacterFlameSystemEnabled => CharacterFlameSystemEnabled;
     public float WalkMoveSpeed => walkMoveSpeed;
     public float MoveSpeed => moveSpeed;
 
@@ -217,15 +217,15 @@ public partial class SquadCharacterController : MonoBehaviour
         ResolveFacialExpressionController();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
-        InitializeTorchState();
+        InitializeFlameState();
     }
 
     private void Update()
     {
-        // Torche + collisions en runtime.
-        if (CharacterTorchSystemEnabled && !IsExternalLocomotionDriverActive)
+        // Flamme + collisions en runtime.
+        if (CharacterFlameSystemEnabled && !IsExternalLocomotionDriverActive)
         {
-            UpdateTorchLifetime(Time.deltaTime);
+            UpdateFlameLifetime(Time.deltaTime);
         }
 
         RefreshCharacterCollisionsIfNeeded();
@@ -243,8 +243,8 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void LateUpdate()
     {
-        UpdateTorchVisualTransition();
-        UpdateTorchAnimationLayerWeight();
+        UpdateFlameVisualTransition();
+        UpdateFlameAnimationLayerWeight();
     }
 
     private void Awake()
@@ -292,7 +292,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
-        InitializeTorchState();
+        InitializeFlameState();
         RefreshAnimationReferences();
     }
 
@@ -454,20 +454,20 @@ public partial class SquadCharacterController : MonoBehaviour
                 if (logInventoryInitialization)
                 {
                     Debug.Log(
-                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='apply_starter_items' inventoryInitialized={characterData.inventoryInitialized} forceStarterItems={forceStarterItems} reason='{starterReason}' runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} starterStackCount={characterData.starterItemsWithQuantity?.Count ?? -1} torchSeconds={characterData.torchSecondsRemaining}",
+                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='apply_starter_items' inventoryInitialized={characterData.inventoryInitialized} forceStarterItems={forceStarterItems} reason='{starterReason}' runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} starterStackCount={characterData.starterItemsWithQuantity?.Count ?? -1} flameSeconds={characterData.flameSecondsRemaining}",
                         this);
                 }
 
                 ApplyStarterItems(characterData, true);
                 characterData.inventoryInitialized = true;
-                SyncTorchStateToCharacterData();
+                SyncFlameStateToCharacterData();
             }
             else
             {
                 if (logInventoryInitialization)
                 {
                     Debug.Log(
-                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} torchSeconds={characterData.torchSecondsRemaining} torchEquipped={characterData.torchEquipped}",
+                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} flameSeconds={characterData.flameSecondsRemaining} flameEquipped={characterData.flameEquipped}",
                         this);
                 }
 
@@ -479,7 +479,7 @@ public partial class SquadCharacterController : MonoBehaviour
             if (logInventoryInitialization)
             {
                 Debug.Log(
-                    $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory_without_init' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} torchSeconds={characterData.torchSecondsRemaining} torchEquipped={characterData.torchEquipped}",
+                    $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory_without_init' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} flameSeconds={characterData.flameSecondsRemaining} flameEquipped={characterData.flameEquipped}",
                     this);
             }
 
@@ -504,9 +504,9 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        if (data.torchSecondsRemaining > 0 || data.torchEquipped)
+        if (data.flameSecondsRemaining > 0 || data.flameEquipped)
         {
-            reason = "runtime_torch_state_already_present";
+            reason = "runtime_flame_state_already_present";
             return false;
         }
 
@@ -670,15 +670,15 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureInventoryList();
         MarkInventoryInitialized();
 
-        if (IsTorchItem(item))
+        if (IsFlameItem(item))
         {
             if (!items.Contains(item))
             {
                 items.Add(item);
             }
 
-            AddTorchSeconds(quantity);
-            SyncTorchStateToCharacterData();
+            AddFlameSeconds(quantity);
+            SyncFlameStateToCharacterData();
             return;
         }
 
@@ -712,25 +712,25 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
-    public int TorchSecondsRemaining => CharacterTorchSystemEnabled ? Mathf.Max(0, torchSecondsRemaining) : 0;
+    public int FlameSecondsRemaining => CharacterFlameSystemEnabled ? Mathf.Max(0, flameSecondsRemaining) : 0;
 
-    public Item TorchItem => CharacterTorchSystemEnabled ? GetTorchItem() : null;
+    public Item FlameItem => CharacterFlameSystemEnabled ? GetFlameItem() : null;
 
-    public bool HasTorchItem => CharacterTorchSystemEnabled && TorchItem != null;
+    public bool HasFlameItem => CharacterFlameSystemEnabled && FlameItem != null;
 
-    public bool IsTorchEquipped => CharacterTorchSystemEnabled && torchEquipped;
+    public bool IsFlameEquipped => CharacterFlameSystemEnabled && flameEquipped;
 
     public static IReadOnlyList<SquadCharacterController> ActiveCharacters => registeredCharacters;
 
-    public void ResetTorchToMax(int maxSeconds, bool ensureTorchItem = true)
+    public void ResetFlameToMax(int maxSeconds, bool ensureFlameItem = true)
     {
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             return;
         }
 
-        int target = maxSeconds > 0 ? maxSeconds : startingTorchSeconds;
+        int target = maxSeconds > 0 ? maxSeconds : startingFlameSeconds;
         if (target <= 0)
         {
             return;
@@ -739,25 +739,25 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureInventoryList();
         MarkInventoryInitialized();
 
-        if (ensureTorchItem && !HasTorchItem)
+        if (ensureFlameItem && !HasFlameItem)
         {
-            Item torchItem = FindTorchItemInCharacterData();
-            if (torchItem != null && !items.Contains(torchItem))
+            Item flameItem = FindFlameItemInCharacterData();
+            if (flameItem != null && !items.Contains(flameItem))
             {
-                items.Add(torchItem);
+                items.Add(flameItem);
             }
         }
 
-        torchSecondsRemaining = Mathf.Max(0, target);
-        if (HasTorchItem && torchSecondsRemaining > 0 && !torchEquipped && torchStartsActive)
+        flameSecondsRemaining = Mathf.Max(0, target);
+        if (HasFlameItem && flameSecondsRemaining > 0 && !flameEquipped && flameStartsActive)
         {
-            SetTorchEquipped(true);
+            SetFlameEquipped(true);
         }
 
-        SyncTorchStateToCharacterData();
+        SyncFlameStateToCharacterData();
     }
 
-    private Item FindTorchItemInCharacterData()
+    private Item FindFlameItemInCharacterData()
     {
         if (characterData == null)
         {
@@ -773,7 +773,7 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             CharacterData.StarterItemStack entry = characterData.starterItemsWithQuantity[i];
             Item item = entry != null ? entry.item : null;
-            if (IsTorchItem(item))
+            if (IsFlameItem(item))
             {
                 return item;
             }
@@ -782,7 +782,7 @@ public partial class SquadCharacterController : MonoBehaviour
         return null;
     }
 
-    public void ApplyInventoryState(List<Item> newItems, int torchSeconds, bool equipTorch, List<Item> newEquippedInteractionItems = null)
+    public void ApplyInventoryState(List<Item> newItems, int flameSeconds, bool equipFlame, List<Item> newEquippedInteractionItems = null)
     {
         EnsureInventoryList();
         EnsureEquippedInteractionList();
@@ -803,25 +803,25 @@ public partial class SquadCharacterController : MonoBehaviour
         NormalizeReactiveInventoryItems();
         ApplyEquippedInteractionItems(newEquippedInteractionItems);
 
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             SyncInteractionEquipmentToCharacterData();
             return;
         }
 
-        torchSecondsRemaining = Mathf.Max(0, torchSeconds);
-        InitializeTorchState();
-        if (HasTorchItem && torchSecondsRemaining > 0)
+        flameSecondsRemaining = Mathf.Max(0, flameSeconds);
+        InitializeFlameState();
+        if (HasFlameItem && flameSecondsRemaining > 0)
         {
-            SetTorchEquipped(equipTorch);
+            SetFlameEquipped(equipFlame);
         }
         else
         {
-            SetTorchEquipped(false);
+            SetFlameEquipped(false);
         }
 
-        SyncTorchStateToCharacterData();
+        SyncFlameStateToCharacterData();
         SyncInteractionEquipmentToCharacterData();
     }
 
@@ -876,9 +876,9 @@ public partial class SquadCharacterController : MonoBehaviour
             capabilities |= item.interactionCapabilities;
         }
 
-        if (IsTorchEquipped && TorchItem != null)
+        if (IsFlameEquipped && FlameItem != null)
         {
-            capabilities |= TorchItem.interactionCapabilities;
+            capabilities |= FlameItem.interactionCapabilities;
         }
 
         return capabilities;
@@ -1046,21 +1046,21 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureEquippedInteractionList();
         MarkInventoryInitialized();
 
-        if (IsTorchItem(item))
+        if (IsFlameItem(item))
         {
             if (count <= 0)
             {
                 return false;
             }
 
-            if (!RemoveTorchItem())
+            if (!RemoveFlameItem())
             {
                 return false;
             }
 
-            torchSecondsRemaining = 0;
-            SetTorchEquipped(false);
-            SyncTorchStateToCharacterData();
+            flameSecondsRemaining = 0;
+            SetFlameEquipped(false);
+            SyncFlameStateToCharacterData();
             return true;
         }
 
@@ -1085,28 +1085,28 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureEquippedInteractionList();
         MarkInventoryInitialized();
 
-        if (IsTorchItem(item))
+        if (IsFlameItem(item))
         {
-            if (!HasTorchItem)
+            if (!HasFlameItem)
             {
                 return false;
             }
 
-            int available = Mathf.Max(0, torchSecondsRemaining);
+            int available = Mathf.Max(0, flameSecondsRemaining);
             if (quantity > available)
             {
                 return false;
             }
 
-            torchSecondsRemaining = available - quantity;
-            if (torchSecondsRemaining <= 0)
+            flameSecondsRemaining = available - quantity;
+            if (flameSecondsRemaining <= 0)
             {
-                torchSecondsRemaining = 0;
-                RemoveTorchItem();
-                SetTorchEquipped(false);
+                flameSecondsRemaining = 0;
+                RemoveFlameItem();
+                SetFlameEquipped(false);
             }
 
-            SyncTorchStateToCharacterData();
+            SyncFlameStateToCharacterData();
             return true;
         }
 
@@ -1130,20 +1130,20 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             items.Clear();
             equippedInteractionItems.Clear();
-            torchSecondsRemaining = 0;
+            flameSecondsRemaining = 0;
         }
 
         if (data == null)
         {
-            torchSecondsRemaining = 0;
-            SetTorchEquipped(false);
-            SyncTorchStateToCharacterData();
+            flameSecondsRemaining = 0;
+            SetFlameEquipped(false);
+            SyncFlameStateToCharacterData();
             SyncInteractionEquipmentToCharacterData();
             return;
         }
 
-        bool hasTorch = false;
-        int torchSecondsTarget = 0;
+        bool hasFlame = false;
+        int flameSecondsTarget = 0;
         if (data.starterItemsWithQuantity != null)
         {
             for (int i = 0; i < data.starterItemsWithQuantity.Count; i++)
@@ -1156,9 +1156,9 @@ public partial class SquadCharacterController : MonoBehaviour
                     continue;
                 }
 
-                if (IsTorchItem(item))
+                if (IsFlameItem(item))
                 {
-                    hasTorch = true;
+                    hasFlame = true;
                     if (items == null)
                     {
                         items = new List<Item>();
@@ -1169,7 +1169,7 @@ public partial class SquadCharacterController : MonoBehaviour
                         items.Add(item);
                     }
 
-                    torchSecondsTarget += quantity;
+                    flameSecondsTarget += quantity;
                     continue;
                 }
 
@@ -1177,25 +1177,25 @@ public partial class SquadCharacterController : MonoBehaviour
             }
         }
 
-        if (hasTorch)
+        if (hasFlame)
         {
-            int target = torchSecondsTarget > 0 ? torchSecondsTarget : startingTorchSeconds;
-            torchSecondsRemaining = Mathf.Max(torchSecondsRemaining, target);
-            InitializeTorchState();
+            int target = flameSecondsTarget > 0 ? flameSecondsTarget : startingFlameSeconds;
+            flameSecondsRemaining = Mathf.Max(flameSecondsRemaining, target);
+            InitializeFlameState();
         }
         else
         {
-            torchSecondsRemaining = 0;
-            SetTorchEquipped(false);
+            flameSecondsRemaining = 0;
+            SetFlameEquipped(false);
         }
 
-        SyncTorchStateToCharacterData();
+        SyncFlameStateToCharacterData();
         SyncInteractionEquipmentToCharacterData();
 
         if (logInventoryInitialization && data != null)
         {
             Debug.Log(
-                $"[InventoryInit] apply_starter_items character='{data.name}' clearExisting={clearExisting} starterStackCount={data.starterItemsWithQuantity?.Count ?? -1} resultInventoryCount={items?.Count ?? -1} torchSeconds={torchSecondsRemaining} torchEquipped={torchEquipped}",
+                $"[InventoryInit] apply_starter_items character='{data.name}' clearExisting={clearExisting} starterStackCount={data.starterItemsWithQuantity?.Count ?? -1} resultInventoryCount={items?.Count ?? -1} flameSeconds={flameSecondsRemaining} flameEquipped={flameEquipped}",
                 this);
         }
     }
@@ -1404,15 +1404,15 @@ public partial class SquadCharacterController : MonoBehaviour
 
         EnsureInventoryList();
         EnsureEquippedInteractionList();
-        torchSecondsRemaining = Mathf.Max(0, characterData.torchSecondsRemaining);
-        InitializeTorchState();
-        if (HasTorchItem && torchSecondsRemaining > 0)
+        flameSecondsRemaining = Mathf.Max(0, characterData.flameSecondsRemaining);
+        InitializeFlameState();
+        if (HasFlameItem && flameSecondsRemaining > 0)
         {
-            SetTorchEquipped(characterData.torchEquipped);
+            SetFlameEquipped(characterData.flameEquipped);
         }
         else
         {
-            SetTorchEquipped(false);
+            SetFlameEquipped(false);
         }
 
         ApplyEquippedInteractionItems(characterData.equippedInteractionItems);
@@ -1420,20 +1420,20 @@ public partial class SquadCharacterController : MonoBehaviour
         if (logInventoryInitialization)
         {
             Debug.Log(
-                $"[InventoryInit] load_runtime_inventory character='{characterData.name}' resultInventoryCount={items?.Count ?? -1} equippedCount={equippedInteractionItems?.Count ?? -1} torchSeconds={torchSecondsRemaining} torchEquipped={torchEquipped}",
+                $"[InventoryInit] load_runtime_inventory character='{characterData.name}' resultInventoryCount={items?.Count ?? -1} equippedCount={equippedInteractionItems?.Count ?? -1} flameSeconds={flameSecondsRemaining} flameEquipped={flameEquipped}",
                 this);
         }
     }
 
-    private void SyncTorchStateToCharacterData()
+    private void SyncFlameStateToCharacterData()
     {
         if (characterData == null)
         {
             return;
         }
 
-        characterData.torchSecondsRemaining = CharacterTorchSystemEnabled ? Mathf.Max(0, torchSecondsRemaining) : 0;
-        characterData.torchEquipped = CharacterTorchSystemEnabled && torchEquipped;
+        characterData.flameSecondsRemaining = CharacterFlameSystemEnabled ? Mathf.Max(0, flameSecondsRemaining) : 0;
+        characterData.flameEquipped = CharacterFlameSystemEnabled && flameEquipped;
         characterData.inventoryInitialized = true;
     }
 
@@ -1515,14 +1515,14 @@ public partial class SquadCharacterController : MonoBehaviour
         characterData.muninChargesInitialized = true;
     }
 
-    private void SyncTorchStateToCharacterDataIfChanged(int prevSeconds, bool prevEquipped)
+    private void SyncFlameStateToCharacterDataIfChanged(int prevSeconds, bool prevEquipped)
     {
-        if (prevSeconds == torchSecondsRemaining && prevEquipped == torchEquipped)
+        if (prevSeconds == flameSecondsRemaining && prevEquipped == flameEquipped)
         {
             return;
         }
 
-        SyncTorchStateToCharacterData();
+        SyncFlameStateToCharacterData();
     }
 
     private void OnValidate()
@@ -1561,61 +1561,61 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureRigidbodyCollisionSafety();
     }
 
-    public void ToggleTorch()
+    public void ToggleFlame()
     {
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             return;
         }
 
-        if (!allowTorchToggle)
-        {
-            return;
-        }
-
-        if (!HasTorchItem)
+        if (!allowFlameToggle)
         {
             return;
         }
 
-        if (!torchEquipped && torchSecondsRemaining <= 0)
+        if (!HasFlameItem)
         {
             return;
         }
 
-        EnsureTorchCached();
-        if (torchTransform == null)
+        if (!flameEquipped && flameSecondsRemaining <= 0)
         {
             return;
         }
 
-        SetTorchEquipped(!torchEquipped);
-        PlayActionAudio(ActionAudioCue.TorchToggle);
+        EnsureFlameCached();
+        if (flameTransform == null)
+        {
+            return;
+        }
+
+        SetFlameEquipped(!flameEquipped);
+        PlayActionAudio(ActionAudioCue.FlameToggle);
     }
 
     public void TriggerMunin()
     {
-        DisableCharacterTorchState();
+        DisableCharacterFlameState();
     }
 
-    public void ApplyTorchState(int torchSeconds, bool equipTorch)
+    public void ApplyFlameState(int flameSeconds, bool equipFlame)
     {
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             return;
         }
 
-        torchSecondsRemaining = Mathf.Max(0, torchSeconds);
+        flameSecondsRemaining = Mathf.Max(0, flameSeconds);
 
-        if (HasTorchItem && torchSecondsRemaining > 0)
+        if (HasFlameItem && flameSecondsRemaining > 0)
         {
-            SetTorchEquipped(equipTorch);
+            SetFlameEquipped(equipFlame);
         }
         else
         {
-            SetTorchEquipped(false);
+            SetFlameEquipped(false);
         }
     }
 
@@ -1825,127 +1825,127 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
-    private void InitializeTorchState()
+    private void InitializeFlameState()
     {
-        torchInitialized = false;
-        EnsureTorchCached();
-        ClearPendingTorchVisualTransition();
+        flameInitialized = false;
+        EnsureFlameCached();
+        ClearPendingFlameVisualTransition();
 
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             return;
         }
 
-        if (torchTransform == null)
+        if (flameTransform == null)
         {
             return;
         }
 
-        if (!HasTorchItem)
+        if (!HasFlameItem)
         {
-            torchEquipped = false;
-            ApplyTorchVisualState(false);
-            SetTorchAnimatorBool(false, true);
-            UpdateTorchAnimationLayerWeight(immediate: true);
+            flameEquipped = false;
+            ApplyFlameVisualState(false);
+            SetFlameAnimatorBool(false, true);
+            UpdateFlameAnimationLayerWeight(immediate: true);
             return;
         }
 
-        if (initializeTorchFromHierarchy)
+        if (initializeFlameFromHierarchy)
         {
-            torchEquipped = torchTransform.gameObject.activeSelf;
+            flameEquipped = flameTransform.gameObject.activeSelf;
         }
         else
         {
-            torchEquipped = torchStartsActive;
+            flameEquipped = flameStartsActive;
         }
 
-        ApplyTorchVisualState(torchEquipped);
+        ApplyFlameVisualState(flameEquipped);
 
-        SetTorchAnimatorBool(torchEquipped, true);
+        SetFlameAnimatorBool(flameEquipped, true);
 
-        UpdateTorchAnimationLayerWeight(immediate: true);
+        UpdateFlameAnimationLayerWeight(immediate: true);
 
-        if (torchSecondsRemaining <= 0 && torchEquipped)
+        if (flameSecondsRemaining <= 0 && flameEquipped)
         {
-            torchEquipped = false;
-            ApplyTorchVisualState(false);
-            SetTorchAnimatorBool(false, true);
-            UpdateTorchAnimationLayerWeight(immediate: true);
+            flameEquipped = false;
+            ApplyFlameVisualState(false);
+            SetFlameAnimatorBool(false, true);
+            UpdateFlameAnimationLayerWeight(immediate: true);
         }
     }
 
-    public void TickTorchLifetimeForExternalLocomotion(float deltaTime)
+    public void TickFlameLifetimeForExternalLocomotion(float deltaTime)
     {
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
             return;
         }
 
-        UpdateTorchLifetime(deltaTime);
+        UpdateFlameLifetime(deltaTime);
     }
 
-    private void UpdateTorchLifetime(float deltaTime)
+    private void UpdateFlameLifetime(float deltaTime)
     {
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             return;
         }
 
-        int prevSeconds = torchSecondsRemaining;
-        bool prevEquipped = torchEquipped;
+        int prevSeconds = flameSecondsRemaining;
+        bool prevEquipped = flameEquipped;
 
-        if (!Zone.ShouldConsumeTorch(gameObject))
+        if (!Zone.ShouldConsumeFlame(gameObject))
         {
-            torchDrainTimer = 0f;
-            SyncTorchStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
+            flameDrainTimer = 0f;
+            SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
             return;
         }
 
-        if (!torchEquipped)
+        if (!flameEquipped)
         {
-            torchDrainTimer = 0f;
-            SyncTorchStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
+            flameDrainTimer = 0f;
+            SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
             return;
         }
 
-        if (!HasTorchItem)
+        if (!HasFlameItem)
         {
-            torchDrainTimer = 0f;
-            SetTorchEquipped(false);
-            SyncTorchStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
+            flameDrainTimer = 0f;
+            SetFlameEquipped(false);
+            SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
             return;
         }
 
-        if (torchSecondsRemaining <= 0)
+        if (flameSecondsRemaining <= 0)
         {
-            SetTorchEquipped(false);
-            SyncTorchStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
+            SetFlameEquipped(false);
+            SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
             return;
         }
 
-        torchDrainTimer += deltaTime;
-        while (torchDrainTimer >= 1f && torchSecondsRemaining > 0)
+        flameDrainTimer += deltaTime;
+        while (flameDrainTimer >= 1f && flameSecondsRemaining > 0)
         {
-            torchSecondsRemaining -= 1;
-            torchDrainTimer -= 1f;
+            flameSecondsRemaining -= 1;
+            flameDrainTimer -= 1f;
         }
 
-        if (torchSecondsRemaining <= 0)
+        if (flameSecondsRemaining <= 0)
         {
-            torchSecondsRemaining = 0;
-            SetTorchEquipped(false);
+            flameSecondsRemaining = 0;
+            SetFlameEquipped(false);
         }
 
-        SyncTorchStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
+        SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
     }
 
-    public void AddTorchSeconds(int seconds)
+    public void AddFlameSeconds(int seconds)
     {
-        if (!CharacterTorchSystemEnabled)
+        if (!CharacterFlameSystemEnabled)
         {
-            DisableCharacterTorchState();
+            DisableCharacterFlameState();
             return;
         }
 
@@ -1955,8 +1955,8 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         MarkInventoryInitialized();
-        torchSecondsRemaining = Mathf.Max(0, torchSecondsRemaining + seconds);
-        SyncTorchStateToCharacterData();
+        flameSecondsRemaining = Mathf.Max(0, flameSecondsRemaining + seconds);
+        SyncFlameStateToCharacterData();
     }
 
     private bool ConsumeItem(Item item, int count)
@@ -1984,238 +1984,238 @@ public partial class SquadCharacterController : MonoBehaviour
         return removed == count;
     }
 
-    private bool IsTorchItem(Item item)
+    private bool IsFlameItem(Item item)
     {
-        return CharacterTorchSystemEnabled && item != null && item.isTorch;
+        return CharacterFlameSystemEnabled && item != null && item.isFlame;
     }
 
-    private void DisableCharacterTorchState()
+    private void DisableCharacterFlameState()
     {
-        torchSecondsRemaining = 0;
-        torchDrainTimer = 0f;
-        torchEquipped = false;
-        EnsureTorchCached();
-        ApplyTorchVisualState(false);
-        ClearPendingTorchVisualTransition();
+        flameSecondsRemaining = 0;
+        flameDrainTimer = 0f;
+        flameEquipped = false;
+        EnsureFlameCached();
+        ApplyFlameVisualState(false);
+        ClearPendingFlameVisualTransition();
 
-        SetTorchAnimatorBool(false, true);
+        SetFlameAnimatorBool(false, true);
 
-        UpdateTorchAnimationLayerWeight(immediate: true);
-        SyncTorchStateToCharacterData();
+        UpdateFlameAnimationLayerWeight(immediate: true);
+        SyncFlameStateToCharacterData();
     }
 
-    private void SetTorchEquipped(bool equipped)
+    private void SetFlameEquipped(bool equipped)
     {
-        EnsureTorchCached();
-        if (torchTransform == null)
+        EnsureFlameCached();
+        if (flameTransform == null)
         {
             return;
         }
 
-        torchEquipped = equipped;
+        flameEquipped = equipped;
 
-        SetTorchAnimatorBool(torchEquipped, false);
+        SetFlameAnimatorBool(flameEquipped, false);
 
-        QueueTorchVisualTransition(equipped);
-        UpdateTorchAnimationLayerWeight(immediate: true);
+        QueueFlameVisualTransition(equipped);
+        UpdateFlameAnimationLayerWeight(immediate: true);
 
-        SyncTorchStateToCharacterData();
+        SyncFlameStateToCharacterData();
     }
 
-    private void ApplyTorchVisualState(bool equipped)
+    private void ApplyFlameVisualState(bool equipped)
     {
-        if (torchTransform == null)
+        if (flameTransform == null)
         {
             return;
         }
 
-        torchVisualEquipped = equipped;
-        if (torchTransform.gameObject.activeSelf != equipped)
+        flameVisualEquipped = equipped;
+        if (flameTransform.gameObject.activeSelf != equipped)
         {
-            torchTransform.gameObject.SetActive(equipped);
+            flameTransform.gameObject.SetActive(equipped);
         }
     }
 
-    private void QueueTorchVisualTransition(bool equipped)
+    private void QueueFlameVisualTransition(bool equipped)
     {
-        if (torchVisualEquipped == equipped)
+        if (flameVisualEquipped == equipped)
         {
-            ClearPendingTorchVisualTransition();
-            UpdateTorchAnimationLayerWeight(immediate: true);
+            ClearPendingFlameVisualTransition();
+            UpdateFlameAnimationLayerWeight(immediate: true);
             return;
         }
 
-        if (!CanDelayTorchVisualTransition())
+        if (!CanDelayFlameVisualTransition())
         {
-            ApplyTorchVisualState(equipped);
-            ClearPendingTorchVisualTransition();
-            UpdateTorchAnimationLayerWeight(immediate: true);
+            ApplyFlameVisualState(equipped);
+            ClearPendingFlameVisualTransition();
+            UpdateFlameAnimationLayerWeight(immediate: true);
             return;
         }
 
-        pendingTorchVisualTransition = equipped ? TorchVisualTransition.Equip : TorchVisualTransition.Unequip;
-        torchVisualTransitionStateObserved = false;
-        torchVisualTransitionTimer = 0f;
-        UpdateTorchAnimationLayerWeight(immediate: true);
+        pendingFlameVisualTransition = equipped ? FlameVisualTransition.Equip : FlameVisualTransition.Unequip;
+        flameVisualTransitionStateObserved = false;
+        flameVisualTransitionTimer = 0f;
+        UpdateFlameAnimationLayerWeight(immediate: true);
     }
 
-    private void UpdateTorchVisualTransition()
+    private void UpdateFlameVisualTransition()
     {
-        if (pendingTorchVisualTransition == TorchVisualTransition.None)
+        if (pendingFlameVisualTransition == FlameVisualTransition.None)
         {
             return;
         }
 
-        EnsureTorchCached();
-        if (torchTransform == null)
+        EnsureFlameCached();
+        if (flameTransform == null)
         {
-            ClearPendingTorchVisualTransition();
+            ClearPendingFlameVisualTransition();
             return;
         }
 
-        if (!CanDelayTorchVisualTransition())
+        if (!CanDelayFlameVisualTransition())
         {
-            ApplyTorchVisualState(torchEquipped);
-            ClearPendingTorchVisualTransition();
+            ApplyFlameVisualState(flameEquipped);
+            ClearPendingFlameVisualTransition();
             return;
         }
 
-        torchVisualTransitionTimer += Time.deltaTime;
-        if (!torchVisualTransitionStateObserved && IsTorchAnimationStateActive(pendingTorchVisualTransition))
+        flameVisualTransitionTimer += Time.deltaTime;
+        if (!flameVisualTransitionStateObserved && IsFlameAnimationStateActive(pendingFlameVisualTransition))
         {
-            torchVisualTransitionStateObserved = true;
-            torchVisualTransitionTimer = 0f;
+            flameVisualTransitionStateObserved = true;
+            flameVisualTransitionTimer = 0f;
             return;
         }
 
-        if (!torchVisualTransitionStateObserved && torchVisualTransitionTimer < TorchAnimationStateFallbackDelay)
-        {
-            return;
-        }
-
-        torchVisualTransitionStateObserved = true;
-        if (torchVisualTransitionTimer < TorchAnimationVisualDelay)
+        if (!flameVisualTransitionStateObserved && flameVisualTransitionTimer < FlameAnimationStateFallbackDelay)
         {
             return;
         }
 
-        if (pendingTorchVisualTransition == TorchVisualTransition.Unequip &&
-            !IsTorchVisualTransitionAnimationComplete(TorchVisualTransition.Unequip))
+        flameVisualTransitionStateObserved = true;
+        if (flameVisualTransitionTimer < FlameAnimationVisualDelay)
         {
             return;
         }
 
-        ApplyTorchVisualState(torchEquipped);
-        ClearPendingTorchVisualTransition();
+        if (pendingFlameVisualTransition == FlameVisualTransition.Unequip &&
+            !IsFlameVisualTransitionAnimationComplete(FlameVisualTransition.Unequip))
+        {
+            return;
+        }
+
+        ApplyFlameVisualState(flameEquipped);
+        ClearPendingFlameVisualTransition();
     }
 
-    private bool CanDelayTorchVisualTransition()
+    private bool CanDelayFlameVisualTransition()
     {
-        return GetTorchAnimationLayerIndex() >= 0
-            && HasAnimatorParameter(torchBoolParam, AnimatorControllerParameterType.Bool);
+        return GetFlameAnimationLayerIndex() >= 0
+            && HasAnimatorParameter(flameBoolParam, AnimatorControllerParameterType.Bool);
     }
 
-    private void SetTorchAnimatorBool(bool value, bool syncImmediate)
+    private void SetFlameAnimatorBool(bool value, bool syncImmediate)
     {
-        if (!HasAnimatorParameter(torchBoolParam, AnimatorControllerParameterType.Bool))
+        if (!HasAnimatorParameter(flameBoolParam, AnimatorControllerParameterType.Bool))
         {
             return;
         }
 
-        animator.SetBool(torchBoolParam, value);
+        animator.SetBool(flameBoolParam, value);
         if (syncImmediate)
         {
-            SyncTorchAnimationStateImmediate();
+            SyncFlameAnimationStateImmediate();
         }
     }
 
-    private bool IsTorchAnimationStateActive(TorchVisualTransition transition)
+    private bool IsFlameAnimationStateActive(FlameVisualTransition transition)
     {
-        int layerIndex = GetTorchAnimationLayerIndex();
+        int layerIndex = GetFlameAnimationLayerIndex();
         if (layerIndex < 0)
         {
             return false;
         }
 
-        int stateHash = transition == TorchVisualTransition.Equip
-            ? TorchEquipStateHash
-            : TorchUnequipStateHash;
+        int stateHash = transition == FlameVisualTransition.Equip
+            ? FlameEquipStateHash
+            : FlameUnequipStateHash;
 
-        if (MatchesTorchAnimationState(animator.GetCurrentAnimatorStateInfo(layerIndex), stateHash))
+        if (MatchesFlameAnimationState(animator.GetCurrentAnimatorStateInfo(layerIndex), stateHash))
         {
             return true;
         }
 
         return animator.IsInTransition(layerIndex)
-            && MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash);
+            && MatchesFlameAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash);
     }
 
-    private bool IsTorchVisualTransitionAnimationComplete(TorchVisualTransition transition)
+    private bool IsFlameVisualTransitionAnimationComplete(FlameVisualTransition transition)
     {
-        int layerIndex = GetTorchAnimationLayerIndex();
+        int layerIndex = GetFlameAnimationLayerIndex();
         if (layerIndex < 0)
         {
             return true;
         }
 
-        int stateHash = transition == TorchVisualTransition.Equip
-            ? TorchEquipStateHash
-            : TorchUnequipStateHash;
+        int stateHash = transition == FlameVisualTransition.Equip
+            ? FlameEquipStateHash
+            : FlameUnequipStateHash;
 
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(layerIndex);
-        if (MatchesTorchAnimationState(currentState, stateHash))
+        if (MatchesFlameAnimationState(currentState, stateHash))
         {
             return currentState.normalizedTime >= 1f;
         }
 
         if (animator.IsInTransition(layerIndex) &&
-            MatchesTorchAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash))
+            MatchesFlameAnimationState(animator.GetNextAnimatorStateInfo(layerIndex), stateHash))
         {
             return false;
         }
 
-        return torchVisualTransitionStateObserved;
+        return flameVisualTransitionStateObserved;
     }
 
-    private int GetTorchAnimationLayerIndex()
+    private int GetFlameAnimationLayerIndex()
     {
         if (animator == null || !animator.isActiveAndEnabled)
         {
             return -1;
         }
 
-        return animator.GetLayerIndex(TorchAnimationLayerName);
+        return animator.GetLayerIndex(FlameAnimationLayerName);
     }
 
-    private void SyncTorchAnimationStateImmediate()
+    private void SyncFlameAnimationStateImmediate()
     {
-        int layerIndex = GetTorchAnimationLayerIndex();
+        int layerIndex = GetFlameAnimationLayerIndex();
         if (layerIndex < 0)
         {
             return;
         }
 
-        int stateHash = torchEquipped ? TorchLocomotionStateHash : TorchOffStateHash;
+        int stateHash = flameEquipped ? FlameLocomotionStateHash : FlameOffStateHash;
         animator.Play(stateHash, layerIndex, 0f);
     }
 
-    private void UpdateTorchAnimationLayerWeight(bool immediate = false)
+    private void UpdateFlameAnimationLayerWeight(bool immediate = false)
     {
-        int layerIndex = GetTorchAnimationLayerIndex();
+        int layerIndex = GetFlameAnimationLayerIndex();
         if (layerIndex < 0)
         {
             return;
         }
 
-        float targetWeight = ResolveTorchAnimationLayerWeightTarget();
+        float targetWeight = ResolveFlameAnimationLayerWeightTarget();
         float nextWeight = targetWeight;
 
         if (!immediate && Application.isPlaying)
         {
             float currentWeight = animator.GetLayerWeight(layerIndex);
-            if (torchUpperBodyLayerWeightResponsiveness > 0f)
+            if (flameUpperBodyLayerWeightResponsiveness > 0f)
             {
-                float t = 1f - Mathf.Exp(-torchUpperBodyLayerWeightResponsiveness * Time.deltaTime);
+                float t = 1f - Mathf.Exp(-flameUpperBodyLayerWeightResponsiveness * Time.deltaTime);
                 nextWeight = Mathf.Lerp(currentWeight, targetWeight, t);
             }
         }
@@ -2226,37 +2226,37 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
-    private float ResolveTorchAnimationLayerWeightTarget()
+    private float ResolveFlameAnimationLayerWeightTarget()
     {
-        if (pendingTorchVisualTransition != TorchVisualTransition.None)
+        if (pendingFlameVisualTransition != FlameVisualTransition.None)
         {
             return 1f;
         }
 
-        if (!torchEquipped)
+        if (!flameEquipped)
         {
             return 0f;
         }
 
         float maxMoveSpeed = Mathf.Max(0.01f, moveSpeed);
         float normalizedSpeed = Mathf.Clamp01(GetCurrentHorizontalVelocity().magnitude / maxMoveSpeed);
-        return Mathf.Lerp(torchUpperBodyIdleLayerWeight, torchUpperBodyMovingLayerWeight, normalizedSpeed);
+        return Mathf.Lerp(flameUpperBodyIdleLayerWeight, flameUpperBodyMovingLayerWeight, normalizedSpeed);
     }
 
-    private static bool MatchesTorchAnimationState(AnimatorStateInfo stateInfo, int stateHash)
+    private static bool MatchesFlameAnimationState(AnimatorStateInfo stateInfo, int stateHash)
     {
         return stateInfo.shortNameHash == stateHash;
     }
 
-    private void ClearPendingTorchVisualTransition()
+    private void ClearPendingFlameVisualTransition()
     {
-        pendingTorchVisualTransition = TorchVisualTransition.None;
-        torchVisualTransitionStateObserved = false;
-        torchVisualTransitionTimer = 0f;
-        UpdateTorchAnimationLayerWeight(immediate: true);
+        pendingFlameVisualTransition = FlameVisualTransition.None;
+        flameVisualTransitionStateObserved = false;
+        flameVisualTransitionTimer = 0f;
+        UpdateFlameAnimationLayerWeight(immediate: true);
     }
 
-    private Item GetTorchItem()
+    private Item GetFlameItem()
     {
         if (items == null || items.Count == 0)
         {
@@ -2266,7 +2266,7 @@ public partial class SquadCharacterController : MonoBehaviour
         for (int i = 0; i < items.Count; i++)
         {
             Item item = items[i];
-            if (IsTorchItem(item))
+            if (IsFlameItem(item))
             {
                 return item;
             }
@@ -2275,7 +2275,7 @@ public partial class SquadCharacterController : MonoBehaviour
         return null;
     }
 
-    private bool RemoveTorchItem()
+    private bool RemoveFlameItem()
     {
         if (items == null || items.Count == 0)
         {
@@ -2285,7 +2285,7 @@ public partial class SquadCharacterController : MonoBehaviour
         for (int i = items.Count - 1; i >= 0; i--)
         {
             Item item = items[i];
-            if (IsTorchItem(item))
+            if (IsFlameItem(item))
             {
                 items.RemoveAt(i);
                 return true;
@@ -2295,22 +2295,22 @@ public partial class SquadCharacterController : MonoBehaviour
         return false;
     }
 
-    private void EnsureTorchCached()
+    private void EnsureFlameCached()
     {
-        if (torchInitialized)
+        if (flameInitialized)
         {
             return;
         }
 
-        torchInitialized = true;
-        torchTransform = FindTorchTransform();
-        if (torchTransform != null)
+        flameInitialized = true;
+        flameTransform = FindFlameTransform();
+        if (flameTransform != null)
         {
-            ConfigureTorchPhysics(torchTransform);
+            ConfigureFlamePhysics(flameTransform);
         }
     }
 
-    private void ConfigureTorchPhysics(Transform root)
+    private void ConfigureFlamePhysics(Transform root)
     {
         if (root == null)
         {
@@ -2340,22 +2340,22 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
-    private Transform FindTorchTransform()
+    private Transform FindFlameTransform()
     {
         Transform root = motionRoot != null ? motionRoot : transform;
-        Transform parent = FindChildByName(root, torchParentName);
+        Transform parent = FindChildByName(root, flameParentName);
         if (parent == null)
         {
             parent = root;
         }
 
-        Transform torch = FindChildByName(parent, torchChildName);
-        if (torch == null)
+        Transform flame = FindChildByName(parent, flameChildName);
+        if (flame == null)
         {
-            torch = root.Find($"{torchParentName}/{torchChildName}");
+            flame = root.Find($"{flameParentName}/{flameChildName}");
         }
 
-        return torch;
+        return flame;
     }
 
     private static Transform FindChildByName(Transform root, string targetName)

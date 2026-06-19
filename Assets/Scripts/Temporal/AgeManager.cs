@@ -9,23 +9,21 @@ using UnityEngine;
 public class AgeManager : MonoBehaviour
 {
     public const int DefaultStartYear = TemporalAgeUtility.MaxYear;
-    public const int DefaultYearsPerBrasero = 100;
+    public const int DefaultYearsPerAncientFlame = TemporalAgeUtility.StepYears;
 
     public static AgeManager ActiveInstance { get; private set; }
 
-    [Header("Ancient Braseros")]
-    [SerializeField, Tooltip("Collecte automatiquement les Braseros anciens de la scene chargee.")]
-    private bool autoCollectSceneAncientBraseros = true;
-    [SerializeField, Tooltip("Inclut les Braseros anciens inactifs dans le calcul, utile pour les objets caches au demarrage.")]
-    private bool includeInactiveAncientBraseros = true;
-    [SerializeField, Tooltip("Seuls ces Braseros anciens pilotent l'AgeManager.")]
-    private List<Brasero> ancientBraseros = new List<Brasero>();
+    [Header("Ancient Flames")]
+    [SerializeField, Tooltip("Collecte automatiquement les AncientFlame de la scene chargee.")]
+    private bool autoCollectSceneAncientFlames = true;
+    [SerializeField, Tooltip("Inclut les AncientFlame inactifs dans le calcul, utile pour les objets caches au demarrage.")]
+    private bool includeInactiveAncientFlames = true;
+    [SerializeField, Tooltip("Seuls ces AncientFlame pilotent l'AgeManager.")]
+    private List<Flame> ancientFlames = new List<Flame>();
 
     [Header("Age")]
     [SerializeField, Tooltip("Annee de depart du joueur.")]
     private int startYear = DefaultStartYear;
-    [SerializeField, Tooltip("Annees reculees par Brasero allume qui pilote l'age.")]
-    private int yearsPerBrasero = DefaultYearsPerBrasero;
     [SerializeField, Tooltip("Ecrit un log quand l'age change.")]
     private bool logAgeChanges;
 
@@ -37,25 +35,24 @@ public class AgeManager : MonoBehaviour
     private bool includeInactiveMasterShaderRenderers = true;
 
     [Header("State")]
-    [SerializeField, Tooltip("Nombre de Braseros qui pilotent l'age et sont allumes.")]
-    private int litBrazierCount;
+    [SerializeField, Tooltip("Nombre de Flames qui pilotent l'age et sont allumes.")]
+    private int litAncientFlameCount;
     [SerializeField, Tooltip("Annee courante canonique.")]
     private int currentYear = DefaultStartYear;
 
-    private readonly HashSet<Brasero> subscribedBraseros = new HashSet<Brasero>();
+    private readonly HashSet<Flame> subscribedFlames = new HashSet<Flame>();
     private readonly List<Renderer> shaderAgeRenderers = new List<Renderer>();
     private MaterialPropertyBlock shaderAgePropertyBlock;
     private int masterShaderAgeAmountPropertyId;
     private bool shaderAgeRendererCacheDirty = true;
 
-    public IReadOnlyList<Brasero> Braseros => ancientBraseros;
-    public IReadOnlyList<Brasero> AncientBraseros => ancientBraseros;
-    public int TotalAgeDrivingBraseroCount => CountAncientBraseros();
-    public int LitBrazierCount => litBrazierCount;
+    public IReadOnlyList<Flame> AncientFlames => ancientFlames;
+    public int TotalAncientFlameCount => CountAncientFlames();
+    public int LitAncientFlameCount => litAncientFlameCount;
     public int CurrentYear => currentYear;
     public int CurrentYearOffsetFromStart => Mathf.Max(0, startYear - currentYear);
     public int StartYear => startYear;
-    public int YearsPerBrasero => yearsPerBrasero;
+    public int YearsPerAncientFlame => DefaultYearsPerAncientFlame;
     public TemporalAge CurrentTemporalAge => TemporalAgeUtility.IntToAge(currentYear);
     public int CurrentTemporalAgeStep => TemporalAgeUtility.AgeToStep(CurrentTemporalAge);
 
@@ -105,7 +102,7 @@ public class AgeManager : MonoBehaviour
 
     private void OnDisable()
     {
-        UnsubscribeFromBraseros();
+        UnsubscribeFromFlames();
         shaderAgeRenderers.Clear();
         shaderAgeRendererCacheDirty = true;
 
@@ -118,7 +115,6 @@ public class AgeManager : MonoBehaviour
     private void OnValidate()
     {
         startYear = Mathf.Clamp(startYear, TemporalAgeUtility.MinYear, TemporalAgeUtility.MaxYear);
-        yearsPerBrasero = Mathf.Max(1, yearsPerBrasero);
         currentYear = ClampYear(currentYear);
         CacheShaderPropertyIds();
         shaderAgeRendererCacheDirty = true;
@@ -126,46 +122,46 @@ public class AgeManager : MonoBehaviour
 
     public void RefreshAndResubscribe()
     {
-        UnsubscribeFromBraseros();
-        RefreshBraseros();
-        SubscribeToBraseros();
+        UnsubscribeFromFlames();
+        RefreshFlames();
+        SubscribeToFlames();
         RecalculateAge(rescanTimePeriodVisibility: true);
     }
 
-    public void RefreshBraseros()
+    public void RefreshFlames()
     {
-        RemoveMissingAncientBraseros();
+        RemoveMissingAncientFlames();
 
-        if (!autoCollectSceneAncientBraseros)
+        if (!autoCollectSceneAncientFlames)
         {
             return;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Brasero[] sceneBraseros = includeInactiveAncientBraseros
-            ? FindObjectsByType<Brasero>(FindObjectsInactive.Include)
-            : FindObjectsByType<Brasero>();
+        Flame[] sceneFlames = includeInactiveAncientFlames
+            ? FindObjectsByType<Flame>(FindObjectsInactive.Include)
+            : FindObjectsByType<Flame>();
 #else
-        Brasero[] sceneBraseros = includeInactiveAncientBraseros
-            ? FindObjectsByType<Brasero>(FindObjectsInactive.Include)
-            : FindObjectsByType<Brasero>();
+        Flame[] sceneFlames = includeInactiveAncientFlames
+            ? FindObjectsByType<Flame>(FindObjectsInactive.Include)
+            : FindObjectsByType<Flame>();
 #endif
-        AddAncientBraseros(sceneBraseros);
+        AddAncientFlames(sceneFlames);
     }
 
     public void RecalculateAge(bool rescanTimePeriodVisibility = true)
     {
         int previousYear = currentYear;
-        int previousLitCount = litBrazierCount;
+        int previousLitCount = litAncientFlameCount;
 
-        litBrazierCount = CountLitBraseros();
-        currentYear = CalculateYearForLitCount(litBrazierCount);
+        litAncientFlameCount = CountLitAncientFlames();
+        currentYear = CalculateYearForLitCount(litAncientFlameCount);
 
-        bool changed = previousYear != currentYear || previousLitCount != litBrazierCount;
+        bool changed = previousYear != currentYear || previousLitCount != litAncientFlameCount;
         if (logAgeChanges && changed)
         {
             Debug.Log(
-                $"[AgeManager] litBraseros={litBrazierCount}/{TotalAgeDrivingBraseroCount} currentYear={currentYear}",
+                $"[AgeManager] litFlames={litAncientFlameCount}/{TotalAncientFlameCount} currentYear={currentYear}",
                 this);
         }
 
@@ -175,14 +171,14 @@ public class AgeManager : MonoBehaviour
         }
 
         TimePeriodVisibility.RefreshAllForAgeManager(this, rescanTimePeriodVisibility);
-        BraseroDisplayManager.RefreshAllDisplays();
+        AncientFlameDisplayManager.RefreshAllDisplays();
         ApplyShaderAgeAmountToScene();
     }
 
     public int CalculateYearForLitCount(int litCount)
     {
         int count = Mathf.Max(0, litCount);
-        return ClampYear(startYear - count * yearsPerBrasero);
+        return ClampYear(startYear - count * DefaultYearsPerAncientFlame);
     }
 
     public bool IsYearInCurrentAge(int year)
@@ -197,8 +193,8 @@ public class AgeManager : MonoBehaviour
             case TimePeriodValueMode.YearOffsetFromBase:
                 return CurrentYearOffsetFromStart;
 
-            case TimePeriodValueMode.LitBrazierCount:
-                return LitBrazierCount;
+            case TimePeriodValueMode.LitAncientFlameCount:
+                return LitAncientFlameCount;
 
             case TimePeriodValueMode.TemporalAgeYear:
                 return TemporalAgeUtility.AgeToInt(CurrentTemporalAge);
@@ -305,16 +301,16 @@ public class AgeManager : MonoBehaviour
         renderer.SetPropertyBlock(shaderAgePropertyBlock);
     }
 
-    private int CountLitBraseros()
+    private int CountLitAncientFlames()
     {
         int count = 0;
 
-        if (ancientBraseros != null)
+        if (ancientFlames != null)
         {
-            for (int i = 0; i < ancientBraseros.Count; i++)
+            for (int i = 0; i < ancientFlames.Count; i++)
             {
-                Brasero brasero = ancientBraseros[i];
-                if (brasero != null && brasero.IsAncientBrasero && brasero.IsLit)
+                Flame flame = ancientFlames[i];
+                if (flame != null && flame.IsAncientFlame && flame.IsLit)
                 {
                     count++;
                 }
@@ -324,16 +320,16 @@ public class AgeManager : MonoBehaviour
         return count;
     }
 
-    private int CountAncientBraseros()
+    private int CountAncientFlames()
     {
         int count = 0;
 
-        if (ancientBraseros != null)
+        if (ancientFlames != null)
         {
-            for (int i = 0; i < ancientBraseros.Count; i++)
+            for (int i = 0; i < ancientFlames.Count; i++)
             {
-                Brasero brasero = ancientBraseros[i];
-                if (brasero != null && brasero.IsAncientBrasero)
+                Flame flame = ancientFlames[i];
+                if (flame != null && flame.IsAncientFlame)
                 {
                     count++;
                 }
@@ -343,50 +339,50 @@ public class AgeManager : MonoBehaviour
         return count;
     }
 
-    private void SubscribeToBraseros()
+    private void SubscribeToFlames()
     {
-        if (ancientBraseros == null)
+        if (ancientFlames == null)
         {
             return;
         }
 
-        for (int i = 0; i < ancientBraseros.Count; i++)
+        for (int i = 0; i < ancientFlames.Count; i++)
         {
-            Brasero brasero = ancientBraseros[i];
-            SubscribeToBrasero(brasero);
+            Flame flame = ancientFlames[i];
+            SubscribeToFlame(flame);
         }
     }
 
-    private void UnsubscribeFromBraseros()
+    private void UnsubscribeFromFlames()
     {
-        foreach (Brasero brasero in subscribedBraseros)
+        foreach (Flame flame in subscribedFlames)
         {
-            if (brasero != null)
+            if (flame != null)
             {
-                brasero.StateChanged -= OnBraseroStateChanged;
+                flame.StateChanged -= OnFlameStateChanged;
             }
         }
 
-        subscribedBraseros.Clear();
+        subscribedFlames.Clear();
     }
 
-    private void OnBraseroStateChanged(Brasero brasero, bool lit)
+    private void OnFlameStateChanged(Flame flame, bool lit)
     {
         RecalculateAge();
     }
 
-    private void SubscribeToBrasero(Brasero brasero)
+    private void SubscribeToFlame(Flame flame)
     {
-        if (brasero == null || !brasero.IsAncientBrasero || subscribedBraseros.Contains(brasero))
+        if (flame == null || !flame.IsAncientFlame || subscribedFlames.Contains(flame))
         {
             return;
         }
 
-        brasero.StateChanged += OnBraseroStateChanged;
-        subscribedBraseros.Add(brasero);
+        flame.StateChanged += OnFlameStateChanged;
+        subscribedFlames.Add(flame);
     }
 
-    private void AddAncientBraseros(IList<Brasero> source)
+    private void AddAncientFlames(IList<Flame> source)
     {
         if (source == null)
         {
@@ -395,11 +391,11 @@ public class AgeManager : MonoBehaviour
 
         for (int i = 0; i < source.Count; i++)
         {
-            AddAncientBrasero(source[i]);
+            AddAncientFlame(source[i]);
         }
     }
 
-    private void AddAncientBraseros(Brasero[] source)
+    private void AddAncientFlames(Flame[] source)
     {
         if (source == null)
         {
@@ -408,41 +404,41 @@ public class AgeManager : MonoBehaviour
 
         for (int i = 0; i < source.Length; i++)
         {
-            AddAncientBrasero(source[i]);
+            AddAncientFlame(source[i]);
         }
     }
 
-    private void AddAncientBrasero(Brasero brasero)
+    private void AddAncientFlame(Flame flame)
     {
-        if (brasero == null || !brasero.IsAncientBrasero)
+        if (flame == null || !flame.IsAncientFlame)
         {
             return;
         }
 
-        if (ancientBraseros == null)
+        if (ancientFlames == null)
         {
-            ancientBraseros = new List<Brasero>();
+            ancientFlames = new List<Flame>();
         }
 
-        if (!ancientBraseros.Contains(brasero))
+        if (!ancientFlames.Contains(flame))
         {
-            ancientBraseros.Add(brasero);
+            ancientFlames.Add(flame);
         }
     }
 
-    private void RemoveMissingAncientBraseros()
+    private void RemoveMissingAncientFlames()
     {
-        if (ancientBraseros == null || ancientBraseros.Count == 0)
+        if (ancientFlames == null || ancientFlames.Count == 0)
         {
             return;
         }
 
-        for (int i = ancientBraseros.Count - 1; i >= 0; i--)
+        for (int i = ancientFlames.Count - 1; i >= 0; i--)
         {
-            Brasero brasero = ancientBraseros[i];
-            if (brasero == null || !brasero.IsAncientBrasero)
+            Flame flame = ancientFlames[i];
+            if (flame == null || !flame.IsAncientFlame)
             {
-                ancientBraseros.RemoveAt(i);
+                ancientFlames.RemoveAt(i);
             }
         }
     }

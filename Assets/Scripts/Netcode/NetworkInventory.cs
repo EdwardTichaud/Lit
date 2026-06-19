@@ -13,10 +13,10 @@ public class NetworkInventory : NetworkBehaviour
     private readonly NetworkList<NetItemStack> netItems = new NetworkList<NetItemStack>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    private readonly NetworkVariable<int> torchSeconds = new NetworkVariable<int>(
+    private readonly NetworkVariable<int> flameSeconds = new NetworkVariable<int>(
         0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    private readonly NetworkVariable<bool> torchEquipped = new NetworkVariable<bool>(
+    private readonly NetworkVariable<bool> flameEquipped = new NetworkVariable<bool>(
         false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private readonly NetworkList<FixedString64Bytes> netEquippedInteractionItems = new NetworkList<FixedString64Bytes>(
@@ -40,8 +40,8 @@ public class NetworkInventory : NetworkBehaviour
             Debug.Log($"NetworkInventory: OnNetworkSpawn (IsServer={IsServer}, IsClient={IsClient}, IsOwner={IsOwner}) on {name}", this);
         }
         netItems.OnListChanged += OnNetItemsChanged;
-        torchSeconds.OnValueChanged += OnTorchChanged;
-        torchEquipped.OnValueChanged += OnTorchChanged;
+        flameSeconds.OnValueChanged += OnFlameChanged;
+        flameEquipped.OnValueChanged += OnFlameChanged;
         netEquippedInteractionItems.OnListChanged += OnEquippedInteractionItemsChanged;
 
         if (IsServer)
@@ -49,7 +49,7 @@ public class NetworkInventory : NetworkBehaviour
             EnsureStarterInventoryIfEmpty();
             if (logInventoryDebug)
             {
-                Debug.Log($"NetworkInventory: After EnsureStarterInventoryIfEmpty -> items={controller?.Items?.Count ?? -1}, torchSeconds={controller?.TorchSecondsRemaining ?? -1}", this);
+                Debug.Log($"NetworkInventory: After EnsureStarterInventoryIfEmpty -> items={controller?.Items?.Count ?? -1}, flameSeconds={controller?.FlameSecondsRemaining ?? -1}", this);
             }
             SyncFromController();
         }
@@ -60,8 +60,8 @@ public class NetworkInventory : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         netItems.OnListChanged -= OnNetItemsChanged;
-        torchSeconds.OnValueChanged -= OnTorchChanged;
-        torchEquipped.OnValueChanged -= OnTorchChanged;
+        flameSeconds.OnValueChanged -= OnFlameChanged;
+        flameEquipped.OnValueChanged -= OnFlameChanged;
         netEquippedInteractionItems.OnListChanged -= OnEquippedInteractionItemsChanged;
     }
 
@@ -101,8 +101,8 @@ public class NetworkInventory : NetworkBehaviour
             }
         }
 
-        torchSeconds.Value = controller.TorchSecondsRemaining;
-        torchEquipped.Value = controller.IsTorchEquipped;
+        flameSeconds.Value = controller.FlameSecondsRemaining;
+        flameEquipped.Value = controller.IsFlameEquipped;
 
         netItems.Clear();
         foreach (KeyValuePair<string, int> pair in counts)
@@ -130,7 +130,7 @@ public class NetworkInventory : NetworkBehaviour
 
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, torchSeconds={torchSeconds.Value}, torchEquipped={torchEquipped.Value}", this);
+            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, flameSeconds={flameSeconds.Value}, flameEquipped={flameEquipped.Value}", this);
         }
     }
 
@@ -816,12 +816,12 @@ public class NetworkInventory : NetworkBehaviour
         ApplyToController();
     }
 
-    private void OnTorchChanged(int previous, int current)
+    private void OnFlameChanged(int previous, int current)
     {
         ApplyToController();
     }
 
-    private void OnTorchChanged(bool previous, bool current)
+    private void OnFlameChanged(bool previous, bool current)
     {
         ApplyToController();
     }
@@ -884,10 +884,10 @@ public class NetworkInventory : NetworkBehaviour
             resolvedEquippedItems.Add(item);
         }
 
-        controller.ApplyInventoryState(resolved, torchSeconds.Value, torchEquipped.Value, resolvedEquippedItems);
+        controller.ApplyInventoryState(resolved, flameSeconds.Value, flameEquipped.Value, resolvedEquippedItems);
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, torchSeconds={torchSeconds.Value}", this);
+            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, flameSeconds={flameSeconds.Value}", this);
             if (unresolvedItemIds != null && unresolvedItemIds.Count > 0)
             {
                 Debug.LogWarning(
@@ -922,7 +922,7 @@ public class NetworkInventory : NetworkBehaviour
             return;
         }
 
-        if (controller.TorchSecondsRemaining > 0 || controller.IsTorchEquipped)
+        if (controller.FlameSecondsRemaining > 0 || controller.IsFlameEquipped)
         {
             return;
         }
@@ -930,7 +930,7 @@ public class NetworkInventory : NetworkBehaviour
         controller.ApplyStarterItems(data, true);
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: EnsureStarterInventoryIfEmpty applied for {data.name} -> items={controller.Items?.Count ?? -1}, torchSeconds={controller.TorchSecondsRemaining}", this);
+            Debug.Log($"NetworkInventory: EnsureStarterInventoryIfEmpty applied for {data.name} -> items={controller.Items?.Count ?? -1}, flameSeconds={controller.FlameSecondsRemaining}", this);
         }
     }
 

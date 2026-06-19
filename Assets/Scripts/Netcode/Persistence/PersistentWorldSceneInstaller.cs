@@ -36,8 +36,8 @@ public static class PersistentWorldSceneInstaller
                 continue;
             }
 
-            PrepareSceneBraziers(root);
-            PrepareSceneTorches(root);
+            PrepareSceneFlames(root);
+            PrepareSceneMuninChargeRewards(root);
             PrepareSceneContainers(root);
             PrepareScenePuzzles(root);
             PrepareSceneGhosts(root);
@@ -79,6 +79,11 @@ public static class PersistentWorldSceneInstaller
 
     public static void EnsureRuntimeBuildingInstance(BuildingInfoInteractable info, Item building, ulong networkId)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         if (info == null || networkId == 0)
         {
             return;
@@ -304,7 +309,7 @@ public static class PersistentWorldSceneInstaller
 
         persistentObject.AssignRuntimeIdentity(persistentId, runtimePrefabId);
 
-        if (target.GetComponent<BuildingInfoInteractable>() != null)
+        if (LegacyBuildingSystem.Enabled && target.GetComponent<BuildingInfoInteractable>() != null)
         {
             NetcodeRuntimeUtilities.GetOrAdd<PersistentBuildingState>(target);
         }
@@ -314,14 +319,14 @@ public static class PersistentWorldSceneInstaller
             NetcodeRuntimeUtilities.GetOrAdd<PersistentPuzzleElementState>(target);
         }
 
-        if (target.GetComponent<Brasero>() != null)
+        if (target.GetComponent<Flame>() != null)
         {
-            NetcodeRuntimeUtilities.GetOrAdd<PersistentBrazierState>(target);
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentFlameState>(target);
         }
 
-        if (target.GetComponent<Torch>() != null)
+        if (target.GetComponent<MuninChargeReward>() != null)
         {
-            NetcodeRuntimeUtilities.GetOrAdd<PersistentTorchState>(target);
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentMuninChargeRewardState>(target);
         }
 
         if (target.GetComponent<InteractableItem>() != null && target.GetComponentInParent<BuildingInfoInteractable>(true) == null)
@@ -470,43 +475,43 @@ public static class PersistentWorldSceneInstaller
         return true;
     }
 
-    private static void PrepareSceneBraziers(GameObject root)
+    private static void PrepareSceneFlames(GameObject root)
     {
-        Brasero[] braziers = root.GetComponentsInChildren<Brasero>(true);
-        for (int i = 0; i < braziers.Length; i++)
+        Flame[] flames = root.GetComponentsInChildren<Flame>(true);
+        for (int i = 0; i < flames.Length; i++)
         {
-            Brasero brazier = braziers[i];
-            if (brazier == null)
+            Flame flame = flames[i];
+            if (flame == null)
             {
                 continue;
             }
 
-            if (EnsurePersistentSceneObject(brazier.gameObject) == null)
+            if (EnsurePersistentSceneObject(flame.gameObject) == null)
             {
                 continue;
             }
 
-            NetcodeRuntimeUtilities.GetOrAdd<PersistentBrazierState>(brazier.gameObject);
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentFlameState>(flame.gameObject);
         }
     }
 
-    private static void PrepareSceneTorches(GameObject root)
+    private static void PrepareSceneMuninChargeRewards(GameObject root)
     {
-        Torch[] torches = root.GetComponentsInChildren<Torch>(true);
-        for (int i = 0; i < torches.Length; i++)
+        MuninChargeReward[] rewards = root.GetComponentsInChildren<MuninChargeReward>(true);
+        for (int i = 0; i < rewards.Length; i++)
         {
-            Torch torch = torches[i];
-            if (torch == null)
+            MuninChargeReward reward = rewards[i];
+            if (reward == null)
             {
                 continue;
             }
 
-            if (EnsurePersistentSceneObject(torch.gameObject) == null)
+            if (EnsurePersistentSceneObject(reward.gameObject) == null)
             {
                 continue;
             }
 
-            NetcodeRuntimeUtilities.GetOrAdd<PersistentTorchState>(torch.gameObject);
+            NetcodeRuntimeUtilities.GetOrAdd<PersistentMuninChargeRewardState>(reward.gameObject);
         }
     }
 
@@ -554,26 +559,15 @@ public static class PersistentWorldSceneInstaller
             NetcodeRuntimeUtilities.GetOrAdd<PersistentPuzzleElementState>(puzzle.gameObject);
         }
 
-        ReadableSentencePuzzle[] readableSentencePuzzles = root.GetComponentsInChildren<ReadableSentencePuzzle>(true);
-        for (int i = 0; i < readableSentencePuzzles.Length; i++)
-        {
-            ReadableSentencePuzzle puzzle = readableSentencePuzzles[i];
-            if (puzzle == null)
-            {
-                continue;
-            }
-
-            if (EnsurePersistentSceneObject(puzzle.gameObject) == null)
-            {
-                continue;
-            }
-
-            NetcodeRuntimeUtilities.GetOrAdd<PersistentReadableSentencePuzzleState>(puzzle.gameObject);
-        }
     }
 
     private static void PrepareSceneBuildings(GameObject root)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         BuildingInfoInteractable[] buildings = root.GetComponentsInChildren<BuildingInfoInteractable>(true);
         for (int i = 0; i < buildings.Length; i++)
         {

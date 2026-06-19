@@ -103,6 +103,12 @@ public class CraftingConstructionPanel : MonoBehaviour
 
     private void Awake()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         if (craftingPanel == null)
         {
             craftingPanel = gameObject;
@@ -128,6 +134,12 @@ public class CraftingConstructionPanel : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
@@ -157,6 +169,11 @@ public class CraftingConstructionPanel : MonoBehaviour
 
     public void OpenPanel(BuildingInfoInteractable building, SquadCharacterController controller)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         if (building == null || controller == null)
         {
             return;

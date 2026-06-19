@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Optional shader global bridge for spatial data only. The canonical gameplay age
-// and _AgeAmount runtime value come from AgeManager, driven only by braseros anciens.
+// and _AgeAmount runtime value come from AgeManager, driven only by AncientFlame.
 public class GlobalAgeZone : MonoBehaviour
 {
     public float radius = 5f;

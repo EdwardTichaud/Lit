@@ -28,7 +28,7 @@ public class DissolveRevealTarget : MonoBehaviour
     [SerializeField] private bool useColliderBoundsWhenNoRendererBounds = true;
 
     [Header("Light Reveal")]
-    [FormerlySerializedAs("requireTorchEquipped")]
+    [FormerlySerializedAs("requireFlameEquipped")]
     [SerializeField] private bool requireActiveRevealSource = true;
     [SerializeField, Min(0f)] private float hiddenDistance = 5f;
     [SerializeField, Min(0f)] private float fullyVisibleDistance = 2f;

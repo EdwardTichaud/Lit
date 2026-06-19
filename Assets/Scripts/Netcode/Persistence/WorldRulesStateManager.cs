@@ -5,8 +5,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class WorldRulesStateManager : MonoBehaviour
 {
-    public const string BrazierLitCountKey = "world.braziers.lit_count";
-    public const string BrazierTotalCountKey = "world.braziers.total_count";
+    public const string FlameLitCountKey = "world.flames.lit_count";
+    public const string FlameTotalCountKey = "world.flames.total_count";
     public const string CurrentYearKey = "world.time.current_year";
     public const string CurrentTemporalAgeKey = "world.time.temporal_age";
     public const string CurrentTemporalAgeStepKey = "world.time.temporal_age_step";
@@ -23,7 +23,7 @@ public class WorldRulesStateManager : MonoBehaviour
     {
         ResolveReferences();
         Subscribe();
-        RebuildDerivedBrazierVariables();
+        RebuildDerivedFlameVariables();
     }
 
     private void OnDisable()
@@ -162,7 +162,7 @@ public class WorldRulesStateManager : MonoBehaviour
         VariablesChanged?.Invoke();
     }
 
-    public void RebuildDerivedBrazierVariables()
+    public void RebuildDerivedFlameVariables()
     {
         ResolveReferences();
         if (ageManager == null)
@@ -170,13 +170,13 @@ public class WorldRulesStateManager : MonoBehaviour
             return;
         }
 
-        int litCount = ageManager.LitBrazierCount;
-        int totalCount = ageManager.TotalAgeDrivingBraseroCount;
+        int litCount = ageManager.LitAncientFlameCount;
+        int totalCount = ageManager.TotalAncientFlameCount;
         int currentYear = ageManager.CurrentYear;
         TemporalAge currentAge = ageManager.CurrentTemporalAge;
 
-        SetInt(BrazierLitCountKey, litCount);
-        SetInt(BrazierTotalCountKey, totalCount);
+        SetInt(FlameLitCountKey, litCount);
+        SetInt(FlameTotalCountKey, totalCount);
         SetInt(CurrentYearKey, currentYear);
         SetInt(CurrentTemporalAgeKey, TemporalAgeUtility.AgeToInt(currentAge));
         SetInt(CurrentTemporalAgeStepKey, TemporalAgeUtility.AgeToStep(currentAge));
@@ -187,9 +187,9 @@ public class WorldRulesStateManager : MonoBehaviour
     {
         List<string> values = new List<string>();
 #if UNITY_2023_1_OR_NEWER
-        BraseroVolumeByYear[] managers = FindObjectsByType<BraseroVolumeByYear>(FindObjectsInactive.Include);
+        AncientFlameVolumeByYear[] managers = FindObjectsByType<AncientFlameVolumeByYear>(FindObjectsInactive.Include);
 #else
-        BraseroVolumeByYear[] managers = FindObjectsByType<BraseroVolumeByYear>(FindObjectsInactive.Include);
+        AncientFlameVolumeByYear[] managers = FindObjectsByType<AncientFlameVolumeByYear>(FindObjectsInactive.Include);
 #endif
         if (managers == null)
         {
@@ -198,7 +198,7 @@ public class WorldRulesStateManager : MonoBehaviour
 
         for (int i = 0; i < managers.Length; i++)
         {
-            BraseroVolumeByYear manager = managers[i];
+            AncientFlameVolumeByYear manager = managers[i];
             if (manager == null)
             {
                 continue;
@@ -252,7 +252,7 @@ public class WorldRulesStateManager : MonoBehaviour
 
     private void OnAgeChanged(AgeManager manager, int previousYear, int currentYear)
     {
-        RebuildDerivedBrazierVariables();
+        RebuildDerivedFlameVariables();
     }
 
     private void Upsert(WorldVariableSnapshot snapshot)

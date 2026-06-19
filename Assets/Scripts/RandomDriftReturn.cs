@@ -35,15 +35,15 @@ public class RandomDriftReturn : MonoBehaviour
     [Tooltip("Distance où le joueur est considéré 'loin' (autorise la dérive). Doit être > rayonProche.")]
     public float rayonLoin = 4f;
 
-    [Header("Personnages / Torche")]
+    [Header("Personnages / Flamme")]
     [Tooltip("Utilise les personnages de la squad plutot qu'un simple Transform joueur.")]
     public bool detecterPersonnages = true;
 
-    [Tooltip("Si true, le retour n'est autorise que si le personnage detecte porte une torche valide.")]
-    public bool requireMatchingTorch = true;
+    [Tooltip("Si true, le retour n'est autorise que si le personnage detecte porte une flamme valide.")]
+    public bool requireMatchingFlame = true;
 
     [Tooltip("Affiche dans la console pourquoi un personnage est accepte/refuse.")]
-    public bool debugTorchDetection;
+    public bool debugFlameDetection;
 
     [Tooltip("Intervalle minimum entre deux logs debug.")]
     [Min(0.1f)] public float debugLogInterval = 1f;
@@ -191,7 +191,7 @@ public class RandomDriftReturn : MonoBehaviour
 
                 case Etat.Retour:
                     // géré par la coroutine (position), la rotation continue via canRotate ci-dessus.
-                    // Si le personnage valide sort de zone ou change de torche, on repart en derive.
+                    // Si le personnage valide sort de zone ou change de flamme, on repart en derive.
                     if (!matchingNotFar)
                     {
                         if (m.routine != null)
@@ -487,7 +487,7 @@ public class RandomDriftReturn : MonoBehaviour
         localBounds.Encapsulate(localPoint);
     }
 
-    // ======== Detection personnages + torche ========
+    // ======== Detection personnages + flamme ========
 
     private void EnsureFallbackPlayer()
     {
@@ -525,14 +525,14 @@ public class RandomDriftReturn : MonoBehaviour
                     continue;
                 }
 
-                if (IsTorchConditionValid(controller, out string rejection))
+                if (IsFlameConditionValid(controller, out string rejection))
                 {
                     match = controller;
-                    DebugTorch($"accepted '{controller.name}' at {Mathf.Sqrt(distanceSqr):0.00}m.");
+                    DebugFlame($"accepted '{controller.name}' at {Mathf.Sqrt(distanceSqr):0.00}m.");
                     return true;
                 }
 
-                DebugTorch($"rejected '{controller.name}': {rejection}");
+                DebugFlame($"rejected '{controller.name}': {rejection}");
             }
 
             return false;
@@ -556,12 +556,12 @@ public class RandomDriftReturn : MonoBehaviour
 
         if (fallbackController == null)
         {
-            return !requireMatchingTorch;
+            return !requireMatchingFlame;
         }
 
-        if (!IsTorchConditionValid(fallbackController, out string fallbackRejection))
+        if (!IsFlameConditionValid(fallbackController, out string fallbackRejection))
         {
-            DebugTorch($"rejected fallback player '{fallbackController.name}': {fallbackRejection}");
+            DebugFlame($"rejected fallback player '{fallbackController.name}': {fallbackRejection}");
             return false;
         }
 
@@ -729,23 +729,23 @@ public class RandomDriftReturn : MonoBehaviour
                 continue;
             }
 
-            if (IsTorchConditionValid(controller, out string rejection))
+            if (IsFlameConditionValid(controller, out string rejection))
             {
                 match = controller;
-                DebugTorch($"accepted parent trigger character '{controller.name}'.");
+                DebugFlame($"accepted parent trigger character '{controller.name}'.");
                 return true;
             }
 
-            DebugTorch($"rejected parent trigger character '{controller.name}': {rejection}");
+            DebugFlame($"rejected parent trigger character '{controller.name}': {rejection}");
         }
 
         return false;
     }
 
-    private bool IsTorchConditionValid(SquadCharacterController controller, out string rejection)
+    private bool IsFlameConditionValid(SquadCharacterController controller, out string rejection)
     {
         rejection = null;
-        if (!requireMatchingTorch)
+        if (!requireMatchingFlame)
         {
             return true;
         }
@@ -756,18 +756,18 @@ public class RandomDriftReturn : MonoBehaviour
             return false;
         }
 
-        if (!controller.IsTorchEquipped)
+        if (!controller.IsFlameEquipped)
         {
-            rejection = "torch is not equipped.";
+            rejection = "flame is not equipped.";
             return false;
         }
 
         return true;
     }
 
-    private void DebugTorch(string message)
+    private void DebugFlame(string message)
     {
-        if (!debugTorchDetection || Time.time < nextDebugLogTime)
+        if (!debugFlameDetection || Time.time < nextDebugLogTime)
         {
             return;
         }

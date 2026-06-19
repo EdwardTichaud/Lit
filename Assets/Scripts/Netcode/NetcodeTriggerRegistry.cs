@@ -7,7 +7,7 @@ public static class NetcodeTriggerRegistry
     private static readonly Dictionary<uint, HubCompanionSwapTrigger> hubSwapTriggers = new Dictionary<uint, HubCompanionSwapTrigger>();
     private static readonly Dictionary<uint, LabyrinthStartTrigger> labyrinthTriggers = new Dictionary<uint, LabyrinthStartTrigger>();
     private static readonly Dictionary<uint, LadderInteractable> ladderTriggers = new Dictionary<uint, LadderInteractable>();
-    private static readonly Dictionary<uint, ReadableSentencePuzzle> readableSentencePuzzles = new Dictionary<uint, ReadableSentencePuzzle>();
+    private static readonly Dictionary<uint, PortalController> portalTriggers = new Dictionary<uint, PortalController>();
 
     public static void Register(ReturnHomeTrigger trigger, uint id)
     {
@@ -121,31 +121,32 @@ public static class NetcodeTriggerRegistry
         return ladderTriggers.TryGetValue(id, out trigger);
     }
 
-    public static void Register(ReadableSentencePuzzle trigger, uint id)
+    public static void Register(PortalController trigger, uint id)
     {
         if (trigger == null || id == 0u)
         {
             return;
         }
 
-        readableSentencePuzzles[id] = trigger;
+        portalTriggers[id] = trigger;
     }
 
-    public static void Unregister(ReadableSentencePuzzle trigger, uint id)
+    public static void Unregister(PortalController trigger, uint id)
     {
         if (trigger == null || id == 0u)
         {
             return;
         }
 
-        if (readableSentencePuzzles.TryGetValue(id, out ReadableSentencePuzzle existing) && existing == trigger)
+        if (portalTriggers.TryGetValue(id, out PortalController existing) && existing == trigger)
         {
-            readableSentencePuzzles.Remove(id);
+            portalTriggers.Remove(id);
         }
     }
 
-    public static bool TryGetReadableSentencePuzzle(uint id, out ReadableSentencePuzzle trigger)
+    public static bool TryGetPortal(uint id, out PortalController trigger)
     {
-        return readableSentencePuzzles.TryGetValue(id, out trigger);
+        return portalTriggers.TryGetValue(id, out trigger);
     }
+
 }

@@ -21,6 +21,6 @@ MonoBehaviour:
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 0}
-  isTorch: 0
+  isFlame: 0
   canBreak: 0
   breakResults: []

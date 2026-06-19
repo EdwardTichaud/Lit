@@ -790,14 +790,14 @@ public class SquadManager : MonoBehaviour
             CharacterData runtimeCharacter = GetRuntimeCharacter(character);
             ApplyMuninChargeStateToCharacterData(runtimeCharacter, entry);
             bool hasSavedInventory = entry.items != null && entry.items.Count > 0;
-            bool hasSavedTorchState = entry.torchSeconds > 0 || entry.torchEquipped;
-            bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedTorchState;
+            bool hasSavedFlameState = entry.flameSeconds > 0 || entry.flameEquipped;
+            bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedFlameState;
 
             bool isVersionZeroSave = pendingLoadData != null && pendingLoadData.dataVersion <= 0;
             bool hasStarterItems = runtimeCharacter != null
                 && runtimeCharacter.starterItemsWithQuantity != null
                 && runtimeCharacter.starterItemsWithQuantity.Count > 0;
-            if (isVersionZeroSave && hasStarterItems && !hasSavedInventory && !hasSavedTorchState)
+            if (isVersionZeroSave && hasStarterItems && !hasSavedInventory && !hasSavedFlameState)
             {
                 shouldApplyInventory = false;
             }
@@ -805,7 +805,7 @@ public class SquadManager : MonoBehaviour
             if (shouldApplyInventory)
             {
                 List<Item> items = BuildItemsFromEntry(entry);
-                runtimeCharacter.SetInventory(items, entry.torchSeconds, entry.torchEquipped, true);
+                runtimeCharacter.SetInventory(items, entry.flameSeconds, entry.flameEquipped, true);
             }
             if (entry.skillsInitialized)
             {
@@ -1897,7 +1897,7 @@ public class SquadManager : MonoBehaviour
             if (maisonComponent != null)
             {
                 List<InteractableItem> homeContainers = maisonComponent.ResolveMaisonLootContainers(homeLootContainer);
-                if (!maisonComponent.TransferNonTorchItemsToHome(character, homeContainers))
+                if (!maisonComponent.TransferNonFlameItemsToHome(character, homeContainers))
                 {
                     return SendHomeResult.StorageFull;
                 }
@@ -2024,7 +2024,7 @@ public class SquadManager : MonoBehaviour
             Maison maisonComponent = GetMaison();
             if (maisonComponent != null)
             {
-                maisonComponent.TransferNonTorchItemsToHome(oldInstance, maisonComponent.ResolveMaisonLootContainers(null));
+                maisonComponent.TransferNonFlameItemsToHome(oldInstance, maisonComponent.ResolveMaisonLootContainers(null));
             }
             SendCharacterToHub(removed, oldInstance);
         }
@@ -2248,8 +2248,8 @@ public class SquadManager : MonoBehaviour
 
         clone.inventoryItems = new List<Item>();
         clone.equippedInteractionItems = new List<Item>();
-        clone.torchSecondsRemaining = 0;
-        clone.torchEquipped = false;
+        clone.flameSecondsRemaining = 0;
+        clone.flameEquipped = false;
         clone.inventoryInitialized = false;
         clone.muninChargesRemaining = 0;
         clone.muninMaxCharges = 0;
@@ -2290,14 +2290,14 @@ public class SquadManager : MonoBehaviour
         if (inventoryCount <= 0
             && equippedCount <= 0
             && !character.inventoryInitialized
-            && character.torchSecondsRemaining <= 0
-            && !character.torchEquipped)
+            && character.flameSecondsRemaining <= 0
+            && !character.flameEquipped)
         {
             return;
         }
 
         Debug.LogWarning(
-            $"SquadManager: source CharacterData '{character.name}' contient deja un etat runtime avant clonage. inventoryInitialized={character.inventoryInitialized} inventoryCount={inventoryCount} equippedCount={equippedCount} torchSeconds={character.torchSecondsRemaining} torchEquipped={character.torchEquipped}. Cela suggere qu'un ScriptableObject a ete modifie en runtime.",
+            $"SquadManager: source CharacterData '{character.name}' contient deja un etat runtime avant clonage. inventoryInitialized={character.inventoryInitialized} inventoryCount={inventoryCount} equippedCount={equippedCount} flameSeconds={character.flameSecondsRemaining} flameEquipped={character.flameEquipped}. Cela suggere qu'un ScriptableObject a ete modifie en runtime.",
             character);
     }
 

@@ -8,7 +8,7 @@ public class ImprovedCombustionRuntime : MonoBehaviour
     {
         public int addedSeconds;
         public float interval;
-        public bool requireTorch;
+        public bool requireFlame;
         public float timer;
     }
 
@@ -28,7 +28,7 @@ public class ImprovedCombustionRuntime : MonoBehaviour
         return instance;
     }
 
-    public void Register(ImprovedCombustionEffect effect, int addedSeconds, float interval, bool requireTorch)
+    public void Register(ImprovedCombustionEffect effect, int addedSeconds, float interval, bool requireFlame)
     {
         if (effect == null)
         {
@@ -43,7 +43,7 @@ public class ImprovedCombustionRuntime : MonoBehaviour
 
         entry.addedSeconds = Mathf.Max(0, addedSeconds);
         entry.interval = Mathf.Max(0.01f, interval);
-        entry.requireTorch = requireTorch;
+        entry.requireFlame = requireFlame;
         if (entry.timer > entry.interval)
         {
             entry.timer = 0f;
@@ -107,12 +107,12 @@ public class ImprovedCombustionRuntime : MonoBehaviour
                 continue;
             }
 
-            if (entry.requireTorch && !controller.HasTorchItem)
+            if (entry.requireFlame && !controller.HasFlameItem)
             {
                 continue;
             }
 
-            controller.AddTorchSeconds(totalSeconds);
+            controller.AddFlameSeconds(totalSeconds);
         }
     }
 }

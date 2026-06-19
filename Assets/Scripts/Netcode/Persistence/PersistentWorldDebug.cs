@@ -171,14 +171,14 @@ public static class PersistentWorldDebug
             return nameof(InteractableItem);
         }
 
-        if (gameObject.GetComponent<Brasero>() != null)
+        if (gameObject.GetComponent<Flame>() != null)
         {
-            return nameof(Brasero);
+            return nameof(Flame);
         }
 
-        if (gameObject.GetComponent<Torch>() != null)
+        if (gameObject.GetComponent<Flame>() != null)
         {
-            return nameof(Torch);
+            return nameof(Flame);
         }
 
         if (gameObject.GetComponent<TwoLeverPuzzle>() != null)

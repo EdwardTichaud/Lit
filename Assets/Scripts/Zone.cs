@@ -3,12 +3,12 @@ using Unity.Netcode;
 using UnityEngine;
 
 [DefaultExecutionOrder(200)]
-// Zone generique: musique, torche, et gestion Maison (waiting points + IA).
+// Zone generique: musique, flamme, et gestion Maison (waiting points + IA).
 public class Zone : MonoBehaviour
 {
-    [Header("Torch")]
-    [Tooltip("Si false, la torche ne consomme pas dans cette zone.")]
-    public bool torchConsumes = true;
+    [Header("Flame")]
+    [Tooltip("Si false, la flamme ne consomme pas dans cette zone.")]
+    public bool flameConsumes = true;
 
     [Header("Audio")]
     [Tooltip("Profil audio de zone (musique + ambiance). Prioritaire sur les champs audio simples si renseigne.")]
@@ -223,7 +223,7 @@ public class Zone : MonoBehaviour
             NotifyZoneEnter();
         }
 
-        if (!torchConsumes)
+        if (!flameConsumes)
         {
             if (!noConsumeCounts.TryGetValue(character, out int count))
             {
@@ -238,7 +238,7 @@ public class Zone : MonoBehaviour
             bool enteredMaison = AddMaisonCharacter(character);
             if (enteredMaison && ShouldSimulateMaisonCharacters())
             {
-                TryResetTorchOnMaisonEntry(character);
+                TryResetFlameOnMaisonEntry(character);
             }
         }
     }
@@ -255,7 +255,7 @@ public class Zone : MonoBehaviour
             NotifyZoneExit();
         }
 
-        if (!torchConsumes && noConsumeCounts.TryGetValue(character, out int count))
+        if (!flameConsumes && noConsumeCounts.TryGetValue(character, out int count))
         {
             count -= 1;
             if (count <= 0)
@@ -294,7 +294,7 @@ public class Zone : MonoBehaviour
         }
     }
 
-    private void TryResetTorchOnMaisonEntry(GameObject character)
+    private void TryResetFlameOnMaisonEntry(GameObject character)
     {
         if (!isMaison || character == null)
         {
@@ -307,19 +307,24 @@ public class Zone : MonoBehaviour
             return;
         }
 
-        int maxSeconds = GetTorchResetSeconds();
+        int maxSeconds = GetFlameResetSeconds();
         if (maxSeconds <= 0)
         {
             return;
         }
 
-        controller.ResetTorchToMax(maxSeconds, true);
+        controller.ResetFlameToMax(maxSeconds, true);
     }
 
-    private int GetTorchResetSeconds()
+    private int GetFlameResetSeconds()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return 0;
+        }
+
         int maxSeconds = 0;
-        BuilderController builder = GetBuilderControllerForTorch();
+        BuilderController builder = GetBuilderControllerForFlame();
         if (builder != null)
         {
             builder.EnsureBuiltBuildings();
@@ -333,7 +338,7 @@ public class Zone : MonoBehaviour
                         continue;
                     }
 
-                    TorchEffect effect = FindTorchEffect(entry.building, entry.level);
+                    FlameEffect effect = FindFlameEffect(entry.building, entry.level);
                     if (effect == null)
                     {
                         continue;
@@ -361,7 +366,7 @@ public class Zone : MonoBehaviour
                         continue;
                     }
 
-                    TorchEffect effect = FindTorchEffect(info.BuildingItem, info.Level);
+                    FlameEffect effect = FindFlameEffect(info.BuildingItem, info.Level);
                     if (effect == null)
                     {
                         continue;
@@ -376,7 +381,7 @@ public class Zone : MonoBehaviour
         return maxSeconds;
     }
 
-    private BuilderController GetBuilderControllerForTorch()
+    private BuilderController GetBuilderControllerForFlame()
     {
 #if UNITY_2023_1_OR_NEWER
         return FindAnyObjectByType<BuilderController>();
@@ -385,7 +390,7 @@ public class Zone : MonoBehaviour
 #endif
     }
 
-    private TorchEffect FindTorchEffect(Item building, int level)
+    private FlameEffect FindFlameEffect(Item building, int level)
     {
         if (building == null || !building.isBuilding)
         {
@@ -400,7 +405,7 @@ public class Zone : MonoBehaviour
 
         for (int i = 0; i < effects.Count; i++)
         {
-            TorchEffect effect = effects[i] as TorchEffect;
+            FlameEffect effect = effects[i] as FlameEffect;
             if (effect != null)
             {
                 return effect;
@@ -417,7 +422,7 @@ public class Zone : MonoBehaviour
             return;
         }
 
-        if (!torchConsumes)
+        if (!flameConsumes)
         {
             foreach (GameObject character in trackedCharacters)
             {
@@ -457,7 +462,7 @@ public class Zone : MonoBehaviour
         trackedCharacters.Clear();
     }
 
-    public static bool ShouldConsumeTorch(GameObject character)
+    public static bool ShouldConsumeFlame(GameObject character)
     {
         if (character == null)
         {

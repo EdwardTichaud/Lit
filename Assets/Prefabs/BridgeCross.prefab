@@ -462,7 +462,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3365215022793260265}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_13
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11608,7 +11608,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5075238465415645526}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_4
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13520,7 +13520,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7570589285466474108}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_7
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22842,7 +22842,7 @@ GameObject:
   - component: {fileID: 2493984492896561260}
   - component: {fileID: 3867375372339976726}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30803,7 +30803,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8404825031965298031}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_6
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -53488,7 +53488,7 @@ GameObject:
   - component: {fileID: 3494451001154250178}
   - component: {fileID: 5837524281003875273}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -57760,7 +57760,7 @@ GameObject:
   - component: {fileID: 4345268788178694758}
   - component: {fileID: 1659625542724428260}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62315,7 +62315,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5176220993444375623}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge
+  m_Name: COMP_PROP_flame_dungeon_03_bridge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -70615,7 +70615,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2848003928012501905}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_8
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76705,7 +76705,7 @@ GameObject:
   - component: {fileID: 7313445756339734664}
   - component: {fileID: 6296098099724985833}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -104093,7 +104093,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2181201455378898146}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_3
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -105530,7 +105530,7 @@ GameObject:
   m_Component:
   - component: {fileID: 342807033036393894}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_12
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -121750,7 +121750,7 @@ GameObject:
   - component: {fileID: 2712009810486708425}
   - component: {fileID: 230442332586490088}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -144939,7 +144939,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8984537248467868977}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_9
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -164401,7 +164401,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2393059851414225899}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_15
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_15
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -190303,7 +190303,7 @@ GameObject:
   - component: {fileID: 5500728923276252417}
   - component: {fileID: 6666259077193176140}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -202318,7 +202318,7 @@ GameObject:
   m_Component:
   - component: {fileID: 567966067867080293}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_5
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -222247,7 +222247,7 @@ GameObject:
   - component: {fileID: 1252067206436934429}
   - component: {fileID: 8187217926223444464}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -223324,7 +223324,7 @@ GameObject:
   m_Component:
   - component: {fileID: 269671533677806045}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_2
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -223473,7 +223473,7 @@ GameObject:
   - component: {fileID: 7632969549224297844}
   - component: {fileID: 5984772774538737}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -234440,7 +234440,7 @@ GameObject:
   - component: {fileID: 1630154624197369480}
   - component: {fileID: 1121158685712023409}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -256688,7 +256688,7 @@ GameObject:
   - component: {fileID: 1411498324035825895}
   - component: {fileID: 2234038184298717918}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -260521,7 +260521,7 @@ GameObject:
   - component: {fileID: 8818626423875016024}
   - component: {fileID: 7056206145828343273}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -261144,7 +261144,7 @@ GameObject:
   - component: {fileID: 2766613320358411254}
   - component: {fileID: 8355919684515339231}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -267981,7 +267981,7 @@ GameObject:
   - component: {fileID: 5962034063542798753}
   - component: {fileID: 8509919499506428801}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -279474,7 +279474,7 @@ GameObject:
   - component: {fileID: 4614492118322319059}
   - component: {fileID: 7127677044994747468}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -282865,7 +282865,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5501211878878811852}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_1
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -283748,7 +283748,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5995713701266003458}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_11
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -299461,7 +299461,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1904383145543192758}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_10
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -299569,7 +299569,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3963458828326606866}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_14
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -301187,7 +301187,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7769420353789337940}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_16
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -307486,7 +307486,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7673843830460446421}
   m_Layer: 0
-  m_Name: COMP_PROP_brazier_dungeon_03_bridge_17
+  m_Name: COMP_PROP_flame_dungeon_03_bridge_17
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -308480,7 +308480,7 @@ GameObject:
   - component: {fileID: 6017812691784049230}
   - component: {fileID: 2974838430049966226}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -309455,7 +309455,7 @@ GameObject:
   - component: {fileID: 1180558513209655814}
   - component: {fileID: 5851715779679677599}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -319772,7 +319772,7 @@ GameObject:
   - component: {fileID: 4486194190120281119}
   - component: {fileID: 319718051196279970}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -321990,7 +321990,7 @@ GameObject:
   - component: {fileID: 6527950189713792449}
   - component: {fileID: 7124330305810245862}
   m_Layer: 0
-  m_Name: P_PROP_brazier_dungeon_02
+  m_Name: P_PROP_flame_dungeon_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

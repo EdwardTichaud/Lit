@@ -59,7 +59,10 @@ public static class CharacterInteractionDetection
                 return destructible;
             }
 
-            if (current.TryGetComponent(out BuildingInfoInteractable buildingInfo) && buildingInfo.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(buildingInfo))
+            if (LegacyBuildingSystem.Enabled &&
+                current.TryGetComponent(out BuildingInfoInteractable buildingInfo) &&
+                buildingInfo.isActiveAndEnabled &&
+                TimePeriodVisibility.IsVisibleFor(buildingInfo))
             {
                 return buildingInfo;
             }
@@ -74,19 +77,9 @@ public static class CharacterInteractionDetection
                 return door;
             }
 
-            if (current.TryGetComponent(out Torch torch) && torch.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(torch))
+            if (current.TryGetComponent(out Flame flame) && flame.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(flame))
             {
-                return torch;
-            }
-
-            if (current.TryGetComponent(out Brasero brasero) && brasero.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(brasero))
-            {
-                return brasero;
-            }
-
-            if (current.TryGetComponent(out ReadableSentencePuzzle readableSentencePuzzle) && readableSentencePuzzle.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(readableSentencePuzzle))
-            {
-                return readableSentencePuzzle;
+                return flame;
             }
 
             if (current.TryGetComponent(out GhostController ghost) && ghost.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(ghost))
@@ -261,7 +254,7 @@ public static class CharacterInteractionDetection
 
     public static bool UsesTriggerInteractionZone(ICharacterDetectedInteractable target)
     {
-        return target is Torch || target is Brasero;
+        return target is Flame;
     }
 
     public static bool IsCharacterInsideInteractionCollider(Transform characterRoot, Collider interactionCollider)

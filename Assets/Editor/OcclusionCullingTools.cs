@@ -19,7 +19,7 @@ public static class OcclusionCullingTools
     private static readonly HashSet<string> ExcludedBehaviourNames = new HashSet<string>(StringComparer.Ordinal)
     {
         "BeaconMarker",
-        "Brasero",
+        "Flame",
         "BuilderController",
         "BuildingInfoInteractable",
         "CharacterController",

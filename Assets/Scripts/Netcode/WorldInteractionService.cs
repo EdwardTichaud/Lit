@@ -321,56 +321,46 @@ public class WorldInteractionService : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RequestReadableSentencePuzzleAttemptServerRpc(uint triggerId, string answer, ServerRpcParams rpcParams = default)
+    public void RequestPortalUseServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
     {
-        if (!NetcodeTriggerRegistry.TryGetReadableSentencePuzzle(triggerId, out ReadableSentencePuzzle puzzle))
+        if (!NetcodeTriggerRegistry.TryGetPortal(triggerId, out PortalController portal))
         {
-            SendReadableSentencePuzzleResultClientRpc(
+            SendPortalUseResultClientRpc(
                 triggerId,
-                (int)ReadableSentencePuzzle.SolveAttemptResult.InvalidConfiguration,
+                false,
+                Vector3.zero,
+                Quaternion.identity,
                 BuildClientRpcParams(rpcParams));
             return;
         }
 
         GameObject character = ResolvePlayerCharacter(rpcParams);
-        ReadableSentencePuzzle.SolveAttemptResult result = puzzle.ServerTrySubmitAnswer(character, answer ?? string.Empty);
-        SendReadableSentencePuzzleResultClientRpc(triggerId, (int)result, BuildClientRpcParams(rpcParams));
-        if (result == ReadableSentencePuzzle.SolveAttemptResult.Success && puzzle.PlayOnce && puzzle.IsSolved)
-        {
-            BroadcastReadableSentencePuzzleSolvedClientRpc(triggerId);
-        }
+        Vector3 destinationPosition = Vector3.zero;
+        Quaternion destinationRotation = Quaternion.identity;
+        bool success = character != null &&
+                       portal.ServerTryUse(character, out destinationPosition, out destinationRotation);
+        SendPortalUseResultClientRpc(
+            triggerId,
+            success,
+            destinationPosition,
+            destinationRotation,
+            BuildClientRpcParams(rpcParams));
     }
 
     [ClientRpc]
-    private void SendReadableSentencePuzzleResultClientRpc(uint triggerId, int resultValue, ClientRpcParams rpcParams = default)
+    private void SendPortalUseResultClientRpc(
+        uint triggerId,
+        bool success,
+        Vector3 destinationPosition,
+        Quaternion destinationRotation,
+        ClientRpcParams rpcParams = default)
     {
-        if (!NetcodeTriggerRegistry.TryGetReadableSentencePuzzle(triggerId, out ReadableSentencePuzzle puzzle))
+        if (!NetcodeTriggerRegistry.TryGetPortal(triggerId, out PortalController portal))
         {
             return;
         }
 
-        puzzle.HandleSolveAttemptResult((ReadableSentencePuzzle.SolveAttemptResult)resultValue);
-    }
-
-    [ClientRpc]
-    private void BroadcastReadableSentencePuzzleSolvedClientRpc(uint triggerId)
-    {
-        if (!NetcodeTriggerRegistry.TryGetReadableSentencePuzzle(triggerId, out ReadableSentencePuzzle puzzle))
-        {
-            return;
-        }
-
-        puzzle.HandleSolvedStateReplicated();
-    }
-
-    public void NotifyReadableSentencePuzzleSolved(uint triggerId)
-    {
-        if (!IsServer)
-        {
-            return;
-        }
-
-        BroadcastReadableSentencePuzzleSolvedClientRpc(triggerId);
+        portal.HandlePortalUseResult(success, destinationPosition, destinationRotation);
     }
 
     [ServerRpc(RequireOwnership = false)]

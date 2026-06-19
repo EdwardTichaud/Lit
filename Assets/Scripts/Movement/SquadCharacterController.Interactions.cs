@@ -25,10 +25,8 @@ public partial class SquadCharacterController
     [Header("Munin Reaction")]
     [SerializeField, Tooltip("Fait reagir Munin quand une cible allumable/eteignable est detectee.")]
     private bool enableMuninInteractionReaction = true;
-    [SerializeField, Range(0f, 1f), Tooltip("Reaction de proximite quand une torche est a portee.")]
-    private float muninTorchProximityReactionIntensity = 0.45f;
-    [SerializeField, Range(0f, 1f), Tooltip("Reaction de proximite quand un brasero est a portee.")]
-    private float muninBraseroProximityReactionIntensity = 1f;
+    [SerializeField, Range(0f, 1f), Tooltip("Reaction de proximite quand une flamme est a portee.")]
+    private float muninFlameProximityReactionIntensity = 1f;
 
     private const int InteractionDetectionHitCapacity = 128;
 
@@ -451,12 +449,12 @@ public partial class SquadCharacterController
 
     private static bool IsMuninLightInteractionTarget(ICharacterDetectedInteractable target)
     {
-        return target is Torch || target is Brasero;
+        return target is Flame;
     }
 
     private static bool IsSwitchableInteractionTarget(ICharacterDetectedInteractable target)
     {
-        return target is Torch || target is Brasero;
+        return target is Flame;
     }
 
     private void ApplyLocalInteractionTarget(ICharacterDetectedInteractable target)
@@ -535,14 +533,9 @@ public partial class SquadCharacterController
             return 0f;
         }
 
-        if (target is Torch)
+        if (target is Flame)
         {
-            return muninTorchProximityReactionIntensity;
-        }
-
-        if (target is Brasero)
-        {
-            return muninBraseroProximityReactionIntensity;
+            return muninFlameProximityReactionIntensity;
         }
 
         return 0f;

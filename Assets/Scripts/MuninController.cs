@@ -79,7 +79,7 @@ public class MuninController : MonoBehaviour
     private bool drawFollowGizmos;
 
     [Header("Manual Movement")]
-    [Min(0.01f), Tooltip("Vitesse de deplacement manuel de Munin vers un brasero ou une torche, en unites Unity par seconde.")]
+    [Min(0.01f), Tooltip("Vitesse de deplacement manuel de Munin vers une flamme ou une flamme, en unites Unity par seconde.")]
     public float movementSpeed = 5f;
 
     [Header("Life Motion")]
@@ -131,22 +131,20 @@ public class MuninController : MonoBehaviour
     private float defaultReactionPulseDuration = 0.45f;
 
     [Header("Light Source Detection")]
-    [SerializeField, Tooltip("Si actif, Munin remplace la portee d'Outline/action des torches et braseros du personnage.")]
+    [SerializeField, Tooltip("Si actif, Munin remplace la portee d'Outline/action des flammes.")]
     private bool overrideLightSourceDetectionDistance = true;
-    [SerializeField, Min(0.1f), Tooltip("Distance d'Outline et d'action TriggerMunin pour les torches.")]
-    private float torchDetectionDistance = 4f;
-    [SerializeField, Min(0.1f), Tooltip("Distance d'Outline et d'action TriggerMunin pour les braseros.")]
-    private float braseroDetectionDistance = 4.5f;
-    [SerializeField, Tooltip("Dessine les distances de detection torche/brasero autour de la cible suivie.")]
+    [SerializeField, Min(0.1f), Tooltip("Distance d'Outline et d'action TriggerMunin pour les flammes.")]
+    private float flameDetectionDistance = 4.5f;
+    [SerializeField, Tooltip("Dessine la distance de detection des flammes autour de la cible suivie.")]
     private bool drawLightDetectionGizmos = true;
 
     [Header("Charges")]
-    [SerializeField, Tooltip("Active la consommation de charges quand Munin allume ou eteint une source.")]
+    [SerializeField, Tooltip("Active la consommation de charges quand Munin allume une source.")]
     private bool chargesEnabled = true;
     [SerializeField, Min(0), Tooltip("Nombre maximum de charges disponibles pour Munin.")]
-    private int maxCharges = 3;
+    private int maxCharges = 10;
     [SerializeField, Min(0), Tooltip("Charges disponibles au demarrage.")]
-    private int currentCharges = 3;
+    private int currentCharges = 10;
     [SerializeField, Min(0.01f), Tooltip("Duree du pulse visuel quand une action est refusee faute de charge.")]
     private float noChargeReactionPulseDuration = 0.35f;
 
@@ -204,14 +202,13 @@ public class MuninController : MonoBehaviour
     public FollowState State => followState;
     public bool IsFollowing => followState == FollowState.Following && enabled && isActiveAndEnabled;
     public bool OverridesLightSourceDetectionDistance => overrideLightSourceDetectionDistance;
-    public float TorchDetectionDistance => Mathf.Max(0.1f, torchDetectionDistance);
-    public float BraseroDetectionDistance => Mathf.Max(0.1f, braseroDetectionDistance);
-    public float MaxLightSourceDetectionDistance => overrideLightSourceDetectionDistance
-        ? Mathf.Max(TorchDetectionDistance, BraseroDetectionDistance)
-        : 0f;
+    public float FlameDetectionDistance => Mathf.Max(0.1f, flameDetectionDistance);
+    public float MaxLightSourceDetectionDistance => overrideLightSourceDetectionDistance ? FlameDetectionDistance : 0f;
 
     public event Action<MuninController, int, int> ChargesChanged;
     public event Action<MuninController> ChargeUseRejected;
+    public event Action<MuninController, int> ChargesSpent;
+    public event Action<MuninController, int, string> ChargeRewardReceived;
 
     private void Reset()
     {
@@ -359,6 +356,7 @@ public class MuninController : MonoBehaviour
         }
 
         SetCharges(currentCharges - safeAmount);
+        ChargesSpent?.Invoke(this, safeAmount);
         return true;
     }
 
@@ -380,6 +378,33 @@ public class MuninController : MonoBehaviour
         }
 
         SetCharges(currentCharges + amount);
+    }
+
+    /// <summary>
+    /// Ajoute une recompense narrative et retourne le nombre reel de charges gagnees.
+    /// Les sources de memoire passent par cette methode pour centraliser le feedback.
+    /// </summary>
+    public int GrantChargeReward(int amount, bool refillToMaximum, string reason)
+    {
+        if (!chargesEnabled || MaxCharges <= 0)
+        {
+            return 0;
+        }
+
+        int previous = ChargesRemaining;
+        int target = refillToMaximum
+            ? MaxCharges
+            : previous + Mathf.Max(0, amount);
+        SetCharges(target);
+
+        int gained = ChargesRemaining - previous;
+        if (gained > 0)
+        {
+            PulseReaction(0.65f, 0.55f);
+            ChargeRewardReceived?.Invoke(this, gained, reason ?? string.Empty);
+        }
+
+        return gained;
     }
 
     public void RefillCharges()
@@ -472,15 +497,9 @@ public class MuninController : MonoBehaviour
             return false;
         }
 
-        if (target is Torch)
+        if (target is Flame)
         {
-            distance = TorchDetectionDistance;
-            return true;
-        }
-
-        if (target is Brasero)
-        {
-            distance = BraseroDetectionDistance;
+            distance = FlameDetectionDistance;
             return true;
         }
 
@@ -1222,10 +1241,7 @@ public class MuninController : MonoBehaviour
         }
 
         Gizmos.color = new Color(1f, 0.55f, 0.15f, 0.35f);
-        Gizmos.DrawWireSphere(detectionCenter, TorchDetectionDistance);
-
-        Gizmos.color = new Color(0.4f, 0.9f, 1f, 0.35f);
-        Gizmos.DrawWireSphere(detectionCenter, BraseroDetectionDistance);
+        Gizmos.DrawWireSphere(detectionCenter, FlameDetectionDistance);
     }
 #endif
 
@@ -1263,8 +1279,7 @@ public class MuninController : MonoBehaviour
         reactionBreathingAmplitudeMultiplier = Mathf.Max(0f, reactionBreathingAmplitudeMultiplier);
         reactionSpasmChanceMultiplier = Mathf.Max(0f, reactionSpasmChanceMultiplier);
         defaultReactionPulseDuration = Mathf.Max(0.01f, defaultReactionPulseDuration);
-        torchDetectionDistance = Mathf.Max(0.1f, torchDetectionDistance);
-        braseroDetectionDistance = Mathf.Max(0.1f, braseroDetectionDistance);
+        flameDetectionDistance = Mathf.Max(0.1f, flameDetectionDistance);
         maxCharges = Mathf.Max(0, maxCharges);
         currentCharges = Mathf.Clamp(currentCharges, 0, maxCharges);
         noChargeReactionPulseDuration = Mathf.Max(0.01f, noChargeReactionPulseDuration);

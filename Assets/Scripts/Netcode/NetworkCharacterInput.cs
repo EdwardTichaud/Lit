@@ -440,11 +440,11 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         controller.TriggerMunin();
-        UpdateTorchClientRpc(controller.IsTorchEquipped, controller.TorchSecondsRemaining);
+        UpdateFlameClientRpc(controller.IsFlameEquipped, controller.FlameSecondsRemaining);
     }
 
     [ClientRpc]
-    private void UpdateTorchClientRpc(bool equipped, int torchSeconds)
+    private void UpdateFlameClientRpc(bool equipped, int flameSeconds)
     {
         if (controller == null)
         {
@@ -456,7 +456,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             return;
         }
 
-        controller.ApplyTorchState(torchSeconds, equipped);
+        controller.ApplyFlameState(flameSeconds, equipped);
     }
 
     private bool IsAssignedToLocalClient()

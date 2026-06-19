@@ -176,6 +176,12 @@ public class BuilderController : NetworkBehaviour
 
     private void Awake()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         ResolveBuildingsRoot();
         InitializeInteractionTrigger();
         voiceLineController = GetComponent<LocalVoiceLineController>();
@@ -183,6 +189,11 @@ public class BuilderController : NetworkBehaviour
 
     private void Start()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         if (IsNetworked() && !IsServer)
         {
             return;
@@ -193,6 +204,12 @@ public class BuilderController : NetworkBehaviour
 
     private void OnEnable()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
     }
@@ -208,6 +225,11 @@ public class BuilderController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         netBuiltBuildings.OnListChanged += OnNetBuiltBuildingsChanged;
         if (IsServer)
         {
@@ -2066,6 +2088,12 @@ public class BuilderController : NetworkBehaviour
 
     public void RequestBuild(Item building, Vector3 position, Quaternion rotation)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            InfoBoxUI.TryShow(LegacyBuildingSystem.DisabledMessage);
+            return;
+        }
+
         if (building == null || !building.isBuilding)
         {
             return;
@@ -2085,6 +2113,12 @@ public class BuilderController : NetworkBehaviour
 
     public void RequestUpgrade(BuildingInfoInteractable info, int targetLevel)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            InfoBoxUI.TryShow(LegacyBuildingSystem.DisabledMessage);
+            return;
+        }
+
         if (info == null)
         {
             return;
@@ -2104,6 +2138,12 @@ public class BuilderController : NetworkBehaviour
 
     public void RequestCraft(BuildingInfoInteractable info, Item craftItem, string successMessage, string failedMessage)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            InfoBoxUI.TryShow(LegacyBuildingSystem.DisabledMessage);
+            return;
+        }
+
         if (info == null || craftItem == null)
         {
             return;
@@ -2138,6 +2178,12 @@ public class BuilderController : NetworkBehaviour
 
     public void RequestCatalyseurCraft(BuildingInfoInteractable info, int effectIndex, string successMessage, string failedMessage)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            InfoBoxUI.TryShow(LegacyBuildingSystem.DisabledMessage);
+            return;
+        }
+
         if (info == null)
         {
             return;
@@ -2169,6 +2215,12 @@ public class BuilderController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestBuildServerRpc(string buildingId, Vector3 position, Quaternion rotation, ServerRpcParams rpcParams = default)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            SendFeedback(LegacyBuildingSystem.DisabledMessage, rpcParams, ActionAudioCue.UiInvalid);
+            return;
+        }
+
         if (!IsServer || string.IsNullOrWhiteSpace(buildingId))
         {
             return;
@@ -2217,6 +2269,12 @@ public class BuilderController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestUpgradeServerRpc(ulong buildingNetworkId, string buildingItemId, int targetLevel, ServerRpcParams rpcParams = default)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            SendFeedback(LegacyBuildingSystem.DisabledMessage, rpcParams, ActionAudioCue.UiInvalid);
+            return;
+        }
+
         if (!IsServer)
         {
             return;
@@ -2279,6 +2337,12 @@ public class BuilderController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestCraftServerRpc(ulong buildingNetworkId, string buildingItemId, string craftItemId, string successMessage, string failedMessage, ServerRpcParams rpcParams = default)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            SendFeedback(LegacyBuildingSystem.DisabledMessage, rpcParams, ActionAudioCue.UiInvalid);
+            return;
+        }
+
         if (!IsServer)
         {
             return;
@@ -2343,6 +2407,12 @@ public class BuilderController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestCatalyseurCraftServerRpc(ulong buildingNetworkId, string buildingItemId, int effectIndex, string successMessage, string failedMessage, ServerRpcParams rpcParams = default)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            SendFeedback(LegacyBuildingSystem.DisabledMessage, rpcParams, ActionAudioCue.UiInvalid);
+            return;
+        }
+
         if (!IsServer)
         {
             return;

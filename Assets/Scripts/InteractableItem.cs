@@ -120,10 +120,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Light Influence")]
     [SerializeField, Tooltip("Si actif, cet item n'est detectable/interactif que dans une zone d'influence allumee.")]
     private bool requireLitInfluenceForInteraction = true;
-    [SerializeField, Tooltip("Autorise les braseros allumes a rendre cet item interactif.")]
-    private bool reactToBraseroInfluence = true;
-    [SerializeField, Tooltip("Autorise les torches allumees a rendre cet item interactif.")]
-    private bool reactToTorchInfluence = true;
+    [SerializeField, Tooltip("Autorise les flammes allumees a rendre cet item interactif.")]
+    private bool reactToFlameInfluence = true;
 
     [Header("Interaction Action Box")]
     [Tooltip("ActionBox utilisee par cet objet interactif. Laisse vide pour auto-detecter.")]
@@ -970,11 +968,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     {
         switch (info.SourceKind)
         {
-            case LitInfluenceSourceKind.Brasero:
-                return reactToBraseroInfluence;
-
-            case LitInfluenceSourceKind.Torch:
-                return reactToTorchInfluence;
+            case LitInfluenceSourceKind.Flame:
+            case LitInfluenceSourceKind.AncientFlame:
+                return reactToFlameInfluence;
 
             default:
                 return false;
@@ -2875,6 +2871,10 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     {
         Item displayItem = ResolveRecoverableDisplayItem();
         bool shouldShow = showWorldInteractionUi && allowTake && displayItem != null;
+        if (shouldShow && displayItem.isBuilding && !LegacyBuildingSystem.Enabled)
+        {
+            shouldShow = false;
+        }
 
         if (!shouldShow)
         {

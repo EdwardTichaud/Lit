@@ -15,13 +15,13 @@ MonoBehaviour:
   itemId: orbeviolette
   itemName: Orbe violette
   itemSprite: {fileID: 0}
-  description: "Une orbe violette qui teinte la torche et relie les torches actives
+  description: "Une orbe violette qui teinte la flamme et relie les flammes actives
     partageant la meme couleur."
   canUse: 1
   canPlace: 1
   isContainer: 0
   worldPrefab: {fileID: 2745207279955555355, guid: 9fec1361f2dd7a34d892c476c638447a, type: 3}
-  isTorch: 0
+  isFlame: 0
   allowWallPlacement: 0
   placementRadiusOverride: 0
   isWetClay: 0

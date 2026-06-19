@@ -106,8 +106,10 @@ public class MainMenuTitleDecorController : MonoBehaviour
             snapshot.squadCount = characterState.squadIds != null && characterState.squadIds.Count > 0
                 ? characterState.squadIds.Count
                 : CountSquadCharacters(characterState);
-            snapshot.litBraseroCount = CountLitBraseros(characterState);
-            snapshot.builtConstructionCount = characterState.builtConstructions != null ? characterState.builtConstructions.Count : 0;
+            snapshot.litFlameCount = CountLitFlames(characterState);
+            snapshot.builtConstructionCount = LegacyBuildingSystem.Enabled && characterState.builtConstructions != null
+                ? characterState.builtConstructions.Count
+                : 0;
             snapshot.readableContentCount = characterState.readableGeneratedContents != null ? characterState.readableGeneratedContents.Count : 0;
         }
 
@@ -225,17 +227,17 @@ public class MainMenuTitleDecorController : MonoBehaviour
         return count;
     }
 
-    private static int CountLitBraseros(CharacterSaveData state)
+    private static int CountLitFlames(CharacterSaveData state)
     {
-        if (state == null || state.braseros == null)
+        if (state == null || state.flames == null)
         {
             return 0;
         }
 
         int count = 0;
-        for (int i = 0; i < state.braseros.Count; i++)
+        for (int i = 0; i < state.flames.Count; i++)
         {
-            BraseroSaveEntry entry = state.braseros[i];
+            FlameSaveEntry entry = state.flames[i];
             if (entry != null && entry.isLit)
             {
                 count++;
@@ -296,7 +298,7 @@ public class MainMenuTitleDecorController : MonoBehaviour
 
         float progress = 0.12f;
         progress += Mathf.Clamp01(snapshot.playTimeSeconds / (6f * 3600f)) * 0.25f;
-        progress += Mathf.Clamp01(snapshot.litBraseroCount / 6f) * 0.22f;
+        progress += Mathf.Clamp01(snapshot.litFlameCount / 6f) * 0.22f;
         progress += Mathf.Clamp01(snapshot.builtConstructionCount / 10f) * 0.18f;
         progress += Mathf.Clamp01(snapshot.readableContentCount / 12f) * 0.12f;
         progress += Mathf.Clamp01(snapshot.squadCount / 4f) * 0.11f;
@@ -382,7 +384,7 @@ public class MainMenuTitleDecorController : MonoBehaviour
         public string sceneName;
         public float playTimeSeconds;
         public int squadCount;
-        public int litBraseroCount;
+        public int litFlameCount;
         public int builtConstructionCount;
         public int readableContentCount;
     }

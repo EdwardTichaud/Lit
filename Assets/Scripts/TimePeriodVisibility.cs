@@ -36,7 +36,7 @@ public class TimePeriodVisibility : MonoBehaviour
     private GameObject targetObject;
 
     [Header("Rule")]
-    [SerializeField, Tooltip("Compare l'annee absolue, l'offset depuis le depart, le nombre de Braseros anciens ou l'age temporel.")]
+    [SerializeField, Tooltip("Compare l'annee absolue, l'offset depuis le depart, le nombre de AncientFlame ou l'age temporel.")]
     private TimePeriodValueMode valueMode = TimePeriodValueMode.AbsoluteYear;
     [SerializeField, Tooltip("Choisit entre une plage continue et une liste de valeurs exactes.")]
     private RuleMode ruleMode = RuleMode.Range;

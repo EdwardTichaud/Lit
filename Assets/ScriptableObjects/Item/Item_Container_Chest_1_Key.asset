@@ -20,7 +20,7 @@ MonoBehaviour:
   canPlace: 1
   isContainer: 1
   worldPrefab: {fileID: 7727207527928336351, guid: 3ce3f387175db264bbf9a32ae684f01d, type: 3}
-  isTorch: 0
+  isFlame: 0
   isKey: 1
   keyId: container_chest_1_key
   interactionCapabilities: 0

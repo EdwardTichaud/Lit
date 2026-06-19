@@ -111,11 +111,18 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     public bool IsHomeChest => buildingItem != null && buildingItem.isHomeChest;
     public ulong NetworkBuildingId => networkBuildingId;
     public string PresentationOrigin => presentationOrigin;
+    public bool IsLegacyBuilding => buildingItem != null && buildingItem.isBuilding;
 
     private void Awake()
     {
         RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         EnsureBuildingData();
+
+        if (IsLegacyBuilding && !LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
 
         InitializeInteractionTrigger();
         ResolveRuntimeReferences();
@@ -124,7 +131,11 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     public bool CanBeDetectedBy(SquadCharacterController controller)
     {
-        return controller != null && isActiveAndEnabled && HasBuildingData() && CanDisplayWorldUi();
+        return (!IsLegacyBuilding || LegacyBuildingSystem.Enabled) &&
+               controller != null &&
+               isActiveAndEnabled &&
+               HasBuildingData() &&
+               CanDisplayWorldUi();
     }
 
     public Collider GetInteractionDetectionCollider()
@@ -173,6 +184,12 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private void OnEnable()
     {
+        if (IsLegacyBuilding && !LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
@@ -191,6 +208,12 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private void Update()
     {
+        if (IsLegacyBuilding && !LegacyBuildingSystem.Enabled)
+        {
+            CloseInfoPanels();
+            return;
+        }
+
         if (!openOnProximity)
         {
             return;
@@ -204,7 +227,7 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
         if (!CanDisplayWorldUi())
         {
             CloseInfoPanels();
-            TrackVisibilityState("update_hidden_by_torch_vision");
+            TrackVisibilityState("update_hidden_by_flame_vision");
             return;
         }
 

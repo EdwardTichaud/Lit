@@ -141776,12 +141776,12 @@ MonoBehaviour:
   reactionSpasmChanceMultiplier: 3
   defaultReactionPulseDuration: 0.45
   overrideLightSourceDetectionDistance: 1
-  torchDetectionDistance: 4
-  braseroDetectionDistance: 4.5
+  flameDetectionDistance: 4
+  flameDetectionDistance: 4.5
   drawLightDetectionGizmos: 1
   chargesEnabled: 1
-  maxCharges: 3
-  currentCharges: 3
+  maxCharges: 10
+  currentCharges: 10
   noChargeReactionPulseDuration: 0.35
 --- !u!198 &8870847657438203678
 ParticleSystem:

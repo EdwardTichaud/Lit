@@ -5,15 +5,14 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 2;
+    public int dataVersion = 3;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
     public List<CharacterSaveEntry> characters = new List<CharacterSaveEntry>();
     public List<ItemStackData> homeItems = new List<ItemStackData>();
     public List<BuiltConstructionData> builtConstructions = new List<BuiltConstructionData>();
     public List<PlayerCharacterBinding> playerBindings = new List<PlayerCharacterBinding>();
-    public List<BraseroSaveEntry> braseros = new List<BraseroSaveEntry>();
-    public List<TorchSaveEntry> torches = new List<TorchSaveEntry>();
+    public List<FlameSaveEntry> flames = new List<FlameSaveEntry>();
     public List<ReadableGeneratedContentData> readableGeneratedContents = new List<ReadableGeneratedContentData>();
 }
 
@@ -33,8 +32,8 @@ public class CharacterSaveEntry
     public bool inSquad;
     public Vector3 position;
     public Quaternion rotation;
-    public int torchSeconds;
-    public bool torchEquipped;
+    public int flameSeconds;
+    public bool flameEquipped;
     public bool muninChargesInitialized;
     public int muninCharges;
     public int muninMaxCharges;
@@ -66,19 +65,11 @@ public class BuiltConstructionData
     public Vector3 scale;
 }
 
-// Sauvegarde de l'etat d'un brasero.
+// Sauvegarde de l'etat d'une flamme de monde.
 [System.Serializable]
-public class BraseroSaveEntry
+public class FlameSaveEntry
 {
-    public string braseroId;
-    public bool isLit;
-}
-
-// Sauvegarde de l'etat d'une torche de monde.
-[System.Serializable]
-public class TorchSaveEntry
-{
-    public string torchId;
+    public string flameId;
     public bool isLit;
 }
 

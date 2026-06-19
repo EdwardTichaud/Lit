@@ -20,9 +20,7 @@ public static class SceneHierarchyOrganizer
         typeof(BuildingInfoInteractable),
         typeof(Door),
         typeof(LadderInteractable),
-        typeof(Torch),
-        typeof(Brasero),
-        typeof(ReadableSentencePuzzle),
+        typeof(Flame),
         typeof(StabReading),
         typeof(DestructibleObject),
         typeof(ReturnHomeTrigger),
@@ -39,7 +37,6 @@ public static class SceneHierarchyOrganizer
         "SquadManager",
         "ConfirmationManager",
         "InfoBoxUI",
-        "ReadableSentencePuzzleUI",
         "LoadingScreenService",
         "SaveSessionManager",
         "ItemPassiveEffectSystem",
@@ -536,8 +533,8 @@ public static class SceneHierarchyOrganizer
         Dictionary<Transform, ObjectKind> candidates = new Dictionary<Transform, ObjectKind>();
 
         AddComponentCandidates(FindSceneComponents<GhostController>(scene), ObjectKind.Ghost, candidates, protectedTransforms);
-        AddComponentCandidates(FindSceneComponents<Torch>(scene), ObjectKind.Light, candidates, protectedTransforms);
-        AddComponentCandidates(FindSceneComponents<Brasero>(scene), ObjectKind.Light, candidates, protectedTransforms);
+        AddComponentCandidates(FindSceneComponents<Flame>(scene), ObjectKind.Light, candidates, protectedTransforms);
+        AddComponentCandidates(FindSceneComponents<Flame>(scene), ObjectKind.Light, candidates, protectedTransforms);
         AddComponentCandidates(FindSceneComponents<Light>(scene), ObjectKind.Light, candidates, protectedTransforms);
         AddTaggedLightCandidates(scene, candidates, protectedTransforms);
 
@@ -691,8 +688,8 @@ public static class SceneHierarchyOrganizer
         while (current != null)
         {
             if (LooksLikeLight(current.gameObject) ||
-                current.GetComponent<Torch>() != null ||
-                current.GetComponent<Brasero>() != null)
+                current.GetComponent<Flame>() != null ||
+                current.GetComponent<Flame>() != null)
             {
                 best = current;
             }
@@ -945,9 +942,9 @@ public static class SceneHierarchyOrganizer
 
         string lower = gameObject.name.ToLowerInvariant();
         return lower.Contains("light") ||
-               lower.Contains("torch") ||
-               lower.Contains("brasero") ||
-               lower.Contains("brazier") ||
+               lower.Contains("flame") ||
+               lower.Contains("flame") ||
+               lower.Contains("flame") ||
                lower.Contains("fire") ||
                lower.Contains("flame") ||
                lower.Contains("candle") ||
@@ -1292,14 +1289,14 @@ public static class SceneHierarchyOrganizer
             validatedGhosts);
 
         ValidateComponentPlacement(
-            FindSceneComponentsIncludingOrganizer<Torch>(scene),
+            FindSceneComponentsIncludingOrganizer<Flame>(scene),
             "03_Lights",
             "light",
             validation,
             validatedLights);
 
         ValidateComponentPlacement(
-            FindSceneComponentsIncludingOrganizer<Brasero>(scene),
+            FindSceneComponentsIncludingOrganizer<Flame>(scene),
             "03_Lights",
             "light",
             validation,
@@ -1325,7 +1322,7 @@ public static class SceneHierarchyOrganizer
         for (int i = 0; i < InteractableComponentTypes.Length; i++)
         {
             Type type = InteractableComponentTypes[i];
-            if (type == typeof(Torch) || type == typeof(Brasero))
+            if (type == typeof(Flame) || type == typeof(Flame))
             {
                 continue;
             }

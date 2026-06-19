@@ -1,12 +1,12 @@
 // Role:
 // Runtime bridge between DistrictRegistry data, the existing Item/BookPanel
-// readable flow, and the temporal systems driven by braseros anciens.
+// readable flow, and the temporal systems driven by AncientFlame.
 // Usage:
 // Add this to a register prop, assign a DistrictRegistry, and use the registry's
 // readable Item in the existing readable/inventory flow.
 // Responsibilities:
 // Resolve the effective temporal year, rebuild the assigned Item pages only when
-// the year changes, and use the dominant zone/brasero ancien age.
+// the year changes, and use the dominant zone/flame ancien age.
 // Dependencies:
 // DistrictRegistry, Item, TemporalZone, AgeManager, InventoryPanelController.
 // Precautions:

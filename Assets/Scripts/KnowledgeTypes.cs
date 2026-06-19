@@ -31,7 +31,7 @@ public enum KnowledgeCategory
     Anomaly = 10,
     Temporality = 11,
     ReligiousCurrent = 12,
-    Brazier = 13,
+    Flame = 13,
     Room = 14,
     Disappearance = 15,
     Truth = 16,

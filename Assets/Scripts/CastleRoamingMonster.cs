@@ -96,14 +96,14 @@ public class CastleRoamingMonster : MonoBehaviour
     [Header("Lumiere")]
     [SerializeField, Min(0.1f), Tooltip("A cette distance, le personnage est immobilise et force dans le noir.")]
     private float lightDangerRadius = 20f;
-    [SerializeField, Min(0.1f), Tooltip("A cette distance, une torche allumee attire le monstre.")]
+    [SerializeField, Min(0.1f), Tooltip("A cette distance, une flamme allumee attire le monstre.")]
     private float lightAttractionRadius = 20f;
     [SerializeField, Tooltip("Immobilise les personnages trop proches du monstre.")]
     private bool immobilizeCharactersInDangerRadius = true;
-    [SerializeField, Tooltip("Eteint automatiquement la torche des personnages trop proches.")]
-    private bool forceTorchOffInDangerRadius = true;
-    [SerializeField, Tooltip("Restaure la torche quand le personnage sort du rayon de danger.")]
-    private bool restoreTorchWhenSafe;
+    [SerializeField, Tooltip("Eteint automatiquement la flamme des personnages trop proches.")]
+    private bool forceFlameOffInDangerRadius = true;
+    [SerializeField, Tooltip("Restaure la flamme quand le personnage sort du rayon de danger.")]
+    private bool restoreFlameWhenSafe;
     [SerializeField, Tooltip("La lumiere attire seulement si la ligne de vue n'est pas bloquee.")]
     private bool lightAttractionRequiresLineOfSight;
 
@@ -147,9 +147,9 @@ public class CastleRoamingMonster : MonoBehaviour
     private class ThreatenedCharacterState
     {
         public bool movementSuppressed;
-        public bool hasTorchSnapshot;
-        public bool torchWasEquipped;
-        public int torchSeconds;
+        public bool hasFlameSnapshot;
+        public bool flameWasEquipped;
+        public int flameSeconds;
     }
 
     private void Reset()
@@ -972,7 +972,7 @@ public class CastleRoamingMonster : MonoBehaviour
 
     private bool CanSenseCharacterLight(SquadCharacterController character)
     {
-        if (!IsValidCharacterTarget(character) || !character.IsTorchEquipped)
+        if (!IsValidCharacterTarget(character) || !character.IsFlameEquipped)
         {
             return false;
         }
@@ -1072,7 +1072,7 @@ public class CastleRoamingMonster : MonoBehaviour
             return;
         }
 
-        if (!immobilizeCharactersInDangerRadius && !forceTorchOffInDangerRadius)
+        if (!immobilizeCharactersInDangerRadius && !forceFlameOffInDangerRadius)
         {
             ReleaseAllThreatStates();
             return;
@@ -1112,7 +1112,7 @@ public class CastleRoamingMonster : MonoBehaviour
 
         for (int i = 0; i < threatReleaseBuffer.Count; i++)
         {
-            ReleaseThreatState(threatReleaseBuffer[i], restoreTorchWhenSafe);
+            ReleaseThreatState(threatReleaseBuffer[i], restoreFlameWhenSafe);
         }
     }
 
@@ -1140,16 +1140,16 @@ public class CastleRoamingMonster : MonoBehaviour
             character.Stop();
         }
 
-        if (forceTorchOffInDangerRadius && character.IsTorchEquipped)
+        if (forceFlameOffInDangerRadius && character.IsFlameEquipped)
         {
-            if (!state.hasTorchSnapshot)
+            if (!state.hasFlameSnapshot)
             {
-                state.hasTorchSnapshot = true;
-                state.torchWasEquipped = character.IsTorchEquipped;
-                state.torchSeconds = character.TorchSecondsRemaining;
+                state.hasFlameSnapshot = true;
+                state.flameWasEquipped = character.IsFlameEquipped;
+                state.flameSeconds = character.FlameSecondsRemaining;
             }
 
-            character.ApplyTorchState(character.TorchSecondsRemaining, false);
+            character.ApplyFlameState(character.FlameSecondsRemaining, false);
         }
     }
 
@@ -1168,11 +1168,11 @@ public class CastleRoamingMonster : MonoBehaviour
 
         for (int i = 0; i < threatReleaseBuffer.Count; i++)
         {
-            ReleaseThreatState(threatReleaseBuffer[i], restoreTorchWhenSafe);
+            ReleaseThreatState(threatReleaseBuffer[i], restoreFlameWhenSafe);
         }
     }
 
-    private void ReleaseThreatState(SquadCharacterController character, bool restoreTorch)
+    private void ReleaseThreatState(SquadCharacterController character, bool restoreFlame)
     {
         if (!threatenedCharacters.TryGetValue(character, out ThreatenedCharacterState state))
         {
@@ -1191,13 +1191,13 @@ public class CastleRoamingMonster : MonoBehaviour
             character.PopScriptedMovementSuppression();
         }
 
-        if (restoreTorch &&
-            state.hasTorchSnapshot &&
-            state.torchWasEquipped &&
+        if (restoreFlame &&
+            state.hasFlameSnapshot &&
+            state.flameWasEquipped &&
             character.gameObject.activeInHierarchy)
         {
-            int restoreSeconds = Mathf.Max(character.TorchSecondsRemaining, state.torchSeconds);
-            character.ApplyTorchState(restoreSeconds, true);
+            int restoreSeconds = Mathf.Max(character.FlameSecondsRemaining, state.flameSeconds);
+            character.ApplyFlameState(restoreSeconds, true);
         }
     }
 
@@ -1231,7 +1231,7 @@ public class CastleRoamingMonster : MonoBehaviour
 
         caughtCharacters.Add(character);
         ReleaseThreatState(character, false);
-        character.ApplyTorchState(character.TorchSecondsRemaining, false);
+        character.ApplyFlameState(character.FlameSecondsRemaining, false);
         character.Stop();
         character.SetCurrentHp(0);
 

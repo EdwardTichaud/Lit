@@ -24,10 +24,10 @@ public class CharacterData : ScriptableObject
         [Tooltip("Item de depart.")]
         public Item item;
         /// <summary>
-        /// Quantite initiale. Pour la torche, cette valeur represente des secondes.
+        /// Quantite initiale. Pour la flamme, cette valeur represente des secondes.
         /// </summary>
         [Min(1)]
-        [Tooltip("Quantite initiale (pour la torche: secondes).")]
+        [Tooltip("Quantite initiale (pour la flamme: secondes).")]
         public int quantity = 1;
     }
 
@@ -80,10 +80,10 @@ public class CharacterData : ScriptableObject
     public List<Item> inventoryItems = new List<Item>();
     /// <summary>Items equipes pour les interactions de monde.</summary>
     public List<Item> equippedInteractionItems = new List<Item>();
-    /// <summary>Temps restant de torche en secondes.</summary>
-    public int torchSecondsRemaining;
-    /// <summary>Indique si la torche est equipee.</summary>
-    public bool torchEquipped;
+    /// <summary>Temps restant de flamme en secondes.</summary>
+    public int flameSecondsRemaining;
+    /// <summary>Indique si la flamme est equipee.</summary>
+    public bool flameEquipped;
     /// <summary>Indique si l'inventaire runtime a deja ete initialise.</summary>
     public bool inventoryInitialized;
 
@@ -91,7 +91,7 @@ public class CharacterData : ScriptableObject
     /// <summary>Charges runtime restantes de Munin.</summary>
     public int muninChargesRemaining;
     /// <summary>Maximum runtime de charges de Munin.</summary>
-    public int muninMaxCharges = 3;
+    public int muninMaxCharges = 10;
     /// <summary>Indique si un etat runtime de charges Munin a ete applique.</summary>
     public bool muninChargesInitialized;
 
@@ -222,15 +222,15 @@ public class CharacterData : ScriptableObject
     /// <summary>
     /// Remplace l'inventaire runtime sans liste d'items equipes.
     /// </summary>
-    public void SetInventory(List<Item> items, int torchSeconds, bool equipped, bool markInitialized = true)
+    public void SetInventory(List<Item> items, int flameSeconds, bool equipped, bool markInitialized = true)
     {
-        SetInventory(items, torchSeconds, equipped, markInitialized, null);
+        SetInventory(items, flameSeconds, equipped, markInitialized, null);
     }
 
     /// <summary>
     /// Remplace l'inventaire runtime et les items d'interaction equipes.
     /// </summary>
-    public void SetInventory(List<Item> items, int torchSeconds, bool equipped, bool markInitialized, List<Item> equippedItems)
+    public void SetInventory(List<Item> items, int flameSeconds, bool equipped, bool markInitialized, List<Item> equippedItems)
     {
         if (inventoryItems == null)
         {
@@ -246,8 +246,8 @@ public class CharacterData : ScriptableObject
             inventoryItems.AddRange(items);
         }
 
-        torchSecondsRemaining = Mathf.Max(0, torchSeconds);
-        torchEquipped = equipped;
+        flameSecondsRemaining = Mathf.Max(0, flameSeconds);
+        flameEquipped = equipped;
         if (equippedInteractionItems == null)
         {
             equippedInteractionItems = new List<Item>();

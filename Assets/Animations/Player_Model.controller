@@ -33,7 +33,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Torch_Locomotion
+  m_Name: Flame_Locomotion
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -88,7 +88,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -113,7 +113,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -3578080327955818795}
@@ -190,7 +190,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -3578080327955818795}
@@ -215,7 +215,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -309,7 +309,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Torch_Equip
+  m_Name: Flame_Equip
   m_Speed: 3
   m_CycleOffset: 0
   m_Transitions:
@@ -337,7 +337,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Torch_Off
+  m_Name: Flame_Off
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -366,7 +366,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -234594715202117747}
@@ -394,7 +394,7 @@ AnimatorStateTransition:
     m_ConditionEvent: JumpPhase
     m_EventTreshold: 0
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -444,7 +444,7 @@ AnimatorStateMachine:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Upper Body Torch
+  m_Name: Upper Body Flame
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -3450741918419907253}
@@ -655,7 +655,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -714,7 +714,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -853,7 +853,7 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: Torch
+  - m_Name: Flame
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -927,7 +927,7 @@ AnimatorController:
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
   - serializedVersion: 5
-    m_Name: Upper Body Torch
+    m_Name: Upper Body Flame
     m_StateMachine: {fileID: -1153067767699184550}
     m_Mask: {fileID: 31900000, guid: 1330e4749cc948c59af22f0c091f3647, type: 2}
     m_Motions: []
@@ -2060,7 +2060,7 @@ AnimatorStateTransition:
     m_ConditionEvent: JumpPhase
     m_EventTreshold: 0
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -234594715202117747}
@@ -2083,7 +2083,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Torch_Unequip
+  m_Name: Flame_Unequip
   m_Speed: -3
   m_CycleOffset: 0
   m_Transitions:
@@ -2116,7 +2116,7 @@ AnimatorStateTransition:
     m_ConditionEvent: JumpPhase
     m_EventTreshold: 0
   - m_ConditionMode: 1
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -2141,7 +2141,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1910067950192478960}
@@ -2166,7 +2166,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 0}
@@ -2290,7 +2290,7 @@ AnimatorStateTransition:
     m_ConditionEvent: JumpPhase
     m_EventTreshold: 0
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -234594715202117747}
@@ -2315,7 +2315,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1910067950192478960}
@@ -2337,7 +2337,7 @@ BlendTree:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Player_Torch_Locomotion_BlendTree
+  m_Name: Player_Flame_Locomotion_BlendTree
   m_Childs:
   - serializedVersion: 2
     m_Motion: {fileID: -203655887218126122, guid: 41f0ac36b3e858b42b0b34f1991064d9, type: 3}
@@ -2412,7 +2412,7 @@ AnimatorStateTransition:
     m_ConditionEvent: Speed
     m_EventTreshold: 0.1
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -234594715202117747}
@@ -2566,7 +2566,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: Torch
+    m_ConditionEvent: Flame
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -234594715202117747}

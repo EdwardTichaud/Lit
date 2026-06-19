@@ -597,7 +597,7 @@ GameObject:
   - component: {fileID: 2272585966178269834}
   - component: {fileID: 3449268001123855281}
   m_Layer: 0
-  m_Name: SM_Torch_Sconce_02
+  m_Name: SM_Flame_Sconce_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -753,22 +753,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 696539278526893494}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4d21c5be2314c9c94283b21c4094209, type: 3}
+  m_Script: {fileID: 11500000, guid: 026b6581d7bc8a048ad8bf041c695ebf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Torch
+  m_EditorClassIdentifier: Assembly-CSharp::Flame
   ShowTopMostFoldoutHeaderGroup: 1
   isLit: 0
-  torchId: scene-torch:Maison:DED51263
+  flameId: scene-flame:Maison:DED51263
   flameObject: {fileID: 0}
   flameLight: {fileID: 0}
   configureRevealSource: 1
-  torchLightReceiver: {fileID: 0}
+  flameLightReceiver: {fileID: 0}
   activateWhenLitTargets: []
   useInteractInput: 0
   useTriggerMuninInput: 1
   showStateDialogueOnInteract: 1
-  litStateMessage: "La torche est allum\xE9e."
-  unlitStateMessage: "La torche est \xE9teinte."
+  litStateMessage: "La flamme est allum\xE9e."
+  unlitStateMessage: "La flamme est \xE9teinte."
   interactMaxDistance: 1
   interactionPriority: 70
   interactionRadius: 1.75
@@ -788,6 +788,7 @@ MonoBehaviour:
   emissionFadeDuration: 0.6
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
+  chargeCostToLight: 1
 --- !u!135 &3449268001123855281
 SphereCollider:
   m_ObjectHideFlags: 0

@@ -27,18 +27,14 @@ public sealed class LitInfluenceParticleSystemController : MonoBehaviour
     [SerializeField] private bool disablePlayOnAwake = true;
     [SerializeField] private bool useRendererBoundsCenter = true;
     [SerializeField] private bool colorUnityLightsFromSource = true;
-    [SerializeField] private bool reactToTorchInfluence = true;
-    [SerializeField] private bool reactToBraseroInfluence = true;
+    [SerializeField] private bool reactToFlameInfluence = true;
 
     private readonly List<CommonLightEntry> commonLights = new List<CommonLightEntry>();
     private readonly Dictionary<GameObject, CommonLightEntry> commonLightLookup = new Dictionary<GameObject, CommonLightEntry>();
     private readonly HashSet<GameObject> scannedCommonRoots = new HashSet<GameObject>();
-    private readonly List<Torch> torches = new List<Torch>();
-    private readonly List<Brasero> braseros = new List<Brasero>();
-    private readonly HashSet<Torch> subscribedTorches = new HashSet<Torch>();
-    private readonly HashSet<Brasero> subscribedBraseros = new HashSet<Brasero>();
-    private readonly List<Torch> staleSubscribedTorches = new List<Torch>();
-    private readonly List<Brasero> staleSubscribedBraseros = new List<Brasero>();
+    private readonly List<Flame> flames = new List<Flame>();
+    private readonly HashSet<Flame> subscribedFlames = new HashSet<Flame>();
+    private readonly List<Flame> staleSubscribedFlames = new List<Flame>();
     private readonly HashSet<MonoBehaviour> activeRootSources = new HashSet<MonoBehaviour>();
     private readonly Dictionary<CommonLightEntry, ActivationRequest> activationRequests = new Dictionary<CommonLightEntry, ActivationRequest>();
     private readonly List<CommonLightEntry> sourceOrderedBuffer = new List<CommonLightEntry>();
@@ -293,44 +289,24 @@ public sealed class LitInfluenceParticleSystemController : MonoBehaviour
 
     private void RefreshInfluenceSources()
     {
-        torches.Clear();
-        braseros.Clear();
+        flames.Clear();
         activeRootSources.Clear();
 
-        if (reactToTorchInfluence)
+        if (reactToFlameInfluence)
         {
-            Torch[] sceneTorches = FindObjectsByType<Torch>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < sceneTorches.Length; i++)
+            Flame[] sceneFlames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < sceneFlames.Length; i++)
             {
-                Torch torch = sceneTorches[i];
-                if (torch == null || !torch.isActiveAndEnabled)
+                Flame flame = sceneFlames[i];
+                if (flame == null || !flame.isActiveAndEnabled)
                 {
                     continue;
                 }
 
-                torches.Add(torch);
-                if (torch.IsLit)
+                flames.Add(flame);
+                if (flame.IsLit)
                 {
-                    activeRootSources.Add(torch);
-                }
-            }
-        }
-
-        if (reactToBraseroInfluence)
-        {
-            Brasero[] sceneBraseros = FindObjectsByType<Brasero>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < sceneBraseros.Length; i++)
-            {
-                Brasero brasero = sceneBraseros[i];
-                if (brasero == null || !brasero.isActiveAndEnabled)
-                {
-                    continue;
-                }
-
-                braseros.Add(brasero);
-                if (brasero.IsLit)
-                {
-                    activeRootSources.Add(brasero);
+                    activeRootSources.Add(flame);
                 }
             }
         }
@@ -340,120 +316,65 @@ public sealed class LitInfluenceParticleSystemController : MonoBehaviour
 
     private void SyncSourceEventSubscriptions()
     {
-        staleSubscribedTorches.Clear();
-        foreach (Torch torch in subscribedTorches)
+        staleSubscribedFlames.Clear();
+        foreach (Flame flame in subscribedFlames)
         {
-            if (torch == null || !torches.Contains(torch))
+            if (flame == null || !flames.Contains(flame))
             {
-                staleSubscribedTorches.Add(torch);
+                staleSubscribedFlames.Add(flame);
             }
         }
 
-        for (int i = 0; i < staleSubscribedTorches.Count; i++)
+        for (int i = 0; i < staleSubscribedFlames.Count; i++)
         {
-            UnsubscribeTorch(staleSubscribedTorches[i]);
+            UnsubscribeFlame(staleSubscribedFlames[i]);
         }
 
-        staleSubscribedTorches.Clear();
+        staleSubscribedFlames.Clear();
 
-        for (int i = 0; i < torches.Count; i++)
+        for (int i = 0; i < flames.Count; i++)
         {
-            SubscribeTorch(torches[i]);
+            SubscribeFlame(flames[i]);
         }
 
-        staleSubscribedBraseros.Clear();
-        foreach (Brasero brasero in subscribedBraseros)
-        {
-            if (brasero == null || !braseros.Contains(brasero))
-            {
-                staleSubscribedBraseros.Add(brasero);
-            }
-        }
-
-        for (int i = 0; i < staleSubscribedBraseros.Count; i++)
-        {
-            UnsubscribeBrasero(staleSubscribedBraseros[i]);
-        }
-
-        staleSubscribedBraseros.Clear();
-
-        for (int i = 0; i < braseros.Count; i++)
-        {
-            SubscribeBrasero(braseros[i]);
-        }
     }
 
-    private void SubscribeTorch(Torch torch)
+    private void SubscribeFlame(Flame flame)
     {
-        if (torch == null || !subscribedTorches.Add(torch))
+        if (flame == null || !subscribedFlames.Add(flame))
         {
             return;
         }
 
-        torch.StateChanged += OnTorchStateChanged;
+        flame.StateChanged += OnFlameStateChanged;
     }
 
-    private void UnsubscribeTorch(Torch torch)
+    private void UnsubscribeFlame(Flame flame)
     {
-        if (torch != null)
+        if (flame != null)
         {
-            torch.StateChanged -= OnTorchStateChanged;
+            flame.StateChanged -= OnFlameStateChanged;
         }
 
-        subscribedTorches.Remove(torch);
-    }
-
-    private void SubscribeBrasero(Brasero brasero)
-    {
-        if (brasero == null || !subscribedBraseros.Add(brasero))
-        {
-            return;
-        }
-
-        brasero.StateChanged += OnBraseroStateChanged;
-    }
-
-    private void UnsubscribeBrasero(Brasero brasero)
-    {
-        if (brasero != null)
-        {
-            brasero.StateChanged -= OnBraseroStateChanged;
-        }
-
-        subscribedBraseros.Remove(brasero);
+        subscribedFlames.Remove(flame);
     }
 
     private void UnsubscribeAllSourceEvents()
     {
-        foreach (Torch torch in subscribedTorches)
+        foreach (Flame flame in subscribedFlames)
         {
-            if (torch != null)
+            if (flame != null)
             {
-                torch.StateChanged -= OnTorchStateChanged;
+                flame.StateChanged -= OnFlameStateChanged;
             }
         }
 
-        subscribedTorches.Clear();
-        staleSubscribedTorches.Clear();
+        subscribedFlames.Clear();
+        staleSubscribedFlames.Clear();
 
-        foreach (Brasero brasero in subscribedBraseros)
-        {
-            if (brasero != null)
-            {
-                brasero.StateChanged -= OnBraseroStateChanged;
-            }
-        }
-
-        subscribedBraseros.Clear();
-        staleSubscribedBraseros.Clear();
     }
 
-    private void OnTorchStateChanged(Torch torch, bool isLit)
-    {
-        ApplyInfluenceSourceStateChange();
-    }
-
-    private void OnBraseroStateChanged(Brasero brasero, bool isLit)
+    private void OnFlameStateChanged(Flame flame, bool isLit)
     {
         ApplyInfluenceSourceStateChange();
     }
@@ -476,48 +397,27 @@ public sealed class LitInfluenceParticleSystemController : MonoBehaviour
         activationRequests.Clear();
 
         float now = Time.unscaledTime;
-        CollectTorchInfluenceRequests(now);
-        CollectBraseroInfluenceRequests(now);
+        CollectFlameInfluenceRequests(now);
         CollectCommonLightPropagationRequests(now);
         ApplyActivationRequests(now);
     }
 
-    private void CollectTorchInfluenceRequests(float now)
+    private void CollectFlameInfluenceRequests(float now)
     {
-        for (int i = 0; i < torches.Count; i++)
+        for (int i = 0; i < flames.Count; i++)
         {
-            Torch torch = torches[i];
-            if (torch == null || !torch.isActiveAndEnabled || !torch.IsLit)
+            Flame flame = flames[i];
+            if (flame == null || !flame.isActiveAndEnabled || !flame.IsLit)
             {
                 continue;
             }
 
             CollectSourceInfluenceRequests(
-                torch.transform,
-                torch,
-                torch.FlameColor,
-                torch.CommonLightActivationOrder,
-                (entry) => torch.ProvidesLitInfluenceTo(entry.Collider, entry.ResolveWorldPoint(useRendererBoundsCenter)),
-                now);
-        }
-    }
-
-    private void CollectBraseroInfluenceRequests(float now)
-    {
-        for (int i = 0; i < braseros.Count; i++)
-        {
-            Brasero brasero = braseros[i];
-            if (brasero == null || !brasero.isActiveAndEnabled || !brasero.IsLit)
-            {
-                continue;
-            }
-
-            CollectSourceInfluenceRequests(
-                brasero.transform,
-                brasero,
-                brasero.FlameColor,
-                brasero.CommonLightActivationOrder,
-                (entry) => brasero.ProvidesLitInfluenceTo(entry.Collider, entry.ResolveWorldPoint(useRendererBoundsCenter)),
+                flame.transform,
+                flame,
+                flame.FlameColor,
+                flame.CommonLightActivationOrder,
+                (entry) => flame.ProvidesLitInfluenceTo(entry.Collider, entry.ResolveWorldPoint(useRendererBoundsCenter)),
                 now);
         }
     }
@@ -681,14 +581,9 @@ public sealed class LitInfluenceParticleSystemController : MonoBehaviour
 
     private bool IsRootSourceStillActive(MonoBehaviour rootSource)
     {
-        if (rootSource is Torch torch)
+        if (rootSource is Flame flame)
         {
-            return torch != null && torch.isActiveAndEnabled && torch.IsLit;
-        }
-
-        if (rootSource is Brasero brasero)
-        {
-            return brasero != null && brasero.isActiveAndEnabled && brasero.IsLit;
+            return flame != null && flame.isActiveAndEnabled && flame.IsLit;
         }
 
         return rootSource != null && activeRootSources.Contains(rootSource);

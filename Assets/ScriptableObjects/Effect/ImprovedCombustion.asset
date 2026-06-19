@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fb3e58f0373c3a4089c6688be060124, type: 3}
   m_Name: ImprovedCombustion
   m_EditorClassIdentifier: Assembly-CSharp::ImprovedCombustionEffect
-  effectDescription: "Augmente la dur\xE9e de vie de vos torches."
+  effectDescription: "Augmente la dur\xE9e de vie de vos flames."
   addedSeconds: 10
   addedSecondsPerLevel: 0
   intervalSeconds: 10
@@ -20,4 +20,4 @@ MonoBehaviour:
   minimumIntervalSeconds: 0.5
   addedSecondsByLevel: 
   intervalSecondsByLevel: []
-  requireTorchItem: 1
+  requireFlameItem: 1

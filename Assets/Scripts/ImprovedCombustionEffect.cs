@@ -1,5 +1,5 @@
 // Role:
-// Squad effect that periodically restores torch time through ImprovedCombustionRuntime.
+// Squad effect that periodically restores flame time through ImprovedCombustionRuntime.
 // Usage:
 // Assigned to the ImprovedCombustion effect asset and applied when the squad/building gains levels.
 // Responsibilities:
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Configures periodic torch-time restoration for the squad.
+/// Configures periodic flame-time restoration for the squad.
 /// </summary>
 [CreateAssetMenu(fileName = "ImprovedCombustion", menuName = "Scriptable Objects/Effects/Improved Combustion")]
 public class ImprovedCombustionEffect : Effect, ISquadEffect
@@ -43,9 +43,9 @@ public class ImprovedCombustionEffect : Effect, ISquadEffect
     [SerializeField] private List<float> intervalSecondsByLevel = new List<float>();
 
     [Header("Rules")]
-    /// <summary>If true, only characters with a torch item benefit from the runtime effect.</summary>
-    [Tooltip("N'applique l'effet que si le perso possede une torche.")]
-    [SerializeField] private bool requireTorchItem = true;
+    /// <summary>If true, only characters with a flame item benefit from the runtime effect.</summary>
+    [Tooltip("N'applique l'effet que si le perso possede une flamme.")]
+    [SerializeField] private bool requireFlameItem = true;
 
     [System.NonSerialized] private int appliedLevels;
 
@@ -79,7 +79,7 @@ public class ImprovedCombustionEffect : Effect, ISquadEffect
         int seconds = GetSecondsForLevel(safeLevel);
         float interval = GetIntervalForLevel(safeLevel);
         string intervalText = interval >= 1f ? interval.ToString("0.#") : interval.ToString("0.##");
-        return $"+{seconds}s torche / {intervalText}s (squad)";
+        return $"+{seconds}s flamme / {intervalText}s (squad)";
     }
 
     /// <summary>Returns short bonus text for the requested level.</summary>
@@ -104,7 +104,7 @@ public class ImprovedCombustionEffect : Effect, ISquadEffect
         }
 
         ImprovedCombustionRuntime runtime = ImprovedCombustionRuntime.GetOrCreate();
-        runtime.Register(this, seconds, interval, requireTorchItem);
+        runtime.Register(this, seconds, interval, requireFlameItem);
     }
 
     private int GetSecondsForLevel(int level)

@@ -350,15 +350,15 @@ MonoBehaviour:
       districtName: "Quartier du Pic Noir"
       habitationNumber: "P-007"
       destinationDistrict: ""
-      cause: "accident de brasero"
-      readableTextOverride: "Décès : accident de brasero"
+      cause: "accident de flame"
+      readableTextOverride: "Décès : accident de flame"
       note: ""
       isNameStruckOut: 0
       relatedRoomId: "P-007"
       relatedObjectId: ""
       relatedReadableId: "REG_PIC_NOIR"
     lastEventType: 1
-    lastEventText: "Décès : accident de brasero"
+    lastEventText: "Décès : accident de flame"
     eventYear: 297
     destinationDistrict: ""
     isNameStruckOut: 0
@@ -2003,15 +2003,15 @@ MonoBehaviour:
       districtName: "Quartier du Pic Noir"
       habitationNumber: "P-040"
       destinationDistrict: ""
-      cause: "accident de brasero"
-      readableTextOverride: "Décès : accident de brasero"
+      cause: "accident de flame"
+      readableTextOverride: "Décès : accident de flame"
       note: ""
       isNameStruckOut: 0
       relatedRoomId: "P-040"
       relatedObjectId: ""
       relatedReadableId: "REG_PIC_NOIR"
     lastEventType: 1
-    lastEventText: "Décès : accident de brasero"
+    lastEventText: "Décès : accident de flame"
     eventYear: 601
     destinationDistrict: ""
     isNameStruckOut: 0

@@ -14,7 +14,7 @@ public class Item : ScriptableObject
 {
     private const string ItemNamePlaceholder = "-ItemName-";
     private const string DefaultCannotPlaceMessage = "Impossible de placer ici";
-    private const string DefaultCannotPlaceWhileEquippedMessage = "La torche équipée empêche la pose";
+    private const string DefaultCannotPlaceWhileEquippedMessage = "La flamme équipée empêche la pose";
     private const string DefaultCannotDropMessage = "Cet objet ne peut pas être jeté";
     private const string DefaultCannotUseMessage = "Cet objet ne peut pas être utilisé";
     private const string DefaultUseFailedMessage = "Echec d'utilisation";
@@ -184,8 +184,8 @@ public class Item : ScriptableObject
     public bool isContainer;
     [Tooltip("Prefab a instancier lors de la pose.")]
     public GameObject worldPrefab;
-    [Tooltip("Item special torche.")]
-    public bool isTorch;
+    [Tooltip("Item special flamme.")]
+    public bool isFlame;
     [Header("Special Placement")]
     [Tooltip("Item special de type balise.")]
     public bool isBeacon;
@@ -242,7 +242,7 @@ public class Item : ScriptableObject
     [Header("Feedback")]
     [Tooltip("Message si l'item ne peut pas etre pose.")]
     public string cannotPlaceMessage = DefaultCannotPlaceMessage;
-    [Tooltip("Message si la torche equipee empêche la pose.")]
+    [Tooltip("Message si la flamme equipee empêche la pose.")]
     public string cannotPlaceWhileEquippedMessage = DefaultCannotPlaceWhileEquippedMessage;
     [Tooltip("Message si l'item ne peut pas etre jete.")]
     public string cannotDropMessage = DefaultCannotDropMessage;
@@ -1026,7 +1026,7 @@ public class Item : ScriptableObject
             return false;
         }
 
-        if (isTorch && controller != null && controller.IsTorchEquipped)
+        if (isFlame && controller != null && controller.IsFlameEquipped)
         {
             reason = ResolveMessage(cannotPlaceWhileEquippedMessage, DefaultCannotPlaceWhileEquippedMessage);
             return false;
@@ -1108,7 +1108,7 @@ public class Item : ScriptableObject
             return false;
         }
 
-        if (isTorch)
+        if (isFlame)
         {
             reason = ResolveMessage(cannotDropMessage, DefaultCannotDropMessage);
             return false;

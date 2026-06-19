@@ -18,7 +18,7 @@ MonoBehaviour:
   registryTitle: "Registre des habitants - Quartier de la Lune Pleine"
   readableItem: {fileID: 11400000, guid: 899705c6bad1b257ae5f606324755d40, type: 2}
   itemDescription: "Registre administratif des chambres du Quartier de la Lune Pleine."
-  coverNote: "Copie de consultation. Les chambres ouvertes sur la lune immobile sont relevees par foyer, brasero et naissance. Les annotations de marge ne sont pas toutes reprises."
+  coverNote: "Copie de consultation. Les chambres ouvertes sur la lune immobile sont relevees par foyer, flame et naissance. Les annotations de marge ne sont pas toutes reprises."
   yearSectionSpan: 40
   maxEntriesPerPage: 6
   residents:
@@ -82,7 +82,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0002"
@@ -119,7 +119,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0003"
@@ -169,7 +169,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0004"
@@ -219,7 +219,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0005"
@@ -249,15 +249,15 @@ MonoBehaviour:
       districtName: "Quartier de la Lune Pleine"
       habitationNumber: "L-005"
       destinationDistrict: ""
-      cause: "accident de brasero"
-      readableTextOverride: "Décès : accident de brasero"
+      cause: "accident de flame"
+      readableTextOverride: "Décès : accident de flame"
       note: ""
       isNameStruckOut: 0
       relatedRoomId: "L-005"
       relatedObjectId: ""
       relatedReadableId: "REG_LUNE_PLEINE"
     lastEventType: 1
-    lastEventText: "Décès : accident de brasero"
+    lastEventText: "Décès : accident de flame"
     eventYear: 296
     destinationDistrict: ""
     isNameStruckOut: 0
@@ -269,7 +269,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0006"
@@ -319,7 +319,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier du Pic Noir."
   - residentId: "RES_LUNE_0007"
@@ -356,7 +356,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0008"
@@ -406,7 +406,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0009"
@@ -456,7 +456,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "anomalie"
     - "rature"
     internalNote: "Rature nette, encre plus sombre que la ligne."
@@ -507,7 +507,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0011"
@@ -557,7 +557,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier de la Statue."
   - residentId: "RES_LUNE_0012"
@@ -607,7 +607,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0013"
@@ -657,7 +657,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0014"
@@ -694,7 +694,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0015"
@@ -757,7 +757,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0016"
@@ -807,7 +807,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0017"
@@ -857,7 +857,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier du Pic Noir."
   - residentId: "RES_LUNE_0018"
@@ -907,7 +907,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0019"
@@ -944,7 +944,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0020"
@@ -994,7 +994,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "anomalie"
     - "disparition"
     internalNote: "Absent des rationnements deux saisons plus tard."
@@ -1058,7 +1058,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0022"
@@ -1121,7 +1121,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier des Salles Basses."
   - residentId: "RES_LUNE_0023"
@@ -1171,7 +1171,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0024"
@@ -1221,7 +1221,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0025"
@@ -1258,7 +1258,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0026"
@@ -1321,7 +1321,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0027"
@@ -1371,7 +1371,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0028"
@@ -1421,7 +1421,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier du Pic Noir."
   - residentId: "RES_LUNE_0029"
@@ -1484,7 +1484,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0030"
@@ -1534,7 +1534,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "anomalie"
     - "statut-incomplet"
     internalNote: "La marge porte seulement une marque de veille."
@@ -1572,7 +1572,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0032"
@@ -1602,15 +1602,15 @@ MonoBehaviour:
       districtName: "Quartier de la Lune Pleine"
       habitationNumber: "L-032"
       destinationDistrict: ""
-      cause: "accident de brasero"
-      readableTextOverride: "Décès : accident de brasero"
+      cause: "accident de flame"
+      readableTextOverride: "Décès : accident de flame"
       note: ""
       isNameStruckOut: 0
       relatedRoomId: "L-032"
       relatedObjectId: ""
       relatedReadableId: "REG_LUNE_PLEINE"
     lastEventType: 1
-    lastEventText: "Décès : accident de brasero"
+    lastEventText: "Décès : accident de flame"
     eventYear: 522
     destinationDistrict: ""
     isNameStruckOut: 0
@@ -1622,7 +1622,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0033"
@@ -1672,7 +1672,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier de la Statue."
   - residentId: "RES_LUNE_0034"
@@ -1722,7 +1722,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0035"
@@ -1772,7 +1772,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0036"
@@ -1809,7 +1809,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0037"
@@ -1859,7 +1859,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "anomalie"
     - "rature"
     internalNote: "Le nom de famille reste lisible sous la rature."
@@ -1910,7 +1910,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0039"
@@ -1960,7 +1960,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier des Archives."
   - residentId: "RES_LUNE_0040"
@@ -2010,7 +2010,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0041"
@@ -2073,7 +2073,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0042"
@@ -2110,7 +2110,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0043"
@@ -2173,7 +2173,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0044"
@@ -2223,7 +2223,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier du Pic Noir."
   - residentId: "RES_LUNE_0045"
@@ -2273,7 +2273,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "chambre-reattribuee"
     internalNote: ""
   - residentId: "RES_LUNE_0046"
@@ -2336,7 +2336,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "anomalie"
     - "disparition"
     internalNote: "Renvoi vers un registre manquant."
@@ -2387,7 +2387,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deces"
     internalNote: ""
   - residentId: "RES_LUNE_0048"
@@ -2437,7 +2437,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier des Citernes."
   - residentId: "RES_LUNE_0049"
@@ -2474,7 +2474,7 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "sans-evenement"
     internalNote: ""
   - residentId: "RES_LUNE_0050"
@@ -2537,6 +2537,6 @@ MonoBehaviour:
     narrativeTags:
     - "lune-pleine"
     - "esperants"
-    - "braseros"
+    - "flames"
     - "deplacement"
     internalNote: "Destination copiee: Quartier du Pic Noir."

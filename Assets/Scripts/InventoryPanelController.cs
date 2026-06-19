@@ -804,11 +804,11 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        Item torchItem = controller.TorchItem;
-        int torchSeconds = controller.TorchSecondsRemaining;
-        if (torchItem != null && torchSeconds > 0)
+        Item flameItem = controller.FlameItem;
+        int flameSeconds = controller.FlameSecondsRemaining;
+        if (flameItem != null && flameSeconds > 0)
         {
-            target.Add(new InventoryEntry { item = torchItem, quantity = torchSeconds });
+            target.Add(new InventoryEntry { item = flameItem, quantity = flameSeconds });
         }
 
         IReadOnlyList<Item> items = controller.Items;
@@ -827,7 +827,7 @@ public class InventoryPanelController : MonoBehaviour
                 continue;
             }
 
-            if (torchItem != null && item == torchItem)
+            if (flameItem != null && item == flameItem)
             {
                 continue;
             }
@@ -3169,6 +3169,13 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        if (item.isBuilding && !LegacyBuildingSystem.Enabled)
+        {
+            ShowPlacementFeedback(LegacyBuildingSystem.DisabledMessage);
+            FlashActionBoxInvalid();
+            return false;
+        }
+
         SquadCharacterController controller = GetCurrentCharacterController();
         if (!item.CanPlaceFromInventory(controller, out string reason))
         {
@@ -3636,6 +3643,13 @@ public class InventoryPanelController : MonoBehaviour
     {
         if (!placementActive || placementInstance == null || placementItem == null)
         {
+            CancelPlacement(false);
+            return;
+        }
+
+        if (placementItem.isBuilding && !LegacyBuildingSystem.Enabled)
+        {
+            ShowPlacementFeedback(LegacyBuildingSystem.DisabledMessage);
             CancelPlacement(false);
             return;
         }

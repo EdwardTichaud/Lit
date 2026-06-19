@@ -247,10 +247,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     [Header("Light Influence")]
     [SerializeField, Tooltip("Si actif, ce fantome n'apparait et ne reagit que dans une zone d'influence allumee.")]
     private bool requireLitInfluenceForAppearance;
-    [SerializeField, Tooltip("Autorise les braseros allumes a reveler ce fantome.")]
-    private bool reactToBraseroInfluence = true;
-    [SerializeField, Tooltip("Autorise les torches allumees a reveler ce fantome.")]
-    private bool reactToTorchInfluence = true;
+    [SerializeField, Tooltip("Autorise les flammes allumees a reveler ce fantome.")]
+    private bool reactToFlameInfluence = true;
     [SerializeField, Tooltip("Verifie directement les sources allumees si le scan d'influence n'a pas encore notifie ce fantome.")]
     private bool useDirectLitInfluenceFallback = true;
 
@@ -291,6 +289,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     public bool HasAppearedToPlayer => hasAppearedToPlayer;
     public bool IsRevealedToPlayer => isRevealedToPlayer;
     public bool AllowsRuntimeOutline => hasAppearedToPlayer && isRevealedToPlayer && CanAppearAtAll() && HasVisibleRuntimeOutlineDissolve();
+    public event System.Action<GhostController> Understood;
 
     private void Reset()
     {
@@ -1023,26 +1022,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         Collider targetCollider = GetInteractionDetectionCollider();
         Vector3 fallbackPoint = ResolveLitInfluenceProbePoint(targetCollider);
 
-        if (reactToBraseroInfluence)
+        if (reactToFlameInfluence)
         {
-            IReadOnlyList<Brasero> braseros = LitInfluenceSourceFrameCache.ActiveBraseros;
-            for (int i = 0; i < braseros.Count; i++)
+            IReadOnlyList<Flame> flames = LitInfluenceSourceFrameCache.ActiveFlames;
+            for (int i = 0; i < flames.Count; i++)
             {
-                Brasero brasero = braseros[i];
-                if (brasero != null && brasero.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
-                {
-                    return true;
-                }
-            }
-        }
-
-        if (reactToTorchInfluence)
-        {
-            IReadOnlyList<Torch> torches = LitInfluenceSourceFrameCache.ActiveTorches;
-            for (int i = 0; i < torches.Count; i++)
-            {
-                Torch torch = torches[i];
-                if (torch != null && torch.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
+                Flame flame = flames[i];
+                if (flame != null && flame.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
                 {
                     return true;
                 }
@@ -1104,11 +1090,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     {
         switch (info.SourceKind)
         {
-            case LitInfluenceSourceKind.Brasero:
-                return reactToBraseroInfluence;
-
-            case LitInfluenceSourceKind.Torch:
-                return reactToTorchInfluence;
+            case LitInfluenceSourceKind.Flame:
+            case LitInfluenceSourceKind.AncientFlame:
+                return reactToFlameInfluence;
 
             default:
                 return false;
@@ -1545,6 +1529,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         if (understood && invokeEvent)
         {
             onGhostUnderstood.Invoke();
+            Understood?.Invoke(this);
         }
     }
 
@@ -1818,25 +1803,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private static class LitInfluenceSourceFrameCache
     {
-        private static readonly List<Torch> activeTorches = new List<Torch>();
-        private static readonly List<Brasero> activeBraseros = new List<Brasero>();
+        private static readonly List<Flame> activeFlames = new List<Flame>();
         private static int cacheFrame = -1;
 
-        public static IReadOnlyList<Torch> ActiveTorches
+        public static IReadOnlyList<Flame> ActiveFlames
         {
             get
             {
                 Refresh();
-                return activeTorches;
-            }
-        }
-
-        public static IReadOnlyList<Brasero> ActiveBraseros
-        {
-            get
-            {
-                Refresh();
-                return activeBraseros;
+                return activeFlames;
             }
         }
 
@@ -1848,28 +1823,18 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             }
 
             cacheFrame = Time.frameCount;
-            activeTorches.Clear();
-            activeBraseros.Clear();
+            activeFlames.Clear();
 
-            Torch[] torches = UnityEngine.Object.FindObjectsByType<Torch>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < torches.Length; i++)
+            Flame[] flames = UnityEngine.Object.FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < flames.Length; i++)
             {
-                Torch torch = torches[i];
-                if (torch != null && torch.isActiveAndEnabled && torch.IsLit)
+                Flame flame = flames[i];
+                if (flame != null && flame.isActiveAndEnabled && flame.IsLit)
                 {
-                    activeTorches.Add(torch);
+                    activeFlames.Add(flame);
                 }
             }
 
-            Brasero[] braseros = UnityEngine.Object.FindObjectsByType<Brasero>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < braseros.Length; i++)
-            {
-                Brasero brasero = braseros[i];
-                if (brasero != null && brasero.isActiveAndEnabled && brasero.IsLit)
-                {
-                    activeBraseros.Add(brasero);
-                }
-            }
         }
     }
 }

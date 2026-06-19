@@ -28,7 +28,7 @@ MonoBehaviour:
   canPlace: 1
   isContainer: 1
   worldPrefab: {fileID: 100000, guid: abc00000000000802509845254826514, type: 3}
-  isTorch: 0
+  isFlame: 0
   isBeacon: 0
   allowWallPlacement: 0
   placementRadiusOverride: 0

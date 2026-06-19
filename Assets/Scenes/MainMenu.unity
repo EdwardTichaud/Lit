@@ -5104,40 +5104,40 @@ MonoBehaviour:
   canvas: {fileID: 793692852}
   cursorVisual: {fileID: 1063186169}
   decorCamera: {fileID: 2011687466}
-  torchLight: {fileID: 1212908923}
+  flameLight: {fileID: 1212908923}
   gamepadSpeed: 2000
   gamepadDeadzone: 0.15
   warpHardwareMouseForGamepad: 1
   synthesizeGamepadUiEvents: 1
-  torchCameraOffset: 0
+  flameCameraOffset: 0
   worldRayDistance: 80
   interactionLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  keepTorchOutsideGeometry: 1
-  torchCollisionLayers:
+  keepFlameOutsideGeometry: 1
+  flameCollisionLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  torchCollisionRadius: 0.12
-  torchSurfaceOffset: 0.035
-  torchCollisionIterations: 3
-  torchCollisionTriggers: 1
-  useTorchBoundsPlane: 1
-  torchBoundsRoot: {fileID: 948963096}
-  includeInactiveTorchBounds: 1
-  clampTorchToDecorViewportBounds: 1
-  torchViewportBoundsPadding: 0.015
-  torchBoundsPadding: 0.08
-  torchBoundsRefreshInterval: 0.25
-  keepTorchOutsideRendererBounds: 1
-  useTorchProjectionRail: 1
-  torchRailColumns: 32
-  torchRailRows: 18
-  torchRailRayDistance: 80
-  torchRailSurfaceStandOff: 0.32
-  rebuildTorchRailOnScreenChange: 1
-  torchPositionSharpness: 18
-  torchRotationSharpness: 22
+  flameCollisionRadius: 0.12
+  flameSurfaceOffset: 0.035
+  flameCollisionIterations: 3
+  flameCollisionTriggers: 1
+  useFlameBoundsPlane: 1
+  flameBoundsRoot: {fileID: 948963096}
+  includeInactiveFlameBounds: 1
+  clampFlameToDecorViewportBounds: 1
+  flameViewportBoundsPadding: 0.015
+  flameBoundsPadding: 0.08
+  flameBoundsRefreshInterval: 0.25
+  keepFlameOutsideRendererBounds: 1
+  useFlameProjectionRail: 1
+  flameRailColumns: 32
+  flameRailRows: 18
+  flameRailRayDistance: 80
+  flameRailSurfaceStandOff: 0.32
+  rebuildFlameRailOnScreenChange: 1
+  flamePositionSharpness: 18
+  flameRotationSharpness: 22
   hideSystemCursor: 1
 --- !u!114 &1063186171
 MonoBehaviour:
@@ -5849,7 +5849,7 @@ GameObject:
   - component: {fileID: 1212908923}
   - component: {fileID: 1212908924}
   m_Layer: 0
-  m_Name: MainMenu_CursorTorch
+  m_Name: MainMenu_CursorFlame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

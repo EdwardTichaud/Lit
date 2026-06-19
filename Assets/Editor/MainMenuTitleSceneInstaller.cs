@@ -49,7 +49,7 @@ public static class MainMenuTitleSceneInstaller
 
         Light ambientLight = CreatePointLight("MainMenu_Decor_Ambient", decorRoot.transform, new Vector3(0f, 2.3f, 6f), 9f, 0.35f, new Color(0.38f, 0.42f, 0.5f, 1f));
         Light accentLight = CreatePointLight("MainMenu_Decor_ProgressLight", decorRoot.transform, new Vector3(0f, 1.2f, 7.2f), 5f, 1.2f, new Color(1f, 0.75f, 0.42f, 1f));
-        Light torchLight = CreatePointLight("MainMenu_CursorTorch", decorRoot.transform, Vector3.zero, 6.5f, 25f, new Color(1f, 0.78f, 0.45f, 1f));
+        Light flameLight = CreatePointLight("MainMenu_CursorFlame", decorRoot.transform, Vector3.zero, 6.5f, 25f, new Color(1f, 0.78f, 0.45f, 1f));
 
         MainMenuTitleDecorController decorController = decorRoot.AddComponent<MainMenuTitleDecorController>();
         AssignObject(decorController, "noSaveRoot", noSaveRoot);
@@ -61,7 +61,7 @@ public static class MainMenuTitleSceneInstaller
         AssignRendererArray(decorController, "progressTintRenderers", new[]
         {
             FindRenderer(baseRoot.transform, "Chronicle_Seal"),
-            FindRenderer(midRoot.transform, "Mid_Brazier"),
+            FindRenderer(midRoot.transform, "Mid_Flame"),
             FindRenderer(lateRoot.transform, "Late_Relic")
         });
         decorController.RefreshDecor();
@@ -69,7 +69,7 @@ public static class MainMenuTitleSceneInstaller
         Camera mainCamera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
         ConfigureCamera(mainCamera);
         Canvas mainCanvas = Object.FindAnyObjectByType<Canvas>();
-        GameObject pointerCursor = InstallPointerCursor(mainCanvas, mainCamera, torchLight);
+        GameObject pointerCursor = InstallPointerCursor(mainCanvas, mainCamera, flameLight);
         pointerCursor.transform.SetAsLastSibling();
 
         RemoveLegacyForcedCursors();
@@ -78,7 +78,7 @@ public static class MainMenuTitleSceneInstaller
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("MainMenuTitleSceneInstaller: decor 3D, pointeur souris/manette et torche installes dans MainMenu.");
+        Debug.Log("MainMenuTitleSceneInstaller: decor 3D, pointeur souris/manette et flamee installes dans MainMenu.");
     }
 
     private static void BuildBaseDecor(Transform parent, Material stone, Material darkStone, Material bronze)
@@ -107,8 +107,8 @@ public static class MainMenuTitleSceneInstaller
         CreatePrimitive(earlyRoot, "Early_Flame", PrimitiveType.Sphere, new Vector3(0.9f, 0.38f, 5.65f), new Vector3(0.18f, 0.28f, 0.18f), ember, false);
 
         CreatePrimitive(midRoot, "Mid_MapStack", PrimitiveType.Cube, new Vector3(-1.1f, 0f, 5.45f), new Vector3(1.3f, 0.14f, 0.9f), paper, false);
-        CreatePrimitive(midRoot, "Mid_Brazier", PrimitiveType.Cylinder, new Vector3(1.25f, 0.0f, 5.75f), new Vector3(0.45f, 0.28f, 0.45f), bronze, false);
-        CreatePrimitive(midRoot, "Mid_BrazierFlame", PrimitiveType.Sphere, new Vector3(1.25f, 0.42f, 5.75f), new Vector3(0.45f, 0.55f, 0.45f), ember, false);
+        CreatePrimitive(midRoot, "Mid_Flame", PrimitiveType.Cylinder, new Vector3(1.25f, 0.0f, 5.75f), new Vector3(0.45f, 0.28f, 0.45f), bronze, false);
+        CreatePrimitive(midRoot, "Mid_FlameFlame", PrimitiveType.Sphere, new Vector3(1.25f, 0.42f, 5.75f), new Vector3(0.45f, 0.55f, 0.45f), ember, false);
 
         CreatePrimitive(lateRoot, "Late_Relic", PrimitiveType.Sphere, new Vector3(0f, 0.55f, 5.65f), new Vector3(0.7f, 0.7f, 0.7f), ember, false);
         CreatePrimitive(lateRoot, "Late_Fragment_Left", PrimitiveType.Cube, new Vector3(-1.2f, 0.35f, 5.9f), new Vector3(0.2f, 0.7f, 0.08f), bronze, false);
@@ -142,7 +142,7 @@ public static class MainMenuTitleSceneInstaller
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    private static GameObject InstallPointerCursor(Canvas canvas, Camera camera, Light torchLight)
+    private static GameObject InstallPointerCursor(Canvas canvas, Camera camera, Light flameLight)
     {
         if (canvas == null)
         {
@@ -177,8 +177,8 @@ public static class MainMenuTitleSceneInstaller
         AssignObject(pointer, "canvas", canvas);
         AssignObject(pointer, "cursorVisual", rect);
         AssignObject(pointer, "decorCamera", camera);
-        AssignObject(pointer, "torchLight", torchLight);
-        AssignObject(pointer, "torchBoundsRoot", torchLight != null ? torchLight.transform.parent : null);
+        AssignObject(pointer, "flameLight", flameLight);
+        AssignObject(pointer, "flameBoundsRoot", flameLight != null ? flameLight.transform.parent : null);
         AssignFloat(pointer, "gamepadSpeed", 1150f);
         AssignFloat(pointer, "worldRayDistance", 80f);
         return cursor;

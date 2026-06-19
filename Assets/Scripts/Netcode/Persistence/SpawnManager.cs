@@ -153,6 +153,14 @@ public class SpawnManager : MonoBehaviour
                 continue;
             }
 
+            if (LegacyBuildingSystem.ShouldSkipRuntimeSnapshot(snapshot))
+            {
+                PersistentWorldDebug.Log(
+                    $"legacy building snapshot preserved without reconstruction persistentId='{snapshot.PersistentId}' prefab='{snapshot.RuntimePrefabId}'",
+                    this);
+                continue;
+            }
+
             if (string.IsNullOrWhiteSpace(snapshot.PersistentId))
             {
                 if (result != null)

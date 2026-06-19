@@ -191,6 +191,11 @@ public class ItemPassiveEffectSystem : MonoBehaviour
 
     private void CollectBuildingSources()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
 #if UNITY_2023_1_OR_NEWER
         BuildingInfoInteractable[] buildings = FindObjectsByType<BuildingInfoInteractable>();
 #else

@@ -553,9 +553,9 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
         if (squadController != null)
         {
             squadController.RefreshAudioListenerStateForExternalLocomotion();
-            if (squadController.IsCharacterTorchSystemEnabled)
+            if (squadController.IsCharacterFlameSystemEnabled)
             {
-                squadController.TickTorchLifetimeForExternalLocomotion(Time.deltaTime);
+                squadController.TickFlameLifetimeForExternalLocomotion(Time.deltaTime);
             }
             squadController.RefreshLocalInteractionDetectionForExternalLocomotion();
         }

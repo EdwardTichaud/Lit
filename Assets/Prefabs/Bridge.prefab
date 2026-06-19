@@ -91375,7 +91375,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_11
+      value: COMP_PROP_flame_dungeon_03_bridge_11
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -91481,7 +91481,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge
+      value: COMP_PROP_flame_dungeon_03_bridge
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -91587,7 +91587,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_4
+      value: COMP_PROP_flame_dungeon_03_bridge_4
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -91693,7 +91693,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_8
+      value: COMP_PROP_flame_dungeon_03_bridge_8
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -91799,7 +91799,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_5
+      value: COMP_PROP_flame_dungeon_03_bridge_5
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -91905,7 +91905,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_3
+      value: COMP_PROP_flame_dungeon_03_bridge_3
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -92011,7 +92011,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_6
+      value: COMP_PROP_flame_dungeon_03_bridge_6
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -92117,7 +92117,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_7
+      value: COMP_PROP_flame_dungeon_03_bridge_7
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -92223,7 +92223,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_10
+      value: COMP_PROP_flame_dungeon_03_bridge_10
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -92329,7 +92329,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_9
+      value: COMP_PROP_flame_dungeon_03_bridge_9
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -92435,7 +92435,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_2
+      value: COMP_PROP_flame_dungeon_03_bridge_2
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x
@@ -92541,7 +92541,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3116729038226841893, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_Name
-      value: COMP_PROP_brazier_dungeon_03_bridge_1
+      value: COMP_PROP_flame_dungeon_03_bridge_1
       objectReference: {fileID: 0}
     - target: {fileID: 6371439577910764888, guid: e6d6bfc2aa9a5c946ae3607bbc9fffed, type: 3}
       propertyPath: m_LocalScale.x

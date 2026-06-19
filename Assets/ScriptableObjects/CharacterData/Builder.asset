@@ -31,6 +31,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fb8c7324859d38b4bbef408ecb7b381a, type: 2}
   maisonWaitingPoint: 0
   inventoryItems: []
-  torchSecondsRemaining: 0
-  torchEquipped: 0
+  flameSecondsRemaining: 0
+  flameEquipped: 0
   inventoryInitialized: 0

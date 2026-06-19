@@ -209,6 +209,12 @@ public class BuildingPanelController : MonoBehaviour
 
     private void Awake()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         ResolveSceneReferences();
         ResolvePrefabReferences();
         InitializePanel();
@@ -352,6 +358,12 @@ public class BuildingPanelController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            enabled = false;
+            return;
+        }
+
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
@@ -447,6 +459,11 @@ public class BuildingPanelController : MonoBehaviour
 
     public void OpenPanel()
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         BuilderController builder = currentBuilder;
         if (builder == null)
         {
@@ -462,6 +479,11 @@ public class BuildingPanelController : MonoBehaviour
 
     public void OpenPanel(BuilderController builder)
     {
+        if (!LegacyBuildingSystem.Enabled)
+        {
+            return;
+        }
+
         ResolveSceneReferences();
         ResolvePrefabReferences();
 

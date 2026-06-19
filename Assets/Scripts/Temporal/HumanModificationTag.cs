@@ -19,7 +19,7 @@ public enum HumanModificationTag
     RoomReassigned = 2,
     BedAdded = 3,
     WindowWalled = 4,
-    BrazierMoved = 5,
+    FlameMoved = 5,
     PassageClosed = 6,
     RegistryCorrected = 7,
     ObjectTransferred = 8,

@@ -87,7 +87,7 @@ public class Maison : MonoBehaviour
         }
     }
 
-    public bool TransferNonTorchItemsToHome(GameObject character, List<InteractableItem> homeLootContainers)
+    public bool TransferNonFlameItemsToHome(GameObject character, List<InteractableItem> homeLootContainers)
     {
         if (character == null)
         {
@@ -105,7 +105,7 @@ public class Maison : MonoBehaviour
             return true;
         }
 
-        if (!TryCollectNonTorchItemCounts(controller, out Dictionary<Item, int> counts, out int totalCount))
+        if (!TryCollectNonFlameItemCounts(controller, out Dictionary<Item, int> counts, out int totalCount))
         {
             return true;
         }
@@ -177,7 +177,7 @@ public class Maison : MonoBehaviour
             return true;
         }
 
-        if (!TryCollectNonTorchItemCounts(controller, out Dictionary<Item, int> _, out int totalCount))
+        if (!TryCollectNonFlameItemCounts(controller, out Dictionary<Item, int> _, out int totalCount))
         {
             return true;
         }
@@ -187,7 +187,7 @@ public class Maison : MonoBehaviour
         return totalCapacity >= totalCount;
     }
 
-    private bool TryCollectNonTorchItemCounts(SquadCharacterController controller, out Dictionary<Item, int> counts, out int totalCount)
+    private bool TryCollectNonFlameItemCounts(SquadCharacterController controller, out Dictionary<Item, int> counts, out int totalCount)
     {
         counts = new Dictionary<Item, int>();
         totalCount = 0;
@@ -206,7 +206,7 @@ public class Maison : MonoBehaviour
         for (int i = 0; i < items.Count; i++)
         {
             Item item = items[i];
-            if (item == null || item.isTorch)
+            if (item == null || item.isFlame)
             {
                 continue;
             }

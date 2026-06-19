@@ -20,7 +20,7 @@ MonoBehaviour:
   canPlace: 1
   isContainer: 0
   worldPrefab: {fileID: 1368317527524287094, guid: b8a9a7f4a8934b04c9e2f22e967f79a9, type: 3}
-  isTorch: 0
+  isFlame: 0
   allowDropFromInventory: 1
   allowPlaceFromInventory: 1
   allowInstantDropWithoutPrefab: 1

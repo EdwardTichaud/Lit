@@ -21,7 +21,7 @@ MonoBehaviour:
   bookPages:
   - text: "An 621, premier mois\nNous avons re\xE7u cette chambre au d\xE9but du
       premier froid.\nElle est petite, mais le mur garde bien la chaleur.\nElle disait
-      que c\u2019\xE9tait assez pour deux c\u0153urs tranquilles.\nLe brasero fume
+      que c\u2019\xE9tait assez pour deux c\u0153urs tranquilles.\nLa flamme fume
       un peu quand le vent descend du conduit.\nJe lui ai promis de le r\xE9parer
       avant l\u2019hiver suivant.\nElle riait souvent de mes promesses trop grandes.\nNous
       priions avec les Esp\xE9rants \xE0 la premi\xE8re veille.\nElle chantait bas,
@@ -35,7 +35,7 @@ MonoBehaviour:
       m\u2019a demand\xE9 de ne pas avoir peur de son silence.\nJ\u2019ai r\xE9pondu
       que je n\u2019avais peur de rien tant qu\u2019elle respirait.\nC\u2019\xE9tait
       un mensonge tendre.\nElle l\u2019a accept\xE9 comme une pri\xE8re."
-  - text: "An 622, deuxi\xE8me mois\nElle est partie avant l\u2019aube.\nLe brasero
+  - text: "An 622, deuxi\xE8me mois\nElle est partie avant l\u2019aube.\nLa flamme
       br\xFBlait encore.\nJe me souviens avoir pens\xE9 que ce n\u2019\xE9tait pas
       juste.\nOn m\u2019avait appris qu\u2019une flamme gard\xE9e ne laissait pas
       entrer le mal.\nPourtant le mal \xE9tait rest\xE9 assis \xE0 c\xF4t\xE9 de
@@ -62,7 +62,7 @@ MonoBehaviour:
       quelques ann\xE9es.\nLes Esp\xE9rants disent que cela renforce les murs.\nLes
       Fatalistes disent que cela pr\xE9pare les \xE2mes.\nLes M\xE9diateurs disent
       que les deux phrases peuvent vivre ensemble.\nJe les \xE9coute, mais aucune
-      ne r\xE9chauffe le lit vide.\nJ\u2019entretiens pourtant le brasero avec soin.\nLa
+      ne r\xE9chauffe le lit vide.\nJ\u2019entretiens pourtant le flame avec soin.\nLa
       pierre garde encore la chaleur du soir.\nParfois je pose ma main dessus jusqu\u2019\xE0
       me faire mal.\nC\u2019est une mauvaise habitude.\nMais la douleur r\xE9pond
       plus vite que la D\xE9esse."
@@ -75,7 +75,7 @@ MonoBehaviour:
   - text: "An 626, troisi\xE8me mois J\u2019ai r\xEAv\xE9 d\u2019elle cette nuit.
       Elle \xE9tait pr\xE8s de la fen\xEAtre, mais la fen\xEAtre donnait sur une
       lumi\xE8re que je ne connais pas. Elle m\u2019a dit que le ch\xE2teau \xE9tait
-      trop petit pour contenir tous nos adieux. Au r\xE9veil, le brasero \xE9tait
+      trop petit pour contenir tous nos adieux. Au r\xE9veil, le flame \xE9tait
       presque \xE9teint. J\u2019ai eu honte de mon n\xE9gligence. Puis j\u2019ai
       pens\xE9 que personne ne viendrait v\xE9rifier. Cette pens\xE9e m\u2019a fait
       plus peur que le froid. Quand plus personne ne surveille une flamme, est-elle
@@ -89,7 +89,7 @@ MonoBehaviour:
       qu\u2019il en est seulement la forme la plus ob\xE9issante.\nJ\u2019\xE9cris
       ces mots et je les regrette aussit\xF4t.\nSi la D\xE9esse les lit, qu\u2019elle
       me pardonne.\nSi elle ne les lit pas, cela ne change rien."
-  - text: "An 628, dernier hiver J\u2019ai plac\xE9 ce livre dans le brasero froid.
+  - text: "An 628, dernier hiver J\u2019ai plac\xE9 ce livre dans le flame froid.
       Ce n\u2019est pas pour le br\xFBler. C\u2019est parce que c\u2019est l\xE0
       que j\u2019ai le plus veill\xE9. C\u2019est l\xE0 que j\u2019ai cru le plus
       longtemps. La chambre est propre. Les couvertures sont pli\xE9es. La seconde
@@ -107,7 +107,7 @@ MonoBehaviour:
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 291949331483662408, guid: e6473d72ba392654195434f39826793a, type: 3}
-  isTorch: 0
+  isFlame: 0
   isBeacon: 0
   allowWallPlacement: 0
   placementRadiusOverride: 0

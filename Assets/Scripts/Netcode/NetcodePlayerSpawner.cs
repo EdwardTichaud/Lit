@@ -209,7 +209,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        if (controller.TorchSecondsRemaining > 0 || controller.IsTorchEquipped)
+        if (controller.FlameSecondsRemaining > 0 || controller.IsFlameEquipped)
         {
             return;
         }

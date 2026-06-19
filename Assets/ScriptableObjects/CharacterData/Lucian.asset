@@ -42,9 +42,9 @@ MonoBehaviour:
   maisonWaitingPoint: 2
   inventoryItems: []
   equippedInteractionItems: []
-  torchSecondsRemaining: 0
-  torchEquipped: 0
+  flameSecondsRemaining: 0
+  flameEquipped: 0
   inventoryInitialized: 0
   muninChargesRemaining: 0
-  muninMaxCharges: 3
+  muninMaxCharges: 10
   muninChargesInitialized: 0

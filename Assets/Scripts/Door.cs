@@ -59,12 +59,10 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
     private int interactionPriority = 45;
 
     [Header("Influence")]
-    [SerializeField, FormerlySerializedAs("requireActiveFlameForInteraction"), Tooltip("Si true, la porte reste bloquee hors zone d'influence d'une torche ou d'un brasero allume.")]
+    [SerializeField, FormerlySerializedAs("requireActiveFlameForInteraction"), Tooltip("Si true, la porte reste bloquee hors zone d'influence d'une flamme ou d'une flamme allume.")]
     private bool requireLitInfluenceForInteraction = true;
-    [SerializeField, Tooltip("La porte reagit a la zone d'influence des braseros allumes.")]
-    private bool reactToBraseroInfluence = true;
-    [SerializeField, Tooltip("La porte reagit a la zone d'influence des torches allumees.")]
-    private bool reactToTorchInfluence = true;
+    [SerializeField, Tooltip("La porte reagit a la zone d'influence des flammes allumees.")]
+    private bool reactToFlameInfluence = true;
 
     [Header("Key")]
     [SerializeField, Tooltip("Identifiant de serrure. Vide = cette porte n'a pas besoin de cle.")]
@@ -559,26 +557,13 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
         Collider targetCollider = GetInteractionDetectionCollider();
         Vector3 fallbackPoint = ResolveLitInfluenceProbePoint(targetCollider);
 
-        if (reactToBraseroInfluence)
+        if (reactToFlameInfluence)
         {
-            Brasero[] braseros = UnityEngine.Object.FindObjectsByType<Brasero>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < braseros.Length; i++)
+            Flame[] flames = UnityEngine.Object.FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < flames.Length; i++)
             {
-                Brasero brasero = braseros[i];
-                if (brasero != null && brasero.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
-                {
-                    return true;
-                }
-            }
-        }
-
-        if (reactToTorchInfluence)
-        {
-            Torch[] torches = UnityEngine.Object.FindObjectsByType<Torch>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < torches.Length; i++)
-            {
-                Torch torch = torches[i];
-                if (torch != null && torch.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
+                Flame flame = flames[i];
+                if (flame != null && flame.ProvidesLitInfluenceTo(targetCollider, fallbackPoint))
                 {
                     return true;
                 }
@@ -644,11 +629,9 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
     {
         switch (info.SourceKind)
         {
-            case LitInfluenceSourceKind.Brasero:
-                return reactToBraseroInfluence;
-
-            case LitInfluenceSourceKind.Torch:
-                return reactToTorchInfluence;
+            case LitInfluenceSourceKind.Flame:
+            case LitInfluenceSourceKind.AncientFlame:
+                return reactToFlameInfluence;
 
             default:
                 return false;

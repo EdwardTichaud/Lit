@@ -4,8 +4,8 @@ using UnityEngine;
 
 public enum LitInfluenceSourceKind
 {
-    Brasero,
-    Torch
+    Flame,
+    AncientFlame
 }
 
 public struct LitInfluenceInfo
@@ -194,7 +194,7 @@ public class LitInfluenceSource
             }
 
             AddReceivers(hit);
-            if (sourceKind == LitInfluenceSourceKind.Brasero)
+            if (sourceKind == LitInfluenceSourceKind.AncientFlame)
             {
                 AddAgeRenderers(hit);
             }
@@ -294,7 +294,7 @@ public class LitInfluenceSource
 
     private void UpdateMaterialAgeInfluence(LitInfluenceInfo info)
     {
-        if (info.SourceKind != LitInfluenceSourceKind.Brasero || info.SourceId == 0)
+        if (info.SourceKind != LitInfluenceSourceKind.AncientFlame || info.SourceId == 0)
         {
             return;
         }
@@ -307,7 +307,7 @@ public class LitInfluenceSource
             }
 
             activeAgeRenderers.Add(renderer);
-            BraseroInfluenceMaterialRuntime.RegisterOrUpdate(info.SourceId, info.Center, renderer);
+            FlameInfluenceMaterialRuntime.RegisterOrUpdate(info.SourceId, info.Center, renderer);
         }
 
         ageRendererRemovalBuffer.Clear();
@@ -323,7 +323,7 @@ public class LitInfluenceSource
         {
             Renderer renderer = ageRendererRemovalBuffer[i];
             activeAgeRenderers.Remove(renderer);
-            BraseroInfluenceMaterialRuntime.Unregister(info.SourceId, renderer);
+            FlameInfluenceMaterialRuntime.Unregister(info.SourceId, renderer);
         }
 
         ageRendererRemovalBuffer.Clear();
@@ -332,7 +332,7 @@ public class LitInfluenceSource
 
     private void ClearMaterialAgeInfluence(LitInfluenceInfo info)
     {
-        if (info.SourceKind != LitInfluenceSourceKind.Brasero || info.SourceId == 0)
+        if (info.SourceKind != LitInfluenceSourceKind.AncientFlame || info.SourceId == 0)
         {
             activeAgeRenderers.Clear();
             scannedAgeRenderers.Clear();
@@ -342,7 +342,7 @@ public class LitInfluenceSource
 
         foreach (Renderer renderer in activeAgeRenderers)
         {
-            BraseroInfluenceMaterialRuntime.Unregister(info.SourceId, renderer);
+            FlameInfluenceMaterialRuntime.Unregister(info.SourceId, renderer);
         }
 
         activeAgeRenderers.Clear();
@@ -378,7 +378,7 @@ public class LitInfluenceSource
     }
 }
 
-internal static class BraseroInfluenceMaterialRuntime
+internal static class FlameInfluenceMaterialRuntime
 {
     private struct SourceInfluence
     {

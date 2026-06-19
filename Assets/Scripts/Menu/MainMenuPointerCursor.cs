@@ -19,7 +19,7 @@ public class MainMenuPointerCursor : MonoBehaviour
     [SerializeField] private Canvas canvas;
     [SerializeField] private RectTransform cursorVisual;
     [SerializeField] private Camera decorCamera;
-    [SerializeField] private Light torchLight;
+    [SerializeField] private Light flameLight;
 
     [Header("Gamepad Pointer")]
     [SerializeField] private float gamepadSpeed = 1150f;
@@ -27,79 +27,79 @@ public class MainMenuPointerCursor : MonoBehaviour
     [SerializeField] private bool warpHardwareMouseForGamepad = true;
     [SerializeField] private bool synthesizeGamepadUiEvents = true;
 
-    [Header("Torch")]
-    [SerializeField] private float torchCameraOffset = 0.2f;
+    [Header("Flame")]
+    [SerializeField] private float flameCameraOffset = 0.2f;
     [SerializeField] private float worldRayDistance = 50f;
     [SerializeField] private LayerMask interactionLayers = ~0;
 
-    [Header("Torch Collision")]
+    [Header("Flame Collision")]
     [SerializeField, Tooltip("Garde la lumiere du curseur en dehors des colliders du decor.")]
-    private bool keepTorchOutsideGeometry = true;
-    [SerializeField] private LayerMask torchCollisionLayers = ~0;
+    private bool keepFlameOutsideGeometry = true;
+    [SerializeField] private LayerMask flameCollisionLayers = ~0;
     [SerializeField, Min(0f), Tooltip("Rayon physique autour de la lumiere.")]
-    private float torchCollisionRadius = 0.12f;
+    private float flameCollisionRadius = 0.12f;
     [SerializeField, Min(0f), Tooltip("Distance minimale gardee entre la lumiere et la surface touchee.")]
-    private float torchSurfaceOffset = 0.035f;
+    private float flameSurfaceOffset = 0.035f;
     [SerializeField, Range(1, 6), Tooltip("Nombre de corrections si la lumiere commence dans un collider.")]
-    private int torchCollisionIterations = 3;
-    [SerializeField] private QueryTriggerInteraction torchCollisionTriggers = QueryTriggerInteraction.Ignore;
+    private int flameCollisionIterations = 3;
+    [SerializeField] private QueryTriggerInteraction flameCollisionTriggers = QueryTriggerInteraction.Ignore;
 
-    [Header("Torch Projection Plane")]
+    [Header("Flame Projection Plane")]
     [SerializeField, Tooltip("Place la lumiere sur un plan parallele a la camera/UI borne par le decor 3D.")]
-    private bool useTorchBoundsPlane = true;
+    private bool useFlameBoundsPlane = true;
     [SerializeField, Tooltip("Racine des objets 3D qui bornent la navigation de la lumiere. Vide = parent de la lumiere.")]
-    private Transform torchBoundsRoot;
+    private Transform flameBoundsRoot;
     [SerializeField, Tooltip("Inclut les etats de decor inactifs dans les bounds du plan pour eviter un changement de zone selon la sauvegarde.")]
-    private bool includeInactiveTorchBounds = true;
+    private bool includeInactiveFlameBounds = true;
     [SerializeField, Tooltip("Limite la projection de la lumiere a la zone ecran occupee par le decor.")]
-    private bool clampTorchToDecorViewportBounds = true;
+    private bool clampFlameToDecorViewportBounds = true;
     [SerializeField, Range(0f, 0.25f), Tooltip("Padding en coordonnees viewport autour des bounds projetes du decor.")]
-    private float torchViewportBoundsPadding = 0.015f;
+    private float flameViewportBoundsPadding = 0.015f;
     [SerializeField, Min(0f), Tooltip("Padding monde ajoute aux bounds du decor pour les corrections de placement.")]
-    private float torchBoundsPadding = 0.08f;
+    private float flameBoundsPadding = 0.08f;
     [SerializeField, Min(0.05f), Tooltip("Intervalle de recalcul des bounds du decor.")]
-    private float torchBoundsRefreshInterval = 0.25f;
+    private float flameBoundsRefreshInterval = 0.25f;
     [SerializeField, Tooltip("Utilise les bounds des renderers actifs pour garder la lumiere hors des meshes sans collider.")]
-    private bool keepTorchOutsideRendererBounds = true;
+    private bool keepFlameOutsideRendererBounds = true;
 
-    [Header("Torch Projection Rail Fallback")]
+    [Header("Flame Projection Rail Fallback")]
     [SerializeField, Tooltip("Construit au lancement une grille de profondeurs devant la camera pour guider la lumiere.")]
-    private bool useTorchProjectionRail = true;
-    [SerializeField, Range(4, 96)] private int torchRailColumns = 32;
-    [SerializeField, Range(4, 96)] private int torchRailRows = 18;
+    private bool useFlameProjectionRail = true;
+    [SerializeField, Range(4, 96)] private int flameRailColumns = 32;
+    [SerializeField, Range(4, 96)] private int flameRailRows = 18;
     [SerializeField, Min(0.1f), Tooltip("Distance maximale des raycasts du rail depuis le plan de projection.")]
-    private float torchRailRayDistance = 80f;
+    private float flameRailRayDistance = 80f;
     [SerializeField, Min(0f), Tooltip("Distance gardee entre la lumiere et le relief du rail.")]
-    private float torchRailSurfaceStandOff = 0.32f;
+    private float flameRailSurfaceStandOff = 0.32f;
     [SerializeField, Tooltip("Reconstruit le rail si la taille d'ecran change.")]
-    private bool rebuildTorchRailOnScreenChange = true;
+    private bool rebuildFlameRailOnScreenChange = true;
     [SerializeField, Min(0f), Tooltip("Lissage de la position de la lumiere. 0 = instantane.")]
-    private float torchPositionSharpness = 18f;
+    private float flamePositionSharpness = 18f;
     [SerializeField, Min(0f), Tooltip("Lissage de l'orientation de la lumiere. 0 = instantane.")]
-    private float torchRotationSharpness = 22f;
+    private float flameRotationSharpness = 22f;
 
     [Header("System Cursor")]
     [SerializeField] private bool hideSystemCursor = true;
 
-    private readonly Collider[] torchOverlapBuffer = new Collider[16];
-    private readonly List<Bounds> torchActiveRendererBounds = new List<Bounds>();
+    private readonly Collider[] flameOverlapBuffer = new Collider[16];
+    private readonly List<Bounds> flameActiveRendererBounds = new List<Bounds>();
     private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
     private PointerEventData pointerEventData;
     private EventSystem pointerEventSystem;
-    private Bounds torchDecorCameraBounds;
-    private Rect torchDecorViewportBounds;
-    private bool hasTorchDecorBounds;
-    private Transform cachedTorchBoundsRoot;
-    private Camera cachedTorchBoundsCamera;
-    private float nextTorchBoundsRefreshTime;
-    private float[] torchRailDepths;
-    private bool[] torchRailSampleValid;
-    private int builtTorchRailColumns;
-    private int builtTorchRailRows;
-    private int builtTorchRailScreenWidth;
-    private int builtTorchRailScreenHeight;
-    private Camera builtTorchRailCamera;
-    private bool torchRailReady;
+    private Bounds flameDecorCameraBounds;
+    private Rect flameDecorViewportBounds;
+    private bool hasFlameDecorBounds;
+    private Transform cachedFlameBoundsRoot;
+    private Camera cachedFlameBoundsCamera;
+    private float nextFlameBoundsRefreshTime;
+    private float[] flameRailDepths;
+    private bool[] flameRailSampleValid;
+    private int builtFlameRailColumns;
+    private int builtFlameRailRows;
+    private int builtFlameRailScreenWidth;
+    private int builtFlameRailScreenHeight;
+    private Camera builtFlameRailCamera;
+    private bool flameRailReady;
     private Vector2 screenPosition;
     private bool hasScreenPosition;
     private PointerSource activeSource = PointerSource.Mouse;
@@ -107,9 +107,9 @@ public class MainMenuPointerCursor : MonoBehaviour
     private CursorLockMode cachedCursorLockMode;
     private GameObject syntheticUiHover;
     private CursorIntercation worldHover;
-    private Vector3 currentTorchPosition;
-    private Quaternion currentTorchRotation = Quaternion.identity;
-    private bool hasTorchPose;
+    private Vector3 currentFlamePosition;
+    private Quaternion currentFlameRotation = Quaternion.identity;
+    private bool hasFlamePose;
 
     private void Awake()
     {
@@ -121,10 +121,10 @@ public class MainMenuPointerCursor : MonoBehaviour
         ResolveReferences();
         CacheAndApplySystemCursor();
         InitializeScreenPosition();
-        RebuildTorchProjectionRail();
-        if (torchLight != null)
+        RebuildFlameProjectionRail();
+        if (flameLight != null)
         {
-            torchLight.enabled = true;
+            flameLight.enabled = true;
         }
     }
 
@@ -133,13 +133,13 @@ public class MainMenuPointerCursor : MonoBehaviour
         ClearSyntheticUiHover();
         SetWorldHover(null);
         RestoreSystemCursor();
-        hasTorchPose = false;
-        torchRailReady = false;
-        hasTorchDecorBounds = false;
-        torchActiveRendererBounds.Clear();
-        if (torchLight != null)
+        hasFlamePose = false;
+        flameRailReady = false;
+        hasFlameDecorBounds = false;
+        flameActiveRendererBounds.Clear();
+        if (flameLight != null)
         {
-            torchLight.enabled = false;
+            flameLight.enabled = false;
         }
     }
 
@@ -148,7 +148,7 @@ public class MainMenuPointerCursor : MonoBehaviour
         ResolveReferences();
         UpdateScreenPosition();
         UpdateCursorVisual();
-        UpdateTorch();
+        UpdateFlame();
         UpdateWorldHover();
         UpdateSyntheticUiHoverAndClick();
         HandleWorldClick();
@@ -171,9 +171,9 @@ public class MainMenuPointerCursor : MonoBehaviour
             decorCamera = canvas != null && canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
         }
 
-        if (torchLight != null && torchLight.type != LightType.Point)
+        if (flameLight != null && flameLight.type != LightType.Point)
         {
-            torchLight.type = LightType.Point;
+            flameLight.type = LightType.Point;
         }
     }
 
@@ -334,9 +334,9 @@ public class MainMenuPointerCursor : MonoBehaviour
         }
     }
 
-    private void UpdateTorch()
+    private void UpdateFlame()
     {
-        if (torchLight == null)
+        if (flameLight == null)
         {
             return;
         }
@@ -347,107 +347,107 @@ public class MainMenuPointerCursor : MonoBehaviour
             return;
         }
 
-        EnsureTorchDecorBounds(cam);
-        EnsureTorchProjectionRail(cam);
+        EnsureFlameDecorBounds(cam);
+        EnsureFlameProjectionRail(cam);
 
         Vector3 direction = cam.transform.forward.sqrMagnitude > 0.0001f ? cam.transform.forward.normalized : Vector3.forward;
         Vector2 viewportPosition = ScreenToViewport(screenPosition);
         Vector3 desiredAimPoint;
-        Vector3 desiredPosition = ResolveTorchDesiredPosition(cam, viewportPosition, direction, out desiredAimPoint);
-        if (keepTorchOutsideGeometry)
+        Vector3 desiredPosition = ResolveFlameDesiredPosition(cam, viewportPosition, direction, out desiredAimPoint);
+        if (keepFlameOutsideGeometry)
         {
-            desiredPosition = ResolveTorchClearance(desiredPosition, direction);
+            desiredPosition = ResolveFlameClearance(desiredPosition, direction);
         }
 
         float deltaTime = Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : Time.deltaTime;
-        Vector3 torchPosition = SmoothTorchPosition(desiredPosition, deltaTime);
-        if (keepTorchOutsideGeometry)
+        Vector3 flamePosition = SmoothFlamePosition(desiredPosition, deltaTime);
+        if (keepFlameOutsideGeometry)
         {
-            torchPosition = ResolveTorchClearance(torchPosition, direction);
+            flamePosition = ResolveFlameClearance(flamePosition, direction);
         }
 
-        Quaternion desiredRotation = ResolveTorchRotation(torchPosition, desiredAimPoint, direction, cam.transform.up);
-        Quaternion torchRotation = SmoothTorchRotation(desiredRotation, deltaTime);
+        Quaternion desiredRotation = ResolveFlameRotation(flamePosition, desiredAimPoint, direction, cam.transform.up);
+        Quaternion flameRotation = SmoothFlameRotation(desiredRotation, deltaTime);
 
-        torchLight.transform.position = torchPosition;
-        torchLight.transform.rotation = torchRotation;
-        currentTorchPosition = torchPosition;
-        currentTorchRotation = torchRotation;
-        hasTorchPose = true;
+        flameLight.transform.position = flamePosition;
+        flameLight.transform.rotation = flameRotation;
+        currentFlamePosition = flamePosition;
+        currentFlameRotation = flameRotation;
+        hasFlamePose = true;
     }
 
-    private void RebuildTorchProjectionRail()
+    private void RebuildFlameProjectionRail()
     {
         Camera cam = decorCamera != null ? decorCamera : Camera.main;
         if (cam == null)
         {
-            hasTorchDecorBounds = false;
-            torchRailReady = false;
+            hasFlameDecorBounds = false;
+            flameRailReady = false;
             return;
         }
 
-        RefreshTorchDecorBounds(cam, ResolveTorchBoundsRoot());
-        if (useTorchBoundsPlane && hasTorchDecorBounds)
+        RefreshFlameDecorBounds(cam, ResolveFlameBoundsRoot());
+        if (useFlameBoundsPlane && hasFlameDecorBounds)
         {
-            torchRailReady = false;
+            flameRailReady = false;
             return;
         }
 
-        BuildTorchProjectionRail(cam);
+        BuildFlameProjectionRail(cam);
     }
 
-    private void EnsureTorchDecorBounds(Camera cam)
+    private void EnsureFlameDecorBounds(Camera cam)
     {
-        if (cam == null || !useTorchBoundsPlane && !keepTorchOutsideRendererBounds)
+        if (cam == null || !useFlameBoundsPlane && !keepFlameOutsideRendererBounds)
         {
             return;
         }
 
-        Transform root = ResolveTorchBoundsRoot();
+        Transform root = ResolveFlameBoundsRoot();
         if (root == null)
         {
-            hasTorchDecorBounds = false;
-            torchActiveRendererBounds.Clear();
+            hasFlameDecorBounds = false;
+            flameActiveRendererBounds.Clear();
             return;
         }
 
         float now = Application.isPlaying ? Time.unscaledTime : 0f;
-        if (hasTorchDecorBounds &&
-            cachedTorchBoundsRoot == root &&
-            cachedTorchBoundsCamera == cam &&
-            now < nextTorchBoundsRefreshTime)
+        if (hasFlameDecorBounds &&
+            cachedFlameBoundsRoot == root &&
+            cachedFlameBoundsCamera == cam &&
+            now < nextFlameBoundsRefreshTime)
         {
             return;
         }
 
-        RefreshTorchDecorBounds(cam, root);
+        RefreshFlameDecorBounds(cam, root);
     }
 
-    private Transform ResolveTorchBoundsRoot()
+    private Transform ResolveFlameBoundsRoot()
     {
-        if (torchBoundsRoot != null)
+        if (flameBoundsRoot != null)
         {
-            return torchBoundsRoot;
+            return flameBoundsRoot;
         }
 
-        if (torchLight != null && torchLight.transform.parent != null)
+        if (flameLight != null && flameLight.transform.parent != null)
         {
-            return torchLight.transform.parent;
+            return flameLight.transform.parent;
         }
 
         return null;
     }
 
-    private void RefreshTorchDecorBounds(Camera cam, Transform root)
+    private void RefreshFlameDecorBounds(Camera cam, Transform root)
     {
-        torchActiveRendererBounds.Clear();
-        cachedTorchBoundsRoot = root;
-        cachedTorchBoundsCamera = cam;
-        nextTorchBoundsRefreshTime = (Application.isPlaying ? Time.unscaledTime : 0f) + Mathf.Max(0.05f, torchBoundsRefreshInterval);
+        flameActiveRendererBounds.Clear();
+        cachedFlameBoundsRoot = root;
+        cachedFlameBoundsCamera = cam;
+        nextFlameBoundsRefreshTime = (Application.isPlaying ? Time.unscaledTime : 0f) + Mathf.Max(0.05f, flameBoundsRefreshInterval);
 
         if (cam == null || root == null)
         {
-            hasTorchDecorBounds = false;
+            hasFlameDecorBounds = false;
             return;
         }
 
@@ -457,17 +457,17 @@ public class MainMenuPointerCursor : MonoBehaviour
         Vector2 viewportMax = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
         bool hasViewportBounds = false;
 
-        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(includeInactiveTorchBounds);
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(includeInactiveFlameBounds);
         for (int i = 0; i < renderers.Length; i++)
         {
             Renderer renderer = renderers[i];
-            if (renderer == null || IsTorchRenderer(renderer))
+            if (renderer == null || IsFlameRenderer(renderer))
             {
                 continue;
             }
 
             bool activeRenderer = renderer.enabled && renderer.gameObject.activeInHierarchy;
-            if (!includeInactiveTorchBounds && !activeRenderer)
+            if (!includeInactiveFlameBounds && !activeRenderer)
             {
                 continue;
             }
@@ -478,26 +478,26 @@ public class MainMenuPointerCursor : MonoBehaviour
                 continue;
             }
 
-            EncapsulateTorchProjectionBounds(cam, bounds, ref cameraBounds, ref hasCameraBounds, ref viewportMin, ref viewportMax, ref hasViewportBounds);
+            EncapsulateFlameProjectionBounds(cam, bounds, ref cameraBounds, ref hasCameraBounds, ref viewportMin, ref viewportMax, ref hasViewportBounds);
 
             if (activeRenderer)
             {
                 Bounds paddedBounds = bounds;
-                paddedBounds.Expand(Mathf.Max(0f, torchBoundsPadding) * 2f);
-                torchActiveRendererBounds.Add(paddedBounds);
+                paddedBounds.Expand(Mathf.Max(0f, flameBoundsPadding) * 2f);
+                flameActiveRendererBounds.Add(paddedBounds);
             }
         }
 
-        Collider[] colliders = root.GetComponentsInChildren<Collider>(includeInactiveTorchBounds);
+        Collider[] colliders = root.GetComponentsInChildren<Collider>(includeInactiveFlameBounds);
         for (int i = 0; i < colliders.Length; i++)
         {
             Collider collider = colliders[i];
-            if (collider == null || IsTorchCollider(collider))
+            if (collider == null || IsFlameCollider(collider))
             {
                 continue;
             }
 
-            if (!includeInactiveTorchBounds && (!collider.enabled || !collider.gameObject.activeInHierarchy))
+            if (!includeInactiveFlameBounds && (!collider.enabled || !collider.gameObject.activeInHierarchy))
             {
                 continue;
             }
@@ -508,20 +508,20 @@ public class MainMenuPointerCursor : MonoBehaviour
                 continue;
             }
 
-            EncapsulateTorchProjectionBounds(cam, bounds, ref cameraBounds, ref hasCameraBounds, ref viewportMin, ref viewportMax, ref hasViewportBounds);
+            EncapsulateFlameProjectionBounds(cam, bounds, ref cameraBounds, ref hasCameraBounds, ref viewportMin, ref viewportMax, ref hasViewportBounds);
         }
 
-        hasTorchDecorBounds = hasCameraBounds && hasViewportBounds;
-        if (!hasTorchDecorBounds)
+        hasFlameDecorBounds = hasCameraBounds && hasViewportBounds;
+        if (!hasFlameDecorBounds)
         {
             return;
         }
 
-        torchDecorCameraBounds = cameraBounds;
-        torchDecorViewportBounds = Rect.MinMaxRect(viewportMin.x, viewportMin.y, viewportMax.x, viewportMax.y);
+        flameDecorCameraBounds = cameraBounds;
+        flameDecorViewportBounds = Rect.MinMaxRect(viewportMin.x, viewportMin.y, viewportMax.x, viewportMax.y);
     }
 
-    private void EncapsulateTorchProjectionBounds(
+    private void EncapsulateFlameProjectionBounds(
         Camera cam,
         Bounds bounds,
         ref Bounds cameraBounds,
@@ -590,47 +590,47 @@ public class MainMenuPointerCursor : MonoBehaviour
         return !float.IsNaN(value) && !float.IsInfinity(value);
     }
 
-    private void EnsureTorchProjectionRail(Camera cam)
+    private void EnsureFlameProjectionRail(Camera cam)
     {
-        if (!useTorchProjectionRail || cam == null)
+        if (!useFlameProjectionRail || cam == null)
         {
             return;
         }
 
-        if (useTorchBoundsPlane && hasTorchDecorBounds)
+        if (useFlameBoundsPlane && hasFlameDecorBounds)
         {
             return;
         }
 
-        int columns = Mathf.Clamp(torchRailColumns, 4, 96);
-        int rows = Mathf.Clamp(torchRailRows, 4, 96);
-        bool screenChanged = builtTorchRailScreenWidth != Screen.width ||
-            builtTorchRailScreenHeight != Screen.height;
+        int columns = Mathf.Clamp(flameRailColumns, 4, 96);
+        int rows = Mathf.Clamp(flameRailRows, 4, 96);
+        bool screenChanged = builtFlameRailScreenWidth != Screen.width ||
+            builtFlameRailScreenHeight != Screen.height;
 
-        if (!torchRailReady ||
-            builtTorchRailCamera != cam ||
-            builtTorchRailColumns != columns ||
-            builtTorchRailRows != rows ||
-            rebuildTorchRailOnScreenChange && screenChanged)
+        if (!flameRailReady ||
+            builtFlameRailCamera != cam ||
+            builtFlameRailColumns != columns ||
+            builtFlameRailRows != rows ||
+            rebuildFlameRailOnScreenChange && screenChanged)
         {
-            BuildTorchProjectionRail(cam);
+            BuildFlameProjectionRail(cam);
         }
     }
 
-    private void BuildTorchProjectionRail(Camera cam)
+    private void BuildFlameProjectionRail(Camera cam)
     {
-        int columns = Mathf.Clamp(torchRailColumns, 4, 96);
-        int rows = Mathf.Clamp(torchRailRows, 4, 96);
+        int columns = Mathf.Clamp(flameRailColumns, 4, 96);
+        int rows = Mathf.Clamp(flameRailRows, 4, 96);
         int sampleCount = columns * rows;
-        if (torchRailDepths == null || torchRailDepths.Length != sampleCount)
+        if (flameRailDepths == null || flameRailDepths.Length != sampleCount)
         {
-            torchRailDepths = new float[sampleCount];
-            torchRailSampleValid = new bool[sampleCount];
+            flameRailDepths = new float[sampleCount];
+            flameRailSampleValid = new bool[sampleCount];
         }
 
         Vector3 forward = cam.transform.forward.sqrMagnitude > 0.0001f ? cam.transform.forward.normalized : Vector3.forward;
-        float projectionDistance = ResolveTorchProjectionDistance(cam);
-        float maxRayDistance = Mathf.Max(0.1f, torchRailRayDistance);
+        float projectionDistance = ResolveFlameProjectionDistance(cam);
+        float maxRayDistance = Mathf.Max(0.1f, flameRailRayDistance);
         int validCount = 0;
 
         for (int y = 0; y < rows; y++)
@@ -640,54 +640,54 @@ public class MainMenuPointerCursor : MonoBehaviour
             {
                 float viewportX = columns <= 1 ? 0.5f : x / (float)(columns - 1);
                 Vector3 origin = cam.ViewportToWorldPoint(new Vector3(viewportX, viewportY, projectionDistance));
-                int index = ResolveTorchRailIndex(x, y, columns);
-                if (Physics.Raycast(origin, forward, out RaycastHit hit, maxRayDistance, torchCollisionLayers, torchCollisionTriggers) &&
-                    !IsTorchCollider(hit.collider))
+                int index = ResolveFlameRailIndex(x, y, columns);
+                if (Physics.Raycast(origin, forward, out RaycastHit hit, maxRayDistance, flameCollisionLayers, flameCollisionTriggers) &&
+                    !IsFlameCollider(hit.collider))
                 {
-                    torchRailDepths[index] = Mathf.Max(0f, hit.distance);
-                    torchRailSampleValid[index] = true;
+                    flameRailDepths[index] = Mathf.Max(0f, hit.distance);
+                    flameRailSampleValid[index] = true;
                     validCount++;
                 }
                 else
                 {
-                    torchRailDepths[index] = 0f;
-                    torchRailSampleValid[index] = false;
+                    flameRailDepths[index] = 0f;
+                    flameRailSampleValid[index] = false;
                 }
             }
         }
 
-        FillMissingTorchRailDepths(columns, rows, validCount > 0 ? ResolveAverageValidTorchRailDepth(validCount) : 0f);
+        FillMissingFlameRailDepths(columns, rows, validCount > 0 ? ResolveAverageValidFlameRailDepth(validCount) : 0f);
 
-        builtTorchRailColumns = columns;
-        builtTorchRailRows = rows;
-        builtTorchRailScreenWidth = Screen.width;
-        builtTorchRailScreenHeight = Screen.height;
-        builtTorchRailCamera = cam;
-        torchRailReady = true;
+        builtFlameRailColumns = columns;
+        builtFlameRailRows = rows;
+        builtFlameRailScreenWidth = Screen.width;
+        builtFlameRailScreenHeight = Screen.height;
+        builtFlameRailCamera = cam;
+        flameRailReady = true;
     }
 
-    private float ResolveAverageValidTorchRailDepth(int validCount)
+    private float ResolveAverageValidFlameRailDepth(int validCount)
     {
-        if (validCount <= 0 || torchRailDepths == null || torchRailSampleValid == null)
+        if (validCount <= 0 || flameRailDepths == null || flameRailSampleValid == null)
         {
             return 0f;
         }
 
         float sum = 0f;
-        for (int i = 0; i < torchRailDepths.Length; i++)
+        for (int i = 0; i < flameRailDepths.Length; i++)
         {
-            if (torchRailSampleValid[i])
+            if (flameRailSampleValid[i])
             {
-                sum += torchRailDepths[i];
+                sum += flameRailDepths[i];
             }
         }
 
         return sum / validCount;
     }
 
-    private void FillMissingTorchRailDepths(int columns, int rows, float fallbackDepth)
+    private void FillMissingFlameRailDepths(int columns, int rows, float fallbackDepth)
     {
-        if (torchRailDepths == null || torchRailSampleValid == null)
+        if (flameRailDepths == null || flameRailSampleValid == null)
         {
             return;
         }
@@ -700,26 +700,26 @@ public class MainMenuPointerCursor : MonoBehaviour
             {
                 for (int x = 0; x < columns; x++)
                 {
-                    int index = ResolveTorchRailIndex(x, y, columns);
-                    if (torchRailSampleValid[index])
+                    int index = ResolveFlameRailIndex(x, y, columns);
+                    if (flameRailSampleValid[index])
                     {
                         continue;
                     }
 
                     float sum = 0f;
                     int count = 0;
-                    AccumulateTorchRailNeighbor(x - 1, y, columns, rows, ref sum, ref count);
-                    AccumulateTorchRailNeighbor(x + 1, y, columns, rows, ref sum, ref count);
-                    AccumulateTorchRailNeighbor(x, y - 1, columns, rows, ref sum, ref count);
-                    AccumulateTorchRailNeighbor(x, y + 1, columns, rows, ref sum, ref count);
+                    AccumulateFlameRailNeighbor(x - 1, y, columns, rows, ref sum, ref count);
+                    AccumulateFlameRailNeighbor(x + 1, y, columns, rows, ref sum, ref count);
+                    AccumulateFlameRailNeighbor(x, y - 1, columns, rows, ref sum, ref count);
+                    AccumulateFlameRailNeighbor(x, y + 1, columns, rows, ref sum, ref count);
 
                     if (count <= 0)
                     {
                         continue;
                     }
 
-                    torchRailDepths[index] = sum / count;
-                    torchRailSampleValid[index] = true;
+                    flameRailDepths[index] = sum / count;
+                    flameRailSampleValid[index] = true;
                     changed = true;
                 }
             }
@@ -730,91 +730,91 @@ public class MainMenuPointerCursor : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < torchRailDepths.Length; i++)
+        for (int i = 0; i < flameRailDepths.Length; i++)
         {
-            if (!torchRailSampleValid[i])
+            if (!flameRailSampleValid[i])
             {
-                torchRailDepths[i] = fallbackDepth;
-                torchRailSampleValid[i] = true;
+                flameRailDepths[i] = fallbackDepth;
+                flameRailSampleValid[i] = true;
             }
         }
     }
 
-    private void AccumulateTorchRailNeighbor(int x, int y, int columns, int rows, ref float sum, ref int count)
+    private void AccumulateFlameRailNeighbor(int x, int y, int columns, int rows, ref float sum, ref int count)
     {
         if (x < 0 || y < 0 || x >= columns || y >= rows)
         {
             return;
         }
 
-        int index = ResolveTorchRailIndex(x, y, columns);
-        if (!torchRailSampleValid[index])
+        int index = ResolveFlameRailIndex(x, y, columns);
+        if (!flameRailSampleValid[index])
         {
             return;
         }
 
-        sum += torchRailDepths[index];
+        sum += flameRailDepths[index];
         count++;
     }
 
-    private Vector3 ResolveTorchDesiredPosition(Camera cam, Vector2 viewportPosition, Vector3 direction, out Vector3 aimPoint)
+    private Vector3 ResolveFlameDesiredPosition(Camera cam, Vector2 viewportPosition, Vector3 direction, out Vector3 aimPoint)
     {
-        if (useTorchBoundsPlane && hasTorchDecorBounds)
+        if (useFlameBoundsPlane && hasFlameDecorBounds)
         {
-            return ResolveTorchBoundsPlanePosition(cam, viewportPosition, direction, out aimPoint);
+            return ResolveFlameBoundsPlanePosition(cam, viewportPosition, direction, out aimPoint);
         }
 
-        float projectionDistance = ResolveTorchProjectionDistance(cam);
+        float projectionDistance = ResolveFlameProjectionDistance(cam);
         Vector3 origin = cam.ViewportToWorldPoint(new Vector3(viewportPosition.x, viewportPosition.y, projectionDistance));
 
-        if (useTorchProjectionRail && torchRailReady && torchRailDepths != null && torchRailDepths.Length > 0)
+        if (useFlameProjectionRail && flameRailReady && flameRailDepths != null && flameRailDepths.Length > 0)
         {
-            float railDepth = SampleTorchRailDepth(viewportPosition);
-            float standOff = Mathf.Max(0f, torchRailSurfaceStandOff) + Mathf.Max(0f, torchSurfaceOffset);
-            float lightDepth = Mathf.Max(0f, railDepth - standOff - Mathf.Max(0f, torchCollisionRadius));
+            float railDepth = SampleFlameRailDepth(viewportPosition);
+            float standOff = Mathf.Max(0f, flameRailSurfaceStandOff) + Mathf.Max(0f, flameSurfaceOffset);
+            float lightDepth = Mathf.Max(0f, railDepth - standOff - Mathf.Max(0f, flameCollisionRadius));
             aimPoint = origin + direction * railDepth;
             return origin + direction * lightDepth;
         }
 
-        aimPoint = origin + direction * ResolveTorchAimExtraDistance();
-        if (!keepTorchOutsideGeometry)
+        aimPoint = origin + direction * ResolveFlameAimExtraDistance();
+        if (!keepFlameOutsideGeometry)
         {
             return origin;
         }
 
-        return ResolveTorchBlockedPosition(new Ray(origin, direction), origin, 0f);
+        return ResolveFlameBlockedPosition(new Ray(origin, direction), origin, 0f);
     }
 
-    private Vector3 ResolveTorchBoundsPlanePosition(Camera cam, Vector2 viewportPosition, Vector3 direction, out Vector3 aimPoint)
+    private Vector3 ResolveFlameBoundsPlanePosition(Camera cam, Vector2 viewportPosition, Vector3 direction, out Vector3 aimPoint)
     {
-        Vector2 clampedViewport = ClampTorchViewportToDecorBounds(viewportPosition);
-        float planeDistance = ResolveTorchBoundsPlaneDistance(cam);
+        Vector2 clampedViewport = ClampFlameViewportToDecorBounds(viewportPosition);
+        float planeDistance = ResolveFlameBoundsPlaneDistance(cam);
         Vector3 position = ResolvePointOnCameraParallelPlane(cam, clampedViewport, planeDistance, direction);
 
         float aimDistance = Mathf.Min(
-            Mathf.Max(planeDistance, torchDecorCameraBounds.max.z + Mathf.Max(0f, torchBoundsPadding)),
-            planeDistance + ResolveTorchAimExtraDistance());
+            Mathf.Max(planeDistance, flameDecorCameraBounds.max.z + Mathf.Max(0f, flameBoundsPadding)),
+            planeDistance + ResolveFlameAimExtraDistance());
         if (aimDistance <= planeDistance + 0.001f)
         {
-            aimDistance = planeDistance + ResolveTorchAimExtraDistance();
+            aimDistance = planeDistance + ResolveFlameAimExtraDistance();
         }
 
         aimPoint = ResolvePointOnCameraParallelPlane(cam, clampedViewport, aimDistance, direction);
         return position;
     }
 
-    private Vector2 ClampTorchViewportToDecorBounds(Vector2 viewportPosition)
+    private Vector2 ClampFlameViewportToDecorBounds(Vector2 viewportPosition)
     {
-        if (!clampTorchToDecorViewportBounds || !hasTorchDecorBounds)
+        if (!clampFlameToDecorViewportBounds || !hasFlameDecorBounds)
         {
             return viewportPosition;
         }
 
-        float padding = Mathf.Clamp(torchViewportBoundsPadding, 0f, 0.25f);
-        float minX = Mathf.Clamp01(torchDecorViewportBounds.xMin - padding);
-        float maxX = Mathf.Clamp01(torchDecorViewportBounds.xMax + padding);
-        float minY = Mathf.Clamp01(torchDecorViewportBounds.yMin - padding);
-        float maxY = Mathf.Clamp01(torchDecorViewportBounds.yMax + padding);
+        float padding = Mathf.Clamp(flameViewportBoundsPadding, 0f, 0.25f);
+        float minX = Mathf.Clamp01(flameDecorViewportBounds.xMin - padding);
+        float maxX = Mathf.Clamp01(flameDecorViewportBounds.xMax + padding);
+        float minY = Mathf.Clamp01(flameDecorViewportBounds.yMin - padding);
+        float maxY = Mathf.Clamp01(flameDecorViewportBounds.yMax + padding);
 
         if (minX > maxX || minY > maxY)
         {
@@ -826,15 +826,15 @@ public class MainMenuPointerCursor : MonoBehaviour
             Mathf.Clamp(viewportPosition.y, minY, maxY));
     }
 
-    private float ResolveTorchBoundsPlaneDistance(Camera cam)
+    private float ResolveFlameBoundsPlaneDistance(Camera cam)
     {
         float nearPlane = cam != null ? cam.nearClipPlane + 0.001f : 0.001f;
-        float padding = Mathf.Max(0f, torchBoundsPadding);
-        float minDecorDepth = Mathf.Max(nearPlane, torchDecorCameraBounds.min.z - padding);
-        float maxDecorDepth = Mathf.Max(minDecorDepth, torchDecorCameraBounds.max.z + padding);
-        float standOff = Mathf.Max(0f, torchRailSurfaceStandOff) +
-            Mathf.Max(0f, torchSurfaceOffset) +
-            Mathf.Max(0f, torchCollisionRadius);
+        float padding = Mathf.Max(0f, flameBoundsPadding);
+        float minDecorDepth = Mathf.Max(nearPlane, flameDecorCameraBounds.min.z - padding);
+        float maxDecorDepth = Mathf.Max(minDecorDepth, flameDecorCameraBounds.max.z + padding);
+        float standOff = Mathf.Max(0f, flameRailSurfaceStandOff) +
+            Mathf.Max(0f, flameSurfaceOffset) +
+            Mathf.Max(0f, flameCollisionRadius);
 
         return Mathf.Clamp(minDecorDepth - standOff, nearPlane, maxDecorDepth);
     }
@@ -852,27 +852,27 @@ public class MainMenuPointerCursor : MonoBehaviour
         return cam.ViewportToWorldPoint(new Vector3(viewportPosition.x, viewportPosition.y, distance));
     }
 
-    private float ResolveTorchProjectionDistance(Camera cam)
+    private float ResolveFlameProjectionDistance(Camera cam)
     {
         float nearPlane = cam != null ? cam.nearClipPlane : 0.01f;
-        return Mathf.Max(nearPlane + 0.001f, torchCameraOffset);
+        return Mathf.Max(nearPlane + 0.001f, flameCameraOffset);
     }
 
-    private float ResolveTorchAimExtraDistance()
+    private float ResolveFlameAimExtraDistance()
     {
-        if (torchLight == null)
+        if (flameLight == null)
         {
             return 0.5f;
         }
 
-        return Mathf.Max(0.1f, torchLight.range);
+        return Mathf.Max(0.1f, flameLight.range);
     }
 
-    private float SampleTorchRailDepth(Vector2 viewportPosition)
+    private float SampleFlameRailDepth(Vector2 viewportPosition)
     {
-        int columns = Mathf.Max(1, builtTorchRailColumns);
-        int rows = Mathf.Max(1, builtTorchRailRows);
-        if (torchRailDepths == null || torchRailDepths.Length < columns * rows)
+        int columns = Mathf.Max(1, builtFlameRailColumns);
+        int rows = Mathf.Max(1, builtFlameRailRows);
+        if (flameRailDepths == null || flameRailDepths.Length < columns * rows)
         {
             return 0f;
         }
@@ -886,10 +886,10 @@ public class MainMenuPointerCursor : MonoBehaviour
         float tx = x - x0;
         float ty = y - y0;
 
-        float d00 = torchRailDepths[ResolveTorchRailIndex(x0, y0, columns)];
-        float d10 = torchRailDepths[ResolveTorchRailIndex(x1, y0, columns)];
-        float d01 = torchRailDepths[ResolveTorchRailIndex(x0, y1, columns)];
-        float d11 = torchRailDepths[ResolveTorchRailIndex(x1, y1, columns)];
+        float d00 = flameRailDepths[ResolveFlameRailIndex(x0, y0, columns)];
+        float d10 = flameRailDepths[ResolveFlameRailIndex(x1, y0, columns)];
+        float d01 = flameRailDepths[ResolveFlameRailIndex(x0, y1, columns)];
+        float d11 = flameRailDepths[ResolveFlameRailIndex(x1, y1, columns)];
 
         float bottom = Mathf.Lerp(d00, d10, tx);
         float top = Mathf.Lerp(d01, d11, tx);
@@ -903,19 +903,19 @@ public class MainMenuPointerCursor : MonoBehaviour
         return new Vector2(Mathf.Clamp01(position.x / width), Mathf.Clamp01(position.y / height));
     }
 
-    private static int ResolveTorchRailIndex(int x, int y, int columns)
+    private static int ResolveFlameRailIndex(int x, int y, int columns)
     {
         return y * columns + x;
     }
 
-    private Vector3 ResolveTorchBlockedPosition(Ray ray, Vector3 desiredPosition, float distanceFromCamera)
+    private Vector3 ResolveFlameBlockedPosition(Ray ray, Vector3 desiredPosition, float distanceFromCamera)
     {
         Vector3 resolvedPosition = desiredPosition;
-        float radius = Mathf.Max(0f, torchCollisionRadius);
-        float surfaceOffset = Mathf.Max(0f, torchSurfaceOffset);
+        float radius = Mathf.Max(0f, flameCollisionRadius);
+        float surfaceOffset = Mathf.Max(0f, flameSurfaceOffset);
         float castDistance = distanceFromCamera + surfaceOffset + radius;
 
-        if (castDistance > 0.0001f && TryFindTorchObstacle(ray, castDistance, radius, out RaycastHit hit))
+        if (castDistance > 0.0001f && TryFindFlameObstacle(ray, castDistance, radius, out RaycastHit hit))
         {
             if (radius > 0.0001f)
             {
@@ -927,44 +927,44 @@ public class MainMenuPointerCursor : MonoBehaviour
             }
         }
 
-        return ResolveTorchOverlaps(resolvedPosition, ray.direction);
+        return ResolveFlameOverlaps(resolvedPosition, ray.direction);
     }
 
-    private Vector3 ResolveTorchClearance(Vector3 position, Vector3 fallbackDirection)
+    private Vector3 ResolveFlameClearance(Vector3 position, Vector3 fallbackDirection)
     {
-        Vector3 resolvedPosition = ResolveTorchOverlaps(position, fallbackDirection);
-        if (keepTorchOutsideRendererBounds)
+        Vector3 resolvedPosition = ResolveFlameOverlaps(position, fallbackDirection);
+        if (keepFlameOutsideRendererBounds)
         {
-            resolvedPosition = ResolveTorchRendererBoundsOverlaps(resolvedPosition);
-            resolvedPosition = ResolveTorchOverlaps(resolvedPosition, fallbackDirection);
+            resolvedPosition = ResolveFlameRendererBoundsOverlaps(resolvedPosition);
+            resolvedPosition = ResolveFlameOverlaps(resolvedPosition, fallbackDirection);
         }
 
         return resolvedPosition;
     }
 
-    private Vector3 SmoothTorchPosition(Vector3 desiredPosition, float deltaTime)
+    private Vector3 SmoothFlamePosition(Vector3 desiredPosition, float deltaTime)
     {
-        if (!hasTorchPose || torchPositionSharpness <= 0f || deltaTime <= 0f)
+        if (!hasFlamePose || flamePositionSharpness <= 0f || deltaTime <= 0f)
         {
             return desiredPosition;
         }
 
-        float t = 1f - Mathf.Exp(-torchPositionSharpness * deltaTime);
-        return Vector3.Lerp(currentTorchPosition, desiredPosition, t);
+        float t = 1f - Mathf.Exp(-flamePositionSharpness * deltaTime);
+        return Vector3.Lerp(currentFlamePosition, desiredPosition, t);
     }
 
-    private Quaternion SmoothTorchRotation(Quaternion desiredRotation, float deltaTime)
+    private Quaternion SmoothFlameRotation(Quaternion desiredRotation, float deltaTime)
     {
-        if (!hasTorchPose || torchRotationSharpness <= 0f || deltaTime <= 0f)
+        if (!hasFlamePose || flameRotationSharpness <= 0f || deltaTime <= 0f)
         {
             return desiredRotation;
         }
 
-        float t = 1f - Mathf.Exp(-torchRotationSharpness * deltaTime);
-        return Quaternion.Slerp(currentTorchRotation, desiredRotation, t);
+        float t = 1f - Mathf.Exp(-flameRotationSharpness * deltaTime);
+        return Quaternion.Slerp(currentFlameRotation, desiredRotation, t);
     }
 
-    private static Quaternion ResolveTorchRotation(Vector3 position, Vector3 aimPoint, Vector3 fallbackDirection, Vector3 up)
+    private static Quaternion ResolveFlameRotation(Vector3 position, Vector3 aimPoint, Vector3 fallbackDirection, Vector3 up)
     {
         Vector3 lookDirection = aimPoint - position;
         if (lookDirection.sqrMagnitude <= 0.0001f)
@@ -980,7 +980,7 @@ public class MainMenuPointerCursor : MonoBehaviour
         return Quaternion.LookRotation(lookDirection.normalized, up);
     }
 
-    private bool TryFindTorchObstacle(Ray ray, float castDistance, float radius, out RaycastHit hit)
+    private bool TryFindFlameObstacle(Ray ray, float castDistance, float radius, out RaycastHit hit)
     {
         if (radius > 0.0001f)
         {
@@ -989,48 +989,48 @@ public class MainMenuPointerCursor : MonoBehaviour
                 radius,
                 out hit,
                 castDistance,
-                torchCollisionLayers,
-                torchCollisionTriggers) &&
-                !IsTorchCollider(hit.collider);
+                flameCollisionLayers,
+                flameCollisionTriggers) &&
+                !IsFlameCollider(hit.collider);
         }
 
         return Physics.Raycast(
             ray,
             out hit,
             castDistance,
-            torchCollisionLayers,
-            torchCollisionTriggers) &&
-            !IsTorchCollider(hit.collider);
+            flameCollisionLayers,
+            flameCollisionTriggers) &&
+            !IsFlameCollider(hit.collider);
     }
 
-    private Vector3 ResolveTorchOverlaps(Vector3 position, Vector3 fallbackDirection)
+    private Vector3 ResolveFlameOverlaps(Vector3 position, Vector3 fallbackDirection)
     {
-        float radius = Mathf.Max(0f, torchCollisionRadius);
+        float radius = Mathf.Max(0f, flameCollisionRadius);
         if (radius <= 0.0001f)
         {
             return position;
         }
 
         Vector3 resolvedPosition = position;
-        float clearance = radius + Mathf.Max(0f, torchSurfaceOffset);
+        float clearance = radius + Mathf.Max(0f, flameSurfaceOffset);
         float clearanceSqr = clearance * clearance;
-        int iterations = Mathf.Clamp(torchCollisionIterations, 1, 6);
+        int iterations = Mathf.Clamp(flameCollisionIterations, 1, 6);
 
         for (int iteration = 0; iteration < iterations; iteration++)
         {
             int hitCount = Physics.OverlapSphereNonAlloc(
                 resolvedPosition,
                 clearance,
-                torchOverlapBuffer,
-                torchCollisionLayers,
-                torchCollisionTriggers);
+                flameOverlapBuffer,
+                flameCollisionLayers,
+                flameCollisionTriggers);
 
             bool adjusted = false;
-            int usableHitCount = Mathf.Min(hitCount, torchOverlapBuffer.Length);
+            int usableHitCount = Mathf.Min(hitCount, flameOverlapBuffer.Length);
             for (int i = 0; i < usableHitCount; i++)
             {
-                Collider hitCollider = torchOverlapBuffer[i];
-                if (hitCollider == null || IsTorchCollider(hitCollider))
+                Collider hitCollider = flameOverlapBuffer[i];
+                if (hitCollider == null || IsFlameCollider(hitCollider))
                 {
                     continue;
                 }
@@ -1075,23 +1075,23 @@ public class MainMenuPointerCursor : MonoBehaviour
         return resolvedPosition;
     }
 
-    private Vector3 ResolveTorchRendererBoundsOverlaps(Vector3 position)
+    private Vector3 ResolveFlameRendererBoundsOverlaps(Vector3 position)
     {
-        if (torchActiveRendererBounds.Count == 0)
+        if (flameActiveRendererBounds.Count == 0)
         {
             return position;
         }
 
         Vector3 resolvedPosition = position;
-        float clearance = Mathf.Max(0f, torchCollisionRadius) + Mathf.Max(0f, torchSurfaceOffset);
-        int iterations = Mathf.Clamp(torchCollisionIterations, 1, 6);
+        float clearance = Mathf.Max(0f, flameCollisionRadius) + Mathf.Max(0f, flameSurfaceOffset);
+        int iterations = Mathf.Clamp(flameCollisionIterations, 1, 6);
 
         for (int iteration = 0; iteration < iterations; iteration++)
         {
             bool adjusted = false;
-            for (int i = 0; i < torchActiveRendererBounds.Count; i++)
+            for (int i = 0; i < flameActiveRendererBounds.Count; i++)
             {
-                Bounds solidBounds = torchActiveRendererBounds[i];
+                Bounds solidBounds = flameActiveRendererBounds[i];
                 Bounds clearanceBounds = solidBounds;
                 clearanceBounds.Expand(clearance * 2f);
                 if (!clearanceBounds.Contains(resolvedPosition))
@@ -1178,18 +1178,18 @@ public class MainMenuPointerCursor : MonoBehaviour
         }
     }
 
-    private bool IsTorchCollider(Collider candidate)
+    private bool IsFlameCollider(Collider candidate)
     {
-        return torchLight != null &&
+        return flameLight != null &&
             candidate != null &&
-            candidate.transform.IsChildOf(torchLight.transform);
+            candidate.transform.IsChildOf(flameLight.transform);
     }
 
-    private bool IsTorchRenderer(Renderer candidate)
+    private bool IsFlameRenderer(Renderer candidate)
     {
-        return torchLight != null &&
+        return flameLight != null &&
             candidate != null &&
-            candidate.transform.IsChildOf(torchLight.transform);
+            candidate.transform.IsChildOf(flameLight.transform);
     }
 
     private void UpdateWorldHover()
@@ -1400,19 +1400,19 @@ public class MainMenuPointerCursor : MonoBehaviour
     {
         gamepadSpeed = Mathf.Max(0f, gamepadSpeed);
         gamepadDeadzone = Mathf.Clamp01(gamepadDeadzone);
-        torchCameraOffset = Mathf.Max(0f, torchCameraOffset);
+        flameCameraOffset = Mathf.Max(0f, flameCameraOffset);
         worldRayDistance = Mathf.Max(0.1f, worldRayDistance);
-        torchCollisionRadius = Mathf.Max(0f, torchCollisionRadius);
-        torchSurfaceOffset = Mathf.Max(0f, torchSurfaceOffset);
-        torchCollisionIterations = Mathf.Clamp(torchCollisionIterations, 1, 6);
-        torchViewportBoundsPadding = Mathf.Clamp(torchViewportBoundsPadding, 0f, 0.25f);
-        torchBoundsPadding = Mathf.Max(0f, torchBoundsPadding);
-        torchBoundsRefreshInterval = Mathf.Max(0.05f, torchBoundsRefreshInterval);
-        torchRailColumns = Mathf.Clamp(torchRailColumns, 4, 96);
-        torchRailRows = Mathf.Clamp(torchRailRows, 4, 96);
-        torchRailSurfaceStandOff = Mathf.Max(0f, torchRailSurfaceStandOff);
-        torchRailRayDistance = Mathf.Max(0.1f, torchRailRayDistance);
-        torchPositionSharpness = Mathf.Max(0f, torchPositionSharpness);
-        torchRotationSharpness = Mathf.Max(0f, torchRotationSharpness);
+        flameCollisionRadius = Mathf.Max(0f, flameCollisionRadius);
+        flameSurfaceOffset = Mathf.Max(0f, flameSurfaceOffset);
+        flameCollisionIterations = Mathf.Clamp(flameCollisionIterations, 1, 6);
+        flameViewportBoundsPadding = Mathf.Clamp(flameViewportBoundsPadding, 0f, 0.25f);
+        flameBoundsPadding = Mathf.Max(0f, flameBoundsPadding);
+        flameBoundsRefreshInterval = Mathf.Max(0.05f, flameBoundsRefreshInterval);
+        flameRailColumns = Mathf.Clamp(flameRailColumns, 4, 96);
+        flameRailRows = Mathf.Clamp(flameRailRows, 4, 96);
+        flameRailSurfaceStandOff = Mathf.Max(0f, flameRailSurfaceStandOff);
+        flameRailRayDistance = Mathf.Max(0.1f, flameRailRayDistance);
+        flamePositionSharpness = Mathf.Max(0f, flamePositionSharpness);
+        flameRotationSharpness = Mathf.Max(0f, flameRotationSharpness);
     }
 }

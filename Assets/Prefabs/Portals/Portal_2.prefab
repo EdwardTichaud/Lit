@@ -19469,6 +19469,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5355996811077772291}
+  - component: {fileID: 9197814362131079002}
   m_Layer: 0
   m_Name: Portal_2
   m_TagString: Untagged
@@ -19494,6 +19495,33 @@ Transform:
   - {fileID: 5101231186076506138}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9197814362131079002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2051969577543164656}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03b17bf80decd484481414cc6a96e13a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PortalController
+  destinationPoint: {fileID: 0}
+  destinationLocalOffset: {x: 0, y: 0, z: 0}
+  useDestinationRotation: 1
+  interactionCollider: {fileID: 5114238776155990629}
+  interactionAnchor: {fileID: 5355996811077772291}
+  interactionMaxDistance: 2.25
+  interactionPriority: 110
+  createTriggerColliderIfMissing: 1
+  fallbackColliderRadius: 1.25
+  fallbackColliderCenter: {x: 0, y: 1, z: 0}
+  reuseCooldown: 0.35
+  stopCharacterAfterTeleport: 1
+  playTeleportAudio: 1
+  allowStandaloneTransformFallback: 0
+  logConfigurationWarnings: 1
 --- !u!1 &2461181033519931466
 GameObject:
   m_ObjectHideFlags: 0

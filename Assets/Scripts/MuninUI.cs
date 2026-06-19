@@ -33,8 +33,14 @@ public class MuninUI : MonoBehaviour
     private Color emptyFillColor = new Color(0.62f, 0.18f, 0.14f, 1f);
     [SerializeField, Tooltip("Couleur de flash de la barre quand une action est refusee.")]
     private Color rejectedFillColor = new Color(1f, 0.66f, 0.08f, 1f);
+    [SerializeField, Tooltip("Couleur discrete lors d'une recharge liee a la memoire.")]
+    private Color rewardedColor = new Color(0.56f, 0.86f, 1f, 1f);
+    [SerializeField, Tooltip("Couleur discrete lors d'une depense de charge.")]
+    private Color spentColor = new Color(0.82f, 0.72f, 1f, 1f);
     [SerializeField, Min(0.01f), Tooltip("Duree du flash quand une action est refusee.")]
     private float rejectedFlashDuration = 0.35f;
+    [SerializeField, Min(0.01f), Tooltip("Duree du feedback doux de gain ou de depense.")]
+    private float chargeChangeFlashDuration = 0.3f;
 
     [Header("References")]
     [SerializeField] private CanvasGroup rootGroup;
@@ -48,6 +54,8 @@ public class MuninUI : MonoBehaviour
     private Transform boundCharacter;
     private float nextResolveTime;
     private float rejectedFlashRemaining;
+    private float rewardedFlashRemaining;
+    private float spentFlashRemaining;
 
 #if UNITY_EDITOR
     private void Reset()
@@ -94,6 +102,13 @@ public class MuninUI : MonoBehaviour
             rejectedFlashRemaining = Mathf.Max(0f, rejectedFlashRemaining - Time.unscaledDeltaTime);
             ApplyColors();
         }
+
+        if (rewardedFlashRemaining > 0f || spentFlashRemaining > 0f)
+        {
+            rewardedFlashRemaining = Mathf.Max(0f, rewardedFlashRemaining - Time.unscaledDeltaTime);
+            spentFlashRemaining = Mathf.Max(0f, spentFlashRemaining - Time.unscaledDeltaTime);
+            ApplyColors();
+        }
     }
 
     private void OnLocalCharacterChanged(Transform characterRoot)
@@ -128,16 +143,22 @@ public class MuninUI : MonoBehaviour
         {
             boundMunin.ChargesChanged -= OnMuninChargesChanged;
             boundMunin.ChargeUseRejected -= OnMuninChargeUseRejected;
+            boundMunin.ChargesSpent -= OnMuninChargesSpent;
+            boundMunin.ChargeRewardReceived -= OnMuninChargeRewardReceived;
         }
 
         boundCharacter = characterRoot;
         boundMunin = munin;
         rejectedFlashRemaining = 0f;
+        rewardedFlashRemaining = 0f;
+        spentFlashRemaining = 0f;
 
         if (boundMunin != null)
         {
             boundMunin.ChargesChanged += OnMuninChargesChanged;
             boundMunin.ChargeUseRejected += OnMuninChargeUseRejected;
+            boundMunin.ChargesSpent += OnMuninChargesSpent;
+            boundMunin.ChargeRewardReceived += OnMuninChargeRewardReceived;
         }
 
         Refresh();
@@ -156,6 +177,18 @@ public class MuninUI : MonoBehaviour
             rejectedChargeShake.Shake();
         }
 
+        Refresh();
+    }
+
+    private void OnMuninChargesSpent(MuninController munin, int amount)
+    {
+        spentFlashRemaining = Mathf.Max(spentFlashRemaining, chargeChangeFlashDuration);
+        Refresh();
+    }
+
+    private void OnMuninChargeRewardReceived(MuninController munin, int amount, string reason)
+    {
+        rewardedFlashRemaining = Mathf.Max(rewardedFlashRemaining, chargeChangeFlashDuration);
         Refresh();
     }
 
@@ -223,9 +256,23 @@ public class MuninUI : MonoBehaviour
         }
 
         bool rejectedFlash = rejectedFlashRemaining > 0f;
+        bool rewardedFlash = rewardedFlashRemaining > 0f;
+        bool spentFlash = spentFlashRemaining > 0f;
         bool empty = boundMunin != null && boundMunin.ChargesEnabled && boundMunin.ChargesRemaining <= 0;
-        Color resolvedTextColor = rejectedFlash ? rejectedTextColor : (empty ? emptyTextColor : textColor);
-        Color resolvedFillColor = rejectedFlash ? rejectedFillColor : (empty ? emptyFillColor : fillColor);
+        Color resolvedTextColor = rejectedFlash
+            ? rejectedTextColor
+            : rewardedFlash
+                ? rewardedColor
+                : spentFlash
+                    ? spentColor
+                    : empty ? emptyTextColor : textColor;
+        Color resolvedFillColor = rejectedFlash
+            ? rejectedFillColor
+            : rewardedFlash
+                ? rewardedColor
+                : spentFlash
+                    ? spentColor
+                    : empty ? emptyFillColor : fillColor;
 
         if (chargesText != null)
         {

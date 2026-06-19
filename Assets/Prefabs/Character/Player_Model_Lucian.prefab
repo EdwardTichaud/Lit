@@ -2337,12 +2337,12 @@ MonoBehaviour:
   requireInteractionTargetVisibleByCamera: 1
   interactionCameraVisibilityGraceSeconds: 0.15
   enableMuninInteractionReaction: 1
-  muninTorchProximityReactionIntensity: 0.45
-  muninBraseroProximityReactionIntensity: 1
+  muninFlameProximityReactionIntensity: 0.45
+  muninFlameProximityReactionIntensity: 1
   items: []
   equippedInteractionItems: []
-  startingTorchSeconds: 300
-  torchSecondsRemaining: 300
+  startingFlameSeconds: 300
+  flameSecondsRemaining: 300
   logInventoryInitialization: 1
   characterData: {fileID: 0}
   maxHp: 10
@@ -2372,15 +2372,15 @@ MonoBehaviour:
   fixedCameraMovementInputRefreshAngle: 65
   fixedCameraMovementReferenceBlendSharpness: 0
   animatePhysics: 1
-  allowTorchToggle: 1
-  torchParentName: Stuff
-  torchChildName: Torch
-  torchBoolParam: Torch
-  torchStartsActive: 1
-  initializeTorchFromHierarchy: 1
-  torchUpperBodyIdleLayerWeight: 0.85
-  torchUpperBodyMovingLayerWeight: 0.25
-  torchUpperBodyLayerWeightResponsiveness: 12
+  allowFlameToggle: 1
+  flameParentName: Stuff
+  flameChildName: Flame
+  flameBoolParam: Flame
+  flameStartsActive: 1
+  initializeFlameFromHierarchy: 1
+  flameUpperBodyIdleLayerWeight: 0.85
+  flameUpperBodyMovingLayerWeight: 0.25
+  flameUpperBodyLayerWeightResponsiveness: 12
   inputLockTime: 0.2
   knockbackForceMode: 2
   ignoreCharacterCollisions: 1

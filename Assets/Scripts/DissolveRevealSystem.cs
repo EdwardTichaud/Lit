@@ -4,14 +4,14 @@ using UnityEngine;
 
 public readonly struct DissolveRevealSourceInfo
 {
-    public readonly TorchLightReceiver Source;
+    public readonly FlameLightReceiver Source;
     public readonly SquadCharacterController Controller;
     public readonly Vector3 Position;
     public readonly Color Color;
     public readonly bool Active;
 
     public DissolveRevealSourceInfo(
-        TorchLightReceiver source,
+        FlameLightReceiver source,
         SquadCharacterController controller,
         Vector3 position,
         Color color,
@@ -27,12 +27,12 @@ public readonly struct DissolveRevealSourceInfo
 
 public static class DissolveRevealSystem
 {
-    private static readonly HashSet<TorchLightReceiver> Sources = new HashSet<TorchLightReceiver>();
-    private static readonly List<TorchLightReceiver> StaleSources = new List<TorchLightReceiver>();
+    private static readonly HashSet<FlameLightReceiver> Sources = new HashSet<FlameLightReceiver>();
+    private static readonly List<FlameLightReceiver> StaleSources = new List<FlameLightReceiver>();
 
     public static event Action SourcesChanged;
 
-    public static void RegisterSource(TorchLightReceiver source)
+    public static void RegisterSource(FlameLightReceiver source)
     {
         if (source == null)
         {
@@ -45,7 +45,7 @@ public static class DissolveRevealSystem
         }
     }
 
-    public static void UnregisterSource(TorchLightReceiver source)
+    public static void UnregisterSource(FlameLightReceiver source)
     {
         if (source == null)
         {
@@ -68,7 +68,7 @@ public static class DissolveRevealSystem
         results.Clear();
         StaleSources.Clear();
 
-        foreach (TorchLightReceiver source in Sources)
+        foreach (FlameLightReceiver source in Sources)
         {
             if (source == null)
             {

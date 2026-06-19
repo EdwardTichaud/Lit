@@ -40,7 +40,7 @@ La source de donnees est separee de l'affichage:
   deplacement, rature, disparition, deces, correction de chambre ou note.
 - L'`Item` readable contient les pages generees pour l'UI actuelle.
 - `DistrictRegistryReadable` est le pont runtime entre les donnees, l'`Item`,
-  `TemporalZone` et `AgeManager`/Braseros anciens.
+  `TemporalZone` et `AgeManager`/AncientFlame.
 
 Assets initiaux:
 
@@ -73,7 +73,7 @@ Priorite des sources temporelles:
 
 1. Le registre utilise l'age dominant de `TemporalZone` quand elle est
    presente et preferee.
-2. Sinon, il utilise l'age canonique d'`AgeManager`, donc les Braseros anciens.
+2. Sinon, il utilise l'age canonique d'`AgeManager`, donc les AncientFlame.
 3. En dernier recours, il utilise `fallbackAge` (`Age666` par defaut).
 
 `InventoryPanelController` appelle
@@ -87,3 +87,39 @@ avec l'UI TMP actuelle, qui ne rend pas le Markdown de type `~~texte~~`.
 TODO: permettre le filtrage des registres par lignée familiale.
 TODO: relier les `ResidentRecord` aux chambres interactives visitables.
 TODO: ajouter le support des objets transgénérationnels dans les registres.
+
+## Building legacy
+
+La construction et l'amélioration de bâtiments sont désactivées. Le point
+d'activation unique est
+`Assets/Resources/LegacyBuildingSystemSettings.asset`.
+
+Tant que `systemEnabled` vaut `false`, le runtime bloque les panels, les
+interactions, le placement, les effets et les RPC de construction. La
+compatibilité est volontairement séparée dans
+`LegacyBuildingPersistenceMigration` : les anciennes constructions restent dans
+les sauvegardes JSON et les snapshots Netcode, mais ne sont pas instanciées.
+
+Ne pas supprimer physiquement les classes Building avant une migration dédiée
+des sauvegardes existantes.
+
+## Recharges de Munin
+
+Les sources lumineuses ne remboursent jamais de charge à l'extinction.
+`Flame.chargeCostToLight` ne s'applique qu'à l'allumage : 1 pour une source
+légère, 2 pour une grande source et au minimum 2 pour une `AncientFlame`.
+
+Pour ajouter une recharge :
+
+1. utiliser `MemoryShard` pour +1, `PacifiedMemoryReward` pour +3 ou
+   `VigilAltar` pour une recharge majeure ;
+2. configurer `optionalKnowledgeRequirement` pour une preuve importante ;
+3. configurer `optionalInvestigationRequirement` avec les tags/catégories de
+   l'enquête ;
+4. configurer `optionalGhostRequirement` pour un apaisement ;
+5. laisser `consumeOnUse` actif pour une récompense unique, ou définir un
+   `reuseCooldown` pour un lieu rare réutilisable.
+
+Le menu `Lit/Munin/Create Memory Charge Sources` recrée les prefabs de référence,
+relie les fantômes de `Maison` et garantit un Autel de Veillée près du spawn du
+hub. L'autel est une interaction volontaire, pas une recharge automatique.

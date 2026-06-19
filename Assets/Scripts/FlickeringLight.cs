@@ -10,8 +10,8 @@ public class FlickeringLight : MonoBehaviour
     [SerializeField] private bool searchInChildren = true;
     [SerializeField] private bool forcePointLight = true;
     [SerializeField] private bool useCurrentLightAsBase = true;
-    [SerializeField] private bool syncTorchReceiverColor = true;
-    [SerializeField] private bool deferShadowingToTorchReceiver = true;
+    [SerializeField] private bool syncFlameReceiverColor = true;
+    [SerializeField] private bool deferShadowingToFlameReceiver = true;
 
     [Header("Base Flame")]
     [SerializeField, Min(0.01f)] private float baseIntensity = 1.4f;
@@ -51,7 +51,7 @@ public class FlickeringLight : MonoBehaviour
     private Vector3 initialLocalPosition;
     private bool hasCachedState;
     private HDAdditionalLightData targetHdLight;
-    private TorchLightReceiver torchLightReceiver;
+    private FlameLightReceiver flameLightReceiver;
     private float nextRuntimeUpdateTime;
 
     private float noiseSeedA;
@@ -147,16 +147,16 @@ public class FlickeringLight : MonoBehaviour
         }
 
         targetHdLight = targetLight != null ? targetLight.GetComponent<HDAdditionalLightData>() : null;
-        torchLightReceiver = GetComponent<TorchLightReceiver>();
+        flameLightReceiver = GetComponent<FlameLightReceiver>();
 
-        if (torchLightReceiver == null && targetLight != null)
+        if (flameLightReceiver == null && targetLight != null)
         {
-            torchLightReceiver = targetLight.GetComponent<TorchLightReceiver>();
+            flameLightReceiver = targetLight.GetComponent<FlameLightReceiver>();
         }
 
-        if (torchLightReceiver == null)
+        if (flameLightReceiver == null)
         {
-            torchLightReceiver = GetComponentInParent<TorchLightReceiver>(true);
+            flameLightReceiver = GetComponentInParent<FlameLightReceiver>(true);
         }
     }
 
@@ -217,7 +217,7 @@ public class FlickeringLight : MonoBehaviour
             return;
         }
 
-        if (deferShadowingToTorchReceiver && torchLightReceiver != null && torchLightReceiver.ControlsShadowing)
+        if (deferShadowingToFlameReceiver && flameLightReceiver != null && flameLightReceiver.ControlsShadowing)
         {
             return;
         }
@@ -285,9 +285,9 @@ public class FlickeringLight : MonoBehaviour
 
     private Color GetDrivenFlameColor()
     {
-        if (syncTorchReceiverColor && torchLightReceiver != null)
+        if (syncFlameReceiverColor && flameLightReceiver != null)
         {
-            return torchLightReceiver.CurrentTorchColor;
+            return flameLightReceiver.CurrentFlameColor;
         }
 
         return flameColor;
@@ -295,9 +295,9 @@ public class FlickeringLight : MonoBehaviour
 
     private Color GetRestoreColor()
     {
-        if (syncTorchReceiverColor && torchLightReceiver != null)
+        if (syncFlameReceiverColor && flameLightReceiver != null)
         {
-            return torchLightReceiver.CurrentTorchColor;
+            return flameLightReceiver.CurrentFlameColor;
         }
 
         return initialColor;
