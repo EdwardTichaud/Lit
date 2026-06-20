@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
   m_Name: 0_Intro
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
-  sequenceId: intro_template
-  displayName: Intro Template
-  description: Dupliquer cet asset pour creer une nouvelle sequence.
-  playOnce: 0
+  sequenceId: intro
+  displayName: intro
+  description: "premi\xE8re s\xE9quence du jeu"
+  playOnce: 1
   waitForLocalPlayer: 1
   localPlayerWaitTimeout: 0
   lockPlayerControl: 1
@@ -46,6 +46,8 @@ MonoBehaviour:
     fadeDuration: 0.5
     duration: 1
     animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
     directorId: 
     timeline: {fileID: 0}
     waitForTimelineCompletion: 1
@@ -68,6 +70,8 @@ MonoBehaviour:
     fadeDuration: 0.5
     duration: 1
     animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 1
     directorId: 
     timeline: {fileID: 0}
     waitForTimelineCompletion: 1

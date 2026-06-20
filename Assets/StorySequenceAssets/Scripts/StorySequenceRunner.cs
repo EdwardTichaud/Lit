@@ -222,6 +222,10 @@ namespace Lit.Story
                     yield return ExecuteAnimatorTrigger(step, useUnscaledTime);
                     break;
 
+                case StorySequenceStepType.Sitting:
+                    yield return ExecuteSitting(step, useUnscaledTime);
+                    break;
+
                 case StorySequenceStepType.Timeline:
                     yield return ExecuteTimeline(step);
                     break;
@@ -269,6 +273,7 @@ namespace Lit.Story
                 speakerName,
                 audioAnchor,
                 step.waitForInteractAfterLine,
+                step.duration,
                 useUnscaledTime,
                 ConsumeAdvanceRequest);
         }
@@ -322,6 +327,106 @@ namespace Lit.Story
             }
 
             yield return WaitSkippable(step.duration, useUnscaledTime);
+        }
+
+        private IEnumerator ExecuteSitting(StorySequenceStep step, bool useUnscaledTime)
+        {
+            bool restorePlayerExternalLock = playerLockHeld && lockedPlayerController != null;
+            if (restorePlayerExternalLock)
+            {
+                lockedPlayerController.EndUccExternalLock();
+                playerLockHeld = false;
+            }
+
+            float retryDuration = Mathf.Max(0f, step.duration);
+            float elapsed = 0f;
+            int targetCount;
+            int affectedCount;
+            bool completed = false;
+            do
+            {
+                affectedCount = 0;
+                targetCount = 0;
+                if (step.applyToWholeSquad)
+                {
+                    SquadManager manager = SquadManager.Instance;
+                    if (manager != null && manager.squadCharacters != null)
+                    {
+                        for (int i = 0; i < manager.squadCharacters.Count; i++)
+                        {
+                            GameObject character = manager.squadCharacters[i];
+                            SquadCharacterController controller = character != null
+                                ? character.GetComponent<SquadCharacterController>()
+                                : null;
+                            if (controller == null)
+                            {
+                                continue;
+                            }
+
+                            targetCount++;
+                            bool alreadyApplied = step.sitting
+                                ? controller.IsSittingRequested
+                                : !controller.IsSittingRequested;
+                            if (alreadyApplied || controller.TrySetSitting(step.sitting))
+                            {
+                                affectedCount++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    StorySequenceActor actor = bindings.ResolveActor(step.actorId);
+                    SquadCharacterController controller = actor != null
+                        ? actor.GetComponent<SquadCharacterController>()
+                        : null;
+                    if (controller != null)
+                    {
+                        targetCount = 1;
+                        bool alreadyApplied = step.sitting
+                            ? controller.IsSittingRequested
+                            : !controller.IsSittingRequested;
+                        if (alreadyApplied || controller.TrySetSitting(step.sitting))
+                        {
+                            affectedCount = 1;
+                        }
+                    }
+                }
+
+                if (targetCount > 0 && affectedCount >= targetCount)
+                {
+                    completed = true;
+                    break;
+                }
+
+                if (ConsumeAdvanceRequest())
+                {
+                    break;
+                }
+
+                if (elapsed >= retryDuration)
+                {
+                    break;
+                }
+
+                elapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                yield return null;
+            }
+            while (true);
+
+            if (restorePlayerExternalLock && lockedPlayerController != null)
+            {
+                playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(
+                    disableGameplayInput: true,
+                    stopActiveAbilities: false);
+            }
+
+            if (!completed && (affectedCount < targetCount || targetCount == 0))
+            {
+                Debug.LogWarning(
+                    $"StorySequenceRunner: etat assis={step.sitting} applique a {affectedCount}/{targetCount} personnage(s).",
+                    this);
+            }
         }
 
         private IEnumerator ExecuteTimeline(StorySequenceStep step)

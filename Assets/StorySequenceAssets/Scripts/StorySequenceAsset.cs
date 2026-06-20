@@ -12,6 +12,7 @@ namespace Lit.Story
         CameraShot,
         Wait,
         AnimatorTrigger,
+        Sitting,
         Timeline,
         SceneEvent
     }
@@ -50,6 +51,12 @@ namespace Lit.Story
         [Header("Wait / Animation")]
         [Min(0f)] public float duration = 1f;
         public string animatorTrigger;
+
+        [Header("Sitting")]
+        [Tooltip("Applique l'etat assis a tous les personnages actuellement presents dans la squad.")]
+        public bool applyToWholeSquad;
+        [Tooltip("Actif = assis, inactif = debout.")]
+        public bool sitting = true;
 
         [Header("Timeline")]
         public string directorId;

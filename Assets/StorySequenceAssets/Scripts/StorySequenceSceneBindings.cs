@@ -73,6 +73,12 @@ namespace Lit.Story
                 return ResolveLocalPlayerActor(id);
             }
 
+            StorySequenceActor squadActor = ResolveSquadActor(id);
+            if (squadActor != null)
+            {
+                return squadActor;
+            }
+
             if (!searchSceneWhenBindingMissing)
             {
                 return null;
@@ -191,6 +197,69 @@ namespace Lit.Story
             return runtimeLocalPlayerActor;
         }
 
+        private static StorySequenceActor ResolveSquadActor(string requestedId)
+        {
+            SquadManager manager = SquadManager.Instance;
+            if (manager == null || manager.squadCharacters == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < manager.squadCharacters.Count; i++)
+            {
+                GameObject characterObject = manager.squadCharacters[i];
+                if (characterObject == null)
+                {
+                    continue;
+                }
+
+                SquadCharacterController controller =
+                    characterObject.GetComponent<SquadCharacterController>();
+                CharacterData data = controller != null ? controller.CharacterData : null;
+                if (!MatchesCharacterData(data, characterObject.name, requestedId))
+                {
+                    continue;
+                }
+
+                StorySequenceActor actor = characterObject.GetComponent<StorySequenceActor>();
+                if (actor == null)
+                {
+                    actor = characterObject.AddComponent<StorySequenceActor>();
+                }
+
+                string displayName = data != null && !string.IsNullOrWhiteSpace(data.characterName)
+                    ? data.characterName
+                    : characterObject.name;
+                actor.ConfigureRuntime(requestedId, displayName);
+                return actor;
+            }
+
+            return null;
+        }
+
+        private static bool MatchesCharacterData(
+            CharacterData data,
+            string objectName,
+            string requestedId)
+        {
+            if (data != null)
+            {
+                if (!string.IsNullOrWhiteSpace(data.characterId) &&
+                    string.Equals(data.characterId, requestedId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrWhiteSpace(data.characterName) &&
+                    string.Equals(data.characterName, requestedId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return string.Equals(objectName, requestedId, StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string ResolveLocalPlayerName(Transform root)
         {
             SquadCharacterController controller = root != null
@@ -205,7 +274,6 @@ namespace Lit.Story
         private static bool IsLocalPlayerAlias(string id)
         {
             return string.Equals(id, "player", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(id, "lucian", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(id, "localplayer", StringComparison.OrdinalIgnoreCase);
         }
     }

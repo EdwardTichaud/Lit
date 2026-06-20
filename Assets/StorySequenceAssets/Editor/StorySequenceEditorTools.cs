@@ -227,6 +227,12 @@ namespace Lit.Story.Editor
                 {
                     errors.Add($"{prefix}: acteur ou trigger Animator manquant.");
                 }
+                else if (step.type == StorySequenceStepType.Sitting &&
+                         !step.applyToWholeSquad &&
+                         string.IsNullOrWhiteSpace(step.actorId))
+                {
+                    errors.Add($"{prefix}: actorId manquant pour l'etat assis individuel.");
+                }
                 else if (step.type == StorySequenceStepType.Timeline && step.timeline == null)
                 {
                     errors.Add($"{prefix}: Timeline manquante.");

@@ -38,6 +38,7 @@ namespace Lit.Story
             string speakerName,
             Transform audioAnchor,
             bool waitForInteractAfterLine,
+            float minimumDuration,
             bool useUnscaledTime,
             Func<bool> consumeSkipRequest)
         {
@@ -62,7 +63,7 @@ namespace Lit.Story
             PlayAudio(line.voiceLineAudioClip, audioAnchor);
             yield return FadeCanvasTo(1f, uiFadeDuration, useUnscaledTime);
 
-            float totalDuration = ResolveDuration(line, cues);
+            float totalDuration = ResolveDuration(line, cues, minimumDuration);
             float elapsed = 0f;
             int nextCue = 0;
             while (nextCue < cues.Count && cues[nextCue].time <= 0f)
@@ -125,9 +126,10 @@ namespace Lit.Story
 
         private float ResolveDuration(
             VoiceLineData line,
-            List<VoiceLineData.VoiceLineTextCue> cues)
+            List<VoiceLineData.VoiceLineTextCue> cues,
+            float minimumDuration)
         {
-            float duration = Mathf.Max(0.1f, fallbackDuration);
+            float duration = Mathf.Max(0.1f, fallbackDuration, minimumDuration);
             AudioClipSO clip = line.voiceLineAudioClip;
             if (clip != null && clip.audioClip != null && !clip.loop)
             {
