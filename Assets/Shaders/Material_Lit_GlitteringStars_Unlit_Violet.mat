@@ -98,7 +98,7 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
-    - Color_8B11495: {r: 158.8802, g: 0, b: 766.9961, a: 0}
+    - Color_8B11495: {r: 0.13654453, g: 0, b: 0.65199995, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
