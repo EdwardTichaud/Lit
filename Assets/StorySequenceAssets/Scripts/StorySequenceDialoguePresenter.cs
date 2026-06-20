@@ -15,6 +15,10 @@ namespace Lit.Story
         [SerializeField] private TMP_Text speakerText;
         [SerializeField] private TMP_Text dialogueText;
         [SerializeField] private TMP_Text continueHintText;
+        [SerializeField, Tooltip("DialoguePanel principal de la scene. Auto-resolu si vide.")]
+        private DialoguePanelUI dialoguePanel;
+        [SerializeField, Tooltip("Ajoute le nom du locuteur avant le texte dans DialoguePanel.")]
+        private bool showSpeakerName = true;
 
         [Header("Runtime UI")]
         [SerializeField] private bool createRuntimeUiWhenMissing = true;
@@ -23,8 +27,6 @@ namespace Lit.Story
         [SerializeField] private Color speakerColor = new Color(0.95f, 0.78f, 0.35f, 1f);
 
         [Header("Playback")]
-        [SerializeField, Min(0.1f)] private float fallbackDuration = 2f;
-        [SerializeField, Min(0f)] private float extraDuration = 0.1f;
         [SerializeField, Min(0f)] private float uiFadeDuration = 0.15f;
         [SerializeField] private bool duckMusic = true;
         [SerializeField, Range(0f, 1f)] private float musicDuckMultiplier = 0.45f;
@@ -32,13 +34,15 @@ namespace Lit.Story
         private AudioSource activeSource;
         private bool activeClipLoops;
         private bool musicDucked;
+        private bool usingDialoguePanel;
+        private string activeSpeakerName;
+        private string activeDialogueText;
 
         public IEnumerator Present(
             VoiceLineData line,
             string speakerName,
             Transform audioAnchor,
-            bool waitForInteractAfterLine,
-            float minimumDuration,
+            float maximumDisplayDuration,
             bool useUnscaledTime,
             Func<bool> consumeSkipRequest)
         {
@@ -47,8 +51,9 @@ namespace Lit.Story
                 yield break;
             }
 
-            EnsureUi();
             StopAudio();
+            ResolveDialoguePanel();
+            activeSpeakerName = speakerName;
             SetSpeaker(speakerName);
             SetDialogue(line.voiceLineText);
             SetContinueHint(false);
@@ -61,10 +66,20 @@ namespace Lit.Story
 
             BeginMusicDucking();
             PlayAudio(line.voiceLineAudioClip, audioAnchor);
-            yield return FadeCanvasTo(1f, uiFadeDuration, useUnscaledTime);
+            usingDialoguePanel = dialoguePanel != null &&
+                                 dialoguePanel.ShowControlledMessage(
+                                     BuildDialoguePanelText(activeSpeakerName, GetCurrentDialogue()));
+            if (!usingDialoguePanel)
+            {
+                EnsureUi();
+                SetSpeaker(speakerName);
+                SetDialogue(line.voiceLineText);
+                yield return FadeCanvasTo(1f, uiFadeDuration, useUnscaledTime);
+            }
 
-            float totalDuration = ResolveDuration(line, cues, minimumDuration);
-            float elapsed = 0f;
+            float maximumDuration = Mathf.Max(0f, maximumDisplayDuration);
+            float displayElapsed = 0f;
+            float playbackTime = 0f;
             int nextCue = 0;
             while (nextCue < cues.Count && cues[nextCue].time <= 0f)
             {
@@ -72,17 +87,23 @@ namespace Lit.Story
                 nextCue++;
             }
 
-            bool skipped = false;
-            while (elapsed < totalDuration)
+            while (true)
             {
                 if (consumeSkipRequest != null && consumeSkipRequest())
                 {
-                    skipped = true;
                     break;
                 }
 
-                elapsed = ResolvePlaybackTime(elapsed, useUnscaledTime);
-                while (nextCue < cues.Count && elapsed >= Mathf.Max(0f, cues[nextCue].time))
+                if (maximumDuration > 0f && displayElapsed >= maximumDuration)
+                {
+                    break;
+                }
+
+                float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                displayElapsed += deltaTime;
+                playbackTime = ResolvePlaybackTime(playbackTime, useUnscaledTime);
+                while (nextCue < cues.Count &&
+                       playbackTime >= Mathf.Max(0f, cues[nextCue].time))
                 {
                     SetDialogue(cues[nextCue].text);
                     nextCue++;
@@ -91,18 +112,22 @@ namespace Lit.Story
                 yield return null;
             }
 
-            if (!skipped && waitForInteractAfterLine)
+            StopAudio();
+            EndMusicDucking();
+            if (usingDialoguePanel && dialoguePanel != null)
             {
-                SetContinueHint(true);
-                while (consumeSkipRequest == null || !consumeSkipRequest())
+                dialoguePanel.HideControlled();
+                while (dialoguePanel != null && dialoguePanel.IsExternallyControlled)
                 {
                     yield return null;
                 }
             }
+            else
+            {
+                yield return FadeCanvasTo(0f, uiFadeDuration, useUnscaledTime);
+            }
 
-            StopAudio();
-            EndMusicDucking();
-            yield return FadeCanvasTo(0f, uiFadeDuration, useUnscaledTime);
+            usingDialoguePanel = false;
             SetContinueHint(false);
         }
 
@@ -110,8 +135,13 @@ namespace Lit.Story
         {
             StopAudio();
             EndMusicDucking();
-            EnsureUi();
-            SetCanvasAlpha(0f);
+            ResolveDialoguePanel();
+            dialoguePanel?.HideControlledImmediate();
+            usingDialoguePanel = false;
+            if (canvasGroup != null)
+            {
+                SetCanvasAlpha(0f);
+            }
         }
 
         private float ResolvePlaybackTime(float elapsed, bool useUnscaledTime)
@@ -122,26 +152,6 @@ namespace Lit.Story
             }
 
             return elapsed + (useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
-        }
-
-        private float ResolveDuration(
-            VoiceLineData line,
-            List<VoiceLineData.VoiceLineTextCue> cues,
-            float minimumDuration)
-        {
-            float duration = Mathf.Max(0.1f, fallbackDuration, minimumDuration);
-            AudioClipSO clip = line.voiceLineAudioClip;
-            if (clip != null && clip.audioClip != null && !clip.loop)
-            {
-                duration = Mathf.Max(duration, clip.audioClip.length + extraDuration);
-            }
-
-            if (cues.Count > 0)
-            {
-                duration = Mathf.Max(duration, cues[cues.Count - 1].time + fallbackDuration);
-            }
-
-            return duration;
         }
 
         private static List<VoiceLineData.VoiceLineTextCue> BuildSortedCues(VoiceLineData line)
@@ -353,17 +363,49 @@ namespace Lit.Story
 
         private void SetSpeaker(string value)
         {
+            activeSpeakerName = value ?? string.Empty;
             if (speakerText != null)
             {
-                speakerText.text = value ?? string.Empty;
+                speakerText.text = activeSpeakerName;
             }
         }
 
         private void SetDialogue(string value)
         {
+            activeDialogueText = value ?? string.Empty;
             if (dialogueText != null)
             {
-                dialogueText.text = value ?? string.Empty;
+                dialogueText.text = activeDialogueText;
+            }
+
+            if (usingDialoguePanel && dialoguePanel != null)
+            {
+                dialoguePanel.SetControlledMessage(
+                    BuildDialoguePanelText(activeSpeakerName, activeDialogueText));
+            }
+        }
+
+        private string GetCurrentDialogue()
+        {
+            return activeDialogueText ?? string.Empty;
+        }
+
+        private string BuildDialoguePanelText(string speakerName, string dialogue)
+        {
+            string safeDialogue = dialogue ?? string.Empty;
+            if (!showSpeakerName || string.IsNullOrWhiteSpace(speakerName))
+            {
+                return safeDialogue;
+            }
+
+            return $"<b>{speakerName.Trim()}</b>\n{safeDialogue}";
+        }
+
+        private void ResolveDialoguePanel()
+        {
+            if (dialoguePanel == null)
+            {
+                dialoguePanel = DialoguePanelUI.GetOrCreate();
             }
         }
 

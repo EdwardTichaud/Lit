@@ -10,6 +10,8 @@ namespace Lit.Story
     [DisallowMultipleComponent]
     public sealed class StorySequenceRunner : MonoBehaviour
     {
+        private static int activeSequenceCount;
+
         [Header("Sequence")]
         [SerializeField] private StorySequenceAsset sequence;
         [SerializeField] private bool playOnStart = true;
@@ -33,9 +35,17 @@ namespace Lit.Story
         private bool currentStepSkippable;
         private int currentStepStartedFrame;
         private bool inputSubscribed;
+        private bool registeredAsActive;
 
         public bool IsPlaying => playbackRoutine != null;
+        public static bool IsAnySequencePlaying => activeSequenceCount > 0;
         public StorySequenceAsset Sequence => sequence;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetActiveSequenceCount()
+        {
+            activeSequenceCount = 0;
+        }
 
         private void Awake()
         {
@@ -90,6 +100,7 @@ namespace Lit.Story
                 return false;
             }
 
+            RegisterActiveSequence();
             playbackRoutine = StartCoroutine(PlayRoutine(sequence));
             return true;
         }
@@ -104,6 +115,7 @@ namespace Lit.Story
 
             dialoguePresenter?.HideImmediate();
             RestoreGameplay();
+            UnregisterActiveSequence();
             fadeController?.SetImmediate(0f);
             onSequenceAborted?.Invoke();
         }
@@ -272,8 +284,7 @@ namespace Lit.Story
                 step.voiceLine,
                 speakerName,
                 audioAnchor,
-                step.waitForInteractAfterLine,
-                step.duration,
+                step.dialogueMaxDisplayDuration,
                 useUnscaledTime,
                 ConsumeAdvanceRequest);
         }
@@ -331,7 +342,11 @@ namespace Lit.Story
 
         private IEnumerator ExecuteSitting(StorySequenceStep step, bool useUnscaledTime)
         {
-            bool restorePlayerExternalLock = playerLockHeld && lockedPlayerController != null;
+            bool useImmediateIdle = step.sitting && step.startDirectlyInSittingIdle;
+            bool restorePlayerExternalLock =
+                !useImmediateIdle &&
+                playerLockHeld &&
+                lockedPlayerController != null;
             if (restorePlayerExternalLock)
             {
                 lockedPlayerController.EndUccExternalLock();
@@ -364,10 +379,10 @@ namespace Lit.Story
                             }
 
                             targetCount++;
-                            bool alreadyApplied = step.sitting
-                                ? controller.IsSittingRequested
-                                : !controller.IsSittingRequested;
-                            if (alreadyApplied || controller.TrySetSitting(step.sitting))
+                            bool applied = useImmediateIdle
+                                ? controller.TrySetSittingImmediate()
+                                : ApplySittingState(controller, step.sitting);
+                            if (applied)
                             {
                                 affectedCount++;
                             }
@@ -383,10 +398,10 @@ namespace Lit.Story
                     if (controller != null)
                     {
                         targetCount = 1;
-                        bool alreadyApplied = step.sitting
-                            ? controller.IsSittingRequested
-                            : !controller.IsSittingRequested;
-                        if (alreadyApplied || controller.TrySetSitting(step.sitting))
+                        bool applied = useImmediateIdle
+                            ? controller.TrySetSittingImmediate()
+                            : ApplySittingState(controller, step.sitting);
+                        if (applied)
                         {
                             affectedCount = 1;
                         }
@@ -427,6 +442,16 @@ namespace Lit.Story
                     $"StorySequenceRunner: etat assis={step.sitting} applique a {affectedCount}/{targetCount} personnage(s).",
                     this);
             }
+        }
+
+        private static bool ApplySittingState(
+            SquadCharacterController controller,
+            bool sitting)
+        {
+            bool alreadyApplied = sitting
+                ? controller.IsSittingRequested
+                : !controller.IsSittingRequested;
+            return alreadyApplied || controller.TrySetSitting(sitting);
         }
 
         private IEnumerator ExecuteTimeline(StorySequenceStep step)
@@ -555,6 +580,7 @@ namespace Lit.Story
         {
             RestoreGameplay();
             playbackRoutine = null;
+            UnregisterActiveSequence();
             currentStepSkippable = false;
             advanceRequested = false;
             if (completed)
@@ -566,6 +592,28 @@ namespace Lit.Story
                 fadeController?.SetImmediate(0f);
                 onSequenceAborted?.Invoke();
             }
+        }
+
+        private void RegisterActiveSequence()
+        {
+            if (registeredAsActive)
+            {
+                return;
+            }
+
+            registeredAsActive = true;
+            activeSequenceCount++;
+        }
+
+        private void UnregisterActiveSequence()
+        {
+            if (!registeredAsActive)
+            {
+                return;
+            }
+
+            registeredAsActive = false;
+            activeSequenceCount = Mathf.Max(0, activeSequenceCount - 1);
         }
 
         private bool ConsumeAdvanceRequest()
@@ -671,6 +719,7 @@ namespace Lit.Story
             }
 
             RestoreGameplay();
+            UnregisterActiveSequence();
         }
     }
 }

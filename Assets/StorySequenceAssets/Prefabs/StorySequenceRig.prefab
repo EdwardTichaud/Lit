@@ -89,12 +89,12 @@ MonoBehaviour:
   speakerText: {fileID: 0}
   dialogueText: {fileID: 0}
   continueHintText: {fileID: 0}
+  dialoguePanel: {fileID: 0}
+  showSpeakerName: 1
   createRuntimeUiWhenMissing: 1
   sortingOrder: 32737
   panelColor: {r: 0.025, g: 0.025, b: 0.035, a: 0.9}
   speakerColor: {r: 0.95, g: 0.78, b: 0.35, a: 1}
-  fallbackDuration: 2
-  extraDuration: 0.1
   uiFadeDuration: 0.15
   duckMusic: 1
   musicDuckMultiplier: 0.45

@@ -36,6 +36,7 @@ MonoBehaviour:
     speakerNameOverride:
     voiceLine: {fileID: 0}
     waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
     dialogueCameraProfile: {fileID: 0}
     cameraPointId:
@@ -58,6 +59,7 @@ MonoBehaviour:
     speakerNameOverride:
     voiceLine: {fileID: 0}
     waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
     dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
     cameraPointId:
@@ -66,7 +68,7 @@ MonoBehaviour:
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0.5
-    duration: 1
+    duration: 0
     animatorTrigger:
     directorId:
     timeline: {fileID: 0}

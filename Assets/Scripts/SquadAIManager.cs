@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Lit.Story;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -90,6 +91,14 @@ public class SquadAIManager : MonoBehaviour
     private float followStopDistance = 0.5f;
     [SerializeField, Tooltip("Distance pour commencer a rattraper.")]
     private float followCatchUpDistance = 2f;
+    [SerializeField, Tooltip("Laisse les compagnons sur place tant que le leader reste dans leur zone de confort.")]
+    private bool holdPositionInsideComfortZone = true;
+    [SerializeField, Tooltip("Distance au leader a partir de laquelle un compagnon quitte sa position et reprend le follow.")]
+    private float followResumeDistance = 7f;
+    [SerializeField, Tooltip("Distance au leader sous laquelle un compagnon en follow peut de nouveau rester sur place. Doit etre inferieure a Follow Resume Distance.")]
+    private float followRestDistance = 4f;
+    [SerializeField, Tooltip("Suspend completement le follow pendant une StorySequence pour conserver la mise en scene.")]
+    private bool suspendFollowDuringStorySequences = true;
     [SerializeField, Tooltip("Input max injecte au controller.")]
     private float followMaxInput = 1f;
     [SerializeField, Tooltip("Offsets de formation en espace leader.")]
@@ -131,6 +140,7 @@ public class SquadAIManager : MonoBehaviour
     {
         public Vector3 lastPosition;
         public float lastProgressTime;
+        public bool followingLeader;
         public bool suspendedByLeaderDistance;
         public LadderController activeLadder;
         public float nextLadderUseTime;
@@ -138,6 +148,8 @@ public class SquadAIManager : MonoBehaviour
 
     private readonly Dictionary<GameObject, FollowerState> followerStates = new Dictionary<GameObject, FollowerState>();
     private readonly List<int> leaderGroupIndices = new List<int>();
+    private GameObject currentFollowLeader;
+    private bool followersStoppedForStorySequence;
 
     private void Awake()
     {
@@ -172,6 +184,8 @@ public class SquadAIManager : MonoBehaviour
         singleFileSpacing = Mathf.Max(0.01f, singleFileSpacing);
         followStopDistance = Mathf.Max(0f, followStopDistance);
         followCatchUpDistance = Mathf.Max(0f, followCatchUpDistance);
+        followRestDistance = Mathf.Max(0f, followRestDistance);
+        followResumeDistance = Mathf.Max(followRestDistance, followResumeDistance);
         followMaxInput = Mathf.Clamp01(followMaxInput);
         maxActiveFollowDistance = Mathf.Max(0f, maxActiveFollowDistance);
         separationRadius = Mathf.Max(0f, separationRadius);
@@ -213,6 +227,19 @@ public class SquadAIManager : MonoBehaviour
             BuildNavMesh();
             navMeshDirty = false;
         }
+
+        if (suspendFollowDuringStorySequences && StorySequenceRunner.IsAnySequencePlaying)
+        {
+            if (!followersStoppedForStorySequence)
+            {
+                StopFollowers();
+                followersStoppedForStorySequence = true;
+            }
+
+            return;
+        }
+
+        followersStoppedForStorySequence = false;
 
         if (squadManager.IsInputLocked())
         {
@@ -670,6 +697,12 @@ public class SquadAIManager : MonoBehaviour
             return;
         }
 
+        if (currentFollowLeader != leader)
+        {
+            currentFollowLeader = leader;
+            ResetFollowLeashStates();
+        }
+
         int followerCount = CountActiveFollowers(leader, leaderIndex, groupIndices);
 
         Vector3 leaderForward = GetLeaderForward(leader);
@@ -698,6 +731,20 @@ public class SquadAIManager : MonoBehaviour
             SquadFollowerAgent navFollower = useNavMeshDirection ? GetFollowerAgent(follower) : null;
             if (TryUpdateFollowerLadderTraversal(follower, controller, navFollower, state))
             {
+                order++;
+                continue;
+            }
+
+            if (!ShouldFollowerMoveTowardLeader(leader, follower, state))
+            {
+                NetcodePlayerUtils.LogControlDecision(
+                    "follower_ai",
+                    follower,
+                    followerAiEnabled: true,
+                    waitingPointEnabled: false,
+                    movementMode: "follower_hold_position",
+                    reason: "leader remains inside follower comfort zone");
+                controller.Stop();
                 order++;
                 continue;
             }
@@ -766,6 +813,81 @@ public class SquadAIManager : MonoBehaviour
             controller.MoveWorld(new Vector2(direction.x, direction.z) * inputScale);
             UpdateFollowerProgress(follower);
             order++;
+        }
+    }
+
+    private bool ShouldFollowerMoveTowardLeader(
+        GameObject leader,
+        GameObject follower,
+        FollowerState state)
+    {
+        if (leader == null || follower == null || state == null)
+        {
+            return false;
+        }
+
+        if (!holdPositionInsideComfortZone)
+        {
+            BeginFollowing(follower, state);
+            return true;
+        }
+
+        Vector3 toLeader = leader.transform.position - follower.transform.position;
+        toLeader.y = 0f;
+        float leaderDistance = toLeader.magnitude;
+
+        if (state.followingLeader)
+        {
+            if (leaderDistance <= followRestDistance)
+            {
+                state.followingLeader = false;
+                state.lastPosition = follower.transform.position;
+                state.lastProgressTime = Time.time;
+                return false;
+            }
+
+            return true;
+        }
+
+        if (leaderDistance < followResumeDistance)
+        {
+            return false;
+        }
+
+        BeginFollowing(follower, state);
+        return true;
+    }
+
+    private static void BeginFollowing(GameObject follower, FollowerState state)
+    {
+        if (state.followingLeader)
+        {
+            return;
+        }
+
+        state.followingLeader = true;
+        state.lastPosition = follower.transform.position;
+        state.lastProgressTime = Time.time;
+    }
+
+    private void ResetFollowLeashStates()
+    {
+        foreach (KeyValuePair<GameObject, FollowerState> pair in followerStates)
+        {
+            GameObject follower = pair.Key;
+            FollowerState state = pair.Value;
+            if (state == null)
+            {
+                continue;
+            }
+
+            state.followingLeader = false;
+            if (follower != null)
+            {
+                state.lastPosition = follower.transform.position;
+            }
+
+            state.lastProgressTime = Time.time;
         }
     }
 

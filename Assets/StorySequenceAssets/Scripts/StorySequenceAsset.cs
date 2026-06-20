@@ -31,8 +31,10 @@ namespace Lit.Story
         public string listenerId;
         public string speakerNameOverride;
         public VoiceLineData voiceLine;
-        [Tooltip("Attend Interact apres la fin de l'audio au lieu d'avancer automatiquement.")]
+        [HideInInspector]
         public bool waitForInteractAfterLine;
+        [Min(0f), Tooltip("Duree maximale d'affichage. 0 = attend indefiniment jusqu'a Interact.")]
+        public float dialogueMaxDisplayDuration;
         [Tooltip("Change automatiquement le plan camera vers le locuteur.")]
         public bool focusCameraOnSpeaker = true;
         public StorySequenceCameraProfile dialogueCameraProfile;
@@ -57,6 +59,8 @@ namespace Lit.Story
         public bool applyToWholeSquad;
         [Tooltip("Actif = assis, inactif = debout.")]
         public bool sitting = true;
+        [Tooltip("Commence directement dans Sitting_Idle sans jouer l'animation Sit_Down.")]
+        public bool startDirectlyInSittingIdle;
 
         [Header("Timeline")]
         public string directorId;

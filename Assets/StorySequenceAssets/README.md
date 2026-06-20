@@ -29,7 +29,15 @@ Ce dossier centralise le système de séquences narratives de Lit.
 - Un plan exceptionnel utilise un `StorySequenceCameraPoint` dans la scène.
 - Timeline sert aux déplacements et animations coordonnés, pas au séquençage ordinaire des dialogues.
 - `Interact` termine uniquement l'étape courante si elle est marquée `skippable`.
+- Une étape `Dialogue` affiche le texte de son `VoiceLineData` dans le `DialoguePanel`.
+- `Dialogue Max Display Duration = 0` attend indéfiniment `Interact`. Une valeur positive impose un délai maximal.
 
-Le stockage `playOnce` utilise `PlayerPrefs` par défaut. Le système de sauvegarde peut remplacer ce
-comportement via `StorySequenceCompletionStore.IsCompletedOverride` et
-`StorySequenceCompletionStore.MarkCompletedOverride`.
+`playOnce` est enregistré dans le `meta.json` du slot actif via `SaveSessionManager`.
+
+- Une nouvelle partie démarre avec une progression vide.
+- Un nouveau slot créé depuis la partie courante hérite des séquences terminées.
+- Charger un ancien slot restaure l'état correspondant à ce slot.
+- Sans sauvegarde active (test direct d'une scène), l'état reste transitoire et est remis à zéro
+  au prochain Play Mode.
+
+Les anciennes clés `PlayerPrefs` ne sont plus utilisées.

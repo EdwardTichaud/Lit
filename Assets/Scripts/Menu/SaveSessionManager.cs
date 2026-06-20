@@ -7,10 +7,11 @@ using UnityEngine.SceneManagement;
 // Gestionnaire de sessions/sauvegardes (menu principal).
 public class SaveSessionManager : MonoBehaviour
 {
+    public const string DefaultSavesRootFolder = "Saves";
     public static SaveSessionManager Instance { get; private set; }
 
     [SerializeField] private string menuSceneName = "MainMenu";
-    [SerializeField] private string savesRootFolder = "Saves";
+    [SerializeField] private string savesRootFolder = DefaultSavesRootFolder;
     [SerializeField] private string sessionMetaFileName = "session.json";
     [SerializeField] private string saveMetaFileName = "meta.json";
 
@@ -234,7 +235,8 @@ public class SaveSessionManager : MonoBehaviour
             saveName = name,
             savedAtUtcTicks = DateTime.UtcNow.Ticks,
             playTimeSeconds = CurrentPlaytimeSeconds,
-            sceneName = SceneManager.GetActiveScene().name
+            sceneName = SceneManager.GetActiveScene().name,
+            completedStorySequenceIds = CopyActiveStorySequenceCompletions(sessionId)
         };
         WriteJson(GetSaveMetaPath(sessionId, saveId), meta);
 
@@ -310,7 +312,114 @@ public class SaveSessionManager : MonoBehaviour
         meta.savedAtUtcTicks = DateTime.UtcNow.Ticks;
         meta.playTimeSeconds = CurrentPlaytimeSeconds;
         meta.sceneName = sceneName;
+        EnsureStorySequenceList(meta);
         WriteJson(metaPath, meta);
+    }
+
+    public bool IsStorySequenceCompleted(string sequenceId)
+    {
+        if (!HasActiveSave || string.IsNullOrWhiteSpace(sequenceId))
+        {
+            return false;
+        }
+
+        SaveMeta meta = ReadJson<SaveMeta>(
+            GetSaveMetaPath(CurrentSessionId, CurrentSaveId));
+        if (meta == null || meta.completedStorySequenceIds == null)
+        {
+            return false;
+        }
+
+        string id = sequenceId.Trim();
+        for (int i = 0; i < meta.completedStorySequenceIds.Count; i++)
+        {
+            if (string.Equals(
+                    meta.completedStorySequenceIds[i],
+                    id,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool MarkStorySequenceCompleted(string sequenceId)
+    {
+        if (!HasActiveSave || string.IsNullOrWhiteSpace(sequenceId))
+        {
+            return false;
+        }
+
+        string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
+        SaveMeta meta = ReadJson<SaveMeta>(metaPath) ?? CreateActiveSaveMeta();
+        EnsureStorySequenceList(meta);
+
+        string id = sequenceId.Trim();
+        for (int i = 0; i < meta.completedStorySequenceIds.Count; i++)
+        {
+            if (string.Equals(
+                    meta.completedStorySequenceIds[i],
+                    id,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        meta.completedStorySequenceIds.Add(id);
+        WriteJson(metaPath, meta);
+        return true;
+    }
+
+    public bool ResetStorySequenceCompletion(string sequenceId)
+    {
+        if (!HasActiveSave || string.IsNullOrWhiteSpace(sequenceId))
+        {
+            return false;
+        }
+
+        string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
+        SaveMeta meta = ReadJson<SaveMeta>(metaPath);
+        if (meta == null || meta.completedStorySequenceIds == null)
+        {
+            return true;
+        }
+
+        string id = sequenceId.Trim();
+        int removed = meta.completedStorySequenceIds.RemoveAll(
+            candidate => string.Equals(candidate, id, StringComparison.OrdinalIgnoreCase));
+        if (removed > 0)
+        {
+            WriteJson(metaPath, meta);
+        }
+
+        return true;
+    }
+
+    public int ResetAllStorySequenceCompletions()
+    {
+        if (!HasActiveSave)
+        {
+            return 0;
+        }
+
+        string metaPath = GetSaveMetaPath(CurrentSessionId, CurrentSaveId);
+        SaveMeta meta = ReadJson<SaveMeta>(metaPath);
+        if (meta == null || meta.completedStorySequenceIds == null)
+        {
+            return 0;
+        }
+
+        int removed = meta.completedStorySequenceIds.Count;
+        meta.completedStorySequenceIds.Clear();
+        if (removed > 0)
+        {
+            WriteJson(metaPath, meta);
+        }
+
+        return removed;
     }
 
     public void StartPlaytimeTracking()
@@ -443,6 +552,60 @@ public class SaveSessionManager : MonoBehaviour
         }
 
         return saveId;
+    }
+
+    private SaveMeta CreateActiveSaveMeta()
+    {
+        return new SaveMeta
+        {
+            sessionId = CurrentSessionId,
+            sessionName = ResolveSessionName(CurrentSessionId),
+            sessionType = ResolveSessionType(CurrentSessionId),
+            saveId = CurrentSaveId,
+            saveName = ResolveSaveName(CurrentSessionId, CurrentSaveId),
+            savedAtUtcTicks = DateTime.UtcNow.Ticks,
+            playTimeSeconds = CurrentPlaytimeSeconds,
+            sceneName = SceneManager.GetActiveScene().name,
+            completedStorySequenceIds = new List<string>()
+        };
+    }
+
+    private List<string> CopyActiveStorySequenceCompletions(string targetSessionId)
+    {
+        List<string> result = new List<string>();
+        if (!HasActiveSave ||
+            !string.Equals(CurrentSessionId, targetSessionId, StringComparison.Ordinal))
+        {
+            return result;
+        }
+
+        SaveMeta activeMeta = ReadJson<SaveMeta>(
+            GetSaveMetaPath(CurrentSessionId, CurrentSaveId));
+        if (activeMeta == null || activeMeta.completedStorySequenceIds == null)
+        {
+            return result;
+        }
+
+        for (int i = 0; i < activeMeta.completedStorySequenceIds.Count; i++)
+        {
+            string id = activeMeta.completedStorySequenceIds[i];
+            if (!string.IsNullOrWhiteSpace(id) &&
+                !result.Exists(candidate =>
+                    string.Equals(candidate, id, StringComparison.OrdinalIgnoreCase)))
+            {
+                result.Add(id);
+            }
+        }
+
+        return result;
+    }
+
+    private static void EnsureStorySequenceList(SaveMeta meta)
+    {
+        if (meta != null && meta.completedStorySequenceIds == null)
+        {
+            meta.completedStorySequenceIds = new List<string>();
+        }
     }
 
     private List<SaveSessionInfo> LoadSessions()
@@ -651,4 +814,5 @@ public class SaveMeta
     public long savedAtUtcTicks;
     public float playTimeSeconds;
     public string sceneName;
+    public List<string> completedStorySequenceIds = new List<string>();
 }

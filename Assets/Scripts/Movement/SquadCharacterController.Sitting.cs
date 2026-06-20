@@ -4,6 +4,7 @@ public partial class SquadCharacterController
 {
     private static readonly int SitDownStateHash = Animator.StringToHash("Sit_Down");
     private static readonly int SittingIdleStateHash = Animator.StringToHash("Sitting_Idle");
+    private static readonly int SittingIdleFullPathHash = Animator.StringToHash("Base Layer.Sitting_Idle");
     private static readonly int StandUpStateHash = Animator.StringToHash("Stand_Up");
 
     [Header("Idle Sitting")]
@@ -82,6 +83,41 @@ public partial class SquadCharacterController
         waitingForStandUpCompletion = true;
         observedStandUpState = false;
         standUpRequestedAt = Time.unscaledTime;
+        return true;
+    }
+
+    public bool TrySetSittingImmediate(float normalizedTime = 0f)
+    {
+        if (sittingRequested)
+        {
+            if (animator != null && animator.HasState(0, SittingIdleFullPathHash))
+            {
+                animator.Play(SittingIdleFullPathHash, 0, Mathf.Repeat(normalizedTime, 1f));
+                animator.Update(0f);
+            }
+
+            return true;
+        }
+
+        if (!CanEnterScriptedSittingImmediate())
+        {
+            return false;
+        }
+
+        Stop();
+        if (!sittingMovementSuppressionActive)
+        {
+            PushScriptedMovementSuppression();
+            sittingMovementSuppressionActive = true;
+        }
+
+        sittingRequested = true;
+        waitingForStandUpCompletion = false;
+        observedStandUpState = false;
+        sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
+        SetAnimatorBoolIfValid(sittingParam, true);
+        animator.Play(SittingIdleFullPathHash, 0, Mathf.Repeat(normalizedTime, 1f));
+        animator.Update(0f);
         return true;
     }
 
@@ -165,6 +201,27 @@ public partial class SquadCharacterController
         }
 
         if (LocalInputRouter.MoveValue.sqrMagnitude > movementInputDeadZone * movementInputDeadZone)
+        {
+            return false;
+        }
+
+        return !IsUccLocomotionActive || IsGrounded;
+    }
+
+    private bool CanEnterScriptedSittingImmediate()
+    {
+        if (!isActiveAndEnabled ||
+            animator == null ||
+            !animator.isActiveAndEnabled ||
+            currentHp <= 0 ||
+            IsFlightActive ||
+            !HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool) ||
+            !animator.HasState(0, SittingIdleFullPathHash))
+        {
+            return false;
+        }
+
+        if (IsExternalLocomotionDriverActive && !IsUccLocomotionActive)
         {
             return false;
         }

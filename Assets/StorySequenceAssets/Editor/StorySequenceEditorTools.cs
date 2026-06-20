@@ -172,6 +172,156 @@ namespace Lit.Story.Editor
             }
         }
 
+        [MenuItem("Lit/Story Sequences/Reset Selected Sequence Completion", priority = 40)]
+        public static void ResetSelectedSequenceCompletion()
+        {
+            StorySequenceAsset sequence = Selection.activeObject as StorySequenceAsset;
+            if (sequence == null)
+            {
+                EditorUtility.DisplayDialog(
+                    "Reset Sequence Completion",
+                    "Selectionnez un StorySequenceAsset dans le Project.",
+                    "OK");
+                return;
+            }
+
+            ResetCompletion(sequence);
+        }
+
+        [MenuItem("Lit/Story Sequences/Reset Selected Sequence Completion", true)]
+        private static bool CanResetSelectedSequenceCompletion()
+        {
+            return Selection.activeObject is StorySequenceAsset;
+        }
+
+        [MenuItem("Lit/Story Sequences/Reset All Sequence Completions", priority = 41)]
+        public static void ResetAllSequenceCompletions()
+        {
+            bool hasActiveSave = StorySequenceCompletionStore.HasActiveSave;
+            string scope = hasActiveSave
+                ? "la sauvegarde active"
+                : "toutes les sauvegardes présentes sur cette machine";
+            if (!EditorUtility.DisplayDialog(
+                    "Reset All Sequence Completions",
+                    $"Réinitialiser l'état Play Once de {scope} ?\n\n" +
+                    "Les sauvegardes de partie ne seront pas supprimées.",
+                    "Réinitialiser",
+                    "Annuler"))
+            {
+                return;
+            }
+
+            int resetCount;
+            if (hasActiveSave)
+            {
+                resetCount = StorySequenceCompletionStore.ResetAllForActiveSave();
+            }
+            else
+            {
+                resetCount = ResetSavedCompletionFiles(null);
+            }
+
+            Debug.Log(
+                $"StorySequence: {resetCount} entrée(s) Play Once réinitialisée(s) dans {scope}.");
+        }
+
+        public static void ResetCompletion(StorySequenceAsset sequence)
+        {
+            if (sequence == null)
+            {
+                return;
+            }
+
+            string id = StorySequenceCompletionStore.ResolveSequenceId(sequence);
+            if (StorySequenceCompletionStore.HasActiveSave)
+            {
+                StorySequenceCompletionStore.ResetCompletion(sequence);
+                SaveSessionManager session = SaveSessionManager.Instance;
+                Debug.Log(
+                    $"StorySequence: '{id}' réinitialisée dans la sauvegarde active " +
+                    $"'{session.CurrentSaveName}' ({session.CurrentSaveId}).",
+                    sequence);
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                    "Reset Sequence Completion",
+                    "Aucune sauvegarde n'est active dans l'éditeur.\n\n" +
+                    $"Réinitialiser '{id}' dans tous les slots de sauvegarde ?",
+                    "Réinitialiser partout",
+                    "Annuler"))
+            {
+                return;
+            }
+
+            StorySequenceCompletionStore.ResetCompletion(sequence);
+            int changedFiles = ResetSavedCompletionFiles(id);
+            Debug.Log(
+                $"StorySequence: '{id}' réinitialisée dans {changedFiles} slot(s) de sauvegarde.",
+                sequence);
+        }
+
+        private static int ResetSavedCompletionFiles(string sequenceId)
+        {
+            string root = Path.Combine(
+                Application.persistentDataPath,
+                SaveSessionManager.DefaultSavesRootFolder);
+            if (!Directory.Exists(root))
+            {
+                return 0;
+            }
+
+            string[] metaPaths = Directory.GetFiles(
+                root,
+                "meta.json",
+                SearchOption.AllDirectories);
+            int changedFiles = 0;
+            for (int i = 0; i < metaPaths.Length; i++)
+            {
+                string path = metaPaths[i];
+                try
+                {
+                    SaveMeta meta = JsonUtility.FromJson<SaveMeta>(File.ReadAllText(path));
+                    if (meta == null ||
+                        meta.completedStorySequenceIds == null ||
+                        meta.completedStorySequenceIds.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    int removed;
+                    if (string.IsNullOrWhiteSpace(sequenceId))
+                    {
+                        removed = meta.completedStorySequenceIds.Count;
+                        meta.completedStorySequenceIds.Clear();
+                    }
+                    else
+                    {
+                        removed = meta.completedStorySequenceIds.RemoveAll(
+                            candidate => string.Equals(
+                                candidate,
+                                sequenceId,
+                                StringComparison.OrdinalIgnoreCase));
+                    }
+
+                    if (removed <= 0)
+                    {
+                        continue;
+                    }
+
+                    File.WriteAllText(path, JsonUtility.ToJson(meta, true));
+                    changedFiles++;
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning(
+                        $"StorySequence: impossible de réinitialiser '{path}'. {exception.Message}");
+                }
+            }
+
+            return changedFiles;
+        }
+
         private static void ValidateRunner(
             StorySequenceRunner runner,
             List<string> errors,
@@ -219,6 +369,12 @@ namespace Lit.Story.Editor
                     if (step.voiceLine == null)
                     {
                         warnings.Add($"{prefix}: VoiceLineData manquante.");
+                    }
+
+                    if (!step.skippable && step.dialogueMaxDisplayDuration <= 0f)
+                    {
+                        errors.Add(
+                            $"{prefix}: dialogue non skippable sans duree maximale; l'etape ne peut pas se terminer.");
                     }
                 }
                 else if (step.type == StorySequenceStepType.AnimatorTrigger &&
@@ -336,9 +492,18 @@ namespace Lit.Story.Editor
                 StorySequenceEditorTools.ValidateOpenScene();
             }
 
+            StorySequenceRunner runner = (StorySequenceRunner)target;
+            StorySequenceAsset sequence = runner.Sequence;
+            using (new EditorGUI.DisabledScope(sequence == null))
+            {
+                if (GUILayout.Button("Reset Sequence Completion"))
+                {
+                    StorySequenceEditorTools.ResetCompletion(sequence);
+                }
+            }
+
             using (new EditorGUI.DisabledScope(!Application.isPlaying))
             {
-                StorySequenceRunner runner = (StorySequenceRunner)target;
                 if (!runner.IsPlaying && GUILayout.Button("Play Sequence"))
                 {
                     runner.Play();
@@ -347,6 +512,32 @@ namespace Lit.Story.Editor
                 {
                     runner.Abort();
                 }
+            }
+        }
+    }
+
+    [CustomEditor(typeof(StorySequenceAsset))]
+    public sealed class StorySequenceAssetEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+            EditorGUILayout.Space();
+
+            StorySequenceAsset sequence = (StorySequenceAsset)target;
+            bool completed = StorySequenceCompletionStore.IsCompleted(sequence);
+            string storage = StorySequenceCompletionStore.HasActiveSave
+                ? $"Sauvegarde active : {SaveSessionManager.Instance.CurrentSaveName}"
+                : "Aucune sauvegarde active : état transitoire de test";
+            EditorGUILayout.HelpBox(
+                $"Play Once : {(completed ? "déjà terminé" : "prêt à jouer")}\n" +
+                $"ID : {StorySequenceCompletionStore.ResolveSequenceId(sequence)}\n" +
+                storage,
+                completed ? MessageType.Warning : MessageType.Info);
+
+            if (GUILayout.Button("Reset Play Once Completion"))
+            {
+                StorySequenceEditorTools.ResetCompletion(sequence);
             }
         }
     }

@@ -48,6 +48,7 @@ MonoBehaviour:
     animatorTrigger: 
     applyToWholeSquad: 1
     sitting: 1
+    startDirectlyInSittingIdle: 1
     directorId: 
     timeline: {fileID: 0}
     waitForTimelineCompletion: 1
@@ -84,6 +85,7 @@ MonoBehaviour:
     speakerNameOverride: 
     voiceLine: {fileID: 11400000, guid: bd6441722c4940c5a5db44b52110f2bc, type: 2}
     waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
     dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
     cameraPointId: 
@@ -92,7 +94,7 @@ MonoBehaviour:
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0
-    duration: 3.5
+    duration: 0
     animatorTrigger: 
     applyToWholeSquad: 0
     sitting: 0
@@ -108,6 +110,7 @@ MonoBehaviour:
     speakerNameOverride: 
     voiceLine: {fileID: 11400000, guid: 8aed318bc99b4635b795e3e50a01d202, type: 2}
     waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
     dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
     cameraPointId: 
@@ -116,7 +119,7 @@ MonoBehaviour:
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0
-    duration: 10
+    duration: 0
     animatorTrigger: 
     applyToWholeSquad: 0
     sitting: 0
@@ -132,6 +135,7 @@ MonoBehaviour:
     speakerNameOverride: 
     voiceLine: {fileID: 11400000, guid: af11bf7ec45e4cc296c901458a9f8f49, type: 2}
     waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
     dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
     cameraPointId: 
@@ -140,7 +144,7 @@ MonoBehaviour:
     cameraHoldDuration: 0
     fadeAlpha: 0
     fadeDuration: 0
-    duration: 4
+    duration: 0
     animatorTrigger: 
     applyToWholeSquad: 0
     sitting: 0

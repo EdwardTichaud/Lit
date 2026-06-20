@@ -54,7 +54,7 @@ Modifier les transforms des points permet donc de placer et orienter les personn
 1. Écran noir immédiat.
 2. Attente de la création du personnage local et de la squad.
 3. Verrouillage du personnage et de la caméra.
-4. Passage de toute la squad dans le cycle assis.
+4. Placement immédiat de toute la squad dans la boucle `Sitting_Idle`, sans jouer `Sit_Down`.
 5. Révélation de la scène depuis le noir pendant quatre secondes.
 6. Dialogue de Link.
 7. Dialogue de Lucian.
@@ -66,16 +66,26 @@ Les lignes sont textuelles pour le moment. Assigner ultérieurement un `AudioCli
 
 ## Durées
 
-En l'absence d'audio, le champ `Duration` de chaque étape Dialogue sert de durée minimale :
+Chaque étape `Dialogue` affiche le texte de son `VoiceLineData` dans le `DialoguePanel`.
 
-- Link : 3,5 secondes
-- Lucian : 10 secondes
-- Mia : 4 secondes
+- `Dialogue Max Display Duration = 0` : la réplique reste affichée jusqu'à `Interact`.
+- Valeur supérieure à `0` : la réplique avance automatiquement après ce délai maximal.
+- `Skippable` doit rester actif pour permettre à `Interact` de terminer immédiatement la réplique.
 
-`Interact` termine immédiatement la réplique active. Les étapes d'assise et de fondu ne sont pas
-skippables dans cette introduction.
+Le champ générique `Duration` n'est plus utilisé par les étapes `Dialogue`. Les étapes d'assise et
+de fondu ne sont pas skippables dans cette introduction.
 
 ## Test conseillé
 
 Tester d'abord directement depuis Maison, puis depuis MainMenu. Pour accélérer les itérations,
 réduire temporairement la durée du fondu dans l'étape `Révéler la scène depuis le noir`.
+
+`Play Once` dépend du slot de sauvegarde actif. Un lancement direct de Maison sans sauvegarde active
+utilise seulement une progression transitoire, réinitialisée à chaque nouvelle session de Play Mode.
+
+Pour réinitialiser les tests :
+
+- sélectionner la séquence puis cliquer `Reset Play Once Completion`;
+- ou utiliser `Lit > Story Sequences > Reset All Sequence Completions`.
+
+Hors Play Mode, l'outil propose de réinitialiser la séquence dans tous les slots existants.

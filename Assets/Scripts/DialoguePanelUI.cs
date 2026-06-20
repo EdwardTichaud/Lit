@@ -33,8 +33,12 @@ public class DialoguePanelUI : MonoBehaviour
     private CanvasGroup canvasGroup;
     private Coroutine hideRoutine;
     private bool isShowing;
+    private bool externallyControlled;
     private int shownFrame = -1;
     private Action onHiddenCallback;
+
+    public bool IsShowing => isShowing;
+    public bool IsExternallyControlled => externallyControlled;
 
     private void Awake()
     {
@@ -67,6 +71,7 @@ public class DialoguePanelUI : MonoBehaviour
         LocalInputRouter.Interact -= OnInteractPerformed;
         InputFocusStack.Pop(this);
         isShowing = false;
+        externallyControlled = false;
         InvokeAndClearHiddenCallback();
     }
 
@@ -82,6 +87,12 @@ public class DialoguePanelUI : MonoBehaviour
             return false;
         }
 
+        DialoguePanelUI ui = GetOrCreate();
+        return ui.ShowMessage(message, duration, onHidden);
+    }
+
+    public static DialoguePanelUI GetOrCreate()
+    {
         DialoguePanelUI ui = Instance;
         if (ui == null)
         {
@@ -98,7 +109,7 @@ public class DialoguePanelUI : MonoBehaviour
             ui = runner.AddComponent<DialoguePanelUI>();
         }
 
-        return ui.ShowMessage(message, duration, onHidden);
+        return ui;
     }
 
     public bool ShowMessage(string message, float duration, Action onHidden)
@@ -125,6 +136,7 @@ public class DialoguePanelUI : MonoBehaviour
             InvokeAndClearHiddenCallback();
         }
 
+        externallyControlled = false;
         onHiddenCallback = onHidden;
         dialogueText.text = message;
         SetVisible(true);
@@ -144,6 +156,83 @@ public class DialoguePanelUI : MonoBehaviour
         }
 
         return true;
+    }
+
+    public bool ShowControlledMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        ResolveReferences();
+        if (dialogueText == null)
+        {
+            return false;
+        }
+
+        CancelActivePresentation();
+        externallyControlled = true;
+        dialogueText.text = message;
+        SetVisible(true);
+        SetCanvasAlpha(0f);
+        isShowing = true;
+        shownFrame = Time.frameCount;
+        hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
+        return true;
+    }
+
+    public void SetControlledMessage(string message)
+    {
+        if (!externallyControlled || dialogueText == null)
+        {
+            return;
+        }
+
+        dialogueText.text = message ?? string.Empty;
+    }
+
+    public void HideControlled()
+    {
+        if (!externallyControlled || !isShowing)
+        {
+            return;
+        }
+
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+        }
+
+        hideRoutine = StartCoroutine(HideRoutine());
+    }
+
+    public void HideImmediate()
+    {
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+        }
+
+        SetCanvasAlpha(0f);
+        if (clearWhenHidden && dialogueText != null)
+        {
+            dialogueText.text = string.Empty;
+        }
+
+        isShowing = false;
+        externallyControlled = false;
+        InputFocusStack.Pop(this);
+        InvokeAndClearHiddenCallback();
+    }
+
+    public void HideControlledImmediate()
+    {
+        if (externallyControlled)
+        {
+            HideImmediate();
+        }
     }
 
     private IEnumerator ShowUntilManualDismissRoutine()
@@ -190,7 +279,10 @@ public class DialoguePanelUI : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
-        if (!requireInteractToClose || !isShowing || !InputFocusStack.HasFocus(this))
+        if (externallyControlled ||
+            !requireInteractToClose ||
+            !isShowing ||
+            !InputFocusStack.HasFocus(this))
         {
             return;
         }
@@ -241,8 +333,23 @@ public class DialoguePanelUI : MonoBehaviour
         }
 
         isShowing = false;
+        externallyControlled = false;
         InputFocusStack.Pop(this);
         hideRoutine = null;
+        InvokeAndClearHiddenCallback();
+    }
+
+    private void CancelActivePresentation()
+    {
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+        }
+
+        InputFocusStack.Pop(this);
+        isShowing = false;
+        externallyControlled = false;
         InvokeAndClearHiddenCallback();
     }
 
