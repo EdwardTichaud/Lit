@@ -43894,7 +43894,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7222518185024461778
 Transform:
   m_ObjectHideFlags: 0
@@ -141777,7 +141777,6 @@ MonoBehaviour:
   defaultReactionPulseDuration: 0.45
   overrideLightSourceDetectionDistance: 1
   flameDetectionDistance: 4
-  flameDetectionDistance: 4.5
   drawLightDetectionGizmos: 1
   chargesEnabled: 1
   maxCharges: 10

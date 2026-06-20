@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 9208775898645146241}
   - component: {fileID: 7860816637420478472}
   - component: {fileID: 5411212848997068458}
+  - component: {fileID: 6153016812206111322}
+  - component: {fileID: 1755475104384141889}
   m_Layer: 0
   m_Name: B_01
   m_TagString: Untagged
@@ -88,7 +90,43 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &6153016812206111322
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 836286787724053739}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -7658602771262105911, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+--- !u!114 &1755475104384141889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 836286787724053739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &3764398122487374504
 GameObject:
   m_ObjectHideFlags: 0
@@ -168,6 +206,8 @@ GameObject:
   - component: {fileID: 8127436117993315867}
   - component: {fileID: 9128537462644215162}
   - component: {fileID: 2884734577406307020}
+  - component: {fileID: 3653420964018470116}
+  - component: {fileID: 7670240947549859149}
   m_Layer: 0
   m_Name: B_002
   m_TagString: Untagged
@@ -245,7 +285,43 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &3653420964018470116
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4640010140063475015}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -108168772592183102, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+--- !u!114 &7670240947549859149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4640010140063475015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &6494630916650945654
 GameObject:
   m_ObjectHideFlags: 0
@@ -288,6 +364,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6937228851401640280}
   - component: {fileID: 7022095738475132869}
+  - component: {fileID: 7445786083374755627}
   m_Layer: 0
   m_Name: AngelOfJustice
   m_TagString: Untagged
@@ -333,6 +410,48 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7445786083374755627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7490359114257671495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc36bd7052d39854d81e5ef569da5d7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OptimizableObject
+  category: 4
+  optimizationEnabled: 1
+  neverCull: 0
+  preserveForCameraFade: 0
+  boundsRoot: {fileID: 6937228851401640280}
+  autoCollectTargets: 1
+  includeInactiveChildren: 1
+  controlRenderers: 1
+  controlSkinnedMeshRenderers: 1
+  controlLights: 1
+  controlExplicitPausables: 0
+  reduceUpdateRateWhenDistant: 1
+  distantUpdateInterval: 0.35
+  pausedUpdateInterval: 1
+  targetRenderers:
+  - {fileID: 5937903959361599611}
+  - {fileID: 5411212848997068458}
+  - {fileID: 2884734577406307020}
+  - {fileID: 2485131628480730020}
+  - {fileID: 8692400854067639194}
+  targetLights: []
+  explicitPausables: []
+  visibleDistanceOverride: -1
+  lightDistanceOverride: -1
+  pauseDistanceOverride: -1
+  distanceMultiplier: 1
+  boundsPadding: 2
+  minimumBoundsRadius: 0.5
+  drawGizmos: 0
+  logStateChanges: 0
 --- !u!1 &7580184654528326622
 GameObject:
   m_ObjectHideFlags: 0
@@ -344,6 +463,8 @@ GameObject:
   - component: {fileID: 7245857925247728098}
   - component: {fileID: 8634084080978489670}
   - component: {fileID: 8692400854067639194}
+  - component: {fileID: 4833621131524268535}
+  - component: {fileID: 1153803208195331012}
   m_Layer: 0
   m_Name: Wings
   m_TagString: Untagged
@@ -399,7 +520,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -5992671549319952435, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+  - {fileID: 2100000, guid: d0974a8a98df1bd4eb4b74de08e6135a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -421,7 +542,43 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &4833621131524268535
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7580184654528326622}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 236335369269791384, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+--- !u!114 &1153803208195331012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7580184654528326622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &7718140308801011059
 GameObject:
   m_ObjectHideFlags: 0
@@ -433,6 +590,8 @@ GameObject:
   - component: {fileID: 380022657172395641}
   - component: {fileID: 6265637150246298306}
   - component: {fileID: 2485131628480730020}
+  - component: {fileID: 7077442392785723108}
+  - component: {fileID: 5160435531687769725}
   m_Layer: 0
   m_Name: Balance
   m_TagString: Untagged
@@ -488,7 +647,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -5397144137826800766, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+  - {fileID: 2100000, guid: 484515f503361424186b5d5c171c2d35, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -510,7 +669,43 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &7077442392785723108
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7718140308801011059}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3635508896863781450, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+--- !u!114 &5160435531687769725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7718140308801011059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
 --- !u!1 &8392495405792569541
 GameObject:
   m_ObjectHideFlags: 0
@@ -522,6 +717,8 @@ GameObject:
   - component: {fileID: 8508643359165622622}
   - component: {fileID: 6507743580190357185}
   - component: {fileID: 5937903959361599611}
+  - component: {fileID: 1724620400870877033}
+  - component: {fileID: 4372173972688295321}
   m_Layer: 0
   m_Name: Angel
   m_TagString: Untagged
@@ -577,7 +774,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -5397144137826800766, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+  - {fileID: 2100000, guid: fec12581174243546a0e14fcedaa5da2, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -599,4 +796,40 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &1724620400870877033
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8392495405792569541}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -7786390875159896513, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+--- !u!114 &4372173972688295321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8392495405792569541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
