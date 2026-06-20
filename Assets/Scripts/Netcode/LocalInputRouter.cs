@@ -5,6 +5,8 @@ using UnityEngine.InputSystem;
 // Route les inputs du joueur local vers les systems interessés.
 public static class LocalInputRouter
 {
+    private const float DefaultInputDebounceSeconds = 0.15f;
+
     private enum InputGate
     {
         Jump,
@@ -58,7 +60,7 @@ public static class LocalInputRouter
     private static uint gameplayActivityVersion;
     private static uint characterMovementActivityVersion;
 
-    public static float InputDebounceSeconds { get; set; } = 0.15f;
+    public static float InputDebounceSeconds { get; set; } = DefaultInputDebounceSeconds;
 
     public static Vector2 MoveValue => moveValue;
     public static Vector2 CameraPanValue => Vector2.ClampMagnitude(cameraPanValue + cameraPanFromMoveValue, 1f);
@@ -77,6 +79,49 @@ public static class LocalInputRouter
     public static uint CharacterMovementActivityVersion => characterMovementActivityVersion;
     internal static bool IsInteractConsumed => interactConsumed;
     internal static bool IsTriggerMuninConsumed => triggerMuninConsumed;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        Move = null;
+        Jump = null;
+        Interact = null;
+        TriggerMunin = null;
+        TakeAll = null;
+        Return = null;
+        Inventory = null;
+        LeftShoulder = null;
+        RightShoulder = null;
+        LocomotionMode = null;
+        SwitchTarget = null;
+        Multi = null;
+        Start = null;
+        CameraRecenter = null;
+        CameraToggleFreeMode = null;
+
+        moveValue = Vector2.zero;
+        rawMoveValue = Vector2.zero;
+        cameraPanValue = Vector2.zero;
+        cameraPanFromMoveValue = Vector2.zero;
+        cameraOrbitValue = Vector2.zero;
+        cameraPointerDelta = Vector2.zero;
+        cameraPointerPosition = Vector2.zero;
+        cameraZoomValue = 0f;
+        flightVerticalValue = 0f;
+        cameraPointerScrollValue = 0f;
+        cameraOrbitModifierPressed = false;
+        cameraPanModifierPressed = false;
+        cameraFreeModeActive = false;
+        rightShoulderPressed = false;
+
+        lastInputTimes.Clear();
+        interactConsumed = false;
+        triggerMuninConsumed = false;
+        lastGameplayActivityTime = float.NegativeInfinity;
+        gameplayActivityVersion = 0;
+        characterMovementActivityVersion = 0;
+        InputDebounceSeconds = DefaultInputDebounceSeconds;
+    }
 
     public static void EnsureInitialized()
     {
@@ -499,7 +544,9 @@ public static class LocalInputRouter
         }
 
         float now = Time.unscaledTime;
-        if (lastInputTimes.TryGetValue(gate, out float lastTime) && now - lastTime < debounce)
+        if (lastInputTimes.TryGetValue(gate, out float lastTime) &&
+            now >= lastTime &&
+            now - lastTime < debounce)
         {
             return false;
         }

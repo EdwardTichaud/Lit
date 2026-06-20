@@ -10,6 +10,24 @@ public static class RuntimeOutlineSelectionManager
 
     public static ICharacterDetectedInteractable ActiveInteractable => activeInteractable;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        for (int i = 0; i < ActiveTargets.Count; i++)
+        {
+            RuntimeOutlineTarget target = ActiveTargets[i];
+            if (target != null)
+            {
+                target.SetOutlined(false);
+            }
+        }
+
+        ActiveTargets.Clear();
+        CandidateTargets.Clear();
+        activeOwner = null;
+        activeInteractable = null;
+    }
+
     public static void SetActiveInteractable(ICharacterDetectedInteractable interactable)
     {
         SetActiveInteractable(null, interactable);

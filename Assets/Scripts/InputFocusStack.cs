@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 // Pile statique pour gerer le focus d'input (UI vs gameplay).
 public interface ICameraInputPassthrough
@@ -9,6 +10,12 @@ public interface ICameraInputPassthrough
 public static class InputFocusStack
 {
     private static readonly List<object> stack = new List<object>();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        stack.Clear();
+    }
 
     public static bool HasAnyFocus()
     {

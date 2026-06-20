@@ -2334,7 +2334,6 @@ MonoBehaviour:
   interactionDetectionRadius: 2.25
   interactionMinimumForwardDot: -0.35
   interactionDetectionHeightOffset: 0.9
-  interactionCurrentTargetBonus: 0.15
   requireInteractionTargetVisibleByCamera: 1
   interactionCameraVisibilityGraceSeconds: 0.15
   enableMuninInteractionReaction: 1

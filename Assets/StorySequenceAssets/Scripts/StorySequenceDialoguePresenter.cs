@@ -135,7 +135,7 @@ namespace Lit.Story
         {
             StopAudio();
             EndMusicDucking();
-            ResolveDialoguePanel();
+            ResolveDialoguePanel(createIfMissing: false);
             dialoguePanel?.HideControlledImmediate();
             usingDialoguePanel = false;
             if (canvasGroup != null)
@@ -401,11 +401,15 @@ namespace Lit.Story
             return $"<b>{speakerName.Trim()}</b>\n{safeDialogue}";
         }
 
-        private void ResolveDialoguePanel()
+        private void ResolveDialoguePanel(bool createIfMissing = true)
         {
             if (dialoguePanel == null)
             {
-                dialoguePanel = DialoguePanelUI.GetOrCreate();
+                dialoguePanel = DialoguePanelUI.Instance;
+                if (dialoguePanel == null && createIfMissing)
+                {
+                    dialoguePanel = DialoguePanelUI.GetOrCreate();
+                }
             }
         }
 

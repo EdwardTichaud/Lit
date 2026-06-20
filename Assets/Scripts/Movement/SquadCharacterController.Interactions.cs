@@ -15,8 +15,6 @@ public partial class SquadCharacterController
     private float interactionMinimumForwardDot = -0.35f;
     [SerializeField, Tooltip("Hauteur supplementaire ajoutee au point d'origine de la detection si aucune capsule n'est disponible.")]
     private float interactionDetectionHeightOffset = 0.9f;
-    [SerializeField, Tooltip("Bonus de score applique a la cible deja selectionnee pour limiter le clignotement.")]
-    private float interactionCurrentTargetBonus = 0.15f;
     [SerializeField, Tooltip("Exige qu'au moins une partie de l'objet soit visible par la camera et non cachee par un collider.")]
     private bool requireInteractionTargetVisibleByCamera = true;
     [SerializeField, Min(0f), Tooltip("Temps de maintien de la cible courante quand le test camera perd brievement la visibilite.")]
@@ -139,48 +137,48 @@ public partial class SquadCharacterController
             ? CharacterInteractionDetection.ResolveInteractionCamera()
             : null;
 
-        if (IsSwitchableInteractionTarget(manualSwitchedInteractable) &&
-            TryEvaluateInteractionCandidate(manualSwitchedInteractable, origin, forward, interactionCamera, out _, out _))
+        if (IsInteractionDetectionCandidate(manualSwitchedInteractable) &&
+            TryEvaluateInteractionCandidate(
+                manualSwitchedInteractable,
+                origin,
+                forward,
+                interactionCamera,
+                out _,
+                out _))
         {
             return manualSwitchedInteractable;
         }
 
         manualSwitchedInteractable = null;
 
-        ICharacterDetectedInteractable bestDirect = null;
-        ICharacterDetectedInteractable bestTriggerZone = null;
-        float bestDirectScore = float.NegativeInfinity;
-        float bestTriggerZoneScore = float.NegativeInfinity;
+        ICharacterDetectedInteractable bestTarget = null;
+        float bestDistanceSqr = float.PositiveInfinity;
 
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
         {
             ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
-            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, interactionCamera, out bool usesTriggerZone, out float score))
+            if (!TryEvaluateInteractionCandidate(
+                    candidate,
+                    origin,
+                    forward,
+                    interactionCamera,
+                    out _,
+                    out float distanceSqr))
             {
                 continue;
             }
 
-            if (ReferenceEquals(candidate, currentDetectedInteractable))
+            if (bestTarget == null ||
+                distanceSqr < bestDistanceSqr ||
+                (distanceSqr == bestDistanceSqr &&
+                 GetInteractionCandidateTieBreaker(candidate) < GetInteractionCandidateTieBreaker(bestTarget)))
             {
-                score += interactionCurrentTargetBonus * 100f;
-            }
-
-            if (usesTriggerZone)
-            {
-                if (score > bestTriggerZoneScore)
-                {
-                    bestTriggerZoneScore = score;
-                    bestTriggerZone = candidate;
-                }
-            }
-            else if (score > bestDirectScore)
-            {
-                bestDirectScore = score;
-                bestDirect = candidate;
+                bestTarget = candidate;
+                bestDistanceSqr = distanceSqr;
             }
         }
 
-        return bestDirect != null ? bestDirect : bestTriggerZone;
+        return bestTarget;
     }
 
     private void OnSwitchTargetPerformed(InputAction.CallbackContext context)
@@ -228,11 +226,6 @@ public partial class SquadCharacterController
         for (int i = 0; i < interactionDetectionCandidates.Count; i++)
         {
             ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
-            if (!IsSwitchableInteractionTarget(candidate))
-            {
-                continue;
-            }
-
             if (!TryEvaluateInteractionCandidate(candidate, origin, forward, interactionCamera, out _, out _))
             {
                 continue;
@@ -269,18 +262,16 @@ public partial class SquadCharacterController
         Vector3 forward,
         Camera interactionCamera)
     {
-        TryEvaluateInteractionCandidate(left, origin, forward, interactionCamera, out _, out float leftScore);
-        TryEvaluateInteractionCandidate(right, origin, forward, interactionCamera, out _, out float rightScore);
+        TryEvaluateInteractionCandidate(left, origin, forward, interactionCamera, out _, out float leftDistanceSqr);
+        TryEvaluateInteractionCandidate(right, origin, forward, interactionCamera, out _, out float rightDistanceSqr);
 
-        int scoreComparison = rightScore.CompareTo(leftScore);
-        if (scoreComparison != 0)
+        int distanceComparison = leftDistanceSqr.CompareTo(rightDistanceSqr);
+        if (distanceComparison != 0)
         {
-            return scoreComparison;
+            return distanceComparison;
         }
 
-        int leftId = left is Object leftObject && leftObject != null ? leftObject.GetInstanceID() : 0;
-        int rightId = right is Object rightObject && rightObject != null ? rightObject.GetInstanceID() : 0;
-        return leftId.CompareTo(rightId);
+        return GetInteractionCandidateTieBreaker(left).CompareTo(GetInteractionCandidateTieBreaker(right));
     }
 
     private int FindSwitchTargetCandidateIndex(ICharacterDetectedInteractable target)
@@ -307,10 +298,10 @@ public partial class SquadCharacterController
         Vector3 forward,
         Camera interactionCamera,
         out bool usesTriggerZone,
-        out float score)
+        out float distanceSqr)
     {
         usesTriggerZone = false;
-        score = float.NegativeInfinity;
+        distanceSqr = float.PositiveInfinity;
 
         if (!(candidate is Object unityCandidate) || unityCandidate == null)
         {
@@ -332,7 +323,8 @@ public partial class SquadCharacterController
         usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
         Vector3 point = CharacterInteractionDetection.GetInteractionPoint(collider, anchor, origin);
         Vector3 toPoint = point - origin;
-        float distance = toPoint.magnitude;
+        distanceSqr = toPoint.sqrMagnitude;
+        float distance = Mathf.Sqrt(distanceSqr);
         float maxDistance = ResolveInteractionMaxDistance(candidate);
         if (usesTriggerZone)
         {
@@ -373,10 +365,6 @@ public partial class SquadCharacterController
             return false;
         }
 
-        float normalizedDistance = distance / maxDistance;
-        score = candidate.GetInteractionPriority(this) * 1000f
-            - normalizedDistance * 100f
-            + forwardDot * 10f;
         return true;
     }
 
@@ -452,9 +440,29 @@ public partial class SquadCharacterController
         return target is Flame;
     }
 
-    private static bool IsSwitchableInteractionTarget(ICharacterDetectedInteractable target)
+    private bool IsInteractionDetectionCandidate(ICharacterDetectedInteractable target)
     {
-        return target is Flame;
+        if (target == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < interactionDetectionCandidates.Count; i++)
+        {
+            if (ReferenceEquals(interactionDetectionCandidates[i], target))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int GetInteractionCandidateTieBreaker(ICharacterDetectedInteractable target)
+    {
+        return target is Object unityTarget && unityTarget != null
+            ? unityTarget.GetHashCode()
+            : int.MaxValue;
     }
 
     private void ApplyLocalInteractionTarget(ICharacterDetectedInteractable target)
