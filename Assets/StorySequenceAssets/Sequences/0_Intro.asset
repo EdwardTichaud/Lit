@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034c82a5cef146e448a545d81bc6f75a, type: 3}
+  m_Name: 0_Intro
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceAsset
+  sequenceId: intro_template
+  displayName: Intro Template
+  description: Dupliquer cet asset pour creer une nouvelle sequence.
+  playOnce: 0
+  waitForLocalPlayer: 1
+  localPlayerWaitTimeout: 0
+  lockPlayerControl: 1
+  stopActiveAbilitiesOnLock: 1
+  useUnscaledTime: 1
+  startFromBlack: 1
+  openingFadeDuration: 1
+  fadeToBlackBeforeGameplay: 1
+  closingFadeDuration: 0.5
+  fadeFromBlackAfterGameplayRestore: 1
+  gameplayFadeInDuration: 0.75
+  steps:
+  - label: Plan large d'ouverture
+    type: 2
+    skippable: 1
+    actorId: lucian
+    listenerId: 
+    speakerNameOverride: 
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 0}
+    cameraPointId: 
+    cameraProfile: {fileID: 11400000, guid: 9865d77a608aafc4b8568202fe7181cd, type: 2}
+    cameraTransitionDuration: 0.8
+    cameraHoldDuration: 0.8
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: Premiere replique
+    type: 1
+    skippable: 1
+    actorId: lucian
+    listenerId: 
+    speakerNameOverride: 
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.55
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0.5
+    duration: 1
+    animatorTrigger: 
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 

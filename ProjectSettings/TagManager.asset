@@ -16,6 +16,7 @@ TagManager:
   - Light
   - Flame
   - Foyer
+  - PNJ
   layers:
   - Default
   - TransparentFX

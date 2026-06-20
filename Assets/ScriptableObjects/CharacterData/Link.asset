@@ -16,7 +16,8 @@ MonoBehaviour:
   characterId: link
   characterName: Link
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
-  model: {fileID: 2784444758471557209, guid: a729af1ce72c113439e422b19e81919d, type: 3}
+  model: {fileID: 2784444758471557209, guid: 7f23c63539d631545be5393362b755ec, type: 3}
+  worldPrefab: {fileID: 0}
   skills:
   - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
   - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
@@ -45,6 +46,10 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: 4c1f1ce8be50409b86794fc750a5101d, type: 2}
     quantity: 300
   hp: 10
+  isEnemy: 0
+  combatCurrentHp: 0
+  attackDamage: 4
+  additionalEnemies: []
   voiceLines: []
   maisonWaitingPoint: 1
   inventoryItems: []
@@ -52,3 +57,6 @@ MonoBehaviour:
   flameSecondsRemaining: 0
   flameEquipped: 0
   inventoryInitialized: 0
+  muninChargesRemaining: 0
+  muninMaxCharges: 10
+  muninChargesInitialized: 0
