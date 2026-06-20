@@ -9,7 +9,7 @@ using UnityEngine;
 [RequireComponent(typeof(UltimateCharacterLocomotion))]
 [RequireComponent(typeof(UltimateCharacterLocomotionHandler))]
 [RequireComponent(typeof(LitOpsivePlayerInput))]
-public class LitOpsiveLocomotionBridge : MonoBehaviour
+public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 {
     private const string JumpInputName = "Jump";
     private const string SpeedChangeInputName = "Change Speeds";
@@ -62,6 +62,12 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField, Min(0f)] private float flightIdleSpeedThreshold = 0.08f;
     [SerializeField, Min(0f)] private float flightTurnRate = 760f;
     [SerializeField, Min(0f)] private float flightBoostTurnRate = 460f;
+    [SerializeField, Min(0f)] private float flightLandingSpeed = 12f;
+    [SerializeField, Min(0f)] private float flightLandingAcceleration = 36f;
+    [SerializeField, Tooltip("Utilise un pilote autonome si la capacite de vol UCC est absente ou refuse de demarrer.")]
+    private bool allowStandaloneFlightFallback = true;
+    [SerializeField, Min(0f)] private float fallbackFlightCollisionSkin = 0.03f;
+    [SerializeField, Min(0f)] private float fallbackFlightGroundProbeDistance = 0.2f;
 
     [Header("Animator Compatibility")]
     [SerializeField, Tooltip("Only enable for legacy Lit animator controllers. UCC animator controllers should be driven by AnimatorMonitor parameters.")]
@@ -70,6 +76,11 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private string isMovingParam = "IsMoving";
     [SerializeField] private string locomotionTierParam = "LocomotionTier";
     [SerializeField] private string turnParam = "Turn";
+    [SerializeField] private string flightStateParam = "FlightState";
+    [SerializeField] private string flightSpeedParam = "FlightSpeed";
+    [SerializeField] private string flightVerticalParam = "FlightVertical";
+    [SerializeField] private string flightBoostParam = "FlightBoost";
+    [SerializeField] private string flightStartTriggerParam = "FlightStartTrigger";
     [SerializeField] private float walkPresentationSpeed = 1.35f;
     [SerializeField] private float runPresentationSpeed = 3.25f;
 
@@ -109,7 +120,7 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
-    public bool IsFlightActive => flightAbility != null && flightAbility.IsActive;
+    public bool IsFlightActive => IsFlightModeActive;
     public bool Grounded => locomotion != null && locomotion.Grounded;
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
@@ -152,7 +163,10 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
             playerInput.SetSprintOverride(pressed, IsDriving);
         }
 
-        SyncSpeedChangeAbility();
+        if (!IsFlightModeActive)
+        {
+            SyncSpeedChangeAbility();
+        }
     }
 
     public bool Jump(Vector2 worldInput, bool hasWorldInput)
@@ -216,7 +230,7 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
     {
         ApplyWorldMoveInput(Vector2.zero);
         SetSprintModifier(false);
-        StopFlightAbilityIfActive();
+        ShutdownFlightMode();
     }
 
     public bool ToggleHeightChange()
@@ -250,63 +264,19 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
 
     public bool ToggleFlightMode(float verticalInput)
     {
-        return SetFlightMode(!IsFlightActive, verticalInput);
+        bool shouldActivate = !IsFlightModeActive ||
+                              flightPresentationState == FlightPresentationState.Landing;
+        return SetFlightMode(shouldActivate, verticalInput);
     }
 
     public bool SetFlightMode(bool active, float verticalInput)
     {
-        ResolveReferences();
-
-        if (!enableUccFlight || !IsDriving || IsInputSuppressedByUcc)
-        {
-            return false;
-        }
-
-        if (!EnsureFlightAbility())
-        {
-            return false;
-        }
-
-        ConfigureFlightAbility();
-        flightAbility.SetInput(currentWorldMoveInput, sprintPressed, verticalInput);
-        if (!active)
-        {
-            return StopFlightAbilityIfActive();
-        }
-
-        if (flightAbility.IsActive)
-        {
-            return true;
-        }
-
-        ClearPendingJump();
-        if (locomotion.TryStartAbility(flightAbility, ignorePriority: true))
-        {
-            warnedFlightStartRejected = false;
-            return true;
-        }
-
-        WarnOnce(ref warnedFlightStartRejected, $"UCC Flight was requested on '{name}' but UltimateCharacterLocomotion rejected LitUccFlightAbility. ActiveAbilities={ResolveActiveAbilityLabel()}.");
-        return false;
+        return RequestFlightMode(active, verticalInput);
     }
 
     public bool SetFlightInput(Vector2 worldInput, bool boost, float verticalInput)
     {
-        ResolveReferences();
-
-        if (!enableUccFlight || !IsDriving || IsInputSuppressedByUcc)
-        {
-            return false;
-        }
-
-        if (!EnsureFlightAbility())
-        {
-            return false;
-        }
-
-        ConfigureFlightAbility();
-        flightAbility.SetInput(worldInput, boost, verticalInput);
-        return flightAbility.IsActive;
+        return ApplyFlightInput(worldInput, boost, verticalInput);
     }
 
     public bool BeginExternalLock(bool disableGameplayInput = true, bool stopActiveAbilities = false)
@@ -541,9 +511,13 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
-        SyncSpeedChangeAbility();
+        if (!IsFlightModeActive)
+        {
+            SyncSpeedChangeAbility();
+        }
         AttachLookSourceIfNeeded(false);
         RetryPendingJump();
+        UpdateFlightMode();
         UpdateAnimatorParameters();
         RefreshSquadFacadeSystems();
     }
@@ -1013,7 +987,9 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
             flightVerticalDeadZone,
             flightIdleSpeedThreshold,
             flightTurnRate,
-            flightBoostTurnRate);
+            flightBoostTurnRate,
+            flightLandingSpeed,
+            flightLandingAcceleration);
     }
 
     private bool StopFlightAbilityIfActive()
@@ -1081,7 +1057,9 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void UpdateAnimatorParameters()
     {
-        if (!driveLitLocomotionAnimatorParameters || animator == null)
+        UpdateFlightAnimatorParameters();
+
+        if (!driveLitLocomotionAnimatorParameters || animator == null || IsFlightModeActive)
         {
             return;
         }
@@ -1220,6 +1198,22 @@ public class LitOpsiveLocomotionBridge : MonoBehaviour
         if (HasAnimatorParameter(parameter, AnimatorControllerParameterType.Bool))
         {
             animator.SetBool(parameter, value);
+        }
+    }
+
+    private void SetAnimatorInteger(string parameter, int value)
+    {
+        if (HasAnimatorParameter(parameter, AnimatorControllerParameterType.Int))
+        {
+            animator.SetInteger(parameter, value);
+        }
+    }
+
+    private void SetAnimatorTrigger(string parameter)
+    {
+        if (HasAnimatorParameter(parameter, AnimatorControllerParameterType.Trigger))
+        {
+            animator.SetTrigger(parameter);
         }
     }
 

@@ -2239,6 +2239,7 @@ GameObject:
   - component: {fileID: 4817604968123456789}
   - component: {fileID: 9095812728330429394}
   - component: {fileID: 6800918242508772571}
+  - component: {fileID: -2401253528140462390}
   m_Layer: 31
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -2338,7 +2339,10 @@ MonoBehaviour:
   interactionCameraVisibilityGraceSeconds: 0.15
   enableMuninInteractionReaction: 1
   muninFlameProximityReactionIntensity: 0.45
-  muninFlameProximityReactionIntensity: 1
+  enableIdleSitting: 1
+  idleSecondsBeforeSitting: 10
+  sittingParam: IsSitting
+  standUpMovementUnlockFallback: 1.5
   items: []
   equippedInteractionItems: []
   startingFlameSeconds: 300
@@ -2363,10 +2367,6 @@ MonoBehaviour:
   locomotionTierParam: LocomotionTier
   turnParam: Turn
   turnInPlaceParam: TurnInPlace
-  enableIdleSitting: 1
-  idleSecondsBeforeSitting: 10
-  sittingParam: IsSitting
-  standUpMovementUnlockFallback: 1.5
   walkMoveSpeed: 5
   moveSpeed: 6.5
   movementInputDeadZone: 0.08
@@ -3180,11 +3180,21 @@ MonoBehaviour:
   flightIdleSpeedThreshold: 0.08
   flightTurnRate: 760
   flightBoostTurnRate: 460
+  flightLandingSpeed: 12
+  flightLandingAcceleration: 36
+  allowStandaloneFlightFallback: 1
+  fallbackFlightCollisionSkin: 0.03
+  fallbackFlightGroundProbeDistance: 0.2
   driveLitLocomotionAnimatorParameters: 1
   speedParam: Speed
   isMovingParam: IsMoving
   locomotionTierParam: LocomotionTier
   turnParam: Turn
+  flightStateParam: FlightState
+  flightSpeedParam: FlightSpeed
+  flightVerticalParam: FlightVertical
+  flightBoostParam: FlightBoost
+  flightStartTriggerParam: FlightStartTrigger
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
 --- !u!114 &9118197817539862428
@@ -3436,6 +3446,23 @@ MonoBehaviour:
     m_RotationOrder: 4
   m_DamagedEffectName: 
   m_DamagedEffectIndex: -1
+--- !u!114 &-2401253528140462390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 741e579fad9418148ab39a63db98d485, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceActor
+  actorId: lucian
+  displayName: Lucian
+  faceAnchor: {fileID: 8186569390409486965}
+  cameraAnchor: {fileID: 8186569390409486965}
+  animator: {fileID: 963045829911085934}
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

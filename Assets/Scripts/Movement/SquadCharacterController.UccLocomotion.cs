@@ -10,7 +10,11 @@ public partial class SquadCharacterController
 
     public bool HasUccLocomotionBridge => GetUccLocomotionBridge() != null;
     public bool IsUccLocomotionActive => TryGetActiveUccLocomotionBridge(out _);
-    public bool IsUccFlightActive => TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge) && bridge.IsFlightActive;
+    public bool IsFlightActive => TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge) && bridge.IsFlightActive;
+    public bool IsUccFlightActive => IsFlightActive;
+    public bool IsStandaloneFlightFallbackActive =>
+        TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge) &&
+        bridge.IsUsingStandaloneFlightFallback;
 
     public void QueueUccJumpInput(Vector2 input, bool isWorldSpace)
     {

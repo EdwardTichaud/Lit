@@ -7,12 +7,22 @@ using UnityEngine;
 [Serializable]
 public sealed class LitUccFlightAbility : Ability
 {
+    public enum FlightPhase
+    {
+        Inactive,
+        Takeoff,
+        Cruise,
+        Landing
+    }
+
     private Vector2 worldPlanarInput;
     private bool boostInput;
     private float verticalInput;
     private Vector3 currentVelocity;
     private bool boostActive;
     private float takeoffTimer;
+    private float landingTimer;
+    private bool landingComplete;
 
     private float takeoffVerticalSpeed = 6.5f;
     private float takeoffDuration = 0.45f;
@@ -29,6 +39,9 @@ public sealed class LitUccFlightAbility : Ability
     private float idleSpeedThreshold = 0.08f;
     private float turnRate = 760f;
     private float boostTurnRate = 460f;
+    private float landingSpeed = 12f;
+    private float landingAcceleration = 36f;
+    private float minimumLandingDuration = 0.15f;
 
     public LitUccFlightAbility()
     {
@@ -44,6 +57,28 @@ public sealed class LitUccFlightAbility : Ability
 
     public Vector3 FlightVelocity => currentVelocity;
     public bool Boosting => IsActive && boostActive;
+    public FlightPhase Phase { get; private set; }
+    public bool LandingComplete => landingComplete;
+    public float NormalizedSpeed
+    {
+        get
+        {
+            Vector3 up = ResolveUp();
+            return boostSpeed > 0f
+                ? Mathf.Clamp01(Vector3.ProjectOnPlane(currentVelocity, up).magnitude / boostSpeed)
+                : 0f;
+        }
+    }
+    public float NormalizedVerticalSpeed
+    {
+        get
+        {
+            Vector3 up = ResolveUp();
+            return verticalSpeed > 0f
+                ? Mathf.Clamp(Vector3.Dot(currentVelocity, up) / verticalSpeed, -1f, 1f)
+                : 0f;
+        }
+    }
     public override float AbilityFloatData => boostSpeed > 0f ? Mathf.Clamp01(currentVelocity.magnitude / boostSpeed) : 0f;
 
     public void Configure(
@@ -61,7 +96,9 @@ public sealed class LitUccFlightAbility : Ability
         float newVerticalDeadZone,
         float newIdleSpeedThreshold,
         float newTurnRate,
-        float newBoostTurnRate)
+        float newBoostTurnRate,
+        float newLandingSpeed,
+        float newLandingAcceleration)
     {
         takeoffVerticalSpeed = Mathf.Max(0f, newTakeoffVerticalSpeed);
         takeoffDuration = Mathf.Max(0f, newTakeoffDuration);
@@ -78,6 +115,8 @@ public sealed class LitUccFlightAbility : Ability
         idleSpeedThreshold = Mathf.Max(0f, newIdleSpeedThreshold);
         turnRate = Mathf.Max(0f, newTurnRate);
         boostTurnRate = Mathf.Max(0f, newBoostTurnRate);
+        landingSpeed = Mathf.Max(0f, newLandingSpeed);
+        landingAcceleration = Mathf.Max(0f, newLandingAcceleration);
     }
 
     public void SetInput(Vector2 worldInput, bool boost, float vertical)
@@ -85,6 +124,37 @@ public sealed class LitUccFlightAbility : Ability
         worldPlanarInput = Vector2.ClampMagnitude(worldInput, 1f);
         boostInput = boost;
         verticalInput = Mathf.Clamp(vertical, -1f, 1f);
+    }
+
+    public void RequestLanding()
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        Phase = FlightPhase.Landing;
+        landingTimer = 0f;
+        landingComplete = false;
+        boostInput = false;
+        boostActive = false;
+    }
+
+    public void CancelLanding()
+    {
+        if (!IsActive || Phase != FlightPhase.Landing)
+        {
+            return;
+        }
+
+        Vector3 up = ResolveUp();
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(currentVelocity, up);
+        float verticalSpeed = Mathf.Max(Vector3.Dot(currentVelocity, up), takeoffVerticalSpeed);
+        currentVelocity = planarVelocity + up * verticalSpeed;
+        Phase = FlightPhase.Takeoff;
+        takeoffTimer = takeoffDuration;
+        landingTimer = 0f;
+        landingComplete = false;
     }
 
     public override bool ShouldStopActiveAbility(Ability activeAbility)
@@ -101,16 +171,24 @@ public sealed class LitUccFlightAbility : Ability
         return startingAbility is Fall ||
                startingAbility is Jump ||
                startingAbility is HeightChange ||
+               startingAbility is SpeedChange ||
                base.ShouldBlockAbilityStart(startingAbility);
     }
 
     protected override void AbilityStarted()
     {
-        currentVelocity = m_CharacterLocomotion != null
-            ? m_CharacterLocomotion.Up * Mathf.Max(Vector3.Dot(m_CharacterLocomotion.Velocity, m_CharacterLocomotion.Up), takeoffVerticalSpeed)
-            : Vector3.up * takeoffVerticalSpeed;
+        Vector3 up = ResolveUp();
+        Vector3 initialVelocity = m_CharacterLocomotion != null
+            ? m_CharacterLocomotion.Velocity
+            : Vector3.zero;
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(initialVelocity, up);
+        float verticalSpeed = Mathf.Max(Vector3.Dot(initialVelocity, up), takeoffVerticalSpeed);
+        currentVelocity = planarVelocity + up * verticalSpeed;
         takeoffTimer = takeoffDuration;
+        landingTimer = 0f;
+        landingComplete = false;
         boostActive = false;
+        Phase = FlightPhase.Takeoff;
 
         if (m_CharacterLocomotion != null)
         {
@@ -175,6 +253,9 @@ public sealed class LitUccFlightAbility : Ability
         verticalInput = 0f;
         boostActive = false;
         takeoffTimer = 0f;
+        landingTimer = 0f;
+        landingComplete = false;
+        Phase = FlightPhase.Inactive;
 
         if (m_CharacterLocomotion != null)
         {
@@ -192,13 +273,24 @@ public sealed class LitUccFlightAbility : Ability
         }
 
         Vector3 up = m_CharacterLocomotion.Up.sqrMagnitude > 0f ? m_CharacterLocomotion.Up.normalized : Vector3.up;
+        if (Phase == FlightPhase.Landing)
+        {
+            TickLanding(deltaTime, up);
+            return;
+        }
+
         if (takeoffTimer > 0f)
         {
             takeoffTimer = Mathf.Max(0f, takeoffTimer - deltaTime);
             currentVelocity = Vector3.MoveTowards(currentVelocity, Vector3.zero, takeoffDamping * deltaTime);
+            if (takeoffTimer <= 0f)
+            {
+                Phase = FlightPhase.Cruise;
+            }
             return;
         }
 
+        Phase = FlightPhase.Cruise;
         Vector3 planarInput = new Vector3(worldPlanarInput.x, 0f, worldPlanarInput.y);
         planarInput = Vector3.ProjectOnPlane(planarInput, up);
         float inputMagnitude = Mathf.Clamp01(planarInput.magnitude);
@@ -227,6 +319,30 @@ public sealed class LitUccFlightAbility : Ability
         }
     }
 
+    private void TickLanding(float deltaTime, Vector3 up)
+    {
+        landingTimer += deltaTime;
+        boostActive = false;
+
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(currentVelocity, up);
+        planarVelocity = Vector3.MoveTowards(planarVelocity, Vector3.zero, deceleration * deltaTime);
+
+        float currentVerticalSpeed = Vector3.Dot(currentVelocity, up);
+        currentVerticalSpeed = Mathf.MoveTowards(
+            currentVerticalSpeed,
+            -landingSpeed,
+            landingAcceleration * deltaTime);
+        currentVelocity = planarVelocity + up * currentVerticalSpeed;
+
+        landingComplete = landingTimer >= minimumLandingDuration &&
+                          m_CharacterLocomotion.Grounded &&
+                          currentVerticalSpeed <= 0f;
+        if (landingComplete)
+        {
+            currentVelocity = Vector3.zero;
+        }
+    }
+
     private float ProcessVerticalInput(float input)
     {
         float magnitude = Mathf.Abs(input);
@@ -237,5 +353,12 @@ public sealed class LitUccFlightAbility : Ability
 
         float normalizedMagnitude = Mathf.InverseLerp(verticalDeadZone, 1f, Mathf.Clamp01(magnitude));
         return Mathf.Sign(input) * normalizedMagnitude;
+    }
+
+    private Vector3 ResolveUp()
+    {
+        return m_CharacterLocomotion != null && m_CharacterLocomotion.Up.sqrMagnitude > 0f
+            ? m_CharacterLocomotion.Up.normalized
+            : Vector3.up;
     }
 }

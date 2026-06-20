@@ -22,7 +22,7 @@ public partial class SquadCharacterController
     private bool observedStandUpState;
     private float standUpRequestedAt;
     private float sittingIdleTrackingStartedAt;
-    private uint sittingActivityVersion;
+    private uint sittingMovementActivityVersion;
 
     public bool IsSittingRequested => sittingRequested;
     public bool IsInSittingCycle => sittingRequested || sittingMovementSuppressionActive;
@@ -58,7 +58,7 @@ public partial class SquadCharacterController
             sittingRequested = true;
             waitingForStandUpCompletion = false;
             observedStandUpState = false;
-            sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+            sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
             SetAnimatorBoolIfValid(sittingParam, true);
             return true;
         }
@@ -69,7 +69,7 @@ public partial class SquadCharacterController
         }
 
         sittingRequested = false;
-        sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+        sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
         SetAnimatorBoolIfValid(sittingParam, false);
 
         if (!sittingMovementSuppressionActive ||
@@ -91,14 +91,14 @@ public partial class SquadCharacterController
         waitingForStandUpCompletion = false;
         observedStandUpState = false;
         sittingIdleTrackingStartedAt = Time.unscaledTime;
-        sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+        sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
         SetAnimatorBoolIfValid(sittingParam, false);
     }
 
     private void ResetSittingIdleTimer()
     {
         sittingIdleTrackingStartedAt = Time.unscaledTime;
-        sittingActivityVersion = LocalInputRouter.GameplayActivityVersion;
+        sittingMovementActivityVersion = LocalInputRouter.CharacterMovementActivityVersion;
     }
 
     private void UpdateSittingState()
@@ -116,7 +116,7 @@ public partial class SquadCharacterController
 
         if (sittingRequested)
         {
-            if (LocalInputRouter.GameplayActivityVersion != sittingActivityVersion)
+            if (LocalInputRouter.CharacterMovementActivityVersion != sittingMovementActivityVersion)
             {
                 TrySetSitting(false);
             }
@@ -147,7 +147,7 @@ public partial class SquadCharacterController
         if (!isActiveAndEnabled ||
             animator == null ||
             currentHp <= 0 ||
-            IsUccFlightActive ||
+            IsFlightActive ||
             !HasAnimatorParameter(sittingParam, AnimatorControllerParameterType.Bool))
         {
             return false;

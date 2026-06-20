@@ -56,6 +56,7 @@ public static class LocalInputRouter
     private static bool triggerMuninConsumed;
     private static float lastGameplayActivityTime = float.NegativeInfinity;
     private static uint gameplayActivityVersion;
+    private static uint characterMovementActivityVersion;
 
     public static float InputDebounceSeconds { get; set; } = 0.15f;
 
@@ -73,6 +74,7 @@ public static class LocalInputRouter
     public static bool RightShoulderPressed => rightShoulderPressed;
     public static float LastGameplayActivityTime => lastGameplayActivityTime;
     public static uint GameplayActivityVersion => gameplayActivityVersion;
+    public static uint CharacterMovementActivityVersion => characterMovementActivityVersion;
     internal static bool IsInteractConsumed => interactConsumed;
     internal static bool IsTriggerMuninConsumed => triggerMuninConsumed;
 
@@ -105,6 +107,10 @@ public static class LocalInputRouter
 
         rawMoveValue = value;
         ApplyMoveRouting(suppressImmediateCharacterMove: false);
+        if (moveValue.sqrMagnitude > 0.0001f)
+        {
+            characterMovementActivityVersion++;
+        }
     }
 
     internal static void SetCameraFreeModeActive(bool active, bool suppressImmediateCharacterMove)
@@ -280,7 +286,8 @@ public static class LocalInputRouter
         }
 
         interactConsumed = false;
-        if (RuntimeOutlineSelectionManager.ActiveInteractable is ILocalInteractHandler activeHandler &&
+        if (!InputFocusStack.HasAnyFocus() &&
+            RuntimeOutlineSelectionManager.ActiveInteractable is ILocalInteractHandler activeHandler &&
             activeHandler.TryHandleLocalInteract())
         {
             interactConsumed = true;
