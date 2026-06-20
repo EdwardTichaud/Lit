@@ -22,72 +22,23 @@ MonoBehaviour:
   stopActiveAbilitiesOnLock: 1
   useUnscaledTime: 1
   startFromBlack: 1
-  openingFadeDuration: 0
+  openingFadeDuration: 2
   fadeToBlackBeforeGameplay: 0
   closingFadeDuration: 0
   fadeFromBlackAfterGameplayRestore: 0
   gameplayFadeInDuration: 0
   steps:
-  - label: Asseoir toute la squad
-    type: 5
-    skippable: 0
-    actorId: 
-    listenerId: 
-    speakerNameOverride: 
-    voiceLine: {fileID: 0}
-    waitForInteractAfterLine: 0
-    focusCameraOnSpeaker: 0
-    dialogueCameraProfile: {fileID: 0}
-    cameraPointId: 
-    cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0
-    cameraHoldDuration: 0
-    fadeAlpha: 0
-    fadeDuration: 0
-    duration: 1
-    animatorTrigger: 
-    applyToWholeSquad: 1
-    sitting: 1
-    startDirectlyInSittingIdle: 1
-    directorId: 
-    timeline: {fileID: 0}
-    waitForTimelineCompletion: 1
-    eventId: 
-  - label: "R\xE9v\xE9ler la sc\xE8ne depuis le noir"
-    type: 0
-    skippable: 0
-    actorId: 
-    listenerId: 
-    speakerNameOverride: 
-    voiceLine: {fileID: 0}
-    waitForInteractAfterLine: 0
-    focusCameraOnSpeaker: 0
-    dialogueCameraProfile: {fileID: 0}
-    cameraPointId: 
-    cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0
-    cameraHoldDuration: 0
-    fadeAlpha: 0
-    fadeDuration: 4
-    duration: 0
-    animatorTrigger: 
-    applyToWholeSquad: 0
-    sitting: 0
-    directorId: 
-    timeline: {fileID: 0}
-    waitForTimelineCompletion: 1
-    eventId: 
-  - label: Link - On a eu chaud
+  - label: 
     type: 1
     skippable: 1
-    actorId: link
+    actorId: luna
     listenerId: lucian
     speakerNameOverride: 
     voiceLine: {fileID: 11400000, guid: bd6441722c4940c5a5db44b52110f2bc, type: 2}
     waitForInteractAfterLine: 0
     dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
-    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
+    dialogueCameraProfile: {fileID: 11400000, guid: 9865d77a608aafc4b8568202fe7181cd, type: 2}
     cameraPointId: 
     cameraProfile: {fileID: 0}
     cameraTransitionDuration: 0.7
@@ -98,45 +49,99 @@ MonoBehaviour:
     animatorTrigger: 
     applyToWholeSquad: 0
     sitting: 0
+    startDirectlyInSittingIdle: 0
     directorId: 
     timeline: {fileID: 0}
     waitForTimelineCompletion: 1
     eventId: 
-  - label: Lucian - Des nouvelles de Corvin
-    type: 1
-    skippable: 1
-    actorId: lucian
-    listenerId: mia
-    speakerNameOverride: 
-    voiceLine: {fileID: 11400000, guid: 8aed318bc99b4635b795e3e50a01d202, type: 2}
-    waitForInteractAfterLine: 0
-    dialogueMaxDisplayDuration: 0
-    focusCameraOnSpeaker: 1
-    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
-    cameraPointId: 
-    cameraProfile: {fileID: 0}
-    cameraTransitionDuration: 0.7
-    cameraHoldDuration: 0
-    fadeAlpha: 0
-    fadeDuration: 0
-    duration: 0
-    animatorTrigger: 
-    applyToWholeSquad: 0
-    sitting: 0
-    directorId: 
-    timeline: {fileID: 0}
-    waitForTimelineCompletion: 1
-    eventId: 
-  - label: "Mia - Toujours \xE0 faire parler de lui"
+  - label: 
     type: 1
     skippable: 1
     actorId: mia
+    listenerId: mia
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: 1e3d45858b9f41b489e479709643f7ee, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: 9865d77a608aafc4b8568202fe7181cd, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: luna
     listenerId: lucian
     speakerNameOverride: 
     voiceLine: {fileID: 11400000, guid: af11bf7ec45e4cc296c901458a9f8f49, type: 2}
     waitForInteractAfterLine: 0
     dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: 9865d77a608aafc4b8568202fe7181cd, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: lucian
+    listenerId: lucian
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: 8aed318bc99b4635b795e3e50a01d202, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: 9865d77a608aafc4b8568202fe7181cd, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: mia
+    listenerId: lucian
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: 91e0bc6aac4457441aa144efb80e9ff5, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
     dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
     cameraPointId: 
     cameraProfile: {fileID: 0}
@@ -148,6 +153,111 @@ MonoBehaviour:
     animatorTrigger: 
     applyToWholeSquad: 0
     sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: lucian
+    listenerId: lucian
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: 81fbad9960b2a8c4ea8b690bdb51dbd1, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: luna
+    listenerId: lucian
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: b1f38e62fb9983d4d9aeb02ce27c2d04, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: mia
+    listenerId: lucian
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: 98f949c4a1ac10048b710dc2499e795c, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    directorId: 
+    timeline: {fileID: 0}
+    waitForTimelineCompletion: 1
+    eventId: 
+  - label: 
+    type: 1
+    skippable: 1
+    actorId: lucian
+    listenerId: lucian
+    speakerNameOverride: 
+    voiceLine: {fileID: 11400000, guid: aadfc180c45e7e74b8da6fe5c7958203, type: 2}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 1
+    dialogueCameraProfile: {fileID: 11400000, guid: d48c76dd01f8be94ab214d78e72489fa, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0.7
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
     directorId: 
     timeline: {fileID: 0}
     waitForTimelineCompletion: 1

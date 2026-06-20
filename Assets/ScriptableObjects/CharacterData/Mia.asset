@@ -16,7 +16,7 @@ MonoBehaviour:
   characterId: mia
   characterName: Mia
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
-  model: {fileID: 2784444758471557209, guid: 7f23c63539d631545be5393362b755ec, type: 3}
+  model: {fileID: 2784444758471557209, guid: 3cf1d0ee5d2d7f146b20b31e16b0e489, type: 3}
   worldPrefab: {fileID: 0}
   skills:
   - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
