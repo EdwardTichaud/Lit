@@ -20,7 +20,8 @@ MonoBehaviour:
   targetId: 
   targetDisplayName: 
   expectedAnswerType: 5
-  apparitionLine: "Tu es arriv\xE9 tard...\nIls sont d\xE9j\xE0 pass\xE9s."
+  apparitionLine: "Il faut les pr\xE9venir.\nIls doivent fermer les portes.\nC'est
+    au del\xE0 de ce que nous imaginions..."
   question: 
   knowledgeUnlockedOnListen: []
   reactions:
@@ -41,7 +42,7 @@ MonoBehaviour:
     triggerEffectIds:
     - ulric_dissolve
     notes: 
-  missingKnowledgeLine: "Il manque encore un \xE9l\xE9ment pour comprendre ce souvenir."
+  missingKnowledgeLine: 
   evidence: []
   dissolveTargetGameObjectIds:
   - 7f8c1457474e40a085c9d3acdef714d3
