@@ -1,0 +1,36 @@
+# Netcode
+
+## Rôle
+
+Créer l’infrastructure NGO, connecter les joueurs, attribuer les personnages et
+faire respecter l’autorité serveur.
+
+## Classes principales
+
+- `NetcodeBootstrap` : crée `NetworkManager`, transport et services persistants.
+- `NetcodeLauncher` / `NetcodeConnectionApproval` : host/client et validation.
+- `NetcodePlayerSpawner` : attribution, spawn et ownership des personnages.
+- `WorldInteractionService` : assignations client-personnage et interactions monde.
+- `NetworkCharacterInput` : commandes du propriétaire vers le serveur.
+- `NetworkInventory` : réplication d’inventaire.
+- `NetcodePrefabRegistry` : mapping des prefabs réseau.
+
+## Flux principaux
+
+1. `NetcodeBootstrap` s’installe avant les scènes.
+2. Le launcher démarre host ou client avec Unity Transport.
+3. Le serveur choisit un `CharacterData`, crée ou réutilise son instance et
+   donne l’ownership au client.
+4. `WorldInteractionService` publie l’assignation.
+5. `NetcodeLocalPlayer` / les utilitaires mettent à jour `LocalPlayerContext`.
+6. Les inputs du propriétaire sont envoyés au serveur, qui pilote le gameplay.
+
+## Pièges observés
+
+- `AutoSpawnPlayerPrefabClientSide` est désactivé : le spawner projet est maître.
+- L’ownership NGO et l’assignation métier sont deux informations distinctes.
+- Les mutations monde, inventaire et combat sont autoritaires serveur.
+- Les objets de scène sont préparés par `NetcodeSceneObjectInstaller` à chaque
+  chargement.
+- Tester les changements en host et client distant, pas seulement en host local.
+
