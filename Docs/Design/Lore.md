@@ -344,13 +344,18 @@ relations propres, mais leur notion reste le cœur constant de leur identité.
 Ils arrivent dans le château plusieurs siècles après la disparition de ses
 habitants.
 
-Le personnage du joueur fait pleinement partie de cette organisation et connaît
-déjà les autres Explorateurs. Le joueur, lui, découvre progressivement leur passé
-commun.
+Dans la campagne solo, le joueur contrôle Lucian. Lucian fait pleinement partie
+de cette organisation et connaît déjà les autres Explorateurs. Le joueur, lui,
+découvre progressivement leur passé commun.
+
+Le jeu débute dans un hub où Lucian échange avec les autres Explorateurs. Ce hub
+sert à présenter les personnages, développer progressivement leurs relations et
+introduire la mission avant l'exploration du château.
 
 L'histoire des Explorateurs doit rester en arrière-plan pendant une grande partie
 du jeu. Leur rôle principal est de découvrir celle du château, de ses familles,
-de ses croyances et du rituel perpétué sans en comprendre la raison.
+de ses croyances et du rituel perpétué sans en comprendre la raison. Ils ne
+deviennent réellement importants que progressivement.
 
 ### Lucian — l'Espoir
 

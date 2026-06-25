@@ -79,7 +79,7 @@ Material:
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
-    - _DissolveAmount: 0.22
+    - _DissolveAmount: 0.408
     - _DissolveEdgeIntensity: 1
     - _DissolveEdgeWidth: 0.008
     - _DissolveNoiseScale: 1.58
@@ -137,11 +137,11 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
     - _DissolveDirection: {r: 0, g: 1, b: 0, a: 0}
-    - _DissolveEdgeColor: {r: 181.01933, g: 86.818665, b: 0, a: 0.78039217}
+    - _DissolveEdgeColor: {r: 0, g: 0, b: 0, a: 0.78039217}
     - _DoubleSidedConstants: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _GhostTint: {r: 5.855522, g: 12.770307, b: 16.121698, a: 0.78039217}
+    - _GhostTint: {r: 0, g: 0, b: 0, a: 0.78039217}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

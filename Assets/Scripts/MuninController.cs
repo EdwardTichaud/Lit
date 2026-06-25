@@ -33,6 +33,8 @@ public class MuninController : MonoBehaviour
     private float followSmoothTime = 0.22f;
     [SerializeField, Min(0f), Tooltip("Anticipe legerement la vitesse horizontale du joueur pour eviter le retard visible en sprint.")]
     private float targetVelocityLeadTime = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Distance ajoutee dans la direction de deplacement horizontale pour que Munin montre davantage la route.")]
+    private float movementDirectionLeadDistance = 0.45f;
     [SerializeField, Range(0.1f, 0.98f), Tooltip("Ratio de la distance max a partir duquel Munin accelere son rattrapage.")]
     private float catchUpDistanceRatio = 0.88f;
     [SerializeField, Range(0.05f, 1f), Tooltip("Multiplicateur du smooth time pendant le rattrapage. Plus bas = rattrapage plus rapide.")]
@@ -682,10 +684,18 @@ public class MuninController : MonoBehaviour
     private Vector3 ResolveFollowTargetPosition(float deltaTime)
     {
         Vector3 targetPosition = ResolveBaseTargetPosition();
-        if (targetVelocityLeadTime > 0f)
+        if (targetVelocityLeadTime > 0f || movementDirectionLeadDistance > 0f)
         {
             Vector3 targetVelocity = Vector3.ProjectOnPlane(ResolveTargetVelocity(deltaTime), Vector3.up);
-            targetPosition += targetVelocity * targetVelocityLeadTime;
+            if (targetVelocityLeadTime > 0f)
+            {
+                targetPosition += targetVelocity * targetVelocityLeadTime;
+            }
+
+            if (movementDirectionLeadDistance > 0f && targetVelocity.sqrMagnitude > 0.0001f)
+            {
+                targetPosition += targetVelocity.normalized * movementDirectionLeadDistance;
+            }
         }
 
         return targetPosition + EvaluateDrift() + EvaluateFollowSpasm(deltaTime);
@@ -1257,6 +1267,7 @@ public class MuninController : MonoBehaviour
         movementSpeed = Mathf.Max(0.01f, movementSpeed);
         followSmoothTime = Mathf.Max(0.01f, followSmoothTime);
         targetVelocityLeadTime = Mathf.Max(0f, targetVelocityLeadTime);
+        movementDirectionLeadDistance = Mathf.Max(0f, movementDirectionLeadDistance);
         catchUpDistanceRatio = Mathf.Clamp(catchUpDistanceRatio, 0.1f, 0.98f);
         catchUpSmoothTimeMultiplier = Mathf.Clamp(catchUpSmoothTimeMultiplier, 0.05f, 1f);
         targetVelocitySharpness = Mathf.Max(0f, targetVelocitySharpness);

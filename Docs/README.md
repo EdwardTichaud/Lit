@@ -48,12 +48,23 @@ sections détaillées restent accessibles depuis leur table des matières.
 Explorateurs étudient les vestiges d'un peuple qui a vécu enfermé pendant 666 ans
 dans un château conçu pour préserver certaines lignées jusqu'à un rituel.
 
+Le projet est structuré autour de deux expériences complémentaires : une
+campagne solo narrative centrée sur Lucian et un mode coopératif rejouable. Les
+deux utilisent le même château, le même lore et les mêmes mécaniques de base ;
+le mode coopératif est une autre manière de parcourir le château, pas une
+campagne séparée.
+
 La direction actuelle privilégie :
 
 - l'observation et la comparaison des traces ;
 - les familles, registres, lignées et objets transmis ;
 - les connaissances persistantes comme mémoire de l'enquête ;
 - les fantômes apaisés par des connaissances retrouvées ;
+- la progression temporelle de `666` vers `000` ;
+- les Flames communes comme outils d'interaction et les Ancient Flames comme
+  progression temporelle ;
+- les portails comme outils de navigation entre districts, zones et époques ;
+- les compositions coopératives comme moteur principal de rejouabilité ;
 - des systèmes simples et maintenables par un développeur solo ;
 - un combat rare, utilisé comme tension ponctuelle.
 
@@ -148,4 +159,7 @@ La checklist détaillée se trouve dans
   le rituel et les traces bleues font partie du lore canonique.
 - `AgeManager` et la grille `TemporalAge` utilisent tous deux des pas de
   111 ans : `666`, `555`, `444`, `333`, `222`, `111`, `000`.
+- La campagne solo et le mode coopératif parcourent le même château ; le coop
+  vise la rejouabilité par les compositions, rôles complémentaires et parcours
+  optimisés.
 - Les idées non confirmées ne sont plus mélangées aux faits canoniques.
