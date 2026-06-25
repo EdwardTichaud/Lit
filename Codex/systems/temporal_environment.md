@@ -13,6 +13,8 @@ l’environnement HDRP du joueur local.
 - `TimePeriodVisibility` : filtrage des objets selon le temps.
 - `EnvironmentManager` / `EnvironmentZone` : profils HDRP et blending local.
 - `Flame` : source d’état utilisée notamment par `AgeManager`.
+- `FlameGuidanceArcRenderer` : feedback local auto-installé qui affiche des arcs
+  discrets depuis une Ancient Flame proche vers les Flames éteintes les plus proches.
 
 ## Flux principaux
 
@@ -21,6 +23,9 @@ l’environnement HDRP du joueur local.
 - `AncientFlameCompassUI` est un affichage client-local auto-installé qui lit
   le personnage local et pointe vers l’Ancient Flame active la plus proche, en
   filtrant optionnellement les Ancient Flames déjà allumées.
+- `FlameGuidanceArcRenderer` lit le personnage local; près d’une Ancient Flame,
+  il trace un arc or vers l’Ancient Flame éteinte la plus proche et un arc blanc
+  vers la Flame commune éteinte la plus proche.
 - Un changement actualise visibilité temporelle, affichages et propriété shader.
 - Une `TemporalZone` peut appliquer explicitement un autre âge à ses objets.
 - `EnvironmentManager` suit `LocalPlayerContext`, évalue les zones autour du
