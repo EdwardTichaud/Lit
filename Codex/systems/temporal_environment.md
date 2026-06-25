@@ -18,6 +18,9 @@ l’environnement HDRP du joueur local.
 
 - `AgeManager` collecte les Ancient Flames, compte celles allumées et calcule
   l’année globale par pas de 111 ans.
+- `AncientFlameCompassUI` est un affichage client-local auto-installé qui lit
+  le personnage local et pointe vers l’Ancient Flame active la plus proche, en
+  filtrant optionnellement les Ancient Flames déjà allumées.
 - Un changement actualise visibilité temporelle, affichages et propriété shader.
 - Une `TemporalZone` peut appliquer explicitement un autre âge à ses objets.
 - `EnvironmentManager` suit `LocalPlayerContext`, évalue les zones autour du
@@ -31,4 +34,3 @@ l’environnement HDRP du joueur local.
 - Les profils HDRP source sont lus, pas modifiés; le manager travaille sur des
   profils runtime.
 - Les objets interactifs peuvent être exclus par `TimePeriodVisibility`.
-

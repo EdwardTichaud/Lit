@@ -7,6 +7,9 @@ de l’état entre deux parties.
 
 ## Classes principales
 
+Emplacement canonique des scripts de session de sauvegarde :
+`Assets/Persistence/Save/Session/`.
+
 - `SaveSessionManager` : sessions, slots, métadonnées, chemin du slot actif.
 - `MainMenuController` : création/sélection d’une partie et chargement de scène.
 - `GameplayRuntimeReset` : nettoyage centralisé des singletons et caches runtime.
@@ -27,4 +30,3 @@ de l’état entre deux parties.
 - Les statiques doivent être réinitialisés même si Domain Reload est désactivé.
 - Une scène lancée directement peut ne pas avoir de slot actif; les fallbacks
   globaux sont généralement désactivés pour éviter les fuites entre parties.
-

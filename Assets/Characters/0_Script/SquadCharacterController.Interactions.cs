@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public partial class SquadCharacterController
 {
@@ -30,10 +29,8 @@ public partial class SquadCharacterController
 
     private readonly Collider[] interactionDetectionHits = new Collider[InteractionDetectionHitCapacity];
     private readonly List<ICharacterDetectedInteractable> interactionDetectionCandidates = new List<ICharacterDetectedInteractable>(16);
-    private readonly List<ICharacterDetectedInteractable> switchTargetCandidates = new List<ICharacterDetectedInteractable>(8);
     private readonly HashSet<Object> interactionDetectionUniqueTargets = new HashSet<Object>();
     private ICharacterDetectedInteractable currentDetectedInteractable;
-    private ICharacterDetectedInteractable manualSwitchedInteractable;
     private float currentTargetLastCameraVisibleTime = float.NegativeInfinity;
 
     public Vector3 GetInteractionOriginWorldPosition()
@@ -128,7 +125,6 @@ public partial class SquadCharacterController
     {
         if (interactionDetectionCandidates.Count == 0)
         {
-            manualSwitchedInteractable = null;
             return null;
         }
 
@@ -136,20 +132,6 @@ public partial class SquadCharacterController
         Camera interactionCamera = requireInteractionTargetVisibleByCamera
             ? CharacterInteractionDetection.ResolveInteractionCamera()
             : null;
-
-        if (IsInteractionDetectionCandidate(manualSwitchedInteractable) &&
-            TryEvaluateInteractionCandidate(
-                manualSwitchedInteractable,
-                origin,
-                forward,
-                interactionCamera,
-                out _,
-                out _))
-        {
-            return manualSwitchedInteractable;
-        }
-
-        manualSwitchedInteractable = null;
 
         ICharacterDetectedInteractable bestTarget = null;
         float bestDistanceSqr = float.PositiveInfinity;
@@ -179,117 +161,6 @@ public partial class SquadCharacterController
         }
 
         return bestTarget;
-    }
-
-    private void OnSwitchTargetPerformed(InputAction.CallbackContext context)
-    {
-        if (!enableCharacterInteractionDetection ||
-            !isActiveAndEnabled ||
-            !IsLocalControlledCharacter() ||
-            InputFocusStack.HasAnyFocus())
-        {
-            return;
-        }
-
-        if (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked())
-        {
-            return;
-        }
-
-        if (!CanUseLitInteractionsWithUcc())
-        {
-            ClearLocalInteractionTarget();
-            return;
-        }
-
-        Vector3 origin = GetInteractionOriginWorldPosition();
-        RefreshInteractionDetectionCandidates(origin);
-
-        if (!TrySelectNextSwitchTarget(origin, out ICharacterDetectedInteractable nextTarget))
-        {
-            return;
-        }
-
-        manualSwitchedInteractable = nextTarget;
-        ApplyLocalInteractionTarget(nextTarget);
-    }
-
-    private bool TrySelectNextSwitchTarget(Vector3 origin, out ICharacterDetectedInteractable nextTarget)
-    {
-        nextTarget = null;
-        switchTargetCandidates.Clear();
-
-        Vector3 forward = ResolveInteractionForward();
-        Camera interactionCamera = requireInteractionTargetVisibleByCamera
-            ? CharacterInteractionDetection.ResolveInteractionCamera()
-            : null;
-        for (int i = 0; i < interactionDetectionCandidates.Count; i++)
-        {
-            ICharacterDetectedInteractable candidate = interactionDetectionCandidates[i];
-            if (!TryEvaluateInteractionCandidate(candidate, origin, forward, interactionCamera, out _, out _))
-            {
-                continue;
-            }
-
-            switchTargetCandidates.Add(candidate);
-        }
-
-        if (switchTargetCandidates.Count == 0)
-        {
-            manualSwitchedInteractable = null;
-            return false;
-        }
-
-        switchTargetCandidates.Sort((left, right) => CompareSwitchTargetCandidates(left, right, origin, forward, interactionCamera));
-
-        int currentIndex = FindSwitchTargetCandidateIndex(currentDetectedInteractable);
-        if (currentIndex < 0)
-        {
-            currentIndex = FindSwitchTargetCandidateIndex(manualSwitchedInteractable);
-        }
-
-        nextTarget = currentIndex >= 0
-            ? switchTargetCandidates[(currentIndex + 1) % switchTargetCandidates.Count]
-            : switchTargetCandidates[0];
-
-        return nextTarget != null;
-    }
-
-    private int CompareSwitchTargetCandidates(
-        ICharacterDetectedInteractable left,
-        ICharacterDetectedInteractable right,
-        Vector3 origin,
-        Vector3 forward,
-        Camera interactionCamera)
-    {
-        TryEvaluateInteractionCandidate(left, origin, forward, interactionCamera, out _, out float leftDistanceSqr);
-        TryEvaluateInteractionCandidate(right, origin, forward, interactionCamera, out _, out float rightDistanceSqr);
-
-        int distanceComparison = leftDistanceSqr.CompareTo(rightDistanceSqr);
-        if (distanceComparison != 0)
-        {
-            return distanceComparison;
-        }
-
-        return GetInteractionCandidateTieBreaker(left).CompareTo(GetInteractionCandidateTieBreaker(right));
-    }
-
-    private int FindSwitchTargetCandidateIndex(ICharacterDetectedInteractable target)
-    {
-        if (target == null)
-        {
-            return -1;
-        }
-
-        for (int i = 0; i < switchTargetCandidates.Count; i++)
-        {
-            if (ReferenceEquals(switchTargetCandidates[i], target))
-            {
-                return i;
-            }
-        }
-
-        return -1;
     }
 
     private bool TryEvaluateInteractionCandidate(
@@ -440,24 +311,6 @@ public partial class SquadCharacterController
         return target is Flame;
     }
 
-    private bool IsInteractionDetectionCandidate(ICharacterDetectedInteractable target)
-    {
-        if (target == null)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < interactionDetectionCandidates.Count; i++)
-        {
-            if (ReferenceEquals(interactionDetectionCandidates[i], target))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static int GetInteractionCandidateTieBreaker(ICharacterDetectedInteractable target)
     {
         return target is Object unityTarget && unityTarget != null
@@ -493,8 +346,6 @@ public partial class SquadCharacterController
 
     private void ClearLocalInteractionTarget()
     {
-        manualSwitchedInteractable = null;
-
         if (currentDetectedInteractable == null)
         {
             currentTargetLastCameraVisibleTime = float.NegativeInfinity;

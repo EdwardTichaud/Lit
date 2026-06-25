@@ -7,6 +7,8 @@ transférer l’état complet aux clients qui rejoignent tardivement.
 
 ## Classes principales
 
+Emplacement canonique : `Assets/Persistence/Save/`.
+
 - `CharacterStateStore` : JSON personnages, roster, inventaires et compatibilité.
 - `WorldSaveAdapter` : lecture/écriture du snapshot binaire du slot actif.
 - `WorldStateManager` : capture et application ordonnée d’un `WorldSnapshot`.
@@ -42,4 +44,6 @@ le monde → restaure son personnage local → envoie `client_ready`.
 - Le snapshot doit correspondre à la scène active.
 - Les clients sont bloqués par `JoinSyncSystem.IsGameplayBlocked` pendant la sync.
 - Les snapshots Building legacy sont conservés mais ignorés si le système est désactivé.
-
+- `EditorAutoSave` sauvegarde scènes/assets côté Editor; la persistance runtime
+  reste isolée dans `Application.persistentDataPath` et ses écritures/lectures
+  runtime doivent être ignorées hors Play Mode.

@@ -20,8 +20,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 1. Le personnage effectue un `OverlapSphere`.
 2. Chaque collider est résolu vers un interactable et validé par portée,
    direction, visibilité et règles temporelles.
-3. La cible automatique est la cible valide la plus proche; `SwitchTarget`
-   conserve explicitement une autre cible tant qu’elle reste valide.
+3. La cible retenue est toujours la cible valide la plus proche; l’ancien
+   `SwitchTarget` ne force plus une cible manuelle.
 4. La cible reçoit le personnage détecté et devient l’Outline actif.
 5. `Interact` appelle d’abord le handler actif, puis ouvre l’UI ou demande une
    mutation au serveur.
@@ -36,4 +36,3 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - Le Building legacy est désactivé via
   `Resources/LegacyBuildingSystemSettings.asset`; conserver ses données pour les
   anciennes sauvegardes.
-

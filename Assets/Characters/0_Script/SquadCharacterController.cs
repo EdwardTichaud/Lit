@@ -307,12 +307,10 @@ public partial class SquadCharacterController : MonoBehaviour
         RefreshAnimationReferences();
         UpdateAudioListenerState(true);
         ResetSittingIdleTimer();
-        LocalInputRouter.SwitchTarget += OnSwitchTargetPerformed;
     }
 
     private void OnDisable()
     {
-        LocalInputRouter.SwitchTarget -= OnSwitchTargetPerformed;
         CancelSittingState();
         ClearLocalInteractionTarget();
         SetAudioListenerActive(false);

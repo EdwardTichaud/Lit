@@ -46,9 +46,9 @@ Préserver l'architecture du projet, minimiser les régressions et transformer l
 
 ## Session et sauvegardes
 
-* `Assets/Scripts/Menu/SaveSessionManager.cs`
-* `Assets/Scripts/GameplayRuntimeReset.cs`
-* `Assets/Scripts/CharacterStateStore.cs`
+* `Assets/Persistence/Save/Session/SaveSessionManager.cs`
+* `Assets/Persistence/Save/Session/GameplayRuntimeReset.cs`
+* `Assets/Persistence/Save/Character/CharacterStateStore.cs`
 
 ## Squad et personnage
 
@@ -82,9 +82,9 @@ Préserver l'architecture du projet, minimiser les régressions et transformer l
 
 ## Persistance monde
 
-* `Assets/Scripts/Netcode/Persistence/WorldStateManager.cs`
-* `Assets/Scripts/Netcode/Persistence/PersistentNetworkObject.cs`
-* `Assets/Scripts/Netcode/Persistence/JoinSyncSystem.cs`
+* `Assets/Persistence/Save/World/WorldStateManager.cs`
+* `Assets/Persistence/Save/World/PersistentNetworkObject.cs`
+* `Assets/Persistence/Save/World/JoinSyncSystem.cs`
 
 ## Narration
 
