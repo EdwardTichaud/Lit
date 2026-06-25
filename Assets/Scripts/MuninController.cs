@@ -34,7 +34,7 @@ public class MuninController : MonoBehaviour
     [SerializeField, Min(0f), Tooltip("Anticipe legerement la vitesse horizontale du joueur pour eviter le retard visible en sprint.")]
     private float targetVelocityLeadTime = 0.08f;
     [SerializeField, Min(0f), Tooltip("Distance ajoutee dans la direction de deplacement horizontale pour que Munin montre davantage la route.")]
-    private float movementDirectionLeadDistance = 0.45f;
+    private float movementDirectionLeadDistance = 0.6f;
     [SerializeField, Range(0.1f, 0.98f), Tooltip("Ratio de la distance max a partir duquel Munin accelere son rattrapage.")]
     private float catchUpDistanceRatio = 0.88f;
     [SerializeField, Range(0.05f, 1f), Tooltip("Multiplicateur du smooth time pendant le rattrapage. Plus bas = rattrapage plus rapide.")]
