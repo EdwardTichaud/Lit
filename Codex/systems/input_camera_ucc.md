@@ -11,7 +11,8 @@ la façade gameplay Lit à Opsive UCC et à sa caméra.
 - `LocalPlayerInput` : capture Input System et singleton local.
 - `LocalInputRouter` : événements, valeurs continues, debounce et consommation.
 - `InputFocusStack` : priorité UI/cinématique sur le gameplay.
-- `LitOpsiveLocomotionBridge` : mouvement, saut, vol et verrous UCC.
+- `LitOpsiveLocomotionBridge` : mouvement, saut, vol, franchissement d'obstacles
+  bas et verrous UCC.
 - `LitUccCameraCharacterBinder` : liaison de la caméra au `LocalPlayerContext`.
 - `NetworkCharacterInput` : relais des commandes du propriétaire vers le serveur.
 
@@ -28,6 +29,11 @@ Le flux se divise ensuite :
 `SquadCharacterController` convertit l’input en espace monde, puis
 `LitOpsiveLocomotionBridge` pilote UCC.
 
+Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
+les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
+franchissables lancent un court traversal scripté avec trigger Animator
+configurable, et les obstacles plus hauts restent bloquants.
+
 ## Pièges observés
 
 - Modifier l’asset `.inputactions`, jamais le wrapper C# généré.
@@ -37,4 +43,3 @@ Le flux se divise ensuite :
   à chaque session Play.
 - Les cinématiques utilisent des verrous externes UCC; toujours restaurer le
   contrôle lors d’un abort ou `OnDisable`.
-

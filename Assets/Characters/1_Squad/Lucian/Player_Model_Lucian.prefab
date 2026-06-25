@@ -3146,6 +3146,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 113a12078d144b4c86b6e74a3c94edab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLocomotionBridge
+  enableObstacleTraversal: 1
+  ignoredObstacleMaxHeight: 0.18
+  traversableObstacleMaxHeight: 0.9
+  obstacleProbeDistance: 0.75
+  obstacleProbeRadius: 0.22
+  obstacleProbeBaseHeight: 0.25
+  obstacleLandingDistance: 0.55
+  obstacleTraversalDuration: 0.42
+  obstacleTraversalArcHeight: 0.25
+  obstacleTraversalMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  obstacleTraversalTriggerParam: JumpTrigger
   squadController: {fileID: 0}
   locomotion: {fileID: 0}
   locomotionHandler: {fileID: 0}
@@ -9636,6 +9649,10 @@ PrefabInstance:
       propertyPath: targetPlayer
       value: 
       objectReference: {fileID: 2233782780378164146}
+    - target: {fileID: 1894658953683459710, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
+      propertyPath: movementDirectionLeadDistance
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2559203603118137772, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
       propertyPath: m_IsActive
       value: 1

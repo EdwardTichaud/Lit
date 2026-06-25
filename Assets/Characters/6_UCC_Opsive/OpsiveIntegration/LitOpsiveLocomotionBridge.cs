@@ -475,6 +475,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelObstacleTraversal();
         RestoreAbilitiesAfterScriptedTraversal();
         RestoreGravityAfterScriptedTraversal();
         if (externalLockInputDisabled || scriptedTraversalInputDisabled)
@@ -507,6 +508,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (IsInputSuppressedByUcc)
         {
             ForceZeroInput();
+            RefreshSquadFacadeSystems();
+            return;
+        }
+
+        if (TryStartObstacleTraversal())
+        {
             RefreshSquadFacadeSystems();
             return;
         }
