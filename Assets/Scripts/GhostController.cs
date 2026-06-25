@@ -193,8 +193,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private bool useDialoguePanelForFeedback = true;
     [SerializeField, Tooltip("Texte affiche si playOnce est actif et que le fantome est deja compris.")]
     private string alreadyUnderstoodMessage = "Ce souvenir a deja ete compris.";
-    [SerializeField, Tooltip("Prefixe optionnel devant la reponse du joueur.")]
+#pragma warning disable CS0414
+    [SerializeField, Tooltip("Conserve pour compatibilite des assets; les reactions affichent seulement la phrase de resolution.")]
     private string playerOptionPrefix = "Vous : ";
+#pragma warning restore CS0414
     [SerializeField, Tooltip("Prefixe optionnel devant la reponse du fantome.")]
     private string ghostResponsePrefix = "";
 
@@ -1207,19 +1209,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private string BuildReactionFeedback(GhostKnowledgeReaction reaction)
     {
-        string option = reaction != null ? reaction.optionText : string.Empty;
         string response = reaction != null ? reaction.responseLine : string.Empty;
-        if (!string.IsNullOrWhiteSpace(option) && !string.IsNullOrWhiteSpace(playerOptionPrefix))
-        {
-            option = playerOptionPrefix + option.Trim();
-        }
-
         if (!string.IsNullOrWhiteSpace(response) && !string.IsNullOrWhiteSpace(ghostResponsePrefix))
         {
             response = ghostResponsePrefix + response.Trim();
         }
 
-        return JoinFeedbackLines(ghostData.apparitionLine, option, response);
+        return JoinFeedbackLines(string.Empty, string.Empty, response);
     }
 
     private bool ShowGhostFeedback(string message)

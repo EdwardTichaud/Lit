@@ -22,6 +22,9 @@ connaissances et résoudre les interactions narratives.
   dialogues et étapes, puis restaure le gameplay.
 - Les acteurs sont résolus par ID, squad ou `LocalPlayerContext`.
 - Les connaissances débloquent des réactions de fantômes et des effets de scène.
+- Quand une réaction de connaissance est disponible, le feedback du fantôme joue
+  seulement la réponse de résolution, sans répéter la ligne d’apparition, la
+  question par défaut ou l’option joueur.
 - Les contenus lisibles générés sont capturés dans `CharacterStateStore`.
 - Les séquences `playOnce` sont enregistrées dans les métadonnées du slot.
 
@@ -32,4 +35,3 @@ connaissances et résoudre les interactions narratives.
 - Les IDs narratifs sont persistants; les renommer nécessite une migration.
 - `GhostData` est une donnée d’auteur; l’état compris/résolu appartient au runtime.
 - Timeline est réservée aux chorégraphies complexes, pas aux dialogues ordinaires.
-
