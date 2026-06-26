@@ -3147,8 +3147,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLocomotionBridge
   enableObstacleTraversal: 1
-  ignoredObstacleMaxHeight: 0.18
-  traversableObstacleMaxHeight: 0.9
+  ignoredObstacleMaxHeight: 0.4
+  traversableObstacleMaxHeight: 1.6
   obstacleProbeDistance: 0.75
   obstacleProbeRadius: 0.22
   obstacleProbeBaseHeight: 0.25

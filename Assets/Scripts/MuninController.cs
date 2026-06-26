@@ -562,6 +562,7 @@ public class MuninController : MonoBehaviour
     public void EndExternalMotion(bool resumeFollowing = true)
     {
         CaptureWorldPose();
+        ResetTargetVelocityTracking();
         SetFollowState(resumeFollowing ? FollowState.Following : FollowState.Disabled);
     }
 
@@ -719,14 +720,27 @@ public class MuninController : MonoBehaviour
             return smoothedTargetVelocity;
         }
 
+        Vector3 positionalVelocity = Vector3.zero;
+        bool hasPositionalVelocity = hasLastTargetPosition && deltaTime > 0.0001f;
+        if (hasPositionalVelocity)
+        {
+            positionalVelocity = (targetPlayer.position - lastTargetPosition) / deltaTime;
+        }
+
         Vector3 rawVelocity = Vector3.zero;
         if (targetRigidbody != null)
         {
             rawVelocity = targetRigidbody.linearVelocity;
+            if (hasPositionalVelocity &&
+                positionalVelocity.sqrMagnitude > rawVelocity.sqrMagnitude + 0.0001f)
+            {
+                // UCC can move the Transform while Rigidbody velocity stays near zero.
+                rawVelocity = positionalVelocity;
+            }
         }
-        else if (hasLastTargetPosition && deltaTime > 0.0001f)
+        else if (hasPositionalVelocity)
         {
-            rawVelocity = (targetPlayer.position - lastTargetPosition) / deltaTime;
+            rawVelocity = positionalVelocity;
         }
 
         lastTargetPosition = targetPlayer.position;

@@ -24,6 +24,11 @@ groupes, le follow et les données runtime de chaque membre.
   `LocalCharacterChanged`.
 - `SquadAIManager` pilote les membres groupés et suspend le follow pendant une
   `StorySequence`.
+- Munin reste enfant logique du personnage pour les systèmes qui le résolvent
+  via le character root, mais son suivi visuel est piloté en position monde par
+  `MuninController`. L'avance de mouvement utilise le delta de position du
+  Transform si la vitesse Rigidbody du personnage ne reflète pas le déplacement
+  réel UCC.
 
 ## Pièges observés
 
@@ -33,4 +38,3 @@ groupes, le follow et les données runtime de chaque membre.
 - Le personnage local n’est pas toujours `SquadManager.currentCharacter` en
   multijoueur; utiliser `LocalPlayerContext`.
 - `SquadCharacterController` est réparti sur plusieurs fichiers `partial`.
-
