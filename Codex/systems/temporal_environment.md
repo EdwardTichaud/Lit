@@ -20,9 +20,10 @@ l’environnement HDRP du joueur local.
 
 - `AgeManager` collecte les Ancient Flames, compte celles allumées et calcule
   l’année globale par pas de 111 ans.
-- `AncientFlameCompassUI` est un affichage client-local auto-installé qui lit
-  le personnage local et pointe vers l’Ancient Flame active la plus proche, en
-  filtrant optionnellement les Ancient Flames déjà allumées.
+- `AncientFlameCompassUI` est un affichage client-local posé dans la scène. Il
+  lit le personnage local, tourne son cadran selon la caméra pour afficher les
+  points cardinaux et oriente sa flèche vers l’Ancient Flame active la plus
+  proche.
 - `FlameGuidanceArcRenderer` lit le personnage local; près d’une Ancient Flame,
   il trace un arc or vers l’Ancient Flame éteinte la plus proche et un arc blanc
   vers la Flame commune éteinte la plus proche.

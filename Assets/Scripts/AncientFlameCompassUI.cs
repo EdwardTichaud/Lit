@@ -1,40 +1,27 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-// UI locale: pointe vers l'Ancient Flame active la plus proche du personnage controle.
+// UI locale: affiche les points cardinaux et pointe vers l'Ancient Flame la plus proche du personnage controle.
 [DefaultExecutionOrder(-20)]
 [DisallowMultipleComponent]
 public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
 {
-    private const string RuntimeHostName = "AncientFlameCompassUI";
-
     private static AncientFlameCompassUI runtimeInstance;
 
     [Header("Behaviour")]
     [SerializeField, Tooltip("Masque la boussole si aucun personnage local ou aucune AncientFlame active n'est trouve.")]
     private bool hideWhenNoTarget = true;
-    [SerializeField, InspectorName("Ancient Flames eteintes uniquement"), Tooltip("Si actif, la boussole ignore les AncientFlames deja allumees.")]
-    private bool targetOnlyUnlitAncientFlames = true;
     [SerializeField, Min(0.05f), Tooltip("Intervalle de recherche de l'AncientFlame la plus proche.")]
     private float targetRefreshInterval = 0.35f;
-
-    [Header("Layout")]
-    [SerializeField, Tooltip("Position de la boussole depuis le coin haut droit.")]
-    private Vector2 topRightOffset = new Vector2(-28f, -28f);
-    [SerializeField, Min(56f), Tooltip("Taille du cadran de boussole.")]
-    private float compassSize = 82f;
 
     [Header("Display")]
     [SerializeField, Tooltip("Format de distance sous le cadran.")]
     private string distanceFormat = "Flame ancienne\n{0:0} m";
-    [SerializeField] private Color panelColor = new Color(0.035f, 0.04f, 0.055f, 0.76f);
-    [SerializeField] private Color dialColor = new Color(0.11f, 0.12f, 0.14f, 0.86f);
-    [SerializeField] private Color tickColor = new Color(0.74f, 0.68f, 0.5f, 0.72f);
-    [SerializeField] private Color needleColor = new Color(1f, 0.74f, 0.25f, 1f);
-    [SerializeField] private Color textColor = new Color(0.94f, 0.91f, 0.8f, 1f);
 
     private CanvasGroup rootGroup;
+    private Canvas rootCanvas;
+    private RectTransform compassRender;
+    private RectTransform arrowPivot;
     private RectTransform needlePivot;
     private TMP_Text distanceText;
     private Transform localCharacter;
@@ -48,26 +35,6 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
         runtimeInstance = null;
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void EnsureRuntimeInstance()
-    {
-        if (runtimeInstance != null)
-        {
-            return;
-        }
-
-        AncientFlameCompassUI existing = FindAnyObjectByType<AncientFlameCompassUI>();
-        if (existing != null)
-        {
-            runtimeInstance = existing;
-            return;
-        }
-
-        GameObject host = new GameObject(RuntimeHostName);
-        DontDestroyOnLoad(host);
-        runtimeInstance = host.AddComponent<AncientFlameCompassUI>();
-    }
-
     private void Awake()
     {
         if (runtimeInstance != null && runtimeInstance != this)
@@ -77,7 +44,11 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
         }
 
         runtimeInstance = this;
-        BuildRuntimeUI();
+        if (!TryBindExistingUI())
+        {
+            Debug.LogWarning("AncientFlameCompassUI requiert une UI de scene contenant Compass_Render et Arrow.", this);
+            enabled = false;
+        }
     }
 
     private void OnEnable()
@@ -186,11 +157,6 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
                 continue;
             }
 
-            if (targetOnlyUnlitAncientFlames && flame.IsLit)
-            {
-                continue;
-            }
-
             float distanceSqr = GetFlatSqrDistance(characterPosition, GetFlamePosition(flame));
             if (distanceSqr < closestSqr)
             {
@@ -202,6 +168,10 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
 
     private void UpdateCompassDirection()
     {
+        Vector3 forward = ResolveReferenceForward();
+        float cameraYaw = Vector3.SignedAngle(Vector3.forward, forward, Vector3.up);
+        SetScreenRotationZ(compassRender, cameraYaw);
+
         if (localCharacter == null || !IsUsableTarget(targetFlame))
         {
             UpdateVisibility();
@@ -222,9 +192,8 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
             return;
         }
 
-        Vector3 forward = ResolveReferenceForward();
         float angle = Vector3.SignedAngle(forward, delta.normalized, Vector3.up);
-        needlePivot.localEulerAngles = new Vector3(0f, 0f, -angle);
+        SetScreenRotationZ(ResolveArrowPivot(), -angle);
     }
 
     private Vector3 ResolveReferenceForward()
@@ -234,9 +203,13 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
             cachedCamera = Camera.main;
         }
 
-        Vector3 forward = cachedCamera != null ? cachedCamera.transform.forward : localCharacter.forward;
+        Vector3 forward = cachedCamera != null
+            ? cachedCamera.transform.forward
+            : localCharacter != null
+                ? localCharacter.forward
+                : Vector3.forward;
         forward.y = 0f;
-        if (forward.sqrMagnitude <= 0.0001f)
+        if (forward.sqrMagnitude <= 0.0001f && localCharacter != null)
         {
             forward = localCharacter.forward;
             forward.y = 0f;
@@ -247,7 +220,7 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
 
     private void UpdateVisibility()
     {
-        if (rootGroup == null)
+        if (rootGroup == null && rootCanvas == null)
         {
             return;
         }
@@ -258,115 +231,106 @@ public class AncientFlameCompassUI : MonoBehaviour, IAncientFlameDisplayTarget
             visible = true;
         }
 
-        rootGroup.alpha = visible ? 1f : 0f;
-        rootGroup.interactable = false;
-        rootGroup.blocksRaycasts = false;
+        if (rootGroup != null)
+        {
+            rootGroup.alpha = visible ? 1f : 0f;
+            rootGroup.interactable = false;
+            rootGroup.blocksRaycasts = false;
+        }
+
+        if (rootCanvas != null)
+        {
+            rootCanvas.enabled = visible;
+        }
     }
 
-    private void BuildRuntimeUI()
+    private bool TryBindExistingUI()
     {
-        if (rootGroup != null)
+        RectTransform existingCompassRender = FindChildRectTransform("Compass_Render", "CompassRender");
+        RectTransform existingArrow = FindChildRectTransform("Arrow");
+        if (existingCompassRender == null || existingArrow == null)
+        {
+            return false;
+        }
+
+        compassRender = existingCompassRender;
+        arrowPivot = existingArrow;
+        needlePivot = existingArrow;
+
+        rootGroup = GetComponent<CanvasGroup>();
+        rootCanvas = GetComponent<Canvas>();
+
+        if (distanceText == null)
+        {
+            RectTransform distanceRect = FindChildRectTransform("DistanceText");
+            distanceText = distanceRect != null ? distanceRect.GetComponent<TMP_Text>() : null;
+        }
+
+        UpdateVisibility();
+        return true;
+    }
+
+    private RectTransform FindChildRectTransform(params string[] names)
+    {
+        if (names == null || names.Length == 0)
+        {
+            return null;
+        }
+
+        RectTransform[] rects = GetComponentsInChildren<RectTransform>(true);
+        for (int i = 0; i < rects.Length; i++)
+        {
+            RectTransform rect = rects[i];
+            if (rect == null)
+            {
+                continue;
+            }
+
+            for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
+            {
+                if (string.Equals(rect.name, names[nameIndex], System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return rect;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private RectTransform ResolveArrowPivot()
+    {
+        return arrowPivot != null ? arrowPivot : needlePivot;
+    }
+
+    private static void SetScreenRotationZ(RectTransform target, float screenRotationZ)
+    {
+        if (target == null)
         {
             return;
         }
 
-        GameObject canvasObject = new GameObject("AncientFlameCompassCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
-        canvasObject.transform.SetParent(transform, false);
-
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 120;
-
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        scaler.matchWidthOrHeight = 0.5f;
-
-        RectTransform root = CreateImage(canvasObject.transform, "Root", panelColor).rectTransform;
-        root.anchorMin = new Vector2(1f, 1f);
-        root.anchorMax = new Vector2(1f, 1f);
-        root.pivot = new Vector2(1f, 1f);
-        root.anchoredPosition = topRightOffset;
-        root.sizeDelta = new Vector2(compassSize + 34f, compassSize + 52f);
-
-        rootGroup = root.gameObject.AddComponent<CanvasGroup>();
-        rootGroup.interactable = false;
-        rootGroup.blocksRaycasts = false;
-
-        RectTransform dial = CreateImage(root, "Dial", dialColor).rectTransform;
-        dial.anchorMin = new Vector2(0.5f, 1f);
-        dial.anchorMax = new Vector2(0.5f, 1f);
-        dial.pivot = new Vector2(0.5f, 1f);
-        dial.anchoredPosition = new Vector2(0f, -12f);
-        dial.sizeDelta = new Vector2(compassSize, compassSize);
-
-        CreateTick(dial, "TickN", new Vector2(0.5f, 1f), new Vector2(0f, -7f), new Vector2(4f, 14f));
-        CreateTick(dial, "TickS", new Vector2(0.5f, 0f), new Vector2(0f, 7f), new Vector2(4f, 14f));
-        CreateTick(dial, "TickE", new Vector2(1f, 0.5f), new Vector2(-7f, 0f), new Vector2(14f, 4f));
-        CreateTick(dial, "TickW", new Vector2(0f, 0.5f), new Vector2(7f, 0f), new Vector2(14f, 4f));
-
-        GameObject pivotObject = new GameObject("NeedlePivot", typeof(RectTransform));
-        pivotObject.transform.SetParent(dial, false);
-        needlePivot = pivotObject.GetComponent<RectTransform>();
-        needlePivot.anchorMin = new Vector2(0.5f, 0.5f);
-        needlePivot.anchorMax = new Vector2(0.5f, 0.5f);
-        needlePivot.pivot = new Vector2(0.5f, 0.5f);
-        needlePivot.anchoredPosition = Vector2.zero;
-        needlePivot.sizeDelta = Vector2.zero;
-
-        RectTransform needle = CreateImage(needlePivot, "Needle", needleColor).rectTransform;
-        needle.anchorMin = new Vector2(0.5f, 0.5f);
-        needle.anchorMax = new Vector2(0.5f, 0.5f);
-        needle.pivot = new Vector2(0.5f, 0f);
-        needle.anchoredPosition = Vector2.zero;
-        needle.sizeDelta = new Vector2(5f, compassSize * 0.38f);
-
-        RectTransform cap = CreateImage(needlePivot, "Cap", needleColor).rectTransform;
-        cap.anchorMin = new Vector2(0.5f, 0.5f);
-        cap.anchorMax = new Vector2(0.5f, 0.5f);
-        cap.pivot = new Vector2(0.5f, 0.5f);
-        cap.anchoredPosition = Vector2.zero;
-        cap.sizeDelta = new Vector2(10f, 10f);
-
-        GameObject textObject = new GameObject("DistanceText", typeof(RectTransform));
-        textObject.transform.SetParent(root, false);
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.anchorMin = new Vector2(0f, 0f);
-        textRect.anchorMax = new Vector2(1f, 0f);
-        textRect.pivot = new Vector2(0.5f, 0f);
-        textRect.anchoredPosition = new Vector2(0f, 9f);
-        textRect.sizeDelta = new Vector2(-12f, 34f);
-
-        distanceText = textObject.AddComponent<TextMeshProUGUI>();
-        distanceText.alignment = TextAlignmentOptions.Center;
-        distanceText.color = textColor;
-        distanceText.fontSize = 15f;
-        distanceText.textWrappingMode = TextWrappingModes.NoWrap;
-        distanceText.raycastTarget = false;
-
-        UpdateVisibility();
+        float inheritedRotationZ = ResolveInheritedRotationZ(target);
+        float localRotationZ = Mathf.DeltaAngle(0f, screenRotationZ - inheritedRotationZ);
+        target.localEulerAngles = new Vector3(0f, 0f, localRotationZ);
     }
 
-    private void CreateTick(RectTransform parent, string name, Vector2 anchor, Vector2 offset, Vector2 size)
+    private static float ResolveInheritedRotationZ(RectTransform target)
     {
-        RectTransform tick = CreateImage(parent, name, tickColor).rectTransform;
-        tick.anchorMin = anchor;
-        tick.anchorMax = anchor;
-        tick.pivot = new Vector2(0.5f, 0.5f);
-        tick.anchoredPosition = offset;
-        tick.sizeDelta = size;
+        float rotationZ = 0f;
+        Transform current = target != null ? target.parent : null;
+        while (current != null)
+        {
+            rotationZ += NormalizeAngle(current.localEulerAngles.z);
+            current = current.parent;
+        }
+
+        return NormalizeAngle(rotationZ);
     }
 
-    private Image CreateImage(Transform parent, string name, Color color)
+    private static float NormalizeAngle(float angle)
     {
-        GameObject imageObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        imageObject.transform.SetParent(parent, false);
-
-        Image image = imageObject.GetComponent<Image>();
-        image.color = color;
-        image.raycastTarget = false;
-        return image;
+        return Mathf.DeltaAngle(0f, angle);
     }
 
     private static bool IsUsableTarget(Flame flame)

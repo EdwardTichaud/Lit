@@ -2,23 +2,23 @@
 
 ## Objectif actuel
 
-Reprise du traversal d'échelle pour placer le personnage au bon point haut/bas
-selon sa position et l'orienter avec une rotation calculée depuis l'axe de
-l'échelle.
+Adaptation de `AncientFlameCompassUI` pour utiliser le prefab `CompassUI` :
+le cadran suit la rotation de la caméra et la flèche pointe vers l'Ancient Flame
+active la plus proche.
 
 ## Contraintes
 
 Patch minimal, sans modification de scènes/prefabs/assets Unity. Réutiliser
-`LadderController`, `LadderInteractable`, `SquadCharacterController` et le
-traversal scripté UCC existant.
+`AncientFlameCompassUI`, `AgeManager`, `LocalPlayerContext` et la hiérarchie
+existante `Compass_Render` / `Arrow` du prefab.
 
 ## Systèmes concernés
 
-Input, UCC et mouvement : interaction d'échelle, traversal scripté et placement
-runtime du personnage.
+Temps et environnement : affichage local des Ancient Flames et repère cardinal
+lié à la caméra.
 
 ## Notes temporaires
 
-À tester dans Unity : utilisation depuis le bas, depuis le haut, depuis chaque
-côté accessible d'une échelle auto-détectée, puis host/client si la scène
-utilise les interactions réseau.
+À tester dans Unity : `Compass_Render` tourne avec le yaw caméra, `Arrow` pointe
+vers l'Ancient Flame active la plus proche, et aucune boussole n'est créée si
+la scène ne fournit pas déjà l'UI.
