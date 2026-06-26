@@ -2,23 +2,21 @@
 
 ## Objectif actuel
 
-Adaptation de `AncientFlameCompassUI` pour utiliser le prefab `CompassUI` :
-le cadran suit la rotation de la caméra et la flèche pointe vers l'Ancient Flame
-active la plus proche.
+Ajout d'une state Animator dédiée au franchissement automatique d'obstacle bas.
 
 ## Contraintes
 
-Patch minimal, sans modification de scènes/prefabs/assets Unity. Réutiliser
-`AncientFlameCompassUI`, `AgeManager`, `LocalPlayerContext` et la hiérarchie
-existante `Compass_Render` / `Arrow` du prefab.
+Patch minimal. Réutiliser le franchissement scripté existant dans
+`LitOpsiveLocomotionBridge` et limiter les changements Unity au controller
+Animator et à la valeur sérialisée nécessaire du prefab joueur.
 
 ## Systèmes concernés
 
-Temps et environnement : affichage local des Ancient Flames et repère cardinal
-lié à la caméra.
+Input/UCC/caméra : `LitOpsiveLocomotionBridge` déclenche le trigger Animator
+`ObstacleTraversal`, qui entre dans la state `Obstacle_Traversal`.
 
 ## Notes temporaires
 
-À tester dans Unity : `Compass_Render` tourne avec le yaw caméra, `Arrow` pointe
-vers l'Ancient Flame active la plus proche, et aucune boussole n'est créée si
-la scène ne fournit pas déjà l'UI.
+À tester dans Unity : franchir un obstacle bas, vérifier que la state
+`Obstacle_Traversal` est déclenchée puis revient à `Locomotion`, et assigner le
+clip sur cette state quand il sera disponible.

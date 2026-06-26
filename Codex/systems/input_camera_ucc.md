@@ -32,7 +32,9 @@ Le flux se divise ensuite :
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
 franchissables lancent un court traversal scripté avec trigger Animator
-configurable, et les obstacles plus hauts restent bloquants.
+configurable, et les obstacles plus hauts restent bloquants. Le trigger par
+défaut est `ObstacleTraversal` et cible la state `Obstacle_Traversal` du
+controller `Player_Model` ; le clip peut être assigné ensuite sur cette state.
 
 Les échelles sont pilotées par `LadderController` comme traversal scripté :
 le trajet monte ou descend selon la position du personnage projetée sur l'axe

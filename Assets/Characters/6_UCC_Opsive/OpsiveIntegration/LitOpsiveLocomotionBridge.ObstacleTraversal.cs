@@ -26,8 +26,8 @@ public partial class LitOpsiveLocomotionBridge
     private float obstacleTraversalArcHeight = 0.25f;
     [SerializeField, Tooltip("Layers consideres comme obstacles franchissables.")]
     private LayerMask obstacleTraversalMask = ~0;
-    [SerializeField, Tooltip("Trigger Animator optionnel lance au debut du franchissement. JumpTrigger existe sur le controller actuel.")]
-    private string obstacleTraversalTriggerParam = "JumpTrigger";
+    [SerializeField, Tooltip("Trigger Animator optionnel lance au debut du franchissement.")]
+    private string obstacleTraversalTriggerParam = "ObstacleTraversal";
 
     private readonly RaycastHit[] obstacleTraversalHits = new RaycastHit[ObstacleTraversalHitCapacity];
     private Coroutine obstacleTraversalRoutine;

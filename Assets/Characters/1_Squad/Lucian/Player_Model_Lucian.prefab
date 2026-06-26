@@ -3158,7 +3158,7 @@ MonoBehaviour:
   obstacleTraversalMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  obstacleTraversalTriggerParam: JumpTrigger
+  obstacleTraversalTriggerParam: ObstacleTraversal
   squadController: {fileID: 0}
   locomotion: {fileID: 0}
   locomotionHandler: {fileID: 0}
