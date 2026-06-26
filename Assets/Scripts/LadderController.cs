@@ -238,28 +238,30 @@ public class LadderController : MonoBehaviour
             character,
             controller,
             motionRoot,
-            route.EntryPoint.position,
-            route.TargetPoint.position,
+            route.EntryPosition,
+            route.TargetPosition,
             route.ExitsAtTop);
         Vector3 ladderLoopEndPosition = ResolveLadderLoopEndPosition(
             animator,
             animationSet,
-            route.EntryPoint.position,
+            route.EntryPosition,
             ladderEndStartPosition,
             route.ExitsAtTop);
         Quaternion climbRotation = keepEntryRotationDuringClimb
-            ? route.EntryPoint.rotation
-            : route.TargetPoint.rotation;
+            ? route.EntryRotation
+            : route.TargetRotation;
 
         activeRoutine = StartCoroutine(UseLadderRoutine(
             controller,
             animator,
             motionTarget,
-            route.EntryPoint,
+            route.EntryPosition,
+            route.EntryRotation,
             ladderLoopEndPosition,
             ladderEndStartPosition,
             climbRotation,
-            route.ExitPoint,
+            route.ExitPosition,
+            route.ExitRotation,
             animationSet,
             driveMotion));
         return true;
@@ -269,11 +271,13 @@ public class LadderController : MonoBehaviour
         SquadCharacterController controller,
         Animator animator,
         ScriptedMotionTarget motionTarget,
-        Transform entryPoint,
+        Vector3 entryPosition,
+        Quaternion entryRotation,
         Vector3 ladderLoopEndPosition,
         Vector3 ladderEndStartPosition,
         Quaternion ladderEndStartRotation,
-        Transform exitPoint,
+        Vector3 exitPosition,
+        Quaternion exitRotation,
         LadderAnimationSet animationSet,
         bool driveMotion)
     {
@@ -318,7 +322,7 @@ public class LadderController : MonoBehaviour
 
             if (driveMotion)
             {
-                yield return MoveToPoint(motionTarget, entryPoint.position, entryPoint.rotation, approachDuration);
+                yield return MoveToPoint(motionTarget, entryPosition, entryRotation, approachDuration);
             }
             else
             {
@@ -346,7 +350,7 @@ public class LadderController : MonoBehaviour
                     startPhaseMoveStartTime,
                     startDuration - Mathf.Min(Mathf.Max(0f, crossFadeDuration), startDuration * MaxStartToLoopLeadRatio));
                 startPhaseMoveDistance = Mathf.Min(
-                    Vector3.Distance(entryPoint.position, ladderLoopEndPosition),
+                    Vector3.Distance(entryPosition, ladderLoopEndPosition),
                     climbSpeed * ladderEndToClimbLerpEndTime);
             }
 
@@ -355,8 +359,8 @@ public class LadderController : MonoBehaviour
                 animationSet.StartName,
                 animationSet.LoopName,
                 motionTarget,
-                entryPoint.position,
-                entryPoint.rotation,
+                entryPosition,
+                entryRotation,
                 ladderLoopEndPosition,
                 ladderEndStartRotation,
                 startDuration,
@@ -402,8 +406,8 @@ public class LadderController : MonoBehaviour
                     animator,
                     animationSet.EndName,
                     motionTarget,
-                    exitPoint.position,
-                    exitPoint.rotation,
+                    exitPosition,
+                    exitRotation,
                     exitMoveStartTime,
                     exitMoveEndTime,
                     endDuration,
@@ -425,7 +429,7 @@ public class LadderController : MonoBehaviour
                 float exitMoveDuration = Mathf.Max(0f, exitDuration);
                 if (driveMotion)
                 {
-                    yield return MoveToPoint(motionTarget, exitPoint.position, exitPoint.rotation, exitMoveDuration);
+                    yield return MoveToPoint(motionTarget, exitPosition, exitRotation, exitMoveDuration);
                 }
                 else
                 {
@@ -1522,7 +1526,7 @@ public class LadderController : MonoBehaviour
     private bool TryResolveLadderRoute(Vector3 characterPosition, out LadderRoute route)
     {
         route = default;
-        if (!TryResolveLadderEndpoints(out LadderEndpoints endpoints))
+        if (!TryResolveLadderEndpoints(characterPosition, out LadderEndpoints endpoints))
         {
             Debug.LogWarning("LadderController: aucun trajet d'echelle valide. Ajoute des points B_Trigger/H_Trigger ou des colliders/renderers d'echelle.", this);
             return false;
@@ -1534,32 +1538,55 @@ public class LadderController : MonoBehaviour
             routeBottomPoint = endpoints.BottomPoint;
         }
 
-        bool useTopEntry = IsTopEntryCloser(characterPosition, routeBottomPoint, endpoints.TopExitPoint);
+        Vector3 climbAxis = ResolveRouteClimbAxis(routeBottomPoint, endpoints.TopPoint);
+        Vector3 approachNormal = ResolveRouteApproachNormal(
+            climbAxis,
+            routeBottomPoint,
+            endpoints.TopPoint,
+            endpoints.BottomExitPoint,
+            endpoints.TopExitPoint,
+            characterPosition);
+        Quaternion climbRotation = ResolveSafeLookRotation(-approachNormal, climbAxis, transform.rotation);
+        Quaternion bottomExitRotation = ResolveExitRotation(endpoints.BottomExitPoint, routeBottomPoint, approachNormal, climbAxis, climbRotation);
+        Quaternion topExitRotation = ResolveExitRotation(endpoints.TopExitPoint, endpoints.TopPoint, approachNormal, climbAxis, climbRotation);
+
+        bool useTopEntry = ShouldUseTopEntry(characterPosition, routeBottomPoint, endpoints.TopPoint);
         if (useTopEntry)
         {
             route = new LadderRoute(
-                endpoints.TopPoint,
-                routeBottomPoint,
-                endpoints.BottomExitPoint,
+                endpoints.TopPoint.position,
+                climbRotation,
+                routeBottomPoint.position,
+                climbRotation,
+                endpoints.BottomExitPoint.position,
+                bottomExitRotation,
                 false);
             return true;
         }
 
         route = new LadderRoute(
-            routeBottomPoint,
-            endpoints.TopPoint,
-            endpoints.TopExitPoint,
+            routeBottomPoint.position,
+            climbRotation,
+            endpoints.TopPoint.position,
+            climbRotation,
+            endpoints.TopExitPoint.position,
+            topExitRotation,
             true);
         return true;
     }
 
     private bool TryResolveLadderEndpoints(out LadderEndpoints endpoints)
     {
+        return TryResolveLadderEndpoints(null, out endpoints);
+    }
+
+    private bool TryResolveLadderEndpoints(Vector3? characterPosition, out LadderEndpoints endpoints)
+    {
         endpoints = default;
         ResolvePointReferencesIfNeeded();
 
         AutoLadderGeometry geometry = default;
-        bool hasAutoGeometry = autoBuildRouteFromGeometry && TryResolveAutoLadderGeometry(out geometry);
+        bool hasAutoGeometry = autoBuildRouteFromGeometry && TryResolveAutoLadderGeometry(characterPosition, out geometry);
         Transform bottomPoint = ResolveExplicitBottomPoint(Vector3.zero, useNearest: false);
         Transform topPoint = ladderTop;
         Transform topExitPoint = ladderExit;
@@ -1654,7 +1681,7 @@ public class LadderController : MonoBehaviour
         return useNearest && nearest != null ? nearest : fallback;
     }
 
-    private bool TryResolveAutoLadderGeometry(out AutoLadderGeometry geometry)
+    private bool TryResolveAutoLadderGeometry(Vector3? characterPosition, out AutoLadderGeometry geometry)
     {
         geometry = default;
 
@@ -1746,17 +1773,23 @@ public class LadderController : MonoBehaviour
 
         float inset = Mathf.Min(endpointInset, Mathf.Max(0f, height * 0.45f));
         float centerSide = (minSide + maxSide) * 0.5f;
-        float frontNormal = maxNormal + climbSurfaceOffset;
+        float centerNormal = (minNormal + maxNormal) * 0.5f;
+        bool useNegativeNormalSide = characterPosition.HasValue &&
+            Vector3.Dot(characterPosition.Value, normal) < centerNormal;
+        float frontNormal = useNegativeNormalSide
+            ? minNormal - climbSurfaceOffset
+            : maxNormal + climbSurfaceOffset;
+        Vector3 approachNormal = useNegativeNormalSide ? -normal : normal;
         Vector3 basePoint = side * centerSide + normal * frontNormal;
         Vector3 bottomPosition = basePoint + axis * (minAxis + inset);
         Vector3 topPosition = basePoint + axis * (maxAxis - inset);
-        Quaternion climbRotation = Quaternion.LookRotation(-normal, axis);
+        Quaternion climbRotation = ResolveSafeLookRotation(-approachNormal, axis, transform.rotation);
 
         geometry = new AutoLadderGeometry(
             bottomPosition,
             topPosition,
-            bottomPosition + normal * bottomExitForwardOffset,
-            topPosition + normal * topExitForwardOffset + axis * topExitUpOffset,
+            bottomPosition + approachNormal * bottomExitForwardOffset,
+            topPosition + approachNormal * topExitForwardOffset + axis * topExitUpOffset,
             climbRotation);
         return true;
     }
@@ -1919,6 +1952,160 @@ public class LadderController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private Vector3 ResolveRouteClimbAxis(Transform bottomPoint, Transform topPoint)
+    {
+        if (bottomPoint != null && topPoint != null)
+        {
+            Vector3 routeAxis = topPoint.position - bottomPoint.position;
+            if (routeAxis.sqrMagnitude > 0.0001f)
+            {
+                return routeAxis.normalized;
+            }
+        }
+
+        return ResolveWorldClimbAxis();
+    }
+
+    private Vector3 ResolveRouteApproachNormal(
+        Vector3 climbAxis,
+        Transform bottomPoint,
+        Transform topPoint,
+        Transform bottomExitPoint,
+        Transform topExitPoint,
+        Vector3 characterPosition)
+    {
+        Vector3 approachNormal = Vector3.zero;
+        if (TryResolveExitOffsetNormal(bottomPoint, bottomExitPoint, climbAxis, out Vector3 bottomNormal))
+        {
+            approachNormal += bottomNormal;
+        }
+
+        if (TryResolveExitOffsetNormal(topPoint, topExitPoint, climbAxis, out Vector3 topNormal))
+        {
+            approachNormal += topNormal;
+        }
+
+        if (approachNormal.sqrMagnitude > 0.0001f)
+        {
+            return approachNormal.normalized;
+        }
+
+        approachNormal = ResolveWorldApproachNormal(climbAxis);
+        Vector3 center = ResolveRouteCenter(bottomPoint, topPoint);
+        Vector3 characterOffset = Vector3.ProjectOnPlane(characterPosition - center, climbAxis);
+        if (characterOffset.sqrMagnitude > 0.0001f && Vector3.Dot(characterOffset, approachNormal) < 0f)
+        {
+            approachNormal = -approachNormal;
+        }
+
+        return approachNormal;
+    }
+
+    private static bool TryResolveExitOffsetNormal(
+        Transform ladderPoint,
+        Transform exitPoint,
+        Vector3 climbAxis,
+        out Vector3 normal)
+    {
+        normal = Vector3.zero;
+        if (ladderPoint == null || exitPoint == null)
+        {
+            return false;
+        }
+
+        Vector3 offset = Vector3.ProjectOnPlane(exitPoint.position - ladderPoint.position, climbAxis);
+        if (offset.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        normal = offset.normalized;
+        return true;
+    }
+
+    private static Vector3 ResolveRouteCenter(Transform bottomPoint, Transform topPoint)
+    {
+        if (bottomPoint != null && topPoint != null)
+        {
+            return (bottomPoint.position + topPoint.position) * 0.5f;
+        }
+
+        if (topPoint != null)
+        {
+            return topPoint.position;
+        }
+
+        return bottomPoint != null ? bottomPoint.position : Vector3.zero;
+    }
+
+    private static Quaternion ResolveExitRotation(
+        Transform exitPoint,
+        Transform ladderPoint,
+        Vector3 approachNormal,
+        Vector3 climbAxis,
+        Quaternion fallback)
+    {
+        if (TryResolveExitOffsetNormal(ladderPoint, exitPoint, climbAxis, out Vector3 exitDirection))
+        {
+            return ResolveSafeLookRotation(exitDirection, climbAxis, fallback);
+        }
+
+        return ResolveSafeLookRotation(-approachNormal, climbAxis, fallback);
+    }
+
+    private static Quaternion ResolveSafeLookRotation(Vector3 forward, Vector3 up, Quaternion fallback)
+    {
+        if (up.sqrMagnitude <= 0.0001f)
+        {
+            up = Vector3.up;
+        }
+
+        up.Normalize();
+        forward = Vector3.ProjectOnPlane(forward, up);
+        if (forward.sqrMagnitude <= 0.0001f)
+        {
+            forward = Vector3.ProjectOnPlane(fallback * Vector3.forward, up);
+        }
+
+        if (forward.sqrMagnitude <= 0.0001f)
+        {
+            return fallback;
+        }
+
+        return Quaternion.LookRotation(forward.normalized, up);
+    }
+
+    private static bool ShouldUseTopEntry(Vector3 characterPosition, Transform bottomPoint, Transform topPoint)
+    {
+        if (topPoint == null)
+        {
+            return false;
+        }
+
+        if (bottomPoint == null)
+        {
+            return true;
+        }
+
+        Vector3 axis = topPoint.position - bottomPoint.position;
+        float height = axis.magnitude;
+        if (height <= 0.001f)
+        {
+            return IsTopEntryCloser(characterPosition, bottomPoint, topPoint);
+        }
+
+        Vector3 axisDirection = axis / height;
+        float characterHeight = Vector3.Dot(characterPosition - bottomPoint.position, axisDirection);
+        float midpoint = height * 0.5f;
+        float deadZone = Mathf.Min(0.25f, height * 0.1f);
+        if (Mathf.Abs(characterHeight - midpoint) > deadZone)
+        {
+            return characterHeight > midpoint;
+        }
+
+        return IsTopEntryCloser(characterPosition, bottomPoint, topPoint);
     }
 
     private static bool IsTopEntryCloser(Vector3 characterPosition, Transform bottomPoint, Transform topPoint)
@@ -2401,17 +2588,30 @@ public class LadderController : MonoBehaviour
 
     private readonly struct LadderRoute
     {
-        public LadderRoute(Transform entryPoint, Transform targetPoint, Transform exitPoint, bool exitsAtTop)
+        public LadderRoute(
+            Vector3 entryPosition,
+            Quaternion entryRotation,
+            Vector3 targetPosition,
+            Quaternion targetRotation,
+            Vector3 exitPosition,
+            Quaternion exitRotation,
+            bool exitsAtTop)
         {
-            EntryPoint = entryPoint;
-            TargetPoint = targetPoint;
-            ExitPoint = exitPoint;
+            EntryPosition = entryPosition;
+            EntryRotation = entryRotation;
+            TargetPosition = targetPosition;
+            TargetRotation = targetRotation;
+            ExitPosition = exitPosition;
+            ExitRotation = exitRotation;
             ExitsAtTop = exitsAtTop;
         }
 
-        public Transform EntryPoint { get; }
-        public Transform TargetPoint { get; }
-        public Transform ExitPoint { get; }
+        public Vector3 EntryPosition { get; }
+        public Quaternion EntryRotation { get; }
+        public Vector3 TargetPosition { get; }
+        public Quaternion TargetRotation { get; }
+        public Vector3 ExitPosition { get; }
+        public Quaternion ExitRotation { get; }
         public bool ExitsAtTop { get; }
     }
 

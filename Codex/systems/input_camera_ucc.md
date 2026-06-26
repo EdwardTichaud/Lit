@@ -34,6 +34,12 @@ les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
 franchissables lancent un court traversal scripté avec trigger Animator
 configurable, et les obstacles plus hauts restent bloquants.
 
+Les échelles sont pilotées par `LadderController` comme traversal scripté :
+le trajet monte ou descend selon la position du personnage projetée sur l'axe
+réel de l'échelle. Les poses d'entrée, de boucle et de sortie sont calculées
+depuis l'axe de l'échelle et le côté d'approche/sortie, pas depuis les rotations
+potentiellement arbitraires des transforms d'ancrage.
+
 ## Pièges observés
 
 - Modifier l’asset `.inputactions`, jamais le wrapper C# généré.

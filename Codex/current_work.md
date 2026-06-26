@@ -2,21 +2,23 @@
 
 ## Objectif actuel
 
-Feedback visuel discret ajouté côté code pour relier une Ancient Flame proche
-aux Flames éteintes les plus proches. Validation Unity à effectuer.
+Reprise du traversal d'échelle pour placer le personnage au bon point haut/bas
+selon sa position et l'orienter avec une rotation calculée depuis l'axe de
+l'échelle.
 
 ## Contraintes
 
-Patch minimal, runtime client-local, sans modification de scènes/prefabs/assets
-Unity. Réutiliser `Flame`, `AgeManager`, `LocalPlayerContext` et
-`LocalPlayerUtils`.
+Patch minimal, sans modification de scènes/prefabs/assets Unity. Réutiliser
+`LadderController`, `LadderInteractable`, `SquadCharacterController` et le
+traversal scripté UCC existant.
 
 ## Systèmes concernés
 
-Temps et environnement : `Flame`, `AgeManager`, feedback local des Ancient Flames.
+Input, UCC et mouvement : interaction d'échelle, traversal scripté et placement
+runtime du personnage.
 
 ## Notes temporaires
 
-À tester dans Unity : proximité d’une Ancient Flame, arc or vers l’Ancient Flame
-éteinte la plus proche, arc blanc vers la Flame commune éteinte la plus proche,
-solo puis host/client.
+À tester dans Unity : utilisation depuis le bas, depuis le haut, depuis chaque
+côté accessible d'une échelle auto-détectée, puis host/client si la scène
+utilise les interactions réseau.
