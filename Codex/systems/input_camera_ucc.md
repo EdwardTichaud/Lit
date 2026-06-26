@@ -29,6 +29,11 @@ Le flux se divise ensuite :
 `SquadCharacterController` convertit l’input en espace monde, puis
 `LitOpsiveLocomotionBridge` pilote UCC.
 
+La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
+`LitUccCameraCharacterBinder` sur la caméra active pour suivre
+`LocalPlayerContext`. Les anciens pivots `CameraAnchor` / `YawPivot` /
+`PitchPivot` du système legacy ne doivent pas piloter la `Main Camera`.
+
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
 franchissables lancent un court traversal scripté avec trigger Animator
