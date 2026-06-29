@@ -1,0 +1,114 @@
+{
+  "AGENTS": {
+    "file": "AGENTS.md",
+    "title": "AGENTS",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "architecture": {
+    "file": "architecture.md",
+    "title": "architecture",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "current_work": {
+    "file": "current_work.md",
+    "title": "current_work",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "known_bugs": {
+    "file": "known_bugs.md",
+    "title": "known_bugs",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.combat": {
+    "file": "systems/combat.md",
+    "title": "combat",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.input_camera_ucc": {
+    "file": "systems/input_camera_ucc.md",
+    "title": "input_camera_ucc",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.interactions_inventory": {
+    "file": "systems/interactions_inventory.md",
+    "title": "interactions_inventory",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.narrative": {
+    "file": "systems/narrative.md",
+    "title": "narrative",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.netcode": {
+    "file": "systems/netcode.md",
+    "title": "netcode",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.persistence": {
+    "file": "systems/persistence.md",
+    "title": "persistence",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.runtime_session": {
+    "file": "systems/runtime_session.md",
+    "title": "runtime_session",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.squad_characters": {
+    "file": "systems/squad_characters.md",
+    "title": "squad_characters",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.surfaces_audio": {
+    "file": "systems/surfaces_audio.md",
+    "title": "surfaces_audio",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  },
+  "systems.temporal_environment": {
+    "file": "systems/temporal_environment.md",
+    "title": "temporal_environment",
+    "tags": [],
+    "systems": [],
+    "owner": "",
+    "priority": 5
+  }
+}
