@@ -18,6 +18,8 @@ public partial class LitOpsiveLocomotionBridge
     private float obstacleProbeRadius = 0.22f;
     [SerializeField, Min(0f), Tooltip("Hauteur du probe horizontal au-dessus des pieds du personnage.")]
     private float obstacleProbeBaseHeight = 0.25f;
+    [SerializeField, Range(0f, 1f), Tooltip("Ignore les surfaces progressives dont la normale pointe trop vers le haut. 0 accepte seulement les faces verticales, 1 accepte aussi les rampes.")]
+    private float obstacleTraversalMaxSurfaceUpDot = 0.35f;
     [SerializeField, Min(0f), Tooltip("Distance horizontale ajoutee derriere l'obstacle pour poser le personnage.")]
     private float obstacleLandingDistance = 0.55f;
     [SerializeField, Min(0.01f), Tooltip("Duree du franchissement scripte.")]
@@ -116,6 +118,8 @@ public partial class LitOpsiveLocomotionBridge
         float closestDistance = float.PositiveInfinity;
         float ignoreHeight = Mathf.Max(0f, ignoredObstacleMaxHeight);
         float maxHeight = Mathf.Max(ignoreHeight, traversableObstacleMaxHeight);
+        float maxSurfaceUpDot = Mathf.Clamp01(obstacleTraversalMaxSurfaceUpDot);
+        Vector3 up = transform.up;
 
         for (int i = 0; i < hitCount; i++)
         {
@@ -127,6 +131,11 @@ public partial class LitOpsiveLocomotionBridge
             }
 
             if (Vector3.Dot(hit.normal, direction) > -0.15f)
+            {
+                continue;
+            }
+
+            if (Vector3.Dot(hit.normal, up) > maxSurfaceUpDot)
             {
                 continue;
             }

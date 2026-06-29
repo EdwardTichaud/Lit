@@ -20,7 +20,11 @@ public enum CombatSessionPhase
     /// <summary>La fin de combat est en cours de resolution.</summary>
     Resolving = 3,
     /// <summary>La session est terminee.</summary>
-    Finished = 4
+    Finished = 4,
+    /// <summary>La presentation locale suspendue du tour est en cours.</summary>
+    Decision = 5,
+    /// <summary>Une action ennemie est en animation/resolution courte.</summary>
+    EnemyAction = 6
 }
 
 /// <summary>
@@ -39,8 +43,12 @@ public sealed class CombatSessionState
     public float NextEnemyActionAt { get; private set; } = float.PositiveInfinity;
     /// <summary>Temps absolu de la prochaine diffusion d'un snapshot reseau.</summary>
     public float NextSnapshotAt { get; private set; }
+    /// <summary>Temps absolu auquel la presentation de decision se termine.</summary>
+    public float DecisionEndsAt { get; private set; }
     /// <summary>Temps absolu auquel l'action joueur en cours se termine.</summary>
     public float PlayerActionEndsAt { get; private set; }
+    /// <summary>Temps absolu auquel l'action ennemie en cours se termine.</summary>
+    public float EnemyActionEndsAt { get; private set; }
     /// <summary>Degats en attente d'application apres l'action joueur.</summary>
     public int PendingPlayerAttackDamage { get; private set; }
     /// <summary>Resultat prevu de la phase de resolution.</summary>
@@ -52,6 +60,12 @@ public sealed class CombatSessionState
 
     /// <summary>Indique si une action joueur est en cours et bloque les nouvelles actions.</summary>
     public bool PlayerActionLocked => Phase == CombatSessionPhase.PlayerAction;
+    /// <summary>Indique si une presentation de decision est en cours.</summary>
+    public bool DecisionActive => Phase == CombatSessionPhase.Decision;
+    /// <summary>Indique si une action ennemie est en cours.</summary>
+    public bool EnemyActionLocked => Phase == CombatSessionPhase.EnemyAction;
+    /// <summary>Indique si une action temps reel est en cours.</summary>
+    public bool ActionLocked => PlayerActionLocked || EnemyActionLocked;
     /// <summary>Indique si la fin de combat est en cours.</summary>
     public bool Resolving => Phase == CombatSessionPhase.Resolving;
     /// <summary>Indique si la session ne doit plus evoluer.</summary>
@@ -66,9 +80,9 @@ public sealed class CombatSessionState
     }
 
     /// <summary>
-    /// Demarre un tour joueur ou ennemi et initialise les timers associes.
+    /// Demarre la presentation de decision d'un tour joueur ou ennemi.
     /// </summary>
-    public void BeginTurn(CombatTurn turn, float now, float turnDurationSeconds, float enemyActionDelay, string message)
+    public void BeginDecision(CombatTurn turn, float now, float decisionDurationSeconds, float turnDurationSeconds, string message)
     {
         if (Finished || Resolving)
         {
@@ -76,14 +90,39 @@ public sealed class CombatSessionState
         }
 
         Turn = turn;
-        Phase = CombatSessionPhase.TurnActive;
-        TurnEndsAt = now + Mathf.Max(1f, turnDurationSeconds);
-        NextEnemyActionAt = turn == CombatTurn.Enemy
-            ? now + Mathf.Max(0f, enemyActionDelay)
-            : float.PositiveInfinity;
+        Phase = CombatSessionPhase.Decision;
+        DecisionEndsAt = now + Mathf.Max(0f, decisionDurationSeconds);
+        TurnEndsAt = turn == CombatTurn.Player
+            ? DecisionEndsAt + Mathf.Max(1f, turnDurationSeconds)
+            : DecisionEndsAt;
+        NextEnemyActionAt = float.PositiveInfinity;
         PlayerActionEndsAt = 0f;
+        EnemyActionEndsAt = 0f;
         PendingPlayerAttackDamage = 0;
         LastMessage = message ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Termine la presentation de decision et ouvre le tour actif.
+    /// </summary>
+    public void CompleteDecision(float now, float turnDurationSeconds, string message = null)
+    {
+        if (!DecisionActive || Finished || Resolving)
+        {
+            return;
+        }
+
+        Phase = CombatSessionPhase.TurnActive;
+        DecisionEndsAt = 0f;
+        TurnEndsAt = now + Mathf.Max(1f, turnDurationSeconds);
+        NextEnemyActionAt = float.PositiveInfinity;
+        PlayerActionEndsAt = 0f;
+        EnemyActionEndsAt = 0f;
+        PendingPlayerAttackDamage = 0;
+        if (message != null)
+        {
+            LastMessage = message;
+        }
     }
 
     /// <summary>
@@ -100,6 +139,8 @@ public sealed class CombatSessionState
         PendingPlayerAttackDamage = Mathf.Max(1, pendingDamage);
         PlayerActionEndsAt = now + Mathf.Max(0.05f, actionDurationSeconds);
         TurnEndsAt = PlayerActionEndsAt;
+        DecisionEndsAt = 0f;
+        EnemyActionEndsAt = 0f;
         NextEnemyActionAt = float.PositiveInfinity;
         LastMessage = message ?? string.Empty;
     }
@@ -116,6 +157,37 @@ public sealed class CombatSessionState
     }
 
     /// <summary>
+    /// Passe en sous-phase d'action ennemie avant l'application des degats.
+    /// </summary>
+    public void BeginEnemyAction(float now, float actionDurationSeconds, string message)
+    {
+        if ((Phase != CombatSessionPhase.Decision && Phase != CombatSessionPhase.TurnActive) ||
+            Turn != CombatTurn.Enemy ||
+            Finished ||
+            Resolving)
+        {
+            return;
+        }
+
+        Phase = CombatSessionPhase.EnemyAction;
+        EnemyActionEndsAt = now + Mathf.Max(0.05f, actionDurationSeconds);
+        TurnEndsAt = EnemyActionEndsAt;
+        DecisionEndsAt = 0f;
+        PlayerActionEndsAt = 0f;
+        PendingPlayerAttackDamage = 0;
+        NextEnemyActionAt = float.PositiveInfinity;
+        LastMessage = message ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Termine la sous-phase d'action ennemie.
+    /// </summary>
+    public void CompleteEnemyAction()
+    {
+        EnemyActionEndsAt = 0f;
+    }
+
+    /// <summary>
     /// Lance la phase de resolution finale avant de quitter le combat.
     /// </summary>
     public void BeginResolution(bool playerVictory, float now, float durationSeconds, string message)
@@ -129,8 +201,10 @@ public sealed class CombatSessionState
         ResolutionPlayerVictory = playerVictory;
         Turn = CombatTurn.Finished;
         TurnEndsAt = now;
+        DecisionEndsAt = 0f;
         NextEnemyActionAt = float.PositiveInfinity;
         PlayerActionEndsAt = 0f;
+        EnemyActionEndsAt = 0f;
         PendingPlayerAttackDamage = 0;
         LastMessage = message ?? string.Empty;
         ResolutionEndsAt = now + Mathf.Max(0f, durationSeconds);
@@ -144,8 +218,10 @@ public sealed class CombatSessionState
         Phase = CombatSessionPhase.Finished;
         Turn = CombatTurn.Finished;
         TurnEndsAt = 0f;
+        DecisionEndsAt = 0f;
         NextEnemyActionAt = float.PositiveInfinity;
         PlayerActionEndsAt = 0f;
+        EnemyActionEndsAt = 0f;
         PendingPlayerAttackDamage = 0;
     }
 

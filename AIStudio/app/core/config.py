@@ -1,9 +1,13 @@
 from pathlib import Path
 import os
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
-load_dotenv()
+if load_dotenv:
+    load_dotenv()
 
 AI_STUDIO_ROOT = Path(__file__).resolve().parents[2]
 LIT_ROOT = AI_STUDIO_ROOT.parent

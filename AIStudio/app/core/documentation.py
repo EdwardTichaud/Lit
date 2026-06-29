@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import re
 
 from app.core.config import DOCS_DIR
 
@@ -10,8 +11,7 @@ INDEX_PATH = DOCS_DIR / "documentation_index.json"
 def load_index() -> dict:
     if not INDEX_PATH.exists():
         raise FileNotFoundError(
-            f"Index documentaire introuvable : {INDEX_PATH}. "
-            "Lance d'abord : python -m app.main"
+            f"Index documentaire introuvable : {INDEX_PATH}"
         )
 
     return json.loads(
@@ -25,45 +25,82 @@ def read_document(relative_file: str) -> str:
     if not path.exists():
         return f"[FICHIER INTROUVABLE] {relative_file}"
 
-    return path.read_text(encoding="utf-8", errors="replace")
+    return path.read_text(
+        encoding="utf-8",
+        errors="replace"
+    )
 
 
-def find_by_tag(tag: str, limit: int = 5) -> list[dict]:
-    tag = tag.lower().strip()
-    results = []
+def tokenize(text: str) -> list[str]:
+    """
+    Découpe une phrase en mots significatifs.
+    """
 
-    for doc_id, doc in load_index().items():
-        tags = [t.lower() for t in doc.get("tags", [])]
-        systems = [s.lower() for s in doc.get("systems", [])]
+    words = re.findall(r"[a-zA-Z0-9_]+", text.lower())
 
-        if tag in tags or tag in systems:
-            results.append({
-                "id": doc_id,
-                "score": int(doc.get("priority", 5)),
-                **doc,
-            })
+    ignored = {
+        "je",
+        "veux",
+        "modifier",
+        "ajouter",
+        "le",
+        "la",
+        "les",
+        "de",
+        "du",
+        "des",
+        "un",
+        "une",
+        "et",
+        "pour",
+        "dans",
+        "sur",
+        "avec",
+        "systeme",
+        "système",
+    }
 
-    return sorted(results, key=lambda x: x["score"], reverse=True)[:limit]
+    return [
+        w for w in words
+        if w not in ignored and len(w) > 2
+    ]
 
 
 def find_by_text(query: str, limit: int = 5) -> list[dict]:
-    query = query.lower().strip()
+
+    keywords = tokenize(query)
+
     results = []
 
     for doc_id, doc in load_index().items():
+
         searchable = " ".join([
             doc_id,
             doc.get("title", ""),
+            doc.get("file", ""),
             " ".join(doc.get("tags", [])),
             " ".join(doc.get("systems", [])),
             doc.get("owner", ""),
         ]).lower()
 
-        if query in searchable:
+        score = 0
+
+        for keyword in keywords:
+
+            if keyword in searchable:
+                score += 10
+
+        if score > 0:
+
             results.append({
                 "id": doc_id,
-                "score": int(doc.get("priority", 5)),
+                "score": score,
                 **doc,
             })
 
-    return sorted(results, key=lambda x: x["score"], reverse=True)[:limit]
+    results.sort(
+        key=lambda x: x["score"],
+        reverse=True,
+    )
+
+    return results[:limit]

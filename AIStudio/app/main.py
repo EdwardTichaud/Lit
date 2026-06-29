@@ -1,15 +1,9 @@
-from app.agents.architect import ArchitectAgent
+from app.chat import run_chat
 
 
-def main():
-
-    agent = ArchitectAgent()
-
-    answer = agent.ask(
-        "Je veux modifier le système de combat."
-    )
-
-    print(answer)
+def main() -> None:
+    print("app.main est obsolete. Utilise plutot : python -m app.chat")
+    run_chat()
 
 
 if __name__ == "__main__":

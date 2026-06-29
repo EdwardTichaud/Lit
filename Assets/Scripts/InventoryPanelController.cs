@@ -606,7 +606,7 @@ public class InventoryPanelController : MonoBehaviour
             return true;
         }
 
-        if (InputFocusStack.HasAnyFocus())
+        if (InputFocusStack.HasAnyFocus() && !CombatHudController.HasCombatInputFocus)
         {
             return false;
         }
@@ -693,7 +693,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private bool CanReceiveInventoryInput()
     {
-        return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this);
+        return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this) || CombatHudController.HasCombatInputFocus;
     }
 
     private void DisableInventoryCursorController()

@@ -36,6 +36,11 @@ public class CombatHudController : MonoBehaviour
     /// </summary>
     public static CombatHudController Instance { get; private set; }
 
+    /// <summary>
+    /// Vrai si le HUD de combat detient actuellement le focus d'input local.
+    /// </summary>
+    public static bool HasCombatInputFocus => Instance != null && Instance.combatFocusPushed && InputFocusStack.HasFocus(Instance);
+
     [Header("Scene UI")]
     /// <summary>
     /// Autorise la creation d'une UI runtime si aucune UI de scene n'est trouvee.
@@ -80,10 +85,12 @@ public class CombatHudController : MonoBehaviour
 
     private string activeSessionId;
     private TurnState currentTurn;
+    private CombatSessionPhase currentPhase;
     private float timerEndsAt;
     private float timerDuration = 1f;
     private bool playerActionLocked;
     private bool visible;
+    private bool combatFocusPushed;
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -152,6 +159,7 @@ public class CombatHudController : MonoBehaviour
         // Nettoyage des objets runtime et des panneaux de scene.
         if (Instance == this)
         {
+            ReleaseCombatInputFocus();
             SetScenePanelVisibility(false, false);
         }
 
@@ -182,6 +190,7 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact -= OnInteract;
         LocalInputRouter.RightShoulder -= OnRightShoulder;
         LocalInputRouter.Return -= OnReturn;
+        ReleaseCombatInputFocus();
     }
 
     private void Update()
@@ -201,6 +210,7 @@ public class CombatHudController : MonoBehaviour
     public void ShowSnapshot(
         string sessionId,
         TurnState turn,
+        CombatSessionPhase phase,
         float timerRemaining,
         int playerHp,
         int playerMaxHp,
@@ -216,11 +226,13 @@ public class CombatHudController : MonoBehaviour
     {
         BuildUi();
         TurnState previousTurn = currentTurn;
+        CombatSessionPhase previousPhase = currentPhase;
         bool previousActionLocked = playerActionLocked;
         activeSessionId = sessionId;
         currentTurn = turn;
+        currentPhase = phase;
         float sanitizedTimer = Mathf.Max(0f, timerRemaining);
-        if (turn != previousTurn || actionLocked != previousActionLocked || sanitizedTimer > timerDuration)
+        if (turn != previousTurn || phase != previousPhase || actionLocked != previousActionLocked || sanitizedTimer > timerDuration)
         {
             // On remet la duree de reference quand le tour change ou que l'etat d'action evolue.
             timerDuration = Mathf.Max(1f, sanitizedTimer);
@@ -229,9 +241,11 @@ public class CombatHudController : MonoBehaviour
         timerEndsAt = Time.unscaledTime + sanitizedTimer;
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
-        SetScenePanelVisibility(visible, turn == TurnState.Player);
+        UpdateCombatInputFocus(visible);
+        SetScenePanelVisibility(visible, CanChoosePlayerAction());
         ApplySnapshotToUi(
             turn,
+            phase,
             playerHp,
             playerMaxHp,
             enemyName,
@@ -263,8 +277,10 @@ public class CombatHudController : MonoBehaviour
     {
         activeSessionId = null;
         currentTurn = TurnState.None;
+        currentPhase = CombatSessionPhase.Finished;
         playerActionLocked = false;
         visible = false;
+        ReleaseCombatInputFocus();
         SetScenePanelVisibility(false, false);
         if (root != null)
         {
@@ -307,9 +323,44 @@ public class CombatHudController : MonoBehaviour
     {
         return visible
             && currentTurn == TurnState.Player
+            && currentPhase == CombatSessionPhase.TurnActive
             && !playerActionLocked
-            && !InputFocusStack.HasAnyFocus()
+            && (!InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
             && CombatSessionManager.Instance != null;
+    }
+
+    private bool CanChoosePlayerAction()
+    {
+        return visible
+            && currentTurn == TurnState.Player
+            && currentPhase == CombatSessionPhase.TurnActive
+            && !playerActionLocked;
+    }
+
+    private void UpdateCombatInputFocus(bool shouldOwnFocus)
+    {
+        if (!shouldOwnFocus)
+        {
+            ReleaseCombatInputFocus();
+            return;
+        }
+
+        if (!combatFocusPushed || !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
+        {
+            InputFocusStack.Push(this);
+            combatFocusPushed = true;
+        }
+    }
+
+    private void ReleaseCombatInputFocus()
+    {
+        if (!combatFocusPushed)
+        {
+            return;
+        }
+
+        InputFocusStack.Pop(this);
+        combatFocusPushed = false;
     }
 
     private void UpdateTimerText()
@@ -462,6 +513,7 @@ public class CombatHudController : MonoBehaviour
 
     private void ApplySnapshotToUi(
         TurnState turn,
+        CombatSessionPhase phase,
         int playerHp,
         int playerMaxHp,
         string enemyName,
@@ -479,7 +531,7 @@ public class CombatHudController : MonoBehaviour
         }
 
         SetText(ActiveTitleText, "Combat");
-        SetText(ActiveTurnText, ResolveTurnLabel(turn));
+        SetText(ActiveTurnText, ResolveTurnLabel(turn, phase));
         SetText(ActivePlayerHpText, $"Joueur\n{Mathf.Max(0, playerHp)}/{Mathf.Max(1, playerMaxHp)} PV");
         SetText(
             ActiveEnemyHpText,
@@ -490,33 +542,45 @@ public class CombatHudController : MonoBehaviour
                 ? $"Soutien: {prayerSupportCount} priere(s), -{Mathf.RoundToInt(damageReduction * 100f)}% degats"
                 : "Soutien: aucune priere active");
         SetText(ActiveMessageText, string.IsNullOrWhiteSpace(message) ? "Combat en cours." : message);
-        SetText(ActiveActionsText, ResolveActionsLabel(turn));
+        SetText(ActiveActionsText, ResolveActionsLabel(turn, phase));
         SetText(baseAttackText, playerActionLocked ? "En cours" : "Attaquer");
         SetFill(ActivePlayerHpFillImage, playerHp, playerMaxHp);
         SetFill(ActiveEnemyHpFillImage, enemyHp, enemyMaxHp);
         UpdateTimerText();
     }
 
-    private string ResolveTurnLabel(TurnState turn)
+    private string ResolveTurnLabel(TurnState turn, CombatSessionPhase phase)
     {
         if (turn == TurnState.Player)
         {
+            if (phase == CombatSessionPhase.Decision)
+            {
+                return "Tour joueur - decision";
+            }
+
             return playerActionLocked ? "Tour joueur - action en cours" : "Tour joueur";
         }
 
         if (turn == TurnState.Enemy)
         {
-            return "Tour ennemi";
+            return phase == CombatSessionPhase.EnemyAction ? "Tour ennemi - action en cours" : "Tour ennemi";
         }
 
         return "Resolution";
     }
 
-    private string ResolveActionsLabel(TurnState turn)
+    private string ResolveActionsLabel(TurnState turn, CombatSessionPhase phase)
     {
         if (turn != TurnState.Player)
         {
-            return "L'ennemi agit. Preparez votre prochaine action.";
+            return phase == CombatSessionPhase.EnemyAction
+                ? "L'ennemi agit."
+                : "L'ennemi prepare son action.";
+        }
+
+        if (phase == CombatSessionPhase.Decision)
+        {
+            return "Choix disponibles dans un instant.";
         }
 
         if (playerActionLocked)

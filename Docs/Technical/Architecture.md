@@ -541,10 +541,11 @@ Le client doit rester derrière l'écran de synchronisation jusqu'à la fin.
 
 Fichiers :
 
-- `Assets/Scripts/Combat/*`
+- `Assets/Combat/*`
 - `CombatSessionManager`
 - `CombatAggroEnemy`
 - `CombatHudController`
+- `CombatCameraPresentationController`
 - `CombatHealth`
 - `CombatTransitionController`
 - `IustiaIdolPrayer`
@@ -554,10 +555,14 @@ Déroulement :
 1. `CombatAggroEnemy` détecte un joueur contrôlé.
 2. Le manager téléporte uniquement ce joueur vers l'arène.
 3. Le mouvement est suspendu côté serveur et client local.
-4. Les tours alternent ennemi puis joueur.
-5. Chaque tour a un timer de 30 secondes.
-6. Le joueur attaque, passe ou utilise un item pendant son tour.
+4. Le tour joueur s'ouvre par une phase de décision locale.
+5. Le joueur attaque, passe ou utilise un item pendant son tour.
+6. Le tour ennemi applique le même principe avec une décision automatique.
 7. La session restaure la position d'exploration à la fin.
+
+La suspension visuelle de décision est locale au client engagé : caméra, HUD et
+focus input utilisent du temps non scalé, mais le combat ne modifie pas
+`Time.timeScale` global afin de préserver le serveur et les autres clients.
 
 Les PV joueur réutilisent `SquadCharacterController`.
 L'inventaire reste `InventoryPanelController`/`NetworkInventory`.

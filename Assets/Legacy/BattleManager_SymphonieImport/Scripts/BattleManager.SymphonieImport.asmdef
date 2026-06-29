@@ -1,0 +1,21 @@
+{
+    "name": "BattleManager.SymphonieImport",
+    "rootNamespace": "",
+    "references": [
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.Timeline",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "SYMPHONIE_IMPORT_COMPILE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

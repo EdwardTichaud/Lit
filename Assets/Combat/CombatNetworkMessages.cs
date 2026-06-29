@@ -201,6 +201,8 @@ public struct CombatSnapshotData : INetworkSerializable
     public FixedString64Bytes SessionId;
     /// <summary>Etat de tour encode en byte pour le reseau.</summary>
     public byte Turn;
+    /// <summary>Phase de session encodee en byte pour le reseau.</summary>
+    public byte Phase;
     /// <summary>Temps restant du tour cote serveur.</summary>
     public float TimerRemaining;
     /// <summary>PV courants du joueur.</summary>
@@ -232,6 +234,7 @@ public struct CombatSnapshotData : INetworkSerializable
     public CombatSnapshotData(
         string sessionId,
         CombatTurn turn,
+        CombatSessionPhase phase,
         float timerRemaining,
         int playerHp,
         int playerMaxHp,
@@ -247,6 +250,7 @@ public struct CombatSnapshotData : INetworkSerializable
     {
         SessionId = CombatNetworkStrings.ToFixed64(sessionId);
         Turn = (byte)turn;
+        Phase = (byte)phase;
         TimerRemaining = timerRemaining;
         PlayerHp = playerHp;
         PlayerMaxHp = playerMaxHp;
@@ -267,12 +271,18 @@ public struct CombatSnapshotData : INetworkSerializable
     public CombatTurn TurnState => (CombatTurn)Turn;
 
     /// <summary>
+    /// Phase de session reconvertie depuis la valeur reseau.
+    /// </summary>
+    public CombatSessionPhase PhaseState => (CombatSessionPhase)Phase;
+
+    /// <summary>
     /// Serialise le snapshot dans l'ordre attendu par Netcode.
     /// </summary>
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref SessionId);
         serializer.SerializeValue(ref Turn);
+        serializer.SerializeValue(ref Phase);
         serializer.SerializeValue(ref TimerRemaining);
         serializer.SerializeValue(ref PlayerHp);
         serializer.SerializeValue(ref PlayerMaxHp);

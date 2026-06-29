@@ -366,6 +366,26 @@ public class AudioManager : MonoBehaviour
         return source;
     }
 
+    public AudioSource PlayClip(AudioClip clip, Vector3 position, float volume, float pitch = 1f)
+    {
+        if (clip == null)
+        {
+            return null;
+        }
+
+        AudioSource source = CreateSource("OneShot_" + clip.name);
+        ConfigureOneShotSource(source);
+        source.transform.position = position;
+        source.clip = clip;
+        source.loop = false;
+        source.pitch = Mathf.Max(0.01f, pitch);
+        source.volume = GetSfxSourceVolume(Mathf.Clamp01(volume));
+        source.Play();
+        RegisterSfxSource(source, Mathf.Clamp01(volume));
+        StartCoroutine(DestroyAfterPlay(source, clip.length / source.pitch));
+        return source;
+    }
+
     public AudioSource PlayUiClip(AudioClipSO clip)
     {
         if (clip == null || clip.audioClip == null)
@@ -746,12 +766,17 @@ public class AudioManager : MonoBehaviour
 
     private void RegisterSfxSource(AudioSource source, AudioClipSO clip)
     {
+        RegisterSfxSource(source, clip != null ? Mathf.Clamp01(clip.volume) : 1f);
+    }
+
+    private void RegisterSfxSource(AudioSource source, float clipVolume)
+    {
         if (source == null)
         {
             return;
         }
 
-        float clipVolume = clip != null ? Mathf.Clamp01(clip.volume) : 1f;
+        clipVolume = Mathf.Clamp01(clipVolume);
         CleanupTrackedSfxSources();
 
         for (int i = 0; i < activeSfxSources.Count; i++)
