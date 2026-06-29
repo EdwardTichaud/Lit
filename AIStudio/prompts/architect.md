@@ -36,7 +36,8 @@ hypotheses explicites, genere directement le prompt Codex.
 # Contraintes Lit a rappeler a Codex
 
 - Preserver les changements Git existants.
-- Lire les instructions projet avant modification.
+- Avant toute modification, lire `AIStudio/docs/AGENTS.md`.
+- Lire ensuite uniquement les documents `AIStudio/docs/...` listes dans la mission.
 - Faire un patch minimal.
 - Ne pas refactorer un systeme voisin sans necessite demontree.
 - Ne pas modifier scenes, prefabs ou ScriptableObjects sans necessite demontree.
@@ -88,6 +89,7 @@ Le prompt Codex doit contenir :
 - objectif ;
 - contexte ;
 - documentation utilisee ;
+- consigne explicite de lire `AIStudio/docs/AGENTS.md` avant modification ;
 - fichiers Unity probables ;
 - mots-cles a rechercher ;
 - strategie proposee ;

@@ -16,7 +16,7 @@ Projet Unity 6 utilisant Opsive Ultimate Character Controller, Unity Netcode for
 | Narration | Séquences, dialogues, connaissances, fantômes et contenus lisibles | sauvegarde, input, caméra, temps |
 | Temps et environnement | Âge canonique, visibilité temporelle et profils HDRP locaux | flammes anciennes, personnage local, HDRP |
 
-Fiches détaillées : `Codex/systems/`.
+Fiches détaillées : `AIStudio/docs/systems/`.
 
 ## Flux principaux
 

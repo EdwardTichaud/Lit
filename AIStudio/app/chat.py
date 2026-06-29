@@ -1,4 +1,5 @@
 from app.core.llm_tracking import print_llm_diagnostics
+from app.core.mission_brief import write_mission_brief
 
 
 INTRO = "AIStudio -- Preparateur de mission Codex"
@@ -60,6 +61,11 @@ def run_chat() -> None:
                 print(f"{file_info['score']:>4}  {file_info['path']}")
 
             print_llm_diagnostics(mission)
+
+            brief_paths = write_mission_brief(mission)
+            print("\n========== BRIEF ==========\n")
+            print(f"Brief courant : {brief_paths['latest']}")
+            print(f"Archive : {brief_paths['archive']}")
 
             print("\n========== PROMPT CODEX ==========\n")
             print(mission.final_codex_prompt or mission.answer)

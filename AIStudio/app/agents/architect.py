@@ -72,6 +72,13 @@ Fichiers Unity probables identifies par scan Python :
 Mots-cles conseilles pour Codex :
 
 {", ".join(extract_search_terms(mission.query, limit=32))}
+
+Instructions Codex obligatoires :
+
+- Avant toute modification, lire `AIStudio/docs/AGENTS.md`.
+- Lire ensuite uniquement les documents selectionnes ci-dessus.
+- Preserver les changements Git existants.
+- Produire un patch minimal et expliquer les tests a effectuer.
 """
 
     def _format_user_messages(self, user_messages: list[str]) -> str:

@@ -6,8 +6,8 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 6649,
-    "preview": "# Règles de travail Codex\n\n## Objectif\n\nPréserver l'architecture du projet, minimiser les régressions et transformer les découvertes importantes en documentation durable afin que les futures tâches bénéficient du travail déjà effectué.\n\n---\n\n# Avant toute modification\n\n1. Lire `Codex/architecture.md`.\n\n2. Identifier puis lire uniquement les fiches pertinentes dans `Codex/systems/`.\n\n3. Lire `Codex/current_work.md`.\n\n4. Lire `Codex/known_bugs.md`.\n\n5. Vérifier `git status` et préserver tous les changements existants.\n\n6. Identifier le flux complet avant de modifier un composant isolé.\n\n7. Confirmer si le comportement attendu concerne :\n\n   * solo ;\n   * multijoueur ;\n   * ou les deux.\n\n8. Pour tout bug Unity, vérifier en priorité :\n\n   * état statique (`static`)\n   * singleton\n   * événemen",
+    "size": 6681,
+    "preview": "# Règles de travail Codex\n\n## Objectif\n\nPréserver l'architecture du projet, minimiser les régressions et transformer les découvertes importantes en documentation durable afin que les futures tâches bénéficient du travail déjà effectué.\n\n---\n\n# Avant toute modification\n\n1. Lire `AIStudio/docs/architecture.md`.\n\n2. Identifier puis lire uniquement les fiches pertinentes dans `AIStudio/docs/systems/`.\n\n3. Lire `AIStudio/docs/current_work.md`.\n\n4. Lire `AIStudio/docs/known_bugs.md`.\n\n5. Vérifier `git status` et préserver tous les changements existants.\n\n6. Identifier le flux complet avant de modifier un composant isolé.\n\n7. Confirmer si le comportement attendu concerne :\n\n   * solo ;\n   * multijoueur ;\n   * ou les deux.\n\n8. Pour tout bug Unity, vérifier en priorité :\n\n   * état statique (`stati",
     "keywords": [
       "assets",
       "scripts",
@@ -19,16 +19,16 @@
       "persistence",
       "save",
       "aucun",
-      "codex",
       "architecture",
       "documentation",
       "toute",
       "uniquement",
       "sans",
       "lire",
+      "aistudio",
+      "docs",
       "identifier",
-      "modifier",
-      "unity"
+      "modifier"
     ]
   },
   "architecture": {
@@ -38,7 +38,7 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 3869,
+    "size": 3877,
     "preview": "# Architecture du projet\n\nProjet Unity 6 utilisant Opsive Ultimate Character Controller, Unity Netcode for GameObjects et HDRP.\n\n## Systèmes principaux\n\n| Système | Responsabilité | Dépendances majeures |\n|---|---|---|\n| Session runtime | Création/chargement des slots, changement de scène, remise à zéro entre parties | `SaveSessionManager`, `GameplayRuntimeReset`, menu |\n| Squad et personnages | Roster, personnage contrôlé, données runtime, inventaire, followers | `SquadManager`, `SquadCharacterController`, `CharacterData` |\n| Input, UCC et caméra | Capture des actions, routage local, locomotion Opsive, liaison caméra | Input System, `LocalPlayerContext`, UCC |\n| Interactions et inventaire | Détection des cibles, Outline, actions monde, loot et UI d’inventaire | physique Unity, input, squa",
     "keywords": [
       "netcode",

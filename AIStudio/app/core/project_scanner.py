@@ -163,18 +163,26 @@ def _scan_root(root_name: str, terms: list[str], rg_command: str) -> dict[str, d
             cwd=LIT_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=20,
             check=False,
         )
-    except subprocess.TimeoutExpired:
+    except (OSError, subprocess.SubprocessError):
         return {}
+
+    if completed is None:
+        return {}
+
+    stdout = completed.stdout or ""
+    stderr = completed.stderr or ""
 
     if completed.returncode not in {0, 1}:
         return {}
 
     scored: dict[str, dict] = defaultdict(_new_file_score)
 
-    for raw_line in completed.stdout.splitlines():
+    for raw_line in stdout.splitlines():
         parsed = _parse_rg_line(raw_line)
 
         if not parsed:

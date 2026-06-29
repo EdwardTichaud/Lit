@@ -8,13 +8,13 @@ Préserver l'architecture du projet, minimiser les régressions et transformer l
 
 # Avant toute modification
 
-1. Lire `Codex/architecture.md`.
+1. Lire `AIStudio/docs/architecture.md`.
 
-2. Identifier puis lire uniquement les fiches pertinentes dans `Codex/systems/`.
+2. Identifier puis lire uniquement les fiches pertinentes dans `AIStudio/docs/systems/`.
 
-3. Lire `Codex/current_work.md`.
+3. Lire `AIStudio/docs/current_work.md`.
 
-4. Lire `Codex/known_bugs.md`.
+4. Lire `AIStudio/docs/known_bugs.md`.
 
 5. Vérifier `git status` et préserver tous les changements existants.
 
