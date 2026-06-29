@@ -1,9 +1,15 @@
-from app.core.documentation_indexer import write_documentation_index
+from app.agents.architect import ArchitectAgent
 
 
 def main():
-    path = write_documentation_index()
-    print(f"Documentation index generated: {path}")
+
+    agent = ArchitectAgent()
+
+    answer = agent.ask(
+        "Je veux modifier le système de combat."
+    )
+
+    print(answer)
 
 
 if __name__ == "__main__":
