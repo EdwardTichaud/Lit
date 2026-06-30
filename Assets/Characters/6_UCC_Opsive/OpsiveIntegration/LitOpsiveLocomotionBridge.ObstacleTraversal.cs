@@ -4,6 +4,10 @@ using UnityEngine;
 public partial class LitOpsiveLocomotionBridge
 {
     private const int ObstacleTraversalHitCapacity = 8;
+    private const int ObstacleTraversalOverlapCapacity = 8;
+    private const float ObstacleTraversalMinOpposingNormalDot = 0.45f;
+    private const float ObstacleTraversalTopNormalMinUpDot = 0.5f;
+    private const float ObstacleTraversalStepHeightTolerance = 0.02f;
 
     [Header("Obstacle Traversal")]
     [SerializeField, Tooltip("Active le franchissement automatique des obstacles bas pendant la locomotion UCC.")]
@@ -32,6 +36,7 @@ public partial class LitOpsiveLocomotionBridge
     private string obstacleTraversalTriggerParam = "ObstacleTraversal";
 
     private readonly RaycastHit[] obstacleTraversalHits = new RaycastHit[ObstacleTraversalHitCapacity];
+    private readonly Collider[] obstacleTraversalOverlaps = new Collider[ObstacleTraversalOverlapCapacity];
     private Coroutine obstacleTraversalRoutine;
     private bool obstacleTraversalOwnsScriptedLock;
 
@@ -75,16 +80,22 @@ public partial class LitOpsiveLocomotionBridge
         Vector3 origin = transform.position + up * Mathf.Max(0f, obstacleProbeBaseHeight);
         float probeDistance = Mathf.Max(0.05f, obstacleProbeDistance);
         float probeRadius = Mathf.Max(0.01f, obstacleProbeRadius);
+        int traversalMask = ResolveObstacleTraversalMask();
+        if (traversalMask == 0)
+        {
+            return false;
+        }
+
         int hitCount = Physics.SphereCastNonAlloc(
             origin,
             probeRadius,
             direction,
             obstacleTraversalHits,
             probeDistance,
-            obstacleTraversalMask,
+            traversalMask,
             QueryTriggerInteraction.Ignore);
 
-        if (!TryFindClosestTraversalHit(hitCount, footY, direction, out RaycastHit obstacleHit, out float obstacleHeight))
+        if (!TryFindClosestTraversalHit(hitCount, footY, direction, traversalMask, out RaycastHit obstacleHit, out float obstacleHeight))
         {
             return false;
         }
@@ -92,9 +103,14 @@ public partial class LitOpsiveLocomotionBridge
         float landingDistance = Mathf.Max(0f, obstacleLandingDistance);
         float travelDistance = Mathf.Max(obstacleHit.distance + probeRadius + landingDistance, landingDistance);
         Vector3 candidate = transform.position + direction * travelDistance;
-        candidate.y = ResolveObstacleTraversalLandingFootY(candidate, footY) + (transform.position.y - footY);
+        candidate.y = ResolveObstacleTraversalLandingFootY(candidate, footY, traversalMask) + (transform.position.y - footY);
 
-        if (!HasTraversalHeadClearance(origin, direction, travelDistance, obstacleHeight))
+        if (!HasTraversalLandingClearance(candidate, traversalMask))
+        {
+            return false;
+        }
+
+        if (!HasTraversalHeadClearance(origin, direction, travelDistance, obstacleHeight, traversalMask))
         {
             return false;
         }
@@ -110,13 +126,14 @@ public partial class LitOpsiveLocomotionBridge
         int hitCount,
         float footY,
         Vector3 direction,
+        int traversalMask,
         out RaycastHit closestHit,
         out float obstacleHeight)
     {
         closestHit = default;
         obstacleHeight = 0f;
         float closestDistance = float.PositiveInfinity;
-        float ignoreHeight = Mathf.Max(0f, ignoredObstacleMaxHeight);
+        float ignoreHeight = ResolveObstacleTraversalIgnoreHeight();
         float maxHeight = Mathf.Max(ignoreHeight, traversableObstacleMaxHeight);
         float maxSurfaceUpDot = Mathf.Clamp01(obstacleTraversalMaxSurfaceUpDot);
         Vector3 up = transform.up;
@@ -125,12 +142,12 @@ public partial class LitOpsiveLocomotionBridge
         {
             RaycastHit hit = obstacleTraversalHits[i];
             Collider hitCollider = hit.collider;
-            if (hitCollider == null || IsOwnObstacleTraversalCollider(hitCollider))
+            if (!IsValidObstacleTraversalCollider(hitCollider, traversalMask))
             {
                 continue;
             }
 
-            if (Vector3.Dot(hit.normal, direction) > -0.15f)
+            if (Vector3.Dot(hit.normal, direction) > -ObstacleTraversalMinOpposingNormalDot)
             {
                 continue;
             }
@@ -140,8 +157,7 @@ public partial class LitOpsiveLocomotionBridge
                 continue;
             }
 
-            float height = hitCollider.bounds.max.y - footY;
-            if (height <= ignoreHeight || height > maxHeight)
+            if (!TryResolveTraversalSurfaceHeight(hit, footY, direction, ignoreHeight, maxHeight, traversalMask, out float height))
             {
                 continue;
             }
@@ -157,7 +173,68 @@ public partial class LitOpsiveLocomotionBridge
         return closestDistance < float.PositiveInfinity;
     }
 
-    private bool HasTraversalHeadClearance(Vector3 baseOrigin, Vector3 direction, float travelDistance, float obstacleHeight)
+    private bool TryResolveTraversalSurfaceHeight(
+        RaycastHit obstacleHit,
+        float footY,
+        Vector3 direction,
+        float ignoreHeight,
+        float maxHeight,
+        int traversalMask,
+        out float obstacleHeight)
+    {
+        obstacleHeight = 0f;
+
+        Vector3 up = transform.up;
+        float forwardOffset = Mathf.Max(0.03f, obstacleProbeRadius * 0.5f);
+        Vector3 topProbeOrigin = obstacleHit.point + direction * forwardOffset;
+        topProbeOrigin.y = footY + maxHeight + 0.2f;
+        float topProbeDistance = maxHeight + 0.35f;
+
+        if (!Physics.Raycast(
+                topProbeOrigin,
+                -up,
+                out RaycastHit topHit,
+                topProbeDistance,
+                traversalMask,
+                QueryTriggerInteraction.Ignore) ||
+            !IsValidObstacleTraversalCollider(topHit.collider, traversalMask) ||
+            topHit.collider != obstacleHit.collider)
+        {
+            return false;
+        }
+
+        if (Vector3.Dot(topHit.normal, up) < ObstacleTraversalTopNormalMinUpDot)
+        {
+            return false;
+        }
+
+        obstacleHeight = topHit.point.y - footY;
+        return obstacleHeight > ignoreHeight && obstacleHeight <= maxHeight;
+    }
+
+    private bool HasTraversalLandingClearance(Vector3 candidate, int traversalMask)
+    {
+        Vector3 center = candidate + transform.up * Mathf.Max(0f, obstacleProbeBaseHeight);
+        int overlapCount = Physics.OverlapSphereNonAlloc(
+            center,
+            Mathf.Max(0.01f, obstacleProbeRadius),
+            obstacleTraversalOverlaps,
+            traversalMask,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < overlapCount; i++)
+        {
+            Collider overlap = obstacleTraversalOverlaps[i];
+            if (IsValidObstacleTraversalCollider(overlap, traversalMask, excludeInteractiveBlockers: false))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool HasTraversalHeadClearance(Vector3 baseOrigin, Vector3 direction, float travelDistance, float obstacleHeight, int traversalMask)
     {
         float probeRadius = Mathf.Max(0.01f, obstacleProbeRadius);
         float clearanceHeight = Mathf.Max(obstacleHeight + probeRadius + 0.15f, obstacleProbeBaseHeight + probeRadius * 2f);
@@ -168,13 +245,13 @@ public partial class LitOpsiveLocomotionBridge
             direction,
             obstacleTraversalHits,
             Mathf.Max(0.05f, travelDistance),
-            obstacleTraversalMask,
+            traversalMask,
             QueryTriggerInteraction.Ignore);
 
         for (int i = 0; i < hitCount; i++)
         {
             Collider hitCollider = obstacleTraversalHits[i].collider;
-            if (hitCollider != null && !IsOwnObstacleTraversalCollider(hitCollider))
+            if (IsValidObstacleTraversalCollider(hitCollider, traversalMask, excludeInteractiveBlockers: false))
             {
                 return false;
             }
@@ -183,7 +260,7 @@ public partial class LitOpsiveLocomotionBridge
         return true;
     }
 
-    private float ResolveObstacleTraversalLandingFootY(Vector3 candidate, float fallbackY)
+    private float ResolveObstacleTraversalLandingFootY(Vector3 candidate, float fallbackY, int traversalMask)
     {
         Vector3 rayOrigin = candidate + transform.up * (Mathf.Max(ignoredObstacleMaxHeight, traversableObstacleMaxHeight) + 0.5f);
         float rayDistance = Mathf.Max(0.6f, traversableObstacleMaxHeight + 1f);
@@ -192,10 +269,9 @@ public partial class LitOpsiveLocomotionBridge
                 -transform.up,
                 out RaycastHit hit,
                 rayDistance,
-                obstacleTraversalMask,
+                traversalMask,
                 QueryTriggerInteraction.Ignore) &&
-            hit.collider != null &&
-            !IsOwnObstacleTraversalCollider(hit.collider))
+            IsValidObstacleTraversalCollider(hit.collider, traversalMask))
         {
             return hit.point.y;
         }
@@ -205,6 +281,27 @@ public partial class LitOpsiveLocomotionBridge
 
     private float ResolveObstacleTraversalFootY()
     {
+        Collider[] locomotionColliders = locomotion != null ? locomotion.Colliders : null;
+        int locomotionColliderCount = locomotion != null ? locomotion.ColliderCount : 0;
+        float footY = float.PositiveInfinity;
+        bool foundLocomotionCollider = false;
+        for (int i = 0; locomotionColliders != null && i < locomotionColliderCount && i < locomotionColliders.Length; i++)
+        {
+            Collider collider = locomotionColliders[i];
+            if (collider == null || !collider.enabled || collider.isTrigger || !collider.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            footY = Mathf.Min(footY, collider.bounds.min.y);
+            foundLocomotionCollider = true;
+        }
+
+        if (foundLocomotionCollider)
+        {
+            return footY;
+        }
+
         CapsuleCollider capsule = GetComponent<CapsuleCollider>();
         if (capsule != null)
         {
@@ -212,6 +309,52 @@ public partial class LitOpsiveLocomotionBridge
         }
 
         return transform.position.y;
+    }
+
+    private int ResolveObstacleTraversalMask()
+    {
+        int mask = obstacleTraversalMask.value;
+        if (locomotion != null)
+        {
+            mask &= locomotion.ColliderLayerMask.value;
+        }
+
+        return mask;
+    }
+
+    private float ResolveObstacleTraversalIgnoreHeight()
+    {
+        float ignoreHeight = Mathf.Max(0f, ignoredObstacleMaxHeight);
+        if (locomotion == null)
+        {
+            return ignoreHeight;
+        }
+
+        float uccStepHeight = Mathf.Max(0f, locomotion.MaxStepHeight - ObstacleTraversalStepHeightTolerance);
+        return Mathf.Min(ignoreHeight, uccStepHeight);
+    }
+
+    private bool IsValidObstacleTraversalCollider(Collider hitCollider, int traversalMask, bool excludeInteractiveBlockers = true)
+    {
+        if (hitCollider == null ||
+            !hitCollider.enabled ||
+            hitCollider.isTrigger ||
+            IsOwnObstacleTraversalCollider(hitCollider))
+        {
+            return false;
+        }
+
+        if ((traversalMask & (1 << hitCollider.gameObject.layer)) == 0)
+        {
+            return false;
+        }
+
+        return !excludeInteractiveBlockers || !IsObstacleTraversalInteractiveBlocker(hitCollider);
+    }
+
+    private static bool IsObstacleTraversalInteractiveBlocker(Collider hitCollider)
+    {
+        return hitCollider != null && hitCollider.GetComponentInParent<Door>() != null;
     }
 
     private bool IsOwnObstacleTraversalCollider(Collider hitCollider)

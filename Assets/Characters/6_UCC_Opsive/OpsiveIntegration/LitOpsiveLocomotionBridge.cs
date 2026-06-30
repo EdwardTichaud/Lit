@@ -44,6 +44,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField, Min(0f), Tooltip("Velocity-style upward force used by the Lit fallback jump path.")]
     private float jumpFallbackVelocity = 7f;
 
+    [Header("Ground Relief")]
+    [SerializeField, Tooltip("Raises selected UCC ground settings at runtime so mesh floor reliefs and thresholds do not behave like hard walls.")]
+    private bool relaxGroundReliefTolerance = true;
+    [SerializeField, Min(0f), Tooltip("Minimum UCC step height used while this bridge drives locomotion.")]
+    private float groundReliefMinStepHeight = 0.6f;
+    [SerializeField, Range(0f, 89f), Tooltip("Minimum UCC traversable slope angle used while this bridge drives locomotion.")]
+    private float groundReliefMinSlopeLimit = 58f;
+    [SerializeField, Min(0f), Tooltip("Minimum UCC stick-to-ground distance used while this bridge drives locomotion.")]
+    private float groundReliefMinStickToGroundDistance = 0.55f;
+
     [Header("Flight")]
     [SerializeField, Tooltip("Restores the pre-UCC LocomotionMode flight toggle through a lightweight UCC ability.")]
     private bool enableUccFlight = true;
@@ -89,6 +99,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool previousUseGravity;
     private bool previousIsKinematic;
     private CollisionDetectionMode previousCollisionMode;
+    private bool groundReliefToleranceApplied;
+    private float previousUccMaxStepHeight;
+    private float previousUccSlopeLimit;
+    private float previousUccStickToGroundDistance;
     private Vector2 currentWorldMoveInput;
     private bool sprintPressed;
     private bool warnedMissingJump;
@@ -468,6 +482,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         EnsureCompanionBridges();
         CacheRigidbodyState();
         ConfigureRigidbody();
+        ConfigureGroundReliefTolerance();
         RegisterExternalDriver();
         AttachLookSourceIfNeeded(true);
         ApplyWorldMoveInput(currentWorldMoveInput);
@@ -495,6 +510,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         scriptedTraversalLockCount = 0;
         StopBridgeInput();
         UnregisterExternalDriver();
+        RestoreGroundReliefTolerance();
         RestoreRigidbody();
     }
 
@@ -517,6 +533,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             RefreshSquadFacadeSystems();
             return;
         }
+
+        TickGroundBlockDiagnostics();
 
         if (!IsFlightModeActive)
         {
@@ -1178,6 +1196,40 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rb.useGravity = false;
         rb.isKinematic = true;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+    }
+
+    private void ConfigureGroundReliefTolerance()
+    {
+        if (!relaxGroundReliefTolerance || locomotion == null || groundReliefToleranceApplied)
+        {
+            return;
+        }
+
+        previousUccMaxStepHeight = locomotion.MaxStepHeight;
+        previousUccSlopeLimit = locomotion.SlopeLimit;
+        previousUccStickToGroundDistance = locomotion.StickToGroundDistance;
+
+        locomotion.MaxStepHeight = Mathf.Max(locomotion.MaxStepHeight, Mathf.Max(0f, groundReliefMinStepHeight));
+        locomotion.SlopeLimit = Mathf.Max(locomotion.SlopeLimit, Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f));
+        locomotion.StickToGroundDistance = Mathf.Max(
+            locomotion.StickToGroundDistance,
+            Mathf.Max(0f, groundReliefMinStickToGroundDistance));
+
+        groundReliefToleranceApplied = true;
+    }
+
+    private void RestoreGroundReliefTolerance()
+    {
+        if (!groundReliefToleranceApplied || locomotion == null)
+        {
+            groundReliefToleranceApplied = false;
+            return;
+        }
+
+        locomotion.MaxStepHeight = previousUccMaxStepHeight;
+        locomotion.SlopeLimit = previousUccSlopeLimit;
+        locomotion.StickToGroundDistance = previousUccStickToGroundDistance;
+        groundReliefToleranceApplied = false;
     }
 
     private void RestoreRigidbody()
