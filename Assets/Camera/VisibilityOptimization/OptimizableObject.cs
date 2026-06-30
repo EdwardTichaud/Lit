@@ -1,68 +1,85 @@
 using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public sealed class OptimizableObject : MonoBehaviour
 {
-    [Header("Classification")]
-    [SerializeField] private VisibilityOptimizationCategory category = VisibilityOptimizationCategory.Decoration;
+    private struct ParticleState
+    {
+        public bool WasPlaying;
+        public bool WasPaused;
+        public bool EmissionEnabled;
+    }
+
+    private struct BehaviourState
+    {
+        public bool WasEnabled;
+        public bool CanRestore;
+    }
+
+    [Header("Runtime")]
     [SerializeField] private bool optimizationEnabled = true;
     [SerializeField] private bool neverCull;
-    [SerializeField] private bool preserveForCameraFade;
+    [SerializeField, Tooltip("Garde les renderers visibles quand le fondu camera/XRay les protege.")]
+    private bool preserveForCameraFade;
 
-    [Header("Targets")]
+    [Header("Bounds")]
     [SerializeField] private Transform boundsRoot;
     [SerializeField] private bool autoCollectTargets = true;
     [SerializeField] private bool includeInactiveChildren = true;
-    [SerializeField] private bool controlRenderers = true;
-    [SerializeField] private bool controlSkinnedMeshRenderers = true;
-    [SerializeField] private bool controlLights = true;
-    [SerializeField, Tooltip("Ne pilote que les comportements qui implementent IPausableWhenInvisible ou IVisibilityUpdateRateTarget.")]
-    private bool controlExplicitPausables;
-    [SerializeField] private bool reduceUpdateRateWhenDistant = true;
-    [SerializeField, Min(0f)] private float distantUpdateInterval = 0.35f;
-    [SerializeField, Min(0f)] private float pausedUpdateInterval = 1f;
-    [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
-    [SerializeField] private Light[] targetLights = Array.Empty<Light>();
-    [SerializeField] private MonoBehaviour[] explicitPausables = Array.Empty<MonoBehaviour>();
-
-    [Header("Distances")]
-    [SerializeField, Tooltip("Valeur < 0 = profil de categorie du manager.")]
-    private float visibleDistanceOverride = -1f;
-    [SerializeField, Tooltip("Valeur < 0 = profil de categorie du manager.")]
-    private float lightDistanceOverride = -1f;
-    [SerializeField, Tooltip("Valeur < 0 = profil de categorie du manager.")]
-    private float pauseDistanceOverride = -1f;
-    [SerializeField, Min(0.1f)] private float distanceMultiplier = 1f;
     [SerializeField, Min(0f)] private float boundsPadding = 1.5f;
     [SerializeField, Min(0.05f)] private float minimumBoundsRadius = 0.5f;
+    [SerializeField, Min(0f), Tooltip("Distance joueur local sous laquelle l'objet reste actif meme hors frustum.")]
+    private float localPlayerKeepVisibleDistance = 2f;
+
+    [Header("Presentation Targets")]
+    [SerializeField] private bool controlRenderers = true;
+    [SerializeField] private bool controlSkinnedMeshRenderers = true;
+    [SerializeField] private bool controlParticleSystems = true;
+    [SerializeField, FormerlySerializedAs("controlExplicitPausables"), Tooltip("Opt-in uniquement: ne jamais ajouter de composant reseau ou de logique autoritaire.")]
+    private bool controlExplicitBehaviours;
+    [SerializeField] private VisibilityParticleOffscreenAction particleOffscreenAction = VisibilityParticleOffscreenAction.PauseAndResume;
+    [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
+    [SerializeField] private ParticleSystem[] targetParticleSystems = Array.Empty<ParticleSystem>();
+    [SerializeField, FormerlySerializedAs("explicitPausables")]
+    private Behaviour[] explicitBehaviours = Array.Empty<Behaviour>();
 
     [Header("Debug")]
     [SerializeField] private bool drawGizmos;
     [SerializeField] private bool logStateChanges;
 
+    [SerializeField, HideInInspector] private VisibilityOptimizationCategory category = VisibilityOptimizationCategory.Decoration;
+#pragma warning disable 0414
+    [SerializeField, HideInInspector] private bool controlLights;
+    [SerializeField, HideInInspector] private Light[] targetLights = Array.Empty<Light>();
+    [SerializeField, HideInInspector] private float visibleDistanceOverride = -1f;
+    [SerializeField, HideInInspector] private float lightDistanceOverride = -1f;
+    [SerializeField, HideInInspector] private float pauseDistanceOverride = -1f;
+    [SerializeField, HideInInspector] private bool reduceUpdateRateWhenDistant = true;
+    [SerializeField, HideInInspector] private float distantUpdateInterval = 0.35f;
+    [SerializeField, HideInInspector] private float pausedUpdateInterval = 1f;
+#pragma warning restore 0414
+    [SerializeField, HideInInspector] private float distanceMultiplier = 1f;
+
     private bool[] rendererEnabledStates = Array.Empty<bool>();
-    private bool[] lightEnabledStates = Array.Empty<bool>();
+    private ParticleState[] particleStates = Array.Empty<ParticleState>();
+    private BehaviourState[] behaviourStates = Array.Empty<BehaviourState>();
     private bool capturedRendererState;
-    private bool capturedLightState;
+    private bool capturedParticleState;
+    private bool capturedBehaviourState;
     private Bounds cachedBounds;
     private bool boundsDirty = true;
     private VisibilityOptimizationState currentState = VisibilityOptimizationState.Visible;
-    private bool currentLightsVisible = true;
-    private bool currentPaused;
 
     public VisibilityOptimizationCategory Category => category;
     public bool OptimizationEnabled => optimizationEnabled;
     public bool NeverCull => neverCull || category == VisibilityOptimizationCategory.Critical;
     public bool PreserveForCameraFade => preserveForCameraFade;
-    public float DistanceMultiplier => distanceMultiplier;
-    public float VisibleDistanceOverride => visibleDistanceOverride;
-    public float LightDistanceOverride => lightDistanceOverride;
-    public float PauseDistanceOverride => pauseDistanceOverride;
+    public float LocalPlayerKeepVisibleDistance => localPlayerKeepVisibleDistance;
     public VisibilityOptimizationState CurrentState => currentState;
-    public bool CurrentLightsVisible => currentLightsVisible;
-    public bool CurrentPaused => currentPaused;
 
     public Bounds CurrentBounds
     {
@@ -92,17 +109,17 @@ public sealed class OptimizableObject : MonoBehaviour
     {
         boundsRoot = transform;
         RefreshCachedTargets();
-        InferCategoryFromContents();
     }
 
     private void Awake()
     {
-        if (autoCollectTargets && !HasAnyCachedTargets())
+        if (autoCollectTargets)
         {
             RefreshCachedTargets();
         }
         else
         {
+            explicitBehaviours = FilterExplicitBehaviours(explicitBehaviours);
             RecalculateBounds();
         }
     }
@@ -136,15 +153,17 @@ public sealed class OptimizableObject : MonoBehaviour
 
     private void OnValidate()
     {
-        distanceMultiplier = Mathf.Max(0.1f, distanceMultiplier);
         boundsPadding = Mathf.Max(0f, boundsPadding);
         minimumBoundsRadius = Mathf.Max(0.05f, minimumBoundsRadius);
+        localPlayerKeepVisibleDistance = Mathf.Max(0f, localPlayerKeepVisibleDistance);
+        distanceMultiplier = Mathf.Max(0.1f, distanceMultiplier);
         if (!Application.isPlaying && autoCollectTargets)
         {
             RefreshCachedTargets();
         }
         else
         {
+            explicitBehaviours = FilterExplicitBehaviours(explicitBehaviours);
             boundsDirty = true;
         }
     }
@@ -164,8 +183,8 @@ public sealed class OptimizableObject : MonoBehaviour
         if (root == null)
         {
             targetRenderers = Array.Empty<Renderer>();
-            targetLights = Array.Empty<Light>();
-            explicitPausables = Array.Empty<MonoBehaviour>();
+            targetParticleSystems = Array.Empty<ParticleSystem>();
+            explicitBehaviours = Array.Empty<Behaviour>();
             boundsDirty = true;
             return;
         }
@@ -178,71 +197,86 @@ public sealed class OptimizableObject : MonoBehaviour
             targetRenderers = Array.FindAll(targetRenderers, renderer => renderer != null && !(renderer is SkinnedMeshRenderer));
         }
 
-        targetLights = controlLights
-            ? FilterOwnedTargets(root.GetComponentsInChildren<Light>(includeInactiveChildren))
-            : Array.Empty<Light>();
+        targetParticleSystems = controlParticleSystems
+            ? FilterOwnedTargets(root.GetComponentsInChildren<ParticleSystem>(includeInactiveChildren))
+            : Array.Empty<ParticleSystem>();
 
-        if (controlExplicitPausables)
-        {
-            explicitPausables = FilterPausables(root.GetComponentsInChildren<MonoBehaviour>(includeInactiveChildren));
-        }
-
+        explicitBehaviours = FilterExplicitBehaviours(explicitBehaviours);
         capturedRendererState = false;
-        capturedLightState = false;
+        capturedParticleState = false;
+        capturedBehaviourState = false;
         boundsDirty = true;
         RecalculateBounds();
     }
 
-    public void ApplyEvaluation(
-        VisibilityOptimizationState requestedState,
-        bool lightsVisible,
-        bool pause,
-        VisibilityPauseContext context)
+    public bool IsNearLocalPlayer(Transform localPlayer)
+    {
+        if (localPlayer == null || localPlayerKeepVisibleDistance <= 0f)
+        {
+            return false;
+        }
+
+        Bounds bounds = CurrentBounds;
+        return bounds.SqrDistance(localPlayer.position) <= localPlayerKeepVisibleDistance * localPlayerKeepVisibleDistance;
+    }
+
+    public void ApplyVisibility(bool visible, string reason)
     {
         if (!optimizationEnabled || NeverCull)
         {
-            RestoreAll();
-            currentState = NeverCull ? VisibilityOptimizationState.Excluded : VisibilityOptimizationState.Visible;
+            RestorePresentation();
+            SetCurrentState(NeverCull ? VisibilityOptimizationState.Excluded : VisibilityOptimizationState.Visible, reason);
             return;
         }
 
-        bool renderersVisible = requestedState == VisibilityOptimizationState.Visible ||
-                                requestedState == VisibilityOptimizationState.LightCulled ||
-                                HasCameraProtectedRenderer();
+        bool protectedForCameraFade = HasCameraProtectedRenderer();
+        bool presentationVisible = visible || protectedForCameraFade;
 
-        ApplyRendererVisibility(renderersVisible);
-        ApplyLightVisibility(lightsVisible);
-        ApplyPause(pause, context);
+        ApplyRendererVisibility(presentationVisible);
+        ApplyParticleVisibility(presentationVisible);
+        ApplyBehaviourVisibility(visible);
 
-        VisibilityOptimizationState nextState = renderersVisible
-            ? lightsVisible ? VisibilityOptimizationState.Visible : VisibilityOptimizationState.LightCulled
-            : pause ? VisibilityOptimizationState.Paused : VisibilityOptimizationState.RendererCulled;
-
-        if (currentState != nextState && logStateChanges)
-        {
-            Debug.Log($"[VisibilityOptimization] {name}: {currentState} -> {nextState} reason='{context.Reason}'", this);
-        }
-
-        currentState = nextState;
-        currentLightsVisible = lightsVisible;
-        currentPaused = pause;
+        VisibilityOptimizationState nextState = ResolveState(presentationVisible);
+        SetCurrentState(nextState, protectedForCameraFade && !visible ? "camera_fade_protected" : reason);
     }
 
     public void RestoreAll()
     {
-        ApplyRendererVisibility(true, forceRestore: true);
-        ApplyLightVisibility(true, forceRestore: true);
-        ApplyPause(false, new VisibilityPauseContext(
-            VisibilityOptimizationState.Visible,
-            category,
-            0f,
-            0f,
-            true,
-            "restore"));
+        RestorePresentation();
+        SetCurrentState(VisibilityOptimizationState.Visible, "restore");
+    }
 
-        currentState = VisibilityOptimizationState.Visible;
-        currentLightsVisible = true;
-        currentPaused = false;
+    private void RestorePresentation()
+    {
+        ApplyRendererVisibility(true, forceRestore: true);
+        ApplyParticleVisibility(true, forceRestore: true);
+        ApplyBehaviourVisibility(true, forceRestore: true);
+    }
+
+    private VisibilityOptimizationState ResolveState(bool presentationVisible)
+    {
+        if (presentationVisible)
+        {
+            return VisibilityOptimizationState.Visible;
+        }
+
+        if (HasAnyReference(targetParticleSystems) ||
+            controlExplicitBehaviours && HasAnyReference(explicitBehaviours))
+        {
+            return VisibilityOptimizationState.Paused;
+        }
+
+        return VisibilityOptimizationState.RendererCulled;
+    }
+
+    private void SetCurrentState(VisibilityOptimizationState nextState, string reason)
+    {
+        if (currentState != nextState && logStateChanges)
+        {
+            Debug.Log($"[VisibilityOptimization] {name}: {currentState} -> {nextState} reason='{reason}'", this);
+        }
+
+        currentState = nextState;
     }
 
     private void ApplyRendererVisibility(bool visible, bool forceRestore = false)
@@ -272,9 +306,9 @@ public sealed class OptimizableObject : MonoBehaviour
 
             if (visible)
             {
-                if (forceRestore || capturedRendererState)
+                if (capturedRendererState && rendererEnabledStates.Length > i)
                 {
-                    target.enabled = rendererEnabledStates.Length > i && rendererEnabledStates[i];
+                    target.enabled = rendererEnabledStates[i];
                 }
             }
             else
@@ -283,27 +317,27 @@ public sealed class OptimizableObject : MonoBehaviour
             }
         }
 
-        if (visible)
+        if (visible && capturedRendererState)
         {
             capturedRendererState = false;
         }
     }
 
-    private void ApplyLightVisibility(bool visible, bool forceRestore = false)
+    private void ApplyParticleVisibility(bool visible, bool forceRestore = false)
     {
-        if (!controlLights || targetLights == null)
+        if (!controlParticleSystems || targetParticleSystems == null)
         {
             return;
         }
 
         if (!visible)
         {
-            CaptureLightStates();
+            CaptureParticleStates();
         }
 
-        for (int i = 0; i < targetLights.Length; i++)
+        for (int i = 0; i < targetParticleSystems.Length; i++)
         {
-            Light target = targetLights[i];
+            ParticleSystem target = targetParticleSystems[i];
             if (target == null)
             {
                 continue;
@@ -311,50 +345,103 @@ public sealed class OptimizableObject : MonoBehaviour
 
             if (visible)
             {
-                if (forceRestore || capturedLightState)
+                if (capturedParticleState && particleStates.Length > i)
                 {
-                    target.enabled = lightEnabledStates.Length > i && lightEnabledStates[i];
+                    RestoreParticle(target, particleStates[i]);
                 }
             }
             else
             {
-                target.enabled = false;
+                SuspendParticle(target);
             }
         }
 
-        if (visible)
+        if (visible && capturedParticleState)
         {
-            capturedLightState = false;
+            capturedParticleState = false;
         }
     }
 
-    private void ApplyPause(bool pause, VisibilityPauseContext context)
+    private void ApplyBehaviourVisibility(bool visible, bool forceRestore = false)
     {
-        if (!controlExplicitPausables || explicitPausables == null)
+        if (!controlExplicitBehaviours || explicitBehaviours == null)
         {
             return;
         }
 
-        bool shouldReduceUpdateRate = reduceUpdateRateWhenDistant &&
-                                      (pause || context.State != VisibilityOptimizationState.Visible);
-        float updateInterval = 0f;
-        if (shouldReduceUpdateRate)
+        if (!visible)
         {
-            updateInterval = pause ? pausedUpdateInterval : distantUpdateInterval;
+            CaptureBehaviourStates();
         }
 
-        for (int i = 0; i < explicitPausables.Length; i++)
+        for (int i = 0; i < explicitBehaviours.Length; i++)
         {
-            MonoBehaviour behaviour = explicitPausables[i];
-            if (behaviour is IPausableWhenInvisible pausable)
+            Behaviour behaviour = explicitBehaviours[i];
+            if (behaviour == null || !IsBehaviourSafeToDisable(behaviour))
             {
-                pausable.SetPausedWhenInvisible(pause, context);
+                continue;
             }
 
-            if (behaviour is IVisibilityUpdateRateTarget updateRateTarget)
+            if (visible)
             {
-                updateRateTarget.SetVisibilityUpdateInterval(updateInterval, context);
+                if (capturedBehaviourState &&
+                    behaviourStates.Length > i &&
+                    behaviourStates[i].CanRestore)
+                {
+                    behaviour.enabled = behaviourStates[i].WasEnabled;
+                }
             }
+            else
+            {
+                behaviour.enabled = false;
+            }
+        }
+
+        if (visible && capturedBehaviourState)
+        {
+            capturedBehaviourState = false;
+        }
+    }
+
+    private void SuspendParticle(ParticleSystem target)
+    {
+        switch (particleOffscreenAction)
+        {
+            case VisibilityParticleOffscreenAction.StopEmitting:
+                target.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                break;
+            case VisibilityParticleOffscreenAction.DisableEmission:
+                ParticleSystem.EmissionModule emission = target.emission;
+                emission.enabled = false;
+                break;
+            default:
+                if (target.isPlaying)
+                {
+                    target.Pause(true);
+                }
+                break;
+        }
+    }
+
+    private void RestoreParticle(ParticleSystem target, ParticleState state)
+    {
+        if (particleOffscreenAction == VisibilityParticleOffscreenAction.DisableEmission)
+        {
+            ParticleSystem.EmissionModule emission = target.emission;
+            emission.enabled = state.EmissionEnabled;
+        }
+
+        if (state.WasPlaying)
+        {
+            target.Play(true);
+        }
+        else if (state.WasPaused)
+        {
+            target.Pause(true);
+        }
+        else if (particleOffscreenAction == VisibilityParticleOffscreenAction.StopEmitting)
+        {
+            target.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
     }
 
@@ -375,21 +462,55 @@ public sealed class OptimizableObject : MonoBehaviour
         capturedRendererState = true;
     }
 
-    private void CaptureLightStates()
+    private void CaptureParticleStates()
     {
-        if (capturedLightState)
+        if (capturedParticleState)
         {
             return;
         }
 
-        EnsureStateArray(ref lightEnabledStates, targetLights != null ? targetLights.Length : 0);
-        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        EnsureStateArray(ref particleStates, targetParticleSystems != null ? targetParticleSystems.Length : 0);
+        for (int i = 0; targetParticleSystems != null && i < targetParticleSystems.Length; i++)
         {
-            Light target = targetLights[i];
-            lightEnabledStates[i] = target != null && target.enabled;
+            ParticleSystem target = targetParticleSystems[i];
+            if (target == null)
+            {
+                particleStates[i] = default;
+                continue;
+            }
+
+            ParticleSystem.EmissionModule emission = target.emission;
+            particleStates[i] = new ParticleState
+            {
+                WasPlaying = target.isPlaying,
+                WasPaused = target.isPaused,
+                EmissionEnabled = emission.enabled
+            };
         }
 
-        capturedLightState = true;
+        capturedParticleState = true;
+    }
+
+    private void CaptureBehaviourStates()
+    {
+        if (capturedBehaviourState)
+        {
+            return;
+        }
+
+        EnsureStateArray(ref behaviourStates, explicitBehaviours != null ? explicitBehaviours.Length : 0);
+        for (int i = 0; explicitBehaviours != null && i < explicitBehaviours.Length; i++)
+        {
+            Behaviour behaviour = explicitBehaviours[i];
+            bool canRestore = behaviour != null && IsBehaviourSafeToDisable(behaviour);
+            behaviourStates[i] = new BehaviourState
+            {
+                WasEnabled = canRestore && behaviour.enabled,
+                CanRestore = canRestore
+            };
+        }
+
+        capturedBehaviourState = true;
     }
 
     private bool HasCameraProtectedRenderer()
@@ -441,6 +562,7 @@ public sealed class OptimizableObject : MonoBehaviour
         Renderer[] renderers = targetRenderers != null && targetRenderers.Length > 0
             ? targetRenderers
             : root.GetComponentsInChildren<Renderer>(includeInactiveChildren);
+
         for (int i = 0; renderers != null && i < renderers.Length; i++)
         {
             Renderer renderer = renderers[i];
@@ -462,26 +584,23 @@ public sealed class OptimizableObject : MonoBehaviour
 
         if (!hasBounds)
         {
-            Light[] lights = targetLights != null && targetLights.Length > 0
-                ? targetLights
-                : root.GetComponentsInChildren<Light>(includeInactiveChildren);
-            for (int i = 0; lights != null && i < lights.Length; i++)
+            for (int i = 0; targetParticleSystems != null && i < targetParticleSystems.Length; i++)
             {
-                Light targetLight = lights[i];
-                if (targetLight == null)
+                ParticleSystem particleSystem = targetParticleSystems[i];
+                if (particleSystem == null)
                 {
                     continue;
                 }
 
-                Bounds lightBounds = new Bounds(targetLight.transform.position, Vector3.one * Mathf.Max(0.5f, targetLight.range));
+                Bounds particleBounds = new Bounds(particleSystem.transform.position, Vector3.one * minimumBoundsRadius);
                 if (!hasBounds)
                 {
-                    merged = lightBounds;
+                    merged = particleBounds;
                     hasBounds = true;
                 }
                 else
                 {
-                    merged.Encapsulate(lightBounds);
+                    merged.Encapsulate(particleBounds);
                 }
             }
         }
@@ -525,26 +644,23 @@ public sealed class OptimizableObject : MonoBehaviour
         return filtered.ToArray();
     }
 
-    private MonoBehaviour[] FilterPausables(MonoBehaviour[] behaviours)
+    private Behaviour[] FilterExplicitBehaviours(Behaviour[] behaviours)
     {
         if (behaviours == null || behaviours.Length == 0)
         {
-            return Array.Empty<MonoBehaviour>();
+            return Array.Empty<Behaviour>();
         }
 
-        List<MonoBehaviour> filtered = new List<MonoBehaviour>(behaviours.Length);
+        List<Behaviour> filtered = new List<Behaviour>(behaviours.Length);
         for (int i = 0; i < behaviours.Length; i++)
         {
-            MonoBehaviour behaviour = behaviours[i];
-            if (behaviour == null || behaviour == this || !IsOwnedTarget(behaviour))
+            Behaviour behaviour = behaviours[i];
+            if (behaviour == null || !IsOwnedTarget(behaviour) || !IsBehaviourSafeToDisable(behaviour))
             {
                 continue;
             }
 
-            if (behaviour is IPausableWhenInvisible || behaviour is IVisibilityUpdateRateTarget)
-            {
-                filtered.Add(behaviour);
-            }
+            filtered.Add(behaviour);
         }
 
         return filtered.ToArray();
@@ -574,7 +690,9 @@ public sealed class OptimizableObject : MonoBehaviour
 
     private bool HasAnyCachedTargets()
     {
-        return HasAnyReference(targetRenderers) || HasAnyReference(targetLights) || HasAnyReference(explicitPausables);
+        return HasAnyReference(targetRenderers) ||
+               HasAnyReference(targetParticleSystems) ||
+               HasAnyReference(explicitBehaviours);
     }
 
     private static bool HasAnyReference<T>(T[] targets) where T : UnityEngine.Object
@@ -595,6 +713,25 @@ public sealed class OptimizableObject : MonoBehaviour
         return false;
     }
 
+    private static bool IsBehaviourSafeToDisable(Behaviour behaviour)
+    {
+        if (behaviour == null ||
+            behaviour is OptimizableObject ||
+            behaviour is VisibilityOptimizationManager ||
+            behaviour is Camera ||
+            behaviour is AudioListener ||
+            behaviour is Animator ||
+            behaviour is Light ||
+            behaviour is NetworkBehaviour ||
+            behaviour is NetworkObject)
+        {
+            return false;
+        }
+
+        string namespaceName = behaviour.GetType().Namespace ?? string.Empty;
+        return !namespaceName.StartsWith("Unity.Netcode", StringComparison.Ordinal);
+    }
+
     private static void EnsureStateArray(ref bool[] states, int requiredLength)
     {
         if (states == null || states.Length != requiredLength)
@@ -603,27 +740,19 @@ public sealed class OptimizableObject : MonoBehaviour
         }
     }
 
-    private void InferCategoryFromContents()
+    private static void EnsureStateArray(ref ParticleState[] states, int requiredLength)
     {
-        MonoBehaviour[] behaviours = GetComponentsInChildren<MonoBehaviour>(true);
-        for (int i = 0; i < behaviours.Length; i++)
+        if (states == null || states.Length != requiredLength)
         {
-            if (behaviours[i] is ICharacterDetectedInteractable)
-            {
-                category = VisibilityOptimizationCategory.Interactive;
-                return;
-            }
+            states = new ParticleState[requiredLength];
         }
+    }
 
-        if (GetComponentInChildren<GhostController>(true) != null)
+    private static void EnsureStateArray(ref BehaviourState[] states, int requiredLength)
+    {
+        if (states == null || states.Length != requiredLength)
         {
-            category = VisibilityOptimizationCategory.NPC;
-            return;
-        }
-
-        if (GetComponentInChildren<Light>(true) != null && GetComponentsInChildren<Renderer>(true).Length == 0)
-        {
-            category = VisibilityOptimizationCategory.Light;
+            states = new BehaviourState[requiredLength];
         }
     }
 
@@ -635,28 +764,7 @@ public sealed class OptimizableObject : MonoBehaviour
         }
 
         Bounds bounds = CurrentBounds;
-        switch (currentState)
-        {
-            case VisibilityOptimizationState.Visible:
-                Gizmos.color = Color.green;
-                break;
-            case VisibilityOptimizationState.LightCulled:
-                Gizmos.color = Color.yellow;
-                break;
-            case VisibilityOptimizationState.RendererCulled:
-                Gizmos.color = Color.gray;
-                break;
-            case VisibilityOptimizationState.Paused:
-                Gizmos.color = Color.cyan;
-                break;
-            case VisibilityOptimizationState.Excluded:
-                Gizmos.color = Color.magenta;
-                break;
-            default:
-                Gizmos.color = Color.white;
-                break;
-        }
-
+        Gizmos.color = currentState == VisibilityOptimizationState.Visible ? Color.green : Color.gray;
         Gizmos.DrawWireSphere(bounds.center, Mathf.Max(minimumBoundsRadius, bounds.extents.magnitude));
     }
 }

@@ -17,6 +17,14 @@ public static class CameraVisibilityProtection
 
     public static bool HasProtectedRenderers => ProtectedRenderers.Count > 0;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        ProtectedRenderers.Clear();
+        RendererBuffer.Clear();
+        RemovalBuffer.Clear();
+    }
+
     public static void RegisterObstacle(GameObject root, Object owner, bool includeChildren)
     {
         if (root == null)

@@ -1,26 +1,11 @@
-using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 [DefaultExecutionOrder(1050)]
 [DisallowMultipleComponent]
 public sealed class VisibilityOptimizationManager : MonoBehaviour
 {
-    [Serializable]
-    public sealed class CategoryProfile
-    {
-        public VisibilityOptimizationCategory category = VisibilityOptimizationCategory.Decoration;
-        [Min(1f)] public float visibleDistance = 90f;
-        [Min(1f)] public float lightDistance = 45f;
-        [Min(1f)] public float pauseDistance = 120f;
-        [Min(0f)] public float playerKeepAliveDistance = 18f;
-        [Min(0f)] public float hysteresisDistance = 8f;
-        public bool useFrustumCulling = true;
-        public bool allowRendererDisable = true;
-        public bool allowLightDisable = true;
-        public bool allowPause = false;
-    }
-
     private static readonly HashSet<OptimizableObject> PendingObjects = new HashSet<OptimizableObject>();
     private static VisibilityOptimizationManager instance;
 
@@ -34,39 +19,32 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
     [SerializeField] private bool optimizationEnabled = true;
     [SerializeField] private bool autoDiscoverObjects = true;
     [SerializeField, Min(0.1f)] private float rescanInterval = 3f;
-    [SerializeField, Min(0.05f)] private float evaluationInterval = 0.2f;
-    [SerializeField, Min(1)] private int maxEvaluationsPerFrame = 256;
-    [SerializeField, Min(0f)] private float offscreenGraceSeconds = 0.25f;
+    [SerializeField, Min(0.05f)] private float evaluationInterval = 0.15f;
+    [SerializeField, Min(1)] private int maxEvaluationsPerFrame = 512;
+    [SerializeField, Min(0f)] private float offscreenGraceSeconds = 0.2f;
     [SerializeField] private bool restoreEverythingWhenDisabled = true;
-
-    [Header("Profiles")]
-    [SerializeField] private CategoryProfile[] profiles =
-    {
-        new CategoryProfile { category = VisibilityOptimizationCategory.StaticMesh, visibleDistance = 120f, lightDistance = 55f, pauseDistance = 160f, playerKeepAliveDistance = 8f, allowPause = false },
-        new CategoryProfile { category = VisibilityOptimizationCategory.DynamicObject, visibleDistance = 95f, lightDistance = 50f, pauseDistance = 130f, playerKeepAliveDistance = 18f, allowPause = false },
-        new CategoryProfile { category = VisibilityOptimizationCategory.Light, visibleDistance = 80f, lightDistance = 45f, pauseDistance = 120f, playerKeepAliveDistance = 10f, allowRendererDisable = false },
-        new CategoryProfile { category = VisibilityOptimizationCategory.NPC, visibleDistance = 110f, lightDistance = 50f, pauseDistance = 140f, playerKeepAliveDistance = 35f, allowPause = true },
-        new CategoryProfile { category = VisibilityOptimizationCategory.Decoration, visibleDistance = 85f, lightDistance = 40f, pauseDistance = 115f, playerKeepAliveDistance = 6f, allowPause = false },
-        new CategoryProfile { category = VisibilityOptimizationCategory.Interactive, visibleDistance = 95f, lightDistance = 45f, pauseDistance = 130f, playerKeepAliveDistance = 28f, allowPause = false },
-        new CategoryProfile { category = VisibilityOptimizationCategory.Critical, visibleDistance = 10000f, lightDistance = 10000f, pauseDistance = 10000f, playerKeepAliveDistance = 10000f, useFrustumCulling = false, allowRendererDisable = false, allowLightDisable = false, allowPause = false }
-    };
 
     [Header("Debug")]
     [SerializeField] private bool drawDebugGizmos;
     [SerializeField] private bool logStateChanges;
 
     private readonly List<OptimizableObject> objects = new List<OptimizableObject>();
-    private readonly Dictionary<OptimizableObject, int> objectIndices = new Dictionary<OptimizableObject, int>();
-    private readonly Queue<int> pendingEvaluationQueue = new Queue<int>();
-    private readonly HashSet<int> pendingEvaluationIndices = new HashSet<int>();
+    private readonly HashSet<OptimizableObject> objectSet = new HashSet<OptimizableObject>();
     private readonly Dictionary<OptimizableObject, float> invisibleSince = new Dictionary<OptimizableObject, float>();
     private readonly Plane[] frustumPlanes = new Plane[6];
 
     private float nextEvaluationTime;
     private float nextRescanTime;
-    private bool queuedAll;
+    private int nextEvaluationIndex;
 
     public static VisibilityOptimizationManager Instance => instance;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        PendingObjects.Clear();
+        instance = null;
+    }
 
     public static void Register(OptimizableObject optimizableObject)
     {
@@ -107,19 +85,18 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         }
 
         instance = this;
-        ValidateProfiles();
     }
 
     private void OnEnable()
     {
-        ValidateProfiles();
         RegisterPendingObjects();
         if (autoDiscoverObjects)
         {
             DiscoverSceneObjects();
         }
 
-        QueueAllEvaluations();
+        nextEvaluationIndex = 0;
+        nextEvaluationTime = 0f;
     }
 
     private void OnDisable()
@@ -129,7 +106,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
             RestoreAllObjects();
         }
 
-        ClearQueues();
+        nextEvaluationIndex = 0;
     }
 
     private void OnDestroy()
@@ -138,6 +115,10 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         {
             RestoreAllObjects();
         }
+
+        objects.Clear();
+        objectSet.Clear();
+        invisibleSince.Clear();
 
         if (instance == this)
         {
@@ -151,26 +132,25 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         evaluationInterval = Mathf.Max(0.05f, evaluationInterval);
         maxEvaluationsPerFrame = Mathf.Max(1, maxEvaluationsPerFrame);
         offscreenGraceSeconds = Mathf.Max(0f, offscreenGraceSeconds);
-        ValidateProfiles();
     }
 
     private void LateUpdate()
     {
+        RegisterPendingObjects();
+
         if (!optimizationEnabled)
         {
             RestoreAllObjects();
             return;
         }
 
-        RegisterPendingObjects();
-        if (!ResolveCamera())
+        if (!ResolveVisibilityContext(out Camera resolvedCamera, out Transform localPlayer))
         {
             RestoreAllObjects();
             return;
         }
 
-        ResolvePlayerTarget();
-        GeometryUtility.CalculateFrustumPlanes(targetCamera, frustumPlanes);
+        GeometryUtility.CalculateFrustumPlanes(resolvedCamera, frustumPlanes);
 
         float now = Time.unscaledTime;
         if (autoDiscoverObjects && now >= nextRescanTime)
@@ -179,57 +159,46 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
             DiscoverSceneObjects();
         }
 
-        if (now >= nextEvaluationTime || !queuedAll)
+        if (now >= nextEvaluationTime || nextEvaluationIndex >= objects.Count)
         {
+            PruneNullObjects();
+            nextEvaluationIndex = 0;
             nextEvaluationTime = now + evaluationInterval;
-            QueueAllEvaluations();
         }
 
-        ProcessPendingEvaluations(now);
+        ProcessEvaluations(now, localPlayer);
     }
 
     private void RegisterInternal(OptimizableObject optimizableObject)
     {
-        if (optimizableObject == null || objectIndices.ContainsKey(optimizableObject))
+        if (optimizableObject == null || objectSet.Contains(optimizableObject))
         {
             return;
         }
 
-        int index = objects.Count;
         objects.Add(optimizableObject);
-        objectIndices.Add(optimizableObject, index);
+        objectSet.Add(optimizableObject);
         invisibleSince[optimizableObject] = -1f;
-        EnqueueEvaluation(index);
     }
 
     private void UnregisterInternal(OptimizableObject optimizableObject)
     {
-        if (optimizableObject == null || !objectIndices.TryGetValue(optimizableObject, out int index))
+        if (optimizableObject == null || !objectSet.Remove(optimizableObject))
         {
             return;
         }
 
         optimizableObject.RestoreAll();
-        RemoveAt(index);
-    }
-
-    private void RemoveAt(int index)
-    {
-        int lastIndex = objects.Count - 1;
-        OptimizableObject removed = objects[index];
-        objectIndices.Remove(removed);
-        invisibleSince.Remove(removed);
-
-        if (index != lastIndex)
+        invisibleSince.Remove(optimizableObject);
+        int index = objects.IndexOf(optimizableObject);
+        if (index >= 0)
         {
-            OptimizableObject moved = objects[lastIndex];
-            objects[index] = moved;
-            objectIndices[moved] = index;
-            EnqueueEvaluation(index);
+            objects.RemoveAt(index);
+            if (nextEvaluationIndex > index)
+            {
+                nextEvaluationIndex--;
+            }
         }
-
-        objects.RemoveAt(lastIndex);
-        queuedAll = false;
     }
 
     private void RegisterPendingObjects()
@@ -252,155 +221,68 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
 
     private void DiscoverSceneObjects()
     {
-#if UNITY_2023_1_OR_NEWER
-        OptimizableObject[] sceneObjects = FindObjectsByType<OptimizableObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-#else
-        OptimizableObject[] sceneObjects = FindObjectsByType<OptimizableObject>(FindObjectsInactive.Include);
-#endif
+        OptimizableObject[] sceneObjects = FindObjectsByType<OptimizableObject>(FindObjectsInactive.Exclude);
         for (int i = 0; i < sceneObjects.Length; i++)
         {
             RegisterInternal(sceneObjects[i]);
         }
     }
 
-    private void QueueAllEvaluations()
-    {
-        PruneNullObjects();
-        for (int i = 0; i < objects.Count; i++)
-        {
-            EnqueueEvaluation(i);
-        }
-
-        queuedAll = true;
-    }
-
-    private void EnqueueEvaluation(int index)
-    {
-        if (index < 0 || index >= objects.Count)
-        {
-            return;
-        }
-
-        if (!pendingEvaluationIndices.Add(index))
-        {
-            return;
-        }
-
-        pendingEvaluationQueue.Enqueue(index);
-    }
-
-    private void ProcessPendingEvaluations(float now)
+    private void ProcessEvaluations(float now, Transform localPlayer)
     {
         int budget = Mathf.Max(1, maxEvaluationsPerFrame);
-        while (budget > 0 && pendingEvaluationQueue.Count > 0)
+        while (budget > 0 && nextEvaluationIndex < objects.Count)
         {
-            int index = pendingEvaluationQueue.Dequeue();
-            pendingEvaluationIndices.Remove(index);
-
-            if (index >= 0 && index < objects.Count)
+            OptimizableObject optimizableObject = objects[nextEvaluationIndex];
+            if (optimizableObject == null)
             {
-                EvaluateObject(index, now);
-                budget--;
+                RemoveAt(nextEvaluationIndex);
+                continue;
             }
+
+            EvaluateObject(optimizableObject, now, localPlayer);
+            nextEvaluationIndex++;
+            budget--;
         }
     }
 
-    private void EvaluateObject(int index, float now)
+    private void EvaluateObject(OptimizableObject optimizableObject, float now, Transform localPlayer)
     {
-        OptimizableObject optimizableObject = objects[index];
         if (optimizableObject == null)
         {
             return;
         }
 
-        CategoryProfile profile = GetProfile(optimizableObject.Category);
-        Bounds bounds = optimizableObject.CurrentBounds;
-        Vector3 center = bounds.center;
-        float cameraDistance = targetCamera != null
-            ? Vector3.Distance(targetCamera.transform.position, center)
-            : 0f;
-        float playerDistance = playerTarget != null
-            ? Vector3.Distance(playerTarget.position, center)
-            : float.PositiveInfinity;
-
-        float visibleDistance = ResolveDistance(optimizableObject.VisibleDistanceOverride, profile.visibleDistance, optimizableObject.DistanceMultiplier);
-        float lightDistance = ResolveDistance(optimizableObject.LightDistanceOverride, profile.lightDistance, optimizableObject.DistanceMultiplier);
-        float pauseDistance = ResolveDistance(optimizableObject.PauseDistanceOverride, profile.pauseDistance, optimizableObject.DistanceMultiplier);
-        bool inFrustum = !profile.useFrustumCulling || GeometryUtility.TestPlanesAABB(frustumPlanes, bounds);
-        bool nearPlayer = playerDistance <= profile.playerKeepAliveDistance;
-
         if (!optimizableObject.OptimizationEnabled || optimizableObject.NeverCull)
         {
-            ApplyEvaluation(
-                optimizableObject,
-                VisibilityOptimizationState.Excluded,
-                lightsVisible: true,
-                pause: false,
-                cameraDistance,
-                playerDistance,
-                inFrustum,
-                "excluded");
+            optimizableObject.ApplyVisibility(true, "excluded");
+            invisibleSince[optimizableObject] = -1f;
             return;
         }
 
-        bool distanceVisible = IsVisibleByDistance(optimizableObject, cameraDistance, visibleDistance, profile.hysteresisDistance);
-        bool rendererVisible = nearPlayer || distanceVisible && inFrustum;
-        rendererVisible = ApplyOffscreenGrace(optimizableObject, rendererVisible, now);
+        Bounds bounds = optimizableObject.CurrentBounds;
+        bool inFrustum = GeometryUtility.TestPlanesAABB(frustumPlanes, bounds);
+        bool nearLocalPlayer = optimizableObject.IsNearLocalPlayer(localPlayer);
+        bool visible = inFrustum || nearLocalPlayer;
+        visible = ApplyOffscreenGrace(optimizableObject, visible, now);
 
-        bool lightsVisible = !profile.allowLightDisable || nearPlayer || rendererVisible && cameraDistance <= lightDistance;
-        bool pause = profile.allowPause &&
-                     !nearPlayer &&
-                     cameraDistance > pauseDistance &&
-                     (!inFrustum || !rendererVisible);
-
-        VisibilityOptimizationState state;
-        if (rendererVisible || !profile.allowRendererDisable)
+        string reason = BuildReason(visible, inFrustum, nearLocalPlayer);
+        VisibilityOptimizationState previousState = optimizableObject.CurrentState;
+        optimizableObject.ApplyVisibility(visible, reason);
+        if (logStateChanges && previousState != optimizableObject.CurrentState)
         {
-            state = lightsVisible ? VisibilityOptimizationState.Visible : VisibilityOptimizationState.LightCulled;
+            Debug.Log(
+                $"[VisibilityOptimization] {optimizableObject.name}: {previousState} -> {optimizableObject.CurrentState} reason='{reason}'",
+                optimizableObject);
         }
-        else
-        {
-            state = pause ? VisibilityOptimizationState.Paused : VisibilityOptimizationState.RendererCulled;
-        }
-
-        if (!profile.allowRendererDisable && state == VisibilityOptimizationState.RendererCulled)
-        {
-            state = lightsVisible ? VisibilityOptimizationState.Visible : VisibilityOptimizationState.LightCulled;
-        }
-
-        ApplyEvaluation(
-            optimizableObject,
-            state,
-            lightsVisible,
-            pause,
-            cameraDistance,
-            playerDistance,
-            inFrustum,
-            BuildReason(rendererVisible, lightsVisible, pause, nearPlayer, inFrustum, cameraDistance, visibleDistance));
     }
 
-    private bool IsVisibleByDistance(OptimizableObject optimizableObject, float cameraDistance, float visibleDistance, float hysteresis)
+    private bool ApplyOffscreenGrace(OptimizableObject optimizableObject, bool visible, float now)
     {
-        float adjustedDistance = visibleDistance;
-        if (optimizableObject.CurrentState == VisibilityOptimizationState.Visible ||
-            optimizableObject.CurrentState == VisibilityOptimizationState.LightCulled)
-        {
-            adjustedDistance += hysteresis;
-        }
-        else
-        {
-            adjustedDistance = Mathf.Max(0f, adjustedDistance - hysteresis);
-        }
-
-        return cameraDistance <= adjustedDistance;
-    }
-
-    private bool ApplyOffscreenGrace(OptimizableObject optimizableObject, bool rendererVisible, float now)
-    {
-        if (rendererVisible || offscreenGraceSeconds <= 0f)
+        if (visible || offscreenGraceSeconds <= 0f)
         {
             invisibleSince[optimizableObject] = -1f;
-            return rendererVisible;
+            return visible;
         }
 
         if (!invisibleSince.TryGetValue(optimizableObject, out float since) || since < 0f)
@@ -412,62 +294,94 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         return now - since < offscreenGraceSeconds;
     }
 
-    private void ApplyEvaluation(
-        OptimizableObject optimizableObject,
-        VisibilityOptimizationState state,
-        bool lightsVisible,
-        bool pause,
-        float cameraDistance,
-        float playerDistance,
-        bool inFrustum,
-        string reason)
+    private bool ResolveVisibilityContext(out Camera camera, out Transform localPlayer)
     {
-        VisibilityPauseContext context = new VisibilityPauseContext(
-            state,
-            optimizableObject.Category,
-            cameraDistance,
-            playerDistance,
-            inFrustum,
-            reason);
-
-        VisibilityOptimizationState previousState = optimizableObject.CurrentState;
-        optimizableObject.ApplyEvaluation(state, lightsVisible, pause, context);
-        if (logStateChanges && previousState != optimizableObject.CurrentState)
+        localPlayer = ResolveLocalPlayerTarget();
+        if (localPlayer != null)
         {
-            Debug.Log(
-                $"[VisibilityOptimization] {optimizableObject.name}: {previousState} -> {optimizableObject.CurrentState} reason='{reason}'",
-                optimizableObject);
-        }
-    }
-
-    private bool ResolveCamera()
-    {
-        if (targetCamera != null && targetCamera.isActiveAndEnabled)
-        {
-            return true;
+            playerTarget = localPlayer;
         }
 
-        if (!fallbackToMainCamera)
+        bool multiplayerListening = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (multiplayerListening && localPlayer == null)
         {
+            camera = null;
             return false;
         }
 
-        targetCamera = Camera.main;
-        return targetCamera != null && targetCamera.isActiveAndEnabled;
+        if (IsUsableCamera(targetCamera))
+        {
+            camera = targetCamera;
+            return true;
+        }
+
+        if (TryFindGameplayCamera(out camera))
+        {
+            targetCamera = camera;
+            return true;
+        }
+
+        if (fallbackToMainCamera && (!multiplayerListening || localPlayer != null))
+        {
+            Camera mainCamera = Camera.main;
+            if (IsUsableCamera(mainCamera))
+            {
+                camera = mainCamera;
+                targetCamera = mainCamera;
+                return true;
+            }
+        }
+
+        camera = null;
+        return false;
     }
 
-    private void ResolvePlayerTarget()
+    private Transform ResolveLocalPlayerTarget()
     {
-        if (!fallbackToControlledPlayer || playerTarget != null && playerTarget.gameObject.activeInHierarchy)
+        Transform contextRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (IsUsableTransform(contextRoot))
         {
-            return;
+            return contextRoot;
         }
 
-        GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
-        if (controlled != null && controlled.activeInHierarchy)
+        if (fallbackToControlledPlayer)
         {
-            playerTarget = controlled.transform;
+            GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
+            if (controlled != null && controlled.activeInHierarchy)
+            {
+                return controlled.transform;
+            }
         }
+
+        bool multiplayerListening = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (!multiplayerListening && IsUsableTransform(playerTarget))
+        {
+            return playerTarget;
+        }
+
+        return null;
+    }
+
+    private static bool TryFindGameplayCamera(out Camera camera)
+    {
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            Camera candidate = cameras[i];
+            if (!IsUsableCamera(candidate))
+            {
+                continue;
+            }
+
+            if (candidate.GetComponent<LitUccCameraCharacterBinder>() != null)
+            {
+                camera = candidate;
+                return true;
+            }
+        }
+
+        camera = null;
+        return false;
     }
 
     private void RestoreAllObjects()
@@ -492,90 +406,49 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         }
     }
 
-    private void ClearQueues()
+    private void RemoveAt(int index)
     {
-        pendingEvaluationQueue.Clear();
-        pendingEvaluationIndices.Clear();
-        queuedAll = false;
-    }
-
-    private CategoryProfile GetProfile(VisibilityOptimizationCategory category)
-    {
-        ValidateProfiles();
-        for (int i = 0; i < profiles.Length; i++)
+        if (index < 0 || index >= objects.Count)
         {
-            if (profiles[i] != null && profiles[i].category == category)
-            {
-                return profiles[i];
-            }
+            return;
         }
 
-        return profiles[0];
-    }
-
-    private void ValidateProfiles()
-    {
-        if (profiles == null || profiles.Length == 0)
+        OptimizableObject removed = objects[index];
+        objects.RemoveAt(index);
+        objectSet.Remove(removed);
+        invisibleSince.Remove(removed);
+        if (nextEvaluationIndex > index)
         {
-            profiles = new[] { new CategoryProfile() };
-        }
-
-        for (int i = 0; i < profiles.Length; i++)
-        {
-            if (profiles[i] == null)
-            {
-                profiles[i] = new CategoryProfile();
-            }
-
-            profiles[i].visibleDistance = Mathf.Max(1f, profiles[i].visibleDistance);
-            profiles[i].lightDistance = Mathf.Max(1f, profiles[i].lightDistance);
-            profiles[i].pauseDistance = Mathf.Max(1f, profiles[i].pauseDistance);
-            profiles[i].playerKeepAliveDistance = Mathf.Max(0f, profiles[i].playerKeepAliveDistance);
-            profiles[i].hysteresisDistance = Mathf.Max(0f, profiles[i].hysteresisDistance);
+            nextEvaluationIndex--;
         }
     }
 
-    private static float ResolveDistance(float overrideValue, float profileValue, float multiplier)
+    private static bool IsUsableCamera(Camera camera)
     {
-        float value = overrideValue >= 0f ? overrideValue : profileValue;
-        return Mathf.Max(0f, value * Mathf.Max(0.1f, multiplier));
+        return camera != null &&
+               camera.isActiveAndEnabled &&
+               camera.gameObject.activeInHierarchy &&
+               camera.cameraType == CameraType.Game;
     }
 
-    private static string BuildReason(
-        bool rendererVisible,
-        bool lightsVisible,
-        bool pause,
-        bool nearPlayer,
-        bool inFrustum,
-        float cameraDistance,
-        float visibleDistance)
+    private static bool IsUsableTransform(Transform target)
     {
-        if (nearPlayer)
+        return target != null && target.gameObject.activeInHierarchy;
+    }
+
+    private static string BuildReason(bool visible, bool inFrustum, bool nearLocalPlayer)
+    {
+        if (nearLocalPlayer)
         {
-            return "near_player_keep_alive";
+            return "near_local_player";
         }
 
-        if (pause)
+        if (inFrustum)
         {
-            return "far_paused";
+            return "inside_camera_frustum";
         }
 
-        if (!inFrustum)
-        {
-            return "outside_camera_frustum";
-        }
-
-        if (!rendererVisible)
-        {
-            return $"distance_culled cameraDistance={cameraDistance:0.0} visibleDistance={visibleDistance:0.0}";
-        }
-
-        if (!lightsVisible)
-        {
-            return "light_distance_culled";
-        }
-
-        return "visible";
+        return visible ? "offscreen_grace" : "outside_camera_frustum";
     }
 
     private void OnDrawGizmosSelected()

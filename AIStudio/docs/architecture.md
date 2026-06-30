@@ -15,6 +15,7 @@ Projet Unity 6 utilisant Opsive Ultimate Character Controller, Unity Netcode for
 | Combat | Sessions tour par tour, présentation, HUD et résolution autoritaire | squad, Netcode, audio |
 | Narration | Séquences, dialogues, connaissances, fantômes et contenus lisibles | sauvegarde, input, caméra, temps |
 | Temps et environnement | Âge canonique, visibilité temporelle et profils HDRP locaux | flammes anciennes, personnage local, HDRP |
+| Optimisation de visibilité locale | Suspension locale opt-in des renderers, particules et comportements de présentation hors caméra | caméra gameplay, `LocalPlayerContext`, `CameraVisibilityProtection` |
 
 Fiches détaillées : `AIStudio/docs/systems/`.
 
@@ -38,6 +39,12 @@ et prépare aussi les services réseau/persistants.
 `SquadCharacterController` délègue la locomotion à `LitOpsiveLocomotionBridge`.
 `LocalPlayerContext` publie le personnage local aux caméras, à l’environnement,
 aux interactions et aux séquences narratives.
+
+L’optimisation locale de visibilité évalue les `OptimizableObject` depuis la
+caméra gameplay active et le personnage publié par `LocalPlayerContext`. Elle ne
+désactive pas les racines de GameObject ni les composants réseau/autoritatifs :
+elle pilote uniquement les renderers, particules et behaviours explicitement
+configurés comme présentation locale.
 
 ### Interaction monde
 

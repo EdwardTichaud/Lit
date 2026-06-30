@@ -268,9 +268,9 @@ public static class VisibilityOptimizationTools
         }
 
         if (root.GetComponentInChildren<Renderer>(true) == null &&
-            root.GetComponentInChildren<Light>(true) == null)
+            root.GetComponentInChildren<ParticleSystem>(true) == null)
         {
-            reason = "no Renderer or Light";
+            reason = "no Renderer or ParticleSystem";
             return false;
         }
 

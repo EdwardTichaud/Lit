@@ -20,6 +20,13 @@ public enum VisibilityOptimizationState
     Excluded
 }
 
+public enum VisibilityParticleOffscreenAction
+{
+    PauseAndResume,
+    StopEmitting,
+    DisableEmission
+}
+
 public readonly struct VisibilityPauseContext
 {
     public readonly VisibilityOptimizationState State;
