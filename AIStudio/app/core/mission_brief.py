@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from app.core.app_workflow import AppWorkflow
 from app.core.config import LOGS_DIR
 from app.core.mission import MissionContext
 
@@ -26,7 +27,9 @@ def write_mission_brief(mission: MissionContext) -> dict[str, str]:
 
 
 def build_mission_brief(mission: MissionContext) -> str:
-    return f"""# Mission Codex
+    workflow_title = _get_workflow_title(mission)
+
+    return f"""# {workflow_title}
 
 ## Demande utilisateur
 
@@ -44,14 +47,31 @@ def build_mission_brief(mission: MissionContext) -> str:
 
 {_format_scanned_files(mission.scanned_files)}
 
+## Fichiers AIStudio charges
+
+{_format_aistudio_files(getattr(mission, "aistudio_files", []))}
+
 ## Diagnostic API
 
 {_format_llm_calls(mission.llm_calls)}
 
-## Prompt Codex
+## Resultat
 
-{mission.final_codex_prompt or mission.answer or "_Aucun prompt genere._"}
+{_format_result(mission)}
 """
+
+
+def _get_workflow_title(mission: MissionContext) -> str:
+    if mission.workflow == AppWorkflow.AISTUDIO_CODE:
+        return "Mission AIStudio"
+    return "Mission Codex"
+
+
+def _format_result(mission: MissionContext) -> str:
+    if mission.workflow == AppWorkflow.CODEX_PROMPT:
+        return mission.final_codex_prompt or mission.answer or "_Aucun prompt genere._"
+
+    return mission.answer or "_Aucun resultat genere._"
 
 
 def _format_user_messages(user_messages: list[str]) -> str:
@@ -83,6 +103,20 @@ def _format_scanned_files(scanned_files: list[dict]) -> str:
 
     for file_info in scanned_files:
         lines.append(f"- `{file_info['path']}` (score {file_info['score']})")
+
+    return "\n".join(lines)
+
+
+def _format_aistudio_files(aistudio_files: list[dict]) -> str:
+    if not aistudio_files:
+        return "- Aucun fichier AIStudio."
+
+    lines = []
+
+    for file_info in aistudio_files:
+        path = file_info.get("path") or file_info.get("file") or str(file_info)
+        score = file_info.get("score", 0)
+        lines.append(f"- `{path}` (score {score})")
 
     return "\n".join(lines)
 

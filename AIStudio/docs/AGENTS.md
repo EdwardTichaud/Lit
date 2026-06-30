@@ -201,28 +201,39 @@ Toute correction ayant nécessité une analyse significative doit être considé
 
 * Compiler les assemblages Runtime et Editor concernés.
 * Corriger toute erreur de compilation introduite.
-* Tester le flux nominal.
-* Tester le teardown et le rechargement de scène.
-* Pour les systèmes partagés : vérifier solo puis host/client.
-* Pour la persistance : vérifier nouvelle partie, chargement et late join.
-* Pour les bugs runtime Unity : préciser les tests manuels à effectuer.
-* Documenter dans `known_bugs.md` tout défaut confirmé non corrigé.
+* Tester le flux concerné.
 
 ---
 
-# Format de réponse attendu
+# Règles spécifiques AIStudio
 
-## Avant modification
+Quand AIStudio travaille sur son propre dépôt :
 
-* Cause probable.
-* Fichiers concernés.
-* Plan minimal de correction.
-* Niveau de confiance (faible / moyen / élevé).
+1. La mission suit toujours ce pipeline :
 
-## Après modification
+   * Mission Manager
+   * Mission Planner
+   * Collecte automatique du contexte
+   * Décision de workflow
+   * LLM
+   * Résultat
 
-* Résumé du patch.
-* Risques identifiés.
-* Vérifications effectuées.
-* Tests manuels recommandés.
-* Documentation mise à jour et justification.
+2. Les workflows prompt et code partagent exactement la même phase de collecte.
+
+3. Le LLM ne doit jamais être appelé tant que la collecte du contexte n’est pas terminée.
+
+4. Le contexte construit est la seule entrée du LLM.
+
+5. En workflow code, ne jamais générer de patch avant validation explicite du plan.
+
+6. Pour un fichier existant, ne jamais reconstruire son contenu depuis mémoire.
+
+7. Un patch sûr exige le contenu complet du fichier dans le contexte.
+
+8. Si le contenu complet d’un fichier manque, répondre exactement :
+
+```text
+Je ne peux pas produire un patch sûr tant que le fichier complet n'est pas chargé.
+```
+
+9. Pour le projet Unity Lit, AIStudio ne doit pas patcher directement les fichiers Unity en mode AIStudio ; cette tâche doit passer par le workflow prompt.

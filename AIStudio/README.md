@@ -1,23 +1,26 @@
 # AIStudio
 
-AIStudio est le préparateur de mission technique du projet **Lit**.
+AIStudio est l’orchestrateur de missions techniques du projet **Lit**.
 
-Il ne modifie jamais directement le projet Unity.
-
-Son rôle est de transformer une demande utilisateur en une mission technique claire, documentée et optimisée que Codex pourra exécuter efficacement.
+Il ne modifie jamais directement le projet Unity Lit en mode patch local.
+Pour Lit, il prépare un contexte ciblé et un résultat adapté au workflow demandé.
+Pour son propre projet AIStudio, il peut proposer puis appliquer des patches contrôlés.
 
 Le but est de réduire :
 
 * le temps d'analyse ;
 * le nombre de tokens envoyés au LLM ;
-* les appels API inutiles.
+* les appels API inutiles ;
+* les patches non fiables produits depuis mémoire.
 
 -------------------------------------------------------
 
 # Utilisation
 
+```bash
 source .venv/Scripts/activate
 python -m app.chat
+```
 
 --------------------------------------------------------
 
@@ -112,77 +115,197 @@ source .venv/Scripts/activate
 python -m app.chat
 ```
 
-L'écran suivant doit apparaître :
+AIStudio propose alors un choix de workflow :
 
 ```text
-AIStudio -- Préparateur de mission Codex
+AIStudio
 
-Commandes :
-GO
-RESET
-QUIT
+Choisis un mode :
+
+1. Préparer un prompt pour Codex
+2. Coder avec AIStudio
 ```
 
-Si c'est le cas, l'installation est terminée.
+---
+
+# Nouvelle architecture logique
+
+Une mission suit toujours ce pipeline :
+
+```text
+Mission utilisateur
+│
+▼
+Mission Manager
+│
+▼
+Mission Planner
+│
+▼
+Collecte automatique du contexte
+│
+├── Documentation Selector
+├── Unity Project Scanner
+├── AIStudio Code Scanner
+└── Context Builder
+│
+▼
+Décision
+│
+├── Prompt Workflow
+└── Code Workflow
+│
+▼
+LLM
+│
+▼
+Résultat
+```
+
+## Invariants
+
+- les deux workflows partagent exactement la même collecte ;
+- le LLM n’est jamais appelé avant la fin de la collecte ;
+- le contexte construit est la seule entrée du LLM ;
+- un patch AIStudio ne doit jamais être inventé depuis mémoire ;
+- un fichier existant doit être patché uniquement si son contenu complet a été chargé.
+
+---
+
+# Workflows
+
+## 1. Prompt Workflow
+
+Produit uniquement :
+
+- analyse ;
+- risques ;
+- plan ;
+- prompt Codex.
+
+Il ne produit aucun patch.
+
+## 2. Code Workflow
+
+Produit le flux suivant :
+
+1. analyse ;
+2. plan ;
+3. attente de validation utilisateur ;
+4. génération du patch ;
+5. attente de confirmation ;
+6. application automatique.
+
+Le patch ne doit jamais être généré avant validation explicite du plan.
+
+---
+
+# Règles de patch AIStudio
+
+Pour chaque fichier existant :
+
+1. utiliser le contenu chargé par le scanner AIStudio ;
+2. modifier ce contenu ;
+3. produire le fichier complet ;
+4. préserver toutes les parties non modifiées.
+
+Si le contenu complet d’un fichier n’est pas dans le contexte, AIStudio doit répondre :
+
+```text
+Je ne peux pas produire un patch sûr tant que le fichier complet n'est pas chargé.
+```
+
+AIStudio ne doit jamais inventer le contenu d’un fichier existant.
 
 ---
 
 # Première utilisation
 
+## Workflow prompt
+
 Exemple :
 
 ```text
 AIStudio > Je veux améliorer la montée et descente d'échelle.
-
 AIStudio > Le personnage doit utiliser les bonnes animations.
-
 AIStudio > Le personnage doit être orienté correctement.
-
 AIStudio > GO
 ```
 
 AIStudio :
 
-1. analyse la demande ;
-2. recherche la documentation pertinente ;
-3. scanne les scripts Unity concernés ;
-4. identifie les risques ;
-5. pose des questions si nécessaire ;
-6. génère un prompt optimisé pour Codex.
+1. collecte le contexte ;
+2. analyse la demande ;
+3. sélectionne la documentation pertinente ;
+4. scanne les scripts Unity concernés ;
+5. identifie les risques ;
+6. génère un prompt Codex ciblé.
+
+## Workflow code AIStudio
+
+Exemple :
+
+```text
+AIStudio > Refonds le pipeline de mission.
+AIStudio > GO
+```
+
+AIStudio :
+
+1. collecte le contexte partagé ;
+2. analyse ;
+3. propose un plan ;
+4. attend `VALIDATE` ;
+5. génère un patch complet ;
+6. attend `APPLY` pour écrire les fichiers.
 
 ---
 
 # Workflow recommandé
+
+## Pour Lit
 
 ```text
 Toi
  ↓
 AIStudio
  ↓
+Collecte de contexte
+ ↓
 Analyse
- ↓
-Documentation
- ↓
-Recherche scripts Unity
- ↓
-Questions éventuelles
  ↓
 Prompt Codex
  ↓
 Codex
  ↓
-Modification du projet
+Modification du projet Unity Lit
 ```
 
-AIStudio prépare.
+## Pour AIStudio
 
-Codex développe.
+```text
+Toi
+ ↓
+AIStudio
+ ↓
+Collecte de contexte
+ ↓
+Analyse + plan
+ ↓
+VALIDATE
+ ↓
+Patch complet
+ ↓
+APPLY
+ ↓
+Modification automatique d’AIStudio
+```
 
 ---
 
-# Architecture
+# Architecture du dépôt
 
-```
+```text
 app/
 
 agents/
@@ -196,6 +319,8 @@ core/
     documentation_indexer.py
     llm_tracking.py
     mission.py
+    mission_brief.py
+    mission_pipeline.py
     models.py
     project_scanner.py
     prompts.py
@@ -223,10 +348,22 @@ Réinitialiser la mission :
 RESET
 ```
 
-Lancer l'analyse :
+Lancer l’analyse ou l’étape courante :
 
 ```text
 GO
+```
+
+Valider le plan en mode code AIStudio :
+
+```text
+VALIDATE
+```
+
+Appliquer le dernier patch proposé :
+
+```text
+APPLY
 ```
 
 Quitter :
@@ -241,7 +378,7 @@ QUIT
 
 ## AIStudio indique :
 
-```
+```text
 Dépendance manquante : langchain-openai
 ```
 
@@ -256,7 +393,7 @@ python -m pip install -r requirements.txt
 
 ## AIStudio indique :
 
-```
+```text
 ripgrep (rg) est introuvable
 ```
 
@@ -287,12 +424,29 @@ Vérifier :
 
 ---
 
+# Limites connues de ce dépôt
+
+- AIStudio peut patcher uniquement ses propres fichiers autorisés.
+- Les fichiers Unity Lit ne doivent pas être patchés directement en mode AIStudio.
+- La suppression automatique de fichiers Python obsolètes n’est sûre que si leur rôle réel et leur contenu complet ont été chargés dans le contexte.
+
+---
+
 # Philosophie
 
 AIStudio n'est pas un IDE.
 
-AIStudio n'est pas un générateur de code.
+AIStudio n'est pas un générateur aveugle de code.
 
-AIStudio est un **préparateur de mission**.
+AIStudio est un **orchestrateur de mission technique**.
 
-Il fait le maximum du travail localement (documentation, recherche, sélection, analyse) afin que Codex reçoive un contexte ciblé et produise un patch de qualité avec un coût API minimal.
+Il fait le maximum du travail localement :
+
+- planification ;
+- sélection documentaire ;
+- recherche ciblée ;
+- lecture des fichiers pertinents ;
+- construction d’un contexte compact ;
+- contrôle du workflow.
+
+Ainsi, le LLM intervient tard, sur un contexte ciblé, avec un coût réduit et un risque de patch plus faible.

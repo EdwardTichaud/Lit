@@ -1,82 +1,201 @@
+from pathlib import Path
+
+from app.core.app_workflow import AppWorkflow
+from app.core.config import AI_STUDIO_ROOT
 from app.core.llm_tracking import print_llm_diagnostics
-from app.core.mission_brief import write_mission_brief
+from app.core.mission_pipeline import run_mission
+from app.core.patch_applier import apply_file_blocks, extract_file_blocks
 
 
-INTRO = "AIStudio -- Preparateur de mission Codex"
-PROMPT = "AIStudio > "
+WELCOME = """
+AIStudio
+
+Choisis un mode :
+
+1. Préparer un prompt pour Codex
+2. Coder avec AIStudio
+"""
 
 
-def print_help() -> None:
-    print("Commandes : GO pour analyser, RESET pour vider, QUIT pour sortir.")
-
-
-def run_chat() -> None:
-    user_messages: list[str] = []
-
-    print(INTRO)
-    print_help()
-
+def select_workflow() -> AppWorkflow:
     while True:
-        try:
-            raw_message = input(PROMPT)
-        except (EOFError, KeyboardInterrupt):
-            print("")
-            return
+        choice = input("Choix 1 ou 2 > ").strip()
 
-        message = raw_message.strip()
+        if choice == "1":
+            return AppWorkflow.CODEX_PROMPT
 
-        if not message:
-            continue
+        if choice == "2":
+            return AppWorkflow.AISTUDIO_CODE
 
-        command = message.upper()
+        print("Choix invalide. Tape 1 ou 2.")
 
-        if command in {"QUIT", "EXIT"}:
-            return
 
-        if command == "RESET":
-            user_messages.clear()
-            print("Demande reinitialisee.")
-            continue
+def build_request(history: list[str]) -> str:
+    return "\n".join(history)
 
-        if command == "GO":
-            if not user_messages:
-                print("Aucune demande a analyser.")
-                continue
 
-            try:
-                from app.agents.architect import ArchitectAgent
+def print_mission_result(mission) -> None:
+    print("\n========== DOCUMENTS UTILISÉS ==========\n")
 
-                agent = ArchitectAgent()
-                mission = agent.prepare(user_messages)
-            except Exception as exc:
-                print(f"Analyse interrompue : {exc}")
-                continue
+    if not mission.loaded_documents:
+        print("Aucun document chargé.")
+    else:
+        for doc in mission.loaded_documents:
+            print(doc.get("file", doc))
 
-            print("\n========== DOCUMENTS ==========\n")
-            for doc in mission.loaded_documents:
-                print(doc["file"])
+    if getattr(mission, "scanned_files", None):
+        print("\n========== FICHIERS UNITY PROBABLES ==========\n")
+        for file in mission.scanned_files[:20]:
+            print(file)
 
-            print("\n========== FICHIERS UNITY PROBABLES ==========\n")
-            for file_info in mission.scanned_files:
-                print(f"{file_info['score']:>4}  {file_info['path']}")
+    if getattr(mission, "aistudio_files", None):
+        print("\n========== FICHIERS AISTUDIO CHARGÉS ==========\n")
+        for file in mission.aistudio_files[:20]:
+            print(file)
 
-            print_llm_diagnostics(mission)
+    print_llm_diagnostics(mission)
 
-            brief_paths = write_mission_brief(mission)
-            print("\n========== BRIEF ==========\n")
-            print(f"Brief courant : {brief_paths['latest']}")
-            print(f"Archive : {brief_paths['archive']}")
+    if mission.workflow == AppWorkflow.CODEX_PROMPT:
+        print("\n========== PROMPT CODEX ==========\n")
+        print(mission.final_codex_prompt or mission.answer)
 
-            print("\n========== PROMPT CODEX ==========\n")
-            print(mission.final_codex_prompt or mission.answer)
-            continue
+    elif mission.workflow == AppWorkflow.AISTUDIO_CODE:
+        print("\n========== RÉPONSE AISTUDIO ==========\n")
+        print(mission.answer)
 
-        user_messages.append(message)
-        print(f"Note ajoutee ({len(user_messages)}).")
+
+def try_apply_patch(mission) -> None:
+    blocks = extract_file_blocks(mission.answer)
+
+    if not blocks:
+        print("\nAucun bloc de fichier applicable trouvé.")
+        return
+
+    print("\nFichiers qui seront modifiés :")
+    for block in blocks:
+        print(f"- {block['path']}")
+
+    confirm = input("\nAppliquer les modifications ? (oui/non) ").strip().lower()
+
+    if confirm not in {"oui", "o", "yes", "y"}:
+        print("Application annulée.")
+        return
+
+    try:
+        written = apply_file_blocks(
+            Path(AI_STUDIO_ROOT),
+            mission.answer,
+        )
+
+        print("\nFichiers modifiés :")
+        for path in written:
+            print(f"- {path}")
+
+        print("\nÀ faire maintenant :")
+        print("- relire les fichiers modifiés ;")
+        print("- lancer python -m app.chat ;")
+        print("- vérifier git diff.")
+
+    except Exception as exc:
+        print(f"Erreur pendant l'application : {exc}")
 
 
 def main() -> None:
-    run_chat()
+    print(WELCOME)
+
+    workflow = select_workflow()
+
+    print(f"\nMode choisi : {workflow.value}")
+
+    history: list[str] = []
+    last_mission = None
+    plan_validated = False
+    patch_ready = False
+
+    print("\nCommandes :")
+    print("GO       -> lancer l'étape courante")
+    print("VALIDATE -> valider le plan en mode code AIStudio")
+    print("APPLY    -> appliquer le dernier patch proposé")
+    print("RESET    -> vider la mission")
+    print("QUIT     -> sortir")
+
+    while True:
+        user_input = input("\nAIStudio > ").strip()
+
+        if not user_input:
+            continue
+
+        command = user_input.upper()
+
+        if command in {"QUIT", "EXIT"}:
+            print("Fermeture.")
+            break
+
+        if command == "RESET":
+            history.clear()
+            last_mission = None
+            plan_validated = False
+            patch_ready = False
+            print("Mission réinitialisée.")
+            continue
+
+        if command == "VALIDATE":
+            if workflow != AppWorkflow.AISTUDIO_CODE:
+                print("VALIDATE est disponible uniquement en mode Coder avec AIStudio.")
+                continue
+
+            if not history:
+                print("Aucune mission en cours.")
+                continue
+
+            plan_validated = True
+            patch_ready = False
+            print("Plan validé. Tape GO pour générer un patch si c'est sûr.")
+            continue
+
+        if command == "APPLY":
+            if last_mission is None:
+                print("Aucune mission précédente.")
+                continue
+
+            if last_mission.workflow != AppWorkflow.AISTUDIO_CODE:
+                print("APPLY est disponible uniquement en mode Coder avec AIStudio.")
+                continue
+
+            if not patch_ready:
+                print("Aucun patch validé à appliquer. Lance d'abord GO après VALIDATE.")
+                continue
+
+            try_apply_patch(last_mission)
+            continue
+
+        if command == "GO":
+            if not history:
+                print("Aucune mission en cours.")
+                continue
+
+            request = build_request(history)
+
+            last_mission = run_mission(
+                query=request,
+                workflow=workflow,
+                plan_validated=plan_validated,
+            )
+
+            print_mission_result(last_mission)
+
+            if workflow == AppWorkflow.AISTUDIO_CODE:
+                if not plan_validated:
+                    print("\nÉtape suivante : relis le plan, puis tape VALIDATE si tu l'acceptes.")
+                    patch_ready = False
+                else:
+                    print("\nSi le patch proposé te convient, tape APPLY.")
+                    patch_ready = True
+
+            continue
+
+        history.append(user_input)
+        print(f"Note ajoutée ({len(history)}).")
 
 
 if __name__ == "__main__":
