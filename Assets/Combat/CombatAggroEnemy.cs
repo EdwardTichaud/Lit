@@ -25,6 +25,12 @@ public class CombatAggroEnemy : MonoBehaviour
     [SerializeField, Tooltip("Trigger utilise pour detecter le joueur.")]
     private Collider aggroTrigger;
 
+    [Header("Local Combat Music")]
+    [SerializeField, Tooltip("Declenche localement la musique de combat quand le joueur local entre dans la portee d'aggro.")]
+    private bool playLocalCombatMusicInAggroRange = true;
+    [SerializeField, Min(0f), Tooltip("Distance supplementaire hors du trigger avant de restaurer la musique precedente.")]
+    private float localCombatMusicExitPadding = 1.25f;
+
     [Header("Combat")]
     [SerializeField, Tooltip("CharacterData ennemi utilise pour les donnees de placement et de combat.")]
     private CharacterData enemy;
@@ -50,6 +56,7 @@ public class CombatAggroEnemy : MonoBehaviour
     private float nextAggroTime;
     private bool defeated;
     private bool combatInProgress;
+    private bool localCombatMusicActive;
 
     private void Reset()
     {
@@ -74,13 +81,30 @@ public class CombatAggroEnemy : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         // Unity appelle ceci quand un collider entre dans un trigger de l'ennemi.
+        TryBeginLocalCombatMusic(other);
         TryAggro(other);
     }
 
     private void OnTriggerStay(Collider other)
     {
         // OnTriggerStay permet de lancer l'aggro si le cooldown expire pendant que le joueur est deja dans la zone.
+        TryBeginLocalCombatMusic(other);
         TryAggro(other);
+    }
+
+    private void Update()
+    {
+        UpdateLocalCombatMusicExit();
+    }
+
+    private void OnDisable()
+    {
+        EndLocalCombatMusic();
+    }
+
+    private void OnDestroy()
+    {
+        EndLocalCombatMusic();
     }
 
     /// <summary>
@@ -151,6 +175,7 @@ public class CombatAggroEnemy : MonoBehaviour
         }
 
         defeated = true;
+        EndLocalCombatMusic();
         if (markHealthDeadAfterVictory && combatHealth != null)
         {
             combatHealth.SetHealth(0, combatHealth.MaxHp);
@@ -182,6 +207,7 @@ public class CombatAggroEnemy : MonoBehaviour
         }
 
         defeated = true;
+        EndLocalCombatMusic();
         if (disableAfterVictory)
         {
             gameObject.SetActive(false);
@@ -226,6 +252,73 @@ public class CombatAggroEnemy : MonoBehaviour
         nextAggroTime = Time.time + aggroCooldown;
     }
 
+    private void TryBeginLocalCombatMusic(Collider other)
+    {
+        if (!CanUseLocalCombatMusic())
+        {
+            return;
+        }
+
+        SquadCharacterController controller = other != null ? other.GetComponentInParent<SquadCharacterController>() : null;
+        if (!IsLocalPlayerTarget(controller))
+        {
+            return;
+        }
+
+        if (!localCombatMusicActive)
+        {
+            CombatTransitionController.EnsureInstance().BeginProximityCombatMusic(this);
+            localCombatMusicActive = true;
+        }
+    }
+
+    private void UpdateLocalCombatMusicExit()
+    {
+        if (!localCombatMusicActive)
+        {
+            return;
+        }
+
+        Transform localPlayer = LocalPlayerContext.LocalCharacterRoot;
+        if (!CanUseLocalCombatMusic() || localPlayer == null || !IsWithinLocalCombatMusicExitRange(localPlayer.position))
+        {
+            EndLocalCombatMusic();
+        }
+    }
+
+    private void EndLocalCombatMusic()
+    {
+        if (!localCombatMusicActive)
+        {
+            return;
+        }
+
+        localCombatMusicActive = false;
+        CombatTransitionController controller = CombatTransitionController.Instance;
+        if (controller != null)
+        {
+            controller.EndProximityCombatMusic(this);
+        }
+    }
+
+    private bool CanUseLocalCombatMusic()
+    {
+        return playLocalCombatMusicInAggroRange && aggroEnabled && !defeated && isActiveAndEnabled;
+    }
+
+    private bool IsWithinLocalCombatMusicExitRange(Vector3 playerPosition)
+    {
+        float padding = Mathf.Max(0f, localCombatMusicExitPadding);
+        if (aggroTrigger != null && aggroTrigger.enabled)
+        {
+            Vector3 closestPoint = aggroTrigger.ClosestPoint(playerPosition);
+            return (playerPosition - closestPoint).sqrMagnitude <= padding * padding;
+        }
+
+        float fallbackRadius = Mathf.Max(0.1f, aggroRadius) + padding;
+        return (playerPosition - transform.position).sqrMagnitude <= fallbackRadius * fallbackRadius;
+    }
+
     private bool CanTryAggro()
     {
         if (!aggroEnabled || defeated || !isActiveAndEnabled)
@@ -265,6 +358,25 @@ public class CombatAggroEnemy : MonoBehaviour
         }
 
         return controller.CompareTag("Player") || controller.GetComponentInParent<NetcodeLocalPlayer>() != null;
+    }
+
+    private static bool IsLocalPlayerTarget(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return false;
+        }
+
+        Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+        if (localRoot == null || !localRoot.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        Transform controllerTransform = controller.transform;
+        return controllerTransform == localRoot ||
+               controllerTransform.IsChildOf(localRoot) ||
+               localRoot.IsChildOf(controllerTransform);
     }
 
     private void EnsureAggroTrigger()

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -63,6 +64,9 @@ public sealed class CombatTransitionController : MonoBehaviour
     private Coroutine transitionRoutine;
     private Action pendingCoveredAction;
     private int musicOverrideToken;
+    private bool combatSessionMusicActive;
+    private readonly HashSet<CombatAggroEnemy> proximityMusicOwners = new HashSet<CombatAggroEnemy>();
+    private readonly List<CombatAggroEnemy> proximityMusicRemovalBuffer = new List<CombatAggroEnemy>();
     private Sprite solidSprite;
 
     /// <summary>
@@ -100,10 +104,8 @@ public sealed class CombatTransitionController : MonoBehaviour
         AudioManager manager = AudioManager.EnsureInstance();
         manager.PlayUiClip(enterSfx);
         manager.PlayUiClip(accentSfx);
-        if (musicOverrideToken == 0 && combatMusic != null)
-        {
-            musicOverrideToken = manager.PushMusicOverride(combatMusic);
-        }
+        combatSessionMusicActive = true;
+        EnsureCombatMusicOverride();
 
         StartTransition(EnterRoutine, coveredAction);
     }
@@ -116,13 +118,40 @@ public sealed class CombatTransitionController : MonoBehaviour
         ResolveDefaultAudio();
         AudioManager manager = AudioManager.EnsureInstance();
         manager.PlayUiClip(exitSfx);
-        if (musicOverrideToken != 0)
-        {
-            manager.PopMusicOverride(musicOverrideToken);
-            musicOverrideToken = 0;
-        }
+        combatSessionMusicActive = false;
+        ReleaseCombatMusicOverrideIfUnused();
 
         StartTransition(ExitRoutine, coveredAction);
+    }
+
+    /// <summary>
+    /// Active localement la musique de combat quand le joueur local approche d'un ennemi, sans demarrer de session.
+    /// </summary>
+    public void BeginProximityCombatMusic(CombatAggroEnemy owner)
+    {
+        if (owner == null)
+        {
+            return;
+        }
+
+        ResolveDefaultAudio();
+        PruneProximityMusicOwners();
+        proximityMusicOwners.Add(owner);
+        EnsureCombatMusicOverride();
+    }
+
+    /// <summary>
+    /// Relache la demande locale de musique de combat d'un ennemi proche.
+    /// </summary>
+    public void EndProximityCombatMusic(CombatAggroEnemy owner)
+    {
+        if (owner == null)
+        {
+            return;
+        }
+
+        proximityMusicOwners.Remove(owner);
+        ReleaseCombatMusicOverrideIfUnused();
     }
 
     private void Awake()
@@ -142,10 +171,68 @@ public sealed class CombatTransitionController : MonoBehaviour
     {
         // Si l'objet est detruit pendant une transition, on execute quand meme l'action critique.
         InvokePendingCoveredAction();
+        ForceReleaseCombatMusicOverride();
         if (Instance == this)
         {
             Instance = null;
         }
+    }
+
+    private void EnsureCombatMusicOverride()
+    {
+        if (musicOverrideToken != 0 || combatMusic == null)
+        {
+            return;
+        }
+
+        musicOverrideToken = AudioManager.EnsureInstance().PushMusicOverride(combatMusic);
+    }
+
+    private void ReleaseCombatMusicOverrideIfUnused()
+    {
+        PruneProximityMusicOwners();
+        if (combatSessionMusicActive || proximityMusicOwners.Count > 0)
+        {
+            return;
+        }
+
+        ForceReleaseCombatMusicOverride();
+    }
+
+    private void ForceReleaseCombatMusicOverride()
+    {
+        if (musicOverrideToken == 0 || AudioManager.Instance == null)
+        {
+            musicOverrideToken = 0;
+            return;
+        }
+
+        AudioManager.Instance.PopMusicOverride(musicOverrideToken);
+        musicOverrideToken = 0;
+    }
+
+    private void PruneProximityMusicOwners()
+    {
+        if (proximityMusicOwners.Count == 0)
+        {
+            return;
+        }
+
+        proximityMusicRemovalBuffer.Clear();
+        foreach (CombatAggroEnemy owner in proximityMusicOwners)
+        {
+            if (owner == null)
+            {
+                proximityMusicRemovalBuffer.Add(owner);
+            }
+        }
+
+        for (int i = 0; i < proximityMusicRemovalBuffer.Count; i++)
+        {
+            proximityMusicOwners.Remove(proximityMusicRemovalBuffer[i]);
+        }
+
+        proximityMusicRemovalBuffer.Clear();
     }
 
     private void StartTransition(Func<IEnumerator> routineFactory, Action coveredAction)

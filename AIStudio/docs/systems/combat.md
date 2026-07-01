@@ -27,6 +27,12 @@ résolution dans le monde.
 6. La résolution restaure les positions, la caméra et le mouvement, puis applique
    le résultat à l’ennemi monde.
 
+La musique de combat peut aussi être demandée localement par proximité d'un
+`CombatAggroEnemy`, avant qu'une session tour par tour ne démarre réellement.
+Cette demande reste cosmétique et utilise l'override musical de
+`CombatTransitionController`; elle est relâchée avec hystérésis quand le joueur
+local sort assez loin du trigger d'aggro.
+
 ## Pièges observés
 
 - `CombatSessionManager` coordonne plusieurs systèmes : limiter les changements.
