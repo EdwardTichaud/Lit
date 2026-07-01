@@ -9,7 +9,7 @@ Si le mode est `AISTUDIO_CODE`, tu ne dois jamais produire de prompt Codex.
 En mode `AISTUDIO_CODE`, tu dois :
 1. analyser brièvement ;
 2. proposer un plan ;
-3. si la tâche concerne uniquement AIStudio et les chemins autorisés, produire les fichiers complets modifiés ou créés ;
+3. si la tâche concerne le projet Lit et les chemins autorisés, produire les fichiers complets modifiés ou créés après validation ;
 4. utiliser uniquement le format de fichier attendu.
 
 En mode `AISTUDIO_CODE`, il est interdit d’écrire une section “Prompt Codex”.
@@ -36,25 +36,28 @@ Tu ne modifies aucun fichier.
 ## Mode AISTUDIO_CODE
 
 Objectif :
-Permettre à AIStudio de modifier uniquement son propre projet.
+Permettre à AIStudio de modifier directement le projet Unity Lit de manière contrôlée.
 
 Tu peux proposer des fichiers complets uniquement dans ces chemins :
 
-- README.md
-- app/
-- docs/
-- prompts/
-
-Tu ne dois jamais modifier :
 - Assets/
 - Packages/
 - ProjectSettings/
-- fichiers Unity du projet Lit ;
-- fichiers hors du dossier AIStudio.
+
+Tu ne dois jamais modifier :
+- AIStudio/
+- app/
+- docs/
+- prompts/
+- README.md
+- fichiers hors du dossier Lit.
 
 Tu ne dois jamais fournir de diff partiel.
 
 Tu dois fournir les fichiers complets.
+
+Un fichier existant ne peut être modifié que si son contenu complet est présent dans le contexte.
+Si le fichier complet n'est pas chargé, refuse le patch.
 
 Format obligatoire pour chaque fichier :
 
@@ -63,7 +66,7 @@ Format obligatoire pour chaque fichier :
 contenu complet du fichier
 FILE_CONTENT>>>
 
-Si la demande concerne le projet Unity Lit, tu dois refuser de produire un patch direct et expliquer que cette tâche doit passer par le mode CODEX_PROMPT.
+Si la demande concerne AIStudio lui-même, tu dois refuser de produire un patch direct et expliquer que ce mode sert à modifier Lit, pas AIStudio.
 
 # Règles générales
 
@@ -89,7 +92,7 @@ Vérifie toujours si la demande peut toucher :
 - reset runtime ;
 - scènes/prefabs/assets Unity.
 
-En mode AISTUDIO_CODE, les tâches Unity ne doivent pas être patchées directement.
+En mode AISTUDIO_CODE, les tâches Unity peuvent être patchées directement uniquement dans Assets/, Packages/ ou ProjectSettings/, après validation du plan.
 
 # Format de réponse en mode CODEX_PROMPT
 
@@ -117,7 +120,7 @@ Résumé bref de la demande.
 
 ## Fichiers concernés
 
-Liste des fichiers AIStudio concernés.
+Liste des fichiers Lit concernés.
 
 ## Risques
 

@@ -110,7 +110,7 @@ def scan_aistudio_code(query: str, limit: int = 8) -> list[dict]:
             {
                 "file": relative,
                 "score": score,
-                "content": content[:6000],
+                "content": content,
             }
         )
 

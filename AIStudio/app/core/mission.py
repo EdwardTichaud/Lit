@@ -14,6 +14,8 @@ class MissionContext:
     loaded_documents: list[dict] = field(default_factory=list)
 
     scanned_files: list[dict] = field(default_factory=list)
+    lit_files: list[dict] = field(default_factory=list)
+    lit_code_context: str = ""
 
     aistudio_files: list[dict] = field(default_factory=list)
     aistudio_code_context: str = ""

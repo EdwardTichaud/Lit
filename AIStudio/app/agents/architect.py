@@ -1,5 +1,4 @@
 from app.core.app_workflow import AppWorkflow
-from app.core.code_scanner import build_aistudio_code_context, scan_aistudio_code
 from app.core.context_builder import build_context
 from app.core.llm_tracking import tracked_invoke
 from app.core.mission import MissionContext
@@ -33,12 +32,6 @@ class ArchitectAgent:
         if prepared_mission is None:
             mission = build_context(mission)
 
-        if workflow == AppWorkflow.AISTUDIO_CODE:
-            mission.aistudio_files = scan_aistudio_code(mission.query)
-            mission.aistudio_code_context = build_aistudio_code_context(
-                mission.aistudio_files
-            )
-
         response = tracked_invoke(
             self.llm,
             [
@@ -62,9 +55,9 @@ Fichiers Unity probables :
 
 {mission.scanned_files}
 
-Fichiers AIStudio pertinents :
+Fichiers Lit chargés en entier :
 
-{mission.aistudio_code_context}
+{mission.lit_code_context}
 """,
                 ),
             ],
@@ -72,6 +65,10 @@ Fichiers AIStudio pertinents :
             "architect_prepare",
         )
 
-        mission.answer = response.content
+        mission.answer = (
+            response.content
+            if isinstance(response.content, str)
+            else str(response.content)
+        )
 
         return mission

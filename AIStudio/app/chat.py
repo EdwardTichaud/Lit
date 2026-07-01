@@ -1,10 +1,11 @@
 from pathlib import Path
+import sys
 
 from app.core.app_workflow import AppWorkflow
-from app.core.config import AI_STUDIO_ROOT
+from app.core.config import LIT_ROOT
 from app.core.llm_tracking import print_llm_diagnostics
 from app.core.mission_pipeline import run_mission
-from app.core.patch_applier import apply_file_blocks, extract_file_blocks
+from app.core.patch_applier import apply_file_blocks, extract_file_blocks, is_safe_path
 
 
 WELCOME = """
@@ -17,9 +18,25 @@ Choisis un mode :
 """
 
 
-def select_workflow() -> AppWorkflow:
+def configure_console() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except AttributeError:
+            pass
+
+
+def select_workflow() -> AppWorkflow | None:
     while True:
-        choice = input("Choix 1 ou 2 > ").strip()
+        try:
+            choice = input("Choix 1 ou 2 > ").strip()
+        except EOFError:
+            return None
+
+        command = choice.upper()
+
+        if command in {"QUIT", "EXIT"}:
+            return None
 
         if choice == "1":
             return AppWorkflow.CODEX_PROMPT
@@ -46,12 +63,12 @@ def print_mission_result(mission) -> None:
     if getattr(mission, "scanned_files", None):
         print("\n========== FICHIERS UNITY PROBABLES ==========\n")
         for file in mission.scanned_files[:20]:
-            print(file)
+            print(format_file_summary(file, "path"))
 
-    if getattr(mission, "aistudio_files", None):
-        print("\n========== FICHIERS AISTUDIO CHARGÉS ==========\n")
-        for file in mission.aistudio_files[:20]:
-            print(file)
+    if getattr(mission, "lit_files", None):
+        print("\n========== FICHIERS LIT CHARGÉS ==========\n")
+        for file in mission.lit_files[:20]:
+            print(format_file_summary(file, "path"))
 
     print_llm_diagnostics(mission)
 
@@ -64,6 +81,19 @@ def print_mission_result(mission) -> None:
         print(mission.answer)
 
 
+def format_file_summary(item, key: str) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+
+    path = item.get(key) or item.get("file") or item.get("path") or item
+    score = item.get("score")
+
+    if score is None:
+        return str(path)
+
+    return f"{path} (score {score})"
+
+
 def try_apply_patch(mission) -> None:
     blocks = extract_file_blocks(mission.answer)
 
@@ -71,11 +101,35 @@ def try_apply_patch(mission) -> None:
         print("\nAucun bloc de fichier applicable trouvé.")
         return
 
+    unsafe_paths = [
+        block["path"]
+        for block in blocks
+        if not is_safe_path(block["path"])
+    ]
+
+    if unsafe_paths:
+        print("\nApplication refusée. Chemins interdits :")
+        for path in unsafe_paths:
+            print(f"- {path}")
+        return
+
+    unloaded_paths = find_unloaded_existing_paths(mission, blocks)
+
+    if unloaded_paths:
+        print("\nApplication refusée. Fichiers existants non chargés en entier :")
+        for path in unloaded_paths:
+            print(f"- {path}")
+        return
+
     print("\nFichiers qui seront modifiés :")
     for block in blocks:
         print(f"- {block['path']}")
 
-    confirm = input("\nAppliquer les modifications ? (oui/non) ").strip().lower()
+    try:
+        confirm = input("\nAppliquer les modifications ? (oui/non) ").strip().lower()
+    except EOFError:
+        print("Application annulée.")
+        return
 
     if confirm not in {"oui", "o", "yes", "y"}:
         print("Application annulée.")
@@ -83,7 +137,7 @@ def try_apply_patch(mission) -> None:
 
     try:
         written = apply_file_blocks(
-            Path(AI_STUDIO_ROOT),
+            Path(LIT_ROOT),
             mission.answer,
         )
 
@@ -100,10 +154,34 @@ def try_apply_patch(mission) -> None:
         print(f"Erreur pendant l'application : {exc}")
 
 
+def find_unloaded_existing_paths(mission, blocks: list[dict]) -> list[str]:
+    loaded_paths = {
+        str(item.get("path", "")).replace("\\", "/").strip()
+        for item in getattr(mission, "lit_files", [])
+        if item.get("content_loaded")
+    }
+
+    missing_paths: list[str] = []
+
+    for block in blocks:
+        relative_path = block["path"].replace("\\", "/").strip()
+        target = Path(LIT_ROOT) / relative_path
+
+        if target.exists() and relative_path not in loaded_paths:
+            missing_paths.append(relative_path)
+
+    return missing_paths
+
+
 def main() -> None:
+    configure_console()
     print(WELCOME)
 
     workflow = select_workflow()
+
+    if workflow is None:
+        print("Fermeture.")
+        return
 
     print(f"\nMode choisi : {workflow.value}")
 
@@ -120,7 +198,11 @@ def main() -> None:
     print("QUIT     -> sortir")
 
     while True:
-        user_input = input("\nAIStudio > ").strip()
+        try:
+            user_input = input("\nAIStudio > ").strip()
+        except EOFError:
+            print("\nFermeture.")
+            break
 
         if not user_input:
             continue
@@ -189,13 +271,26 @@ def main() -> None:
                     print("\nÉtape suivante : relis le plan, puis tape VALIDATE si tu l'acceptes.")
                     patch_ready = False
                 else:
-                    print("\nSi le patch proposé te convient, tape APPLY.")
-                    patch_ready = True
+                    patch_ready = bool(extract_file_blocks(last_mission.answer))
+
+                    if patch_ready:
+                        print("\nSi le patch proposé te convient, tape APPLY.")
+                    else:
+                        print("\nAucun patch applicable n'a été produit.")
 
             continue
 
+        if workflow == AppWorkflow.AISTUDIO_CODE and plan_validated:
+            plan_validated = False
+            patch_ready = False
+            print("Nouvelle note ajoutée : validation du plan annulée.")
+
         history.append(user_input)
         print(f"Note ajoutée ({len(history)}).")
+
+
+def run_chat() -> None:
+    main()
 
 
 if __name__ == "__main__":
