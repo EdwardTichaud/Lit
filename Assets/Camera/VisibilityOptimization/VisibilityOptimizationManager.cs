@@ -166,7 +166,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
             nextEvaluationTime = now + evaluationInterval;
         }
 
-        ProcessEvaluations(now, localPlayer);
+        ProcessEvaluations(resolvedCamera, now, localPlayer);
     }
 
     private void RegisterInternal(OptimizableObject optimizableObject)
@@ -228,7 +228,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         }
     }
 
-    private void ProcessEvaluations(float now, Transform localPlayer)
+    private void ProcessEvaluations(Camera resolvedCamera, float now, Transform localPlayer)
     {
         int budget = Mathf.Max(1, maxEvaluationsPerFrame);
         while (budget > 0 && nextEvaluationIndex < objects.Count)
@@ -240,13 +240,13 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
                 continue;
             }
 
-            EvaluateObject(optimizableObject, now, localPlayer);
+            EvaluateObject(resolvedCamera, optimizableObject, now, localPlayer);
             nextEvaluationIndex++;
             budget--;
         }
     }
 
-    private void EvaluateObject(OptimizableObject optimizableObject, float now, Transform localPlayer)
+    private void EvaluateObject(Camera resolvedCamera, OptimizableObject optimizableObject, float now, Transform localPlayer)
     {
         if (optimizableObject == null)
         {
@@ -260,13 +260,12 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
             return;
         }
 
-        Bounds bounds = optimizableObject.CurrentBounds;
-        bool inFrustum = GeometryUtility.TestPlanesAABB(frustumPlanes, bounds);
+        bool inFrustum = IsInCameraVisibilityRange(resolvedCamera, optimizableObject, out bool inCameraMargin);
         bool nearLocalPlayer = optimizableObject.IsNearLocalPlayer(localPlayer);
         bool visible = inFrustum || nearLocalPlayer;
         visible = ApplyOffscreenGrace(optimizableObject, visible, now);
 
-        string reason = BuildReason(visible, inFrustum, nearLocalPlayer);
+        string reason = BuildReason(visible, inFrustum, inCameraMargin, nearLocalPlayer);
         VisibilityOptimizationState previousState = optimizableObject.CurrentState;
         optimizableObject.ApplyVisibility(visible, reason);
         if (logStateChanges && previousState != optimizableObject.CurrentState)
@@ -275,6 +274,77 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
                 $"[VisibilityOptimization] {optimizableObject.name}: {previousState} -> {optimizableObject.CurrentState} reason='{reason}'",
                 optimizableObject);
         }
+    }
+
+    private bool IsInCameraVisibilityRange(Camera camera, OptimizableObject optimizableObject, out bool inCameraMargin)
+    {
+        inCameraMargin = false;
+        Bounds bounds = optimizableObject.CurrentBounds;
+        if (GeometryUtility.TestPlanesAABB(frustumPlanes, bounds))
+        {
+            return true;
+        }
+
+        bool currentlyVisible = optimizableObject.CurrentState == VisibilityOptimizationState.Visible;
+        float marginDegrees = optimizableObject.GetFrustumMarginDegrees(currentlyVisible);
+        if (marginDegrees <= 0f)
+        {
+            return false;
+        }
+
+        if (!IsBoundingSphereInsideCameraMargin(camera, optimizableObject.CurrentBoundingSphere, marginDegrees))
+        {
+            return false;
+        }
+
+        inCameraMargin = true;
+        return true;
+    }
+
+    private static bool IsBoundingSphereInsideCameraMargin(Camera camera, BoundingSphere sphere, float marginDegrees)
+    {
+        if (camera == null)
+        {
+            return false;
+        }
+
+        Vector3 localCenter = camera.transform.InverseTransformPoint(sphere.position);
+        float radius = Mathf.Max(0f, sphere.radius);
+        float z = localCenter.z;
+        if (z + radius < camera.nearClipPlane || z - radius > camera.farClipPlane)
+        {
+            return false;
+        }
+
+        float marginRadians = marginDegrees * Mathf.Deg2Rad;
+        if (camera.orthographic)
+        {
+            float worldMargin = Mathf.Tan(marginRadians) * Mathf.Max(1f, Mathf.Abs(z));
+            float verticalExtent = camera.orthographicSize + worldMargin + radius;
+            float horizontalExtent = camera.orthographicSize * camera.aspect + worldMargin + radius;
+            return Mathf.Abs(localCenter.x) <= horizontalExtent &&
+                   Mathf.Abs(localCenter.y) <= verticalExtent;
+        }
+
+        if (z <= 0f)
+        {
+            return false;
+        }
+
+        float distance = localCenter.magnitude;
+        if (distance <= radius)
+        {
+            return true;
+        }
+
+        float verticalHalfFov = camera.fieldOfView * 0.5f * Mathf.Deg2Rad + marginRadians;
+        float horizontalHalfFov = Mathf.Atan(Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * camera.aspect) + marginRadians;
+        float angularRadius = Mathf.Asin(Mathf.Clamp01(radius / Mathf.Max(distance, 0.0001f)));
+        float horizontalAngle = Mathf.Atan2(localCenter.x, z);
+        float verticalAngle = Mathf.Atan2(localCenter.y, z);
+
+        return Mathf.Abs(horizontalAngle) <= horizontalHalfFov + angularRadius &&
+               Mathf.Abs(verticalAngle) <= verticalHalfFov + angularRadius;
     }
 
     private bool ApplyOffscreenGrace(OptimizableObject optimizableObject, bool visible, float now)
@@ -436,7 +506,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         return target != null && target.gameObject.activeInHierarchy;
     }
 
-    private static string BuildReason(bool visible, bool inFrustum, bool nearLocalPlayer)
+    private static string BuildReason(bool visible, bool inFrustum, bool inCameraMargin, bool nearLocalPlayer)
     {
         if (nearLocalPlayer)
         {
@@ -445,7 +515,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
 
         if (inFrustum)
         {
-            return "inside_camera_frustum";
+            return inCameraMargin ? "inside_camera_margin" : "inside_camera_frustum";
         }
 
         return visible ? "offscreen_grace" : "outside_camera_frustum";

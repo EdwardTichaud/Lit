@@ -65,6 +65,9 @@ le trajet monte ou descend selon la position du personnage projetée sur l'axe
 réel de l'échelle. Les poses d'entrée, de boucle et de sortie sont calculées
 depuis l'axe de l'échelle et le côté d'approche/sortie, pas depuis les rotations
 potentiellement arbitraires des transforms d'ancrage.
+La sortie haute d'une montée est traitée comme un passage de l'autre côté de
+l'échelle : les offsets de sortie haute placés côté approche sont donc miroités
+sur le plan perpendiculaire à l'axe réel de l'échelle.
 
 ## Pièges observés
 

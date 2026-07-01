@@ -64,7 +64,7 @@ public class LadderController : MonoBehaviour
     private float endpointInset = 0.08f;
     [SerializeField, Min(0.1f), Tooltip("Hauteur minimale necessaire pour accepter une echelle auto-detectee.")]
     private float minimumAutoHeight = 0.75f;
-    [SerializeField, Min(0f), Tooltip("Distance de sortie en haut, dans la direction accessible.")]
+    [SerializeField, Min(0f), Tooltip("Distance de sortie en haut, de l'autre cote de l'echelle apres la montee.")]
     private float topExitForwardOffset = 0.85f;
     [SerializeField, Min(0f), Tooltip("Offset vertical ajoute a la sortie haute.")]
     private float topExitUpOffset = 0.05f;
@@ -1548,7 +1548,8 @@ public class LadderController : MonoBehaviour
             characterPosition);
         Quaternion climbRotation = ResolveSafeLookRotation(-approachNormal, climbAxis, transform.rotation);
         Quaternion bottomExitRotation = ResolveExitRotation(endpoints.BottomExitPoint, routeBottomPoint, approachNormal, climbAxis, climbRotation);
-        Quaternion topExitRotation = ResolveExitRotation(endpoints.TopExitPoint, endpoints.TopPoint, approachNormal, climbAxis, climbRotation);
+        Vector3 topExitPosition = ResolveTopClimbExitPosition(endpoints.TopPoint, endpoints.TopExitPoint, approachNormal, climbAxis);
+        Quaternion topExitRotation = ResolveTopClimbExitRotation(endpoints.TopPoint, topExitPosition, approachNormal, climbAxis, climbRotation);
 
         bool useTopEntry = ShouldUseTopEntry(characterPosition, routeBottomPoint, endpoints.TopPoint);
         if (useTopEntry)
@@ -1569,7 +1570,7 @@ public class LadderController : MonoBehaviour
             climbRotation,
             endpoints.TopPoint.position,
             climbRotation,
-            endpoints.TopExitPoint.position,
+            topExitPosition,
             topExitRotation,
             true);
         return true;
@@ -1789,7 +1790,7 @@ public class LadderController : MonoBehaviour
             bottomPosition,
             topPosition,
             bottomPosition + approachNormal * bottomExitForwardOffset,
-            topPosition + approachNormal * topExitForwardOffset + axis * topExitUpOffset,
+            topPosition - approachNormal * topExitForwardOffset + axis * topExitUpOffset,
             climbRotation);
         return true;
     }
@@ -1984,23 +1985,79 @@ public class LadderController : MonoBehaviour
 
         if (TryResolveExitOffsetNormal(topPoint, topExitPoint, climbAxis, out Vector3 topNormal))
         {
-            approachNormal += topNormal;
+            approachNormal -= topNormal;
         }
 
         if (approachNormal.sqrMagnitude > 0.0001f)
         {
-            return approachNormal.normalized;
+            return AlignNormalToCharacterSide(approachNormal.normalized, bottomPoint, topPoint, climbAxis, characterPosition);
         }
 
         approachNormal = ResolveWorldApproachNormal(climbAxis);
+        return AlignNormalToCharacterSide(approachNormal, bottomPoint, topPoint, climbAxis, characterPosition);
+    }
+
+    private static Vector3 AlignNormalToCharacterSide(
+        Vector3 normal,
+        Transform bottomPoint,
+        Transform topPoint,
+        Vector3 climbAxis,
+        Vector3 characterPosition)
+    {
         Vector3 center = ResolveRouteCenter(bottomPoint, topPoint);
         Vector3 characterOffset = Vector3.ProjectOnPlane(characterPosition - center, climbAxis);
-        if (characterOffset.sqrMagnitude > 0.0001f && Vector3.Dot(characterOffset, approachNormal) < 0f)
+        if (characterOffset.sqrMagnitude > 0.0001f && Vector3.Dot(characterOffset, normal) < 0f)
         {
-            approachNormal = -approachNormal;
+            normal = -normal;
         }
 
-        return approachNormal;
+        return normal;
+    }
+
+    private static Vector3 ResolveTopClimbExitPosition(
+        Transform topPoint,
+        Transform topExitPoint,
+        Vector3 approachNormal,
+        Vector3 climbAxis)
+    {
+        if (topPoint == null || topExitPoint == null)
+        {
+            return topPoint != null ? topPoint.position : Vector3.zero;
+        }
+
+        Vector3 offset = topExitPoint.position - topPoint.position;
+        Vector3 axialOffset = Vector3.Project(offset, climbAxis);
+        Vector3 planarOffset = Vector3.ProjectOnPlane(offset, climbAxis);
+        if (planarOffset.sqrMagnitude <= 0.0001f || approachNormal.sqrMagnitude <= 0.0001f)
+        {
+            return topExitPoint.position;
+        }
+
+        Vector3 approachDirection = approachNormal.normalized;
+        float approachDistance = Vector3.Dot(planarOffset, approachDirection);
+        if (approachDistance > 0f)
+        {
+            planarOffset -= approachDirection * (approachDistance * 2f);
+        }
+
+        return topPoint.position + axialOffset + planarOffset;
+    }
+
+    private static Quaternion ResolveTopClimbExitRotation(
+        Transform topPoint,
+        Vector3 topExitPosition,
+        Vector3 approachNormal,
+        Vector3 climbAxis,
+        Quaternion fallback)
+    {
+        Vector3 topPosition = topPoint != null ? topPoint.position : topExitPosition;
+        Vector3 exitDirection = Vector3.ProjectOnPlane(topExitPosition - topPosition, climbAxis);
+        if (exitDirection.sqrMagnitude > 0.0001f)
+        {
+            return ResolveSafeLookRotation(exitDirection, climbAxis, fallback);
+        }
+
+        return ResolveSafeLookRotation(-approachNormal, climbAxis, fallback);
     }
 
     private static bool TryResolveExitOffsetNormal(

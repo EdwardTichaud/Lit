@@ -29,11 +29,19 @@ public sealed class OptimizableObject : MonoBehaviour
     [Header("Bounds")]
     [SerializeField] private Transform boundsRoot;
     [SerializeField] private bool autoCollectTargets = true;
+    [SerializeField, Tooltip("Relance le scan quand le composant est reactive, utile pour les racines d'environnement instanciees ou modifiees runtime.")]
+    private bool rescanTargetsOnEnable;
     [SerializeField] private bool includeInactiveChildren = true;
     [SerializeField, Min(0f)] private float boundsPadding = 1.5f;
     [SerializeField, Min(0.05f)] private float minimumBoundsRadius = 0.5f;
     [SerializeField, Min(0f), Tooltip("Distance joueur local sous laquelle l'objet reste actif meme hors frustum.")]
     private float localPlayerKeepVisibleDistance = 2f;
+
+    [Header("Visibility Margin")]
+    [SerializeField, Min(0f), Tooltip("Marge angulaire ajoutee autour du champ camera avant de masquer l'objet.")]
+    private float frustumMarginDegrees;
+    [SerializeField, Min(0f), Tooltip("Marge angulaire supplementaire tant que l'objet est deja visible, pour reduire le popping en bord d'ecran.")]
+    private float visibleStateHysteresisMarginDegrees;
 
     [Header("Presentation Targets")]
     [SerializeField] private bool controlRenderers = true;
@@ -46,6 +54,10 @@ public sealed class OptimizableObject : MonoBehaviour
     [SerializeField] private ParticleSystem[] targetParticleSystems = Array.Empty<ParticleSystem>();
     [SerializeField, FormerlySerializedAs("explicitPausables")]
     private Behaviour[] explicitBehaviours = Array.Empty<Behaviour>();
+    [SerializeField, Tooltip("Racines enfant a ignorer pendant le scan automatique.")]
+    private GameObject[] excludedRoots = Array.Empty<GameObject>();
+    [SerializeField, Tooltip("Composants precis a ignorer pendant le scan automatique.")]
+    private Component[] excludedComponents = Array.Empty<Component>();
 
     [Header("Debug")]
     [SerializeField] private bool drawGizmos;
@@ -80,6 +92,8 @@ public sealed class OptimizableObject : MonoBehaviour
     public bool PreserveForCameraFade => preserveForCameraFade;
     public float LocalPlayerKeepVisibleDistance => localPlayerKeepVisibleDistance;
     public VisibilityOptimizationState CurrentState => currentState;
+    public float FrustumMarginDegrees => frustumMarginDegrees;
+    public float VisibleStateHysteresisMarginDegrees => visibleStateHysteresisMarginDegrees;
 
     public Bounds CurrentBounds
     {
@@ -126,7 +140,15 @@ public sealed class OptimizableObject : MonoBehaviour
 
     private void OnEnable()
     {
-        boundsDirty = true;
+        if (autoCollectTargets && rescanTargetsOnEnable)
+        {
+            RefreshCachedTargets();
+        }
+        else
+        {
+            boundsDirty = true;
+        }
+
         if (Application.isPlaying)
         {
             VisibilityOptimizationManager.Register(this);
@@ -156,6 +178,8 @@ public sealed class OptimizableObject : MonoBehaviour
         boundsPadding = Mathf.Max(0f, boundsPadding);
         minimumBoundsRadius = Mathf.Max(0.05f, minimumBoundsRadius);
         localPlayerKeepVisibleDistance = Mathf.Max(0f, localPlayerKeepVisibleDistance);
+        frustumMarginDegrees = Mathf.Max(0f, frustumMarginDegrees);
+        visibleStateHysteresisMarginDegrees = Mathf.Max(0f, visibleStateHysteresisMarginDegrees);
         distanceMultiplier = Mathf.Max(0.1f, distanceMultiplier);
         if (!Application.isPlaying && autoCollectTargets)
         {
@@ -177,6 +201,7 @@ public sealed class OptimizableObject : MonoBehaviour
         }
     }
 
+    [ContextMenu("Refresh Cached Targets")]
     public void RefreshCachedTargets()
     {
         Transform root = BoundsRoot;
@@ -218,6 +243,17 @@ public sealed class OptimizableObject : MonoBehaviour
 
         Bounds bounds = CurrentBounds;
         return bounds.SqrDistance(localPlayer.position) <= localPlayerKeepVisibleDistance * localPlayerKeepVisibleDistance;
+    }
+
+    public float GetFrustumMarginDegrees(bool currentlyVisible)
+    {
+        float margin = frustumMarginDegrees;
+        if (currentlyVisible)
+        {
+            margin += visibleStateHysteresisMarginDegrees;
+        }
+
+        return Mathf.Max(0f, margin);
     }
 
     public void ApplyVisibility(bool visible, string reason)
@@ -561,7 +597,7 @@ public sealed class OptimizableObject : MonoBehaviour
         Bounds merged = new Bounds(root.position, Vector3.one * minimumBoundsRadius);
         Renderer[] renderers = targetRenderers != null && targetRenderers.Length > 0
             ? targetRenderers
-            : root.GetComponentsInChildren<Renderer>(includeInactiveChildren);
+            : ResolveBoundsRenderers(root);
 
         for (int i = 0; renderers != null && i < renderers.Length; i++)
         {
@@ -624,6 +660,22 @@ public sealed class OptimizableObject : MonoBehaviour
         boundsDirty = false;
     }
 
+    private Renderer[] ResolveBoundsRenderers(Transform root)
+    {
+        if (root == null)
+        {
+            return Array.Empty<Renderer>();
+        }
+
+        Renderer[] renderers = FilterOwnedTargets(root.GetComponentsInChildren<Renderer>(includeInactiveChildren));
+        if (!controlSkinnedMeshRenderers && renderers.Length > 0)
+        {
+            renderers = Array.FindAll(renderers, renderer => renderer != null && !(renderer is SkinnedMeshRenderer));
+        }
+
+        return renderers;
+    }
+
     private T[] FilterOwnedTargets<T>(T[] targets) where T : Component
     {
         if (targets == null || targets.Length == 0)
@@ -635,7 +687,7 @@ public sealed class OptimizableObject : MonoBehaviour
         for (int i = 0; i < targets.Length; i++)
         {
             T target = targets[i];
-            if (IsOwnedTarget(target))
+            if (IsOwnedTarget(target) && !IsTargetExcluded(target))
             {
                 filtered.Add(target);
             }
@@ -655,7 +707,7 @@ public sealed class OptimizableObject : MonoBehaviour
         for (int i = 0; i < behaviours.Length; i++)
         {
             Behaviour behaviour = behaviours[i];
-            if (behaviour == null || !IsOwnedTarget(behaviour) || !IsBehaviourSafeToDisable(behaviour))
+            if (behaviour == null || !IsOwnedTarget(behaviour) || IsTargetExcluded(behaviour) || !IsBehaviourSafeToDisable(behaviour))
             {
                 continue;
             }
@@ -686,6 +738,48 @@ public sealed class OptimizableObject : MonoBehaviour
         }
 
         return true;
+    }
+
+    private bool IsTargetExcluded(Component target)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        if (excludedComponents != null)
+        {
+            for (int i = 0; i < excludedComponents.Length; i++)
+            {
+                if (excludedComponents[i] == target)
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (excludedRoots == null)
+        {
+            return false;
+        }
+
+        Transform targetTransform = target.transform;
+        for (int i = 0; i < excludedRoots.Length; i++)
+        {
+            GameObject excludedRoot = excludedRoots[i];
+            if (excludedRoot == null)
+            {
+                continue;
+            }
+
+            Transform excludedTransform = excludedRoot.transform;
+            if (targetTransform == excludedTransform || targetTransform.IsChildOf(excludedTransform))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private bool HasAnyCachedTargets()

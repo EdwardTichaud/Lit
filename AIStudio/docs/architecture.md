@@ -45,6 +45,9 @@ caméra gameplay active et le personnage publié par `LocalPlayerContext`. Elle 
 désactive pas les racines de GameObject ni les composants réseau/autoritatifs :
 elle pilote uniquement les renderers, particules et behaviours explicitement
 configurés comme présentation locale.
+Un `OptimizableObject` peut aussi servir de racine agrégée d'environnement :
+son scan enfant met en cache renderers et particules, avec exclusions et marge
+de champ caméra configurables pour limiter le popping sans scan par frame.
 
 ### Interaction monde
 
