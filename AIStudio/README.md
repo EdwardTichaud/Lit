@@ -255,9 +255,10 @@ AIStudio :
 1. collecte le contexte partagé ;
 2. analyse ;
 3. propose un plan ;
-4. attend `VALIDATE` ;
-5. génère un patch complet ;
-6. attend `APPLY` pour écrire les fichiers.
+4. peut attendre `EXTEND` si le contexte Lit doit être élargi ;
+5. attend `VALIDATE` ;
+6. génère un patch complet ;
+7. attend `APPLY` pour écrire les fichiers.
 
 ---
 
@@ -352,6 +353,12 @@ Lancer l’analyse ou l’étape courante :
 
 ```text
 GO
+```
+
+Élargir le contexte Lit chargé et relancer un plan :
+
+```text
+EXTEND
 ```
 
 Valider le plan en mode code AIStudio :

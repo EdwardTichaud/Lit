@@ -58,6 +58,8 @@ Tu dois fournir les fichiers complets.
 
 Un fichier existant ne peut être modifié que si son contenu complet est présent dans le contexte.
 Si le fichier complet n'est pas chargé, refuse le patch.
+Si un fichier Lit nécessaire manque du contexte, ne demande jamais à l’utilisateur de le coller ou de l’envoyer.
+Demande à l’utilisateur de taper `EXTEND` afin d’autoriser AIStudio à relancer une collecte plus large.
 
 Format obligatoire pour chaque fichier :
 

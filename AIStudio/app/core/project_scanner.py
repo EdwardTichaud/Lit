@@ -166,7 +166,7 @@ def extract_search_terms(text: str, limit: int = 24) -> list[str]:
     return deduped[:limit]
 
 
-def scan_project(query: str, limit: int = 15) -> list[dict]:
+def scan_project(query: str, limit: int = 20) -> list[dict]:
     terms = extract_search_terms(query)
     explicit_paths = extract_explicit_lit_paths(query)
     results: dict[str, dict] = {}
@@ -240,7 +240,7 @@ def extract_explicit_lit_paths(text: str) -> list[str]:
 
 def load_lit_code_files(
     scanned_files: list[dict],
-    limit: int = 5,
+    limit: int = 10,
     max_chars_per_file: int = 120_000,
 ) -> list[dict]:
     loaded_files: list[dict] = []

@@ -12,7 +12,9 @@ l’environnement HDRP du joueur local.
 - `TemporalZone` / `TemporalObject` : âge local et objets affectés.
 - `TimePeriodVisibility` : filtrage des objets selon le temps.
 - `EnvironmentManager` / `EnvironmentZone` : profils HDRP et blending local.
-- `Flame` : source d’état utilisée notamment par `AgeManager`.
+- `Flame` : source d’état utilisée notamment par `AgeManager`; affiche en
+  runtime une sphère transparente sans collider calée sur sa zone
+  `LitInfluenceSource` quand l'influence est visible.
 - `FlameGuidanceArcRenderer` : feedback local auto-installé qui affiche des arcs
   discrets depuis une Ancient Flame proche vers les Flames éteintes les plus proches.
 

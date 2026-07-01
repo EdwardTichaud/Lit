@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using Unity.Netcode;
 
@@ -72,6 +73,18 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Influence")]
     [SerializeField, Tooltip("Zone d'information active seulement quand la flamme est allumee.")]
     private LitInfluenceSource litInfluence = new LitInfluenceSource(6f);
+    [SerializeField, Tooltip("Affiche en runtime une sphere transparente qui represente la zone d'influence lumineuse.")]
+    private bool showInfluenceSphere = true;
+    [SerializeField, Tooltip("Masque la sphere quand la zone d'influence n'est pas active.")]
+    private bool influenceSphereOnlyWhenLit = true;
+    [SerializeField, Range(0f, 1f), Tooltip("Opacite de la sphere d'influence runtime.")]
+    private float influenceSphereAlpha = 0.14f;
+    [SerializeField, Tooltip("Couleur de la sphere d'influence pour les flames communes.")]
+    private Color influenceSphereColor = new Color(1f, 0.72f, 0.18f, 1f);
+    [SerializeField, Tooltip("Couleur de la sphere d'influence pour les ancient flames.")]
+    private Color ancientInfluenceSphereColor = new Color(0.35f, 0.72f, 1f, 1f);
+    [SerializeField, Tooltip("Materiau transparent optionnel pour la sphere d'influence. Laisse vide pour utiliser le materiau runtime.")]
+    private Material influenceSphereMaterialOverride;
     [SerializeField, Tooltip("Ordre d'allumage des lights communes influencees par cette flamme.")]
     private List<GameObject> commonLightActivationOrder = new List<GameObject>();
 
@@ -102,7 +115,15 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private Coroutine interactionRoutine;
     private bool interactionInProgress;
     private MuninController activeMuninController;
+    private GameObject influenceSphereVisual;
+    private MeshRenderer influenceSphereRenderer;
+    private Material runtimeInfluenceSphereMaterial;
+    private MaterialPropertyBlock influenceSphereProperties;
     private NetworkVariable<bool> netIsLit = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private const string InfluenceSphereVisualName = "LitInfluenceSphereVisual";
+    private static readonly int baseColorPropertyId = Shader.PropertyToID("_BaseColor");
+    private static readonly int colorPropertyId = Shader.PropertyToID("_Color");
+    private static Mesh influenceSphereMesh;
 
     private void Reset()
     {
@@ -266,15 +287,23 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
 
         ClearLitInfluence();
+        SetInfluenceSphereVisualActive(false);
         NotifyAgeManagerDriverAvailabilityChanged();
         StopEmissionRoutine();
         StopInteractionRoutine();
         ResetInteractionState();
     }
 
+    public override void OnDestroy()
+    {
+        DestroyRuntimeInfluenceSphereMaterial();
+        base.OnDestroy();
+    }
+
     private void Update()
     {
         UpdateLitInfluence(false);
+        UpdateInfluenceSphereVisual();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -338,6 +367,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
 
         ApplyLitActivationTargets();
         UpdateFlameVisuals(immediate);
+        UpdateInfluenceSphereVisual();
     }
 
     public void SetGameObjectActiveWhenLit(GameObject target)
@@ -1174,10 +1204,329 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         }
     }
 
+    private void UpdateInfluenceSphereVisual()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        EnsureLitInfluence();
+        bool shouldShow = showInfluenceSphere
+            && litInfluence != null
+            && litInfluence.Enabled
+            && litInfluence.Radius > 0f
+            && (!influenceSphereOnlyWhenLit || isLit);
+
+        if (!shouldShow)
+        {
+            SetInfluenceSphereVisualActive(false);
+            return;
+        }
+
+        EnsureInfluenceSphereVisual();
+        if (influenceSphereVisual == null || influenceSphereRenderer == null)
+        {
+            return;
+        }
+
+        Transform visualTransform = influenceSphereVisual.transform;
+        visualTransform.localPosition = litInfluence.Center;
+        visualTransform.localRotation = Quaternion.identity;
+
+        float diameter = litInfluence.Radius * 2f;
+        Vector3 parentScale = transform.lossyScale;
+        visualTransform.localScale = new Vector3(
+            ResolveLocalScaleForWorldDiameter(diameter, parentScale.x),
+            ResolveLocalScaleForWorldDiameter(diameter, parentScale.y),
+            ResolveLocalScaleForWorldDiameter(diameter, parentScale.z));
+
+        ApplyInfluenceSphereColor();
+        SetInfluenceSphereVisualActive(true);
+    }
+
+    private void EnsureInfluenceSphereVisual()
+    {
+        if (influenceSphereVisual != null && influenceSphereRenderer != null)
+        {
+            return;
+        }
+
+        if (influenceSphereVisual == null)
+        {
+            Transform existing = transform.Find(InfluenceSphereVisualName);
+            influenceSphereVisual = existing != null ? existing.gameObject : null;
+        }
+
+        if (influenceSphereVisual == null)
+        {
+            influenceSphereVisual = new GameObject(InfluenceSphereVisualName);
+            influenceSphereVisual.hideFlags = HideFlags.DontSave;
+            influenceSphereVisual.transform.SetParent(transform, false);
+        }
+
+        MeshFilter meshFilter = influenceSphereVisual.GetComponent<MeshFilter>();
+        if (meshFilter == null)
+        {
+            meshFilter = influenceSphereVisual.AddComponent<MeshFilter>();
+        }
+
+        meshFilter.sharedMesh = GetInfluenceSphereMesh();
+
+        influenceSphereRenderer = influenceSphereVisual.GetComponent<MeshRenderer>();
+        if (influenceSphereRenderer == null)
+        {
+            influenceSphereRenderer = influenceSphereVisual.AddComponent<MeshRenderer>();
+        }
+
+        influenceSphereRenderer.sharedMaterial = ResolveInfluenceSphereMaterial();
+        influenceSphereRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        influenceSphereRenderer.receiveShadows = false;
+        RemoveInfluenceSphereColliders();
+    }
+
+    private Material ResolveInfluenceSphereMaterial()
+    {
+        if (influenceSphereMaterialOverride != null)
+        {
+            return influenceSphereMaterialOverride;
+        }
+
+        if (runtimeInfluenceSphereMaterial == null)
+        {
+            runtimeInfluenceSphereMaterial = CreateRuntimeInfluenceSphereMaterial();
+        }
+
+        return runtimeInfluenceSphereMaterial;
+    }
+
+    private Material CreateRuntimeInfluenceSphereMaterial()
+    {
+        Shader shader = Shader.Find("HDRP/Unlit")
+            ?? Shader.Find("HDRenderPipeline/Unlit")
+            ?? Shader.Find("Universal Render Pipeline/Unlit")
+            ?? Shader.Find("Unlit/Color")
+            ?? Shader.Find("Standard");
+
+        if (shader == null)
+        {
+            return null;
+        }
+
+        Material material = new Material(shader)
+        {
+            name = "Runtime_FlameInfluenceSphere",
+            hideFlags = HideFlags.DontSave
+        };
+
+        ConfigureTransparentRuntimeMaterial(material);
+        return material;
+    }
+
+    private void ApplyInfluenceSphereColor()
+    {
+        if (influenceSphereRenderer == null)
+        {
+            return;
+        }
+
+        Material material = ResolveInfluenceSphereMaterial();
+        if (material == null)
+        {
+            influenceSphereRenderer.enabled = false;
+            return;
+        }
+
+        if (influenceSphereRenderer.sharedMaterial != material)
+        {
+            influenceSphereRenderer.sharedMaterial = material;
+        }
+
+        influenceSphereRenderer.enabled = true;
+        Color color = ancientFlame ? ancientInfluenceSphereColor : influenceSphereColor;
+        color.a = Mathf.Clamp01(influenceSphereAlpha);
+
+        if (influenceSphereProperties == null)
+        {
+            influenceSphereProperties = new MaterialPropertyBlock();
+        }
+
+        influenceSphereRenderer.GetPropertyBlock(influenceSphereProperties);
+        influenceSphereProperties.SetColor(baseColorPropertyId, color);
+        influenceSphereProperties.SetColor(colorPropertyId, color);
+        influenceSphereRenderer.SetPropertyBlock(influenceSphereProperties);
+    }
+
+    private void SetInfluenceSphereVisualActive(bool active)
+    {
+        if (influenceSphereVisual != null && influenceSphereVisual.activeSelf != active)
+        {
+            influenceSphereVisual.SetActive(active);
+        }
+    }
+
+    private void RemoveInfluenceSphereColliders()
+    {
+        if (influenceSphereVisual == null)
+        {
+            return;
+        }
+
+        Collider[] colliders = influenceSphereVisual.GetComponents<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider visualCollider = colliders[i];
+            if (visualCollider == null)
+            {
+                continue;
+            }
+
+            visualCollider.enabled = false;
+            Destroy(visualCollider);
+        }
+    }
+
+    private void DestroyRuntimeInfluenceSphereMaterial()
+    {
+        if (runtimeInfluenceSphereMaterial == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            Destroy(runtimeInfluenceSphereMaterial);
+        }
+        else
+        {
+            DestroyImmediate(runtimeInfluenceSphereMaterial);
+        }
+
+        runtimeInfluenceSphereMaterial = null;
+    }
+
+    private static void ConfigureTransparentRuntimeMaterial(Material material)
+    {
+        if (material == null)
+        {
+            return;
+        }
+
+        SetMaterialFloatIfPresent(material, "_SurfaceType", 1f);
+        SetMaterialFloatIfPresent(material, "_BlendMode", 0f);
+        SetMaterialFloatIfPresent(material, "_AlphaCutoffEnable", 0f);
+        SetMaterialFloatIfPresent(material, "_ZWrite", 0f);
+        SetMaterialFloatIfPresent(material, "_CullMode", (float)CullMode.Off);
+        SetMaterialFloatIfPresent(material, "_DoubleSidedEnable", 1f);
+        SetMaterialIntIfPresent(material, "_SrcBlend", (int)BlendMode.SrcAlpha);
+        SetMaterialIntIfPresent(material, "_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+        SetMaterialColorIfPresent(material, "_BaseColor", new Color(1f, 0.72f, 0.18f, 0.14f));
+        SetMaterialColorIfPresent(material, "_Color", new Color(1f, 0.72f, 0.18f, 0.14f));
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.renderQueue = (int)RenderQueue.Transparent;
+    }
+
+    private static void SetMaterialFloatIfPresent(Material material, string propertyName, float value)
+    {
+        if (material.HasProperty(propertyName))
+        {
+            material.SetFloat(propertyName, value);
+        }
+    }
+
+    private static void SetMaterialIntIfPresent(Material material, string propertyName, int value)
+    {
+        if (material.HasProperty(propertyName))
+        {
+            material.SetInt(propertyName, value);
+        }
+    }
+
+    private static void SetMaterialColorIfPresent(Material material, string propertyName, Color value)
+    {
+        if (material.HasProperty(propertyName))
+        {
+            material.SetColor(propertyName, value);
+        }
+    }
+
+    private static float ResolveLocalScaleForWorldDiameter(float diameter, float parentAxisScale)
+    {
+        float safeScale = Mathf.Abs(parentAxisScale);
+        return safeScale > 0.0001f ? diameter / safeScale : diameter;
+    }
+
+    private static Mesh GetInfluenceSphereMesh()
+    {
+        if (influenceSphereMesh != null)
+        {
+            return influenceSphereMesh;
+        }
+
+        const int latitudeSegments = 16;
+        const int longitudeSegments = 32;
+        int vertexCount = (latitudeSegments + 1) * (longitudeSegments + 1);
+        Vector3[] vertices = new Vector3[vertexCount];
+        Vector3[] normals = new Vector3[vertexCount];
+        int vertexIndex = 0;
+
+        for (int lat = 0; lat <= latitudeSegments; lat++)
+        {
+            float theta = Mathf.PI * lat / latitudeSegments;
+            float y = Mathf.Cos(theta) * 0.5f;
+            float ringRadius = Mathf.Sin(theta) * 0.5f;
+
+            for (int lon = 0; lon <= longitudeSegments; lon++)
+            {
+                float phi = Mathf.PI * 2f * lon / longitudeSegments;
+                Vector3 vertex = new Vector3(
+                    Mathf.Cos(phi) * ringRadius,
+                    y,
+                    Mathf.Sin(phi) * ringRadius);
+
+                vertices[vertexIndex] = vertex;
+                normals[vertexIndex] = vertex.normalized;
+                vertexIndex++;
+            }
+        }
+
+        int[] triangles = new int[latitudeSegments * longitudeSegments * 6];
+        int triangleIndex = 0;
+
+        for (int lat = 0; lat < latitudeSegments; lat++)
+        {
+            for (int lon = 0; lon < longitudeSegments; lon++)
+            {
+                int current = lat * (longitudeSegments + 1) + lon;
+                int next = current + longitudeSegments + 1;
+
+                triangles[triangleIndex++] = current;
+                triangles[triangleIndex++] = next;
+                triangles[triangleIndex++] = current + 1;
+                triangles[triangleIndex++] = current + 1;
+                triangles[triangleIndex++] = next;
+                triangles[triangleIndex++] = next + 1;
+            }
+        }
+
+        influenceSphereMesh = new Mesh
+        {
+            name = "Runtime_FlameInfluenceSphereMesh",
+            hideFlags = HideFlags.DontSave
+        };
+        influenceSphereMesh.vertices = vertices;
+        influenceSphereMesh.normals = normals;
+        influenceSphereMesh.triangles = triangles;
+        influenceSphereMesh.RecalculateBounds();
+        return influenceSphereMesh;
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
         chargeCostToLight = Mathf.Max(0, chargeCostToLight);
+        influenceSphereAlpha = Mathf.Clamp01(influenceSphereAlpha);
         EnsureId();
         EnsureInteractionTrigger();
         EnsureLitInfluence();

@@ -16,6 +16,8 @@ class MissionContext:
     scanned_files: list[dict] = field(default_factory=list)
     lit_files: list[dict] = field(default_factory=list)
     lit_code_context: str = ""
+    lit_file_limit: int = 10
+    scanned_file_limit: int = 20
 
     aistudio_files: list[dict] = field(default_factory=list)
     aistudio_code_context: str = ""

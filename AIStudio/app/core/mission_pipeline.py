@@ -11,6 +11,10 @@ from app.core.project_scanner import (
 )
 
 
+DEFAULT_LIT_FILE_LIMIT = 10
+CONTEXT_EXTENSION_STEP = 10
+
+
 def build_prompt_for_workflow(
     mission: MissionContext,
     *,
@@ -57,6 +61,8 @@ Rappels :
 - si un fichier existant n'est pas chargé en entier, ne l'invente jamais ;
 - si un patch sûr est impossible, explique-le.
 - les seuls chemins patchables sont Assets/, Packages/ et ProjectSettings/.
+- si un fichier Lit nécessaire manque du contexte, demande à l'utilisateur de taper EXTEND pour autoriser une collecte plus large ;
+- ne demande jamais à l'utilisateur de coller ou envoyer un fichier du projet.
 
 Ne produis aucun bloc fichier à cette étape.
 """
@@ -80,6 +86,8 @@ Tu dois maintenant :
 Si le contenu complet d'un fichier existant n'est pas disponible, réponds exactement :
 "Je ne peux pas produire un patch sûr tant que le fichier complet n'est pas chargé."
 
+Dans ce cas, ne demande pas à l'utilisateur de coller le fichier : la console proposera EXTEND si une collecte plus large est possible.
+
 N'écris jamais de bloc fichier pour AIStudio/, app/, docs/, prompts/ ou README.md.
 
 Produis uniquement des fichiers complets au format :
@@ -98,11 +106,15 @@ def run_mission(
     workflow: AppWorkflow,
     *,
     plan_validated: bool = False,
+    lit_file_limit: int = DEFAULT_LIT_FILE_LIMIT,
 ) -> MissionContext:
+    scanned_file_limit = max(20, lit_file_limit + CONTEXT_EXTENSION_STEP)
     mission = MissionContext(
         query=query,
         workflow=workflow,
         user_messages=[query],
+        lit_file_limit=lit_file_limit,
+        scanned_file_limit=scanned_file_limit,
     )
 
     _collect_context(mission)
@@ -139,13 +151,19 @@ def _collect_context(mission: MissionContext) -> None:
         mission.notes.append(f"Documentation indisponible : {exc}")
 
     try:
-        mission.scanned_files = scan_project(mission.query)
+        mission.scanned_files = scan_project(
+            mission.query,
+            limit=mission.scanned_file_limit,
+        )
     except Exception as exc:
         mission.notes.append(f"Scanner Unity indisponible : {exc}")
 
     if mission.workflow == AppWorkflow.AISTUDIO_CODE:
         try:
-            mission.lit_files = load_lit_code_files(mission.scanned_files)
+            mission.lit_files = load_lit_code_files(
+                mission.scanned_files,
+                limit=mission.lit_file_limit,
+            )
             mission.lit_code_context = build_lit_code_context(
                 mission.lit_files
             )

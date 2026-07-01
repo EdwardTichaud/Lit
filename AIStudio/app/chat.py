@@ -4,7 +4,11 @@ import sys
 from app.core.app_workflow import AppWorkflow
 from app.core.config import LIT_ROOT
 from app.core.llm_tracking import print_llm_diagnostics
-from app.core.mission_pipeline import run_mission
+from app.core.mission_pipeline import (
+    CONTEXT_EXTENSION_STEP,
+    DEFAULT_LIT_FILE_LIMIT,
+    run_mission,
+)
 from app.core.patch_applier import apply_file_blocks, extract_file_blocks, is_safe_path
 
 
@@ -79,6 +83,68 @@ def print_mission_result(mission) -> None:
     elif mission.workflow == AppWorkflow.AISTUDIO_CODE:
         print("\n========== RÉPONSE AISTUDIO ==========\n")
         print(mission.answer)
+
+
+def print_context_extension_hint(mission) -> None:
+    if mission.workflow != AppWorkflow.AISTUDIO_CODE:
+        return
+
+    candidates = get_context_extension_candidates(mission)
+
+    if not candidates:
+        return
+
+    print(
+        "\nContexte extensible : "
+        f"{count_loaded_lit_files(mission)} fichier(s) Lit chargé(s) "
+        f"sur une limite de {mission.lit_file_limit}."
+    )
+    print(
+        "Si AIStudio indique qu'un fichier manque, tape EXTEND pour autoriser "
+        f"{CONTEXT_EXTENSION_STEP} fichier(s) complet(s) supplémentaire(s) "
+        "et relancer l'analyse avant validation."
+    )
+    print("Prochains candidats probables :")
+
+    for path in candidates[:5]:
+        print(f"- {path}")
+
+
+def count_loaded_lit_files(mission) -> int:
+    return sum(
+        1
+        for item in getattr(mission, "lit_files", [])
+        if isinstance(item, dict) and item.get("content_loaded")
+    )
+
+
+def get_context_extension_candidates(mission) -> list[str]:
+    known_paths = {
+        str(item.get("path", "")).replace("\\", "/").strip()
+        for item in getattr(mission, "lit_files", [])
+        if isinstance(item, dict)
+    }
+
+    candidates: list[str] = []
+
+    for item in getattr(mission, "scanned_files", []):
+        if not isinstance(item, dict):
+            continue
+
+        relative_path = str(item.get("path", "")).replace("\\", "/").strip()
+
+        if not relative_path or relative_path in known_paths:
+            continue
+
+        if not is_safe_path(relative_path):
+            continue
+
+        if not (Path(LIT_ROOT) / relative_path).is_file():
+            continue
+
+        candidates.append(relative_path)
+
+    return candidates
 
 
 def format_file_summary(item, key: str) -> str:
@@ -189,9 +255,11 @@ def main() -> None:
     last_mission = None
     plan_validated = False
     patch_ready = False
+    lit_file_limit = DEFAULT_LIT_FILE_LIMIT
 
     print("\nCommandes :")
     print("GO       -> lancer l'étape courante")
+    print("EXTEND   -> élargir le contexte Lit et relancer le plan")
     print("VALIDATE -> valider le plan en mode code AIStudio")
     print("APPLY    -> appliquer le dernier patch proposé")
     print("RESET    -> vider la mission")
@@ -218,7 +286,40 @@ def main() -> None:
             last_mission = None
             plan_validated = False
             patch_ready = False
+            lit_file_limit = DEFAULT_LIT_FILE_LIMIT
             print("Mission réinitialisée.")
+            continue
+
+        if command == "EXTEND":
+            if workflow != AppWorkflow.AISTUDIO_CODE:
+                print("EXTEND est disponible uniquement en mode Coder avec AIStudio.")
+                continue
+
+            if not history:
+                print("Aucune mission en cours.")
+                continue
+
+            lit_file_limit += CONTEXT_EXTENSION_STEP
+            plan_validated = False
+            patch_ready = False
+            request = build_request(history)
+
+            print(
+                "\nExtension autorisée : "
+                f"chargement jusqu'à {lit_file_limit} fichier(s) Lit complet(s)."
+            )
+            print("Relance de l'analyse et du plan.")
+
+            last_mission = run_mission(
+                query=request,
+                workflow=workflow,
+                plan_validated=False,
+                lit_file_limit=lit_file_limit,
+            )
+
+            print_mission_result(last_mission)
+            print("\nÉtape suivante : relis le plan, puis tape VALIDATE si tu l'acceptes.")
+            print_context_extension_hint(last_mission)
             continue
 
         if command == "VALIDATE":
@@ -262,6 +363,7 @@ def main() -> None:
                 query=request,
                 workflow=workflow,
                 plan_validated=plan_validated,
+                lit_file_limit=lit_file_limit,
             )
 
             print_mission_result(last_mission)
@@ -270,6 +372,7 @@ def main() -> None:
                 if not plan_validated:
                     print("\nÉtape suivante : relis le plan, puis tape VALIDATE si tu l'acceptes.")
                     patch_ready = False
+                    print_context_extension_hint(last_mission)
                 else:
                     patch_ready = bool(extract_file_blocks(last_mission.answer))
 
@@ -277,6 +380,7 @@ def main() -> None:
                         print("\nSi le patch proposé te convient, tape APPLY.")
                     else:
                         print("\nAucun patch applicable n'a été produit.")
+                        print_context_extension_hint(last_mission)
 
             continue
 
