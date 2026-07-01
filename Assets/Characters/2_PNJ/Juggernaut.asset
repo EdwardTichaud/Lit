@@ -33,6 +33,21 @@ MonoBehaviour:
   isEnemy: 1
   combatCurrentHp: 0
   attackDamage: 4
+  combatAttacks:
+  - displayName: Griffe
+    damage: 4
+    animationName: Griffe
+    vfxPrefab: {fileID: 5706726923497195754, guid: ee9874f0aac828e47bcc32eb03144926, type: 3}
+    vfxLocalOffset: {x: 0, y: 1.1, z: 1.15}
+    vfxLocalEulerAngles: {x: 0, y: 0, z: 0}
+    vfxLifetime: 2
+  - displayName: Pique
+    damage: 6
+    animationName: Pique
+    vfxPrefab: {fileID: 5188088577048021458, guid: 98db911210d5ef744932afe2ecd58040, type: 3}
+    vfxLocalOffset: {x: 0, y: 1.05, z: 1.45}
+    vfxLocalEulerAngles: {x: 0, y: 0, z: 0}
+    vfxLifetime: 2
   additionalEnemies: []
   voiceLines: []
   maisonWaitingPoint: 0
@@ -41,3 +56,6 @@ MonoBehaviour:
   flameSecondsRemaining: 0
   flameEquipped: 0
   inventoryInitialized: 0
+  muninChargesRemaining: 0
+  muninMaxCharges: 10
+  muninChargesInitialized: 0

@@ -63,6 +63,9 @@ public class CharacterData : ScriptableObject
     [Min(0)]
     [Tooltip("Degats bruts infliges pendant le tour ennemi.")]
     public int attackDamage = 4;
+    /// <summary>Attaques nommees disponibles pour cet ennemi.</summary>
+    [Tooltip("Attaques nommees disponibles pour cet ennemi. Vide conserve l'attaque de base.")]
+    public List<CombatEnemyAttackDefinition> combatAttacks = new List<CombatEnemyAttackDefinition>();
     /// <summary>Ennemis supplementaires ajoutes a une session de combat.</summary>
     [Tooltip("Ennemis additionnels ajoutes a la meme session solo.")]
     public List<CombatEnemyDefinition> additionalEnemies = new List<CombatEnemyDefinition>();
@@ -188,7 +191,12 @@ public class CharacterData : ScriptableObject
             ? Mathf.Clamp(healthOverride.CurrentHp, 0, resolvedMaxHp)
             : ResolveCurrentHp(resolvedMaxHp);
 
-        return new CombatEnemyDefinition(ResolveDisplayName(), resolvedMaxHp, resolvedCurrentHp, attackDamage);
+        CombatEnemyDefinition definition = new CombatEnemyDefinition(ResolveDisplayName(), resolvedMaxHp, resolvedCurrentHp, attackDamage)
+        {
+            attacks = CombatEnemyDefinition.CreateRuntimeAttackCopies(combatAttacks, attackDamage)
+        };
+
+        return definition;
     }
 
     /// <summary>

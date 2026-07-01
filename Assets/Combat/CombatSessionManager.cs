@@ -15,6 +15,7 @@ using UnityEngine;
 public class CombatSessionManager : NetworkBehaviour
 {
     private const string BasicAttackAnimationName = "Attack_Base";
+    private const string DefaultEnemyAttackDisplayName = "Attaque";
     private const string DefaultArenaRootName = "Arena";
     private const string DefaultPlayerSpawnPointName = "SpawnPoint_Player";
     private const string DefaultEnemySpawnPointName = "SpawnPoint_Enemy";
@@ -63,6 +64,12 @@ public class CombatSessionManager : NetworkBehaviour
         public CombatSessionState State = new CombatSessionState();
         /// <summary>Ennemis runtime encore suivis par cette session.</summary>
         public List<CombatRuntimeEnemy> Enemies = new List<CombatRuntimeEnemy>();
+        /// <summary>Index de l'ennemi qui execute l'action verrouillee.</summary>
+        public int PendingEnemyIndex = -1;
+        /// <summary>Index de l'attaque ennemie verrouillee.</summary>
+        public int PendingEnemyAttackIndex = -1;
+        /// <summary>Attaque ennemie verrouillee pendant sa presentation.</summary>
+        public CombatEnemyAttackDefinition PendingEnemyAttack;
         /// <summary>Indique si le mouvement joueur a ete supprime par ce combat.</summary>
         public bool SuppressedMovement;
     }
@@ -925,8 +932,15 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        float actionDuration = PlayEnemyBasicAttackPresentation(session);
-        session.State.BeginEnemyAction(Time.time, actionDuration, $"{enemy.DisplayName} attaque.");
+        int enemyIndex = GetActiveEnemyIndex(session);
+        CombatEnemyAttackDefinition attack = enemy.SelectNextAttack(out int attackIndex);
+        session.PendingEnemyIndex = enemyIndex;
+        session.PendingEnemyAttackIndex = attackIndex;
+        session.PendingEnemyAttack = attack;
+
+        string attackName = ResolveEnemyAttackDisplayName(attack);
+        float actionDuration = PlayEnemyBasicAttackPresentation(session, attack, enemyIndex, attackIndex);
+        session.State.BeginEnemyAction(Time.time, actionDuration, $"{enemy.DisplayName} utilise {attackName}.");
         SendSnapshot(session, session.State.LastMessage);
     }
 
@@ -948,16 +962,20 @@ public class CombatSessionManager : NetworkBehaviour
 
         int supportCount = CountPrayerSupport(session);
         float reduction = ResolvePrayerReduction(supportCount);
-        int rawDamage = Mathf.Max(0, enemy.AttackDamage);
+        CombatEnemyAttackDefinition attack = session.PendingEnemyAttack;
+        string attackName = ResolveEnemyAttackDisplayName(attack);
+        int rawDamage = ResolveEnemyAttackDamage(enemy, attack);
         int finalDamage = ResolveReducedDamage(rawDamage, reduction);
         int applied = session.Player.ApplyDamage(finalDamage, "combat");
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: false));
 
-        string message = $"{enemy.DisplayName} inflige {applied} degats.";
+        string message = $"{enemy.DisplayName} utilise {attackName} et inflige {applied} degats.";
         if (supportCount > 0)
         {
             message = $"{message} Prieres: -{Mathf.RoundToInt(reduction * 100f)}%.";
         }
+
+        ClearPendingEnemyAttack(session);
 
         if (session.Player.CurrentHp <= 0)
         {
@@ -1007,20 +1025,25 @@ public class CombatSessionManager : NetworkBehaviour
         return Mathf.Max(0.05f, duration);
     }
 
-    private float PlayEnemyBasicAttackPresentation(CombatSession session)
+    private float PlayEnemyBasicAttackPresentation(
+        CombatSession session,
+        CombatEnemyAttackDefinition attack,
+        int enemyIndex,
+        int attackIndex)
     {
         Animator animator = session?.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null;
-        float duration = ResolveAnimationDuration(animator, BasicAttackAnimationName, DefaultEnemyAttackAnimationDuration);
+        string animationName = ResolveEnemyAttackAnimationName(attack);
+        float duration = ResolveAnimationDuration(animator, animationName, DefaultEnemyAttackAnimationDuration);
         if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
         {
-            duration = PlayEnemyBasicAttackAnimationLocally(session);
+            duration = PlayEnemyBasicAttackAnimationLocally(session, attack);
         }
 
         if (IsNetworkSessionActive() &&
             IsSpawned &&
             session.OwnerClientId != ResolveLocalClientId())
         {
-            PlayEnemyBasicAttackClientRpc(session.SessionId, BuildClientRpcParams(session.OwnerClientId));
+            PlayEnemyBasicAttackClientRpc(session.SessionId, enemyIndex, attackIndex, BuildClientRpcParams(session.OwnerClientId));
         }
 
         return Mathf.Max(0.05f, duration);
@@ -1044,7 +1067,11 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void PlayEnemyBasicAttackClientRpc(string sessionId, ClientRpcParams rpcParams = default)
+    private void PlayEnemyBasicAttackClientRpc(
+        string sessionId,
+        int enemyIndex,
+        int attackIndex,
+        ClientRpcParams rpcParams = default)
     {
         if (IsServer ||
             !localCombatPresentation.Active ||
@@ -1053,7 +1080,7 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        PlayEnemyBasicAttackAnimationLocally(sessionId);
+        PlayEnemyBasicAttackAnimationLocally(sessionId, enemyIndex, attackIndex);
     }
 
     private void BeginCombatResolution(CombatSession session, bool playerVictory, string message)
@@ -1439,6 +1466,48 @@ public class CombatSessionManager : NetworkBehaviour
         return Mathf.Max(1, reduced);
     }
 
+    private static int ResolveEnemyAttackDamage(CombatRuntimeEnemy enemy, CombatEnemyAttackDefinition attack)
+    {
+        if (attack != null)
+        {
+            return Mathf.Max(0, attack.damage);
+        }
+
+        return Mathf.Max(0, enemy != null ? enemy.AttackDamage : 0);
+    }
+
+    private static string ResolveEnemyAttackDisplayName(CombatEnemyAttackDefinition attack)
+    {
+        if (attack != null && !string.IsNullOrWhiteSpace(attack.displayName))
+        {
+            return attack.displayName;
+        }
+
+        return DefaultEnemyAttackDisplayName;
+    }
+
+    private static string ResolveEnemyAttackAnimationName(CombatEnemyAttackDefinition attack)
+    {
+        if (attack != null && !string.IsNullOrWhiteSpace(attack.animationName))
+        {
+            return attack.animationName;
+        }
+
+        return BasicAttackAnimationName;
+    }
+
+    private static void ClearPendingEnemyAttack(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.PendingEnemyIndex = -1;
+        session.PendingEnemyAttackIndex = -1;
+        session.PendingEnemyAttack = null;
+    }
+
     private int ResolvePlayerAttackDamage(SquadCharacterController player)
     {
         int modifier = player != null ? global::CharacterData.GetStatModifier(player.GetStatValue(StatType.Strength)) : 0;
@@ -1470,10 +1539,30 @@ public class CombatSessionManager : NetworkBehaviour
                 runtime.displayName,
                 runtime.currentHp,
                 runtime.maxHp,
-                runtime.attackDamage));
+                runtime.attackDamage,
+                runtime.attacks));
         }
 
         return enemies;
+    }
+
+    private int GetActiveEnemyIndex(CombatSession session)
+    {
+        if (session?.Enemies == null)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < session.Enemies.Count; i++)
+        {
+            CombatRuntimeEnemy enemy = session.Enemies[i];
+            if (enemy != null && enemy.IsAlive)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private CombatRuntimeEnemy GetActiveEnemy(CombatSession session)
@@ -2125,7 +2214,7 @@ public class CombatSessionManager : NetworkBehaviour
         return PlayNamedAnimation(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
     }
 
-    private float PlayEnemyBasicAttackAnimationLocally(CombatSession session)
+    private float PlayEnemyBasicAttackAnimationLocally(CombatSession session, CombatEnemyAttackDefinition attack)
     {
         if (session?.SourceEnemy == null)
         {
@@ -2133,10 +2222,14 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         PlayActionAudio(ActionAudioCue.CombatAttack, session.SourceEnemy.transform.position);
-        return PlayNamedAnimation(session.SourceEnemy.ResolveAnimator(), BasicAttackAnimationName, DefaultEnemyAttackAnimationDuration);
+        PlayEnemyAttackVfx(session.SourceEnemy.transform, attack);
+        return PlayNamedAnimation(
+            session.SourceEnemy.ResolveAnimator(),
+            ResolveEnemyAttackAnimationName(attack),
+            DefaultEnemyAttackAnimationDuration);
     }
 
-    private float PlayEnemyBasicAttackAnimationLocally(string sessionId)
+    private float PlayEnemyBasicAttackAnimationLocally(string sessionId, int enemyIndex, int attackIndex)
     {
         if (string.IsNullOrWhiteSpace(sessionId))
         {
@@ -2149,8 +2242,55 @@ public class CombatSessionManager : NetworkBehaviour
             return DefaultEnemyAttackAnimationDuration;
         }
 
+        CombatEnemyAttackDefinition attack = ResolvePresentationEnemyAttack(presentation.Enemy, enemyIndex, attackIndex);
         PlayActionAudio(ActionAudioCue.CombatAttack, presentation.Enemy.transform.position);
-        return PlayNamedAnimation(presentation.Enemy.ResolveAnimator(), BasicAttackAnimationName, DefaultEnemyAttackAnimationDuration);
+        PlayEnemyAttackVfx(presentation.Enemy.transform, attack);
+        return PlayNamedAnimation(
+            presentation.Enemy.ResolveAnimator(),
+            ResolveEnemyAttackAnimationName(attack),
+            DefaultEnemyAttackAnimationDuration);
+    }
+
+    private CombatEnemyAttackDefinition ResolvePresentationEnemyAttack(
+        CombatAggroEnemy enemy,
+        int enemyIndex,
+        int attackIndex)
+    {
+        if (enemy == null || enemyIndex < 0 || attackIndex < 0)
+        {
+            return null;
+        }
+
+        List<CombatEnemyDefinition> definitions = enemy.CreateEnemyDefinitions();
+        if (definitions == null || enemyIndex >= definitions.Count)
+        {
+            return null;
+        }
+
+        CombatEnemyDefinition runtime = definitions[enemyIndex]?.CreateRuntimeCopy(enemyIndex, definitions.Count);
+        if (runtime?.attacks == null || attackIndex >= runtime.attacks.Count)
+        {
+            return null;
+        }
+
+        return runtime.attacks[attackIndex];
+    }
+
+    private void PlayEnemyAttackVfx(Transform origin, CombatEnemyAttackDefinition attack)
+    {
+        if (origin == null || attack?.vfxPrefab == null)
+        {
+            return;
+        }
+
+        Vector3 position = origin.TransformPoint(attack.vfxLocalOffset);
+        Quaternion rotation = origin.rotation * Quaternion.Euler(attack.vfxLocalEulerAngles);
+        GameObject instance = Instantiate(attack.vfxPrefab, position, rotation);
+        float lifetime = Mathf.Max(0f, attack.vfxLifetime);
+        if (lifetime > 0f)
+        {
+            Destroy(instance, lifetime);
+        }
     }
 
     private float ResolveCombatResolutionDuration(CombatSession session, bool playerVictory)
