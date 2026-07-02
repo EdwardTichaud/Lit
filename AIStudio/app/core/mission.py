@@ -1,12 +1,9 @@
 from dataclasses import dataclass, field
 
-from app.core.app_workflow import AppWorkflow
-
 
 @dataclass
 class MissionContext:
     query: str
-    workflow: AppWorkflow
 
     user_messages: list[str] = field(default_factory=list)
 
@@ -14,13 +11,7 @@ class MissionContext:
     loaded_documents: list[dict] = field(default_factory=list)
 
     scanned_files: list[dict] = field(default_factory=list)
-    lit_files: list[dict] = field(default_factory=list)
-    lit_code_context: str = ""
-    lit_file_limit: int = 10
     scanned_file_limit: int = 20
-
-    aistudio_files: list[dict] = field(default_factory=list)
-    aistudio_code_context: str = ""
 
     llm_context: str = ""
 

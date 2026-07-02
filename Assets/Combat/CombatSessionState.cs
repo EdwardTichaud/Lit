@@ -234,6 +234,14 @@ public sealed class CombatSessionState
     }
 
     /// <summary>
+    /// Met a jour le dernier message HUD sans changer la phase courante.
+    /// </summary>
+    public void SetMessage(string message)
+    {
+        LastMessage = message ?? string.Empty;
+    }
+
+    /// <summary>
     /// Retourne le temps restant du tour courant.
     /// </summary>
     public float GetTimerRemaining(float now)

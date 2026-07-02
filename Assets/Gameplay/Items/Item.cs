@@ -178,6 +178,13 @@ public class Item : ScriptableObject
     [Header("Usage")]
     [Tooltip("Peut etre utilise via l'ActionBox.")]
     public bool canUse;
+    [Header("Combat Defense")]
+    [Tooltip("Peut etre choisi pendant une reaction defensive en combat.")]
+    public bool canDefendInCombat;
+    [Min(0)]
+    [Tooltip("PV defensifs de chaque unite de cet item pendant une attaque ennemie.")]
+    public int combatDefenseHitPoints;
+    [Header("Placement")]
     [Tooltip("Peut etre pose dans le monde.")]
     public bool canPlace;
     [Tooltip("Est un container (coffre, sac, etc.).")]
@@ -558,6 +565,22 @@ public class Item : ScriptableObject
         }
 
         return useEffects != null && useEffects.Count > 0;
+    }
+
+    /// <summary>
+    /// Indique si cet item peut absorber une attaque ennemie pendant une reaction defensive.
+    /// </summary>
+    public bool CanDefendInCombat()
+    {
+        return canDefendInCombat && combatDefenseHitPoints > 0;
+    }
+
+    /// <summary>
+    /// Retourne les PV defensifs d'une unite de cet item.
+    /// </summary>
+    public int GetCombatDefenseHitPoints()
+    {
+        return CanDefendInCombat() ? Mathf.Max(1, combatDefenseHitPoints) : 0;
     }
 
     /// <summary>

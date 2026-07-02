@@ -1,4 +1,3 @@
-from app.core.app_workflow import AppWorkflow
 from app.core.context_builder import build_context
 from app.core.llm_tracking import tracked_invoke
 from app.core.mission import MissionContext
@@ -12,20 +11,15 @@ class ArchitectAgent:
         self.system_prompt = load_prompt("architect.md")
 
     def ask(self, question: str):
-        return self.prepare(
-            question=question,
-            workflow=AppWorkflow.CODEX_PROMPT,
-        )
+        return self.prepare(question=question)
 
     def prepare(
         self,
         question: str,
-        workflow: AppWorkflow,
         prepared_mission: MissionContext | None = None,
     ):
         mission = prepared_mission or MissionContext(
             query=question,
-            workflow=workflow,
             user_messages=[question],
         )
 
@@ -43,10 +37,6 @@ Question :
 
 {question}
 
-Mode :
-
-{mission.workflow.value}
-
 Documentation :
 
 {mission.llm_context}
@@ -54,10 +44,6 @@ Documentation :
 Fichiers Unity probables :
 
 {mission.scanned_files}
-
-Fichiers Lit chargés en entier :
-
-{mission.lit_code_context}
 """,
                 ),
             ],

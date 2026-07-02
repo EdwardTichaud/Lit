@@ -148,6 +148,12 @@ MonoBehaviour:
     refreshInterval: 0.25
     notifyStay: 1
     drawDebugGizmos: 1
+  showInfluenceSphere: 1
+  influenceSphereOnlyWhenLit: 1
+  influenceSphereAlpha: 0.14
+  influenceSphereColor: {r: 1, g: 0.72, b: 0.18, a: 1}
+  ancientInfluenceSphereColor: {r: 0.35, g: 0.72, b: 1, a: 1}
+  influenceSphereMaterialOverride: {fileID: 0}
   commonLightActivationOrder: []
   ancientFlame: 1
   emissionFadeDuration: 1

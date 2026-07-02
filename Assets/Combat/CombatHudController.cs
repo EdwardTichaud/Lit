@@ -563,6 +563,11 @@ public class CombatHudController : MonoBehaviour
 
         if (turn == TurnState.Enemy)
         {
+            if (phase == CombatSessionPhase.Decision)
+            {
+                return "Reaction defensive";
+            }
+
             return phase == CombatSessionPhase.EnemyAction ? "Tour ennemi - action en cours" : "Tour ennemi";
         }
 
@@ -573,6 +578,11 @@ public class CombatHudController : MonoBehaviour
     {
         if (turn != TurnState.Player)
         {
+            if (phase == CombatSessionPhase.Decision)
+            {
+                return "Inventaire: choisir un item defensif.";
+            }
+
             return phase == CombatSessionPhase.EnemyAction
                 ? "L'ennemi agit."
                 : "L'ennemi prepare son action.";

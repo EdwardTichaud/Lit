@@ -8,7 +8,7 @@ import subprocess
 import unicodedata
 
 from app.core.config import LIT_ROOT
-from app.core.patch_applier import is_safe_path
+from app.core.path_safety import is_safe_path
 
 
 SEARCH_GLOBS = [
@@ -28,7 +28,7 @@ SEARCH_GLOBS = [
     "*.yml",
 ]
 
-PATCHABLE_ROOTS = (
+SCANNED_ROOTS = (
     "Assets",
     "Packages",
     "ProjectSettings",
@@ -37,53 +37,6 @@ PATCHABLE_ROOTS = (
 EXPLICIT_PATH_RE = re.compile(
     r"\b(?:Assets|Packages|ProjectSettings)[\\/][^\s`\"'<>()]+"
 )
-
-TEXT_CONTEXT_EXTENSIONS = {
-    ".asmdef",
-    ".asset",
-    ".anim",
-    ".controller",
-    ".compute",
-    ".cs",
-    ".cginc",
-    ".hlsl",
-    ".inputactions",
-    ".json",
-    ".mat",
-    ".md",
-    ".meta",
-    ".prefab",
-    ".shader",
-    ".txt",
-    ".unity",
-    ".uss",
-    ".uxml",
-    ".xml",
-    ".yaml",
-    ".yml",
-}
-
-BLOCKED_BINARY_EXTENSIONS = {
-    ".aif",
-    ".aiff",
-    ".blend",
-    ".dll",
-    ".exe",
-    ".fbx",
-    ".gif",
-    ".jpg",
-    ".jpeg",
-    ".mp3",
-    ".mp4",
-    ".ogg",
-    ".pdf",
-    ".png",
-    ".psb",
-    ".psd",
-    ".tga",
-    ".ttf",
-    ".wav",
-}
 
 STOPWORDS = {
     "avec",
@@ -182,7 +135,7 @@ def scan_project(query: str, limit: int = 20) -> list[dict]:
                 return _rank_results(results, limit)
             raise
 
-        for root_name in PATCHABLE_ROOTS:
+        for root_name in SCANNED_ROOTS:
             results.update(_scan_root(root_name, terms, rg_command))
 
     for path in explicit_paths:
@@ -226,7 +179,7 @@ def extract_explicit_lit_paths(text: str) -> list[str]:
         path = match.group(0).replace("\\", "/").strip()
         path = path.rstrip(".,;:]}")
 
-        if not is_lit_patch_path(path):
+        if not is_safe_path(path):
             continue
 
         if path in seen:
@@ -236,83 +189,6 @@ def extract_explicit_lit_paths(text: str) -> list[str]:
         paths.append(path)
 
     return paths
-
-
-def load_lit_code_files(
-    scanned_files: list[dict],
-    limit: int = 10,
-    max_chars_per_file: int = 120_000,
-) -> list[dict]:
-    loaded_files: list[dict] = []
-
-    for item in scanned_files:
-        if len(loaded_files) >= limit:
-            break
-
-        raw_path = str(item.get("path", ""))
-        relative_path = raw_path.replace("\\", "/").strip()
-
-        if not is_lit_patch_path(relative_path):
-            continue
-
-        path = LIT_ROOT / relative_path
-
-        if not path.is_file():
-            continue
-
-        suffix = path.suffix.lower()
-
-        if suffix in BLOCKED_BINARY_EXTENSIONS:
-            continue
-
-        if suffix not in TEXT_CONTEXT_EXTENSIONS:
-            continue
-
-        try:
-            content = path.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-
-        if len(content) > max_chars_per_file:
-            loaded_files.append({
-                **item,
-                "path": relative_path,
-                "content_loaded": False,
-                "reason": "Fichier trop volumineux pour un patch sûr.",
-            })
-            continue
-
-        loaded_files.append({
-            **item,
-            "path": relative_path,
-            "content": content,
-            "content_loaded": True,
-        })
-
-    return loaded_files
-
-
-def build_lit_code_context(files: list[dict]) -> str:
-    parts: list[str] = []
-
-    for file in files:
-        path = file.get("path", "")
-
-        if not file.get("content_loaded"):
-            reason = file.get("reason", "Contenu non chargé.")
-            parts.append(f"\n\n===== {path} | NON CHARGÉ =====\n{reason}\n")
-            continue
-
-        parts.append(f"\n\n===== {path} | score {file.get('score', 0)} =====\n")
-        parts.append(file.get("content", ""))
-
-    return "\n".join(parts)
-
-
-def is_lit_patch_path(relative_path: str) -> bool:
-    normalized = relative_path.replace("\\", "/").strip()
-
-    return is_safe_path(normalized)
 
 
 def _find_rg_command() -> str:

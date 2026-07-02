@@ -64,6 +64,10 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Chemin Resources de la librairie audio d'actions par defaut.")]
     public string defaultActionAudioLibraryResourcePath = DefaultActionAudioLibraryResourcePath;
 
+    [Header("Combat Audio")]
+    [Tooltip("Librairie des sons de presentation combat.")]
+    public CombatAudioLibrarySO combatAudioLibrary;
+
     private AudioSource primarySource;
     private AudioSource secondarySource;
     private AudioSource activeSource;
@@ -431,6 +435,16 @@ public class AudioManager : MonoBehaviour
 
         ActionAudioLibrarySO library = ResolveActionAudioLibrary();
         return library != null ? library.Resolve(cue) : null;
+    }
+
+    public AudioClipSO ResolveCombatAudioClip(CombatAudioCue cue)
+    {
+        if (cue == CombatAudioCue.None || combatAudioLibrary == null)
+        {
+            return null;
+        }
+
+        return combatAudioLibrary.Resolve(cue);
     }
 
     private ActionAudioLibrarySO ResolveActionAudioLibrary()

@@ -6,29 +6,29 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 6681,
+    "size": 6669,
     "preview": "# Règles de travail Codex\n\n## Objectif\n\nPréserver l'architecture du projet, minimiser les régressions et transformer les découvertes importantes en documentation durable afin que les futures tâches bénéficient du travail déjà effectué.\n\n---\n\n# Avant toute modification\n\n1. Lire `AIStudio/docs/architecture.md`.\n\n2. Identifier puis lire uniquement les fiches pertinentes dans `AIStudio/docs/systems/`.\n\n3. Lire `AIStudio/docs/current_work.md`.\n\n4. Lire `AIStudio/docs/known_bugs.md`.\n\n5. Vérifier `git status` et préserver tous les changements existants.\n\n6. Identifier le flux complet avant de modifier un composant isolé.\n\n7. Confirmer si le comportement attendu concerne :\n\n   * solo ;\n   * multijoueur ;\n   * ou les deux.\n\n8. Pour tout bug Unity, vérifier en priorité :\n\n   * état statique (`stati",
     "keywords": [
       "assets",
       "scripts",
+      "aistudio",
       "netcode",
-      "avant",
-      "modification",
-      "rifier",
-      "runtime",
+      "jamais",
+      "doit",
+      "toute",
       "persistence",
       "save",
       "aucun",
       "architecture",
-      "documentation",
-      "toute",
+      "avant",
+      "modification",
       "uniquement",
+      "modifier",
+      "runtime",
       "sans",
-      "lire",
-      "aistudio",
-      "docs",
-      "identifier",
-      "modifier"
+      "codex",
+      "projet",
+      "documentation"
     ]
   },
   "architecture": {
@@ -38,7 +38,7 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 4437,
+    "size": 4668,
     "preview": "# Architecture du projet\n\nProjet Unity 6 utilisant Opsive Ultimate Character Controller, Unity Netcode for GameObjects et HDRP.\n\n## Systèmes principaux\n\n| Système | Responsabilité | Dépendances majeures |\n|---|---|---|\n| Session runtime | Création/chargement des slots, changement de scène, remise à zéro entre parties | `SaveSessionManager`, `GameplayRuntimeReset`, menu |\n| Squad et personnages | Roster, personnage contrôlé, données runtime, inventaire, followers | `SquadManager`, `SquadCharacterController`, `CharacterData` |\n| Input, UCC et caméra | Capture des actions, routage local, locomotion Opsive, liaison caméra | Input System, `LocalPlayerContext`, UCC |\n| Interactions et inventaire | Détection des cibles, Outline, actions monde, loot et UI d’inventaire | physique Unity, input, squa",
     "keywords": [
       "personnage",
@@ -127,29 +127,29 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 1963,
+    "size": 2751,
     "preview": "# Combat\n\n## Rôle\n\nGérer les combats tour par tour en solo et Netcode, leur présentation et leur\nrésolution dans le monde.\n\n## Classes principales\n\n- `CombatAggroEnemy` : détection et création des définitions ennemies.\n- `CombatSessionManager` : autorité, sessions, tours, actions et RPC.\n- `CombatSessionState`, `CombatTurn`, `CombatRuntimeEnemy` : état runtime.\n- `CombatHudController` : commandes et affichage local.\n- `CombatCameraPresentationController` : cadrage caméra local joueur/ennemi.\n- `CombatTransitionController` : transition visuelle/audio.\n- `CombatHealth` : santé persistante des ennemis de scène.\n\n## Flux principaux\n\n1. Un trigger d’aggro demande une session au manager.\n2. L’autorité capture les positions de retour et construit les ennemis runtime.\n3. Le joueur engagé est télép",
     "keywords": [
       "autorit",
       "local",
       "joueur",
-      "transition",
       "tour",
-      "ennemi",
+      "transition",
       "combat",
-      "netcode",
       "sentation",
+      "ennemi",
+      "engag",
+      "locale",
+      "time",
+      "timescale",
+      "action",
+      "inventaire",
+      "puis",
+      "netcode",
       "solution",
       "monde",
-      "combatsessionmanager",
-      "runtime",
-      "combathealth",
-      "sant",
-      "ennemis",
-      "flux",
-      "manager",
-      "positions",
-      "engag"
+      "combataggroenemy",
+      "combatsessionmanager"
     ]
   },
   "systems.input_camera_ucc": {
@@ -159,7 +159,7 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 3964,
+    "size": 4176,
     "preview": "# Input, UCC et caméra\n\n## Rôle\n\nCentraliser les actions locales, les transmettre au bon personnage et adapter\nla façade gameplay Lit à Opsive UCC et à sa caméra.\n\n## Classes principales\n\n- `PlayerInputs.inputactions` : source des bindings.\n- `LocalPlayerInput` : capture Input System et singleton local.\n- `LocalInputRouter` : événements, valeurs continues, debounce et consommation.\n- `InputFocusStack` : priorité UI/cinématique sur le gameplay.\n- `LitOpsiveLocomotionBridge` : mouvement, saut, vol, franchissement d'obstacles\n  bas et verrous UCC.\n- `LitUccCameraCharacterBinder` : liaison de la caméra au `LocalPlayerContext`.\n- `NetworkCharacterInput` : relais des commandes du propriétaire vers le serveur.\n\n## Flux principaux\n\n`PlayerInputs` → `LocalPlayerInput` → `LocalInputRouter`.\n\nLe flux",
     "keywords": [
       "obstacles",
@@ -167,6 +167,8 @@
       "doit",
       "input",
       "franchissement",
+      "chelle",
+      "sortie",
       "personnage",
       "gameplay",
       "litopsivelocomotionbridge",
@@ -175,13 +177,11 @@
       "restent",
       "afin",
       "trop",
+      "haute",
       "opsive",
       "playerinputs",
       "inputactions",
-      "localplayerinput",
-      "localinputrouter",
-      "debounce",
-      "inputfocusstack"
+      "localplayerinput"
     ]
   },
   "systems.interactions_inventory": {
@@ -191,11 +191,11 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 1692,
+    "size": 2086,
     "preview": "# Interactions et inventaire\n\n## Rôle\n\nDétecter une cible monde, afficher son Outline, exécuter son interaction et\ngérer loot, inventaire, lecture, placement et actions contextuelles.\n\n## Classes principales\n\n- `CharacterInteractionDetection` : résolution, collider, portée et visibilité.\n- `SquadCharacterController.Interactions` : collecte et sélection locale.\n- `RuntimeOutlineSelectionManager` / `RuntimeOutlineTarget` : Outline unique.\n- `ICharacterDetectedInteractable` / `ILocalInteractHandler` : contrats.\n- `InteractableItem` : conteneurs, objets récupérables, serrures et pièges.\n- `InventoryPanelController` : UI, dépôt, lecture et placement.\n- `NetworkInventory` / `WorldInteractionService` : autorité réseau.\n\n## Flux principaux\n\n1. Le personnage effectue un `OverlapSphere`.\n2. Chaque c",
     "keywords": [
-      "cible",
       "inventaire",
+      "cible",
       "outline",
       "interactions",
       "monde",
@@ -204,16 +204,16 @@
       "collider",
       "port",
       "visibilit",
+      "autorit",
       "seau",
       "personnage",
+      "vers",
+      "valid",
       "actif",
+      "puis",
+      "casse",
       "seul",
-      "doit",
-      "tecter",
-      "afficher",
-      "cuter",
-      "interaction",
-      "loot"
+      "doit"
     ]
   },
   "systems.narrative": {
@@ -415,8 +415,8 @@
     "tags": [],
     "systems": [],
     "owner": "",
-    "size": 2083,
-    "preview": "# Temps et environnement\n\n## Rôle\n\nFournir l’âge temporel canonique, adapter les objets visibles et piloter\nl’environnement HDRP du joueur local.\n\n## Classes principales\n\n- `AgeManager` : année globale calculée depuis les Ancient Flames.\n- `TemporalAge` / `TemporalAgeUtility` : représentation et conversions.\n- `TemporalZone` / `TemporalObject` : âge local et objets affectés.\n- `TimePeriodVisibility` : filtrage des objets selon le temps.\n- `EnvironmentManager` / `EnvironmentZone` : profils HDRP et blending local.\n- `Flame` : source d’état utilisée notamment par `AgeManager`.\n- `FlameGuidanceArcRenderer` : feedback local auto-installé qui affiche des arcs\n  discrets depuis une Ancient Flame proche vers les Flames éteintes les plus proches.\n\n## Flux principaux\n\n- `AgeManager` collecte les Anc",
+    "size": 2214,
+    "preview": "# Temps et environnement\n\n## Rôle\n\nFournir l’âge temporel canonique, adapter les objets visibles et piloter\nl’environnement HDRP du joueur local.\n\n## Classes principales\n\n- `AgeManager` : année globale calculée depuis les Ancient Flames.\n- `TemporalAge` / `TemporalAgeUtility` : représentation et conversions.\n- `TemporalZone` / `TemporalObject` : âge local et objets affectés.\n- `TimePeriodVisibility` : filtrage des objets selon le temps.\n- `EnvironmentManager` / `EnvironmentZone` : profils HDRP et blending local.\n- `Flame` : source d’état utilisée notamment par `AgeManager`; affiche en\n  runtime une sphère transparente sans collider calée sur sa zone\n  `LitInfluenceSource` quand l'influence est visible.\n- `FlameGuidanceArcRenderer` : feedback local auto-installé qui affiche des arcs\n  discr",
     "keywords": [
       "local",
       "ancient",
@@ -429,6 +429,7 @@
       "proche",
       "flames",
       "environmentmanager",
+      "runtime",
       "personnage",
       "temps",
       "environnement",
@@ -436,8 +437,7 @@
       "depuis",
       "temporalzone",
       "timeperiodvisibility",
-      "selon",
-      "source"
+      "selon"
     ]
   }
 }

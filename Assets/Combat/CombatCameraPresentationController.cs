@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UccCameraController = Opsive.UltimateCharacterController.Camera.CameraController;
+using UccCharacterLocomotion = Opsive.UltimateCharacterController.Character.UltimateCharacterLocomotion;
 
 // Role: applique une presentation camera locale pendant les combats sans toucher au timeScale global.
 // Usage: cree par CombatSessionManager a l'entree en combat; lit le contexte local expose par le manager.
@@ -19,6 +21,8 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     [SerializeField, Min(0.05f)] private float actionBlendSeconds = 0.35f;
     [SerializeField, Min(0f)] private float targetLookHeight = 1.25f;
     [SerializeField, Min(0.01f)] private float minLookDistance = 0.25f;
+    [SerializeField] private bool slowAnimatorsDuringDefensiveReaction = true;
+    [SerializeField, Min(0.05f)] private float defensiveSlowSeconds = 2f;
 
     private string originalViewTypeFullName;
     private Vector3 originalAnchorOffset;
@@ -26,6 +30,11 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     private bool combatViewTypeApplied;
     private bool rotationalOverrideApplied;
     private float localPauseWeight;
+    private float defensiveSlowWeight;
+    private readonly Dictionary<Animator, float> slowedAnimatorSpeeds = new Dictionary<Animator, float>();
+    private readonly Dictionary<UccCharacterLocomotion, float> slowedCharacterTimeScales = new Dictionary<UccCharacterLocomotion, float>();
+    private readonly List<Animator> animatorRemovalBuffer = new List<Animator>();
+    private readonly List<UccCharacterLocomotion> locomotionRemovalBuffer = new List<UccCharacterLocomotion>();
 
     public static CombatCameraPresentationController EnsureInstance()
     {
@@ -79,18 +88,21 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     private void LateUpdate()
     {
         CombatSessionManager manager = CombatSessionManager.Instance;
+        Transform player = null;
+        Transform enemy = null;
         bool playerTurn = false;
         CombatSessionPhase phase = CombatSessionPhase.Finished;
         bool hasContext = manager != null &&
             manager.TryGetLocalCombatCameraContext(
-                out Transform player,
-                out Transform enemy,
+                out player,
+                out enemy,
                 out playerTurn,
                 out phase);
 
         if (!hasContext)
         {
             UpdateLocalPauseWeight(holding: false);
+            UpdateDefensiveLocalSlow(null, null, slowing: false);
             if (localPauseWeight <= 0f)
             {
                 RestoreCameraPresentation();
@@ -99,13 +111,14 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             return;
         }
 
+        UpdateLocalPauseWeight(ShouldHoldLocalPause(playerTurn, phase));
+        UpdateDefensiveLocalSlow(player, enemy, ShouldSlowDefensiveReaction(playerTurn, phase));
         if (!EnsureCameraController())
         {
             return;
         }
 
         ApplyCameraPresentation();
-        UpdateLocalPauseWeight(ShouldHoldLocalPause(playerTurn, phase));
         UpdateAnchorOffset(playerTurn);
     }
 
@@ -116,7 +129,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             return true;
         }
 
-        RestoreCameraPresentation();
+        RestoreCameraState();
         cameraController = null;
 
         Camera mainCamera = Camera.main;
@@ -175,13 +188,12 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     {
         CombatSessionManager manager = CombatSessionManager.Instance;
         if (manager == null ||
-            !manager.TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out bool playerTurn, out _))
+            !manager.TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out _, out _))
         {
             return currentRotation;
         }
 
-        Transform actor = playerTurn ? player : enemy;
-        Transform target = playerTurn ? enemy : player;
+        Transform target = ResolveLookTarget(player, enemy);
         if (target == null)
         {
             return currentRotation;
@@ -189,9 +201,9 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
 
         Vector3 targetPosition = target.position + Vector3.up * targetLookHeight;
         Vector3 direction = targetPosition - cameraPosition;
-        if (direction.sqrMagnitude < minLookDistance * minLookDistance && actor != null)
+        if (direction.sqrMagnitude < minLookDistance * minLookDistance && player != null && target != player)
         {
-            direction = targetPosition - (actor.position + Vector3.up * targetLookHeight);
+            direction = targetPosition - (player.position + Vector3.up * targetLookHeight);
         }
 
         if (direction.sqrMagnitude < minLookDistance * minLookDistance)
@@ -233,7 +245,204 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         return playerTurn && phase == CombatSessionPhase.TurnActive;
     }
 
+    private static bool ShouldSlowDefensiveReaction(bool playerTurn, CombatSessionPhase phase)
+    {
+        return !playerTurn && phase == CombatSessionPhase.Decision;
+    }
+
+    private void UpdateDefensiveLocalSlow(Transform player, Transform enemy, bool slowing)
+    {
+        if (!slowAnimatorsDuringDefensiveReaction)
+        {
+            RestoreDefensiveSlowTargets();
+            defensiveSlowWeight = 0f;
+            return;
+        }
+
+        float target = slowing ? 1f : 0f;
+        float duration = target > defensiveSlowWeight ? defensiveSlowSeconds : actionBlendSeconds;
+        defensiveSlowWeight = Mathf.MoveTowards(
+            defensiveSlowWeight,
+            target,
+            Time.unscaledDeltaTime / Mathf.Max(0.05f, duration));
+
+        if (slowing)
+        {
+            TrackCharacterLocomotions(player);
+            TrackCharacterLocomotions(enemy);
+            TrackAnimators(player);
+            TrackAnimators(enemy);
+        }
+
+        ApplySlowedCharacterTimeScales();
+        ApplySlowedAnimatorSpeeds();
+        if (!slowing && defensiveSlowWeight <= 0f)
+        {
+            RestoreDefensiveSlowTargets();
+        }
+    }
+
+    private static Transform ResolveLookTarget(Transform player, Transform enemy)
+    {
+        // The Opsive camera stays bound to the local player through LitUccCameraCharacterBinder.
+        // Looking back at the player during the enemy turn makes the camera orbit the player.
+        return enemy != null ? enemy : player;
+    }
+
+    private void TrackCharacterLocomotions(Transform root)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        UccCharacterLocomotion[] locomotions = root.GetComponentsInChildren<UccCharacterLocomotion>(true);
+        if (locomotions == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < locomotions.Length; i++)
+        {
+            UccCharacterLocomotion locomotion = locomotions[i];
+            if (locomotion == null || slowedCharacterTimeScales.ContainsKey(locomotion))
+            {
+                continue;
+            }
+
+            slowedCharacterTimeScales.Add(locomotion, locomotion.TimeScale);
+        }
+    }
+
+    private void TrackAnimators(Transform root)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+        if (animators == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < animators.Length; i++)
+        {
+            Animator animator = animators[i];
+            if (animator == null || slowedAnimatorSpeeds.ContainsKey(animator))
+            {
+                continue;
+            }
+
+            slowedAnimatorSpeeds.Add(animator, animator.speed);
+        }
+    }
+
+    private void ApplySlowedAnimatorSpeeds()
+    {
+        if (slowedAnimatorSpeeds.Count == 0)
+        {
+            return;
+        }
+
+        float multiplier = Mathf.Clamp01(1f - defensiveSlowWeight);
+        animatorRemovalBuffer.Clear();
+        foreach (KeyValuePair<Animator, float> pair in slowedAnimatorSpeeds)
+        {
+            if (pair.Key == null)
+            {
+                animatorRemovalBuffer.Add(pair.Key);
+                continue;
+            }
+
+            pair.Key.speed = pair.Value * multiplier;
+        }
+
+        for (int i = 0; i < animatorRemovalBuffer.Count; i++)
+        {
+            slowedAnimatorSpeeds.Remove(animatorRemovalBuffer[i]);
+        }
+    }
+
+    private void ApplySlowedCharacterTimeScales()
+    {
+        if (slowedCharacterTimeScales.Count == 0)
+        {
+            return;
+        }
+
+        float multiplier = Mathf.Clamp01(1f - defensiveSlowWeight);
+        locomotionRemovalBuffer.Clear();
+        foreach (KeyValuePair<UccCharacterLocomotion, float> pair in slowedCharacterTimeScales)
+        {
+            if (pair.Key == null)
+            {
+                locomotionRemovalBuffer.Add(pair.Key);
+                continue;
+            }
+
+            pair.Key.TimeScale = Mathf.Max(0f, pair.Value * multiplier);
+        }
+
+        for (int i = 0; i < locomotionRemovalBuffer.Count; i++)
+        {
+            slowedCharacterTimeScales.Remove(locomotionRemovalBuffer[i]);
+        }
+    }
+
+    private void RestoreDefensiveSlowTargets()
+    {
+        RestoreSlowedCharacterTimeScales();
+        RestoreSlowedAnimators();
+    }
+
+    private void RestoreSlowedCharacterTimeScales()
+    {
+        if (slowedCharacterTimeScales.Count == 0)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<UccCharacterLocomotion, float> pair in slowedCharacterTimeScales)
+        {
+            if (pair.Key != null)
+            {
+                pair.Key.TimeScale = pair.Value;
+            }
+        }
+
+        slowedCharacterTimeScales.Clear();
+        locomotionRemovalBuffer.Clear();
+    }
+
+    private void RestoreSlowedAnimators()
+    {
+        if (slowedAnimatorSpeeds.Count == 0)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<Animator, float> pair in slowedAnimatorSpeeds)
+        {
+            if (pair.Key != null)
+            {
+                pair.Key.speed = pair.Value;
+            }
+        }
+
+        slowedAnimatorSpeeds.Clear();
+        animatorRemovalBuffer.Clear();
+    }
+
     private void RestoreCameraPresentation()
+    {
+        RestoreDefensiveSlowTargets();
+        RestoreCameraState();
+        defensiveSlowWeight = 0f;
+    }
+
+    private void RestoreCameraState()
     {
         if (cameraController != null)
         {

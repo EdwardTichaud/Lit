@@ -214,26 +214,17 @@ Quand AIStudio travaille sur son propre dépôt :
    * Mission Manager
    * Mission Planner
    * Collecte automatique du contexte
-   * Décision de workflow
    * LLM
-   * Résultat
+   * Prompt Codex
 
-2. Les workflows prompt et code partagent exactement la même phase de collecte.
+2. AIStudio ne sert qu'à produire un prompt Codex.
 
 3. Le LLM ne doit jamais être appelé tant que la collecte du contexte n’est pas terminée.
 
 4. Le contexte construit est la seule entrée du LLM.
 
-5. En workflow code, ne jamais générer de patch avant validation explicite du plan.
+5. AIStudio ne doit jamais générer ni appliquer de patch.
 
-6. Pour un fichier existant, ne jamais reconstruire son contenu depuis mémoire.
+6. AIStudio ne doit jamais modifier directement les fichiers Unity Lit.
 
-7. Un patch sûr exige le contenu complet du fichier dans le contexte.
-
-8. Si le contenu complet d’un fichier manque, répondre exactement :
-
-```text
-Je ne peux pas produire un patch sûr tant que le fichier complet n'est pas chargé.
-```
-
-9. Pour le projet Unity Lit, AIStudio ne doit pas patcher directement les fichiers Unity en mode AIStudio ; cette tâche doit passer par le workflow prompt.
+7. Toute modification du projet doit être faite ensuite par Codex à partir du prompt généré.

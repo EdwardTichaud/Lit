@@ -15,11 +15,6 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class CombatTransitionController : MonoBehaviour
 {
-    private const string CombatMusicResourcePath = "CombatTransition/CombatMusic";
-    private const string EnterSfxResourcePath = "CombatTransition/CombatEnter";
-    private const string ExitSfxResourcePath = "CombatTransition/CombatExit";
-    private const string AccentSfxResourcePath = "CombatTransition/CombatAccent";
-
     /// <summary>
     /// Instance singleton de transition de combat.
     /// </summary>
@@ -42,13 +37,6 @@ public sealed class CombatTransitionController : MonoBehaviour
     /// Moment normalise ou l'action couverte est executee pendant la sortie.
     /// </summary>
     [SerializeField, Range(0.05f, 0.95f)] private float exitCoverNormalizedTime = 0.44f;
-
-    [Header("Audio")]
-    [SerializeField] private AudioClipSO combatMusic;
-    [SerializeField] private AudioClipSO enterSfx;
-    [SerializeField] private AudioClipSO exitSfx;
-    [SerializeField] private AudioClipSO accentSfx;
-    [SerializeField] private bool autoLoadDefaultAudio = true;
 
     private CanvasGroup canvasGroup;
     private RectTransform visualRoot;
@@ -100,12 +88,11 @@ public sealed class CombatTransitionController : MonoBehaviour
     /// </summary>
     public void PlayEnterTransition(Action coveredAction = null)
     {
-        ResolveDefaultAudio();
         AudioManager manager = AudioManager.EnsureInstance();
-        manager.PlayUiClip(enterSfx);
-        manager.PlayUiClip(accentSfx);
+        manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.EnterTransition));
+        manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.Accent));
         combatSessionMusicActive = true;
-        EnsureCombatMusicOverride();
+        EnsureCombatMusicOverride(manager);
 
         StartTransition(EnterRoutine, coveredAction);
     }
@@ -115,9 +102,8 @@ public sealed class CombatTransitionController : MonoBehaviour
     /// </summary>
     public void PlayExitTransition(Action coveredAction = null)
     {
-        ResolveDefaultAudio();
         AudioManager manager = AudioManager.EnsureInstance();
-        manager.PlayUiClip(exitSfx);
+        manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.ExitTransition));
         combatSessionMusicActive = false;
         ReleaseCombatMusicOverrideIfUnused();
 
@@ -134,10 +120,10 @@ public sealed class CombatTransitionController : MonoBehaviour
             return;
         }
 
-        ResolveDefaultAudio();
+        AudioManager manager = AudioManager.EnsureInstance();
         PruneProximityMusicOwners();
         proximityMusicOwners.Add(owner);
-        EnsureCombatMusicOverride();
+        EnsureCombatMusicOverride(manager);
     }
 
     /// <summary>
@@ -178,14 +164,20 @@ public sealed class CombatTransitionController : MonoBehaviour
         }
     }
 
-    private void EnsureCombatMusicOverride()
+    private void EnsureCombatMusicOverride(AudioManager manager = null)
     {
-        if (musicOverrideToken != 0 || combatMusic == null)
+        if (musicOverrideToken != 0)
         {
             return;
         }
 
-        musicOverrideToken = AudioManager.EnsureInstance().PushMusicOverride(combatMusic);
+        if (manager == null)
+        {
+            manager = AudioManager.EnsureInstance();
+        }
+
+        AudioClipSO musicClip = manager.ResolveCombatAudioClip(CombatAudioCue.CombatMusic);
+        musicOverrideToken = manager.PushMusicOverride(musicClip);
     }
 
     private void ReleaseCombatMusicOverrideIfUnused()
@@ -388,19 +380,6 @@ public sealed class CombatTransitionController : MonoBehaviour
         Action action = pendingCoveredAction;
         pendingCoveredAction = null;
         action?.Invoke();
-    }
-
-    private void ResolveDefaultAudio()
-    {
-        if (!autoLoadDefaultAudio)
-        {
-            return;
-        }
-
-        combatMusic ??= Resources.Load<AudioClipSO>(CombatMusicResourcePath);
-        enterSfx ??= Resources.Load<AudioClipSO>(EnterSfxResourcePath);
-        exitSfx ??= Resources.Load<AudioClipSO>(ExitSfxResourcePath);
-        accentSfx ??= Resources.Load<AudioClipSO>(AccentSfxResourcePath);
     }
 
     private void EnsureVisuals()

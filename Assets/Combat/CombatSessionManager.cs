@@ -70,6 +70,10 @@ public class CombatSessionManager : NetworkBehaviour
         public int PendingEnemyAttackIndex = -1;
         /// <summary>Attaque ennemie verrouillee pendant sa presentation.</summary>
         public CombatEnemyAttackDefinition PendingEnemyAttack;
+        /// <summary>Item defensif choisi pendant la reaction locale ennemie.</summary>
+        public Item PendingDefensiveItem;
+        /// <summary>PV defensifs de l'unite choisie pour cette attaque.</summary>
+        public int PendingDefensiveItemHitPoints;
         /// <summary>Indique si le mouvement joueur a ete supprime par ce combat.</summary>
         public bool SuppressedMovement;
     }
@@ -161,6 +165,11 @@ public class CombatSessionManager : NetworkBehaviour
     /// </summary>
     [SerializeField, Min(0f), Tooltip("Duree de presentation locale suspendue avant les actions de combat.")]
     private float decisionPresentationSeconds = 2f;
+    /// <summary>
+    /// Duree minimale de reaction defensive quand l'ennemi prepare son attaque.
+    /// </summary>
+    [SerializeField, Min(0f), Tooltip("Duree minimale de reaction defensive avant l'attaque ennemie.")]
+    private float defensiveReactionSeconds = 2f;
     /// <summary>
     /// Degats de l'attaque de base du joueur.
     /// </summary>
@@ -541,6 +550,115 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Indique si le joueur local peut actuellement choisir un item defensif.
+    /// </summary>
+    public bool IsLocalDefensiveReactionActive()
+    {
+        if (CanRunAuthority())
+        {
+            return sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) &&
+                   IsDefensiveReactionActive(session);
+        }
+
+        return localCombatPresentation.Active &&
+               localCombatPresentation.Turn == CombatTurn.Enemy &&
+               localCombatPresentation.Phase == CombatSessionPhase.Decision;
+    }
+
+    /// <summary>
+    /// Verifie localement ou cote autorite si un item defensif peut etre choisi maintenant.
+    /// </summary>
+    public bool CanUseDefensiveItemNow(SquadCharacterController controller, Item item, out string reason)
+    {
+        reason = string.Empty;
+        if (controller == null)
+        {
+            reason = "Personnage introuvable.";
+            return false;
+        }
+
+        if (item == null || !item.CanDefendInCombat())
+        {
+            reason = "Cet item ne peut pas absorber une attaque.";
+            return false;
+        }
+
+        if (!ControllerHasItem(controller, item))
+        {
+            reason = "Item absent de l'inventaire.";
+            return false;
+        }
+
+        if (CanRunAuthority())
+        {
+            if (!TryGetSession(controller, out CombatSession session) || !IsDefensiveReactionActive(session))
+            {
+                reason = "Aucune reaction defensive n'est active.";
+                return false;
+            }
+
+            if (session.PendingDefensiveItem != null)
+            {
+                reason = "Un item defensif est deja choisi.";
+                return false;
+            }
+
+            return true;
+        }
+
+        if (!IsLocalDefensiveReactionActive())
+        {
+            reason = "Aucune reaction defensive n'est active.";
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Demande au serveur, ou a l'autorite locale, de retenir un item defensif pour l'attaque ennemie.
+    /// </summary>
+    public bool RequestLocalDefensiveItem(Item item)
+    {
+        SquadCharacterController controller = ResolveLocalControllerFromContext();
+        if (!CanUseDefensiveItemNow(controller, item, out string reason))
+        {
+            if (!string.IsNullOrWhiteSpace(reason))
+            {
+                InfoBoxUI.TryShow(reason);
+            }
+
+            return false;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            string itemId = ItemIdUtils.GetItemId(item);
+            if (string.IsNullOrWhiteSpace(itemId))
+            {
+                InfoBoxUI.TryShow("Item defensif sans identifiant.");
+                return false;
+            }
+
+            RequestDefensiveItemServerRpc(itemId);
+            return true;
+        }
+
+        if (TrySelectDefensiveItemForClient(ResolveLocalClientId(), item, out string feedback))
+        {
+            SendDefensiveItemFeedback(ResolveLocalClientId(), feedback, ActionAudioCue.InventoryUse);
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(feedback))
+        {
+            InfoBoxUI.TryShow(feedback);
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Demande l'activation ou l'arret de la priere locale associee a une idole.
     /// </summary>
     public void RequestTogglePrayerFromLocal(SquadCharacterController controller, IustiaIdolPrayer idol)
@@ -597,6 +715,25 @@ public class CombatSessionManager : NetworkBehaviour
     private void RequestStopPrayerServerRpc(ServerRpcParams rpcParams = default)
     {
         StopPrayer(rpcParams.Receive.SenderClientId, sendFeedback: true);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestDefensiveItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    {
+        Item item = ItemRegistry.Resolve(itemId);
+        if (item == null)
+        {
+            SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, "Item defensif introuvable.", ActionAudioCue.UiInvalid);
+            return;
+        }
+
+        if (TrySelectDefensiveItemForClient(rpcParams.Receive.SenderClientId, item, out string feedback))
+        {
+            SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, feedback, ActionAudioCue.InventoryUse);
+            return;
+        }
+
+        SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, feedback, ActionAudioCue.UiInvalid);
     }
 
     [ClientRpc]
@@ -724,6 +861,16 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
+    [ClientRpc]
+    private void DefensiveItemFeedbackClientRpc(string message, ActionAudioCue cue, ClientRpcParams rpcParams = default)
+    {
+        PlayUiFeedbackAudio(cue);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
     private void TickSession(CombatSession session)
     {
         if (session == null || session.State.Finished)
@@ -823,6 +970,47 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         return TryPlayerPass(session, message);
+    }
+
+    private bool TrySelectDefensiveItemForClient(ulong clientId, Item item, out string feedback)
+    {
+        feedback = string.Empty;
+        if (!sessionsByClientId.TryGetValue(clientId, out CombatSession session) || session == null)
+        {
+            feedback = "Aucun combat actif.";
+            return false;
+        }
+
+        if (!IsDefensiveReactionActive(session))
+        {
+            feedback = "Aucune reaction defensive n'est active.";
+            return false;
+        }
+
+        if (session.PendingDefensiveItem != null)
+        {
+            feedback = "Un item defensif est deja choisi.";
+            return false;
+        }
+
+        if (item == null || !item.CanDefendInCombat())
+        {
+            feedback = "Cet item ne peut pas absorber une attaque.";
+            return false;
+        }
+
+        if (!ControllerHasItem(session.Player, item))
+        {
+            feedback = "Item absent de l'inventaire.";
+            return false;
+        }
+
+        session.PendingDefensiveItem = item;
+        session.PendingDefensiveItemHitPoints = item.GetCombatDefenseHitPoints();
+        feedback = $"{ResolveItemDisplayName(item)} prepare la defense.";
+        session.State.SetMessage(feedback);
+        SendSnapshot(session, feedback);
+        return true;
     }
 
     private bool TryPlayerAttack(CombatSession session)
@@ -966,16 +1154,31 @@ public class CombatSessionManager : NetworkBehaviour
         string attackName = ResolveEnemyAttackDisplayName(attack);
         int rawDamage = ResolveEnemyAttackDamage(enemy, attack);
         int finalDamage = ResolveReducedDamage(rawDamage, reduction);
+        int absorbedDamage = 0;
+        bool defensiveItemBroken = false;
+        Item defensiveItem = session.PendingDefensiveItem;
+        if (TryApplyPendingDefensiveItem(session, ref finalDamage, out absorbedDamage, out defensiveItemBroken))
+        {
+            session.State.SetMessage($"{ResolveItemDisplayName(defensiveItem)} encaisse l'attaque.");
+        }
+
         int applied = session.Player.ApplyDamage(finalDamage, "combat");
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: false));
 
-        string message = $"{enemy.DisplayName} utilise {attackName} et inflige {applied} degats.";
+        string message = BuildEnemyAttackResultMessage(
+            enemy.DisplayName,
+            attackName,
+            applied,
+            defensiveItem,
+            absorbedDamage,
+            defensiveItemBroken);
         if (supportCount > 0)
         {
             message = $"{message} Prieres: -{Mathf.RoundToInt(reduction * 100f)}%.";
         }
 
         ClearPendingEnemyAttack(session);
+        ClearPendingDefensiveItem(session);
 
         if (session.Player.CurrentHp <= 0)
         {
@@ -993,8 +1196,10 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        ClearPendingEnemyAttack(session);
+        ClearPendingDefensiveItem(session);
         float decisionSeconds = turn == CombatTurn.Enemy
-            ? Mathf.Max(decisionPresentationSeconds, enemyActionDelay)
+            ? Mathf.Max(Mathf.Max(decisionPresentationSeconds, enemyActionDelay), defensiveReactionSeconds)
             : decisionPresentationSeconds;
         session.State.BeginDecision(turn, Time.time, decisionSeconds, turnDurationSeconds, message);
         PlayActionAudio(ActionAudioCue.CombatTurn, ResolveCombatAudioPosition(session, preferEnemy: turn == CombatTurn.Enemy));
@@ -1388,6 +1593,35 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
+    private void SendDefensiveItemFeedback(ulong clientId, string message, ActionAudioCue cue)
+    {
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            DefensiveItemFeedbackClientRpc(message ?? string.Empty, cue, BuildClientRpcParams(clientId));
+            return;
+        }
+
+        PlayUiFeedbackAudio(cue);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            InfoBoxUI.TryShow(message);
+        }
+    }
+
+    private static void PlayUiFeedbackAudio(ActionAudioCue cue)
+    {
+        if (cue == ActionAudioCue.None)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        if (manager != null)
+        {
+            manager.PlayUiActionCue(cue);
+        }
+    }
+
     private void ValidatePrayerStates()
     {
         if (activePrayersByClientId.Count == 0)
@@ -1466,6 +1700,78 @@ public class CombatSessionManager : NetworkBehaviour
         return Mathf.Max(1, reduced);
     }
 
+    private bool TryApplyPendingDefensiveItem(
+        CombatSession session,
+        ref int finalDamage,
+        out int absorbedDamage,
+        out bool itemBroken)
+    {
+        absorbedDamage = 0;
+        itemBroken = false;
+        if (session == null || session.PendingDefensiveItem == null || finalDamage <= 0)
+        {
+            return false;
+        }
+
+        Item item = session.PendingDefensiveItem;
+        int itemHitPoints = Mathf.Max(0, session.PendingDefensiveItemHitPoints);
+        if (itemHitPoints <= 0 || !TryFindControllerItem(session.Player, item, out Item inventoryItem))
+        {
+            return false;
+        }
+
+        absorbedDamage = Mathf.Min(finalDamage, itemHitPoints);
+        itemBroken = finalDamage >= itemHitPoints;
+        if (itemBroken && !TryConsumeBrokenDefensiveItem(session, inventoryItem))
+        {
+            absorbedDamage = 0;
+            itemBroken = false;
+            return false;
+        }
+
+        finalDamage = Mathf.Max(0, finalDamage - absorbedDamage);
+        return true;
+    }
+
+    private bool TryConsumeBrokenDefensiveItem(CombatSession session, Item item)
+    {
+        if (session?.Player == null || item == null)
+        {
+            return false;
+        }
+
+        if (!session.Player.TryRemoveItemQuantity(item, 1))
+        {
+            return false;
+        }
+
+        SyncNetworkInventory(session.Player);
+        return true;
+    }
+
+    private static string BuildEnemyAttackResultMessage(
+        string enemyName,
+        string attackName,
+        int appliedDamage,
+        Item defensiveItem,
+        int absorbedDamage,
+        bool defensiveItemBroken)
+    {
+        string resolvedEnemyName = string.IsNullOrWhiteSpace(enemyName) ? "Ennemi" : enemyName;
+        string resolvedAttackName = string.IsNullOrWhiteSpace(attackName) ? DefaultEnemyAttackDisplayName : attackName;
+        if (defensiveItem == null || absorbedDamage <= 0)
+        {
+            return $"{resolvedEnemyName} utilise {resolvedAttackName} et inflige {appliedDamage} degats.";
+        }
+
+        string itemName = ResolveItemDisplayName(defensiveItem);
+        string breakText = defensiveItemBroken ? " et se casse" : string.Empty;
+        string passText = appliedDamage > 0
+            ? $"{appliedDamage} degats passent."
+            : "Aucun degat ne passe.";
+        return $"{resolvedEnemyName} utilise {resolvedAttackName}. {itemName} absorbe {absorbedDamage} degats{breakText}. {passText}";
+    }
+
     private static int ResolveEnemyAttackDamage(CombatRuntimeEnemy enemy, CombatEnemyAttackDefinition attack)
     {
         if (attack != null)
@@ -1506,6 +1812,80 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEnemyIndex = -1;
         session.PendingEnemyAttackIndex = -1;
         session.PendingEnemyAttack = null;
+    }
+
+    private static void ClearPendingDefensiveItem(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.PendingDefensiveItem = null;
+        session.PendingDefensiveItemHitPoints = 0;
+    }
+
+    private static bool IsDefensiveReactionActive(CombatSession session)
+    {
+        return session != null &&
+               !session.State.Finished &&
+               session.State.DecisionActive &&
+               session.State.Turn == CombatTurn.Enemy;
+    }
+
+    private static bool ControllerHasItem(SquadCharacterController controller, Item item)
+    {
+        return TryFindControllerItem(controller, item, out _);
+    }
+
+    private static bool TryFindControllerItem(SquadCharacterController controller, Item item, out Item inventoryItem)
+    {
+        inventoryItem = null;
+        if (controller == null || item == null)
+        {
+            return false;
+        }
+
+        string expectedItemId = ItemIdUtils.GetItemId(item);
+        IReadOnlyList<Item> items = controller.Items;
+        if (items == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Item candidate = items[i];
+            if (candidate == item)
+            {
+                inventoryItem = candidate;
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(expectedItemId) &&
+                string.Equals(ItemIdUtils.GetItemId(candidate), expectedItemId, StringComparison.Ordinal))
+            {
+                inventoryItem = candidate;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string ResolveItemDisplayName(Item item)
+    {
+        if (item == null)
+        {
+            return "Item defensif";
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.itemName))
+        {
+            return item.itemName;
+        }
+
+        return !string.IsNullOrWhiteSpace(item.name) ? item.name : "Item defensif";
     }
 
     private int ResolvePlayerAttackDamage(SquadCharacterController player)
@@ -1802,6 +2182,26 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         target.SetPositionAndRotation(position, rotation);
+    }
+
+    private static void SyncNetworkInventory(SquadCharacterController controller)
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (controller == null || manager == null || !manager.IsListening || !manager.IsServer)
+        {
+            return;
+        }
+
+        NetworkInventory inventory = controller.GetComponent<NetworkInventory>();
+        if (inventory == null)
+        {
+            inventory = controller.GetComponentInChildren<NetworkInventory>(true);
+        }
+
+        if (inventory != null)
+        {
+            inventory.SyncFromController();
+        }
     }
 
     private void SuppressLocalClientMovement(string sessionId, Vector3 combatPosition, Quaternion combatRotation)

@@ -1,146 +1,53 @@
 from __future__ import annotations
 
 from app.agents.architect import ArchitectAgent
-from app.core.app_workflow import AppWorkflow
 from app.core.context_builder import build_context
 from app.core.mission import MissionContext
-from app.core.project_scanner import (
-    build_lit_code_context,
-    load_lit_code_files,
-    scan_project,
-)
+from app.core.project_scanner import scan_project
 
 
-DEFAULT_LIT_FILE_LIMIT = 10
-CONTEXT_EXTENSION_STEP = 10
+SCANNED_FILE_LIMIT = 20
 
 
-def build_prompt_for_workflow(
-    mission: MissionContext,
-    *,
-    plan_validated: bool = False,
-) -> str:
-    if mission.workflow == AppWorkflow.CODEX_PROMPT:
-        return f"""
-Prépare un résultat de workflow prompt.
+def build_codex_prompt_request(mission: MissionContext) -> str:
+    return f"""
+Prépare un prompt Codex pour le projet Unity Lit.
 
 Produit uniquement :
-- analyse
-- risques
-- plan
-- prompt Codex
+- analyse ;
+- risques ;
+- plan ;
+- tests à prévoir ;
+- prompt Codex final.
 
-Ne modifie aucun fichier.
+Ne modifie aucun fichier et ne produis aucun patch.
 
 Mission utilisateur :
 
 {mission.query}
 """
 
-    if mission.workflow == AppWorkflow.AISTUDIO_CODE:
-        if not plan_validated:
-            return f"""
-Mode : AISTUDIO_CODE
 
-Mission utilisateur :
-
-{mission.query}
-
-Tu dois préparer une modification directe du projet Unity Lit si c'est sûr.
-
-Pipeline obligatoire :
-1. analyse
-2. plan
-3. attente de validation utilisateur
-
-Tu ne dois pas générer de patch à cette étape.
-
-Rappels :
-- utilise uniquement le contexte fourni ;
-- le LLM ne doit agir qu'après la collecte complète du contexte ;
-- si un fichier existant n'est pas chargé en entier, ne l'invente jamais ;
-- si un patch sûr est impossible, explique-le.
-- les seuls chemins patchables sont Assets/, Packages/ et ProjectSettings/.
-- si un fichier Lit nécessaire manque du contexte, demande à l'utilisateur de taper EXTEND pour autoriser une collecte plus large ;
-- ne demande jamais à l'utilisateur de coller ou envoyer un fichier du projet.
-
-Ne produis aucun bloc fichier à cette étape.
-"""
-
-        return f"""
-Mode : AISTUDIO_CODE
-
-Mission utilisateur :
-
-{mission.query}
-
-Le plan a été validé par l'utilisateur.
-
-Tu dois maintenant :
-1. analyser brièvement si nécessaire ;
-2. produire le patch complet uniquement pour le projet Lit ;
-3. utiliser uniquement Assets/, Packages/ ou ProjectSettings/ ;
-4. préserver toutes les parties non modifiées ;
-5. ne jamais inventer le contenu d'un fichier existant.
-
-Si le contenu complet d'un fichier existant n'est pas disponible, réponds exactement :
-"Je ne peux pas produire un patch sûr tant que le fichier complet n'est pas chargé."
-
-Dans ce cas, ne demande pas à l'utilisateur de coller le fichier : la console proposera EXTEND si une collecte plus large est possible.
-
-N'écris jamais de bloc fichier pour AIStudio/, app/, docs/, prompts/ ou README.md.
-
-Produis uniquement des fichiers complets au format :
-
-=== FILE: chemin/du/fichier ===
-<<<FILE_CONTENT
-contenu complet du fichier
-FILE_CONTENT>>>
-"""
-
-    raise ValueError(f"Workflow inconnu : {mission.workflow}")
-
-
-def run_mission(
-    query: str,
-    workflow: AppWorkflow,
-    *,
-    plan_validated: bool = False,
-    lit_file_limit: int = DEFAULT_LIT_FILE_LIMIT,
-) -> MissionContext:
-    scanned_file_limit = max(20, lit_file_limit + CONTEXT_EXTENSION_STEP)
+def run_mission(query: str) -> MissionContext:
     mission = MissionContext(
         query=query,
-        workflow=workflow,
         user_messages=[query],
-        lit_file_limit=lit_file_limit,
-        scanned_file_limit=scanned_file_limit,
+        scanned_file_limit=SCANNED_FILE_LIMIT,
     )
 
     _collect_context(mission)
-
-    prompt = build_prompt_for_workflow(
-        mission,
-        plan_validated=plan_validated,
-    )
+    prompt = build_codex_prompt_request(mission)
 
     try:
         mission = ArchitectAgent().prepare(
             question=prompt,
-            workflow=workflow,
             prepared_mission=mission,
         )
     except Exception as exc:
         mission.notes.append(f"LLM indisponible : {exc}")
-        mission.answer = _build_local_fallback(
-            mission,
-            plan_validated=plan_validated,
-            error=exc,
-        )
+        mission.answer = _build_local_fallback(mission, error=exc)
 
-    if mission.workflow == AppWorkflow.CODEX_PROMPT:
-        mission.final_codex_prompt = mission.answer
-
+    mission.final_codex_prompt = mission.answer
     return mission
 
 
@@ -158,30 +65,16 @@ def _collect_context(mission: MissionContext) -> None:
     except Exception as exc:
         mission.notes.append(f"Scanner Unity indisponible : {exc}")
 
-    if mission.workflow == AppWorkflow.AISTUDIO_CODE:
-        try:
-            mission.lit_files = load_lit_code_files(
-                mission.scanned_files,
-                limit=mission.lit_file_limit,
-            )
-            mission.lit_code_context = build_lit_code_context(
-                mission.lit_files
-            )
-        except Exception as exc:
-            mission.notes.append(f"Chargement des fichiers Lit indisponible : {exc}")
-
 
 def _build_local_fallback(
     mission: MissionContext,
     *,
-    plan_validated: bool,
     error: Exception,
 ) -> str:
-    if mission.workflow == AppWorkflow.CODEX_PROMPT:
-        docs = _format_document_list(mission.loaded_documents)
-        unity_files = _format_unity_file_list(mission.scanned_files)
+    docs = _format_document_list(mission.loaded_documents)
+    unity_files = _format_unity_file_list(mission.scanned_files)
 
-        return f"""## 1. Compréhension de la demande
+    return f"""## 1. Compréhension de la demande
 
 {mission.query}
 
@@ -216,80 +109,25 @@ Tu travailles dans le projet Lit. Réponds à cette mission :
 
 {mission.query}
 
-Contrainte principale : ne modifie aucun fichier sans confirmation explicite et préserve les changements Git existants.
-"""
-
-    if not plan_validated:
-        files = _format_lit_file_list(mission.lit_files)
-
-        return f"""## Analyse
-
-{mission.query}
-
-## Fichiers concernés
-
-{files}
-
-## Risques
-
-- Le LLM n'a pas pu être appelé : {error}
-- Aucun patch ne doit être généré avant validation du plan.
-
-## Plan
-
-1. Vérifier les fichiers Lit listés.
-2. Limiter la modification à Assets/, Packages/ ou ProjectSettings/.
-3. Générer un patch complet uniquement après VALIDATE.
-
-## Patch
-
-Aucun patch produit à cette étape.
-"""
-
-    return f"""## Analyse
-
-{mission.query}
-
-## Patch
-
-Je ne peux pas produire un patch sûr tant que le LLM est indisponible.
-
-Erreur : {error}
+Contrainte principale : préserve les changements Git existants et limite l'intervention aux fichiers réellement concernés.
 """
 
 
 def _format_document_list(documents: list[dict]) -> str:
     if not documents:
-        return "Aucun document chargé."
+        return "- Aucun document chargé."
 
-    return "\n".join(f"- {doc.get('file', doc)}" for doc in documents)
+    return "\n".join(
+        f"- `{doc.get('file', doc)}`"
+        for doc in documents
+    )
 
 
 def _format_unity_file_list(files: list[dict]) -> str:
     if not files:
-        return "Aucun fichier Unity identifié."
+        return "- Aucun fichier probable."
 
     return "\n".join(
-        f"- {item.get('path', item)}"
-        for item in files[:20]
-    )
-
-
-def _format_aistudio_file_list(files: list[dict]) -> str:
-    if not files:
-        return "Aucun fichier AIStudio identifié."
-
-    return "\n".join(
-        f"- {item.get('file', item)}"
-        for item in files[:20]
-    )
-
-
-def _format_lit_file_list(files: list[dict]) -> str:
-    if not files:
-        return "Aucun fichier Lit chargé en entier."
-
-    return "\n".join(
-        f"- {item.get('path', item)}"
-        for item in files[:20]
+        f"- `{file.get('path', file)}` (score {file.get('score', 0)})"
+        for file in files[:20]
     )

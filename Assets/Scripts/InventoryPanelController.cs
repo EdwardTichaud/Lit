@@ -36,6 +36,7 @@ public class InventoryPanelController : MonoBehaviour
     }
 
     private bool inventoryOpen;
+    private bool defensiveReactionInventoryOpen;
     private bool squadInputLocked;
     [Header("Action Box")]
     [Tooltip("ActionBox utilisee par l'inventaire.")]
@@ -381,6 +382,12 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (defensiveReactionInventoryOpen && !IsLocalDefensiveReactionActive())
+        {
+            CloseInventory();
+            return;
+        }
+
         if (readablePanelOpen)
         {
             HandleReadablePanelNavigation();
@@ -629,6 +636,7 @@ public class InventoryPanelController : MonoBehaviour
         settings.OpenPanel();
         PlayUiActionAudio(ActionAudioCue.InventoryOpen);
         inventoryOpen = true;
+        defensiveReactionInventoryOpen = IsLocalDefensiveReactionActive();
         RegisterNetworkInventory();
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
@@ -658,6 +666,7 @@ public class InventoryPanelController : MonoBehaviour
         CloseReadablePanel();
         CloseQuantityBox();
         inventoryOpen = false;
+        defensiveReactionInventoryOpen = false;
         actionBoxSuppressFrame = -1;
         UnregisterNetworkInventory();
         if (!placementActive)
@@ -694,6 +703,12 @@ public class InventoryPanelController : MonoBehaviour
     private bool CanReceiveInventoryInput()
     {
         return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this) || CombatHudController.HasCombatInputFocus;
+    }
+
+    private static bool IsLocalDefensiveReactionActive()
+    {
+        CombatSessionManager manager = CombatSessionManager.Instance;
+        return manager != null && manager.IsLocalDefensiveReactionActive();
     }
 
     private void DisableInventoryCursorController()
@@ -1553,6 +1568,26 @@ public class InventoryPanelController : MonoBehaviour
             return false;
         }
 
+        CombatSessionManager combatManager = CombatSessionManager.Instance;
+        if (combatManager != null && combatManager.IsLocalDefensiveReactionActive())
+        {
+            if (!combatManager.CanUseDefensiveItemNow(controller, item, out string defenseReason))
+            {
+                PlayUiActionAudio(ActionAudioCue.UiInvalid);
+                ShowActionFeedback(defenseReason);
+                return false;
+            }
+
+            if (combatManager.RequestLocalDefensiveItem(item))
+            {
+                CloseInventory();
+                return true;
+            }
+
+            PlayUiActionAudio(ActionAudioCue.UiInvalid);
+            return false;
+        }
+
         if (item != null && item.isBeacon)
         {
             ShowBeaconColorPanel(item);
@@ -1570,7 +1605,6 @@ public class InventoryPanelController : MonoBehaviour
             return inventory.RequestUseItem(item);
         }
 
-        CombatSessionManager combatManager = CombatSessionManager.Instance;
         if (combatManager != null && !combatManager.CanUseItemNow(controller, out string combatReason))
         {
             ShowActionFeedback(combatReason);

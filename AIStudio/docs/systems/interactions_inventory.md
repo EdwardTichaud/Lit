@@ -25,6 +25,10 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 4. La cible reçoit le personnage détecté et devient l’Outline actif.
 5. `Interact` appelle d’abord le handler actif, puis ouvre l’UI ou demande une
    mutation au serveur.
+6. En combat, pendant la réaction défensive du tour ennemi, l'inventaire peut
+   passer au-dessus du focus du HUD. Seuls les items marqués défensifs sont alors
+   routés vers `CombatSessionManager`; la suppression/casse reste validée côté
+   autorité.
 
 ## Pièges observés
 
@@ -33,6 +37,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - Les interactions peuvent être masquées par `TimePeriodVisibility` ou exiger
   une influence lumineuse.
 - En réseau, le client ne doit pas modifier seul un inventaire ou un objet monde.
+- La `planche de bois` est un item défensif à 1 PV : une unité absorbe jusqu'à
+  1 dégât de l'attaque ennemie puis est retirée si elle casse.
 - Le Building legacy est désactivé via
   `Resources/LegacyBuildingSystemSettings.asset`; conserver ses données pour les
   anciennes sauvegardes.

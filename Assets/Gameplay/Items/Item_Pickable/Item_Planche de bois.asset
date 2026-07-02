@@ -16,8 +16,10 @@ MonoBehaviour:
   itemName: Planche de bois
   itemIcon: {fileID: 0}
   itemSprite: {fileID: 0}
-  description: 
+  description: Planche fragile pouvant absorber une attaque ennemie en combat.
   canUse: 0
+  canDefendInCombat: 1
+  combatDefenseHitPoints: 1
   canPlace: 0
   isContainer: 0
   worldPrefab: {fileID: 0}
