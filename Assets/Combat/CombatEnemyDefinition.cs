@@ -7,6 +7,36 @@ using UnityEngine;
 // Dependencies: Unity serialization, Mathf.
 // Precautions: les champs publics sont serialises dans les scenes/prefabs; ne pas les renommer sans migration.
 /// <summary>
+/// Portee logique d'une attaque de combat pour piloter sa presentation.
+/// </summary>
+public enum CombatAttackRangeType
+{
+    /// <summary>Deduit prudemment depuis le nom de l'attaque et de l'animation.</summary>
+    Auto = 0,
+    /// <summary>Attaque au contact : peut demander une approche de presentation.</summary>
+    Melee = 1,
+    /// <summary>Attaque a distance : reste sur place.</summary>
+    Ranged = 2,
+    /// <summary>Action de soutien : reste sur place.</summary>
+    Support = 3
+}
+
+/// <summary>
+/// Indique comment une attaque gere son mouvement de presentation.
+/// </summary>
+public enum CombatAttackMovementMode
+{
+    /// <summary>Deduit depuis les donnees disponibles et le root motion de l'Animator.</summary>
+    Auto = 0,
+    /// <summary>Force une approche scriptée si la cible est trop loin.</summary>
+    ScriptedApproach = 1,
+    /// <summary>L'animation contient deja l'avancee; le script ne rajoute pas d'approche.</summary>
+    AnimationIncludesMovement = 2,
+    /// <summary>Aucun deplacement de presentation.</summary>
+    None = 3
+}
+
+/// <summary>
 /// Definition d'une attaque ennemie jouee pendant le tour de combat.
 /// </summary>
 [System.Serializable]
@@ -49,6 +79,22 @@ public class CombatEnemyAttackDefinition
     [Min(0f)]
     [Tooltip("Duree avant destruction du VFX. 0 laisse le prefab se gerer seul.")]
     public float vfxLifetime = 2f;
+    /// <summary>
+    /// Portee logique utilisee pour decider si l'attaquant doit s'approcher.
+    /// </summary>
+    [Tooltip("Portee logique de l'attaque. Auto deduit depuis le nom; Melee peut declencher une approche.")]
+    public CombatAttackRangeType rangeType = CombatAttackRangeType.Auto;
+    /// <summary>
+    /// Mode de deplacement de presentation pour cette animation.
+    /// </summary>
+    [Tooltip("Mode de mouvement de presentation. Auto evite l'approche si l'animation/root motion semble deja avancer.")]
+    public CombatAttackMovementMode movementMode = CombatAttackMovementMode.Auto;
+    /// <summary>
+    /// Distance a conserver avec la cible apres une approche scriptée.
+    /// </summary>
+    [Min(0.1f)]
+    [Tooltip("Distance a conserver avec la cible apres une approche scriptée.")]
+    public float approachDistance = 1.25f;
 
     /// <summary>
     /// Constructeur vide requis par la serialisation Unity.
@@ -67,7 +113,10 @@ public class CombatEnemyAttackDefinition
         GameObject vfxPrefab,
         Vector3 vfxLocalOffset,
         Vector3 vfxLocalEulerAngles,
-        float vfxLifetime)
+        float vfxLifetime,
+        CombatAttackRangeType rangeType = CombatAttackRangeType.Auto,
+        CombatAttackMovementMode movementMode = CombatAttackMovementMode.Auto,
+        float approachDistance = 1.25f)
     {
         this.displayName = string.IsNullOrWhiteSpace(displayName) ? "Attaque" : displayName;
         this.damage = Mathf.Max(0, damage);
@@ -76,6 +125,9 @@ public class CombatEnemyAttackDefinition
         this.vfxLocalOffset = vfxLocalOffset;
         this.vfxLocalEulerAngles = vfxLocalEulerAngles;
         this.vfxLifetime = Mathf.Max(0f, vfxLifetime);
+        this.rangeType = rangeType;
+        this.movementMode = movementMode;
+        this.approachDistance = Mathf.Max(0.1f, approachDistance);
     }
 
     /// <summary>
@@ -90,7 +142,10 @@ public class CombatEnemyAttackDefinition
             vfxPrefab,
             vfxLocalOffset,
             vfxLocalEulerAngles,
-            vfxLifetime);
+            vfxLifetime,
+            rangeType,
+            movementMode,
+            approachDistance);
     }
 }
 

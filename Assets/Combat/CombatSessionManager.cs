@@ -25,7 +25,22 @@ public class CombatSessionManager : NetworkBehaviour
     private const float DefaultDeathAnimationDuration = 1f;
     private const float PostDeathReturnDelaySeconds = 3f;
     private const float LocalEnemyLookupMaxDistance = 6f;
+    private const float ActionMoveCompleteThreshold = 0.03f;
+    private const float ActionReturnDisplacementThreshold = 0.12f;
+    private const float ActionAlreadyInRangePadding = 0.15f;
     private static readonly string[] DeathAnimationCandidates = { "Death", "Death_v1", "Death_v2" };
+    private static readonly string[] RangedAttackNameHints =
+    {
+        "ranged", "range", "distance", "projectile", "shoot", "shot", "fireball", "bolt", "arrow", "tir", "fleche", "lancer"
+    };
+    private static readonly string[] SupportAttackNameHints =
+    {
+        "support", "heal", "soin", "buff", "priere", "shield", "protection"
+    };
+    private static readonly string[] MovementAnimationNameHints =
+    {
+        "advance", "approach", "dash", "charge", "lunge", "leap", "jump", "rush", "forward", "avance", "bond", "saut", "assaut"
+    };
 
     /// <summary>
     /// Donnees completes d'une session de combat active cote autorite.
@@ -70,6 +85,22 @@ public class CombatSessionManager : NetworkBehaviour
         public int PendingEnemyAttackIndex = -1;
         /// <summary>Attaque ennemie verrouillee pendant sa presentation.</summary>
         public CombatEnemyAttackDefinition PendingEnemyAttack;
+        /// <summary>Moment autoritaire ou appliquer l'impact de l'action joueur.</summary>
+        public float PendingPlayerActionImpactAt;
+        /// <summary>Indique si l'impact joueur a deja ete resolu.</summary>
+        public bool PendingPlayerActionResolved;
+        /// <summary>Message issu de l'impact joueur, affiche apres le retour de presentation.</summary>
+        public string PendingPlayerActionResultMessage;
+        /// <summary>Indique si l'action joueur a vaincu tous les ennemis.</summary>
+        public bool PendingPlayerActionVictory;
+        /// <summary>Moment autoritaire ou appliquer l'impact de l'action ennemie.</summary>
+        public float PendingEnemyActionImpactAt;
+        /// <summary>Indique si l'impact ennemi a deja ete resolu.</summary>
+        public bool PendingEnemyActionResolved;
+        /// <summary>Message issu de l'impact ennemi, affiche apres le retour de presentation.</summary>
+        public string PendingEnemyActionResultMessage;
+        /// <summary>Indique si l'action ennemie a vaincu le joueur.</summary>
+        public bool PendingEnemyActionPlayerDefeated;
         /// <summary>Item defensif choisi pendant la reaction locale ennemie.</summary>
         public Item PendingDefensiveItem;
         /// <summary>PV defensifs de l'unite choisie pour cette attaque.</summary>
@@ -132,6 +163,49 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Plan local de mouvement pour une action de combat.
+    /// </summary>
+    private struct CombatActionMotionPlan
+    {
+        public Vector3 StartPosition;
+        public Quaternion StartRotation;
+        public Vector3 ApproachPosition;
+        public Quaternion ApproachRotation;
+        public Quaternion AttackRotation;
+        public bool UseScriptedApproach;
+        public bool ReturnToStart;
+        public float ApproachDuration;
+        public float AttackDuration;
+        public float ReturnDuration;
+
+        public float ImpactDelay(float impactNormalizedTime)
+        {
+            float normalizedImpact = Mathf.Clamp01(impactNormalizedTime);
+            return Mathf.Max(0.05f, ApproachDuration + AttackDuration * normalizedImpact);
+        }
+
+        public float TotalDuration()
+        {
+            return Mathf.Max(0.05f, ApproachDuration + AttackDuration + ReturnDuration);
+        }
+    }
+
+    /// <summary>
+    /// Timings autoritaires utilises pour appliquer l'impact puis liberer l'action.
+    /// </summary>
+    private struct CombatActionTiming
+    {
+        public float ImpactDelay;
+        public float TotalDuration;
+
+        public CombatActionTiming(float impactDelay, float totalDuration)
+        {
+            ImpactDelay = Mathf.Max(0.05f, impactDelay);
+            TotalDuration = Mathf.Max(ImpactDelay, totalDuration);
+        }
+    }
+
+    /// <summary>
     /// Etat d'une priere de soutien active pour un client.
     /// </summary>
     private sealed class PrayerState
@@ -181,6 +255,28 @@ public class CombatSessionManager : NetworkBehaviour
     [SerializeField, Min(0.05f), Tooltip("Intervalle de rafraichissement du HUD pendant un combat.")]
     private float snapshotInterval = 0.2f;
 
+    [Header("Action Presentation")]
+    /// <summary>
+    /// Distance de contact par defaut conservee apres une approche de melee.
+    /// </summary>
+    [SerializeField, Min(0.1f), Tooltip("Distance de contact par defaut conservee apres une approche de melee.")]
+    private float defaultMeleeApproachDistance = 1.25f;
+    /// <summary>
+    /// Vitesse de deplacement de presentation pour l'approche et le retour.
+    /// </summary>
+    [SerializeField, Min(0.1f), Tooltip("Vitesse de deplacement de presentation pour l'approche et le retour.")]
+    private float actionPresentationMoveSpeed = 3.5f;
+    /// <summary>
+    /// Duree maximale d'un aller ou retour de presentation.
+    /// </summary>
+    [SerializeField, Min(0.05f), Tooltip("Duree maximale d'un aller ou retour de presentation.")]
+    private float maxActionPresentationMoveSeconds = 0.75f;
+    /// <summary>
+    /// Moment normalise de l'animation ou l'impact autoritaire est applique.
+    /// </summary>
+    [SerializeField, Range(0.1f, 1f), Tooltip("Moment normalise de l'animation ou l'impact autoritaire est applique.")]
+    private float actionImpactNormalizedTime = 0.75f;
+
     [Header("Arena Scene")]
     /// <summary>
     /// Racine optionnelle de l'arene de combat.
@@ -216,6 +312,7 @@ public class CombatSessionManager : NetworkBehaviour
     private readonly List<CombatSession> tickSessions = new List<CombatSession>();
     private readonly HashSet<string> locallySuppressedSessions = new HashSet<string>();
     private readonly Dictionary<string, LocalEnemyPresentation> localEnemyPresentationsBySessionId = new Dictionary<string, LocalEnemyPresentation>();
+    private readonly Dictionary<Transform, Coroutine> actionPresentationCoroutinesByActor = new Dictionary<Transform, Coroutine>();
     private readonly LocalCombatPresentationState localCombatPresentation = new LocalCombatPresentationState();
     private int nextSessionId = 1;
 
@@ -352,6 +449,7 @@ public class CombatSessionManager : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         // Netcode appelle OnNetworkDespawn avant destruction/desactivation reseau; il faut restaurer les presentations locales.
+        StopAllCombatActionPresentations();
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
         localCombatPresentation.Reset();
@@ -369,6 +467,7 @@ public class CombatSessionManager : NetworkBehaviour
     public override void OnDestroy()
     {
         // Unity appelle OnDestroy; on repete le nettoyage pour couvrir le mode non reseau.
+        StopAllCombatActionPresentations();
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
         localCombatPresentation.Reset();
@@ -765,6 +864,7 @@ public class CombatSessionManager : NetworkBehaviour
     [ClientRpc]
     private void ExitCombatClientRpc(CombatExitData data, ClientRpcParams rpcParams = default)
     {
+        StopAllCombatActionPresentations();
         CombatTransitionController.EnsureInstance().PlayExitTransition(() =>
         {
             ApplyExitCombatPresentation(data, restoreLocalClient: !IsServer);
@@ -791,6 +891,7 @@ public class CombatSessionManager : NetworkBehaviour
     private void ApplyExitCombatPresentation(CombatExitData data, bool restoreLocalClient)
     {
         string sessionId = data.SessionId.ToString();
+        StopAllCombatActionPresentations();
         if (restoreLocalClient)
         {
             localCombatPresentation.Reset();
@@ -906,6 +1007,11 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (session.State.PlayerActionLocked)
         {
+            if (!session.PendingPlayerActionResolved && Time.time >= session.PendingPlayerActionImpactAt)
+            {
+                ResolveLockedPlayerAttackImpact(session);
+            }
+
             if (Time.time >= session.State.PlayerActionEndsAt)
             {
                 CompleteLockedPlayerAttack(session);
@@ -916,6 +1022,11 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (session.State.EnemyActionLocked)
         {
+            if (!session.PendingEnemyActionResolved && Time.time >= session.PendingEnemyActionImpactAt)
+            {
+                ResolveEnemyActionImpact(session);
+            }
+
             if (Time.time >= session.State.EnemyActionEndsAt)
             {
                 CompleteEnemyAction(session);
@@ -1028,8 +1139,9 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         int pendingDamage = ResolvePlayerAttackDamage(session.Player);
-        float actionDuration = PlayPlayerBasicAttackPresentation(session);
-        session.State.BeginPlayerAction(pendingDamage, Time.time, actionDuration, $"Attaque de base sur {enemy.DisplayName}.");
+        CombatActionTiming actionTiming = PlayPlayerBasicAttackPresentation(session);
+        PreparePendingPlayerAction(session, actionTiming);
+        session.State.BeginPlayerAction(pendingDamage, Time.time, actionTiming.TotalDuration, $"Attaque de base sur {enemy.DisplayName}.");
         SendSnapshot(session, session.State.LastMessage);
         return true;
     }
@@ -1069,24 +1181,70 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        if (!session.PendingPlayerActionResolved)
+        {
+            CombatRuntimeEnemy activeEnemy = GetActiveEnemy(session);
+            if (activeEnemy == null)
+            {
+                BeginCombatResolution(session, true, "Victoire.");
+                return;
+            }
+
+            ResolveLockedPlayerAttackImpact(session);
+        }
+
+        string message = string.IsNullOrWhiteSpace(session.PendingPlayerActionResultMessage)
+            ? "L'attaque se termine."
+            : session.PendingPlayerActionResultMessage;
+        bool playerVictory = session.PendingPlayerActionVictory;
+        ClearPendingPlayerAction(session);
+
+        if (playerVictory)
+        {
+            BeginCombatResolution(session, true, $"Victoire. {message}");
+            return;
+        }
+
+        BeginTurn(session, CombatTurn.Enemy, message);
+    }
+
+    private void PreparePendingPlayerAction(CombatSession session, CombatActionTiming timing)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.PendingPlayerActionImpactAt = Time.time + timing.ImpactDelay;
+        session.PendingPlayerActionResolved = false;
+        session.PendingPlayerActionResultMessage = string.Empty;
+        session.PendingPlayerActionVictory = false;
+    }
+
+    private void ResolveLockedPlayerAttackImpact(CombatSession session)
+    {
+        if (session == null || session.PendingPlayerActionResolved || session.State.Finished)
+        {
+            return;
+        }
+
+        session.PendingPlayerActionResolved = true;
         CombatRuntimeEnemy enemy = GetActiveEnemy(session);
         if (enemy == null)
         {
-            BeginCombatResolution(session, true, "Victoire.");
+            session.PendingPlayerActionVictory = true;
+            session.PendingPlayerActionResultMessage = "Victoire.";
             return;
         }
 
-        int damage = session.State.ConsumePendingPlayerAttackDamage();
+        int damage = session.State.ConsumePendingPlayerAttackDamage(clearActionTimer: false);
         int applied = enemy.ApplyDamage(damage);
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: true));
 
-        if (AreAllEnemiesDefeated(session))
-        {
-            BeginCombatResolution(session, true, $"Victoire. {enemy.DisplayName} subit {applied} degats.");
-            return;
-        }
-
-        BeginTurn(session, CombatTurn.Enemy, $"{enemy.DisplayName} subit {applied} degats.");
+        session.PendingPlayerActionVictory = AreAllEnemiesDefeated(session);
+        session.PendingPlayerActionResultMessage = $"{enemy.DisplayName} subit {applied} degats.";
+        session.State.SetMessage(session.PendingPlayerActionResultMessage);
+        SendSnapshot(session, session.PendingPlayerActionResultMessage);
     }
 
     private void ExecuteEnemyTurn(CombatSession session)
@@ -1127,24 +1285,37 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEnemyAttack = attack;
 
         string attackName = ResolveEnemyAttackDisplayName(attack);
-        float actionDuration = PlayEnemyBasicAttackPresentation(session, attack, enemyIndex, attackIndex);
-        session.State.BeginEnemyAction(Time.time, actionDuration, $"{enemy.DisplayName} utilise {attackName}.");
+        CombatActionTiming actionTiming = PlayEnemyBasicAttackPresentation(session, attack, enemyIndex, attackIndex);
+        PreparePendingEnemyAction(session, actionTiming);
+        session.State.BeginEnemyAction(Time.time, actionTiming.TotalDuration, $"{enemy.DisplayName} utilise {attackName}.");
         SendSnapshot(session, session.State.LastMessage);
     }
 
-    private void CompleteEnemyAction(CombatSession session)
+    private void PreparePendingEnemyAction(CombatSession session, CombatActionTiming timing)
     {
-        if (session == null || !session.State.EnemyActionLocked || session.State.Finished)
+        if (session == null)
         {
             return;
         }
 
-        session.State.CompleteEnemyAction();
+        session.PendingEnemyActionImpactAt = Time.time + timing.ImpactDelay;
+        session.PendingEnemyActionResolved = false;
+        session.PendingEnemyActionResultMessage = string.Empty;
+        session.PendingEnemyActionPlayerDefeated = false;
+    }
 
+    private void ResolveEnemyActionImpact(CombatSession session)
+    {
+        if (session == null || session.PendingEnemyActionResolved || session.State.Finished)
+        {
+            return;
+        }
+
+        session.PendingEnemyActionResolved = true;
         CombatRuntimeEnemy enemy = GetActiveEnemy(session);
         if (enemy == null)
         {
-            BeginCombatResolution(session, true, "Victoire.");
+            session.PendingEnemyActionResultMessage = "Victoire.";
             return;
         }
 
@@ -1162,7 +1333,7 @@ public class CombatSessionManager : NetworkBehaviour
             session.State.SetMessage($"{ResolveItemDisplayName(defensiveItem)} encaisse l'attaque.");
         }
 
-        int applied = session.Player.ApplyDamage(finalDamage, "combat");
+        int applied = session.Player != null ? session.Player.ApplyDamage(finalDamage, "combat") : 0;
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: false));
 
         string message = BuildEnemyAttackResultMessage(
@@ -1177,10 +1348,42 @@ public class CombatSessionManager : NetworkBehaviour
             message = $"{message} Prieres: -{Mathf.RoundToInt(reduction * 100f)}%.";
         }
 
+        session.PendingEnemyActionPlayerDefeated = session.Player == null || session.Player.CurrentHp <= 0;
+        session.PendingEnemyActionResultMessage = message;
+        session.State.SetMessage(message);
+        SendSnapshot(session, message);
+    }
+
+    private void CompleteEnemyAction(CombatSession session)
+    {
+        if (session == null || !session.State.EnemyActionLocked || session.State.Finished)
+        {
+            return;
+        }
+
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
+        if (enemy == null)
+        {
+            BeginCombatResolution(session, true, "Victoire.");
+            return;
+        }
+
+        if (!session.PendingEnemyActionResolved)
+        {
+            ResolveEnemyActionImpact(session);
+        }
+
+        session.State.CompleteEnemyAction();
+
+        string message = string.IsNullOrWhiteSpace(session.PendingEnemyActionResultMessage)
+            ? $"{enemy.DisplayName} termine son attaque."
+            : session.PendingEnemyActionResultMessage;
+        bool playerDefeated = session.PendingEnemyActionPlayerDefeated;
         ClearPendingEnemyAttack(session);
         ClearPendingDefensiveItem(session);
+        ClearPendingEnemyAction(session);
 
-        if (session.Player.CurrentHp <= 0)
+        if (playerDefeated)
         {
             BeginCombatResolution(session, false, $"Defaite. {message}");
             return;
@@ -1198,6 +1401,8 @@ public class CombatSessionManager : NetworkBehaviour
 
         ClearPendingEnemyAttack(session);
         ClearPendingDefensiveItem(session);
+        ClearPendingPlayerAction(session);
+        ClearPendingEnemyAction(session);
         float decisionSeconds = turn == CombatTurn.Enemy
             ? Mathf.Max(Mathf.Max(decisionPresentationSeconds, enemyActionDelay), defensiveReactionSeconds)
             : decisionPresentationSeconds;
@@ -1206,18 +1411,37 @@ public class CombatSessionManager : NetworkBehaviour
         SendSnapshot(session, session.State.LastMessage);
     }
 
-    private float PlayPlayerBasicAttackPresentation(CombatSession session)
+    private CombatActionTiming PlayPlayerBasicAttackPresentation(CombatSession session)
     {
         if (session?.Player == null)
         {
-            return DefaultBasicAttackAnimationDuration;
+            return CreateActionTiming(DefaultBasicAttackAnimationDuration);
         }
 
         Animator animator = session.Player.GetComponent<Animator>();
-        float duration = ResolveAnimationDuration(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
+        float animationDuration = ResolveAnimationDuration(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
+        CombatActionMotionPlan motion = BuildCombatActionMotionPlan(
+            session.Player.transform,
+            session.SourceEnemy != null ? session.SourceEnemy.transform : null,
+            animator,
+            BasicAttackAnimationName,
+            CombatAttackRangeType.Melee,
+            CombatAttackMovementMode.Auto,
+            defaultMeleeApproachDistance,
+            animationDuration);
+
         if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
         {
-            duration = PlayBasicAttackAnimationLocally(session.Player);
+            StartCombatActionPresentation(
+                session.Player.transform,
+                session.Player,
+                null,
+                session.SourceEnemy != null ? session.SourceEnemy.transform : null,
+                motion,
+                () =>
+                {
+                    PlayBasicAttackAnimationLocally(session.Player);
+                });
         }
 
         if (IsNetworkSessionActive() &&
@@ -1227,10 +1451,10 @@ public class CombatSessionManager : NetworkBehaviour
             PlayPlayerBasicAttackClientRpc(session.SessionId, BuildClientRpcParams(session.OwnerClientId));
         }
 
-        return Mathf.Max(0.05f, duration);
+        return CreateActionTiming(motion);
     }
 
-    private float PlayEnemyBasicAttackPresentation(
+    private CombatActionTiming PlayEnemyBasicAttackPresentation(
         CombatSession session,
         CombatEnemyAttackDefinition attack,
         int enemyIndex,
@@ -1238,10 +1462,29 @@ public class CombatSessionManager : NetworkBehaviour
     {
         Animator animator = session?.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null;
         string animationName = ResolveEnemyAttackAnimationName(attack);
-        float duration = ResolveAnimationDuration(animator, animationName, DefaultEnemyAttackAnimationDuration);
+        float animationDuration = ResolveAnimationDuration(animator, animationName, DefaultEnemyAttackAnimationDuration);
+        CombatActionMotionPlan motion = BuildCombatActionMotionPlan(
+            session?.SourceEnemy != null ? session.SourceEnemy.transform : null,
+            session?.Player != null ? session.Player.transform : null,
+            animator,
+            animationName,
+            ResolveEnemyAttackRangeType(attack, animationName),
+            ResolveEnemyAttackMovementMode(attack),
+            ResolveEnemyAttackApproachDistance(attack),
+            animationDuration);
+
         if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
         {
-            duration = PlayEnemyBasicAttackAnimationLocally(session, attack);
+            StartCombatActionPresentation(
+                session.SourceEnemy != null ? session.SourceEnemy.transform : null,
+                null,
+                session.SourceEnemy,
+                session.Player != null ? session.Player.transform : null,
+                motion,
+                () =>
+                {
+                    PlayEnemyBasicAttackAnimationLocally(session, attack);
+                });
         }
 
         if (IsNetworkSessionActive() &&
@@ -1251,7 +1494,7 @@ public class CombatSessionManager : NetworkBehaviour
             PlayEnemyBasicAttackClientRpc(session.SessionId, enemyIndex, attackIndex, BuildClientRpcParams(session.OwnerClientId));
         }
 
-        return Mathf.Max(0.05f, duration);
+        return CreateActionTiming(motion);
     }
 
     [ClientRpc]
@@ -1267,7 +1510,28 @@ public class CombatSessionManager : NetworkBehaviour
         SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
         if (controller != null)
         {
-            PlayBasicAttackAnimationLocally(controller);
+            Transform target = ResolveLocalCombatEnemyTransform(localCombatPresentation);
+            Animator animator = controller.GetComponent<Animator>();
+            float animationDuration = ResolveAnimationDuration(animator, BasicAttackAnimationName, DefaultBasicAttackAnimationDuration);
+            CombatActionMotionPlan motion = BuildCombatActionMotionPlan(
+                controller.transform,
+                target,
+                animator,
+                BasicAttackAnimationName,
+                CombatAttackRangeType.Melee,
+                CombatAttackMovementMode.Auto,
+                defaultMeleeApproachDistance,
+                animationDuration);
+            StartCombatActionPresentation(
+                controller.transform,
+                controller,
+                null,
+                target,
+                motion,
+                () =>
+                {
+                    PlayBasicAttackAnimationLocally(controller);
+                });
         }
     }
 
@@ -1285,7 +1549,7 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        PlayEnemyBasicAttackAnimationLocally(sessionId, enemyIndex, attackIndex);
+        PlayEnemyBasicAttackPresentationLocally(sessionId, enemyIndex, attackIndex);
     }
 
     private void BeginCombatResolution(CombatSession session, bool playerVictory, string message)
@@ -1371,6 +1635,7 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        StopCombatActionPresentations(session);
         session.State.Finish();
         SendSnapshot(session, message);
 
@@ -1812,6 +2077,32 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEnemyIndex = -1;
         session.PendingEnemyAttackIndex = -1;
         session.PendingEnemyAttack = null;
+    }
+
+    private static void ClearPendingPlayerAction(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.PendingPlayerActionImpactAt = 0f;
+        session.PendingPlayerActionResolved = false;
+        session.PendingPlayerActionResultMessage = string.Empty;
+        session.PendingPlayerActionVictory = false;
+    }
+
+    private static void ClearPendingEnemyAction(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.PendingEnemyActionImpactAt = 0f;
+        session.PendingEnemyActionResolved = false;
+        session.PendingEnemyActionResultMessage = string.Empty;
+        session.PendingEnemyActionPlayerDefeated = false;
     }
 
     private static void ClearPendingDefensiveItem(CombatSession session)
@@ -2599,6 +2890,416 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
+    private CombatActionTiming CreateActionTiming(float animationDuration)
+    {
+        float duration = Mathf.Max(0.05f, animationDuration);
+        float impactDelay = duration * Mathf.Clamp01(actionImpactNormalizedTime);
+        return new CombatActionTiming(impactDelay, duration);
+    }
+
+    private CombatActionTiming CreateActionTiming(CombatActionMotionPlan motion)
+    {
+        return new CombatActionTiming(
+            motion.ImpactDelay(actionImpactNormalizedTime),
+            motion.TotalDuration());
+    }
+
+    private CombatActionMotionPlan BuildCombatActionMotionPlan(
+        Transform actor,
+        Transform target,
+        Animator animator,
+        string animationName,
+        CombatAttackRangeType rangeType,
+        CombatAttackMovementMode movementMode,
+        float desiredDistance,
+        float animationDuration)
+    {
+        CombatActionMotionPlan plan = new CombatActionMotionPlan
+        {
+            StartPosition = actor != null ? actor.position : Vector3.zero,
+            StartRotation = actor != null ? actor.rotation : Quaternion.identity,
+            ApproachPosition = actor != null ? actor.position : Vector3.zero,
+            ApproachRotation = actor != null ? actor.rotation : Quaternion.identity,
+            AttackRotation = actor != null ? actor.rotation : Quaternion.identity,
+            AttackDuration = Mathf.Max(0.05f, animationDuration)
+        };
+
+        if (actor == null || target == null)
+        {
+            return plan;
+        }
+
+        plan.AttackRotation = ResolveFacingRotation(actor.position, target.position);
+        bool isMelee = IsMeleeAttack(rangeType, animationName);
+        bool animationIncludesMovement = DoesAttackAnimationIncludeMovement(animator, animationName, movementMode);
+
+        if (!isMelee || movementMode == CombatAttackMovementMode.None)
+        {
+            return plan;
+        }
+
+        if (animationIncludesMovement)
+        {
+            plan.ReturnToStart = true;
+            plan.ReturnDuration = EstimateActionMoveDuration(Mathf.Max(0.1f, desiredDistance > 0f ? desiredDistance : defaultMeleeApproachDistance));
+            return plan;
+        }
+
+        if (!TryResolveApproachDestination(actor.position, target.position, desiredDistance, out Vector3 approachPosition))
+        {
+            return plan;
+        }
+
+        float sqrDistanceToApproach = (approachPosition - actor.position).sqrMagnitude;
+        if (sqrDistanceToApproach <= ActionAlreadyInRangePadding * ActionAlreadyInRangePadding)
+        {
+            return plan;
+        }
+
+        plan.UseScriptedApproach = true;
+        plan.ReturnToStart = true;
+        plan.ApproachPosition = approachPosition;
+        plan.ApproachRotation = ResolveFacingRotation(approachPosition, target.position);
+        plan.ApproachDuration = EstimateActionMoveDuration(actor.position, approachPosition);
+        plan.ReturnDuration = EstimateActionMoveDuration(approachPosition, actor.position);
+        return plan;
+    }
+
+    private bool TryResolveApproachDestination(Vector3 actorPosition, Vector3 targetPosition, float desiredDistance, out Vector3 destination)
+    {
+        destination = actorPosition;
+        float resolvedDistance = Mathf.Max(0.1f, desiredDistance > 0f ? desiredDistance : defaultMeleeApproachDistance);
+        Vector3 directionFromTarget = Vector3.ProjectOnPlane(actorPosition - targetPosition, Vector3.up);
+        if (directionFromTarget.sqrMagnitude <= 0.0001f)
+        {
+            directionFromTarget = Vector3.ProjectOnPlane(-transform.forward, Vector3.up);
+        }
+
+        if (directionFromTarget.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        destination = targetPosition + directionFromTarget.normalized * resolvedDistance;
+        destination.y = actorPosition.y;
+        return true;
+    }
+
+    private float EstimateActionMoveDuration(Vector3 from, Vector3 to)
+    {
+        return EstimateActionMoveDuration(Vector3.Distance(from, to));
+    }
+
+    private float EstimateActionMoveDuration(float distance)
+    {
+        if (distance <= ActionMoveCompleteThreshold)
+        {
+            return 0f;
+        }
+
+        float speed = Mathf.Max(0.1f, actionPresentationMoveSpeed);
+        return Mathf.Clamp(distance / speed, 0.05f, Mathf.Max(0.05f, maxActionPresentationMoveSeconds));
+    }
+
+    private static bool IsMeleeAttack(CombatAttackRangeType rangeType, string animationName)
+    {
+        if (rangeType == CombatAttackRangeType.Melee)
+        {
+            return true;
+        }
+
+        if (rangeType == CombatAttackRangeType.Ranged || rangeType == CombatAttackRangeType.Support)
+        {
+            return false;
+        }
+
+        return !ContainsAnyNameHint(animationName, RangedAttackNameHints) &&
+               !ContainsAnyNameHint(animationName, SupportAttackNameHints);
+    }
+
+    private static bool DoesAttackAnimationIncludeMovement(
+        Animator animator,
+        string animationName,
+        CombatAttackMovementMode movementMode)
+    {
+        if (movementMode == CombatAttackMovementMode.ScriptedApproach)
+        {
+            return false;
+        }
+
+        if (movementMode == CombatAttackMovementMode.AnimationIncludesMovement)
+        {
+            return true;
+        }
+
+        return animator != null && animator.applyRootMotion ||
+               ContainsAnyNameHint(animationName, MovementAnimationNameHints);
+    }
+
+    private static CombatAttackRangeType ResolveEnemyAttackRangeType(CombatEnemyAttackDefinition attack, string animationName)
+    {
+        if (attack == null)
+        {
+            return CombatAttackRangeType.Melee;
+        }
+
+        if (attack.rangeType != CombatAttackRangeType.Auto)
+        {
+            return attack.rangeType;
+        }
+
+        string combinedName = $"{attack.displayName} {animationName}";
+        if (ContainsAnyNameHint(combinedName, SupportAttackNameHints))
+        {
+            return CombatAttackRangeType.Support;
+        }
+
+        if (ContainsAnyNameHint(combinedName, RangedAttackNameHints))
+        {
+            return CombatAttackRangeType.Ranged;
+        }
+
+        return CombatAttackRangeType.Melee;
+    }
+
+    private static CombatAttackMovementMode ResolveEnemyAttackMovementMode(CombatEnemyAttackDefinition attack)
+    {
+        return attack != null ? attack.movementMode : CombatAttackMovementMode.Auto;
+    }
+
+    private float ResolveEnemyAttackApproachDistance(CombatEnemyAttackDefinition attack)
+    {
+        return Mathf.Max(0.1f, attack != null && attack.approachDistance > 0f
+            ? attack.approachDistance
+            : defaultMeleeApproachDistance);
+    }
+
+    private static bool ContainsAnyNameHint(string value, string[] hints)
+    {
+        if (string.IsNullOrWhiteSpace(value) || hints == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < hints.Length; i++)
+        {
+            string hint = hints[i];
+            if (!string.IsNullOrWhiteSpace(hint) &&
+                value.IndexOf(hint, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void StartCombatActionPresentation(
+        Transform actor,
+        SquadCharacterController playerController,
+        CombatAggroEnemy enemyController,
+        Transform target,
+        CombatActionMotionPlan motion,
+        Action playAttack)
+    {
+        if (actor == null)
+        {
+            playAttack?.Invoke();
+            return;
+        }
+
+        StopCombatActionPresentation(actor);
+        Coroutine routine = StartCoroutine(PlayCombatActionPresentationRoutine(
+            actor,
+            playerController,
+            enemyController,
+            target,
+            motion,
+            playAttack));
+        actionPresentationCoroutinesByActor[actor] = routine;
+    }
+
+    private IEnumerator PlayCombatActionPresentationRoutine(
+        Transform actor,
+        SquadCharacterController playerController,
+        CombatAggroEnemy enemyController,
+        Transform target,
+        CombatActionMotionPlan motion,
+        Action playAttack)
+    {
+        if (actor == null)
+        {
+            yield break;
+        }
+
+        if (motion.UseScriptedApproach)
+        {
+            yield return MoveCombatActionActorRoutine(
+                actor,
+                playerController,
+                enemyController,
+                target,
+                motion.StartPosition,
+                motion.StartRotation,
+                motion.ApproachPosition,
+                motion.ApproachRotation,
+                motion.ApproachDuration);
+        }
+        else
+        {
+            MoveCombatActionActorTo(actor, playerController, enemyController, actor.position, motion.AttackRotation);
+        }
+
+        playAttack?.Invoke();
+
+        float elapsed = 0f;
+        while (actor != null && elapsed < motion.AttackDuration)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (actor != null && motion.ReturnToStart)
+        {
+            float sqrDisplacement = (actor.position - motion.StartPosition).sqrMagnitude;
+            if (motion.UseScriptedApproach ||
+                sqrDisplacement > ActionReturnDisplacementThreshold * ActionReturnDisplacementThreshold)
+            {
+                yield return MoveCombatActionActorRoutine(
+                    actor,
+                    playerController,
+                    enemyController,
+                    target,
+                    actor.position,
+                    actor.rotation,
+                    motion.StartPosition,
+                    motion.StartRotation,
+                    motion.ReturnDuration);
+            }
+        }
+
+        if (actor != null)
+        {
+            actionPresentationCoroutinesByActor.Remove(actor);
+        }
+    }
+
+    private IEnumerator MoveCombatActionActorRoutine(
+        Transform actor,
+        SquadCharacterController playerController,
+        CombatAggroEnemy enemyController,
+        Transform target,
+        Vector3 start,
+        Quaternion startRotation,
+        Vector3 destination,
+        Quaternion destinationRotation,
+        float duration)
+    {
+        if (actor == null)
+        {
+            yield break;
+        }
+
+        if (duration <= 0f || (destination - start).sqrMagnitude <= ActionMoveCompleteThreshold * ActionMoveCompleteThreshold)
+        {
+            MoveCombatActionActorTo(actor, playerController, enemyController, destination, destinationRotation);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (actor != null && elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+            Vector3 position = Vector3.Lerp(start, destination, t);
+            Quaternion rotation = ResolvePresentationFacingRotation(position, target, destinationRotation);
+            MoveCombatActionActorTo(actor, playerController, enemyController, position, rotation);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (actor != null)
+        {
+            MoveCombatActionActorTo(actor, playerController, enemyController, destination, destinationRotation);
+        }
+    }
+
+    private static Quaternion ResolvePresentationFacingRotation(Vector3 actorPosition, Transform target, Quaternion fallbackRotation)
+    {
+        if (target == null)
+        {
+            return fallbackRotation;
+        }
+
+        return ResolveFacingRotation(actorPosition, target.position);
+    }
+
+    private static void MoveCombatActionActorTo(
+        Transform actor,
+        SquadCharacterController playerController,
+        CombatAggroEnemy enemyController,
+        Vector3 position,
+        Quaternion rotation)
+    {
+        if (playerController != null)
+        {
+            MoveCharacterTo(playerController, position, rotation);
+            return;
+        }
+
+        if (enemyController != null)
+        {
+            MoveCombatAggroEnemyTo(enemyController, position, rotation);
+            return;
+        }
+
+        MoveTransformTo(actor, position, rotation);
+    }
+
+    private void StopCombatActionPresentation(Transform actor)
+    {
+        if (actor == null)
+        {
+            return;
+        }
+
+        if (!actionPresentationCoroutinesByActor.TryGetValue(actor, out Coroutine routine) || routine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(routine);
+        actionPresentationCoroutinesByActor.Remove(actor);
+    }
+
+    private void StopCombatActionPresentations(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        StopCombatActionPresentation(session.Player != null ? session.Player.transform : null);
+        StopCombatActionPresentation(session.SourceEnemy != null ? session.SourceEnemy.transform : null);
+    }
+
+    private void StopAllCombatActionPresentations()
+    {
+        if (actionPresentationCoroutinesByActor.Count == 0)
+        {
+            return;
+        }
+
+        foreach (Coroutine routine in actionPresentationCoroutinesByActor.Values)
+        {
+            if (routine != null)
+            {
+                StopCoroutine(routine);
+            }
+        }
+
+        actionPresentationCoroutinesByActor.Clear();
+    }
+
     private float PlayBasicAttackAnimationLocally(SquadCharacterController controller)
     {
         if (controller != null)
@@ -2629,26 +3330,46 @@ public class CombatSessionManager : NetworkBehaviour
             DefaultEnemyAttackAnimationDuration);
     }
 
-    private float PlayEnemyBasicAttackAnimationLocally(string sessionId, int enemyIndex, int attackIndex)
+    private void PlayEnemyBasicAttackPresentationLocally(string sessionId, int enemyIndex, int attackIndex)
     {
         if (string.IsNullOrWhiteSpace(sessionId))
         {
-            return DefaultEnemyAttackAnimationDuration;
+            return;
         }
 
         if (!localEnemyPresentationsBySessionId.TryGetValue(sessionId, out LocalEnemyPresentation presentation) ||
             presentation?.Enemy == null)
         {
-            return DefaultEnemyAttackAnimationDuration;
+            return;
         }
 
         CombatEnemyAttackDefinition attack = ResolvePresentationEnemyAttack(presentation.Enemy, enemyIndex, attackIndex);
-        PlayActionAudio(ActionAudioCue.CombatAttack, presentation.Enemy.transform.position);
-        PlayEnemyAttackVfx(presentation.Enemy.transform, attack);
-        return PlayNamedAnimation(
-            presentation.Enemy.ResolveAnimator(),
-            ResolveEnemyAttackAnimationName(attack),
-            DefaultEnemyAttackAnimationDuration);
+        Animator animator = presentation.Enemy.ResolveAnimator();
+        string animationName = ResolveEnemyAttackAnimationName(attack);
+        float animationDuration = ResolveAnimationDuration(animator, animationName, DefaultEnemyAttackAnimationDuration);
+        Transform target = ResolveControllerForClient(ResolveLocalClientId())?.transform;
+        CombatActionMotionPlan motion = BuildCombatActionMotionPlan(
+            presentation.Enemy.transform,
+            target,
+            animator,
+            animationName,
+            ResolveEnemyAttackRangeType(attack, animationName),
+            ResolveEnemyAttackMovementMode(attack),
+            ResolveEnemyAttackApproachDistance(attack),
+            animationDuration);
+
+        StartCombatActionPresentation(
+            presentation.Enemy.transform,
+            null,
+            presentation.Enemy,
+            target,
+            motion,
+            () =>
+            {
+                PlayActionAudio(ActionAudioCue.CombatAttack, presentation.Enemy.transform.position);
+                PlayEnemyAttackVfx(presentation.Enemy.transform, attack);
+                PlayNamedAnimation(animator, animationName, DefaultEnemyAttackAnimationDuration);
+            });
     }
 
     private CombatEnemyAttackDefinition ResolvePresentationEnemyAttack(

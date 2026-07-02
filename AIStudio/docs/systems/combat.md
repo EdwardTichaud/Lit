@@ -31,6 +31,13 @@ résolution dans le monde.
 7. La résolution restaure les positions, la caméra et le mouvement, puis applique
    le résultat à l’ennemi monde.
 
+Pendant une attaque de mêlée, la présentation peut déplacer temporairement
+l'attaquant vers sa cible puis le ramener à sa position de combat. Ce mouvement
+reste cosmétique : l'impact est toujours appliqué par `CombatSessionManager` à
+un timing autoritaire, et les attaques distance/support restent sur place. Les
+attaques dont l'animation embarque déjà le déplacement ne reçoivent pas
+d'approche scriptée supplémentaire.
+
 La musique de combat peut aussi être demandée localement par proximité d'un
 `CombatAggroEnemy`, avant qu'une session tour par tour ne démarre réellement.
 Cette demande reste cosmétique et utilise l'override musical de
@@ -52,3 +59,5 @@ hystérésis quand le joueur local sort assez loin du trigger d'aggro.
 - Le joueur local doit être résolu via `LocalPlayerContext`; éviter les fallbacks
   arbitraires qui peuvent viser le mauvais personnage en Netcode.
 - Tester victoire, défaite, déconnexion et destruction pendant une transition.
+- Les approches d'attaque doivent toujours restaurer la position de combat en
+  fin d'action ou lors d'un abort/despawn.

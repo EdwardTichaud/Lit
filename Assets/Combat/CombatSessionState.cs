@@ -148,11 +148,15 @@ public sealed class CombatSessionState
     /// <summary>
     /// Recupere puis vide les degats de l'action joueur en attente.
     /// </summary>
-    public int ConsumePendingPlayerAttackDamage()
+    public int ConsumePendingPlayerAttackDamage(bool clearActionTimer = true)
     {
         int damage = Mathf.Max(1, PendingPlayerAttackDamage);
         PendingPlayerAttackDamage = 0;
-        PlayerActionEndsAt = 0f;
+        if (clearActionTimer)
+        {
+            PlayerActionEndsAt = 0f;
+        }
+
         return damage;
     }
 
