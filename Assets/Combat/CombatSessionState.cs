@@ -126,6 +126,27 @@ public sealed class CombatSessionState
     }
 
     /// <summary>
+    /// Ouvre directement un tour actif court, sans presentation de decision intermediaire.
+    /// </summary>
+    public void BeginActiveTurn(CombatTurn turn, float now, float turnDurationSeconds, string message)
+    {
+        if (Finished || Resolving)
+        {
+            return;
+        }
+
+        Turn = turn;
+        Phase = CombatSessionPhase.TurnActive;
+        DecisionEndsAt = 0f;
+        TurnEndsAt = now + Mathf.Max(0.25f, turnDurationSeconds);
+        NextEnemyActionAt = float.PositiveInfinity;
+        PlayerActionEndsAt = 0f;
+        EnemyActionEndsAt = 0f;
+        PendingPlayerAttackDamage = 0;
+        LastMessage = message ?? string.Empty;
+    }
+
+    /// <summary>
     /// Passe en sous-phase d'action joueur avant l'application des degats.
     /// </summary>
     public void BeginPlayerAction(int pendingDamage, float now, float actionDurationSeconds, string message)

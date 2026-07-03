@@ -28,6 +28,7 @@ public static class GameplayRuntimeReset
         ReadableContentRuntime.ResetRuntimeState(resolvedReason);
         Zone.ResetRuntimeState();
         DissolveRevealSystem.ResetRuntimeState();
+        TimeManager.Instance?.RestoreCombatTime();
 
         if (NetcodePlayerSpawner.Instance != null)
         {

@@ -242,7 +242,7 @@ public class CombatHudController : MonoBehaviour
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
         UpdateCombatInputFocus(visible);
-        SetScenePanelVisibility(visible, CanChoosePlayerAction());
+        SetScenePanelVisibility(visible, CanShowCombatActionPrompt());
         ApplySnapshotToUi(
             turn,
             phase,
@@ -290,6 +290,13 @@ public class CombatHudController : MonoBehaviour
 
     private void OnInteract(InputAction.CallbackContext context)
     {
+        if (CanSendCounter())
+        {
+            LocalInputRouter.ConsumeInteract();
+            CombatSessionManager.Instance?.RequestLocalCounter();
+            return;
+        }
+
         if (!CanSendPlayerAction())
         {
             return;
@@ -301,6 +308,12 @@ public class CombatHudController : MonoBehaviour
 
     private void OnRightShoulder(InputAction.CallbackContext context)
     {
+        if (CanSendCounter())
+        {
+            CombatSessionManager.Instance?.RequestLocalCounter();
+            return;
+        }
+
         if (!CanSendPlayerAction())
         {
             return;
@@ -311,6 +324,12 @@ public class CombatHudController : MonoBehaviour
 
     private void OnReturn(InputAction.CallbackContext context)
     {
+        if (CanSendDefense())
+        {
+            CombatSessionManager.Instance?.RequestLocalDefense();
+            return;
+        }
+
         if (!CanSendPlayerAction())
         {
             return;
@@ -325,7 +344,30 @@ public class CombatHudController : MonoBehaviour
             && currentTurn == TurnState.Player
             && currentPhase == CombatSessionPhase.TurnActive
             && !playerActionLocked
-            && (!InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
+            && HasCombatInputAccess();
+    }
+
+    private bool CanSendCounter()
+    {
+        return visible
+            && currentTurn == TurnState.Enemy
+            && currentPhase == CombatSessionPhase.Decision
+            && !playerActionLocked
+            && HasCombatInputAccess();
+    }
+
+    private bool CanSendDefense()
+    {
+        return visible
+            && currentTurn == TurnState.Enemy
+            && currentPhase == CombatSessionPhase.Decision
+            && !playerActionLocked
+            && HasCombatInputAccess();
+    }
+
+    private bool HasCombatInputAccess()
+    {
+        return (!InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
             && CombatSessionManager.Instance != null;
     }
 
@@ -335,6 +377,19 @@ public class CombatHudController : MonoBehaviour
             && currentTurn == TurnState.Player
             && currentPhase == CombatSessionPhase.TurnActive
             && !playerActionLocked;
+    }
+
+    private bool CanChooseEncounterReaction()
+    {
+        return visible
+            && currentTurn == TurnState.Enemy
+            && currentPhase == CombatSessionPhase.Decision
+            && !playerActionLocked;
+    }
+
+    private bool CanShowCombatActionPrompt()
+    {
+        return CanChoosePlayerAction() || CanChooseEncounterReaction();
     }
 
     private void UpdateCombatInputFocus(bool shouldOwnFocus)
@@ -543,7 +598,7 @@ public class CombatHudController : MonoBehaviour
                 : "Soutien: aucune priere active");
         SetText(ActiveMessageText, string.IsNullOrWhiteSpace(message) ? "Combat en cours." : message);
         SetText(ActiveActionsText, ResolveActionsLabel(turn, phase));
-        SetText(baseAttackText, playerActionLocked ? "En cours" : "Attaquer");
+        SetText(baseAttackText, ResolvePrimaryActionLabel(turn, phase));
         SetFill(ActivePlayerHpFillImage, playerHp, playerMaxHp);
         SetFill(ActiveEnemyHpFillImage, enemyHp, enemyMaxHp);
         UpdateTimerText();
@@ -555,20 +610,20 @@ public class CombatHudController : MonoBehaviour
         {
             if (phase == CombatSessionPhase.Decision)
             {
-                return "Tour joueur - decision";
+                return "Fenetre d'attaque - preparation";
             }
 
-            return playerActionLocked ? "Tour joueur - action en cours" : "Tour joueur";
+            return playerActionLocked ? "Attaque en cours" : "Fenetre d'attaque";
         }
 
         if (turn == TurnState.Enemy)
         {
             if (phase == CombatSessionPhase.Decision)
             {
-                return "Reaction defensive";
+                return "Fenetre de reaction";
             }
 
-            return phase == CombatSessionPhase.EnemyAction ? "Tour ennemi - action en cours" : "Tour ennemi";
+            return phase == CombatSessionPhase.EnemyAction ? "Attaque ennemie" : "Rencontre ennemie";
         }
 
         return "Resolution";
@@ -580,12 +635,12 @@ public class CombatHudController : MonoBehaviour
         {
             if (phase == CombatSessionPhase.Decision)
             {
-                return "Inventaire: choisir un item defensif.";
+                return "Interagir/RB: contre | Retour: defense | aucune reaction: mort.";
             }
 
             return phase == CombatSessionPhase.EnemyAction
                 ? "L'ennemi agit."
-                : "L'ennemi prepare son action.";
+                : "L'ennemi attaque en premier.";
         }
 
         if (phase == CombatSessionPhase.Decision)
@@ -595,10 +650,25 @@ public class CombatHudController : MonoBehaviour
 
         if (playerActionLocked)
         {
-            return "Attaque de base en cours.";
+            return "Attaque en cours.";
         }
 
-        return "Interagir/RB: attaquer | Inventaire: utiliser un item | Retour: passer";
+        return "Interagir/RB: attaque decisive | Retour: abandonner";
+    }
+
+    private string ResolvePrimaryActionLabel(TurnState turn, CombatSessionPhase phase)
+    {
+        if (turn == TurnState.Enemy && phase == CombatSessionPhase.Decision)
+        {
+            return "Contrer / Defendre";
+        }
+
+        if (turn == TurnState.Player && phase == CombatSessionPhase.TurnActive)
+        {
+            return playerActionLocked ? "En cours" : "Attaquer";
+        }
+
+        return playerActionLocked ? "En cours" : string.Empty;
     }
 
     private TextMeshProUGUI ActiveTitleText => titleText != null ? titleText : runtimeTitleText;
