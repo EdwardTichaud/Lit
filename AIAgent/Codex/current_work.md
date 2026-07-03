@@ -15,6 +15,10 @@ Le nouveau flux ne depend plus d'une application Python, d'un environnement
 virtuel ou d'un appel LLM local. Les prompts sont prepares manuellement depuis
 `AIAgent/prompts/codex_task.md`.
 
+Le combat tour par tour pilote maintenant la camera locale par phase via
+`CombatCameraPresentationController`; pendant le combat, Opsive est suspendu
+comme driver camera spatial puis restaure a la sortie.
+
 ## Contraintes
 
 - Garder `Codex/AGENTS.md` et `Codex/current_work.md` courts.

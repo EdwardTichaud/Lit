@@ -34,6 +34,11 @@ La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
 `LocalPlayerContext`. Les anciens pivots `CameraAnchor` / `YawPivot` /
 `PitchPivot` du système legacy ne doivent pas piloter la `Main Camera`.
 
+Exception : en combat, `CombatSessionManager` devient la source de phase camera.
+`CombatCameraPresentationController` suspend temporairement le driver camera
+Opsive et pilote directement la `Main Camera`, puis restaure Opsive a la sortie
+du combat.
+
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
 franchissables lancent un court traversal scripté avec trigger Animator

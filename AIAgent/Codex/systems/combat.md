@@ -11,7 +11,8 @@ résolution dans le monde.
 - `CombatSessionManager` : autorité, sessions, tours, actions et RPC.
 - `CombatSessionState`, `CombatTurn`, `CombatRuntimeEnemy` : état runtime.
 - `CombatHudController` : commandes et affichage local.
-- `CombatCameraPresentationController` : cadrage caméra local joueur/ennemi.
+- `CombatCameraPresentationController` : pilote camera cinematographique locale
+  par phase de combat.
 - `CombatTransitionController` : transition visuelle/audio.
 - `CombatHealth` : santé persistante des ennemis de scène.
 
@@ -30,6 +31,14 @@ résolution dans le monde.
    autorité et synchronise les clients.
 7. La résolution restaure les positions, la caméra et le mouvement, puis applique
    le résultat à l’ennemi monde.
+
+Pendant une session, la camera locale de combat est la seule source de pilotage
+spatial de la `Main Camera`. `CombatCameraPresentationController`, cree par
+`CombatSessionManager`, lit uniquement le contexte local du manager, suspend les
+pilotes camera Opsive (`CameraController`, handler et binder), applique un plan
+de camera par phase, puis restaure Opsive a la sortie. La phase `EnemyAction`
+utilise un cadrage cinematographique proche du joueur, un FOV plus large, un
+focus biaise vers l'ennemi et une respiration lente pour suivre l'attaque.
 
 Pendant une attaque de mêlée, la présentation peut déplacer temporairement
 l'attaquant vers sa cible puis le ramener à sa position de combat. Ce mouvement
