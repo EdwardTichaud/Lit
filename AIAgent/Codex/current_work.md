@@ -22,6 +22,10 @@ Le ralenti de reaction ennemie entre rapidement, reste actif pendant l'action
 ennemie, et evite une vitesse trop basse pour conserver un rendu dynamique.
 Les profils de temps combat synchronisent aussi les mouvements scriptes de
 presentation et declenchent un court hit-stop local aux impacts.
+Un composant `CombatAnimationEvents` permet aux clips d'attaque de declencher
+un ralenti local, une ruee vers la victime et un retour a la pose initiale.
+`Griffe` du Juggernaut est maintenant pilotee par son clip : le manager lance
+seulement `Attack_Griffe`, sans saut/dash/audio/VFX specifiques codes.
 
 ## Contraintes
 

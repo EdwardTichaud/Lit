@@ -183,13 +183,93 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 0e4efc510b6b0c94cb63cd144318ac50, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9175183284145347147}
   m_SourcePrefab: {fileID: 100100000, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
 --- !u!4 &7136339443753286939 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
   m_PrefabInstance: {fileID: 7242887263535274736}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7512723562377357217 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
+  m_PrefabInstance: {fileID: 7242887263535274736}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9175183284145347147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7512723562377357217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4542b248a0941cb91396c00e209444b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatAnimationEvents
+  actorRoot: {fileID: 158977838910440850}
+  victimOverride: {fileID: 0}
+  slowedTimeScale: 0.2
+  slowBlendSeconds: 1
+  slowBlendCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  victimStopDistance: 1.15
+  moveToVictimSeconds: 0.2
+  returnSeconds: 0.2
+  movementCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  keepActorHeight: 1

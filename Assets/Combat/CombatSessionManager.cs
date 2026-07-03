@@ -31,10 +31,6 @@ public class CombatSessionManager : NetworkBehaviour
     private const float DefaultEnemyAttackAnimationDuration = 0.75f;
     private const float DefaultDeathAnimationDuration = 1f;
     private const float PostDeathReturnDelaySeconds = 3f;
-    private const float JuggernautGriffeOpeningJumpSeconds = 0.35f;
-    private const float JuggernautGriffeOpeningJumpHeight = 1.15f;
-    private const float JuggernautGriffeOpeningTimeScale = 0.3f;
-    private const float JuggernautGriffeDashSeconds = 0.2f;
     private const float LocalEnemyLookupMaxDistance = 6f;
     private const float ActionMoveCompleteThreshold = 0.03f;
     private const float ActionReturnDisplacementThreshold = 0.12f;
@@ -1474,13 +1470,11 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEnemyAttack = attack;
 
         string attackName = ResolveEnemyAttackDisplayName(attack);
-        bool startEnemyAttackImmediately = session.PendingEncounterReaction != EncounterReactionChoice.None;
         CombatActionTiming actionTiming = PlayEnemyBasicAttackPresentation(
             session,
             attack,
             enemyIndex,
-            attackIndex,
-            startEnemyAttackImmediately);
+            attackIndex);
         if (session.PendingEncounterReaction == EncounterReactionChoice.Defend)
         {
             PlayPlayerDefensePresentation(session);
@@ -1768,45 +1762,35 @@ public class CombatSessionManager : NetworkBehaviour
         CombatSession session,
         CombatEnemyAttackDefinition attack,
         int enemyIndex,
-        int attackIndex,
-        bool startAttackImmediately)
+        int attackIndex)
     {
         Animator animator = session?.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null;
         string animationName = ResolveEnemyPresentationAnimationName(attack, animator);
         float animationDuration = ResolveAnimationDuration(animator, animationName, DefaultEnemyAttackAnimationDuration);
-        CombatActionMotionPlan motion = BuildCombatActionMotionPlan(
-            session?.SourceEnemy != null ? session.SourceEnemy.transform : null,
-            session?.Player != null ? session.Player.transform : null,
-            animator,
-            animationName,
-            ResolveEnemyAttackRangeType(attack, animationName),
-            ResolveEnemyAttackMovementMode(attack),
-            ResolveEnemyAttackApproachDistance(attack),
-            animationDuration);
-        bool useJuggernautGriffePresentation = IsJuggernautGriffeAttack(attack, animator);
-        if (useJuggernautGriffePresentation)
-        {
-            motion = ConfigureJuggernautGriffeMotion(motion);
-        }
+        bool useAnimationEventPresentation = IsJuggernautGriffeAttack(attack, animator);
+        CombatActionMotionPlan motion = useAnimationEventPresentation
+            ? default
+            : BuildCombatActionMotionPlan(
+                session?.SourceEnemy != null ? session.SourceEnemy.transform : null,
+                session?.Player != null ? session.Player.transform : null,
+                animator,
+                animationName,
+                ResolveEnemyAttackRangeType(attack, animationName),
+                ResolveEnemyAttackMovementMode(attack),
+                ResolveEnemyAttackApproachDistance(attack),
+                animationDuration);
 
         if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
         {
             Transform actor = session.SourceEnemy != null ? session.SourceEnemy.transform : null;
             Transform target = session.Player != null ? session.Player.transform : null;
-            Action playAttack = () =>
-            {
-                PlayEnemyBasicAttackAnimationLocally(session, attack, animationName);
-            };
+            Action playAttack = useAnimationEventPresentation
+                ? () => PlayNamedAnimation(animator, animationName, DefaultEnemyAttackAnimationDuration)
+                : () => PlayEnemyBasicAttackAnimationLocally(session, attack, animationName);
 
-            if (useJuggernautGriffePresentation)
+            if (useAnimationEventPresentation)
             {
-                StartJuggernautGriffePresentation(
-                    actor,
-                    session.SourceEnemy,
-                    target,
-                    motion,
-                    startAttackImmediately,
-                    playAttack);
+                playAttack();
             }
             else
             {
@@ -1828,12 +1812,11 @@ public class CombatSessionManager : NetworkBehaviour
                 session.SessionId,
                 enemyIndex,
                 attackIndex,
-                startAttackImmediately,
                 BuildClientRpcParams(session.OwnerClientId));
         }
 
-        CombatActionTiming timing = useJuggernautGriffePresentation
-            ? CreateJuggernautGriffeActionTiming(motion, startAttackImmediately)
+        CombatActionTiming timing = useAnimationEventPresentation
+            ? CreateActionTiming(animationDuration)
             : CreateActionTiming(motion);
         return ApplyCombatTimeProfile(timing, TimeManager.CombatPresentationTimeProfile.EnemyAction);
     }
@@ -1935,7 +1918,6 @@ public class CombatSessionManager : NetworkBehaviour
         string sessionId,
         int enemyIndex,
         int attackIndex,
-        bool startAttackImmediately,
         ClientRpcParams rpcParams = default)
     {
         if (IsServer ||
@@ -1945,7 +1927,7 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        PlayEnemyBasicAttackPresentationLocally(sessionId, enemyIndex, attackIndex, startAttackImmediately);
+        PlayEnemyBasicAttackPresentationLocally(sessionId, enemyIndex, attackIndex);
     }
 
     private void BeginCombatResolution(CombatSession session, bool playerVictory, string message)
@@ -3394,32 +3376,6 @@ public class CombatSessionManager : NetworkBehaviour
             TimeManager.EstimateCombatPresentationDuration(timing.TotalDuration, profile));
     }
 
-    private CombatActionTiming CreateJuggernautGriffeActionTiming(CombatActionMotionPlan motion, bool startAttackImmediately)
-    {
-        float openingDelay = startAttackImmediately ? 0f : JuggernautGriffeOpeningJumpSeconds;
-        float attackDuration = Mathf.Max(0.05f, motion.AttackDuration);
-        float dashDuration = motion.UseScriptedApproach ? Mathf.Max(0.05f, motion.ApproachDuration) : 0f;
-        float impactDelay = openingDelay + Mathf.Max(dashDuration, attackDuration * Mathf.Clamp01(actionImpactNormalizedTime));
-        float totalDuration = openingDelay + Mathf.Max(dashDuration, attackDuration) + Mathf.Max(0f, motion.ReturnDuration);
-        return new CombatActionTiming(impactDelay, totalDuration);
-    }
-
-    private CombatActionMotionPlan ConfigureJuggernautGriffeMotion(CombatActionMotionPlan motion)
-    {
-        motion.ReturnToStart = true;
-        if (motion.UseScriptedApproach)
-        {
-            motion.ApproachDuration = JuggernautGriffeDashSeconds;
-        }
-
-        if (motion.ReturnDuration <= 0f)
-        {
-            motion.ReturnDuration = JuggernautGriffeDashSeconds;
-        }
-
-        return motion;
-    }
-
     private CombatActionMotionPlan BuildCombatActionMotionPlan(
         Transform actor,
         Transform target,
@@ -3635,31 +3591,6 @@ public class CombatSessionManager : NetworkBehaviour
         actionPresentationCoroutinesByActor[actor] = routine;
     }
 
-    private void StartJuggernautGriffePresentation(
-        Transform actor,
-        CombatAggroEnemy enemyController,
-        Transform target,
-        CombatActionMotionPlan motion,
-        bool startAttackImmediately,
-        Action playAttack)
-    {
-        if (actor == null)
-        {
-            playAttack?.Invoke();
-            return;
-        }
-
-        StopCombatActionPresentation(actor);
-        Coroutine routine = StartCoroutine(PlayJuggernautGriffePresentationRoutine(
-            actor,
-            enemyController,
-            target,
-            motion,
-            startAttackImmediately,
-            playAttack));
-        actionPresentationCoroutinesByActor[actor] = routine;
-    }
-
     private IEnumerator PlayCombatActionPresentationRoutine(
         Transform actor,
         SquadCharacterController playerController,
@@ -3722,120 +3653,6 @@ public class CombatSessionManager : NetworkBehaviour
         if (actor != null)
         {
             actionPresentationCoroutinesByActor.Remove(actor);
-        }
-    }
-
-    private IEnumerator PlayJuggernautGriffePresentationRoutine(
-        Transform actor,
-        CombatAggroEnemy enemyController,
-        Transform target,
-        CombatActionMotionPlan motion,
-        bool startAttackImmediately,
-        Action playAttack)
-    {
-        if (actor == null)
-        {
-            yield break;
-        }
-
-        if (!startAttackImmediately)
-        {
-            yield return PlayJuggernautGriffeOpeningJumpRoutine(
-                actor,
-                enemyController,
-                target,
-                motion);
-        }
-        else
-        {
-            MoveCombatActionActorTo(actor, null, enemyController, actor.position, motion.AttackRotation);
-        }
-
-        playAttack?.Invoke();
-
-        Vector3 dashStart = actor != null ? actor.position : motion.StartPosition;
-        bool dashCompleted = !motion.UseScriptedApproach;
-        float dashDuration = Mathf.Max(0.05f, motion.ApproachDuration);
-        float elapsed = 0f;
-        while (actor != null && elapsed < motion.AttackDuration)
-        {
-            if (motion.UseScriptedApproach && elapsed < dashDuration)
-            {
-                float t = Mathf.Clamp01(elapsed / dashDuration);
-                Vector3 position = Vector3.Lerp(dashStart, motion.ApproachPosition, t);
-                Quaternion rotation = ResolvePresentationFacingRotation(position, target, motion.ApproachRotation);
-                MoveCombatActionActorTo(actor, null, enemyController, position, rotation);
-            }
-            else if (!dashCompleted)
-            {
-                MoveCombatActionActorTo(actor, null, enemyController, motion.ApproachPosition, motion.ApproachRotation);
-                dashCompleted = true;
-            }
-
-            elapsed += TimeManager.GetCombatPresentationDeltaTime();
-            yield return null;
-        }
-
-        if (actor != null && motion.UseScriptedApproach && !dashCompleted)
-        {
-            MoveCombatActionActorTo(actor, null, enemyController, motion.ApproachPosition, motion.ApproachRotation);
-        }
-
-        if (actor != null && motion.ReturnToStart)
-        {
-            yield return MoveCombatActionActorRoutine(
-                actor,
-                null,
-                enemyController,
-                target,
-                actor.position,
-                actor.rotation,
-                motion.StartPosition,
-                motion.StartRotation,
-                motion.ReturnDuration);
-        }
-
-        if (actor != null)
-        {
-            actionPresentationCoroutinesByActor.Remove(actor);
-        }
-    }
-
-    private IEnumerator PlayJuggernautGriffeOpeningJumpRoutine(
-        Transform actor,
-        CombatAggroEnemy enemyController,
-        Transform target,
-        CombatActionMotionPlan motion)
-    {
-        TimeManager timeManager = TimeManager.EnsureInstance();
-        timeManager.SetCombatPresentationTimeScale(actor, JuggernautGriffeOpeningTimeScale, active: true);
-
-        float elapsed = 0f;
-        float duration = Mathf.Max(0.05f, JuggernautGriffeOpeningJumpSeconds);
-        Vector3 start = actor.position;
-        try
-        {
-            while (actor != null && elapsed < duration)
-            {
-                float t = Mathf.Clamp01(elapsed / duration);
-                float height = Mathf.SmoothStep(0f, JuggernautGriffeOpeningJumpHeight, t);
-                Vector3 position = start + Vector3.up * height;
-                Quaternion rotation = ResolvePresentationFacingRotation(position, target, motion.AttackRotation);
-                MoveCombatActionActorTo(actor, null, enemyController, position, rotation);
-                elapsed += TimeManager.GetCombatPresentationDeltaTime();
-                yield return null;
-            }
-
-            if (actor != null)
-            {
-                Vector3 position = start + Vector3.up * JuggernautGriffeOpeningJumpHeight;
-                Quaternion rotation = ResolvePresentationFacingRotation(position, target, motion.AttackRotation);
-                MoveCombatActionActorTo(actor, null, enemyController, position, rotation);
-            }
-        }
-        finally
-        {
-            TimeManager.Instance?.SetCombatPresentationTimeScale(null, 1f, active: false);
         }
     }
 
@@ -4014,8 +3831,7 @@ public class CombatSessionManager : NetworkBehaviour
     private void PlayEnemyBasicAttackPresentationLocally(
         string sessionId,
         int enemyIndex,
-        int attackIndex,
-        bool startAttackImmediately)
+        int attackIndex)
     {
         if (string.IsNullOrWhiteSpace(sessionId))
         {
@@ -4033,6 +3849,23 @@ public class CombatSessionManager : NetworkBehaviour
         string animationName = ResolveEnemyPresentationAnimationName(attack, animator);
         float animationDuration = ResolveAnimationDuration(animator, animationName, DefaultEnemyAttackAnimationDuration);
         Transform target = ResolveControllerForClient(ResolveLocalClientId())?.transform;
+        bool useAnimationEventPresentation = IsJuggernautGriffeAttack(attack, animator);
+
+        Action playAttack = useAnimationEventPresentation
+            ? () => PlayNamedAnimation(animator, animationName, DefaultEnemyAttackAnimationDuration)
+            : () =>
+            {
+                PlayActionAudio(ActionAudioCue.CombatAttack, presentation.Enemy.transform.position);
+                PlayEnemyAttackVfx(presentation.Enemy.transform, attack);
+                PlayNamedAnimation(animator, animationName, DefaultEnemyAttackAnimationDuration);
+            };
+
+        if (useAnimationEventPresentation)
+        {
+            playAttack();
+            return;
+        }
+
         CombatActionMotionPlan motion = BuildCombatActionMotionPlan(
             presentation.Enemy.transform,
             target,
@@ -4042,31 +3875,6 @@ public class CombatSessionManager : NetworkBehaviour
             ResolveEnemyAttackMovementMode(attack),
             ResolveEnemyAttackApproachDistance(attack),
             animationDuration);
-        bool useJuggernautGriffePresentation = IsJuggernautGriffeAttack(attack, animator);
-        if (useJuggernautGriffePresentation)
-        {
-            motion = ConfigureJuggernautGriffeMotion(motion);
-        }
-
-        Action playAttack = () =>
-        {
-            PlayActionAudio(ActionAudioCue.CombatAttack, presentation.Enemy.transform.position);
-            PlayEnemyAttackVfx(presentation.Enemy.transform, attack);
-            PlayNamedAnimation(animator, animationName, DefaultEnemyAttackAnimationDuration);
-        };
-
-        if (useJuggernautGriffePresentation)
-        {
-            StartJuggernautGriffePresentation(
-                presentation.Enemy.transform,
-                presentation.Enemy,
-                target,
-                motion,
-                startAttackImmediately,
-                playAttack);
-            return;
-        }
-
         StartCombatActionPresentation(
             presentation.Enemy.transform,
             null,

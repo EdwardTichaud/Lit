@@ -13,6 +13,8 @@ résolution dans le monde.
 - `CombatHudController` : commandes et affichage local.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat.
+- `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation
+  et deplacer l'attaquant vers sa victime puis revenir a sa pose initiale.
 - `TimeManager` : profils de temps et hit-stop locaux de presentation combat,
   sans `Time.timeScale`.
 - `CombatTransitionController` : transition visuelle/audio.
@@ -55,6 +57,15 @@ animations, UCC et mouvements scriptes de presentation lisent le meme
 multiplicateur afin de rester synchronises avec la camera. Un hit-stop tres
 court est declenche aux impacts joueur/ennemi pour accentuer le contact sans
 modifier `Time.timeScale`.
+
+Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
+pour controler finement le ralenti et une ruee cosmetique. Le composant resout
+la victime depuis le contexte local de combat, capture la pose de depart au
+moment de la ruee et restaure uniquement cette presentation; les degats restent
+resolus par `CombatSessionManager`.
+L'attaque Juggernaut `Griffe` est animation-driven : le manager force seulement
+le lancement de `Attack_Griffe` et ne joue plus de saut, dash, audio ou VFX
+specifiques pour cette attaque. Ces elements doivent etre places dans le clip.
 
 La musique de combat peut aussi être demandée localement par proximité d'un
 `CombatAggroEnemy`, avant qu'une session tour par tour ne démarre réellement.
