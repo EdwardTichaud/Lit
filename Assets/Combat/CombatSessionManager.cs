@@ -1426,6 +1426,9 @@ public class CombatSessionManager : NetworkBehaviour
         int damage = session.State.ConsumePendingPlayerAttackDamage(clearActionTimer: false);
         int applied = enemy.ApplyDamage(damage);
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: true));
+        TimeManager.EnsureInstance().TriggerCombatHitStop(
+            session.Player != null ? session.Player.transform : null,
+            session.SourceEnemy != null ? session.SourceEnemy.transform : null);
 
         session.PendingPlayerActionVictory = AreAllEnemiesDefeated(session);
         session.PendingPlayerActionResultMessage = $"{enemy.DisplayName} subit {applied} degats.";
@@ -1545,6 +1548,9 @@ public class CombatSessionManager : NetworkBehaviour
 
         int applied = session.Player != null ? session.Player.ApplyDamage(finalDamage, "combat") : 0;
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: false));
+        TimeManager.EnsureInstance().TriggerCombatHitStop(
+            session.SourceEnemy != null ? session.SourceEnemy.transform : null,
+            session.Player != null ? session.Player.transform : null);
 
         string message = reaction == EncounterReactionChoice.Defend
             ? BuildDefendedEnemyAttackResultMessage(enemy.DisplayName, attackName, defensiveItem, absorbedDamage, defensiveItemBroken)
@@ -1826,9 +1832,10 @@ public class CombatSessionManager : NetworkBehaviour
                 BuildClientRpcParams(session.OwnerClientId));
         }
 
-        return useJuggernautGriffePresentation
+        CombatActionTiming timing = useJuggernautGriffePresentation
             ? CreateJuggernautGriffeActionTiming(motion, startAttackImmediately)
             : CreateActionTiming(motion);
+        return ApplyCombatTimeProfile(timing, TimeManager.CombatPresentationTimeProfile.EnemyAction);
     }
 
     [ClientRpc]
@@ -3373,6 +3380,20 @@ public class CombatSessionManager : NetworkBehaviour
             motion.TotalDuration());
     }
 
+    private static CombatActionTiming ApplyCombatTimeProfile(
+        CombatActionTiming timing,
+        TimeManager.CombatPresentationTimeProfile profile)
+    {
+        if (profile == TimeManager.CombatPresentationTimeProfile.None)
+        {
+            return timing;
+        }
+
+        return new CombatActionTiming(
+            TimeManager.EstimateCombatPresentationDuration(timing.ImpactDelay, profile),
+            TimeManager.EstimateCombatPresentationDuration(timing.TotalDuration, profile));
+    }
+
     private CombatActionTiming CreateJuggernautGriffeActionTiming(CombatActionMotionPlan motion, bool startAttackImmediately)
     {
         float openingDelay = startAttackImmediately ? 0f : JuggernautGriffeOpeningJumpSeconds;
@@ -3675,7 +3696,7 @@ public class CombatSessionManager : NetworkBehaviour
         float elapsed = 0f;
         while (actor != null && elapsed < motion.AttackDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += TimeManager.GetCombatPresentationDeltaTime();
             yield return null;
         }
 
@@ -3751,7 +3772,7 @@ public class CombatSessionManager : NetworkBehaviour
                 dashCompleted = true;
             }
 
-            elapsed += Time.deltaTime;
+            elapsed += TimeManager.GetCombatPresentationDeltaTime();
             yield return null;
         }
 
@@ -3801,7 +3822,7 @@ public class CombatSessionManager : NetworkBehaviour
                 Vector3 position = start + Vector3.up * height;
                 Quaternion rotation = ResolvePresentationFacingRotation(position, target, motion.AttackRotation);
                 MoveCombatActionActorTo(actor, null, enemyController, position, rotation);
-                elapsed += Time.deltaTime;
+                elapsed += TimeManager.GetCombatPresentationDeltaTime();
                 yield return null;
             }
 
@@ -3847,7 +3868,7 @@ public class CombatSessionManager : NetworkBehaviour
             Vector3 position = Vector3.Lerp(start, destination, t);
             Quaternion rotation = ResolvePresentationFacingRotation(position, target, destinationRotation);
             MoveCombatActionActorTo(actor, playerController, enemyController, position, rotation);
-            elapsed += Time.deltaTime;
+            elapsed += TimeManager.GetCombatPresentationDeltaTime();
             yield return null;
         }
 

@@ -13,6 +13,8 @@ résolution dans le monde.
 - `CombatHudController` : commandes et affichage local.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat.
+- `TimeManager` : profils de temps et hit-stop locaux de presentation combat,
+  sans `Time.timeScale`.
 - `CombatTransitionController` : transition visuelle/audio.
 - `CombatHealth` : santé persistante des ennemis de scène.
 
@@ -24,9 +26,10 @@ résolution dans le monde.
 4. Chaque tour commence par une courte phase de décision locale : HUD/focus et
    caméra se suspendent visuellement sans utiliser `Time.timeScale` global.
 5. Pendant la décision ennemie, le joueur engagé dispose d'une réaction
-   défensive locale : la présentation ralentit sur 2 secondes sans
+   défensive locale : la présentation entre rapidement en ralenti dynamique sans
    `Time.timeScale`, l'inventaire peut s'ouvrir, et un item défensif choisi est
-   validé puis résolu côté autorité.
+   validé puis résolu côté autorité. Le ralenti local reste actif pendant
+   l'action ennemie pour rendre l'attaque lisible.
 6. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
 7. La résolution restaure les positions, la caméra et le mouvement, puis applique
@@ -46,6 +49,12 @@ reste cosmétique : l'impact est toujours appliqué par `CombatSessionManager` �
 un timing autoritaire, et les attaques distance/support restent sur place. Les
 attaques dont l'animation embarque déjà le déplacement ne reçoivent pas
 d'approche scriptée supplémentaire.
+
+Les ralentis de combat passent par des profils `TimeManager` locaux. Les
+animations, UCC et mouvements scriptes de presentation lisent le meme
+multiplicateur afin de rester synchronises avec la camera. Un hit-stop tres
+court est declenche aux impacts joueur/ennemi pour accentuer le contact sans
+modifier `Time.timeScale`.
 
 La musique de combat peut aussi être demandée localement par proximité d'un
 `CombatAggroEnemy`, avant qu'une session tour par tour ne démarre réellement.
