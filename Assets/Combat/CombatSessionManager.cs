@@ -21,6 +21,7 @@ public class CombatSessionManager : NetworkBehaviour
     private const string JuggernautGriffeDisplayName = "Griffe";
     private const string JuggernautGriffeAnimationName = "Attack_Griffe";
     private const string DefaultEnemyAttackDisplayName = "Attaque";
+    private const string EnemyAttackWarningMessage = "Attention l’ennemi attaque:";
     private const string DefaultArenaRootName = "Arena";
     private const string DefaultPlayerSpawnPointName = "SpawnPoint_Player";
     private const string DefaultEnemySpawnPointName = "SpawnPoint_Enemy";
@@ -603,7 +604,7 @@ public class CombatSessionManager : NetworkBehaviour
         MoveCombatAggroEnemyTo(sourceEnemy, session.EnemyCombatPosition, session.EnemyCombatRotation);
 
         SendEnterCombat(session);
-        BeginTurn(session, CombatTurn.Enemy, "L'ennemi attaque. Contrez ou defendez-vous.");
+        BeginTurn(session, CombatTurn.Enemy, EnemyAttackWarningMessage);
         RefreshGlobalCombatDefensiveReaction();
         return true;
     }

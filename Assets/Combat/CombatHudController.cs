@@ -15,6 +15,7 @@ public class CombatHudController : MonoBehaviour
 {
     private const string DefaultBattlePanelName = "BattlePanel";
     private const string DefaultBaseAttackUiName = "BaseAttackUI";
+    private const string EnemyAttackAlertText = "Attention l’ennemi attaque:";
 
     /// <summary>
     /// Etat de tour converti pour l'affichage local du HUD.
@@ -585,7 +586,8 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        SetText(ActiveTitleText, "Combat");
+        bool enemyReactionWindow = IsEnemyReactionWindow(turn, phase);
+        SetText(ActiveTitleText, enemyReactionWindow ? EnemyAttackAlertText : "Combat");
         SetText(ActiveTurnText, ResolveTurnLabel(turn, phase));
         SetText(ActivePlayerHpText, $"Joueur\n{Mathf.Max(0, playerHp)}/{Mathf.Max(1, playerMaxHp)} PV");
         SetText(
@@ -596,12 +598,27 @@ public class CombatHudController : MonoBehaviour
             prayerSupportCount > 0
                 ? $"Soutien: {prayerSupportCount} priere(s), -{Mathf.RoundToInt(damageReduction * 100f)}% degats"
                 : "Soutien: aucune priere active");
-        SetText(ActiveMessageText, string.IsNullOrWhiteSpace(message) ? "Combat en cours." : message);
+        SetText(ActiveMessageText, ResolveMessageLabel(turn, phase, message));
         SetText(ActiveActionsText, ResolveActionsLabel(turn, phase));
         SetText(baseAttackText, ResolvePrimaryActionLabel(turn, phase));
         SetFill(ActivePlayerHpFillImage, playerHp, playerMaxHp);
         SetFill(ActiveEnemyHpFillImage, enemyHp, enemyMaxHp);
         UpdateTimerText();
+    }
+
+    private static bool IsEnemyReactionWindow(TurnState turn, CombatSessionPhase phase)
+    {
+        return turn == TurnState.Enemy && phase == CombatSessionPhase.Decision;
+    }
+
+    private static string ResolveMessageLabel(TurnState turn, CombatSessionPhase phase, string message)
+    {
+        if (IsEnemyReactionWindow(turn, phase) && string.IsNullOrWhiteSpace(message))
+        {
+            return EnemyAttackAlertText;
+        }
+
+        return string.IsNullOrWhiteSpace(message) ? "Combat en cours." : message;
     }
 
     private string ResolveTurnLabel(TurnState turn, CombatSessionPhase phase)
@@ -620,7 +637,7 @@ public class CombatHudController : MonoBehaviour
         {
             if (phase == CombatSessionPhase.Decision)
             {
-                return "Fenetre de reaction";
+                return "Fenetre de contre";
             }
 
             return phase == CombatSessionPhase.EnemyAction ? "Attaque ennemie" : "Rencontre ennemie";
@@ -635,11 +652,11 @@ public class CombatHudController : MonoBehaviour
         {
             if (phase == CombatSessionPhase.Decision)
             {
-                return "Interagir/RB: contre | Retour: defense | aucune reaction: mort.";
+                return "Interagir/RB: contre | Retour: defense | aucune reaction: defaite.";
             }
 
             return phase == CombatSessionPhase.EnemyAction
-                ? "L'ennemi agit."
+                ? "Impact ennemi imminent."
                 : "L'ennemi attaque en premier.";
         }
 
@@ -660,7 +677,7 @@ public class CombatHudController : MonoBehaviour
     {
         if (turn == TurnState.Enemy && phase == CombatSessionPhase.Decision)
         {
-            return "Contrer / Defendre";
+            return "Contrer";
         }
 
         if (turn == TurnState.Player && phase == CombatSessionPhase.TurnActive)

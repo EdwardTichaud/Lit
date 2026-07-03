@@ -19,12 +19,21 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     [SerializeField, Min(0.05f)] private float actionBlendSeconds = 0.35f;
     [SerializeField, Min(0f)] private float targetLookHeight = 1.25f;
     [SerializeField, Min(0.01f)] private float minLookDistance = 0.25f;
+    [Header("Enemy Reaction Cinematic")]
+    [SerializeField] private Vector3 enemyReactionAnchorOffset = new Vector3(-0.75f, 1.05f, -0.45f);
+    [SerializeField] private Vector3 enemyActionAnchorOffset = new Vector3(-0.55f, 1.15f, -0.25f);
+    [SerializeField, Range(0f, 1f)] private float enemyReactionLookBias = 0.72f;
+    [SerializeField, Range(0f, 1f)] private float enemyActionLookBias = 0.82f;
+    [SerializeField, Min(0f)] private float cinematicLookHeight = 1.1f;
+    [SerializeField, Range(-10f, 10f)] private float enemyReactionRollDegrees = -2.5f;
+    [SerializeField, Range(-10f, 10f)] private float enemyActionRollDegrees = -1f;
 
     private string originalViewTypeFullName;
     private Vector3 originalAnchorOffset;
     private bool originalAnchorOffsetStored;
     private bool combatViewTypeApplied;
     private bool rotationalOverrideApplied;
+    private bool presentationLogged;
     private float localPauseWeight;
 
     public static CombatCameraPresentationController EnsureInstance()
@@ -110,7 +119,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         }
 
         ApplyCameraPresentation();
-        UpdateAnchorOffset(playerTurn);
+        UpdateAnchorOffset(playerTurn, phase);
     }
 
     private bool EnsureCameraController()
@@ -160,6 +169,12 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             rotationalOverrideApplied = true;
         }
 
+        if (!presentationLogged)
+        {
+            Debug.Log("[CombatCamera] Cinematic combat camera active.");
+            presentationLogged = true;
+        }
+
         if (!useOpsiveCombatViewType || combatViewTypeApplied)
         {
             return;
@@ -179,20 +194,19 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     {
         CombatSessionManager manager = CombatSessionManager.Instance;
         if (manager == null ||
-            !manager.TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out _, out _))
+            !manager.TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out bool playerTurn, out CombatSessionPhase phase))
         {
             return currentRotation;
         }
 
-        Transform target = ResolveLookTarget(player, enemy);
-        if (target == null)
+        if (player == null && enemy == null)
         {
             return currentRotation;
         }
 
-        Vector3 targetPosition = target.position + Vector3.up * targetLookHeight;
+        Vector3 targetPosition = ResolveLookPosition(player, enemy, playerTurn, phase);
         Vector3 direction = targetPosition - cameraPosition;
-        if (direction.sqrMagnitude < minLookDistance * minLookDistance && player != null && target != player)
+        if (direction.sqrMagnitude < minLookDistance * minLookDistance && player != null)
         {
             direction = targetPosition - (player.position + Vector3.up * targetLookHeight);
         }
@@ -202,7 +216,11 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             return currentRotation;
         }
 
-        return Quaternion.LookRotation(direction.normalized, Vector3.up);
+        Quaternion lookRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+        float rollDegrees = ResolveCinematicRoll(playerTurn, phase);
+        return Mathf.Approximately(rollDegrees, 0f)
+            ? lookRotation
+            : lookRotation * Quaternion.Euler(0f, 0f, rollDegrees);
     }
 
     private void UpdateLocalPauseWeight(bool holding)
@@ -215,20 +233,25 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             Time.unscaledDeltaTime / Mathf.Max(0.05f, duration));
     }
 
-    private void UpdateAnchorOffset(bool playerTurn)
+    private void UpdateAnchorOffset(bool playerTurn, CombatSessionPhase phase)
     {
         if (!applyShoulderAnchorOffset || cameraController == null || !originalAnchorOffsetStored)
         {
             return;
         }
 
-        Vector3 targetOffset = playerTurn ? playerDecisionAnchorOffset : enemyDecisionAnchorOffset;
+        Vector3 targetOffset = ResolveAnchorOffset(playerTurn, phase);
         cameraController.AnchorOffset = Vector3.Lerp(originalAnchorOffset, targetOffset, localPauseWeight);
     }
 
     private static bool ShouldHoldLocalPause(bool playerTurn, CombatSessionPhase phase)
     {
         if (phase == CombatSessionPhase.Decision)
+        {
+            return true;
+        }
+
+        if (!playerTurn && phase == CombatSessionPhase.EnemyAction)
         {
             return true;
         }
@@ -246,6 +269,64 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         // The Opsive camera stays bound to the local player through LitUccCameraCharacterBinder.
         // Looking back at the player during the enemy turn makes the camera orbit the player.
         return enemy != null ? enemy : player;
+    }
+
+    private Vector3 ResolveLookPosition(Transform player, Transform enemy, bool playerTurn, CombatSessionPhase phase)
+    {
+        if (enemy != null && !playerTurn && IsEnemyCinematicPhase(phase))
+        {
+            float bias = phase == CombatSessionPhase.EnemyAction
+                ? enemyActionLookBias
+                : enemyReactionLookBias;
+            Vector3 playerPosition = player != null ? player.position : enemy.position;
+            return Vector3.Lerp(playerPosition, enemy.position, Mathf.Clamp01(bias)) +
+                   Vector3.up * cinematicLookHeight;
+        }
+
+        Transform target = ResolveLookTarget(player, enemy);
+        return target != null
+            ? target.position + Vector3.up * targetLookHeight
+            : Vector3.up * targetLookHeight;
+    }
+
+    private Vector3 ResolveAnchorOffset(bool playerTurn, CombatSessionPhase phase)
+    {
+        if (!playerTurn)
+        {
+            if (phase == CombatSessionPhase.Decision)
+            {
+                return enemyReactionAnchorOffset;
+            }
+
+            if (phase == CombatSessionPhase.EnemyAction)
+            {
+                return enemyActionAnchorOffset;
+            }
+
+            return enemyDecisionAnchorOffset;
+        }
+
+        return playerDecisionAnchorOffset;
+    }
+
+    private float ResolveCinematicRoll(bool playerTurn, CombatSessionPhase phase)
+    {
+        if (playerTurn)
+        {
+            return 0f;
+        }
+
+        if (phase == CombatSessionPhase.Decision)
+        {
+            return enemyReactionRollDegrees;
+        }
+
+        return phase == CombatSessionPhase.EnemyAction ? enemyActionRollDegrees : 0f;
+    }
+
+    private static bool IsEnemyCinematicPhase(CombatSessionPhase phase)
+    {
+        return phase == CombatSessionPhase.Decision || phase == CombatSessionPhase.EnemyAction;
     }
 
     private void RestoreCameraPresentation()
@@ -278,6 +359,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         combatViewTypeApplied = false;
         originalAnchorOffsetStored = false;
         originalViewTypeFullName = null;
+        presentationLogged = false;
         localPauseWeight = 0f;
     }
 }
