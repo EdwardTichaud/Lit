@@ -6,6 +6,8 @@ using UnityEngine.SceneManagement;
 // Bootstrap runtime pour Netcode (NetworkManager, prefabs, scene objects).
 public class NetcodeBootstrap : MonoBehaviour
 {
+    private static NetcodeBootstrap instance;
+
     [SerializeField] private bool dontDestroyOnLoad = true;
     [SerializeField] private bool autoCreateNetworkManager = true;
     [SerializeField] private bool autoCreateLauncher = true;
@@ -15,9 +17,14 @@ public class NetcodeBootstrap : MonoBehaviour
     [SerializeField] private bool autoCreatePersistentWorldSystems = true;
     [SerializeField] private bool enableSceneManagement = true;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntime()
     {
+        if (instance != null)
+        {
+            return;
+        }
+
         NetcodeBootstrap existing = null;
 #if UNITY_2023_1_OR_NEWER
         existing = FindAnyObjectByType<NetcodeBootstrap>();
@@ -26,6 +33,7 @@ public class NetcodeBootstrap : MonoBehaviour
 #endif
         if (existing != null)
         {
+            instance = existing;
             return;
         }
 
@@ -35,9 +43,16 @@ public class NetcodeBootstrap : MonoBehaviour
 
     private void Awake()
     {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
         if (dontDestroyOnLoad)
         {
-            DontDestroyOnLoad(gameObject);
+            RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
         }
 
         LocalInputRouter.EnsureInitialized();
@@ -69,10 +84,15 @@ public class NetcodeBootstrap : MonoBehaviour
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (instance == this)
+        {
+            instance = null;
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        EnsureNetworkManager();
         NetcodeSceneObjectInstaller.PrepareScene(scene);
         NetcodePrefabRegistry.Refresh();
 
@@ -127,20 +147,16 @@ public class NetcodeBootstrap : MonoBehaviour
 
     private void EnsureNetworkManager()
     {
-        if (NetworkManager.Singleton != null)
+        NetworkManager manager = ResolveNetworkManager();
+        if (manager != null)
         {
-            EnsureNetworkConfig(NetworkManager.Singleton);
-            return;
-        }
+            if (dontDestroyOnLoad)
+            {
+                RuntimePersistenceUtility.DontDestroyOnLoadRoot(manager.gameObject);
+            }
 
-#if UNITY_2023_1_OR_NEWER
-        NetworkManager existing = FindAnyObjectByType<NetworkManager>();
-#else
-        NetworkManager existing = FindAnyObjectByType<NetworkManager>();
-#endif
-        if (existing != null)
-        {
-            EnsureNetworkConfig(existing);
+            EnsureNetworkConfig(manager);
+            DestroyDuplicateNetworkManagers(manager);
             return;
         }
 
@@ -150,12 +166,80 @@ public class NetcodeBootstrap : MonoBehaviour
         }
 
         GameObject managerHost = new GameObject("NetworkManager");
-        DontDestroyOnLoad(managerHost);
+        if (dontDestroyOnLoad)
+        {
+            RuntimePersistenceUtility.DontDestroyOnLoadRoot(managerHost);
+        }
 
-        NetworkManager manager = managerHost.AddComponent<NetworkManager>();
+        manager = managerHost.AddComponent<NetworkManager>();
         managerHost.AddComponent<UnityTransport>();
 
         EnsureNetworkConfig(manager);
+        DestroyDuplicateNetworkManagers(manager);
+    }
+
+    private static NetworkManager ResolveNetworkManager()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            return NetworkManager.Singleton;
+        }
+
+        NetworkManager[] managers = FindNetworkManagers();
+        if (managers == null || managers.Length == 0)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            NetworkManager manager = managers[i];
+            if (manager != null && manager.IsListening)
+            {
+                return manager;
+            }
+        }
+
+        return managers[0];
+    }
+
+    private static NetworkManager[] FindNetworkManagers()
+    {
+#if UNITY_2023_1_OR_NEWER
+        return FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+        return FindObjectsOfType<NetworkManager>(true);
+#endif
+    }
+
+    private static void DestroyDuplicateNetworkManagers(NetworkManager keep)
+    {
+        if (keep == null)
+        {
+            return;
+        }
+
+        NetworkManager[] managers = FindNetworkManagers();
+        if (managers == null || managers.Length <= 1)
+        {
+            return;
+        }
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            NetworkManager candidate = managers[i];
+            if (candidate == null || candidate == keep)
+            {
+                continue;
+            }
+
+            if (candidate.IsListening)
+            {
+                candidate.Shutdown();
+            }
+
+            Destroy(candidate.gameObject);
+        }
     }
 
     private void EnsureNetworkConfig(NetworkManager manager)

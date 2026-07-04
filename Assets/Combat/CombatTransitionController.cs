@@ -150,7 +150,7 @@ public sealed class CombatTransitionController : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
     }
 
     private void OnDestroy()

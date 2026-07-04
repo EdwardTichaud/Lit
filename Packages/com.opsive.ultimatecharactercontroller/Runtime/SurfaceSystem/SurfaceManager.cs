@@ -323,6 +323,10 @@ namespace Opsive.UltimateCharacterController.SurfaceSystem
                 }
             }
 
+            if (hitCollider is TerrainCollider) {
+                return GetTerrainSurfaceType(hit, hitCollider);
+            }
+
             // Detect objects with a single material and no texture regions.
             var surfaceType = GetSimpleSurfaceType(hitCollider);
             if (surfaceType != null) {
@@ -568,6 +572,10 @@ namespace Opsive.UltimateCharacterController.SurfaceSystem
         /// <returns>The SurfaceType of the complex surface. Can be null.</returns>
         private SurfaceType GetComplexSurfaceType(RaycastHit hit, Collider hitCollider)
         {
+            if (hitCollider is TerrainCollider) {
+                return null;
+            }
+
             // GetHitMaterial will only return a value if the hit collider is a MeshCollider.
             var material = GetHitMaterial(hit, hitCollider);
             if (material == null) {

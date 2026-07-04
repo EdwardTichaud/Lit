@@ -129,7 +129,7 @@ public sealed class LoadingScreenService : MonoBehaviour
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
+        RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
         BuildUiIfNeeded();
         RefreshChildParticleCache();
         ResolveMessageTextIfNeeded();

@@ -15,6 +15,9 @@ public class CombatHudController : MonoBehaviour
 {
     private const string DefaultBattlePanelName = "BattlePanel";
     private const string DefaultBaseAttackUiName = "BaseAttackUI";
+    private const string DefaultCombatEngagedPanelName = "CombatEngagedPanel";
+    private const string DefaultCombatScreenInfosPanelName = "CombatScreenInfosPanel";
+    private const string CombatEngagedAnimationName = "CombatEngagedPanel_Trigger";
     private const string EnemyAttackAlertText = "Attention l’ennemi attaque:";
 
     /// <summary>
@@ -55,6 +58,10 @@ public class CombatHudController : MonoBehaviour
     /// CanvasGroup de l'action attaque de base.
     /// </summary>
     [SerializeField] private CanvasGroup baseAttackCanvasGroup;
+    [SerializeField] private CanvasGroup combatEngagedCanvasGroup;
+    [SerializeField] private CanvasGroup combatScreenInfosCanvasGroup;
+    [SerializeField] private Animator combatEngagedAnimator;
+    [SerializeField, Min(0.1f)] private float combatEngagedFallbackDuration = 1.2f;
     [SerializeField] private Image playerHpFillImage;
     [SerializeField] private Image enemyHpFillImage;
     [SerializeField] private Image timerFillImage;
@@ -92,6 +99,9 @@ public class CombatHudController : MonoBehaviour
     private bool playerActionLocked;
     private bool visible;
     private bool combatFocusPushed;
+    private string combatEngagedSessionId;
+    private bool combatEngagedIntroActive;
+    private float combatEngagedIntroEndsAt;
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -162,6 +172,7 @@ public class CombatHudController : MonoBehaviour
         {
             ReleaseCombatInputFocus();
             SetScenePanelVisibility(false, false);
+            SetCombatEngagedVisible(false);
             CombatDefensePanelController.HideActive();
         }
 
@@ -204,6 +215,7 @@ public class CombatHudController : MonoBehaviour
 
         // Le timer est derive du temps local entre deux snapshots serveur.
         UpdateTimerText();
+        UpdateCombatEngagedIntro();
     }
 
     /// <summary>
@@ -243,9 +255,13 @@ public class CombatHudController : MonoBehaviour
         timerEndsAt = Time.unscaledTime + sanitizedTimer;
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
+        if (visible && !string.IsNullOrWhiteSpace(sessionId) && !string.Equals(combatEngagedSessionId, sessionId, System.StringComparison.Ordinal))
+        {
+            StartCombatEngagedIntro(sessionId);
+        }
+
         UpdateCombatInputFocus(visible);
-        SetScenePanelVisibility(visible, CanShowCombatActionPrompt());
-        CombatDefensePanelController.SetReactionVisible(visible && CanChooseEncounterReaction());
+        RefreshCombatPanelVisibility();
         ApplySnapshotToUi(
             turn,
             phase,
@@ -279,12 +295,14 @@ public class CombatHudController : MonoBehaviour
     private void Hide()
     {
         activeSessionId = null;
+        combatEngagedSessionId = null;
         currentTurn = TurnState.None;
         currentPhase = CombatSessionPhase.Finished;
         playerActionLocked = false;
         visible = false;
         ReleaseCombatInputFocus();
         SetScenePanelVisibility(false, false);
+        SetCombatEngagedVisible(false);
         CombatDefensePanelController.HideActive();
         if (root != null)
         {
@@ -435,6 +453,132 @@ public class CombatHudController : MonoBehaviour
         SetFill(ActiveTimerFillImage, remaining, timerDuration);
     }
 
+    private void StartCombatEngagedIntro(string sessionId)
+    {
+        ResolveScenePanelsIfNeeded();
+        combatEngagedSessionId = sessionId;
+        if (combatEngagedCanvasGroup == null && combatEngagedAnimator == null)
+        {
+            combatEngagedIntroActive = false;
+            RefreshCombatPanelVisibility();
+            return;
+        }
+
+        combatEngagedIntroActive = true;
+        combatEngagedIntroEndsAt = Time.unscaledTime + ResolveCombatEngagedDuration();
+
+        SetScenePanelVisibility(false, false);
+        CombatDefensePanelController.HideActive();
+        SetCombatEngagedVisible(true);
+        PlayCombatEngagedAnimation();
+    }
+
+    private void UpdateCombatEngagedIntro()
+    {
+        if (!combatEngagedIntroActive)
+        {
+            return;
+        }
+
+        if (Time.unscaledTime < combatEngagedIntroEndsAt)
+        {
+            return;
+        }
+
+        combatEngagedIntroActive = false;
+        SetCombatEngagedVisible(false);
+        RefreshCombatPanelVisibility();
+    }
+
+    private void RefreshCombatPanelVisibility()
+    {
+        bool defenseVisible = visible && !combatEngagedIntroActive && CanChooseEncounterReaction();
+        bool infosVisible = visible && !combatEngagedIntroActive && !defenseVisible;
+        SetScenePanelVisibility(infosVisible, infosVisible && CanChoosePlayerAction());
+        CombatDefensePanelController.SetReactionVisible(defenseVisible);
+
+        if (!visible)
+        {
+            SetCombatEngagedVisible(false);
+        }
+    }
+
+    private void SetCombatEngagedVisible(bool shouldBeVisible)
+    {
+        ResolveScenePanelsIfNeeded();
+        SetCanvasGroupVisible(combatEngagedCanvasGroup, shouldBeVisible, blocksRaycasts: false);
+        if (!shouldBeVisible)
+        {
+            combatEngagedIntroActive = false;
+        }
+    }
+
+    private void PlayCombatEngagedAnimation()
+    {
+        if (combatEngagedAnimator == null)
+        {
+            return;
+        }
+
+        if (HasAnimatorTrigger(combatEngagedAnimator, CombatEngagedAnimationName))
+        {
+            combatEngagedAnimator.ResetTrigger(CombatEngagedAnimationName);
+            combatEngagedAnimator.SetTrigger(CombatEngagedAnimationName);
+            return;
+        }
+
+        combatEngagedAnimator.Play(CombatEngagedAnimationName, 0, 0f);
+    }
+
+    private float ResolveCombatEngagedDuration()
+    {
+        float fallback = Mathf.Max(0.1f, combatEngagedFallbackDuration);
+        if (combatEngagedAnimator == null || combatEngagedAnimator.runtimeAnimatorController == null)
+        {
+            return fallback;
+        }
+
+        AnimationClip[] clips = combatEngagedAnimator.runtimeAnimatorController.animationClips;
+        if (clips == null)
+        {
+            return fallback;
+        }
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AnimationClip clip = clips[i];
+            if (clip == null || !string.Equals(clip.name, CombatEngagedAnimationName, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            return Mathf.Max(0.1f, clip.length);
+        }
+
+        return fallback;
+    }
+
+    private static bool HasAnimatorTrigger(Animator animator, string triggerName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(triggerName))
+        {
+            return false;
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+            if (parameter.type == AnimatorControllerParameterType.Trigger
+                && string.Equals(parameter.name, triggerName, System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void BuildUi()
     {
         ResolveScenePanelsIfNeeded();
@@ -505,11 +649,16 @@ public class CombatHudController : MonoBehaviour
 
     private bool HasScenePanelUi()
     {
-        return battlePanelCanvasGroup != null;
+        return combatScreenInfosCanvasGroup != null || battlePanelCanvasGroup != null;
     }
 
     private void ResolveScenePanelsIfNeeded()
     {
+        if (combatScreenInfosCanvasGroup == null)
+        {
+            combatScreenInfosCanvasGroup = FindCanvasGroupByName(DefaultCombatScreenInfosPanelName);
+        }
+
         if (battlePanelCanvasGroup == null)
         {
             battlePanelCanvasGroup = FindCanvasGroupByName(DefaultBattlePanelName);
@@ -518,6 +667,16 @@ public class CombatHudController : MonoBehaviour
         if (baseAttackCanvasGroup == null)
         {
             baseAttackCanvasGroup = FindCanvasGroupByName(DefaultBaseAttackUiName);
+        }
+
+        if (combatEngagedCanvasGroup == null)
+        {
+            combatEngagedCanvasGroup = FindCanvasGroupByName(DefaultCombatEngagedPanelName);
+        }
+
+        if (combatEngagedAnimator == null && combatEngagedCanvasGroup != null)
+        {
+            combatEngagedAnimator = combatEngagedCanvasGroup.GetComponentInChildren<Animator>(true);
         }
 
         ResolveSceneTextIfNeeded(ref titleText, "CombatTitleText");
@@ -538,7 +697,16 @@ public class CombatHudController : MonoBehaviour
     private void SetScenePanelVisibility(bool battleVisible, bool baseAttackVisible)
     {
         ResolveScenePanelsIfNeeded();
-        SetCanvasGroupVisible(battlePanelCanvasGroup, battleVisible, blocksRaycasts: false);
+        if (combatScreenInfosCanvasGroup != null)
+        {
+            SetCanvasGroupVisible(combatScreenInfosCanvasGroup, battleVisible, blocksRaycasts: false);
+            SetCanvasGroupVisible(battlePanelCanvasGroup, false, blocksRaycasts: false);
+        }
+        else
+        {
+            SetCanvasGroupVisible(battlePanelCanvasGroup, battleVisible, blocksRaycasts: false);
+        }
+
         SetCanvasGroupVisible(baseAttackCanvasGroup, battleVisible && baseAttackVisible, blocksRaycasts: false);
     }
 
@@ -547,6 +715,11 @@ public class CombatHudController : MonoBehaviour
         if (canvasGroup == null)
         {
             return;
+        }
+
+        if (visible && !canvasGroup.gameObject.activeSelf)
+        {
+            canvasGroup.gameObject.SetActive(true);
         }
 
         canvasGroup.alpha = visible ? 1f : 0f;
@@ -561,10 +734,57 @@ public class CombatHudController : MonoBehaviour
             return null;
         }
 
-        GameObject found = GameObject.Find(objectName);
+        GameObject found = FindSceneGameObjectByName(objectName);
         if (found != null)
         {
-            return found.GetComponent<CanvasGroup>();
+            CanvasGroup canvasGroup = found.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = found.AddComponent<CanvasGroup>();
+            }
+
+            return canvasGroup;
+        }
+
+        return null;
+    }
+
+    private static GameObject FindSceneGameObjectByName(string objectName)
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        GameObject active = GameObject.Find(objectName);
+        if (active != null)
+        {
+            return active;
+        }
+
+        Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();
+        if (transforms == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            Transform candidate = transforms[i];
+            if (candidate == null || candidate.gameObject == null)
+            {
+                continue;
+            }
+
+            if (!candidate.gameObject.scene.IsValid())
+            {
+                continue;
+            }
+
+            if (string.Equals(candidate.name, objectName, System.StringComparison.Ordinal))
+            {
+                return candidate.gameObject;
+            }
         }
 
         return null;
@@ -726,7 +946,7 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        GameObject found = GameObject.Find(objectName);
+        GameObject found = FindSceneGameObjectByName(objectName);
         if (found != null)
         {
             text = found.GetComponent<TextMeshProUGUI>();
@@ -740,7 +960,7 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        GameObject found = GameObject.Find(objectName);
+        GameObject found = FindSceneGameObjectByName(objectName);
         if (found != null)
         {
             image = found.GetComponent<Image>();

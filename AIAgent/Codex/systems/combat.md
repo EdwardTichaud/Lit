@@ -11,6 +11,8 @@ résolution dans le monde.
 - `CombatSessionManager` : autorité, sessions, tours, actions et RPC.
 - `CombatSessionState`, `CombatTurn`, `CombatRuntimeEnemy` : état runtime.
 - `CombatHudController` : commandes et affichage local.
+  Il orchestre aussi `CombatEngagedPanel`, `CombatScreenInfosPanel` et
+  l'exclusivite de `CombatDefensePanel`.
 - `CombatDefensePanelController` : affiche les 3 items defensifs assignes
   pendant la reaction ennemie.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
@@ -27,18 +29,21 @@ résolution dans le monde.
 1. Un trigger d’aggro demande une session au manager.
 2. L’autorité capture les positions de retour et construit les ennemis runtime.
 3. Le joueur engagé est téléporté instantanément vers l’arène et verrouillé.
-4. Chaque tour commence par une courte phase de décision locale : HUD/focus et
+4. Le HUD joue une fois par session l'intro `CombatEngagedPanel_Trigger` sur
+   `CombatEngagedPanel`, puis affiche `CombatScreenInfosPanel`.
+5. Chaque tour commence par une courte phase de décision locale : HUD/focus et
    caméra se suspendent visuellement sans utiliser `Time.timeScale` global.
-5. Pendant la décision ennemie, le joueur engagé dispose d'une réaction
+6. Pendant la décision ennemie, le joueur engagé dispose d'une réaction
    défensive locale : la présentation entre rapidement en ralenti dynamique sans
    `Time.timeScale`, l'inventaire peut s'ouvrir, et un item défensif choisi est
    validé puis résolu côté autorité. Le ralenti local reste actif pendant
    l'action ennemie pour rendre l'attaque lisible.
-   `CombatDefensePanel` s'ouvre aussi pendant cette fenetre et ne propose que
-   les 3 items defensifs assignes au personnage comme items combat.
-6. Le manager alterne joueur puis ennemi, applique les intentions validées côté
+   `CombatDefensePanel` s'ouvre aussi pendant cette fenetre, masque les infos de
+   combat, et ne propose que les 3 items defensifs assignes au personnage comme
+   items combat.
+7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
-7. La résolution restaure les positions, la caméra et le mouvement, puis applique
+8. La résolution restaure les positions, la caméra et le mouvement, puis applique
    le résultat à l’ennemi monde.
 
 Pendant une session, la camera locale de combat est la seule source de pilotage

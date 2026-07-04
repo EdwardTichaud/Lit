@@ -50,7 +50,7 @@ public class ItemPassiveEffectSystem : MonoBehaviour
         instance = this;
         if (dontDestroyOnLoad)
         {
-            DontDestroyOnLoad(gameObject);
+            RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
         }
     }
 

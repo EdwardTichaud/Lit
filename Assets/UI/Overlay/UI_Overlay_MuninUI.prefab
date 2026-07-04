@@ -199,7 +199,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf57365f8b6d4a85a6d7ce4ad9a9e114, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hideWhenNoMunin: 1
+  hideWhenNoMunin: 0
   hideWhenChargesDisabled: 1
   resolveInterval: 0.2
   chargesFormat: '{0}/{1}'

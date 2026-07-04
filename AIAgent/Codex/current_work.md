@@ -36,6 +36,10 @@ items combat. Pendant la reaction ennemie ralentie, `CombatDefensePanel` s'ouvre
 et ne propose que ces items a portee de main; la selection reste validee par
 `CombatSessionManager`, synchronisee par `NetworkInventory` et sauvegardee avec
 l'etat personnage.
+L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
+`CombatEngagedPanel` au lancement d'une session, affiche ensuite
+`CombatScreenInfosPanel`, puis masque ces infos pendant le ralenti defensif pour
+laisser uniquement `CombatDefensePanel`.
 
 ## Contraintes
 

@@ -139,7 +139,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
     }
 
     private void OnDisable()

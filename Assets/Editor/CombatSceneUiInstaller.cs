@@ -243,8 +243,8 @@ public static class CombatSceneUiInstaller
         Image image = EnsureComponent<Image>(rect.gameObject);
         image.color = color;
         image.raycastTarget = false;
-        image.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
-        image.type = Image.Type.Sliced;
+        image.sprite = RuntimeUiSpriteUtility.SolidSprite;
+        image.type = Image.Type.Simple;
         return rect;
     }
 

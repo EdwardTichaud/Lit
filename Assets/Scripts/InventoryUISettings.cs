@@ -243,8 +243,8 @@ public class InventoryUISettings : MonoBehaviour
         Image image = cursorObject.GetComponent<Image>();
         image.color = new Color(1f, 1f, 1f, 0.25f);
         image.raycastTarget = false;
-        image.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Background.psd");
-        image.type = Image.Type.Sliced;
+        image.sprite = RuntimeUiSpriteUtility.SolidSprite;
+        image.type = Image.Type.Simple;
         slotCursor = rect;
         return rect;
     }

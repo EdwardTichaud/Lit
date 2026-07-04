@@ -232,8 +232,8 @@ public class CombatDefensePanelController : MonoBehaviour
 
         Image image = slot.GetComponent<Image>();
         image.color = new Color(0.04f, 0.04f, 0.04f, 0.82f);
-        image.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/Background.psd");
-        image.type = Image.Type.Sliced;
+        image.sprite = RuntimeUiSpriteUtility.SolidSprite;
+        image.type = Image.Type.Simple;
 
         LayoutElement layout = slot.GetComponent<LayoutElement>();
         layout.minHeight = 48f;
