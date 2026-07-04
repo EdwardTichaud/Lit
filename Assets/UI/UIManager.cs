@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UIManager : MonoBehaviour
@@ -6,12 +7,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Startup Visibility")]
     [SerializeField] private Transform uiRoot;
-    [SerializeField] private string[] visibleAtStartupPanelNames =
-    {
-        "MuninUIPanel",
-        "MuninUI",
-        "UI_Overlay_MuninUI"
-    };
+    [SerializeField] private List<RectTransform> visibleAtStartupPanels = new List<RectTransform>();
 
     private void Start()
     {
@@ -26,11 +22,10 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        Transform startupPanel = FindDescendantByNames(root, visibleAtStartupPanelNames);
         for (int i = 0; i < root.childCount; i++)
         {
             Transform child = root.GetChild(i);
-            if (ContainsTransform(child, startupPanel))
+            if (ContainsStartupPanel(child))
             {
                 continue;
             }
@@ -38,7 +33,15 @@ public class UIManager : MonoBehaviour
             SetPanelVisible(child, false);
         }
 
-        SetPanelVisible(startupPanel, true, false);
+        if (visibleAtStartupPanels == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < visibleAtStartupPanels.Count; i++)
+        {
+            SetPanelVisible(visibleAtStartupPanels[i], true, false);
+        }
     }
 
     public void SetPanelVisible(Transform panel, bool visible)
@@ -84,36 +87,17 @@ public class UIManager : MonoBehaviour
         return uiRoot;
     }
 
-    private static Transform FindDescendantByNames(Transform root, string[] names)
+    private bool ContainsStartupPanel(Transform root)
     {
-        if (root == null || names == null)
+        if (root == null || visibleAtStartupPanels == null)
         {
-            return null;
+            return false;
         }
 
-        for (int i = 0; i < root.childCount; i++)
+        for (int i = 0; i < visibleAtStartupPanels.Count; i++)
         {
-            Transform child = root.GetChild(i);
-            if (MatchesAnyName(child.name, names))
-            {
-                return child;
-            }
-
-            Transform match = FindDescendantByNames(child, names);
-            if (match != null)
-            {
-                return match;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool MatchesAnyName(string objectName, string[] names)
-    {
-        for (int i = 0; i < names.Length; i++)
-        {
-            if (string.Equals(objectName, names[i], System.StringComparison.Ordinal))
+            RectTransform startupPanel = visibleAtStartupPanels[i];
+            if (startupPanel != null && ContainsTransform(root, startupPanel))
             {
                 return true;
             }
