@@ -103,6 +103,7 @@ public class CombatHudController : MonoBehaviour
     private bool combatEngagedIntroActive;
     private float combatEngagedIntroEndsAt;
     private bool combatEngagedAnimationObserved;
+    private bool combatSlowPresentationActive;
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -196,6 +197,9 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact += OnInteract;
         LocalInputRouter.RightShoulder += OnRightShoulder;
         LocalInputRouter.Return += OnReturn;
+        TimeManager.CombatSlowPresentationChanged += OnCombatSlowPresentationChanged;
+        combatSlowPresentationActive = TimeManager.IsCombatSlowPresentationActive;
+        RefreshCombatPanelVisibility();
     }
 
     private void OnDisable()
@@ -204,6 +208,8 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact -= OnInteract;
         LocalInputRouter.RightShoulder -= OnRightShoulder;
         LocalInputRouter.Return -= OnReturn;
+        TimeManager.CombatSlowPresentationChanged -= OnCombatSlowPresentationChanged;
+        combatSlowPresentationActive = false;
         ReleaseCombatInputFocus();
     }
 
@@ -256,6 +262,7 @@ public class CombatHudController : MonoBehaviour
         timerEndsAt = Time.unscaledTime + sanitizedTimer;
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
+        combatSlowPresentationActive = TimeManager.IsCombatSlowPresentationActive;
         if (visible && !string.IsNullOrWhiteSpace(sessionId) && !string.Equals(combatEngagedSessionId, sessionId, System.StringComparison.Ordinal))
         {
             StartCombatEngagedIntro(sessionId);
@@ -301,6 +308,7 @@ public class CombatHudController : MonoBehaviour
         currentPhase = CombatSessionPhase.Finished;
         playerActionLocked = false;
         visible = false;
+        combatSlowPresentationActive = false;
         ReleaseCombatInputFocus();
         SetScenePanelVisibility(false, false);
         SetCombatEngagedVisible(false);
@@ -526,15 +534,24 @@ public class CombatHudController : MonoBehaviour
 
     private void RefreshCombatPanelVisibility()
     {
-        bool defenseVisible = visible && !combatEngagedIntroActive && CanChooseEncounterReaction();
-        bool infosVisible = visible && !combatEngagedIntroActive && !defenseVisible;
-        SetScenePanelVisibility(infosVisible, infosVisible && CanChoosePlayerAction());
-        CombatDefensePanelController.SetReactionVisible(defenseVisible);
-
         if (!visible)
         {
+            SetScenePanelVisibility(false, false);
+            CombatDefensePanelController.HideActive();
             SetCombatEngagedVisible(false);
+            return;
         }
+
+        bool defenseVisible = visible && !combatEngagedIntroActive && combatSlowPresentationActive;
+        bool infosVisible = visible && !combatEngagedIntroActive && !defenseVisible;
+        SetScenePanelVisibility(infosVisible, infosVisible && CanChoosePlayerAction());
+        CombatDefensePanelController.SetSlowPresentationVisible(defenseVisible);
+    }
+
+    private void OnCombatSlowPresentationChanged(bool active)
+    {
+        combatSlowPresentationActive = active;
+        RefreshCombatPanelVisibility();
     }
 
     private void SetCombatEngagedVisible(bool shouldBeVisible)

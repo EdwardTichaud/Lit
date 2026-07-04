@@ -14,7 +14,7 @@ résolution dans le monde.
   Il orchestre aussi `CombatEngagedPanel`, `CombatScreenInfosPanel` et
   l'exclusivite de `CombatDefensePanel`.
 - `CombatDefensePanelController` : affiche les 3 items defensifs assignes
-  pendant la reaction ennemie.
+  pendant le ralenti de presentation combat.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat.
 - `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation,
@@ -37,9 +37,10 @@ résolution dans le monde.
    défensive locale : l'inventaire peut s'ouvrir, et un item défensif choisi est
    validé puis résolu côté autorité. Le ralenti n'est pas declenche par cette
    phase; il doit venir des `AnimationEvent` places dans les clips d'attaque.
-   `CombatDefensePanel` s'ouvre aussi pendant cette fenetre, masque les infos de
-   combat, et ne propose que les 3 items defensifs assignes au personnage comme
-   items combat.
+   Quand ce ralenti de presentation est actif, `CombatDefensePanel` devient le
+   seul panel combat visible et ne propose que les 3 items defensifs assignes au
+   personnage comme items combat. Au retour a vitesse normale,
+   `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
 8. La résolution restaure les positions, la caméra et le mouvement, puis applique
@@ -71,6 +72,9 @@ des assets `AudioClipSO`.
 Pendant ce meme ralenti, `TimeManager` demande aussi un leger ducking de la
 musique via `AudioManager.BeginMusicDucking`, puis le relache au retour a la
 vitesse normale.
+`TimeManager` publie aussi l'etat actif/inactif de ce ralenti afin que
+`CombatHudController` bascule l'affichage entre `CombatScreenInfosPanel` et
+`CombatDefensePanel` sans dependre de la phase `Decision`.
 
 Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
 pour controler finement le ralenti et une ruee cosmetique. Le composant resout
@@ -88,6 +92,14 @@ specifiques pour cette attaque. Ces elements doivent etre places dans le clip.
 Les anciens hooks autonomes `AnimationEventsManager` et `FirstStrikeEffect` du
 systeme legacy ont ete retires pour eviter les appels accidentels a
 `Time.timeScale`.
+
+Le systeme de combat actuel ne doit pas dependre du legacy Symphonie importe
+dans `Assets/Legacy/BattleManager_SymphonieImport`. Cet import reste isole dans
+son assembly `BattleManager.SymphonieImport`, non auto-referencee, compilee
+uniquement dans l'Editor et seulement si le define `SYMPHONIE_IMPORT_COMPILE`
+est ajoute manuellement. Aucun code, scene ou asset de combat actuel ne doit
+referencer ses types ou ses GUIDs afin que le dossier puisse etre supprime plus
+tard.
 
 La musique de combat peut aussi être demandée localement par proximité d'un
 `CombatAggroEnemy`, avant qu'une session tour par tour ne démarre réellement.
@@ -109,7 +121,7 @@ hystérésis quand le joueur local sort assez loin du trigger d'aggro.
   mais l'absorption, la casse et la synchronisation d'inventaire restent côté
   autorité.
 - Un item defensif doit etre assigne aux 3 items combat du personnage pour etre
-  utilisable dans `CombatDefensePanel` ou via l'inventaire pendant cette reaction.
+  utilisable dans `CombatDefensePanel` et dans l'inventaire de reaction.
 - Le joueur local doit être résolu via `LocalPlayerContext`; éviter les fallbacks
   arbitraires qui peuvent viser le mauvais personnage en Netcode.
 - Tester victoire, défaite, déconnexion et destruction pendant une transition.

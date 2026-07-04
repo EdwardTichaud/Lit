@@ -31,18 +31,23 @@ Le ralenti Animation Event descend maintenant a `0.1`, cible l'acteur et la
 victime, et les anciens hooks legacy autonomes qui modifiaient `Time.timeScale`
 ont ete retires.
 Le joueur peut maintenant assigner hors combat jusqu'a 3 items defensifs comme
-items combat. Pendant la reaction ennemie, `CombatDefensePanel` s'ouvre
-et ne propose que ces items a portee de main; la selection reste validee par
-`CombatSessionManager`, synchronisee par `NetworkInventory` et sauvegardee avec
-l'etat personnage.
+items combat. Pendant le ralenti de presentation combat,
+`CombatDefensePanel` s'ouvre et ne propose que ces items a portee de main; la
+selection reste validee par `CombatSessionManager`, synchronisee par
+`NetworkInventory` et sauvegardee avec l'etat personnage.
 L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
 `CombatEngagedPanel` au lancement d'une session, affiche ensuite
-`CombatScreenInfosPanel`, puis masque ces infos pendant la reaction defensive
-pour laisser uniquement `CombatDefensePanel`.
+`CombatScreenInfosPanel`, puis masque ces infos pendant le ralenti combat pour
+laisser uniquement `CombatDefensePanel`; au retour a vitesse normale, les infos
+de combat reviennent.
 Les transitions d'entree et sortie du ralenti combat jouent des sons via
 `ActionAudioCue.CombatTimeSlow` et `ActionAudioCue.CombatTimeResume`, relies a
 des `AudioClipSO` de la banque de sons, et appliquent un leger ducking de la
 musique pendant toute la duree du ralenti.
+L'import legacy Symphonie est isole dans son assembly non auto-referencee,
+Editor-only et compilee seulement avec le define manuel
+`SYMPHONIE_IMPORT_COMPILE`; le combat actuel ne reference pas ses types ni ses
+GUIDs.
 
 ## Contraintes
 

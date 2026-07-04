@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Role: affiche les trois items defensifs assignes pendant la reaction ennemie.
+// Role: affiche les trois items defensifs assignes pendant le ralenti de combat.
 // Usage: appele par CombatHudController; se branche sur le GameObject "CombatDefensePanel" de la scene.
 // Dependencies: CombatSessionManager, SquadCharacterController, LocalPlayerContext, TMP, Unity UI.
 public class CombatDefensePanelController : MonoBehaviour
@@ -59,6 +59,11 @@ public class CombatDefensePanelController : MonoBehaviour
 
     public static void SetReactionVisible(bool shouldBeVisible)
     {
+        SetSlowPresentationVisible(shouldBeVisible);
+    }
+
+    public static void SetSlowPresentationVisible(bool shouldBeVisible)
+    {
         CombatDefensePanelController controller = EnsureInstance();
         if (controller != null)
         {
@@ -94,8 +99,7 @@ public class CombatDefensePanelController : MonoBehaviour
             return;
         }
 
-        CombatSessionManager combatManager = CombatSessionManager.Instance;
-        if (combatManager == null || !combatManager.IsLocalDefensiveReactionActive())
+        if (!TimeManager.IsCombatSlowPresentationActive)
         {
             SetVisible(false);
             return;
