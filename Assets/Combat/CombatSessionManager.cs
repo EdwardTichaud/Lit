@@ -442,6 +442,26 @@ public class CombatSessionManager : NetworkBehaviour
         return player != null && enemy != null;
     }
 
+    public void NotifyLocalCombatAnimationImpact(Transform actor)
+    {
+        if (CanRunAuthority())
+        {
+            if (TryResolveLocalCombatAnimationImpactSession(actor, out CombatSession session))
+            {
+                TryResolveCombatAnimationImpact(session);
+            }
+
+            return;
+        }
+
+        if (!IsNetworkSessionActive() || !IsSpawned || !localCombatPresentation.Active)
+        {
+            return;
+        }
+
+        NotifyCombatAnimationImpactServerRpc(localCombatPresentation.SessionId);
+    }
+
     private void Awake()
     {
         // Unity appelle Awake au chargement; le singleton peut provenir de la scene ou etre cree au runtime.
@@ -903,6 +923,20 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, feedback, ActionAudioCue.UiInvalid);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void NotifyCombatAnimationImpactServerRpc(string sessionId, ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) ||
+            !sessionsByClientId.TryGetValue(rpcParams.Receive.SenderClientId, out CombatSession session) ||
+            session == null ||
+            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        TryResolveCombatAnimationImpact(session);
     }
 
     [ClientRpc]
@@ -1564,6 +1598,28 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEnemyActionResultMessage = message;
         session.State.SetMessage(message);
         SendSnapshot(session, message);
+    }
+
+    private bool TryResolveCombatAnimationImpact(CombatSession session)
+    {
+        if (session == null || session.State.Finished)
+        {
+            return false;
+        }
+
+        if (session.State.PlayerActionLocked && !session.PendingPlayerActionResolved)
+        {
+            ResolveLockedPlayerAttackImpact(session);
+            return true;
+        }
+
+        if (session.State.EnemyActionLocked && !session.PendingEnemyActionResolved)
+        {
+            ResolveEnemyActionImpact(session);
+            return true;
+        }
+
+        return false;
     }
 
     private void CompleteEnemyAction(CombatSession session)
@@ -2747,6 +2803,55 @@ public class CombatSessionManager : NetworkBehaviour
 
         string characterId = ResolveCharacterId(controller);
         return !string.IsNullOrWhiteSpace(characterId) && sessionsByCharacterId.TryGetValue(characterId, out session);
+    }
+
+    private bool TryResolveLocalCombatAnimationImpactSession(Transform actor, out CombatSession session)
+    {
+        session = null;
+        if (sessionsByClientId.TryGetValue(ResolveLocalClientId(), out session) &&
+            session != null &&
+            !session.State.Finished)
+        {
+            return true;
+        }
+
+        if (actor == null)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = actor.GetComponentInParent<SquadCharacterController>();
+        if (controller != null &&
+            TryGetSession(controller, out session) &&
+            session != null &&
+            !session.State.Finished)
+        {
+            return true;
+        }
+
+        foreach (CombatSession candidate in sessionsByCharacterId.Values)
+        {
+            if (candidate == null ||
+                candidate.State.Finished ||
+                candidate.SourceEnemy == null ||
+                !BelongsToTransform(actor, candidate.SourceEnemy.transform))
+            {
+                continue;
+            }
+
+            session = candidate;
+            return true;
+        }
+
+        session = null;
+        return false;
+    }
+
+    private static bool BelongsToTransform(Transform actor, Transform candidate)
+    {
+        return actor != null &&
+               candidate != null &&
+               (actor == candidate || actor.IsChildOf(candidate) || candidate.IsChildOf(actor));
     }
 
     private void ResolveCombatPositions(

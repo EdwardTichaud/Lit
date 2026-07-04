@@ -219,8 +219,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatAnimationEvents
   actorRoot: {fileID: 158977838910440850}
   victimOverride: {fileID: 0}
-  slowedTimeScale: 0.2
-  slowBlendSeconds: 1
+  slowedTimeScale: 0.1
+  slowBlendSeconds: 0.15
   slowBlendCurve:
     serializedVersion: 2
     m_Curve:
@@ -245,6 +245,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  includeVictimInTimeScale: 1
   victimStopDistance: 1.15
   moveToVictimSeconds: 0.2
   returnSeconds: 0.2

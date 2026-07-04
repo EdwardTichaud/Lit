@@ -10,7 +10,7 @@ using UccCharacterLocomotion = Opsive.UltimateCharacterController.Character.Ulti
 public sealed class TimeManager : MonoBehaviour
 {
     private const float MaxDynamicCombatBlendInSeconds = 0.25f;
-    private const float MinDynamicCombatTimeScale = 0.35f;
+    private const float MinDynamicCombatTimeScale = 0.1f;
     private const float DefaultEnemyActionTimeScale = 0.55f;
 
     public enum CombatPresentationTimeProfile
@@ -157,7 +157,8 @@ public sealed class TimeManager : MonoBehaviour
         if (profile == CombatPresentationTimeProfile.None &&
             defensiveReactionWeight <= 0f &&
             enemyActionWeight <= 0f &&
-            hitStopWeight <= 0f)
+            hitStopWeight <= 0f &&
+            !presentationTimeScaleActive)
         {
             RestoreCombatTime();
         }

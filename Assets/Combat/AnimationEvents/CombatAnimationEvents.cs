@@ -12,9 +12,10 @@ public sealed class CombatAnimationEvents : MonoBehaviour
     [SerializeField] private Transform victimOverride;
 
     [Header("Time")]
-    [SerializeField, Range(0.05f, 1f)] private float slowedTimeScale = 0.2f;
-    [SerializeField, Min(0.01f)] private float slowBlendSeconds = 1f;
+    [SerializeField, Range(0.01f, 1f)] private float slowedTimeScale = 0.1f;
+    [SerializeField, Min(0.01f)] private float slowBlendSeconds = 0.15f;
     [SerializeField] private AnimationCurve slowBlendCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private bool includeVictimInTimeScale = true;
 
     [Header("Movement")]
     [SerializeField, Min(0f)] private float victimStopDistance = 1.15f;
@@ -31,8 +32,23 @@ public sealed class CombatAnimationEvents : MonoBehaviour
 
     public void SlowCombatTime()
     {
+        StartSlowCombatTime(slowedTimeScale, slowBlendSeconds);
+    }
+
+    public void SlowCombatTimeTo(float targetTimeScale)
+    {
+        StartSlowCombatTime(targetTimeScale, slowBlendSeconds);
+    }
+
+    public void SlowCombatTimeInstant()
+    {
+        StartSlowCombatTime(slowedTimeScale, 0.01f);
+    }
+
+    private void StartSlowCombatTime(float targetTimeScale, float blendSeconds)
+    {
         StopTimeRoutine();
-        timeRoutine = StartCoroutine(SlowCombatTimeRoutine());
+        timeRoutine = StartCoroutine(SlowCombatTimeRoutine(targetTimeScale, blendSeconds));
     }
 
     public void RestoreCombatTime()
@@ -71,6 +87,11 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         StartMove(actor, initialPosition, initialRotation, returnSeconds, clearInitialPose: true);
     }
 
+    public void NotifyCombatImpact()
+    {
+        CombatSessionManager.Instance?.NotifyLocalCombatAnimationImpact(ResolveActorRoot());
+    }
+
     private void OnDisable()
     {
         StopTimeRoutine();
@@ -78,7 +99,7 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         TimeManager.Instance?.SetCombatPresentationTimeScale(null, 1f, active: false);
     }
 
-    private IEnumerator SlowCombatTimeRoutine()
+    private IEnumerator SlowCombatTimeRoutine(float targetTimeScale, float blendSeconds)
     {
         Transform actor = ResolveActorRoot();
         if (actor == null)
@@ -87,25 +108,42 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         }
 
         TimeManager timeManager = TimeManager.EnsureInstance();
-        float targetScale = Mathf.Clamp(slowedTimeScale, 0.05f, 1f);
-        float duration = Mathf.Max(0.01f, slowBlendSeconds);
+        Transform victim = includeVictimInTimeScale && TryResolveCombatVictim(actor, out Transform resolvedVictim)
+            ? resolvedVictim
+            : null;
+        float targetScale = Mathf.Clamp(targetTimeScale, 0.01f, 1f);
+        float duration = Mathf.Max(0.01f, blendSeconds);
         float elapsed = 0f;
 
         while (actor != null && elapsed < duration)
         {
             float t = EvaluateCurve(slowBlendCurve, elapsed / duration);
             float timeScale = Mathf.Lerp(1f, targetScale, t);
-            timeManager.SetCombatPresentationTimeScale(actor, timeScale, active: true);
+            ApplyPresentationTimeScale(timeManager, actor, victim, timeScale);
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
         if (actor != null)
         {
-            timeManager.SetCombatPresentationTimeScale(actor, targetScale, active: true);
+            ApplyPresentationTimeScale(timeManager, actor, victim, targetScale);
         }
 
         timeRoutine = null;
+    }
+
+    private void ApplyPresentationTimeScale(TimeManager timeManager, Transform actor, Transform victim, float timeScale)
+    {
+        if (timeManager == null || actor == null)
+        {
+            return;
+        }
+
+        timeManager.SetCombatPresentationTimeScale(actor, timeScale, active: true);
+        if (includeVictimInTimeScale && victim != null && !BelongsTo(victim, actor))
+        {
+            timeManager.SetCombatPresentationTimeScale(victim, timeScale, active: true);
+        }
     }
 
     private void StartMove(

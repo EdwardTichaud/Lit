@@ -13,8 +13,8 @@ résolution dans le monde.
 - `CombatHudController` : commandes et affichage local.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat.
-- `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation
-  et deplacer l'attaquant vers sa victime puis revenir a sa pose initiale.
+- `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation,
+  deplacer l'attaquant, revenir a sa pose initiale et notifier l'impact.
 - `TimeManager` : profils de temps et hit-stop locaux de presentation combat,
   sans `Time.timeScale`.
 - `CombatTransitionController` : transition visuelle/audio.
@@ -61,11 +61,19 @@ modifier `Time.timeScale`.
 Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
 pour controler finement le ralenti et une ruee cosmetique. Le composant resout
 la victime depuis le contexte local de combat, capture la pose de depart au
-moment de la ruee et restaure uniquement cette presentation; les degats restent
-resolus par `CombatSessionManager`.
+moment de la ruee, restaure uniquement cette presentation et peut notifier
+`NotifyCombatImpact` au frame d'impact. Les degats restent resolus une seule
+fois par `CombatSessionManager`; le timer autoritaire reste le fallback si
+l'evenement n'est pas declenche.
+`SlowCombatTime` descend par defaut a `0.1` en entree rapide, suit les
+`Animator`/UCC sous l'acteur et inclut aussi la victime de combat pour rendre
+le ralenti visible sur les deux corps.
 L'attaque Juggernaut `Griffe` est animation-driven : le manager force seulement
 le lancement de `Attack_Griffe` et ne joue plus de saut, dash, audio ou VFX
 specifiques pour cette attaque. Ces elements doivent etre places dans le clip.
+Les anciens hooks autonomes `AnimationEventsManager` et `FirstStrikeEffect` du
+systeme legacy ont ete retires pour eviter les appels accidentels a
+`Time.timeScale`.
 
 La musique de combat peut aussi être demandée localement par proximité d'un
 `CombatAggroEnemy`, avant qu'une session tour par tour ne démarre réellement.

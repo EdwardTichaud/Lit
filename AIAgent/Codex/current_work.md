@@ -26,6 +26,11 @@ Un composant `CombatAnimationEvents` permet aux clips d'attaque de declencher
 un ralenti local, une ruee vers la victime et un retour a la pose initiale.
 `Griffe` du Juggernaut est maintenant pilotee par son clip : le manager lance
 seulement `Attack_Griffe`, sans saut/dash/audio/VFX specifiques codes.
+Les clips peuvent notifier l'impact avec `NotifyCombatImpact`; le manager
+applique alors l'impact pending une seule fois, avec le timer comme fallback.
+Le ralenti Animation Event descend maintenant a `0.1`, cible l'acteur et la
+victime, et les anciens hooks legacy autonomes qui modifiaient `Time.timeScale`
+ont ete retires.
 
 ## Contraintes
 
