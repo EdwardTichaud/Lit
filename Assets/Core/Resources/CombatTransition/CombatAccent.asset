@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CombatAccent
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Combat Accent
-  composer:
-  audioClip: {fileID: 8300000, guid: ce1c18345a74ab947acbea164a653686, type: 3}
+  composer: 
+  audioClip: {fileID: 0}
   volume: 0.72
   loop: 0

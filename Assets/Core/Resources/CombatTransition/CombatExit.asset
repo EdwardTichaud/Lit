@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CombatExit
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Combat Exit
-  composer:
+  composer: 
   audioClip: {fileID: 8300000, guid: b34045e1bf997cf419246929775c1edd, type: 3}
-  volume: 0.75
+  volume: 0.6
   loop: 0

@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Role: expose des hooks Animation Event pour la presentation des attaques de combat.
 // Usage: attacher sur l'objet qui recoit les Animation Events; le parent est deplace par defaut.
-// Responsibilities: ralentir localement le temps de presentation et deplacer l'attaquant vers sa victime.
+// Responsibilities: ralentir localement la presentation, afficher l'UI defensive et deplacer l'attaquant vers sa victime.
 // Precautions: presentation locale uniquement; ne resout aucun degat et ne modifie pas Time.timeScale.
 public sealed class CombatAnimationEvents : MonoBehaviour
 {
@@ -32,16 +32,19 @@ public sealed class CombatAnimationEvents : MonoBehaviour
 
     public void SlowCombatTime()
     {
+        ShowCombatDefensePanel();
         StartSlowCombatTime(slowedTimeScale, slowBlendSeconds);
     }
 
     public void SlowCombatTimeTo(float targetTimeScale)
     {
+        ShowCombatDefensePanel();
         StartSlowCombatTime(targetTimeScale, slowBlendSeconds);
     }
 
     public void SlowCombatTimeInstant()
     {
+        ShowCombatDefensePanel();
         StartSlowCombatTime(slowedTimeScale, 0.01f);
     }
 
@@ -55,6 +58,17 @@ public sealed class CombatAnimationEvents : MonoBehaviour
     {
         StopTimeRoutine();
         TimeManager.Instance?.SetCombatPresentationTimeScale(null, 1f, active: false);
+        HideCombatDefensePanel();
+    }
+
+    public void ShowCombatDefensePanel()
+    {
+        CombatHudController.SetCombatDefensePanelVisibleFromAnimationEvent(true);
+    }
+
+    public void HideCombatDefensePanel()
+    {
+        CombatHudController.SetCombatDefensePanelVisibleFromAnimationEvent(false);
     }
 
     public void MoveParentToCombatVictim()
@@ -97,6 +111,7 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         StopTimeRoutine();
         StopMoveRoutine();
         TimeManager.Instance?.SetCombatPresentationTimeScale(null, 1f, active: false);
+        HideCombatDefensePanel();
     }
 
     private IEnumerator SlowCombatTimeRoutine(float targetTimeScale, float blendSeconds)

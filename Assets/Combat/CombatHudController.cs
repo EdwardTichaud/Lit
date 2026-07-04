@@ -45,6 +45,26 @@ public class CombatHudController : MonoBehaviour
     /// </summary>
     public static bool HasCombatInputFocus => Instance != null && Instance.combatFocusPushed && InputFocusStack.HasFocus(Instance);
 
+    public static void SetCombatDefensePanelVisibleFromAnimationEvent(bool shouldBeVisible)
+    {
+        CombatHudController controller = Instance;
+        if (controller == null && shouldBeVisible)
+        {
+            controller = EnsureInstance();
+        }
+
+        if (controller != null)
+        {
+            controller.SetCombatDefensePanelRequested(shouldBeVisible);
+            return;
+        }
+
+        if (!shouldBeVisible)
+        {
+            CombatDefensePanelController.HideActive();
+        }
+    }
+
     [Header("Scene UI")]
     /// <summary>
     /// Autorise la creation d'une UI runtime si aucune UI de scene n'est trouvee.
@@ -103,7 +123,7 @@ public class CombatHudController : MonoBehaviour
     private bool combatEngagedIntroActive;
     private float combatEngagedIntroEndsAt;
     private bool combatEngagedAnimationObserved;
-    private bool combatSlowPresentationActive;
+    private bool combatDefensePanelRequested;
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -197,8 +217,6 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact += OnInteract;
         LocalInputRouter.RightShoulder += OnRightShoulder;
         LocalInputRouter.Return += OnReturn;
-        TimeManager.CombatSlowPresentationChanged += OnCombatSlowPresentationChanged;
-        combatSlowPresentationActive = TimeManager.IsCombatSlowPresentationActive;
         RefreshCombatPanelVisibility();
     }
 
@@ -208,8 +226,7 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact -= OnInteract;
         LocalInputRouter.RightShoulder -= OnRightShoulder;
         LocalInputRouter.Return -= OnReturn;
-        TimeManager.CombatSlowPresentationChanged -= OnCombatSlowPresentationChanged;
-        combatSlowPresentationActive = false;
+        combatDefensePanelRequested = false;
         ReleaseCombatInputFocus();
     }
 
@@ -262,7 +279,6 @@ public class CombatHudController : MonoBehaviour
         timerEndsAt = Time.unscaledTime + sanitizedTimer;
         playerActionLocked = actionLocked;
         visible = turn != TurnState.None && turn != TurnState.Finished;
-        combatSlowPresentationActive = TimeManager.IsCombatSlowPresentationActive;
         if (visible && !string.IsNullOrWhiteSpace(sessionId) && !string.Equals(combatEngagedSessionId, sessionId, System.StringComparison.Ordinal))
         {
             StartCombatEngagedIntro(sessionId);
@@ -308,7 +324,7 @@ public class CombatHudController : MonoBehaviour
         currentPhase = CombatSessionPhase.Finished;
         playerActionLocked = false;
         visible = false;
-        combatSlowPresentationActive = false;
+        combatDefensePanelRequested = false;
         ReleaseCombatInputFocus();
         SetScenePanelVisibility(false, false);
         SetCombatEngagedVisible(false);
@@ -476,6 +492,7 @@ public class CombatHudController : MonoBehaviour
         combatEngagedIntroActive = true;
         combatEngagedIntroEndsAt = Time.unscaledTime + ResolveCombatEngagedDuration();
         combatEngagedAnimationObserved = false;
+        combatDefensePanelRequested = false;
 
         SetScenePanelVisibility(false, false);
         CombatDefensePanelController.HideActive();
@@ -536,21 +553,22 @@ public class CombatHudController : MonoBehaviour
     {
         if (!visible)
         {
+            combatDefensePanelRequested = false;
             SetScenePanelVisibility(false, false);
             CombatDefensePanelController.HideActive();
             SetCombatEngagedVisible(false);
             return;
         }
 
-        bool defenseVisible = visible && !combatEngagedIntroActive && combatSlowPresentationActive;
+        bool defenseVisible = visible && !combatEngagedIntroActive && combatDefensePanelRequested;
         bool infosVisible = visible && !combatEngagedIntroActive && !defenseVisible;
         SetScenePanelVisibility(infosVisible, infosVisible && CanChoosePlayerAction());
-        CombatDefensePanelController.SetSlowPresentationVisible(defenseVisible);
+        CombatDefensePanelController.SetAnimationEventVisible(defenseVisible);
     }
 
-    private void OnCombatSlowPresentationChanged(bool active)
+    private void SetCombatDefensePanelRequested(bool shouldBeVisible)
     {
-        combatSlowPresentationActive = active;
+        combatDefensePanelRequested = shouldBeVisible;
         RefreshCombatPanelVisibility();
     }
 

@@ -14,11 +14,12 @@ résolution dans le monde.
   Il orchestre aussi `CombatEngagedPanel`, `CombatScreenInfosPanel` et
   l'exclusivite de `CombatDefensePanel`.
 - `CombatDefensePanelController` : affiche les 3 items defensifs assignes
-  pendant le ralenti de presentation combat.
+  quand un `AnimationEvent` de combat le demande.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat.
 - `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation,
-  deplacer l'attaquant, revenir a sa pose initiale et notifier l'impact.
+  ouvrir/fermer `CombatDefensePanel`, deplacer l'attaquant, revenir a sa pose
+  initiale et notifier l'impact.
 - `TimeManager` : multiplicateur local de presentation combat declenche par les
   `AnimationEvent`, sans `Time.timeScale`.
 - `CombatTransitionController` : transition visuelle/audio.
@@ -37,9 +38,9 @@ résolution dans le monde.
    défensive locale : l'inventaire peut s'ouvrir, et un item défensif choisi est
    validé puis résolu côté autorité. Le ralenti n'est pas declenche par cette
    phase; il doit venir des `AnimationEvent` places dans les clips d'attaque.
-   Quand ce ralenti de presentation est actif, `CombatDefensePanel` devient le
-   seul panel combat visible et ne propose que les 3 items defensifs assignes au
-   personnage comme items combat. Au retour a vitesse normale,
+   Quand un `AnimationEvent` le demande, `CombatDefensePanel` devient le seul
+   panel combat visible et ne propose que les 3 items defensifs assignes au
+   personnage comme items combat. Quand le clip ferme ce panel,
    `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
@@ -72,20 +73,21 @@ des assets `AudioClipSO`.
 Pendant ce meme ralenti, `TimeManager` demande aussi un leger ducking de la
 musique via `AudioManager.BeginMusicDucking`, puis le relache au retour a la
 vitesse normale.
-`TimeManager` publie aussi l'etat actif/inactif de ce ralenti afin que
-`CombatHudController` bascule l'affichage entre `CombatScreenInfosPanel` et
-`CombatDefensePanel` sans dependre de la phase `Decision`.
+L'affichage de `CombatDefensePanel` ne depend pas de l'etat du ralenti dans
+`TimeManager` : il est demande explicitement par `CombatAnimationEvents`.
 
 Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
-pour controler finement le ralenti et une ruee cosmetique. Le composant resout
-la victime depuis le contexte local de combat, capture la pose de depart au
-moment de la ruee, restaure uniquement cette presentation et peut notifier
+pour controler finement le ralenti, l'ouverture/fermeture de
+`CombatDefensePanel` et une ruee cosmetique. Le composant resout la victime
+depuis le contexte local de combat, capture la pose de depart au moment de la
+ruee, restaure uniquement cette presentation et peut notifier
 `NotifyCombatImpact` au frame d'impact. Les degats restent resolus une seule
 fois par `CombatSessionManager`; le timer autoritaire reste le fallback si
 l'evenement n'est pas declenche.
 `SlowCombatTime` descend par defaut a `0.1` en entree rapide, suit les
 `Animator`/UCC sous l'acteur et inclut aussi la victime de combat pour rendre
-le ralenti visible sur les deux corps.
+le ralenti visible sur les deux corps. Les appels `SlowCombatTime` ouvrent
+aussi `CombatDefensePanel`; `RestoreCombatTime` le ferme.
 L'attaque Juggernaut `Griffe` est animation-driven : le manager force seulement
 le lancement de `Attack_Griffe` et ne joue plus de saut, dash, audio ou VFX
 specifiques pour cette attaque. Ces elements doivent etre places dans le clip.

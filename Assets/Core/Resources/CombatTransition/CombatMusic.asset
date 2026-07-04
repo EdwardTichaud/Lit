@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Symphony - Theme 2 Combat
   composer: Manaberry
-  audioClip: {fileID: 8300000, guid: 2435bc550470534458523bd39948cbc5, type: 3}
-  volume: 0.82
+  audioClip: {fileID: 8300000, guid: 0a5a8536e44e89149a70fda880b58b57, type: 3}
+  volume: 1
   loop: 1

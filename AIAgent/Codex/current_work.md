@@ -31,15 +31,14 @@ Le ralenti Animation Event descend maintenant a `0.1`, cible l'acteur et la
 victime, et les anciens hooks legacy autonomes qui modifiaient `Time.timeScale`
 ont ete retires.
 Le joueur peut maintenant assigner hors combat jusqu'a 3 items defensifs comme
-items combat. Pendant le ralenti de presentation combat,
-`CombatDefensePanel` s'ouvre et ne propose que ces items a portee de main; la
-selection reste validee par `CombatSessionManager`, synchronisee par
+items combat. Les clips d'attaque ouvrent/ferment `CombatDefensePanel` via
+`CombatAnimationEvents`; le panel ne propose que ces items a portee de main, et
+la selection reste validee par `CombatSessionManager`, synchronisee par
 `NetworkInventory` et sauvegardee avec l'etat personnage.
 L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
 `CombatEngagedPanel` au lancement d'une session, affiche ensuite
-`CombatScreenInfosPanel`, puis masque ces infos pendant le ralenti combat pour
-laisser uniquement `CombatDefensePanel`; au retour a vitesse normale, les infos
-de combat reviennent.
+`CombatScreenInfosPanel`, puis masque ces infos quand un AnimationEvent demande
+`CombatDefensePanel`; a la fermeture du panel, les infos de combat reviennent.
 Les transitions d'entree et sortie du ralenti combat jouent des sons via
 `ActionAudioCue.CombatTimeSlow` et `ActionAudioCue.CombatTimeResume`, relies a
 des `AudioClipSO` de la banque de sons, et appliquent un leger ducking de la

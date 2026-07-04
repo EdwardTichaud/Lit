@@ -10,9 +10,6 @@ using UccCharacterLocomotion = Opsive.UltimateCharacterController.Character.Ulti
 public sealed class TimeManager : MonoBehaviour
 {
     public static TimeManager Instance { get; private set; }
-    public static event System.Action<bool> CombatSlowPresentationChanged;
-
-    public static bool IsCombatSlowPresentationActive => Instance != null && Instance.HasCombatSlowAudioState();
 
     [Header("Combat Time")]
     [SerializeField, Range(0.2f, 1f)] private float combatSlowMusicDuckMultiplier = 0.72f;
@@ -55,7 +52,6 @@ public sealed class TimeManager : MonoBehaviour
     private static void ResetStaticState()
     {
         Instance = null;
-        CombatSlowPresentationChanged = null;
     }
 
     private void Awake()
@@ -148,7 +144,6 @@ public sealed class TimeManager : MonoBehaviour
         }
 
         combatSlowAudioActive = active;
-        CombatSlowPresentationChanged?.Invoke(active);
         if (audioManager == null)
         {
             return;

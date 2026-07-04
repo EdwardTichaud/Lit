@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CombatEnter
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Fight Engaged
-  composer:
-  audioClip: {fileID: 8300000, guid: 079703429e4773941a2bcaa885e03a41, type: 3}
-  volume: 0.9
+  composer: 
+  audioClip: {fileID: 8300000, guid: 8af85fcfc280d7d4f87e55bf84ea72a9, type: 3}
+  volume: 0.6
   loop: 0
