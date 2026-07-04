@@ -102,6 +102,7 @@ public class CombatHudController : MonoBehaviour
     private string combatEngagedSessionId;
     private bool combatEngagedIntroActive;
     private float combatEngagedIntroEndsAt;
+    private bool combatEngagedAnimationObserved;
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -466,6 +467,7 @@ public class CombatHudController : MonoBehaviour
 
         combatEngagedIntroActive = true;
         combatEngagedIntroEndsAt = Time.unscaledTime + ResolveCombatEngagedDuration();
+        combatEngagedAnimationObserved = false;
 
         SetScenePanelVisibility(false, false);
         CombatDefensePanelController.HideActive();
@@ -480,7 +482,7 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        if (Time.unscaledTime < combatEngagedIntroEndsAt)
+        if (IsCombatEngagedAnimationStillPlaying())
         {
             return;
         }
@@ -488,6 +490,38 @@ public class CombatHudController : MonoBehaviour
         combatEngagedIntroActive = false;
         SetCombatEngagedVisible(false);
         RefreshCombatPanelVisibility();
+    }
+
+    private bool IsCombatEngagedAnimationStillPlaying()
+    {
+        if (combatEngagedAnimator == null || !combatEngagedAnimator.isActiveAndEnabled)
+        {
+            return Time.unscaledTime < combatEngagedIntroEndsAt;
+        }
+
+        AnimatorStateInfo currentState = combatEngagedAnimator.GetCurrentAnimatorStateInfo(0);
+        if (AnimatorStateOrClipMatches(combatEngagedAnimator, currentState, false))
+        {
+            combatEngagedAnimationObserved = true;
+            return combatEngagedAnimator.IsInTransition(0) || currentState.normalizedTime < 1f;
+        }
+
+        if (combatEngagedAnimator.IsInTransition(0))
+        {
+            AnimatorStateInfo nextState = combatEngagedAnimator.GetNextAnimatorStateInfo(0);
+            if (AnimatorStateOrClipMatches(combatEngagedAnimator, nextState, true))
+            {
+                combatEngagedAnimationObserved = true;
+                return nextState.normalizedTime < 1f;
+            }
+        }
+
+        if (combatEngagedAnimationObserved)
+        {
+            return false;
+        }
+
+        return Time.unscaledTime < combatEngagedIntroEndsAt;
     }
 
     private void RefreshCombatPanelVisibility()
@@ -571,6 +605,33 @@ public class CombatHudController : MonoBehaviour
             AnimatorControllerParameter parameter = parameters[i];
             if (parameter.type == AnimatorControllerParameterType.Trigger
                 && string.Equals(parameter.name, triggerName, System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool AnimatorStateOrClipMatches(Animator animator, AnimatorStateInfo stateInfo, bool next)
+    {
+        if (stateInfo.IsName(CombatEngagedAnimationName))
+        {
+            return true;
+        }
+
+        AnimatorClipInfo[] clips = next
+            ? animator.GetNextAnimatorClipInfo(0)
+            : animator.GetCurrentAnimatorClipInfo(0);
+        if (clips == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AnimationClip clip = clips[i].clip;
+            if (clip != null && string.Equals(clip.name, CombatEngagedAnimationName, System.StringComparison.Ordinal))
             {
                 return true;
             }
