@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
+  m_Name: Item_Weapon_Sword
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemId: sword01
+  itemName: Sword
+  itemSprite: {fileID: 21300000, guid: 8283172e805bf58459c2e348ed41b55a, type: 3}
+  description: "Une \xE9p\xE9e basique et assez fragile."
+  readableKind: 0
+  parchmentText: 
+  bookPages: []
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableContentId: 
+  readableGenerationSeedOffset: 0
+  readableMetadata:
+    enabled: 0
+    associatedAge: 666
+    district: 
+    room: 
+    lineageId: 
+    religiousCurrent: 0
+    revelationLevel: 0
+    narrativeTags: []
+  knowledgeUnlockedOnRead: []
+  temporalDistrictRegistry: {fileID: 0}
+  refreshTemporalDistrictRegistryOnRead: 1
+  canUse: 0
+  canDefendInCombat: 0
+  combatDefenseHitPoints: 0
+  canPlace: 1
+  isContainer: 1
+  worldPrefab: {fileID: 1845237839428460, guid: ab8ac2017bc4c9e40b484324e5ee20e7, type: 3}
+  isFlame: 0
+  isBeacon: 0
+  allowWallPlacement: 0
+  placementRadiusOverride: 0
+  isWetClay: 0
+  driedReplacementItem: {fileID: 0}
+  preservesWetClay: 0
+  preservedWetClayCapacity: 1
+  isKey: 0
+  keyId: 
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
+  useEffects: []
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: Impossible de placer ici
+  cannotPlaceWhileEquippedMessage: "La flamme \xE9quip\xE9e emp\xEAche la pose"
+  cannotDropMessage: "Cet objet ne peut pas \xEAtre jet\xE9"
+  cannotUseMessage: "Cet objet ne peut pas \xEAtre utilis\xE9"
+  useFailedMessage: Echec d'utilisation
+  cannotPickupMessage: "Cet objet ne peut pas \xEAtre r\xE9cup\xE9r\xE9"
+  cannotDepositMessage: "Cet objet ne pas pas \xEAtre d\xE9pos\xE9"
+  cannotTakeMessage: "Cet item ne peut pas \xEAtre pris"
+  cannotBreakMessage: Cet objet est incassable
+  breakFailedMessage: Echec de casse
+  useSuccessMessage: "-ItemName- utilis\xE9"
+  placeSuccessMessage: "-ItemName- pos\xE9"
+  dropSuccessMessage: "-ItemName- jet\xE9"
+  depositSuccessMessage: "-ItemName- d\xE9pos\xE9"
+  takeSuccessMessage: -ItemName- pris
+  breakSuccessMessage: "-ItemName- cass\xE9"
+  isBuilding: 0
+  isCraftingBuilding: 0
+  availableCrafts: []
+  buildingPrefab: {fileID: 0}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
+  buildingRequirements: []
+  buildingEffects: []
+  buildingLevelConfigs: []
+  isHomeChest: 0
+  canBreak: 1
+  breakResults:
+  - item: {fileID: 11400000, guid: 0d0e70bd6452fb24da4785d4f1a0b421, type: 2}
+    quantity: 10
+  - item: {fileID: 11400000, guid: 8a93f57dfb7a39b489c2606d28b103e1, type: 2}
+    quantity: 20
