@@ -59,6 +59,8 @@ MonoBehaviour:
   combatTurn: {fileID: 11400000, guid: e3b13cd15eac499ea87f344d333d2136, type: 2}
   combatVictory: {fileID: 11400000, guid: 3b654d83b8ab404fb3c80ecbe74b5940, type: 2}
   combatDefeat: {fileID: 11400000, guid: b61b6438d2bf48c8a4a487a4c4883d5c, type: 2}
+  combatTimeSlow: {fileID: 11400000, guid: 10a90e07f98e4c1c87dafddcb923f727, type: 2}
+  combatTimeResume: {fileID: 11400000, guid: ec81217620cf41018d25a6739d4fe1cb, type: 2}
   puzzleSuccess: {fileID: 11400000, guid: 414c24aa6c1048768e9deb4d17f17dac, type: 2}
   puzzleFailure: {fileID: 11400000, guid: 62bc7cae88704752bf099f9b403988cb, type: 2}
   destructibleDestroy: {fileID: 11400000, guid: 97a53cc5f3c74f45a8280c0342a41b9d, type: 2}

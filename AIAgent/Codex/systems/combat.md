@@ -19,8 +19,8 @@ résolution dans le monde.
   par phase de combat.
 - `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation,
   deplacer l'attaquant, revenir a sa pose initiale et notifier l'impact.
-- `TimeManager` : profils de temps et hit-stop locaux de presentation combat,
-  sans `Time.timeScale`.
+- `TimeManager` : multiplicateur local de presentation combat declenche par les
+  `AnimationEvent`, sans `Time.timeScale`.
 - `CombatTransitionController` : transition visuelle/audio.
 - `CombatHealth` : santé persistante des ennemis de scène.
 
@@ -34,10 +34,9 @@ résolution dans le monde.
 5. Chaque tour commence par une courte phase de décision locale : HUD/focus et
    caméra se suspendent visuellement sans utiliser `Time.timeScale` global.
 6. Pendant la décision ennemie, le joueur engagé dispose d'une réaction
-   défensive locale : la présentation entre rapidement en ralenti dynamique sans
-   `Time.timeScale`, l'inventaire peut s'ouvrir, et un item défensif choisi est
-   validé puis résolu côté autorité. Le ralenti local reste actif pendant
-   l'action ennemie pour rendre l'attaque lisible.
+   défensive locale : l'inventaire peut s'ouvrir, et un item défensif choisi est
+   validé puis résolu côté autorité. Le ralenti n'est pas declenche par cette
+   phase; il doit venir des `AnimationEvent` places dans les clips d'attaque.
    `CombatDefensePanel` s'ouvre aussi pendant cette fenetre, masque les infos de
    combat, et ne propose que les 3 items defensifs assignes au personnage comme
    items combat.
@@ -61,11 +60,17 @@ un timing autoritaire, et les attaques distance/support restent sur place. Les
 attaques dont l'animation embarque déjà le déplacement ne reçoivent pas
 d'approche scriptée supplémentaire.
 
-Les ralentis de combat passent par des profils `TimeManager` locaux. Les
+Les ralentis de combat sont exclusivement declenches par les `AnimationEvent`
+exposes par `CombatAnimationEvents`. La camera de combat, `CombatSessionManager`
+et les impacts ne demarrent plus de ralenti ou de hit-stop automatiques. Les
 animations, UCC et mouvements scriptes de presentation lisent le meme
-multiplicateur afin de rester synchronises avec la camera. Un hit-stop tres
-court est declenche aux impacts joueur/ennemi pour accentuer le contact sans
-modifier `Time.timeScale`.
+multiplicateur quand un clip a lance `SlowCombatTime`.
+Les entrees/sorties de ce ralenti jouent aussi les cues
+`CombatTimeSlow`/`CombatTimeResume` de l'`ActionAudioLibrary` par defaut, via
+des assets `AudioClipSO`.
+Pendant ce meme ralenti, `TimeManager` demande aussi un leger ducking de la
+musique via `AudioManager.BeginMusicDucking`, puis le relache au retour a la
+vitesse normale.
 
 Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
 pour controler finement le ralenti et une ruee cosmetique. Le composant resout
@@ -97,8 +102,9 @@ hystérésis quand le joueur local sort assez loin du trigger d'aggro.
 - Une action couverte de transition doit être exécutée même si la transition est
   interrompue.
 - Le serveur est l’autorité en multijoueur; les clients gardent une présentation locale.
-- Le ralenti/pause de combat est cosmétique et local au client engagé; ne pas
-  utiliser `Time.timeScale` pour ce flux multijoueur.
+- Le ralenti de combat est cosmétique, local au client engagé et
+  animation-driven; ne pas utiliser `Time.timeScale` ni le declencher depuis le
+  manager ou la camera.
 - Les items défensifs de réaction ennemie sont choisis depuis l'inventaire local,
   mais l'absorption, la casse et la synchronisation d'inventaire restent côté
   autorité.

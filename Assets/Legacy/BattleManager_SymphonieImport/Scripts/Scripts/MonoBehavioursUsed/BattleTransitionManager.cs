@@ -600,11 +600,6 @@ public class BattleTransitionManager : MonoBehaviour
 
         exitBattleRoutineRunning = true;
 
-        // On fige immédiatement le temps pour empêcher toute frame supplémentaire
-        // du combat avant que l'interface ne soit complètement masquée.
-        Time.timeScale = 0f;
-        Time.fixedDeltaTime = 0f; // La physique est figée elle aussi pour éliminer toute avance discrète des animations.
-
         yield return ExitVictoryScreenAndBattleSequence();
 
         exitBattleRoutineRunning = false;
@@ -719,9 +714,6 @@ public class BattleTransitionManager : MonoBehaviour
             Debug.LogWarning("[BattleTransitionManager] InputsManager ou son PlayerInputs est manquant lors du retour à l'exploration.");
         }
 
-        // Une fois l'UI fermée et les inputs réactivés, on peut relancer le temps de jeu.
-        yield return StartCoroutine(RestoreTimeScale(0f, 1f, 2f));
-        Time.fixedDeltaTime = 0.02f; // Garantit la valeur par défaut même si le RestoreTimeScale a été interrompu.
         InputsManager.Instance?.RestoreInputUpdateMode();
 
         if (Application.isPlaying && !Application.isEditor && SaveAndLoadManager.Instance != null)
@@ -755,14 +747,6 @@ public class BattleTransitionManager : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(0);
 
-        // Si pour une raison quelconque le timeScale reste figé (ex : Restore interrompu),
-        // on force une remise à la valeur attendue pour éviter de bloquer le monde.
-        if (Time.timeScale < 0.999f)
-        {
-            Debug.LogWarning("[BattleTransitionManager] timeScale forcé à 1 après la transition de combat.");
-            Time.timeScale = 1f;
-            Time.fixedDeltaTime = 0.02f;
-        }
     }
 
     private readonly struct PostBattleTimelineContext
@@ -1007,44 +991,6 @@ public class BattleTransitionManager : MonoBehaviour
         // Active le premier enfant du TransitionCanvas si trouvé
         if (battleSceneTransitionPanel != null)
             battleSceneTransitionPanel.gameObject.SetActive(true);
-    }
-
-    public IEnumerator SlowTimeScale(float to, float speed)
-    {
-        float epsilon = 0.001f; // petit seuil pour éviter les flottants imprécis
-
-        while (Time.timeScale - to > epsilon)
-        {
-            float newScale = Time.timeScale - Time.unscaledDeltaTime * speed;
-            if (newScale <= to + epsilon)
-                newScale = to;
-
-            Time.timeScale = Mathf.Max(0f, newScale);
-            Time.fixedDeltaTime = Time.timeScale * 0.02f;
-
-            yield return null;
-        }
-
-        Time.timeScale = to;
-        Time.fixedDeltaTime = Time.timeScale * 0.02f;
-    }
-
-    private IEnumerator RestoreTimeScale(float from, float to, float speed)
-    {
-        float epsilon = 0.001f;
-
-        while (to - Time.timeScale > epsilon)
-        {
-            Time.timeScale += Time.unscaledDeltaTime * speed;
-            if (Time.timeScale > to)
-                Time.timeScale = to;
-
-            Time.fixedDeltaTime = Time.timeScale * 0.02f;
-            yield return null;
-        }
-
-        Time.timeScale = to;
-        Time.fixedDeltaTime = 0.02f;
     }
 
     private void StartDissolveReset(float duration)

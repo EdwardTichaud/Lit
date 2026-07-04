@@ -46,8 +46,6 @@ public class RhythmQTEManager : MonoBehaviour
     // lorsque l'on enchaîne avec la phase de performing.
     private Coroutine pendingMotifSwitch;
 
-    private float defaultFixedDeltaTime;
-
     [Header("QTE Visuel")]
     public GameObject qteCirclePrefab; // Prefab du cercle QTE historique
     public Transform qteUIParent; // Parent dans le canvas (facultatif, sinon instancié en world space)
@@ -130,18 +128,17 @@ public class RhythmQTEManager : MonoBehaviour
     /// </summary>
     public bool IsQteActive => qteActive;
 
-    // Si activé, le temps de jeu est figé durant les QTE pour faciliter l'exécution
+    // Si active, conserve l'aide QTE legacy sans modifier le temps global.
     [SerializeField] private bool easyMode = false;
 
     #region Initialisation
     /// <summary>
-    /// Configure l'instance unique et mémorise le fixedDeltaTime de départ.
+    /// Configure l'instance unique.
     /// </summary>
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        defaultFixedDeltaTime = Time.fixedDeltaTime;
     }
 
     /// <summary>
@@ -1984,27 +1981,18 @@ public class RhythmQTEManager : MonoBehaviour
             yield break;
         }
         RegisterQteStart();
-        float slowestTimeScale = 0f;
         float transitionDuration = 0.1f;
         float holdDuration = (windowDelay / 1000f) * Mathf.Max(0.1f, qteWindowScale);
-        float normalTimeScale = 1f;
 
-        // 🔻 Ralentissement progressif uniquement en mode facile
+        // Delai d'aide legacy en temps reel, sans modifier le temps global.
         float t = 0f;
         if (easyMode)
         {
             while (t < transitionDuration)
             {
                 t += Time.unscaledDeltaTime;
-                float blend = t / transitionDuration;
-                Time.timeScale = Mathf.Lerp(normalTimeScale, slowestTimeScale, blend);
-                Time.fixedDeltaTime = defaultFixedDeltaTime * Time.timeScale;
                 yield return null;
             }
-
-            // 🎯 Temps ralenti & instanciation du visuel
-            Time.timeScale = slowestTimeScale;
-            Time.fixedDeltaTime = defaultFixedDeltaTime * slowestTimeScale;
         }
 
         GameObject qteVisualGO = null;
@@ -2105,14 +2093,8 @@ public class RhythmQTEManager : MonoBehaviour
             while (t < transitionDuration)
             {
                 t += Time.unscaledDeltaTime;
-                float blend = t / transitionDuration;
-                Time.timeScale = Mathf.Lerp(slowestTimeScale, normalTimeScale, blend);
-                Time.fixedDeltaTime = defaultFixedDeltaTime * Time.timeScale;
                 yield return null;
             }
-
-            Time.timeScale = normalTimeScale;
-            Time.fixedDeltaTime = defaultFixedDeltaTime;
         }
         RegisterQteEnd();
     }
@@ -2134,26 +2116,17 @@ public class RhythmQTEManager : MonoBehaviour
         float dodgeWindow = 0.2f * windowScale;
         float parryRatio = dodgeWindow > 0f ? parryWindow / dodgeWindow : 0.5f;
 
-        float slowestTimeScale = 0f;
         float transitionDuration = 0.1f;
-        float normalTimeScale = 1f;
 
-        // 🔻 Ralentissement progressif uniquement en mode facile
+        // Delai d'aide legacy en temps reel, sans modifier le temps global.
         float t = 0f;
         if (easyMode)
         {
             while (t < transitionDuration)
             {
                 t += Time.unscaledDeltaTime;
-                float blend = t / transitionDuration;
-                Time.timeScale = Mathf.Lerp(normalTimeScale, slowestTimeScale, blend);
-                Time.fixedDeltaTime = defaultFixedDeltaTime * Time.timeScale;
                 yield return null;
             }
-
-            // 🎯 Temps ralenti & instanciation du visuel
-            Time.timeScale = slowestTimeScale;
-            Time.fixedDeltaTime = defaultFixedDeltaTime * slowestTimeScale;
         }
 
         parryWindow = dodgeWindow * parryRatio;
@@ -2241,14 +2214,8 @@ public class RhythmQTEManager : MonoBehaviour
             while (t < transitionDuration)
             {
                 t += Time.unscaledDeltaTime;
-                float blend = t / transitionDuration;
-                Time.timeScale = Mathf.Lerp(slowestTimeScale, normalTimeScale, blend);
-                Time.fixedDeltaTime = defaultFixedDeltaTime * Time.timeScale;
                 yield return null;
             }
-
-            Time.timeScale = normalTimeScale;
-            Time.fixedDeltaTime = defaultFixedDeltaTime;
         }
         RegisterQteEnd();
     }

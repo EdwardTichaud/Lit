@@ -341,7 +341,6 @@ public class CombatSessionManager : NetworkBehaviour
     private readonly Dictionary<string, LocalEnemyPresentation> localEnemyPresentationsBySessionId = new Dictionary<string, LocalEnemyPresentation>();
     private readonly Dictionary<Transform, Coroutine> actionPresentationCoroutinesByActor = new Dictionary<Transform, Coroutine>();
     private readonly LocalCombatPresentationState localCombatPresentation = new LocalCombatPresentationState();
-    private bool globalCombatDefensiveReactionActive;
     private int nextSessionId = 1;
 
     /// <summary>
@@ -497,7 +496,6 @@ public class CombatSessionManager : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         // Netcode appelle OnNetworkDespawn avant destruction/desactivation reseau; il faut restaurer les presentations locales.
-        ApplyGlobalCombatDefensiveReaction(false, force: true, broadcast: false);
         StopAllCombatActionPresentations();
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
@@ -516,7 +514,6 @@ public class CombatSessionManager : NetworkBehaviour
     public override void OnDestroy()
     {
         // Unity appelle OnDestroy; on repete le nettoyage pour couvrir le mode non reseau.
-        ApplyGlobalCombatDefensiveReaction(false, force: true, broadcast: false);
         StopAllCombatActionPresentations();
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
@@ -547,8 +544,6 @@ public class CombatSessionManager : NetworkBehaviour
         {
             TickSession(tickSessions[i]);
         }
-
-        RefreshGlobalCombatDefensiveReaction();
     }
 
     /// <summary>
@@ -621,7 +616,6 @@ public class CombatSessionManager : NetworkBehaviour
 
         SendEnterCombat(session);
         BeginTurn(session, CombatTurn.Enemy, EnemyAttackWarningMessage);
-        RefreshGlobalCombatDefensiveReaction();
         return true;
     }
 
@@ -1082,58 +1076,6 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    private void CombatDefensiveReactionTimeClientRpc(bool active)
-    {
-        ApplyGlobalCombatDefensiveReaction(active, force: false, broadcast: false);
-    }
-
-    private void RefreshGlobalCombatDefensiveReaction()
-    {
-        if (!CanRunAuthority())
-        {
-            return;
-        }
-
-        ApplyGlobalCombatDefensiveReaction(HasAnyGlobalCombatDefensiveReaction(), force: false);
-    }
-
-    private bool HasAnyGlobalCombatDefensiveReaction()
-    {
-        foreach (CombatSession session in sessionsByCharacterId.Values)
-        {
-            if (IsDefensiveReactionActive(session))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void ApplyGlobalCombatDefensiveReaction(bool active, bool force, bool broadcast = true)
-    {
-        if (!force && globalCombatDefensiveReactionActive == active)
-        {
-            return;
-        }
-
-        globalCombatDefensiveReactionActive = active;
-        if (active)
-        {
-            TimeManager.EnsureInstance().SetGlobalCombatDefensiveReaction(true);
-        }
-        else
-        {
-            TimeManager.Instance?.RestoreGlobalCombatTime();
-        }
-
-        if (broadcast && CanRunAuthority() && IsNetworkSessionActive() && IsSpawned)
-        {
-            CombatDefensiveReactionTimeClientRpc(active);
-        }
-    }
-
     private void TickSession(CombatSession session)
     {
         if (session == null || session.State.Finished)
@@ -1427,7 +1369,6 @@ public class CombatSessionManager : NetworkBehaviour
         PreparePendingPlayerAction(session, actionTiming);
         session.State.BeginPlayerAction(pendingDamage, Time.time, actionTiming.TotalDuration, $"Contre sur {enemy.DisplayName}.");
         SendSnapshot(session, session.State.LastMessage);
-        RefreshGlobalCombatDefensiveReaction();
     }
 
     private void PreparePendingPlayerAction(CombatSession session, CombatActionTiming timing)
@@ -1462,9 +1403,6 @@ public class CombatSessionManager : NetworkBehaviour
         int damage = session.State.ConsumePendingPlayerAttackDamage(clearActionTimer: false);
         int applied = enemy.ApplyDamage(damage);
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: true));
-        TimeManager.EnsureInstance().TriggerCombatHitStop(
-            session.Player != null ? session.Player.transform : null,
-            session.SourceEnemy != null ? session.SourceEnemy.transform : null);
 
         session.PendingPlayerActionVictory = AreAllEnemiesDefeated(session);
         session.PendingPlayerActionResultMessage = $"{enemy.DisplayName} subit {applied} degats.";
@@ -1523,7 +1461,6 @@ public class CombatSessionManager : NetworkBehaviour
         PreparePendingEnemyAction(session, actionTiming);
         session.State.BeginEnemyAction(Time.time, actionTiming.TotalDuration, $"{enemy.DisplayName} utilise {attackName}.");
         SendSnapshot(session, session.State.LastMessage);
-        RefreshGlobalCombatDefensiveReaction();
     }
 
     private void PreparePendingEnemyAction(CombatSession session, CombatActionTiming timing)
@@ -1582,9 +1519,6 @@ public class CombatSessionManager : NetworkBehaviour
 
         int applied = session.Player != null ? session.Player.ApplyDamage(finalDamage, "combat") : 0;
         PlayActionAudio(ActionAudioCue.CombatHit, ResolveCombatAudioPosition(session, preferEnemy: false));
-        TimeManager.EnsureInstance().TriggerCombatHitStop(
-            session.SourceEnemy != null ? session.SourceEnemy.transform : null,
-            session.Player != null ? session.Player.transform : null);
 
         string message = reaction == EncounterReactionChoice.Defend
             ? BuildDefendedEnemyAttackResultMessage(enemy.DisplayName, attackName, defensiveItem, absorbedDamage, defensiveItemBroken)
@@ -1692,7 +1626,6 @@ public class CombatSessionManager : NetworkBehaviour
         session.State.BeginDecision(turn, Time.time, decisionSeconds, turnDurationSeconds, message);
         PlayActionAudio(ActionAudioCue.CombatTurn, ResolveCombatAudioPosition(session, preferEnemy: turn == CombatTurn.Enemy));
         SendSnapshot(session, session.State.LastMessage);
-        RefreshGlobalCombatDefensiveReaction();
     }
 
     private void BeginPlayerAttackWindow(CombatSession session, string message)
@@ -1710,7 +1643,6 @@ public class CombatSessionManager : NetworkBehaviour
         session.State.BeginActiveTurn(CombatTurn.Player, Time.time, encounterPlayerAttackWindowSeconds, message);
         PlayActionAudio(ActionAudioCue.CombatTurn, ResolveCombatAudioPosition(session, preferEnemy: false));
         SendSnapshot(session, session.State.LastMessage);
-        RefreshGlobalCombatDefensiveReaction();
     }
 
     private CombatActionTiming PlayPlayerBasicAttackPresentation(CombatSession session)
@@ -1880,7 +1812,7 @@ public class CombatSessionManager : NetworkBehaviour
         CombatActionTiming timing = useAnimationEventPresentation
             ? CreateActionTiming(animationDuration)
             : CreateActionTiming(motion);
-        return ApplyCombatTimeProfile(timing, TimeManager.CombatPresentationTimeProfile.EnemyAction);
+        return timing;
     }
 
     [ClientRpc]
@@ -2004,7 +1936,6 @@ public class CombatSessionManager : NetworkBehaviour
             Time.time,
             ResolveCombatResolutionDuration(session, playerVictory),
             message);
-        RefreshGlobalCombatDefensiveReaction();
 
         PlayActionAudio(
             playerVictory ? ActionAudioCue.CombatVictory : ActionAudioCue.CombatDefeat,
@@ -2113,7 +2044,6 @@ public class CombatSessionManager : NetworkBehaviour
         session.SourceEnemy?.FinalizeCombatResult(playerVictory, enemyRemainingHp);
         sessionsByCharacterId.Remove(session.CharacterId);
         sessionsByClientId.Remove(session.OwnerClientId);
-        RefreshGlobalCombatDefensiveReaction();
 
         if (notifyClient)
         {
@@ -3471,20 +3401,6 @@ public class CombatSessionManager : NetworkBehaviour
         return new CombatActionTiming(
             motion.ImpactDelay(actionImpactNormalizedTime),
             motion.TotalDuration());
-    }
-
-    private static CombatActionTiming ApplyCombatTimeProfile(
-        CombatActionTiming timing,
-        TimeManager.CombatPresentationTimeProfile profile)
-    {
-        if (profile == TimeManager.CombatPresentationTimeProfile.None)
-        {
-            return timing;
-        }
-
-        return new CombatActionTiming(
-            TimeManager.EstimateCombatPresentationDuration(timing.ImpactDelay, profile),
-            TimeManager.EstimateCombatPresentationDuration(timing.TotalDuration, profile));
     }
 
     private CombatActionMotionPlan BuildCombatActionMotionPlan(

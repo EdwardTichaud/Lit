@@ -173,7 +173,6 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         if (!hasContext)
         {
             UpdateLocalPauseWeight(holding: false);
-            TimeManager.Instance?.SetCombatTimeTargets(null, null, defensiveReactionActive: false);
             if (localPauseWeight <= 0f)
             {
                 RestoreCameraPresentation();
@@ -183,7 +182,6 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         }
 
         UpdateLocalPauseWeight(ShouldHoldLocalPause(playerTurn, phase));
-        TimeManager.EnsureInstance().SetCombatTimeTargets(player, enemy, ResolveTimeProfile(playerTurn, phase));
         if (!EnsureCameraRig())
         {
             return;
@@ -360,23 +358,6 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         }
 
         return playerTurn && phase == CombatSessionPhase.TurnActive;
-    }
-
-    private static TimeManager.CombatPresentationTimeProfile ResolveTimeProfile(bool playerTurn, CombatSessionPhase phase)
-    {
-        if (playerTurn)
-        {
-            return TimeManager.CombatPresentationTimeProfile.None;
-        }
-
-        if (phase == CombatSessionPhase.Decision)
-        {
-            return TimeManager.CombatPresentationTimeProfile.DefensiveReaction;
-        }
-
-        return phase == CombatSessionPhase.EnemyAction
-            ? TimeManager.CombatPresentationTimeProfile.EnemyAction
-            : TimeManager.CombatPresentationTimeProfile.None;
     }
 
     private float ResolveBlendSeconds(bool playerTurn, CombatSessionPhase phase)
@@ -621,7 +602,6 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
 
     private void RestoreCameraPresentation()
     {
-        TimeManager.Instance?.RestoreCombatTime();
         RestoreCameraState();
     }
 

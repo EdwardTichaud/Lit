@@ -155,10 +155,6 @@ public partial class NewBattleManager : MonoBehaviour
 
     public event Action<bool> BattlePauseStateChanged;
 
-    // Paramètres du ralentissement appliqué lors de l'introduction.
-    [Tooltip("Facteur de ralentissement au tout début du combat.")]
-    public float equipSlowMotionScale = 1f;
-
     [Header("Fin de combat")]
     public GameObject victoryScreen;
     public GameObject gameOverScreen;
@@ -785,16 +781,12 @@ public partial class NewBattleManager : MonoBehaviour
 #endif
 
     /// <summary>
-    /// Lance les animations d'introduction pour chaque unité en appliquant
-    /// un effet de ralenti global. Toutes les animations démarrent en parallèle
-    /// et la coroutine attend leur terminaison avant de poursuivre.
+    /// Lance les animations d'introduction pour chaque unité. Toutes les
+    /// animations démarrent en parallèle et la coroutine attend leur terminaison
+    /// avant de poursuivre, sans modifier le temps global.
     /// </summary>
-    private IEnumerator PlayIntroAnimationsWithSlowTime()
+    private IEnumerator PlayIntroAnimations()
     {
-        // Sauvegarde des paramètres temporels actuels pour les restaurer ensuite
-        float initialTimeScale = Time.timeScale;
-        float initialFixedDelta = Time.fixedDeltaTime;
-
         // 🕵️‍♂️ Identifie les unités disposant réellement d'un BlendTree d'introduction
         // pour éviter d'appliquer un délai inutile lorsqu'aucune intro n'est configurée.
         List<IntroAnimationPlayback> introCandidates = new();
@@ -811,14 +803,9 @@ public partial class NewBattleManager : MonoBehaviour
                 introCandidates.Add(new IntroAnimationPlayback(introAnimator, layer));
         }
 
-        // 🚀 Si aucune intro n'est définie, on quitte immédiatement sans ralentir le jeu.
+        // 🚀 Si aucune intro n'est définie, on quitte immédiatement.
         if (introCandidates.Count == 0)
             yield break;
-
-        // Application du facteur de ralenti défini dans l'inspecteur uniquement
-        // lorsque la mise en scène doit effectivement se jouer.
-        Time.timeScale = equipSlowMotionScale;
-        Time.fixedDeltaTime = initialFixedDelta * Time.timeScale;
 
         // Déclenche les animations d'introduction sur chaque unité concernée
         foreach (var intro in introCandidates)
@@ -846,8 +833,7 @@ public partial class NewBattleManager : MonoBehaviour
             intro.animator.CrossFade(BattleIntroStateName, 0.05f, intro.layer, 0f);
         }
 
-        // ⏱️ Calcule la durée d'attente maximale en temps réel. L'utilisation de l'unscaled delta
-        //     permet de respecter la durée configurée même si le timeScale a été réduit.
+        // ⏱️ Calcule la durée d'attente maximale en temps réel.
         float waitDuration = Mathf.Max(0f, battleIntroLockDuration);
         float elapsedIntroTime = 0f;
 
@@ -868,11 +854,6 @@ public partial class NewBattleManager : MonoBehaviour
         {
             yield return null;
         }
-
-        // Restaure les valeurs temporelles initiales une fois le délai écoulé pour que le gameplay
-        // retrouve immédiatement sa vitesse normale lorsque le premier tour débute.
-        Time.timeScale = initialTimeScale;
-        Time.fixedDeltaTime = initialFixedDelta;
 
         // 📌 Aucun yield supplémentaire n'est nécessaire : la boucle de tours peut démarrer dès
         //     maintenant, les Animator poursuivent leur animation sans bloquer le gameplay.
@@ -919,8 +900,8 @@ public partial class NewBattleManager : MonoBehaviour
     /// </summary>
     private IEnumerator PlayIntroCameraSequence()
     {
-        // 🎬 Lance les animations d'introduction en mode ralenti et attend leur terminaison.
-        yield return PlayIntroAnimationsWithSlowTime();
+        // 🎬 Lance les animations d'introduction et attend leur terminaison.
+        yield return PlayIntroAnimations();
 
         // 📷 Dès que les mises en scène sont terminées, on bascule vers la caméra dédiée au menu principal.
         const float introToMenuBlendDuration = 0.5f;
@@ -1728,27 +1709,14 @@ public partial class NewBattleManager : MonoBehaviour
         // 1️⃣ Capture la dernière image du combat au moment de la victoire.
         yield return CaptureVictoryScreenshotBeforeCameraSwap();
 
-        // 2️⃣ Ralentit progressivement le temps jusqu'à l'arrêt complet pour figer la scène.
-        if (BattleTransitionManager.Instance != null)
-        {
-            yield return BattleTransitionManager.Instance.StartCoroutine(
-                BattleTransitionManager.Instance.SlowTimeScale(0f, 0.5f));
-        }
-        else
-        {
-            Time.timeScale = 0f;
-        }
-
-        Time.fixedDeltaTime = 0f; // Les physiques sont également gelées.
-
-        // 3️⃣ Demande officiellement la caméra de victoire afin de lancer le travelling.
+        // 2️⃣ Demande officiellement la caméra de victoire afin de lancer le travelling.
         ChangeBattleState(BattleState.VictoryScreen_Await);
         battleIntroMenusLocked = false;
 
-        // 4️⃣ Patiente jusqu'à la fin du blend Cinemachine pour que le plan soit parfaitement cadré.
+        // 3️⃣ Patiente jusqu'à la fin du blend Cinemachine pour que le plan soit parfaitement cadré.
         yield return WaitForVictoryCameraToSettle();
 
-        // 5️⃣ L'interface de victoire peut maintenant se superposer au plan stabilisé.
+        // 4️⃣ L'interface de victoire peut maintenant se superposer au plan stabilisé.
         victoryScreen.SetActive(true);
         ForceUnscaledAnimators(victoryScreen.transform);
         InputsManager.Instance?.ForceDynamicInputUpdate();
@@ -1762,7 +1730,7 @@ public partial class NewBattleManager : MonoBehaviour
 
         InputsManager.Instance?.playerInputs?.Battle.Confirm.Enable();
 
-        // 6️⃣ Distribution des récompenses avant de les afficher sur le panneau.
+        // 5️⃣ Distribution des récompenses avant de les afficher sur le panneau.
         int adjustedXP = ApplyHarmonicMenuPenalty(rewardXP);
         GameManager.Instance?.AddXPToSquad(adjustedXP);
         GameManager.Instance?.AddItemsToInventory(rewardItems);
@@ -1773,7 +1741,7 @@ public partial class NewBattleManager : MonoBehaviour
         int totalEnemies = GameManager.Instance != null ? GameManager.Instance.gameData.enemiesDefeatedCount : 0;
         panel?.DisplayVictory(adjustedXP, rewardItems, totalEnemies, duration, mvpUnit, maxTurnDamage);
 
-        // 7️⃣ Applique la capture sur le panneau de victoire.
+        // 6️⃣ Applique la capture sur le panneau de victoire.
         ApplyVictoryScreenTexture(VictoryScreenImage);
 
         Transform continueButtonTransform = FindChildRecursive(victoryScreen.transform.GetChild(0), "BattleScene_UI_VictoryPanel_Continue");
@@ -1972,15 +1940,6 @@ public partial class NewBattleManager : MonoBehaviour
 
     IEnumerator ShowGameOverPanel()
     {
-        // Ralentit le temps jusqu'à l'arrêt complet avant d'afficher le panneau
-        if (BattleTransitionManager.Instance != null)
-            yield return BattleTransitionManager.Instance.StartCoroutine(
-                BattleTransitionManager.Instance.SlowTimeScale(0f, 0.5f));
-        else
-            Time.timeScale = 0f;
-
-        Time.fixedDeltaTime = 0f;
-
         // Activation du panneau GameOver (animation en temps réel)
         Transform panel = gameOverScreen.transform.GetChild(0);
         Animator anim = panel.GetComponent<Animator>();

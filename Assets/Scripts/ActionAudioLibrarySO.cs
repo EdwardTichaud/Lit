@@ -64,6 +64,8 @@ public enum ActionAudioCue
     CombatTurn = 92,
     CombatVictory = 93,
     CombatDefeat = 94,
+    CombatTimeSlow = 95,
+    CombatTimeResume = 96,
     PuzzleSuccess = 100,
     PuzzleFailure = 101,
     DestructibleDestroy = 110,
@@ -180,6 +182,10 @@ public class ActionAudioLibrarySO : ScriptableObject
     public AudioClipSO combatVictory;
     /// <summary>Clip for combat defeat.</summary>
     public AudioClipSO combatDefeat;
+    /// <summary>Clip for entering combat slow motion.</summary>
+    public AudioClipSO combatTimeSlow;
+    /// <summary>Clip for returning to normal combat time.</summary>
+    public AudioClipSO combatTimeResume;
 
     [Header("Puzzles")]
     /// <summary>Clip for puzzle success.</summary>
@@ -245,6 +251,8 @@ public class ActionAudioLibrarySO : ScriptableObject
             case ActionAudioCue.CombatTurn: return combatTurn;
             case ActionAudioCue.CombatVictory: return combatVictory;
             case ActionAudioCue.CombatDefeat: return combatDefeat;
+            case ActionAudioCue.CombatTimeSlow: return combatTimeSlow;
+            case ActionAudioCue.CombatTimeResume: return combatTimeResume;
             case ActionAudioCue.PuzzleSuccess: return puzzleSuccess;
             case ActionAudioCue.PuzzleFailure: return puzzleFailure;
             case ActionAudioCue.DestructibleDestroy: return destructibleDestroy;
