@@ -557,6 +557,11 @@ public class CombatHudController : MonoBehaviour
     private void SetCombatEngagedVisible(bool shouldBeVisible)
     {
         ResolveScenePanelsIfNeeded();
+        if (shouldBeVisible && IsAncestorOf(battlePanelCanvasGroup, combatEngagedCanvasGroup))
+        {
+            SetCanvasGroupVisible(battlePanelCanvasGroup, true, blocksRaycasts: false);
+        }
+
         SetCanvasGroupVisible(combatEngagedCanvasGroup, shouldBeVisible, blocksRaycasts: false);
         if (!shouldBeVisible)
         {
@@ -777,8 +782,17 @@ public class CombatHudController : MonoBehaviour
         ResolveScenePanelsIfNeeded();
         if (combatScreenInfosCanvasGroup != null)
         {
+            if (IsAncestorOf(battlePanelCanvasGroup, combatScreenInfosCanvasGroup)
+                || IsAncestorOf(battlePanelCanvasGroup, combatEngagedCanvasGroup))
+            {
+                SetCanvasGroupVisible(battlePanelCanvasGroup, true, blocksRaycasts: false);
+            }
+            else
+            {
+                SetCanvasGroupVisible(battlePanelCanvasGroup, false, blocksRaycasts: false);
+            }
+
             SetCanvasGroupVisible(combatScreenInfosCanvasGroup, battleVisible, blocksRaycasts: false);
-            SetCanvasGroupVisible(battlePanelCanvasGroup, false, blocksRaycasts: false);
         }
         else
         {
@@ -795,14 +809,43 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        if (visible && !canvasGroup.gameObject.activeSelf)
+        if (visible)
         {
-            canvasGroup.gameObject.SetActive(true);
+            EnsureActiveHierarchy(canvasGroup.transform);
         }
 
         canvasGroup.alpha = visible ? 1f : 0f;
         canvasGroup.interactable = visible && blocksRaycasts;
         canvasGroup.blocksRaycasts = visible && blocksRaycasts;
+    }
+
+    private static bool IsAncestorOf(CanvasGroup maybeAncestor, CanvasGroup maybeDescendant)
+    {
+        if (maybeAncestor == null || maybeDescendant == null || maybeAncestor == maybeDescendant)
+        {
+            return false;
+        }
+
+        return maybeDescendant.transform.IsChildOf(maybeAncestor.transform);
+    }
+
+    private static void EnsureActiveHierarchy(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Transform parent = target.parent;
+        if (parent != null && parent.gameObject.scene.IsValid())
+        {
+            EnsureActiveHierarchy(parent);
+        }
+
+        if (!target.gameObject.activeSelf)
+        {
+            target.gameObject.SetActive(true);
+        }
     }
 
     private static CanvasGroup FindCanvasGroupByName(string objectName)

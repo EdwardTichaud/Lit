@@ -128,9 +128,9 @@ public class CombatDefensePanelController : MonoBehaviour
             return;
         }
 
-        if (shouldBeVisible && !panelRoot.activeSelf)
+        if (shouldBeVisible)
         {
-            panelRoot.SetActive(true);
+            EnsureActiveHierarchy(panelRoot.transform);
         }
 
         SetCanvasGroupVisible(panelCanvasGroup, shouldBeVisible);
@@ -138,10 +138,6 @@ public class CombatDefensePanelController : MonoBehaviour
         {
             RefreshSlots();
             SelectFirstInteractableSlot();
-        }
-        else
-        {
-            panelRoot.SetActive(false);
         }
     }
 
@@ -396,6 +392,25 @@ public class CombatDefensePanelController : MonoBehaviour
         canvasGroup.alpha = shouldBeVisible ? 1f : 0f;
         canvasGroup.interactable = shouldBeVisible;
         canvasGroup.blocksRaycasts = shouldBeVisible;
+    }
+
+    private static void EnsureActiveHierarchy(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Transform parent = target.parent;
+        if (parent != null && parent.gameObject.scene.IsValid())
+        {
+            EnsureActiveHierarchy(parent);
+        }
+
+        if (!target.gameObject.activeSelf)
+        {
+            target.gameObject.SetActive(true);
+        }
     }
 
     private static GameObject FindSceneGameObjectByName(string objectName)
