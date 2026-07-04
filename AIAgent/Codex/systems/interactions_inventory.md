@@ -14,6 +14,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - `InteractableItem` : conteneurs, objets récupérables, serrures et pièges.
 - `InventoryPanelController` : UI, dépôt, lecture et placement.
 - `NetworkInventory` / `WorldInteractionService` : autorité réseau.
+- `SquadCharacterController` porte aussi les 3 items defensifs actives pour le
+  combat, separes de l'inventaire complet.
 
 ## Flux principaux
 
@@ -42,3 +44,11 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - Le Building legacy est désactivé via
   `Resources/LegacyBuildingSystemSettings.asset`; conserver ses données pour les
   anciennes sauvegardes.
+
+## Notes recentes
+
+- Hors combat, l'ActionBox d'inventaire permet d'ajouter/retirer un item
+  defensif des 3 items combat actives. Ces ids sont synchronises par
+  `NetworkInventory` et sauvegardes dans `CharacterSaveData`.
+- En combat, un item defensif non assigne aux 3 items combat reste dans le sac,
+  mais n'est pas a portee de main pour la reaction ennemie.

@@ -31,6 +31,11 @@ applique alors l'impact pending une seule fois, avec le timer comme fallback.
 Le ralenti Animation Event descend maintenant a `0.1`, cible l'acteur et la
 victime, et les anciens hooks legacy autonomes qui modifiaient `Time.timeScale`
 ont ete retires.
+Le joueur peut maintenant assigner hors combat jusqu'a 3 items defensifs comme
+items combat. Pendant la reaction ennemie ralentie, `CombatDefensePanel` s'ouvre
+et ne propose que ces items a portee de main; la selection reste validee par
+`CombatSessionManager`, synchronisee par `NetworkInventory` et sauvegardee avec
+l'etat personnage.
 
 ## Contraintes
 

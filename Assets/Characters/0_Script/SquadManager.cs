@@ -838,7 +838,8 @@ public class SquadManager : MonoBehaviour
             if (shouldApplyInventory)
             {
                 List<Item> items = BuildItemsFromEntry(entry);
-                runtimeCharacter.SetInventory(items, entry.flameSeconds, entry.flameEquipped, true);
+                List<Item> enabledCombatItems = BuildEnabledCombatItemsFromEntry(entry);
+                runtimeCharacter.SetInventory(items, entry.flameSeconds, entry.flameEquipped, true, null, enabledCombatItems);
             }
             if (entry.skillsInitialized)
             {
@@ -977,6 +978,39 @@ public class SquadManager : MonoBehaviour
 
             int count = Mathf.Max(0, stack.quantity);
             for (int j = 0; j < count; j++)
+            {
+                items.Add(item);
+            }
+        }
+
+        return items;
+    }
+
+    private List<Item> BuildEnabledCombatItemsFromEntry(CharacterSaveEntry entry)
+    {
+        List<Item> items = new List<Item>();
+        if (entry == null || pendingItemLookup == null || entry.enabledCombatItemIds == null)
+        {
+            return items;
+        }
+
+        for (int i = 0; i < entry.enabledCombatItemIds.Count && items.Count < 3; i++)
+        {
+            string itemId = entry.enabledCombatItemIds[i];
+            if (string.IsNullOrWhiteSpace(itemId))
+            {
+                continue;
+            }
+
+            if (!pendingItemLookup.TryGetValue(itemId, out Item item) || item == null)
+            {
+                Debug.LogWarning(
+                    $"SquadManager: item combat sauvegarde introuvable pour characterId='{entry.characterId}' itemId='{itemId}'. L'item sera ignore lors de la restauration.",
+                    this);
+                continue;
+            }
+
+            if (!items.Contains(item))
             {
                 items.Add(item);
             }
@@ -2308,6 +2342,7 @@ public class SquadManager : MonoBehaviour
 
         clone.inventoryItems = new List<Item>();
         clone.equippedInteractionItems = new List<Item>();
+        clone.enabledCombatItems = new List<Item>();
         clone.flameSecondsRemaining = 0;
         clone.flameEquipped = false;
         clone.inventoryInitialized = false;
@@ -2347,8 +2382,10 @@ public class SquadManager : MonoBehaviour
 
         int inventoryCount = character.inventoryItems != null ? character.inventoryItems.Count : 0;
         int equippedCount = character.equippedInteractionItems != null ? character.equippedInteractionItems.Count : 0;
+        int combatItemCount = character.enabledCombatItems != null ? character.enabledCombatItems.Count : 0;
         if (inventoryCount <= 0
             && equippedCount <= 0
+            && combatItemCount <= 0
             && !character.inventoryInitialized
             && character.flameSecondsRemaining <= 0
             && !character.flameEquipped)
@@ -2357,7 +2394,7 @@ public class SquadManager : MonoBehaviour
         }
 
         Debug.LogWarning(
-            $"SquadManager: source CharacterData '{character.name}' contient deja un etat runtime avant clonage. inventoryInitialized={character.inventoryInitialized} inventoryCount={inventoryCount} equippedCount={equippedCount} flameSeconds={character.flameSecondsRemaining} flameEquipped={character.flameEquipped}. Cela suggere qu'un ScriptableObject a ete modifie en runtime.",
+            $"SquadManager: source CharacterData '{character.name}' contient deja un etat runtime avant clonage. inventoryInitialized={character.inventoryInitialized} inventoryCount={inventoryCount} equippedCount={equippedCount} combatItemCount={combatItemCount} flameSeconds={character.flameSecondsRemaining} flameEquipped={character.flameEquipped}. Cela suggere qu'un ScriptableObject a ete modifie en runtime.",
             character);
     }
 

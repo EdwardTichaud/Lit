@@ -524,11 +524,13 @@ public class CharacterStateStore : MonoBehaviour
             int flameSeconds = character != null ? character.flameSecondsRemaining : 0;
             bool flameEquipped = character != null && character.flameEquipped;
             IReadOnlyList<Item> items = character != null ? character.InventoryItems : null;
+            IReadOnlyList<Item> enabledCombatItems = character != null ? character.enabledCombatItems : null;
             if (controller != null)
             {
                 flameSeconds = controller.FlameSecondsRemaining;
                 flameEquipped = controller.IsFlameEquipped;
                 items = controller.Items;
+                enabledCombatItems = controller.EnabledCombatItems;
                 MuninController munin = controller.GetComponentInChildren<MuninController>(true);
                 if (munin != null)
                 {
@@ -576,6 +578,28 @@ public class CharacterStateStore : MonoBehaviour
                     itemId = itemId,
                     quantity = pair.Value
                 });
+            }
+
+            entry.enabledCombatItemIds.Clear();
+            if (enabledCombatItems != null)
+            {
+                HashSet<string> enabledIds = new HashSet<string>();
+                for (int j = 0; j < enabledCombatItems.Count; j++)
+                {
+                    Item item = enabledCombatItems[j];
+                    if (item == null || !item.CanDefendInCombat())
+                    {
+                        continue;
+                    }
+
+                    string itemId = GetItemId(item);
+                    if (string.IsNullOrWhiteSpace(itemId) || !enabledIds.Add(itemId))
+                    {
+                        continue;
+                    }
+
+                    entry.enabledCombatItemIds.Add(itemId);
+                }
             }
 
             entry.skillIds.Clear();

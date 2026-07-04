@@ -162,6 +162,7 @@ public class CombatHudController : MonoBehaviour
         {
             ReleaseCombatInputFocus();
             SetScenePanelVisibility(false, false);
+            CombatDefensePanelController.HideActive();
         }
 
         if (root != null)
@@ -244,6 +245,7 @@ public class CombatHudController : MonoBehaviour
         visible = turn != TurnState.None && turn != TurnState.Finished;
         UpdateCombatInputFocus(visible);
         SetScenePanelVisibility(visible, CanShowCombatActionPrompt());
+        CombatDefensePanelController.SetReactionVisible(visible && CanChooseEncounterReaction());
         ApplySnapshotToUi(
             turn,
             phase,
@@ -283,6 +285,7 @@ public class CombatHudController : MonoBehaviour
         visible = false;
         ReleaseCombatInputFocus();
         SetScenePanelVisibility(false, false);
+        CombatDefensePanelController.HideActive();
         if (root != null)
         {
             root.SetActive(false);

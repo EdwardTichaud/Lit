@@ -11,6 +11,8 @@ résolution dans le monde.
 - `CombatSessionManager` : autorité, sessions, tours, actions et RPC.
 - `CombatSessionState`, `CombatTurn`, `CombatRuntimeEnemy` : état runtime.
 - `CombatHudController` : commandes et affichage local.
+- `CombatDefensePanelController` : affiche les 3 items defensifs assignes
+  pendant la reaction ennemie.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat.
 - `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation,
@@ -32,6 +34,8 @@ résolution dans le monde.
    `Time.timeScale`, l'inventaire peut s'ouvrir, et un item défensif choisi est
    validé puis résolu côté autorité. Le ralenti local reste actif pendant
    l'action ennemie pour rendre l'attaque lisible.
+   `CombatDefensePanel` s'ouvre aussi pendant cette fenetre et ne propose que
+   les 3 items defensifs assignes au personnage comme items combat.
 6. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
 7. La résolution restaure les positions, la caméra et le mouvement, puis applique
@@ -93,6 +97,8 @@ hystérésis quand le joueur local sort assez loin du trigger d'aggro.
 - Les items défensifs de réaction ennemie sont choisis depuis l'inventaire local,
   mais l'absorption, la casse et la synchronisation d'inventaire restent côté
   autorité.
+- Un item defensif doit etre assigne aux 3 items combat du personnage pour etre
+  utilisable dans `CombatDefensePanel` ou via l'inventaire pendant cette reaction.
 - Le joueur local doit être résolu via `LocalPlayerContext`; éviter les fallbacks
   arbitraires qui peuvent viser le mauvais personnage en Netcode.
 - Tester victoire, défaite, déconnexion et destruction pendant une transition.

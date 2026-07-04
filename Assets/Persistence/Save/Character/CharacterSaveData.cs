@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 3;
+    public int dataVersion = 4;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
     public List<CharacterSaveEntry> characters = new List<CharacterSaveEntry>();
@@ -39,6 +39,7 @@ public class CharacterSaveEntry
     public int muninMaxCharges;
     public List<ItemStackData> items = new List<ItemStackData>();
     public bool itemsInitialized;
+    public List<string> enabledCombatItemIds = new List<string>();
     public List<string> skillIds = new List<string>();
     public bool skillsInitialized;
 }

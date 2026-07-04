@@ -22,6 +22,9 @@ public class NetworkInventory : NetworkBehaviour
     private readonly NetworkList<FixedString64Bytes> netEquippedInteractionItems = new NetworkList<FixedString64Bytes>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private readonly NetworkList<FixedString64Bytes> netEnabledCombatItems = new NetworkList<FixedString64Bytes>(
+        null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     public event System.Action InventoryChanged;
     [SerializeField] private bool logInventoryDebug = true;
 
@@ -43,6 +46,7 @@ public class NetworkInventory : NetworkBehaviour
         flameSeconds.OnValueChanged += OnFlameChanged;
         flameEquipped.OnValueChanged += OnFlameChanged;
         netEquippedInteractionItems.OnListChanged += OnEquippedInteractionItemsChanged;
+        netEnabledCombatItems.OnListChanged += OnEnabledCombatItemsChanged;
 
         if (IsServer)
         {
@@ -63,6 +67,7 @@ public class NetworkInventory : NetworkBehaviour
         flameSeconds.OnValueChanged -= OnFlameChanged;
         flameEquipped.OnValueChanged -= OnFlameChanged;
         netEquippedInteractionItems.OnListChanged -= OnEquippedInteractionItemsChanged;
+        netEnabledCombatItems.OnListChanged -= OnEnabledCombatItemsChanged;
     }
 
     public void SyncFromController()
@@ -128,9 +133,27 @@ public class NetworkInventory : NetworkBehaviour
             }
         }
 
+        netEnabledCombatItems.Clear();
+        IReadOnlyList<Item> enabledItems = controller.EnabledCombatItems;
+        if (enabledItems != null)
+        {
+            HashSet<string> enabledIds = new HashSet<string>();
+            for (int i = 0; i < enabledItems.Count; i++)
+            {
+                Item item = enabledItems[i];
+                string id = ItemIdUtils.GetItemId(item);
+                if (string.IsNullOrWhiteSpace(id) || !enabledIds.Add(id))
+                {
+                    continue;
+                }
+
+                netEnabledCombatItems.Add(new FixedString64Bytes(id));
+            }
+        }
+
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, flameSeconds={flameSeconds.Value}, flameEquipped={flameEquipped.Value}", this);
+            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, combatItems={netEnabledCombatItems.Count}, flameSeconds={flameSeconds.Value}, flameEquipped={flameEquipped.Value}", this);
         }
     }
 
@@ -265,6 +288,52 @@ public class NetworkInventory : NetworkBehaviour
         }
 
         RequestBreakItemServerRpc(itemId);
+        return true;
+    }
+
+    public bool RequestToggleEnabledCombatItem(Item item)
+    {
+        if (item == null)
+        {
+            return false;
+        }
+
+        if (!IsSpawned || NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+        {
+            if (controller == null)
+            {
+                return false;
+            }
+
+            bool wasEnabled = controller.IsCombatItemEnabled(item);
+            if (controller.TryToggleEnabledCombatItem(item, out string reason))
+            {
+                SyncFromController();
+                InfoBoxUI.TryShow(wasEnabled ? "Item retire des items combat." : "Item ajoute aux items combat.");
+                return true;
+            }
+
+            InfoBoxUI.TryShow(reason);
+            return false;
+        }
+
+        if (IsServer)
+        {
+            bool success = ExecuteToggleEnabledCombatItem(item, out string feedback);
+            if (!string.IsNullOrWhiteSpace(feedback))
+            {
+                InfoBoxUI.TryShow(feedback);
+            }
+            return success;
+        }
+
+        string itemId = ItemIdUtils.GetItemId(item);
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return false;
+        }
+
+        RequestToggleEnabledCombatItemServerRpc(itemId);
         return true;
     }
 
@@ -441,6 +510,26 @@ public class NetworkInventory : NetworkBehaviour
         {
             SyncFromController();
             feedback = item.GetBreakSuccessMessage();
+            return true;
+        }
+
+        feedback = reason;
+        return false;
+    }
+
+    private bool ExecuteToggleEnabledCombatItem(Item item, out string feedback)
+    {
+        feedback = string.Empty;
+        if (!IsServer || controller == null || item == null)
+        {
+            return false;
+        }
+
+        bool wasEnabled = controller.IsCombatItemEnabled(item);
+        if (controller.TryToggleEnabledCombatItem(item, out string reason))
+        {
+            SyncFromController();
+            feedback = wasEnabled ? "Item retire des items combat." : "Item ajoute aux items combat.";
             return true;
         }
 
@@ -653,6 +742,38 @@ public class NetworkInventory : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
+    private void RequestToggleEnabledCombatItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    {
+        if (!IsRequestFromOwner(rpcParams))
+        {
+            return;
+        }
+
+        Item item = ItemRegistry.Resolve(itemId);
+        if (item == null)
+        {
+            return;
+        }
+
+        if (ExecuteToggleEnabledCombatItem(item, out string feedback))
+        {
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.InventoryUse,
+                BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(feedback))
+        {
+            ShowFeedbackWithAudioClientRpc(
+                feedback,
+                ActionAudioCue.UiInvalid,
+                BuildClientRpcParams(rpcParams));
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     private void RequestDropItemServerRpc(string itemId, int quantity, Vector3 position, Quaternion rotation, bool allowDropWithoutPrefab, bool destroyWhenEmpty, ServerRpcParams rpcParams = default)
     {
         if (!IsRequestFromOwner(rpcParams))
@@ -831,6 +952,11 @@ public class NetworkInventory : NetworkBehaviour
         ApplyToController();
     }
 
+    private void OnEnabledCombatItemsChanged(NetworkListEvent<FixedString64Bytes> change)
+    {
+        ApplyToController();
+    }
+
     private void ApplyToController()
     {
         if (controller == null)
@@ -845,6 +971,7 @@ public class NetworkInventory : NetworkBehaviour
 
         List<Item> resolved = new List<Item>();
         List<Item> resolvedEquippedItems = new List<Item>();
+        List<Item> resolvedEnabledCombatItems = new List<Item>();
         int unresolvedCount = 0;
         List<string> unresolvedItemIds = logInventoryDebug ? new List<string>() : null;
         for (int i = 0; i < netItems.Count; i++)
@@ -884,10 +1011,26 @@ public class NetworkInventory : NetworkBehaviour
             resolvedEquippedItems.Add(item);
         }
 
-        controller.ApplyInventoryState(resolved, flameSeconds.Value, flameEquipped.Value, resolvedEquippedItems);
+        for (int i = 0; i < netEnabledCombatItems.Count; i++)
+        {
+            Item item = ItemRegistry.Resolve(netEnabledCombatItems[i].ToString());
+            if (item == null || resolvedEnabledCombatItems.Contains(item))
+            {
+                continue;
+            }
+
+            resolvedEnabledCombatItems.Add(item);
+        }
+
+        controller.ApplyInventoryState(
+            resolved,
+            flameSeconds.Value,
+            flameEquipped.Value,
+            resolvedEquippedItems,
+            resolvedEnabledCombatItems);
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, flameSeconds={flameSeconds.Value}", this);
+            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, combatItems={resolvedEnabledCombatItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, flameSeconds={flameSeconds.Value}", this);
             if (unresolvedItemIds != null && unresolvedItemIds.Count > 0)
             {
                 Debug.LogWarning(

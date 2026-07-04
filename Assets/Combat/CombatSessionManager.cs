@@ -766,6 +766,12 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
+        if (!controller.IsCombatItemEnabled(item))
+        {
+            reason = "Cet item n'est pas dans les 3 items a portee de main.";
+            return false;
+        }
+
         if (CanRunAuthority())
         {
             if (!TryGetSession(controller, out CombatSession session) || !IsDefensiveReactionActive(session))

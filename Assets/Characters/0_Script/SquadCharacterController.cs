@@ -8,6 +8,7 @@ using UnityEngine;
 public partial class SquadCharacterController : MonoBehaviour
 {
     private const float WalkLocomotionTier = 1f;
+    private const int MaxEnabledCombatItems = 3;
 
     private enum FlameVisualTransition
     {
@@ -28,6 +29,7 @@ public partial class SquadCharacterController : MonoBehaviour
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
     [SerializeField, HideInInspector] private List<Item> equippedInteractionItems = new List<Item>();
+    [SerializeField, HideInInspector] private List<Item> enabledCombatItems = new List<Item>();
     [SerializeField, Tooltip("Duree initiale de la flamme (secondes).")]
     private int startingFlameSeconds = 300;
     [SerializeField, Tooltip("Duree restante de la flamme (secondes).")]
@@ -179,6 +181,8 @@ public partial class SquadCharacterController : MonoBehaviour
     public IReadOnlyList<Item> Items => items;
 
     public IReadOnlyList<Item> EquippedInteractionItems => equippedInteractionItems;
+
+    public IReadOnlyList<Item> EnabledCombatItems => enabledCombatItems;
 
     public IReadOnlyList<Skill> Skills => characterData != null ? characterData.skills : null;
 
@@ -786,10 +790,16 @@ public partial class SquadCharacterController : MonoBehaviour
         return null;
     }
 
-    public void ApplyInventoryState(List<Item> newItems, int flameSeconds, bool equipFlame, List<Item> newEquippedInteractionItems = null)
+    public void ApplyInventoryState(
+        List<Item> newItems,
+        int flameSeconds,
+        bool equipFlame,
+        List<Item> newEquippedInteractionItems = null,
+        List<Item> newEnabledCombatItems = null)
     {
         EnsureInventoryList();
         EnsureEquippedInteractionList();
+        EnsureEnabledCombatList();
         MarkInventoryInitialized();
 
         if (newItems == null)
@@ -806,11 +816,13 @@ public partial class SquadCharacterController : MonoBehaviour
         items.AddRange(newItems);
         NormalizeReactiveInventoryItems();
         ApplyEquippedInteractionItems(newEquippedInteractionItems);
+        ApplyEnabledCombatItems(newEnabledCombatItems);
 
         if (!CharacterFlameSystemEnabled)
         {
             DisableCharacterFlameState();
             SyncInteractionEquipmentToCharacterData();
+            SyncCombatEquipmentToCharacterData();
             return;
         }
 
@@ -827,6 +839,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         SyncFlameStateToCharacterData();
         SyncInteractionEquipmentToCharacterData();
+        SyncCombatEquipmentToCharacterData();
     }
 
     public bool TryUseItem(Item item)
@@ -896,6 +909,111 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         return TryEquipInteractionItem(item, out reason);
+    }
+
+    public bool IsCombatItemEnabled(Item item)
+    {
+        EnsureEnabledCombatList();
+        return item != null && enabledCombatItems.Contains(item);
+    }
+
+    public bool TryToggleEnabledCombatItem(Item item, out string reason)
+    {
+        if (IsCombatItemEnabled(item))
+        {
+            return TryDisableCombatItem(item, out reason);
+        }
+
+        return TryEnableCombatItem(item, out reason);
+    }
+
+    public bool TryEnableCombatItem(Item item, out string reason)
+    {
+        reason = string.Empty;
+        if (item == null)
+        {
+            reason = "Impossible d'assigner cet objet au combat.";
+            return false;
+        }
+
+        if (!item.CanDefendInCombat())
+        {
+            reason = "Seuls les items defensifs peuvent etre assignes au combat.";
+            return false;
+        }
+
+        EnsureInventoryList();
+        EnsureEnabledCombatList();
+        MarkInventoryInitialized();
+
+        if (!items.Contains(item))
+        {
+            reason = "L'objet doit etre dans l'inventaire pour etre assigne au combat.";
+            return false;
+        }
+
+        if (enabledCombatItems.Contains(item))
+        {
+            return true;
+        }
+
+        SanitizeEnabledCombatItems();
+        if (enabledCombatItems.Count >= MaxEnabledCombatItems)
+        {
+            reason = $"Seulement {MaxEnabledCombatItems} items peuvent etre gardes a portee de main en combat.";
+            return false;
+        }
+
+        enabledCombatItems.Add(item);
+        SyncCombatEquipmentToCharacterData();
+        return true;
+    }
+
+    public bool TryDisableCombatItem(Item item, out string reason)
+    {
+        reason = string.Empty;
+        if (item == null)
+        {
+            reason = "Impossible de retirer cet objet du combat.";
+            return false;
+        }
+
+        EnsureEnabledCombatList();
+        if (!enabledCombatItems.Remove(item))
+        {
+            reason = "Cet objet n'est pas assigne au combat.";
+            return false;
+        }
+
+        SyncCombatEquipmentToCharacterData();
+        return true;
+    }
+
+    public List<Item> GetEnabledCombatItemsSnapshot()
+    {
+        EnsureEnabledCombatList();
+        SanitizeEnabledCombatItems();
+        return new List<Item>(enabledCombatItems);
+    }
+
+    public List<Item> GetEnabledCombatDefensiveItems()
+    {
+        EnsureEnabledCombatList();
+        SanitizeEnabledCombatItems();
+
+        List<Item> result = new List<Item>(MaxEnabledCombatItems);
+        for (int i = 0; i < enabledCombatItems.Count; i++)
+        {
+            Item item = enabledCombatItems[i];
+            if (item == null || !item.CanDefendInCombat())
+            {
+                continue;
+            }
+
+            result.Add(item);
+        }
+
+        return result;
     }
 
     public bool TryEquipInteractionItem(Item item, out string reason)
@@ -1048,6 +1166,7 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         EnsureInventoryList();
         EnsureEquippedInteractionList();
+        EnsureEnabledCombatList();
         MarkInventoryInitialized();
 
         if (IsFlameItem(item))
@@ -1073,6 +1192,7 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             NormalizeReactiveInventoryItems();
             SanitizeEquippedInteractionItems();
+            SanitizeEnabledCombatItems();
         }
 
         return removed;
@@ -1087,6 +1207,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         EnsureInventoryList();
         EnsureEquippedInteractionList();
+        EnsureEnabledCombatList();
         MarkInventoryInitialized();
 
         if (IsFlameItem(item))
@@ -1119,6 +1240,7 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             NormalizeReactiveInventoryItems();
             SanitizeEquippedInteractionItems();
+            SanitizeEnabledCombatItems();
         }
 
         return removed;
@@ -1128,12 +1250,14 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         EnsureInventoryList();
         EnsureEquippedInteractionList();
+        EnsureEnabledCombatList();
         MarkInventoryInitialized();
 
         if (clearExisting)
         {
             items.Clear();
             equippedInteractionItems.Clear();
+            enabledCombatItems.Clear();
             flameSecondsRemaining = 0;
         }
 
@@ -1143,6 +1267,7 @@ public partial class SquadCharacterController : MonoBehaviour
             SetFlameEquipped(false);
             SyncFlameStateToCharacterData();
             SyncInteractionEquipmentToCharacterData();
+            SyncCombatEquipmentToCharacterData();
             return;
         }
 
@@ -1195,6 +1320,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         SyncFlameStateToCharacterData();
         SyncInteractionEquipmentToCharacterData();
+        SyncCombatEquipmentToCharacterData();
 
         if (logInventoryInitialization && data != null)
         {
@@ -1250,6 +1376,29 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
+    private void EnsureEnabledCombatList()
+    {
+        if (characterData != null)
+        {
+            if (characterData.enabledCombatItems == null)
+            {
+                characterData.enabledCombatItems = new List<Item>();
+            }
+
+            if (!ReferenceEquals(enabledCombatItems, characterData.enabledCombatItems))
+            {
+                enabledCombatItems = characterData.enabledCombatItems;
+            }
+
+            return;
+        }
+
+        if (enabledCombatItems == null)
+        {
+            enabledCombatItems = new List<Item>();
+        }
+    }
+
     private void ApplyEquippedInteractionItems(List<Item> source)
     {
         EnsureEquippedInteractionList();
@@ -1277,6 +1426,33 @@ public partial class SquadCharacterController : MonoBehaviour
         SanitizeEquippedInteractionItems();
     }
 
+    private void ApplyEnabledCombatItems(List<Item> source)
+    {
+        EnsureEnabledCombatList();
+
+        if (ReferenceEquals(source, enabledCombatItems))
+        {
+            source = source != null ? new List<Item>(source) : null;
+        }
+
+        enabledCombatItems.Clear();
+        if (source != null)
+        {
+            for (int i = 0; i < source.Count && enabledCombatItems.Count < MaxEnabledCombatItems; i++)
+            {
+                Item item = source[i];
+                if (item == null || enabledCombatItems.Contains(item))
+                {
+                    continue;
+                }
+
+                enabledCombatItems.Add(item);
+            }
+        }
+
+        SanitizeEnabledCombatItems();
+    }
+
     private void SanitizeEquippedInteractionItems()
     {
         EnsureInventoryList();
@@ -1294,6 +1470,28 @@ public partial class SquadCharacterController : MonoBehaviour
         SyncInteractionEquipmentToCharacterData();
     }
 
+    private void SanitizeEnabledCombatItems()
+    {
+        EnsureInventoryList();
+        EnsureEnabledCombatList();
+
+        for (int i = enabledCombatItems.Count - 1; i >= 0; i--)
+        {
+            Item item = enabledCombatItems[i];
+            if (item == null || !items.Contains(item) || !item.CanDefendInCombat())
+            {
+                enabledCombatItems.RemoveAt(i);
+            }
+        }
+
+        while (enabledCombatItems.Count > MaxEnabledCombatItems)
+        {
+            enabledCombatItems.RemoveAt(enabledCombatItems.Count - 1);
+        }
+
+        SyncCombatEquipmentToCharacterData();
+    }
+
     private void NormalizeReactiveInventoryItems()
     {
         EnsureInventoryList();
@@ -1306,6 +1504,7 @@ public partial class SquadCharacterController : MonoBehaviour
         if (inventoryChanged)
         {
             SanitizeEquippedInteractionItems();
+            SanitizeEnabledCombatItems();
         }
     }
 
@@ -1408,6 +1607,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         EnsureInventoryList();
         EnsureEquippedInteractionList();
+        EnsureEnabledCombatList();
         flameSecondsRemaining = Mathf.Max(0, characterData.flameSecondsRemaining);
         InitializeFlameState();
         if (HasFlameItem && flameSecondsRemaining > 0)
@@ -1420,6 +1620,7 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         ApplyEquippedInteractionItems(characterData.equippedInteractionItems);
+        ApplyEnabledCombatItems(characterData.enabledCombatItems);
 
         if (logInventoryInitialization)
         {
@@ -1449,6 +1650,17 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         EnsureEquippedInteractionList();
+        characterData.inventoryInitialized = true;
+    }
+
+    private void SyncCombatEquipmentToCharacterData()
+    {
+        if (characterData == null)
+        {
+            return;
+        }
+
+        EnsureEnabledCombatList();
         characterData.inventoryInitialized = true;
     }
 

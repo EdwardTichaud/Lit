@@ -1459,6 +1459,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        RefreshActionBoxLabels();
         actionBoxVisible = true;
         PlayUiActionAudio(ActionAudioCue.UiOpen);
         ResetInventoryNavigation();
@@ -2484,6 +2485,20 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
+        if (name.IndexOf("combat", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            if (TryToggleSelectedCombatItem())
+            {
+                RebuildInventorySlots();
+            }
+            else
+            {
+                FlashActionBoxInvalid();
+            }
+
+            return;
+        }
+
         if (name.IndexOf("fermer", System.StringComparison.OrdinalIgnoreCase) >= 0
             || name.IndexOf("close", System.StringComparison.OrdinalIgnoreCase) >= 0)
         {
@@ -2589,6 +2604,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         EnsureBreakActionBoxEntry(container);
+        EnsureCombatActionBoxEntry(container);
 
         for (int i = 0; i < container.childCount; i++)
         {
@@ -2728,6 +2744,46 @@ public class InventoryPanelController : MonoBehaviour
         return false;
     }
 
+    private bool TryToggleSelectedCombatItem()
+    {
+        if (currentFocusedSlot == null || currentFocusedSlot.Item == null)
+        {
+            return false;
+        }
+
+        Item item = currentFocusedSlot.Item;
+        SquadCharacterController controller = GetCurrentCharacterController();
+        if (controller == null)
+        {
+            return false;
+        }
+
+        CombatSessionManager combatManager = CombatSessionManager.Instance;
+        if (combatManager != null && combatManager.IsLocalDefensiveReactionActive())
+        {
+            ShowActionFeedback("Les items combat doivent etre assignes hors combat.");
+            return false;
+        }
+
+        NetworkInventory inventory = ResolveNetworkInventory(controller);
+        if (IsNetworked() && inventory != null)
+        {
+            return inventory.RequestToggleEnabledCombatItem(item);
+        }
+
+        bool wasEnabled = controller.IsCombatItemEnabled(item);
+        if (controller.TryToggleEnabledCombatItem(item, out string reason))
+        {
+            SyncNetworkInventory(controller);
+            ShowActionFeedback(wasEnabled ? "Item retire des items combat." : "Item ajoute aux items combat.");
+            return true;
+        }
+
+        PlayUiActionAudio(ActionAudioCue.UiInvalid);
+        ShowActionFeedback(reason);
+        return false;
+    }
+
     private void ShowActionFeedback(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
@@ -2793,6 +2849,59 @@ public class InventoryPanelController : MonoBehaviour
         clone.name = "ActionBox_Casser";
         RenameActionBoxChildren(clone.transform, "ActionBox_Casser");
         EnsureActionBoxLabelText(clone.transform, "Casser");
+    }
+
+    private void EnsureCombatActionBoxEntry(Transform container)
+    {
+        if (container == null)
+        {
+            return;
+        }
+
+        Transform existing = FindActionBoxEntry(container, "ActionBox_Combat");
+        if (existing != null)
+        {
+            EnsureActionBoxLabelText(existing, "Combat");
+            return;
+        }
+
+        Transform template = FindFirstActionBoxEntry(container);
+        if (template == null)
+        {
+            return;
+        }
+
+        GameObject clone = Instantiate(template.gameObject, container);
+        clone.name = "ActionBox_Combat";
+        RenameActionBoxChildren(clone.transform, "ActionBox_Combat");
+        EnsureActionBoxLabelText(clone.transform, "Combat");
+    }
+
+    private void RefreshActionBoxLabels()
+    {
+        if (actionBoxEntries.Count == 0)
+        {
+            return;
+        }
+
+        SquadCharacterController controller = GetCurrentCharacterController();
+        Item item = currentFocusedSlot != null ? currentFocusedSlot.Item : null;
+        for (int i = 0; i < actionBoxEntries.Count; i++)
+        {
+            ActionBoxEntry entry = actionBoxEntries[i];
+            if (entry == null || entry.Label == null)
+            {
+                continue;
+            }
+
+            if (entry.Name.IndexOf("combat", System.StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                continue;
+            }
+
+            bool enabled = controller != null && controller.IsCombatItemEnabled(item);
+            entry.Label.text = enabled ? "Retirer combat" : "Ajouter combat";
+        }
     }
 
     private Transform FindActionBoxEntry(Transform container, string name)

@@ -83,6 +83,8 @@ public class CharacterData : ScriptableObject
     public List<Item> inventoryItems = new List<Item>();
     /// <summary>Items equipes pour les interactions de monde.</summary>
     public List<Item> equippedInteractionItems = new List<Item>();
+    /// <summary>Items defensifs gardes a portee de main en combat.</summary>
+    public List<Item> enabledCombatItems = new List<Item>();
     /// <summary>Temps restant de flamme en secondes.</summary>
     public int flameSecondsRemaining;
     /// <summary>Indique si la flamme est equipee.</summary>
@@ -232,13 +234,27 @@ public class CharacterData : ScriptableObject
     /// </summary>
     public void SetInventory(List<Item> items, int flameSeconds, bool equipped, bool markInitialized = true)
     {
-        SetInventory(items, flameSeconds, equipped, markInitialized, null);
+        SetInventory(items, flameSeconds, equipped, markInitialized, null, null);
     }
 
     /// <summary>
     /// Remplace l'inventaire runtime et les items d'interaction equipes.
     /// </summary>
     public void SetInventory(List<Item> items, int flameSeconds, bool equipped, bool markInitialized, List<Item> equippedItems)
+    {
+        SetInventory(items, flameSeconds, equipped, markInitialized, equippedItems, null);
+    }
+
+    /// <summary>
+    /// Remplace l'inventaire runtime, les items d'interaction equipes et les items combat actives.
+    /// </summary>
+    public void SetInventory(
+        List<Item> items,
+        int flameSeconds,
+        bool equipped,
+        bool markInitialized,
+        List<Item> equippedItems,
+        List<Item> combatItems)
     {
         if (inventoryItems == null)
         {
@@ -276,6 +292,34 @@ public class CharacterData : ScriptableObject
                 }
 
                 equippedInteractionItems.Add(item);
+            }
+        }
+
+        if (enabledCombatItems == null)
+        {
+            enabledCombatItems = new List<Item>();
+        }
+        else
+        {
+            enabledCombatItems.Clear();
+        }
+
+        if (combatItems != null)
+        {
+            for (int i = 0; i < combatItems.Count && enabledCombatItems.Count < 3; i++)
+            {
+                Item item = combatItems[i];
+                if (item == null || enabledCombatItems.Contains(item) || !item.CanDefendInCombat())
+                {
+                    continue;
+                }
+
+                if (inventoryItems != null && !inventoryItems.Contains(item))
+                {
+                    continue;
+                }
+
+                enabledCombatItems.Add(item);
             }
         }
 
