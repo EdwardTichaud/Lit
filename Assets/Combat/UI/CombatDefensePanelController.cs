@@ -428,7 +428,23 @@ public class CombatDefensePanelController : MonoBehaviour
         }
 
         GameObject controlled = LocalPlayerUtils.GetControlledCharacter();
-        return controlled != null ? controlled.GetComponentInChildren<SquadCharacterController>(true) : null;
+        if (controlled != null)
+        {
+            return controlled.GetComponentInChildren<SquadCharacterController>(true);
+        }
+
+        CombatSessionManager manager = CombatSessionManager.Instance;
+        if (manager != null &&
+            manager.TryGetLocalCombatCameraContext(
+                out Transform player,
+                out _,
+                out _,
+                out _))
+        {
+            return player != null ? player.GetComponentInChildren<SquadCharacterController>(true) : null;
+        }
+
+        return null;
     }
 
     private static string ResolveItemDisplayName(Item item)

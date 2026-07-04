@@ -33,6 +33,8 @@ MonoBehaviour:
     quantity: 300
   - item: {fileID: 11400000, guid: 4e191bc50e9af1e45a89291aaeb89774, type: 2}
     quantity: 300
+  - item: {fileID: 11400000, guid: 1c025a0b39ccf564b8d5fe22b4ea5109, type: 2}
+    quantity: 1
   hp: 10
   isEnemy: 0
   combatCurrentHp: 0

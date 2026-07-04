@@ -48,6 +48,10 @@ résolution dans le monde.
    selectionnent les slots 1 a 3. Les slots sans item assigne restent masques.
    Les racines `EnableItem_1/2/3` sont resolues comme boutons UI pour permettre
    aussi la selection souris et la navigation manette/clavier.
+   Cette demande issue d'un AnimationEvent est prioritaire sur l'intro
+   `CombatEngagedPanel_Trigger` : si l'attaque ennemie commence pendant
+   l'intro, celle-ci est masquee et `CombatDefensePanel` s'affiche
+   immediatement.
    Quand le clip ferme ce panel,
    `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté

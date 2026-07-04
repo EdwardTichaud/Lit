@@ -551,7 +551,8 @@ public class CombatHudController : MonoBehaviour
 
     private void RefreshCombatPanelVisibility()
     {
-        if (!visible)
+        bool hasDefenseRequestContext = combatDefensePanelRequested && HasLocalCombatContext();
+        if (!visible && !hasDefenseRequestContext)
         {
             combatDefensePanelRequested = false;
             SetScenePanelVisibility(false, false);
@@ -560,7 +561,12 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        bool defenseVisible = visible && !combatEngagedIntroActive && combatDefensePanelRequested;
+        if (combatDefensePanelRequested && combatEngagedIntroActive)
+        {
+            SetCombatEngagedVisible(false);
+        }
+
+        bool defenseVisible = combatDefensePanelRequested && (visible || hasDefenseRequestContext);
         bool infosVisible = visible && !combatEngagedIntroActive && !defenseVisible;
         SetScenePanelVisibility(infosVisible, infosVisible && CanChoosePlayerAction());
         CombatDefensePanelController.SetAnimationEventVisible(defenseVisible);
@@ -569,7 +575,30 @@ public class CombatHudController : MonoBehaviour
     private void SetCombatDefensePanelRequested(bool shouldBeVisible)
     {
         combatDefensePanelRequested = shouldBeVisible;
+        if (shouldBeVisible && combatEngagedIntroActive)
+        {
+            SetCombatEngagedVisible(false);
+        }
+
         RefreshCombatPanelVisibility();
+    }
+
+    private static bool HasLocalCombatContext()
+    {
+        CombatSessionManager manager = CombatSessionManager.Instance;
+        if (manager == null)
+        {
+            return false;
+        }
+
+        return manager.TryGetLocalCombatCameraContext(
+                out Transform player,
+                out Transform enemy,
+                out _,
+                out CombatSessionPhase phase)
+            && phase != CombatSessionPhase.Created
+            && phase != CombatSessionPhase.Finished
+            && (player != null || enemy != null);
     }
 
     private void SetCombatEngagedVisible(bool shouldBeVisible)

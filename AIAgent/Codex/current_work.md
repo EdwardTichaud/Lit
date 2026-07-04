@@ -53,6 +53,9 @@ L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
 `CombatEngagedPanel` au lancement d'une session, affiche ensuite
 `CombatScreenInfosPanel`, puis masque ces infos quand un AnimationEvent demande
 `CombatDefensePanel`; a la fermeture du panel, les infos de combat reviennent.
+Les demandes `CombatDefensePanel` issues des AnimationEvents ont priorite sur
+l'intro de combat afin que la fenetre defensive s'ouvre meme si l'attaque
+ennemie commence pendant `CombatEngagedPanel_Trigger`.
 Les panels combat restaurent aussi leur hierarchie UI active et une echelle non
 nulle afin de rester visibles si la racine `UI_Overlay` a ete sauvegardee a
 `localScale` zero.
