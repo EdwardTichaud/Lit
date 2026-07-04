@@ -25,15 +25,18 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     [SerializeField] private Vector3 playerActionCameraOffset = new Vector3(0.45f, 1.35f, -2.45f);
     [SerializeField] private Vector3 enemyDecisionCameraOffset = new Vector3(-0.95f, 1.25f, -2.7f);
     [SerializeField] private Vector3 enemyActionCameraOffset = new Vector3(-1.25f, 1.08f, -2.1f);
+    [SerializeField] private Vector3 counterActionCameraOffset = new Vector3(0.15f, 1.18f, -1.85f);
     [SerializeField] private Vector3 resolvingCameraOffset = new Vector3(0f, 1.65f, -3.2f);
     [SerializeField, Range(0f, 1f)] private float playerDecisionLookBias = 0.62f;
     [SerializeField, Range(0f, 1f)] private float playerActionLookBias = 0.78f;
     [SerializeField, Range(0f, 1f)] private float enemyReactionLookBias = 0.74f;
     [SerializeField, Range(0f, 1f)] private float enemyActionLookBias = 0.92f;
+    [SerializeField, Range(0f, 1f)] private float counterActionLookBias = 0.86f;
     [SerializeField, Range(15f, 100f)] private float playerDecisionFieldOfView = 50f;
     [SerializeField, Range(15f, 100f)] private float playerActionFieldOfView = 54f;
     [SerializeField, Range(15f, 100f)] private float enemyReactionFieldOfView = 60f;
     [SerializeField, Range(15f, 100f)] private float enemyActionFieldOfView = 68f;
+    [SerializeField, Range(15f, 100f)] private float counterActionFieldOfView = 58f;
     [SerializeField, Range(15f, 100f)] private float resolvingFieldOfView = 52f;
     [SerializeField, Min(0f)] private float targetLookHeight = 1.25f;
     [SerializeField, Min(0f)] private float cinematicLookHeight = 1.1f;
@@ -43,14 +46,17 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     [SerializeField, Min(0.05f)] private float decisionBlendSeconds = 2f;
     [SerializeField, Min(0.05f)] private float actionBlendSeconds = 0.35f;
     [SerializeField, Min(0.05f)] private float enemyActionBlendSeconds = 0.75f;
+    [SerializeField, Min(0.05f)] private float counterActionBlendSeconds = 0.22f;
     [SerializeField, Min(0f)] private float cameraFollowSharpness = 7f;
     [SerializeField, Min(0f)] private float enemyActionFollowSharpness = 9f;
     [SerializeField] private Vector3 subtleBreathingAmplitude = new Vector3(0.08f, 0.03f, 0.06f);
     [SerializeField] private Vector3 enemyActionBreathingAmplitude = new Vector3(0.32f, 0.12f, 0.26f);
+    [SerializeField] private Vector3 counterActionBreathingAmplitude = new Vector3(0.18f, 0.05f, 0.12f);
     [SerializeField, Min(0f)] private float subtleBreathingFrequency = 0.05f;
     [SerializeField, Min(0f)] private float enemyActionBreathingFrequency = 0.08f;
     [SerializeField, Range(-10f, 10f)] private float enemyReactionRollDegrees = -2.5f;
     [SerializeField, Range(-10f, 10f)] private float enemyActionRollDegrees = -1.5f;
+    [SerializeField, Range(-10f, 10f)] private float counterActionRollDegrees = 1.75f;
 
     private struct CombatCameraShot
     {
@@ -98,6 +104,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     private bool presentationLogged;
     private bool phaseStateStored;
     private bool activePlayerTurn;
+    private bool activeCounterActionShot;
     private CombatSessionPhase activePhase = CombatSessionPhase.Finished;
     private Vector3 transitionStartPosition;
     private Quaternion transitionStartRotation;
@@ -106,6 +113,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     private float transitionElapsed;
     private bool transitioning;
     private float localPauseWeight;
+    private float counterActionShotEndsAt;
 
     public static CombatCameraPresentationController EnsureInstance()
     {
@@ -181,7 +189,8 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             return;
         }
 
-        UpdateLocalPauseWeight(ShouldHoldLocalPause(playerTurn, phase));
+        bool counterActionShot = IsCounterActionShotActive();
+        UpdateLocalPauseWeight(ShouldHoldLocalPause(playerTurn, phase) || counterActionShot);
         if (!EnsureCameraRig())
         {
             return;
@@ -192,15 +201,27 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             return;
         }
 
-        if (!phaseStateStored || activePlayerTurn != playerTurn || activePhase != phase)
+        if (!phaseStateStored ||
+            activePlayerTurn != playerTurn ||
+            activePhase != phase ||
+            activeCounterActionShot != counterActionShot)
         {
             activePlayerTurn = playerTurn;
             activePhase = phase;
+            activeCounterActionShot = counterActionShot;
             phaseStateStored = true;
-            StartCameraTransition(ResolveBlendSeconds(playerTurn, phase));
+            StartCameraTransition(ResolveBlendSeconds(playerTurn, phase, counterActionShot));
         }
 
-        ApplyCameraPose(player, enemy, playerTurn, phase);
+        ApplyCameraPose(player, enemy, playerTurn, phase, counterActionShot);
+    }
+
+    public void PlayCounterActionShot(float durationSeconds)
+    {
+        counterActionShotEndsAt = Mathf.Max(
+            counterActionShotEndsAt,
+            Time.unscaledTime + Mathf.Max(0.05f, durationSeconds));
+        StartCameraTransition(counterActionBlendSeconds);
     }
 
     private bool EnsureCameraRig()
@@ -360,8 +381,13 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         return playerTurn && phase == CombatSessionPhase.TurnActive;
     }
 
-    private float ResolveBlendSeconds(bool playerTurn, CombatSessionPhase phase)
+    private float ResolveBlendSeconds(bool playerTurn, CombatSessionPhase phase, bool counterActionShot)
     {
+        if (counterActionShot)
+        {
+            return counterActionBlendSeconds;
+        }
+
         if (phase == CombatSessionPhase.Decision)
         {
             return decisionBlendSeconds;
@@ -390,14 +416,14 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         transitioning = transitionDuration > 0f;
     }
 
-    private void ApplyCameraPose(Transform player, Transform enemy, bool playerTurn, CombatSessionPhase phase)
+    private void ApplyCameraPose(Transform player, Transform enemy, bool playerTurn, CombatSessionPhase phase, bool counterActionShot)
     {
         if (controlledCamera == null)
         {
             return;
         }
 
-        CombatCameraShot shot = ResolveShot(playerTurn, phase);
+        CombatCameraShot shot = ResolveShot(playerTurn, phase, counterActionShot);
         ResolveDesiredPose(
             player,
             enemy,
@@ -435,8 +461,21 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         controlledCamera.fieldOfView = Mathf.Lerp(controlledCamera.fieldOfView, targetFov, followT);
     }
 
-    private CombatCameraShot ResolveShot(bool playerTurn, CombatSessionPhase phase)
+    private CombatCameraShot ResolveShot(bool playerTurn, CombatSessionPhase phase, bool counterActionShot)
     {
+        if (counterActionShot)
+        {
+            return new CombatCameraShot(
+                counterActionCameraOffset,
+                counterActionLookBias,
+                cinematicLookHeight,
+                counterActionFieldOfView,
+                counterActionRollDegrees,
+                enemyActionFollowSharpness,
+                counterActionBreathingAmplitude,
+                enemyActionBreathingFrequency);
+        }
+
         if (phase == CombatSessionPhase.Resolving)
         {
             return new CombatCameraShot(
@@ -598,6 +637,11 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         return right * (Mathf.Sin(phase) * shot.BreathingAmplitude.x) +
                Vector3.up * (Mathf.Sin(phase * 0.7f + 1.1f) * shot.BreathingAmplitude.y) +
                forward * (Mathf.Cos(phase * 0.55f + 0.4f) * shot.BreathingAmplitude.z);
+    }
+
+    private bool IsCounterActionShotActive()
+    {
+        return Time.unscaledTime < counterActionShotEndsAt;
     }
 
     private void RestoreCameraPresentation()

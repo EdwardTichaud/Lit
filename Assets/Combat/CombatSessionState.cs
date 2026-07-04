@@ -213,6 +213,24 @@ public sealed class CombatSessionState
     }
 
     /// <summary>
+    /// Prolonge l'action ennemie courante pour laisser respirer une presentation locale.
+    /// </summary>
+    public void ExtendEnemyAction(float now, float actionDurationSeconds, string message = null)
+    {
+        if (!EnemyActionLocked || Finished || Resolving)
+        {
+            return;
+        }
+
+        EnemyActionEndsAt = now + Mathf.Max(0.05f, actionDurationSeconds);
+        TurnEndsAt = EnemyActionEndsAt;
+        if (message != null)
+        {
+            LastMessage = message;
+        }
+    }
+
+    /// <summary>
     /// Lance la phase de resolution finale avant de quitter le combat.
     /// </summary>
     public void BeginResolution(bool playerVictory, float now, float durationSeconds, string message)

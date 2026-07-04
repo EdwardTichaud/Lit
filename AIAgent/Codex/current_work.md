@@ -35,6 +35,16 @@ items combat. Les clips d'attaque ouvrent/ferment `CombatDefensePanel` via
 `CombatAnimationEvents`; le panel ne propose que ces items a portee de main, et
 la selection reste validee par `CombatSessionManager`, synchronisee par
 `NetworkInventory` et sauvegardee avec l'etat personnage.
+Quand `CombatDefensePanel` est visible, l'input local bascule sur l'ActionMap
+`Combat`; `UseItem1`, `UseItem2` et `UseItem3` activent les trois slots, dont
+les enfants `Text` affichent le nom de l'item assigne.
+Les items peuvent porter un `CombatReactionProfile` optionnel. `Item_Weapon_Sword`
+est configure comme premier contre melee : il declenche `Counter_Sword`,
+`Impaled`, un shot camera `CounterAction`, un court ralenti local, et peut
+configurer ses attaches, SFX/VFX/voix depuis l'item.
+Le Juggernaut expose une state Animator `Impaled` vide pour y brancher le clip,
+et le visuel plante oriente automatiquement son axe Z a l'inverse du Z local de
+l'ennemi.
 L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
 `CombatEngagedPanel` au lancement d'une session, affiche ensuite
 `CombatScreenInfosPanel`, puis masque ces infos quand un AnimationEvent demande

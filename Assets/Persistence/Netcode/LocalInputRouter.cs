@@ -20,7 +20,10 @@ public static class LocalInputRouter
         LocomotionMode,
         SwitchTarget,
         Multi,
-        Start
+        Start,
+        CombatUseItem1,
+        CombatUseItem2,
+        CombatUseItem3
     }
 
     public static event Action<Vector2> Move;
@@ -36,6 +39,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> SwitchTarget;
     public static event Action<InputAction.CallbackContext> Multi;
     public static event Action<InputAction.CallbackContext> Start;
+    public static event Action<int> CombatUseItem;
     public static event Action CameraRecenter;
     public static event Action CameraToggleFreeMode;
 
@@ -96,6 +100,7 @@ public static class LocalInputRouter
         SwitchTarget = null;
         Multi = null;
         Start = null;
+        CombatUseItem = null;
         CameraRecenter = null;
         CameraToggleFreeMode = null;
 
@@ -483,6 +488,32 @@ public static class LocalInputRouter
             return;
         }
         Start?.Invoke(context);
+    }
+
+    internal static void RaiseCombatUseItem(InputAction.CallbackContext context, int slotIndex)
+    {
+        InputGate gate;
+        switch (slotIndex)
+        {
+            case 0:
+                gate = InputGate.CombatUseItem1;
+                break;
+            case 1:
+                gate = InputGate.CombatUseItem2;
+                break;
+            case 2:
+                gate = InputGate.CombatUseItem3;
+                break;
+            default:
+                return;
+        }
+
+        if (!AllowInput(gate))
+        {
+            return;
+        }
+
+        CombatUseItem?.Invoke(slotIndex);
     }
 
     internal static void RaiseCameraRecenter()

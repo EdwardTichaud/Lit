@@ -56,8 +56,6 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        panel.gameObject.SetActive(true);
-
         CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {

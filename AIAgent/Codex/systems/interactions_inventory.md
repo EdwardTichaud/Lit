@@ -52,3 +52,10 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   `NetworkInventory` et sauvegardes dans `CharacterSaveData`.
 - En combat, un item defensif non assigne aux 3 items combat reste dans le sac,
   mais n'est pas a portee de main pour la reaction ennemie.
+- Les actions `UseItem1`, `UseItem2` et `UseItem3` consomment respectivement les
+  trois items combat actifs; les libelles `EnableItem_1/2/3/Text` affichent les
+  noms de ces items.
+- Un item combat actif peut etre defensif ou porter un `CombatReactionProfile`.
+  `Item_Weapon_Sword` est configure comme premier `MeleeCounterImpale` : il ne
+  sert pas de bouclier, mais declenche un empalement si l'attaque ennemie est
+  melee.

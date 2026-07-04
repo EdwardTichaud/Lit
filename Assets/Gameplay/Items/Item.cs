@@ -57,6 +57,17 @@ public class Item : ScriptableObject
     }
 
     /// <summary>
+    /// Type de reaction speciale declenchee par un item pendant un combat.
+    /// </summary>
+    public enum CombatReactionKind
+    {
+        /// <summary>Aucune reaction speciale.</summary>
+        None = 0,
+        /// <summary>Contre une attaque melee en empalant l'ennemi.</summary>
+        MeleeCounterImpale = 1
+    }
+
+    /// <summary>
     /// Resultat donne quand un item est casse.
     /// </summary>
     [System.Serializable]
@@ -106,6 +117,102 @@ public class Item : ScriptableObject
         public List<Effect> effects = new List<Effect>();
         [Tooltip("Crafts debloques a ce niveau (optionnel).")]
         public List<Item> unlockedCrafts = new List<Item>();
+    }
+
+    /// <summary>
+    /// Profil optionnel de reaction combat porte par un item.
+    /// </summary>
+    [System.Serializable]
+    public class CombatReactionProfile
+    {
+        [Tooltip("Type de reaction speciale de cet item en combat.")]
+        public CombatReactionKind reactionKind = CombatReactionKind.None;
+        [Tooltip("Animation jouee par le joueur quand la reaction se declenche.")]
+        public string playerAnimationName;
+        [Tooltip("Animation joueur de secours si l'animation principale est absente.")]
+        public string fallbackPlayerAnimationName;
+        [Tooltip("Animation jouee par l'ennemi touche par la reaction.")]
+        public string enemyAnimationName;
+        [Min(0.05f)]
+        [Tooltip("Duree de secours de l'animation joueur.")]
+        public float fallbackPlayerAnimationDuration = 1.2f;
+        [Min(0.05f)]
+        [Tooltip("Duree de secours de l'animation ennemie.")]
+        public float fallbackEnemyAnimationDuration = 1.35f;
+        [Min(0f)]
+        [Tooltip("Temps avant l'impact visuel/audio de la reaction.")]
+        public float impactDelaySeconds = 0.32f;
+        [Range(0.01f, 1f)]
+        [Tooltip("Multiplicateur local de presentation pendant la reaction.")]
+        public float slowTimeScale = 0.2f;
+        [Min(0f)]
+        [Tooltip("Duree du ralenti local de reaction.")]
+        public float slowDurationSeconds = 0.5f;
+        [Tooltip("Declenche le shot camera CounterAction pendant cette reaction.")]
+        public bool playCounterActionCameraShot = true;
+        [Tooltip("Prefab visuel optionnel a utiliser pendant la reaction. Fallback: prefab monde de l'item.")]
+        public GameObject combatVisualPrefab;
+        [Tooltip("Nom de l'os ou transform de main joueur qui porte le visuel.")]
+        public string playerAttachBoneName = "RightHand";
+        [Tooltip("Offset local du visuel dans la main joueur.")]
+        public Vector3 playerAttachLocalPosition;
+        [Tooltip("Rotation locale du visuel dans la main joueur.")]
+        public Vector3 playerAttachLocalEulerAngles;
+        [Tooltip("Nom de l'os ou transform ennemi ou le visuel reste plante.")]
+        public string enemyAttachBoneName = "spine_03";
+        [Tooltip("Offset local du visuel sur l'ennemi.")]
+        public Vector3 enemyAttachLocalPosition;
+        [Tooltip("Rotation locale du visuel sur l'ennemi.")]
+        public Vector3 enemyAttachLocalEulerAngles;
+        [Tooltip("Cue audio joue au declenchement. Ignore si un clip direct est assigne.")]
+        public ActionAudioCue startAudioCue = ActionAudioCue.CombatAttack;
+        [Tooltip("Cue audio joue a l'impact. Ignore si un clip direct est assigne.")]
+        public ActionAudioCue impactAudioCue = ActionAudioCue.CombatHit;
+        [Tooltip("SFX direct joue au declenchement de la reaction.")]
+        public AudioClipSO startSfx;
+        [Tooltip("SFX direct joue a l'impact de la reaction.")]
+        public AudioClipSO impactSfx;
+        [Tooltip("Voix optionnelle jouee a l'impact.")]
+        public AudioClipSO voiceClip;
+        [Tooltip("VFX optionnel instancie a l'impact.")]
+        public GameObject impactVfxPrefab;
+        [Tooltip("Offset local du VFX d'impact depuis le point d'attache ennemi.")]
+        public Vector3 impactVfxLocalOffset;
+        [Tooltip("Rotation locale du VFX d'impact depuis le point d'attache ennemi.")]
+        public Vector3 impactVfxLocalEulerAngles;
+        [Min(0f)]
+        [Tooltip("Duree de vie du VFX d'impact. 0 = ne pas detruire automatiquement.")]
+        public float impactVfxLifetime = 2f;
+
+        public bool IsEnabled()
+        {
+            return reactionKind != CombatReactionKind.None;
+        }
+
+        public bool IsMeleeCounter()
+        {
+            return reactionKind == CombatReactionKind.MeleeCounterImpale;
+        }
+
+        public string ResolvePlayerAnimationName(string fallback)
+        {
+            return string.IsNullOrWhiteSpace(playerAnimationName) ? fallback : playerAnimationName;
+        }
+
+        public string ResolveFallbackPlayerAnimationName(string fallback)
+        {
+            return string.IsNullOrWhiteSpace(fallbackPlayerAnimationName) ? fallback : fallbackPlayerAnimationName;
+        }
+
+        public string ResolveEnemyAnimationName(string fallback)
+        {
+            return string.IsNullOrWhiteSpace(enemyAnimationName) ? fallback : enemyAnimationName;
+        }
+
+        public GameObject ResolveVisualPrefab(Item owner)
+        {
+            return combatVisualPrefab != null ? combatVisualPrefab : owner != null ? owner.ResolveWorldPrefab() : null;
+        }
     }
 
     /// <summary>
@@ -184,6 +291,9 @@ public class Item : ScriptableObject
     [Min(0)]
     [Tooltip("PV defensifs de chaque unite de cet item pendant une attaque ennemie.")]
     public int combatDefenseHitPoints;
+    [Header("Combat Reaction")]
+    [Tooltip("Profil optionnel de contre/reaction speciale utilisable dans les 3 items combat.")]
+    public CombatReactionProfile combatReactionProfile = new CombatReactionProfile();
     [Header("Placement")]
     [Tooltip("Peut etre pose dans le monde.")]
     public bool canPlace;
@@ -573,6 +683,31 @@ public class Item : ScriptableObject
     public bool CanDefendInCombat()
     {
         return canDefendInCombat && combatDefenseHitPoints > 0;
+    }
+
+    /// <summary>
+    /// Indique si cet item declenche un contre special contre les attaques melee.
+    /// </summary>
+    public bool CanCounterMeleeInCombat()
+    {
+        return combatReactionProfile != null && combatReactionProfile.IsMeleeCounter();
+    }
+
+    /// <summary>
+    /// Indique si cet item peut occuper un des trois slots rapides de combat.
+    /// </summary>
+    public bool CanUseInCombatReaction()
+    {
+        return CanDefendInCombat() ||
+               (combatReactionProfile != null && combatReactionProfile.IsEnabled());
+    }
+
+    /// <summary>
+    /// Retourne le profil de reaction combat optionnel.
+    /// </summary>
+    public CombatReactionProfile GetCombatReactionProfile()
+    {
+        return combatReactionProfile;
     }
 
     /// <summary>

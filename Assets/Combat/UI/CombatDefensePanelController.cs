@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Role: affiche les trois items defensifs assignes quand un AnimationEvent de combat le demande.
@@ -20,6 +19,7 @@ public class CombatDefensePanelController : MonoBehaviour
     [SerializeField] private CanvasGroup panelCanvasGroup;
     [SerializeField] private Button[] slotButtons = new Button[SlotCount];
     [SerializeField] private TextMeshProUGUI[] slotLabels = new TextMeshProUGUI[SlotCount];
+    [SerializeField] private Text[] slotLegacyLabels = new Text[SlotCount];
     [SerializeField] private bool createMissingSlots = true;
 
     private readonly List<Item> visibleItems = new List<Item>(SlotCount);
@@ -87,6 +87,17 @@ public class CombatDefensePanelController : MonoBehaviour
         SetVisible(false);
     }
 
+    private void OnEnable()
+    {
+        LocalInputRouter.CombatUseItem += OnCombatUseItem;
+    }
+
+    private void OnDisable()
+    {
+        LocalInputRouter.CombatUseItem -= OnCombatUseItem;
+        LocalPlayerInput.SetCombatInputActive(false);
+    }
+
     private void Update()
     {
         if (!visible)
@@ -94,7 +105,6 @@ public class CombatDefensePanelController : MonoBehaviour
             return;
         }
 
-        HandleQuickSelectInput();
         RefreshSlots();
     }
 
@@ -103,6 +113,7 @@ public class CombatDefensePanelController : MonoBehaviour
         if (shouldBeVisible && !ResolvePanel())
         {
             visible = false;
+            LocalPlayerInput.SetCombatInputActive(false);
             if (!warnedMissingPanel)
             {
                 warnedMissingPanel = true;
@@ -112,14 +123,10 @@ public class CombatDefensePanelController : MonoBehaviour
         }
 
         visible = shouldBeVisible;
+        LocalPlayerInput.SetCombatInputActive(shouldBeVisible);
         if (panelRoot == null)
         {
             return;
-        }
-
-        if (shouldBeVisible)
-        {
-            EnsureActiveHierarchy(panelRoot.transform);
         }
 
         SetCanvasGroupVisible(panelCanvasGroup, shouldBeVisible);
@@ -174,10 +181,30 @@ public class CombatDefensePanelController : MonoBehaviour
             slotLabels = new TextMeshProUGUI[SlotCount];
         }
 
+        if (slotLegacyLabels == null || slotLegacyLabels.Length != SlotCount)
+        {
+            slotLegacyLabels = new Text[SlotCount];
+        }
+
         Button[] foundButtons = panelRoot.GetComponentsInChildren<Button>(true);
         int foundIndex = 0;
         for (int i = 0; i < SlotCount; i++)
         {
+            Transform namedSlot = FindChildByName(panelRoot.transform, $"EnableItem_{i + 1}");
+            if (namedSlot != null)
+            {
+                if (slotButtons[i] == null)
+                {
+                    slotButtons[i] = namedSlot.GetComponent<Button>();
+                    if (slotButtons[i] == null)
+                    {
+                        slotButtons[i] = namedSlot.GetComponentInChildren<Button>(true);
+                    }
+                }
+
+                ResolveSlotLabel(i, namedSlot);
+            }
+
             if (slotButtons[i] == null && foundButtons != null && foundIndex < foundButtons.Length)
             {
                 slotButtons[i] = foundButtons[foundIndex];
@@ -196,7 +223,7 @@ public class CombatDefensePanelController : MonoBehaviour
 
             if (slotLabels[i] == null)
             {
-                slotLabels[i] = slotButtons[i].GetComponentInChildren<TextMeshProUGUI>(true);
+                ResolveSlotLabel(i, slotButtons[i].transform);
             }
 
             int slotIndex = i;
@@ -239,7 +266,7 @@ public class CombatDefensePanelController : MonoBehaviour
         TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
         label.alignment = TextAlignmentOptions.Center;
         label.fontSize = 22f;
-        label.text = $"{index + 1}. -";
+        label.text = "-";
         slotLabels[index] = label;
 
         return slot.GetComponent<Button>();
@@ -264,12 +291,7 @@ public class CombatDefensePanelController : MonoBehaviour
         for (int i = 0; i < SlotCount; i++)
         {
             Item item = i < visibleItems.Count ? visibleItems[i] : null;
-            if (slotLabels != null && i < slotLabels.Length && slotLabels[i] != null)
-            {
-                slotLabels[i].text = item != null
-                    ? $"{i + 1}. {ResolveItemDisplayName(item)}"
-                    : $"{i + 1}. -";
-            }
+            SetSlotLabel(i, item != null ? ResolveItemDisplayName(item) : "-");
 
             if (slotButtons == null || i >= slotButtons.Length || slotButtons[i] == null)
             {
@@ -304,26 +326,14 @@ public class CombatDefensePanelController : MonoBehaviour
         }
     }
 
-    private void HandleQuickSelectInput()
+    private void OnCombatUseItem(int slotIndex)
     {
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard == null)
+        if (!visible)
         {
             return;
         }
 
-        if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame)
-        {
-            SelectSlot(0);
-        }
-        else if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame)
-        {
-            SelectSlot(1);
-        }
-        else if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame)
-        {
-            SelectSlot(2);
-        }
+        SelectSlot(slotIndex);
     }
 
     private void SelectFirstInteractableSlot()
@@ -371,6 +381,54 @@ public class CombatDefensePanelController : MonoBehaviour
         return !string.IsNullOrWhiteSpace(item.name) ? item.name : "Item";
     }
 
+    private void ResolveSlotLabel(int index, Transform slotRoot)
+    {
+        if (slotRoot == null)
+        {
+            return;
+        }
+
+        Transform textChild = FindChildByName(slotRoot, "Text");
+        if (slotLabels[index] == null)
+        {
+            if (textChild != null)
+            {
+                slotLabels[index] = textChild.GetComponent<TextMeshProUGUI>();
+            }
+
+            if (slotLabels[index] == null)
+            {
+                slotLabels[index] = slotRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+        }
+
+        if (slotLegacyLabels[index] == null)
+        {
+            if (textChild != null)
+            {
+                slotLegacyLabels[index] = textChild.GetComponent<Text>();
+            }
+
+            if (slotLegacyLabels[index] == null)
+            {
+                slotLegacyLabels[index] = slotRoot.GetComponentInChildren<Text>(true);
+            }
+        }
+    }
+
+    private void SetSlotLabel(int index, string value)
+    {
+        if (slotLabels != null && index < slotLabels.Length && slotLabels[index] != null)
+        {
+            slotLabels[index].text = value;
+        }
+
+        if (slotLegacyLabels != null && index < slotLegacyLabels.Length && slotLegacyLabels[index] != null)
+        {
+            slotLegacyLabels[index].text = value;
+        }
+    }
+
     private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool shouldBeVisible)
     {
         if (canvasGroup == null)
@@ -383,23 +441,28 @@ public class CombatDefensePanelController : MonoBehaviour
         canvasGroup.blocksRaycasts = shouldBeVisible;
     }
 
-    private static void EnsureActiveHierarchy(Transform target)
+    private static Transform FindChildByName(Transform root, string childName)
     {
-        if (target == null)
+        if (root == null || string.IsNullOrWhiteSpace(childName))
         {
-            return;
+            return null;
         }
 
-        Transform parent = target.parent;
-        if (parent != null && parent.gameObject.scene.IsValid())
+        if (string.Equals(root.name, childName, System.StringComparison.Ordinal))
         {
-            EnsureActiveHierarchy(parent);
+            return root;
         }
 
-        if (!target.gameObject.activeSelf)
+        for (int i = 0; i < root.childCount; i++)
         {
-            target.gameObject.SetActive(true);
+            Transform match = FindChildByName(root.GetChild(i), childName);
+            if (match != null)
+            {
+                return match;
+            }
         }
+
+        return null;
     }
 
     private static GameObject FindSceneGameObjectByName(string objectName)

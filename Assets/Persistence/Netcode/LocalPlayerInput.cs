@@ -2,13 +2,15 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // Singleton local qui capture les inputs et les envoie au LocalInputRouter.
-public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, PlayerInputs.ICameraActions
+public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, PlayerInputs.ICameraActions, PlayerInputs.ICombatActions
 {
     public static LocalPlayerInput Instance { get; private set; }
 
     [SerializeField] private bool dontDestroyOnLoad = true;
 
     private PlayerInputs playerInputs;
+    private bool combatInputActive;
+    private bool inputMapsConfigured;
 
     public static void EnsureInstance()
     {
@@ -45,12 +47,19 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         playerInputs = new PlayerInputs();
         playerInputs.Player.SetCallbacks(this);
         playerInputs.Camera.SetCallbacks(this);
+        playerInputs.Combat.SetCallbacks(this);
         MainMenuInputSettings.ModeChanged += OnInputModeChanged;
-        playerInputs.Enable();
+        ApplyCombatInputActive(false);
     }
 
     private void Update()
     {
+        if (combatInputActive)
+        {
+            LocalInputRouter.SetFlightVerticalValue(0f);
+            return;
+        }
+
         LocalInputRouter.SetFlightVerticalValue(ReadFlightVerticalInput());
     }
 
@@ -174,6 +183,30 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
+    public void OnUseItem1(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseCombatUseItem(context, 0);
+        }
+    }
+
+    public void OnUseItem2(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseCombatUseItem(context, 1);
+        }
+    }
+
+    public void OnUseItem3(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseCombatUseItem(context, 2);
+        }
+    }
+
     public void OnPan(InputAction.CallbackContext context)
     {
         if (!ShouldProcess(context))
@@ -274,6 +307,49 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     {
         LocalInputRouter.ResetMove();
         LocalInputRouter.ResetCamera();
+    }
+
+    public static void SetCombatInputActive(bool active)
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        if (Instance == null && !active)
+        {
+            return;
+        }
+
+        EnsureInstance();
+        if (Instance != null)
+        {
+            Instance.ApplyCombatInputActive(active);
+        }
+    }
+
+    private void ApplyCombatInputActive(bool active)
+    {
+        if (playerInputs == null || (inputMapsConfigured && combatInputActive == active))
+        {
+            return;
+        }
+
+        inputMapsConfigured = true;
+        combatInputActive = active;
+        if (active)
+        {
+            playerInputs.Player.Disable();
+            playerInputs.Camera.Disable();
+            playerInputs.Combat.Enable();
+            LocalInputRouter.ResetMove();
+            LocalInputRouter.ResetCamera();
+            return;
+        }
+
+        playerInputs.Combat.Disable();
+        playerInputs.Player.Enable();
+        playerInputs.Camera.Enable();
     }
 
     private static float ReadFlightVerticalInput()

@@ -309,7 +309,7 @@ public class CharacterData : ScriptableObject
             for (int i = 0; i < combatItems.Count && enabledCombatItems.Count < 3; i++)
             {
                 Item item = combatItems[i];
-                if (item == null || enabledCombatItems.Contains(item) || !item.CanDefendInCombat())
+                if (item == null || enabledCombatItems.Contains(item) || !item.CanUseInCombatReaction())
                 {
                     continue;
                 }

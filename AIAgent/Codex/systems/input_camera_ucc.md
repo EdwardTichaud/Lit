@@ -25,6 +25,7 @@ Le flux se divise ensuite :
 - solo vers `SquadManager` / `SquadCharacterController`;
 - réseau vers `NetworkCharacterInput`;
 - caméra vers les abonnés dédiés.
+- combat vers `CombatDefensePanelController` via `UseItem1/2/3`.
 
 `SquadCharacterController` convertit l’input en espace monde, puis
 `LitOpsiveLocomotionBridge` pilote UCC.
@@ -38,6 +39,12 @@ Exception : en combat, `CombatSessionManager` devient la source de phase camera.
 `CombatCameraPresentationController` suspend temporairement le driver camera
 Opsive et pilote directement la `Main Camera`, puis restaure Opsive a la sortie
 du combat.
+Quand `CombatDefensePanel` est visible, `LocalPlayerInput` active seulement
+l'ActionMap `Combat` et coupe `Player`/`Camera`; a la fermeture du panel, les
+maps gameplay sont restaurees.
+Les contres melee configures par item utilisent un override camera local
+`CounterAction` dans `CombatCameraPresentationController`, sans changer la source
+de phase camera du manager.
 
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas

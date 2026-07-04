@@ -106,6 +106,12 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         CombatSessionManager.Instance?.NotifyLocalCombatAnimationImpact(ResolveActorRoot());
     }
 
+    public void StopCombatPresentationMovement()
+    {
+        StopMoveRoutine();
+        hasInitialPose = false;
+    }
+
     private void OnDisable()
     {
         StopTimeRoutine();

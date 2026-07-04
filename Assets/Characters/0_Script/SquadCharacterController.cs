@@ -936,9 +936,9 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        if (!item.CanDefendInCombat())
+        if (!item.CanUseInCombatReaction())
         {
-            reason = "Seuls les items defensifs peuvent etre assignes au combat.";
+            reason = "Seuls les items de reaction peuvent etre assignes au combat.";
             return false;
         }
 
@@ -1005,7 +1005,7 @@ public partial class SquadCharacterController : MonoBehaviour
         for (int i = 0; i < enabledCombatItems.Count; i++)
         {
             Item item = enabledCombatItems[i];
-            if (item == null || !item.CanDefendInCombat())
+            if (item == null || !item.CanUseInCombatReaction())
             {
                 continue;
             }
@@ -1478,7 +1478,7 @@ public partial class SquadCharacterController : MonoBehaviour
         for (int i = enabledCombatItems.Count - 1; i >= 0; i--)
         {
             Item item = enabledCombatItems[i];
-            if (item == null || !items.Contains(item) || !item.CanDefendInCombat())
+            if (item == null || !items.Contains(item) || !item.CanUseInCombatReaction())
             {
                 enabledCombatItems.RemoveAt(i);
             }

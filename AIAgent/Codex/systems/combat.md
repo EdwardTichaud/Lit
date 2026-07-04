@@ -14,9 +14,12 @@ résolution dans le monde.
   Il orchestre aussi `CombatEngagedPanel`, `CombatScreenInfosPanel` et
   l'exclusivite de `CombatDefensePanel`.
 - `CombatDefensePanelController` : affiche les 3 items defensifs assignes
-  quand un `AnimationEvent` de combat le demande.
+  quand un `AnimationEvent` de combat le demande, puis route `UseItem1/2/3`
+  vers ces slots via l'ActionMap `Combat`.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
-  par phase de combat.
+  par phase de combat et expose le shot temporaire `CounterAction`.
+- `CombatCounterItemPresentation` : presentation locale des items de contre
+  configures par `Item.CombatReactionProfile`.
 - `CombatAnimationEvents` : hooks Animation Event pour ralentir la presentation,
   ouvrir/fermer `CombatDefensePanel`, deplacer l'attaquant, revenir a sa pose
   initiale et notifier l'impact.
@@ -40,7 +43,9 @@ résolution dans le monde.
    phase; il doit venir des `AnimationEvent` places dans les clips d'attaque.
    Quand un `AnimationEvent` le demande, `CombatDefensePanel` devient le seul
    panel combat visible et ne propose que les 3 items defensifs assignes au
-   personnage comme items combat. Quand le clip ferme ce panel,
+   personnage comme items combat. Pendant son affichage, l'ActionMap locale
+   `Combat` remplace `Player`/`Camera`; `UseItem1`, `UseItem2` et `UseItem3`
+   selectionnent les slots 1 a 3. Quand le clip ferme ce panel,
    `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
@@ -75,6 +80,19 @@ musique via `AudioManager.BeginMusicDucking`, puis le relache au retour a la
 vitesse normale.
 L'affichage de `CombatDefensePanel` ne depend pas de l'etat du ralenti dans
 `TimeManager` : il est demande explicitement par `CombatAnimationEvents`.
+
+Un item peut porter un `CombatReactionProfile` optionnel. Les items de reaction
+peuvent etre gardes dans les 3 items combat meme s'ils n'absorbent pas de
+degats. Le premier type supporte est `MeleeCounterImpale` : si le joueur choisit
+l'item avant l'impact d'une attaque ennemie melee, l'attaque est interrompue,
+les animations joueur/ennemi configurees se jouent, le visuel de l'item passe de
+l'attache joueur a l'attache ennemie, puis le shot camera `CounterAction`, le
+ralenti local, les SFX, VFX et voix optionnelles du profil soulignent l'impact.
+Contre une attaque non melee, ce profil ne remplace pas une defense.
+Au moment ou le visuel reste plante sur l'ennemi, son axe Z monde est force a
+l'inverse du Z local de l'ennemi; seul le roll Z du profil sert encore
+d'ajustement fin. Le Juggernaut fournit une state Animator `Impaled` vide pour
+recevoir le clip d'empalement.
 
 Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
 pour controler finement le ralenti, l'ouverture/fermeture de
