@@ -45,7 +45,10 @@ résolution dans le monde.
    panel combat visible et ne propose que les 3 items defensifs assignes au
    personnage comme items combat. Pendant son affichage, l'ActionMap locale
    `Combat` remplace `Player`/`Camera`; `UseItem1`, `UseItem2` et `UseItem3`
-   selectionnent les slots 1 a 3. Quand le clip ferme ce panel,
+   selectionnent les slots 1 a 3. Les slots sans item assigne restent masques.
+   Les racines `EnableItem_1/2/3` sont resolues comme boutons UI pour permettre
+   aussi la selection souris et la navigation manette/clavier.
+   Quand le clip ferme ce panel,
    `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
@@ -105,6 +108,10 @@ ruee, restaure uniquement cette presentation et peut notifier
 `NotifyCombatImpact` au frame d'impact. Les degats restent resolus une seule
 fois par `CombatSessionManager`; le timer autoritaire reste le fallback si
 l'evenement n'est pas declenche.
+Les panels UI de combat reactivenent aussi leur hierarchie et corrigent une
+echelle locale nulle sur les parents au moment de l'affichage, afin que
+`CombatEngagedPanel`, `CombatScreenInfosPanel` et `CombatDefensePanel` restent
+visibles meme si la racine `UI_Overlay` a ete sauvegardee a `localScale` zero.
 `SlowCombatTime` descend par defaut a `0.1` en entree rapide, suit les
 `Animator`/UCC sous l'acteur et inclut aussi la victime de combat pour rendre
 le ralenti visible sur les deux corps. Les appels `SlowCombatTime` ouvrent

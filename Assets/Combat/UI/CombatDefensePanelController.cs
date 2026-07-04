@@ -17,6 +17,7 @@ public class CombatDefensePanelController : MonoBehaviour
     [SerializeField] private string panelName = DefaultPanelName;
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private CanvasGroup panelCanvasGroup;
+    [SerializeField] private GameObject[] slotRoots = new GameObject[SlotCount];
     [SerializeField] private Button[] slotButtons = new Button[SlotCount];
     [SerializeField] private TextMeshProUGUI[] slotLabels = new TextMeshProUGUI[SlotCount];
     [SerializeField] private Text[] slotLegacyLabels = new Text[SlotCount];
@@ -176,6 +177,11 @@ public class CombatDefensePanelController : MonoBehaviour
             slotButtons = new Button[SlotCount];
         }
 
+        if (slotRoots == null || slotRoots.Length != SlotCount)
+        {
+            slotRoots = new GameObject[SlotCount];
+        }
+
         if (slotLabels == null || slotLabels.Length != SlotCount)
         {
             slotLabels = new TextMeshProUGUI[SlotCount];
@@ -193,37 +199,37 @@ public class CombatDefensePanelController : MonoBehaviour
             Transform namedSlot = FindChildByName(panelRoot.transform, $"EnableItem_{i + 1}");
             if (namedSlot != null)
             {
-                if (slotButtons[i] == null)
-                {
-                    slotButtons[i] = namedSlot.GetComponent<Button>();
-                    if (slotButtons[i] == null)
-                    {
-                        slotButtons[i] = namedSlot.GetComponentInChildren<Button>(true);
-                    }
-                }
-
+                slotRoots[i] = namedSlot.gameObject;
+                slotLabels[i] = null;
+                slotLegacyLabels[i] = null;
+                slotButtons[i] = EnsureSlotRootButton(namedSlot);
                 ResolveSlotLabel(i, namedSlot);
             }
 
-            if (slotButtons[i] == null && foundButtons != null && foundIndex < foundButtons.Length)
+            if (slotButtons[i] == null &&
+                slotRoots[i] == null &&
+                foundButtons != null &&
+                foundIndex < foundButtons.Length)
             {
                 slotButtons[i] = foundButtons[foundIndex];
+                slotRoots[i] = slotButtons[i] != null ? slotButtons[i].gameObject : null;
                 foundIndex++;
             }
 
-            if (slotButtons[i] == null && createMissingSlots)
+            if (slotButtons[i] == null && slotRoots[i] == null && createMissingSlots)
             {
                 slotButtons[i] = CreateSlotButton(i);
+                slotRoots[i] = slotButtons[i] != null ? slotButtons[i].gameObject : null;
+            }
+
+            if (slotLabels[i] == null && slotButtons[i] != null)
+            {
+                ResolveSlotLabel(i, slotButtons[i].transform);
             }
 
             if (slotButtons[i] == null)
             {
                 continue;
-            }
-
-            if (slotLabels[i] == null)
-            {
-                ResolveSlotLabel(i, slotButtons[i].transform);
             }
 
             int slotIndex = i;
@@ -272,6 +278,63 @@ public class CombatDefensePanelController : MonoBehaviour
         return slot.GetComponent<Button>();
     }
 
+    private Button EnsureSlotRootButton(Transform slotRoot)
+    {
+        if (slotRoot == null)
+        {
+            return null;
+        }
+
+        Button button = slotRoot.GetComponent<Button>();
+        if (button == null)
+        {
+            button = slotRoot.gameObject.AddComponent<Button>();
+        }
+
+        bool createdHitArea = false;
+        Graphic targetGraphic = slotRoot.GetComponent<Graphic>();
+        if (targetGraphic == null)
+        {
+            Image hitArea = slotRoot.gameObject.AddComponent<Image>();
+            hitArea.sprite = RuntimeUiSpriteUtility.SolidSprite;
+            hitArea.type = Image.Type.Simple;
+            hitArea.color = Color.white;
+            hitArea.raycastTarget = true;
+            targetGraphic = hitArea;
+            createdHitArea = true;
+        }
+        else
+        {
+            targetGraphic.raycastTarget = true;
+        }
+
+        button.targetGraphic = targetGraphic;
+        button.transition = Selectable.Transition.ColorTint;
+        button.colors = BuildSlotButtonColors(button.colors);
+        if (createdHitArea)
+        {
+            targetGraphic.canvasRenderer.SetColor(button.colors.normalColor);
+        }
+
+        Navigation navigation = button.navigation;
+        navigation.mode = Navigation.Mode.Automatic;
+        button.navigation = navigation;
+
+        return button;
+    }
+
+    private static ColorBlock BuildSlotButtonColors(ColorBlock source)
+    {
+        source.normalColor = new Color(1f, 1f, 1f, 0f);
+        source.highlightedColor = new Color(1f, 1f, 1f, 0.12f);
+        source.pressedColor = new Color(1f, 1f, 1f, 0.2f);
+        source.selectedColor = new Color(1f, 1f, 1f, 0.14f);
+        source.disabledColor = new Color(1f, 1f, 1f, 0f);
+        source.colorMultiplier = 1f;
+        source.fadeDuration = 0.08f;
+        return source;
+    }
+
     private void RefreshSlots()
     {
         ResolvePanel();
@@ -291,7 +354,9 @@ public class CombatDefensePanelController : MonoBehaviour
         for (int i = 0; i < SlotCount; i++)
         {
             Item item = i < visibleItems.Count ? visibleItems[i] : null;
-            SetSlotLabel(i, item != null ? ResolveItemDisplayName(item) : "-");
+            bool hasItem = item != null;
+            SetSlotVisible(i, hasItem);
+            SetSlotLabel(i, hasItem ? ResolveItemDisplayName(item) : string.Empty);
 
             if (slotButtons == null || i >= slotButtons.Length || slotButtons[i] == null)
             {
@@ -429,6 +494,19 @@ public class CombatDefensePanelController : MonoBehaviour
         }
     }
 
+    private void SetSlotVisible(int index, bool shouldBeVisible)
+    {
+        if (slotRoots == null || index < 0 || index >= slotRoots.Length || slotRoots[index] == null)
+        {
+            return;
+        }
+
+        if (slotRoots[index].activeSelf != shouldBeVisible)
+        {
+            slotRoots[index].SetActive(shouldBeVisible);
+        }
+    }
+
     private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool shouldBeVisible)
     {
         if (canvasGroup == null)
@@ -436,9 +514,38 @@ public class CombatDefensePanelController : MonoBehaviour
             return;
         }
 
+        if (shouldBeVisible)
+        {
+            EnsureActiveHierarchy(canvasGroup.transform);
+        }
+
         canvasGroup.alpha = shouldBeVisible ? 1f : 0f;
         canvasGroup.interactable = shouldBeVisible;
         canvasGroup.blocksRaycasts = shouldBeVisible;
+    }
+
+    private static void EnsureActiveHierarchy(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Transform parent = target.parent;
+        if (parent != null && parent.gameObject.scene.IsValid())
+        {
+            EnsureActiveHierarchy(parent);
+        }
+
+        if (!target.gameObject.activeSelf)
+        {
+            target.gameObject.SetActive(true);
+        }
+
+        if (target.localScale.sqrMagnitude <= 0.0001f)
+        {
+            target.localScale = Vector3.one;
+        }
     }
 
     private static Transform FindChildByName(Transform root, string childName)
@@ -470,12 +577,6 @@ public class CombatDefensePanelController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(objectName))
         {
             return null;
-        }
-
-        GameObject active = GameObject.Find(objectName);
-        if (active != null)
-        {
-            return active;
         }
 
         Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();

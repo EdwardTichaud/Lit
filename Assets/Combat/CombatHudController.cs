@@ -864,6 +864,11 @@ public class CombatHudController : MonoBehaviour
         {
             target.gameObject.SetActive(true);
         }
+
+        if (target.localScale.sqrMagnitude <= 0.0001f)
+        {
+            target.localScale = Vector3.one;
+        }
     }
 
     private static CanvasGroup FindCanvasGroupByName(string objectName)
@@ -893,12 +898,6 @@ public class CombatHudController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(objectName))
         {
             return null;
-        }
-
-        GameObject active = GameObject.Find(objectName);
-        if (active != null)
-        {
-            return active;
         }
 
         Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();

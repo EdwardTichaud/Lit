@@ -2314,7 +2314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d482e64f4c70ee4fae5f379165d46a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterInfo
-  characterData: {fileID: 0}
+  characterData: {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
 --- !u!114 &6731850666202294345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2344,6 +2344,7 @@ MonoBehaviour:
   standUpMovementUnlockFallback: 1.5
   items: []
   equippedInteractionItems: []
+  enabledCombatItems: []
   startingFlameSeconds: 300
   flameSecondsRemaining: 300
   logInventoryInitialization: 1
@@ -3123,6 +3124,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 113a12078d144b4c86b6e74a3c94edab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLocomotionBridge
+  debugGroundBlockDiagnostics: 0
+  groundBlockDiagnosticInterval: 0.75
+  groundBlockDiagnosticMinProgress: 0.04
   enableObstacleTraversal: 1
   ignoredObstacleMaxHeight: 0.4
   traversableObstacleMaxHeight: 1.6
@@ -3154,6 +3158,10 @@ MonoBehaviour:
   warnWhenJumpRejected: 1
   useJumpForceFallback: 1
   jumpFallbackVelocity: 7
+  relaxGroundReliefTolerance: 1
+  groundReliefMinStepHeight: 0.6
+  groundReliefMinSlopeLimit: 58
+  groundReliefMinStickToGroundDistance: 0.55
   enableUccFlight: 1
   flightTakeoffVerticalSpeed: 6.5
   flightTakeoffDuration: 0.45

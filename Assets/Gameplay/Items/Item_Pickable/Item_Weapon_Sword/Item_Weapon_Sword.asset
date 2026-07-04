@@ -44,14 +44,14 @@ MonoBehaviour:
     playerAnimationName: Counter_Sword
     fallbackPlayerAnimationName: Counter
     enemyAnimationName: Impaled
-    enemyAnimationClip: {fileID: 0}
+    enemyAnimationClip: {fileID: 7400000, guid: 2622150291d55c442964e5d6fc048a04, type: 2}
     fallbackPlayerAnimationDuration: 1.2
     fallbackEnemyAnimationDuration: 1.35
     impactDelaySeconds: 0.32
     slowTimeScale: 0.2
     slowDurationSeconds: 0.5
     playCounterActionCameraShot: 1
-    combatVisualPrefab: {fileID: 0}
+    combatVisualPrefab: {fileID: 1845237839428460, guid: ab8ac2017bc4c9e40b484324e5ee20e7, type: 3}
     playerAttachBoneName: RightHand
     playerAttachLocalPosition: {x: 0, y: 0, z: 0}
     playerAttachLocalEulerAngles: {x: 0, y: 0, z: 0}

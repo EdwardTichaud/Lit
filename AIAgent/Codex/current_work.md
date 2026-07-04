@@ -37,7 +37,9 @@ la selection reste validee par `CombatSessionManager`, synchronisee par
 `NetworkInventory` et sauvegardee avec l'etat personnage.
 Quand `CombatDefensePanel` est visible, l'input local bascule sur l'ActionMap
 `Combat`; `UseItem1`, `UseItem2` et `UseItem3` activent les trois slots, dont
-les enfants `Text` affichent le nom de l'item assigne.
+les enfants `Text` affichent le nom de l'item assigne. Les slots sans item
+assigne restent masques. Les racines `EnableItem_1/2/3` sont aussi garanties
+comme boutons UI pour la souris et la navigation manette/clavier.
 Les items peuvent porter un `CombatReactionProfile` optionnel. `Item_Weapon_Sword`
 est configure comme premier contre melee : il declenche `Counter_Sword`,
 `Impaled`, un shot camera `CounterAction`, un court ralenti local, et peut
@@ -51,10 +53,16 @@ L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
 `CombatEngagedPanel` au lancement d'une session, affiche ensuite
 `CombatScreenInfosPanel`, puis masque ces infos quand un AnimationEvent demande
 `CombatDefensePanel`; a la fermeture du panel, les infos de combat reviennent.
+Les panels combat restaurent aussi leur hierarchie UI active et une echelle non
+nulle afin de rester visibles si la racine `UI_Overlay` a ete sauvegardee a
+`localScale` zero.
 Les transitions d'entree et sortie du ralenti combat jouent des sons via
 `ActionAudioCue.CombatTimeSlow` et `ActionAudioCue.CombatTimeResume`, relies a
 des `AudioClipSO` de la banque de sons, et appliquent un leger ducking de la
 musique pendant toute la duree du ralenti.
+`RuntimePersistenceUtility` ignore les objets sous `NetworkObject`; les objets
+reseau de scene restent donc dans leur hierarchie Netcode et ne sont plus
+reparentes en `DontDestroyOnLoad` avant le demarrage host/server.
 L'import legacy Symphonie est isole dans son assembly non auto-referencee,
 Editor-only et compilee seulement avec le define manuel
 `SYMPHONIE_IMPORT_COMPILE`; le combat actuel ne reference pas ses types ni ses

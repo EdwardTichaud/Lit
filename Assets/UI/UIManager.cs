@@ -22,6 +22,11 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+        if (root.localScale.sqrMagnitude <= 0.0001f)
+        {
+            root.localScale = Vector3.one;
+        }
+
         for (int i = 0; i < root.childCount; i++)
         {
             Transform child = root.GetChild(i);

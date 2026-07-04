@@ -32,6 +32,9 @@ faire respecter l’autorité serveur.
 - Les mutations monde, inventaire et combat sont autoritaires serveur.
 - Les objets de scène sont préparés par `NetcodeSceneObjectInstaller` à chaque
   chargement.
+- Les objets sous `NetworkObject` ne doivent pas etre reparentes par des helpers
+  `DontDestroyOnLoad` avant que le host/server n'ecoute; les objets reseau de
+  scene restent dans leur hierarchie Netcode.
 - Les systèmes de snapshot/persistance réseau vivent sous
   `Assets/Persistence/Save/World/`; `NetcodeBootstrap` les crée toujours au
   runtime quand l’option dédiée est active.

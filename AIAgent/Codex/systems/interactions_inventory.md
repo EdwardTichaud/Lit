@@ -54,7 +54,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   mais n'est pas a portee de main pour la reaction ennemie.
 - Les actions `UseItem1`, `UseItem2` et `UseItem3` consomment respectivement les
   trois items combat actifs; les libelles `EnableItem_1/2/3/Text` affichent les
-  noms de ces items.
+  noms de ces items. Ces racines sont aussi des boutons UI, et les slots sans
+  item assigne restent masques.
 - Un item combat actif peut etre defensif ou porter un `CombatReactionProfile`.
   `Item_Weapon_Sword` est configure comme premier `MeleeCounterImpale` : il ne
   sert pas de bouclier, mais declenche un empalement si l'attaque ennemie est
