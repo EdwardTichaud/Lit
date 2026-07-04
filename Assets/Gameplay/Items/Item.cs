@@ -133,6 +133,8 @@ public class Item : ScriptableObject
         public string fallbackPlayerAnimationName;
         [Tooltip("Animation jouee par l'ennemi touche par la reaction.")]
         public string enemyAnimationName;
+        [Tooltip("Clip ennemi joue directement via Playables. Prioritaire sur la state/trigger par nom.")]
+        public AnimationClip enemyAnimationClip;
         [Min(0.05f)]
         [Tooltip("Duree de secours de l'animation joueur.")]
         public float fallbackPlayerAnimationDuration = 1.2f;

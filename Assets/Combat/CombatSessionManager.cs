@@ -1840,10 +1840,7 @@ public class CombatSessionManager : NetworkBehaviour
             playerAnimator,
             playerAnimationName,
             ResolveCounterReactionPlayerFallbackDuration(profile));
-        float enemyDuration = ResolveAnimationDuration(
-            enemyAnimator,
-            enemyAnimationName,
-            ResolveCounterReactionEnemyFallbackDuration(profile));
+        float enemyDuration = ResolveCounterReactionEnemyDuration(enemyAnimator, profile, enemyAnimationName);
         float totalDuration = Mathf.Max(
             Mathf.Max(playerDuration, enemyDuration),
             ResolveCounterReactionPlayerFallbackDuration(profile));
@@ -3647,6 +3644,22 @@ public class CombatSessionManager : NetworkBehaviour
             : DefaultCounterReactionEnemyAnimationDuration;
     }
 
+    private static float ResolveCounterReactionEnemyDuration(
+        Animator animator,
+        Item.CombatReactionProfile profile,
+        string enemyAnimationName)
+    {
+        if (profile != null && profile.enemyAnimationClip != null)
+        {
+            return Mathf.Max(0.05f, profile.enemyAnimationClip.length);
+        }
+
+        return ResolveAnimationDuration(
+            animator,
+            enemyAnimationName,
+            ResolveCounterReactionEnemyFallbackDuration(profile));
+    }
+
     private static void SpawnCounterReactionImpactVfx(
         Item.CombatReactionProfile profile,
         Transform impactPoint,
@@ -4267,10 +4280,13 @@ public class CombatSessionManager : NetworkBehaviour
             ResolveCounterReactionPlayerFallbackDuration(profile));
 
         Animator enemyAnimator = enemy != null ? enemy.GetComponentInChildren<Animator>(true) : null;
-        PlayNamedAnimation(
-            enemyAnimator,
-            string.IsNullOrWhiteSpace(enemyAnimationName) ? profile.ResolveEnemyAnimationName(string.Empty) : enemyAnimationName,
-            ResolveCounterReactionEnemyFallbackDuration(profile));
+        if (CombatReactionClipPlayer.Play(enemyAnimator, profile.enemyAnimationClip) <= 0f)
+        {
+            PlayNamedAnimation(
+                enemyAnimator,
+                string.IsNullOrWhiteSpace(enemyAnimationName) ? profile.ResolveEnemyAnimationName(string.Empty) : enemyAnimationName,
+                ResolveCounterReactionEnemyFallbackDuration(profile));
+        }
 
         if (profile.playCounterActionCameraShot)
         {

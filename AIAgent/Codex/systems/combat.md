@@ -89,6 +89,9 @@ les animations joueur/ennemi configurees se jouent, le visuel de l'item passe de
 l'attache joueur a l'attache ennemie, puis le shot camera `CounterAction`, le
 ralenti local, les SFX, VFX et voix optionnelles du profil soulignent l'impact.
 Contre une attaque non melee, ce profil ne remplace pas une defense.
+Si le profil renseigne `enemyAnimationClip`, `CombatReactionClipPlayer` lit ce
+clip directement via Playables sur l'Animator ennemi; sinon le manager retombe
+sur la state ou le trigger `enemyAnimationName`, puis sur la duree fallback.
 Au moment ou le visuel reste plante sur l'ennemi, son axe Z monde est force a
 l'inverse du Z local de l'ennemi; seul le roll Z du profil sert encore
 d'ajustement fin. Le Juggernaut fournit une state Animator `Impaled` vide pour

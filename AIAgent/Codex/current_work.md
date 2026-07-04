@@ -42,8 +42,10 @@ Les items peuvent porter un `CombatReactionProfile` optionnel. `Item_Weapon_Swor
 est configure comme premier contre melee : il declenche `Counter_Sword`,
 `Impaled`, un shot camera `CounterAction`, un court ralenti local, et peut
 configurer ses attaches, SFX/VFX/voix depuis l'item.
-Le Juggernaut expose une state Animator `Impaled` vide pour y brancher le clip,
-et le visuel plante oriente automatiquement son axe Z a l'inverse du Z local de
+Le profil peut aussi jouer un `enemyAnimationClip` direct via Playables, sans
+state Animator par ennemi; `Impaled` reste le fallback par nom. Le Juggernaut
+expose une state Animator `Impaled` vide pour y brancher le clip si besoin, et
+le visuel plante oriente automatiquement son axe Z a l'inverse du Z local de
 l'ennemi.
 L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
 `CombatEngagedPanel` au lancement d'une session, affiche ensuite
