@@ -10,6 +10,8 @@ transférer l’état complet aux clients qui rejoignent tardivement.
 Emplacement canonique : `Assets/Persistence/Save/`.
 
 - `CharacterStateStore` : JSON personnages, roster, inventaires et compatibilité.
+  Il persiste aussi les PV restants des items defensifs combat entames par
+  personnage.
 - `WorldSaveAdapter` : lecture/écriture du snapshot binaire du slot actif.
 - `WorldStateManager` : capture et application ordonnée d’un `WorldSnapshot`.
 - `PersistentNetworkObject` : identité stable et agrégation des providers.
@@ -31,6 +33,11 @@ lecture du JSON → restauration des données de squad → lecture du snapshot �
 résolution des objets de scène → spawn/destruction runtime → transforms →
 providers → références finales.
 
+Les sauvegardes personnage version 7 stockent
+`CharacterSaveEntry.combatDefenseItemHitPoints` comme des piles `itemId` + PV
+restants + quantite. Seuls les items encore portes et entames sont sauvegardes;
+les items pleins sont deduits du nombre total porte.
+
 Late join :
 
 client demande le snapshot → serveur sérialise et segmente → client reconstruit
@@ -47,3 +54,5 @@ le monde → restaure son personnage local → envoie `client_ready`.
 - `EditorAutoSave` sauvegarde scènes/assets côté Editor; la persistance runtime
   reste isolée dans `Application.persistentDataPath` et ses écritures/lectures
   runtime doivent être ignorées hors Play Mode.
+- Les PV de bouclier sont propres au personnage. Ne pas les placer dans l'asset
+  `Item`, sinon tous les personnages partageraient la meme usure.

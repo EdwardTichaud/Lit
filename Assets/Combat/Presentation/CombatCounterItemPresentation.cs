@@ -40,6 +40,46 @@ public static class CombatCounterItemPresentation
             onImpact));
     }
 
+    public static Coroutine PlayHeldItem(
+        MonoBehaviour runner,
+        Transform playerRoot,
+        Item item,
+        Item.CombatReactionProfile profile,
+        float totalSeconds)
+    {
+        if (runner == null)
+        {
+            return null;
+        }
+
+        return runner.StartCoroutine(PlayHeldItemRoutine(playerRoot, item, profile, totalSeconds));
+    }
+
+    private static IEnumerator PlayHeldItemRoutine(
+        Transform playerRoot,
+        Item item,
+        Item.CombatReactionProfile profile,
+        float totalSeconds)
+    {
+        GameObject visual = CreateItemVisual(item, profile, playerRoot, null);
+        Transform rightHand = ResolveRightHand(playerRoot, profile);
+        if (visual != null && rightHand != null)
+        {
+            AttachToPoint(
+                visual.transform,
+                rightHand,
+                profile != null ? profile.playerAttachLocalPosition : Vector3.zero,
+                profile != null ? profile.playerAttachLocalEulerAngles : Vector3.zero);
+        }
+
+        yield return WaitPresentationSeconds(totalSeconds);
+
+        if (visual != null)
+        {
+            UnityEngine.Object.Destroy(visual);
+        }
+    }
+
     private static IEnumerator PlayMeleeCounterRoutine(
         Transform playerRoot,
         Transform enemyRoot,

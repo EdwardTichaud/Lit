@@ -845,6 +845,7 @@ public class SquadManager : MonoBehaviour
                 }
 
                 runtimeCharacter.SetInventory(items, entry.flameSeconds, entry.flameEquipped, true, null, enabledCombatItems);
+                runtimeCharacter.SetCombatDefenseItemHitPoints(BuildCombatDefenseItemHitPointsFromEntry(entry));
             }
             if (entry.skillsInitialized)
             {
@@ -1027,6 +1028,68 @@ public class SquadManager : MonoBehaviour
         }
 
         return items;
+    }
+
+    private List<CombatDefenseItemHitPointData> BuildCombatDefenseItemHitPointsFromEntry(CharacterSaveEntry entry)
+    {
+        List<CombatDefenseItemHitPointData> hitPoints = new List<CombatDefenseItemHitPointData>();
+        if (entry == null || pendingItemLookup == null || entry.combatDefenseItemHitPoints == null)
+        {
+            return hitPoints;
+        }
+
+        HashSet<string> carriedItemIds = new HashSet<string>();
+        if (entry.items != null)
+        {
+            for (int i = 0; i < entry.items.Count; i++)
+            {
+                ItemStackData stack = entry.items[i];
+                if (stack == null || string.IsNullOrWhiteSpace(stack.itemId) || stack.quantity <= 0)
+                {
+                    continue;
+                }
+
+                carriedItemIds.Add(stack.itemId);
+            }
+        }
+
+        HashSet<string> seen = new HashSet<string>();
+        for (int i = 0; i < entry.combatDefenseItemHitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData saved = entry.combatDefenseItemHitPoints[i];
+            if (saved == null
+                || string.IsNullOrWhiteSpace(saved.itemId)
+                || saved.hitPoints <= 0
+                || !carriedItemIds.Contains(saved.itemId))
+            {
+                continue;
+            }
+
+            if (!pendingItemLookup.TryGetValue(saved.itemId, out Item item) || item == null)
+            {
+                Debug.LogWarning(
+                    $"SquadManager: PV defensifs sauvegardes ignores pour characterId='{entry.characterId}' itemId='{saved.itemId}' introuvable.",
+                    this);
+                continue;
+            }
+
+            int maxHitPoints = item.GetCombatDefenseHitPoints();
+            int remainingHitPoints = Mathf.Clamp(saved.hitPoints, 0, maxHitPoints);
+            string key = $"{saved.itemId}:{remainingHitPoints}";
+            if (maxHitPoints <= 0 || remainingHitPoints <= 0 || remainingHitPoints >= maxHitPoints || !seen.Add(key))
+            {
+                continue;
+            }
+
+            hitPoints.Add(new CombatDefenseItemHitPointData
+            {
+                itemId = saved.itemId,
+                hitPoints = remainingHitPoints,
+                quantity = Mathf.Max(1, saved.quantity)
+            });
+        }
+
+        return hitPoints;
     }
 
     private bool ShouldMigrateDefaultEnabledCombatItems(CharacterSaveEntry entry, CharacterData character)

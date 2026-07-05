@@ -25,6 +25,7 @@ public sealed class TimeManager : MonoBehaviour
     private readonly List<UccCharacterLocomotion> locomotionRemovalBuffer = new List<UccCharacterLocomotion>();
 
     public float CombatPresentationDeltaTime => Time.unscaledDeltaTime * CombatTimeMultiplier;
+    public float CombatPresentationTimeScale => CombatTimeMultiplier;
 
     public static TimeManager EnsureInstance()
     {
@@ -118,6 +119,12 @@ public sealed class TimeManager : MonoBehaviour
     public static float GetCombatPresentationDeltaTime()
     {
         return Instance != null ? Instance.CombatPresentationDeltaTime : Time.deltaTime;
+    }
+
+    public static float GetAudioTimeScale()
+    {
+        float globalTimeScale = Mathf.Max(0f, Time.timeScale);
+        return Instance != null ? globalTimeScale * Instance.CombatPresentationTimeScale : globalTimeScale;
     }
 
     private float CombatTimeMultiplier => presentationTimeScaleActive ? presentationTimeScale : 1f;

@@ -828,6 +828,6 @@ public class Door : NetworkBehaviour, ICharacterDetectedInteractable, ILocalInte
             return;
         }
 
-        AudioSource.PlayClipAtPoint(clip.audioClip, transform.position, Mathf.Clamp01(clip.volume));
+        AudioManager.PlayClipAtPoint(clip, transform.position);
     }
 }

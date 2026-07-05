@@ -25,6 +25,9 @@ public class NetworkInventory : NetworkBehaviour
     private readonly NetworkList<FixedString64Bytes> netEnabledCombatItems = new NetworkList<FixedString64Bytes>(
         null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private readonly NetworkList<NetCombatDefenseItemHitPointStack> netCombatDefenseItemHitPoints = new NetworkList<NetCombatDefenseItemHitPointStack>(
+        null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     public event System.Action InventoryChanged;
     [SerializeField] private bool logInventoryDebug = true;
 
@@ -47,6 +50,7 @@ public class NetworkInventory : NetworkBehaviour
         flameEquipped.OnValueChanged += OnFlameChanged;
         netEquippedInteractionItems.OnListChanged += OnEquippedInteractionItemsChanged;
         netEnabledCombatItems.OnListChanged += OnEnabledCombatItemsChanged;
+        netCombatDefenseItemHitPoints.OnListChanged += OnCombatDefenseItemHitPointsChanged;
 
         if (IsServer)
         {
@@ -68,6 +72,7 @@ public class NetworkInventory : NetworkBehaviour
         flameEquipped.OnValueChanged -= OnFlameChanged;
         netEquippedInteractionItems.OnListChanged -= OnEquippedInteractionItemsChanged;
         netEnabledCombatItems.OnListChanged -= OnEnabledCombatItemsChanged;
+        netCombatDefenseItemHitPoints.OnListChanged -= OnCombatDefenseItemHitPointsChanged;
     }
 
     public void SyncFromController()
@@ -151,9 +156,34 @@ public class NetworkInventory : NetworkBehaviour
             }
         }
 
+        netCombatDefenseItemHitPoints.Clear();
+        IReadOnlyList<CombatDefenseItemHitPointData> defenseHitPoints = controller.GetCombatDefenseItemHitPointsSnapshot();
+        if (defenseHitPoints != null)
+        {
+            HashSet<string> defenseIds = new HashSet<string>();
+            for (int i = 0; i < defenseHitPoints.Count; i++)
+            {
+                CombatDefenseItemHitPointData entry = defenseHitPoints[i];
+                string defenseKey = entry != null ? $"{entry.itemId}:{entry.hitPoints}" : string.Empty;
+                if (entry == null
+                    || string.IsNullOrWhiteSpace(entry.itemId)
+                    || entry.hitPoints <= 0
+                    || entry.quantity <= 0
+                    || !defenseIds.Add(defenseKey))
+                {
+                    continue;
+                }
+
+                netCombatDefenseItemHitPoints.Add(new NetCombatDefenseItemHitPointStack(
+                    new FixedString64Bytes(entry.itemId),
+                    entry.hitPoints,
+                    Mathf.Max(1, entry.quantity)));
+            }
+        }
+
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, combatItems={netEnabledCombatItems.Count}, flameSeconds={flameSeconds.Value}, flameEquipped={flameEquipped.Value}", this);
+            Debug.Log($"NetworkInventory: SyncFromController -> netItems={netItems.Count}, equippedItems={netEquippedInteractionItems.Count}, combatItems={netEnabledCombatItems.Count}, defenseItemHp={netCombatDefenseItemHitPoints.Count}, flameSeconds={flameSeconds.Value}, flameEquipped={flameEquipped.Value}", this);
         }
     }
 
@@ -957,6 +987,11 @@ public class NetworkInventory : NetworkBehaviour
         ApplyToController();
     }
 
+    private void OnCombatDefenseItemHitPointsChanged(NetworkListEvent<NetCombatDefenseItemHitPointStack> change)
+    {
+        ApplyToController();
+    }
+
     private void ApplyToController()
     {
         if (controller == null)
@@ -972,6 +1007,7 @@ public class NetworkInventory : NetworkBehaviour
         List<Item> resolved = new List<Item>();
         List<Item> resolvedEquippedItems = new List<Item>();
         List<Item> resolvedEnabledCombatItems = new List<Item>();
+        List<CombatDefenseItemHitPointData> resolvedCombatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
         int unresolvedCount = 0;
         List<string> unresolvedItemIds = logInventoryDebug ? new List<string>() : null;
         for (int i = 0; i < netItems.Count; i++)
@@ -1022,15 +1058,38 @@ public class NetworkInventory : NetworkBehaviour
             resolvedEnabledCombatItems.Add(item);
         }
 
+        HashSet<string> resolvedDefenseIds = new HashSet<string>();
+        for (int i = 0; i < netCombatDefenseItemHitPoints.Count; i++)
+        {
+            NetCombatDefenseItemHitPointStack stack = netCombatDefenseItemHitPoints[i];
+            string itemId = stack.ItemId.ToString();
+            string key = $"{itemId}:{stack.HitPoints}";
+            if (string.IsNullOrWhiteSpace(itemId)
+                || stack.HitPoints <= 0
+                || stack.Quantity <= 0
+                || !resolvedDefenseIds.Add(key))
+            {
+                continue;
+            }
+
+            resolvedCombatDefenseItemHitPoints.Add(new CombatDefenseItemHitPointData
+            {
+                itemId = itemId,
+                hitPoints = stack.HitPoints,
+                quantity = Mathf.Max(1, stack.Quantity)
+            });
+        }
+
         controller.ApplyInventoryState(
             resolved,
             flameSeconds.Value,
             flameEquipped.Value,
             resolvedEquippedItems,
-            resolvedEnabledCombatItems);
+            resolvedEnabledCombatItems,
+            resolvedCombatDefenseItemHitPoints);
         if (logInventoryDebug)
         {
-            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, combatItems={resolvedEnabledCombatItems.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, flameSeconds={flameSeconds.Value}", this);
+            Debug.Log($"NetworkInventory: ApplyToController -> netItems={netItems.Count}, equippedItems={resolvedEquippedItems.Count}, combatItems={resolvedEnabledCombatItems.Count}, defenseItemHp={resolvedCombatDefenseItemHitPoints.Count}, resolved={resolved.Count}, unresolved={unresolvedCount}, flameSeconds={flameSeconds.Value}", this);
             if (unresolvedItemIds != null && unresolvedItemIds.Count > 0)
             {
                 Debug.LogWarning(

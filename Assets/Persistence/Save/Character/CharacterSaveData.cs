@@ -5,7 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    public int dataVersion = 5;
+    public int dataVersion = 7;
     public List<string> squadIds = new List<string>();
     public int currentIndex = 0;
     public List<CharacterSaveEntry> characters = new List<CharacterSaveEntry>();
@@ -40,6 +40,7 @@ public class CharacterSaveEntry
     public List<ItemStackData> items = new List<ItemStackData>();
     public bool itemsInitialized;
     public List<string> enabledCombatItemIds = new List<string>();
+    public List<CombatDefenseItemHitPointData> combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
     public List<string> skillIds = new List<string>();
     public bool skillsInitialized;
 }
@@ -50,6 +51,15 @@ public class ItemStackData
 {
     public string itemId;
     public int quantity;
+}
+
+// PV restants d'un item defensif de combat porte par un personnage.
+[System.Serializable]
+public class CombatDefenseItemHitPointData
+{
+    public string itemId;
+    public int hitPoints;
+    public int quantity = 1;
 }
 
 // Sauvegarde d'une construction instanciee dans la scene.

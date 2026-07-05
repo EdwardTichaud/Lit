@@ -75,3 +75,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   `Item_Weapon_Sword` est configure comme premier `MeleeCounterImpale` : il ne
   sert pas de bouclier, mais declenche un empalement si l'attaque ennemie est
   melee.
+  `Item_Shield_WoodShield` utilise `MeleeDefense` : il bloque une attaque melee,
+  perd des PV defensifs persistants entre les combats, reste reutilisable s'il
+  en conserve et retire une unite de l'inventaire s'il casse. L'inventaire
+  regroupe ces items par PV restants identiques et affiche leurs PV actuels/max
+  sur le slot et dans la description.

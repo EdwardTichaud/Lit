@@ -1467,7 +1467,7 @@ public class MainMenuController : MonoBehaviour
         }
         else if (titleCardProceedSfx.audioClip != null)
         {
-            AudioSource.PlayClipAtPoint(titleCardProceedSfx.audioClip, Vector3.zero, Mathf.Clamp01(titleCardProceedSfx.volume));
+            AudioManager.PlayClipAtPoint(titleCardProceedSfx, Vector3.zero);
         }
     }
 
@@ -1492,7 +1492,7 @@ public class MainMenuController : MonoBehaviour
             }
             else if (clip.audioClip != null)
             {
-                AudioSource.PlayClipAtPoint(clip.audioClip, Vector3.zero, Mathf.Clamp01(clip.volume));
+                AudioManager.PlayClipAtPoint(clip, Vector3.zero);
             }
         }
     }

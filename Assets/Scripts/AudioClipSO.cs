@@ -34,4 +34,8 @@ public class AudioClipSO : ScriptableObject
     /// <summary>Whether this clip should loop by default.</summary>
     [Tooltip("Lecture en boucle.")]
     public bool loop = true;
+
+    /// <summary>Whether playback pitch should follow the current game time scale.</summary>
+    [Tooltip("Si actif, le pitch suit le TimeScale courant. Desactive par defaut.")]
+    public bool affectedByTimeScale = false;
 }

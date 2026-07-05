@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class CharacterStateStore : MonoBehaviour
 {
     public static CharacterStateStore Instance { get; private set; }
-    private const int SaveDataVersion = 3;
+    private const int SaveDataVersion = 7;
     [Header("References")]
     [Tooltip("Reference au SquadManager (auto-resolve si null).")]
     public SquadManager squadManager;
@@ -599,6 +599,57 @@ public class CharacterStateStore : MonoBehaviour
                     }
 
                     entry.enabledCombatItemIds.Add(itemId);
+                }
+            }
+
+            entry.combatDefenseItemHitPoints.Clear();
+            IReadOnlyList<CombatDefenseItemHitPointData> combatDefenseHitPoints = controller != null
+                ? controller.GetCombatDefenseItemHitPointsSnapshot()
+                : character != null ? character.CombatDefenseItemHitPoints : null;
+            if (combatDefenseHitPoints != null)
+            {
+                Dictionary<string, Item> carriedItemById = new Dictionary<string, Item>();
+                foreach (KeyValuePair<Item, int> pair in counts)
+                {
+                    string itemId = GetItemId(pair.Key);
+                    if (string.IsNullOrWhiteSpace(itemId) || carriedItemById.ContainsKey(itemId))
+                    {
+                        continue;
+                    }
+
+                    carriedItemById[itemId] = pair.Key;
+                }
+
+                HashSet<string> savedDefenseKeys = new HashSet<string>();
+                for (int j = 0; j < combatDefenseHitPoints.Count; j++)
+                {
+                    CombatDefenseItemHitPointData hitPointEntry = combatDefenseHitPoints[j];
+                    if (hitPointEntry == null
+                        || string.IsNullOrWhiteSpace(hitPointEntry.itemId)
+                        || hitPointEntry.hitPoints <= 0
+                        || !carriedItemById.TryGetValue(hitPointEntry.itemId, out Item item)
+                        || item == null)
+                    {
+                        continue;
+                    }
+
+                    int maxHitPoints = item.GetCombatDefenseHitPoints();
+                    int remainingHitPoints = Mathf.Clamp(hitPointEntry.hitPoints, 0, maxHitPoints);
+                    string defenseKey = $"{hitPointEntry.itemId}:{remainingHitPoints}";
+                    if (maxHitPoints <= 0
+                        || remainingHitPoints <= 0
+                        || remainingHitPoints >= maxHitPoints
+                        || !savedDefenseKeys.Add(defenseKey))
+                    {
+                        continue;
+                    }
+
+                    entry.combatDefenseItemHitPoints.Add(new CombatDefenseItemHitPointData
+                    {
+                        itemId = hitPointEntry.itemId,
+                        hitPoints = remainingHitPoints,
+                        quantity = Mathf.Max(1, hitPointEntry.quantity)
+                    });
                 }
             }
 

@@ -58,6 +58,12 @@ Les items peuvent porter un `CombatReactionProfile` optionnel. `Item_Weapon_Swor
 est configure comme premier contre melee : il declenche `Counter_Sword`,
 `Impaled`, un shot camera `CounterAction`, un court ralenti local, et peut
 configurer ses attaches, SFX/VFX/voix depuis l'item.
+`Item_Shield_WoodShield` utilise maintenant le type `MeleeDefense` : le joueur
+sort son visuel en main, bloque les attaques melee, l'item perd des PV defensifs
+persistes sur le personnage entre les combats, reste reutilisable s'il lui en
+reste et casse sinon. L'inventaire separe les boucliers en piles par PV
+restants identiques, par exemple une pile de boucliers pleins et des piles
+distinctes pour les boucliers abimes.
 Le profil peut aussi jouer un `enemyAnimationClip` direct via Playables, sans
 state Animator par ennemi; `Impaled` reste le fallback par nom. Le Juggernaut
 expose une state Animator `Impaled` vide pour y brancher le clip si besoin, et

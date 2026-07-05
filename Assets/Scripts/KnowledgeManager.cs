@@ -433,7 +433,7 @@ public class KnowledgeManager : MonoBehaviour
             }
             else
             {
-                AudioSource.PlayClipAtPoint(unlockSfx.audioClip, anchorPosition, Mathf.Clamp01(unlockSfx.volume));
+                AudioManager.PlayClipAtPoint(unlockSfx, anchorPosition);
             }
         }
 

@@ -64,7 +64,9 @@ public class Item : ScriptableObject
         /// <summary>Aucune reaction speciale.</summary>
         None = 0,
         /// <summary>Contre une attaque melee en empalant l'ennemi.</summary>
-        MeleeCounterImpale = 1
+        MeleeCounterImpale = 1,
+        /// <summary>Defense melee avec un objet qui encaisse l'impact.</summary>
+        MeleeDefense = 2
     }
 
     /// <summary>
@@ -194,6 +196,11 @@ public class Item : ScriptableObject
         public bool IsMeleeCounter()
         {
             return reactionKind == CombatReactionKind.MeleeCounterImpale;
+        }
+
+        public bool IsMeleeDefense()
+        {
+            return reactionKind == CombatReactionKind.MeleeDefense;
         }
 
         public string ResolvePlayerAnimationName(string fallback)
@@ -696,12 +703,25 @@ public class Item : ScriptableObject
     }
 
     /// <summary>
+    /// Indique si cet item bloque une attaque melee avec ses PV defensifs.
+    /// </summary>
+    public bool CanMeleeDefendInCombat()
+    {
+        return combatReactionProfile != null &&
+               combatReactionProfile.IsMeleeDefense() &&
+               combatDefenseHitPoints > 0;
+    }
+
+    /// <summary>
     /// Indique si cet item peut occuper un des trois slots rapides de combat.
     /// </summary>
     public bool CanUseInCombatReaction()
     {
         return CanDefendInCombat() ||
-               (combatReactionProfile != null && combatReactionProfile.IsEnabled());
+               CanMeleeDefendInCombat() ||
+               (combatReactionProfile != null &&
+                combatReactionProfile.IsEnabled() &&
+                !combatReactionProfile.IsMeleeDefense());
     }
 
     /// <summary>
@@ -717,7 +737,9 @@ public class Item : ScriptableObject
     /// </summary>
     public int GetCombatDefenseHitPoints()
     {
-        return CanDefendInCombat() ? Mathf.Max(1, combatDefenseHitPoints) : 0;
+        return CanDefendInCombat() || CanMeleeDefendInCombat()
+            ? Mathf.Max(1, combatDefenseHitPoints)
+            : 0;
     }
 
     /// <summary>

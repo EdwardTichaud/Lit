@@ -33,6 +33,9 @@ public class InventoryPanelController : MonoBehaviour
     {
         public Item item;
         public int quantity;
+        public bool hasCombatDefenseHitPoints;
+        public int combatDefenseHitPoints;
+        public int combatDefenseMaxHitPoints;
     }
 
     private bool inventoryOpen;
@@ -802,14 +805,20 @@ public class InventoryPanelController : MonoBehaviour
 
             if (slotObject != null)
             {
-                SetEntryText(slotObject, entry.quantity.ToString());
+                SetEntryText(slotObject, BuildEntryQuantityText(entry));
                 SetEntrySprite(slotObject, entry.item);
                 InventorySlotUI slotUi = slotObject.GetComponent<InventorySlotUI>();
                 if (slotUi == null)
                 {
                     slotUi = slotObject.AddComponent<InventorySlotUI>();
                 }
-                slotUi.Initialize(this, entry.item, entry.quantity);
+                slotUi.Initialize(
+                    this,
+                    entry.item,
+                    entry.quantity,
+                    entry.hasCombatDefenseHitPoints,
+                    entry.combatDefenseHitPoints,
+                    entry.combatDefenseMaxHitPoints);
                 inventorySlots.Add(slotUi);
                 if (firstSlot == null)
                 {
@@ -889,7 +898,47 @@ public class InventoryPanelController : MonoBehaviour
                 continue;
             }
 
+            AddInventoryEntriesForItem(target, controller, item, count);
+        }
+    }
+
+    private void AddInventoryEntriesForItem(List<InventoryEntry> target, SquadCharacterController controller, Item item, int count)
+    {
+        if (target == null || item == null || count <= 0)
+        {
+            return;
+        }
+
+        int maxHitPoints = item.GetCombatDefenseHitPoints();
+        if (controller == null || maxHitPoints <= 0)
+        {
             target.Add(new InventoryEntry { item = item, quantity = count });
+            return;
+        }
+
+        List<CombatDefenseItemHitPointData> stacks = controller.GetCombatDefenseItemHitPointStacks(item, count);
+        if (stacks == null || stacks.Count == 0)
+        {
+            target.Add(new InventoryEntry { item = item, quantity = count });
+            return;
+        }
+
+        for (int i = 0; i < stacks.Count; i++)
+        {
+            CombatDefenseItemHitPointData stack = stacks[i];
+            if (stack == null || stack.quantity <= 0)
+            {
+                continue;
+            }
+
+            target.Add(new InventoryEntry
+            {
+                item = item,
+                quantity = stack.quantity,
+                hasCombatDefenseHitPoints = true,
+                combatDefenseHitPoints = Mathf.Clamp(stack.hitPoints, 0, maxHitPoints),
+                combatDefenseMaxHitPoints = maxHitPoints
+            });
         }
     }
 
@@ -906,7 +955,34 @@ public class InventoryPanelController : MonoBehaviour
         if (settings != null)
         {
             settings.UpdateDescription(slot.Item);
+            AppendCombatDefenseHitPointsDescription(settings, slot);
         }
+    }
+
+    private string BuildEntryQuantityText(InventoryEntry entry)
+    {
+        string text = entry.quantity.ToString();
+        if (!entry.hasCombatDefenseHitPoints)
+        {
+            return text;
+        }
+
+        return $"{text}\nPV {entry.combatDefenseHitPoints}/{entry.combatDefenseMaxHitPoints}";
+    }
+
+    private void AppendCombatDefenseHitPointsDescription(InventoryUISettings settings, InventorySlotUI slot)
+    {
+        if (settings == null || settings.descriptionText == null || slot == null || !slot.HasCombatDefenseHitPoints)
+        {
+            return;
+        }
+
+        string baseText = settings.descriptionText.text;
+        string suffix = $"PV bouclier : {slot.CombatDefenseHitPoints}/{slot.CombatDefenseMaxHitPoints}";
+        settings.descriptionText.text = string.IsNullOrWhiteSpace(baseText)
+            ? suffix
+            : $"{baseText}\n{suffix}";
+        settings.descriptionText.gameObject.SetActive(true);
     }
 
     private void UpdateCursorVisual()
@@ -935,6 +1011,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         settings.UpdateDescription(slot.Item);
+        AppendCombatDefenseHitPointsDescription(settings, slot);
 
         if (cursorDirty)
         {
@@ -4196,6 +4273,7 @@ public class InventoryPanelController : MonoBehaviour
         if (inventoryOpen && currentFocusedSlot != null)
         {
             settings.UpdateDescription(currentFocusedSlot.Item);
+            AppendCombatDefenseHitPointsDescription(settings, currentFocusedSlot);
         }
         else
         {
@@ -4523,13 +4601,30 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, ISelectHandl
     public InventoryPanelController Owner { get; private set; }
     public Item Item { get; private set; }
     public int Quantity { get; private set; }
+    public bool HasCombatDefenseHitPoints { get; private set; }
+    public int CombatDefenseHitPoints { get; private set; }
+    public int CombatDefenseMaxHitPoints { get; private set; }
     public RectTransform SlotRect { get; private set; }
 
     public void Initialize(InventoryPanelController owner, Item item, int quantity)
     {
+        Initialize(owner, item, quantity, false, 0, 0);
+    }
+
+    public void Initialize(
+        InventoryPanelController owner,
+        Item item,
+        int quantity,
+        bool hasCombatDefenseHitPoints,
+        int combatDefenseHitPoints,
+        int combatDefenseMaxHitPoints)
+    {
         Owner = owner;
         Item = item;
         Quantity = Mathf.Max(0, quantity);
+        HasCombatDefenseHitPoints = hasCombatDefenseHitPoints;
+        CombatDefenseHitPoints = Mathf.Max(0, combatDefenseHitPoints);
+        CombatDefenseMaxHitPoints = Mathf.Max(0, combatDefenseMaxHitPoints);
         SlotRect = GetComponent<RectTransform>();
     }
 

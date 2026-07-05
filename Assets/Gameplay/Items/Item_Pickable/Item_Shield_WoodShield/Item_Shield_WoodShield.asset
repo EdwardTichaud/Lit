@@ -38,9 +38,9 @@ MonoBehaviour:
   refreshTemporalDistrictRegistryOnRead: 1
   canUse: 0
   canDefendInCombat: 0
-  combatDefenseHitPoints: 0
+  combatDefenseHitPoints: 5
   combatReactionProfile:
-    reactionKind: 1
+    reactionKind: 2
     playerAnimationName: Defense_Shield
     fallbackPlayerAnimationName: Defense
     enemyAnimationName: Countered

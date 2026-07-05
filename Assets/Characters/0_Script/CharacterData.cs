@@ -85,6 +85,8 @@ public class CharacterData : ScriptableObject
     public List<Item> equippedInteractionItems = new List<Item>();
     /// <summary>Items defensifs gardes a portee de main en combat.</summary>
     public List<Item> enabledCombatItems = new List<Item>();
+    /// <summary>PV restants des items defensifs combat entames.</summary>
+    public List<CombatDefenseItemHitPointData> combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
     /// <summary>Temps restant de flamme en secondes.</summary>
     public int flameSecondsRemaining;
     /// <summary>Indique si la flamme est equipee.</summary>
@@ -145,6 +147,8 @@ public class CharacterData : ScriptableObject
             return inventoryItems;
         }
     }
+
+    public IReadOnlyList<CombatDefenseItemHitPointData> CombatDefenseItemHitPoints => combatDefenseItemHitPoints;
 
     /// <summary>
     /// Retourne le prefab monde, ou le modele si aucun prefab specifique n'est configure.
@@ -327,6 +331,61 @@ public class CharacterData : ScriptableObject
         {
             inventoryInitialized = true;
         }
+    }
+
+    public void SetCombatDefenseItemHitPoints(List<CombatDefenseItemHitPointData> hitPoints)
+    {
+        if (combatDefenseItemHitPoints == null)
+        {
+            combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
+        }
+        else
+        {
+            combatDefenseItemHitPoints.Clear();
+        }
+
+        if (hitPoints == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < hitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = hitPoints[i];
+            if (entry == null || string.IsNullOrWhiteSpace(entry.itemId) || entry.hitPoints <= 0)
+            {
+                continue;
+            }
+
+            AddCombatDefenseItemHitPointStack(entry.itemId, entry.hitPoints, Mathf.Max(1, entry.quantity));
+        }
+    }
+
+    private void AddCombatDefenseItemHitPointStack(string itemId, int hitPoints, int quantity)
+    {
+        if (string.IsNullOrWhiteSpace(itemId) || hitPoints <= 0 || quantity <= 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < combatDefenseItemHitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
+            if (entry == null || entry.itemId != itemId || entry.hitPoints != hitPoints)
+            {
+                continue;
+            }
+
+            entry.quantity = Mathf.Max(1, entry.quantity) + quantity;
+            return;
+        }
+
+        combatDefenseItemHitPoints.Add(new CombatDefenseItemHitPointData
+        {
+            itemId = itemId,
+            hitPoints = hitPoints,
+            quantity = quantity
+        });
     }
 
     /// <summary>

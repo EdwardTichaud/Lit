@@ -971,7 +971,7 @@ public class Lever : NetworkBehaviour
             return;
         }
 
-        AudioSource.PlayClipAtPoint(clip.audioClip, transform.position, Mathf.Clamp01(clip.volume));
+        AudioManager.PlayClipAtPoint(clip, transform.position);
     }
 
     private void LogDebug(string eventName, string extra = "")

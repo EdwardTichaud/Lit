@@ -35,6 +35,9 @@ public class AudioClipSO : ScriptableObject
     [Tooltip("Lecture en boucle activée par défaut pour ce clip.")]
     public bool loop = false;
 
+    [Tooltip("Si actif, le pitch suit le TimeScale courant. Desactive par defaut.")]
+    public bool affectedByTimeScale = false;
+
     [Min(0f)]
     [Tooltip("Delai en secondes avant la lecture (ignore si Loop est actif).")]
     public float startDelay = 0f;
@@ -57,6 +60,11 @@ public class AudioClipSO : ScriptableObject
     /// Indique si le clip doit boucler par défaut.
     /// </summary>
     public bool Loop => loop;
+
+    /// <summary>
+    /// Indique si le pitch doit suivre le TimeScale courant.
+    /// </summary>
+    public bool AffectedByTimeScale => affectedByTimeScale;
 
     /// <summary>
     /// Delai avant lancement du clip (0 si negatif).

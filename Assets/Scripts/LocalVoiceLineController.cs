@@ -200,6 +200,7 @@ public class LocalVoiceLineController : MonoBehaviour
     private readonly Dictionary<int, VoiceLineData> lookup = new Dictionary<int, VoiceLineData>();
     private Coroutine displayRoutine;
     private AudioSource activeSource;
+    private AudioClipSO activeAudioClip;
     private AudioSource localSource;
     private Transform textInstanceRoot;
     private bool warnedMissingTextRoot;
@@ -751,6 +752,7 @@ public class LocalVoiceLineController : MonoBehaviour
             }
         }
 
+        activeAudioClip = null;
         EndMusicDucking();
     }
 
@@ -796,6 +798,11 @@ public class LocalVoiceLineController : MonoBehaviour
             activeSource.Stop();
         }
 
+        if (stopAudio)
+        {
+            activeAudioClip = null;
+        }
+
         SetTextVisible(false);
         EndMusicDucking();
     }
@@ -810,9 +817,11 @@ public class LocalVoiceLineController : MonoBehaviour
         if (clip == null || clip.audioClip == null)
         {
             activeSource = null;
+            activeAudioClip = null;
             return;
         }
 
+        activeAudioClip = clip;
         Vector3 position = GetAnchorPosition();
         if (useAudioManager && AudioManager.Instance != null)
         {
@@ -824,6 +833,7 @@ public class LocalVoiceLineController : MonoBehaviour
         source.transform.position = position;
         source.clip = clip.audioClip;
         source.loop = clip.loop;
+        AudioManager.ApplyClipPitch(source, clip);
         source.volume = Mathf.Clamp01(clip.volume);
         source.Play();
         activeSource = source;
@@ -1182,6 +1192,7 @@ public class LocalVoiceLineController : MonoBehaviour
         }
 
         activeSource.transform.position = GetAnchorPosition();
+        AudioManager.ApplyClipPitch(activeSource, activeAudioClip);
     }
 
     private Vector3 GetAnchorPosition()

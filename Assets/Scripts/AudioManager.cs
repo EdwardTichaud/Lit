@@ -14,11 +14,15 @@ public class AudioManager : MonoBehaviour
     {
         public AudioSource source;
         public float clipVolume;
+        public float basePitch;
+        public bool affectedByTimeScale;
 
-        public ManagedSfxSource(AudioSource audioSource, float baseClipVolume)
+        public ManagedSfxSource(AudioSource audioSource, float baseClipVolume, float sourceBasePitch, bool sourceAffectedByTimeScale)
         {
             source = audioSource;
             clipVolume = baseClipVolume;
+            basePitch = sourceBasePitch;
+            affectedByTimeScale = sourceAffectedByTimeScale;
         }
     }
 
@@ -145,6 +149,11 @@ public class AudioManager : MonoBehaviour
 
         RefreshMusicVolume();
         RefreshSfxVolumes();
+    }
+
+    private void LateUpdate()
+    {
+        RefreshTimeScaledPitches();
     }
 
     public static float GetSavedMusicVolume()
@@ -345,6 +354,12 @@ public class AudioManager : MonoBehaviour
         RefreshMusicVolume();
     }
 
+    public static AudioSource PlayClipAtPoint(AudioClipSO clip, Vector3 position)
+    {
+        AudioManager manager = Instance != null ? Instance : EnsureInstance();
+        return manager != null ? manager.PlayClip(clip, position) : null;
+    }
+
     public AudioSource PlayClip(AudioClipSO clip, Vector3 position)
     {
         if (clip == null || clip.audioClip == null)
@@ -358,13 +373,14 @@ public class AudioManager : MonoBehaviour
         source.transform.position = position;
         source.clip = clip.audioClip;
         source.loop = clip.loop;
+        ApplyClipPitch(source, clip);
         source.volume = GetSfxSourceVolume(clip);
         source.Play();
         RegisterSfxSource(source, clip);
 
         if (!clip.loop)
         {
-            StartCoroutine(DestroyAfterPlay(source, clip.audioClip.length));
+            StartCoroutine(DestroyAfterPlay(source));
         }
 
         return source;
@@ -385,8 +401,8 @@ public class AudioManager : MonoBehaviour
         source.pitch = Mathf.Max(0.01f, pitch);
         source.volume = GetSfxSourceVolume(Mathf.Clamp01(volume));
         source.Play();
-        RegisterSfxSource(source, Mathf.Clamp01(volume));
-        StartCoroutine(DestroyAfterPlay(source, clip.length / source.pitch));
+        RegisterSfxSource(source, Mathf.Clamp01(volume), source.pitch, false);
+        StartCoroutine(DestroyAfterPlay(source));
         return source;
     }
 
@@ -402,13 +418,14 @@ public class AudioManager : MonoBehaviour
         source.spatialBlend = 0f;
         source.clip = clip.audioClip;
         source.loop = clip.loop;
+        ApplyClipPitch(source, clip);
         source.volume = GetSfxSourceVolume(clip);
         source.Play();
         RegisterSfxSource(source, clip);
 
         if (!clip.loop)
         {
-            StartCoroutine(DestroyAfterPlay(source, clip.audioClip.length));
+            StartCoroutine(DestroyAfterPlay(source));
         }
 
         return source;
@@ -530,6 +547,7 @@ public class AudioManager : MonoBehaviour
                 {
                     float t = elapsed / duration;
                     float multiplier = GetMusicMultiplier();
+                    ApplyClipPitch(from, previousClip);
                     from.volume = Mathf.Lerp(GetMusicSourceVolume(previousClip) * multiplier, 0f, t);
                     elapsed += Time.unscaledDeltaTime;
                     yield return null;
@@ -553,6 +571,7 @@ public class AudioManager : MonoBehaviour
             // Demarre la nouvelle musique en volume 0.
             to.clip = clip.audioClip;
             to.loop = clip.loop;
+            ApplyClipPitch(to, clip);
             to.volume = 0f;
             to.Play();
         }
@@ -564,11 +583,13 @@ public class AudioManager : MonoBehaviour
             float multiplier = GetMusicMultiplier();
             if (to != null)
             {
+                ApplyClipPitch(to, clip);
                 to.volume = Mathf.Lerp(0f, GetMusicSourceVolume(clip) * multiplier, t);
             }
 
             if (from != null)
             {
+                ApplyClipPitch(from, previousClip);
                 from.volume = Mathf.Lerp(GetMusicSourceVolume(previousClip) * multiplier, 0f, t);
             }
 
@@ -578,6 +599,7 @@ public class AudioManager : MonoBehaviour
 
         if (to != null)
         {
+            ApplyClipPitch(to, clip);
             to.volume = GetMusicSourceVolume(clip) * GetMusicMultiplier();
         }
 
@@ -612,6 +634,7 @@ public class AudioManager : MonoBehaviour
                 while (elapsed < duration)
                 {
                     float t = elapsed / duration;
+                    ApplyClipPitch(from, previousClip);
                     from.volume = Mathf.Lerp(GetAmbienceSourceVolume(previousClip), 0f, t);
                     elapsed += Time.unscaledDeltaTime;
                     yield return null;
@@ -634,6 +657,7 @@ public class AudioManager : MonoBehaviour
         {
             to.clip = clip.audioClip;
             to.loop = clip.loop;
+            ApplyClipPitch(to, clip);
             to.volume = 0f;
             to.Play();
         }
@@ -644,11 +668,13 @@ public class AudioManager : MonoBehaviour
             float t = time / duration;
             if (to != null)
             {
+                ApplyClipPitch(to, clip);
                 to.volume = Mathf.Lerp(0f, GetAmbienceSourceVolume(clip), t);
             }
 
             if (from != null)
             {
+                ApplyClipPitch(from, previousClip);
                 from.volume = Mathf.Lerp(GetAmbienceSourceVolume(previousClip), 0f, t);
             }
 
@@ -658,6 +684,7 @@ public class AudioManager : MonoBehaviour
 
         if (to != null)
         {
+            ApplyClipPitch(to, clip);
             to.volume = GetAmbienceSourceVolume(clip);
         }
 
@@ -742,6 +769,53 @@ public class AudioManager : MonoBehaviour
         return GetSfxSourceVolume(Mathf.Clamp01(clip.volume));
     }
 
+    public static float GetClipPitch(AudioClipSO clip, float basePitch = 1f)
+    {
+        float safeBasePitch = Mathf.Max(0f, basePitch);
+        if (clip == null || !clip.affectedByTimeScale)
+        {
+            return safeBasePitch;
+        }
+
+        return Mathf.Clamp(safeBasePitch * TimeManager.GetAudioTimeScale(), 0f, 3f);
+    }
+
+    public static void ApplyClipPitch(AudioSource source, AudioClipSO clip, float basePitch = 1f)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        source.pitch = GetClipPitch(clip, basePitch);
+    }
+
+    private static float GetManagedSourcePitch(ManagedSfxSource entry)
+    {
+        float basePitch = Mathf.Max(0f, entry.basePitch);
+        if (!entry.affectedByTimeScale)
+        {
+            return basePitch;
+        }
+
+        return Mathf.Clamp(basePitch * TimeManager.GetAudioTimeScale(), 0f, 3f);
+    }
+
+    private void RefreshTimeScaledPitches()
+    {
+        ApplyClipPitch(activeSource, activeClip);
+        ApplyClipPitch(activeAmbienceSource, activeAmbienceClip);
+        CleanupTrackedSfxSources();
+        for (int i = 0; i < activeSfxSources.Count; i++)
+        {
+            ManagedSfxSource entry = activeSfxSources[i];
+            if (entry.source != null)
+            {
+                entry.source.pitch = GetManagedSourcePitch(entry);
+            }
+        }
+    }
+
     private void RefreshMusicVolume()
     {
         if (activeSource == null || activeClip == null || activeClip.audioClip == null)
@@ -780,10 +854,14 @@ public class AudioManager : MonoBehaviour
 
     private void RegisterSfxSource(AudioSource source, AudioClipSO clip)
     {
-        RegisterSfxSource(source, clip != null ? Mathf.Clamp01(clip.volume) : 1f);
+        RegisterSfxSource(
+            source,
+            clip != null ? Mathf.Clamp01(clip.volume) : 1f,
+            1f,
+            clip != null && clip.affectedByTimeScale);
     }
 
-    private void RegisterSfxSource(AudioSource source, float clipVolume)
+    private void RegisterSfxSource(AudioSource source, float clipVolume, float basePitch, bool affectedByTimeScale)
     {
         if (source == null)
         {
@@ -791,18 +869,19 @@ public class AudioManager : MonoBehaviour
         }
 
         clipVolume = Mathf.Clamp01(clipVolume);
+        basePitch = Mathf.Max(0f, basePitch);
         CleanupTrackedSfxSources();
 
         for (int i = 0; i < activeSfxSources.Count; i++)
         {
             if (activeSfxSources[i].source == source)
             {
-                activeSfxSources[i] = new ManagedSfxSource(source, clipVolume);
+                activeSfxSources[i] = new ManagedSfxSource(source, clipVolume, basePitch, affectedByTimeScale);
                 return;
             }
         }
 
-        activeSfxSources.Add(new ManagedSfxSource(source, clipVolume));
+        activeSfxSources.Add(new ManagedSfxSource(source, clipVolume, basePitch, affectedByTimeScale));
     }
 
     private void CleanupTrackedSfxSources()
@@ -832,14 +911,18 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private IEnumerator DestroyAfterPlay(AudioSource source, float duration)
+    private IEnumerator DestroyAfterPlay(AudioSource source)
     {
         if (source == null)
         {
             yield break;
         }
 
-        yield return new WaitForSeconds(duration);
+        while (source != null && source.isPlaying)
+        {
+            yield return null;
+        }
+
         if (source != null)
         {
             UnregisterSfxSource(source);

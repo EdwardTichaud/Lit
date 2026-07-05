@@ -30,6 +30,7 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
     [SerializeField, HideInInspector] private List<Item> equippedInteractionItems = new List<Item>();
     [SerializeField, HideInInspector] private List<Item> enabledCombatItems = new List<Item>();
+    [SerializeField, HideInInspector] private List<CombatDefenseItemHitPointData> combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
     [SerializeField, Tooltip("Duree initiale de la flamme (secondes).")]
     private int startingFlameSeconds = 300;
     [SerializeField, Tooltip("Duree restante de la flamme (secondes).")]
@@ -183,6 +184,8 @@ public partial class SquadCharacterController : MonoBehaviour
     public IReadOnlyList<Item> EquippedInteractionItems => equippedInteractionItems;
 
     public IReadOnlyList<Item> EnabledCombatItems => enabledCombatItems;
+
+    public IReadOnlyList<CombatDefenseItemHitPointData> CombatDefenseItemHitPoints => combatDefenseItemHitPoints;
 
     public IReadOnlyList<Skill> Skills => characterData != null ? characterData.skills : null;
 
@@ -446,6 +449,8 @@ public partial class SquadCharacterController : MonoBehaviour
         SyncCharacterInfo(characterData);
         EnsureInventoryList();
         EnsureEquippedInteractionList();
+        EnsureEnabledCombatList();
+        EnsureCombatDefenseItemHitPointsList();
         InitializeHealthFromCharacterData(resetHpOnBind);
 
         if (characterData == null)
@@ -795,11 +800,13 @@ public partial class SquadCharacterController : MonoBehaviour
         int flameSeconds,
         bool equipFlame,
         List<Item> newEquippedInteractionItems = null,
-        List<Item> newEnabledCombatItems = null)
+        List<Item> newEnabledCombatItems = null,
+        List<CombatDefenseItemHitPointData> newCombatDefenseItemHitPoints = null)
     {
         EnsureInventoryList();
         EnsureEquippedInteractionList();
         EnsureEnabledCombatList();
+        EnsureCombatDefenseItemHitPointsList();
         MarkInventoryInitialized();
 
         if (newItems == null)
@@ -817,12 +824,21 @@ public partial class SquadCharacterController : MonoBehaviour
         NormalizeReactiveInventoryItems();
         ApplyEquippedInteractionItems(newEquippedInteractionItems);
         ApplyEnabledCombatItems(newEnabledCombatItems);
+        if (newCombatDefenseItemHitPoints != null)
+        {
+            ApplyCombatDefenseItemHitPoints(newCombatDefenseItemHitPoints);
+        }
+        else
+        {
+            SanitizeCombatDefenseItemHitPoints();
+        }
 
         if (!CharacterFlameSystemEnabled)
         {
             DisableCharacterFlameState();
             SyncInteractionEquipmentToCharacterData();
             SyncCombatEquipmentToCharacterData();
+            SyncCombatDefenseItemHitPointsToCharacterData();
             return;
         }
 
@@ -840,6 +856,7 @@ public partial class SquadCharacterController : MonoBehaviour
         SyncFlameStateToCharacterData();
         SyncInteractionEquipmentToCharacterData();
         SyncCombatEquipmentToCharacterData();
+        SyncCombatDefenseItemHitPointsToCharacterData();
     }
 
     public bool TryUseItem(Item item)
@@ -1015,6 +1032,195 @@ public partial class SquadCharacterController : MonoBehaviour
         return result;
     }
 
+    public bool TryGetCombatDefenseItemHitPoints(Item item, out int currentHitPoints, out int maxHitPoints)
+    {
+        currentHitPoints = 0;
+        maxHitPoints = item != null ? item.GetCombatDefenseHitPoints() : 0;
+        if (item == null || maxHitPoints <= 0)
+        {
+            return false;
+        }
+
+        currentHitPoints = GetCombatDefenseItemRemainingHitPoints(item);
+        return currentHitPoints > 0;
+    }
+
+    public int GetCombatDefenseItemRemainingHitPoints(Item item)
+    {
+        int maxHitPoints = item != null ? item.GetCombatDefenseHitPoints() : 0;
+        if (item == null || maxHitPoints <= 0)
+        {
+            return 0;
+        }
+
+        EnsureInventoryList();
+        EnsureCombatDefenseItemHitPointsList();
+        string itemId = ItemIdUtils.GetItemId(item);
+        if (string.IsNullOrWhiteSpace(itemId) || CountInventoryItemById(itemId) <= 0)
+        {
+            return 0;
+        }
+
+        SanitizeCombatDefenseItemHitPoints();
+
+        int selectedHitPoints = maxHitPoints;
+        bool hasDamagedStack = false;
+        for (int i = 0; i < combatDefenseItemHitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
+            if (entry == null
+                || entry.quantity <= 0
+                || !string.Equals(entry.itemId, itemId, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            int clampedHitPoints = Mathf.Clamp(entry.hitPoints, 1, maxHitPoints - 1);
+            selectedHitPoints = Mathf.Min(selectedHitPoints, clampedHitPoints);
+            hasDamagedStack = true;
+        }
+
+        return hasDamagedStack ? selectedHitPoints : maxHitPoints;
+    }
+
+    public void SetCombatDefenseItemRemainingHitPoints(Item item, int hitPoints)
+    {
+        ApplyCombatDefenseItemHitPointChange(item, GetCombatDefenseItemRemainingHitPoints(item), hitPoints);
+    }
+
+    public void ApplyCombatDefenseItemHitPointChange(Item item, int previousHitPoints, int remainingHitPoints)
+    {
+        int maxHitPoints = item != null ? item.GetCombatDefenseHitPoints() : 0;
+        if (item == null || maxHitPoints <= 0)
+        {
+            return;
+        }
+
+        EnsureInventoryList();
+        EnsureCombatDefenseItemHitPointsList();
+        string itemId = ItemIdUtils.GetItemId(item);
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return;
+        }
+
+        int previous = Mathf.Clamp(previousHitPoints, 0, maxHitPoints);
+        if (previous > 0 && previous < maxHitPoints)
+        {
+            RemoveCombatDefenseItemHitPointUnits(itemId, previous, 1);
+        }
+
+        int remaining = Mathf.Clamp(remainingHitPoints, 0, maxHitPoints);
+        if (remaining > 0 && remaining < maxHitPoints && CountInventoryItemById(itemId) > 0)
+        {
+            AddCombatDefenseItemHitPointUnits(itemId, remaining, 1);
+        }
+
+        SanitizeCombatDefenseItemHitPoints();
+        SyncCombatDefenseItemHitPointsToCharacterData();
+    }
+
+    public List<CombatDefenseItemHitPointData> GetCombatDefenseItemHitPointStacks(Item item, int totalQuantity)
+    {
+        List<CombatDefenseItemHitPointData> stacks = new List<CombatDefenseItemHitPointData>();
+        int maxHitPoints = item != null ? item.GetCombatDefenseHitPoints() : 0;
+        int clampedTotal = Mathf.Max(0, totalQuantity);
+        if (item == null || maxHitPoints <= 0 || clampedTotal <= 0)
+        {
+            return stacks;
+        }
+
+        string itemId = ItemIdUtils.GetItemId(item);
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return stacks;
+        }
+
+        SanitizeCombatDefenseItemHitPoints();
+
+        Dictionary<int, int> damagedCountsByHitPoints = new Dictionary<int, int>();
+        List<int> damagedHitPoints = new List<int>();
+        int damagedQuantity = 0;
+        for (int i = 0; i < combatDefenseItemHitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
+            if (entry == null || !string.Equals(entry.itemId, itemId, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            int hitPoints = Mathf.Clamp(entry.hitPoints, 1, maxHitPoints - 1);
+            int quantity = Mathf.Max(1, entry.quantity);
+            if (!damagedCountsByHitPoints.TryGetValue(hitPoints, out int currentQuantity))
+            {
+                damagedCountsByHitPoints[hitPoints] = quantity;
+                damagedHitPoints.Add(hitPoints);
+            }
+            else
+            {
+                damagedCountsByHitPoints[hitPoints] = currentQuantity + quantity;
+            }
+
+            damagedQuantity += quantity;
+        }
+
+        int fullQuantity = Mathf.Max(0, clampedTotal - damagedQuantity);
+        if (fullQuantity > 0)
+        {
+            stacks.Add(new CombatDefenseItemHitPointData
+            {
+                itemId = itemId,
+                hitPoints = maxHitPoints,
+                quantity = fullQuantity
+            });
+        }
+
+        damagedHitPoints.Sort((left, right) => right.CompareTo(left));
+        for (int i = 0; i < damagedHitPoints.Count; i++)
+        {
+            int hitPoints = damagedHitPoints[i];
+            int quantity = damagedCountsByHitPoints.TryGetValue(hitPoints, out int count) ? count : 0;
+            if (quantity <= 0)
+            {
+                continue;
+            }
+
+            stacks.Add(new CombatDefenseItemHitPointData
+            {
+                itemId = itemId,
+                hitPoints = hitPoints,
+                quantity = quantity
+            });
+        }
+
+        return stacks;
+    }
+
+    public List<CombatDefenseItemHitPointData> GetCombatDefenseItemHitPointsSnapshot()
+    {
+        EnsureCombatDefenseItemHitPointsList();
+        SanitizeCombatDefenseItemHitPoints();
+
+        List<CombatDefenseItemHitPointData> snapshot = new List<CombatDefenseItemHitPointData>();
+        for (int i = 0; i < combatDefenseItemHitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
+            if (entry == null || string.IsNullOrWhiteSpace(entry.itemId) || entry.hitPoints <= 0)
+            {
+                continue;
+            }
+
+            snapshot.Add(new CombatDefenseItemHitPointData
+            {
+                itemId = entry.itemId,
+                hitPoints = entry.hitPoints,
+                quantity = Mathf.Max(1, entry.quantity)
+            });
+        }
+
+        return snapshot;
+    }
+
     public bool TryEquipInteractionItem(Item item, out string reason)
     {
         reason = string.Empty;
@@ -1166,6 +1372,7 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureInventoryList();
         EnsureEquippedInteractionList();
         EnsureEnabledCombatList();
+        EnsureCombatDefenseItemHitPointsList();
         MarkInventoryInitialized();
 
         if (IsFlameItem(item))
@@ -1190,6 +1397,7 @@ public partial class SquadCharacterController : MonoBehaviour
         if (removed)
         {
             NormalizeReactiveInventoryItems();
+            SanitizeCombatDefenseItemHitPoints();
             SanitizeEquippedInteractionItems();
             SanitizeEnabledCombatItems();
         }
@@ -1238,6 +1446,7 @@ public partial class SquadCharacterController : MonoBehaviour
         if (removed)
         {
             NormalizeReactiveInventoryItems();
+            SanitizeCombatDefenseItemHitPoints();
             SanitizeEquippedInteractionItems();
             SanitizeEnabledCombatItems();
         }
@@ -1260,6 +1469,7 @@ public partial class SquadCharacterController : MonoBehaviour
             items.Clear();
             equippedInteractionItems.Clear();
             enabledCombatItems.Clear();
+            combatDefenseItemHitPoints.Clear();
             flameSecondsRemaining = 0;
         }
 
@@ -1270,6 +1480,7 @@ public partial class SquadCharacterController : MonoBehaviour
             SyncFlameStateToCharacterData();
             SyncInteractionEquipmentToCharacterData();
             SyncCombatEquipmentToCharacterData();
+            SyncCombatDefenseItemHitPointsToCharacterData();
             return;
         }
 
@@ -1328,6 +1539,7 @@ public partial class SquadCharacterController : MonoBehaviour
         SyncFlameStateToCharacterData();
         SyncInteractionEquipmentToCharacterData();
         SyncCombatEquipmentToCharacterData();
+        SanitizeCombatDefenseItemHitPoints();
 
         if (logInventoryInitialization && data != null)
         {
@@ -1406,6 +1618,29 @@ public partial class SquadCharacterController : MonoBehaviour
         }
     }
 
+    private void EnsureCombatDefenseItemHitPointsList()
+    {
+        if (characterData != null)
+        {
+            if (characterData.combatDefenseItemHitPoints == null)
+            {
+                characterData.combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
+            }
+
+            if (!ReferenceEquals(combatDefenseItemHitPoints, characterData.combatDefenseItemHitPoints))
+            {
+                combatDefenseItemHitPoints = characterData.combatDefenseItemHitPoints;
+            }
+
+            return;
+        }
+
+        if (combatDefenseItemHitPoints == null)
+        {
+            combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
+        }
+    }
+
     private void ApplyEquippedInteractionItems(List<Item> source)
     {
         EnsureEquippedInteractionList();
@@ -1460,6 +1695,33 @@ public partial class SquadCharacterController : MonoBehaviour
         SanitizeEnabledCombatItems();
     }
 
+    private void ApplyCombatDefenseItemHitPoints(List<CombatDefenseItemHitPointData> source)
+    {
+        EnsureCombatDefenseItemHitPointsList();
+
+        if (ReferenceEquals(source, combatDefenseItemHitPoints))
+        {
+            source = source != null ? new List<CombatDefenseItemHitPointData>(source) : null;
+        }
+
+        combatDefenseItemHitPoints.Clear();
+        if (source != null)
+        {
+            for (int i = 0; i < source.Count; i++)
+            {
+                CombatDefenseItemHitPointData entry = source[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.itemId) || entry.hitPoints <= 0)
+                {
+                    continue;
+                }
+
+                AddCombatDefenseItemHitPointUnits(entry.itemId, entry.hitPoints, Mathf.Max(1, entry.quantity));
+            }
+        }
+
+        SanitizeCombatDefenseItemHitPoints();
+    }
+
     private void SanitizeEquippedInteractionItems()
     {
         EnsureInventoryList();
@@ -1497,6 +1759,246 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         SyncCombatEquipmentToCharacterData();
+    }
+
+    private void SanitizeCombatDefenseItemHitPoints()
+    {
+        EnsureInventoryList();
+        EnsureCombatDefenseItemHitPointsList();
+
+        if (combatDefenseItemHitPoints.Count == 0)
+        {
+            SyncCombatDefenseItemHitPointsToCharacterData();
+            return;
+        }
+
+        List<CombatDefenseItemHitPointData> merged = new List<CombatDefenseItemHitPointData>();
+        for (int i = 0; i < combatDefenseItemHitPoints.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
+            if (entry == null || string.IsNullOrWhiteSpace(entry.itemId) || entry.hitPoints <= 0)
+            {
+                continue;
+            }
+
+            Item item = ResolveInventoryItemById(entry.itemId);
+            int maxHitPoints = item != null ? item.GetCombatDefenseHitPoints() : 0;
+            if (item == null || maxHitPoints <= 0)
+            {
+                continue;
+            }
+
+            if (entry.hitPoints >= maxHitPoints)
+            {
+                continue;
+            }
+
+            int hitPoints = Mathf.Clamp(entry.hitPoints, 1, maxHitPoints - 1);
+            AddCombatDefenseItemHitPointUnits(merged, entry.itemId, hitPoints, Mathf.Max(1, entry.quantity));
+        }
+
+        combatDefenseItemHitPoints.Clear();
+        List<string> itemIds = new List<string>();
+        for (int i = 0; i < merged.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = merged[i];
+            if (entry != null && !itemIds.Contains(entry.itemId))
+            {
+                itemIds.Add(entry.itemId);
+            }
+        }
+
+        for (int i = 0; i < itemIds.Count; i++)
+        {
+            string itemId = itemIds[i];
+            int remainingCapacity = CountInventoryItemById(itemId);
+            while (remainingCapacity > 0)
+            {
+                int mostDamagedIndex = FindMostDamagedHitPointEntryIndex(merged, itemId);
+                if (mostDamagedIndex < 0)
+                {
+                    break;
+                }
+
+                CombatDefenseItemHitPointData entry = merged[mostDamagedIndex];
+                int keepQuantity = Mathf.Min(Mathf.Max(0, entry.quantity), remainingCapacity);
+                if (keepQuantity > 0)
+                {
+                    combatDefenseItemHitPoints.Add(new CombatDefenseItemHitPointData
+                    {
+                        itemId = entry.itemId,
+                        hitPoints = entry.hitPoints,
+                        quantity = keepQuantity
+                    });
+                    remainingCapacity -= keepQuantity;
+                }
+
+                merged.RemoveAt(mostDamagedIndex);
+            }
+        }
+
+        SyncCombatDefenseItemHitPointsToCharacterData();
+    }
+
+    private static int FindMostDamagedHitPointEntryIndex(List<CombatDefenseItemHitPointData> entries, string itemId)
+    {
+        int bestIndex = -1;
+        int bestHitPoints = int.MaxValue;
+        if (entries == null || string.IsNullOrWhiteSpace(itemId))
+        {
+            return bestIndex;
+        }
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = entries[i];
+            if (entry == null || !string.Equals(entry.itemId, itemId, System.StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (entry.hitPoints < bestHitPoints)
+            {
+                bestHitPoints = entry.hitPoints;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private Item ResolveInventoryItemById(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return null;
+        }
+
+        EnsureInventoryList();
+        if (items == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Item item = items[i];
+            if (item == null)
+            {
+                continue;
+            }
+
+            string candidateId = ItemIdUtils.GetItemId(item);
+            if (string.Equals(candidateId, itemId, System.StringComparison.Ordinal))
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    private int CountInventoryItemById(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return 0;
+        }
+
+        EnsureInventoryList();
+        int count = 0;
+        if (items == null)
+        {
+            return count;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Item item = items[i];
+            if (item == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(ItemIdUtils.GetItemId(item), itemId, System.StringComparison.Ordinal))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private void AddCombatDefenseItemHitPointUnits(string itemId, int hitPoints, int quantity)
+    {
+        AddCombatDefenseItemHitPointUnits(combatDefenseItemHitPoints, itemId, hitPoints, quantity);
+    }
+
+    private static void AddCombatDefenseItemHitPointUnits(
+        List<CombatDefenseItemHitPointData> entries,
+        string itemId,
+        int hitPoints,
+        int quantity)
+    {
+        if (entries == null || string.IsNullOrWhiteSpace(itemId) || hitPoints <= 0 || quantity <= 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            CombatDefenseItemHitPointData entry = entries[i];
+            if (entry == null
+                || !string.Equals(entry.itemId, itemId, System.StringComparison.Ordinal)
+                || entry.hitPoints != hitPoints)
+            {
+                continue;
+            }
+
+            entry.quantity = Mathf.Max(1, entry.quantity) + quantity;
+            return;
+        }
+
+        entries.Add(new CombatDefenseItemHitPointData
+        {
+            itemId = itemId,
+            hitPoints = hitPoints,
+            quantity = quantity
+        });
+    }
+
+    private void RemoveCombatDefenseItemHitPointUnits(string itemId, int hitPoints, int quantity)
+    {
+        if (string.IsNullOrWhiteSpace(itemId) || hitPoints <= 0 || quantity <= 0)
+        {
+            return;
+        }
+
+        EnsureCombatDefenseItemHitPointsList();
+        int remaining = quantity;
+        for (int i = combatDefenseItemHitPoints.Count - 1; i >= 0 && remaining > 0; i--)
+        {
+            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
+            if (entry == null)
+            {
+                combatDefenseItemHitPoints.RemoveAt(i);
+                continue;
+            }
+
+            if (!string.Equals(entry.itemId, itemId, System.StringComparison.Ordinal) || entry.hitPoints != hitPoints)
+            {
+                continue;
+            }
+
+            int available = Mathf.Max(1, entry.quantity);
+            int removed = Mathf.Min(available, remaining);
+            entry.quantity = available - removed;
+            remaining -= removed;
+            if (entry.quantity <= 0)
+            {
+                combatDefenseItemHitPoints.RemoveAt(i);
+            }
+        }
     }
 
     private void NormalizeReactiveInventoryItems()
@@ -1615,6 +2117,7 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureInventoryList();
         EnsureEquippedInteractionList();
         EnsureEnabledCombatList();
+        EnsureCombatDefenseItemHitPointsList();
         flameSecondsRemaining = Mathf.Max(0, characterData.flameSecondsRemaining);
         InitializeFlameState();
         if (HasFlameItem && flameSecondsRemaining > 0)
@@ -1628,6 +2131,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
         ApplyEquippedInteractionItems(characterData.equippedInteractionItems);
         ApplyEnabledCombatItems(characterData.enabledCombatItems);
+        SanitizeCombatDefenseItemHitPoints();
 
         if (logInventoryInitialization)
         {
@@ -1668,6 +2172,17 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         EnsureEnabledCombatList();
+        characterData.inventoryInitialized = true;
+    }
+
+    private void SyncCombatDefenseItemHitPointsToCharacterData()
+    {
+        if (characterData == null)
+        {
+            return;
+        }
+
+        EnsureCombatDefenseItemHitPointsList();
         characterData.inventoryInitialized = true;
     }
 

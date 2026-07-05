@@ -623,7 +623,7 @@ public class CursorController : MonoBehaviour
         }
         else
         {
-            AudioSource.PlayClipAtPoint(moveSfx.audioClip, Vector3.zero, Mathf.Clamp01(moveSfx.volume));
+            AudioManager.PlayClipAtPoint(moveSfx, Vector3.zero);
         }
     }
 

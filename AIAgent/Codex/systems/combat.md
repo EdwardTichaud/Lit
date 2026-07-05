@@ -109,6 +109,13 @@ les animations joueur/ennemi configurees se jouent, le visuel de l'item passe de
 l'attache joueur a l'attache ennemie, puis le shot camera `CounterAction`, le
 ralenti local, les SFX, VFX et voix optionnelles du profil soulignent l'impact.
 Contre une attaque non melee, ce profil ne remplace pas une defense.
+Le type `MeleeDefense` sert aux objets comme `Item_Shield_WoodShield` : le
+joueur sort le visuel de l'item en main, bloque une attaque melee sans subir de
+degats, puis l'item perd des PV defensifs persistants portes par le personnage.
+Si ses PV tombent a zero, une unite est retiree de l'inventaire; sinon elle peut
+etre reutilisee lors des combats suivants avec ses PV restants. Quand plusieurs
+boucliers identiques existent, le combat consomme d'abord une unite de la pile
+la plus abimee.
 Si le profil renseigne `enemyAnimationClip`, `CombatReactionClipPlayer` lit ce
 clip directement via Playables sur l'Animator ennemi; sinon le manager retombe
 sur la state ou le trigger `enemyAnimationName`, puis sur la duree fallback.
@@ -167,6 +174,8 @@ hystérésis quand le joueur local sort assez loin du trigger d'aggro.
 - Les items défensifs de réaction ennemie sont choisis depuis l'inventaire local,
   mais l'absorption, la casse et la synchronisation d'inventaire restent côté
   autorité.
+- Les PV restants des items defensifs sont un etat de personnage, pas un etat de
+  session de combat; ne pas les stocker dans `CombatSession`.
 - Un item defensif doit etre assigne aux 3 items combat du personnage pour etre
   utilisable dans `CombatDefensePanel` et dans l'inventaire de reaction.
 - Le joueur local doit être résolu via `LocalPlayerContext`; éviter les fallbacks

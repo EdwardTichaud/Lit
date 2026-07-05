@@ -1355,6 +1355,8 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingDefensiveItemHitPoints = counterItem ? 0 : item.GetCombatDefenseHitPoints();
         feedback = counterItem
             ? $"{ResolveItemDisplayName(item)} prepare un contre."
+            : IsMeleeDefenseItem(item)
+            ? $"{ResolveItemDisplayName(item)} prepare une defense melee."
             : $"{ResolveItemDisplayName(item)} prepare la defense.";
         session.State.SetMessage(feedback);
         SendSnapshot(session, feedback);
@@ -1571,9 +1573,9 @@ public class CombatSessionManager : NetworkBehaviour
             enemyIndex,
             attackIndex);
         if (session.PendingEncounterReaction == EncounterReactionChoice.Defend &&
-            !IsMeleeCounterItem(session.PendingDefensiveItem))
+            CanResolveDefensiveItem(session, attack))
         {
-            PlayPlayerDefensePresentation(session);
+            PlayPlayerDefensePresentation(session, actionTiming.TotalDuration);
         }
 
         PreparePendingEnemyAction(session, actionTiming);
@@ -1629,6 +1631,11 @@ public class CombatSessionManager : NetworkBehaviour
         EncounterReactionChoice reaction = IsMeleeCounterItem(session.PendingDefensiveItem)
             ? EncounterReactionChoice.None
             : ResolveEncounterReaction(session);
+        if (reaction == EncounterReactionChoice.Defend && !CanResolveDefensiveItem(session, attack))
+        {
+            reaction = EncounterReactionChoice.None;
+        }
+
         if (reaction == EncounterReactionChoice.Defend)
         {
             if (TryApplyPendingDefensiveItem(session, ref finalDamage, out absorbedDamage, out defensiveItemBroken))
@@ -1957,23 +1964,28 @@ public class CombatSessionManager : NetworkBehaviour
             totalDuration);
     }
 
-    private void PlayPlayerDefensePresentation(CombatSession session)
+    private void PlayPlayerDefensePresentation(CombatSession session, float totalDuration)
     {
         if (session?.Player == null)
         {
             return;
         }
 
+        Item item = session.PendingDefensiveItem;
         if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
         {
-            PlayDefenseAnimationLocally(session.Player);
+            PlayDefensePresentationLocally(session.Player, item, totalDuration);
         }
 
         if (IsNetworkSessionActive() &&
             IsSpawned &&
             session.OwnerClientId != ResolveLocalClientId())
         {
-            PlayPlayerDefenseClientRpc(session.SessionId, BuildClientRpcParams(session.OwnerClientId));
+            PlayPlayerDefenseClientRpc(
+                session.SessionId,
+                ItemIdUtils.GetItemId(item),
+                totalDuration,
+                BuildClientRpcParams(session.OwnerClientId));
         }
     }
 
@@ -2154,7 +2166,11 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void PlayPlayerDefenseClientRpc(string sessionId, ClientRpcParams rpcParams = default)
+    private void PlayPlayerDefenseClientRpc(
+        string sessionId,
+        string itemId,
+        float totalDuration,
+        ClientRpcParams rpcParams = default)
     {
         if (IsServer ||
             !localCombatPresentation.Active ||
@@ -2163,7 +2179,11 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        PlayDefenseAnimationLocally(ResolveControllerForClient(ResolveLocalClientId()));
+        Item item = ItemRegistry.Resolve(itemId);
+        PlayDefensePresentationLocally(
+            ResolveControllerForClient(ResolveLocalClientId()),
+            item,
+            totalDuration);
     }
 
     [ClientRpc]
@@ -2696,7 +2716,7 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         Item item = session.PendingDefensiveItem;
-        int itemHitPoints = Mathf.Max(0, session.PendingDefensiveItemHitPoints);
+        int itemHitPoints = ResolvePendingDefensiveItemHitPoints(session, item);
         if (itemHitPoints <= 0 || !TryFindControllerItem(session.Player, item, out Item inventoryItem))
         {
             return false;
@@ -2711,8 +2731,39 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
+        StorePendingDefensiveItemHitPoints(session, inventoryItem, itemHitPoints, itemBroken ? 0 : itemHitPoints - finalDamage);
+        SyncNetworkInventory(session.Player);
         finalDamage = Mathf.Max(0, finalDamage - absorbedDamage);
         return true;
+    }
+
+    private static int ResolvePendingDefensiveItemHitPoints(CombatSession session, Item item)
+    {
+        if (session == null || item == null)
+        {
+            return 0;
+        }
+
+        if (session.Player != null)
+        {
+            return Mathf.Max(0, session.Player.GetCombatDefenseItemRemainingHitPoints(item));
+        }
+
+        return Mathf.Max(0, session.PendingDefensiveItemHitPoints);
+    }
+
+    private static void StorePendingDefensiveItemHitPoints(
+        CombatSession session,
+        Item item,
+        int previousHitPoints,
+        int remainingHitPoints)
+    {
+        if (session?.Player == null || item == null)
+        {
+            return;
+        }
+
+        session.Player.ApplyCombatDefenseItemHitPointChange(item, previousHitPoints, remainingHitPoints);
     }
 
     private bool TryConsumeBrokenDefensiveItem(CombatSession session, Item item)
@@ -2727,7 +2778,6 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
-        SyncNetworkInventory(session.Player);
         return true;
     }
 
@@ -2917,9 +2967,29 @@ public class CombatSessionManager : NetworkBehaviour
                IsEnemyAttackMelee(attack);
     }
 
+    private static bool CanResolveDefensiveItem(CombatSession session, CombatEnemyAttackDefinition attack)
+    {
+        if (session?.PendingDefensiveItem == null || IsMeleeCounterItem(session.PendingDefensiveItem))
+        {
+            return false;
+        }
+
+        if (IsMeleeDefenseItem(session.PendingDefensiveItem))
+        {
+            return IsEnemyAttackMelee(attack);
+        }
+
+        return session.PendingDefensiveItem.CanDefendInCombat();
+    }
+
     private static bool IsMeleeCounterItem(Item item)
     {
         return item != null && item.CanCounterMeleeInCombat();
+    }
+
+    private static bool IsMeleeDefenseItem(Item item)
+    {
+        return item != null && item.CanMeleeDefendInCombat();
     }
 
     private static bool IsEnemyAttackMelee(CombatEnemyAttackDefinition attack)
@@ -4323,6 +4393,42 @@ public class CombatSessionManager : NetworkBehaviour
         Animator animator = controller != null ? controller.GetComponent<Animator>() : null;
         string animationName = ResolveAvailableActionAnimationName(animator, DefenseAnimationName, BlockAnimationName);
         return PlayNamedAnimation(animator, animationName, DefaultDefenseAnimationDuration);
+    }
+
+    private float PlayDefensePresentationLocally(SquadCharacterController controller, Item item, float totalDuration)
+    {
+        if (!IsMeleeDefenseItem(item))
+        {
+            return PlayDefenseAnimationLocally(controller);
+        }
+
+        if (controller == null)
+        {
+            return DefaultDefenseAnimationDuration;
+        }
+
+        Item.CombatReactionProfile profile = item.GetCombatReactionProfile();
+        controller.Stop();
+        Transform playerTransform = controller.transform;
+        PlayReactionAudio(profile.startSfx, profile.startAudioCue, playerTransform.position);
+
+        Animator animator = controller.GetComponent<Animator>();
+        string animationName = ResolveAvailableActionAnimationName(
+            animator,
+            profile.ResolvePlayerAnimationName(DefenseAnimationName),
+            profile.ResolveFallbackPlayerAnimationName(BlockAnimationName));
+        float animationDuration = PlayNamedAnimation(
+            animator,
+            animationName,
+            ResolveCounterReactionPlayerFallbackDuration(profile));
+
+        CombatCounterItemPresentation.PlayHeldItem(
+            this,
+            playerTransform,
+            item,
+            profile,
+            Mathf.Max(Mathf.Max(0.05f, totalDuration), animationDuration));
+        return animationDuration;
     }
 
     private float PlayEnemyBasicAttackAnimationLocally(
