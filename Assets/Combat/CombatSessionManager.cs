@@ -2218,6 +2218,11 @@ public class CombatSessionManager : NetworkBehaviour
             ResolveCombatResolutionDuration(session, playerVictory),
             message);
 
+        if (!playerVictory && (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId()))
+        {
+            CombatTransitionController.EnsureInstance().PlayGameOverResolutionMusic();
+        }
+
         PlayActionAudio(
             playerVictory ? ActionAudioCue.CombatVictory : ActionAudioCue.CombatDefeat,
             ResolveCombatAudioPosition(session, preferEnemy: playerVictory));
@@ -2312,6 +2317,10 @@ public class CombatSessionManager : NetworkBehaviour
         AudioManager.EnsureInstance()?.PlayActionCue(
             playerVictory ? ActionAudioCue.CombatVictory : ActionAudioCue.CombatDefeat,
             ResolveLocalCombatAudioPosition(playerVictory));
+        if (!playerVictory)
+        {
+            CombatTransitionController.EnsureInstance().PlayGameOverResolutionMusic();
+        }
 
         SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
         if (controller != null)

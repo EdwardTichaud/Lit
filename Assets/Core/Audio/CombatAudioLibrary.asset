@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: CombatAudioLibrary
   m_EditorClassIdentifier: Assembly-CSharp::CombatAudioLibrarySO
   combatMusic: {fileID: 11400000, guid: fda52e85c360437c8db75e6f495743f2, type: 2}
+  gameOverMusic: {fileID: 11400000, guid: 9072f3a81c7c4ad4b8609302f79dff2d, type: 2}
   enterTransition: {fileID: 11400000, guid: bd96090ec204455e871a47055fa94da1, type: 2}
   exitTransition: {fileID: 11400000, guid: 381ec7bdd3e44960bd2a2191dd56425b, type: 2}
   accent: {fileID: 11400000, guid: 9212d67e137c47dd88b3582e44323962, type: 2}

@@ -18,6 +18,7 @@ public enum CombatAudioCue
     EnterTransition = 2,
     ExitTransition = 3,
     Accent = 4,
+    GameOverMusic = 5,
 }
 
 /// <summary>
@@ -29,6 +30,8 @@ public class CombatAudioLibrarySO : ScriptableObject
     [Header("Music")]
     /// <summary>Music override used while combat is active or nearby.</summary>
     public AudioClipSO combatMusic;
+    /// <summary>Music override used during defeat resolution and Game Over.</summary>
+    public AudioClipSO gameOverMusic;
 
     [Header("Transition SFX")]
     /// <summary>Clip played when entering combat.</summary>
@@ -46,6 +49,7 @@ public class CombatAudioLibrarySO : ScriptableObject
         switch (cue)
         {
             case CombatAudioCue.CombatMusic: return combatMusic;
+            case CombatAudioCue.GameOverMusic: return gameOverMusic;
             case CombatAudioCue.EnterTransition: return enterTransition;
             case CombatAudioCue.ExitTransition: return exitTransition;
             case CombatAudioCue.Accent: return accent;

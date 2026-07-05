@@ -52,6 +52,7 @@ public sealed class CombatTransitionController : MonoBehaviour
     private Coroutine transitionRoutine;
     private Action pendingCoveredAction;
     private int musicOverrideToken;
+    private int gameOverMusicOverrideToken;
     private bool combatSessionMusicActive;
     private readonly HashSet<CombatAggroEnemy> proximityMusicOwners = new HashSet<CombatAggroEnemy>();
     private readonly List<CombatAggroEnemy> proximityMusicRemovalBuffer = new List<CombatAggroEnemy>();
@@ -91,6 +92,7 @@ public sealed class CombatTransitionController : MonoBehaviour
         AudioManager manager = AudioManager.EnsureInstance();
         manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.EnterTransition));
         manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.Accent));
+        ForceReleaseGameOverMusicOverride();
         combatSessionMusicActive = true;
         EnsureCombatMusicOverride(manager);
 
@@ -104,10 +106,26 @@ public sealed class CombatTransitionController : MonoBehaviour
     {
         AudioManager manager = AudioManager.EnsureInstance();
         manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.ExitTransition));
+        ForceReleaseGameOverMusicOverride();
         combatSessionMusicActive = false;
         ReleaseCombatMusicOverrideIfUnused();
 
         StartTransition(ExitRoutine, coveredAction);
+    }
+
+    /// <summary>
+    /// Remplace localement la musique de combat par la musique de Game Over pendant une defaite.
+    /// </summary>
+    public void PlayGameOverResolutionMusic()
+    {
+        if (gameOverMusicOverrideToken != 0)
+        {
+            return;
+        }
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        AudioClipSO musicClip = manager.ResolveCombatAudioClip(CombatAudioCue.GameOverMusic);
+        gameOverMusicOverrideToken = manager.PushMusicOverride(musicClip);
     }
 
     /// <summary>
@@ -157,6 +175,7 @@ public sealed class CombatTransitionController : MonoBehaviour
     {
         // Si l'objet est detruit pendant une transition, on execute quand meme l'action critique.
         InvokePendingCoveredAction();
+        ForceReleaseGameOverMusicOverride();
         ForceReleaseCombatMusicOverride();
         if (Instance == this)
         {
@@ -201,6 +220,18 @@ public sealed class CombatTransitionController : MonoBehaviour
 
         AudioManager.Instance.PopMusicOverride(musicOverrideToken);
         musicOverrideToken = 0;
+    }
+
+    private void ForceReleaseGameOverMusicOverride()
+    {
+        if (gameOverMusicOverrideToken == 0 || AudioManager.Instance == null)
+        {
+            gameOverMusicOverrideToken = 0;
+            return;
+        }
+
+        AudioManager.Instance.PopMusicOverride(gameOverMusicOverrideToken);
+        gameOverMusicOverrideToken = 0;
     }
 
     private void PruneProximityMusicOwners()

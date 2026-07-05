@@ -95,9 +95,11 @@ Editor-only et compilee seulement avec le define manuel
 GUIDs.
 La fin de combat n'est plus une sortie automatique immediatement apres la
 resolution : le perdant joue sa mort, le gagnant tente un taunt (`Taunt`,
-`Victory` ou `Celebrate`), puis un ecran runtime `VICTOIRE`/`GAME OVER` attend
-une validation manuelle du joueur avant de restaurer les positions, camera,
-mouvement et resultats monde.
+`Victory` ou `Celebrate`), puis les panels de scene `VictoryPanel` ou
+`DefeatPanel` attendent une validation manuelle du joueur avant de restaurer
+les positions, camera, mouvement et resultats monde.
+En cas de defaite, la resolution remplace aussi la musique de combat par une
+musique `Game Over` issue de `CombatAudioLibrary` jusqu'a la sortie manuelle.
 
 ## Contraintes
 

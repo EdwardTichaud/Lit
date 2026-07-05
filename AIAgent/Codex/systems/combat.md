@@ -67,9 +67,12 @@ résolution dans le monde.
    autorité et synchronise les clients.
 8. La resolution joue la mort du perdant puis un taunt du gagnant
    (`Taunt`, puis `Victory`/`Celebrate` en fallback si disponibles). Le HUD
-   affiche ensuite un ecran `VICTOIRE` ou `GAME OVER` et la sortie de combat ne
-   se fait qu'apres validation manuelle du joueur. Cette validation restaure
-   alors les positions, la camera et le mouvement, puis applique le resultat a
+   affiche ensuite le panel de scene `VictoryPanel` ou `DefeatPanel`; aucun
+   panel de resultat n'est cree en runtime. La sortie de combat ne se fait
+   qu'apres validation manuelle du joueur. En cas de defaite, la
+   musique de combat est remplacee par la musique `Game Over` configuree dans
+   `CombatAudioLibrary` jusqu'a cette sortie. Cette validation restaure alors
+   les positions, la camera et le mouvement, puis applique le resultat a
    l'ennemi monde.
 
 Pendant une session, la camera locale de combat est la seule source de pilotage
@@ -164,6 +167,8 @@ La musique de combat peut aussi être demandée localement par proximité d'un
 Cette demande reste cosmétique et utilise l'override musical de
 `CombatAudioLibrary` exposée par `AudioManager`; elle est relâchée avec
 hystérésis quand le joueur local sort assez loin du trigger d'aggro.
+La resolution de defaite empile un override musical `GameOverMusic` au-dessus
+de cette musique de combat, puis le relache pendant la transition de sortie.
 
 ## Pièges observés
 

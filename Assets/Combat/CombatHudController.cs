@@ -17,7 +17,8 @@ public class CombatHudController : MonoBehaviour
     private const string DefaultBaseAttackUiName = "BaseAttackUI";
     private const string DefaultCombatEngagedPanelName = "CombatEngagedPanel";
     private const string DefaultCombatScreenInfosPanelName = "CombatScreenInfosPanel";
-    private const string RuntimeCombatResultScreenName = "CombatResultScreen";
+    private const string DefaultVictoryPanelName = "VictoryPanel";
+    private const string DefaultDefeatPanelName = "DefeatPanel";
     private const string CombatEngagedAnimationName = "CombatEngagedPanel_Trigger";
     private const string EnemyAttackAlertText = "Attention l’ennemi attaque:";
 
@@ -81,6 +82,12 @@ public class CombatHudController : MonoBehaviour
     [SerializeField] private CanvasGroup baseAttackCanvasGroup;
     [SerializeField] private CanvasGroup combatEngagedCanvasGroup;
     [SerializeField] private CanvasGroup combatScreenInfosCanvasGroup;
+    [SerializeField] private CanvasGroup victoryPanelCanvasGroup;
+    [SerializeField] private CanvasGroup defeatPanelCanvasGroup;
+    [SerializeField] private TextMeshProUGUI victoryResultMessageText;
+    [SerializeField] private TextMeshProUGUI defeatResultMessageText;
+    [SerializeField] private Button victoryContinueButton;
+    [SerializeField] private Button defeatContinueButton;
     [SerializeField] private Animator combatEngagedAnimator;
     [SerializeField, Min(0.1f)] private float combatEngagedFallbackDuration = 1.2f;
     [SerializeField] private Image playerHpFillImage;
@@ -125,10 +132,9 @@ public class CombatHudController : MonoBehaviour
     private float combatEngagedIntroEndsAt;
     private bool combatEngagedAnimationObserved;
     private bool combatDefensePanelRequested;
-    private GameObject resultRoot;
-    private TextMeshProUGUI resultTitleText;
     private TextMeshProUGUI resultMessageText;
     private Button resultContinueButton;
+    private CanvasGroup activeResultPanelCanvasGroup;
     private bool combatResultVisible;
     private string combatResultSessionId;
 
@@ -184,6 +190,7 @@ public class CombatHudController : MonoBehaviour
         }
 
         BuildUi();
+        HideCombatResult();
         activeSessionId = sessionId;
         LocalPlayerInput.SetCombatInputActive(true);
         UpdateCombatInputFocus(true);
@@ -209,7 +216,8 @@ public class CombatHudController : MonoBehaviour
         combatDefensePanelRequested = false;
         combatEngagedIntroActive = false;
 
-        SetText(resultTitleText, playerVictory ? "VICTOIRE" : "GAME OVER");
+        resultMessageText = playerVictory ? victoryResultMessageText : defeatResultMessageText;
+        resultContinueButton = playerVictory ? victoryContinueButton : defeatContinueButton;
         SetText(resultMessageText, string.IsNullOrWhiteSpace(message)
             ? (playerVictory ? "Combat remporte." : "Combat perdu.")
             : message);
@@ -227,9 +235,25 @@ public class CombatHudController : MonoBehaviour
             root.SetActive(false);
         }
 
-        if (resultRoot != null)
+        SetCanvasGroupVisible(victoryPanelCanvasGroup, false, blocksRaycasts: false);
+        SetCanvasGroupVisible(defeatPanelCanvasGroup, false, blocksRaycasts: false);
+
+        CanvasGroup targetResultPanel = playerVictory ? victoryPanelCanvasGroup : defeatPanelCanvasGroup;
+        activeResultPanelCanvasGroup = targetResultPanel;
+        if (targetResultPanel != null)
         {
-            resultRoot.SetActive(true);
+            if (IsAncestorOf(battlePanelCanvasGroup, targetResultPanel))
+            {
+                SetCanvasGroupVisible(battlePanelCanvasGroup, true, blocksRaycasts: true);
+            }
+
+            SetCanvasGroupVisible(targetResultPanel, true, blocksRaycasts: true);
+        }
+        else
+        {
+            Debug.LogWarning(playerVictory
+                ? "[CombatHud] VictoryPanel introuvable dans la scene; aucun panel de victoire runtime ne sera cree."
+                : "[CombatHud] DefeatPanel introuvable dans la scene; aucun panel de defaite runtime ne sera cree.");
         }
 
         LocalPlayerInput.SetCombatInputActive(true);
@@ -252,6 +276,7 @@ public class CombatHudController : MonoBehaviour
         }
 
         BuildUi();
+        HideCombatResult();
     }
 
     private void OnDestroy()
@@ -273,12 +298,6 @@ public class CombatHudController : MonoBehaviour
             root = null;
         }
 
-        if (resultRoot != null)
-        {
-            Destroy(resultRoot);
-            resultRoot = null;
-        }
-
         if (Instance == this)
         {
             Instance = null;
@@ -293,6 +312,7 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.RightShoulder += OnRightShoulder;
         LocalInputRouter.Return += OnReturn;
         LocalInputRouter.CombatUseItem += OnCombatUseItem;
+        HideCombatResult();
         RefreshCombatPanelVisibility();
     }
 
@@ -686,6 +706,7 @@ public class CombatHudController : MonoBehaviour
             SetScenePanelVisibility(false, false);
             CombatDefensePanelController.HideActive();
             SetCombatEngagedVisible(false);
+            RefreshActiveResultPanelVisibility();
             return;
         }
 
@@ -923,83 +944,9 @@ public class CombatHudController : MonoBehaviour
 
     private void BuildResultUi()
     {
-        if (resultRoot != null)
-        {
-            return;
-        }
-
-        resultRoot = new GameObject(RuntimeCombatResultScreenName, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        DontDestroyOnLoad(resultRoot);
-
-        Canvas canvas = resultRoot.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 7000;
-
-        CanvasScaler scaler = resultRoot.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-
-        GameObject blocker = new GameObject("Blocker", typeof(RectTransform), typeof(Image));
-        blocker.transform.SetParent(resultRoot.transform, false);
-        RectTransform blockerRect = blocker.GetComponent<RectTransform>();
-        blockerRect.anchorMin = Vector2.zero;
-        blockerRect.anchorMax = Vector2.one;
-        blockerRect.offsetMin = Vector2.zero;
-        blockerRect.offsetMax = Vector2.zero;
-        blocker.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.58f);
-
-        GameObject panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup));
-        panel.transform.SetParent(resultRoot.transform, false);
-        RectTransform panelRect = panel.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRect.pivot = new Vector2(0.5f, 0.5f);
-        panelRect.anchoredPosition = Vector2.zero;
-        panelRect.sizeDelta = new Vector2(560f, 300f);
-
-        Image panelImage = panel.GetComponent<Image>();
-        panelImage.color = new Color(0.025f, 0.028f, 0.032f, 0.94f);
-
-        VerticalLayoutGroup layout = panel.GetComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(34, 34, 28, 28);
-        layout.spacing = 18f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlHeight = true;
-        layout.childControlWidth = true;
-        layout.childForceExpandHeight = false;
-        layout.childForceExpandWidth = true;
-
-        resultTitleText = CreateText(panel.transform, "Title", 46f, FontStyles.Bold);
-        resultTitleText.alignment = TextAlignmentOptions.Center;
-
-        resultMessageText = CreateText(panel.transform, "Message", 22f, FontStyles.Normal);
-        resultMessageText.alignment = TextAlignmentOptions.Center;
-
-        GameObject buttonObject = new GameObject("ContinueButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-        buttonObject.transform.SetParent(panel.transform, false);
-        RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-        buttonRect.sizeDelta = new Vector2(320f, 64f);
-        LayoutElement buttonLayout = buttonObject.GetComponent<LayoutElement>();
-        buttonLayout.preferredWidth = 320f;
-        buttonLayout.preferredHeight = 64f;
-
-        Image buttonImage = buttonObject.GetComponent<Image>();
-        buttonImage.color = new Color(0.84f, 0.78f, 0.62f, 0.94f);
-
-        resultContinueButton = buttonObject.GetComponent<Button>();
-        resultContinueButton.onClick.AddListener(RequestCombatResultContinue);
-
-        TextMeshProUGUI buttonText = CreateText(buttonObject.transform, "Text", 20f, FontStyles.Bold);
-        buttonText.alignment = TextAlignmentOptions.Center;
-        buttonText.color = new Color(0.08f, 0.075f, 0.065f, 1f);
-        buttonText.text = "Continuer";
-        RectTransform buttonTextRect = buttonText.GetComponent<RectTransform>();
-        buttonTextRect.anchorMin = Vector2.zero;
-        buttonTextRect.anchorMax = Vector2.one;
-        buttonTextRect.offsetMin = Vector2.zero;
-        buttonTextRect.offsetMax = Vector2.zero;
-
-        resultRoot.SetActive(false);
+        ResolveSceneResultPanelsIfNeeded();
+        SetCanvasGroupVisible(victoryPanelCanvasGroup, false, blocksRaycasts: false);
+        SetCanvasGroupVisible(defeatPanelCanvasGroup, false, blocksRaycasts: false);
     }
 
     private void HideCombatResult()
@@ -1011,10 +958,13 @@ public class CombatHudController : MonoBehaviour
             resultContinueButton.interactable = true;
         }
 
-        if (resultRoot != null)
-        {
-            resultRoot.SetActive(false);
-        }
+        ResolveSceneResultPanelsIfNeeded();
+        SetCanvasGroupVisible(activeResultPanelCanvasGroup, false, blocksRaycasts: false);
+        SetCanvasGroupVisible(victoryPanelCanvasGroup, false, blocksRaycasts: false);
+        SetCanvasGroupVisible(defeatPanelCanvasGroup, false, blocksRaycasts: false);
+        activeResultPanelCanvasGroup = null;
+        resultMessageText = null;
+        resultContinueButton = null;
     }
 
     private bool HasScenePanelUi()
@@ -1062,6 +1012,106 @@ public class CombatHudController : MonoBehaviour
         ResolveSceneImageIfNeeded(ref playerHpFillImage, "CombatPlayerHpFill");
         ResolveSceneImageIfNeeded(ref enemyHpFillImage, "CombatEnemyHpFill");
         ResolveSceneImageIfNeeded(ref timerFillImage, "CombatTimerFill");
+    }
+
+    private void ResolveSceneResultPanelsIfNeeded()
+    {
+        if (victoryPanelCanvasGroup == null)
+        {
+            victoryPanelCanvasGroup = FindCanvasGroupByName(DefaultVictoryPanelName);
+        }
+
+        if (defeatPanelCanvasGroup == null)
+        {
+            defeatPanelCanvasGroup = FindCanvasGroupByName(DefaultDefeatPanelName);
+        }
+
+        if (victoryResultMessageText == null)
+        {
+            victoryResultMessageText = FindResultMessageText(victoryPanelCanvasGroup, DefaultVictoryPanelName);
+        }
+
+        if (defeatResultMessageText == null)
+        {
+            defeatResultMessageText = FindResultMessageText(defeatPanelCanvasGroup, DefaultDefeatPanelName);
+        }
+
+        if (victoryContinueButton == null)
+        {
+            victoryContinueButton = FindResultContinueButton(victoryPanelCanvasGroup);
+        }
+
+        if (defeatContinueButton == null)
+        {
+            defeatContinueButton = FindResultContinueButton(defeatPanelCanvasGroup);
+        }
+
+        RegisterResultContinueButton(victoryContinueButton);
+        RegisterResultContinueButton(defeatContinueButton);
+    }
+
+    private void RefreshActiveResultPanelVisibility()
+    {
+        if (activeResultPanelCanvasGroup == null)
+        {
+            return;
+        }
+
+        if (IsAncestorOf(battlePanelCanvasGroup, activeResultPanelCanvasGroup))
+        {
+            SetCanvasGroupVisible(battlePanelCanvasGroup, true, blocksRaycasts: true);
+        }
+
+        SetCanvasGroupVisible(activeResultPanelCanvasGroup, true, blocksRaycasts: true);
+    }
+
+    private static TextMeshProUGUI FindResultMessageText(CanvasGroup panel, string panelName)
+    {
+        if (panel == null)
+        {
+            return null;
+        }
+
+        TextMeshProUGUI[] texts = panel.GetComponentsInChildren<TextMeshProUGUI>(true);
+        if (texts == null)
+        {
+            return null;
+        }
+
+        string panelMessageName = panelName + "_Message";
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TextMeshProUGUI text = texts[i];
+            if (text == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(text.name, "CombatResultMessageText", System.StringComparison.Ordinal)
+                || string.Equals(text.name, "ResultMessageText", System.StringComparison.Ordinal)
+                || string.Equals(text.name, panelMessageName, System.StringComparison.Ordinal))
+            {
+                return text;
+            }
+        }
+
+        return null;
+    }
+
+    private static Button FindResultContinueButton(CanvasGroup panel)
+    {
+        return panel != null ? panel.GetComponentInChildren<Button>(true) : null;
+    }
+
+    private void RegisterResultContinueButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveListener(RequestCombatResultContinue);
+        button.onClick.AddListener(RequestCombatResultContinue);
     }
 
     private void SetScenePanelVisibility(bool battleVisible, bool baseAttackVisible)
