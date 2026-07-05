@@ -533,6 +533,22 @@ public class SquadManager : MonoBehaviour
         pendingSkillLookup = skillLookup;
     }
 
+    public void ApplyPendingLoadDataNow()
+    {
+        if (pendingLoadData == null)
+        {
+            return;
+        }
+
+        ApplyPendingRoster();
+        EnsureRuntimeSquad();
+        ApplyPendingCharacterStates();
+        if (IsMultiplayerActive())
+        {
+            RefreshNetworkCharacters();
+        }
+    }
+
     public List<CharacterData> GetKnownCharacters()
     {
         List<CharacterData> list = new List<CharacterData>();

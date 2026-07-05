@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Role: autorite principale des sessions de combat tour par tour.
 // Usage: singleton scene/runtime appele par CombatAggroEnemy, CombatHudController, items et idoles Iustia.
@@ -41,6 +42,9 @@ public class CombatSessionManager : NetworkBehaviour
     private const float DefaultCounterReactionImpactDelaySeconds = 0.32f;
     private const float DefaultCounterReactionSlowTimeScale = 0.2f;
     private const float DefaultCounterReactionSlowSeconds = 0.5f;
+    private const string ReturnToMainMenuLoadingMessage = "Retour au menu principal...";
+    private const string RetryCombatMessage = "Combat relance.";
+    private const string ReloadCheckpointLoadingMessage = "Retour au dernier checkpoint...";
     private static readonly string[] DeathAnimationCandidates = { "Death", "Death_v1", "Death_v2" };
     private static readonly string[] TauntAnimationCandidates = { "Taunt", "Victory", "Celebrate" };
     private static readonly string[] RangedAttackNameHints =
@@ -144,6 +148,21 @@ public class CombatSessionManager : NetworkBehaviour
         public bool ResolutionResultReady;
         /// <summary>Message final conserve jusqu'a la validation manuelle.</summary>
         public string ResolutionResultMessage;
+        /// <summary>Snapshot runtime pris juste avant l'entree en combat pour un retry exact.</summary>
+        public CombatRetrySnapshot RetrySnapshot;
+    }
+
+    /// <summary>
+    /// Etat en memoire permettant de rejouer une defaite depuis le vrai debut du combat.
+    /// </summary>
+    private sealed class CombatRetrySnapshot
+    {
+        public CharacterSaveData CharacterState;
+        public WorldSnapshot WorldState;
+        public int PlayerHp;
+        public int PlayerMaxHp;
+
+        public bool HasAnyState => CharacterState != null || WorldState != null || PlayerMaxHp > 0;
     }
 
     /// <summary>
@@ -335,6 +354,11 @@ public class CombatSessionManager : NetworkBehaviour
     /// </summary>
     [SerializeField, Tooltip("Spawn point scene de l'ennemi pour les combats. Si vide, cherche 'Arena/SpawnPoint_Enemy'.")]
     private Transform spawnPointEnemy;
+    /// <summary>
+    /// Prefab optionnel instancie a mi-chemin entre le joueur et l'ennemi avant la teleportation d'entree en combat.
+    /// </summary>
+    [Tooltip("Prefab instancie a mi-chemin entre le joueur et l'ennemi juste avant la teleportation d'entree en combat.")]
+    public GameObject combatEntryMidpointPrefab;
 
     [Header("Idoles de Iustia")]
     /// <summary>
@@ -354,8 +378,10 @@ public class CombatSessionManager : NetworkBehaviour
     private readonly List<CombatSession> tickSessions = new List<CombatSession>();
     private readonly HashSet<string> locallySuppressedSessions = new HashSet<string>();
     private readonly Dictionary<string, LocalEnemyPresentation> localEnemyPresentationsBySessionId = new Dictionary<string, LocalEnemyPresentation>();
+    private readonly Dictionary<string, GameObject> combatEntryMidpointInstancesBySessionId = new Dictionary<string, GameObject>();
     private readonly Dictionary<Transform, Coroutine> actionPresentationCoroutinesByActor = new Dictionary<Transform, Coroutine>();
     private readonly LocalCombatPresentationState localCombatPresentation = new LocalCombatPresentationState();
+    private readonly SnapshotSerializer retrySnapshotSerializer = new SnapshotSerializer();
     private int nextSessionId = 1;
 
     /// <summary>
@@ -589,6 +615,7 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
+        CombatRetrySnapshot retrySnapshot = CaptureCombatRetrySnapshot(player);
         StopPrayer(ownerClientId, sendFeedback: false);
 
         // Les positions de combat peuvent venir de l'arene configuree ou de fallbacks proches du combat.
@@ -615,11 +642,14 @@ public class CombatSessionManager : NetworkBehaviour
             EnemyCombatPosition = enemyCombatPosition,
             EnemyCombatRotation = enemyCombatRotation,
             HasEnemyPresentation = sourceEnemy != null,
-            Enemies = enemies
+            Enemies = enemies,
+            RetrySnapshot = retrySnapshot
         };
 
         sessionsByCharacterId[characterId] = session;
         sessionsByClientId[ownerClientId] = session;
+
+        SendCombatEntryMidpointPresentation(session);
 
         // Le mouvement est bloque pendant la session pour eviter que le joueur sorte de la presentation.
         player.PushScriptedMovementSuppression();
@@ -632,6 +662,86 @@ public class CombatSessionManager : NetworkBehaviour
         SendEnterCombat(session);
         BeginTurn(session, CombatTurn.Enemy, EnemyAttackWarningMessage);
         return true;
+    }
+
+    private void SendCombatEntryMidpointPresentation(CombatSession session)
+    {
+        if (session?.Player == null || !session.HasEnemyPresentation)
+        {
+            return;
+        }
+
+        SendCombatEntryMidpointPresentation(
+            session.SessionId,
+            session.Player.transform.position,
+            session.EnemyReturnPosition);
+    }
+
+    private void SendCombatEntryMidpointPresentation(string sessionId, Vector3 playerPosition, Vector3 enemyPosition)
+    {
+        if (combatEntryMidpointPrefab == null || string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            SpawnCombatEntryMidpointPrefabClientRpc(sessionId, playerPosition, enemyPosition);
+            return;
+        }
+
+        SpawnCombatEntryMidpointPrefab(sessionId, playerPosition, enemyPosition);
+    }
+
+    private void DestroyCombatEntryMidpointPresentation(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            DestroyCombatEntryMidpointPrefabClientRpc(sessionId);
+            return;
+        }
+
+        DestroyCombatEntryMidpointInstance(sessionId);
+    }
+
+    private void SpawnCombatEntryMidpointPrefab(string sessionId, Vector3 playerPosition, Vector3 enemyPosition)
+    {
+        if (combatEntryMidpointPrefab == null || string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        DestroyCombatEntryMidpointInstance(sessionId);
+
+        Vector3 midpoint = (playerPosition + enemyPosition) * 0.5f;
+        Vector3 direction = enemyPosition - playerPosition;
+        direction.y = 0f;
+
+        Quaternion rotation = direction.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(direction.normalized, Vector3.up)
+            : Quaternion.identity;
+
+        combatEntryMidpointInstancesBySessionId[sessionId] = Instantiate(combatEntryMidpointPrefab, midpoint, rotation);
+    }
+
+    private void DestroyCombatEntryMidpointInstance(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) ||
+            !combatEntryMidpointInstancesBySessionId.TryGetValue(sessionId, out GameObject instance))
+        {
+            return;
+        }
+
+        combatEntryMidpointInstancesBySessionId.Remove(sessionId);
+        if (instance != null)
+        {
+            Destroy(instance);
+        }
     }
 
     /// <summary>
@@ -706,14 +816,85 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        if (!sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) ||
-            session == null ||
-            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        if (!TryGetCombatResultSession(ResolveLocalClientId(), sessionId, requireDefeat: false, out CombatSession session) ||
+            !session.State.ResolutionPlayerVictory)
         {
             return;
         }
 
         CompleteCombatResultExit(session);
+    }
+
+    /// <summary>
+    /// Demande un retour au menu principal depuis l'ecran de defaite.
+    /// </summary>
+    public void RequestLocalCombatResultReturnToMainMenu(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestCombatResultMainMenuServerRpc(sessionId);
+            return;
+        }
+
+        if (!TryGetCombatResultSession(ResolveLocalClientId(), sessionId, requireDefeat: true, out CombatSession session))
+        {
+            return;
+        }
+
+        CompleteCombatResultReturnToMainMenu(session);
+    }
+
+    /// <summary>
+    /// Demande de rejouer immediatement le combat perdu.
+    /// </summary>
+    public void RequestLocalCombatResultRetry(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestCombatResultRetryServerRpc(sessionId);
+            return;
+        }
+
+        if (!TryGetCombatResultSession(ResolveLocalClientId(), sessionId, requireDefeat: true, out CombatSession session))
+        {
+            return;
+        }
+
+        RetryCombatResult(session);
+    }
+
+    /// <summary>
+    /// Demande un retour au dernier checkpoint depuis l'ecran de defaite.
+    /// </summary>
+    public void RequestLocalCombatResultLastCheckpoint(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestCombatResultCheckpointServerRpc(sessionId);
+            return;
+        }
+
+        if (!TryGetCombatResultSession(ResolveLocalClientId(), sessionId, requireDefeat: true, out CombatSession session))
+        {
+            return;
+        }
+
+        CompleteCombatResultReloadCheckpoint(session);
     }
 
     /// <summary>
@@ -1004,15 +1185,46 @@ public class CombatSessionManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestCombatResultContinueServerRpc(string sessionId, ServerRpcParams rpcParams = default)
     {
-        if (string.IsNullOrWhiteSpace(sessionId) ||
-            !sessionsByClientId.TryGetValue(rpcParams.Receive.SenderClientId, out CombatSession session) ||
-            session == null ||
-            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        if (!TryGetCombatResultSession(rpcParams.Receive.SenderClientId, sessionId, requireDefeat: false, out CombatSession session) ||
+            !session.State.ResolutionPlayerVictory)
         {
             return;
         }
 
         CompleteCombatResultExit(session);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCombatResultMainMenuServerRpc(string sessionId, ServerRpcParams rpcParams = default)
+    {
+        if (!TryGetCombatResultSession(rpcParams.Receive.SenderClientId, sessionId, requireDefeat: true, out CombatSession session))
+        {
+            return;
+        }
+
+        CompleteCombatResultReturnToMainMenu(session);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCombatResultRetryServerRpc(string sessionId, ServerRpcParams rpcParams = default)
+    {
+        if (!TryGetCombatResultSession(rpcParams.Receive.SenderClientId, sessionId, requireDefeat: true, out CombatSession session))
+        {
+            return;
+        }
+
+        RetryCombatResult(session);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCombatResultCheckpointServerRpc(string sessionId, ServerRpcParams rpcParams = default)
+    {
+        if (!TryGetCombatResultSession(rpcParams.Receive.SenderClientId, sessionId, requireDefeat: true, out CombatSession session))
+        {
+            return;
+        }
+
+        CompleteCombatResultReloadCheckpoint(session);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -1044,6 +1256,22 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         TryResolveCombatAnimationImpact(session);
+    }
+
+    [ClientRpc]
+    private void SpawnCombatEntryMidpointPrefabClientRpc(
+        string sessionId,
+        Vector3 playerPosition,
+        Vector3 enemyPosition,
+        ClientRpcParams rpcParams = default)
+    {
+        SpawnCombatEntryMidpointPrefab(sessionId, playerPosition, enemyPosition);
+    }
+
+    [ClientRpc]
+    private void DestroyCombatEntryMidpointPrefabClientRpc(string sessionId, ClientRpcParams rpcParams = default)
+    {
+        DestroyCombatEntryMidpointInstance(sessionId);
     }
 
     [ClientRpc]
@@ -2284,6 +2512,282 @@ public class CombatSessionManager : NetworkBehaviour
         EndCombat(session, session.State.ResolutionPlayerVictory, resultMessage, notifyClient: true);
     }
 
+    private bool TryGetCombatResultSession(
+        ulong clientId,
+        string sessionId,
+        bool requireDefeat,
+        out CombatSession session)
+    {
+        session = null;
+        if (string.IsNullOrWhiteSpace(sessionId) ||
+            !sessionsByClientId.TryGetValue(clientId, out CombatSession candidate) ||
+            candidate == null ||
+            !string.Equals(candidate.SessionId, sessionId, StringComparison.Ordinal) ||
+            candidate.State.Finished ||
+            !candidate.State.Resolving ||
+            !candidate.ResolutionResultReady ||
+            (requireDefeat && candidate.State.ResolutionPlayerVictory))
+        {
+            return false;
+        }
+
+        session = candidate;
+        return true;
+    }
+
+    private void CompleteCombatResultReturnToMainMenu(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        SuppressNextCharacterAutoSave("combat_defeat_main_menu");
+        CompleteCombatResultExit(session);
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        LoadingScreenService.LoadScene(
+            MainMenuController.DefaultMenuSceneName,
+            ReturnToMainMenuLoadingMessage,
+            LoadSceneMode.Single);
+    }
+
+    private void CompleteCombatResultReloadCheckpoint(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        string targetSceneName = ResolveActiveSaveSceneName();
+        if (string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            targetSceneName = SceneManager.GetActiveScene().name;
+        }
+
+        SuppressNextCharacterAutoSave("combat_defeat_checkpoint");
+        CompleteCombatResultExit(session);
+        LoadingScreenService.LoadScene(targetSceneName, ReloadCheckpointLoadingMessage, LoadSceneMode.Single);
+    }
+
+    private void RetryCombatResult(CombatSession session)
+    {
+        if (session == null ||
+            session.State.Finished ||
+            !session.State.Resolving ||
+            !session.ResolutionResultReady ||
+            session.State.ResolutionPlayerVictory)
+        {
+            return;
+        }
+
+        StopCombatActionPresentations(session);
+        ClearPendingEnemyAttack(session);
+        ClearPendingDefensiveItem(session);
+        ClearPendingPlayerAction(session);
+        ClearPendingEnemyAction(session);
+        ClearPendingEncounterReaction(session);
+        ReleaseSessionMovementSuppression(session);
+        RestorePreCombatRetrySnapshot(session);
+
+        session.ResolutionResultReady = false;
+        session.ResolutionResultMessage = null;
+        session.State = new CombatSessionState();
+
+        SendCombatEntryMidpointPresentation(session);
+
+        if (session.Player != null)
+        {
+            session.Player.PushScriptedMovementSuppression();
+            session.SuppressedMovement = true;
+            RestoreRetryPlayerHealth(session);
+            session.Player.Stop();
+            MoveCharacterTo(session.Player, session.PlayerCombatPosition, session.PlayerCombatRotation);
+        }
+
+        List<CombatRuntimeEnemy> restoredEnemies = BuildRuntimeEnemies(session.SourceEnemy);
+        if (restoredEnemies.Count > 0)
+        {
+            session.Enemies = restoredEnemies;
+        }
+        else if (session.Enemies != null)
+        {
+            for (int i = 0; i < session.Enemies.Count; i++)
+            {
+                session.Enemies[i]?.RestoreForRetry();
+            }
+        }
+
+        if (session.SourceEnemy != null && session.HasEnemyPresentation)
+        {
+            MoveCombatAggroEnemyTo(session.SourceEnemy, session.EnemyCombatPosition, session.EnemyCombatRotation);
+        }
+
+        SendEnterCombat(session);
+        BeginTurn(session, CombatTurn.Enemy, RetryCombatMessage);
+    }
+
+    private CombatRetrySnapshot CaptureCombatRetrySnapshot(SquadCharacterController player)
+    {
+        CombatRetrySnapshot snapshot = new CombatRetrySnapshot
+        {
+            PlayerHp = player != null ? player.CurrentHp : 0,
+            PlayerMaxHp = player != null ? player.MaxHp : 0
+        };
+
+        CharacterStateStore store = CharacterStateStore.Instance;
+        if (store != null)
+        {
+            snapshot.CharacterState = store.CaptureRuntimeState("combat_retry_precombat_character");
+        }
+
+        snapshot.WorldState = CaptureWorldRetrySnapshot("combat_retry_precombat_world");
+        return snapshot.HasAnyState ? snapshot : null;
+    }
+
+    private WorldSnapshot CaptureWorldRetrySnapshot(string reason)
+    {
+#if UNITY_2023_1_OR_NEWER
+        WorldStateManager worldStateManager = FindAnyObjectByType<WorldStateManager>();
+#else
+        WorldStateManager worldStateManager = FindAnyObjectByType<WorldStateManager>();
+#endif
+        if (worldStateManager == null)
+        {
+            return null;
+        }
+
+        WorldSnapshot snapshot = worldStateManager.CaptureSnapshot(reason);
+        return CloneWorldSnapshot(snapshot);
+    }
+
+    private bool RestorePreCombatRetrySnapshot(CombatSession session)
+    {
+        CombatRetrySnapshot snapshot = session?.RetrySnapshot;
+        if (snapshot == null)
+        {
+            return false;
+        }
+
+        bool worldRestored = RestoreWorldRetrySnapshot(snapshot.WorldState);
+        CharacterStateStore store = CharacterStateStore.Instance;
+        bool characterRestored = store != null &&
+                                 store.RestoreRuntimeState(
+                                     snapshot.CharacterState,
+                                     worldRestored,
+                                     "combat_retry_restore_character");
+        RefreshSessionPlayerAfterRetryRestore(session);
+        return worldRestored || characterRestored;
+    }
+
+    private bool RestoreWorldRetrySnapshot(WorldSnapshot snapshot)
+    {
+        WorldSnapshot clone = CloneWorldSnapshot(snapshot);
+        if (clone == null)
+        {
+            return false;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
+#else
+        WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
+#endif
+        if (adapter != null)
+        {
+            return adapter.ApplyWorldSnapshot(clone, serverSideLoad: true, restoreReason: "combat_retry_restore_world");
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        WorldStateManager worldStateManager = FindAnyObjectByType<WorldStateManager>();
+#else
+        WorldStateManager worldStateManager = FindAnyObjectByType<WorldStateManager>();
+#endif
+        return worldStateManager != null && worldStateManager.ApplySnapshot(clone, serverSideLoad: true);
+    }
+
+    private WorldSnapshot CloneWorldSnapshot(WorldSnapshot snapshot)
+    {
+        if (snapshot == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            byte[] bytes = retrySnapshotSerializer.Serialize(snapshot);
+            return retrySnapshotSerializer.Deserialize(bytes);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"CombatSessionManager: impossible de cloner le snapshot de retry. {ex.Message}", this);
+            return null;
+        }
+    }
+
+    private void RefreshSessionPlayerAfterRetryRestore(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        SquadCharacterController resolved = ResolveControllerForClient(session.OwnerClientId);
+        if (resolved == null)
+        {
+            return;
+        }
+
+        string resolvedCharacterId = ResolveCharacterId(resolved);
+        if (string.IsNullOrWhiteSpace(session.CharacterId) ||
+            string.Equals(resolvedCharacterId, session.CharacterId, StringComparison.Ordinal))
+        {
+            session.Player = resolved;
+        }
+    }
+
+    private static void ReleaseSessionMovementSuppression(CombatSession session)
+    {
+        if (session?.Player == null || !session.SuppressedMovement)
+        {
+            return;
+        }
+
+        session.Player.PopScriptedMovementSuppression();
+        session.SuppressedMovement = false;
+    }
+
+    private static void RestoreRetryPlayerHealth(CombatSession session)
+    {
+        CombatRetrySnapshot snapshot = session?.RetrySnapshot;
+        if (session?.Player == null)
+        {
+            return;
+        }
+
+        int maxHp = snapshot != null && snapshot.PlayerMaxHp > 0
+            ? snapshot.PlayerMaxHp
+            : session.Player.MaxHp;
+        int currentHp = snapshot != null
+            ? Mathf.Clamp(snapshot.PlayerHp, 1, maxHp)
+            : maxHp;
+        session.Player.SetHealth(currentHp, maxHp);
+    }
+
+    private static void SuppressNextCharacterAutoSave(string reason)
+    {
+        CharacterStateStore.Instance?.SuppressNextAutomaticSave(reason);
+    }
+
+    private static string ResolveActiveSaveSceneName()
+    {
+        SaveSessionManager saveSession = SaveSessionManager.Instance;
+        return saveSession != null ? saveSession.GetActiveSaveSceneName() : null;
+    }
+
     private void BeginEncounterPlayerDeath(CombatSession session, string message)
     {
         if (session?.Player != null && session.Player.CurrentHp > 0)
@@ -2379,6 +2883,7 @@ public class CombatSessionManager : NetworkBehaviour
         StopCombatActionPresentations(session);
         session.State.Finish();
         SendSnapshot(session, message);
+        DestroyCombatEntryMidpointPresentation(session.SessionId);
 
         int playerHp = session.Player != null ? session.Player.CurrentHp : 0;
         int playerMaxHp = session.Player != null ? session.Player.MaxHp : 1;

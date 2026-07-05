@@ -20,6 +20,9 @@ public class CombatHudController : MonoBehaviour
     private const string DefaultVictoryPanelName = "VictoryPanel";
     private const string DefaultDefeatPanelName = "DefeatPanel";
     private const string CombatEngagedAnimationName = "CombatEngagedPanel_Trigger";
+    private static readonly string[] DefeatMainMenuButtonHints = { "mainmenu", "main menu", "menuprincipal", "menu principal", "menu" };
+    private static readonly string[] DefeatRetryButtonHints = { "retry", "reessayer", "réessayer", "recommencer", "relancer" };
+    private static readonly string[] DefeatCheckpointButtonHints = { "checkpoint", "derniercheckpoint", "dernier checkpoint" };
     private const string EnemyAttackAlertText = "Attention l’ennemi attaque:";
 
     /// <summary>
@@ -88,6 +91,9 @@ public class CombatHudController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI defeatResultMessageText;
     [SerializeField] private Button victoryContinueButton;
     [SerializeField] private Button defeatContinueButton;
+    [SerializeField] private Button defeatMainMenuButton;
+    [SerializeField] private Button defeatRetryButton;
+    [SerializeField] private Button defeatCheckpointButton;
     [SerializeField] private Animator combatEngagedAnimator;
     [SerializeField, Min(0.1f)] private float combatEngagedFallbackDuration = 1.2f;
     [SerializeField] private Image playerHpFillImage;
@@ -136,6 +142,7 @@ public class CombatHudController : MonoBehaviour
     private Button resultContinueButton;
     private CanvasGroup activeResultPanelCanvasGroup;
     private bool combatResultVisible;
+    private bool combatResultPlayerVictory;
     private string combatResultSessionId;
 
     /// <summary>
@@ -211,21 +218,25 @@ public class CombatHudController : MonoBehaviour
         activeSessionId = sessionId;
         combatResultSessionId = sessionId;
         combatResultVisible = true;
+        combatResultPlayerVictory = playerVictory;
         visible = false;
         playerActionLocked = true;
         combatDefensePanelRequested = false;
         combatEngagedIntroActive = false;
 
-        resultMessageText = playerVictory ? victoryResultMessageText : defeatResultMessageText;
-        resultContinueButton = playerVictory ? victoryContinueButton : defeatContinueButton;
-        SetText(resultMessageText, string.IsNullOrWhiteSpace(message)
-            ? (playerVictory ? "Combat remporte." : "Combat perdu.")
-            : message);
+        resultMessageText = playerVictory ? victoryResultMessageText : null;
+        resultContinueButton = playerVictory ? victoryContinueButton : null;
+        if (playerVictory)
+        {
+            SetText(resultMessageText, string.IsNullOrWhiteSpace(message) ? "Combat remporte." : message);
+        }
 
         if (resultContinueButton != null)
         {
             resultContinueButton.interactable = true;
         }
+
+        SetDefeatChoiceButtonsInteractable(!playerVictory);
 
         SetScenePanelVisibility(false, false);
         CombatDefensePanelController.HideActive();
@@ -448,7 +459,11 @@ public class CombatHudController : MonoBehaviour
         if (combatResultVisible)
         {
             LocalInputRouter.ConsumeInteract();
-            RequestCombatResultContinue();
+            if (combatResultPlayerVictory)
+            {
+                RequestCombatResultContinue();
+            }
+
             return;
         }
 
@@ -488,7 +503,11 @@ public class CombatHudController : MonoBehaviour
     {
         if (combatResultVisible)
         {
-            RequestCombatResultContinue();
+            if (combatResultPlayerVictory)
+            {
+                RequestCombatResultContinue();
+            }
+
             return;
         }
 
@@ -513,12 +532,15 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        RequestCombatResultContinue();
+        if (combatResultPlayerVictory)
+        {
+            RequestCombatResultContinue();
+        }
     }
 
     private void RequestCombatResultContinue()
     {
-        if (!combatResultVisible || string.IsNullOrWhiteSpace(combatResultSessionId))
+        if (!combatResultVisible || !combatResultPlayerVictory || string.IsNullOrWhiteSpace(combatResultSessionId))
         {
             return;
         }
@@ -529,6 +551,44 @@ public class CombatHudController : MonoBehaviour
         }
 
         CombatSessionManager.Instance?.RequestLocalCombatResultContinue(combatResultSessionId);
+    }
+
+    private void RequestCombatResultReturnToMainMenu()
+    {
+        if (!CanRequestDefeatChoice())
+        {
+            return;
+        }
+
+        SetDefeatChoiceButtonsInteractable(false);
+        CombatSessionManager.Instance?.RequestLocalCombatResultReturnToMainMenu(combatResultSessionId);
+    }
+
+    private void RequestCombatResultRetry()
+    {
+        if (!CanRequestDefeatChoice())
+        {
+            return;
+        }
+
+        SetDefeatChoiceButtonsInteractable(false);
+        CombatSessionManager.Instance?.RequestLocalCombatResultRetry(combatResultSessionId);
+    }
+
+    private void RequestCombatResultLastCheckpoint()
+    {
+        if (!CanRequestDefeatChoice())
+        {
+            return;
+        }
+
+        SetDefeatChoiceButtonsInteractable(false);
+        CombatSessionManager.Instance?.RequestLocalCombatResultLastCheckpoint(combatResultSessionId);
+    }
+
+    private bool CanRequestDefeatChoice()
+    {
+        return combatResultVisible && !combatResultPlayerVictory && !string.IsNullOrWhiteSpace(combatResultSessionId);
     }
 
     private bool CanSendPlayerAction()
@@ -952,12 +1012,14 @@ public class CombatHudController : MonoBehaviour
     private void HideCombatResult()
     {
         combatResultVisible = false;
+        combatResultPlayerVictory = false;
         combatResultSessionId = null;
         if (resultContinueButton != null)
         {
             resultContinueButton.interactable = true;
         }
 
+        SetDefeatChoiceButtonsInteractable(true);
         ResolveSceneResultPanelsIfNeeded();
         SetCanvasGroupVisible(activeResultPanelCanvasGroup, false, blocksRaycasts: false);
         SetCanvasGroupVisible(victoryPanelCanvasGroup, false, blocksRaycasts: false);
@@ -1046,8 +1108,12 @@ public class CombatHudController : MonoBehaviour
             defeatContinueButton = FindResultContinueButton(defeatPanelCanvasGroup);
         }
 
+        ResolveDefeatChoiceButtonsIfNeeded();
         RegisterResultContinueButton(victoryContinueButton);
-        RegisterResultContinueButton(defeatContinueButton);
+        UnregisterResultContinueButton(defeatContinueButton);
+        RegisterButton(defeatMainMenuButton, RequestCombatResultReturnToMainMenu);
+        RegisterButton(defeatRetryButton, RequestCombatResultRetry);
+        RegisterButton(defeatCheckpointButton, RequestCombatResultLastCheckpoint);
     }
 
     private void RefreshActiveResultPanelVisibility()
@@ -1103,7 +1169,142 @@ public class CombatHudController : MonoBehaviour
         return panel != null ? panel.GetComponentInChildren<Button>(true) : null;
     }
 
+    private void ResolveDefeatChoiceButtonsIfNeeded()
+    {
+        if (defeatPanelCanvasGroup == null)
+        {
+            return;
+        }
+
+        Button[] buttons = defeatPanelCanvasGroup.GetComponentsInChildren<Button>(true);
+        if (buttons == null || buttons.Length == 0)
+        {
+            return;
+        }
+
+        if (defeatMainMenuButton == null)
+        {
+            defeatMainMenuButton = FindButtonByHints(buttons, DefeatMainMenuButtonHints);
+        }
+
+        if (defeatRetryButton == null)
+        {
+            defeatRetryButton = FindButtonByHints(buttons, DefeatRetryButtonHints);
+        }
+
+        if (defeatCheckpointButton == null)
+        {
+            defeatCheckpointButton = FindButtonByHints(buttons, DefeatCheckpointButtonHints);
+        }
+
+        AssignMissingDefeatButtonsByOrder(buttons);
+    }
+
+    private void AssignMissingDefeatButtonsByOrder(Button[] buttons)
+    {
+        int nextIndex = 0;
+        if (defeatMainMenuButton == null)
+        {
+            defeatMainMenuButton = FindNextUnassignedButton(buttons, ref nextIndex);
+        }
+
+        if (defeatRetryButton == null)
+        {
+            defeatRetryButton = FindNextUnassignedButton(buttons, ref nextIndex);
+        }
+
+        if (defeatCheckpointButton == null)
+        {
+            defeatCheckpointButton = FindNextUnassignedButton(buttons, ref nextIndex);
+        }
+    }
+
+    private Button FindNextUnassignedButton(Button[] buttons, ref int startIndex)
+    {
+        if (buttons == null)
+        {
+            return null;
+        }
+
+        for (int i = Mathf.Max(0, startIndex); i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+            if (button == null ||
+                button == defeatMainMenuButton ||
+                button == defeatRetryButton ||
+                button == defeatCheckpointButton)
+            {
+                continue;
+            }
+
+            startIndex = i + 1;
+            return button;
+        }
+
+        return null;
+    }
+
+    private static Button FindButtonByHints(Button[] buttons, string[] hints)
+    {
+        if (buttons == null || hints == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+            if (ButtonMatchesHints(button, hints))
+            {
+                return button;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool ButtonMatchesHints(Button button, string[] hints)
+    {
+        if (button == null || hints == null)
+        {
+            return false;
+        }
+
+        if (TextMatchesHints(button.name, hints))
+        {
+            return true;
+        }
+
+        TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+        return label != null && TextMatchesHints(label.text, hints);
+    }
+
+    private static bool TextMatchesHints(string value, string[] hints)
+    {
+        if (string.IsNullOrWhiteSpace(value) || hints == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < hints.Length; i++)
+        {
+            string hint = hints[i];
+            if (!string.IsNullOrWhiteSpace(hint) &&
+                value.IndexOf(hint, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void RegisterResultContinueButton(Button button)
+    {
+        RegisterButton(button, RequestCombatResultContinue);
+    }
+
+    private void UnregisterResultContinueButton(Button button)
     {
         if (button == null)
         {
@@ -1111,7 +1312,33 @@ public class CombatHudController : MonoBehaviour
         }
 
         button.onClick.RemoveListener(RequestCombatResultContinue);
-        button.onClick.AddListener(RequestCombatResultContinue);
+    }
+
+    private static void RegisterButton(Button button, UnityEngine.Events.UnityAction callback)
+    {
+        if (button == null || callback == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveListener(callback);
+        button.onClick.AddListener(callback);
+    }
+
+    private void SetDefeatChoiceButtonsInteractable(bool interactable)
+    {
+        ResolveDefeatChoiceButtonsIfNeeded();
+        SetButtonInteractable(defeatMainMenuButton, interactable);
+        SetButtonInteractable(defeatRetryButton, interactable);
+        SetButtonInteractable(defeatCheckpointButton, interactable);
+    }
+
+    private static void SetButtonInteractable(Button button, bool interactable)
+    {
+        if (button != null)
+        {
+            button.interactable = interactable;
+        }
     }
 
     private void SetScenePanelVisibility(bool battleVisible, bool baseAttackVisible)

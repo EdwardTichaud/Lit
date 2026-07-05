@@ -55,6 +55,8 @@ public class CharacterStateStore : MonoBehaviour
     private CharacterSaveData loadedData;
     private readonly Dictionary<string, string> playerBindings = new Dictionary<string, string>();
     private Coroutine screenshotRoutine;
+    private bool suppressNextAutomaticSave;
+    private string suppressNextAutomaticSaveReason;
 
     public bool HasSaveFile
     {
@@ -103,7 +105,7 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
-        if (saveOnDisable)
+        if (saveOnDisable && !ConsumeAutomaticSaveSuppression("OnDisable"))
         {
             Save();
         }
@@ -121,10 +123,79 @@ public class CharacterStateStore : MonoBehaviour
             return;
         }
 
-        if (saveOnApplicationQuit)
+        if (saveOnApplicationQuit && !ConsumeAutomaticSaveSuppression("OnApplicationQuit"))
         {
             Save();
         }
+    }
+
+    public void SuppressNextAutomaticSave(string reason = null)
+    {
+        suppressNextAutomaticSave = true;
+        suppressNextAutomaticSaveReason = reason ?? string.Empty;
+    }
+
+    public CharacterSaveData CaptureRuntimeState(string reason = null)
+    {
+        if (!Application.isPlaying || (IsNetworked() && !IsServer()))
+        {
+            return null;
+        }
+
+        SquadManager manager = GetSquadManager();
+        if (manager == null)
+        {
+            return null;
+        }
+
+        CharacterSaveData data = BuildSaveData(manager);
+        return CloneCharacterSaveData(data);
+    }
+
+    public bool RestoreRuntimeState(
+        CharacterSaveData snapshot,
+        bool worldStateAlreadyRestored = false,
+        string reason = null)
+    {
+        if (!Application.isPlaying || snapshot == null || (IsNetworked() && !IsServer()))
+        {
+            return false;
+        }
+
+        loadedData = CloneCharacterSaveData(snapshot);
+        return ApplyLoadedData(
+            restoreWorldFromDisk: false,
+            worldAlreadyRestored: worldStateAlreadyRestored,
+            applySquadNow: true,
+            restoreReason: reason);
+    }
+
+    private bool ConsumeAutomaticSaveSuppression(string eventName)
+    {
+        if (!suppressNextAutomaticSave)
+        {
+            return false;
+        }
+
+        suppressNextAutomaticSave = false;
+        if (!string.IsNullOrWhiteSpace(suppressNextAutomaticSaveReason))
+        {
+            Debug.Log($"CharacterStateStore: sauvegarde automatique ignoree ({eventName}, {suppressNextAutomaticSaveReason}).");
+        }
+
+        suppressNextAutomaticSaveReason = null;
+        return true;
+    }
+
+    private static CharacterSaveData CloneCharacterSaveData(CharacterSaveData data)
+    {
+        if (data == null)
+        {
+            return null;
+        }
+
+        string json = JsonUtility.ToJson(data);
+        return string.IsNullOrEmpty(json) ? null : JsonUtility.FromJson<CharacterSaveData>(json);
     }
 
     public void Save()
@@ -223,16 +294,29 @@ public class CharacterStateStore : MonoBehaviour
 
     private void ApplyLoadedData()
     {
+        ApplyLoadedData(
+            restoreWorldFromDisk: true,
+            worldAlreadyRestored: false,
+            applySquadNow: false,
+            restoreReason: "character_state_store_host_load");
+    }
+
+    private bool ApplyLoadedData(
+        bool restoreWorldFromDisk,
+        bool worldAlreadyRestored,
+        bool applySquadNow,
+        string restoreReason)
+    {
         if (IsNetworked() && !IsServer())
         {
-            return;
+            return false;
         }
 
         ReadableContentRuntime.RestoreSaveData(loadedData != null ? loadedData.readableGeneratedContents : null);
 
         if (loadedData == null)
         {
-            return;
+            return false;
         }
 
         ApplyLoadedPlayerBindings(loadedData);
@@ -241,7 +325,7 @@ public class CharacterStateStore : MonoBehaviour
         SquadManager manager = GetSquadManager();
         if (manager == null)
         {
-            return;
+            return false;
         }
 
         Dictionary<string, CharacterData> characterLookup = BuildCharacterLookup(manager);
@@ -251,16 +335,30 @@ public class CharacterStateStore : MonoBehaviour
 
         manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
 
-        bool appliedWorldSnapshot = TryApplyLoadedWorldSnapshot();
+        bool appliedWorldSnapshot = worldAlreadyRestored;
+        if (!appliedWorldSnapshot && restoreWorldFromDisk)
+        {
+            appliedWorldSnapshot = TryApplyLoadedWorldSnapshot(restoreReason);
+        }
+
         if (!appliedWorldSnapshot)
         {
             ApplyBuiltConstructions(loadedData, itemLookup, buildingLookup);
             ApplyHomeItems(loadedData, itemLookup);
             ApplyFlameStates(loadedData);
-            return;
+        }
+        else if (restoreWorldFromDisk)
+        {
+            PersistentWorldDebug.Log("host load path restored world state from snapshot; compatibility world restore skipped", this);
         }
 
-        PersistentWorldDebug.Log("host load path restored world state from snapshot; compatibility world restore skipped", this);
+        if (applySquadNow)
+        {
+            manager.ApplyPendingLoadDataNow();
+            SyncNetworkInventoriesFromControllers();
+        }
+
+        return true;
     }
 
     private void RequestScreenshotCapture()
@@ -349,7 +447,7 @@ public class CharacterStateStore : MonoBehaviour
         return Path.Combine(directory, screenshotFileName);
     }
 
-    private bool TryApplyLoadedWorldSnapshot()
+    private bool TryApplyLoadedWorldSnapshot(string restoreReason = null)
     {
 #if UNITY_2023_1_OR_NEWER
         WorldSaveAdapter adapter = FindAnyObjectByType<WorldSaveAdapter>();
@@ -367,7 +465,10 @@ public class CharacterStateStore : MonoBehaviour
             return false;
         }
 
-        bool applied = adapter.EnsureHostWorldRestoredFromSave("character_state_store_host_load");
+        string resolvedReason = string.IsNullOrWhiteSpace(restoreReason)
+            ? "character_state_store_host_load"
+            : restoreReason;
+        bool applied = adapter.EnsureHostWorldRestoredFromSave(resolvedReason);
         if (!applied)
         {
             PersistentWorldDebug.Error("host load path world snapshot apply failed; falling back to compatibility restore", this);
@@ -379,6 +480,29 @@ public class CharacterStateStore : MonoBehaviour
             $"host load path restored world snapshot scene='{snapshot?.SceneName}' runtimeObjects={snapshot?.RuntimeObjects?.Count ?? 0} sceneObjects={snapshot?.SceneObjects?.Count ?? 0} restoreSequence={adapter.LastRestoreSequence} identityValidated={adapter.LastRestoreIdentityValidated} identityIssues={adapter.LastRestoreIdentityIssues}",
             this);
         return true;
+    }
+
+    private static void SyncNetworkInventoriesFromControllers()
+    {
+        if (!IsNetworked() || !IsServer())
+        {
+            return;
+        }
+
+#if UNITY_2023_1_OR_NEWER
+        NetworkInventory[] inventories = FindObjectsByType<NetworkInventory>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+        NetworkInventory[] inventories = FindObjectsOfType<NetworkInventory>(true);
+#endif
+        if (inventories == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < inventories.Length; i++)
+        {
+            inventories[i]?.SyncFromController();
+        }
     }
 
     private void ApplyLoadedPlayerBindings(CharacterSaveData data)

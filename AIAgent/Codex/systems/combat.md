@@ -33,7 +33,14 @@ résolution dans le monde.
 
 1. Un trigger d’aggro demande une session au manager.
 2. L’autorité capture les positions de retour et construit les ennemis runtime.
-3. Le joueur engagé est téléporté instantanément vers l’arène et verrouillé.
+3. Si `combatEntryMidpointPrefab` est renseigne, le manager l'instancie a
+   mi-chemin entre le joueur et l'ennemi, oriente vers l'ennemi, juste avant la
+   teleportation d'entree en combat. En reseau, un RPC dedie demande cette
+   presentation a tous les clients sans declencher le HUD/camera des joueurs
+   non engages. L'instance est suivie par session et detruite quand la sortie
+   manuelle du combat est validee apres l'ecran victoire/defaite; un retry la
+   remplace par une nouvelle instance.
+   Le joueur engage est ensuite teleporte instantanement vers l'arene et verrouille.
 4. Le HUD ferme l'inventaire ouvert, prend le focus exclusif, active l'ActionMap
    locale `Combat` et joue une fois par session l'intro
    `CombatEngagedPanel_Trigger` sur `CombatEngagedPanel`, des l'entree en
@@ -68,11 +75,18 @@ résolution dans le monde.
 8. La resolution joue la mort du perdant puis un taunt du gagnant
    (`Taunt`, puis `Victory`/`Celebrate` en fallback si disponibles). Le HUD
    affiche ensuite le panel de scene `VictoryPanel` ou `DefeatPanel`; aucun
-   panel de resultat n'est cree en runtime. La sortie de combat ne se fait
-   qu'apres validation manuelle du joueur. En cas de defaite, la
-   musique de combat est remplacee par la musique `Game Over` configuree dans
-   `CombatAudioLibrary` jusqu'a cette sortie. Cette validation restaure alors
-   les positions, la camera et le mouvement, puis applique le resultat a
+   panel de resultat n'est cree en runtime. La victoire garde une validation
+   manuelle simple. En defaite, `CombatHudController` ne remplace pas le texte
+   de `DefeatPanel` et route ses boutons de scene vers trois choix : retour
+   `MainMenu`, retry immediat du combat courant, ou rechargement du dernier
+   checkpoint/sauvegarde active. Le retry restaure le snapshot en memoire pris
+   juste avant l'entree en combat : etat personnage/inventaire, snapshot monde
+   persistant, PV joueur pre-combat et ennemis reconstruits depuis l'etat monde,
+   puis relance la session sans la terminer. Les sorties menu et checkpoint
+   terminent la session avant chargement de scene. En cas de defaite,
+   la musique de combat est remplacee par la musique `Game Over` configuree
+   dans `CombatAudioLibrary` jusqu'a cette sortie. Cette validation restaure
+   alors les positions, la camera et le mouvement, puis applique le resultat a
    l'ennemi monde.
 
 Pendant une session, la camera locale de combat est la seule source de pilotage
@@ -169,6 +183,14 @@ Cette demande reste cosmétique et utilise l'override musical de
 hystérésis quand le joueur local sort assez loin du trigger d'aggro.
 La resolution de defaite empile un override musical `GameOverMusic` au-dessus
 de cette musique de combat, puis le relache pendant la transition de sortie.
+Les boutons de `DefeatPanel` sont resolus depuis la scene par nom ou texte
+(`menu`, `retry`/`reessayer`, `checkpoint`), avec fallback sur l'ordre des
+boutons enfants si necessaire; eviter de renommer ces boutons sans mettre a jour
+les mots-cles ou les references serializees.
+Le snapshot de retry est strictement runtime et n'ecrit aucun fichier : le
+manager capture `CharacterStateStore.CaptureRuntimeState` et
+`WorldStateManager.CaptureSnapshot` avant tout deplacement vers l'arene, puis
+restaure ces donnees au bouton retry.
 
 ## Pièges observés
 

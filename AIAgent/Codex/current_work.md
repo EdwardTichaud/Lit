@@ -18,6 +18,10 @@ virtuel ou d'un appel LLM local. Les prompts sont prepares manuellement depuis
 Le combat tour par tour pilote maintenant la camera locale par phase via
 `CombatCameraPresentationController`; pendant le combat, Opsive est suspendu
 comme driver camera spatial puis restaure a la sortie.
+`CombatSessionManager` peut instancier un prefab public a mi-chemin entre le
+joueur et l'ennemi juste avant la teleportation d'entree en combat; en reseau,
+cette presentation est demandee a tous les clients et detruite a la sortie
+manuelle du combat.
 Chaque phase shot peut aussi ajouter une vitesse de deplacement locale a son
 offset camera pour creer un drift cinematographique pendant la phase.
 Le ralenti de combat est maintenant strictement pilote par les `AnimationEvent`
@@ -100,6 +104,13 @@ resolution : le perdant joue sa mort, le gagnant tente un taunt (`Taunt`,
 les positions, camera, mouvement et resultats monde.
 En cas de defaite, la resolution remplace aussi la musique de combat par une
 musique `Game Over` issue de `CombatAudioLibrary` jusqu'a la sortie manuelle.
+Le `DefeatPanel` garde son texte de scene et expose maintenant trois boutons :
+retour `MainMenu`, retry immediat du combat courant, ou retour au dernier
+checkpoint/sauvegarde active. Les retours menu/checkpoint ignorent la prochaine
+sauvegarde automatique pour ne pas persister l'etat de defaite.
+Le retry capture maintenant un snapshot runtime pre-combat et le restaure avant
+de relancer la session, afin de revenir aux inventaires, PV de bouclier, monde
+persistant et PV joueur du debut de combat.
 
 ## Contraintes
 

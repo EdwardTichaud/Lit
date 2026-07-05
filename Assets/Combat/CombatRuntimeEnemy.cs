@@ -70,6 +70,15 @@ public sealed class CombatRuntimeEnemy
     }
 
     /// <summary>
+    /// Reinitialise cet ennemi pour rejouer la session de combat courante.
+    /// </summary>
+    public void RestoreForRetry()
+    {
+        CurrentHp = MaxHp;
+        nextAttackIndex = 0;
+    }
+
+    /// <summary>
     /// Selectionne la prochaine attaque configuree. Retourne null pour conserver l'attaque de base.
     /// </summary>
     public CombatEnemyAttackDefinition SelectNextAttack(out int attackIndex)

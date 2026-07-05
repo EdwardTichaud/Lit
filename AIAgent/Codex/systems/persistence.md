@@ -38,6 +38,18 @@ Les sauvegardes personnage version 7 stockent
 restants + quantite. Seuls les items encore portes et entames sont sauvegardes;
 les items pleins sont deduits du nombre total porte.
 
+`CharacterStateStore.SuppressNextAutomaticSave` permet d'ignorer une seule
+sauvegarde automatique `OnDisable`/`OnApplicationQuit`. Le combat l'utilise
+avant un retour `MainMenu` ou un rechargement checkpoint apres defaite, afin de
+ne pas ecraser la sauvegarde active avec l'etat de mort juste avant le
+chargement.
+
+`CharacterStateStore.CaptureRuntimeState` / `RestoreRuntimeState` exposent aussi
+une restauration en memoire, sans ecriture disque ni screenshot. Le retry de
+combat s'en sert pour remettre inventaires, items combat, PV de bouclier,
+flamme, Munin et donnees lisibles a leur etat pre-combat, pendant que le monde
+persistant est restaure via un `WorldSnapshot` en memoire.
+
 Late join :
 
 client demande le snapshot → serveur sérialise et segmente → client reconstruit

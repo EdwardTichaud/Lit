@@ -92,6 +92,17 @@ public class SaveSessionManager : MonoBehaviour
 
     public bool HasActiveSave => !string.IsNullOrWhiteSpace(CurrentSessionId) && !string.IsNullOrWhiteSpace(CurrentSaveId);
 
+    public string GetActiveSaveSceneName()
+    {
+        if (!HasActiveSave)
+        {
+            return null;
+        }
+
+        SaveMeta meta = ReadJson<SaveMeta>(GetSaveMetaPath(CurrentSessionId, CurrentSaveId));
+        return meta != null ? meta.sceneName : null;
+    }
+
     public void SetMenuSceneName(string sceneName)
     {
         if (string.IsNullOrWhiteSpace(sceneName))
