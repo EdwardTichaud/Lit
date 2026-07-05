@@ -21,7 +21,9 @@ comme driver camera spatial puis restaure a la sortie.
 `CombatSessionManager` peut instancier un prefab public a mi-chemin entre le
 joueur et l'ennemi juste avant la teleportation d'entree en combat; en reseau,
 cette presentation est demandee a tous les clients et detruite a la sortie
-manuelle du combat.
+manuelle du combat. Si ce prefab contient un ou plusieurs `CharacterEffect`,
+ils sont joues a l'apparition, stoppes a la sortie, puis detruits apres un
+delai par defaut de 2 secondes.
 Chaque phase shot peut aussi ajouter une vitesse de deplacement locale a son
 offset camera pour creer un drift cinematographique pendant la phase.
 Le ralenti de combat est maintenant strictement pilote par les `AnimationEvent`

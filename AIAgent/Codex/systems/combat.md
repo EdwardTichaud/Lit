@@ -39,7 +39,9 @@ résolution dans le monde.
    presentation a tous les clients sans declencher le HUD/camera des joueurs
    non engages. L'instance est suivie par session et detruite quand la sortie
    manuelle du combat est validee apres l'ecran victoire/defaite; un retry la
-   remplace par une nouvelle instance.
+   remplace par une nouvelle instance. Les `CharacterEffect` presents sur cette
+   instance sont joues a l'apparition, stoppes a la sortie, puis detruits apres
+   un delai par defaut de 2 secondes.
    Le joueur engage est ensuite teleporte instantanement vers l'arene et verrouille.
 4. Le HUD ferme l'inventaire ouvert, prend le focus exclusif, active l'ActionMap
    locale `Combat` et joue une fois par session l'intro
