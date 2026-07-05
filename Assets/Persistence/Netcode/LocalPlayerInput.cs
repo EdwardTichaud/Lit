@@ -161,6 +161,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnInventory(InputAction.CallbackContext context)
     {
+        if (combatInputActive || CombatHudController.HasCombatInputFocus || CombatDefensePanelController.IsVisible || IsLocalCombatActive())
+        {
+            return;
+        }
+
         if (context.performed && ShouldProcess(context))
         {
             LocalInputRouter.RaiseInventory(context);
@@ -366,5 +371,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     private static bool ShouldProcess(InputAction.CallbackContext context)
     {
         return MainMenuInputSettings.IsActionAllowed(context);
+    }
+
+    private static bool IsLocalCombatActive()
+    {
+        CombatSessionManager manager = CombatSessionManager.Instance;
+        return manager != null && manager.IsLocalCombatActive();
     }
 }

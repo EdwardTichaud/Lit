@@ -839,6 +839,11 @@ public class SquadManager : MonoBehaviour
             {
                 List<Item> items = BuildItemsFromEntry(entry);
                 List<Item> enabledCombatItems = BuildEnabledCombatItemsFromEntry(entry);
+                if (ShouldMigrateDefaultEnabledCombatItems(entry, runtimeCharacter) && enabledCombatItems.Count == 0)
+                {
+                    enabledCombatItems = BuildDefaultEnabledCombatItems(runtimeCharacter);
+                }
+
                 runtimeCharacter.SetInventory(items, entry.flameSeconds, entry.flameEquipped, true, null, enabledCombatItems);
             }
             if (entry.skillsInitialized)
@@ -1010,10 +1015,48 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
+            if (!item.CanUseInCombatReaction())
+            {
+                continue;
+            }
+
             if (!items.Contains(item))
             {
                 items.Add(item);
             }
+        }
+
+        return items;
+    }
+
+    private bool ShouldMigrateDefaultEnabledCombatItems(CharacterSaveEntry entry, CharacterData character)
+    {
+        return pendingLoadData != null
+            && pendingLoadData.dataVersion < 5
+            && entry != null
+            && (entry.enabledCombatItemIds == null || entry.enabledCombatItemIds.Count == 0)
+            && character != null
+            && character.enabledCombatItems != null
+            && character.enabledCombatItems.Count > 0;
+    }
+
+    private static List<Item> BuildDefaultEnabledCombatItems(CharacterData character)
+    {
+        List<Item> items = new List<Item>();
+        if (character == null || character.enabledCombatItems == null)
+        {
+            return items;
+        }
+
+        for (int i = 0; i < character.enabledCombatItems.Count && items.Count < 3; i++)
+        {
+            Item item = character.enabledCombatItems[i];
+            if (item == null || !item.CanUseInCombatReaction() || items.Contains(item))
+            {
+                continue;
+            }
+
+            items.Add(item);
         }
 
         return items;
@@ -2342,7 +2385,7 @@ public class SquadManager : MonoBehaviour
 
         clone.inventoryItems = new List<Item>();
         clone.equippedInteractionItems = new List<Item>();
-        clone.enabledCombatItems = new List<Item>();
+        clone.enabledCombatItems = BuildDefaultEnabledCombatItems(character);
         clone.flameSecondsRemaining = 0;
         clone.flameEquipped = false;
         clone.inventoryInitialized = false;
@@ -2385,7 +2428,6 @@ public class SquadManager : MonoBehaviour
         int combatItemCount = character.enabledCombatItems != null ? character.enabledCombatItems.Count : 0;
         if (inventoryCount <= 0
             && equippedCount <= 0
-            && combatItemCount <= 0
             && !character.inventoryInitialized
             && character.flameSecondsRemaining <= 0
             && !character.flameEquipped)

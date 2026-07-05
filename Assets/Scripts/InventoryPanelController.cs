@@ -613,13 +613,36 @@ public class InventoryPanelController : MonoBehaviour
             return true;
         }
 
-        if (InputFocusStack.HasAnyFocus() && !CombatHudController.HasCombatInputFocus)
+        if (InputFocusStack.HasAnyFocus())
         {
             return false;
         }
 
         OpenInventory();
         return inventoryOpen;
+    }
+
+    public static void CloseAllOpenForCombat()
+    {
+        InventoryPanelController[] controllers = Resources.FindObjectsOfTypeAll<InventoryPanelController>();
+        if (controllers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            InventoryPanelController controller = controllers[i];
+            if (controller == null || controller.gameObject == null || !controller.gameObject.scene.IsValid())
+            {
+                continue;
+            }
+
+            if (controller.inventoryOpen)
+            {
+                controller.CloseInventory();
+            }
+        }
     }
 
     public bool IsOpen => inventoryOpen;
@@ -702,7 +725,7 @@ public class InventoryPanelController : MonoBehaviour
 
     private bool CanReceiveInventoryInput()
     {
-        return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this) || CombatHudController.HasCombatInputFocus;
+        return !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this);
     }
 
     private static bool IsLocalDefensiveReactionActive()

@@ -26,7 +26,8 @@ un ralenti local, une ruee vers la victime et un retour a la pose initiale.
 `Griffe` du Juggernaut est maintenant pilotee par son clip : le manager lance
 seulement `Attack_Griffe`, sans saut/dash/audio/VFX specifiques codes.
 Les clips peuvent notifier l'impact avec `NotifyCombatImpact`; le manager
-applique alors l'impact pending une seule fois, avec le timer comme fallback.
+applique alors l'impact pending une seule fois. Les impacts de combat attendent
+ce `AnimationEvent` et ne sont plus resolus par timer fallback.
 Le ralenti Animation Event descend maintenant a `0.1`, cible l'acteur et la
 victime, et les anciens hooks legacy autonomes qui modifiaient `Time.timeScale`
 ont ete retires.
@@ -35,10 +36,23 @@ items combat. Les clips d'attaque ouvrent/ferment `CombatDefensePanel` via
 `CombatAnimationEvents`; le panel ne propose que ces items a portee de main, et
 la selection reste validee par `CombatSessionManager`, synchronisee par
 `NetworkInventory` et sauvegardee avec l'etat personnage.
-Quand `CombatDefensePanel` est visible, l'input local bascule sur l'ActionMap
-`Combat`; `UseItem1`, `UseItem2` et `UseItem3` activent les trois slots, dont
-les enfants `Text` affichent le nom de l'item assigne. Les slots sans item
-assigne restent masques. Les racines `EnableItem_1/2/3` sont aussi garanties
+La fenetre defensive autorisee correspond maintenant a l'affichage reel de
+`CombatDefensePanel` : tant que le panel est visible, le joueur peut remplacer
+son choix, et seul le dernier item selectionne est resolu a l'impact avec un
+surlignage/agrandissement du slot choisi.
+Pendant toute la session de combat, le HUD garde l'ActionMap locale `Combat`
+active, prend le focus exclusif et ferme l'inventaire s'il etait deja ouvert;
+`UseItem1`, `UseItem2` et `UseItem3` activent les trois slots quand
+`CombatDefensePanel` est visible. Le panel force aussi l'ActionMap `Combat` a
+son affichage afin qu'un AnimationEvent ne laisse jamais NorthButton ouvrir
+l'inventaire. Les enfants `Text` affichent le nom de l'item assigne, les slots
+sans item restent masques, et l'affichage ne purge plus les items combat si
+l'inventaire runtime n'est pas encore initialise;
+l'initialisation des starter items conserve aussi ces assignations quand l'item
+existe dans les objets de depart. Les anciennes sauvegardes `CharacterSaveData`
+avant version 5 migrent les items combat manquants depuis les defaults du
+personnage, puis les nouvelles sauvegardes persistent aussi les items avec
+`CombatReactionProfile`. Les racines `EnableItem_1/2/3` sont aussi garanties
 comme boutons UI pour la souris et la navigation manette/clavier.
 Les items peuvent porter un `CombatReactionProfile` optionnel. `Item_Weapon_Sword`
 est configure comme premier contre melee : il declenche `Counter_Sword`,
@@ -50,9 +64,10 @@ expose une state Animator `Impaled` vide pour y brancher le clip si besoin, et
 le visuel plante oriente automatiquement son axe Z a l'inverse du Z local de
 l'ennemi.
 L'UI de combat joue maintenant `CombatEngagedPanel_Trigger` sur
-`CombatEngagedPanel` au lancement d'une session, affiche ensuite
-`CombatScreenInfosPanel`, puis masque ces infos quand un AnimationEvent demande
-`CombatDefensePanel`; a la fermeture du panel, les infos de combat reviennent.
+`CombatEngagedPanel` des l'entree en session, sans attendre le premier snapshot,
+affiche ensuite `CombatScreenInfosPanel`, puis masque ces infos quand un
+AnimationEvent demande `CombatDefensePanel`; a la fermeture du panel, les infos
+de combat reviennent.
 Les demandes `CombatDefensePanel` issues des AnimationEvents ont priorite sur
 l'intro de combat afin que la fenetre defensive s'ouvre meme si l'attaque
 ennemie commence pendant `CombatEngagedPanel_Trigger`.
@@ -70,6 +85,11 @@ L'import legacy Symphonie est isole dans son assembly non auto-referencee,
 Editor-only et compilee seulement avec le define manuel
 `SYMPHONIE_IMPORT_COMPILE`; le combat actuel ne reference pas ses types ni ses
 GUIDs.
+La fin de combat n'est plus une sortie automatique immediatement apres la
+resolution : le perdant joue sa mort, le gagnant tente un taunt (`Taunt`,
+`Victory` ou `Celebrate`), puis un ecran runtime `VICTOIRE`/`GAME OVER` attend
+une validation manuelle du joueur avant de restaurer les positions, camera,
+mouvement et resultats monde.
 
 ## Contraintes
 

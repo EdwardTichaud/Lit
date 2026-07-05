@@ -13,6 +13,7 @@ public class CombatDefensePanelController : MonoBehaviour
     private const int SlotCount = 3;
 
     public static CombatDefensePanelController Instance { get; private set; }
+    public static bool IsVisible => Instance != null && Instance.visible;
 
     [SerializeField] private string panelName = DefaultPanelName;
     [SerializeField] private GameObject panelRoot;
@@ -22,10 +23,17 @@ public class CombatDefensePanelController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI[] slotLabels = new TextMeshProUGUI[SlotCount];
     [SerializeField] private Text[] slotLegacyLabels = new Text[SlotCount];
     [SerializeField] private bool createMissingSlots = true;
+    [SerializeField, Min(1f)] private float selectedSlotScale = 1.12f;
+    [SerializeField] private Color selectedOutlineColor = new Color(1f, 0.82f, 0.28f, 1f);
+    [SerializeField] private Vector2 selectedOutlineDistance = new Vector2(5f, -5f);
 
     private readonly List<Item> visibleItems = new List<Item>(SlotCount);
+    private readonly Outline[] slotOutlines = new Outline[SlotCount];
+    private readonly Vector3[] slotBaseScales = new Vector3[SlotCount];
+    private readonly bool[] slotBaseScaleCaptured = new bool[SlotCount];
     private bool visible;
     private bool warnedMissingPanel;
+    private string selectedItemId;
 
     public static CombatDefensePanelController EnsureInstance()
     {
@@ -96,7 +104,13 @@ public class CombatDefensePanelController : MonoBehaviour
     private void OnDisable()
     {
         LocalInputRouter.CombatUseItem -= OnCombatUseItem;
-        LocalPlayerInput.SetCombatInputActive(false);
+        if (visible)
+        {
+            CombatSessionManager.Instance?.SetLocalDefensePanelSelectionWindowActive(false);
+            visible = false;
+            selectedItemId = null;
+            RefreshSelectionVisuals();
+        }
     }
 
     private void Update()
@@ -111,10 +125,17 @@ public class CombatDefensePanelController : MonoBehaviour
 
     public void SetVisible(bool shouldBeVisible)
     {
+        bool wasVisible = visible;
         if (shouldBeVisible && !ResolvePanel())
         {
             visible = false;
-            LocalPlayerInput.SetCombatInputActive(false);
+            if (wasVisible)
+            {
+                CombatSessionManager.Instance?.SetLocalDefensePanelSelectionWindowActive(false);
+                selectedItemId = null;
+                RefreshSelectionVisuals();
+            }
+
             if (!warnedMissingPanel)
             {
                 warnedMissingPanel = true;
@@ -123,18 +144,44 @@ public class CombatDefensePanelController : MonoBehaviour
             return;
         }
 
+        bool visibilityChanged = wasVisible != shouldBeVisible;
         visible = shouldBeVisible;
-        LocalPlayerInput.SetCombatInputActive(shouldBeVisible);
         if (panelRoot == null)
         {
+            if (visibilityChanged && !shouldBeVisible)
+            {
+                CombatSessionManager.Instance?.SetLocalDefensePanelSelectionWindowActive(false);
+            }
+
             return;
         }
 
         SetCanvasGroupVisible(panelCanvasGroup, shouldBeVisible);
+        if (visibilityChanged)
+        {
+            if (shouldBeVisible)
+            {
+                selectedItemId = null;
+            }
+            else
+            {
+                CombatSessionManager.Instance?.SetLocalDefensePanelSelectionWindowActive(false);
+                selectedItemId = null;
+                RefreshSelectionVisuals();
+            }
+        }
+
         if (shouldBeVisible)
         {
+            InventoryPanelController.CloseAllOpenForCombat();
+            LocalPlayerInput.SetCombatInputActive(true);
+            CombatSessionManager.Instance?.SetLocalDefensePanelSelectionWindowActive(true);
+
             RefreshSlots();
-            SelectFirstInteractableSlot();
+            if (visibilityChanged)
+            {
+                SelectFirstInteractableSlot();
+            }
         }
     }
 
@@ -232,6 +279,7 @@ public class CombatDefensePanelController : MonoBehaviour
                 continue;
             }
 
+            EnsureSlotSelectionVisual(i);
             int slotIndex = i;
             slotButtons[i].onClick.RemoveAllListeners();
             slotButtons[i].onClick.AddListener(() => SelectSlot(slotIndex));
@@ -369,6 +417,8 @@ public class CombatDefensePanelController : MonoBehaviour
                 && combatManager.CanUseDefensiveItemNow(controller, item, out _);
             slotButtons[i].interactable = canUse;
         }
+
+        RefreshSelectionVisuals();
     }
 
     private void SelectSlot(int index)
@@ -387,6 +437,7 @@ public class CombatDefensePanelController : MonoBehaviour
         CombatSessionManager manager = CombatSessionManager.Instance;
         if (manager != null && manager.RequestLocalDefensiveItem(item))
         {
+            selectedItemId = ResolveSelectionItemId(item);
             RefreshSlots();
         }
     }
@@ -521,6 +572,112 @@ public class CombatDefensePanelController : MonoBehaviour
         {
             slotRoots[index].SetActive(shouldBeVisible);
         }
+    }
+
+    private void EnsureSlotSelectionVisual(int index)
+    {
+        Transform slotTransform = ResolveSlotTransform(index);
+        if (slotTransform == null)
+        {
+            return;
+        }
+
+        if (slotOutlines[index] != null && slotOutlines[index].gameObject != slotTransform.gameObject)
+        {
+            slotOutlines[index] = null;
+            slotBaseScaleCaptured[index] = false;
+        }
+
+        if (!slotBaseScaleCaptured[index])
+        {
+            slotBaseScales[index] = slotTransform.localScale.sqrMagnitude > 0.0001f
+                ? slotTransform.localScale
+                : Vector3.one;
+            slotBaseScaleCaptured[index] = true;
+        }
+
+        if (slotOutlines[index] == null)
+        {
+            slotOutlines[index] = slotTransform.GetComponent<Outline>();
+            if (slotOutlines[index] == null)
+            {
+                slotOutlines[index] = slotTransform.gameObject.AddComponent<Outline>();
+            }
+        }
+
+        slotOutlines[index].effectColor = selectedOutlineColor;
+        slotOutlines[index].effectDistance = selectedOutlineDistance;
+        slotOutlines[index].useGraphicAlpha = false;
+        slotOutlines[index].enabled = false;
+    }
+
+    private void RefreshSelectionVisuals()
+    {
+        for (int i = 0; i < SlotCount; i++)
+        {
+            Transform slotTransform = ResolveSlotTransform(i);
+            if (slotTransform == null)
+            {
+                continue;
+            }
+
+            EnsureSlotSelectionVisual(i);
+            bool selected = visible &&
+                i < visibleItems.Count &&
+                IsSelectedItem(visibleItems[i]);
+            Vector3 baseScale = slotBaseScaleCaptured[i] && slotBaseScales[i].sqrMagnitude > 0.0001f
+                ? slotBaseScales[i]
+                : Vector3.one;
+            slotTransform.localScale = selected ? baseScale * selectedSlotScale : baseScale;
+
+            if (slotOutlines[i] != null)
+            {
+                slotOutlines[i].enabled = selected;
+            }
+        }
+    }
+
+    private Transform ResolveSlotTransform(int index)
+    {
+        if (index < 0 || index >= SlotCount)
+        {
+            return null;
+        }
+
+        if (slotRoots != null && index < slotRoots.Length && slotRoots[index] != null)
+        {
+            return slotRoots[index].transform;
+        }
+
+        return slotButtons != null && index < slotButtons.Length && slotButtons[index] != null
+            ? slotButtons[index].transform
+            : null;
+    }
+
+    private bool IsSelectedItem(Item item)
+    {
+        if (item == null || string.IsNullOrWhiteSpace(selectedItemId))
+        {
+            return false;
+        }
+
+        return string.Equals(ResolveSelectionItemId(item), selectedItemId, System.StringComparison.Ordinal);
+    }
+
+    private static string ResolveSelectionItemId(Item item)
+    {
+        if (item == null)
+        {
+            return string.Empty;
+        }
+
+        string itemId = ItemIdUtils.GetItemId(item);
+        if (!string.IsNullOrWhiteSpace(itemId))
+        {
+            return itemId;
+        }
+
+        return !string.IsNullOrWhiteSpace(item.name) ? item.name : item.GetInstanceID().ToString();
     }
 
     private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool shouldBeVisible)

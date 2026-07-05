@@ -587,7 +587,7 @@ public class CharacterStateStore : MonoBehaviour
                 for (int j = 0; j < enabledCombatItems.Count; j++)
                 {
                     Item item = enabledCombatItems[j];
-                    if (item == null || !item.CanDefendInCombat())
+                    if (item == null || !item.CanUseInCombatReaction())
                     {
                         continue;
                     }

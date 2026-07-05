@@ -32,7 +32,8 @@ public class CombatSessionManager : NetworkBehaviour
     private const float DefaultDefenseAnimationDuration = 0.5f;
     private const float DefaultEnemyAttackAnimationDuration = 0.75f;
     private const float DefaultDeathAnimationDuration = 1f;
-    private const float PostDeathReturnDelaySeconds = 3f;
+    private const float DefaultTauntAnimationDuration = 1.2f;
+    private const float PostResolutionResultDelaySeconds = 0.35f;
     private const float LocalEnemyLookupMaxDistance = 6f;
     private const float ActionMoveCompleteThreshold = 0.03f;
     private const float ActionReturnDisplacementThreshold = 0.12f;
@@ -41,6 +42,7 @@ public class CombatSessionManager : NetworkBehaviour
     private const float DefaultCounterReactionSlowTimeScale = 0.2f;
     private const float DefaultCounterReactionSlowSeconds = 0.5f;
     private static readonly string[] DeathAnimationCandidates = { "Death", "Death_v1", "Death_v2" };
+    private static readonly string[] TauntAnimationCandidates = { "Taunt", "Victory", "Celebrate" };
     private static readonly string[] RangedAttackNameHints =
     {
         "ranged", "range", "distance", "projectile", "shoot", "shot", "fireball", "bolt", "arrow", "tir", "fleche", "lancer"
@@ -134,8 +136,14 @@ public class CombatSessionManager : NetworkBehaviour
         public Item PendingDefensiveItem;
         /// <summary>PV defensifs de l'unite choisie pour cette attaque.</summary>
         public int PendingDefensiveItemHitPoints;
+        /// <summary>Vrai tant que le CombatDefensePanel est affiche pour cette session.</summary>
+        public bool DefensePanelSelectionWindowActive;
         /// <summary>Indique si le mouvement joueur a ete supprime par ce combat.</summary>
         public bool SuppressedMovement;
+        /// <summary>Indique si l'ecran final attend la validation du joueur.</summary>
+        public bool ResolutionResultReady;
+        /// <summary>Message final conserve jusqu'a la validation manuelle.</summary>
+        public string ResolutionResultMessage;
     }
 
     /// <summary>
@@ -683,6 +691,55 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Demande la sortie manuelle apres l'ecran Win/GameOver.
+    /// </summary>
+    public void RequestLocalCombatResultContinue(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            RequestCombatResultContinueServerRpc(sessionId);
+            return;
+        }
+
+        if (!sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) ||
+            session == null ||
+            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        CompleteCombatResultExit(session);
+    }
+
+    /// <summary>
+    /// Aligne la fenetre de selection defensive sur l'affichage reel du panel.
+    /// </summary>
+    public void SetLocalDefensePanelSelectionWindowActive(bool active)
+    {
+        if (IsNetworkSessionActive() && IsSpawned && !IsServer)
+        {
+            if (localCombatPresentation.Active)
+            {
+                SetDefensePanelSelectionWindowServerRpc(localCombatPresentation.SessionId, active);
+            }
+
+            return;
+        }
+
+        if (!sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) || session == null)
+        {
+            return;
+        }
+
+        SetDefensePanelSelectionWindowActive(session, active);
+    }
+
+    /// <summary>
     /// Notifie le combat qu'un item vient d'etre utilise par un personnage.
     /// </summary>
     public void NotifyInventoryItemUsed(SquadCharacterController controller)
@@ -735,10 +792,11 @@ public class CombatSessionManager : NetworkBehaviour
         if (CanRunAuthority())
         {
             return sessionsByClientId.TryGetValue(ResolveLocalClientId(), out CombatSession session) &&
-                   IsDefensiveReactionActive(session);
+                   IsDefensePanelSelectionWindowActive(session);
         }
 
         return localCombatPresentation.Active &&
+               CombatDefensePanelController.IsVisible &&
                localCombatPresentation.Turn == CombatTurn.Enemy &&
                (localCombatPresentation.Phase == CombatSessionPhase.Decision ||
                 localCombatPresentation.Phase == CombatSessionPhase.EnemyAction);
@@ -776,22 +834,16 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (CanRunAuthority())
         {
-            if (!TryGetSession(controller, out CombatSession session) || !IsDefensiveReactionActive(session))
+            if (!TryGetSession(controller, out CombatSession session) || !IsDefensePanelSelectionWindowActive(session))
             {
                 reason = "Aucune reaction defensive n'est active.";
-                return false;
-            }
-
-            if (session.PendingDefensiveItem != null)
-            {
-                reason = "Un item defensif est deja choisi.";
                 return false;
             }
 
             return true;
         }
 
-        if (!IsLocalDefensiveReactionActive())
+        if (!IsLocalDefensiveReactionActive() || !CombatDefensePanelController.IsVisible)
         {
             reason = "Aucune reaction defensive n'est active.";
             return false;
@@ -825,7 +877,7 @@ public class CombatSessionManager : NetworkBehaviour
                 return false;
             }
 
-            RequestDefensiveItemServerRpc(itemId);
+            RequestDefensiveItemServerRpc(itemId, CombatDefensePanelController.IsVisible);
             return true;
         }
 
@@ -915,8 +967,24 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestDefensiveItemServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    private void RequestDefensiveItemServerRpc(
+        string itemId,
+        bool defensePanelVisible,
+        ServerRpcParams rpcParams = default)
     {
+        if (!sessionsByClientId.TryGetValue(rpcParams.Receive.SenderClientId, out CombatSession session) || session == null)
+        {
+            SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, "Aucun combat actif.", ActionAudioCue.UiInvalid);
+            return;
+        }
+
+        SetDefensePanelSelectionWindowActive(session, defensePanelVisible);
+        if (!defensePanelVisible)
+        {
+            SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, "Aucune reaction defensive n'est active.", ActionAudioCue.UiInvalid);
+            return;
+        }
+
         Item item = ItemRegistry.Resolve(itemId);
         if (item == null)
         {
@@ -931,6 +999,37 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         SendDefensiveItemFeedback(rpcParams.Receive.SenderClientId, feedback, ActionAudioCue.UiInvalid);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCombatResultContinueServerRpc(string sessionId, ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) ||
+            !sessionsByClientId.TryGetValue(rpcParams.Receive.SenderClientId, out CombatSession session) ||
+            session == null ||
+            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        CompleteCombatResultExit(session);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetDefensePanelSelectionWindowServerRpc(
+        string sessionId,
+        bool active,
+        ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) ||
+            !sessionsByClientId.TryGetValue(rpcParams.Receive.SenderClientId, out CombatSession session) ||
+            session == null ||
+            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SetDefensePanelSelectionWindowActive(session, active);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -950,10 +1049,11 @@ public class CombatSessionManager : NetworkBehaviour
     [ClientRpc]
     private void EnterCombatClientRpc(CombatEnterData data, ClientRpcParams rpcParams = default)
     {
+        string sessionId = data.SessionId.ToString();
         if (!IsServer)
         {
             // Les clients non serveurs conservent un etat minimal pour HUD/camera.
-            localCombatPresentation.SessionId = data.SessionId.ToString();
+            localCombatPresentation.SessionId = sessionId;
             localCombatPresentation.Turn = CombatTurn.None;
             localCombatPresentation.Phase = CombatSessionPhase.Created;
             localCombatPresentation.Resolving = false;
@@ -963,7 +1063,7 @@ public class CombatSessionManager : NetworkBehaviour
             localCombatPresentation.PlayerActionLocked = false;
         }
 
-        CombatHudController.EnsureInstance();
+        CombatHudController.EnsureInstance().BeginCombatSessionIntro(sessionId);
         CombatCameraPresentationController.EnsureInstance();
         if (!IsServer)
         {
@@ -1095,7 +1195,7 @@ public class CombatSessionManager : NetworkBehaviour
         {
             if (Time.time >= session.State.ResolutionEndsAt)
             {
-                EndCombat(session, session.State.ResolutionPlayerVictory, session.State.LastMessage, notifyClient: true);
+                ShowCombatResolutionResult(session);
             }
 
             return;
@@ -1119,12 +1219,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (session.State.PlayerActionLocked)
         {
-            if (!session.PendingPlayerActionResolved && Time.time >= session.PendingPlayerActionImpactAt)
-            {
-                ResolveLockedPlayerAttackImpact(session);
-            }
-
-            if (Time.time >= session.State.PlayerActionEndsAt)
+            if (session.PendingPlayerActionResolved && Time.time >= session.State.PlayerActionEndsAt)
             {
                 CompleteLockedPlayerAttack(session);
             }
@@ -1134,12 +1229,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (session.State.EnemyActionLocked)
         {
-            if (!session.PendingEnemyActionResolved && Time.time >= session.PendingEnemyActionImpactAt)
-            {
-                ResolveEnemyActionImpact(session);
-            }
-
-            if (Time.time >= session.State.EnemyActionEndsAt)
+            if (session.PendingEnemyActionResolved && Time.time >= session.State.EnemyActionEndsAt)
             {
                 CompleteEnemyAction(session);
             }
@@ -1235,7 +1325,7 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
-        if (!IsDefensiveReactionActive(session))
+        if (!IsDefensePanelSelectionWindowActive(session))
         {
             feedback = "Aucune reaction defensive n'est active.";
             return false;
@@ -1244,12 +1334,6 @@ public class CombatSessionManager : NetworkBehaviour
         if (session.PendingEncounterReaction == EncounterReactionChoice.Counter)
         {
             feedback = "Un contre est deja prepare.";
-            return false;
-        }
-
-        if (session.PendingDefensiveItem != null)
-        {
-            feedback = "Un item defensif est deja choisi.";
             return false;
         }
 
@@ -1342,14 +1426,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (!session.PendingPlayerActionResolved)
         {
-            CombatRuntimeEnemy activeEnemy = GetActiveEnemy(session);
-            if (activeEnemy == null)
-            {
-                BeginCombatResolution(session, true, "Victoire.");
-                return;
-            }
-
-            ResolveLockedPlayerAttackImpact(session);
+            return;
         }
 
         string message = string.IsNullOrWhiteSpace(session.PendingPlayerActionResultMessage)
@@ -1659,7 +1736,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (!session.PendingEnemyActionResolved)
         {
-            ResolveEnemyActionImpact(session);
+            return;
         }
 
         session.State.CompleteEnemyAction();
@@ -2113,6 +2190,8 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        session.ResolutionResultReady = false;
+        session.ResolutionResultMessage = message ?? string.Empty;
         session.State.BeginResolution(
             playerVictory,
             Time.time,
@@ -2133,6 +2212,51 @@ public class CombatSessionManager : NetworkBehaviour
                 session.Player != null ? session.Player.MaxHp : 1,
                 BuildClientRpcParams(session.OwnerClientId));
         }
+    }
+
+    private void ShowCombatResolutionResult(CombatSession session)
+    {
+        if (session == null || session.State.Finished || !session.State.Resolving || session.ResolutionResultReady)
+        {
+            return;
+        }
+
+        session.ResolutionResultReady = true;
+        string resultMessage = string.IsNullOrWhiteSpace(session.ResolutionResultMessage)
+            ? session.State.LastMessage
+            : session.ResolutionResultMessage;
+
+        if (IsNetworkSessionActive() && IsSpawned)
+        {
+            CombatResultReadyClientRpc(
+                session.SessionId,
+                session.State.ResolutionPlayerVictory,
+                resultMessage ?? string.Empty,
+                BuildClientRpcParams(session.OwnerClientId));
+            return;
+        }
+
+        CombatHudController.EnsureInstance().ShowCombatResult(
+            session.SessionId,
+            session.State.ResolutionPlayerVictory,
+            resultMessage);
+    }
+
+    private void CompleteCombatResultExit(CombatSession session)
+    {
+        if (session == null ||
+            session.State.Finished ||
+            !session.State.Resolving ||
+            !session.ResolutionResultReady)
+        {
+            return;
+        }
+
+        string resultMessage = string.IsNullOrWhiteSpace(session.ResolutionResultMessage)
+            ? session.State.LastMessage
+            : session.ResolutionResultMessage;
+
+        EndCombat(session, session.State.ResolutionPlayerVictory, resultMessage, notifyClient: true);
     }
 
     private void BeginEncounterPlayerDeath(CombatSession session, string message)
@@ -2177,19 +2301,43 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (playerVictory)
         {
+            Animator enemyAnimator = null;
             if (localEnemyPresentationsBySessionId.TryGetValue(sessionId, out LocalEnemyPresentation presentation))
             {
-                PlayDeathAnimation(presentation.Enemy != null ? presentation.Enemy.ResolveAnimator() : null);
+                enemyAnimator = presentation.Enemy != null ? presentation.Enemy.ResolveAnimator() : null;
             }
 
+            PlayCombatResolutionAnimationSequence(
+                enemyAnimator,
+                controller != null ? controller.GetComponent<Animator>() : null);
             return;
         }
 
         if (controller != null)
         {
             controller.Stop();
-            PlayDeathAnimation(controller.GetComponent<Animator>());
         }
+
+        PlayCombatResolutionAnimationSequence(
+            controller != null ? controller.GetComponent<Animator>() : null,
+            ResolveLocalEnemyAnimator(sessionId));
+    }
+
+    [ClientRpc]
+    private void CombatResultReadyClientRpc(
+        string sessionId,
+        bool playerVictory,
+        string message,
+        ClientRpcParams rpcParams = default)
+    {
+        if (!IsServer && localCombatPresentation.Active && localCombatPresentation.SessionId == sessionId)
+        {
+            localCombatPresentation.Resolving = true;
+            localCombatPresentation.Phase = CombatSessionPhase.Resolving;
+            localCombatPresentation.ResolutionPlayerVictory = playerVictory;
+        }
+
+        CombatHudController.EnsureInstance().ShowCombatResult(sessionId, playerVictory, message);
     }
 
     private void EndCombat(CombatSession session, bool playerVictory, string message, bool notifyClient)
@@ -2242,6 +2390,11 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (IsNetworkSessionActive() && IsSpawned)
         {
+            if (session.OwnerClientId == ResolveLocalClientId())
+            {
+                CombatHudController.EnsureInstance().BeginCombatSessionIntro(session.SessionId);
+            }
+
             CombatEnterData enterData = new CombatEnterData(
                 session.SessionId,
                 session.PlayerCombatPosition,
@@ -2255,7 +2408,7 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        CombatHudController.EnsureInstance();
+        CombatHudController.EnsureInstance().BeginCombatSessionIntro(session.SessionId);
         CombatCameraPresentationController.EnsureInstance();
         CombatTransitionController.EnsureInstance().PlayEnterTransition();
     }
@@ -2720,6 +2873,7 @@ public class CombatSessionManager : NetworkBehaviour
 
         session.PendingDefensiveItem = null;
         session.PendingDefensiveItemHitPoints = 0;
+        session.DefensePanelSelectionWindowActive = false;
     }
 
     private static void ClearPendingEncounterReaction(CombatSession session)
@@ -2781,6 +2935,22 @@ public class CombatSessionManager : NetworkBehaviour
                session.State.Turn == CombatTurn.Enemy &&
                (session.State.DecisionActive ||
                 (session.State.EnemyActionLocked && !session.PendingEnemyActionResolved));
+    }
+
+    private static bool IsDefensePanelSelectionWindowActive(CombatSession session)
+    {
+        return IsDefensiveReactionActive(session) &&
+               session.DefensePanelSelectionWindowActive;
+    }
+
+    private static void SetDefensePanelSelectionWindowActive(CombatSession session, bool active)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.DefensePanelSelectionWindowActive = active && IsDefensiveReactionActive(session);
     }
 
     private static bool ControllerHasItem(SquadCharacterController controller, Item item)
@@ -3378,6 +3548,30 @@ public class CombatSessionManager : NetworkBehaviour
 
         CombatAggroEnemy enemy = FindLocalEnemyPresentation(presentation.EnemyReturnPosition);
         return enemy != null ? enemy.transform : null;
+    }
+
+    private Animator ResolveLocalEnemyAnimator(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return null;
+        }
+
+        if (localEnemyPresentationsBySessionId.TryGetValue(sessionId, out LocalEnemyPresentation tracked) &&
+            tracked != null &&
+            tracked.Enemy != null)
+        {
+            return tracked.Enemy.ResolveAnimator();
+        }
+
+        if (!localCombatPresentation.Active ||
+            !string.Equals(localCombatPresentation.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        Transform enemy = ResolveLocalCombatEnemyTransform(localCombatPresentation);
+        return enemy != null ? enemy.GetComponentInChildren<Animator>(true) : null;
     }
 
     private CombatAggroEnemy FindLocalEnemyPresentation(Vector3 expectedPosition)
@@ -4371,22 +4565,91 @@ public class CombatSessionManager : NetworkBehaviour
     private float ResolveCombatResolutionDuration(CombatSession session, bool playerVictory)
     {
         Animator loserAnimator = null;
+        Animator winnerAnimator = null;
         if (playerVictory)
         {
-            if (session != null && session.PendingEnemyCounterReactionAction)
-            {
-                return PostDeathReturnDelaySeconds;
-            }
-
             loserAnimator = session?.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null;
+            winnerAnimator = session?.Player != null ? session.Player.GetComponent<Animator>() : null;
         }
         else if (session?.Player != null)
         {
             loserAnimator = session.Player.GetComponent<Animator>();
+            winnerAnimator = session.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null;
             session.Player.Stop();
         }
 
-        return Mathf.Max(0f, PlayDeathAnimation(loserAnimator)) + PostDeathReturnDelaySeconds;
+        return PlayCombatResolutionAnimationSequence(loserAnimator, winnerAnimator) + PostResolutionResultDelaySeconds;
+    }
+
+    private float PlayCombatResolutionAnimationSequence(Animator loserAnimator, Animator winnerAnimator)
+    {
+        float deathDuration = Mathf.Max(0f, PlayDeathAnimation(loserAnimator));
+        float tauntDuration = ScheduleTauntAnimation(winnerAnimator, deathDuration);
+        return deathDuration + tauntDuration;
+    }
+
+    private float ScheduleTauntAnimation(Animator animator, float delaySeconds)
+    {
+        float duration = ResolveTauntAnimationDuration(animator);
+        if (duration <= 0f)
+        {
+            return 0f;
+        }
+
+        StartCoroutine(PlayTauntAfterDelay(animator, delaySeconds));
+        return duration;
+    }
+
+    private IEnumerator PlayTauntAfterDelay(Animator animator, float delaySeconds)
+    {
+        if (delaySeconds > 0f)
+        {
+            yield return new WaitForSeconds(delaySeconds);
+        }
+
+        PlayTauntAnimation(animator);
+    }
+
+    private float PlayTauntAnimation(Animator animator)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            return 0f;
+        }
+
+        for (int i = 0; i < TauntAnimationCandidates.Length; i++)
+        {
+            string candidate = TauntAnimationCandidates[i];
+            if (!HasAnimatorStateOrTrigger(animator, candidate))
+            {
+                continue;
+            }
+
+            return PlayNamedAnimation(animator, candidate, DefaultTauntAnimationDuration);
+        }
+
+        return 0f;
+    }
+
+    private static float ResolveTauntAnimationDuration(Animator animator)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            return 0f;
+        }
+
+        for (int i = 0; i < TauntAnimationCandidates.Length; i++)
+        {
+            string candidate = TauntAnimationCandidates[i];
+            if (!HasAnimatorStateOrTrigger(animator, candidate))
+            {
+                continue;
+            }
+
+            return ResolveAnimationDuration(animator, candidate, DefaultTauntAnimationDuration);
+        }
+
+        return 0f;
     }
 
     private float PlayDeathAnimation(Animator animator)

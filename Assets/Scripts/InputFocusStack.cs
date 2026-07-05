@@ -60,6 +60,17 @@ public static class InputFocusStack
         stack.Add(owner);
     }
 
+    public static void PushExclusive(object owner)
+    {
+        if (owner == null)
+        {
+            return;
+        }
+
+        stack.Clear();
+        stack.Add(owner);
+    }
+
     public static void Pop(object owner)
     {
         if (owner == null)

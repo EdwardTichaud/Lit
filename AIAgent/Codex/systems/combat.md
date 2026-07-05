@@ -12,10 +12,11 @@ résolution dans le monde.
 - `CombatSessionState`, `CombatTurn`, `CombatRuntimeEnemy` : état runtime.
 - `CombatHudController` : commandes et affichage local.
   Il orchestre aussi `CombatEngagedPanel`, `CombatScreenInfosPanel` et
-  l'exclusivite de `CombatDefensePanel`.
+  l'exclusivite de `CombatDefensePanel`, ainsi que l'ActionMap `Combat` pendant
+  toute la session.
 - `CombatDefensePanelController` : affiche les 3 items defensifs assignes
   quand un `AnimationEvent` de combat le demande, puis route `UseItem1/2/3`
-  vers ces slots via l'ActionMap `Combat`.
+  vers ces slots.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat et expose le shot temporaire `CounterAction`.
 - `CombatCounterItemPresentation` : presentation locale des items de contre
@@ -33,19 +34,27 @@ résolution dans le monde.
 1. Un trigger d’aggro demande une session au manager.
 2. L’autorité capture les positions de retour et construit les ennemis runtime.
 3. Le joueur engagé est téléporté instantanément vers l’arène et verrouillé.
-4. Le HUD joue une fois par session l'intro `CombatEngagedPanel_Trigger` sur
-   `CombatEngagedPanel`, puis affiche `CombatScreenInfosPanel`.
+4. Le HUD ferme l'inventaire ouvert, prend le focus exclusif, active l'ActionMap
+   locale `Combat` et joue une fois par session l'intro
+   `CombatEngagedPanel_Trigger` sur `CombatEngagedPanel`, des l'entree en
+   combat et sans attendre le premier snapshot, puis affiche
+   `CombatScreenInfosPanel`.
 5. Chaque tour commence par une courte phase de décision locale : HUD/focus et
    caméra se suspendent visuellement sans utiliser `Time.timeScale` global.
 6. Pendant la décision ennemie, le joueur engagé dispose d'une réaction
-   défensive locale : l'inventaire peut s'ouvrir, et un item défensif choisi est
-   validé puis résolu côté autorité. Le ralenti n'est pas declenche par cette
-   phase; il doit venir des `AnimationEvent` places dans les clips d'attaque.
+   defensive locale : l'inventaire ne s'ouvre pas en combat, et un item choisi
+   via `CombatDefensePanel` est valide puis resolu cote autorite. Le ralenti
+   n'est pas declenche par cette phase; il doit venir des `AnimationEvent`
+   places dans les clips d'attaque.
    Quand un `AnimationEvent` le demande, `CombatDefensePanel` devient le seul
    panel combat visible et ne propose que les 3 items defensifs assignes au
-   personnage comme items combat. Pendant son affichage, l'ActionMap locale
-   `Combat` remplace `Player`/`Camera`; `UseItem1`, `UseItem2` et `UseItem3`
-   selectionnent les slots 1 a 3. Les slots sans item assigne restent masques.
+   personnage comme items combat. L'ActionMap locale `Combat` reste active
+   pendant toute la session et le panel la force aussi quand il devient visible;
+   `UseItem1`, `UseItem2` et `UseItem3` selectionnent les slots 1 a 3 quand le
+   panel est visible. La fenetre defensive autorisee correspond a cet affichage
+   reel : le joueur peut remplacer son choix jusqu'a ce que le panel se masque,
+   et seul le dernier item choisi est resolu a l'impact. Les slots sans item
+   assigne restent masques.
    Les racines `EnableItem_1/2/3` sont resolues comme boutons UI pour permettre
    aussi la selection souris et la navigation manette/clavier.
    Cette demande issue d'un AnimationEvent est prioritaire sur l'intro
@@ -56,8 +65,12 @@ résolution dans le monde.
    `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
-8. La résolution restaure les positions, la caméra et le mouvement, puis applique
-   le résultat à l’ennemi monde.
+8. La resolution joue la mort du perdant puis un taunt du gagnant
+   (`Taunt`, puis `Victory`/`Celebrate` en fallback si disponibles). Le HUD
+   affiche ensuite un ecran `VICTOIRE` ou `GAME OVER` et la sortie de combat ne
+   se fait qu'apres validation manuelle du joueur. Cette validation restaure
+   alors les positions, la camera et le mouvement, puis applique le resultat a
+   l'ennemi monde.
 
 Pendant une session, la camera locale de combat est la seule source de pilotage
 spatial de la `Main Camera`. `CombatCameraPresentationController`, cree par
@@ -110,8 +123,8 @@ pour controler finement le ralenti, l'ouverture/fermeture de
 depuis le contexte local de combat, capture la pose de depart au moment de la
 ruee, restaure uniquement cette presentation et peut notifier
 `NotifyCombatImpact` au frame d'impact. Les degats restent resolus une seule
-fois par `CombatSessionManager`; le timer autoritaire reste le fallback si
-l'evenement n'est pas declenche.
+fois par `CombatSessionManager`; il n'y a plus de timer fallback, donc un clip
+d'attaque doit emettre `NotifyCombatImpact` pour appliquer l'impact.
 Les panels UI de combat reactivenent aussi leur hierarchie et corrigent une
 echelle locale nulle sur les parents au moment de l'affichage, afin que
 `CombatEngagedPanel`, `CombatScreenInfosPanel` et `CombatDefensePanel` restent

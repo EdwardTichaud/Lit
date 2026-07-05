@@ -15,5 +15,5 @@ MonoBehaviour:
   title: Fight Engaged
   composer: 
   audioClip: {fileID: 8300000, guid: 8af85fcfc280d7d4f87e55bf84ea72a9, type: 3}
-  volume: 0.6
+  volume: 0.1
   loop: 0

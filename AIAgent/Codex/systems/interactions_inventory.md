@@ -27,10 +27,10 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 4. La cible reçoit le personnage détecté et devient l’Outline actif.
 5. `Interact` appelle d’abord le handler actif, puis ouvre l’UI ou demande une
    mutation au serveur.
-6. En combat, pendant la réaction défensive du tour ennemi, l'inventaire peut
-   passer au-dessus du focus du HUD. Seuls les items marqués défensifs sont alors
-   routés vers `CombatSessionManager`; la suppression/casse reste validée côté
-   autorité.
+6. En combat, l'inventaire ne s'ouvre pas au-dessus du HUD. Pendant la réaction
+   défensive du tour ennemi, le choix passe par `CombatDefensePanel` et par les
+   actions `UseItem1/2/3`; la validation, la suppression/casse et la
+   synchronisation restent côté autorité.
 
 ## Pièges observés
 
@@ -52,10 +52,25 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   `NetworkInventory` et sauvegardes dans `CharacterSaveData`.
 - En combat, un item defensif non assigne aux 3 items combat reste dans le sac,
   mais n'est pas a portee de main pour la reaction ennemie.
-- Les actions `UseItem1`, `UseItem2` et `UseItem3` consomment respectivement les
-  trois items combat actifs; les libelles `EnableItem_1/2/3/Text` affichent les
-  noms de ces items. Ces racines sont aussi des boutons UI, et les slots sans
-  item assigne restent masques.
+- L'input inventaire est ignore pendant une session de combat locale ou quand
+  `CombatDefensePanel` est visible; NorthButton doit alors passer par
+  `UseItem1`.
+- Les actions `UseItem1`, `UseItem2` et `UseItem3` selectionnent
+  respectivement les trois items combat actifs pendant que
+  `CombatDefensePanel` est visible. Le dernier choix remplace les precedents et
+  reste le seul resolu a l'impact; le slot choisi est surligne et agrandi. Les
+  libelles `EnableItem_1/2/3/Text` affichent les noms de ces items. Ces racines
+  sont aussi des boutons UI, et les slots sans item assigne restent masques.
+- L'affichage des 3 slots lit les items combat assignes sans les purger si
+  l'inventaire runtime n'est pas encore initialise; l'utilisation reste ensuite
+  refusee par `CombatSessionManager` si l'item n'est pas reellement dans
+  l'inventaire.
+- L'application des starter items preserve les 3 items combat preassignes, puis
+  les revalide apres ajout des objets de depart.
+- Les sauvegardes `CharacterSaveData` version 5 persistent aussi les items avec
+  `CombatReactionProfile`. Au chargement d'une sauvegarde plus ancienne sans
+  items combat, les defaults du personnage sont migres si les items existent
+  dans l'inventaire restaure.
 - Un item combat actif peut etre defensif ou porter un `CombatReactionProfile`.
   `Item_Weapon_Sword` est configure comme premier `MeleeCounterImpale` : il ne
   sert pas de bouclier, mais declenche un empalement si l'attaque ennemie est

@@ -17,6 +17,7 @@ public class CombatHudController : MonoBehaviour
     private const string DefaultBaseAttackUiName = "BaseAttackUI";
     private const string DefaultCombatEngagedPanelName = "CombatEngagedPanel";
     private const string DefaultCombatScreenInfosPanelName = "CombatScreenInfosPanel";
+    private const string RuntimeCombatResultScreenName = "CombatResultScreen";
     private const string CombatEngagedAnimationName = "CombatEngagedPanel_Trigger";
     private const string EnemyAttackAlertText = "Attention l’ennemi attaque:";
 
@@ -124,6 +125,12 @@ public class CombatHudController : MonoBehaviour
     private float combatEngagedIntroEndsAt;
     private bool combatEngagedAnimationObserved;
     private bool combatDefensePanelRequested;
+    private GameObject resultRoot;
+    private TextMeshProUGUI resultTitleText;
+    private TextMeshProUGUI resultMessageText;
+    private Button resultContinueButton;
+    private bool combatResultVisible;
+    private string combatResultSessionId;
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -169,6 +176,66 @@ public class CombatHudController : MonoBehaviour
         Instance.Hide();
     }
 
+    public void BeginCombatSessionIntro(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        BuildUi();
+        activeSessionId = sessionId;
+        LocalPlayerInput.SetCombatInputActive(true);
+        UpdateCombatInputFocus(true);
+        if (!string.Equals(combatEngagedSessionId, sessionId, System.StringComparison.Ordinal))
+        {
+            StartCombatEngagedIntro(sessionId);
+        }
+    }
+
+    public void ShowCombatResult(string sessionId, bool playerVictory, string message)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        BuildResultUi();
+        activeSessionId = sessionId;
+        combatResultSessionId = sessionId;
+        combatResultVisible = true;
+        visible = false;
+        playerActionLocked = true;
+        combatDefensePanelRequested = false;
+        combatEngagedIntroActive = false;
+
+        SetText(resultTitleText, playerVictory ? "VICTOIRE" : "GAME OVER");
+        SetText(resultMessageText, string.IsNullOrWhiteSpace(message)
+            ? (playerVictory ? "Combat remporte." : "Combat perdu.")
+            : message);
+
+        if (resultContinueButton != null)
+        {
+            resultContinueButton.interactable = true;
+        }
+
+        SetScenePanelVisibility(false, false);
+        CombatDefensePanelController.HideActive();
+        SetCombatEngagedVisible(false);
+        if (root != null)
+        {
+            root.SetActive(false);
+        }
+
+        if (resultRoot != null)
+        {
+            resultRoot.SetActive(true);
+        }
+
+        LocalPlayerInput.SetCombatInputActive(true);
+        UpdateCombatInputFocus(true);
+    }
+
     private void Awake()
     {
         // Unity appelle Awake au chargement; on initialise le singleton et l'UI disponible.
@@ -193,15 +260,23 @@ public class CombatHudController : MonoBehaviour
         if (Instance == this)
         {
             ReleaseCombatInputFocus();
+            LocalPlayerInput.SetCombatInputActive(false);
             SetScenePanelVisibility(false, false);
             SetCombatEngagedVisible(false);
             CombatDefensePanelController.HideActive();
+            HideCombatResult();
         }
 
         if (root != null)
         {
             Destroy(root);
             root = null;
+        }
+
+        if (resultRoot != null)
+        {
+            Destroy(resultRoot);
+            resultRoot = null;
         }
 
         if (Instance == this)
@@ -217,6 +292,7 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact += OnInteract;
         LocalInputRouter.RightShoulder += OnRightShoulder;
         LocalInputRouter.Return += OnReturn;
+        LocalInputRouter.CombatUseItem += OnCombatUseItem;
         RefreshCombatPanelVisibility();
     }
 
@@ -226,12 +302,20 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Interact -= OnInteract;
         LocalInputRouter.RightShoulder -= OnRightShoulder;
         LocalInputRouter.Return -= OnReturn;
+        LocalInputRouter.CombatUseItem -= OnCombatUseItem;
         combatDefensePanelRequested = false;
+        HideCombatResult();
         ReleaseCombatInputFocus();
+        LocalPlayerInput.SetCombatInputActive(false);
     }
 
     private void Update()
     {
+        if (combatEngagedIntroActive)
+        {
+            UpdateCombatEngagedIntro();
+        }
+
         if (!visible)
         {
             return;
@@ -239,7 +323,6 @@ public class CombatHudController : MonoBehaviour
 
         // Le timer est derive du temps local entre deux snapshots serveur.
         UpdateTimerText();
-        UpdateCombatEngagedIntro();
     }
 
     /// <summary>
@@ -278,13 +361,16 @@ public class CombatHudController : MonoBehaviour
 
         timerEndsAt = Time.unscaledTime + sanitizedTimer;
         playerActionLocked = actionLocked;
+        bool resolving = phase == CombatSessionPhase.Resolving;
         visible = turn != TurnState.None && turn != TurnState.Finished;
         if (visible && !string.IsNullOrWhiteSpace(sessionId) && !string.Equals(combatEngagedSessionId, sessionId, System.StringComparison.Ordinal))
         {
             StartCombatEngagedIntro(sessionId);
         }
 
-        UpdateCombatInputFocus(visible);
+        bool combatInputVisible = visible || resolving || combatEngagedIntroActive || combatResultVisible;
+        LocalPlayerInput.SetCombatInputActive(combatInputVisible);
+        UpdateCombatInputFocus(combatInputVisible);
         RefreshCombatPanelVisibility();
         ApplySnapshotToUi(
             turn,
@@ -325,7 +411,9 @@ public class CombatHudController : MonoBehaviour
         playerActionLocked = false;
         visible = false;
         combatDefensePanelRequested = false;
+        HideCombatResult();
         ReleaseCombatInputFocus();
+        LocalPlayerInput.SetCombatInputActive(false);
         SetScenePanelVisibility(false, false);
         SetCombatEngagedVisible(false);
         CombatDefensePanelController.HideActive();
@@ -337,6 +425,13 @@ public class CombatHudController : MonoBehaviour
 
     private void OnInteract(InputAction.CallbackContext context)
     {
+        if (combatResultVisible)
+        {
+            LocalInputRouter.ConsumeInteract();
+            RequestCombatResultContinue();
+            return;
+        }
+
         if (CanSendCounter())
         {
             LocalInputRouter.ConsumeInteract();
@@ -371,6 +466,12 @@ public class CombatHudController : MonoBehaviour
 
     private void OnReturn(InputAction.CallbackContext context)
     {
+        if (combatResultVisible)
+        {
+            RequestCombatResultContinue();
+            return;
+        }
+
         if (CanSendDefense())
         {
             CombatSessionManager.Instance?.RequestLocalDefense();
@@ -383,6 +484,31 @@ public class CombatHudController : MonoBehaviour
         }
 
         CombatSessionManager.Instance?.RequestLocalPlayerPass();
+    }
+
+    private void OnCombatUseItem(int slotIndex)
+    {
+        if (!combatResultVisible)
+        {
+            return;
+        }
+
+        RequestCombatResultContinue();
+    }
+
+    private void RequestCombatResultContinue()
+    {
+        if (!combatResultVisible || string.IsNullOrWhiteSpace(combatResultSessionId))
+        {
+            return;
+        }
+
+        if (resultContinueButton != null)
+        {
+            resultContinueButton.interactable = false;
+        }
+
+        CombatSessionManager.Instance?.RequestLocalCombatResultContinue(combatResultSessionId);
     }
 
     private bool CanSendPlayerAction()
@@ -447,11 +573,13 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        if (!combatFocusPushed || !InputFocusStack.HasAnyFocus() || InputFocusStack.HasFocus(this))
+        if (!InputFocusStack.HasFocus(this))
         {
-            InputFocusStack.Push(this);
-            combatFocusPushed = true;
+            InventoryPanelController.CloseAllOpenForCombat();
+            InputFocusStack.PushExclusive(this);
         }
+
+        combatFocusPushed = true;
     }
 
     private void ReleaseCombatInputFocus()
@@ -494,6 +622,8 @@ public class CombatHudController : MonoBehaviour
         combatEngagedAnimationObserved = false;
         combatDefensePanelRequested = false;
 
+        LocalPlayerInput.SetCombatInputActive(true);
+        UpdateCombatInputFocus(true);
         SetScenePanelVisibility(false, false);
         CombatDefensePanelController.HideActive();
         SetCombatEngagedVisible(true);
@@ -551,8 +681,16 @@ public class CombatHudController : MonoBehaviour
 
     private void RefreshCombatPanelVisibility()
     {
+        if (combatResultVisible)
+        {
+            SetScenePanelVisibility(false, false);
+            CombatDefensePanelController.HideActive();
+            SetCombatEngagedVisible(false);
+            return;
+        }
+
         bool hasDefenseRequestContext = combatDefensePanelRequested && HasLocalCombatContext();
-        if (!visible && !hasDefenseRequestContext)
+        if (!visible && !hasDefenseRequestContext && !combatEngagedIntroActive)
         {
             combatDefensePanelRequested = false;
             SetScenePanelVisibility(false, false);
@@ -575,6 +713,12 @@ public class CombatHudController : MonoBehaviour
     private void SetCombatDefensePanelRequested(bool shouldBeVisible)
     {
         combatDefensePanelRequested = shouldBeVisible;
+        if (shouldBeVisible)
+        {
+            LocalPlayerInput.SetCombatInputActive(true);
+            UpdateCombatInputFocus(true);
+        }
+
         if (shouldBeVisible && combatEngagedIntroActive)
         {
             SetCombatEngagedVisible(false);
@@ -775,6 +919,102 @@ public class CombatHudController : MonoBehaviour
         runtimeActionsText = CreateText(panel.transform, "Actions", 15, FontStyles.Normal);
 
         root.SetActive(false);
+    }
+
+    private void BuildResultUi()
+    {
+        if (resultRoot != null)
+        {
+            return;
+        }
+
+        resultRoot = new GameObject(RuntimeCombatResultScreenName, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        DontDestroyOnLoad(resultRoot);
+
+        Canvas canvas = resultRoot.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 7000;
+
+        CanvasScaler scaler = resultRoot.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        GameObject blocker = new GameObject("Blocker", typeof(RectTransform), typeof(Image));
+        blocker.transform.SetParent(resultRoot.transform, false);
+        RectTransform blockerRect = blocker.GetComponent<RectTransform>();
+        blockerRect.anchorMin = Vector2.zero;
+        blockerRect.anchorMax = Vector2.one;
+        blockerRect.offsetMin = Vector2.zero;
+        blockerRect.offsetMax = Vector2.zero;
+        blocker.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.58f);
+
+        GameObject panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup));
+        panel.transform.SetParent(resultRoot.transform, false);
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = Vector2.zero;
+        panelRect.sizeDelta = new Vector2(560f, 300f);
+
+        Image panelImage = panel.GetComponent<Image>();
+        panelImage.color = new Color(0.025f, 0.028f, 0.032f, 0.94f);
+
+        VerticalLayoutGroup layout = panel.GetComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(34, 34, 28, 28);
+        layout.spacing = 18f;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlHeight = true;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childForceExpandWidth = true;
+
+        resultTitleText = CreateText(panel.transform, "Title", 46f, FontStyles.Bold);
+        resultTitleText.alignment = TextAlignmentOptions.Center;
+
+        resultMessageText = CreateText(panel.transform, "Message", 22f, FontStyles.Normal);
+        resultMessageText.alignment = TextAlignmentOptions.Center;
+
+        GameObject buttonObject = new GameObject("ContinueButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+        buttonObject.transform.SetParent(panel.transform, false);
+        RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+        buttonRect.sizeDelta = new Vector2(320f, 64f);
+        LayoutElement buttonLayout = buttonObject.GetComponent<LayoutElement>();
+        buttonLayout.preferredWidth = 320f;
+        buttonLayout.preferredHeight = 64f;
+
+        Image buttonImage = buttonObject.GetComponent<Image>();
+        buttonImage.color = new Color(0.84f, 0.78f, 0.62f, 0.94f);
+
+        resultContinueButton = buttonObject.GetComponent<Button>();
+        resultContinueButton.onClick.AddListener(RequestCombatResultContinue);
+
+        TextMeshProUGUI buttonText = CreateText(buttonObject.transform, "Text", 20f, FontStyles.Bold);
+        buttonText.alignment = TextAlignmentOptions.Center;
+        buttonText.color = new Color(0.08f, 0.075f, 0.065f, 1f);
+        buttonText.text = "Continuer";
+        RectTransform buttonTextRect = buttonText.GetComponent<RectTransform>();
+        buttonTextRect.anchorMin = Vector2.zero;
+        buttonTextRect.anchorMax = Vector2.one;
+        buttonTextRect.offsetMin = Vector2.zero;
+        buttonTextRect.offsetMax = Vector2.zero;
+
+        resultRoot.SetActive(false);
+    }
+
+    private void HideCombatResult()
+    {
+        combatResultVisible = false;
+        combatResultSessionId = null;
+        if (resultContinueButton != null)
+        {
+            resultContinueButton.interactable = true;
+        }
+
+        if (resultRoot != null)
+        {
+            resultRoot.SetActive(false);
+        }
     }
 
     private bool HasScenePanelUi()

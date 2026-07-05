@@ -999,7 +999,6 @@ public partial class SquadCharacterController : MonoBehaviour
     public List<Item> GetEnabledCombatDefensiveItems()
     {
         EnsureEnabledCombatList();
-        SanitizeEnabledCombatItems();
 
         List<Item> result = new List<Item>(MaxEnabledCombatItems);
         for (int i = 0; i < enabledCombatItems.Count; i++)
@@ -1252,6 +1251,9 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureEquippedInteractionList();
         EnsureEnabledCombatList();
         MarkInventoryInitialized();
+        List<Item> enabledCombatItemsToRestore = clearExisting && enabledCombatItems != null
+            ? new List<Item>(enabledCombatItems)
+            : null;
 
         if (clearExisting)
         {
@@ -1316,6 +1318,11 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             flameSecondsRemaining = 0;
             SetFlameEquipped(false);
+        }
+
+        if (enabledCombatItemsToRestore != null)
+        {
+            ApplyEnabledCombatItems(enabledCombatItemsToRestore);
         }
 
         SyncFlameStateToCharacterData();
