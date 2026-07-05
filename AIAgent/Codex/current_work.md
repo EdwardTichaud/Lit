@@ -18,6 +18,8 @@ virtuel ou d'un appel LLM local. Les prompts sont prepares manuellement depuis
 Le combat tour par tour pilote maintenant la camera locale par phase via
 `CombatCameraPresentationController`; pendant le combat, Opsive est suspendu
 comme driver camera spatial puis restaure a la sortie.
+Chaque phase shot peut aussi ajouter une vitesse de deplacement locale a son
+offset camera pour creer un drift cinematographique pendant la phase.
 Le ralenti de combat est maintenant strictement pilote par les `AnimationEvent`
 des clips via `CombatAnimationEvents`; la camera, le manager de combat et les
 impacts ne declenchent plus de ralenti automatique.

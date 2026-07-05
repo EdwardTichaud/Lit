@@ -79,6 +79,10 @@ pilotes camera Opsive (`CameraController`, handler et binder), applique un plan
 de camera par phase, puis restaure Opsive a la sortie. La phase `EnemyAction`
 utilise un cadrage cinematographique proche du joueur, un FOV plus large, un
 focus biaise vers l'ennemi et une respiration lente pour suivre l'attaque.
+Chaque phase shot expose aussi une vitesse de deplacement locale de son offset :
+une valeur X positive fait glisser la camera lateralement depuis son offset de
+depart, Y la fait monter, et Z la pousse sur l'axe joueur-vers-ennemi pendant
+la duree du shot.
 
 Pendant une attaque de mêlée, la présentation peut déplacer temporairement
 l'attaquant vers sa cible puis le ramener à sa position de combat. Ce mouvement

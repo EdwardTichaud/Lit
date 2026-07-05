@@ -22,11 +22,17 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
 
     [Header("Phase Shots")]
     [SerializeField] private Vector3 playerDecisionCameraOffset = new Vector3(0.75f, 1.55f, -3f);
+    [SerializeField] private Vector3 playerDecisionCameraOffsetMoveSpeed;
     [SerializeField] private Vector3 playerActionCameraOffset = new Vector3(0.45f, 1.35f, -2.45f);
+    [SerializeField] private Vector3 playerActionCameraOffsetMoveSpeed;
     [SerializeField] private Vector3 enemyDecisionCameraOffset = new Vector3(-0.95f, 1.25f, -2.7f);
+    [SerializeField] private Vector3 enemyDecisionCameraOffsetMoveSpeed;
     [SerializeField] private Vector3 enemyActionCameraOffset = new Vector3(-1.25f, 1.08f, -2.1f);
+    [SerializeField] private Vector3 enemyActionCameraOffsetMoveSpeed;
     [SerializeField] private Vector3 counterActionCameraOffset = new Vector3(0.15f, 1.18f, -1.85f);
+    [SerializeField] private Vector3 counterActionCameraOffsetMoveSpeed;
     [SerializeField] private Vector3 resolvingCameraOffset = new Vector3(0f, 1.65f, -3.2f);
+    [SerializeField] private Vector3 resolvingCameraOffsetMoveSpeed;
     [SerializeField, Range(0f, 1f)] private float playerDecisionLookBias = 0.62f;
     [SerializeField, Range(0f, 1f)] private float playerActionLookBias = 0.78f;
     [SerializeField, Range(0f, 1f)] private float enemyReactionLookBias = 0.74f;
@@ -61,6 +67,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     private struct CombatCameraShot
     {
         public Vector3 LocalOffset;
+        public Vector3 LocalOffsetMoveSpeed;
         public float LookBias;
         public float LookHeight;
         public float FieldOfView;
@@ -71,6 +78,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
 
         public CombatCameraShot(
             Vector3 localOffset,
+            Vector3 localOffsetMoveSpeed,
             float lookBias,
             float lookHeight,
             float fieldOfView,
@@ -80,6 +88,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             float breathingFrequency)
         {
             LocalOffset = localOffset;
+            LocalOffsetMoveSpeed = localOffsetMoveSpeed;
             LookBias = lookBias;
             LookHeight = lookHeight;
             FieldOfView = fieldOfView;
@@ -113,6 +122,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
     private float transitionElapsed;
     private bool transitioning;
     private float localPauseWeight;
+    private float activeShotStartedAt;
     private float counterActionShotEndsAt;
 
     public static CombatCameraPresentationController EnsureInstance()
@@ -210,6 +220,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             activePhase = phase;
             activeCounterActionShot = counterActionShot;
             phaseStateStored = true;
+            activeShotStartedAt = Time.unscaledTime;
             StartCameraTransition(ResolveBlendSeconds(playerTurn, phase, counterActionShot));
         }
 
@@ -428,6 +439,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             player,
             enemy,
             shot,
+            Mathf.Max(0f, Time.unscaledTime - activeShotStartedAt),
             out Vector3 targetPosition,
             out Quaternion targetRotation,
             out float targetFov);
@@ -467,6 +479,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         {
             return new CombatCameraShot(
                 counterActionCameraOffset,
+                counterActionCameraOffsetMoveSpeed,
                 counterActionLookBias,
                 cinematicLookHeight,
                 counterActionFieldOfView,
@@ -480,6 +493,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         {
             return new CombatCameraShot(
                 resolvingCameraOffset,
+                resolvingCameraOffsetMoveSpeed,
                 0.68f,
                 targetLookHeight,
                 resolvingFieldOfView,
@@ -495,6 +509,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
             {
                 return new CombatCameraShot(
                     enemyActionCameraOffset,
+                    enemyActionCameraOffsetMoveSpeed,
                     enemyActionLookBias,
                     cinematicLookHeight,
                     enemyActionFieldOfView,
@@ -506,6 +521,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
 
             return new CombatCameraShot(
                 enemyDecisionCameraOffset,
+                enemyDecisionCameraOffsetMoveSpeed,
                 enemyReactionLookBias,
                 cinematicLookHeight,
                 enemyReactionFieldOfView,
@@ -519,6 +535,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         {
             return new CombatCameraShot(
                 playerActionCameraOffset,
+                playerActionCameraOffsetMoveSpeed,
                 playerActionLookBias,
                 targetLookHeight,
                 playerActionFieldOfView,
@@ -530,6 +547,7 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
 
         return new CombatCameraShot(
             playerDecisionCameraOffset,
+            playerDecisionCameraOffsetMoveSpeed,
             playerDecisionLookBias,
             targetLookHeight,
             playerDecisionFieldOfView,
@@ -543,16 +561,18 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         Transform player,
         Transform enemy,
         CombatCameraShot shot,
+        float shotElapsed,
         out Vector3 position,
         out Quaternion rotation,
         out float fieldOfView)
     {
         ResolveCombatAxes(player, enemy, out Vector3 origin, out Vector3 forward, out Vector3 right);
 
+        Vector3 localOffset = shot.LocalOffset + shot.LocalOffsetMoveSpeed * shotElapsed;
         position = origin +
-                   right * shot.LocalOffset.x +
-                   Vector3.up * shot.LocalOffset.y +
-                   forward * shot.LocalOffset.z;
+                   right * localOffset.x +
+                   Vector3.up * localOffset.y +
+                   forward * localOffset.z;
         position += ResolveBreathingOffset(forward, right, shot);
 
         Vector3 lookPosition = ResolveLookPosition(player, enemy, shot);
@@ -721,5 +741,6 @@ public sealed class CombatCameraPresentationController : MonoBehaviour
         activePhase = CombatSessionPhase.Finished;
         activePlayerTurn = false;
         localPauseWeight = 0f;
+        activeShotStartedAt = 0f;
     }
 }
