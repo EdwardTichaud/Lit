@@ -48,7 +48,9 @@ chargement.
 une restauration en memoire, sans ecriture disque ni screenshot. Le retry de
 combat s'en sert pour remettre inventaires, items combat, PV de bouclier,
 flamme, Munin et donnees lisibles a leur etat pre-combat, pendant que le monde
-persistant est restaure via un `WorldSnapshot` en memoire.
+persistant est restaure via un `WorldSnapshot` en memoire. Cette capture runtime
+de retry peut conserver les issues de validation sans les log en erreurs console,
+pour ne pas polluer l'entree combat avec des providers de scene incomplets.
 
 Late join :
 

@@ -1240,7 +1240,15 @@ internal static class PersistentStateValidation
             return;
         }
 
-        PersistentWorldDebug.Error(fullMessage, logContext);
+        if (applyContext == null || applyContext.LogValidationFailuresAsErrors)
+        {
+            PersistentWorldDebug.Error(fullMessage, logContext);
+        }
+        else
+        {
+            PersistentWorldDebug.Log(fullMessage, logContext);
+        }
+
         applyContext?.ReportValidationIssue(fullMessage);
     }
 

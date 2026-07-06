@@ -1,5 +1,17 @@
 Shader "Hidden/Lit/BattleScreenWave"
 {
+    Properties
+    {
+        _Progress("Progress", Range(-0.2, 1.35)) = 0
+        _Intensity("Intensity", Range(0, 0.25)) = 0
+        _WaveCenter("Wave Center", Vector) = (0.5, 0.5, 0, 0)
+        _RingWidth("Ring Width", Range(0.02, 0.5)) = 0.16
+        _Frequency("Frequency", Range(1, 48)) = 18
+        _ChromaticAberration("Chromatic Aberration", Range(0, 0.08)) = 0
+        _Vignette("Vignette", Range(0, 0.6)) = 0
+        _Fade("Fade", Range(0, 0.6)) = 0
+    }
+
     HLSLINCLUDE
 
     #pragma vertex Vert

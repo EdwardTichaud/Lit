@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using INab.VFXAssets;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.VFX;
 
@@ -11,6 +10,7 @@ using UnityEngine.VFX;
 // Responsibilities: jouer la vague HDRP, lancer l'audio combat local et prechauffer BattleSphere/VFX.
 // Dependencies: HDRP Custom Pass, CombatTransitionController, CharacterEffect.
 // Precautions: l'action couverte doit toujours etre executee, meme si l'effet est interrompu.
+[ExecuteAlways]
 public sealed class BattleTransition : MonoBehaviour
 {
     private const string ShaderName = "Hidden/Lit/BattleScreenWave";
@@ -27,14 +27,26 @@ public sealed class BattleTransition : MonoBehaviour
 
     [Header("Screen Wave")]
     [SerializeField] private Shader screenWaveShader;
+    [SerializeField] private Material screenWaveMaterial;
+    [SerializeField] private CustomPassVolume screenWaveVolume;
+    [SerializeField] private string screenWavePassName = "Battle Screen Wave";
     [SerializeField, Min(0.2f)] private float enterDuration = 0.9f;
     [SerializeField, Range(0.05f, 0.95f)] private float enterPeakNormalizedTime = 0.38f;
-    [SerializeField, Range(0f, 0.25f)] private float maxIntensity = 0.1f;
+    [SerializeField, Range(0f, 0.25f)] private float maxIntensity = 0.12f;
     [SerializeField, Range(0.02f, 0.5f)] private float ringWidth = 0.16f;
     [SerializeField, Range(1f, 48f)] private float frequency = 18f;
-    [SerializeField, Range(0f, 0.08f)] private float chromaticAberration = 0.015f;
-    [SerializeField, Range(0f, 0.6f)] private float vignette = 0.18f;
-    [SerializeField, Range(0f, 0.6f)] private float fade = 0.14f;
+    [SerializeField, Range(0f, 0.08f)] private float chromaticAberration = 0.02f;
+    [SerializeField, Range(0f, 0.6f)] private float vignette = 0.22f;
+    [SerializeField, Range(0f, 0.6f)] private float fade = 0.2f;
+
+    [Header("Editor Preview")]
+    [SerializeField] private bool previewInEditMode;
+    [SerializeField, Range(0f, 1f)] private float previewProgress = 0.38f;
+    [SerializeField, Range(0f, 0.25f)] private float previewIntensity = 0.18f;
+    [SerializeField, Range(0f, 0.08f)] private float previewChromaticAberration = 0.02f;
+    [SerializeField, Range(0f, 0.6f)] private float previewVignette = 0.22f;
+    [SerializeField, Range(0f, 0.6f)] private float previewFade = 0.35f;
+    [SerializeField] private Vector2 previewWaveCenter = new Vector2(0.5f, 0.5f);
 
     [Header("Preload")]
     [SerializeField] private GameObject battleSpherePrefab;
@@ -49,7 +61,6 @@ public sealed class BattleTransition : MonoBehaviour
     private Material waveMaterial;
     private CustomPassVolume waveVolume;
     private FullScreenCustomPass wavePass;
-    private GameObject waveVolumeObject;
     private Coroutine transitionRoutine;
     private Action pendingCoveredAction;
 
@@ -70,16 +81,7 @@ public sealed class BattleTransition : MonoBehaviour
             return Instance;
         }
 
-        GameObject battleManager = GameObject.Find("BattleManager");
-        if (battleManager != null)
-        {
-            Instance = battleManager.AddComponent<BattleTransition>();
-            return Instance;
-        }
-
-        GameObject host = new GameObject("BattleTransition");
-        Instance = host.AddComponent<BattleTransition>();
-        return Instance;
+        return null;
     }
 
     public void PlayEnterTransition(Vector3 worldCenter, Action coveredAction, bool playVisual = true)
@@ -108,13 +110,46 @@ public sealed class BattleTransition : MonoBehaviour
 
     private IEnumerator Start()
     {
+        if (!Application.isPlaying)
+        {
+            ApplyEditModePreview();
+            yield break;
+        }
+
         yield return PreloadRoutine();
+    }
+
+    private void OnEnable()
+    {
+        if (!Application.isPlaying)
+        {
+            ApplyEditModePreview();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (!Application.isPlaying)
+        {
+            SetWaveActive(false);
+        }
+    }
+
+    private void OnValidate()
+    {
+        if (!Application.isPlaying)
+        {
+            waveMaterial = null;
+            waveVolume = null;
+            wavePass = null;
+            ApplyEditModePreview();
+        }
     }
 
     private void OnDestroy()
     {
         InvokePendingCoveredAction();
-        DestroyWavePass();
+        SetWaveActive(false);
         if (Instance == this)
         {
             Instance = null;
@@ -143,15 +178,20 @@ public sealed class BattleTransition : MonoBehaviour
         float time = 0f;
         while (time < duration)
         {
-            if (!covered && time >= coverAt)
-            {
-                covered = true;
-                InvokePendingCoveredAction();
-            }
-
             if (visualReady)
             {
                 ApplyWaveValues(time / duration, screenCenter);
+            }
+
+            if (!covered && time >= coverAt)
+            {
+                covered = true;
+                if (visualReady)
+                {
+                    ApplyWaveValues(enterPeakNormalizedTime, screenCenter);
+                }
+
+                InvokePendingCoveredAction();
             }
 
             time += Time.unscaledDeltaTime;
@@ -174,7 +214,16 @@ public sealed class BattleTransition : MonoBehaviour
 
     private IEnumerator PreloadRoutine()
     {
-        shaderVariants?.WarmUp();
+        if (!Application.isPlaying)
+        {
+            yield break;
+        }
+
+        if (shaderVariants != null)
+        {
+            shaderVariants.WarmUp();
+        }
+
         if (EnsureWavePass())
         {
             ApplyWaveValues(0f, new Vector2(0.5f, 0.5f));
@@ -213,66 +262,108 @@ public sealed class BattleTransition : MonoBehaviour
             return true;
         }
 
-        Shader shader = screenWaveShader != null ? screenWaveShader : Shader.Find(ShaderName);
-        if (shader == null)
+        waveVolume = screenWaveVolume != null ? screenWaveVolume : FindConfiguredWaveVolume();
+        if (waveVolume == null)
         {
-            Debug.LogWarning($"BattleTransition: shader '{ShaderName}' introuvable, transition d'ecran desactivee.", this);
+            Debug.LogWarning("BattleTransition: aucun CustomPassVolume de vague n'est assigne dans la scene.", this);
             return false;
         }
 
-        if (waveMaterial == null)
-        {
-            waveMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
-
-        if (waveVolumeObject == null)
-        {
-            waveVolumeObject = new GameObject("BattleScreenWavePass");
-            waveVolumeObject.hideFlags = HideFlags.HideAndDontSave;
-            waveVolumeObject.transform.SetParent(transform, false);
-        }
-
-        if (waveVolume == null)
-        {
-            waveVolume = waveVolumeObject.AddComponent<CustomPassVolume>();
-            waveVolume.isGlobal = true;
-            waveVolume.priority = 1000f;
-            waveVolume.injectionPoint = CustomPassInjectionPoint.AfterPostProcess;
-        }
-
+        wavePass = FindConfiguredWavePass(waveVolume);
         if (wavePass == null)
         {
-            wavePass = CustomPass.CreateFullScreenPass(
-                waveMaterial,
-                CustomPass.TargetBuffer.Camera,
-                CustomPass.TargetBuffer.None);
-            wavePass.name = "Battle Screen Wave";
-            wavePass.fetchColorBuffer = true;
-            wavePass.materialPassName = "Custom Pass 0";
-            wavePass.enabled = false;
-            waveVolume.customPasses.Add(wavePass);
+            Debug.LogWarning("BattleTransition: aucun FullScreenCustomPass 'Battle Screen Wave' n'est configure dans le CustomPassVolume assigne.", waveVolume);
+            return false;
         }
 
+        waveMaterial = screenWaveMaterial != null ? screenWaveMaterial : wavePass.fullscreenPassMaterial;
+        if (waveMaterial == null)
+        {
+            Debug.LogWarning("BattleTransition: le material de vague n'est pas assigne.", this);
+            return false;
+        }
+
+        Shader expectedShader = screenWaveShader != null ? screenWaveShader : Shader.Find(ShaderName);
+        if (expectedShader != null && waveMaterial.shader != expectedShader)
+        {
+            Debug.LogWarning("BattleTransition: le material assigne n'utilise pas le shader BattleScreenWave.", waveMaterial);
+            return false;
+        }
+
+        if (wavePass.fullscreenPassMaterial == null)
+        {
+            wavePass.fullscreenPassMaterial = waveMaterial;
+        }
+
+        wavePass.fetchColorBuffer = true;
+        wavePass.materialPassName = "Custom Pass 0";
+        wavePass.enabled = false;
         return true;
     }
 
-    private void DestroyWavePass()
+    private void ApplyEditModePreview()
     {
-        if (waveVolume != null && wavePass != null)
+        if (Application.isPlaying || !EnsureWavePass())
         {
-            waveVolume.customPasses.Remove(wavePass);
+            return;
         }
 
-        wavePass = null;
-        if (waveVolumeObject != null)
+        if (!previewInEditMode)
         {
-            Destroy(waveVolumeObject);
-            waveVolumeObject = null;
-            waveVolume = null;
+            ApplyWaveMaterialValues(0f, 0f, previewWaveCenter, 0f, 0f, 0f);
+            SetWaveActive(false);
+            return;
         }
 
-        CoreUtils.Destroy(waveMaterial);
-        waveMaterial = null;
+        float progress = Mathf.Lerp(-0.2f, 1.35f, Mathf.Clamp01(previewProgress));
+        Vector2 center = new Vector2(Mathf.Clamp01(previewWaveCenter.x), Mathf.Clamp01(previewWaveCenter.y));
+        ApplyWaveMaterialValues(
+            progress,
+            previewIntensity,
+            center,
+            previewChromaticAberration,
+            previewVignette,
+            previewFade);
+        SetWaveActive(true);
+    }
+
+    private CustomPassVolume FindConfiguredWaveVolume()
+    {
+        CustomPassVolume[] volumes = GetComponentsInChildren<CustomPassVolume>(true);
+        for (int i = 0; i < volumes.Length; i++)
+        {
+            if (volumes[i] != null && string.Equals(volumes[i].name, "BattleScreenWavePass", StringComparison.Ordinal))
+            {
+                return volumes[i];
+            }
+        }
+
+        return null;
+    }
+
+    private FullScreenCustomPass FindConfiguredWavePass(CustomPassVolume volume)
+    {
+        if (volume == null || volume.customPasses == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < volume.customPasses.Count; i++)
+        {
+            FullScreenCustomPass pass = volume.customPasses[i] as FullScreenCustomPass;
+            if (pass == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(pass.name, screenWavePassName, StringComparison.Ordinal) ||
+                pass.fullscreenPassMaterial == screenWaveMaterial)
+            {
+                return pass;
+            }
+        }
+
+        return null;
     }
 
     private void SetWaveActive(bool active)
@@ -298,14 +389,36 @@ public sealed class BattleTransition : MonoBehaviour
             ? Ease(beforePeak)
             : 1f - Ease(afterPeak);
 
-        waveMaterial.SetFloat(ProgressId, Mathf.Lerp(-0.2f, 1.35f, n));
-        waveMaterial.SetFloat(IntensityId, maxIntensity * envelope);
+        ApplyWaveMaterialValues(
+            Mathf.Lerp(-0.2f, 1.35f, n),
+            maxIntensity * envelope,
+            center,
+            chromaticAberration * envelope,
+            vignette * envelope,
+            fade * envelope);
+    }
+
+    private void ApplyWaveMaterialValues(
+        float progress,
+        float intensity,
+        Vector2 center,
+        float chromaticAberrationAmount,
+        float vignetteAmount,
+        float fadeAmount)
+    {
+        if (waveMaterial == null)
+        {
+            return;
+        }
+
+        waveMaterial.SetFloat(ProgressId, progress);
+        waveMaterial.SetFloat(IntensityId, intensity);
         waveMaterial.SetVector(WaveCenterId, new Vector4(center.x, center.y, 0f, 0f));
         waveMaterial.SetFloat(RingWidthId, ringWidth);
         waveMaterial.SetFloat(FrequencyId, frequency);
-        waveMaterial.SetFloat(ChromaticAberrationId, chromaticAberration * envelope);
-        waveMaterial.SetFloat(VignetteId, vignette * envelope);
-        waveMaterial.SetFloat(FadeId, fade * envelope);
+        waveMaterial.SetFloat(ChromaticAberrationId, chromaticAberrationAmount);
+        waveMaterial.SetFloat(VignetteId, vignetteAmount);
+        waveMaterial.SetFloat(FadeId, fadeAmount);
     }
 
     private Vector2 ResolveWaveCenter(Vector3 worldCenter)
@@ -357,25 +470,39 @@ public sealed class BattleTransition : MonoBehaviour
 
         for (int i = 0; i < visualEffects.Length; i++)
         {
-            visualEffects[i]?.Reinit();
-            visualEffects[i]?.Play();
+            if (visualEffects[i] == null)
+            {
+                continue;
+            }
+
+            visualEffects[i].Reinit();
+            visualEffects[i].Play();
         }
 
         for (int i = 0; i < characterEffects.Length; i++)
         {
-            characterEffects[i]?.StartEffect();
+            if (characterEffects[i] != null)
+            {
+                characterEffects[i].StartEffect();
+            }
         }
 
         yield return null;
 
         for (int i = 0; i < characterEffects.Length; i++)
         {
-            characterEffects[i]?.StopEffect();
+            if (characterEffects[i] != null)
+            {
+                characterEffects[i].StopEffect();
+            }
         }
 
         for (int i = 0; i < visualEffects.Length; i++)
         {
-            visualEffects[i]?.Stop();
+            if (visualEffects[i] != null)
+            {
+                visualEffects[i].Stop();
+            }
         }
 
         Destroy(instance);

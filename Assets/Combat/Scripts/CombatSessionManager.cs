@@ -631,7 +631,6 @@ public class CombatSessionManager : NetworkBehaviour
             return false;
         }
 
-        CombatRetrySnapshot retrySnapshot = CaptureCombatRetrySnapshot(player);
         StopPrayer(ownerClientId, sendFeedback: false);
 
         // Les positions de combat peuvent venir de l'arene configuree ou de fallbacks proches du combat.
@@ -658,8 +657,7 @@ public class CombatSessionManager : NetworkBehaviour
             EnemyCombatPosition = enemyCombatPosition,
             EnemyCombatRotation = enemyCombatRotation,
             HasEnemyPresentation = sourceEnemy != null,
-            Enemies = enemies,
-            RetrySnapshot = retrySnapshot
+            Enemies = enemies
         };
 
         sessionsByCharacterId[characterId] = session;
@@ -724,6 +722,7 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        session.RetrySnapshot = CaptureCombatRetrySnapshot(session.Player);
         SendCombatEntryMidpointPresentation(session);
 
         if (session.Player != null)
@@ -1411,7 +1410,11 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
-        BattleTransition.EnsureInstance().PlayEnterTransition(worldCenter, null, playVisual: true);
+        BattleTransition transition = BattleTransition.EnsureInstance();
+        if (transition != null)
+        {
+            transition.PlayEnterTransition(worldCenter, null, playVisual: true);
+        }
     }
 
     [ClientRpc]
@@ -2870,7 +2873,7 @@ public class CombatSessionManager : NetworkBehaviour
             return null;
         }
 
-        WorldSnapshot snapshot = worldStateManager.CaptureSnapshot(reason);
+        WorldSnapshot snapshot = worldStateManager.CaptureSnapshot(reason, logValidationFailuresAsErrors: false);
         return CloneWorldSnapshot(snapshot);
     }
 

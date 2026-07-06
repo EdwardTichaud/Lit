@@ -25,7 +25,7 @@ public class WorldStateManager : MonoBehaviour
         ResolveReferences();
     }
 
-    public WorldSnapshot CaptureSnapshot(string captureReason = null)
+    public WorldSnapshot CaptureSnapshot(string captureReason = null, bool logValidationFailuresAsErrors = true)
     {
         string resolvedCaptureReason = string.IsNullOrWhiteSpace(captureReason)
             ? "capture snapshot"
@@ -43,7 +43,7 @@ public class WorldStateManager : MonoBehaviour
         };
 
         CapturePlayers(snapshot);
-        CapturePersistentObjects(snapshot);
+        CapturePersistentObjects(snapshot, logValidationFailuresAsErrors);
         CaptureWorldRules(snapshot);
         LegacyBuildingPersistenceMigration.MergeLegacyWorldSnapshots(
             snapshot,
@@ -265,7 +265,7 @@ public class WorldStateManager : MonoBehaviour
         }
     }
 
-    private void CapturePersistentObjects(WorldSnapshot snapshot)
+    private void CapturePersistentObjects(WorldSnapshot snapshot, bool logValidationFailuresAsErrors)
     {
         if (snapshot == null || registry == null)
         {
@@ -273,7 +273,13 @@ public class WorldStateManager : MonoBehaviour
         }
 
         List<PersistentNetworkObject> objects = registry.GetAllObjects();
-        PersistentStateContext context = new PersistentStateContext(snapshot, registry, spawnManager, worldRulesStateManager, IsServer());
+        PersistentStateContext context = new PersistentStateContext(
+            snapshot,
+            registry,
+            spawnManager,
+            worldRulesStateManager,
+            IsServer(),
+            logValidationFailuresAsErrors);
 
         for (int i = 0; i < objects.Count; i++)
         {

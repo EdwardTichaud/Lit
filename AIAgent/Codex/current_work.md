@@ -23,10 +23,16 @@ joueur et l'ennemi au pic de la transition d'entree en combat; en reseau,
 cette presentation est demandee a tous les clients et detruite a la sortie
 manuelle du combat. L'entree combat est pilotee par `BattleTransition` sur le
 `BattleManager` de `Maison` : une vague HDRP locale au joueur engage masque la
-teleportation, tandis que BattleSphere, VFX et shader sont prechauffes au
-demarrage de scene. Si le prefab contient un ou plusieurs `CharacterEffect`,
-ils sont joues a l'apparition, stoppes a la sortie, puis detruits apres un
-delai par defaut de 2 secondes.
+teleportation via le `CustomPassVolume` de scene `BattleScreenWavePass`, tandis
+que BattleSphere, VFX et shader sont prechauffes au demarrage de scene. Le
+composant expose aussi un apercu edit-mode de la vague, sans prechauffage ni
+creation runtime, pour tester le rendu directement depuis le `BattleManager`.
+Le snapshot de retry pre-combat est aussi capture au pic de cette vague, avant tout
+deplacement, pour eviter un gel visible avant l'effet. Ses validations
+persistent en memoire sans etre loguees comme erreurs console.
+Si le prefab contient un ou plusieurs `CharacterEffect`, ils sont joues a
+l'apparition, stoppes a la sortie, puis detruits apres un delai par defaut de 2
+secondes.
 Chaque phase shot peut aussi ajouter une vitesse de deplacement locale a son
 offset camera pour creer un drift cinematographique pendant la phase.
 Le ralenti de combat est maintenant strictement pilote par les `AnimationEvent`

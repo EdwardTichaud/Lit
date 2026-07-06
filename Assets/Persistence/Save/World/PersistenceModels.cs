@@ -158,13 +158,15 @@ public sealed class PersistentStateContext
         NetworkObjectRegistry registry,
         SpawnManager spawnManager,
         WorldRulesStateManager worldRules,
-        bool isServer)
+        bool isServer,
+        bool logValidationFailuresAsErrors = true)
     {
         Snapshot = snapshot;
         Registry = registry;
         SpawnManager = spawnManager;
         WorldRules = worldRules;
         IsServer = isServer;
+        LogValidationFailuresAsErrors = logValidationFailuresAsErrors;
         LocalClientId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : NetworkManager.ServerClientId;
 
         if (snapshot == null)
@@ -185,6 +187,8 @@ public sealed class PersistentStateContext
     public WorldRulesStateManager WorldRules { get; }
 
     public bool IsServer { get; }
+
+    public bool LogValidationFailuresAsErrors { get; }
 
     public ulong LocalClientId { get; }
 
