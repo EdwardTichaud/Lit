@@ -105,9 +105,11 @@ namespace Opsive.UltimateCharacterController.SurfaceSystem
             InitObjectSurfaces();
 
 #if UNITY_2023_1_OR_NEWER
-            m_HasTerrain = FindObjectsByType<Terrain>(FindObjectsSortMode.None) != null;
+            var terrains = FindObjectsByType<Terrain>(FindObjectsInactive.Exclude);
+            m_HasTerrain = terrains != null && terrains.Length > 0;
 #else
-            m_HasTerrain = FindObjectsOfType<Terrain>() != null;
+            var terrains = FindObjectsOfType<Terrain>();
+            m_HasTerrain = terrains != null && terrains.Length > 0;
 #endif
         }
 
@@ -650,6 +652,10 @@ namespace Opsive.UltimateCharacterController.SurfaceSystem
                 return null;
             }
 
+            if (hitCollider is TerrainCollider) {
+                return null;
+            }
+
             Mesh mesh;
             if (!m_ColliderMeshMap.TryGetValue(hitCollider, out mesh)) {
                 // If no MeshCollider exists then try to get the mesh based off of the MeshFilter.
@@ -683,7 +689,7 @@ namespace Opsive.UltimateCharacterController.SurfaceSystem
                         mesh = meshCollider.sharedMesh;
 
                         // The mesh can't be used if it's not readable or has no triangles.
-                        if (!mesh.isReadable || mesh.triangles == null) {
+                        if (mesh == null || !mesh.isReadable || mesh.triangles == null) {
                             mesh = null;
                         }
                     }
@@ -709,7 +715,6 @@ namespace Opsive.UltimateCharacterController.SurfaceSystem
             }
 
             if (!(hitCollider is MeshCollider)) {
-                Debug.LogWarning($"Warning: Surface UV regions on {hitCollider.name} only support MeshColliders.");
                 return null;
             }
 

@@ -48,6 +48,9 @@ La fenetre defensive autorisee correspond maintenant a l'affichage reel de
 `CombatDefensePanel` : tant que le panel est visible, le joueur peut remplacer
 son choix, et seul le dernier item selectionne est resolu a l'impact avec un
 surlignage/agrandissement du slot choisi.
+Quand une attaque ennemie normale commence, le joueur local peut jouer une
+animation de preparation defensive configurable et une voix `AudioClipSO`
+optionnelle, avec fallback animation sur `Defense` puis `Block`.
 Pendant toute la session de combat, le HUD garde l'ActionMap locale `Combat`
 active, prend le focus exclusif et ferme l'inventaire s'il etait deja ouvert;
 `UseItem1`, `UseItem2` et `UseItem3` activent les trois slots quand

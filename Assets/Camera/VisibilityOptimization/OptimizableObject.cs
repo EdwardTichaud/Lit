@@ -7,17 +7,22 @@ using UnityEngine.Serialization;
 [DisallowMultipleComponent]
 public sealed class OptimizableObject : MonoBehaviour
 {
-    private struct ParticleState
+    private struct LightState
     {
-        public bool WasPlaying;
-        public bool WasPaused;
-        public bool EmissionEnabled;
+        public bool WasEnabled;
     }
 
     private struct BehaviourState
     {
         public bool WasEnabled;
         public bool CanRestore;
+    }
+
+    private struct ParticleState
+    {
+        public bool WasPlaying;
+        public bool WasPaused;
+        public bool EmissionEnabled;
     }
 
     [Header("Runtime")]
@@ -47,11 +52,15 @@ public sealed class OptimizableObject : MonoBehaviour
     [SerializeField] private bool controlRenderers = true;
     [SerializeField] private bool controlSkinnedMeshRenderers = true;
     [SerializeField] private bool controlParticleSystems = true;
+    [SerializeField] private bool controlLights;
+    [SerializeField] private bool controlColliders;
     [SerializeField, FormerlySerializedAs("controlExplicitPausables"), Tooltip("Opt-in uniquement: ne jamais ajouter de composant reseau ou de logique autoritaire.")]
     private bool controlExplicitBehaviours;
     [SerializeField] private VisibilityParticleOffscreenAction particleOffscreenAction = VisibilityParticleOffscreenAction.PauseAndResume;
     [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
     [SerializeField] private ParticleSystem[] targetParticleSystems = Array.Empty<ParticleSystem>();
+    [SerializeField] private Light[] targetLights = Array.Empty<Light>();
+    [SerializeField] private Collider[] targetColliders = Array.Empty<Collider>();
     [SerializeField, FormerlySerializedAs("explicitPausables")]
     private Behaviour[] explicitBehaviours = Array.Empty<Behaviour>();
     [SerializeField, Tooltip("Racines enfant a ignorer pendant le scan automatique.")]
@@ -65,8 +74,6 @@ public sealed class OptimizableObject : MonoBehaviour
 
     [SerializeField, HideInInspector] private VisibilityOptimizationCategory category = VisibilityOptimizationCategory.Decoration;
 #pragma warning disable 0414
-    [SerializeField, HideInInspector] private bool controlLights;
-    [SerializeField, HideInInspector] private Light[] targetLights = Array.Empty<Light>();
     [SerializeField, HideInInspector] private float visibleDistanceOverride = -1f;
     [SerializeField, HideInInspector] private float lightDistanceOverride = -1f;
     [SerializeField, HideInInspector] private float pauseDistanceOverride = -1f;
@@ -78,9 +85,13 @@ public sealed class OptimizableObject : MonoBehaviour
 
     private bool[] rendererEnabledStates = Array.Empty<bool>();
     private ParticleState[] particleStates = Array.Empty<ParticleState>();
+    private LightState[] lightStates = Array.Empty<LightState>();
+    private bool[] colliderEnabledStates = Array.Empty<bool>();
     private BehaviourState[] behaviourStates = Array.Empty<BehaviourState>();
     private bool capturedRendererState;
     private bool capturedParticleState;
+    private bool capturedLightState;
+    private bool capturedColliderState;
     private bool capturedBehaviourState;
     private Bounds cachedBounds;
     private bool boundsDirty = true;
@@ -209,6 +220,8 @@ public sealed class OptimizableObject : MonoBehaviour
         {
             targetRenderers = Array.Empty<Renderer>();
             targetParticleSystems = Array.Empty<ParticleSystem>();
+            targetLights = Array.Empty<Light>();
+            targetColliders = Array.Empty<Collider>();
             explicitBehaviours = Array.Empty<Behaviour>();
             boundsDirty = true;
             return;
@@ -226,9 +239,19 @@ public sealed class OptimizableObject : MonoBehaviour
             ? FilterOwnedTargets(root.GetComponentsInChildren<ParticleSystem>(includeInactiveChildren))
             : Array.Empty<ParticleSystem>();
 
+        targetLights = controlLights
+            ? FilterOwnedTargets(root.GetComponentsInChildren<Light>(includeInactiveChildren))
+            : Array.Empty<Light>();
+
+        targetColliders = controlColliders
+            ? FilterOwnedTargets(root.GetComponentsInChildren<Collider>(includeInactiveChildren))
+            : Array.Empty<Collider>();
+
         explicitBehaviours = FilterExplicitBehaviours(explicitBehaviours);
         capturedRendererState = false;
         capturedParticleState = false;
+        capturedLightState = false;
+        capturedColliderState = false;
         capturedBehaviourState = false;
         boundsDirty = true;
         RecalculateBounds();
@@ -270,6 +293,8 @@ public sealed class OptimizableObject : MonoBehaviour
 
         ApplyRendererVisibility(presentationVisible);
         ApplyParticleVisibility(presentationVisible);
+        ApplyLightVisibility(presentationVisible);
+        ApplyColliderVisibility(visible);
         ApplyBehaviourVisibility(visible);
 
         VisibilityOptimizationState nextState = ResolveState(presentationVisible);
@@ -286,6 +311,8 @@ public sealed class OptimizableObject : MonoBehaviour
     {
         ApplyRendererVisibility(true, forceRestore: true);
         ApplyParticleVisibility(true, forceRestore: true);
+        ApplyLightVisibility(true, forceRestore: true);
+        ApplyColliderVisibility(true, forceRestore: true);
         ApplyBehaviourVisibility(true, forceRestore: true);
     }
 
@@ -297,6 +324,8 @@ public sealed class OptimizableObject : MonoBehaviour
         }
 
         if (HasAnyReference(targetParticleSystems) ||
+            HasAnyReference(targetLights) ||
+            HasAnyReference(targetColliders) ||
             controlExplicitBehaviours && HasAnyReference(explicitBehaviours))
         {
             return VisibilityOptimizationState.Paused;
@@ -395,6 +424,84 @@ public sealed class OptimizableObject : MonoBehaviour
         if (visible && capturedParticleState)
         {
             capturedParticleState = false;
+        }
+    }
+
+    private void ApplyLightVisibility(bool visible, bool forceRestore = false)
+    {
+        if (!controlLights || targetLights == null)
+        {
+            return;
+        }
+
+        if (!visible)
+        {
+            CaptureLightStates();
+        }
+
+        for (int i = 0; i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            if (target == null)
+            {
+                continue;
+            }
+
+            if (visible)
+            {
+                if (capturedLightState && lightStates.Length > i)
+                {
+                    target.enabled = lightStates[i].WasEnabled;
+                }
+            }
+            else
+            {
+                target.enabled = false;
+            }
+        }
+
+        if (visible && capturedLightState)
+        {
+            capturedLightState = false;
+        }
+    }
+
+    private void ApplyColliderVisibility(bool visible, bool forceRestore = false)
+    {
+        if (!controlColliders || targetColliders == null)
+        {
+            return;
+        }
+
+        if (!visible)
+        {
+            CaptureColliderStates();
+        }
+
+        for (int i = 0; i < targetColliders.Length; i++)
+        {
+            Collider target = targetColliders[i];
+            if (target == null)
+            {
+                continue;
+            }
+
+            if (visible)
+            {
+                if (capturedColliderState && colliderEnabledStates.Length > i)
+                {
+                    target.enabled = colliderEnabledStates[i];
+                }
+            }
+            else
+            {
+                target.enabled = false;
+            }
+        }
+
+        if (visible && capturedColliderState)
+        {
+            capturedColliderState = false;
         }
     }
 
@@ -527,6 +634,43 @@ public sealed class OptimizableObject : MonoBehaviour
         capturedParticleState = true;
     }
 
+    private void CaptureLightStates()
+    {
+        if (capturedLightState)
+        {
+            return;
+        }
+
+        EnsureStateArray(ref lightStates, targetLights != null ? targetLights.Length : 0);
+        for (int i = 0; targetLights != null && i < targetLights.Length; i++)
+        {
+            Light target = targetLights[i];
+            lightStates[i] = new LightState
+            {
+                WasEnabled = target != null && target.enabled
+            };
+        }
+
+        capturedLightState = true;
+    }
+
+    private void CaptureColliderStates()
+    {
+        if (capturedColliderState)
+        {
+            return;
+        }
+
+        EnsureStateArray(ref colliderEnabledStates, targetColliders != null ? targetColliders.Length : 0);
+        for (int i = 0; targetColliders != null && i < targetColliders.Length; i++)
+        {
+            Collider target = targetColliders[i];
+            colliderEnabledStates[i] = target != null && target.enabled;
+        }
+
+        capturedColliderState = true;
+    }
+
     private void CaptureBehaviourStates()
     {
         if (capturedBehaviourState)
@@ -637,6 +781,28 @@ public sealed class OptimizableObject : MonoBehaviour
                 else
                 {
                     merged.Encapsulate(particleBounds);
+                }
+            }
+        }
+
+        if (!hasBounds)
+        {
+            for (int i = 0; targetColliders != null && i < targetColliders.Length; i++)
+            {
+                Collider collider = targetColliders[i];
+                if (collider == null)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    merged = collider.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    merged.Encapsulate(collider.bounds);
                 }
             }
         }
@@ -786,6 +952,8 @@ public sealed class OptimizableObject : MonoBehaviour
     {
         return HasAnyReference(targetRenderers) ||
                HasAnyReference(targetParticleSystems) ||
+               HasAnyReference(targetLights) ||
+               HasAnyReference(targetColliders) ||
                HasAnyReference(explicitBehaviours);
     }
 
@@ -839,6 +1007,14 @@ public sealed class OptimizableObject : MonoBehaviour
         if (states == null || states.Length != requiredLength)
         {
             states = new ParticleState[requiredLength];
+        }
+    }
+
+    private static void EnsureStateArray(ref LightState[] states, int requiredLength)
+    {
+        if (states == null || states.Length != requiredLength)
+        {
+            states = new LightState[requiredLength];
         }
     }
 

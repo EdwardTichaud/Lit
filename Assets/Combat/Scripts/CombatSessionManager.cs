@@ -338,6 +338,16 @@ public class CombatSessionManager : NetworkBehaviour
     /// </summary>
     [SerializeField, Range(0.1f, 1f), Tooltip("Moment normalise de l'animation ou l'impact autoritaire est applique.")]
     private float actionImpactNormalizedTime = 0.75f;
+    /// <summary>
+    /// Animation jouee par le joueur quand l'ennemi commence une attaque.
+    /// </summary>
+    [SerializeField, Tooltip("Animation de preparation defensive jouee par le joueur au debut d'une attaque ennemie.")]
+    private string enemyAttackDefensePreparationAnimationName = BlockAnimationName;
+    /// <summary>
+    /// Voix optionnelle jouee par le joueur quand l'ennemi commence une attaque.
+    /// </summary>
+    [SerializeField, Tooltip("AudioClipSO de voix joue par le joueur au debut d'une attaque ennemie.")]
+    private AudioClipSO enemyAttackDefensePreparationVoice;
 
     [Header("Arena Scene")]
     /// <summary>
@@ -1832,6 +1842,8 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        PlayEnemyAttackPlayerDefensePreparation(session);
+
         CombatActionTiming actionTiming = PlayEnemyBasicAttackPresentation(
             session,
             attack,
@@ -2317,6 +2329,67 @@ public class CombatSessionManager : NetworkBehaviour
         return timing;
     }
 
+    private void PlayEnemyAttackPlayerDefensePreparation(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        if (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId())
+        {
+            PlayEnemyAttackPlayerDefensePreparationLocally(session.Player);
+        }
+
+        if (IsNetworkSessionActive() &&
+            IsSpawned &&
+            session.OwnerClientId != ResolveLocalClientId())
+        {
+            PlayEnemyAttackPlayerDefensePreparationClientRpc(
+                session.SessionId,
+                BuildClientRpcParams(session.OwnerClientId));
+        }
+    }
+
+    private void PlayEnemyAttackPlayerDefensePreparationLocally(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return;
+        }
+
+        controller.Stop();
+        Transform playerTransform = controller.transform;
+        Animator animator = controller.GetComponent<Animator>();
+        PlayNamedAnimation(
+            animator,
+            ResolveEnemyAttackDefensePreparationAnimationName(animator),
+            DefaultDefenseAnimationDuration);
+        PlayReactionAudio(enemyAttackDefensePreparationVoice, ActionAudioCue.None, playerTransform.position);
+    }
+
+    private string ResolveEnemyAttackDefensePreparationAnimationName(Animator animator)
+    {
+        if (HasAnimatorStateOrTrigger(animator, enemyAttackDefensePreparationAnimationName))
+        {
+            return enemyAttackDefensePreparationAnimationName;
+        }
+
+        if (HasAnimatorStateOrTrigger(animator, DefenseAnimationName))
+        {
+            return DefenseAnimationName;
+        }
+
+        if (HasAnimatorStateOrTrigger(animator, BlockAnimationName))
+        {
+            return BlockAnimationName;
+        }
+
+        return string.IsNullOrWhiteSpace(enemyAttackDefensePreparationAnimationName)
+            ? BlockAnimationName
+            : enemyAttackDefensePreparationAnimationName;
+    }
+
     [ClientRpc]
     private void PlayPlayerBasicAttackClientRpc(string sessionId, ClientRpcParams rpcParams = default)
     {
@@ -2449,6 +2522,22 @@ public class CombatSessionManager : NetworkBehaviour
             ResolveControllerForClient(ResolveLocalClientId()),
             item,
             totalDuration);
+    }
+
+    [ClientRpc]
+    private void PlayEnemyAttackPlayerDefensePreparationClientRpc(
+        string sessionId,
+        ClientRpcParams rpcParams = default)
+    {
+        if (IsServer ||
+            !localCombatPresentation.Active ||
+            localCombatPresentation.SessionId != sessionId)
+        {
+            return;
+        }
+
+        PlayEnemyAttackPlayerDefensePreparationLocally(
+            ResolveControllerForClient(ResolveLocalClientId()));
     }
 
     [ClientRpc]

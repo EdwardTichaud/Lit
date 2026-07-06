@@ -74,6 +74,10 @@ résolution dans le monde.
    `CombatScreenInfosPanel` redevient visible.
 7. Le manager alterne joueur puis ennemi, applique les intentions validées côté
    autorité et synchronise les clients.
+   Au debut d'une attaque ennemie normale, le joueur engage peut jouer une
+   animation de preparation defensive configurable, avec fallback sur `Defense`
+   puis `Block`, ainsi qu'une voix `AudioClipSO` optionnelle. Cette
+   presentation est jouee localement chez le client proprietaire.
 8. La resolution joue la mort du perdant puis un taunt du gagnant
    (`Taunt`, puis `Victory`/`Celebrate` en fallback si disponibles). Le HUD
    affiche ensuite le panel de scene `VictoryPanel` ou `DefeatPanel`; aucun
