@@ -89,14 +89,21 @@ public sealed class CombatTransitionController : MonoBehaviour
     /// </summary>
     public void PlayEnterTransition(Action coveredAction = null)
     {
+        BeginCombatEntryAudioAndMusic();
+        StartTransition(EnterRoutine, coveredAction);
+    }
+
+    /// <summary>
+    /// Demarre les sons et la musique d'entree combat sans jouer l'ancienne transition visuelle.
+    /// </summary>
+    public void BeginCombatEntryAudioAndMusic()
+    {
         AudioManager manager = AudioManager.EnsureInstance();
         manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.EnterTransition));
         manager.PlayUiClip(manager.ResolveCombatAudioClip(CombatAudioCue.Accent));
         ForceReleaseGameOverMusicOverride();
         combatSessionMusicActive = true;
         EnsureCombatMusicOverride(manager);
-
-        StartTransition(EnterRoutine, coveredAction);
     }
 
     /// <summary>

@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 // Role: autorite principale des sessions de combat tour par tour.
 // Usage: singleton scene/runtime appele par CombatAggroEnemy, CombatHudController, items et idoles Iustia.
 // Responsibilities: creer sessions, piloter tours, synchroniser clients Netcode, deplacer presentations, appliquer resultats.
-// Dependencies: Unity Netcode, CombatHudController, CombatTransitionController, SquadCharacterController, CombatAggroEnemy.
+// Dependencies: Unity Netcode, BattleTransition, CombatHudController, CombatTransitionController, SquadCharacterController, CombatAggroEnemy.
 // Precautions: ce script coordonne beaucoup de systemes; privilegier des changements petits et tester solo + host/client.
 /// <summary>
 /// Manager central des combats tour par tour, compatible solo et Netcode.
@@ -665,19 +665,101 @@ public class CombatSessionManager : NetworkBehaviour
         sessionsByCharacterId[characterId] = session;
         sessionsByClientId[ownerClientId] = session;
 
+        BeginCombatEntryTransition(session, EnemyAttackWarningMessage);
+        return true;
+    }
+
+    private void BeginCombatEntryTransition(CombatSession session, string firstTurnMessage)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        Vector3 transitionCenter = ResolveCombatEntryTransitionCenter(session);
+        bool playLocalVisual = !IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId();
+        if (IsNetworkSessionActive() && IsSpawned && !playLocalVisual)
+        {
+            PlayCombatEntryWaveClientRpc(session.SessionId, transitionCenter, BuildClientRpcParams(session.OwnerClientId));
+        }
+
+        BattleTransition transition = BattleTransition.EnsureInstance();
+        if (transition == null)
+        {
+            ExecuteCombatEntryPlacementAndStart(session, firstTurnMessage);
+            return;
+        }
+
+        if (playLocalVisual)
+        {
+            transition.PlayEnterTransition(
+                transitionCenter,
+                () => ExecuteCombatEntryPlacementAndStart(session, firstTurnMessage),
+                playVisual: true);
+            return;
+        }
+
+        StartCoroutine(DelayedCombatEntryPlacementRoutine(session, firstTurnMessage, transition.EnterPeakDelaySeconds));
+    }
+
+    private IEnumerator DelayedCombatEntryPlacementRoutine(CombatSession session, string firstTurnMessage, float delaySeconds)
+    {
+        float endAt = Time.unscaledTime + Mathf.Max(0f, delaySeconds);
+        while (Time.unscaledTime < endAt)
+        {
+            yield return null;
+        }
+
+        ExecuteCombatEntryPlacementAndStart(session, firstTurnMessage);
+    }
+
+    private void ExecuteCombatEntryPlacementAndStart(CombatSession session, string firstTurnMessage)
+    {
+        if (session == null ||
+            session.State.Finished ||
+            session.State.Resolving ||
+            session.State.Phase != CombatSessionPhase.Created ||
+            session.State.Turn != CombatTurn.None)
+        {
+            return;
+        }
+
         SendCombatEntryMidpointPresentation(session);
 
-        // Le mouvement est bloque pendant la session pour eviter que le joueur sorte de la presentation.
-        player.PushScriptedMovementSuppression();
-        session.SuppressedMovement = true;
-        player.Stop();
+        if (session.Player != null)
+        {
+            if (!session.SuppressedMovement)
+            {
+                session.Player.PushScriptedMovementSuppression();
+                session.SuppressedMovement = true;
+            }
 
-        MoveCharacterTo(player, session.PlayerCombatPosition, session.PlayerCombatRotation);
-        MoveCombatAggroEnemyTo(sourceEnemy, session.EnemyCombatPosition, session.EnemyCombatRotation);
+            session.Player.Stop();
+            MoveCharacterTo(session.Player, session.PlayerCombatPosition, session.PlayerCombatRotation);
+        }
+
+        if (session.SourceEnemy != null && session.HasEnemyPresentation)
+        {
+            MoveCombatAggroEnemyTo(session.SourceEnemy, session.EnemyCombatPosition, session.EnemyCombatRotation);
+        }
 
         SendEnterCombat(session);
-        BeginTurn(session, CombatTurn.Enemy, EnemyAttackWarningMessage);
-        return true;
+        BeginTurn(session, CombatTurn.Enemy, firstTurnMessage);
+    }
+
+    private Vector3 ResolveCombatEntryTransitionCenter(CombatSession session)
+    {
+        if (session == null)
+        {
+            return Vector3.zero;
+        }
+
+        if (session.HasEnemyPresentation)
+        {
+            return (session.ReturnPosition + session.EnemyReturnPosition) * 0.5f;
+        }
+
+        return session.Player != null ? session.Player.transform.position : session.ReturnPosition;
     }
 
     private void SendCombatEntryMidpointPresentation(CombatSession session)
@@ -1322,6 +1404,17 @@ public class CombatSessionManager : NetworkBehaviour
     }
 
     [ClientRpc]
+    private void PlayCombatEntryWaveClientRpc(string sessionId, Vector3 worldCenter, ClientRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        BattleTransition.EnsureInstance().PlayEnterTransition(worldCenter, null, playVisual: true);
+    }
+
+    [ClientRpc]
     private void EnterCombatClientRpc(CombatEnterData data, ClientRpcParams rpcParams = default)
     {
         string sessionId = data.SessionId.ToString();
@@ -1344,8 +1437,6 @@ public class CombatSessionManager : NetworkBehaviour
         {
             ApplyLocalEnterCombatPresentation(data);
         }
-
-        CombatTransitionController.EnsureInstance().PlayEnterTransition();
     }
 
     [ClientRpc]
@@ -1479,6 +1570,11 @@ public class CombatSessionManager : NetworkBehaviour
         if (session.Player == null)
         {
             EndCombat(session, false, "Combat interrompu.", notifyClient: true);
+            return;
+        }
+
+        if (session.State.Phase == CombatSessionPhase.Created && session.State.Turn == CombatTurn.None)
+        {
             return;
         }
 
@@ -2723,15 +2819,9 @@ public class CombatSessionManager : NetworkBehaviour
         session.ResolutionResultMessage = null;
         session.State = new CombatSessionState();
 
-        SendCombatEntryMidpointPresentation(session);
-
         if (session.Player != null)
         {
-            session.Player.PushScriptedMovementSuppression();
-            session.SuppressedMovement = true;
             RestoreRetryPlayerHealth(session);
-            session.Player.Stop();
-            MoveCharacterTo(session.Player, session.PlayerCombatPosition, session.PlayerCombatRotation);
         }
 
         List<CombatRuntimeEnemy> restoredEnemies = BuildRuntimeEnemies(session.SourceEnemy);
@@ -2747,13 +2837,7 @@ public class CombatSessionManager : NetworkBehaviour
             }
         }
 
-        if (session.SourceEnemy != null && session.HasEnemyPresentation)
-        {
-            MoveCombatAggroEnemyTo(session.SourceEnemy, session.EnemyCombatPosition, session.EnemyCombatRotation);
-        }
-
-        SendEnterCombat(session);
-        BeginTurn(session, CombatTurn.Enemy, RetryCombatMessage);
+        BeginCombatEntryTransition(session, RetryCombatMessage);
     }
 
     private CombatRetrySnapshot CaptureCombatRetrySnapshot(SquadCharacterController player)
@@ -3070,7 +3154,6 @@ public class CombatSessionManager : NetworkBehaviour
 
         CombatHudController.EnsureInstance().BeginCombatSessionIntro(session.SessionId);
         CombatCameraPresentationController.EnsureInstance();
-        CombatTransitionController.EnsureInstance().PlayEnterTransition();
     }
 
     private void SendExitCombat(CombatSession session, string message, bool playerVictory, int enemyRemainingHp)

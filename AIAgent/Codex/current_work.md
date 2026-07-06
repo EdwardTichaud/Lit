@@ -19,9 +19,12 @@ Le combat tour par tour pilote maintenant la camera locale par phase via
 `CombatCameraPresentationController`; pendant le combat, Opsive est suspendu
 comme driver camera spatial puis restaure a la sortie.
 `CombatSessionManager` peut instancier un prefab public a mi-chemin entre le
-joueur et l'ennemi juste avant la teleportation d'entree en combat; en reseau,
+joueur et l'ennemi au pic de la transition d'entree en combat; en reseau,
 cette presentation est demandee a tous les clients et detruite a la sortie
-manuelle du combat. Si ce prefab contient un ou plusieurs `CharacterEffect`,
+manuelle du combat. L'entree combat est pilotee par `BattleTransition` sur le
+`BattleManager` de `Maison` : une vague HDRP locale au joueur engage masque la
+teleportation, tandis que BattleSphere, VFX et shader sont prechauffes au
+demarrage de scene. Si le prefab contient un ou plusieurs `CharacterEffect`,
 ils sont joues a l'apparition, stoppes a la sortie, puis detruits apres un
 delai par defaut de 2 secondes.
 Chaque phase shot peut aussi ajouter une vitesse de deplacement locale a son

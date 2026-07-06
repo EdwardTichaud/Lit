@@ -17,6 +17,8 @@ résolution dans le monde.
 - `CombatDefensePanelController` : affiche les 3 items defensifs assignes
   quand un `AnimationEvent` de combat le demande, puis route `UseItem1/2/3`
   vers ces slots.
+- `BattleTransition` : composant place sur le `BattleManager` de `Maison` qui
+  pilote la vague HDRP locale d'entree combat et prechauffe BattleSphere/VFX.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat et expose le shot temporaire `CounterAction`.
 - `CombatCounterItemPresentation` : presentation locale des items de contre
@@ -26,23 +28,25 @@ résolution dans le monde.
   initiale et notifier l'impact.
 - `TimeManager` : multiplicateur local de presentation combat declenche par les
   `AnimationEvent`, sans `Time.timeScale`.
-- `CombatTransitionController` : transition visuelle/audio.
+- `CombatTransitionController` : audio/musique de transition, transition de
+  sortie et musique de proximite.
 - `CombatHealth` : santé persistante des ennemis de scène.
 
 ## Flux principaux
 
 1. Un trigger d’aggro demande une session au manager.
 2. L’autorité capture les positions de retour et construit les ennemis runtime.
-3. Si `combatEntryMidpointPrefab` est renseigne, le manager l'instancie a
-   mi-chemin entre le joueur et l'ennemi, oriente vers l'ennemi, juste avant la
-   teleportation d'entree en combat. En reseau, un RPC dedie demande cette
-   presentation a tous les clients sans declencher le HUD/camera des joueurs
-   non engages. L'instance est suivie par session et detruite quand la sortie
-   manuelle du combat est validee apres l'ecran victoire/defaite; un retry la
-   remplace par une nouvelle instance. Les `CharacterEffect` presents sur cette
-   instance sont joues a l'apparition, stoppes a la sortie, puis detruits apres
-   un delai par defaut de 2 secondes.
-   Le joueur engage est ensuite teleporte instantanement vers l'arene et verrouille.
+3. `BattleTransition` lance une vague HDRP locale chez le joueur engage. Au pic
+   de distorsion, le manager instancie `combatEntryMidpointPrefab` a mi-chemin
+   entre le joueur et l'ennemi, oriente vers l'ennemi, puis teleporte le joueur
+   et l'ennemi vers l'arene. En reseau, la vague n'est jouee que chez le joueur
+   engage, tandis qu'un RPC dedie demande la BattleSphere a tous les clients sans
+   declencher le HUD/camera des joueurs non engages. L'instance est suivie par
+   session et detruite quand la sortie manuelle du combat est validee apres
+   l'ecran victoire/defaite; un retry la remplace par une nouvelle instance.
+   Les `CharacterEffect` presents sur cette instance sont joues a l'apparition,
+   stoppes a la sortie, puis detruits apres un delai par defaut de 2 secondes.
+   Le joueur engage est verrouille au moment de cette teleportation.
 4. Le HUD ferme l'inventaire ouvert, prend le focus exclusif, active l'ActionMap
    locale `Combat` et joue une fois par session l'intro
    `CombatEngagedPanel_Trigger` sur `CombatEngagedPanel`, des l'entree en
@@ -197,6 +201,11 @@ Le snapshot de retry est strictement runtime et n'ecrit aucun fichier : le
 manager capture `CharacterStateStore.CaptureRuntimeState` et
 `WorldStateManager.CaptureSnapshot` avant tout deplacement vers l'arene, puis
 restaure ces donnees au bouton retry.
+`BattleTransition` prechauffe au demarrage le shader `Hidden/Lit/BattleScreenWave`,
+une `ShaderVariantCollection` optionnelle, les materiaux/prefabs optionnels et
+une instance cachee de BattleSphere dont les colliders sont desactives; il joue
+puis stoppe ses `CharacterEffect`/VFX sur une frame pour limiter le hitch du
+premier combat. Le timing par defaut est 0.9s avec pic a 0.38.
 
 ## Pièges observés
 
