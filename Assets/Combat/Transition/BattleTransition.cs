@@ -97,7 +97,7 @@ public sealed class BattleTransition : MonoBehaviour
     private IEnumerator EnterRoutine(Vector3 worldCenter, bool playVisual)
     {
         ScreenWaveController wave = playVisual ? ResolveScreenWaveController() : null;
-        float duration = ResolveEnterDuration(wave);
+        float duration = ResolveEnterDuration(wave, playInverseWaveAfterPlacement);
         float freezeDuration = ResolveEntryFreezeDuration(wave);
         bool covered = false;
         Vector2 waveOrigin = ResolveWaveOrigin(worldCenter);
@@ -113,7 +113,14 @@ public sealed class BattleTransition : MonoBehaviour
             if (wave != null)
             {
                 BeginEntryFreeze();
-                wave.PlayScreenWave(waveOrigin, false);
+                if (playInverseWaveAfterPlacement)
+                {
+                    wave.PlayScreenWaveCycle(waveOrigin);
+                }
+                else
+                {
+                    wave.PlayScreenWavePhase(waveOrigin, false);
+                }
             }
         }
 
@@ -125,11 +132,6 @@ public sealed class BattleTransition : MonoBehaviour
                 covered = true;
                 RestoreEntryFreeze();
                 InvokePendingCoveredAction();
-
-                if (playVisual && playInverseWaveAfterPlacement && wave != null)
-                {
-                    wave.PlayScreenWave(waveOrigin, true);
-                }
             }
 
             time += Time.unscaledDeltaTime;
@@ -140,11 +142,6 @@ public sealed class BattleTransition : MonoBehaviour
         {
             RestoreEntryFreeze();
             InvokePendingCoveredAction();
-
-            if (playVisual && playInverseWaveAfterPlacement && wave != null)
-            {
-                wave.PlayScreenWave(waveOrigin, true);
-            }
         }
 
         transitionRoutine = null;
@@ -205,12 +202,13 @@ public sealed class BattleTransition : MonoBehaviour
         return screenWaveController;
     }
 
-    private float ResolveEnterDuration(ScreenWaveController wave = null)
+    private float ResolveEnterDuration(ScreenWaveController wave = null, bool includeInversePhase = true)
     {
         ScreenWaveController resolvedWave = wave != null ? wave : ResolveScreenWaveController();
         if (resolvedWave != null)
         {
-            return Mathf.Max(0.2f, resolvedWave.TotalDuration);
+            float duration = includeInversePhase ? resolvedWave.TotalDuration : resolvedWave.SinglePhaseDuration;
+            return Mathf.Max(0.2f, duration);
         }
 
         return Mathf.Max(0.2f, fallbackEnterDuration);

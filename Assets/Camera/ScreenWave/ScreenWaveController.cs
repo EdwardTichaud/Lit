@@ -82,11 +82,19 @@ public sealed class ScreenWaveController : MonoBehaviour
         get
         {
             ScreenWaveSettings settings = defaultSettings.Sanitized();
-            return settings.duration + settings.fadeOutDuration;
+            return settings.duration * 2f + settings.fadeOutDuration;
         }
     }
 
     public float MainDuration => defaultSettings.Sanitized().duration;
+    public float SinglePhaseDuration
+    {
+        get
+        {
+            ScreenWaveSettings settings = defaultSettings.Sanitized();
+            return settings.duration + settings.fadeOutDuration;
+        }
+    }
 
     public bool IsPlaying => playing || passDisablePending;
 
@@ -96,6 +104,7 @@ public sealed class ScreenWaveController : MonoBehaviour
     private float releaseElapsed;
     private bool playing;
     private bool releasing;
+    private bool playReverseAfterForward;
     private bool passDisablePending;
 #if UNITY_EDITOR
     private double lastEditorUpdateTime;
@@ -118,12 +127,25 @@ public sealed class ScreenWaveController : MonoBehaviour
 
     public void PlayScreenWave()
     {
-        PlayScreenWave(defaultSettings);
+        PlayScreenWaveCycle(defaultSettings);
     }
 
     public void PlayScreenWave(Vector2 origin)
     {
-        PlayScreenWave(origin, false);
+        PlayScreenWaveCycle(origin);
+    }
+
+    public void PlayScreenWaveCycle(Vector2 origin)
+    {
+        ScreenWaveSettings settings = defaultSettings;
+        settings.origin = origin;
+        PlayScreenWaveCycle(settings);
+    }
+
+    public void PlayScreenWaveCycle(ScreenWaveSettings settings)
+    {
+        settings.reverse = false;
+        PlayScreenWavePhase(settings, true);
     }
 
     public void PlayScreenWave(Vector2 origin, bool reverse)
@@ -131,33 +153,53 @@ public sealed class ScreenWaveController : MonoBehaviour
         ScreenWaveSettings settings = defaultSettings;
         settings.origin = origin;
         settings.reverse = reverse;
-        PlayScreenWave(settings);
+        PlayScreenWavePhase(settings, false);
+    }
+
+    public void PlayScreenWave(ScreenWaveSettings settings)
+    {
+        PlayScreenWaveCycle(settings);
+    }
+
+    public void PlayScreenWavePhase(ScreenWaveSettings settings)
+    {
+        PlayScreenWavePhase(settings, false);
+    }
+
+    public void PlayScreenWavePhase(Vector2 origin, bool reverse)
+    {
+        ScreenWaveSettings settings = defaultSettings;
+        settings.origin = origin;
+        settings.reverse = reverse;
+        PlayScreenWavePhase(settings, false);
     }
 
     public void PlayInverseScreenWave()
     {
         ScreenWaveSettings settings = defaultSettings;
         settings.reverse = true;
-        PlayScreenWave(settings);
+        PlayScreenWavePhase(settings, false);
     }
 
     public void PlayInverseScreenWave(Vector2 origin)
     {
-        PlayScreenWave(origin, true);
+        PlayScreenWavePhase(origin, true);
     }
 
-    public void PlayScreenWave(ScreenWaveSettings settings)
+    private void PlayScreenWavePhase(ScreenWaveSettings settings, bool chainReverse)
     {
         activeSettings = settings.Sanitized();
         elapsed = 0f;
         releaseElapsed = 0f;
         playing = true;
         releasing = false;
+        playReverseAfterForward = chainReverse && !activeSettings.reverse;
         passDisablePending = false;
 
         if (!EnsurePass(true))
         {
             playing = false;
+            playReverseAfterForward = false;
             return;
         }
 
@@ -288,6 +330,12 @@ public sealed class ScreenWaveController : MonoBehaviour
         if (elapsed >= mainDuration)
         {
             elapsed = mainDuration;
+            if (playReverseAfterForward)
+            {
+                StartReversePhase();
+                return;
+            }
+
             BeginRelease();
             return;
         }
@@ -311,8 +359,20 @@ public sealed class ScreenWaveController : MonoBehaviour
         }
 
         releasing = true;
+        playReverseAfterForward = false;
         releaseElapsed = 0f;
         ApplyWave(activeSettings, elapsed, 1f);
+        SetPassActive(true);
+    }
+
+    private void StartReversePhase()
+    {
+        playReverseAfterForward = false;
+        releasing = false;
+        releaseElapsed = 0f;
+        elapsed = 0f;
+        activeSettings.reverse = true;
+        ApplyWave(activeSettings, 0f, 1f);
         SetPassActive(true);
     }
 
@@ -338,6 +398,7 @@ public sealed class ScreenWaveController : MonoBehaviour
         SetPassActive(true);
         playing = false;
         releasing = false;
+        playReverseAfterForward = false;
         passDisablePending = true;
     }
 
@@ -345,6 +406,7 @@ public sealed class ScreenWaveController : MonoBehaviour
     {
         playing = false;
         releasing = false;
+        playReverseAfterForward = false;
         passDisablePending = false;
         EndEditorPreviewUpdate();
         if (EnsurePass(false))

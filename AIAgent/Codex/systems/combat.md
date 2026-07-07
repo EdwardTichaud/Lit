@@ -44,8 +44,9 @@ résolution dans le monde.
    premiere vague. A la fin de la vague, le manager capture le snapshot de retry
    pre-combat, instancie `combatEntryMidpointPrefab` a mi-chemin entre le joueur
    et l'ennemi, oriente vers l'ennemi, puis teleporte le joueur et l'ennemi vers
-   l'arene. Une deuxieme vague inversee est alors jouee pour revenir a un rendu
-   normal dans l'arene. En reseau, la vague n'est jouee que chez le joueur
+   l'arene. Le meme Custom Pass reste actif et enchaine alors une deuxieme vague
+   inversee pour revenir a un rendu normal dans l'arene. En reseau, la vague
+   n'est jouee que chez le joueur
    engage, tandis qu'un RPC dedie demande la BattleSphere a tous les clients sans
    declencher le HUD/camera des joueurs non engages. L'instance est suivie par
    session et detruite quand la sortie
@@ -218,15 +219,16 @@ enfant `ScreenWavePass` avec un `CustomPassVolume` global et un
 `FullScreenCustomPass` desactive par defaut. `ScreenWaveController` reference ce
 volume et le material `MAT_ScreenWave`, qui utilise le shader
 `Hidden/Lit/ScreenWave`. Le bouton inspecteur `PlayScreenWave` sur
-`ScreenWaveController` joue une vague unique hors Play Mode. Ses parametres
+`ScreenWaveController` joue hors Play Mode le cycle complet vague normale puis
+vague inversee. Ses parametres
 exposent l'origine viewport, la direction de pousse, la frequence, la vitesse de
 propagation, l'amplitude, la duree, l'attenuation et le fondu de sortie.
 La sortie wave vers normal est un release progressif : `StopScreenWave` lance ce
 fondu, puis le pass est coupe seulement apres une frame neutre. Le flux combat
-utilise aussi `PlayScreenWave(origin, true)` pour jouer une deuxieme vague en
-sens inverse apres le placement en arene. Le gel d'entree et le timing de
-placement restent calcules sur la duree principale de la vague, pas sur le
-fade-out.
+utilise `PlayScreenWaveCycle(origin)` pour garder le Custom Pass actif entre la
+phase `reverse = false` et la phase `reverse = true`; le placement en arene se
+fait a la fin de la premiere phase. Le gel d'entree et le timing de placement
+restent calcules sur la duree principale de la vague, pas sur le fade-out.
 Le snapshot monde du retry combat utilise une capture qui conserve les issues
 de validation mais ne les log pas en erreurs console, afin de ne pas polluer
 l'entree combat avec des providers de scene incomplets deja presents.

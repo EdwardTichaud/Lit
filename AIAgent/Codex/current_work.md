@@ -31,8 +31,9 @@ vitesse de propagation, son amplitude, sa duree et son attenuation, puis
 `BattleTransition` la declenche au debut du combat pendant que BattleSphere, VFX
 et shaders sont prechauffes au demarrage de scene. Quand le joueur rencontre un
 ennemi, l'entree combat fige localement le temps pendant la premiere vague,
-effectue le placement combat a la fin de cette vague, puis joue une deuxieme
-vague inversee pour revenir a un rendu normal dans l'arene.
+effectue le placement combat a la fin de cette vague, puis laisse le meme
+Custom Pass enchaîner une deuxieme vague inversee pour revenir a un rendu normal
+dans l'arene. Le bouton `PlayScreenWave` teste ce cycle complet hors Play Mode.
 Le snapshot de retry pre-combat est aussi capture au pic de cette vague, avant tout
 deplacement, pour eviter un gel visible avant l'effet. Ses validations
 persistent en memoire sans etre loguees comme erreurs console.
