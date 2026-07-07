@@ -21,12 +21,18 @@ comme driver camera spatial puis restaure a la sortie.
 `CombatSessionManager` peut instancier un prefab public a mi-chemin entre le
 joueur et l'ennemi au pic de la transition d'entree en combat; en reseau,
 cette presentation est demandee a tous les clients et detruite a la sortie
-manuelle du combat. L'entree combat est pilotee par `BattleTransition` sur le
-`BattleManager` de `Maison` : une vague HDRP locale au joueur engage masque la
-teleportation via le `CustomPassVolume` de scene `BattleScreenWavePass`, tandis
-que BattleSphere, VFX et shader sont prechauffes au demarrage de scene. Le
-composant expose aussi un apercu edit-mode de la vague, sans prechauffage ni
-creation runtime, pour tester le rendu directement depuis le `BattleManager`.
+manuelle du combat. L'entree combat est orchestree par `BattleTransition` sur le
+`BattleManager` de `Maison`, mais la vague HDRP est maintenant un systeme dedie :
+`ScreenWaveController` pilote le `CustomPassVolume` de scene `ScreenWavePass`
+avec le material `MAT_ScreenWave`. Le bouton inspecteur `PlayScreenWave` permet
+de tester une vague unique hors Play Mode depuis le `BattleManager`, sans
+creation runtime. La vague expose son origine, sa direction, sa frequence, sa
+vitesse de propagation, son amplitude, sa duree et son attenuation, puis
+`BattleTransition` la declenche au debut du combat pendant que BattleSphere, VFX
+et shaders sont prechauffes au demarrage de scene. Quand le joueur rencontre un
+ennemi, l'entree combat fige localement le temps pendant la premiere vague,
+effectue le placement combat a la fin de cette vague, puis joue une deuxieme
+vague inversee pour revenir a un rendu normal dans l'arene.
 Le snapshot de retry pre-combat est aussi capture au pic de cette vague, avant tout
 deplacement, pour eviter un gel visible avant l'effet. Ses validations
 persistent en memoire sans etre loguees comme erreurs console.

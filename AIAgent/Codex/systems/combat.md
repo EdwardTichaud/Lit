@@ -18,8 +18,10 @@ résolution dans le monde.
   quand un `AnimationEvent` de combat le demande, puis route `UseItem1/2/3`
   vers ces slots.
 - `BattleTransition` : composant place sur le `BattleManager` de `Maison` qui
-  pilote la vague HDRP locale d'entree combat depuis le `CustomPassVolume` de
-  scene `BattleScreenWavePass` et prechauffe BattleSphere/VFX.
+  orchestre l'entree combat, declenche `ScreenWaveController` et prechauffe
+  BattleSphere/VFX.
+- `ScreenWaveController` : systeme HDRP Custom Pass dedie a la vague d'ecran,
+  testable hors Play Mode via le bouton inspecteur `PlayScreenWave`.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat et expose le shot temporaire `CounterAction`.
 - `CombatCounterItemPresentation` : presentation locale des items de contre
@@ -37,13 +39,16 @@ résolution dans le monde.
 
 1. Un trigger d’aggro demande une session au manager.
 2. L’autorité capture les positions de retour et construit les ennemis runtime.
-3. `BattleTransition` lance une vague HDRP locale chez le joueur engage. Au pic
-   de distorsion, le manager capture le snapshot de retry pre-combat, instancie
-   `combatEntryMidpointPrefab` a mi-chemin entre le joueur et l'ennemi, oriente
-   vers l'ennemi, puis teleporte le joueur et l'ennemi vers l'arene. En reseau,
-   la vague n'est jouee que chez le joueur engage, tandis qu'un RPC dedie demande
-   la BattleSphere a tous les clients sans declencher le HUD/camera des joueurs
-   non engages. L'instance est suivie par session et detruite quand la sortie
+3. `BattleTransition` demande a `ScreenWaveController` de jouer une vague HDRP
+   locale chez le joueur engage et fige localement `Time.timeScale` pendant cette
+   premiere vague. A la fin de la vague, le manager capture le snapshot de retry
+   pre-combat, instancie `combatEntryMidpointPrefab` a mi-chemin entre le joueur
+   et l'ennemi, oriente vers l'ennemi, puis teleporte le joueur et l'ennemi vers
+   l'arene. Une deuxieme vague inversee est alors jouee pour revenir a un rendu
+   normal dans l'arene. En reseau, la vague n'est jouee que chez le joueur
+   engage, tandis qu'un RPC dedie demande la BattleSphere a tous les clients sans
+   declencher le HUD/camera des joueurs non engages. L'instance est suivie par
+   session et detruite quand la sortie
    manuelle du combat est validee apres l'ecran victoire/defaite; un retry la
    remplace par une nouvelle instance. Les `CharacterEffect` presents sur cette
    instance sont joues a l'apparition, stoppes a la sortie, puis detruits apres
@@ -203,18 +208,25 @@ Le snapshot de retry est strictement runtime et n'ecrit aucun fichier : le
 manager capture `CharacterStateStore.CaptureRuntimeState` et
 `WorldStateManager.CaptureSnapshot` avant tout deplacement vers l'arene, puis
 restaure ces donnees au bouton retry.
-`BattleTransition` prechauffe au demarrage le shader `Hidden/Lit/BattleScreenWave`,
-une `ShaderVariantCollection` optionnelle, les materiaux/prefabs optionnels et
-une instance cachee de BattleSphere dont les colliders sont desactives; il joue
-puis stoppe ses `CharacterEffect`/VFX sur une frame pour limiter le hitch du
-premier combat. Le timing par defaut est 0.9s avec pic a 0.38.
+`BattleTransition` prechauffe au demarrage une `ShaderVariantCollection`
+optionnelle, les materiaux/prefabs optionnels et une instance cachee de
+BattleSphere dont les colliders sont desactives; il joue puis stoppe ses
+`CharacterEffect`/VFX sur une frame pour limiter le hitch du premier combat.
+Le timing d'entree par defaut est 0.9s avec pic a 0.38.
 Le pass d'ecran n'est pas cree en runtime : `BattleManager` possede en scene un
-enfant `BattleScreenWavePass` avec un `CustomPassVolume` global et un
-`FullScreenCustomPass` desactive par defaut, reference par `BattleTransition`.
-Le material `MAT_BattleScreenWave` expose les proprietes shader de la vague, et
-`BattleTransition` peut activer un apercu hors Play Mode via `Preview In Edit
-Mode`; cet apercu pilote le pass existant de scene mais ne lance pas le
-prechauffage BattleSphere/VFX.
+enfant `ScreenWavePass` avec un `CustomPassVolume` global et un
+`FullScreenCustomPass` desactive par defaut. `ScreenWaveController` reference ce
+volume et le material `MAT_ScreenWave`, qui utilise le shader
+`Hidden/Lit/ScreenWave`. Le bouton inspecteur `PlayScreenWave` sur
+`ScreenWaveController` joue une vague unique hors Play Mode. Ses parametres
+exposent l'origine viewport, la direction de pousse, la frequence, la vitesse de
+propagation, l'amplitude, la duree, l'attenuation et le fondu de sortie.
+La sortie wave vers normal est un release progressif : `StopScreenWave` lance ce
+fondu, puis le pass est coupe seulement apres une frame neutre. Le flux combat
+utilise aussi `PlayScreenWave(origin, true)` pour jouer une deuxieme vague en
+sens inverse apres le placement en arene. Le gel d'entree et le timing de
+placement restent calcules sur la duree principale de la vague, pas sur le
+fade-out.
 Le snapshot monde du retry combat utilise une capture qui conserve les issues
 de validation mais ne les log pas en erreurs console, afin de ne pas polluer
 l'entree combat avec des providers de scene incomplets deja presents.
