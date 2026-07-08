@@ -106,6 +106,16 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         CombatSessionManager.Instance?.NotifyLocalCombatAnimationImpact(ResolveActorRoot());
     }
 
+    public void Hit()
+    {
+        CombatSessionManager.Instance?.NotifyLocalCombatCounterHit(ResolveActorRoot());
+    }
+
+    public void Release()
+    {
+        CombatSessionManager.Instance?.NotifyLocalCombatCounterRelease(ResolveActorRoot());
+    }
+
     public void StopCombatPresentationMovement()
     {
         StopMoveRoutine();

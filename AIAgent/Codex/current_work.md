@@ -85,6 +85,9 @@ Les items peuvent porter un `CombatReactionProfile` optionnel. `Item_Weapon_Swor
 est configure comme premier contre melee : il declenche `Counter_Sword`,
 `Impaled`, un shot camera `CounterAction`, un court ralenti local, et peut
 configurer ses attaches, SFX/VFX/voix depuis l'item.
+Quand ce contre interrompt une attaque ennemie, la presentation ennemie bascule
+sur le clip/profil de reaction et `Counter_Sword` pilote l'impact via
+`Hit`, puis le plantage visuel de l'item via `Release`.
 `Item_Shield_WoodShield` utilise maintenant le type `MeleeDefense` : le joueur
 sort son visuel en main, bloque les attaques melee, l'item perd des PV defensifs
 persistes sur le personnage entre les combats, reste reutilisable s'il lui en

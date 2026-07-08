@@ -144,9 +144,11 @@ Un item peut porter un `CombatReactionProfile` optionnel. Les items de reaction
 peuvent etre gardes dans les 3 items combat meme s'ils n'absorbent pas de
 degats. Le premier type supporte est `MeleeCounterImpale` : si le joueur choisit
 l'item avant l'impact d'une attaque ennemie melee, l'attaque est interrompue,
-les animations joueur/ennemi configurees se jouent, le visuel de l'item passe de
-l'attache joueur a l'attache ennemie, puis le shot camera `CounterAction`, le
-ralenti local, les SFX, VFX et voix optionnelles du profil soulignent l'impact.
+les animations joueur/ennemi configurees se jouent et le shot camera
+`CounterAction` demarre. L'animation joueur pilote ensuite le timing exact :
+`Hit` applique le contre effectif et les degats, tandis que `Release` detache le
+visuel de l'item de la main joueur pour le planter sur l'ennemi. Les SFX, VFX,
+voix optionnelles et ralenti local du profil soulignent l'impact.
 Contre une attaque non melee, ce profil ne remplace pas une defense.
 Le type `MeleeDefense` sert aux objets comme `Item_Shield_WoodShield` : le
 joueur sort le visuel de l'item en main, bloque une attaque melee sans subir de

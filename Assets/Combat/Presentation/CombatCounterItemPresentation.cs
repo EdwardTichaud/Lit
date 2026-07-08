@@ -5,6 +5,54 @@ using UnityEngine;
 // Presentation locale des items utilises pour des contres de combat.
 public static class CombatCounterItemPresentation
 {
+    public sealed class MeleeCounterHandle
+    {
+        private readonly GameObject visual;
+        private readonly Transform enemyAttach;
+        private readonly Transform enemyRoot;
+        private readonly Vector3 enemyLocalPosition;
+        private readonly Vector3 enemyLocalEulerAngles;
+
+        internal MeleeCounterHandle(
+            GameObject visual,
+            Transform enemyAttach,
+            Transform enemyRoot,
+            Vector3 enemyLocalPosition,
+            Vector3 enemyLocalEulerAngles)
+        {
+            this.visual = visual;
+            this.enemyAttach = enemyAttach;
+            this.enemyRoot = enemyRoot;
+            this.enemyLocalPosition = enemyLocalPosition;
+            this.enemyLocalEulerAngles = enemyLocalEulerAngles;
+        }
+
+        public Transform ImpactPoint => enemyAttach;
+
+        public void ReleaseToEnemy()
+        {
+            if (visual == null || enemyAttach == null)
+            {
+                return;
+            }
+
+            AttachToEnemyPoint(
+                visual.transform,
+                enemyAttach,
+                enemyRoot,
+                enemyLocalPosition,
+                enemyLocalEulerAngles);
+        }
+
+        public void DestroyVisual()
+        {
+            if (visual != null)
+            {
+                UnityEngine.Object.Destroy(visual);
+            }
+        }
+    }
+
     private static readonly string[] RightHandNames =
     {
         "RightHand", "right_hand", "hand_r", "Hand_R", "mixamorig:RightHand"
@@ -15,29 +63,31 @@ public static class CombatCounterItemPresentation
         "spine_03", "Spine_03", "mixamorig:Spine2", "spine_04", "Spine"
     };
 
-    public static Coroutine PlayMeleeCounter(
-        MonoBehaviour runner,
+    public static MeleeCounterHandle BeginMeleeCounter(
         Transform playerRoot,
         Transform enemyRoot,
         Item item,
-        Item.CombatReactionProfile profile,
-        float handSeconds,
-        float totalSeconds,
-        Action<Transform> onImpact)
+        Item.CombatReactionProfile profile)
     {
-        if (runner == null)
+        GameObject visual = CreateItemVisual(item, profile, playerRoot, enemyRoot);
+        Transform rightHand = ResolveRightHand(playerRoot, profile);
+        Transform enemyAttach = ResolveNamedChild(enemyRoot, profile?.enemyAttachBoneName, SpineNames);
+
+        if (visual != null && rightHand != null)
         {
-            return null;
+            AttachToPoint(
+                visual.transform,
+                rightHand,
+                profile != null ? profile.playerAttachLocalPosition : Vector3.zero,
+                profile != null ? profile.playerAttachLocalEulerAngles : Vector3.zero);
         }
 
-        return runner.StartCoroutine(PlayMeleeCounterRoutine(
-            playerRoot,
+        return new MeleeCounterHandle(
+            visual,
+            enemyAttach,
             enemyRoot,
-            item,
-            profile,
-            handSeconds,
-            totalSeconds,
-            onImpact));
+            profile != null ? profile.enemyAttachLocalPosition : Vector3.zero,
+            profile != null ? profile.enemyAttachLocalEulerAngles : Vector3.zero);
     }
 
     public static Coroutine PlayHeldItem(
@@ -73,51 +123,6 @@ public static class CombatCounterItemPresentation
         }
 
         yield return WaitPresentationSeconds(totalSeconds);
-
-        if (visual != null)
-        {
-            UnityEngine.Object.Destroy(visual);
-        }
-    }
-
-    private static IEnumerator PlayMeleeCounterRoutine(
-        Transform playerRoot,
-        Transform enemyRoot,
-        Item item,
-        Item.CombatReactionProfile profile,
-        float handSeconds,
-        float totalSeconds,
-        Action<Transform> onImpact)
-    {
-        GameObject visual = CreateItemVisual(item, profile, playerRoot, enemyRoot);
-        Transform rightHand = ResolveRightHand(playerRoot, profile);
-        Transform enemyAttach = ResolveNamedChild(enemyRoot, profile?.enemyAttachBoneName, SpineNames);
-
-        if (visual != null && rightHand != null)
-        {
-            AttachToPoint(
-                visual.transform,
-                rightHand,
-                profile != null ? profile.playerAttachLocalPosition : Vector3.zero,
-                profile != null ? profile.playerAttachLocalEulerAngles : Vector3.zero);
-        }
-
-        yield return WaitPresentationSeconds(handSeconds);
-
-        if (visual != null && enemyAttach != null)
-        {
-            AttachToEnemyPoint(
-                visual.transform,
-                enemyAttach,
-                enemyRoot,
-                profile != null ? profile.enemyAttachLocalPosition : Vector3.zero,
-                profile != null ? profile.enemyAttachLocalEulerAngles : Vector3.zero);
-        }
-
-        onImpact?.Invoke(enemyAttach);
-
-        float remaining = Mathf.Max(0f, totalSeconds - Mathf.Max(0f, handSeconds));
-        yield return WaitPresentationSeconds(remaining);
 
         if (visual != null)
         {

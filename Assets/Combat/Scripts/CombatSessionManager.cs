@@ -275,6 +275,20 @@ public class CombatSessionManager : NetworkBehaviour
         public float LastValidationTime;
     }
 
+    private sealed class LocalCounterReactionPresentation
+    {
+        public string SessionId;
+        public Transform PlayerRoot;
+        public Transform EnemyRoot;
+        public Item Item;
+        public Item.CombatReactionProfile Profile;
+        public CombatCounterItemPresentation.MeleeCounterHandle ItemHandle;
+        public Coroutine CleanupRoutine;
+        public bool HitNotified;
+        public bool Released;
+        public bool EnemyAnimationStarted;
+    }
+
     /// <summary>
     /// Instance singleton active du manager de combat.
     /// </summary>
@@ -398,6 +412,7 @@ public class CombatSessionManager : NetworkBehaviour
     private readonly Dictionary<Transform, Coroutine> actionPresentationCoroutinesByActor = new Dictionary<Transform, Coroutine>();
     private readonly LocalCombatPresentationState localCombatPresentation = new LocalCombatPresentationState();
     private readonly SnapshotSerializer retrySnapshotSerializer = new SnapshotSerializer();
+    private LocalCounterReactionPresentation localCounterReactionPresentation;
     private int nextSessionId = 1;
 
     /// <summary>
@@ -518,6 +533,47 @@ public class CombatSessionManager : NetworkBehaviour
         NotifyCombatAnimationImpactServerRpc(localCombatPresentation.SessionId);
     }
 
+    public void NotifyLocalCombatCounterHit(Transform actor)
+    {
+        if (!TryResolveLocalCounterReactionPresentation(actor, out LocalCounterReactionPresentation presentation) ||
+            presentation.HitNotified)
+        {
+            return;
+        }
+
+        presentation.HitNotified = true;
+        PlayLocalCounterReactionImpact(presentation);
+
+        if (CanRunAuthority())
+        {
+            if (TryResolveLocalCombatAnimationImpactSession(actor, out CombatSession session))
+            {
+                TryResolveCombatCounterHit(session);
+            }
+
+            return;
+        }
+
+        if (!IsNetworkSessionActive() || !IsSpawned || string.IsNullOrWhiteSpace(presentation.SessionId))
+        {
+            return;
+        }
+
+        NotifyCombatCounterHitServerRpc(presentation.SessionId);
+    }
+
+    public void NotifyLocalCombatCounterRelease(Transform actor)
+    {
+        if (!TryResolveLocalCounterReactionPresentation(actor, out LocalCounterReactionPresentation presentation) ||
+            presentation.Released)
+        {
+            return;
+        }
+
+        presentation.Released = true;
+        presentation.ItemHandle?.ReleaseToEnemy();
+    }
+
     private void Awake()
     {
         // Unity appelle Awake au chargement; le singleton peut provenir de la scene ou etre cree au runtime.
@@ -553,6 +609,7 @@ public class CombatSessionManager : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         // Netcode appelle OnNetworkDespawn avant destruction/desactivation reseau; il faut restaurer les presentations locales.
+        ClearLocalCounterReactionPresentation();
         StopAllCombatActionPresentations();
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
@@ -571,6 +628,7 @@ public class CombatSessionManager : NetworkBehaviour
     public override void OnDestroy()
     {
         // Unity appelle OnDestroy; on repete le nettoyage pour couvrir le mode non reseau.
+        ClearLocalCounterReactionPresentation();
         StopAllCombatActionPresentations();
         ReleaseAllLocalClientMovement();
         RestoreAllLocalEnemyPresentations();
@@ -1386,6 +1444,20 @@ public class CombatSessionManager : NetworkBehaviour
         TryResolveCombatAnimationImpact(session);
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void NotifyCombatCounterHitServerRpc(string sessionId, ServerRpcParams rpcParams = default)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) ||
+            !sessionsByClientId.TryGetValue(rpcParams.Receive.SenderClientId, out CombatSession session) ||
+            session == null ||
+            !string.Equals(session.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        TryResolveCombatCounterHit(session);
+    }
+
     [ClientRpc]
     private void SpawnCombatEntryMidpointPrefabClientRpc(
         string sessionId,
@@ -1732,6 +1804,11 @@ public class CombatSessionManager : NetworkBehaviour
             : IsMeleeDefenseItem(item)
             ? $"{ResolveItemDisplayName(item)} prepare une defense melee."
             : $"{ResolveItemDisplayName(item)} prepare la defense.";
+        if (counterItem && TryStartItemCounterReactionDuringEnemyAction(session, out string counterFeedback))
+        {
+            feedback = counterFeedback;
+        }
+
         session.State.SetMessage(feedback);
         SendSnapshot(session, feedback);
         return true;
@@ -1848,11 +1925,41 @@ public class CombatSessionManager : NetworkBehaviour
         CombatActionTiming actionTiming = PlayItemCounterReactionPresentation(session);
         PreparePendingEnemyAction(session, actionTiming);
         session.PendingEnemyCounterReactionAction = true;
+        session.PendingEncounterReaction = EncounterReactionChoice.Counter;
         string itemName = ResolveItemDisplayName(session.PendingDefensiveItem);
         string attackName = ResolveEnemyAttackDisplayName(attack);
         string message = $"{itemName} intercepte {attackName}.";
         session.State.BeginEnemyAction(Time.time, actionTiming.TotalDuration, message);
         SendSnapshot(session, message);
+    }
+
+    private bool TryStartItemCounterReactionDuringEnemyAction(CombatSession session, out string message)
+    {
+        message = string.Empty;
+        if (session == null ||
+            !session.State.EnemyActionLocked ||
+            session.PendingEnemyActionResolved ||
+            session.PendingEnemyCounterReactionAction ||
+            !CanStartItemCounterReaction(session, session.PendingEnemyAttack))
+        {
+            return false;
+        }
+
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
+        if (enemy == null)
+        {
+            return false;
+        }
+
+        CombatActionTiming actionTiming = PlayItemCounterReactionPresentation(session);
+        session.PendingEnemyCounterReactionAction = true;
+        session.PendingEncounterReaction = EncounterReactionChoice.Counter;
+        string itemName = ResolveItemDisplayName(session.PendingDefensiveItem);
+        string attackName = ResolveEnemyAttackDisplayName(session.PendingEnemyAttack);
+        message = $"{itemName} intercepte {attackName}.";
+        session.State.ExtendEnemyAction(Time.time, actionTiming.TotalDuration, message);
+        session.PendingEnemyActionImpactAt = Time.time + actionTiming.ImpactDelay;
+        return true;
     }
 
     private void PreparePendingPlayerAction(CombatSession session, CombatActionTiming timing)
@@ -2093,11 +2200,42 @@ public class CombatSessionManager : NetworkBehaviour
 
         if (session.State.EnemyActionLocked && !session.PendingEnemyActionResolved)
         {
+            if (session.PendingEnemyCounterReactionAction &&
+                CanResolveItemCounterReaction(session, session.PendingEnemyAttack))
+            {
+                return false;
+            }
+
             ResolveEnemyActionImpact(session);
             return true;
         }
 
         return false;
+    }
+
+    private bool TryResolveCombatCounterHit(CombatSession session)
+    {
+        if (session == null ||
+            session.State.Finished ||
+            !session.State.EnemyActionLocked ||
+            session.PendingEnemyActionResolved ||
+            !CanResolveItemCounterReaction(session, session.PendingEnemyAttack))
+        {
+            return false;
+        }
+
+        CombatRuntimeEnemy enemy = GetActiveEnemy(session);
+        if (enemy == null)
+        {
+            return false;
+        }
+
+        session.PendingEnemyActionResolved = true;
+        ResolveItemCounterReactionImpact(
+            session,
+            enemy,
+            ResolveEnemyAttackDisplayName(session.PendingEnemyAttack));
+        return true;
     }
 
     private void CompleteEnemyAction(CombatSession session)
@@ -5068,6 +5206,7 @@ public class CombatSessionManager : NetworkBehaviour
 
     private void StopAllCombatActionPresentations()
     {
+        ClearLocalCounterReactionPresentation();
         if (actionPresentationCoroutinesByActor.Count == 0)
         {
             return;
@@ -5293,11 +5432,26 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         Transform playerTransform = player.transform;
+        ClearLocalCounterReactionPresentation();
         StopCombatActionPresentation(playerTransform);
         StopCombatActionPresentation(enemy);
         StopCombatAnimationEventMovement(enemy);
         CombatHudController.SetCombatDefensePanelVisibleFromAnimationEvent(false);
         player.Stop();
+
+        localCounterReactionPresentation = new LocalCounterReactionPresentation
+        {
+            SessionId = ResolveLocalCounterReactionSessionId(player),
+            PlayerRoot = playerTransform,
+            EnemyRoot = enemy,
+            Item = item,
+            Profile = profile
+        };
+        localCounterReactionPresentation.ItemHandle = CombatCounterItemPresentation.BeginMeleeCounter(
+            playerTransform,
+            enemy,
+            item,
+            profile);
 
         PlayReactionAudio(profile.startSfx, profile.startAudioCue, playerTransform.position);
         PlayNamedAnimation(
@@ -5305,14 +5459,9 @@ public class CombatSessionManager : NetworkBehaviour
             string.IsNullOrWhiteSpace(playerAnimationName) ? profile.ResolvePlayerAnimationName(CounterAnimationName) : playerAnimationName,
             ResolveCounterReactionPlayerFallbackDuration(profile));
 
-        Animator enemyAnimator = enemy != null ? enemy.GetComponentInChildren<Animator>(true) : null;
-        if (CombatReactionClipPlayer.Play(enemyAnimator, profile.enemyAnimationClip) <= 0f)
-        {
-            PlayNamedAnimation(
-                enemyAnimator,
-                string.IsNullOrWhiteSpace(enemyAnimationName) ? profile.ResolveEnemyAnimationName(string.Empty) : enemyAnimationName,
-                ResolveCounterReactionEnemyFallbackDuration(profile));
-        }
+        PlayLocalCounterReactionEnemyAnimation(
+            localCounterReactionPresentation,
+            string.IsNullOrWhiteSpace(enemyAnimationName) ? profile.ResolveEnemyAnimationName(string.Empty) : enemyAnimationName);
 
         if (profile.playCounterActionCameraShot)
         {
@@ -5320,23 +5469,120 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         StartCounterActionSlowEffect(playerTransform, enemy, profile);
-        CombatCounterItemPresentation.PlayMeleeCounter(
-            this,
-            playerTransform,
-            enemy,
-            item,
-            profile,
-            ResolveCounterReactionImpactDelay(profile),
-            totalDuration,
-            impactPoint =>
-            {
-                Vector3 position = impactPoint != null
-                    ? impactPoint.position
-                    : enemy != null ? enemy.position : playerTransform.position;
-                PlayReactionAudio(profile.impactSfx, profile.impactAudioCue, position);
-                PlayReactionAudio(profile.voiceClip, ActionAudioCue.None, position);
-                SpawnCounterReactionImpactVfx(profile, impactPoint, position);
-            });
+        localCounterReactionPresentation.CleanupRoutine = StartCoroutine(
+            ClearLocalCounterReactionAfterRoutine(localCounterReactionPresentation, totalDuration));
+    }
+
+    private string ResolveLocalCounterReactionSessionId(SquadCharacterController player)
+    {
+        if (CanRunAuthority() && player != null && TryGetSession(player, out CombatSession session) && session != null)
+        {
+            return session.SessionId;
+        }
+
+        return localCombatPresentation.Active ? localCombatPresentation.SessionId : string.Empty;
+    }
+
+    private void PlayLocalCounterReactionEnemyAnimation(
+        LocalCounterReactionPresentation presentation,
+        string enemyAnimationName)
+    {
+        if (presentation == null ||
+            presentation.Profile == null ||
+            presentation.EnemyAnimationStarted)
+        {
+            return;
+        }
+
+        Animator enemyAnimator = presentation.EnemyRoot != null
+            ? presentation.EnemyRoot.GetComponentInChildren<Animator>(true)
+            : null;
+        if (CombatReactionClipPlayer.Play(enemyAnimator, presentation.Profile.enemyAnimationClip) <= 0f)
+        {
+            PlayNamedAnimation(
+                enemyAnimator,
+                string.IsNullOrWhiteSpace(enemyAnimationName)
+                    ? presentation.Profile.ResolveEnemyAnimationName(string.Empty)
+                    : enemyAnimationName,
+                ResolveCounterReactionEnemyFallbackDuration(presentation.Profile));
+        }
+
+        presentation.EnemyAnimationStarted = true;
+    }
+
+    private void PlayLocalCounterReactionImpact(LocalCounterReactionPresentation presentation)
+    {
+        if (presentation == null || presentation.Profile == null)
+        {
+            return;
+        }
+
+        PlayLocalCounterReactionEnemyAnimation(
+            presentation,
+            presentation.Profile.ResolveEnemyAnimationName(string.Empty));
+
+        Transform impactPoint = presentation.ItemHandle != null
+            ? presentation.ItemHandle.ImpactPoint
+            : null;
+        Vector3 position = impactPoint != null
+            ? impactPoint.position
+            : presentation.EnemyRoot != null
+                ? presentation.EnemyRoot.position
+                : presentation.PlayerRoot != null
+                    ? presentation.PlayerRoot.position
+                    : transform.position;
+        PlayReactionAudio(presentation.Profile.impactSfx, presentation.Profile.impactAudioCue, position);
+        PlayReactionAudio(presentation.Profile.voiceClip, ActionAudioCue.None, position);
+        SpawnCounterReactionImpactVfx(presentation.Profile, impactPoint, position);
+    }
+
+    private bool TryResolveLocalCounterReactionPresentation(
+        Transform actor,
+        out LocalCounterReactionPresentation presentation)
+    {
+        presentation = localCounterReactionPresentation;
+        if (presentation == null)
+        {
+            return false;
+        }
+
+        return actor == null ||
+               BelongsToTransform(actor, presentation.PlayerRoot) ||
+               BelongsToTransform(actor, presentation.EnemyRoot);
+    }
+
+    private IEnumerator ClearLocalCounterReactionAfterRoutine(
+        LocalCounterReactionPresentation presentation,
+        float totalSeconds)
+    {
+        float endTime = Time.unscaledTime + Mathf.Max(0.05f, totalSeconds);
+        while (Time.unscaledTime < endTime)
+        {
+            yield return null;
+        }
+
+        if (localCounterReactionPresentation == presentation)
+        {
+            presentation.CleanupRoutine = null;
+            ClearLocalCounterReactionPresentation();
+        }
+    }
+
+    private void ClearLocalCounterReactionPresentation()
+    {
+        LocalCounterReactionPresentation presentation = localCounterReactionPresentation;
+        if (presentation == null)
+        {
+            return;
+        }
+
+        if (presentation.CleanupRoutine != null)
+        {
+            StopCoroutine(presentation.CleanupRoutine);
+        }
+
+        presentation.ItemHandle?.DestroyVisual();
+        localCounterReactionPresentation = null;
     }
 
     private void StartCounterActionSlowEffect(
