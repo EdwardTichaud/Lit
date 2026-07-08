@@ -5294,8 +5294,6 @@ public class CombatSessionManager : NetworkBehaviour
 
         Transform playerTransform = player.transform;
         StopCombatActionPresentation(playerTransform);
-        StopCombatActionPresentation(enemy);
-        StopCombatAnimationEventMovement(enemy);
         CombatHudController.SetCombatDefensePanelVisibleFromAnimationEvent(false);
         player.Stop();
 
@@ -5307,6 +5305,10 @@ public class CombatSessionManager : NetworkBehaviour
             item,
             profile,
             totalDuration,
+            () =>
+            {
+                PlayCounterHitEnemyAnimation(enemy, profile, enemyAnimationName);
+            },
             impactPoint =>
             {
                 Vector3 position = impactPoint != null
@@ -5322,21 +5324,37 @@ public class CombatSessionManager : NetworkBehaviour
             string.IsNullOrWhiteSpace(playerAnimationName) ? profile.ResolvePlayerAnimationName(CounterAnimationName) : playerAnimationName,
             ResolveCounterReactionPlayerFallbackDuration(profile));
 
-        Animator enemyAnimator = enemy != null ? enemy.GetComponentInChildren<Animator>(true) : null;
-        if (CombatReactionClipPlayer.Play(enemyAnimator, profile.enemyAnimationClip) <= 0f)
-        {
-            PlayNamedAnimation(
-                enemyAnimator,
-                string.IsNullOrWhiteSpace(enemyAnimationName) ? profile.ResolveEnemyAnimationName(string.Empty) : enemyAnimationName,
-                ResolveCounterReactionEnemyFallbackDuration(profile));
-        }
-
         if (profile.playCounterActionCameraShot)
         {
             CombatCameraPresentationController.EnsureInstance()?.PlayCounterActionShot(totalDuration);
         }
 
         StartCounterActionSlowEffect(playerTransform, enemy, profile);
+    }
+
+    private void PlayCounterHitEnemyAnimation(
+        Transform enemy,
+        Item.CombatReactionProfile profile,
+        string enemyAnimationName)
+    {
+        if (enemy == null || profile == null)
+        {
+            return;
+        }
+
+        StopCombatActionPresentation(enemy);
+        StopCombatAnimationEventMovement(enemy);
+
+        Animator enemyAnimator = enemy.GetComponentInChildren<Animator>(true);
+        if (CombatReactionClipPlayer.Play(enemyAnimator, profile.enemyAnimationClip) > 0f)
+        {
+            return;
+        }
+
+        PlayNamedAnimation(
+            enemyAnimator,
+            string.IsNullOrWhiteSpace(enemyAnimationName) ? profile.ResolveEnemyAnimationName(string.Empty) : enemyAnimationName,
+            ResolveCounterReactionEnemyFallbackDuration(profile));
     }
 
     private void StartCounterActionSlowEffect(

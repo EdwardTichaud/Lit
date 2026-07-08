@@ -86,7 +86,8 @@ est configure comme premier contre melee : il declenche `Counter_Sword`,
 `Impaled`, un shot camera `CounterAction`, un court ralenti local, et peut
 configurer ses attaches, SFX/VFX/voix depuis l'item. Les clips de contre peuvent
 maintenant piloter le visuel via les AnimationEvents `Take` (apparition en main)
-et `Release` (plantage sur l'ennemi).
+et `Release` (plantage sur l'ennemi), puis interrompre l'attaque ennemie via
+`CounterHit` pour jouer `Impaled`.
 `Item_Shield_WoodShield` utilise maintenant le type `MeleeDefense` : le joueur
 sort son visuel en main, bloque les attaques melee, l'item perd des PV defensifs
 persistes sur le personnage entre les combats, reste reutilisable s'il lui en

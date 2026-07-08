@@ -23,6 +23,7 @@ public static class CombatCounterItemPresentation
         public Transform EnemyRoot;
         public Item Item;
         public Item.CombatReactionProfile Profile;
+        public Action OnCounterHit;
         public Action<Transform> OnRelease;
         public GameObject Visual;
         public Coroutine CleanupRoutine;
@@ -77,6 +78,7 @@ public static class CombatCounterItemPresentation
         Item item,
         Item.CombatReactionProfile profile,
         float totalSeconds,
+        Action onCounterHit,
         Action<Transform> onRelease)
     {
         if (playerRoot == null || item == null)
@@ -94,6 +96,7 @@ public static class CombatCounterItemPresentation
             EnemyRoot = enemyRoot,
             Item = item,
             Profile = profile,
+            OnCounterHit = onCounterHit,
             OnRelease = onRelease
         };
 
@@ -128,6 +131,23 @@ public static class CombatCounterItemPresentation
             rightHand,
             context.Profile != null ? context.Profile.playerAttachLocalPosition : Vector3.zero,
             context.Profile != null ? context.Profile.playerAttachLocalEulerAngles : Vector3.zero);
+        return true;
+    }
+
+    public static bool CounterHitAnimationEventItem(Transform actorRoot, Transform enemyRoot = null)
+    {
+        if (!TryGetAnimationEventContext(actorRoot, out AnimationEventItemContext context))
+        {
+            return false;
+        }
+
+        if (enemyRoot != null)
+        {
+            context.EnemyRoot = enemyRoot;
+        }
+
+        context.OnCounterHit?.Invoke();
+        context.OnCounterHit = null;
         return true;
     }
 

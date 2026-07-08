@@ -126,6 +126,16 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         CombatCounterItemPresentation.ReleaseAnimationEventItem(player, enemy);
     }
 
+    public void CounterHit()
+    {
+        if (!TryResolveItemPresentationRoots(out Transform player, out Transform enemy))
+        {
+            return;
+        }
+
+        CombatCounterItemPresentation.CounterHitAnimationEventItem(player, enemy);
+    }
+
     public void StopCombatPresentationMovement()
     {
         StopMoveRoutine();
