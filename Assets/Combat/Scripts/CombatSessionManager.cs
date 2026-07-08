@@ -5300,6 +5300,23 @@ public class CombatSessionManager : NetworkBehaviour
         player.Stop();
 
         PlayReactionAudio(profile.startSfx, profile.startAudioCue, playerTransform.position);
+        CombatCounterItemPresentation.BeginAnimationEventItemPresentation(
+            this,
+            playerTransform,
+            enemy,
+            item,
+            profile,
+            totalDuration,
+            impactPoint =>
+            {
+                Vector3 position = impactPoint != null
+                    ? impactPoint.position
+                    : enemy != null ? enemy.position : playerTransform.position;
+                PlayReactionAudio(profile.impactSfx, profile.impactAudioCue, position);
+                PlayReactionAudio(profile.voiceClip, ActionAudioCue.None, position);
+                SpawnCounterReactionImpactVfx(profile, impactPoint, position);
+            });
+
         PlayNamedAnimation(
             player.GetComponent<Animator>(),
             string.IsNullOrWhiteSpace(playerAnimationName) ? profile.ResolvePlayerAnimationName(CounterAnimationName) : playerAnimationName,
@@ -5320,23 +5337,6 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         StartCounterActionSlowEffect(playerTransform, enemy, profile);
-        CombatCounterItemPresentation.PlayMeleeCounter(
-            this,
-            playerTransform,
-            enemy,
-            item,
-            profile,
-            ResolveCounterReactionImpactDelay(profile),
-            totalDuration,
-            impactPoint =>
-            {
-                Vector3 position = impactPoint != null
-                    ? impactPoint.position
-                    : enemy != null ? enemy.position : playerTransform.position;
-                PlayReactionAudio(profile.impactSfx, profile.impactAudioCue, position);
-                PlayReactionAudio(profile.voiceClip, ActionAudioCue.None, position);
-                SpawnCounterReactionImpactVfx(profile, impactPoint, position);
-            });
     }
 
     private void StartCounterActionSlowEffect(

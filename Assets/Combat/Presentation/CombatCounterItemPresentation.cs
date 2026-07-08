@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Presentation locale des items utilises pour des contres de combat.
@@ -14,6 +15,20 @@ public static class CombatCounterItemPresentation
     {
         "spine_03", "Spine_03", "mixamorig:Spine2", "spine_04", "Spine"
     };
+
+    private sealed class AnimationEventItemContext
+    {
+        public MonoBehaviour Runner;
+        public Transform PlayerRoot;
+        public Transform EnemyRoot;
+        public Item Item;
+        public Item.CombatReactionProfile Profile;
+        public Action<Transform> OnRelease;
+        public GameObject Visual;
+        public Coroutine CleanupRoutine;
+    }
+
+    private static readonly Dictionary<int, AnimationEventItemContext> AnimationEventContexts = new Dictionary<int, AnimationEventItemContext>();
 
     public static Coroutine PlayMeleeCounter(
         MonoBehaviour runner,
@@ -55,6 +70,122 @@ public static class CombatCounterItemPresentation
         return runner.StartCoroutine(PlayHeldItemRoutine(playerRoot, item, profile, totalSeconds));
     }
 
+    public static void BeginAnimationEventItemPresentation(
+        MonoBehaviour runner,
+        Transform playerRoot,
+        Transform enemyRoot,
+        Item item,
+        Item.CombatReactionProfile profile,
+        float totalSeconds,
+        Action<Transform> onRelease)
+    {
+        if (playerRoot == null || item == null)
+        {
+            return;
+        }
+
+        int key = playerRoot.GetInstanceID();
+        ClearAnimationEventItemPresentation(playerRoot);
+
+        AnimationEventItemContext context = new AnimationEventItemContext
+        {
+            Runner = runner,
+            PlayerRoot = playerRoot,
+            EnemyRoot = enemyRoot,
+            Item = item,
+            Profile = profile,
+            OnRelease = onRelease
+        };
+
+        AnimationEventContexts[key] = context;
+        if (runner != null && totalSeconds > 0f)
+        {
+            context.CleanupRoutine = runner.StartCoroutine(CleanupAnimationEventItemPresentationRoutine(key, totalSeconds));
+        }
+    }
+
+    public static bool TakeAnimationEventItem(Transform actorRoot, Transform enemyRoot = null)
+    {
+        if (!TryGetAnimationEventContext(actorRoot, out AnimationEventItemContext context))
+        {
+            return false;
+        }
+
+        if (enemyRoot != null)
+        {
+            context.EnemyRoot = enemyRoot;
+        }
+
+        GameObject visual = EnsureAnimationEventVisual(context);
+        Transform rightHand = ResolveRightHand(context.PlayerRoot, context.Profile);
+        if (visual == null || rightHand == null)
+        {
+            return false;
+        }
+
+        AttachToPoint(
+            visual.transform,
+            rightHand,
+            context.Profile != null ? context.Profile.playerAttachLocalPosition : Vector3.zero,
+            context.Profile != null ? context.Profile.playerAttachLocalEulerAngles : Vector3.zero);
+        return true;
+    }
+
+    public static bool ReleaseAnimationEventItem(Transform actorRoot, Transform enemyRoot = null)
+    {
+        if (!TryGetAnimationEventContext(actorRoot, out AnimationEventItemContext context))
+        {
+            return false;
+        }
+
+        if (enemyRoot != null)
+        {
+            context.EnemyRoot = enemyRoot;
+        }
+
+        GameObject visual = EnsureAnimationEventVisual(context);
+        Transform enemyAttach = ResolveNamedChild(context.EnemyRoot, context.Profile?.enemyAttachBoneName, SpineNames);
+        if (visual != null && enemyAttach != null)
+        {
+            AttachToEnemyPoint(
+                visual.transform,
+                enemyAttach,
+                context.EnemyRoot,
+                context.Profile != null ? context.Profile.enemyAttachLocalPosition : Vector3.zero,
+                context.Profile != null ? context.Profile.enemyAttachLocalEulerAngles : Vector3.zero);
+        }
+
+        context.OnRelease?.Invoke(enemyAttach);
+        context.OnRelease = null;
+        return visual != null && enemyAttach != null;
+    }
+
+    public static void ClearAnimationEventItemPresentation(Transform actorRoot)
+    {
+        if (actorRoot == null)
+        {
+            return;
+        }
+
+        int key = actorRoot.GetInstanceID();
+        if (!AnimationEventContexts.TryGetValue(key, out AnimationEventItemContext context))
+        {
+            return;
+        }
+
+        if (context.CleanupRoutine != null && context.Runner != null)
+        {
+            context.Runner.StopCoroutine(context.CleanupRoutine);
+        }
+
+        if (context.Visual != null)
+        {
+            UnityEngine.Object.Destroy(context.Visual);
+        }
+
+        AnimationEventContexts.Remove(key);
+    }
+
     private static IEnumerator PlayHeldItemRoutine(
         Transform playerRoot,
         Item item,
@@ -78,6 +209,70 @@ public static class CombatCounterItemPresentation
         {
             UnityEngine.Object.Destroy(visual);
         }
+    }
+
+    private static IEnumerator CleanupAnimationEventItemPresentationRoutine(int key, float totalSeconds)
+    {
+        yield return WaitPresentationSeconds(totalSeconds);
+
+        if (!AnimationEventContexts.TryGetValue(key, out AnimationEventItemContext context))
+        {
+            yield break;
+        }
+
+        if (context.Visual != null)
+        {
+            UnityEngine.Object.Destroy(context.Visual);
+        }
+
+        AnimationEventContexts.Remove(key);
+    }
+
+    private static GameObject EnsureAnimationEventVisual(AnimationEventItemContext context)
+    {
+        if (context == null)
+        {
+            return null;
+        }
+
+        if (context.Visual != null)
+        {
+            return context.Visual;
+        }
+
+        context.Visual = CreateItemVisual(context.Item, context.Profile, context.PlayerRoot, context.EnemyRoot);
+        return context.Visual;
+    }
+
+    private static bool TryGetAnimationEventContext(Transform actorRoot, out AnimationEventItemContext context)
+    {
+        context = null;
+        if (actorRoot == null)
+        {
+            return false;
+        }
+
+        int key = actorRoot.GetInstanceID();
+        if (AnimationEventContexts.TryGetValue(key, out context))
+        {
+            return true;
+        }
+
+        foreach (AnimationEventItemContext candidate in AnimationEventContexts.Values)
+        {
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            if (BelongsTo(actorRoot, candidate.PlayerRoot) || BelongsTo(actorRoot, candidate.EnemyRoot))
+            {
+                context = candidate;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static IEnumerator PlayMeleeCounterRoutine(
@@ -301,6 +496,13 @@ public static class CombatCounterItemPresentation
         }
 
         return null;
+    }
+
+    private static bool BelongsTo(Transform actor, Transform candidate)
+    {
+        return actor != null &&
+               candidate != null &&
+               (actor == candidate || actor.IsChildOf(candidate) || candidate.IsChildOf(actor));
     }
 
     private static IEnumerator WaitPresentationSeconds(float seconds)

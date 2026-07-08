@@ -144,9 +144,10 @@ Un item peut porter un `CombatReactionProfile` optionnel. Les items de reaction
 peuvent etre gardes dans les 3 items combat meme s'ils n'absorbent pas de
 degats. Le premier type supporte est `MeleeCounterImpale` : si le joueur choisit
 l'item avant l'impact d'une attaque ennemie melee, l'attaque est interrompue,
-les animations joueur/ennemi configurees se jouent, le visuel de l'item passe de
-l'attache joueur a l'attache ennemie, puis le shot camera `CounterAction`, le
-ralenti local, les SFX, VFX et voix optionnelles du profil soulignent l'impact.
+les animations joueur/ennemi configurees se jouent, puis les AnimationEvents
+`Take` et `Release` du clip joueur font passer le visuel de l'item de l'attache
+joueur a l'attache ennemie. Le shot camera `CounterAction`, le ralenti local,
+les SFX, VFX et voix optionnelles du profil soulignent l'impact.
 Contre une attaque non melee, ce profil ne remplace pas une defense.
 Le type `MeleeDefense` sert aux objets comme `Item_Shield_WoodShield` : le
 joueur sort le visuel de l'item en main, bloque une attaque melee sans subir de
@@ -165,12 +166,13 @@ recevoir le clip d'empalement.
 
 Les clips peuvent aussi declencher des evenements via `CombatAnimationEvents`
 pour controler finement le ralenti, l'ouverture/fermeture de
-`CombatDefensePanel` et une ruee cosmetique. Le composant resout la victime
-depuis le contexte local de combat, capture la pose de depart au moment de la
-ruee, restaure uniquement cette presentation et peut notifier
-`NotifyCombatImpact` au frame d'impact. Les degats restent resolus une seule
-fois par `CombatSessionManager`; il n'y a plus de timer fallback, donc un clip
-d'attaque doit emettre `NotifyCombatImpact` pour appliquer l'impact.
+`CombatDefensePanel`, une ruee cosmetique et la presentation d'item avec
+`Take`/`Release`. Le composant resout la victime depuis le contexte local de
+combat, capture la pose de depart au moment de la ruee, restaure uniquement
+cette presentation et peut notifier `NotifyCombatImpact` au frame d'impact. Les
+degats restent resolus une seule fois par `CombatSessionManager`; il n'y a plus
+de timer fallback, donc un clip d'attaque doit emettre `NotifyCombatImpact` pour
+appliquer l'impact.
 Les panels UI de combat reactivenent aussi leur hierarchie et corrigent une
 echelle locale nulle sur les parents au moment de l'affichage, afin que
 `CombatEngagedPanel`, `CombatScreenInfosPanel` et `CombatDefensePanel` restent

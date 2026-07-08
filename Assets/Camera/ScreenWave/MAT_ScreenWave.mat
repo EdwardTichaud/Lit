@@ -27,11 +27,11 @@ Material:
     m_Floats:
     - _Amplitude: 0.03
     - _Duration: 0.9
-    - _Elapsed: 0.9
+    - _Elapsed: 0
     - _Falloff: 2
     - _Frequency: 4
     - _PropagationSpeed: 1.45
-    - _Reverse: 1
+    - _Reverse: 0
     - _WaveFade: 0
     m_Colors:
     - _Direction: {r: 0, g: 0, b: 0, a: 0}

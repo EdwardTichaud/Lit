@@ -106,6 +106,26 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         CombatSessionManager.Instance?.NotifyLocalCombatAnimationImpact(ResolveActorRoot());
     }
 
+    public void Take()
+    {
+        if (!TryResolveItemPresentationRoots(out Transform player, out Transform enemy))
+        {
+            return;
+        }
+
+        CombatCounterItemPresentation.TakeAnimationEventItem(player, enemy);
+    }
+
+    public void Release()
+    {
+        if (!TryResolveItemPresentationRoots(out Transform player, out Transform enemy))
+        {
+            return;
+        }
+
+        CombatCounterItemPresentation.ReleaseAnimationEventItem(player, enemy);
+    }
+
     public void StopCombatPresentationMovement()
     {
         StopMoveRoutine();
@@ -118,6 +138,7 @@ public sealed class CombatAnimationEvents : MonoBehaviour
         StopMoveRoutine();
         TimeManager.Instance?.SetCombatPresentationTimeScale(null, 1f, active: false);
         HideCombatDefensePanel();
+        CombatCounterItemPresentation.ClearAnimationEventItemPresentation(ResolveActorRoot());
     }
 
     private IEnumerator SlowCombatTimeRoutine(float targetTimeScale, float blendSeconds)
@@ -254,6 +275,39 @@ public sealed class CombatAnimationEvents : MonoBehaviour
 
         victim = victimOverride;
         return victim != null;
+    }
+
+    private bool TryResolveItemPresentationRoots(out Transform player, out Transform enemy)
+    {
+        player = null;
+        enemy = null;
+
+        Transform actor = ResolveActorRoot();
+        if (actor == null)
+        {
+            return false;
+        }
+
+        CombatSessionManager manager = CombatSessionManager.Instance;
+        if (manager != null &&
+            manager.TryGetLocalCombatCameraContext(
+                out Transform contextPlayer,
+                out Transform contextEnemy,
+                out _,
+                out _))
+        {
+            player = contextPlayer;
+            enemy = contextEnemy;
+            return player != null;
+        }
+
+        player = actor;
+        if (TryResolveCombatVictim(actor, out Transform victim))
+        {
+            enemy = victim;
+        }
+
+        return player != null;
     }
 
     private void CaptureInitialPose(Transform actor)
