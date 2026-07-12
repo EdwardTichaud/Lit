@@ -38,6 +38,8 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField] private string moveStopTriggerParam = "MoveStopTrigger";
     [SerializeField] private string turnInPlaceParam = "TurnInPlace";
     [SerializeField, Min(0.01f)] private float groundedAnimationSpeedToBlend = 0.48f;
+    [SerializeField, Min(0.01f), Tooltip("Lower physical-speed feedback while root motion drives displacement, keeping animation selection input-led.")]
+    private float groundedRootMotionSpeedToBlend = 0.22f;
     [SerializeField, Min(0f)] private float groundedAnimatorSpeedRiseRate = 18f;
     [SerializeField, Min(0f)] private float groundedAnimatorSpeedFallRate = 11f;
     [SerializeField, Min(0f)] private float groundedAnimatorTurnRate = 9f;
@@ -75,7 +77,13 @@ public partial class LitOpsiveLocomotionBridge
 
     private void ConfigureGroundedFeelProfile()
     {
-        if (!enableCinematicGroundedFeel || !tuneGroundedUccPhysics || locomotion == null || groundedFeelProfileApplied)
+        if (!enableCinematicGroundedFeel || locomotion == null)
+        {
+            ConfigureGroundedSprintSpeedChange();
+            return;
+        }
+
+        if (IsRootMotionLocomotionEnabled() || !tuneGroundedUccPhysics || groundedFeelProfileApplied)
         {
             ConfigureGroundedSprintSpeedChange();
             return;
@@ -263,6 +271,7 @@ public partial class LitOpsiveLocomotionBridge
         UpdateGroundedMoveTriggers(speed);
 
         SetAnimatorFloat(speedParam, groundedPresentationSpeed);
+        SetGroundedDirectionalAnimatorParameters(groundedPresentationSpeed, velocity);
         SetAnimatorBool(isMovingParam, shouldAnimateMoving);
         SetAnimatorFloat(locomotionTierParam, ResolveLocomotionTier(groundedPresentationSpeed));
         SetAnimatorFloat(turnParam, groundedPresentationTurn);
@@ -272,7 +281,10 @@ public partial class LitOpsiveLocomotionBridge
 
     private float ResolveGroundedPresentationSpeed(float physicalSpeed)
     {
-        float scaledPhysicalSpeed = physicalSpeed * Mathf.Max(0.01f, groundedAnimationSpeedToBlend);
+        float physicalSpeedToBlend = IsRootMotionLocomotionEnabled()
+            ? groundedRootMotionSpeedToBlend
+            : groundedAnimationSpeedToBlend;
+        float scaledPhysicalSpeed = physicalSpeed * Mathf.Max(0.01f, physicalSpeedToBlend);
         float inputBlendSpeed = 0f;
         float inputMagnitude = currentWorldMoveInput.magnitude;
         if (inputMagnitude > 0f)

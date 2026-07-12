@@ -32,6 +32,19 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool orientLookSourceFromMovement = true;
     [SerializeField, Tooltip("Configure the Rigidbody as kinematic/no-gravity while UCC is active.")]
     private bool configureRigidbodyForOpsive = true;
+    [Header("Root Motion Locomotion")]
+    [SerializeField, Tooltip("Lets UCC consume Animator root motion for grounded locomotion instead of using motor-force displacement.")]
+    private bool useRootMotionLocomotion = false;
+    [SerializeField, Min(0f)] private float rootMotionSpeedMultiplier = 1f;
+    [SerializeField, Min(0f)] private float rootMotionRotationMultiplier = 1f;
+    [SerializeField, Tooltip("Keeps Animator.applyRootMotion enabled while UCC reads deltaPosition/deltaRotation through AnimatorMonitor.")]
+    private bool preserveAnimatorRootMotion = true;
+    [SerializeField, Tooltip("Restores the previous UCC root motion settings when the bridge is disabled.")]
+    private bool restoreRootMotionSettingsOnDisable = true;
+    [SerializeField, Tooltip("Reapplies root motion multipliers every frame so Play Mode inspector tuning is felt immediately.")]
+    private bool refreshRootMotionSettingsEveryFrame = true;
+    [SerializeField, Tooltip("Feeds local X/Y movement to UCC and the Animator so root-motion strafe/diagonal clips can blend in.")]
+    private bool driveDirectionalRootMotionInput = true;
     [SerializeField, Tooltip("Add Lit/UCC companion bridges at runtime so interaction, damage and follower systems can respect UCC state without prefab edits.")]
     private bool autoInstallCompanionBridges = true;
     [SerializeField, Range(0f, 0.5f)] private float movementDeadZone = 0.08f;
@@ -83,6 +96,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField, Tooltip("Only enable for legacy Lit animator controllers. UCC animator controllers should be driven by AnimatorMonitor parameters.")]
     private bool driveLitLocomotionAnimatorParameters = false;
     [SerializeField] private string speedParam = "Speed";
+    [SerializeField] private string horizontalMovementParam = "HorizontalMovement";
+    [SerializeField] private string forwardMovementParam = "ForwardMovement";
     [SerializeField] private string isMovingParam = "IsMoving";
     [SerializeField] private string locomotionTierParam = "LocomotionTier";
     [SerializeField] private string turnParam = "Turn";
@@ -99,6 +114,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool previousUseGravity;
     private bool previousIsKinematic;
     private CollisionDetectionMode previousCollisionMode;
+    private bool rootMotionLocomotionApplied;
+    private bool previousUseRootMotionPosition;
+    private float previousRootMotionSpeedMultiplier;
+    private bool previousUseRootMotionRotation;
+    private float previousRootMotionRotationMultiplier;
+    private bool previousAnimatorApplyRootMotion;
     private bool groundReliefToleranceApplied;
     private float previousUccMaxStepHeight;
     private float previousUccSlopeLimit;
@@ -136,6 +157,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
     public bool IsFlightActive => IsFlightModeActive;
     public bool Grounded => locomotion != null && locomotion.Grounded;
+    public bool ShouldPreserveAnimatorRootMotion => useRootMotionLocomotion && preserveAnimatorRootMotion;
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
     public Vector3 WorldPosition => locomotion != null ? locomotion.transform.position : Vector3.zero;
@@ -146,6 +168,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             ResolveReferences();
             return isActiveAndEnabled && locomotion != null;
         }
+    }
+
+    private void OnValidate()
+    {
+        rootMotionSpeedMultiplier = Mathf.Max(0f, rootMotionSpeedMultiplier);
+        rootMotionRotationMultiplier = Mathf.Max(0f, rootMotionRotationMultiplier);
     }
 
     public void SetMoveInput(Vector2 input, bool isWorldSpace)
@@ -483,6 +511,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         EnsureCompanionBridges();
         CacheRigidbodyState();
         ConfigureRigidbody();
+        RefreshRootMotionLocomotionSettings();
         ConfigureGroundReliefTolerance();
         ConfigureGroundedFeelProfile();
         ResetGroundedFeelState();
@@ -515,6 +544,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetLitAnimatorSpeedParameterOverride(false);
         UnregisterExternalDriver();
         RestoreGroundedFeelProfile();
+        RestoreRootMotionLocomotion();
         ResetGroundedFeelState();
         RestoreGroundReliefTolerance();
         RestoreRigidbody();
@@ -522,6 +552,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void Update()
     {
+        RefreshRootMotionLocomotionSettings();
+
         if (!IsDriving && !IsInputSuppressedByUcc)
         {
             return;
@@ -578,6 +610,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         ResetGroundedFeelInput();
         currentWorldMoveInput = Vector2.zero;
         sprintPressed = false;
+        SetAnimatorFloat(horizontalMovementParam, 0f);
+        SetAnimatorFloat(forwardMovementParam, 0f);
 
         if (playerInput != null)
         {
@@ -831,7 +865,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             Vector3 direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
             direction.Normalize();
             lastPlanarDirection = direction;
-            opsiveInput = new Vector2(0f, magnitude);
+            opsiveInput = ShouldUseDirectionalRootMotionInput()
+                ? ResolveLocalMoveInput(direction, magnitude)
+                : new Vector2(0f, magnitude);
             if (orientLookSourceFromMovement && lookSource != null)
             {
                 lookSource.SetPlanarLookDirection(direction);
@@ -851,6 +887,28 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             locomotionHandler.OverriddenForwardMovement = opsiveInput.y;
             locomotionHandler.OverriddenLookVector = Vector2.zero;
         }
+    }
+
+    private bool ShouldUseDirectionalRootMotionInput()
+    {
+        return driveDirectionalRootMotionInput && IsRootMotionLocomotionEnabled();
+    }
+
+    private Vector2 ResolveLocalMoveInput(Vector3 worldDirection, float magnitude)
+    {
+        if (worldDirection.sqrMagnitude <= 0.0001f || magnitude <= 0f)
+        {
+            return Vector2.zero;
+        }
+
+        Vector3 localDirection = transform.InverseTransformDirection(worldDirection.normalized);
+        Vector2 localInput = new Vector2(localDirection.x, localDirection.z);
+        if (localInput.sqrMagnitude <= 0.0001f)
+        {
+            return new Vector2(0f, Mathf.Clamp01(magnitude));
+        }
+
+        return Vector2.ClampMagnitude(localInput.normalized * Mathf.Clamp01(magnitude), 1f);
     }
 
     private void SyncSpeedChangeAbility()
@@ -1116,6 +1174,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         SetAnimatorFloat(speedParam, speed);
+        SetGroundedDirectionalAnimatorParameters(speed, velocity);
         SetAnimatorBool(isMovingParam, moving);
         SetAnimatorFloat(locomotionTierParam, ResolveLocomotionTier(speed));
         SetAnimatorFloat(turnParam, ResolveSignedTurn(velocity));
@@ -1168,6 +1227,39 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return Mathf.Clamp(Vector3.SignedAngle(transform.forward, direction, Vector3.up) / 90f, -1f, 1f);
     }
 
+    private void SetGroundedDirectionalAnimatorParameters(float presentationSpeed, Vector3 fallbackVelocity)
+    {
+        Vector2 localDirection = ResolveGroundedLocalMoveDirection(fallbackVelocity);
+        Vector2 directionalSpeed = localDirection * Mathf.Max(0f, presentationSpeed);
+        SetAnimatorFloat(horizontalMovementParam, directionalSpeed.x);
+        SetAnimatorFloat(forwardMovementParam, directionalSpeed.y);
+    }
+
+    private Vector2 ResolveGroundedLocalMoveDirection(Vector3 fallbackVelocity)
+    {
+        Vector3 direction = Vector3.zero;
+        if (currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
+        }
+        else if (fallbackVelocity.sqrMagnitude > 0.0001f)
+        {
+            direction = fallbackVelocity;
+        }
+        else
+        {
+            return Vector2.zero;
+        }
+
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return Vector2.zero;
+        }
+
+        return ResolveLocalMoveInput(direction.normalized, 1f);
+    }
+
     private void RegisterExternalDriver()
     {
         if (!driveFromSquadFacade || externalDriverRegistered || squadController == null)
@@ -1218,6 +1310,98 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rb.useGravity = false;
         rb.isKinematic = true;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+    }
+
+    private void ConfigureRootMotionLocomotion()
+    {
+        if (!useRootMotionLocomotion || locomotion == null || rootMotionLocomotionApplied)
+        {
+            return;
+        }
+
+        previousUseRootMotionPosition = locomotion.UseRootMotionPosition;
+        previousRootMotionSpeedMultiplier = locomotion.RootMotionSpeedMultiplier;
+        previousUseRootMotionRotation = locomotion.UseRootMotionRotation;
+        previousRootMotionRotationMultiplier = locomotion.RootMotionRotationMultiplier;
+        previousAnimatorApplyRootMotion = animator != null && animator.applyRootMotion;
+
+        ApplyRootMotionLocomotionSettings();
+        rootMotionLocomotionApplied = true;
+    }
+
+    private void RefreshRootMotionLocomotionSettings()
+    {
+        if (!useRootMotionLocomotion)
+        {
+            if (rootMotionLocomotionApplied)
+            {
+                RestoreRootMotionLocomotion();
+            }
+
+            return;
+        }
+
+        if (locomotion == null)
+        {
+            return;
+        }
+
+        if (!rootMotionLocomotionApplied)
+        {
+            ConfigureRootMotionLocomotion();
+            return;
+        }
+
+        if (refreshRootMotionSettingsEveryFrame)
+        {
+            ApplyRootMotionLocomotionSettings();
+        }
+    }
+
+    private void ApplyRootMotionLocomotionSettings()
+    {
+        if (locomotion == null)
+        {
+            return;
+        }
+
+        locomotion.UseRootMotionPosition = true;
+        locomotion.RootMotionSpeedMultiplier = Mathf.Max(0f, rootMotionSpeedMultiplier);
+        locomotion.UseRootMotionRotation = true;
+        locomotion.RootMotionRotationMultiplier = Mathf.Max(0f, rootMotionRotationMultiplier);
+
+        if (animator != null && preserveAnimatorRootMotion)
+        {
+            animator.applyRootMotion = true;
+        }
+    }
+
+    private void RestoreRootMotionLocomotion()
+    {
+        if (!rootMotionLocomotionApplied)
+        {
+            return;
+        }
+
+        if (restoreRootMotionSettingsOnDisable && locomotion != null)
+        {
+            locomotion.UseRootMotionPosition = previousUseRootMotionPosition;
+            locomotion.RootMotionSpeedMultiplier = previousRootMotionSpeedMultiplier;
+            locomotion.UseRootMotionRotation = previousUseRootMotionRotation;
+            locomotion.RootMotionRotationMultiplier = previousRootMotionRotationMultiplier;
+        }
+
+        if (restoreRootMotionSettingsOnDisable && animator != null && preserveAnimatorRootMotion)
+        {
+            animator.applyRootMotion = previousAnimatorApplyRootMotion;
+        }
+
+        rootMotionLocomotionApplied = false;
+    }
+
+    private bool IsRootMotionLocomotionEnabled()
+    {
+        return useRootMotionLocomotion && locomotion != null;
     }
 
     private void ConfigureGroundReliefTolerance()

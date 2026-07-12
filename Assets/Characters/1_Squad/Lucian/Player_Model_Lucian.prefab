@@ -2294,7 +2294,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -2586,7 +2586,7 @@ MonoBehaviour:
   m_LogAbilityParameterChanges: 0
   m_LogItemParameterChanges: 0
   m_LogEvents: 0
-  m_AnimatorSpeed: 0.8
+  m_AnimatorSpeed: 1
   m_UpdateMode: 0
   m_HorizontalMovementDampingTime: 0.1
   m_ForwardMovementDampingTime: 0.1
@@ -2619,8 +2619,8 @@ MonoBehaviour:
     m_Preset: {fileID: 0}
     m_BlockList: []
     m_Default: 1
-  m_UseRootMotionPosition: 0
-  m_RootMotionSpeedMultiplier: 1
+  m_UseRootMotionPosition: 1
+  m_RootMotionSpeedMultiplier: 1.04
   m_MotorAcceleration: {x: 4.6, y: 0, z: 4.6}
   m_MotorDamping: 5.7
   m_MotorBackwardsMultiplier: 0.6
@@ -2628,8 +2628,8 @@ MonoBehaviour:
   m_AdjustMotorForceOnSlope: 1
   m_MotorSlopeForceUp: 1
   m_MotorSlopeForceDown: 1.25
-  m_UseRootMotionRotation: 0
-  m_RootMotionRotationMultiplier: 1
+  m_UseRootMotionRotation: 1
+  m_RootMotionRotationMultiplier: 1.08
   m_MotorRotationSpeed: 0.14
   m_UpAlignmentRotationSpeed: 0.2
   m_Up: {x: 0, y: 1, z: 0}
@@ -3154,6 +3154,7 @@ MonoBehaviour:
   moveStopTriggerParam: MoveStopTrigger
   turnInPlaceParam: TurnInPlace
   groundedAnimationSpeedToBlend: 0.48
+  groundedRootMotionSpeedToBlend: 0.22
   groundedAnimatorSpeedRiseRate: 18
   groundedAnimatorSpeedFallRate: 11
   groundedAnimatorTurnRate: 9
@@ -3185,6 +3186,13 @@ MonoBehaviour:
   overrideOpsiveHandlerInput: 1
   orientLookSourceFromMovement: 1
   configureRigidbodyForOpsive: 1
+  useRootMotionLocomotion: 1
+  rootMotionSpeedMultiplier: 1.04
+  rootMotionRotationMultiplier: 1.08
+  preserveAnimatorRootMotion: 1
+  restoreRootMotionSettingsOnDisable: 1
+  refreshRootMotionSettingsEveryFrame: 1
+  driveDirectionalRootMotionInput: 1
   autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
   jumpRetryWindow: 0.15
@@ -3218,6 +3226,8 @@ MonoBehaviour:
   fallbackFlightGroundProbeDistance: 0.2
   driveLitLocomotionAnimatorParameters: 1
   speedParam: Speed
+  horizontalMovementParam: HorizontalMovement
+  forwardMovementParam: ForwardMovement
   isMovingParam: IsMoving
   locomotionTierParam: LocomotionTier
   turnParam: Turn

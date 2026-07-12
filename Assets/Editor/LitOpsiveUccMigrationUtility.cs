@@ -16,14 +16,18 @@ public static class LitOpsiveUccMigrationUtility
     private const string UccSuffix = "_UCC";
     private const string AdventureMovementType = "Opsive.UltimateCharacterController.ThirdPersonController.Character.MovementTypes.Adventure";
     private const string UccDemoAnimatorControllerPath = "Assets/Opsive/UltimateCharacterController/RuntimeAnimator/Characters/Demo.controller";
-    private const string LucianAnimatorControllerPath = "Assets/Animations/Player_Model.controller";
+    private const string LucianAnimatorControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
     private const float UccAnimatorSpeed = 0.8f;
+    private const float LucianRootMotionAnimatorSpeed = 1f;
+    private const float LucianRootMotionSpeedMultiplier = 1.04f;
+    private const float LucianRootMotionRotationMultiplier = 1.08f;
+    private const float LucianGroundedRootMotionSpeedToBlend = 0.22f;
     private const string UccHealthAttributeName = "Health";
-    private const string LucianCharacterDataPath = "Assets/ScriptableObjects/CharacterData/Lucian.asset";
-    private const string LucianPrefabPath = "Assets/Prefabs/Character/Player_Model_Lucian.prefab";
+    private const string LucianCharacterDataPath = "Assets/Characters/1_Squad/Lucian/Lucian.asset";
+    private const string LucianPrefabPath = "Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab";
     private static readonly string[] KnownPlayerCharacterPrefabPaths =
     {
-        "Assets/Prefabs/Character/Player_Model_Lucian.prefab"
+        LucianPrefabPath
     };
 
     [MenuItem(MenuRoot + "Create Selected Character UCC Variant", true)]
@@ -276,9 +280,14 @@ public static class LitOpsiveUccMigrationUtility
 
         ConfigureLocomotionAnimationMode(
             character.GetComponent<UltimateCharacterLocomotion>(),
-            useRootMotionPosition: !useLucianAnimatorController);
+            useRootMotionPosition: useLucianAnimatorController,
+            useRootMotionRotation: useLucianAnimatorController,
+            rootMotionSpeedMultiplier: useLucianAnimatorController ? LucianRootMotionSpeedMultiplier : 1f,
+            rootMotionRotationMultiplier: useLucianAnimatorController ? LucianRootMotionRotationMultiplier : 1f);
         EnsureSingleStandardAbilities(character.GetComponent<UltimateCharacterLocomotion>());
-        ConfigureAnimatorMonitor(character.GetComponent<AnimatorMonitor>());
+        ConfigureAnimatorMonitor(
+            character.GetComponent<AnimatorMonitor>(),
+            useLucianAnimatorController ? LucianRootMotionAnimatorSpeed : UccAnimatorSpeed);
         EnsureLookSource(character);
         ConfigureCharacterIk(character);
         ConfigureCharacterHealthAuthority(character);
@@ -290,12 +299,18 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         ConfigureBridgeAnimatorMode(bridge, driveLitAnimatorParameters: useLucianAnimatorController);
+        ConfigureBridgeRootMotionMode(bridge, useRootMotionLocomotion: useLucianAnimatorController);
         ConfigureBridgeCompanionMode(bridge, autoInstallCompanionBridges: false);
         EnsureExplicitCompanionBridges(character);
         ConfigureDamageBridgeHealthAuthority(character);
     }
 
-    private static void ConfigureLocomotionAnimationMode(UltimateCharacterLocomotion locomotion, bool useRootMotionPosition)
+    private static void ConfigureLocomotionAnimationMode(
+        UltimateCharacterLocomotion locomotion,
+        bool useRootMotionPosition,
+        bool useRootMotionRotation,
+        float rootMotionSpeedMultiplier,
+        float rootMotionRotationMultiplier)
     {
         if (locomotion == null)
         {
@@ -304,11 +319,14 @@ public static class LitOpsiveUccMigrationUtility
 
         SerializedObject serializedObject = new SerializedObject(locomotion);
         SetSerializedBool(serializedObject, "m_UseRootMotionPosition", useRootMotionPosition);
+        SetSerializedFloat(serializedObject, "m_RootMotionSpeedMultiplier", rootMotionSpeedMultiplier);
+        SetSerializedBool(serializedObject, "m_UseRootMotionRotation", useRootMotionRotation);
+        SetSerializedFloat(serializedObject, "m_RootMotionRotationMultiplier", rootMotionRotationMultiplier);
         SetSerializedFloat(serializedObject, "m_MotorRotationSpeed", 0.14f);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    private static void ConfigureAnimatorMonitor(AnimatorMonitor animatorMonitor)
+    private static void ConfigureAnimatorMonitor(AnimatorMonitor animatorMonitor, float animatorSpeed)
     {
         if (animatorMonitor == null)
         {
@@ -316,7 +334,7 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         SerializedObject serializedObject = new SerializedObject(animatorMonitor);
-        SetSerializedFloat(serializedObject, "m_AnimatorSpeed", UccAnimatorSpeed);
+        SetSerializedFloat(serializedObject, "m_AnimatorSpeed", animatorSpeed);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -361,6 +379,33 @@ public static class LitOpsiveUccMigrationUtility
             driveLitProperty.boolValue = driveLitAnimatorParameters;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
+    }
+
+    private static void ConfigureBridgeRootMotionMode(LitOpsiveLocomotionBridge bridge, bool useRootMotionLocomotion)
+    {
+        if (bridge == null)
+        {
+            return;
+        }
+
+        SerializedObject serializedObject = new SerializedObject(bridge);
+        SetSerializedBool(serializedObject, "useRootMotionLocomotion", useRootMotionLocomotion);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionSpeedMultiplier",
+            useRootMotionLocomotion ? LucianRootMotionSpeedMultiplier : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionRotationMultiplier",
+            useRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f);
+        SetSerializedBool(serializedObject, "preserveAnimatorRootMotion", true);
+        SetSerializedBool(serializedObject, "restoreRootMotionSettingsOnDisable", true);
+        SetSerializedBool(serializedObject, "refreshRootMotionSettingsEveryFrame", true);
+        SetSerializedBool(serializedObject, "driveDirectionalRootMotionInput", useRootMotionLocomotion);
+        SetSerializedString(serializedObject, "horizontalMovementParam", "HorizontalMovement");
+        SetSerializedString(serializedObject, "forwardMovementParam", "ForwardMovement");
+        SetSerializedFloat(serializedObject, "groundedRootMotionSpeedToBlend", LucianGroundedRootMotionSpeedToBlend);
+        serializedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void ConfigureBridgeCompanionMode(LitOpsiveLocomotionBridge bridge, bool autoInstallCompanionBridges)
@@ -866,6 +911,40 @@ public static class LitOpsiveUccMigrationUtility
         return string.Join("/", parts);
     }
 
+    private static bool ShouldExpectRootMotionLocomotion(
+        GameObject character,
+        string expectedAnimatorControllerPath,
+        LitOpsiveLocomotionBridge bridge)
+    {
+        if (string.Equals(expectedAnimatorControllerPath, LucianAnimatorControllerPath, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return bridge != null &&
+               TryGetSerializedBool(bridge, "useRootMotionLocomotion", out bool useRootMotionLocomotion) &&
+               useRootMotionLocomotion;
+    }
+
+    private static bool TryGetSerializedBool(UnityEngine.Object target, string propertyName, out bool value)
+    {
+        value = false;
+        if (target == null)
+        {
+            return false;
+        }
+
+        SerializedObject serializedObject = new SerializedObject(target);
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property == null)
+        {
+            return false;
+        }
+
+        value = property.boolValue;
+        return true;
+    }
+
     private static void ValidateUccPrefab(
         string prefabPath,
         string label,
@@ -930,10 +1009,20 @@ public static class LitOpsiveUccMigrationUtility
             errors.Add($"{label} LitOpsiveLookSource EventTarget does not point to the character root.");
         }
 
+        LitOpsiveLocomotionBridge bridge = character.GetComponent<LitOpsiveLocomotionBridge>();
+        bool expectedRootMotionLocomotion = ShouldExpectRootMotionLocomotion(character, expectedAnimatorControllerPath, bridge);
+
         UltimateCharacterLocomotion locomotion = character.GetComponent<UltimateCharacterLocomotion>();
         if (locomotion != null)
         {
-            ValidateLocomotionAnimationMode(locomotion, label, errors, expectedRootMotionPosition: false);
+            ValidateLocomotionAnimationMode(
+                locomotion,
+                label,
+                errors,
+                expectedRootMotionPosition: expectedRootMotionLocomotion,
+                expectedRootMotionRotation: expectedRootMotionLocomotion,
+                expectedRootMotionSpeedMultiplier: expectedRootMotionLocomotion ? LucianRootMotionSpeedMultiplier : 1f,
+                expectedRootMotionRotationMultiplier: expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f);
             ValidateSingleAbility<Jump>(locomotion, label, errors);
             ValidateSingleAbility<Fall>(locomotion, label, errors);
             ValidateSingleAbility<MoveTowards>(locomotion, label, errors);
@@ -948,16 +1037,34 @@ public static class LitOpsiveUccMigrationUtility
         }
         else
         {
-            ValidateAnimatorMonitor(animatorMonitor, label, errors);
+            ValidateAnimatorMonitor(
+                animatorMonitor,
+                label,
+                errors,
+                expectedRootMotionLocomotion ? LucianRootMotionAnimatorSpeed : UccAnimatorSpeed);
         }
 
-        LitOpsiveLocomotionBridge bridge = character.GetComponent<LitOpsiveLocomotionBridge>();
         if (bridge != null)
         {
             ValidateBridgeBoolean(bridge, label, "driveFromSquadFacade", true, errors);
             ValidateBridgeBoolean(bridge, label, "overrideOpsiveHandlerInput", true, errors);
             ValidateBridgeBoolean(bridge, label, "orientLookSourceFromMovement", true, errors);
             ValidateBridgeBoolean(bridge, label, "configureRigidbodyForOpsive", true, errors);
+            ValidateBridgeBoolean(bridge, label, "useRootMotionLocomotion", expectedRootMotionLocomotion, errors);
+            ValidateBridgeBoolean(bridge, label, "refreshRootMotionSettingsEveryFrame", true, errors);
+            ValidateBridgeBoolean(bridge, label, "driveDirectionalRootMotionInput", expectedRootMotionLocomotion, errors);
+            ValidateBridgeString(bridge, label, "horizontalMovementParam", "HorizontalMovement", errors);
+            ValidateBridgeString(bridge, label, "forwardMovementParam", "ForwardMovement", errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionSpeedMultiplier",
+                expectedRootMotionLocomotion ? LucianRootMotionSpeedMultiplier : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionRotationMultiplier",
+                expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f,
+                errors);
             ValidateBridgeBoolean(bridge, label, "autoInstallCompanionBridges", false, errors);
             ValidateBridgeBoolean(bridge, label, "driveLitLocomotionAnimatorParameters", true, errors);
         }
@@ -1208,13 +1315,34 @@ public static class LitOpsiveUccMigrationUtility
         UltimateCharacterLocomotion locomotion,
         string label,
         List<string> errors,
-        bool expectedRootMotionPosition)
+        bool expectedRootMotionPosition,
+        bool expectedRootMotionRotation,
+        float expectedRootMotionSpeedMultiplier,
+        float expectedRootMotionRotationMultiplier)
     {
         SerializedObject serializedObject = new SerializedObject(locomotion);
         SerializedProperty rootMotionPosition = serializedObject.FindProperty("m_UseRootMotionPosition");
         if (rootMotionPosition != null && rootMotionPosition.boolValue != expectedRootMotionPosition)
         {
             errors.Add($"{label} m_UseRootMotionPosition should be {expectedRootMotionPosition}.");
+        }
+
+        SerializedProperty rootMotionSpeedMultiplier = serializedObject.FindProperty("m_RootMotionSpeedMultiplier");
+        if (rootMotionSpeedMultiplier != null && Mathf.Abs(rootMotionSpeedMultiplier.floatValue - expectedRootMotionSpeedMultiplier) > 0.001f)
+        {
+            errors.Add($"{label} m_RootMotionSpeedMultiplier should be {expectedRootMotionSpeedMultiplier} but is {rootMotionSpeedMultiplier.floatValue}.");
+        }
+
+        SerializedProperty rootMotionRotation = serializedObject.FindProperty("m_UseRootMotionRotation");
+        if (rootMotionRotation != null && rootMotionRotation.boolValue != expectedRootMotionRotation)
+        {
+            errors.Add($"{label} m_UseRootMotionRotation should be {expectedRootMotionRotation}.");
+        }
+
+        SerializedProperty rootMotionRotationMultiplier = serializedObject.FindProperty("m_RootMotionRotationMultiplier");
+        if (rootMotionRotationMultiplier != null && Mathf.Abs(rootMotionRotationMultiplier.floatValue - expectedRootMotionRotationMultiplier) > 0.001f)
+        {
+            errors.Add($"{label} m_RootMotionRotationMultiplier should be {expectedRootMotionRotationMultiplier} but is {rootMotionRotationMultiplier.floatValue}.");
         }
 
         SerializedProperty motorRotationSpeed = serializedObject.FindProperty("m_MotorRotationSpeed");
@@ -1224,13 +1352,17 @@ public static class LitOpsiveUccMigrationUtility
         }
     }
 
-    private static void ValidateAnimatorMonitor(AnimatorMonitor animatorMonitor, string label, List<string> errors)
+    private static void ValidateAnimatorMonitor(
+        AnimatorMonitor animatorMonitor,
+        string label,
+        List<string> errors,
+        float expectedAnimatorSpeed)
     {
         SerializedObject serializedObject = new SerializedObject(animatorMonitor);
         SerializedProperty animatorSpeed = serializedObject.FindProperty("m_AnimatorSpeed");
-        if (animatorSpeed != null && Mathf.Abs(animatorSpeed.floatValue - UccAnimatorSpeed) > 0.001f)
+        if (animatorSpeed != null && Mathf.Abs(animatorSpeed.floatValue - expectedAnimatorSpeed) > 0.001f)
         {
-            errors.Add($"{label} AnimatorMonitor speed should be {UccAnimatorSpeed} but is {animatorSpeed.floatValue}.");
+            errors.Add($"{label} AnimatorMonitor speed should be {expectedAnimatorSpeed} but is {animatorSpeed.floatValue}.");
         }
     }
 

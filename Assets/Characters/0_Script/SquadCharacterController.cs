@@ -3445,8 +3445,14 @@ public partial class SquadCharacterController : MonoBehaviour
             return;
         }
 
-        animator.applyRootMotion = false;
+        animator.applyRootMotion = ShouldPreserveAnimatorRootMotion();
         animator.updateMode = animatePhysics ? AnimatorUpdateMode.Fixed : AnimatorUpdateMode.Normal;
+    }
+
+    private bool ShouldPreserveAnimatorRootMotion()
+    {
+        LitOpsiveLocomotionBridge locomotionBridge = GetComponent<LitOpsiveLocomotionBridge>();
+        return locomotionBridge != null && locomotionBridge.ShouldPreserveAnimatorRootMotion;
     }
 
     private void EnsureRigidbodyCollisionSafety()

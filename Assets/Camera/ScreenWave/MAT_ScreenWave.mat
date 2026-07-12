@@ -25,13 +25,13 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Amplitude: 0.06
+    - _Amplitude: 0.03
     - _Duration: 0.9
-    - _EdgeContrast: 2.4
+    - _EdgeContrast: 2.2
     - _Elapsed: 0
-    - _Falloff: 2.6
-    - _Frequency: 7
-    - _HighlightIntensity: 0.55
+    - _Falloff: 2
+    - _Frequency: 4
+    - _HighlightIntensity: 0.38
     - _PropagationSpeed: 1.45
     - _Reverse: 0
     - _WaveFade: 0
