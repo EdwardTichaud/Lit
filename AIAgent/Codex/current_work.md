@@ -27,11 +27,13 @@ manuelle du combat. L'entree combat est orchestree par `BattleTransition` sur le
 avec le material `MAT_ScreenWave`. Le bouton inspecteur `PlayScreenWave` permet
 de tester une vague unique hors Play Mode depuis le `BattleManager`, sans
 creation runtime. La vague expose son origine, sa direction, sa frequence, sa
-vitesse de propagation, son amplitude, sa duree et son attenuation, puis
+vitesse de propagation, son amplitude, sa duree, son attenuation et un lisere
+lumineux reglable pour rester lisible dans les scenes sombres, puis
 `BattleTransition` la declenche au debut du combat pendant que BattleSphere, VFX
 et shaders sont prechauffes au demarrage de scene. Quand le joueur rencontre un
 ennemi, l'entree combat fige localement le temps pendant la premiere vague,
-effectue le placement combat a la fin de cette vague, puis laisse le meme
+masque l'Outline monde actif pendant ce gel, effectue le placement combat a la
+fin de cette vague, puis laisse le meme
 Custom Pass enchaîner une deuxieme vague inversee pour revenir a un rendu normal
 dans l'arene. Le bouton `PlayScreenWave` teste ce cycle complet hors Play Mode.
 Le snapshot de retry pre-combat est aussi capture au pic de cette vague, avant tout
@@ -63,7 +65,9 @@ la selection reste validee par `CombatSessionManager`, synchronisee par
 La fenetre defensive autorisee correspond maintenant a l'affichage reel de
 `CombatDefensePanel` : tant que le panel est visible, le joueur peut remplacer
 son choix, et seul le dernier item selectionne est resolu a l'impact avec un
-surlignage/agrandissement du slot choisi.
+surlignage, un tint de fond et un agrandissement du slot choisi. Les messages
+positifs de choix defensif sont ajoutes au journal `CombatLog`; les erreurs
+restent affichees dans `InfoBoxUI`.
 Quand une attaque ennemie normale commence, le joueur local peut jouer une
 animation de preparation defensive configurable et une voix `AudioClipSO`
 optionnelle, avec fallback animation sur `Defense` puis `Block`.
@@ -87,7 +91,10 @@ est configure comme premier contre melee : il declenche `Counter_Sword`,
 configurer ses attaches, SFX/VFX/voix depuis l'item. Les clips de contre peuvent
 maintenant piloter le visuel via les AnimationEvents `Take` (apparition en main)
 et `Release` (plantage sur l'ennemi), puis interrompre l'attaque ennemie via
-`CounterHit` pour jouer `Impaled`.
+`CounterHit` pour jouer `Impaled` et resoudre l'impact logique du contre au
+meme frame, sans delai `impactDelaySeconds` cote manager. Si ce `CounterHit`
+tue l'ennemi, `Impaled` est ignore et la resolution de victoire demarre sur
+l'animation de mort.
 `Item_Shield_WoodShield` utilise maintenant le type `MeleeDefense` : le joueur
 sort son visuel en main, bloque les attaques melee, l'item perd des PV defensifs
 persistes sur le personnage entre les combats, reste reutilisable s'il lui en
@@ -123,9 +130,12 @@ Editor-only et compilee seulement avec le define manuel
 GUIDs.
 La fin de combat n'est plus une sortie automatique immediatement apres la
 resolution : le perdant joue sa mort, le gagnant tente un taunt (`Taunt`,
-`Victory` ou `Celebrate`), puis les panels de scene `VictoryPanel` ou
-`DefeatPanel` attendent une validation manuelle du joueur avant de restaurer
-les positions, camera, mouvement et resultats monde.
+`Victory` ou `Celebrate`), et une victoire declenche le travelling camera
+ralenti stylise des le coup fatal joueur, puis affiche le `VictoryPanel` apres
+un delai sur : au moins 3 secondes apres ce coup, la fin de l'action fatale, la
+mort ennemie et une petite marge. Les panels de scene `VictoryPanel` ou `DefeatPanel`
+attendent ensuite une validation manuelle du joueur avant de restaurer les
+positions, camera, mouvement et resultats monde.
 En cas de defaite, la resolution remplace aussi la musique de combat par une
 musique `Game Over` issue de `CombatAudioLibrary` jusqu'a la sortie manuelle.
 Le `DefeatPanel` garde son texte de scene et expose maintenant trois boutons :

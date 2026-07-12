@@ -40,7 +40,6 @@ public class CombatSessionManager : NetworkBehaviour
     private const float ActionMoveCompleteThreshold = 0.03f;
     private const float ActionReturnDisplacementThreshold = 0.12f;
     private const float ActionAlreadyInRangePadding = 0.15f;
-    private const float DefaultCounterReactionImpactDelaySeconds = 0.32f;
     private const float DefaultCounterReactionSlowTimeScale = 0.2f;
     private const float DefaultCounterReactionSlowSeconds = 0.5f;
     private const string ReturnToMainMenuLoadingMessage = "Retour au menu principal...";
@@ -149,6 +148,10 @@ public class CombatSessionManager : NetworkBehaviour
         public bool ResolutionResultReady;
         /// <summary>Message final conserve jusqu'a la validation manuelle.</summary>
         public string ResolutionResultMessage;
+        /// <summary>Instant du coup fatal joueur qui a declenche la victoire.</summary>
+        public float PlayerVictoryImpactTime = -1f;
+        /// <summary>Instant attendu de fin de l'action joueur qui a porte le coup fatal.</summary>
+        public float PlayerVictoryActionEndsAt = -1f;
         /// <summary>Snapshot runtime pris juste avant l'entree en combat pour un retry exact.</summary>
         public CombatRetrySnapshot RetrySnapshot;
     }
@@ -348,6 +351,16 @@ public class CombatSessionManager : NetworkBehaviour
     /// </summary>
     [SerializeField, Tooltip("AudioClipSO de voix joue par le joueur au debut d'une attaque ennemie.")]
     private AudioClipSO enemyAttackDefensePreparationVoice;
+
+    [Header("Victory Presentation")]
+    [SerializeField, Min(0f), Tooltip("Delai entre le coup fatal et l'affichage du panel de victoire.")]
+    private float victoryResolutionDelayAfterFatalImpactSeconds = 3f;
+    [SerializeField, Min(0f), Tooltip("Marge ajoutee avant l'affichage du panel de victoire apres les animations fatales.")]
+    private float victoryPanelExtraSafetySeconds = 0.25f;
+    [SerializeField, Min(0f), Tooltip("Duree du shot camera stylise de victoire.")]
+    private float victoryResolutionPresentationSeconds = 2.35f;
+    [SerializeField, Range(0.05f, 1f), Tooltip("Ralentissement local applique pendant le shot de victoire.")]
+    private float victoryResolutionTimeScale = 0.28f;
 
     [Header("Arena Scene")]
     /// <summary>
@@ -1546,11 +1559,7 @@ public class CombatSessionManager : NetworkBehaviour
     [ClientRpc]
     private void DefensiveItemFeedbackClientRpc(string message, ActionAudioCue cue, ClientRpcParams rpcParams = default)
     {
-        PlayUiFeedbackAudio(cue);
-        if (!string.IsNullOrWhiteSpace(message))
-        {
-            InfoBoxUI.TryShow(message);
-        }
+        ShowDefensiveItemFeedback(message, cue);
     }
 
     private void TickSession(CombatSession session)
@@ -1727,13 +1736,14 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEncounterReaction = EncounterReactionChoice.Defend;
         session.PendingDefensiveItem = item;
         session.PendingDefensiveItemHitPoints = counterItem ? 0 : item.GetCombatDefenseHitPoints();
+        string playerName = ResolvePlayerDisplayName(session);
+        string itemName = ResolveItemDisplayName(item);
         feedback = counterItem
-            ? $"{ResolveItemDisplayName(item)} prepare un contre."
+            ? $"{playerName} prépare un contre avec {itemName}."
             : IsMeleeDefenseItem(item)
-            ? $"{ResolveItemDisplayName(item)} prepare une defense melee."
-            : $"{ResolveItemDisplayName(item)} prepare la defense.";
-        session.State.SetMessage(feedback);
-        SendSnapshot(session, feedback);
+            ? $"{playerName} prépare une défense de mêlée avec {itemName}."
+            : $"{playerName} prépare la défense avec {itemName}.";
+        SendSnapshot(session, session.State.LastMessage);
         return true;
     }
 
@@ -1881,6 +1891,8 @@ public class CombatSessionManager : NetworkBehaviour
         {
             session.PendingPlayerActionVictory = true;
             session.PendingPlayerActionResultMessage = "Victoire.";
+            RecordPlayerVictoryImpact(session, session.State.PlayerActionEndsAt);
+            BeginCombatResolution(session, true, "Victoire.");
             return;
         }
 
@@ -1891,6 +1903,13 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingPlayerActionVictory = AreAllEnemiesDefeated(session);
         session.PendingPlayerActionResultMessage = $"{enemy.DisplayName} subit {applied} degats.";
         session.State.SetMessage(session.PendingPlayerActionResultMessage);
+        if (session.PendingPlayerActionVictory)
+        {
+            RecordPlayerVictoryImpact(session, session.State.PlayerActionEndsAt);
+            BeginCombatResolution(session, true, $"Victoire. {session.PendingPlayerActionResultMessage}");
+            return;
+        }
+
         SendSnapshot(session, session.PendingPlayerActionResultMessage);
     }
 
@@ -2075,6 +2094,17 @@ public class CombatSessionManager : NetworkBehaviour
         session.PendingEnemyActionOpensPlayerAttackWindow = false;
         session.PendingEnemyActionResultMessage = message;
         session.State.SetMessage(message);
+        if (AreAllEnemiesDefeated(session))
+        {
+            RecordPlayerVictoryImpact(session, session.State.EnemyActionEndsAt);
+            ClearPendingEnemyAttack(session);
+            ClearPendingDefensiveItem(session);
+            ClearPendingEnemyAction(session);
+            ClearPendingEncounterReaction(session);
+            BeginCombatResolution(session, true, $"Victoire. {message}");
+            return;
+        }
+
         SendSnapshot(session, message);
     }
 
@@ -2335,9 +2365,8 @@ public class CombatSessionManager : NetworkBehaviour
                 BuildClientRpcParams(session.OwnerClientId));
         }
 
-        return new CombatActionTiming(
-            Mathf.Min(totalDuration, ResolveCounterReactionImpactDelay(profile)),
-            totalDuration);
+        // Le contre d'item resout son impact via l'AnimationEvent CounterHit.
+        return new CombatActionTiming(totalDuration, totalDuration);
     }
 
     private void PlayPlayerDefensePresentation(CombatSession session, float totalDuration)
@@ -2663,12 +2692,17 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        float victoryPresentationDelaySeconds;
         session.ResolutionResultReady = false;
         session.ResolutionResultMessage = message ?? string.Empty;
+        float resolutionDuration = ResolveCombatResolutionDuration(
+            session,
+            playerVictory,
+            out victoryPresentationDelaySeconds);
         session.State.BeginResolution(
             playerVictory,
             Time.time,
-            ResolveCombatResolutionDuration(session, playerVictory),
+            resolutionDuration,
             message);
 
         if (!playerVictory && (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId()))
@@ -2820,6 +2854,8 @@ public class CombatSessionManager : NetworkBehaviour
 
         session.ResolutionResultReady = false;
         session.ResolutionResultMessage = null;
+        session.PlayerVictoryImpactTime = -1f;
+        session.PlayerVictoryActionEndsAt = -1f;
         session.State = new CombatSessionState();
 
         if (session.Player != null)
@@ -3056,6 +3092,9 @@ public class CombatSessionManager : NetworkBehaviour
             PlayCombatResolutionAnimationSequence(
                 enemyAnimator,
                 controller != null ? controller.GetComponent<Animator>() : null);
+            PlayVictoryResolutionPresentationLocally(
+                controller != null ? controller.transform : null,
+                0f);
             return;
         }
 
@@ -3329,11 +3368,24 @@ public class CombatSessionManager : NetworkBehaviour
             return;
         }
 
+        ShowDefensiveItemFeedback(message, cue);
+    }
+
+    private static void ShowDefensiveItemFeedback(string message, ActionAudioCue cue)
+    {
         PlayUiFeedbackAudio(cue);
-        if (!string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(message))
         {
-            InfoBoxUI.TryShow(message);
+            return;
         }
+
+        if (cue == ActionAudioCue.InventoryUse)
+        {
+            CombatHudController.AppendCombatLog(message);
+            return;
+        }
+
+        InfoBoxUI.TryShow(message);
     }
 
     private static void PlayUiFeedbackAudio(ActionAudioCue cue)
@@ -3802,6 +3854,22 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         return !string.IsNullOrWhiteSpace(item.name) ? item.name : "Item defensif";
+    }
+
+    private static string ResolvePlayerDisplayName(CombatSession session)
+    {
+        CharacterData characterData = session?.Player != null ? session.Player.CharacterData : null;
+        if (characterData != null && !string.IsNullOrWhiteSpace(characterData.characterName))
+        {
+            return characterData.characterName;
+        }
+
+        if (session != null && !string.IsNullOrWhiteSpace(session.CharacterId))
+        {
+            return session.CharacterId;
+        }
+
+        return "Joueur";
     }
 
     private int ResolvePlayerAttackDamage(SquadCharacterController player)
@@ -4608,18 +4676,6 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
-    private static float ResolveCounterReactionImpactDelay(Item.CombatReactionProfile profile)
-    {
-        if (profile == null)
-        {
-            return DefaultCounterReactionImpactDelaySeconds;
-        }
-
-        return profile.impactDelaySeconds > 0f
-            ? profile.impactDelaySeconds
-            : DefaultCounterReactionImpactDelaySeconds;
-    }
-
     private static float ResolveCounterReactionPlayerFallbackDuration(Item.CombatReactionProfile profile)
     {
         return profile != null && profile.fallbackPlayerAnimationDuration > 0f
@@ -5307,6 +5363,14 @@ public class CombatSessionManager : NetworkBehaviour
             totalDuration,
             () =>
             {
+                NotifyLocalCombatAnimationImpact(playerTransform);
+                if (ShouldSkipCounterHitEnemyAnimationAfterImpact(enemy, profile))
+                {
+                    StopCombatActionPresentation(enemy);
+                    StopCombatAnimationEventMovement(enemy);
+                    return;
+                }
+
                 PlayCounterHitEnemyAnimation(enemy, profile, enemyAnimationName);
             },
             impactPoint =>
@@ -5330,6 +5394,28 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         StartCounterActionSlowEffect(playerTransform, enemy, profile);
+    }
+
+    private bool ShouldSkipCounterHitEnemyAnimationAfterImpact(
+        Transform enemy,
+        Item.CombatReactionProfile profile)
+    {
+        if (profile == null || !profile.IsMeleeCounter())
+        {
+            return false;
+        }
+
+        if (!CanRunAuthority())
+        {
+            return true;
+        }
+
+        if (!TryResolveLocalCombatAnimationImpactSession(enemy, out CombatSession session) || session == null)
+        {
+            return false;
+        }
+
+        return session.State.Resolving || AreAllEnemiesDefeated(session);
     }
 
     private void PlayCounterHitEnemyAnimation(
@@ -5412,8 +5498,12 @@ public class CombatSessionManager : NetworkBehaviour
         }
     }
 
-    private float ResolveCombatResolutionDuration(CombatSession session, bool playerVictory)
+    private float ResolveCombatResolutionDuration(
+        CombatSession session,
+        bool playerVictory,
+        out float victoryPresentationDelaySeconds)
     {
+        victoryPresentationDelaySeconds = 0f;
         Animator loserAnimator = null;
         Animator winnerAnimator = null;
         if (playerVictory)
@@ -5428,12 +5518,109 @@ public class CombatSessionManager : NetworkBehaviour
             session.Player.Stop();
         }
 
-        return PlayCombatResolutionAnimationSequence(loserAnimator, winnerAnimator) + PostResolutionResultDelaySeconds;
+        float sequenceDuration = PlayCombatResolutionAnimationSequence(loserAnimator, winnerAnimator, out float deathDuration);
+        if (!playerVictory)
+        {
+            return sequenceDuration + PostResolutionResultDelaySeconds;
+        }
+
+        victoryPresentationDelaySeconds = ResolveVictoryResolutionPresentationDelay(session, deathDuration);
+        ScheduleVictoryResolutionPresentation(session, 0f);
+        return victoryPresentationDelaySeconds;
+    }
+
+    private void RecordPlayerVictoryImpact(CombatSession session, float actionEndsAt)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        session.PlayerVictoryImpactTime = Time.time;
+        session.PlayerVictoryActionEndsAt = actionEndsAt > Time.time ? actionEndsAt : -1f;
+    }
+
+    private float ResolveVictoryResolutionPresentationDelay(CombatSession session, float deathDurationSeconds)
+    {
+        float configuredDelay = Mathf.Max(0f, victoryResolutionDelayAfterFatalImpactSeconds);
+        float delay = configuredDelay;
+        if (session == null || session.PlayerVictoryImpactTime < 0f)
+        {
+            return delay + Mathf.Max(0f, victoryPanelExtraSafetySeconds);
+        }
+
+        float fatalImpactDelay = Mathf.Max(0f, session.PlayerVictoryImpactTime + configuredDelay - Time.time);
+        float actionDelay = session.PlayerVictoryActionEndsAt > Time.time
+            ? session.PlayerVictoryActionEndsAt - Time.time
+            : 0f;
+        float deathDelay = Mathf.Max(0f, deathDurationSeconds);
+        delay = Mathf.Max(fatalImpactDelay, actionDelay, deathDelay);
+        return delay + Mathf.Max(0f, victoryPanelExtraSafetySeconds);
+    }
+
+    private void ScheduleVictoryResolutionPresentation(CombatSession session, float delaySeconds)
+    {
+        float duration = Mathf.Max(0f, victoryResolutionPresentationSeconds);
+        if (duration <= 0f)
+        {
+            return;
+        }
+
+        bool playLocal = session != null &&
+                         (!IsNetworkSessionActive() || session.OwnerClientId == ResolveLocalClientId());
+        if (playLocal)
+        {
+            PlayVictoryResolutionPresentationLocally(
+                session.Player != null ? session.Player.transform : null,
+                delaySeconds);
+        }
+    }
+
+    private void PlayVictoryResolutionPresentationLocally(Transform slowRoot, float delaySeconds)
+    {
+        float duration = Mathf.Max(0f, victoryResolutionPresentationSeconds);
+        if (duration <= 0f)
+        {
+            return;
+        }
+
+        StartCoroutine(VictoryResolutionPresentationRoutine(slowRoot, delaySeconds, duration));
+    }
+
+    private IEnumerator VictoryResolutionPresentationRoutine(Transform slowRoot, float delaySeconds, float duration)
+    {
+        float startAt = Time.unscaledTime + Mathf.Max(0f, delaySeconds);
+        while (Time.unscaledTime < startAt)
+        {
+            yield return null;
+        }
+
+        CombatCameraPresentationController.EnsureInstance()?.PlayVictoryResolutionShot(duration);
+        if (slowRoot != null)
+        {
+            TimeManager.EnsureInstance()?.SetCombatPresentationTimeScale(
+                slowRoot,
+                victoryResolutionTimeScale,
+                active: true);
+        }
+
+        float endAt = Time.unscaledTime + duration;
+        while (Time.unscaledTime < endAt)
+        {
+            yield return null;
+        }
+
+        TimeManager.Instance?.SetCombatPresentationTimeScale(null, 1f, active: false);
     }
 
     private float PlayCombatResolutionAnimationSequence(Animator loserAnimator, Animator winnerAnimator)
     {
-        float deathDuration = Mathf.Max(0f, PlayDeathAnimation(loserAnimator));
+        return PlayCombatResolutionAnimationSequence(loserAnimator, winnerAnimator, out _);
+    }
+
+    private float PlayCombatResolutionAnimationSequence(Animator loserAnimator, Animator winnerAnimator, out float deathDuration)
+    {
+        deathDuration = Mathf.Max(0f, PlayDeathAnimation(loserAnimator));
         float tauntDuration = ScheduleTauntAnimation(winnerAnimator, deathDuration);
         return deathDuration + tauntDuration;
     }

@@ -32,6 +32,7 @@ public sealed class BattleTransition : MonoBehaviour
     private Coroutine transitionRoutine;
     private Action pendingCoveredAction;
     private bool entryFreezeActive;
+    private bool outlineSuspensionActive;
     private float previousTimeScale = 1f;
 
     public static BattleTransition EnsureInstance()
@@ -230,10 +231,18 @@ public sealed class BattleTransition : MonoBehaviour
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         entryFreezeActive = true;
+        RuntimeOutlineSelectionManager.PushSuspension(this);
+        outlineSuspensionActive = true;
     }
 
     private void RestoreEntryFreeze()
     {
+        if (outlineSuspensionActive)
+        {
+            RuntimeOutlineSelectionManager.PopSuspension(this);
+            outlineSuspensionActive = false;
+        }
+
         if (!entryFreezeActive)
         {
             return;

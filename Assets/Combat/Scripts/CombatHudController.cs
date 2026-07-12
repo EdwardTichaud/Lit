@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,6 +18,7 @@ public class CombatHudController : MonoBehaviour
     private const string DefaultBaseAttackUiName = "BaseAttackUI";
     private const string DefaultCombatEngagedPanelName = "CombatEngagedPanel";
     private const string DefaultCombatScreenInfosPanelName = "CombatScreenInfosPanel";
+    private const string DefaultCombatLogName = "CombatLog";
     private const string DefaultVictoryPanelName = "VictoryPanel";
     private const string DefaultDefeatPanelName = "DefeatPanel";
     private const string CombatEngagedAnimationName = "CombatEngagedPanel_Trigger";
@@ -112,6 +114,8 @@ public class CombatHudController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI prayerText;
     [SerializeField] private TextMeshProUGUI messageText;
     [SerializeField] private TextMeshProUGUI actionsText;
+    [SerializeField] private TextMeshProUGUI combatLogText;
+    [SerializeField, Min(1)] private int combatLogMaxLines = 6;
 
     private TextMeshProUGUI runtimeTitleText;
     private TextMeshProUGUI runtimeTurnText;
@@ -144,6 +148,7 @@ public class CombatHudController : MonoBehaviour
     private bool combatResultVisible;
     private bool combatResultPlayerVictory;
     private string combatResultSessionId;
+    private readonly List<string> combatLogLines = new List<string>(6);
 
     /// <summary>
     /// Retourne l'instance existante ou cree un HUD runtime minimal.
@@ -169,6 +174,15 @@ public class CombatHudController : MonoBehaviour
         DontDestroyOnLoad(host);
         Instance = host.AddComponent<CombatHudController>();
         return Instance;
+    }
+
+    public static void AppendCombatLog(string message)
+    {
+        CombatHudController controller = EnsureInstance();
+        if (controller != null)
+        {
+            controller.AppendCombatLogLine(message);
+        }
     }
 
     /// <summary>
@@ -447,6 +461,7 @@ public class CombatHudController : MonoBehaviour
         LocalPlayerInput.SetCombatInputActive(false);
         SetScenePanelVisibility(false, false);
         SetCombatEngagedVisible(false);
+        ClearCombatLog();
         CombatDefensePanelController.HideActive();
         if (root != null)
         {
@@ -701,6 +716,7 @@ public class CombatHudController : MonoBehaviour
         combatEngagedIntroEndsAt = Time.unscaledTime + ResolveCombatEngagedDuration();
         combatEngagedAnimationObserved = false;
         combatDefensePanelRequested = false;
+        ClearCombatLog();
 
         LocalPlayerInput.SetCombatInputActive(true);
         UpdateCombatInputFocus(true);
@@ -1070,6 +1086,7 @@ public class CombatHudController : MonoBehaviour
         ResolveSceneTextIfNeeded(ref messageText, "CombatMessageText");
         ResolveSceneTextIfNeeded(ref actionsText, "CombatActionsText");
         ResolveSceneTextIfNeeded(ref baseAttackText, "BaseAttack_Text");
+        ResolveCombatLogTextIfNeeded();
 
         ResolveSceneImageIfNeeded(ref playerHpFillImage, "CombatPlayerHpFill");
         ResolveSceneImageIfNeeded(ref enemyHpFillImage, "CombatEnemyHpFill");
@@ -1612,6 +1629,59 @@ public class CombatHudController : MonoBehaviour
         if (text != null)
         {
             text.text = value ?? string.Empty;
+        }
+    }
+
+    private void AppendCombatLogLine(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        ResolveCombatLogTextIfNeeded();
+        if (combatLogText == null)
+        {
+            return;
+        }
+
+        combatLogLines.Add(message.Trim());
+        int maxLines = Mathf.Max(1, combatLogMaxLines);
+        while (combatLogLines.Count > maxLines)
+        {
+            combatLogLines.RemoveAt(0);
+        }
+
+        combatLogText.text = string.Join("\n", combatLogLines);
+    }
+
+    private void ClearCombatLog()
+    {
+        combatLogLines.Clear();
+        ResolveCombatLogTextIfNeeded();
+        if (combatLogText != null)
+        {
+            combatLogText.text = string.Empty;
+        }
+    }
+
+    private void ResolveCombatLogTextIfNeeded()
+    {
+        if (combatLogText != null)
+        {
+            return;
+        }
+
+        GameObject found = FindSceneGameObjectByName(DefaultCombatLogName);
+        if (found == null)
+        {
+            return;
+        }
+
+        combatLogText = found.GetComponent<TextMeshProUGUI>();
+        if (combatLogText == null)
+        {
+            combatLogText = found.GetComponentInChildren<TextMeshProUGUI>(true);
         }
     }
 

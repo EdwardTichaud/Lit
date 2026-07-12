@@ -2366,6 +2366,7 @@ GameObject:
   - component: {fileID: 9095812728330429394}
   - component: {fileID: 6800918242508772571}
   - component: {fileID: -2401253528140462390}
+  - component: {fileID: 6197907773269782780}
   m_Layer: 31
   m_Name: Player_Model_Mia
   m_TagString: PNJ
@@ -3588,6 +3589,33 @@ MonoBehaviour:
   faceAnchor: {fileID: 8186569390409486965}
   cameraAnchor: {fileID: 8186569390409486965}
   animator: {fileID: 963045829911085934}
+--- !u!114 &6197907773269782780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1b0e5c2a7f94f4aa5d23224fe72b48c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocomotionAnimationEvent
+  defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raycastOrigin: {fileID: 0}
+  raycastHeight: 0.4
+  raycastDistance: 1.6
+  animator: {fileID: 963045829911085934}
+  leftFoot: {fileID: 5826101239439711920}
+  rightFoot: {fileID: 3004153059774259606}
+  autoResolveHumanoidFeet: 1
+  footRaycastHeight: 0.35
+  footRaycastDistance: 0.8
+  minimumFootstepInterval: 0.05
+  minimumAnimationEventWeight: 0.5
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

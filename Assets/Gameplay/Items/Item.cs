@@ -143,9 +143,6 @@ public class Item : ScriptableObject
         [Min(0.05f)]
         [Tooltip("Duree de secours de l'animation ennemie.")]
         public float fallbackEnemyAnimationDuration = 1.35f;
-        [Min(0f)]
-        [Tooltip("Temps avant l'impact visuel/audio de la reaction.")]
-        public float impactDelaySeconds = 0.32f;
         [Range(0.01f, 1f)]
         [Tooltip("Multiplicateur local de presentation pendant la reaction.")]
         public float slowTimeScale = 0.2f;

@@ -5,10 +5,12 @@ public static class RuntimeOutlineSelectionManager
 {
     private static readonly List<RuntimeOutlineTarget> ActiveTargets = new List<RuntimeOutlineTarget>();
     private static readonly List<RuntimeOutlineTarget> CandidateTargets = new List<RuntimeOutlineTarget>();
+    private static readonly List<Object> SuspensionOwners = new List<Object>();
     private static Object activeOwner;
     private static ICharacterDetectedInteractable activeInteractable;
 
     public static ICharacterDetectedInteractable ActiveInteractable => activeInteractable;
+    public static bool IsSuspended => SuspensionOwners.Count > 0;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeState()
@@ -24,6 +26,7 @@ public static class RuntimeOutlineSelectionManager
 
         ActiveTargets.Clear();
         CandidateTargets.Clear();
+        SuspensionOwners.Clear();
         activeOwner = null;
         activeInteractable = null;
     }
@@ -54,6 +57,41 @@ public static class RuntimeOutlineSelectionManager
         CandidateTargets.Clear();
         RuntimeOutlineUtility.CollectOutlineTargets(activeInteractable as Component, CandidateTargets, ensureTargets: true);
         SetActiveTargets(activeOwner, CandidateTargets);
+    }
+
+    public static void PushSuspension(Object owner)
+    {
+        if (owner != null && SuspensionOwners.Contains(owner))
+        {
+            return;
+        }
+
+        SuspensionOwners.Add(owner);
+        HideActiveTargets();
+    }
+
+    public static void PopSuspension(Object owner)
+    {
+        if (owner == null)
+        {
+            SuspensionOwners.Clear();
+        }
+        else
+        {
+            SuspensionOwners.Remove(owner);
+        }
+
+        if (!IsSuspended)
+        {
+            if (activeInteractable != null)
+            {
+                RefreshActiveInteractable();
+            }
+            else
+            {
+                ShowActiveTargets();
+            }
+        }
     }
 
     public static void SetActiveComponent(Component component)
@@ -131,6 +169,36 @@ public static class RuntimeOutlineSelectionManager
             if (!ActiveTargets.Contains(target))
             {
                 ActiveTargets.Add(target);
+            }
+
+            target.SetOutlined(!IsSuspended);
+        }
+    }
+
+    private static void HideActiveTargets()
+    {
+        for (int i = ActiveTargets.Count - 1; i >= 0; i--)
+        {
+            RuntimeOutlineTarget target = ActiveTargets[i];
+            if (target == null)
+            {
+                ActiveTargets.RemoveAt(i);
+                continue;
+            }
+
+            target.SetOutlined(false);
+        }
+    }
+
+    private static void ShowActiveTargets()
+    {
+        for (int i = ActiveTargets.Count - 1; i >= 0; i--)
+        {
+            RuntimeOutlineTarget target = ActiveTargets[i];
+            if (target == null)
+            {
+                ActiveTargets.RemoveAt(i);
+                continue;
             }
 
             target.SetOutlined(true);

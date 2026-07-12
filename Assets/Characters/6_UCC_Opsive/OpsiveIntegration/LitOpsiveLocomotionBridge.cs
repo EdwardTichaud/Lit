@@ -474,6 +474,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         CacheRigidbodyState();
         lastPosition = transform.position;
         hasLastPosition = true;
+        ResetGroundedFeelState();
     }
 
     private void OnEnable()
@@ -483,6 +484,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         CacheRigidbodyState();
         ConfigureRigidbody();
         ConfigureGroundReliefTolerance();
+        ConfigureGroundedFeelProfile();
+        ResetGroundedFeelState();
         RegisterExternalDriver();
         AttachLookSourceIfNeeded(true);
         ApplyWorldMoveInput(currentWorldMoveInput);
@@ -509,7 +512,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         externalLockCount = 0;
         scriptedTraversalLockCount = 0;
         StopBridgeInput();
+        SetLitAnimatorSpeedParameterOverride(false);
         UnregisterExternalDriver();
+        RestoreGroundedFeelProfile();
+        ResetGroundedFeelState();
         RestoreGroundReliefTolerance();
         RestoreRigidbody();
     }
@@ -569,6 +575,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void ForceZeroInput()
     {
+        ResetGroundedFeelInput();
         currentWorldMoveInput = Vector2.zero;
         sprintPressed = false;
 
@@ -802,7 +809,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void ApplyWorldMoveInput(Vector2 worldInput)
     {
-        currentWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f);
+        Vector2 targetWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f);
+        float targetMagnitude = targetWorldMoveInput.magnitude;
+        if (targetMagnitude <= movementDeadZone)
+        {
+            targetWorldMoveInput = Vector2.zero;
+            targetMagnitude = 0f;
+        }
+
+        currentWorldMoveInput = ResolveGroundedFeelWorldMoveInput(targetWorldMoveInput, targetMagnitude);
         float magnitude = currentWorldMoveInput.magnitude;
         if (magnitude <= movementDeadZone)
         {
@@ -1086,12 +1101,19 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (!driveLitLocomotionAnimatorParameters || animator == null || IsFlightModeActive)
         {
+            SetLitAnimatorSpeedParameterOverride(false);
             return;
         }
 
+        SetLitAnimatorSpeedParameterOverride(true);
         Vector3 velocity = ResolvePlanarVelocity();
         float speed = velocity.magnitude;
         bool moving = currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone || speed > 0.05f;
+
+        if (TryUpdateGroundedFeelAnimatorParameters(velocity, speed, moving))
+        {
+            return;
+        }
 
         SetAnimatorFloat(speedParam, speed);
         SetAnimatorBool(isMovingParam, moving);

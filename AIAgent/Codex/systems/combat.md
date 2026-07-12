@@ -21,7 +21,8 @@ résolution dans le monde.
   orchestre l'entree combat, declenche `ScreenWaveController` et prechauffe
   BattleSphere/VFX.
 - `ScreenWaveController` : systeme HDRP Custom Pass dedie a la vague d'ecran,
-  testable hors Play Mode via le bouton inspecteur `PlayScreenWave`.
+  testable hors Play Mode via le bouton inspecteur `PlayScreenWave`, avec un
+  lisere lumineux reglable pour rester lisible dans les scenes sombres.
 - `CombatCameraPresentationController` : pilote camera cinematographique locale
   par phase de combat et expose le shot temporaire `CounterAction`.
 - `CombatCounterItemPresentation` : presentation locale des items de contre
@@ -41,10 +42,12 @@ résolution dans le monde.
 2. L’autorité capture les positions de retour et construit les ennemis runtime.
 3. `BattleTransition` demande a `ScreenWaveController` de jouer une vague HDRP
    locale chez le joueur engage et fige localement `Time.timeScale` pendant cette
-   premiere vague. A la fin de la vague, le manager capture le snapshot de retry
-   pre-combat, instancie `combatEntryMidpointPrefab` a mi-chemin entre le joueur
-   et l'ennemi, oriente vers l'ennemi, puis teleporte le joueur et l'ennemi vers
-   l'arene. Le meme Custom Pass reste actif et enchaine alors une deuxieme vague
+   premiere vague. Pendant ce gel, `RuntimeOutlineSelectionManager` suspend
+   l'Outline monde actif puis le restaure a la fin de la transition. A la fin
+   de la vague, le manager capture le snapshot de retry pre-combat, instancie
+   `combatEntryMidpointPrefab` a mi-chemin entre le joueur et l'ennemi, oriente
+   vers l'ennemi, puis teleporte le joueur et l'ennemi vers l'arene. Le meme
+   Custom Pass reste actif et enchaine alors une deuxieme vague
    inversee pour revenir a un rendu normal dans l'arene. En reseau, la vague
    n'est jouee que chez le joueur
    engage, tandis qu'un RPC dedie demande la BattleSphere a tous les clients sans
@@ -74,8 +77,10 @@ résolution dans le monde.
    `UseItem1`, `UseItem2` et `UseItem3` selectionnent les slots 1 a 3 quand le
    panel est visible. La fenetre defensive autorisee correspond a cet affichage
    reel : le joueur peut remplacer son choix jusqu'a ce que le panel se masque,
-   et seul le dernier item choisi est resolu a l'impact. Les slots sans item
-   assigne restent masques.
+   et seul le dernier item choisi est resolu a l'impact. Le slot choisi est
+   agrandi, outline et tinte; les slots sans item assigne restent masques.
+   Les retours positifs de choix defensif sont ajoutes a `CombatLog`, tandis
+   que les erreurs restent dans `InfoBoxUI`.
    Les racines `EnableItem_1/2/3` sont resolues comme boutons UI pour permettre
    aussi la selection souris et la navigation manette/clavier.
    Cette demande issue d'un AnimationEvent est prioritaire sur l'intro
@@ -91,21 +96,25 @@ résolution dans le monde.
    puis `Block`, ainsi qu'une voix `AudioClipSO` optionnelle. Cette
    presentation est jouee localement chez le client proprietaire.
 8. La resolution joue la mort du perdant puis un taunt du gagnant
-   (`Taunt`, puis `Victory`/`Celebrate` en fallback si disponibles). Le HUD
-   affiche ensuite le panel de scene `VictoryPanel` ou `DefeatPanel`; aucun
-   panel de resultat n'est cree en runtime. La victoire garde une validation
-   manuelle simple. En defaite, `CombatHudController` ne remplace pas le texte
-   de `DefeatPanel` et route ses boutons de scene vers trois choix : retour
-   `MainMenu`, retry immediat du combat courant, ou rechargement du dernier
-   checkpoint/sauvegarde active. Le retry restaure le snapshot en memoire pris
-   juste avant l'entree en combat : etat personnage/inventaire, snapshot monde
-   persistant, PV joueur pre-combat et ennemis reconstruits depuis l'etat monde,
-   puis relance la session sans la terminer. Les sorties menu et checkpoint
-   terminent la session avant chargement de scene. En cas de defaite,
-   la musique de combat est remplacee par la musique `Game Over` configuree
-   dans `CombatAudioLibrary` jusqu'a cette sortie. Cette validation restaure
-   alors les positions, la camera et le mouvement, puis applique le resultat a
-   l'ennemi monde.
+   (`Taunt`, puis `Victory`/`Celebrate` en fallback si disponibles). En cas de
+   victoire, le coup fatal joueur est memorise et un shot camera ralenti de fin
+   de combat est declenche aussitot, puis le `VictoryPanel` attend le plus long
+   delai entre 3 secondes apres cet impact, la fin de l'action fatale joueur et
+   la duree de mort ennemie, avec une petite marge de securite. Le HUD affiche
+   le panel de scene `VictoryPanel` ou
+   `DefeatPanel`; aucun panel de resultat n'est cree en runtime. La victoire
+   garde une validation manuelle simple. En defaite,
+   `CombatHudController` ne remplace pas le texte de `DefeatPanel` et route ses
+   boutons de scene vers trois choix : retour `MainMenu`, retry immediat du
+   combat courant, ou rechargement du dernier checkpoint/sauvegarde active. Le
+   retry restaure le snapshot en memoire pris juste avant l'entree en combat :
+   etat personnage/inventaire, snapshot monde persistant, PV joueur pre-combat
+   et ennemis reconstruits depuis l'etat monde, puis relance la session sans la
+   terminer. Les sorties menu et checkpoint terminent la session avant chargement
+   de scene. En cas de defaite, la musique de combat est remplacee par la
+   musique `Game Over` configuree dans `CombatAudioLibrary` jusqu'a cette
+   sortie. Cette validation restaure alors les positions, la camera et le
+   mouvement, puis applique le resultat a l'ennemi monde.
 
 Pendant une session, la camera locale de combat est la seule source de pilotage
 spatial de la `Main Camera`. `CombatCameraPresentationController`, cree par
@@ -117,14 +126,15 @@ focus biaise vers l'ennemi et une respiration lente pour suivre l'attaque.
 Chaque phase shot expose aussi une vitesse de deplacement locale de son offset :
 une valeur X positive fait glisser la camera lateralement depuis son offset de
 depart, Y la fait monter, et Z la pousse sur l'axe joueur-vers-ennemi pendant
-la duree du shot.
+la duree du shot. Le shot temporaire de victoire utilise ce meme systeme pour
+creer un travelling final ralenti des que la resolution de victoire demarre.
 
 Pendant une attaque de mêlée, la présentation peut déplacer temporairement
 l'attaquant vers sa cible puis le ramener à sa position de combat. Ce mouvement
-reste cosmétique : l'impact est toujours appliqué par `CombatSessionManager` à
-un timing autoritaire, et les attaques distance/support restent sur place. Les
-attaques dont l'animation embarque déjà le déplacement ne reçoivent pas
-d'approche scriptée supplémentaire.
+reste cosmétique : l'impact est toujours appliqué par `CombatSessionManager`
+quand le clip emet son AnimationEvent d'impact, et les attaques
+distance/support restent sur place. Les attaques dont l'animation embarque déjà
+le déplacement ne reçoivent pas d'approche scriptée supplémentaire.
 
 Les ralentis de combat sont exclusivement declenches par les `AnimationEvent`
 exposes par `CombatAnimationEvents`. La camera de combat, `CombatSessionManager`
@@ -148,8 +158,12 @@ les animations joueur/ennemi configurees se jouent, puis les AnimationEvents
 `Take` et `Release` du clip joueur font passer le visuel de l'item de l'attache
 joueur a l'attache ennemie. L'AnimationEvent `CounterHit` du clip joueur
 interrompt alors l'animation d'attaque ennemie et declenche l'animation/clip
-ennemi configure, `Impaled` par defaut. Le shot camera `CounterAction`, le
-ralenti local, les SFX, VFX et voix optionnelles du profil soulignent l'impact.
+ennemi configure, `Impaled` par defaut. Ce meme `CounterHit` notifie aussi la
+resolution logique du contre au manager : les degats/morts ne dependent plus
+d'un delai profil ou d'un timer manager. Si ce `CounterHit` tue l'ennemi,
+l'animation/clip `Impaled` est ignoree pour laisser la resolution jouer
+directement la mort. Le shot camera `CounterAction`, le ralenti local, les SFX,
+VFX et voix optionnelles du profil soulignent l'impact.
 Contre une attaque non melee, ce profil ne remplace pas une defense.
 Le type `MeleeDefense` sert aux objets comme `Item_Shield_WoodShield` : le
 joueur sort le visuel de l'item en main, bloque une attaque melee sans subir de
@@ -174,7 +188,9 @@ local de combat, capture la pose de depart au moment de la ruee, restaure
 uniquement cette presentation et peut notifier `NotifyCombatImpact` au frame
 d'impact. Les degats restent resolus une seule fois par `CombatSessionManager`;
 il n'y a plus de timer fallback, donc un clip d'attaque doit emettre
-`NotifyCombatImpact` pour appliquer l'impact.
+`NotifyCombatImpact` pour appliquer l'impact, tandis qu'un clip de contre
+`MeleeCounterImpale` doit emettre `CounterHit` au frame ou la reaction doit
+etre resolue.
 Les panels UI de combat reactivenent aussi leur hierarchie et corrigent une
 echelle locale nulle sur les parents au moment de l'affichage, afin que
 `CombatEngagedPanel`, `CombatScreenInfosPanel` et `CombatDefensePanel` restent
@@ -226,7 +242,8 @@ volume et le material `MAT_ScreenWave`, qui utilise le shader
 `ScreenWaveController` joue hors Play Mode le cycle complet vague normale puis
 vague inversee. Ses parametres
 exposent l'origine viewport, la direction de pousse, la frequence, la vitesse de
-propagation, l'amplitude, la duree, l'attenuation et le fondu de sortie.
+propagation, l'amplitude, la duree, l'attenuation, le fondu de sortie,
+`highlightIntensity`, `highlightColor` et `edgeContrast`.
 La sortie wave vers normal est un release progressif : `StopScreenWave` lance ce
 fondu, puis le pass est coupe seulement apres une frame neutre. Le flux combat
 utilise `PlayScreenWaveCycle(origin)` pour garder le Custom Pass actif entre la

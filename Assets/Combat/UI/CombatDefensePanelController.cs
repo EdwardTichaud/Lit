@@ -23,14 +23,18 @@ public class CombatDefensePanelController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI[] slotLabels = new TextMeshProUGUI[SlotCount];
     [SerializeField] private Text[] slotLegacyLabels = new Text[SlotCount];
     [SerializeField] private bool createMissingSlots = true;
-    [SerializeField, Min(1f)] private float selectedSlotScale = 1.12f;
+    [SerializeField, Min(1f)] private float selectedSlotScale = 1.18f;
     [SerializeField] private Color selectedOutlineColor = new Color(1f, 0.82f, 0.28f, 1f);
     [SerializeField] private Vector2 selectedOutlineDistance = new Vector2(5f, -5f);
+    [SerializeField] private Color selectedBackgroundColor = new Color(1f, 0.82f, 0.28f, 0.28f);
 
     private readonly List<Item> visibleItems = new List<Item>(SlotCount);
     private readonly Outline[] slotOutlines = new Outline[SlotCount];
+    private readonly Graphic[] slotSelectionGraphics = new Graphic[SlotCount];
     private readonly Vector3[] slotBaseScales = new Vector3[SlotCount];
+    private readonly Color[] slotBaseColors = new Color[SlotCount];
     private readonly bool[] slotBaseScaleCaptured = new bool[SlotCount];
+    private readonly bool[] slotBaseColorCaptured = new bool[SlotCount];
     private bool visible;
     private bool warnedMissingPanel;
     private string selectedItemId;
@@ -585,7 +589,9 @@ public class CombatDefensePanelController : MonoBehaviour
         if (slotOutlines[index] != null && slotOutlines[index].gameObject != slotTransform.gameObject)
         {
             slotOutlines[index] = null;
+            slotSelectionGraphics[index] = null;
             slotBaseScaleCaptured[index] = false;
+            slotBaseColorCaptured[index] = false;
         }
 
         if (!slotBaseScaleCaptured[index])
@@ -609,6 +615,18 @@ public class CombatDefensePanelController : MonoBehaviour
         slotOutlines[index].effectDistance = selectedOutlineDistance;
         slotOutlines[index].useGraphicAlpha = false;
         slotOutlines[index].enabled = false;
+
+        if (slotSelectionGraphics[index] == null)
+        {
+            slotSelectionGraphics[index] = ResolveSlotSelectionGraphic(index, slotTransform);
+            slotBaseColorCaptured[index] = false;
+        }
+
+        if (slotSelectionGraphics[index] != null && !slotBaseColorCaptured[index])
+        {
+            slotBaseColors[index] = slotSelectionGraphics[index].color;
+            slotBaseColorCaptured[index] = true;
+        }
     }
 
     private void RefreshSelectionVisuals()
@@ -634,7 +652,38 @@ public class CombatDefensePanelController : MonoBehaviour
             {
                 slotOutlines[i].enabled = selected;
             }
+
+            if (slotSelectionGraphics[i] != null)
+            {
+                Color baseColor = slotBaseColorCaptured[i] ? slotBaseColors[i] : Color.clear;
+                slotSelectionGraphics[i].color = selected ? selectedBackgroundColor : baseColor;
+            }
         }
+    }
+
+    private Graphic ResolveSlotSelectionGraphic(int index, Transform slotTransform)
+    {
+        if (slotTransform == null)
+        {
+            return null;
+        }
+
+        Graphic graphic = slotTransform.GetComponent<Image>();
+        if (graphic != null)
+        {
+            return graphic;
+        }
+
+        if (slotButtons != null &&
+            index >= 0 &&
+            index < slotButtons.Length &&
+            slotButtons[index] != null &&
+            slotButtons[index].targetGraphic != null)
+        {
+            return slotButtons[index].targetGraphic;
+        }
+
+        return slotTransform.GetComponentInChildren<Image>(true);
     }
 
     private Transform ResolveSlotTransform(int index)

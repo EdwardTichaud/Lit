@@ -24,6 +24,9 @@ public sealed class ScreenWaveController : MonoBehaviour
         [Min(0.05f)] public float duration;
         [Min(0.01f)] public float falloff;
         [Min(0f)] public float fadeOutDuration;
+        [Range(0f, 2f)] public float highlightIntensity;
+        [Min(0.1f)] public float edgeContrast;
+        public Color highlightColor;
 
         public static ScreenWaveSettings Default => new ScreenWaveSettings
         {
@@ -35,11 +38,26 @@ public sealed class ScreenWaveController : MonoBehaviour
             amplitude = 0.15f,
             duration = 0.9f,
             falloff = 6f,
-            fadeOutDuration = 0.75f
+            fadeOutDuration = 0.75f,
+            highlightIntensity = 0.38f,
+            edgeContrast = 2.2f,
+            highlightColor = new Color(0.72f, 0.9f, 1f, 1f)
         };
 
         public ScreenWaveSettings Sanitized()
         {
+            bool legacyVisibilityDefaults =
+                highlightIntensity <= 0f &&
+                edgeContrast <= 0f &&
+                highlightColor.maxColorComponent <= 0f &&
+                highlightColor.a <= 0f;
+            if (legacyVisibilityDefaults)
+            {
+                highlightIntensity = Default.highlightIntensity;
+                edgeContrast = Default.edgeContrast;
+                highlightColor = Default.highlightColor;
+            }
+
             origin = new Vector2(Mathf.Clamp01(origin.x), Mathf.Clamp01(origin.y));
             if (direction.sqrMagnitude > 1f)
             {
@@ -52,6 +70,8 @@ public sealed class ScreenWaveController : MonoBehaviour
             duration = Mathf.Max(0.05f, duration);
             falloff = Mathf.Max(0.01f, falloff);
             fadeOutDuration = Mathf.Max(0f, fadeOutDuration);
+            highlightIntensity = Mathf.Clamp(highlightIntensity, 0f, 2f);
+            edgeContrast = Mathf.Max(0.1f, edgeContrast);
             return this;
         }
     }
@@ -66,6 +86,9 @@ public sealed class ScreenWaveController : MonoBehaviour
     private static readonly int AmplitudeId = Shader.PropertyToID("_Amplitude");
     private static readonly int FalloffId = Shader.PropertyToID("_Falloff");
     private static readonly int WaveFadeId = Shader.PropertyToID("_WaveFade");
+    private static readonly int HighlightColorId = Shader.PropertyToID("_HighlightColor");
+    private static readonly int HighlightIntensityId = Shader.PropertyToID("_HighlightIntensity");
+    private static readonly int EdgeContrastId = Shader.PropertyToID("_EdgeContrast");
 
     public static ScreenWaveController Instance { get; private set; }
 
@@ -538,6 +561,9 @@ public sealed class ScreenWaveController : MonoBehaviour
         screenWaveMaterial.SetFloat(AmplitudeId, sanitized.amplitude);
         screenWaveMaterial.SetFloat(FalloffId, sanitized.falloff);
         screenWaveMaterial.SetFloat(WaveFadeId, Mathf.Clamp01(fade));
+        screenWaveMaterial.SetColor(HighlightColorId, sanitized.highlightColor);
+        screenWaveMaterial.SetFloat(HighlightIntensityId, sanitized.highlightIntensity);
+        screenWaveMaterial.SetFloat(EdgeContrastId, sanitized.edgeContrast);
     }
 
     private void SetPassActive(bool active)

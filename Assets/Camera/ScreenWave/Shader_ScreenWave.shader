@@ -12,6 +12,9 @@ Shader "Hidden/Lit/ScreenWave"
         _Amplitude("Amplitude", Range(0, 0.25)) = 0.08
         _Falloff("Falloff", Range(0.01, 16)) = 6
         _WaveFade("Wave Fade", Range(0, 1)) = 0
+        _HighlightColor("Highlight Color", Color) = (0.72, 0.9, 1, 1)
+        _HighlightIntensity("Highlight Intensity", Range(0, 2)) = 0.38
+        _EdgeContrast("Edge Contrast", Range(0.1, 8)) = 2.2
     }
 
     HLSLINCLUDE
@@ -31,6 +34,9 @@ Shader "Hidden/Lit/ScreenWave"
     float _Amplitude;
     float _Falloff;
     float _WaveFade;
+    float4 _HighlightColor;
+    float _HighlightIntensity;
+    float _EdgeContrast;
 
     float4 FullScreenPass(Varyings varyings) : SV_Target
     {
@@ -67,6 +73,9 @@ Shader "Hidden/Lit/ScreenWave"
         float3 normalColor = CustomPassSampleCameraColor(uv, 0);
         float3 waveColor = CustomPassSampleCameraColor(distortedUv, 0);
         float3 color = lerp(normalColor, waveColor, visible);
+        float edge = pow(saturate(frontBand), max(_EdgeContrast, 0.1f));
+        float rippleLift = saturate(abs(ripple) * 0.7f + 0.3f);
+        color += _HighlightColor.rgb * edge * rippleLift * _HighlightIntensity * visible;
 
         return float4(color, 1.0f);
     }

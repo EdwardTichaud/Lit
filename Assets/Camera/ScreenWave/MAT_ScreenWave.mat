@@ -25,16 +25,19 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Amplitude: 0.03
+    - _Amplitude: 0.06
     - _Duration: 0.9
+    - _EdgeContrast: 2.4
     - _Elapsed: 0
-    - _Falloff: 2
-    - _Frequency: 4
+    - _Falloff: 2.6
+    - _Frequency: 7
+    - _HighlightIntensity: 0.55
     - _PropagationSpeed: 1.45
     - _Reverse: 0
     - _WaveFade: 0
     m_Colors:
     - _Direction: {r: 0, g: 0, b: 0, a: 0}
+    - _HighlightColor: {r: 0.72, g: 0.9, b: 1, a: 1}
     - _Origin: {r: 0.5, g: 0.5, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -2239,8 +2239,8 @@ GameObject:
   - component: {fileID: 9095812728330429394}
   - component: {fileID: 6800918242508772571}
   - component: {fileID: -2401253528140462390}
-  - component: {fileID: 6197907773269782780}
   - component: {fileID: 1317749357599445725}
+  - component: {fileID: 4886044154287277720}
   m_Layer: 31
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -2621,10 +2621,10 @@ MonoBehaviour:
     m_Default: 1
   m_UseRootMotionPosition: 0
   m_RootMotionSpeedMultiplier: 1
-  m_MotorAcceleration: {x: 3.2, y: 0, z: 3.2}
-  m_MotorDamping: 5.4
-  m_MotorBackwardsMultiplier: 0.7
-  m_PreviousAccelerationInfluence: 1
+  m_MotorAcceleration: {x: 4.6, y: 0, z: 4.6}
+  m_MotorDamping: 5.7
+  m_MotorBackwardsMultiplier: 0.6
+  m_PreviousAccelerationInfluence: 0.88
   m_AdjustMotorForceOnSlope: 1
   m_MotorSlopeForceUp: 1
   m_MotorSlopeForceDown: 1.25
@@ -2634,11 +2634,11 @@ MonoBehaviour:
   m_UpAlignmentRotationSpeed: 0.2
   m_Up: {x: 0, y: 1, z: 0}
   m_UseGravity: 1
-  m_GravityAmount: 0.2
+  m_GravityAmount: 0.65
   m_GravityDirection: {x: 0, y: -1, z: 0}
   m_SkinWidth: 0.08
   m_StickToGround: 1
-  m_StickToGroundDistance: 0.3
+  m_StickToGroundDistance: 0.72
   m_VerticalCastBuffer: 0
   m_ExternalForceDamping: 0.1
   m_WallGlideCurve:
@@ -2678,8 +2678,8 @@ MonoBehaviour:
   m_WallBounceModifier: 2
   m_GroundFrictionModifier: 10
   m_GroundBounceModifier: 1
-  m_SlopeLimit: 50
-  m_MaxStepHeight: 0.35
+  m_SlopeLimit: 60
+  m_MaxStepHeight: 0.5
   m_TimeScale: 1
   m_DetectHorizontalCollisions: 1
   m_DetectVerticalCollisions: 1
@@ -2694,9 +2694,9 @@ MonoBehaviour:
   m_MaxPenetrationChecks: 5
   m_MaxRotationCollisionChecks: 10
   m_StickToMovingPlatform: 1
-  m_MovingPlatformSeperationVelocity: 5
-  m_MovingPlatformDisconnectMovementMultiplier: 0.8
-  m_MovingPlatformForceDamping: 0.1
+  m_MovingPlatformSeperationVelocity: 7
+  m_MovingPlatformDisconnectMovementMultiplier: 0.65
+  m_MovingPlatformForceDamping: 0.18
   m_FirstPersonStateName: FirstPerson
   m_ThirdPersonStateName: ThirdPerson
   m_MovingStateName: Moving
@@ -2997,10 +2997,10 @@ MonoBehaviour:
         m_AbilityMessageText: 
         m_AbilityMessageIcon: {fileID: 0}
         m_InspectorDescription: 
-        m_SpeedChangeMultiplier: 2
-        m_MinSpeedChangeValue: -2
-        m_MaxSpeedChangeValue: 2
-        m_SpeedParameterValue: 2
+        m_SpeedChangeMultiplier: 1.65
+        m_MinSpeedChangeValue: -1.65
+        m_MaxSpeedChangeValue: 1.65
+        m_SpeedParameterValue: 2.6
         m_RequireMovement: 1
     - rid: 2938102941717364753
       type: {class: HeightChange, ns: Opsive.UltimateCharacterController.Character.Abilities, asm: Opsive.UltimateCharacterController}
@@ -3129,16 +3129,47 @@ MonoBehaviour:
   debugGroundBlockDiagnostics: 0
   groundBlockDiagnosticInterval: 0.75
   groundBlockDiagnosticMinProgress: 0.04
+  enableCinematicGroundedFeel: 1
+  tuneGroundedUccPhysics: 1
+  groundedMotorAcceleration: {x: 4.6, y: 0, z: 4.6}
+  groundedMotorDamping: 5.7
+  groundedPreviousAccelerationInfluence: 0.88
+  groundedBackwardsMultiplier: 0.6
+  groundedGravityAmount: 0.65
+  groundedStickToGroundDistance: 0.72
+  groundedSlopeLimit: 60
+  groundedMaxStepHeight: 0.5
+  groundedMovingPlatformSeparationVelocity: 7
+  groundedMovingPlatformDisconnectMultiplier: 0.65
+  groundedMovingPlatformForceDamping: 0.18
+  groundedInputAcceleration: 6.5
+  groundedSprintInputAcceleration: 4.8
+  groundedInputDeceleration: 9.5
+  groundedDirectionChangeAcceleration: 13
+  groundedDirectionChangeDot: 0.2
+  tuneGroundedSprintSpeedChange: 1
+  groundedSprintSpeedMultiplier: 1.65
+  groundedSprintSpeedParameterValue: 2.6
+  moveStartTriggerParam: MoveStartTrigger
+  moveStopTriggerParam: MoveStopTrigger
+  turnInPlaceParam: TurnInPlace
+  groundedAnimationSpeedToBlend: 0.48
+  groundedAnimatorSpeedRiseRate: 18
+  groundedAnimatorSpeedFallRate: 11
+  groundedAnimatorTurnRate: 9
+  groundedTurnInPlaceThreshold: 0.55
+  groundedTurnInPlaceMaxSpeed: 0.35
+  groundedStopTriggerMinSpeed: 0.35
   enableObstacleTraversal: 1
-  ignoredObstacleMaxHeight: 0.4
-  traversableObstacleMaxHeight: 1.6
+  ignoredObstacleMaxHeight: 0.22
+  traversableObstacleMaxHeight: 1.05
   obstacleProbeDistance: 0.75
   obstacleProbeRadius: 0.22
   obstacleProbeBaseHeight: 0.25
   obstacleTraversalMaxSurfaceUpDot: 0.35
   obstacleLandingDistance: 0.55
-  obstacleTraversalDuration: 0.42
-  obstacleTraversalArcHeight: 0.25
+  obstacleTraversalDuration: 0.46
+  obstacleTraversalArcHeight: 0.22
   obstacleTraversalMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -3161,9 +3192,9 @@ MonoBehaviour:
   useJumpForceFallback: 1
   jumpFallbackVelocity: 7
   relaxGroundReliefTolerance: 1
-  groundReliefMinStepHeight: 0.6
-  groundReliefMinSlopeLimit: 58
-  groundReliefMinStickToGroundDistance: 0.55
+  groundReliefMinStepHeight: 0.5
+  groundReliefMinSlopeLimit: 60
+  groundReliefMinStickToGroundDistance: 0.72
   enableUccFlight: 1
   flightTakeoffVerticalSpeed: 6.5
   flightTakeoffDuration: 0.45
@@ -3463,29 +3494,6 @@ MonoBehaviour:
   faceAnchor: {fileID: 8186569390409486965}
   cameraAnchor: {fileID: 8186569390409486965}
   animator: {fileID: 963045829911085934}
---- !u!114 &6197907773269782780
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 972a052c79c7b7b16aa3a101eb894acd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SurfaceFootstepPlayer
-  defaultSurface: {fileID: 0}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  raycastOrigin: {fileID: 0}
-  raycastHeight: 0.4
-  raycastDistance: 1.6
-  stepDistance: 0.65
-  minimumStepInterval: 0.18
-  minimumPlanarSpeed: 0.15
-  teleportResetDistance: 3
 --- !u!114 &1317749357599445725
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3555,6 +3563,33 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   keepActorHeight: 1
+--- !u!114 &4886044154287277720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1b0e5c2a7f94f4aa5d23224fe72b48c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LocomotionAnimationEvent
+  defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raycastOrigin: {fileID: 0}
+  raycastHeight: 0.4
+  raycastDistance: 1.6
+  animator: {fileID: 963045829911085934}
+  leftFoot: {fileID: 5826101239439711920}
+  rightFoot: {fileID: 3004153059774259606}
+  autoResolveHumanoidFeet: 1
+  footRaycastHeight: 0.35
+  footRaycastDistance: 0.8
+  minimumFootstepInterval: 0.05
+  minimumAnimationEventWeight: 0.5
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

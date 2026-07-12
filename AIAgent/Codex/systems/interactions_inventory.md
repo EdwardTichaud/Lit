@@ -9,7 +9,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 
 - `CharacterInteractionDetection` : résolution, collider, portée et visibilité.
 - `SquadCharacterController.Interactions` : collecte et sélection locale.
-- `RuntimeOutlineSelectionManager` / `RuntimeOutlineTarget` : Outline unique.
+- `RuntimeOutlineSelectionManager` / `RuntimeOutlineTarget` : Outline unique,
+  avec suspension temporaire possible par un systeme comme `BattleTransition`.
 - `ICharacterDetectedInteractable` / `ILocalInteractHandler` : contrats.
 - `InteractableItem` : conteneurs, objets récupérables, serrures et pièges.
 - `InventoryPanelController` : UI, dépôt, lecture et placement.
@@ -25,6 +26,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 3. La cible retenue est toujours la cible valide la plus proche; l’ancien
    `SwitchTarget` ne force plus une cible manuelle.
 4. La cible reçoit le personnage détecté et devient l’Outline actif.
+   Si une suspension globale est active, la cible reste suivie mais son outline
+   est masque jusqu'a la restauration.
 5. `Interact` appelle d’abord le handler actif, puis ouvre l’UI ou demande une
    mutation au serveur.
 6. En combat, l'inventaire ne s'ouvre pas au-dessus du HUD. Pendant la réaction
@@ -35,6 +38,8 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 ## Pièges observés
 
 - Un seul propriétaire doit contrôler l’Outline global.
+- Les suspensions d'Outline doivent toujours etre relachees par leur owner
+  (`PopSuspension`) pour eviter un outline durablement invisible.
 - Les UI d’inventaire utilisent `InputFocusStack` et des verrous de squad.
 - Les interactions peuvent être masquées par `TimePeriodVisibility` ou exiger
   une influence lumineuse.
@@ -47,6 +52,10 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 
 ## Notes recentes
 
+- Pendant le gel d'entree combat, `BattleTransition` suspend
+  `RuntimeOutlineSelectionManager` pour masquer les outlines monde encore actifs
+  (par exemple un brasero vise juste avant le combat), puis restaure l'etat a la
+  fin de la transition.
 - Hors combat, l'ActionBox d'inventaire permet d'ajouter/retirer un item
   defensif des 3 items combat actives. Ces ids sont synchronises par
   `NetworkInventory` et sauvegardes dans `CharacterSaveData`.
