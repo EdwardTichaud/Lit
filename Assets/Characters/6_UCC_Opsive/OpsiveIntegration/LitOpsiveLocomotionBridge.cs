@@ -37,6 +37,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool useRootMotionLocomotion = false;
     [SerializeField, Min(0f)] private float rootMotionSpeedMultiplier = 1f;
     [SerializeField, Min(0f)] private float rootMotionRotationMultiplier = 1f;
+    [SerializeField, Tooltip("Applies additional root-motion tuning based on the active grounded animation phase.")]
+    private bool useRootMotionPhaseMultipliers = true;
+    [SerializeField, Min(0f)] private float rootMotionLoopSpeedScale = 1f;
+    [SerializeField, Min(0f)] private float rootMotionLoopRotationScale = 1f;
+    [SerializeField, Min(0f)] private float rootMotionStartSpeedScale = 0.96f;
+    [SerializeField, Min(0f)] private float rootMotionStartRotationScale = 1f;
+    [SerializeField, Min(0f)] private float rootMotionStopSpeedScale = 0.82f;
+    [SerializeField, Min(0f)] private float rootMotionStopRotationScale = 0.94f;
+    [SerializeField, Min(0f)] private float rootMotionPivotSpeedScale = 0.88f;
+    [SerializeField, Min(0f)] private float rootMotionPivotRotationScale = 1.12f;
     [SerializeField, Tooltip("Keeps Animator.applyRootMotion enabled while UCC reads deltaPosition/deltaRotation through AnimatorMonitor.")]
     private bool preserveAnimatorRootMotion = true;
     [SerializeField, Tooltip("Restores the previous UCC root motion settings when the bridge is disabled.")]
@@ -66,6 +76,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private float groundReliefMinSlopeLimit = 58f;
     [SerializeField, Min(0f), Tooltip("Minimum UCC stick-to-ground distance used while this bridge drives locomotion.")]
     private float groundReliefMinStickToGroundDistance = 0.55f;
+    [SerializeField, Tooltip("Blends stronger relief tolerance while root-motion locomotion is moving across uneven surfaces.")]
+    private bool adaptRootMotionGroundRelief = true;
+    [SerializeField, Min(0f)] private float rootMotionMovingStepHeight = 0.58f;
+    [SerializeField, Range(0f, 89f)] private float rootMotionMovingSlopeLimit = 62f;
+    [SerializeField, Min(0f)] private float rootMotionMovingStickToGroundDistance = 0.86f;
+    [SerializeField, Min(0f)] private float rootMotionIdleStickToGroundDistance = 0.64f;
+    [SerializeField, Min(0f)] private float rootMotionGroundReliefAdaptationSpeed = 7.5f;
 
     [Header("Flight")]
     [SerializeField, Tooltip("Restores the pre-UCC LocomotionMode flight toggle through a lightweight UCC ability.")]
@@ -121,6 +138,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private float previousRootMotionRotationMultiplier;
     private bool previousAnimatorApplyRootMotion;
     private bool groundReliefToleranceApplied;
+    private bool previousUccStickToGround;
     private float previousUccMaxStepHeight;
     private float previousUccSlopeLimit;
     private float previousUccStickToGroundDistance;
@@ -151,6 +169,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private int externalLockCount;
     private bool externalLockInputDisabled;
 
+    private enum RootMotionPhase
+    {
+        Locomotion,
+        Start,
+        Stop,
+        Pivot,
+        Other
+    }
+
     public bool IsDriving => isActiveAndEnabled && driveFromSquadFacade && locomotion != null && locomotionHandler != null;
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0;
     public bool IsExternalLockActive => externalLockCount > 0;
@@ -174,6 +201,23 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     {
         rootMotionSpeedMultiplier = Mathf.Max(0f, rootMotionSpeedMultiplier);
         rootMotionRotationMultiplier = Mathf.Max(0f, rootMotionRotationMultiplier);
+        rootMotionLoopSpeedScale = Mathf.Max(0f, rootMotionLoopSpeedScale);
+        rootMotionLoopRotationScale = Mathf.Max(0f, rootMotionLoopRotationScale);
+        rootMotionStartSpeedScale = Mathf.Max(0f, rootMotionStartSpeedScale);
+        rootMotionStartRotationScale = Mathf.Max(0f, rootMotionStartRotationScale);
+        rootMotionStopSpeedScale = Mathf.Max(0f, rootMotionStopSpeedScale);
+        rootMotionStopRotationScale = Mathf.Max(0f, rootMotionStopRotationScale);
+        rootMotionPivotSpeedScale = Mathf.Max(0f, rootMotionPivotSpeedScale);
+        rootMotionPivotRotationScale = Mathf.Max(0f, rootMotionPivotRotationScale);
+        groundReliefMinStepHeight = Mathf.Max(0f, groundReliefMinStepHeight);
+        groundReliefMinSlopeLimit = Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f);
+        groundReliefMinStickToGroundDistance = Mathf.Max(0f, groundReliefMinStickToGroundDistance);
+        rootMotionMovingStepHeight = Mathf.Max(0f, rootMotionMovingStepHeight);
+        rootMotionMovingSlopeLimit = Mathf.Clamp(rootMotionMovingSlopeLimit, 0f, 89f);
+        rootMotionMovingStickToGroundDistance = Mathf.Max(0f, rootMotionMovingStickToGroundDistance);
+        rootMotionIdleStickToGroundDistance = Mathf.Max(0f, rootMotionIdleStickToGroundDistance);
+        rootMotionGroundReliefAdaptationSpeed = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        ValidateJumpLandingSettings();
     }
 
     public void SetMoveInput(Vector2 input, bool isWorldSpace)
@@ -503,6 +547,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         lastPosition = transform.position;
         hasLastPosition = true;
         ResetGroundedFeelState();
+        ResetJumpLandingState();
     }
 
     private void OnEnable()
@@ -515,6 +560,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         ConfigureGroundReliefTolerance();
         ConfigureGroundedFeelProfile();
         ResetGroundedFeelState();
+        ResetJumpLandingState();
         RegisterExternalDriver();
         AttachLookSourceIfNeeded(true);
         ApplyWorldMoveInput(currentWorldMoveInput);
@@ -546,6 +592,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         RestoreGroundedFeelProfile();
         RestoreRootMotionLocomotion();
         ResetGroundedFeelState();
+        ResetJumpLandingState();
         RestoreGroundReliefTolerance();
         RestoreRigidbody();
     }
@@ -553,6 +600,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private void Update()
     {
         RefreshRootMotionLocomotionSettings();
+        RefreshGroundReliefTolerance(immediate: false);
 
         if (!IsDriving && !IsInputSuppressedByUcc)
         {
@@ -581,6 +629,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         AttachLookSourceIfNeeded(false);
         RetryPendingJump();
         UpdateFlightMode();
+        UpdateJumpLandingAnimatorParameters();
         UpdateAnimatorParameters();
         RefreshSquadFacadeSystems();
     }
@@ -851,6 +900,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             targetMagnitude = 0f;
         }
 
+        targetWorldMoveInput = ResolveJumpLandingWorldMoveInput(targetWorldMoveInput);
+        targetMagnitude = targetWorldMoveInput.magnitude;
+
         currentWorldMoveInput = ResolveGroundedFeelWorldMoveInput(targetWorldMoveInput, targetMagnitude);
         float magnitude = currentWorldMoveInput.magnitude;
         if (magnitude <= movementDeadZone)
@@ -947,6 +999,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             ClearPendingJump();
             warnedJumpRejected = false;
+            NotifyJumpStarted();
             return true;
         }
 
@@ -1031,6 +1084,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         locomotion.AddForce(transform.up * jumpFallbackVelocity, 1, false);
         warnedJumpRejected = false;
         ClearPendingJump();
+        NotifyJumpStarted();
         return true;
     }
 
@@ -1377,15 +1431,137 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
+        RootMotionPhase phase = ResolveCurrentRootMotionPhase();
         locomotion.UseRootMotionPosition = true;
-        locomotion.RootMotionSpeedMultiplier = Mathf.Max(0f, rootMotionSpeedMultiplier);
+        locomotion.RootMotionSpeedMultiplier = ResolveEffectiveRootMotionSpeedMultiplier(phase);
         locomotion.UseRootMotionRotation = true;
-        locomotion.RootMotionRotationMultiplier = Mathf.Max(0f, rootMotionRotationMultiplier);
+        locomotion.RootMotionRotationMultiplier = ResolveEffectiveRootMotionRotationMultiplier(phase);
 
         if (animator != null && preserveAnimatorRootMotion)
         {
             animator.applyRootMotion = true;
         }
+    }
+
+    private float ResolveEffectiveRootMotionSpeedMultiplier(RootMotionPhase phase)
+    {
+        return Mathf.Max(0f, rootMotionSpeedMultiplier) * ResolveRootMotionPhaseSpeedScale(phase);
+    }
+
+    private float ResolveEffectiveRootMotionRotationMultiplier(RootMotionPhase phase)
+    {
+        return Mathf.Max(0f, rootMotionRotationMultiplier) * ResolveRootMotionPhaseRotationScale(phase);
+    }
+
+    private float ResolveRootMotionPhaseSpeedScale(RootMotionPhase phase)
+    {
+        if (!useRootMotionPhaseMultipliers)
+        {
+            return 1f;
+        }
+
+        switch (phase)
+        {
+            case RootMotionPhase.Start:
+                return Mathf.Max(0f, rootMotionStartSpeedScale);
+            case RootMotionPhase.Stop:
+                return Mathf.Max(0f, rootMotionStopSpeedScale);
+            case RootMotionPhase.Pivot:
+                return Mathf.Max(0f, rootMotionPivotSpeedScale);
+            case RootMotionPhase.Locomotion:
+                return Mathf.Max(0f, rootMotionLoopSpeedScale);
+            default:
+                return 1f;
+        }
+    }
+
+    private float ResolveRootMotionPhaseRotationScale(RootMotionPhase phase)
+    {
+        if (!useRootMotionPhaseMultipliers)
+        {
+            return 1f;
+        }
+
+        switch (phase)
+        {
+            case RootMotionPhase.Start:
+                return Mathf.Max(0f, rootMotionStartRotationScale);
+            case RootMotionPhase.Stop:
+                return Mathf.Max(0f, rootMotionStopRotationScale);
+            case RootMotionPhase.Pivot:
+                return Mathf.Max(0f, rootMotionPivotRotationScale);
+            case RootMotionPhase.Locomotion:
+                return Mathf.Max(0f, rootMotionLoopRotationScale);
+            default:
+                return 1f;
+        }
+    }
+
+    private RootMotionPhase ResolveCurrentRootMotionPhase()
+    {
+        if (!useRootMotionPhaseMultipliers || animator == null)
+        {
+            return RootMotionPhase.Other;
+        }
+
+        const int baseLayer = 0;
+        if (animator.IsInTransition(baseLayer))
+        {
+            RootMotionPhase nextPhase = ResolveRootMotionPhase(animator.GetNextAnimatorStateInfo(baseLayer));
+            if (nextPhase == RootMotionPhase.Start ||
+                nextPhase == RootMotionPhase.Stop ||
+                nextPhase == RootMotionPhase.Pivot)
+            {
+                return nextPhase;
+            }
+
+            RootMotionPhase currentPhase = ResolveRootMotionPhase(animator.GetCurrentAnimatorStateInfo(baseLayer));
+            if (currentPhase == RootMotionPhase.Start ||
+                currentPhase == RootMotionPhase.Stop ||
+                currentPhase == RootMotionPhase.Pivot)
+            {
+                return currentPhase;
+            }
+
+            if (nextPhase != RootMotionPhase.Other)
+            {
+                return nextPhase;
+            }
+        }
+
+        return ResolveRootMotionPhase(animator.GetCurrentAnimatorStateInfo(baseLayer));
+    }
+
+    private RootMotionPhase ResolveRootMotionPhase(AnimatorStateInfo stateInfo)
+    {
+        if (stateInfo.IsName("Walk_Start") ||
+            stateInfo.IsName("Jogtrot_Start") ||
+            stateInfo.IsName("Run_Start"))
+        {
+            return RootMotionPhase.Start;
+        }
+
+        if (stateInfo.IsName("Walk_Stop") ||
+            stateInfo.IsName("Jogtrot_Stop") ||
+            stateInfo.IsName("Run_Stop"))
+        {
+            return RootMotionPhase.Stop;
+        }
+
+        if (stateInfo.IsName("Turn_L90") ||
+            stateInfo.IsName("Turn_R90") ||
+            stateInfo.IsName("Turn_L180") ||
+            stateInfo.IsName("Turn_R180"))
+        {
+            return RootMotionPhase.Pivot;
+        }
+
+        if (stateInfo.IsName("Locomotion"))
+        {
+            return RootMotionPhase.Locomotion;
+        }
+
+        return RootMotionPhase.Other;
     }
 
     private void RestoreRootMotionLocomotion()
@@ -1423,17 +1599,89 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
+        previousUccStickToGround = locomotion.StickToGround;
         previousUccMaxStepHeight = locomotion.MaxStepHeight;
         previousUccSlopeLimit = locomotion.SlopeLimit;
         previousUccStickToGroundDistance = locomotion.StickToGroundDistance;
 
-        locomotion.MaxStepHeight = Mathf.Max(locomotion.MaxStepHeight, Mathf.Max(0f, groundReliefMinStepHeight));
-        locomotion.SlopeLimit = Mathf.Max(locomotion.SlopeLimit, Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f));
-        locomotion.StickToGroundDistance = Mathf.Max(
+        groundReliefToleranceApplied = true;
+        RefreshGroundReliefTolerance(immediate: true);
+    }
+
+    private void RefreshGroundReliefTolerance(bool immediate)
+    {
+        if (!groundReliefToleranceApplied || !relaxGroundReliefTolerance || locomotion == null)
+        {
+            return;
+        }
+
+        GroundReliefTargets targets = ResolveGroundReliefTargets();
+        float deltaTime = ResolveGroundReliefDeltaTime();
+        float rate = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        float step = immediate || rate <= 0f ? float.PositiveInfinity : rate * deltaTime;
+
+        locomotion.StickToGround = true;
+        locomotion.MaxStepHeight = MoveReliefValue(locomotion.MaxStepHeight, targets.stepHeight, step);
+        locomotion.SlopeLimit = MoveReliefValue(locomotion.SlopeLimit, targets.slopeLimit, step);
+        locomotion.StickToGroundDistance = MoveReliefValue(
             locomotion.StickToGroundDistance,
+            targets.stickToGroundDistance,
+            step);
+    }
+
+    private GroundReliefTargets ResolveGroundReliefTargets()
+    {
+        float baseStepHeight = Mathf.Max(previousUccMaxStepHeight, Mathf.Max(0f, groundReliefMinStepHeight));
+        float baseSlopeLimit = Mathf.Max(previousUccSlopeLimit, Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f));
+        float baseStickDistance = Mathf.Max(
+            previousUccStickToGroundDistance,
             Mathf.Max(0f, groundReliefMinStickToGroundDistance));
 
-        groundReliefToleranceApplied = true;
+        if (!adaptRootMotionGroundRelief || !IsRootMotionLocomotionEnabled())
+        {
+            return new GroundReliefTargets(baseStepHeight, baseSlopeLimit, baseStickDistance);
+        }
+
+        float reliefBlend = ResolveRootMotionGroundReliefBlend();
+        float movingStepHeight = Mathf.Max(baseStepHeight, Mathf.Max(0f, rootMotionMovingStepHeight));
+        float movingSlopeLimit = Mathf.Max(baseSlopeLimit, Mathf.Clamp(rootMotionMovingSlopeLimit, 0f, 89f));
+        float idleStickDistance = Mathf.Max(baseStickDistance, Mathf.Max(0f, rootMotionIdleStickToGroundDistance));
+        float movingStickDistance = Mathf.Max(idleStickDistance, Mathf.Max(0f, rootMotionMovingStickToGroundDistance));
+
+        return new GroundReliefTargets(
+            Mathf.Lerp(baseStepHeight, movingStepHeight, reliefBlend),
+            Mathf.Lerp(baseSlopeLimit, movingSlopeLimit, reliefBlend),
+            Mathf.Lerp(idleStickDistance, movingStickDistance, reliefBlend));
+    }
+
+    private float ResolveRootMotionGroundReliefBlend()
+    {
+        float inputMagnitude = Mathf.Clamp01(currentWorldMoveInput.magnitude);
+        float speedMagnitude = 0f;
+        if (locomotion != null)
+        {
+            Vector3 planarVelocity = locomotion.Velocity;
+            planarVelocity.y = 0f;
+            speedMagnitude = Mathf.Clamp01(planarVelocity.magnitude / Mathf.Max(0.01f, runPresentationSpeed));
+        }
+
+        return Mathf.Clamp01(Mathf.Max(inputMagnitude, speedMagnitude));
+    }
+
+    private float MoveReliefValue(float current, float target, float maxDelta)
+    {
+        if (float.IsPositiveInfinity(maxDelta))
+        {
+            return target;
+        }
+
+        return Mathf.MoveTowards(current, target, maxDelta);
+    }
+
+    private float ResolveGroundReliefDeltaTime()
+    {
+        float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
+        return Mathf.Max(deltaTime, 0.0001f);
     }
 
     private void RestoreGroundReliefTolerance()
@@ -1444,10 +1692,25 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
+        locomotion.StickToGround = previousUccStickToGround;
         locomotion.MaxStepHeight = previousUccMaxStepHeight;
         locomotion.SlopeLimit = previousUccSlopeLimit;
         locomotion.StickToGroundDistance = previousUccStickToGroundDistance;
         groundReliefToleranceApplied = false;
+    }
+
+    private struct GroundReliefTargets
+    {
+        public readonly float stepHeight;
+        public readonly float slopeLimit;
+        public readonly float stickToGroundDistance;
+
+        public GroundReliefTargets(float stepHeight, float slopeLimit, float stickToGroundDistance)
+        {
+            this.stepHeight = stepHeight;
+            this.slopeLimit = slopeLimit;
+            this.stickToGroundDistance = stickToGroundDistance;
+        }
     }
 
     private void RestoreRigidbody()

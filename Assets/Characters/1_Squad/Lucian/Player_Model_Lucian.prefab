@@ -3170,6 +3170,30 @@ MonoBehaviour:
   groundedPivotMaxSmoothedInput: 0.24
   groundedPivotHoldTime: 0.32
   groundedPivotCooldown: 0.28
+  driveJumpLandingAnimatorParameters: 1
+  jumpTriggerParam: JumpTrigger
+  isAirborneParam: IsAirborne
+  landingTypeParam: LandingType
+  jumpFromMovementParam: JumpFromMovement
+  rollTriggerParam: RollTrigger
+  jumpPhaseParam: JumpPhase
+  normalLandingStateName: Jump_Land
+  hardLandingStateName: Landing_Hard
+  rollLandingStateName: Jump_Roll
+  takeoffPhaseMaxGroundedTime: 0.24
+  airbornePhaseMinTime: 0.08
+  normalLandingMinFallSpeed: 1.35
+  hardLandingMinFallSpeed: 5.75
+  rollLandingMinFallSpeed: 8.25
+  rollLandingMinPlanarSpeed: 2.2
+  normalLandingRecoveryTime: 0.18
+  hardLandingRecoveryTime: 0.34
+  rollLandingRecoveryTime: 0.28
+  normalLandingInputScale: 0.42
+  hardLandingInputScale: 0.1
+  rollLandingInputScale: 0.32
+  crossFadeLandingStates: 1
+  landingCrossFadeDuration: 0.055
   enableObstacleTraversal: 1
   ignoredObstacleMaxHeight: 0.22
   traversableObstacleMaxHeight: 1.05
@@ -3198,6 +3222,15 @@ MonoBehaviour:
   useRootMotionLocomotion: 1
   rootMotionSpeedMultiplier: 1.04
   rootMotionRotationMultiplier: 1.08
+  useRootMotionPhaseMultipliers: 1
+  rootMotionLoopSpeedScale: 1
+  rootMotionLoopRotationScale: 1
+  rootMotionStartSpeedScale: 0.96
+  rootMotionStartRotationScale: 1
+  rootMotionStopSpeedScale: 0.82
+  rootMotionStopRotationScale: 0.94
+  rootMotionPivotSpeedScale: 0.88
+  rootMotionPivotRotationScale: 1.12
   preserveAnimatorRootMotion: 1
   restoreRootMotionSettingsOnDisable: 1
   refreshRootMotionSettingsEveryFrame: 1
@@ -3212,6 +3245,12 @@ MonoBehaviour:
   groundReliefMinStepHeight: 0.5
   groundReliefMinSlopeLimit: 60
   groundReliefMinStickToGroundDistance: 0.72
+  adaptRootMotionGroundRelief: 1
+  rootMotionMovingStepHeight: 0.58
+  rootMotionMovingSlopeLimit: 62
+  rootMotionMovingStickToGroundDistance: 0.86
+  rootMotionIdleStickToGroundDistance: 0.64
+  rootMotionGroundReliefAdaptationSpeed: 7.5
   enableUccFlight: 1
   flightTakeoffVerticalSpeed: 6.5
   flightTakeoffDuration: 0.45

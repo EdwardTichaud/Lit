@@ -21,6 +21,22 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianRootMotionAnimatorSpeed = 1f;
     private const float LucianRootMotionSpeedMultiplier = 1.04f;
     private const float LucianRootMotionRotationMultiplier = 1.08f;
+    private const float LucianRootMotionLoopSpeedScale = 1f;
+    private const float LucianRootMotionLoopRotationScale = 1f;
+    private const float LucianRootMotionStartSpeedScale = 0.96f;
+    private const float LucianRootMotionStartRotationScale = 1f;
+    private const float LucianRootMotionStopSpeedScale = 0.82f;
+    private const float LucianRootMotionStopRotationScale = 0.94f;
+    private const float LucianRootMotionPivotSpeedScale = 0.88f;
+    private const float LucianRootMotionPivotRotationScale = 1.12f;
+    private const float LucianGroundReliefMinStepHeight = 0.5f;
+    private const float LucianGroundReliefMinSlopeLimit = 60f;
+    private const float LucianGroundReliefMinStickToGroundDistance = 0.72f;
+    private const float LucianRootMotionMovingStepHeight = 0.58f;
+    private const float LucianRootMotionMovingSlopeLimit = 62f;
+    private const float LucianRootMotionMovingStickToGroundDistance = 0.86f;
+    private const float LucianRootMotionIdleStickToGroundDistance = 0.64f;
+    private const float LucianRootMotionGroundReliefAdaptationSpeed = 7.5f;
     private const float LucianGroundedRootMotionSpeedToBlend = 0.22f;
     private const float LucianGroundedMoveTransitionDirectionHoldTime = 0.28f;
     private const float LucianGroundedMoveTransitionParameterSpeed = 1.35f;
@@ -30,6 +46,19 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianGroundedPivotMaxSmoothedInput = 0.24f;
     private const float LucianGroundedPivotHoldTime = 0.32f;
     private const float LucianGroundedPivotCooldown = 0.28f;
+    private const float LucianTakeoffPhaseMaxGroundedTime = 0.24f;
+    private const float LucianAirbornePhaseMinTime = 0.08f;
+    private const float LucianNormalLandingMinFallSpeed = 1.35f;
+    private const float LucianHardLandingMinFallSpeed = 5.75f;
+    private const float LucianRollLandingMinFallSpeed = 8.25f;
+    private const float LucianRollLandingMinPlanarSpeed = 2.2f;
+    private const float LucianNormalLandingRecoveryTime = 0.18f;
+    private const float LucianHardLandingRecoveryTime = 0.34f;
+    private const float LucianRollLandingRecoveryTime = 0.28f;
+    private const float LucianNormalLandingInputScale = 0.42f;
+    private const float LucianHardLandingInputScale = 0.1f;
+    private const float LucianRollLandingInputScale = 0.32f;
+    private const float LucianLandingCrossFadeDuration = 0.055f;
     private const float LucianCharacterIkHipsPositionAdjustmentSpeed = 7f;
     private const float LucianCharacterIkFootOffsetAdjustment = 0.012f;
     private const float LucianCharacterIkFootWeightActiveAdjustmentSpeed = 14f;
@@ -410,6 +439,61 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "rootMotionRotationMultiplier",
             useRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f);
+        SetSerializedBool(serializedObject, "useRootMotionPhaseMultipliers", useRootMotionLocomotion);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionLoopSpeedScale",
+            useRootMotionLocomotion ? LucianRootMotionLoopSpeedScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionLoopRotationScale",
+            useRootMotionLocomotion ? LucianRootMotionLoopRotationScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionStartSpeedScale",
+            useRootMotionLocomotion ? LucianRootMotionStartSpeedScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionStartRotationScale",
+            useRootMotionLocomotion ? LucianRootMotionStartRotationScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionStopSpeedScale",
+            useRootMotionLocomotion ? LucianRootMotionStopSpeedScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionStopRotationScale",
+            useRootMotionLocomotion ? LucianRootMotionStopRotationScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionPivotSpeedScale",
+            useRootMotionLocomotion ? LucianRootMotionPivotSpeedScale : 1f);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionPivotRotationScale",
+            useRootMotionLocomotion ? LucianRootMotionPivotRotationScale : 1f);
+        SetSerializedBool(serializedObject, "relaxGroundReliefTolerance", true);
+        SetSerializedFloat(serializedObject, "groundReliefMinStepHeight", LucianGroundReliefMinStepHeight);
+        SetSerializedFloat(serializedObject, "groundReliefMinSlopeLimit", LucianGroundReliefMinSlopeLimit);
+        SetSerializedFloat(
+            serializedObject,
+            "groundReliefMinStickToGroundDistance",
+            LucianGroundReliefMinStickToGroundDistance);
+        SetSerializedBool(serializedObject, "adaptRootMotionGroundRelief", useRootMotionLocomotion);
+        SetSerializedFloat(serializedObject, "rootMotionMovingStepHeight", LucianRootMotionMovingStepHeight);
+        SetSerializedFloat(serializedObject, "rootMotionMovingSlopeLimit", LucianRootMotionMovingSlopeLimit);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionMovingStickToGroundDistance",
+            LucianRootMotionMovingStickToGroundDistance);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionIdleStickToGroundDistance",
+            LucianRootMotionIdleStickToGroundDistance);
+        SetSerializedFloat(
+            serializedObject,
+            "rootMotionGroundReliefAdaptationSpeed",
+            LucianRootMotionGroundReliefAdaptationSpeed);
         SetSerializedBool(serializedObject, "preserveAnimatorRootMotion", true);
         SetSerializedBool(serializedObject, "restoreRootMotionSettingsOnDisable", true);
         SetSerializedBool(serializedObject, "refreshRootMotionSettingsEveryFrame", true);
@@ -432,6 +516,30 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput);
         SetSerializedFloat(serializedObject, "groundedPivotHoldTime", LucianGroundedPivotHoldTime);
         SetSerializedFloat(serializedObject, "groundedPivotCooldown", LucianGroundedPivotCooldown);
+        SetSerializedBool(serializedObject, "driveJumpLandingAnimatorParameters", useRootMotionLocomotion);
+        SetSerializedString(serializedObject, "jumpTriggerParam", "JumpTrigger");
+        SetSerializedString(serializedObject, "isAirborneParam", "IsAirborne");
+        SetSerializedString(serializedObject, "landingTypeParam", "LandingType");
+        SetSerializedString(serializedObject, "jumpFromMovementParam", "JumpFromMovement");
+        SetSerializedString(serializedObject, "rollTriggerParam", "RollTrigger");
+        SetSerializedString(serializedObject, "jumpPhaseParam", "JumpPhase");
+        SetSerializedString(serializedObject, "normalLandingStateName", "Jump_Land");
+        SetSerializedString(serializedObject, "hardLandingStateName", "Landing_Hard");
+        SetSerializedString(serializedObject, "rollLandingStateName", "Jump_Roll");
+        SetSerializedFloat(serializedObject, "takeoffPhaseMaxGroundedTime", LucianTakeoffPhaseMaxGroundedTime);
+        SetSerializedFloat(serializedObject, "airbornePhaseMinTime", LucianAirbornePhaseMinTime);
+        SetSerializedFloat(serializedObject, "normalLandingMinFallSpeed", LucianNormalLandingMinFallSpeed);
+        SetSerializedFloat(serializedObject, "hardLandingMinFallSpeed", LucianHardLandingMinFallSpeed);
+        SetSerializedFloat(serializedObject, "rollLandingMinFallSpeed", LucianRollLandingMinFallSpeed);
+        SetSerializedFloat(serializedObject, "rollLandingMinPlanarSpeed", LucianRollLandingMinPlanarSpeed);
+        SetSerializedFloat(serializedObject, "normalLandingRecoveryTime", LucianNormalLandingRecoveryTime);
+        SetSerializedFloat(serializedObject, "hardLandingRecoveryTime", LucianHardLandingRecoveryTime);
+        SetSerializedFloat(serializedObject, "rollLandingRecoveryTime", LucianRollLandingRecoveryTime);
+        SetSerializedFloat(serializedObject, "normalLandingInputScale", LucianNormalLandingInputScale);
+        SetSerializedFloat(serializedObject, "hardLandingInputScale", LucianHardLandingInputScale);
+        SetSerializedFloat(serializedObject, "rollLandingInputScale", LucianRollLandingInputScale);
+        SetSerializedBool(serializedObject, "crossFadeLandingStates", useRootMotionLocomotion);
+        SetSerializedFloat(serializedObject, "landingCrossFadeDuration", LucianLandingCrossFadeDuration);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -1108,6 +1216,78 @@ public static class LitOpsiveUccMigrationUtility
                 "rootMotionRotationMultiplier",
                 expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f,
                 errors);
+            ValidateBridgeBoolean(bridge, label, "useRootMotionPhaseMultipliers", expectedRootMotionLocomotion, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionLoopSpeedScale",
+                expectedRootMotionLocomotion ? LucianRootMotionLoopSpeedScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionLoopRotationScale",
+                expectedRootMotionLocomotion ? LucianRootMotionLoopRotationScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionStartSpeedScale",
+                expectedRootMotionLocomotion ? LucianRootMotionStartSpeedScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionStartRotationScale",
+                expectedRootMotionLocomotion ? LucianRootMotionStartRotationScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionStopSpeedScale",
+                expectedRootMotionLocomotion ? LucianRootMotionStopSpeedScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionStopRotationScale",
+                expectedRootMotionLocomotion ? LucianRootMotionStopRotationScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionPivotSpeedScale",
+                expectedRootMotionLocomotion ? LucianRootMotionPivotSpeedScale : 1f,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionPivotRotationScale",
+                expectedRootMotionLocomotion ? LucianRootMotionPivotRotationScale : 1f,
+                errors);
+            ValidateBridgeBoolean(bridge, label, "relaxGroundReliefTolerance", true, errors);
+            ValidateSerializedFloat(bridge, "groundReliefMinStepHeight", LucianGroundReliefMinStepHeight, errors);
+            ValidateSerializedFloat(bridge, "groundReliefMinSlopeLimit", LucianGroundReliefMinSlopeLimit, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundReliefMinStickToGroundDistance",
+                LucianGroundReliefMinStickToGroundDistance,
+                errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "adaptRootMotionGroundRelief",
+                expectedRootMotionLocomotion,
+                errors);
+            ValidateSerializedFloat(bridge, "rootMotionMovingStepHeight", LucianRootMotionMovingStepHeight, errors);
+            ValidateSerializedFloat(bridge, "rootMotionMovingSlopeLimit", LucianRootMotionMovingSlopeLimit, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionMovingStickToGroundDistance",
+                LucianRootMotionMovingStickToGroundDistance,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionIdleStickToGroundDistance",
+                LucianRootMotionIdleStickToGroundDistance,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "rootMotionGroundReliefAdaptationSpeed",
+                LucianRootMotionGroundReliefAdaptationSpeed,
+                errors);
             ValidateSerializedFloat(
                 bridge,
                 "groundedMoveTransitionDirectionHoldTime",
@@ -1124,6 +1304,35 @@ public static class LitOpsiveUccMigrationUtility
             ValidateSerializedFloat(bridge, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput, errors);
             ValidateSerializedFloat(bridge, "groundedPivotHoldTime", LucianGroundedPivotHoldTime, errors);
             ValidateSerializedFloat(bridge, "groundedPivotCooldown", LucianGroundedPivotCooldown, errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "driveJumpLandingAnimatorParameters",
+                expectedRootMotionLocomotion,
+                errors);
+            ValidateBridgeString(bridge, label, "jumpTriggerParam", "JumpTrigger", errors);
+            ValidateBridgeString(bridge, label, "isAirborneParam", "IsAirborne", errors);
+            ValidateBridgeString(bridge, label, "landingTypeParam", "LandingType", errors);
+            ValidateBridgeString(bridge, label, "jumpFromMovementParam", "JumpFromMovement", errors);
+            ValidateBridgeString(bridge, label, "rollTriggerParam", "RollTrigger", errors);
+            ValidateBridgeString(bridge, label, "jumpPhaseParam", "JumpPhase", errors);
+            ValidateBridgeString(bridge, label, "normalLandingStateName", "Jump_Land", errors);
+            ValidateBridgeString(bridge, label, "hardLandingStateName", "Landing_Hard", errors);
+            ValidateBridgeString(bridge, label, "rollLandingStateName", "Jump_Roll", errors);
+            ValidateSerializedFloat(bridge, "takeoffPhaseMaxGroundedTime", LucianTakeoffPhaseMaxGroundedTime, errors);
+            ValidateSerializedFloat(bridge, "airbornePhaseMinTime", LucianAirbornePhaseMinTime, errors);
+            ValidateSerializedFloat(bridge, "normalLandingMinFallSpeed", LucianNormalLandingMinFallSpeed, errors);
+            ValidateSerializedFloat(bridge, "hardLandingMinFallSpeed", LucianHardLandingMinFallSpeed, errors);
+            ValidateSerializedFloat(bridge, "rollLandingMinFallSpeed", LucianRollLandingMinFallSpeed, errors);
+            ValidateSerializedFloat(bridge, "rollLandingMinPlanarSpeed", LucianRollLandingMinPlanarSpeed, errors);
+            ValidateSerializedFloat(bridge, "normalLandingRecoveryTime", LucianNormalLandingRecoveryTime, errors);
+            ValidateSerializedFloat(bridge, "hardLandingRecoveryTime", LucianHardLandingRecoveryTime, errors);
+            ValidateSerializedFloat(bridge, "rollLandingRecoveryTime", LucianRollLandingRecoveryTime, errors);
+            ValidateSerializedFloat(bridge, "normalLandingInputScale", LucianNormalLandingInputScale, errors);
+            ValidateSerializedFloat(bridge, "hardLandingInputScale", LucianHardLandingInputScale, errors);
+            ValidateSerializedFloat(bridge, "rollLandingInputScale", LucianRollLandingInputScale, errors);
+            ValidateBridgeBoolean(bridge, label, "crossFadeLandingStates", expectedRootMotionLocomotion, errors);
+            ValidateSerializedFloat(bridge, "landingCrossFadeDuration", LucianLandingCrossFadeDuration, errors);
             ValidateBridgeBoolean(bridge, label, "autoInstallCompanionBridges", false, errors);
             ValidateBridgeBoolean(bridge, label, "driveLitLocomotionAnimatorParameters", true, errors);
         }
