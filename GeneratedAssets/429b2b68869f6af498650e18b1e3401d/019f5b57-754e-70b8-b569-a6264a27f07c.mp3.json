@@ -1,0 +1,15 @@
+{
+    "asset": "429b2b68869f6af498650e18b1e3401d",
+    "fileName": "019f5b57-754e-70b8-b569-a6264a27f07c.mp3",
+    "prompt": "Create an epic cinematic orchestral soundtrack, approximately 1 minute 30 seconds long. The atmosphere should feel ancient, mysterious, and transcendent, as if walking through a forgotten castle suspended between time and eternity. Begin with distant ghostly choirs, ethereal whispers, deep ambient drones, and vast cosmic textures. Introduce slow, heavy cathedral bells that toll like the passage of time and the inevitability of fate. Gradually build with dark strings, powerful brass, taiko drums, low percussion, pipe organ, and celestial choir. Blend haunting spectral harmonies with a sense of cosmic infinity and subtle biblical grandeur, evoking sacred prophecy rather than horror. The music should continuously intensify toward a majestic climax before ending with a lingering, mysterious resonance. No modern electronic beats, no vocals with intelligible words, only atmospheric choir and orchestral instruments. Cinematic, emotional, awe-inspiring, dramatic, and immersive.",
+    "negativePrompt": "",
+    "model": "google-lyria-3-pro",
+    "modelName": "Google Lyria 3 Pro",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false,
+    "voice": ""
+}

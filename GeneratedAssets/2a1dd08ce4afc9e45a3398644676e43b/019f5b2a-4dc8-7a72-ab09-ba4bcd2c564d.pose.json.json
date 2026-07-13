@@ -1,0 +1,12 @@
+{
+    "asset": "2a1dd08ce4afc9e45a3398644676e43b",
+    "fileName": "019f5b2a-4dc8-7a72-ab09-ba4bcd2c564d.pose.json",
+    "prompt": "Professional boxer preparing to fight. Light bounce on the balls of the feet, subtle weight shifting, relaxed shoulders, loosens both arms with small shoulder rolls, briefly stretches the neck with a slight head tilt, takes a controlled breath, then confidently raises both fists into a tight boxing guard and finishes in a stable ready-to-fight stance. Realistic sports motion, smooth anticipation, natural body mechanics, cinematic quality.",
+    "negativePrompt": "walking, running, jumping, punching, kicking, attacking, dodging, blocking, spinning, dancing, exaggerated movements, cartoon animation, robotic motion, stiff pose, jerky motion, foot sliding, foot skating, floating, unrealistic balance, exaggerated head movement, excessive torso twisting, weapon, props, facial exaggeration, clipping",
+    "model": "unity-text-to-motion",
+    "modelName": "Text to Motion",
+    "customSeed": 1278847738,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "isTrimmed": false
+}

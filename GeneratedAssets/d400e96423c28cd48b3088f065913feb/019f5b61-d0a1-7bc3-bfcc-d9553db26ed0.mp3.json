@@ -1,0 +1,15 @@
+{
+    "asset": "d400e96423c28cd48b3088f065913feb",
+    "fileName": "019f5b61-d0a1-7bc3-bfcc-d9553db26ed0.mp3",
+    "prompt": "Create a 2 minute 30 second seamless looping JRPG exploration soundtrack. Bright, adventurous and emotional with a strong sense of wonder, ancient ruins and floating worlds. Feature expressive piano, lyrical strings, solo flute, oboe, harp, acoustic guitar, warm woodwinds and light orchestral percussion. Introduce memorable melodic themes that evolve naturally without becoming too dramatic. Add subtle choir textures only in the background to create a mystical atmosphere. The harmony should feel hopeful, nostalgic and magical with rich orchestral colors and elegant modulations. Maintain a steady flowing rhythm suitable for exploration inside an ancient castle filled with mystery. The ending must transition perfectly back into the beginning for an invisible loop. No electronic music, no vocals, no heavy percussion, cinematic high-quality orchestral production.",
+    "negativePrompt": "",
+    "model": "google-lyria-3-pro",
+    "modelName": "Google Lyria 3 Pro",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false,
+    "voice": ""
+}

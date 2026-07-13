@@ -1,0 +1,15 @@
+{
+  "asset": "dfdb4c5dcf5687f44ad7d21e3f9af6c1",
+  "fileName": "019f5b69-f98d-7c62-9f50-9504e1f00265.mp3",
+  "prompt": "Create a dark-fantasy main theme for Lit, set in a colossal castle where a civilization preserved forgotten rites and bloodlines for 666 years. Begin intimate and human: a fragile piano motif, warm cello, harp and one wordless voice, evoking family, memory and a flame kept alive. Pass this motif through seven subtle variations, like overlapping ages. Gradually reveal hidden machinery with low strings, pipe organ, distant bells, drones and ritual percussion. Introduce an ancient mixed choir without intelligible words: beautiful, sacred and unsettling, embodying the Singers and a purpose lost through transmission. Rise toward tragic grandeur, then let Lucian's Hope transform the opening motif into a luminous, resolute climax—never purely triumphant. End with one sustained choral note, a soft bell and the returning flame motif, leaving mystery and continuation. Memorable leitmotif, emotional orchestral storytelling, gothic but humane. No horror stingers, trailer braams, electronic beat or generic heroic bombast.",
+  "negativePrompt": "",
+  "model": "google-lyria-3-pro",
+  "modelName": "Google Lyria 3 Pro",
+  "customSeed": -1,
+  "w3CTraceId": "",
+  "feedback": 1,
+  "duration": 10.0,
+  "autoTrim": false,
+  "hasReference": false,
+  "voice": ""
+}

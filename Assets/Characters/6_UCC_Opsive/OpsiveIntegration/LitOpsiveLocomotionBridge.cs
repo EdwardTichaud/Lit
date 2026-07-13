@@ -217,6 +217,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rootMotionMovingStickToGroundDistance = Mathf.Max(0f, rootMotionMovingStickToGroundDistance);
         rootMotionIdleStickToGroundDistance = Mathf.Max(0f, rootMotionIdleStickToGroundDistance);
         rootMotionGroundReliefAdaptationSpeed = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        ValidateOrientationFeelSettings();
+        ValidateObstacleTraversalSettings();
         ValidateJumpLandingSettings();
     }
 
@@ -546,6 +548,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         CacheRigidbodyState();
         lastPosition = transform.position;
         hasLastPosition = true;
+        ResetOrientationFeelState();
         ResetGroundedFeelState();
         ResetJumpLandingState();
     }
@@ -559,6 +562,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         RefreshRootMotionLocomotionSettings();
         ConfigureGroundReliefTolerance();
         ConfigureGroundedFeelProfile();
+        ResetOrientationFeelState();
         ResetGroundedFeelState();
         ResetJumpLandingState();
         RegisterExternalDriver();
@@ -591,6 +595,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         UnregisterExternalDriver();
         RestoreGroundedFeelProfile();
         RestoreRootMotionLocomotion();
+        ResetOrientationFeelState();
         ResetGroundedFeelState();
         ResetJumpLandingState();
         RestoreGroundReliefTolerance();
@@ -916,14 +921,17 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             Vector3 direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
             direction.Normalize();
-            lastPlanarDirection = direction;
             opsiveInput = ShouldUseDirectionalRootMotionInput()
                 ? ResolveLocalMoveInput(direction, magnitude)
                 : new Vector2(0f, magnitude);
+            Vector3 lookDirection = direction;
             if (orientLookSourceFromMovement && lookSource != null)
             {
-                lookSource.SetPlanarLookDirection(direction);
+                lookDirection = ResolveOrientationLookDirection(direction, magnitude);
+                lookSource.SetPlanarLookDirection(lookDirection);
             }
+
+            lastPlanarDirection = lookDirection.sqrMagnitude > 0.0001f ? lookDirection : direction;
         }
 
         if (playerInput != null)

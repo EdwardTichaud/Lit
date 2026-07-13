@@ -1,0 +1,15 @@
+{
+    "asset": "429b2b68869f6af498650e18b1e3401d",
+    "fileName": "019f5b5c-0e37-7578-a4ff-a8c4c5d537f3.mp3",
+    "prompt": "Create a 150-second cinematic dark fantasy battle soundtrack. Start immediately with driving taiko drums, timpani, low percussion and rhythmic string ostinatos to create tension and momentum, but keep it restrained, not yet epic. After about 5 seconds, unleash a powerful mixed choir, deep cathedral bells, soaring violins, pipe organ, rich orchestral strings and French horns. Build into a relentless orchestral battle theme with ghostly echoes, sacred cathedral atmosphere, ancient mystery and subtle cosmic grandeur. The melody should be carried by the violins and choir while the percussion maintains constant intensity. Evoke a battle against supernatural forces inside an ancient castle. Dramatic, emotional, majestic and immersive. No electronic beats, no spoken words, no intelligible vocals, only orchestral instruments and atmospheric choir.",
+    "negativePrompt": "",
+    "model": "google-lyria-3-pro",
+    "modelName": "Google Lyria 3 Pro",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false,
+    "voice": ""
+}

@@ -1,0 +1,12 @@
+{
+    "asset": "b96817d834e0a1247a5b350c202283ad",
+    "fileName": "019f5b4b-4a92-728a-83b9-a9eed6b084b3_Preview.png",
+    "prompt": "Ne crée pas seulement un Material utilisant HDRP/Lit.\r\n\r\nCrée obligatoirement un nouveau Shader Graph HDRP Lit nommé SG_Ice_Procedural, puis crée un matériau utilisant ce Shader Graph.\r\n\r\nLe champ Shader du matériau final ne doit pas être HDRP/Lit. Il doit être Shader Graphs/SG_Ice_Procedural.\r\n\r\nLe Shader Graph doit contenir réellement les calculs suivants, sous forme de nœuds connectés :\r\n\r\n1. Fresnel dépendant de la caméra\r\n- Utiliser les nœuds Fresnel Effect ou Dot Product entre View Direction et Normal Vector.\r\n- Utiliser ce masque pour rendre les silhouettes blanc bleuté.\r\n- Le Fresnel doit influencer Base Color, Alpha et Emission.\r\n\r\n2. Projection triplanaire\r\n- Ne pas utiliser les UV classiques du mesh.\r\n- Utiliser Position en World Space ou Object Space et Normal Vector.\r\n- Projeter les textures et noises sur les axes X, Y et Z.\r\n- Mélanger les trois projections selon l’orientation des normales.\r\n- Le matériau doit fonctionner sans coutures sur un cube, une sphère, un triangle et des meshes irrégulie",
+    "negativePrompt": "",
+    "model": "gemini-3.1-flash-texture",
+    "modelName": "Gemini 3.1 Nano Banana 2",
+    "customSeed": 1358921993,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation"
+}

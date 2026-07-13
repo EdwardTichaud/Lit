@@ -1,0 +1,12 @@
+{
+    "asset": "dda537709c4efba4a94f73ed936e2569",
+    "fileName": "019f5b43-0e69-722c-9a5d-d676352c3742_Preview.png",
+    "prompt": "Crée pour Unity un matériau de glace réaliste et réutilisable avec Shader Graph, compatible avec le pipeline URP.\r\n\r\nObjectif visuel :\r\nLe matériau doit donner l’impression que n’importe quel mesh est entièrement constitué de glace épaisse : murs, sols, cubes, triangles et prefabs irréguliers. Le centre du volume doit être bleu froid et semi-transparent, tandis que les silhouettes, contours et zones vues sous un angle rasant doivent devenir blanc bleuté et lumineux.\r\n\r\nLe matériau ne doit pas dépendre des UV du mesh. Utilise une projection triplanaire en coordonnées World Space ou Object Space afin que les motifs de glace conservent une échelle cohérente sur toutes les faces et toutes les formes.\r\n\r\nConstruis les effets suivants :\r\n\r\n1. Contours dépendants de la caméra\r\n- Utiliser un effet Fresnel calculé avec la normale de surface et la direction de vue.\r\n- Les surfaces face à la caméra doivent rester bleu foncé et relativement transparentes.\r\n- Les surfaces vues sous un angle rasant et la silhouette du mesh",
+    "negativePrompt": "",
+    "model": "gemini-3.1-flash-texture",
+    "modelName": "Gemini 3.1 Nano Banana 2",
+    "customSeed": 747371160,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation"
+}

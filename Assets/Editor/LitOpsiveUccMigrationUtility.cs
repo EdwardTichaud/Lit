@@ -46,6 +46,12 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianGroundedPivotMaxSmoothedInput = 0.24f;
     private const float LucianGroundedPivotHoldTime = 0.32f;
     private const float LucianGroundedPivotCooldown = 0.28f;
+    private const float LucianOrientationInputDeadZone = 0.14f;
+    private const float LucianOrientationWalkTurnRate = 520f;
+    private const float LucianOrientationSprintTurnRate = 420f;
+    private const float LucianOrientationSharpTurnRate = 760f;
+    private const float LucianOrientationSharpTurnAngle = 92f;
+    private const float LucianOrientationVelocityBlend = 0.18f;
     private const float LucianTakeoffPhaseMaxGroundedTime = 0.24f;
     private const float LucianAirbornePhaseMinTime = 0.08f;
     private const float LucianNormalLandingMinFallSpeed = 1.35f;
@@ -59,6 +65,20 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianHardLandingInputScale = 0.1f;
     private const float LucianRollLandingInputScale = 0.32f;
     private const float LucianLandingCrossFadeDuration = 0.055f;
+    private const float LucianIgnoredObstacleMaxHeight = 0.22f;
+    private const float LucianTraversableObstacleMaxHeight = 1.05f;
+    private const float LucianObstacleProbeDistance = 0.75f;
+    private const float LucianObstacleProbeRadius = 0.22f;
+    private const float LucianObstacleProbeBaseHeight = 0.25f;
+    private const float LucianObstacleTraversalMaxSurfaceUpDot = 0.35f;
+    private const float LucianObstacleLandingDistance = 0.55f;
+    private const float LucianObstacleTraversalDuration = 0.46f;
+    private const float LucianObstacleTraversalArcHeight = 0.22f;
+    private const float LucianObstacleTraversalTopClearance = 0.16f;
+    private const float LucianObstacleTraversalHeightArcMultiplier = 0.38f;
+    private const float LucianObstacleTraversalRotationLead = 0.68f;
+    private const float LucianObstacleTraversalMinInputMagnitude = 0.34f;
+    private const float LucianObstacleTraversalCooldown = 0.28f;
     private const float LucianCharacterIkHipsPositionAdjustmentSpeed = 7f;
     private const float LucianCharacterIkFootOffsetAdjustment = 0.012f;
     private const float LucianCharacterIkFootWeightActiveAdjustmentSpeed = 14f;
@@ -516,6 +536,13 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput);
         SetSerializedFloat(serializedObject, "groundedPivotHoldTime", LucianGroundedPivotHoldTime);
         SetSerializedFloat(serializedObject, "groundedPivotCooldown", LucianGroundedPivotCooldown);
+        SetSerializedBool(serializedObject, "enableCinematicOrientationFeel", useRootMotionLocomotion);
+        SetSerializedFloat(serializedObject, "orientationInputDeadZone", LucianOrientationInputDeadZone);
+        SetSerializedFloat(serializedObject, "orientationWalkTurnRate", LucianOrientationWalkTurnRate);
+        SetSerializedFloat(serializedObject, "orientationSprintTurnRate", LucianOrientationSprintTurnRate);
+        SetSerializedFloat(serializedObject, "orientationSharpTurnRate", LucianOrientationSharpTurnRate);
+        SetSerializedFloat(serializedObject, "orientationSharpTurnAngle", LucianOrientationSharpTurnAngle);
+        SetSerializedFloat(serializedObject, "orientationVelocityBlend", LucianOrientationVelocityBlend);
         SetSerializedBool(serializedObject, "driveJumpLandingAnimatorParameters", useRootMotionLocomotion);
         SetSerializedString(serializedObject, "jumpTriggerParam", "JumpTrigger");
         SetSerializedString(serializedObject, "isAirborneParam", "IsAirborne");
@@ -540,6 +567,31 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "rollLandingInputScale", LucianRollLandingInputScale);
         SetSerializedBool(serializedObject, "crossFadeLandingStates", useRootMotionLocomotion);
         SetSerializedFloat(serializedObject, "landingCrossFadeDuration", LucianLandingCrossFadeDuration);
+        SetSerializedBool(serializedObject, "enableObstacleTraversal", useRootMotionLocomotion);
+        SetSerializedFloat(serializedObject, "ignoredObstacleMaxHeight", LucianIgnoredObstacleMaxHeight);
+        SetSerializedFloat(serializedObject, "traversableObstacleMaxHeight", LucianTraversableObstacleMaxHeight);
+        SetSerializedFloat(serializedObject, "obstacleProbeDistance", LucianObstacleProbeDistance);
+        SetSerializedFloat(serializedObject, "obstacleProbeRadius", LucianObstacleProbeRadius);
+        SetSerializedFloat(serializedObject, "obstacleProbeBaseHeight", LucianObstacleProbeBaseHeight);
+        SetSerializedFloat(
+            serializedObject,
+            "obstacleTraversalMaxSurfaceUpDot",
+            LucianObstacleTraversalMaxSurfaceUpDot);
+        SetSerializedFloat(serializedObject, "obstacleLandingDistance", LucianObstacleLandingDistance);
+        SetSerializedFloat(serializedObject, "obstacleTraversalDuration", LucianObstacleTraversalDuration);
+        SetSerializedFloat(serializedObject, "obstacleTraversalArcHeight", LucianObstacleTraversalArcHeight);
+        SetSerializedFloat(serializedObject, "obstacleTraversalTopClearance", LucianObstacleTraversalTopClearance);
+        SetSerializedFloat(
+            serializedObject,
+            "obstacleTraversalHeightArcMultiplier",
+            LucianObstacleTraversalHeightArcMultiplier);
+        SetSerializedFloat(serializedObject, "obstacleTraversalRotationLead", LucianObstacleTraversalRotationLead);
+        SetSerializedFloat(
+            serializedObject,
+            "obstacleTraversalMinInputMagnitude",
+            LucianObstacleTraversalMinInputMagnitude);
+        SetSerializedFloat(serializedObject, "obstacleTraversalCooldown", LucianObstacleTraversalCooldown);
+        SetSerializedString(serializedObject, "obstacleTraversalTriggerParam", "ObstacleTraversal");
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -1307,6 +1359,18 @@ public static class LitOpsiveUccMigrationUtility
             ValidateBridgeBoolean(
                 bridge,
                 label,
+                "enableCinematicOrientationFeel",
+                expectedRootMotionLocomotion,
+                errors);
+            ValidateSerializedFloat(bridge, "orientationInputDeadZone", LucianOrientationInputDeadZone, errors);
+            ValidateSerializedFloat(bridge, "orientationWalkTurnRate", LucianOrientationWalkTurnRate, errors);
+            ValidateSerializedFloat(bridge, "orientationSprintTurnRate", LucianOrientationSprintTurnRate, errors);
+            ValidateSerializedFloat(bridge, "orientationSharpTurnRate", LucianOrientationSharpTurnRate, errors);
+            ValidateSerializedFloat(bridge, "orientationSharpTurnAngle", LucianOrientationSharpTurnAngle, errors);
+            ValidateSerializedFloat(bridge, "orientationVelocityBlend", LucianOrientationVelocityBlend, errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
                 "driveJumpLandingAnimatorParameters",
                 expectedRootMotionLocomotion,
                 errors);
@@ -1333,6 +1397,34 @@ public static class LitOpsiveUccMigrationUtility
             ValidateSerializedFloat(bridge, "rollLandingInputScale", LucianRollLandingInputScale, errors);
             ValidateBridgeBoolean(bridge, label, "crossFadeLandingStates", expectedRootMotionLocomotion, errors);
             ValidateSerializedFloat(bridge, "landingCrossFadeDuration", LucianLandingCrossFadeDuration, errors);
+            ValidateBridgeBoolean(bridge, label, "enableObstacleTraversal", expectedRootMotionLocomotion, errors);
+            ValidateSerializedFloat(bridge, "ignoredObstacleMaxHeight", LucianIgnoredObstacleMaxHeight, errors);
+            ValidateSerializedFloat(bridge, "traversableObstacleMaxHeight", LucianTraversableObstacleMaxHeight, errors);
+            ValidateSerializedFloat(bridge, "obstacleProbeDistance", LucianObstacleProbeDistance, errors);
+            ValidateSerializedFloat(bridge, "obstacleProbeRadius", LucianObstacleProbeRadius, errors);
+            ValidateSerializedFloat(bridge, "obstacleProbeBaseHeight", LucianObstacleProbeBaseHeight, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "obstacleTraversalMaxSurfaceUpDot",
+                LucianObstacleTraversalMaxSurfaceUpDot,
+                errors);
+            ValidateSerializedFloat(bridge, "obstacleLandingDistance", LucianObstacleLandingDistance, errors);
+            ValidateSerializedFloat(bridge, "obstacleTraversalDuration", LucianObstacleTraversalDuration, errors);
+            ValidateSerializedFloat(bridge, "obstacleTraversalArcHeight", LucianObstacleTraversalArcHeight, errors);
+            ValidateSerializedFloat(bridge, "obstacleTraversalTopClearance", LucianObstacleTraversalTopClearance, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "obstacleTraversalHeightArcMultiplier",
+                LucianObstacleTraversalHeightArcMultiplier,
+                errors);
+            ValidateSerializedFloat(bridge, "obstacleTraversalRotationLead", LucianObstacleTraversalRotationLead, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "obstacleTraversalMinInputMagnitude",
+                LucianObstacleTraversalMinInputMagnitude,
+                errors);
+            ValidateSerializedFloat(bridge, "obstacleTraversalCooldown", LucianObstacleTraversalCooldown, errors);
+            ValidateBridgeString(bridge, label, "obstacleTraversalTriggerParam", "ObstacleTraversal", errors);
             ValidateBridgeBoolean(bridge, label, "autoInstallCompanionBridges", false, errors);
             ValidateBridgeBoolean(bridge, label, "driveLitLocomotionAnimatorParameters", true, errors);
         }

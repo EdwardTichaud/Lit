@@ -1,0 +1,12 @@
+{
+    "asset": "2a1dd08ce4afc9e45a3398644676e43b",
+    "fileName": "019f5b28-e7a2-7d96-abb4-989829d033c1.pose.json",
+    "prompt": "Energetic fighter preparing for battle. Fast rhythmic bouncing, dynamic guard adjustment, shoulder rolls, quick arm loosening, subtle neck crack, determined posture, athletic anticipation, powerful but controlled movements, seamless idle loop.",
+    "negativePrompt": "walking, running, jumping, punching, kicking, attacking, dodging, blocking, spinning, dancing, exaggerated movements, cartoon animation, robotic motion, stiff pose, jerky motion, foot sliding, foot skating, floating, unrealistic balance, exaggerated head movement, excessive torso twisting, weapon, props, facial exaggeration, clipping",
+    "model": "unity-text-to-motion",
+    "modelName": "Text to Motion",
+    "customSeed": 1563436696,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "isTrimmed": false
+}

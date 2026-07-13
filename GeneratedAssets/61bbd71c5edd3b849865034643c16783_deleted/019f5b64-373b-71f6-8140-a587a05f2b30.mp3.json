@@ -1,0 +1,15 @@
+{
+    "asset": "61bbd71c5edd3b849865034643c16783",
+    "fileName": "019f5b64-373b-71f6-8140-a587a05f2b30.mp3",
+    "prompt": "Create a 90-second cinematic dark fantasy battle soundtrack where all hope feels lost. Slow to moderate tempo, heavy and oppressive rather than fast or heroic. Use deep strings, mournful violins, low brass, pipe organ, distant cathedral bells, soft choir, and sparse orchestral percussion. The music should evoke despair, sacrifice, and the feeling of facing an unstoppable fate. Build emotional intensity through dark harmonies and haunting melodies instead of constant rhythm. Include moments of silence and breathing space to heighten tension. The choir should sound ancient and sorrowful, never triumphant. The atmosphere should feel like the final stand against an overwhelming force in a ruined cathedral. No electronic music, no spoken words, no intelligible vocals. Orchestral, haunting, emotional, cinematic, and deeply immersive.",
+    "negativePrompt": "",
+    "model": "google-lyria-3-pro",
+    "modelName": "Google Lyria 3 Pro",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false,
+    "voice": ""
+}

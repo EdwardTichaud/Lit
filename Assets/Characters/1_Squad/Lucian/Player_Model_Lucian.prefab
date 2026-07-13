@@ -3170,6 +3170,13 @@ MonoBehaviour:
   groundedPivotMaxSmoothedInput: 0.24
   groundedPivotHoldTime: 0.32
   groundedPivotCooldown: 0.28
+  enableCinematicOrientationFeel: 1
+  orientationInputDeadZone: 0.14
+  orientationWalkTurnRate: 520
+  orientationSprintTurnRate: 420
+  orientationSharpTurnRate: 760
+  orientationSharpTurnAngle: 92
+  orientationVelocityBlend: 0.18
   driveJumpLandingAnimatorParameters: 1
   jumpTriggerParam: JumpTrigger
   isAirborneParam: IsAirborne
@@ -3204,6 +3211,11 @@ MonoBehaviour:
   obstacleLandingDistance: 0.55
   obstacleTraversalDuration: 0.46
   obstacleTraversalArcHeight: 0.22
+  obstacleTraversalTopClearance: 0.16
+  obstacleTraversalHeightArcMultiplier: 0.38
+  obstacleTraversalRotationLead: 0.68
+  obstacleTraversalMinInputMagnitude: 0.34
+  obstacleTraversalCooldown: 0.28
   obstacleTraversalMask:
     serializedVersion: 2
     m_Bits: 4294967295

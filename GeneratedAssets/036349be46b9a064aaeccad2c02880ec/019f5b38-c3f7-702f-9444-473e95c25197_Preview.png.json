@@ -1,0 +1,12 @@
+{
+    "asset": "036349be46b9a064aaeccad2c02880ec",
+    "fileName": "019f5b38-c3f7-702f-9444-473e95c25197_Preview.png",
+    "prompt": "Create a universal, reusable ice material shader for Unity using Shader Graph.\r\n\r\nThis shader must NOT generate, model or modify any castle, building, environment or mesh.\r\n\r\nIt must only create a material that can be assigned to any existing 3D object and make that object appear physically made of ice.\r\n\r\nThe material must work consistently on all kinds of meshes, including:\r\n\r\n- Buildings\r\n- Walls\r\n- Floors\r\n- Stairs\r\n- Columns\r\n- Trees\r\n- Branches\r\n- Rocks\r\n- Cliffs\r\n- Furniture\r\n- Chairs\r\n- Tables\r\n- Doors\r\n- Props\r\n- Statues\r\n- Creatures\r\n- Vehicles\r\n- Weapons\r\n- Organic meshes\r\n- Hard-surface meshes\r\n- Small objects\r\n- Large objects\r\n- Simple meshes\r\n- Highly detailed meshes\r\n\r\nThe shader must preserve the original geometry and silhouette of the object.\r\n\r\nIt must automatically adapt to:\r\n- Different mesh shapes\r\n- Different object orientations\r\n- Different object sizes\r\n- Curved surfaces\r\n- Sharp edges\r\n- Concave and convex forms\r\n- Thin and thick parts\r\n- Camera movement\r\n- Different lighting conditio",
+    "negativePrompt": "",
+    "model": "gemini-3.1-flash-texture",
+    "modelName": "Gemini 3.1 Nano Banana 2",
+    "customSeed": 300585345,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation"
+}

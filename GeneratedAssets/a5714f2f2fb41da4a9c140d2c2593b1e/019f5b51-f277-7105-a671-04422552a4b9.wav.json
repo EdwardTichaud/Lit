@@ -1,0 +1,15 @@
+{
+  "asset": "a5714f2f2fb41da4a9c140d2c2593b1e",
+  "fileName": "019f5b51-f277-7105-a671-04422552a4b9.wav",
+  "prompt": "Barefoot person walking through an ancient castle corridor with a stone floor, realistic skin-to-stone contact, gentle echoes, steady rhythm, high-quality Foley, seamless loop, no voices, no music.",
+  "negativePrompt": "",
+  "model": "elevenlabs-sound-effects-v2",
+  "modelName": "ElevenLabs Sound Effects V2",
+  "customSeed": -1,
+  "w3CTraceId": "",
+  "feedback": -1,
+  "duration": 0.5,
+  "autoTrim": false,
+  "hasReference": false,
+  "voice": "Adam"
+}

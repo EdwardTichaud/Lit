@@ -30,6 +30,16 @@ public partial class LitOpsiveLocomotionBridge
     private float obstacleTraversalDuration = 0.42f;
     [SerializeField, Min(0f), Tooltip("Arc vertical ajoute pendant le franchissement.")]
     private float obstacleTraversalArcHeight = 0.25f;
+    [SerializeField, Min(0f), Tooltip("Marge ajoutee au-dessus de l'obstacle pour eviter un franchissement trop plat.")]
+    private float obstacleTraversalTopClearance = 0.16f;
+    [SerializeField, Range(0f, 1f), Tooltip("Ajoute une part de la hauteur de l'obstacle a l'arc de franchissement.")]
+    private float obstacleTraversalHeightArcMultiplier = 0.38f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("Fraction du franchissement utilisee pour terminer la rotation vers la direction cible.")]
+    private float obstacleTraversalRotationLead = 0.68f;
+    [SerializeField, Range(0f, 1f), Tooltip("Magnitude d'input minimale avant de declencher un franchissement automatique.")]
+    private float obstacleTraversalMinInputMagnitude = 0.34f;
+    [SerializeField, Min(0f), Tooltip("Delai anti-redeclenchement apres un franchissement.")]
+    private float obstacleTraversalCooldown = 0.28f;
     [SerializeField, Tooltip("Layers consideres comme obstacles franchissables.")]
     private LayerMask obstacleTraversalMask = ~0;
     [SerializeField, Tooltip("Trigger Animator optionnel lance au debut du franchissement.")]
@@ -39,6 +49,25 @@ public partial class LitOpsiveLocomotionBridge
     private readonly Collider[] obstacleTraversalOverlaps = new Collider[ObstacleTraversalOverlapCapacity];
     private Coroutine obstacleTraversalRoutine;
     private bool obstacleTraversalOwnsScriptedLock;
+    private float lastObstacleTraversalTime = -999f;
+
+    private void ValidateObstacleTraversalSettings()
+    {
+        ignoredObstacleMaxHeight = Mathf.Max(0f, ignoredObstacleMaxHeight);
+        traversableObstacleMaxHeight = Mathf.Max(ignoredObstacleMaxHeight, traversableObstacleMaxHeight);
+        obstacleProbeDistance = Mathf.Max(0.05f, obstacleProbeDistance);
+        obstacleProbeRadius = Mathf.Max(0.01f, obstacleProbeRadius);
+        obstacleProbeBaseHeight = Mathf.Max(0f, obstacleProbeBaseHeight);
+        obstacleTraversalMaxSurfaceUpDot = Mathf.Clamp01(obstacleTraversalMaxSurfaceUpDot);
+        obstacleLandingDistance = Mathf.Max(0f, obstacleLandingDistance);
+        obstacleTraversalDuration = Mathf.Max(0.01f, obstacleTraversalDuration);
+        obstacleTraversalArcHeight = Mathf.Max(0f, obstacleTraversalArcHeight);
+        obstacleTraversalTopClearance = Mathf.Max(0f, obstacleTraversalTopClearance);
+        obstacleTraversalHeightArcMultiplier = Mathf.Clamp01(obstacleTraversalHeightArcMultiplier);
+        obstacleTraversalRotationLead = Mathf.Clamp(obstacleTraversalRotationLead, 0.1f, 1f);
+        obstacleTraversalMinInputMagnitude = Mathf.Clamp01(obstacleTraversalMinInputMagnitude);
+        obstacleTraversalCooldown = Mathf.Max(0f, obstacleTraversalCooldown);
+    }
 
     private bool TryStartObstacleTraversal()
     {
@@ -49,7 +78,8 @@ public partial class LitOpsiveLocomotionBridge
             IsFlightActive ||
             locomotion == null ||
             !locomotion.Grounded ||
-            currentWorldMoveInput.sqrMagnitude <= movementDeadZone * movementDeadZone)
+            Time.time - lastObstacleTraversalTime < Mathf.Max(0f, obstacleTraversalCooldown) ||
+            currentWorldMoveInput.magnitude < Mathf.Max(movementDeadZone, obstacleTraversalMinInputMagnitude))
         {
             return false;
         }
@@ -61,19 +91,18 @@ public partial class LitOpsiveLocomotionBridge
         }
 
         direction.Normalize();
-        if (!TryResolveObstacleTraversal(direction, out Vector3 targetPosition, out Quaternion targetRotation))
+        if (!TryResolveObstacleTraversal(direction, out ObstacleTraversalSolution solution))
         {
             return false;
         }
 
-        obstacleTraversalRoutine = StartCoroutine(ObstacleTraversalRoutine(targetPosition, targetRotation));
+        obstacleTraversalRoutine = StartCoroutine(ObstacleTraversalRoutine(solution));
         return true;
     }
 
-    private bool TryResolveObstacleTraversal(Vector3 direction, out Vector3 targetPosition, out Quaternion targetRotation)
+    private bool TryResolveObstacleTraversal(Vector3 direction, out ObstacleTraversalSolution solution)
     {
-        targetPosition = transform.position;
-        targetRotation = transform.rotation;
+        solution = new ObstacleTraversalSolution(transform.position, transform.rotation, direction, 0f, 0f);
 
         float footY = ResolveObstacleTraversalFootY();
         Vector3 up = transform.up;
@@ -115,10 +144,10 @@ public partial class LitOpsiveLocomotionBridge
             return false;
         }
 
-        targetPosition = candidate;
-        targetRotation = direction.sqrMagnitude > 0.0001f
+        Quaternion targetRotation = direction.sqrMagnitude > 0.0001f
             ? Quaternion.LookRotation(direction, up)
             : transform.rotation;
+        solution = new ObstacleTraversalSolution(candidate, targetRotation, direction, obstacleHeight, travelDistance);
         return true;
     }
 
@@ -362,7 +391,7 @@ public partial class LitOpsiveLocomotionBridge
         return hitCollider != null && hitCollider.transform.IsChildOf(transform);
     }
 
-    private IEnumerator ObstacleTraversalRoutine(Vector3 targetPosition, Quaternion targetRotation)
+    private IEnumerator ObstacleTraversalRoutine(ObstacleTraversalSolution solution)
     {
         obstacleTraversalOwnsScriptedLock = false;
         if (!BeginScriptedTraversal())
@@ -373,27 +402,68 @@ public partial class LitOpsiveLocomotionBridge
 
         obstacleTraversalOwnsScriptedLock = true;
         SetAnimatorTrigger(obstacleTraversalTriggerParam);
+        if (orientLookSourceFromMovement && lookSource != null && solution.direction.sqrMagnitude > 0.0001f)
+        {
+            lookSource.SetPlanarLookDirection(solution.direction);
+        }
 
         Vector3 startPosition = transform.position;
         Quaternion startRotation = transform.rotation;
-        float duration = Mathf.Max(0.01f, obstacleTraversalDuration);
+        float duration = ResolveObstacleTraversalDuration(solution.travelDistance);
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            float t = Mathf.Clamp01(elapsed / duration);
-            Vector3 position = Vector3.Lerp(startPosition, targetPosition, t);
-            position += transform.up * (Mathf.Sin(t * Mathf.PI) * Mathf.Max(0f, obstacleTraversalArcHeight));
-            ApplyScriptedTraversalPose(position, Quaternion.Slerp(startRotation, targetRotation, t));
+            float rawT = Mathf.Clamp01(elapsed / duration);
+            float easedT = EaseObstacleTraversalTime(rawT);
+            Vector3 position = ResolveObstacleTraversalPosition(startPosition, solution, easedT);
+            Quaternion rotation = ResolveObstacleTraversalRotation(startRotation, solution.targetRotation, rawT);
+            ApplyScriptedTraversalPose(position, rotation);
 
             yield return new WaitForFixedUpdate();
             elapsed += Time.fixedDeltaTime;
         }
 
-        ApplyScriptedTraversalPose(targetPosition, targetRotation);
+        ApplyScriptedTraversalPose(solution.targetPosition, solution.targetRotation);
         EndScriptedTraversal();
+        lastObstacleTraversalTime = Time.time;
         obstacleTraversalOwnsScriptedLock = false;
         obstacleTraversalRoutine = null;
+    }
+
+    private Vector3 ResolveObstacleTraversalPosition(Vector3 startPosition, ObstacleTraversalSolution solution, float t)
+    {
+        Vector3 position = Vector3.Lerp(startPosition, solution.targetPosition, t);
+        float arcHeight = ResolveObstacleTraversalArcHeight(solution.obstacleHeight);
+        position += transform.up * (Mathf.Sin(t * Mathf.PI) * arcHeight);
+        return position;
+    }
+
+    private float ResolveObstacleTraversalDuration(float travelDistance)
+    {
+        float referenceDistance = Mathf.Max(0.1f, obstacleProbeDistance + obstacleLandingDistance);
+        float distanceScale = Mathf.Clamp(travelDistance / referenceDistance, 0.85f, 1.18f);
+        return Mathf.Max(0.01f, obstacleTraversalDuration * distanceScale);
+    }
+
+    private float ResolveObstacleTraversalArcHeight(float obstacleHeight)
+    {
+        float heightDrivenArc = Mathf.Max(0f, obstacleHeight) * Mathf.Clamp01(obstacleTraversalHeightArcMultiplier) +
+                                Mathf.Max(0f, obstacleTraversalTopClearance);
+        return Mathf.Max(Mathf.Max(0f, obstacleTraversalArcHeight), heightDrivenArc);
+    }
+
+    private Quaternion ResolveObstacleTraversalRotation(Quaternion startRotation, Quaternion targetRotation, float rawT)
+    {
+        float lead = Mathf.Clamp(obstacleTraversalRotationLead, 0.1f, 1f);
+        float rotationT = EaseObstacleTraversalTime(Mathf.Clamp01(rawT / lead));
+        return Quaternion.Slerp(startRotation, targetRotation, rotationT);
+    }
+
+    private static float EaseObstacleTraversalTime(float t)
+    {
+        t = Mathf.Clamp01(t);
+        return t * t * (3f - 2f * t);
     }
 
     private void CancelObstacleTraversal()
@@ -408,6 +478,29 @@ public partial class LitOpsiveLocomotionBridge
         {
             EndScriptedTraversal();
             obstacleTraversalOwnsScriptedLock = false;
+        }
+    }
+
+    private struct ObstacleTraversalSolution
+    {
+        public readonly Vector3 targetPosition;
+        public readonly Quaternion targetRotation;
+        public readonly Vector3 direction;
+        public readonly float obstacleHeight;
+        public readonly float travelDistance;
+
+        public ObstacleTraversalSolution(
+            Vector3 targetPosition,
+            Quaternion targetRotation,
+            Vector3 direction,
+            float obstacleHeight,
+            float travelDistance)
+        {
+            this.targetPosition = targetPosition;
+            this.targetRotation = targetRotation;
+            this.direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.zero;
+            this.obstacleHeight = obstacleHeight;
+            this.travelDistance = travelDistance;
         }
     }
 }
