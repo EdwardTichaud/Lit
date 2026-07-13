@@ -1,0 +1,15 @@
+{
+    "asset": "044fa2ea23643f844a5534cd688fbebf",
+    "fileName": "019f5b73-7a3b-71ae-a0e1-0b8fa53f5903.mp3",
+    "prompt": "Create a slow, deeply emotional main theme for Lit, a dark-fantasy exploration game about memory, lost meaning and hope surviving across 666 years. Write one simple, unforgettable melody: fragile, melancholic and tender, able to bring tears through beauty rather than sorrow. Begin with intimate piano, warm solo cello, soft harp and distant wordless voices. Let the melody gently pass between piano, cello, flute and strings, with subtle variations suggesting memories overlapping through seven ages. Add faint bells, restrained organ and low ambient textures to evoke an immense ancient castle and its forgotten ritual, but keep the music human and delicate. Use a free, spacious pulse with very little percussion and no driving rhythm. Build slowly toward a restrained emotional climax: fuller strings and choir, luminous but never loud, heroic or bombastic. Resolve into quiet hope, ending with the melody alone on piano and a distant wordless voice, as if a flame still lives. No lyrics, intelligible words, epic drums,",
+    "negativePrompt": "",
+    "model": "google-lyria-3-pro",
+    "modelName": "Google Lyria 3 Pro",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false,
+    "voice": ""
+}
