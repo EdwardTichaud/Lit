@@ -1229,8 +1229,20 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void SetGroundedDirectionalAnimatorParameters(float presentationSpeed, Vector3 fallbackVelocity)
     {
-        Vector2 localDirection = ResolveGroundedLocalMoveDirection(fallbackVelocity);
-        Vector2 directionalSpeed = localDirection * Mathf.Max(0f, presentationSpeed);
+        Vector2 localDirection;
+        float parameterSpeed;
+        if (TryGetGroundedMoveTransitionLocalDirection(out Vector2 latchedLocalDirection, out float latchedParameterSpeed))
+        {
+            localDirection = latchedLocalDirection;
+            parameterSpeed = Mathf.Max(Mathf.Max(0f, presentationSpeed), latchedParameterSpeed);
+        }
+        else
+        {
+            localDirection = ResolveGroundedLocalMoveDirection(fallbackVelocity);
+            parameterSpeed = Mathf.Max(0f, presentationSpeed);
+        }
+
+        Vector2 directionalSpeed = localDirection * parameterSpeed;
         SetAnimatorFloat(horizontalMovementParam, directionalSpeed.x);
         SetAnimatorFloat(forwardMovementParam, directionalSpeed.y);
     }

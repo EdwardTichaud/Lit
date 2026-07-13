@@ -46,6 +46,18 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Range(0f, 1f)] private float groundedTurnInPlaceThreshold = 0.55f;
     [SerializeField, Min(0f)] private float groundedTurnInPlaceMaxSpeed = 0.35f;
     [SerializeField, Min(0f)] private float groundedStopTriggerMinSpeed = 0.35f;
+    [SerializeField, Min(0f), Tooltip("Keeps start/stop blend trees aimed after input or physical velocity drops to zero.")]
+    private float groundedMoveTransitionDirectionHoldTime = 0.28f;
+    [SerializeField, Min(0f), Tooltip("Minimum parameter radius used by directional start/stop blend trees while their direction is latched.")]
+    private float groundedMoveTransitionParameterSpeed = 1.35f;
+    [SerializeField, Tooltip("Uses root-motion turn clips when movement starts from a sharp angle change.")]
+    private bool enableRootMotionPivotTurns = true;
+    [SerializeField, Range(45f, 180f)] private float groundedPivotMinAngle = 65f;
+    [SerializeField, Range(90f, 180f)] private float groundedPivot180Angle = 135f;
+    [SerializeField, Min(0f)] private float groundedPivotMaxSpeed = 0.45f;
+    [SerializeField, Range(0f, 1f)] private float groundedPivotMaxSmoothedInput = 0.24f;
+    [SerializeField, Min(0.05f)] private float groundedPivotHoldTime = 0.32f;
+    [SerializeField, Min(0f)] private float groundedPivotCooldown = 0.28f;
 
     private Vector2 desiredGroundedWorldMoveInput;
     private Vector2 smoothedGroundedWorldMoveInput;
@@ -53,6 +65,12 @@ public partial class LitOpsiveLocomotionBridge
     private bool previousGroundedMoveIntent;
     private float groundedPresentationSpeed;
     private float groundedPresentationTurn;
+    private bool groundedPivotActive;
+    private float groundedPivotHoldTimer;
+    private float groundedPivotCooldownTimer;
+    private float groundedPivotTurnValue;
+    private Vector2 groundedMoveTransitionLocalDirection;
+    private float groundedMoveTransitionDirectionTimer;
 
     private bool groundedFeelProfileApplied;
     private Vector3 previousGroundedMotorAcceleration;
@@ -204,11 +222,30 @@ public partial class LitOpsiveLocomotionBridge
 
         if (!enableCinematicGroundedFeel || IsFlightModeActive)
         {
+            ResetGroundedPivotTurn();
+            ResetGroundedMoveTransitionDirection();
             smoothedGroundedWorldMoveInput = targetWorldMoveInput;
             return targetWorldMoveInput;
         }
 
         float deltaTime = ResolveGroundedFeelDeltaTime();
+        TickGroundedMoveTransitionDirection(deltaTime);
+        if (locomotion == null || !locomotion.Grounded)
+        {
+            ResetGroundedPivotTurn();
+        }
+        else
+        {
+            TickGroundedPivotTurn(deltaTime);
+        }
+
+        if (TryStartGroundedPivotTurn(targetWorldMoveInput, targetMagnitude) || groundedPivotActive)
+        {
+            ResetGroundedMoveTransitionDirection();
+            smoothedGroundedWorldMoveInput = Vector2.zero;
+            return Vector2.zero;
+        }
+
         float rate = ResolveGroundedInputRate(targetWorldMoveInput, targetMagnitude);
         smoothedGroundedWorldMoveInput = Vector2.MoveTowards(
             smoothedGroundedWorldMoveInput,
@@ -268,7 +305,7 @@ public partial class LitOpsiveLocomotionBridge
             Mathf.Max(0f, groundedAnimatorTurnRate) * deltaTime);
 
         bool shouldAnimateMoving = moving || groundedMoveIntent || groundedPresentationSpeed > 0.05f;
-        UpdateGroundedMoveTriggers(speed);
+        UpdateGroundedMoveTriggers(speed, velocity);
 
         SetAnimatorFloat(speedParam, groundedPresentationSpeed);
         SetGroundedDirectionalAnimatorParameters(groundedPresentationSpeed, velocity);
@@ -300,6 +337,11 @@ public partial class LitOpsiveLocomotionBridge
 
     private float ResolveGroundedPresentationTurn(Vector3 velocity)
     {
+        if (groundedPivotActive)
+        {
+            return groundedPivotTurnValue;
+        }
+
         Vector3 direction = Vector3.zero;
         if (desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
         {
@@ -324,6 +366,11 @@ public partial class LitOpsiveLocomotionBridge
 
     private bool ShouldGroundedTurnInPlace(float speed, float targetTurn)
     {
+        if (groundedPivotActive)
+        {
+            return locomotion != null && locomotion.Grounded;
+        }
+
         return locomotion != null &&
                locomotion.Grounded &&
                groundedMoveIntent &&
@@ -332,7 +379,76 @@ public partial class LitOpsiveLocomotionBridge
                Mathf.Abs(targetTurn) >= groundedTurnInPlaceThreshold;
     }
 
-    private void UpdateGroundedMoveTriggers(float speed)
+    private void TickGroundedPivotTurn(float deltaTime)
+    {
+        if (groundedPivotHoldTimer > 0f)
+        {
+            groundedPivotHoldTimer = Mathf.Max(0f, groundedPivotHoldTimer - deltaTime);
+            groundedPivotActive = true;
+            if (groundedPivotHoldTimer <= 0f)
+            {
+                groundedPivotActive = false;
+                groundedPivotCooldownTimer = Mathf.Max(groundedPivotCooldownTimer, groundedPivotCooldown);
+            }
+        }
+        else
+        {
+            groundedPivotActive = false;
+        }
+
+        if (!groundedPivotActive && groundedPivotCooldownTimer > 0f)
+        {
+            groundedPivotCooldownTimer = Mathf.Max(0f, groundedPivotCooldownTimer - deltaTime);
+        }
+    }
+
+    private bool TryStartGroundedPivotTurn(Vector2 targetWorldMoveInput, float targetMagnitude)
+    {
+        if (!enableRootMotionPivotTurns ||
+            !IsRootMotionLocomotionEnabled() ||
+            locomotion == null ||
+            !locomotion.Grounded ||
+            !groundedMoveIntent ||
+            targetMagnitude <= movementDeadZone ||
+            groundedPivotActive ||
+            groundedPivotCooldownTimer > 0f)
+        {
+            return false;
+        }
+
+        Vector3 planarVelocity = locomotion.Velocity;
+        planarVelocity.y = 0f;
+        if (planarVelocity.magnitude > groundedPivotMaxSpeed ||
+            smoothedGroundedWorldMoveInput.magnitude > groundedPivotMaxSmoothedInput)
+        {
+            return false;
+        }
+
+        Vector3 targetDirection = new Vector3(targetWorldMoveInput.x, 0f, targetWorldMoveInput.y);
+        if (targetDirection.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        float signedAngle = Vector3.SignedAngle(transform.forward, targetDirection.normalized, Vector3.up);
+        float absAngle = Mathf.Abs(signedAngle);
+        if (absAngle < groundedPivotMinAngle)
+        {
+            return false;
+        }
+
+        float turnSign = Mathf.Sign(signedAngle);
+        float signedTurn = turnSign * (absAngle >= groundedPivot180Angle ? 2f : 1f);
+
+        groundedPivotTurnValue = signedTurn;
+        groundedPresentationTurn = signedTurn;
+        groundedPresentationSpeed = 0f;
+        groundedPivotHoldTimer = Mathf.Max(0.05f, groundedPivotHoldTime);
+        groundedPivotActive = true;
+        return true;
+    }
+
+    private void UpdateGroundedMoveTriggers(float speed, Vector3 velocity)
     {
         if (animator == null || IsFlightModeActive)
         {
@@ -340,18 +456,95 @@ public partial class LitOpsiveLocomotionBridge
             return;
         }
 
+        if (groundedPivotActive)
+        {
+            ResetAnimatorTrigger(moveStartTriggerParam);
+            ResetAnimatorTrigger(moveStopTriggerParam);
+            previousGroundedMoveIntent = groundedMoveIntent;
+            return;
+        }
+
         if (groundedMoveIntent && !previousGroundedMoveIntent)
         {
+            LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
             ResetAnimatorTrigger(moveStopTriggerParam);
             SetAnimatorTrigger(moveStartTriggerParam);
         }
         else if (!groundedMoveIntent && previousGroundedMoveIntent && speed >= groundedStopTriggerMinSpeed)
         {
+            LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
             ResetAnimatorTrigger(moveStartTriggerParam);
             SetAnimatorTrigger(moveStopTriggerParam);
         }
 
         previousGroundedMoveIntent = groundedMoveIntent;
+    }
+
+    private void TickGroundedMoveTransitionDirection(float deltaTime)
+    {
+        if (groundedMoveTransitionDirectionTimer > 0f)
+        {
+            groundedMoveTransitionDirectionTimer = Mathf.Max(0f, groundedMoveTransitionDirectionTimer - deltaTime);
+            if (groundedMoveTransitionDirectionTimer <= 0f)
+            {
+                groundedMoveTransitionLocalDirection = Vector2.zero;
+            }
+        }
+    }
+
+    private void LatchGroundedMoveTransitionDirection(Vector2 localDirection)
+    {
+        if (localDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        groundedMoveTransitionLocalDirection = localDirection.normalized;
+        groundedMoveTransitionDirectionTimer = Mathf.Max(0f, groundedMoveTransitionDirectionHoldTime);
+    }
+
+    private bool TryGetGroundedMoveTransitionLocalDirection(out Vector2 localDirection, out float parameterSpeed)
+    {
+        if (groundedMoveTransitionDirectionTimer > 0f &&
+            groundedMoveTransitionLocalDirection.sqrMagnitude > 0.0001f)
+        {
+            localDirection = groundedMoveTransitionLocalDirection.normalized;
+            parameterSpeed = Mathf.Max(0f, groundedMoveTransitionParameterSpeed);
+            return true;
+        }
+
+        localDirection = Vector2.zero;
+        parameterSpeed = 0f;
+        return false;
+    }
+
+    private Vector2 ResolveGroundedMoveTransitionLocalDirection(Vector3 fallbackVelocity)
+    {
+        Vector3 direction = Vector3.zero;
+        if (desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            direction = new Vector3(desiredGroundedWorldMoveInput.x, 0f, desiredGroundedWorldMoveInput.y);
+        }
+        else if (currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
+        }
+        else if (fallbackVelocity.sqrMagnitude > 0.0001f)
+        {
+            direction = fallbackVelocity;
+        }
+        else
+        {
+            direction = lastPlanarDirection;
+        }
+
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return Vector2.zero;
+        }
+
+        return ResolveLocalMoveInput(direction.normalized, 1f);
     }
 
     private void ResetGroundedFeelState()
@@ -362,6 +555,8 @@ public partial class LitOpsiveLocomotionBridge
         previousGroundedMoveIntent = false;
         groundedPresentationSpeed = 0f;
         groundedPresentationTurn = 0f;
+        ResetGroundedPivotTurn();
+        ResetGroundedMoveTransitionDirection();
     }
 
     private void ResetGroundedFeelInput()
@@ -370,6 +565,22 @@ public partial class LitOpsiveLocomotionBridge
         smoothedGroundedWorldMoveInput = Vector2.zero;
         groundedMoveIntent = false;
         previousGroundedMoveIntent = false;
+        ResetGroundedPivotTurn();
+        ResetGroundedMoveTransitionDirection();
+    }
+
+    private void ResetGroundedPivotTurn()
+    {
+        groundedPivotActive = false;
+        groundedPivotHoldTimer = 0f;
+        groundedPivotCooldownTimer = 0f;
+        groundedPivotTurnValue = 0f;
+    }
+
+    private void ResetGroundedMoveTransitionDirection()
+    {
+        groundedMoveTransitionLocalDirection = Vector2.zero;
+        groundedMoveTransitionDirectionTimer = 0f;
     }
 
     private float ResolveGroundedFeelDeltaTime()

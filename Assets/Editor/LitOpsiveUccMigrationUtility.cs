@@ -22,6 +22,14 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianRootMotionSpeedMultiplier = 1.04f;
     private const float LucianRootMotionRotationMultiplier = 1.08f;
     private const float LucianGroundedRootMotionSpeedToBlend = 0.22f;
+    private const float LucianGroundedMoveTransitionDirectionHoldTime = 0.28f;
+    private const float LucianGroundedMoveTransitionParameterSpeed = 1.35f;
+    private const float LucianGroundedPivotMinAngle = 65f;
+    private const float LucianGroundedPivot180Angle = 135f;
+    private const float LucianGroundedPivotMaxSpeed = 0.45f;
+    private const float LucianGroundedPivotMaxSmoothedInput = 0.24f;
+    private const float LucianGroundedPivotHoldTime = 0.32f;
+    private const float LucianGroundedPivotCooldown = 0.28f;
     private const string UccHealthAttributeName = "Health";
     private const string LucianCharacterDataPath = "Assets/Characters/1_Squad/Lucian/Lucian.asset";
     private const string LucianPrefabPath = "Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab";
@@ -405,6 +413,21 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedString(serializedObject, "horizontalMovementParam", "HorizontalMovement");
         SetSerializedString(serializedObject, "forwardMovementParam", "ForwardMovement");
         SetSerializedFloat(serializedObject, "groundedRootMotionSpeedToBlend", LucianGroundedRootMotionSpeedToBlend);
+        SetSerializedFloat(
+            serializedObject,
+            "groundedMoveTransitionDirectionHoldTime",
+            LucianGroundedMoveTransitionDirectionHoldTime);
+        SetSerializedFloat(
+            serializedObject,
+            "groundedMoveTransitionParameterSpeed",
+            LucianGroundedMoveTransitionParameterSpeed);
+        SetSerializedBool(serializedObject, "enableRootMotionPivotTurns", useRootMotionLocomotion);
+        SetSerializedFloat(serializedObject, "groundedPivotMinAngle", LucianGroundedPivotMinAngle);
+        SetSerializedFloat(serializedObject, "groundedPivot180Angle", LucianGroundedPivot180Angle);
+        SetSerializedFloat(serializedObject, "groundedPivotMaxSpeed", LucianGroundedPivotMaxSpeed);
+        SetSerializedFloat(serializedObject, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput);
+        SetSerializedFloat(serializedObject, "groundedPivotHoldTime", LucianGroundedPivotHoldTime);
+        SetSerializedFloat(serializedObject, "groundedPivotCooldown", LucianGroundedPivotCooldown);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -1053,6 +1076,7 @@ public static class LitOpsiveUccMigrationUtility
             ValidateBridgeBoolean(bridge, label, "useRootMotionLocomotion", expectedRootMotionLocomotion, errors);
             ValidateBridgeBoolean(bridge, label, "refreshRootMotionSettingsEveryFrame", true, errors);
             ValidateBridgeBoolean(bridge, label, "driveDirectionalRootMotionInput", expectedRootMotionLocomotion, errors);
+            ValidateBridgeBoolean(bridge, label, "enableRootMotionPivotTurns", expectedRootMotionLocomotion, errors);
             ValidateBridgeString(bridge, label, "horizontalMovementParam", "HorizontalMovement", errors);
             ValidateBridgeString(bridge, label, "forwardMovementParam", "ForwardMovement", errors);
             ValidateSerializedFloat(
@@ -1065,6 +1089,22 @@ public static class LitOpsiveUccMigrationUtility
                 "rootMotionRotationMultiplier",
                 expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f,
                 errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedMoveTransitionDirectionHoldTime",
+                LucianGroundedMoveTransitionDirectionHoldTime,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedMoveTransitionParameterSpeed",
+                LucianGroundedMoveTransitionParameterSpeed,
+                errors);
+            ValidateSerializedFloat(bridge, "groundedPivotMinAngle", LucianGroundedPivotMinAngle, errors);
+            ValidateSerializedFloat(bridge, "groundedPivot180Angle", LucianGroundedPivot180Angle, errors);
+            ValidateSerializedFloat(bridge, "groundedPivotMaxSpeed", LucianGroundedPivotMaxSpeed, errors);
+            ValidateSerializedFloat(bridge, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput, errors);
+            ValidateSerializedFloat(bridge, "groundedPivotHoldTime", LucianGroundedPivotHoldTime, errors);
+            ValidateSerializedFloat(bridge, "groundedPivotCooldown", LucianGroundedPivotCooldown, errors);
             ValidateBridgeBoolean(bridge, label, "autoInstallCompanionBridges", false, errors);
             ValidateBridgeBoolean(bridge, label, "driveLitLocomotionAnimatorParameters", true, errors);
         }

@@ -3161,6 +3161,15 @@ MonoBehaviour:
   groundedTurnInPlaceThreshold: 0.55
   groundedTurnInPlaceMaxSpeed: 0.35
   groundedStopTriggerMinSpeed: 0.35
+  groundedMoveTransitionDirectionHoldTime: 0.28
+  groundedMoveTransitionParameterSpeed: 1.35
+  enableRootMotionPivotTurns: 1
+  groundedPivotMinAngle: 65
+  groundedPivot180Angle: 135
+  groundedPivotMaxSpeed: 0.45
+  groundedPivotMaxSmoothedInput: 0.24
+  groundedPivotHoldTime: 0.32
+  groundedPivotCooldown: 0.28
   enableObstacleTraversal: 1
   ignoredObstacleMaxHeight: 0.22
   traversableObstacleMaxHeight: 1.05
