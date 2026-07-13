@@ -30,6 +30,10 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianGroundedPivotMaxSmoothedInput = 0.24f;
     private const float LucianGroundedPivotHoldTime = 0.32f;
     private const float LucianGroundedPivotCooldown = 0.28f;
+    private const float LucianCharacterIkHipsPositionAdjustmentSpeed = 7f;
+    private const float LucianCharacterIkFootOffsetAdjustment = 0.012f;
+    private const float LucianCharacterIkFootWeightActiveAdjustmentSpeed = 14f;
+    private const float LucianCharacterIkFootWeightInactiveAdjustmentSpeed = 4f;
     private const string UccHealthAttributeName = "Health";
     private const string LucianCharacterDataPath = "Assets/Characters/1_Squad/Lucian/Lucian.asset";
     private const string LucianPrefabPath = "Assets/Characters/1_Squad/Lucian/Player_Model_Lucian.prefab";
@@ -576,7 +580,22 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "m_RightElbowWeight", 0f);
         SetSerializedBool(serializedObject, "m_IndividualHandWeightsInitialized", true);
         SetSerializedFloat(serializedObject, "m_OverrideFootIKWeight", -1f);
-        SetSerializedFloat(serializedObject, "m_FootOffsetAdjustment", 0.005f);
+        SetSerializedFloat(
+            serializedObject,
+            "m_HipsPositionAdjustmentSpeed",
+            LucianCharacterIkHipsPositionAdjustmentSpeed);
+        SetSerializedFloat(
+            serializedObject,
+            "m_FootOffsetAdjustment",
+            LucianCharacterIkFootOffsetAdjustment);
+        SetSerializedFloat(
+            serializedObject,
+            "m_FootWeightActiveAdjustmentSpeed",
+            LucianCharacterIkFootWeightActiveAdjustmentSpeed);
+        SetSerializedFloat(
+            serializedObject,
+            "m_FootWeightInactiveAdjustmentSpeed",
+            LucianCharacterIkFootWeightInactiveAdjustmentSpeed);
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(characterIk);
     }
@@ -1198,7 +1217,26 @@ public static class LitOpsiveUccMigrationUtility
             ValidateSerializedFloat(characterIk, "m_LeftElbowWeight", 0f, errors);
             ValidateSerializedFloat(characterIk, "m_RightElbowWeight", 0f, errors);
             ValidateSerializedFloat(characterIk, "m_OverrideFootIKWeight", -1f, errors);
-            ValidateSerializedFloat(characterIk, "m_FootOffsetAdjustment", 0.005f, errors);
+            ValidateSerializedFloat(
+                characterIk,
+                "m_HipsPositionAdjustmentSpeed",
+                LucianCharacterIkHipsPositionAdjustmentSpeed,
+                errors);
+            ValidateSerializedFloat(
+                characterIk,
+                "m_FootOffsetAdjustment",
+                LucianCharacterIkFootOffsetAdjustment,
+                errors);
+            ValidateSerializedFloat(
+                characterIk,
+                "m_FootWeightActiveAdjustmentSpeed",
+                LucianCharacterIkFootWeightActiveAdjustmentSpeed,
+                errors);
+            ValidateSerializedFloat(
+                characterIk,
+                "m_FootWeightInactiveAdjustmentSpeed",
+                LucianCharacterIkFootWeightInactiveAdjustmentSpeed,
+                errors);
         }
     }
 

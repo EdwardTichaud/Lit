@@ -3337,11 +3337,11 @@ MonoBehaviour:
   m_LookAtAdjustmentSpeed: 0.5
   m_ActiveLookAtStateName: LookAt
   m_LookAtWeightAdjustmentSpeed: 0.2
-  m_HipsPositionAdjustmentSpeed: 4
+  m_HipsPositionAdjustmentSpeed: 7
   m_HipsPositionOffset: 0
-  m_FootOffsetAdjustment: 0.005
-  m_FootWeightActiveAdjustmentSpeed: 10
-  m_FootWeightInactiveAdjustmentSpeed: 2
+  m_FootOffsetAdjustment: 0.012
+  m_FootWeightActiveAdjustmentSpeed: 14
+  m_FootWeightInactiveAdjustmentSpeed: 4
   m_OverrideFootIKWeight: -1
   m_UpperArmWeight: 0
   m_UpperArmAdjustmentSpeed: 10
