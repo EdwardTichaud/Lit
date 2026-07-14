@@ -17,21 +17,23 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
 
     [Header("Runtime")]
     [SerializeField] private bool optimizationEnabled = true;
-    [SerializeField] private bool autoDiscoverObjects = true;
-    [SerializeField, Min(0.1f)] private float rescanInterval = 3f;
+    [SerializeField] private bool discoverObjectsOnEnable = true;
+    [SerializeField, Tooltip("A garder desactive en production: les OptimizableObject s'inscrivent eux-memes au manager.")]
+    private bool autoDiscoverObjects;
+    [SerializeField, Min(0.1f)] private float rescanInterval = 8f;
     [SerializeField, Min(0.05f)] private float evaluationInterval = 0.15f;
-    [SerializeField, Min(1)] private int maxEvaluationsPerFrame = 512;
+    [SerializeField, Min(1)] private int maxEvaluationsPerFrame = 128;
     [SerializeField, Min(0f)] private float offscreenGraceSeconds = 0.2f;
     [SerializeField] private bool restoreEverythingWhenDisabled = true;
 
     [Header("Obstruction Culling")]
     [SerializeField] private bool obstructionCullingEnabled = true;
-    [SerializeField] private LayerMask obstructionLayers = ~0;
+    [SerializeField] private LayerMask obstructionLayers = (1 << 3) | (1 << 7) | (1 << 9) | (1 << 11);
     [SerializeField] private QueryTriggerInteraction obstructionTriggerInteraction = QueryTriggerInteraction.Ignore;
-    [SerializeField, Min(0.02f)] private float obstructionCheckInterval = 0.2f;
-    [SerializeField, Min(0)] private int maxObstructionChecksPerFrame = 64;
+    [SerializeField, Min(0.02f)] private float obstructionCheckInterval = 0.35f;
+    [SerializeField, Min(0)] private int maxObstructionChecksPerFrame = 12;
     [SerializeField, Min(0f)] private float obstructionNearDistance = 2f;
-    [SerializeField, Range(1, 5)] private int obstructionSampleCount = 3;
+    [SerializeField, Range(1, 5)] private int obstructionSampleCount = 1;
     [SerializeField, Min(0f)] private float obstructionSampleSpread = 0.35f;
 
     [Header("Debug")]
@@ -47,9 +49,11 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
 
     private float nextEvaluationTime;
     private float nextRescanTime;
+    private float nextCameraSearchTime;
     private int nextEvaluationIndex;
     private int obstructionChecksFrame = -1;
     private int obstructionChecksThisFrame;
+    private const float CameraSearchInterval = 1f;
 
     public static VisibilityOptimizationManager Instance => instance;
 
@@ -104,13 +108,14 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
     private void OnEnable()
     {
         RegisterPendingObjects();
-        if (autoDiscoverObjects)
+        if (discoverObjectsOnEnable || autoDiscoverObjects)
         {
             DiscoverSceneObjects();
         }
 
         nextEvaluationIndex = 0;
         nextEvaluationTime = 0f;
+        nextRescanTime = Time.unscaledTime + rescanInterval;
     }
 
     private void OnDisable()
@@ -151,6 +156,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         obstructionCheckInterval = Mathf.Max(0.02f, obstructionCheckInterval);
         maxObstructionChecksPerFrame = Mathf.Max(0, maxObstructionChecksPerFrame);
         obstructionNearDistance = Mathf.Max(0f, obstructionNearDistance);
+        obstructionSampleCount = Mathf.Clamp(obstructionSampleCount, 1, 5);
         obstructionSampleSpread = Mathf.Max(0f, obstructionSampleSpread);
     }
 
@@ -527,10 +533,15 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
             return true;
         }
 
-        if (TryFindGameplayCamera(out camera))
+        float now = Time.unscaledTime;
+        if (now >= nextCameraSearchTime)
         {
-            targetCamera = camera;
-            return true;
+            nextCameraSearchTime = now + CameraSearchInterval;
+            if (TryFindGameplayCamera(out camera))
+            {
+                targetCamera = camera;
+                return true;
+            }
         }
 
         if (fallbackToMainCamera && (!multiplayerListening || localPlayer != null))

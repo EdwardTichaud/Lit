@@ -77,6 +77,11 @@ public sealed class PortalVisibilityController : MonoBehaviour
         EvaluateVisibility(force: true);
     }
 
+    private void OnDisable()
+    {
+        PortalRenderScheduler.Release(this);
+    }
+
     private void LateUpdate()
     {
         if (Time.unscaledTime < nextRefreshTime)
@@ -371,6 +376,17 @@ public sealed class PortalVisibilityController : MonoBehaviour
     private void ApplyCameraVisibility(bool visible)
     {
         if (!controlChildCameras)
+        {
+            return;
+        }
+
+        if (PortalRenderScheduler.RequestPortalCameras(
+                this,
+                targetCameras,
+                targetRenderers,
+                visible,
+                ResolveReferenceCamera(),
+                ResolvePlayerTarget()))
         {
             return;
         }

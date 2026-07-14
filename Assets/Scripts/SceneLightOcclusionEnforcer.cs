@@ -7,7 +7,7 @@ using UnityEngine.Rendering.HighDefinition;
 public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
 {
     [Header("Runtime")]
-    [SerializeField] private bool enforceOnEnable = true;
+    [SerializeField] private bool enforceOnEnable;
     [SerializeField, Tooltip("Laisse desactive pour eviter que l'inspecteur modifie les lights/renderers en edit mode.")]
     private bool enforceInEditMode = false;
     [SerializeField, Tooltip("Desactive par defaut: scanner toutes les lumieres et tous les renderers en continu est couteux. Active seulement pour du debug ou des scenes qui spawnent du decor/lumieres dynamiques.")]
@@ -37,7 +37,7 @@ public sealed class SceneLightOcclusionEnforcer : MonoBehaviour
     [SerializeField, Min(128)] private int hdrpShadowResolution = 1024;
     [SerializeField, Range(0f, 1f)] private float hdrpNormalBias = 0.03f;
     [SerializeField, Range(0f, 1f)] private float hdrpSlopeBias = 0.1f;
-    [SerializeField] private bool enableHdrpContactShadows = true;
+    [SerializeField] private bool enableHdrpContactShadows;
 
     [Header("Wall Shadow Casters")]
     [SerializeField, Tooltip("Force les gros renderers de decor a caster des ombres pour bloquer les lumieres a travers les murs.")]
