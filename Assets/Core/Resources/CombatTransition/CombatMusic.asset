@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3baf3de3ad65d741a0c1b5f0a06f8db, type: 3}
   m_Name: CombatMusic
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
-  title: Symphony - Theme 2 Combat
-  composer: Manaberry
-  audioClip: {fileID: 8300000, guid: 0a5a8536e44e89149a70fda880b58b57, type: 3}
+  title: Lit Battle Theme
+  composer: Suno
+  audioClip: {fileID: 8300000, guid: 5e06f886feb372644a2c88bda9d7d23b, type: 3}
   volume: 1
   loop: 1
+  affectedByTimeScale: 0
