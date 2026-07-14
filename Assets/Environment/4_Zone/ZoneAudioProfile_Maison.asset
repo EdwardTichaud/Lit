@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c4f88d57bd24b7ba4a813807e24684c, type: 3}
   m_Name: ZoneAudioProfile_Maison
   m_EditorClassIdentifier: Assembly-CSharp::ZoneAudioProfileSO
-  music: {fileID: 11400000, guid: d4db1a94d5d052d4d9a2f25c5b11099a, type: 2}
+  music: {fileID: 11400000, guid: d50df96919533cf42bdd8c5c11edc6ff, type: 2}
   ambience: {fileID: 0}
