@@ -60,6 +60,9 @@ Material:
     - _AlphaCutoffEnable: 0
     - _AlphaDstBlend: 10
     - _AlphaSrcBlend: 1
+    - _BaseMetallic: 0
+    - _BaseNormalStrength: 1
+    - _BaseSmoothness: 0.5
     - _BlendMode: 0
     - _ConservativeDepthOffsetEnable: 0
     - _CrackWidth: 0.25
@@ -73,11 +76,11 @@ Material:
     - _DstBlend2: 10
     - _EdgeBakedBoost: 1
     - _EdgeSensitivity: 100
-    - _EmissionIntensity: 2
+    - _EmissionIntensity: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _ExcludeFromTUAndAA: 0
-    - _FlameInfluenceRadius: 107.9
+    - _FlameInfluenceRadius: 107
     - _FresnelIntensity: 0
     - _FresnelPower: 0.2
     - _FrostWidth: 10
@@ -111,7 +114,7 @@ Material:
     - _SurfaceType: 1
     - _TilingMultiplier: 1
     - _TransitionProgress: 1
-    - _TransitionSoftness: 5
+    - _TransitionSoftness: 1
     - _TransmissionEnable: 0
     - _Transparency: 0.93
     - _TransparentBackfaceEnable: 0
@@ -129,11 +132,12 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 0
     m_Colors:
-    - _CrackColor: {r: 0.8, g: 1.2, b: 1.7, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CrackColor: {r: 0.35247982, g: 0.5287197, b: 0.7490196, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _FrostColor: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 1}
+    - _FrostColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
     - _IceDeepColor: {r: 0, g: 0.5085181, b: 1, a: 1}
     - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

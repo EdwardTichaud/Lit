@@ -128,6 +128,10 @@ internal static class LitIceShaderInstaller
 
     private static void ApplyV2Defaults(Material material)
     {
+        SetColor(material, "_BaseColor", Color.white);
+        SetFloat(material, "_BaseNormalStrength", 1.0f);
+        SetFloat(material, "_BaseSmoothness", 0.5f);
+        SetFloat(material, "_BaseMetallic", 0.0f);
         SetFloat(material, "_UseScaleTiling", 0.0f);
         SetFloat(material, "_TilingMultiplier", 1.0f);
         SetVector(material, "_FlameCenter", Vector4.zero);
