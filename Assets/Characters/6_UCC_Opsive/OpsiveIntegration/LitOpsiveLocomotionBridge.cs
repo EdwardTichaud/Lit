@@ -37,6 +37,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool useRootMotionLocomotion = false;
     [SerializeField, Min(0f)] private float rootMotionSpeedMultiplier = 1f;
     [SerializeField, Min(0f)] private float rootMotionRotationMultiplier = 1f;
+    [SerializeField, Tooltip("Lets UCC/look-source rotation drive regular root-motion locomotion so directional clips cannot lock the body facing. Pivot clips can still use authored root rotation.")]
+    private bool preferLookSourceRotationForRootMotionLocomotion = true;
+    [SerializeField, Tooltip("Allows authored root rotation during start/stop clips. Keep disabled when clips contain little or conflicting deltaRotation.")]
+    private bool allowRootMotionRotationDuringStartStop = false;
     [SerializeField, Tooltip("Applies additional root-motion tuning based on the active grounded animation phase.")]
     private bool useRootMotionPhaseMultipliers = true;
     [SerializeField, Min(0f)] private float rootMotionLoopSpeedScale = 1f;
@@ -1440,15 +1444,34 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         RootMotionPhase phase = ResolveCurrentRootMotionPhase();
+        bool useRootMotionRotation = ResolveUseRootMotionRotation(phase);
         locomotion.UseRootMotionPosition = true;
         locomotion.RootMotionSpeedMultiplier = ResolveEffectiveRootMotionSpeedMultiplier(phase);
-        locomotion.UseRootMotionRotation = true;
-        locomotion.RootMotionRotationMultiplier = ResolveEffectiveRootMotionRotationMultiplier(phase);
+        locomotion.UseRootMotionRotation = useRootMotionRotation;
+        locomotion.RootMotionRotationMultiplier = useRootMotionRotation
+            ? ResolveEffectiveRootMotionRotationMultiplier(phase)
+            : 0f;
 
         if (animator != null && preserveAnimatorRootMotion)
         {
             animator.applyRootMotion = true;
         }
+    }
+
+    private bool ResolveUseRootMotionRotation(RootMotionPhase phase)
+    {
+        if (!preferLookSourceRotationForRootMotionLocomotion)
+        {
+            return true;
+        }
+
+        if (phase == RootMotionPhase.Pivot)
+        {
+            return true;
+        }
+
+        return allowRootMotionRotationDuringStartStop &&
+               (phase == RootMotionPhase.Start || phase == RootMotionPhase.Stop);
     }
 
     private float ResolveEffectiveRootMotionSpeedMultiplier(RootMotionPhase phase)

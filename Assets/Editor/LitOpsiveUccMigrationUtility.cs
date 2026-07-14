@@ -21,6 +21,8 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianRootMotionAnimatorSpeed = 1f;
     private const float LucianRootMotionSpeedMultiplier = 1.04f;
     private const float LucianRootMotionRotationMultiplier = 1.08f;
+    private const bool LucianPreferLookSourceRotationForRootMotionLocomotion = true;
+    private const bool LucianAllowRootMotionRotationDuringStartStop = false;
     private const float LucianRootMotionLoopSpeedScale = 1f;
     private const float LucianRootMotionLoopRotationScale = 1f;
     private const float LucianRootMotionStartSpeedScale = 0.96f;
@@ -459,6 +461,14 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "rootMotionRotationMultiplier",
             useRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f);
+        SetSerializedBool(
+            serializedObject,
+            "preferLookSourceRotationForRootMotionLocomotion",
+            useRootMotionLocomotion && LucianPreferLookSourceRotationForRootMotionLocomotion);
+        SetSerializedBool(
+            serializedObject,
+            "allowRootMotionRotationDuringStartStop",
+            useRootMotionLocomotion && LucianAllowRootMotionRotationDuringStartStop);
         SetSerializedBool(serializedObject, "useRootMotionPhaseMultipliers", useRootMotionLocomotion);
         SetSerializedFloat(
             serializedObject,
@@ -1267,6 +1277,18 @@ public static class LitOpsiveUccMigrationUtility
                 bridge,
                 "rootMotionRotationMultiplier",
                 expectedRootMotionLocomotion ? LucianRootMotionRotationMultiplier : 1f,
+                errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "preferLookSourceRotationForRootMotionLocomotion",
+                expectedRootMotionLocomotion && LucianPreferLookSourceRotationForRootMotionLocomotion,
+                errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "allowRootMotionRotationDuringStartStop",
+                expectedRootMotionLocomotion && LucianAllowRootMotionRotationDuringStartStop,
                 errors);
             ValidateBridgeBoolean(bridge, label, "useRootMotionPhaseMultipliers", expectedRootMotionLocomotion, errors);
             ValidateSerializedFloat(

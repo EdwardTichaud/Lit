@@ -3234,6 +3234,8 @@ MonoBehaviour:
   useRootMotionLocomotion: 1
   rootMotionSpeedMultiplier: 1.04
   rootMotionRotationMultiplier: 1.08
+  preferLookSourceRotationForRootMotionLocomotion: 1
+  allowRootMotionRotationDuringStartStop: 0
   useRootMotionPhaseMultipliers: 1
   rootMotionLoopSpeedScale: 1
   rootMotionLoopRotationScale: 1
