@@ -1,6 +1,6 @@
 # Lit Ice — Frosted Edges (HDRP)
 
-`ShaderGraph_LitIceFrostedEdges` is an HDRP Lit transparent Shader Graph for Unity 6.4 / Shader Graph 17.4.
+`ShaderGraph_LitIceFrostedEdges` is an HDRP Lit transparent Shader Graph for Unity 6.4 / Shader Graph 17.4. Its optional v2 variant adds a flame-driven transition from ice to a revealed base appearance without changing the original shader.
 
 It combines:
 
@@ -12,11 +12,11 @@ It combines:
 
 ## Quick use
 
-1. Assign `Material_LitIceFrostedEdges` to the renderer.
+1. Assign `Material_LitIceFrostedEdges` for the original ice, or `Material_LitIceFrostedEdges_v2` for the flame transition.
 2. Add or refresh an HDRP Reflection Probe around the object.
 3. Enable Bloom in an HDRP Volume to see the emissive glow.
 4. For exact hard-edge frost around every individual stone, select the object and run **Lit > Shadergraph > Bake Edge Mask On Selected Meshes**. The tool creates and assigns a mesh copy; the source mesh asset is not modified.
-5. To process every renderer in the currently open scenes that uses `Material_LitIceFrostedEdges`, run **Lit > Shadergraph > Bake Edge Mask On All Material_LitIceFrostedEdges**. Shared source meshes are baked only once and reused by their instances.
+5. To process every renderer in the currently open scenes that uses either the v1 or v2 material, run **Lit > Shadergraph > Bake Edge Mask On All Material_LitIceFrostedEdges**. Shared source meshes are baked only once and reused by their instances.
 6. Use **Lit > Shadergraph > Apply Recommended Ice Preset** to restore the balanced dielectric-ice values after experimentation.
 
 Baked mesh assets use compact names such as `IceEdges_a1b2c3d4e5f6.asset` to stay safely below Windows and Git path-length limits, regardless of the source object name.
@@ -39,3 +39,15 @@ A material shader cannot use Fresnel alone to discover the boundary of every sto
 Reflection Probe sample from producing pure-black patches while preserving the
 Lit response. Ice is dielectric, so keep **Metallic** at `0`; Reflection Probes
 still work through HDRP's dielectric specular reflection.
+
+## Flame transition (v2)
+
+The v2 shader is available at **LIT > Ice > Lit Ice Frosted Edges V2**. Set **Base Texture** to the appearance that the flame must reveal. With **Use Scale Tiling** disabled, it uses UV0; when enabled, it uses the same dominant-face world projection as `ShaderGraph_MasterShader`. **Tiling Multiplier** controls the scale in both modes.
+
+Every lit regular flame and AncientFlame sends its world centre and real influence radius to compatible renderers. If several flames overlap a renderer, the closest one to the renderer bounds centre is used. Extinguishing a flame or leaving its area resets the v2 radius to zero. Regular flames never write `_AgeCenter` or `_AgeAmount`; the existing MasterShader age behaviour remains exclusive to AncientFlames.
+
+Inside **Flame Influence Radius**, the texture fully replaces the ice Base Color and Alpha, while the ice normal becomes flat and all frost/crack emission is removed. **Transition Softness** fades back to complete ice outside the radius. **Transition Progress** is the manual blend slider: `0` keeps complete ice and `1` reveals the complete base appearance. A radius of `0` disables the transition, including when softness is `0`.
+
+At runtime, each flame animates **Transition Progress** from `0` to `1`. The **Transition Duration** setting on its `LitInfluenceSource` is `5` seconds by default. Extinguishing the flame animates the same value back toward `0`; a duration of `0` makes both directions instantaneous.
+
+`BaseTexture.a = 1` produces a fully opaque revealed appearance inside the influence area, although the material itself remains rendered in HDRP's transparent queue.

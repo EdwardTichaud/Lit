@@ -10,12 +10,18 @@ public enum LitInfluenceSourceKind
 
 public struct LitInfluenceInfo
 {
-    public LitInfluenceInfo(MonoBehaviour source, LitInfluenceSourceKind sourceKind, Vector3 center, float radius)
+    public LitInfluenceInfo(
+        MonoBehaviour source,
+        LitInfluenceSourceKind sourceKind,
+        Vector3 center,
+        float radius,
+        float transitionDuration = 5f)
     {
         Source = source;
         SourceKind = sourceKind;
         Center = center;
         Radius = radius;
+        TransitionDuration = Mathf.Max(0f, transitionDuration);
         SourceId = source != null ? source.GetInstanceID() : 0;
     }
 
@@ -23,6 +29,7 @@ public struct LitInfluenceInfo
     public LitInfluenceSourceKind SourceKind { get; }
     public Vector3 Center { get; }
     public float Radius { get; }
+    public float TransitionDuration { get; }
     public int SourceId { get; }
     public GameObject SourceObject => Source != null ? Source.gameObject : null;
 }
@@ -41,6 +48,8 @@ public class LitInfluenceSource
     private bool enabled = true;
     [SerializeField, Min(0f), Tooltip("Rayon monde de l'influence lumineuse.")]
     private float radius = 5f;
+    [SerializeField, Min(0f), Tooltip("Duree en secondes du fondu entre la glace et l'apparence revelee.")]
+    private float transitionDuration = 5f;
     [SerializeField, Tooltip("Centre local de la zone d'influence.")]
     private Vector3 center = Vector3.zero;
     [SerializeField, Tooltip("Layers scannes pour trouver les objets qui peuvent reagir a la lumiere.")]
@@ -58,9 +67,9 @@ public class LitInfluenceSource
     private readonly HashSet<ILitInfluenceReceiver> activeReceivers = new HashSet<ILitInfluenceReceiver>();
     private readonly HashSet<ILitInfluenceReceiver> scannedReceivers = new HashSet<ILitInfluenceReceiver>();
     private readonly List<ILitInfluenceReceiver> removalBuffer = new List<ILitInfluenceReceiver>();
-    private readonly HashSet<Renderer> activeAgeRenderers = new HashSet<Renderer>();
-    private readonly HashSet<Renderer> scannedAgeRenderers = new HashSet<Renderer>();
-    private readonly List<Renderer> ageRendererRemovalBuffer = new List<Renderer>();
+    private readonly HashSet<Renderer> activeMaterialRenderers = new HashSet<Renderer>();
+    private readonly HashSet<Renderer> scannedMaterialRenderers = new HashSet<Renderer>();
+    private readonly List<Renderer> materialRendererRemovalBuffer = new List<Renderer>();
     private float nextScanTime;
 
     public LitInfluenceSource()
@@ -74,6 +83,7 @@ public class LitInfluenceSource
 
     public bool Enabled => enabled;
     public float Radius => radius;
+    public float TransitionDuration => transitionDuration;
     public Vector3 Center => center;
     public bool DrawDebugGizmos => drawDebugGizmos;
 
@@ -127,7 +137,7 @@ public class LitInfluenceSource
 
     public void Clear(MonoBehaviour owner, LitInfluenceSourceKind sourceKind)
     {
-        if (activeReceivers.Count == 0 && activeAgeRenderers.Count == 0)
+        if (activeReceivers.Count == 0 && activeMaterialRenderers.Count == 0)
         {
             return;
         }
@@ -150,7 +160,7 @@ public class LitInfluenceSource
             receiver.OnLitInfluenceExit(info);
         }
 
-        ClearMaterialAgeInfluence(info);
+        ClearMaterialInfluence(info);
         activeReceivers.Clear();
         scannedReceivers.Clear();
         removalBuffer.Clear();
@@ -172,7 +182,7 @@ public class LitInfluenceSource
     private void Scan(MonoBehaviour owner, LitInfluenceSourceKind sourceKind)
     {
         scannedReceivers.Clear();
-        scannedAgeRenderers.Clear();
+        scannedMaterialRenderers.Clear();
 
         Transform ownerTransform = owner.transform;
         Vector3 worldCenter = GetWorldCenter(ownerTransform);
@@ -194,13 +204,10 @@ public class LitInfluenceSource
             }
 
             AddReceivers(hit);
-            if (sourceKind == LitInfluenceSourceKind.AncientFlame)
-            {
-                AddAgeRenderers(hit);
-            }
+            AddMaterialRenderers(hit);
         }
 
-        LitInfluenceInfo info = new LitInfluenceInfo(owner, sourceKind, worldCenter, radius);
+        LitInfluenceInfo info = new LitInfluenceInfo(owner, sourceKind, worldCenter, radius, transitionDuration);
 
         foreach (ILitInfluenceReceiver receiver in scannedReceivers)
         {
@@ -238,7 +245,7 @@ public class LitInfluenceSource
             }
         }
 
-        UpdateMaterialAgeInfluence(info);
+        UpdateMaterialInfluence(info);
         removalBuffer.Clear();
     }
 
@@ -264,18 +271,18 @@ public class LitInfluenceSource
         }
     }
 
-    private void AddAgeRenderers(Collider hit)
+    private void AddMaterialRenderers(Collider hit)
     {
         if (hit == null)
         {
             return;
         }
 
-        AddAgeRenderers(hit.GetComponentsInParent<Renderer>(true));
-        AddAgeRenderers(hit.GetComponentsInChildren<Renderer>(true));
+        AddMaterialRenderers(hit.GetComponentsInParent<Renderer>(true));
+        AddMaterialRenderers(hit.GetComponentsInChildren<Renderer>(true));
     }
 
-    private void AddAgeRenderers(Renderer[] renderers)
+    private void AddMaterialRenderers(Renderer[] renderers)
     {
         if (renderers == null)
         {
@@ -287,74 +294,74 @@ public class LitInfluenceSource
             Renderer renderer = renderers[i];
             if (renderer != null)
             {
-                scannedAgeRenderers.Add(renderer);
+                scannedMaterialRenderers.Add(renderer);
             }
         }
     }
 
-    private void UpdateMaterialAgeInfluence(LitInfluenceInfo info)
+    private void UpdateMaterialInfluence(LitInfluenceInfo info)
     {
-        if (info.SourceKind != LitInfluenceSourceKind.AncientFlame || info.SourceId == 0)
+        if (info.SourceId == 0)
         {
             return;
         }
 
-        foreach (Renderer renderer in scannedAgeRenderers)
+        foreach (Renderer renderer in scannedMaterialRenderers)
         {
             if (!IsRendererAlive(renderer))
             {
                 continue;
             }
 
-            activeAgeRenderers.Add(renderer);
-            FlameInfluenceMaterialRuntime.RegisterOrUpdate(info.SourceId, info.Center, renderer);
+            activeMaterialRenderers.Add(renderer);
+            FlameInfluenceMaterialRuntime.RegisterOrUpdate(info, renderer);
         }
 
-        ageRendererRemovalBuffer.Clear();
-        foreach (Renderer renderer in activeAgeRenderers)
+        materialRendererRemovalBuffer.Clear();
+        foreach (Renderer renderer in activeMaterialRenderers)
         {
-            if (!scannedAgeRenderers.Contains(renderer))
+            if (!scannedMaterialRenderers.Contains(renderer))
             {
-                ageRendererRemovalBuffer.Add(renderer);
+                materialRendererRemovalBuffer.Add(renderer);
             }
         }
 
-        for (int i = 0; i < ageRendererRemovalBuffer.Count; i++)
+        for (int i = 0; i < materialRendererRemovalBuffer.Count; i++)
         {
-            Renderer renderer = ageRendererRemovalBuffer[i];
-            activeAgeRenderers.Remove(renderer);
+            Renderer renderer = materialRendererRemovalBuffer[i];
+            activeMaterialRenderers.Remove(renderer);
             FlameInfluenceMaterialRuntime.Unregister(info.SourceId, renderer);
         }
 
-        ageRendererRemovalBuffer.Clear();
-        scannedAgeRenderers.Clear();
+        materialRendererRemovalBuffer.Clear();
+        scannedMaterialRenderers.Clear();
     }
 
-    private void ClearMaterialAgeInfluence(LitInfluenceInfo info)
+    private void ClearMaterialInfluence(LitInfluenceInfo info)
     {
-        if (info.SourceKind != LitInfluenceSourceKind.AncientFlame || info.SourceId == 0)
+        if (info.SourceId == 0)
         {
-            activeAgeRenderers.Clear();
-            scannedAgeRenderers.Clear();
-            ageRendererRemovalBuffer.Clear();
+            activeMaterialRenderers.Clear();
+            scannedMaterialRenderers.Clear();
+            materialRendererRemovalBuffer.Clear();
             return;
         }
 
-        foreach (Renderer renderer in activeAgeRenderers)
+        foreach (Renderer renderer in activeMaterialRenderers)
         {
             FlameInfluenceMaterialRuntime.Unregister(info.SourceId, renderer);
         }
 
-        activeAgeRenderers.Clear();
-        scannedAgeRenderers.Clear();
-        ageRendererRemovalBuffer.Clear();
+        activeMaterialRenderers.Clear();
+        scannedMaterialRenderers.Clear();
+        materialRendererRemovalBuffer.Clear();
     }
 
     private LitInfluenceInfo CreateInfo(MonoBehaviour owner, LitInfluenceSourceKind sourceKind)
     {
         Transform ownerTransform = owner != null ? owner.transform : null;
         Vector3 worldCenter = ownerTransform != null ? GetWorldCenter(ownerTransform) : center;
-        return new LitInfluenceInfo(owner, sourceKind, worldCenter, radius);
+        return new LitInfluenceInfo(owner, sourceKind, worldCenter, radius, transitionDuration);
     }
 
     private static bool IsReceiverAlive(ILitInfluenceReceiver receiver)
@@ -383,21 +390,42 @@ internal static class FlameInfluenceMaterialRuntime
     private struct SourceInfluence
     {
         public int SourceId;
+        public LitInfluenceSourceKind SourceKind;
         public Vector3 Center;
+        public float Radius;
+        public float TransitionDuration;
+        public float TransitionProgress;
+        public bool Active;
     }
 
     private static readonly Dictionary<Renderer, List<SourceInfluence>> rendererInfluences = new Dictionary<Renderer, List<SourceInfluence>>();
     private static readonly List<Renderer> staleRenderers = new List<Renderer>();
     private static readonly int ageCenterPropertyId = Shader.PropertyToID("_AgeCenter");
     private static readonly int ageAmountPropertyId = Shader.PropertyToID("_AgeAmount");
+    private static readonly int flameCenterPropertyId = Shader.PropertyToID("_FlameCenter");
+    private static readonly int flameRadiusPropertyId = Shader.PropertyToID("_FlameInfluenceRadius");
+    private static readonly int transitionProgressPropertyId = Shader.PropertyToID("_TransitionProgress");
     private static MaterialPropertyBlock propertyBlock;
+    private static FlameInfluenceMaterialUpdater updater;
 
-    public static void RegisterOrUpdate(int sourceId, Vector3 sourceCenter, Renderer renderer)
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetState()
     {
+        rendererInfluences.Clear();
+        staleRenderers.Clear();
+        propertyBlock = null;
+        updater = null;
+    }
+
+    public static void RegisterOrUpdate(LitInfluenceInfo info, Renderer renderer)
+    {
+        int sourceId = info.SourceId;
         if (sourceId == 0 || renderer == null)
         {
             return;
         }
+
+        EnsureUpdater();
 
         if (!rendererInfluences.TryGetValue(renderer, out List<SourceInfluence> influences))
         {
@@ -414,7 +442,15 @@ internal static class FlameInfluenceMaterialRuntime
                 continue;
             }
 
-            influence.Center = sourceCenter;
+            influence.SourceKind = info.SourceKind;
+            influence.Center = info.Center;
+            influence.Radius = Mathf.Max(0f, info.Radius);
+            influence.TransitionDuration = Mathf.Max(0f, info.TransitionDuration);
+            influence.Active = true;
+            if (influence.TransitionDuration <= 0f)
+            {
+                influence.TransitionProgress = 1f;
+            }
             influences[i] = influence;
             updated = true;
             break;
@@ -425,11 +461,16 @@ internal static class FlameInfluenceMaterialRuntime
             influences.Add(new SourceInfluence
             {
                 SourceId = sourceId,
-                Center = sourceCenter
+                SourceKind = info.SourceKind,
+                Center = info.Center,
+                Radius = Mathf.Max(0f, info.Radius),
+                TransitionDuration = Mathf.Max(0f, info.TransitionDuration),
+                TransitionProgress = info.TransitionDuration <= 0f ? 1f : 0f,
+                Active = true
             });
         }
 
-        ApplyBestInfluence(renderer, influences);
+        ApplyBestInfluence(renderer, influences, info.SourceKind == LitInfluenceSourceKind.AncientFlame);
     }
 
     public static void Unregister(int sourceId, Renderer renderer)
@@ -444,22 +485,94 @@ internal static class FlameInfluenceMaterialRuntime
             return;
         }
 
+        bool removedAncientFlame = false;
         for (int i = influences.Count - 1; i >= 0; i--)
         {
-            if (influences[i].SourceId == sourceId)
+            SourceInfluence influence = influences[i];
+            if (influence.SourceId == sourceId)
             {
-                influences.RemoveAt(i);
+                removedAncientFlame |= influence.SourceKind == LitInfluenceSourceKind.AncientFlame;
+                influence.Active = false;
+                if (influence.TransitionDuration <= 0f || influence.TransitionProgress <= 0f)
+                {
+                    influences.RemoveAt(i);
+                }
+                else
+                {
+                    influences[i] = influence;
+                }
             }
         }
 
         if (influences.Count == 0)
         {
             rendererInfluences.Remove(renderer);
-            ClearInfluence(renderer);
+            ClearInfluence(renderer, removedAncientFlame);
             return;
         }
 
-        ApplyBestInfluence(renderer, influences);
+        ApplyBestInfluence(renderer, influences, removedAncientFlame);
+    }
+
+    public static void UpdateTransitions(float deltaTime)
+    {
+        if (rendererInfluences.Count == 0)
+        {
+            return;
+        }
+
+        float safeDeltaTime = Mathf.Max(0f, deltaTime);
+        staleRenderers.Clear();
+        foreach (KeyValuePair<Renderer, List<SourceInfluence>> entry in rendererInfluences)
+        {
+            Renderer renderer = entry.Key;
+            List<SourceInfluence> influences = entry.Value;
+            if (renderer == null)
+            {
+                staleRenderers.Add(renderer);
+                continue;
+            }
+
+            bool changed = false;
+            for (int i = influences.Count - 1; i >= 0; i--)
+            {
+                SourceInfluence influence = influences[i];
+                float target = influence.Active ? 1f : 0f;
+                float step = influence.TransitionDuration <= 0f
+                    ? 1f
+                    : safeDeltaTime / influence.TransitionDuration;
+                float progress = Mathf.MoveTowards(influence.TransitionProgress, target, step);
+                if (!Mathf.Approximately(progress, influence.TransitionProgress))
+                {
+                    influence.TransitionProgress = progress;
+                    influences[i] = influence;
+                    changed = true;
+                }
+
+                if (!influence.Active && influence.TransitionProgress <= 0f)
+                {
+                    influences.RemoveAt(i);
+                    changed = true;
+                }
+            }
+
+            if (influences.Count == 0)
+            {
+                ClearInfluence(renderer, false);
+                staleRenderers.Add(renderer);
+            }
+            else if (changed)
+            {
+                ApplyBestInfluence(renderer, influences, false);
+            }
+        }
+
+        for (int i = 0; i < staleRenderers.Count; i++)
+        {
+            rendererInfluences.Remove(staleRenderers[i]);
+        }
+
+        staleRenderers.Clear();
     }
 
     public static void CleanupStaleRenderers()
@@ -481,66 +594,173 @@ internal static class FlameInfluenceMaterialRuntime
         staleRenderers.Clear();
     }
 
-    private static void ApplyBestInfluence(Renderer renderer, List<SourceInfluence> influences)
+    private static void ApplyBestInfluence(
+        Renderer renderer,
+        List<SourceInfluence> influences,
+        bool refreshAgeProperties)
     {
         if (renderer == null || influences == null || influences.Count == 0)
         {
             return;
         }
 
-        if (!TryResolveAgePropertySupport(renderer, out bool hasAgeCenter, out bool hasAgeAmount))
+        if (!TryResolvePropertySupport(
+                renderer,
+                out bool hasAgeCenter,
+                out bool hasAgeAmount,
+                out bool hasFlameCenter,
+                out bool hasFlameRadius,
+                out bool hasTransitionProgress))
         {
             return;
         }
 
         Vector3 reference = renderer.bounds.center;
-        SourceInfluence best = influences[0];
-        float bestDistanceSqr = (best.Center - reference).sqrMagnitude;
-        for (int i = 1; i < influences.Count; i++)
+        if (!TryGetClosestInfluence(influences, reference, false, true, out SourceInfluence bestFlame))
         {
-            SourceInfluence candidate = influences[i];
-            float distanceSqr = (candidate.Center - reference).sqrMagnitude;
-            if (distanceSqr < bestDistanceSqr)
-            {
-                best = candidate;
-                bestDistanceSqr = distanceSqr;
-            }
+            TryGetClosestInfluence(influences, reference, false, false, out bestFlame);
         }
 
-        ApplyAgeProperties(renderer, hasAgeCenter, hasAgeAmount, best.Center, ResolveCurrentAgeAmount());
+        Vector3 ageCenter = Vector3.zero;
+        if (refreshAgeProperties
+            && TryGetClosestInfluence(influences, reference, true, true, out SourceInfluence bestAncientFlame))
+        {
+            ageCenter = bestAncientFlame.Center;
+        }
+
+        ApplyProperties(
+            renderer,
+            refreshAgeProperties && hasAgeCenter,
+            refreshAgeProperties && hasAgeAmount,
+            ageCenter,
+            ResolveCurrentAgeAmount(),
+            hasFlameCenter,
+            hasFlameRadius,
+            bestFlame.Center,
+            bestFlame.Radius,
+            hasTransitionProgress,
+            bestFlame.TransitionProgress);
     }
 
-    private static void ClearInfluence(Renderer renderer)
+    private static void ClearInfluence(Renderer renderer, bool clearAgeProperties)
     {
-        if (renderer == null || !TryResolveAgePropertySupport(renderer, out bool hasAgeCenter, out bool hasAgeAmount))
+        if (renderer == null
+            || !TryResolvePropertySupport(
+                renderer,
+                out bool hasAgeCenter,
+                out bool hasAgeAmount,
+                out bool hasFlameCenter,
+                out bool hasFlameRadius,
+                out bool hasTransitionProgress))
         {
             return;
         }
 
-        ApplyAgeProperties(renderer, hasAgeCenter, hasAgeAmount, Vector3.zero, ResolveCurrentAgeAmount());
+        ApplyProperties(
+            renderer,
+            clearAgeProperties && hasAgeCenter,
+            clearAgeProperties && hasAgeAmount,
+            Vector3.zero,
+            ResolveCurrentAgeAmount(),
+            hasFlameCenter,
+            hasFlameRadius,
+            Vector3.zero,
+            0f,
+            hasTransitionProgress,
+            0f);
     }
 
-    private static void ApplyAgeProperties(
-        Renderer renderer,
-        bool hasAgeCenter,
-        bool hasAgeAmount,
-        Vector3 ageCenter,
-        float ageAmount)
+    private static bool TryGetClosestInfluence(
+        List<SourceInfluence> influences,
+        Vector3 reference,
+        bool ancientFlamesOnly,
+        bool activeOnly,
+        out SourceInfluence best)
     {
+        best = default;
+        bool found = false;
+        float bestDistanceSqr = float.PositiveInfinity;
+        for (int i = 0; i < influences.Count; i++)
+        {
+            SourceInfluence candidate = influences[i];
+            if (ancientFlamesOnly && candidate.SourceKind != LitInfluenceSourceKind.AncientFlame)
+            {
+                continue;
+            }
+
+            if (activeOnly && !candidate.Active)
+            {
+                continue;
+            }
+
+            if (!activeOnly && !candidate.Active && candidate.TransitionProgress <= 0f)
+            {
+                continue;
+            }
+
+            float distanceSqr = (candidate.Center - reference).sqrMagnitude;
+            if (!found || distanceSqr < bestDistanceSqr)
+            {
+                best = candidate;
+                bestDistanceSqr = distanceSqr;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
+    private static void ApplyProperties(
+        Renderer renderer,
+        bool writeAgeCenter,
+        bool writeAgeAmount,
+        Vector3 ageCenter,
+        float ageAmount,
+        bool writeFlameCenter,
+        bool writeFlameRadius,
+        Vector3 flameCenter,
+        float flameRadius,
+        bool writeTransitionProgress,
+        float transitionProgress)
+    {
+        if (!writeAgeCenter
+            && !writeAgeAmount
+            && !writeFlameCenter
+            && !writeFlameRadius
+            && !writeTransitionProgress)
+        {
+            return;
+        }
+
         if (propertyBlock == null)
         {
             propertyBlock = new MaterialPropertyBlock();
         }
 
         renderer.GetPropertyBlock(propertyBlock);
-        if (hasAgeCenter)
+        if (writeAgeCenter)
         {
             propertyBlock.SetVector(ageCenterPropertyId, ageCenter);
         }
 
-        if (hasAgeAmount)
+        if (writeAgeAmount)
         {
             propertyBlock.SetFloat(ageAmountPropertyId, ageAmount);
+        }
+
+        if (writeFlameCenter)
+        {
+            propertyBlock.SetVector(flameCenterPropertyId, flameCenter);
+        }
+
+        if (writeFlameRadius)
+        {
+            propertyBlock.SetFloat(flameRadiusPropertyId, Mathf.Max(0f, flameRadius));
+        }
+
+        if (writeTransitionProgress)
+        {
+            propertyBlock.SetFloat(transitionProgressPropertyId, Mathf.Clamp01(transitionProgress));
         }
 
         renderer.SetPropertyBlock(propertyBlock);
@@ -552,10 +772,19 @@ internal static class FlameInfluenceMaterialRuntime
         return manager != null ? manager.CurrentYear : AgeManager.DefaultStartYear;
     }
 
-    private static bool TryResolveAgePropertySupport(Renderer renderer, out bool hasAgeCenter, out bool hasAgeAmount)
+    private static bool TryResolvePropertySupport(
+        Renderer renderer,
+        out bool hasAgeCenter,
+        out bool hasAgeAmount,
+        out bool hasFlameCenter,
+        out bool hasFlameRadius,
+        out bool hasTransitionProgress)
     {
         hasAgeCenter = false;
         hasAgeAmount = false;
+        hasFlameCenter = false;
+        hasFlameRadius = false;
+        hasTransitionProgress = false;
 
         Material[] materials = renderer != null ? renderer.sharedMaterials : null;
         if (materials == null)
@@ -573,12 +802,46 @@ internal static class FlameInfluenceMaterialRuntime
 
             hasAgeCenter |= material.HasProperty(ageCenterPropertyId);
             hasAgeAmount |= material.HasProperty(ageAmountPropertyId);
-            if (hasAgeCenter && hasAgeAmount)
+            hasFlameCenter |= material.HasProperty(flameCenterPropertyId);
+            hasFlameRadius |= material.HasProperty(flameRadiusPropertyId);
+            hasTransitionProgress |= material.HasProperty(transitionProgressPropertyId);
+            if (hasAgeCenter
+                && hasAgeAmount
+                && hasFlameCenter
+                && hasFlameRadius
+                && hasTransitionProgress)
             {
                 return true;
             }
         }
 
-        return hasAgeCenter || hasAgeAmount;
+        return hasAgeCenter
+            || hasAgeAmount
+            || hasFlameCenter
+            || hasFlameRadius
+            || hasTransitionProgress;
+    }
+
+    private static void EnsureUpdater()
+    {
+        if (!Application.isPlaying || updater != null)
+        {
+            return;
+        }
+
+        var updaterObject = new GameObject("Lit Flame Material Transition Updater")
+        {
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        UnityEngine.Object.DontDestroyOnLoad(updaterObject);
+        updater = updaterObject.AddComponent<FlameInfluenceMaterialUpdater>();
+    }
+}
+
+internal sealed class FlameInfluenceMaterialUpdater : MonoBehaviour
+{
+    private void Update()
+    {
+        FlameInfluenceMaterialRuntime.UpdateTransitions(Time.deltaTime);
     }
 }

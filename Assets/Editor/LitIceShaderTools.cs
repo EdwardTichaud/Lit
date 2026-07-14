@@ -7,8 +7,11 @@ using UnityEngine.Rendering;
 
 internal static class LitIceShaderInstaller
 {
+    // Keep v1 and v2 import validation together so either graph failure is visible immediately.
     private const string GraphPath = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges.shadergraph";
     private const string MaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
+    private const string GraphV2Path = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v2.shadergraph";
+    private const string MaterialV2Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v2.mat";
     private const string StatusPath = "Temp/LitIceShaderGraphStatus.txt";
     private static bool s_Running;
 
@@ -35,6 +38,14 @@ internal static class LitIceShaderInstaller
             if (ShaderUtil.ShaderHasError(shader))
                 throw new InvalidOperationException("Shader Graph imported, but HDRP reported a shader compilation error.");
 
+            AssetDatabase.ImportAsset(GraphV2Path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            Shader shaderV2 = AssetDatabase.LoadAssetAtPath<Shader>(GraphV2Path);
+            if (shaderV2 == null)
+                throw new InvalidOperationException("Shader Graph v2 import returned a null shader.");
+
+            if (ShaderUtil.ShaderHasError(shaderV2))
+                throw new InvalidOperationException("Shader Graph v2 imported, but HDRP reported a shader compilation error.");
+
             Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
             if (material == null)
             {
@@ -48,9 +59,23 @@ internal static class LitIceShaderInstaller
                 EditorUtility.SetDirty(material);
             }
 
+            Material materialV2 = AssetDatabase.LoadAssetAtPath<Material>(MaterialV2Path);
+            if (materialV2 == null)
+            {
+                materialV2 = new Material(material) { name = "Material_LitIceFrostedEdges_v2" };
+                materialV2.shader = shaderV2;
+                ApplyV2Defaults(materialV2);
+                AssetDatabase.CreateAsset(materialV2, MaterialV2Path);
+            }
+            else if (materialV2.shader != shaderV2)
+            {
+                materialV2.shader = shaderV2;
+                EditorUtility.SetDirty(materialV2);
+            }
+
             AssetDatabase.SaveAssets();
             WriteStatus("OK");
-            Debug.Log("[Lit Ice] Shader Graph and material imported successfully.");
+            Debug.Log("[Lit Ice] Shader Graphs v1/v2 and their materials imported successfully.");
         }
         catch (Exception exception)
         {
@@ -101,6 +126,16 @@ internal static class LitIceShaderInstaller
         SetFloat(material, "_Metallic", 0.0f);
     }
 
+    private static void ApplyV2Defaults(Material material)
+    {
+        SetFloat(material, "_UseScaleTiling", 0.0f);
+        SetFloat(material, "_TilingMultiplier", 1.0f);
+        SetVector(material, "_FlameCenter", Vector4.zero);
+        SetFloat(material, "_FlameInfluenceRadius", 0.0f);
+        SetFloat(material, "_TransitionSoftness", 0.5f);
+        SetFloat(material, "_TransitionProgress", 1.0f);
+    }
+
     private static void SetFloat(Material material, string property, float value)
     {
         if (material.HasProperty(property)) material.SetFloat(property, value);
@@ -128,6 +163,7 @@ internal static class LitIceEdgeMaskBaker
     private const string BakedVersionSuffix = "_IceEdgesV2";
     private const string OutputFolder = "Assets/Materials/IceShader/BakedMeshes";
     private const string IceMaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
+    private const string IceMaterialV2Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v2.mat";
     private const string BakeAllMenu = "Lit/Shadergraph/Bake Edge Mask On All Material_LitIceFrostedEdges";
 
     [MenuItem("Lit/Shadergraph/Bake Edge Mask On Selected Meshes", true)]
@@ -177,18 +213,24 @@ internal static class LitIceEdgeMaskBaker
     [MenuItem(BakeAllMenu, true)]
     private static bool CanBakeAllMaterialUsers()
     {
-        return AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath) != null;
+        return AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath) != null
+            || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path) != null;
     }
 
     [MenuItem(BakeAllMenu)]
     private static void BakeAllMaterialUsers()
     {
         Material iceMaterial = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath);
-        if (iceMaterial == null)
+        Material iceMaterialV2 = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path);
+        if (iceMaterial == null && iceMaterialV2 == null)
         {
-            Debug.LogError($"[Lit Ice] Material not found at {IceMaterialPath}.");
+            Debug.LogError($"[Lit Ice] No v1/v2 Lit Ice material was found.");
             return;
         }
+
+        var iceMaterials = new HashSet<Material>();
+        if (iceMaterial != null) iceMaterials.Add(iceMaterial);
+        if (iceMaterialV2 != null) iceMaterials.Add(iceMaterialV2);
 
         EnsureOutputFolder();
         var bakedBySource = new Dictionary<Mesh, Mesh>();
@@ -198,7 +240,7 @@ internal static class LitIceEdgeMaskBaker
 
         foreach (Renderer renderer in Resources.FindObjectsOfTypeAll<Renderer>())
         {
-            if (!IsEditableSceneRenderer(renderer) || !UsesMaterial(renderer, iceMaterial))
+            if (!IsEditableSceneRenderer(renderer) || !UsesAnyMaterial(renderer, iceMaterials))
                 continue;
 
             Mesh source = GetSharedMesh(renderer);
@@ -246,10 +288,10 @@ internal static class LitIceEdgeMaskBaker
             && renderer.gameObject.scene.isLoaded;
     }
 
-    private static bool UsesMaterial(Renderer renderer, Material material)
+    private static bool UsesAnyMaterial(Renderer renderer, HashSet<Material> materials)
     {
         foreach (Material sharedMaterial in renderer.sharedMaterials)
-            if (sharedMaterial == material)
+            if (sharedMaterial != null && materials.Contains(sharedMaterial))
                 return true;
         return false;
     }
