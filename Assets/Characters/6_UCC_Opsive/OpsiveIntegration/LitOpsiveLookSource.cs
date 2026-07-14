@@ -15,10 +15,16 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
     private float lookDirectionDistance = 100f;
     [SerializeField, Tooltip("Fallback height above this transform when no head/look transform is assigned.")]
     private float fallbackLookHeight = 1.6f;
+    [SerializeField, Tooltip("Reports and preserves a world-space planar direction instead of inheriting the character parent's rotation.")]
+    private bool useStableWorldPlanarDirection = true;
+    [SerializeField, Tooltip("Optional yaw correction for characters whose authored visual forward differs from the gameplay root.")]
+    private float planarDirectionYawOffset = 0f;
 
     private bool attached;
     private bool started;
     private int attachRetryFramesRemaining = InitialAttachRetryFrames;
+    private Vector3 stableWorldPlanarDirection;
+    private bool hasStableWorldPlanarDirection;
 
     private const int InitialAttachRetryFrames = 8;
 
@@ -75,7 +81,9 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
             return;
         }
 
-        transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+        stableWorldPlanarDirection = ApplyYawOffset(direction.normalized);
+        hasStableWorldPlanarDirection = true;
+        RefreshStableWorldRotation();
     }
 
     public Vector3 LookPosition(bool characterLookPosition)
@@ -90,17 +98,18 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
 
     public Vector3 LookDirection(bool characterLookDirection)
     {
-        return transform.forward;
+        return ResolveReportedLookDirection();
     }
 
     public Vector3 LookDirection(Vector3 lookPosition, bool characterLookDirection, int layerMask, bool includeRecoil, bool includeMovementSpread)
     {
-        return transform.forward;
+        return ResolveReportedLookDirection();
     }
 
     private void Awake()
     {
         ResolveDefaults();
+        EnsureStableWorldPlanarDirection();
     }
 
     private void OnEnable()
@@ -121,6 +130,8 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
 
     private void FixedUpdate()
     {
+        RefreshStableWorldRotation();
+
         if (attachRetryFramesRemaining > 0)
         {
             attachRetryFramesRemaining--;
@@ -132,6 +143,16 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
         {
             AttachToCharacter();
         }
+    }
+
+    private void Update()
+    {
+        RefreshStableWorldRotation();
+    }
+
+    private void LateUpdate()
+    {
+        RefreshStableWorldRotation();
     }
 
     private void OnApplicationFocus(bool hasFocus)
@@ -175,6 +196,62 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
             {
                 lookTransform = animator.GetBoneTransform(HumanBodyBones.Head);
             }
+        }
+    }
+
+    private Vector3 ResolveReportedLookDirection()
+    {
+        if (!useStableWorldPlanarDirection)
+        {
+            Vector3 transformDirection = transform.forward;
+            transformDirection.y = 0f;
+            return transformDirection.sqrMagnitude > 0.0001f ? transformDirection.normalized : Vector3.forward;
+        }
+
+        EnsureStableWorldPlanarDirection();
+        return stableWorldPlanarDirection.sqrMagnitude > 0.0001f
+            ? stableWorldPlanarDirection
+            : Vector3.forward;
+    }
+
+    private void EnsureStableWorldPlanarDirection()
+    {
+        if (hasStableWorldPlanarDirection && stableWorldPlanarDirection.sqrMagnitude > 0.0001f)
+        {
+            return;
+        }
+
+        Vector3 direction = eventTarget != null ? eventTarget.transform.forward : transform.forward;
+        direction.y = 0f;
+        stableWorldPlanarDirection = direction.sqrMagnitude > 0.0001f
+            ? ApplyYawOffset(direction.normalized)
+            : Vector3.forward;
+        hasStableWorldPlanarDirection = true;
+    }
+
+    private Vector3 ApplyYawOffset(Vector3 direction)
+    {
+        if (Mathf.Abs(planarDirectionYawOffset) <= 0.001f)
+        {
+            return direction;
+        }
+
+        Vector3 rotated = Quaternion.AngleAxis(planarDirectionYawOffset, Vector3.up) * direction;
+        rotated.y = 0f;
+        return rotated.sqrMagnitude > 0.0001f ? rotated.normalized : direction;
+    }
+
+    private void RefreshStableWorldRotation()
+    {
+        if (!useStableWorldPlanarDirection)
+        {
+            return;
+        }
+
+        Vector3 direction = ResolveReportedLookDirection();
+        if (direction.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
         }
     }
 

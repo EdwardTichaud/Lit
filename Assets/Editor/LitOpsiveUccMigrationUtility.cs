@@ -23,6 +23,11 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianRootMotionRotationMultiplier = 1.08f;
     private const bool LucianPreferLookSourceRotationForRootMotionLocomotion = true;
     private const bool LucianAllowRootMotionRotationDuringStartStop = false;
+    private const bool LucianUseLookSourceForwardInputForRootMotion = true;
+    private const bool LucianUseStableWorldPlanarLookSource = true;
+    private const float LucianLookSourcePlanarYawOffset = 0f;
+    private const bool LucianSuppressIdleRootMotionPosition = true;
+    private const float LucianIdleRootMotionVelocityThreshold = 0.06f;
     private const float LucianRootMotionLoopSpeedScale = 1f;
     private const float LucianRootMotionLoopRotationScale = 1f;
     private const float LucianRootMotionStartSpeedScale = 0.96f;
@@ -469,6 +474,14 @@ public static class LitOpsiveUccMigrationUtility
             serializedObject,
             "allowRootMotionRotationDuringStartStop",
             useRootMotionLocomotion && LucianAllowRootMotionRotationDuringStartStop);
+        SetSerializedBool(
+            serializedObject,
+            "suppressIdleRootMotionPosition",
+            useRootMotionLocomotion && LucianSuppressIdleRootMotionPosition);
+        SetSerializedFloat(
+            serializedObject,
+            "idleRootMotionVelocityThreshold",
+            LucianIdleRootMotionVelocityThreshold);
         SetSerializedBool(serializedObject, "useRootMotionPhaseMultipliers", useRootMotionLocomotion);
         SetSerializedFloat(
             serializedObject,
@@ -528,6 +541,10 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedBool(serializedObject, "restoreRootMotionSettingsOnDisable", true);
         SetSerializedBool(serializedObject, "refreshRootMotionSettingsEveryFrame", true);
         SetSerializedBool(serializedObject, "driveDirectionalRootMotionInput", useRootMotionLocomotion);
+        SetSerializedBool(
+            serializedObject,
+            "useLookSourceForwardInputForRootMotion",
+            useRootMotionLocomotion && LucianUseLookSourceForwardInputForRootMotion);
         SetSerializedString(serializedObject, "horizontalMovementParam", "HorizontalMovement");
         SetSerializedString(serializedObject, "forwardMovementParam", "ForwardMovement");
         SetSerializedFloat(serializedObject, "groundedRootMotionSpeedToBlend", LucianGroundedRootMotionSpeedToBlend);
@@ -915,6 +932,10 @@ public static class LitOpsiveUccMigrationUtility
         }
 
         lookSource.EventTarget = character;
+        SerializedObject serializedObject = new SerializedObject(lookSource);
+        SetSerializedBool(serializedObject, "useStableWorldPlanarDirection", LucianUseStableWorldPlanarLookSource);
+        SetSerializedFloat(serializedObject, "planarDirectionYawOffset", LucianLookSourcePlanarYawOffset);
+        serializedObject.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(lookSource);
     }
 
@@ -1220,6 +1241,11 @@ public static class LitOpsiveUccMigrationUtility
         {
             errors.Add($"{label} LitOpsiveLookSource EventTarget does not point to the character root.");
         }
+        else
+        {
+            ValidateSerializedBool(lookSource, "useStableWorldPlanarDirection", LucianUseStableWorldPlanarLookSource, errors);
+            ValidateSerializedFloat(lookSource, "planarDirectionYawOffset", LucianLookSourcePlanarYawOffset, errors);
+        }
 
         LitOpsiveLocomotionBridge bridge = character.GetComponent<LitOpsiveLocomotionBridge>();
         bool expectedRootMotionLocomotion = ShouldExpectRootMotionLocomotion(character, expectedAnimatorControllerPath, bridge);
@@ -1265,6 +1291,12 @@ public static class LitOpsiveUccMigrationUtility
             ValidateBridgeBoolean(bridge, label, "useRootMotionLocomotion", expectedRootMotionLocomotion, errors);
             ValidateBridgeBoolean(bridge, label, "refreshRootMotionSettingsEveryFrame", true, errors);
             ValidateBridgeBoolean(bridge, label, "driveDirectionalRootMotionInput", expectedRootMotionLocomotion, errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "useLookSourceForwardInputForRootMotion",
+                expectedRootMotionLocomotion && LucianUseLookSourceForwardInputForRootMotion,
+                errors);
             ValidateBridgeBoolean(bridge, label, "enableRootMotionPivotTurns", expectedRootMotionLocomotion, errors);
             ValidateBridgeString(bridge, label, "horizontalMovementParam", "HorizontalMovement", errors);
             ValidateBridgeString(bridge, label, "forwardMovementParam", "ForwardMovement", errors);
@@ -1290,6 +1322,13 @@ public static class LitOpsiveUccMigrationUtility
                 "allowRootMotionRotationDuringStartStop",
                 expectedRootMotionLocomotion && LucianAllowRootMotionRotationDuringStartStop,
                 errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "suppressIdleRootMotionPosition",
+                expectedRootMotionLocomotion && LucianSuppressIdleRootMotionPosition,
+                errors);
+            ValidateSerializedFloat(bridge, "idleRootMotionVelocityThreshold", LucianIdleRootMotionVelocityThreshold, errors);
             ValidateBridgeBoolean(bridge, label, "useRootMotionPhaseMultipliers", expectedRootMotionLocomotion, errors);
             ValidateSerializedFloat(
                 bridge,
@@ -1649,6 +1688,22 @@ public static class LitOpsiveUccMigrationUtility
         if (Mathf.Abs(property.floatValue - expected) > 0.001f)
         {
             errors.Add($"{target.GetType().Name} property '{propertyName}' should be {expected} but is {property.floatValue}.");
+        }
+    }
+
+    private static void ValidateSerializedBool(UnityEngine.Object target, string propertyName, bool expected, List<string> errors)
+    {
+        SerializedObject serializedObject = new SerializedObject(target);
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property == null)
+        {
+            errors.Add($"{target.GetType().Name} serialized property missing: {propertyName}.");
+            return;
+        }
+
+        if (property.boolValue != expected)
+        {
+            errors.Add($"{target.GetType().Name} property '{propertyName}' should be {expected}.");
         }
     }
 

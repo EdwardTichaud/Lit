@@ -41,6 +41,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool preferLookSourceRotationForRootMotionLocomotion = true;
     [SerializeField, Tooltip("Allows authored root rotation during start/stop clips. Keep disabled when clips contain little or conflicting deltaRotation.")]
     private bool allowRootMotionRotationDuringStartStop = false;
+    [SerializeField, Tooltip("Zeros tiny idle root-motion displacement so authored idle drift cannot vibrate the capsule at rest.")]
+    private bool suppressIdleRootMotionPosition = true;
+    [SerializeField, Min(0f), Tooltip("Maximum planar speed still considered idle for root-motion drift suppression.")]
+    private float idleRootMotionVelocityThreshold = 0.06f;
     [SerializeField, Tooltip("Applies additional root-motion tuning based on the active grounded animation phase.")]
     private bool useRootMotionPhaseMultipliers = true;
     [SerializeField, Min(0f)] private float rootMotionLoopSpeedScale = 1f;
@@ -59,6 +63,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool refreshRootMotionSettingsEveryFrame = true;
     [SerializeField, Tooltip("Feeds local X/Y movement to UCC and the Animator so root-motion strafe/diagonal clips can blend in.")]
     private bool driveDirectionalRootMotionInput = true;
+    [SerializeField, Tooltip("When the look source already points toward movement, feeds UCC forward input to avoid double-rotating movement space.")]
+    private bool useLookSourceForwardInputForRootMotion = true;
     [SerializeField, Tooltip("Add Lit/UCC companion bridges at runtime so interaction, damage and follower systems can respect UCC state without prefab edits.")]
     private bool autoInstallCompanionBridges = true;
     [SerializeField, Range(0f, 0.5f)] private float movementDeadZone = 0.08f;
@@ -213,6 +219,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rootMotionStopRotationScale = Mathf.Max(0f, rootMotionStopRotationScale);
         rootMotionPivotSpeedScale = Mathf.Max(0f, rootMotionPivotSpeedScale);
         rootMotionPivotRotationScale = Mathf.Max(0f, rootMotionPivotRotationScale);
+        idleRootMotionVelocityThreshold = Mathf.Max(0f, idleRootMotionVelocityThreshold);
         groundReliefMinStepHeight = Mathf.Max(0f, groundReliefMinStepHeight);
         groundReliefMinSlopeLimit = Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f);
         groundReliefMinStickToGroundDistance = Mathf.Max(0f, groundReliefMinStickToGroundDistance);
@@ -925,9 +932,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             Vector3 direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
             direction.Normalize();
-            opsiveInput = ShouldUseDirectionalRootMotionInput()
-                ? ResolveLocalMoveInput(direction, magnitude)
-                : new Vector2(0f, magnitude);
             Vector3 lookDirection = direction;
             if (orientLookSourceFromMovement && lookSource != null)
             {
@@ -935,6 +939,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                 lookSource.SetPlanarLookDirection(lookDirection);
             }
 
+            opsiveInput = ResolveOpsiveMoveInput(direction, magnitude);
             lastPlanarDirection = lookDirection.sqrMagnitude > 0.0001f ? lookDirection : direction;
         }
 
@@ -956,6 +961,27 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool ShouldUseDirectionalRootMotionInput()
     {
         return driveDirectionalRootMotionInput && IsRootMotionLocomotionEnabled();
+    }
+
+    private Vector2 ResolveOpsiveMoveInput(Vector3 worldDirection, float magnitude)
+    {
+        float clampedMagnitude = Mathf.Clamp01(magnitude);
+        if (clampedMagnitude <= 0f)
+        {
+            return Vector2.zero;
+        }
+
+        if (!ShouldUseDirectionalRootMotionInput())
+        {
+            return new Vector2(0f, clampedMagnitude);
+        }
+
+        if (useLookSourceForwardInputForRootMotion && orientLookSourceFromMovement && lookSource != null)
+        {
+            return new Vector2(0f, clampedMagnitude);
+        }
+
+        return ResolveLocalMoveInput(worldDirection, clampedMagnitude);
     }
 
     private Vector2 ResolveLocalMoveInput(Vector3 worldDirection, float magnitude)
@@ -1444,9 +1470,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         RootMotionPhase phase = ResolveCurrentRootMotionPhase();
+        bool suppressIdlePosition = ShouldSuppressIdleRootMotionPosition(phase);
         bool useRootMotionRotation = ResolveUseRootMotionRotation(phase);
         locomotion.UseRootMotionPosition = true;
-        locomotion.RootMotionSpeedMultiplier = ResolveEffectiveRootMotionSpeedMultiplier(phase);
+        locomotion.RootMotionSpeedMultiplier = suppressIdlePosition
+            ? 0f
+            : ResolveEffectiveRootMotionSpeedMultiplier(phase);
         locomotion.UseRootMotionRotation = useRootMotionRotation;
         locomotion.RootMotionRotationMultiplier = useRootMotionRotation
             ? ResolveEffectiveRootMotionRotationMultiplier(phase)
@@ -1472,6 +1501,31 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         return allowRootMotionRotationDuringStartStop &&
                (phase == RootMotionPhase.Start || phase == RootMotionPhase.Stop);
+    }
+
+    private bool ShouldSuppressIdleRootMotionPosition(RootMotionPhase phase)
+    {
+        if (!suppressIdleRootMotionPosition ||
+            locomotion == null ||
+            !locomotion.Grounded ||
+            phase == RootMotionPhase.Start ||
+            phase == RootMotionPhase.Stop ||
+            phase == RootMotionPhase.Pivot)
+        {
+            return false;
+        }
+
+        float deadZoneSqr = movementDeadZone * movementDeadZone;
+        if (currentWorldMoveInput.sqrMagnitude > deadZoneSqr ||
+            desiredGroundedWorldMoveInput.sqrMagnitude > deadZoneSqr)
+        {
+            return false;
+        }
+
+        Vector3 planarVelocity = locomotion.Velocity;
+        planarVelocity.y = 0f;
+        float threshold = Mathf.Max(0f, idleRootMotionVelocityThreshold);
+        return planarVelocity.sqrMagnitude <= threshold * threshold;
     }
 
     private float ResolveEffectiveRootMotionSpeedMultiplier(RootMotionPhase phase)

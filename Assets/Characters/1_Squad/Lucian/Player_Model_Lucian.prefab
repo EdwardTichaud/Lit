@@ -2052,6 +2052,8 @@ MonoBehaviour:
   lookTransform: {fileID: 0}
   lookDirectionDistance: 100
   fallbackLookHeight: 1.6
+  useStableWorldPlanarDirection: 1
+  planarDirectionYawOffset: 0
 --- !u!1 &2642581467516400508
 GameObject:
   m_ObjectHideFlags: 0
@@ -3236,6 +3238,8 @@ MonoBehaviour:
   rootMotionRotationMultiplier: 1.08
   preferLookSourceRotationForRootMotionLocomotion: 1
   allowRootMotionRotationDuringStartStop: 0
+  suppressIdleRootMotionPosition: 1
+  idleRootMotionVelocityThreshold: 0.06
   useRootMotionPhaseMultipliers: 1
   rootMotionLoopSpeedScale: 1
   rootMotionLoopRotationScale: 1
@@ -3249,6 +3253,7 @@ MonoBehaviour:
   restoreRootMotionSettingsOnDisable: 1
   refreshRootMotionSettingsEveryFrame: 1
   driveDirectionalRootMotionInput: 1
+  useLookSourceForwardInputForRootMotion: 1
   autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
   jumpRetryWindow: 0.15
