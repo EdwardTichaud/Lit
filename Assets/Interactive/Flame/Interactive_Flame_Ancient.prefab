@@ -140,6 +140,7 @@ MonoBehaviour:
   litInfluence:
     enabled: 1
     radius: 6
+    transitionDuration: 5
     center: {x: 0, y: 0, z: 0}
     layerMask:
       serializedVersion: 2

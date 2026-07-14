@@ -77,6 +77,9 @@
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930119"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c693011a"
         }
     ],
     "m_Keywords": [],
@@ -203,6 +206,9 @@
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930419"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c693041a"
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930305"
@@ -592,6 +598,10 @@
         {
             "m_OutputSlot": { "m_Node": { "m_Id": "c0f4f7e77c28483dbb949a57c6930419" }, "m_SlotId": 0 },
             "m_InputSlot": { "m_Node": { "m_Id": "c0f4f7e77c28483dbb949a57c6930303" }, "m_SlotId": 31 }
+        },
+        {
+            "m_OutputSlot": { "m_Node": { "m_Id": "c0f4f7e77c28483dbb949a57c693041a" }, "m_SlotId": 0 },
+            "m_InputSlot": { "m_Node": { "m_Id": "c0f4f7e77c28483dbb949a57c6930303" }, "m_SlotId": 32 }
         }
     ],
     "m_VertexContext": {
@@ -1847,6 +1857,9 @@
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930119"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c693011a"
         }
     ]
 }
@@ -3068,6 +3081,9 @@
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930716"
+        },
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c693071d"
         },
         {
             "m_Id": "c0f4f7e77c28483dbb949a57c6930717"
@@ -4984,4 +5000,108 @@
     "m_DefaultValue": 1.0,
     "m_Labels": [],
     "m_LiteralMode": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c693011a",
+    "m_Guid": {
+        "m_GuidSerialized": "44444444-4444-4444-8444-9a57c693011a"
+    },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "NormalTexture",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "NormalTexture",
+    "m_DefaultReferenceName": "_NormalTexture",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": {
+        "m_SerializedTexture": "",
+        "m_Guid": ""
+    },
+    "isMainTexture": false,
+    "useTilingAndOffset": false,
+    "useTexelSize": true,
+    "isHDR": false,
+    "m_Modifiable": true,
+    "m_DefaultType": 3
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c693041a",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -880,
+            "y": 460,
+            "width": 180,
+            "height": 34
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "c0f4f7e77c28483dbb949a57c693061a"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": true,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "c0f4f7e77c28483dbb949a57c693011a"
+    }
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Texture2DMaterialSlot",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c693061a",
+    "m_Id": 0,
+    "m_DisplayName": "NormalTexture",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_BareResource": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Texture2DInputMaterialSlot",
+    "m_ObjectId": "c0f4f7e77c28483dbb949a57c693071d",
+    "m_Id": 32,
+    "m_DisplayName": "NormalTexture",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "NormalTexture",
+    "m_StageCapability": 3,
+    "m_BareResource": false,
+    "m_Texture": {
+        "m_SerializedTexture": "",
+        "m_Guid": ""
+    },
+    "m_DefaultType": 3
 }

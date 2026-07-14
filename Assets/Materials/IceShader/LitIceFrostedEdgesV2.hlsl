@@ -60,6 +60,7 @@ void LitIceFrostedEdgesV2_float(
     float4 UV0,
     UnityTexture2D BaseTexture,
     UnitySamplerState BaseSampler,
+    UnityTexture2D NormalTexture,
     float UseScaleTiling,
     float TilingMultiplier,
     float3 FlameCenter,
@@ -85,13 +86,14 @@ void LitIceFrostedEdgesV2_float(
     float2 baseUV = LitIceReplacementUV(
         PositionWS, NormalWS, BoundsSize, UV0, UseScaleTiling, TilingMultiplier);
     float4 baseAppearance = BaseTexture.Sample(BaseSampler, baseUV);
+    float3 baseNormalTS = UnpackNormal(NormalTexture.Sample(BaseSampler, baseUV));
     float flameMask = LitIceFlameMask(
         PositionWS, FlameCenter, FlameInfluenceRadius, TransitionSoftness);
     flameMask *= saturate(TransitionProgress);
 
     OutBaseColor = lerp(iceBaseColor, baseAppearance.rgb, flameMask);
     OutAlpha = lerp(iceAlpha, baseAppearance.a, flameMask);
-    OutNormalTS = normalize(lerp(iceNormalTS, float3(0.0, 0.0, 1.0), flameMask));
+    OutNormalTS = normalize(lerp(iceNormalTS, baseNormalTS, flameMask));
     OutEmission = lerp(iceEmission, float3(0.0, 0.0, 0.0), flameMask);
 }
 
@@ -118,6 +120,7 @@ void LitIceFrostedEdgesV2_half(
     half4 UV0,
     UnityTexture2D BaseTexture,
     UnitySamplerState BaseSampler,
+    UnityTexture2D NormalTexture,
     half UseScaleTiling,
     half TilingMultiplier,
     half3 FlameCenter,
@@ -138,7 +141,7 @@ void LitIceFrostedEdgesV2_half(
         IceScale, FrostWidth, CrackColor, Transparency, NormalStrength,
         EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, FresnelPower,
         FresnelIntensity, EmissionIntensity, EdgeBakedBoost,
-        BoundsSize, UV0, BaseTexture, BaseSampler, UseScaleTiling,
+        BoundsSize, UV0, BaseTexture, BaseSampler, NormalTexture, UseScaleTiling,
         TilingMultiplier, FlameCenter, FlameInfluenceRadius, TransitionSoftness,
         TransitionProgress,
         baseColor, alpha, normalTS, emission);

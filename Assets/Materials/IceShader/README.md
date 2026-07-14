@@ -42,11 +42,11 @@ still work through HDRP's dielectric specular reflection.
 
 ## Flame transition (v2)
 
-The v2 shader is available at **LIT > Ice > Lit Ice Frosted Edges V2**. Set **Base Texture** to the appearance that the flame must reveal. With **Use Scale Tiling** disabled, it uses UV0; when enabled, it uses the same dominant-face world projection as `ShaderGraph_MasterShader`. **Tiling Multiplier** controls the scale in both modes.
+The v2 shader is available at **LIT > Ice > Lit Ice Frosted Edges V2**. Set **Base Texture** to the colour appearance that the flame must reveal and **Normal Texture** to its tangent-space normal map. Both textures use exactly the same coordinates: with **Use Scale Tiling** disabled they use UV0; when enabled they use the same dominant-face world projection as `ShaderGraph_MasterShader`. **Tiling Multiplier** controls their shared scale in both modes. Import the Normal Texture as a Unity **Normal map**; leaving it empty uses a flat normal.
 
 Every lit regular flame and AncientFlame sends its world centre and real influence radius to compatible renderers. If several flames overlap a renderer, the closest one to the renderer bounds centre is used. Extinguishing a flame or leaving its area resets the v2 radius to zero. Regular flames never write `_AgeCenter` or `_AgeAmount`; the existing MasterShader age behaviour remains exclusive to AncientFlames.
 
-Inside **Flame Influence Radius**, the texture fully replaces the ice Base Color and Alpha, while the ice normal becomes flat and all frost/crack emission is removed. **Transition Softness** fades back to complete ice outside the radius. **Transition Progress** is the manual blend slider: `0` keeps complete ice and `1` reveals the complete base appearance. A radius of `0` disables the transition, including when softness is `0`.
+Inside **Flame Influence Radius**, Base Texture replaces the ice Base Color and Alpha, Normal Texture replaces the ice normal, and all frost/crack emission is removed. **Transition Softness** fades back to complete ice outside the radius. **Transition Progress** is the manual blend slider: `0` keeps complete ice and `1` reveals the complete base appearance. A radius of `0` disables the transition, including when softness is `0`.
 
 At runtime, each flame animates **Transition Progress** from `0` to `1`. The **Transition Duration** setting on its `LitInfluenceSource` is `5` seconds by default. Extinguishing the flame animates the same value back toward `0`; a duration of `0` makes both directions instantaneous.
 
