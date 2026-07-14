@@ -1,0 +1,15 @@
+{
+    "asset": "69ec1900f04ddf04c860a1fbb97cf18d",
+    "fileName": "019f5fc5-c33e-7b21-b072-8efe2edc06c0.mp3",
+    "prompt": "Create an original slow JRPG main theme for Lit: bittersweet and memorable, evoking a journey beneath glittering stars. Center it on one singable 8-bar leitmotif, first played by delicate solo harp, then passed to expressive violin, oboe and warm strings. Use a gentle 6/8 flow, no percussion, harp arpeggios, lyrical counterpoint, soft woodwinds, chamber strings and restrained French horn for warmth. Write late-Romantic harmony with suspensions, aching resolutions, modal color, subtle major/minor shifts and one graceful modulation. Convey nostalgia, wonder and tenderness—not grief: tears born from beauty, memory and fragile hope. Let the arrangement breathe through intimate pauses and natural dynamics. Build only to a moderate luminous swell, never epic or bombastic. Return to harp and solo violin, ending unresolved but peaceful, like a flame surviving through centuries. Optional distant wordless choir as texture only. No lyrics, drums, trailer hits, rhythmic ostinatos, electronics or heroic climax.",
+    "negativePrompt": "",
+    "model": "google-lyria-3-pro",
+    "modelName": "Google Lyria 3 Pro",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "duration": 10.0,
+    "autoTrim": false,
+    "hasReference": false,
+    "voice": ""
+}
