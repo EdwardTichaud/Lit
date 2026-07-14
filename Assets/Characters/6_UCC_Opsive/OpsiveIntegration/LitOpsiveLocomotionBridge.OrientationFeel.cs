@@ -41,6 +41,22 @@ public partial class LitOpsiveLocomotionBridge
         hasSmoothedPlanarLookDirection = true;
     }
 
+    private void ForceOrientationLookDirection(Vector3 direction)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        smoothedPlanarLookDirection = direction.normalized;
+        hasSmoothedPlanarLookDirection = true;
+        if (orientLookSourceFromMovement && lookSource != null)
+        {
+            lookSource.SetPlanarLookDirection(smoothedPlanarLookDirection);
+        }
+    }
+
     private Vector3 ResolveOrientationLookDirection(Vector3 targetDirection, float inputMagnitude)
     {
         targetDirection.y = 0f;

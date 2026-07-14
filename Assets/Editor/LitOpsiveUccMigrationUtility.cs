@@ -44,15 +44,24 @@ public static class LitOpsiveUccMigrationUtility
     private const float LucianRootMotionMovingStickToGroundDistance = 0.86f;
     private const float LucianRootMotionIdleStickToGroundDistance = 0.64f;
     private const float LucianRootMotionGroundReliefAdaptationSpeed = 7.5f;
+    private const float LucianGroundedInputAcceleration = 5.5f;
+    private const float LucianGroundedSprintInputAcceleration = 4.1f;
+    private const float LucianGroundedInputDeceleration = 8.2f;
+    private const float LucianGroundedDirectionChangeAcceleration = 10.5f;
+    private const float LucianGroundedAnimatorSpeedRiseRate = 11f;
+    private const float LucianGroundedAnimatorSpeedFallRate = 8f;
+    private const float LucianGroundedAnimatorTurnRate = 6.5f;
     private const float LucianGroundedRootMotionSpeedToBlend = 0.22f;
-    private const float LucianGroundedMoveTransitionDirectionHoldTime = 0.28f;
-    private const float LucianGroundedMoveTransitionParameterSpeed = 1.35f;
+    private const float LucianGroundedMoveTransitionDirectionHoldTime = 0.34f;
+    private const float LucianGroundedMoveTransitionParameterSpeed = 1.15f;
     private const float LucianGroundedPivotMinAngle = 65f;
     private const float LucianGroundedPivot180Angle = 135f;
     private const float LucianGroundedPivotMaxSpeed = 0.45f;
     private const float LucianGroundedPivotMaxSmoothedInput = 0.24f;
-    private const float LucianGroundedPivotHoldTime = 0.32f;
+    private const float LucianGroundedPivotHoldTime = 0.42f;
     private const float LucianGroundedPivotCooldown = 0.28f;
+    private const bool LucianCommitRootRotationDuringPivot = true;
+    private const float LucianGroundedPivotRotationCommitRate = 720f;
     private const float LucianOrientationInputDeadZone = 0.14f;
     private const float LucianOrientationWalkTurnRate = 520f;
     private const float LucianOrientationSprintTurnRate = 420f;
@@ -547,6 +556,16 @@ public static class LitOpsiveUccMigrationUtility
             useRootMotionLocomotion && LucianUseLookSourceForwardInputForRootMotion);
         SetSerializedString(serializedObject, "horizontalMovementParam", "HorizontalMovement");
         SetSerializedString(serializedObject, "forwardMovementParam", "ForwardMovement");
+        SetSerializedFloat(serializedObject, "groundedInputAcceleration", LucianGroundedInputAcceleration);
+        SetSerializedFloat(serializedObject, "groundedSprintInputAcceleration", LucianGroundedSprintInputAcceleration);
+        SetSerializedFloat(serializedObject, "groundedInputDeceleration", LucianGroundedInputDeceleration);
+        SetSerializedFloat(
+            serializedObject,
+            "groundedDirectionChangeAcceleration",
+            LucianGroundedDirectionChangeAcceleration);
+        SetSerializedFloat(serializedObject, "groundedAnimatorSpeedRiseRate", LucianGroundedAnimatorSpeedRiseRate);
+        SetSerializedFloat(serializedObject, "groundedAnimatorSpeedFallRate", LucianGroundedAnimatorSpeedFallRate);
+        SetSerializedFloat(serializedObject, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate);
         SetSerializedFloat(serializedObject, "groundedRootMotionSpeedToBlend", LucianGroundedRootMotionSpeedToBlend);
         SetSerializedFloat(
             serializedObject,
@@ -563,6 +582,11 @@ public static class LitOpsiveUccMigrationUtility
         SetSerializedFloat(serializedObject, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput);
         SetSerializedFloat(serializedObject, "groundedPivotHoldTime", LucianGroundedPivotHoldTime);
         SetSerializedFloat(serializedObject, "groundedPivotCooldown", LucianGroundedPivotCooldown);
+        SetSerializedBool(serializedObject, "commitRootRotationDuringPivot", LucianCommitRootRotationDuringPivot);
+        SetSerializedFloat(
+            serializedObject,
+            "groundedPivotRotationCommitRate",
+            LucianGroundedPivotRotationCommitRate);
         SetSerializedBool(serializedObject, "enableCinematicOrientationFeel", useRootMotionLocomotion);
         SetSerializedFloat(serializedObject, "orientationInputDeadZone", LucianOrientationInputDeadZone);
         SetSerializedFloat(serializedObject, "orientationWalkTurnRate", LucianOrientationWalkTurnRate);
@@ -1401,6 +1425,29 @@ public static class LitOpsiveUccMigrationUtility
                 "rootMotionGroundReliefAdaptationSpeed",
                 LucianRootMotionGroundReliefAdaptationSpeed,
                 errors);
+            ValidateSerializedFloat(bridge, "groundedInputAcceleration", LucianGroundedInputAcceleration, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedSprintInputAcceleration",
+                LucianGroundedSprintInputAcceleration,
+                errors);
+            ValidateSerializedFloat(bridge, "groundedInputDeceleration", LucianGroundedInputDeceleration, errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedDirectionChangeAcceleration",
+                LucianGroundedDirectionChangeAcceleration,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedAnimatorSpeedRiseRate",
+                LucianGroundedAnimatorSpeedRiseRate,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedAnimatorSpeedFallRate",
+                LucianGroundedAnimatorSpeedFallRate,
+                errors);
+            ValidateSerializedFloat(bridge, "groundedAnimatorTurnRate", LucianGroundedAnimatorTurnRate, errors);
             ValidateSerializedFloat(
                 bridge,
                 "groundedMoveTransitionDirectionHoldTime",
@@ -1417,6 +1464,17 @@ public static class LitOpsiveUccMigrationUtility
             ValidateSerializedFloat(bridge, "groundedPivotMaxSmoothedInput", LucianGroundedPivotMaxSmoothedInput, errors);
             ValidateSerializedFloat(bridge, "groundedPivotHoldTime", LucianGroundedPivotHoldTime, errors);
             ValidateSerializedFloat(bridge, "groundedPivotCooldown", LucianGroundedPivotCooldown, errors);
+            ValidateBridgeBoolean(
+                bridge,
+                label,
+                "commitRootRotationDuringPivot",
+                LucianCommitRootRotationDuringPivot,
+                errors);
+            ValidateSerializedFloat(
+                bridge,
+                "groundedPivotRotationCommitRate",
+                LucianGroundedPivotRotationCommitRate,
+                errors);
             ValidateBridgeBoolean(
                 bridge,
                 label,

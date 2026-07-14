@@ -21,10 +21,10 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Min(0f)] private float groundedMovingPlatformForceDamping = 0.18f;
 
     [Header("Grounded Input Feel")]
-    [SerializeField, Min(0f)] private float groundedInputAcceleration = 6.5f;
-    [SerializeField, Min(0f)] private float groundedSprintInputAcceleration = 4.8f;
-    [SerializeField, Min(0f)] private float groundedInputDeceleration = 9.5f;
-    [SerializeField, Min(0f)] private float groundedDirectionChangeAcceleration = 13f;
+    [SerializeField, Min(0f)] private float groundedInputAcceleration = 5.5f;
+    [SerializeField, Min(0f)] private float groundedSprintInputAcceleration = 4.1f;
+    [SerializeField, Min(0f)] private float groundedInputDeceleration = 8.2f;
+    [SerializeField, Min(0f)] private float groundedDirectionChangeAcceleration = 10.5f;
     [SerializeField, Range(-1f, 1f)] private float groundedDirectionChangeDot = 0.2f;
 
     [Header("Grounded Sprint Feel")]
@@ -40,24 +40,27 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Min(0.01f)] private float groundedAnimationSpeedToBlend = 0.48f;
     [SerializeField, Min(0.01f), Tooltip("Lower physical-speed feedback while root motion drives displacement, keeping animation selection input-led.")]
     private float groundedRootMotionSpeedToBlend = 0.22f;
-    [SerializeField, Min(0f)] private float groundedAnimatorSpeedRiseRate = 18f;
-    [SerializeField, Min(0f)] private float groundedAnimatorSpeedFallRate = 11f;
-    [SerializeField, Min(0f)] private float groundedAnimatorTurnRate = 9f;
+    [SerializeField, Min(0f)] private float groundedAnimatorSpeedRiseRate = 11f;
+    [SerializeField, Min(0f)] private float groundedAnimatorSpeedFallRate = 8f;
+    [SerializeField, Min(0f)] private float groundedAnimatorTurnRate = 6.5f;
     [SerializeField, Range(0f, 1f)] private float groundedTurnInPlaceThreshold = 0.55f;
     [SerializeField, Min(0f)] private float groundedTurnInPlaceMaxSpeed = 0.35f;
     [SerializeField, Min(0f)] private float groundedStopTriggerMinSpeed = 0.35f;
     [SerializeField, Min(0f), Tooltip("Keeps start/stop blend trees aimed after input or physical velocity drops to zero.")]
-    private float groundedMoveTransitionDirectionHoldTime = 0.28f;
+    private float groundedMoveTransitionDirectionHoldTime = 0.34f;
     [SerializeField, Min(0f), Tooltip("Minimum parameter radius used by directional start/stop blend trees while their direction is latched.")]
-    private float groundedMoveTransitionParameterSpeed = 1.35f;
+    private float groundedMoveTransitionParameterSpeed = 1.15f;
     [SerializeField, Tooltip("Uses root-motion turn clips when movement starts from a sharp angle change.")]
     private bool enableRootMotionPivotTurns = true;
     [SerializeField, Range(45f, 180f)] private float groundedPivotMinAngle = 65f;
     [SerializeField, Range(90f, 180f)] private float groundedPivot180Angle = 135f;
     [SerializeField, Min(0f)] private float groundedPivotMaxSpeed = 0.45f;
     [SerializeField, Range(0f, 1f)] private float groundedPivotMaxSmoothedInput = 0.24f;
-    [SerializeField, Min(0.05f)] private float groundedPivotHoldTime = 0.32f;
+    [SerializeField, Min(0.05f)] private float groundedPivotHoldTime = 0.42f;
     [SerializeField, Min(0f)] private float groundedPivotCooldown = 0.28f;
+    [SerializeField, Tooltip("Commits the gameplay root rotation toward the authored turn target so turn clips cannot visually rotate and then snap back.")]
+    private bool commitRootRotationDuringPivot = true;
+    [SerializeField, Min(1f)] private float groundedPivotRotationCommitRate = 720f;
 
     private Vector2 desiredGroundedWorldMoveInput;
     private Vector2 smoothedGroundedWorldMoveInput;
@@ -69,6 +72,8 @@ public partial class LitOpsiveLocomotionBridge
     private float groundedPivotHoldTimer;
     private float groundedPivotCooldownTimer;
     private float groundedPivotTurnValue;
+    private Vector3 groundedPivotTargetDirection;
+    private bool hasGroundedPivotTargetDirection;
     private Vector2 groundedMoveTransitionLocalDirection;
     private float groundedMoveTransitionDirectionTimer;
 
@@ -385,8 +390,11 @@ public partial class LitOpsiveLocomotionBridge
         {
             groundedPivotHoldTimer = Mathf.Max(0f, groundedPivotHoldTimer - deltaTime);
             groundedPivotActive = true;
+            ApplyGroundedPivotRotationCommit(deltaTime, forceComplete: false);
             if (groundedPivotHoldTimer <= 0f)
             {
+                ApplyGroundedPivotRotationCommit(deltaTime, forceComplete: true);
+                CommitGroundedPivotTargetDirection();
                 groundedPivotActive = false;
                 groundedPivotCooldownTimer = Mathf.Max(groundedPivotCooldownTimer, groundedPivotCooldown);
             }
@@ -430,7 +438,8 @@ public partial class LitOpsiveLocomotionBridge
             return false;
         }
 
-        float signedAngle = Vector3.SignedAngle(transform.forward, targetDirection.normalized, Vector3.up);
+        targetDirection.Normalize();
+        float signedAngle = Vector3.SignedAngle(transform.forward, targetDirection, Vector3.up);
         float absAngle = Mathf.Abs(signedAngle);
         if (absAngle < groundedPivotMinAngle)
         {
@@ -443,9 +452,51 @@ public partial class LitOpsiveLocomotionBridge
         groundedPivotTurnValue = signedTurn;
         groundedPresentationTurn = signedTurn;
         groundedPresentationSpeed = 0f;
+        groundedPivotTargetDirection = targetDirection;
+        hasGroundedPivotTargetDirection = true;
+        CommitGroundedPivotTargetDirection();
         groundedPivotHoldTimer = Mathf.Max(0.05f, groundedPivotHoldTime);
         groundedPivotActive = true;
         return true;
+    }
+
+    private void ApplyGroundedPivotRotationCommit(float deltaTime, bool forceComplete)
+    {
+        if (!commitRootRotationDuringPivot ||
+            locomotion == null ||
+            !hasGroundedPivotTargetDirection ||
+            groundedPivotTargetDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        Quaternion targetRotation = Quaternion.LookRotation(groundedPivotTargetDirection.normalized, Vector3.up);
+        float angle = Quaternion.Angle(transform.rotation, targetRotation);
+        if (angle <= 0.05f)
+        {
+            return;
+        }
+
+        Quaternion nextRotation = forceComplete
+            ? targetRotation
+            : Quaternion.RotateTowards(
+                transform.rotation,
+                targetRotation,
+                Mathf.Max(1f, groundedPivotRotationCommitRate) * Mathf.Max(0.0001f, deltaTime));
+        locomotion.SetPositionAndRotation(transform.position, nextRotation, false, false);
+    }
+
+    private void CommitGroundedPivotTargetDirection()
+    {
+        if (!hasGroundedPivotTargetDirection ||
+            groundedPivotTargetDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        Vector3 direction = groundedPivotTargetDirection.normalized;
+        lastPlanarDirection = direction;
+        ForceOrientationLookDirection(direction);
     }
 
     private void UpdateGroundedMoveTriggers(float speed, Vector3 velocity)
@@ -575,6 +626,8 @@ public partial class LitOpsiveLocomotionBridge
         groundedPivotHoldTimer = 0f;
         groundedPivotCooldownTimer = 0f;
         groundedPivotTurnValue = 0f;
+        groundedPivotTargetDirection = Vector3.zero;
+        hasGroundedPivotTargetDirection = false;
     }
 
     private void ResetGroundedMoveTransitionDirection()

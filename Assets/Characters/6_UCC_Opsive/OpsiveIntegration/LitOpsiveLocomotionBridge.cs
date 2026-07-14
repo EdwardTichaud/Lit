@@ -1496,7 +1496,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (phase == RootMotionPhase.Pivot)
         {
-            return true;
+            return !commitRootRotationDuringPivot;
         }
 
         return allowRootMotionRotationDuringStartStop &&

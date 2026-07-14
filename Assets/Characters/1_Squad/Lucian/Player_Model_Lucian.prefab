@@ -3144,10 +3144,10 @@ MonoBehaviour:
   groundedMovingPlatformSeparationVelocity: 7
   groundedMovingPlatformDisconnectMultiplier: 0.65
   groundedMovingPlatformForceDamping: 0.18
-  groundedInputAcceleration: 6.5
-  groundedSprintInputAcceleration: 4.8
-  groundedInputDeceleration: 9.5
-  groundedDirectionChangeAcceleration: 13
+  groundedInputAcceleration: 5.5
+  groundedSprintInputAcceleration: 4.1
+  groundedInputDeceleration: 8.2
+  groundedDirectionChangeAcceleration: 10.5
   groundedDirectionChangeDot: 0.2
   tuneGroundedSprintSpeedChange: 1
   groundedSprintSpeedMultiplier: 1.65
@@ -3157,21 +3157,23 @@ MonoBehaviour:
   turnInPlaceParam: TurnInPlace
   groundedAnimationSpeedToBlend: 0.48
   groundedRootMotionSpeedToBlend: 0.22
-  groundedAnimatorSpeedRiseRate: 18
-  groundedAnimatorSpeedFallRate: 11
-  groundedAnimatorTurnRate: 9
+  groundedAnimatorSpeedRiseRate: 11
+  groundedAnimatorSpeedFallRate: 8
+  groundedAnimatorTurnRate: 6.5
   groundedTurnInPlaceThreshold: 0.55
   groundedTurnInPlaceMaxSpeed: 0.35
   groundedStopTriggerMinSpeed: 0.35
-  groundedMoveTransitionDirectionHoldTime: 0.28
-  groundedMoveTransitionParameterSpeed: 1.35
+  groundedMoveTransitionDirectionHoldTime: 0.34
+  groundedMoveTransitionParameterSpeed: 1.15
   enableRootMotionPivotTurns: 1
   groundedPivotMinAngle: 65
   groundedPivot180Angle: 135
   groundedPivotMaxSpeed: 0.45
   groundedPivotMaxSmoothedInput: 0.24
-  groundedPivotHoldTime: 0.32
+  groundedPivotHoldTime: 0.42
   groundedPivotCooldown: 0.28
+  commitRootRotationDuringPivot: 1
+  groundedPivotRotationCommitRate: 720
   enableCinematicOrientationFeel: 1
   orientationInputDeadZone: 0.14
   orientationWalkTurnRate: 520
