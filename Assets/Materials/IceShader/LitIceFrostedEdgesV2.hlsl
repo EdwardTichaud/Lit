@@ -63,6 +63,12 @@ void LitIceFrostedEdgesV2_float(
     UnityTexture2D BaseTexture,
     UnitySamplerState BaseSampler,
     UnityTexture2D NormalTexture,
+    UnityTexture2D BaseRoughnessTexture,
+    UnityTexture2D BaseMetallicTexture,
+    UnityTexture2D BaseOcclusionTexture,
+    float UseBaseRoughnessTexture,
+    float UseBaseMetallicTexture,
+    float UseBaseOcclusionTexture,
     float4 BaseColor,
     float BaseNormalStrength,
     float UseScaleTiling,
@@ -80,7 +86,8 @@ void LitIceFrostedEdgesV2_float(
     out float3 OutNormalTS,
     out float3 OutEmission,
     out float OutSmoothness,
-    out float OutMetallic)
+    out float OutMetallic,
+    out float OutOcclusion)
 {
     float3 iceBaseColor;
     float iceAlpha;
@@ -97,6 +104,9 @@ void LitIceFrostedEdgesV2_float(
         PositionWS, NormalWS, BoundsSize, UV0, UseScaleTiling, TilingMultiplier);
     float4 baseAppearance = BaseTexture.Sample(BaseSampler, baseUV);
     float3 sampledBaseNormalTS = UnpackNormal(NormalTexture.Sample(BaseSampler, baseUV));
+    float sampledRoughness = BaseRoughnessTexture.Sample(BaseSampler, baseUV).r;
+    float sampledMetallic = BaseMetallicTexture.Sample(BaseSampler, baseUV).r;
+    float sampledOcclusion = BaseOcclusionTexture.Sample(BaseSampler, baseUV).r;
     float normalStrength = saturate(BaseNormalStrength);
     float3 baseNormalTS = float3(
         sampledBaseNormalTS.rg * BaseNormalStrength,
@@ -106,13 +116,28 @@ void LitIceFrostedEdgesV2_float(
     flameMask *= saturate(TransitionProgress);
 
     float3 revealedBaseColor = BaseColor.rgb * baseAppearance.rgb;
+    // Autodesk Interactive converts perceptual roughness with 1 - sqrt(roughness).
+    // Keep the independent scalar controls as fallbacks when a map is disabled.
+    float revealedSmoothness = lerp(
+        BaseSmoothness,
+        1.0 - sqrt(saturate(sampledRoughness)),
+        step(0.5, UseBaseRoughnessTexture));
+    float revealedMetallic = lerp(
+        BaseMetallic,
+        saturate(sampledMetallic),
+        step(0.5, UseBaseMetallicTexture));
+    float revealedOcclusion = lerp(
+        1.0,
+        saturate(sampledOcclusion),
+        step(0.5, UseBaseOcclusionTexture));
     OutBaseColor = lerp(iceBaseColor, revealedBaseColor, flameMask);
     // ShaderGraph_MasterShader is opaque when its dissolve is inactive.
     OutAlpha = lerp(iceAlpha, 1.0, flameMask);
     OutNormalTS = normalize(lerp(iceNormalTS, baseNormalTS, flameMask));
     OutEmission = lerp(iceEmission, float3(0.0, 0.0, 0.0), flameMask);
-    OutSmoothness = lerp(IceSmoothness, BaseSmoothness, flameMask);
-    OutMetallic = lerp(IceMetallic, BaseMetallic, flameMask);
+    OutSmoothness = lerp(IceSmoothness, revealedSmoothness, flameMask);
+    OutMetallic = lerp(IceMetallic, revealedMetallic, flameMask);
+    OutOcclusion = lerp(1.0, revealedOcclusion, flameMask);
 }
 
 void LitIceFrostedEdgesV2_half(
@@ -139,6 +164,12 @@ void LitIceFrostedEdgesV2_half(
     UnityTexture2D BaseTexture,
     UnitySamplerState BaseSampler,
     UnityTexture2D NormalTexture,
+    UnityTexture2D BaseRoughnessTexture,
+    UnityTexture2D BaseMetallicTexture,
+    UnityTexture2D BaseOcclusionTexture,
+    half UseBaseRoughnessTexture,
+    half UseBaseMetallicTexture,
+    half UseBaseOcclusionTexture,
     half4 BaseColor,
     half BaseNormalStrength,
     half UseScaleTiling,
@@ -156,7 +187,8 @@ void LitIceFrostedEdgesV2_half(
     out half3 OutNormalTS,
     out half3 OutEmission,
     out half OutSmoothness,
-    out half OutMetallic)
+    out half OutMetallic,
+    out half OutOcclusion)
 {
     float3 baseColor;
     float alpha;
@@ -164,22 +196,26 @@ void LitIceFrostedEdgesV2_half(
     float3 emission;
     float smoothness;
     float metallic;
+    float occlusion;
     LitIceFrostedEdgesV2_float(
         PositionWS, NormalWS, IceDeepColor, FrostColor, VertexEdgeData,
         IceScale, FrostWidth, CrackColor, Transparency, NormalStrength,
         EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, FresnelPower,
         FresnelIntensity, EmissionIntensity, EdgeBakedBoost,
         BoundsSize, UV0, BaseTexture, BaseSampler, NormalTexture,
+        BaseRoughnessTexture, BaseMetallicTexture, BaseOcclusionTexture,
+        UseBaseRoughnessTexture, UseBaseMetallicTexture, UseBaseOcclusionTexture,
         BaseColor, BaseNormalStrength, UseScaleTiling,
         TilingMultiplier, FlameCenter, FlameInfluenceRadius, TransitionSoftness,
         TransitionProgress, IceSmoothness, IceMetallic, BaseSmoothness, BaseMetallic,
-        baseColor, alpha, normalTS, emission, smoothness, metallic);
+        baseColor, alpha, normalTS, emission, smoothness, metallic, occlusion);
     OutBaseColor = half3(baseColor);
     OutAlpha = half(alpha);
     OutNormalTS = half3(normalTS);
     OutEmission = half3(emission);
     OutSmoothness = half(smoothness);
     OutMetallic = half(metallic);
+    OutOcclusion = half(occlusion);
 }
 
 #endif

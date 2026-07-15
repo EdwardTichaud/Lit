@@ -7,11 +7,13 @@ using UnityEngine.Rendering;
 
 internal static class LitIceShaderInstaller
 {
-    // Keep v1 and v2 import validation together so either graph failure is visible immediately.
+    // Keep every Lit Ice variant in one validation pass so graph failures are visible immediately.
     private const string GraphPath = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges.shadergraph";
     private const string MaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
     private const string GraphV2Path = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v2.shadergraph";
     private const string MaterialV2Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v2.mat";
+    private const string GraphV3Path = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v3.shadergraph";
+    private const string MaterialV3Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v3.mat";
     private const string StatusPath = "Temp/LitIceShaderGraphStatus.txt";
     private static bool s_Running;
 
@@ -46,6 +48,14 @@ internal static class LitIceShaderInstaller
             if (ShaderUtil.ShaderHasError(shaderV2))
                 throw new InvalidOperationException("Shader Graph v2 imported, but HDRP reported a shader compilation error.");
 
+            AssetDatabase.ImportAsset(GraphV3Path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            Shader shaderV3 = AssetDatabase.LoadAssetAtPath<Shader>(GraphV3Path);
+            if (shaderV3 == null)
+                throw new InvalidOperationException("Shader Graph v3 import returned a null shader.");
+
+            if (ShaderUtil.ShaderHasError(shaderV3))
+                throw new InvalidOperationException("Shader Graph v3 imported, but HDRP reported a shader compilation error.");
+
             Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
             if (material == null)
             {
@@ -73,9 +83,23 @@ internal static class LitIceShaderInstaller
                 EditorUtility.SetDirty(materialV2);
             }
 
+            Material materialV3 = AssetDatabase.LoadAssetAtPath<Material>(MaterialV3Path);
+            if (materialV3 == null)
+            {
+                materialV3 = new Material(materialV2) { name = "Material_LitIceFrostedEdges_v3" };
+                materialV3.shader = shaderV3;
+                ApplyV3Defaults(materialV3);
+                AssetDatabase.CreateAsset(materialV3, MaterialV3Path);
+            }
+            else if (materialV3.shader != shaderV3)
+            {
+                materialV3.shader = shaderV3;
+                EditorUtility.SetDirty(materialV3);
+            }
+
             AssetDatabase.SaveAssets();
             WriteStatus("OK");
-            Debug.Log("[Lit Ice] Shader Graphs v1/v2 and their materials imported successfully.");
+            Debug.Log("[Lit Ice] Shader Graphs v1/v2/v3 and their materials imported successfully.");
         }
         catch (Exception exception)
         {
@@ -132,12 +156,27 @@ internal static class LitIceShaderInstaller
         SetFloat(material, "_BaseNormalStrength", 1.0f);
         SetFloat(material, "_BaseSmoothness", 0.5f);
         SetFloat(material, "_BaseMetallic", 0.0f);
+        SetFloat(material, "_UseBaseRoughnessTexture", 0.0f);
+        SetFloat(material, "_UseBaseMetallicTexture", 0.0f);
+        SetFloat(material, "_UseBaseOcclusionTexture", 0.0f);
         SetFloat(material, "_UseScaleTiling", 0.0f);
         SetFloat(material, "_TilingMultiplier", 1.0f);
         SetVector(material, "_FlameCenter", Vector4.zero);
         SetFloat(material, "_FlameInfluenceRadius", 0.0f);
         SetFloat(material, "_TransitionSoftness", 0.5f);
         SetFloat(material, "_TransitionProgress", 1.0f);
+    }
+
+    private static void ApplyV3Defaults(Material material)
+    {
+        ApplyV2Defaults(material);
+        SetFloat(material, "_IceReliefNormalStrength", 0.75f);
+        SetFloat(material, "_IceReliefRoughnessInfluence", 0.4f);
+        SetFloat(material, "_TextureEdgeStrength", 1.0f);
+        SetFloat(material, "_TextureEdgeWidth", 1.5f);
+        SetFloat(material, "_TextureEdgeThreshold", 0.25f);
+        SetFloat(material, "_TextureEdgeNormalInfluence", 1.0f);
+        SetFloat(material, "_TextureEdgeRoughnessInfluence", 0.5f);
     }
 
     private static void SetFloat(Material material, string property, float value)
@@ -168,6 +207,7 @@ internal static class LitIceEdgeMaskBaker
     private const string OutputFolder = "Assets/Materials/IceShader/BakedMeshes";
     private const string IceMaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
     private const string IceMaterialV2Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v2.mat";
+    private const string IceMaterialV3Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v3.mat";
     private const string BakeAllMenu = "Lit/Shadergraph/Bake Edge Mask On All Material_LitIceFrostedEdges";
 
     [MenuItem("Lit/Shadergraph/Bake Edge Mask On Selected Meshes", true)]
@@ -218,7 +258,8 @@ internal static class LitIceEdgeMaskBaker
     private static bool CanBakeAllMaterialUsers()
     {
         return AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath) != null
-            || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path) != null;
+            || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path) != null
+            || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV3Path) != null;
     }
 
     [MenuItem(BakeAllMenu)]
@@ -226,15 +267,17 @@ internal static class LitIceEdgeMaskBaker
     {
         Material iceMaterial = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath);
         Material iceMaterialV2 = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path);
-        if (iceMaterial == null && iceMaterialV2 == null)
+        Material iceMaterialV3 = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV3Path);
+        if (iceMaterial == null && iceMaterialV2 == null && iceMaterialV3 == null)
         {
-            Debug.LogError($"[Lit Ice] No v1/v2 Lit Ice material was found.");
+            Debug.LogError($"[Lit Ice] No v1/v2/v3 Lit Ice material was found.");
             return;
         }
 
         var iceMaterials = new HashSet<Material>();
         if (iceMaterial != null) iceMaterials.Add(iceMaterial);
         if (iceMaterialV2 != null) iceMaterials.Add(iceMaterialV2);
+        if (iceMaterialV3 != null) iceMaterials.Add(iceMaterialV3);
 
         EnsureOutputFolder();
         var bakedBySource = new Dictionary<Mesh, Mesh>();
