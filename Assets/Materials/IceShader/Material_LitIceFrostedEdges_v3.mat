@@ -98,11 +98,6 @@ Material:
     - _FrostWidth: 10
     - _IceReliefNormalStrength: 0.75
     - _IceReliefRoughnessInfluence: 0.4
-    - _TextureEdgeNormalInfluence: 1
-    - _TextureEdgeRoughnessInfluence: 0.5
-    - _TextureEdgeStrength: 1
-    - _TextureEdgeThreshold: 0.25
-    - _TextureEdgeWidth: 1.5
     - _IceScale: 5.74
     - _MaterialID: 1
     - _MaterialTypeMask: 2
@@ -131,6 +126,11 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
     - _SurfaceType: 1
+    - _TextureEdgeNormalInfluence: 1
+    - _TextureEdgeRoughnessInfluence: 0.5
+    - _TextureEdgeStrength: 1
+    - _TextureEdgeThreshold: 0.25
+    - _TextureEdgeWidth: 1.5
     - _TilingMultiplier: 1
     - _TransitionProgress: 0
     - _TransitionSoftness: 1

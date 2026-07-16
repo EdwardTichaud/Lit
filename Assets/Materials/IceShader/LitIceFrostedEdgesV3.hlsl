@@ -167,11 +167,19 @@ void LitIceFrostedEdgesV3_float(
     float iceAlpha;
     float3 iceNormalTS;
     float3 iceEmission;
-    LitIceFrostedEdges_float(
+    // V3 treats FrostWidth as a real 0..10 artistic range. Geometry/baked
+    // contours grow from sub-pixel lines to a clearly visible 16-pixel band;
+    // unlike v1/v2, the last two thirds of the slider therefore stay useful.
+    float normalizedFrostWidth = saturate(FrostWidth * 0.1);
+    float bakedEdgeWidthPixels = lerp(
+        0.75, 16.0, pow(normalizedFrostWidth, 1.35));
+    float frostEnabled = step(0.0001, normalizedFrostWidth);
+    LitIceFrostedEdgesCore_float(
         PositionWS, NormalWS, IceDeepColor, FrostColor, VertexEdgeData,
-        IceScale, FrostWidth, CrackColor, Transparency, NormalStrength,
-        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, FresnelPower,
-        FresnelIntensity, EmissionIntensity, EdgeBakedBoost,
+        IceScale, normalizedFrostWidth, CrackColor, Transparency, NormalStrength,
+        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, 1.0,
+        0.0, EmissionIntensity, EdgeBakedBoost,
+        bakedEdgeWidthPixels, frostEnabled,
         iceBaseColor, iceAlpha, iceNormalTS, iceEmission);
 
     float2 baseUV = LitIceReplacementUV(

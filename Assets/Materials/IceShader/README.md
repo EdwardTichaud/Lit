@@ -4,7 +4,7 @@
 
 It combines:
 
-- camera-dependent Fresnel frost for silhouettes and curved contours;
+- camera-dependent Fresnel frost for silhouettes in v1/v2 (removed from v3);
 - screen-space curvature response for bevels and smooth shape changes;
 - a deterministic per-triangle geometric-edge mask stored as signed barycentrics in vertex colour RGB;
 - UV-free world-space procedural cracks, clouding and micro-normal roughness;
@@ -19,19 +19,19 @@ It combines:
 5. To process every renderer in the currently open scenes that uses either the v1 or v2 material, run **Lit > Shadergraph > Bake Edge Mask On All Material_LitIceFrostedEdges**. Shared source meshes are baked only once and reused by their instances.
 6. Use **Lit > Shadergraph > Apply Recommended Ice Preset** to restore the balanced dielectric-ice values after experimentation.
 
-Baked mesh assets use compact names such as `IceEdges_a1b2c3d4e5f6.asset` to stay safely below Windows and Git path-length limits, regardless of the source object name.
+Baked mesh assets use compact names such as `IceEdgesV3_a1b2c3d4e5f6.asset` to stay safely below Windows and Git path-length limits, regardless of the source object name. The V3 prefix also lets the tool recognize that the latest diagonal-safe bake has already been applied.
 
 ## Important modelling note
 
-A material shader cannot use Fresnel alone to discover the boundary of every stone inside a combined mesh: Fresnel only describes the camera-facing silhouette of the rendered surface. The V2 baker therefore detects open borders, hard angles and disconnected coincident pieces, then writes signed barycentric data after duplicating triangle corners. The shader uses that data to draw thin internal stone borders without lighting the triangulation diagonals or washing an entire low-poly face white.
+A material shader cannot use Fresnel alone to discover the boundary of every stone inside a combined mesh: Fresnel only describes the camera-facing silhouette of the rendered surface. The baker therefore detects only open borders and genuine hard angles, then writes signed barycentric data after duplicating triangle corners. Coplanar triangulation diagonals and duplicated UV seams are explicitly rejected. The shader uses that data to draw thin internal stone borders without washing an entire low-poly face white.
 
 ## Main controls
 
 - **Ice Deep Color / Transparency**: body tint and opacity.
-- **Frost Color / Frost Width / Emission Intensity**: white-blue edge frost and glow.
-- **Fresnel Power / Fresnel Intensity**: optional camera-facing silhouette response; intensity is `0` in the recommended preset because the baked stone edges now provide the principal contour.
+- **Frost Color / Frost Width / Emission Intensity**: white-blue edge frost and glow. In v3, `0` disables edge frost and the complete `0..10` Frost Width range grows progressively up to a broad 16-pixel baked-edge band; values above `3` therefore remain visibly useful.
+- **Fresnel Power / Fresnel Intensity**: optional camera-facing silhouette response in v1/v2 only. V3 ignores and hides both properties so its white contours come only from geometry, baked edges, and optional texture-relief detection.
 - **Edge Sensitivity / Edge Baked Boost**: automatic curvature and baked edge contribution.
-- **Ice Scale / Micro Scale / Crack Width**: procedural structure.
+- **Ice Scale / Micro Scale / Crack Width**: procedural structure. Micro Scale changes the frequency, not the strength, of the fine procedural asperities: a low value gives broader details and a high value gives finer, tighter details. Its Normal effect needs **Normal Strength** to be visible and can be visually dominated by the texture Normal used by v3.
 - **Normal Strength**: micro-asperity normal intensity.
 - **Smoothness**: Reflection Probe sharpness.
 
@@ -57,3 +57,9 @@ The revealed output is fully opaque inside the influence area, although the mate
 The v3 shader is available at **LIT > Ice > Lit Ice Frosted Edges V3**. It keeps all v2 behaviour and uses the existing **Normal Texture** and **Base Roughness Texture** in the frozen state as well as in the revealed state. **Ice Relief Normal Strength** controls how strongly the source Normal appears beneath the procedural ice normal. **Ice Relief Roughness Influence** controls how much of the source Roughness modulates the frozen smoothness; it only applies when **Use Base Roughness Texture** is enabled. Set either relief value to `0` to disable that contribution and recover the corresponding v2 behaviour. Both effects blend continuously into the normal revealed appearance during the flame transition.
 
 V3 also detects frosted edges that exist only in material textures, such as mortar joints on a geometrically flat brick wall. **Texture Edge Strength** controls their colour and emission, while **Texture Edge Width** is the neighbour sampling distance in texels. **Texture Edge Threshold** filters small noisy variations: raise it when the Normal Map creates too much frost and lower it when important joints are missed. **Texture Edge Normal Influence** controls detection from the Normal Map. **Texture Edge Roughness Influence** adds detection from the Roughness Map and only contributes when **Use Base Roughness Texture** is enabled. Set **Texture Edge Strength** to `0` to disable texture-edge frost while preserving the relief itself.
+
+## V3 material inspector and edge bake
+
+V3 uses a dedicated material inspector. Its exposed controls are grouped into **State: Frost**, **State: Normal**, **Option: Walls / Floors**, and **Flame Transition**. HDRP surface, transparency, and advanced settings remain available below those groups.
+
+Use **Bake Edge Mask** at the top of the material before tuning a new model. If compatible scene objects are selected, the button bakes those objects and their children. Otherwise it bakes every loaded scene renderer using the inspected material. The global bake command also recognizes every custom material that uses the V3 shader, rather than only the canonical `Material_LitIceFrostedEdges_v3` asset. Baked data belongs to the mesh copy, so one material can safely be used by many differently shaped models. Re-run Bake on meshes created with an older edge-mask version so their triangulation and UV-seam diagonals are removed.

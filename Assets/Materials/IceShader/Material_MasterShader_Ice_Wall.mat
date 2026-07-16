@@ -96,9 +96,9 @@ Material:
     - _FresnelIntensity: 0
     - _FresnelPower: 0.2
     - _FrostWidth: 10
-    - _IceReliefNormalStrength: 1
-    - _IceReliefRoughnessInfluence: 0
-    - _IceScale: 5.74
+    - _IceReliefNormalStrength: 0.205
+    - _IceReliefRoughnessInfluence: 1
+    - _IceScale: 0.001
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0
@@ -126,13 +126,13 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
     - _SurfaceType: 1
-    - _TextureEdgeNormalInfluence: 2
-    - _TextureEdgeRoughnessInfluence: 0
+    - _TextureEdgeNormalInfluence: 1.678
+    - _TextureEdgeRoughnessInfluence: 2
     - _TextureEdgeStrength: 0.663
-    - _TextureEdgeThreshold: 0.913
-    - _TextureEdgeWidth: 3.76
+    - _TextureEdgeThreshold: 0.995
+    - _TextureEdgeWidth: 8.9
     - _TilingMultiplier: 0.2
-    - _TransitionProgress: 1
+    - _TransitionProgress: 0
     - _TransitionSoftness: 1
     - _TransmissionEnable: 0
     - _Transparency: 0.8

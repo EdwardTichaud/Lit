@@ -52,7 +52,7 @@ float LitIceCracks(float3 p, float width)
     return smoothstep(1.0 - saturate(width), 1.0, ridge);
 }
 
-void LitIceFrostedEdges_float(
+void LitIceFrostedEdgesCore_float(
     float3 PositionWS,
     float3 NormalWS,
     float4 IceDeepColor,
@@ -71,6 +71,8 @@ void LitIceFrostedEdges_float(
     float FresnelIntensity,
     float EmissionIntensity,
     float EdgeBakedBoost,
+    float BakedEdgeWidthPixels,
+    float FrostEnabled,
     out float3 OutBaseColor,
     out float OutAlpha,
     out float3 OutNormalTS,
@@ -92,10 +94,11 @@ void LitIceFrostedEdges_float(
     // camera-facing silhouette effect; it cannot discover borders between the
     // disconnected stones contained in a single renderer.
     float curvature = saturate(length(fwidth(n)) * max(EdgeSensitivity, 0.0));
+    float frostWidth01 = saturate(FrostWidth);
     float automaticFrost = smoothstep(
-        1.0 - saturate(FrostWidth),
+        1.0 - max(frostWidth01, 0.0001),
         1.0,
-        max(fresnel, curvature));
+        max(fresnel, curvature)) * saturate(FrostEnabled);
 
     // The edge baker duplicates triangle corners and stores signed barycentrics
     // in vertex colour RGB. Positive channels identify only selected geometric
@@ -105,14 +108,15 @@ void LitIceFrostedEdges_float(
     float bakedFormatV2 = 1.0 - step(0.01, abs(VertexEdgeData.a - 0.25));
     float3 barycentricDistance = abs(signedBarycentrics);
     float3 barycentricWidth = max(fwidth(barycentricDistance), 0.00001);
-    float edgePixels = lerp(0.9, 5.0, saturate(FrostWidth));
+    float edgePixels = max(BakedEdgeWidthPixels, 0.251);
     float3 selectedEdges = step(0.0, signedBarycentrics);
     float3 edgeLines = selectedEdges * (1.0 - smoothstep(
         barycentricWidth * 0.25,
         barycentricWidth * edgePixels,
         barycentricDistance));
     float bakedFrost = max(edgeLines.x, max(edgeLines.y, edgeLines.z))
-                     * saturate(EdgeBakedBoost) * bakedFormatV2;
+                     * saturate(EdgeBakedBoost) * bakedFormatV2
+                     * saturate(FrostEnabled);
     float frost = saturate(max(automaticFrost, bakedFrost));
 
     // Keep a real deep-ice colour floor. Previously the procedural modulation
@@ -148,6 +152,42 @@ void LitIceFrostedEdges_float(
     OutEmission = deepColorFill
                 + FrostColor.rgb * frost * EmissionIntensity
                 + CrackColor.rgb * cracks * EmissionIntensity * 0.42;
+}
+
+// Legacy entry point used by v1/v2. Its original normalized width and
+// 0.9-to-5-pixel baked-edge behaviour remain unchanged.
+void LitIceFrostedEdges_float(
+    float3 PositionWS,
+    float3 NormalWS,
+    float4 IceDeepColor,
+    float4 FrostColor,
+    float4 VertexEdgeData,
+    float IceScale,
+    float FrostWidth,
+    float4 CrackColor,
+    float Transparency,
+    float NormalStrength,
+    float EdgeSensitivity,
+    float3 NoiseOffset,
+    float MicroScale,
+    float CrackWidth,
+    float FresnelPower,
+    float FresnelIntensity,
+    float EmissionIntensity,
+    float EdgeBakedBoost,
+    out float3 OutBaseColor,
+    out float OutAlpha,
+    out float3 OutNormalTS,
+    out float3 OutEmission)
+{
+    float legacyWidth = saturate(FrostWidth);
+    LitIceFrostedEdgesCore_float(
+        PositionWS, NormalWS, IceDeepColor, FrostColor, VertexEdgeData,
+        IceScale, legacyWidth, CrackColor, Transparency, NormalStrength,
+        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, FresnelPower,
+        FresnelIntensity, EmissionIntensity, EdgeBakedBoost,
+        lerp(0.9, 5.0, legacyWidth), 1.0,
+        OutBaseColor, OutAlpha, OutNormalTS, OutEmission);
 }
 
 void LitIceFrostedEdges_half(

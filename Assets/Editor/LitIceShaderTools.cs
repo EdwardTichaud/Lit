@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -170,6 +171,8 @@ internal static class LitIceShaderInstaller
     private static void ApplyV3Defaults(Material material)
     {
         ApplyV2Defaults(material);
+        // V3 maps the complete inspector range 0..10 to the normalized frost width used by the core shader.
+        SetFloat(material, "_FrostWidth", 2.2f);
         SetFloat(material, "_IceReliefNormalStrength", 0.75f);
         SetFloat(material, "_IceReliefRoughnessInfluence", 0.4f);
         SetFloat(material, "_TextureEdgeStrength", 1.0f);
@@ -203,19 +206,47 @@ internal static class LitIceShaderInstaller
 internal static class LitIceEdgeMaskBaker
 {
     private const float EdgeAngleDegrees = 32f;
-    private const string BakedVersionSuffix = "_IceEdgesV2";
+    private const string BakedVersionMarker = "IceEdgesV3_";
     private const string OutputFolder = "Assets/Materials/IceShader/BakedMeshes";
     private const string IceMaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
     private const string IceMaterialV2Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v2.mat";
     private const string IceMaterialV3Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v3.mat";
+    private const string IceShaderV3Path = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v3.shadergraph";
     private const string BakeAllMenu = "Lit/Shadergraph/Bake Edge Mask On All Material_LitIceFrostedEdges";
+
+    internal sealed class BakeSummary
+    {
+        public bool UsedSelection;
+        public int CandidateRendererCount;
+        public int UpdatedRendererCount;
+        public int CreatedMeshCount;
+        public int AlreadyBakedCount;
+        public int MissingMeshCount;
+        public int ErrorCount;
+
+        public string ToDisplayMessage()
+        {
+            if (CandidateRendererCount == 0)
+                return "Aucun renderer chargé n’utilise ce matériau.";
+
+            string scope = UsedSelection ? "sélection" : "scènes chargées";
+            string message = $"Bake ({scope}) : {UpdatedRendererCount} renderer(s) mis à jour, "
+                           + $"{CreatedMeshCount} mesh(s) créé(s), {AlreadyBakedCount} déjà baké(s).";
+            if (MissingMeshCount > 0)
+                message += $" {MissingMeshCount} renderer(s) sans mesh.";
+            if (ErrorCount > 0)
+                message += $" {ErrorCount} erreur(s), voir la Console.";
+            return message;
+        }
+    }
 
     [MenuItem("Lit/Shadergraph/Bake Edge Mask On Selected Meshes", true)]
     private static bool CanBakeSelection()
     {
         foreach (GameObject go in Selection.gameObjects)
         {
-            if (go.GetComponent<MeshFilter>() != null || go.GetComponent<SkinnedMeshRenderer>() != null)
+            if (go.GetComponentInChildren<MeshFilter>(true) != null
+                || go.GetComponentInChildren<SkinnedMeshRenderer>(true) != null)
                 return true;
         }
         return false;
@@ -224,34 +255,12 @@ internal static class LitIceEdgeMaskBaker
     [MenuItem("Lit/Shadergraph/Bake Edge Mask On Selected Meshes")]
     private static void BakeSelection()
     {
-        EnsureOutputFolder();
-        int bakedCount = 0;
-
-        foreach (GameObject go in Selection.gameObjects)
-        {
-            MeshFilter filter = go.GetComponent<MeshFilter>();
-            if (filter != null && filter.sharedMesh != null)
-            {
-                if (IsCurrentBakedMesh(filter.sharedMesh))
-                    continue;
-                Mesh baked = BakeMesh(filter.sharedMesh);
-                SaveAndAssign(baked, mesh => filter.sharedMesh = mesh);
-                bakedCount++;
-            }
-
-            SkinnedMeshRenderer skinned = go.GetComponent<SkinnedMeshRenderer>();
-            if (skinned != null && skinned.sharedMesh != null)
-            {
-                if (IsCurrentBakedMesh(skinned.sharedMesh))
-                    continue;
-                Mesh baked = BakeMesh(skinned.sharedMesh);
-                SaveAndAssign(baked, mesh => skinned.sharedMesh = mesh);
-                bakedCount++;
-            }
-        }
-
-        AssetDatabase.SaveAssets();
-        Debug.Log($"[Lit Ice] Baked per-triangle stone-edge masks for {bakedCount} selected renderer(s).");
+        Renderer[] renderers = Selection.gameObjects
+            .SelectMany(go => go.GetComponentsInChildren<Renderer>(true))
+            .Distinct()
+            .ToArray();
+        BakeSummary summary = BakeRenderers(renderers, true);
+        Debug.Log($"[Lit Ice] {summary.ToDisplayMessage()}");
     }
 
     [MenuItem(BakeAllMenu, true)]
@@ -259,7 +268,8 @@ internal static class LitIceEdgeMaskBaker
     {
         return AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath) != null
             || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path) != null
-            || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV3Path) != null;
+            || AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV3Path) != null
+            || AssetDatabase.LoadAssetAtPath<Shader>(IceShaderV3Path) != null;
     }
 
     [MenuItem(BakeAllMenu)]
@@ -268,7 +278,8 @@ internal static class LitIceEdgeMaskBaker
         Material iceMaterial = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialPath);
         Material iceMaterialV2 = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV2Path);
         Material iceMaterialV3 = AssetDatabase.LoadAssetAtPath<Material>(IceMaterialV3Path);
-        if (iceMaterial == null && iceMaterialV2 == null && iceMaterialV3 == null)
+        Shader iceShaderV3 = AssetDatabase.LoadAssetAtPath<Shader>(IceShaderV3Path);
+        if (iceMaterial == null && iceMaterialV2 == null && iceMaterialV3 == null && iceShaderV3 == null)
         {
             Debug.LogError($"[Lit Ice] No v1/v2/v3 Lit Ice material was found.");
             return;
@@ -279,24 +290,62 @@ internal static class LitIceEdgeMaskBaker
         if (iceMaterialV2 != null) iceMaterials.Add(iceMaterialV2);
         if (iceMaterialV3 != null) iceMaterials.Add(iceMaterialV3);
 
+        Renderer[] renderers = Resources.FindObjectsOfTypeAll<Renderer>()
+            .Where(renderer => IsEditableSceneRenderer(renderer)
+                && UsesAnyMaterial(renderer, iceMaterials, iceShaderV3))
+            .ToArray();
+        BakeSummary summary = BakeRenderers(renderers, false);
+        Debug.Log($"[Lit Ice] Global bake complete. {summary.ToDisplayMessage()}");
+    }
+
+    internal static BakeSummary BakeForMaterials(IEnumerable<Material> materials)
+    {
+        var materialSet = new HashSet<Material>(materials.Where(material => material != null));
+        Renderer[] selectedRenderers = Selection.gameObjects
+            .SelectMany(go => go.GetComponentsInChildren<Renderer>(true))
+            .Where(renderer => IsEditableSceneRenderer(renderer)
+                && UsesAnyMaterial(renderer, materialSet))
+            .Distinct()
+            .ToArray();
+
+        bool useSelection = selectedRenderers.Length > 0;
+        Renderer[] renderers = useSelection
+            ? selectedRenderers
+            : Resources.FindObjectsOfTypeAll<Renderer>()
+                .Where(renderer => IsEditableSceneRenderer(renderer)
+                    && UsesAnyMaterial(renderer, materialSet))
+                .Distinct()
+                .ToArray();
+
+        return BakeRenderers(renderers, useSelection);
+    }
+
+    private static BakeSummary BakeRenderers(IEnumerable<Renderer> renderers, bool usedSelection)
+    {
         EnsureOutputFolder();
-        var bakedBySource = new Dictionary<Mesh, Mesh>();
-        int rendererCount = 0;
-        int meshCount = 0;
-        int alreadyBakedCount = 0;
-
-        foreach (Renderer renderer in Resources.FindObjectsOfTypeAll<Renderer>())
+        Renderer[] candidates = renderers
+            .Where(IsEditableSceneRenderer)
+            .Distinct()
+            .ToArray();
+        var summary = new BakeSummary
         {
-            if (!IsEditableSceneRenderer(renderer) || !UsesAnyMaterial(renderer, iceMaterials))
-                continue;
+            UsedSelection = usedSelection,
+            CandidateRendererCount = candidates.Length
+        };
+        var bakedBySource = new Dictionary<Mesh, Mesh>();
 
+        foreach (Renderer renderer in candidates)
+        {
             Mesh source = GetSharedMesh(renderer);
             if (source == null)
+            {
+                summary.MissingMeshCount++;
                 continue;
+            }
 
             if (IsCurrentBakedMesh(source))
             {
-                alreadyBakedCount++;
+                summary.AlreadyBakedCount++;
                 continue;
             }
 
@@ -304,27 +353,27 @@ internal static class LitIceEdgeMaskBaker
             {
                 if (!bakedBySource.TryGetValue(source, out Mesh baked))
                 {
-                    baked = BakeMesh(source);
-                    baked = SaveBakedMesh(baked);
+                    baked = SaveBakedMesh(BakeMesh(source));
                     bakedBySource.Add(source, baked);
-                    meshCount++;
+                    summary.CreatedMeshCount++;
                 }
 
                 Undo.RecordObject(renderer, "Bake Lit Ice edge mask");
                 AssignSharedMesh(renderer, baked);
                 EditorUtility.SetDirty(renderer);
-                rendererCount++;
+                summary.UpdatedRendererCount++;
             }
             catch (Exception exception)
             {
-                Debug.LogError($"[Lit Ice] Could not bake '{renderer.name}' ({source.name}): {exception.Message}", renderer);
+                summary.ErrorCount++;
+                Debug.LogError(
+                    $"[Lit Ice] Could not bake '{renderer.name}' ({source.name}): {exception.Message}",
+                    renderer);
             }
         }
 
         AssetDatabase.SaveAssets();
-        Debug.Log(
-            $"[Lit Ice] Global bake complete: {rendererCount} renderer(s) updated, " +
-            $"{meshCount} unique mesh asset(s) created, {alreadyBakedCount} renderer(s) already baked.");
+        return summary;
     }
 
     private static bool IsEditableSceneRenderer(Renderer renderer)
@@ -335,10 +384,13 @@ internal static class LitIceEdgeMaskBaker
             && renderer.gameObject.scene.isLoaded;
     }
 
-    private static bool UsesAnyMaterial(Renderer renderer, HashSet<Material> materials)
+    private static bool UsesAnyMaterial(Renderer renderer, HashSet<Material> materials,
+        Shader additionalShader = null)
     {
         foreach (Material sharedMaterial in renderer.sharedMaterials)
-            if (sharedMaterial != null && materials.Contains(sharedMaterial))
+            if (sharedMaterial != null
+                && (materials.Contains(sharedMaterial)
+                    || (additionalShader != null && sharedMaterial.shader == additionalShader)))
                 return true;
         return false;
     }
@@ -437,7 +489,7 @@ internal static class LitIceEdgeMaskBaker
         {
             // Keep the internal name short as rebaking an already baked mesh
             // must never recursively append the complete source name.
-            name = "Lit" + BakedVersionSuffix,
+            name = BakedVersionMarker + "Pending",
             indexFormat = triangleIndexCount > ushort.MaxValue ? IndexFormat.UInt32 : IndexFormat.UInt16,
             subMeshCount = source.subMeshCount
         };
@@ -456,7 +508,8 @@ internal static class LitIceEdgeMaskBaker
 
     private static bool IsCurrentBakedMesh(Mesh mesh)
     {
-        return mesh != null && mesh.name.EndsWith(BakedVersionSuffix, StringComparison.Ordinal);
+        return mesh != null
+            && mesh.name.StartsWith(BakedVersionMarker, StringComparison.Ordinal);
     }
 
     private static void RegisterEdge(int a, int b, Vector3[] vertices, float tolerance,
@@ -465,7 +518,7 @@ internal static class LitIceEdgeMaskBaker
         var key = new GeometricEdgeKey(vertices[a], vertices[b], tolerance);
         if (!edges.TryGetValue(key, out EdgeRecord record))
             edges.Add(key, record = new EdgeRecord(faceNormal));
-        record.AddFace(faceNormal, new EdgeKey(a, b), threshold);
+        record.AddFace(faceNormal, threshold);
     }
 
     private static bool IsSelectedEdge(int a, int b, Vector3[] vertices, float tolerance,
@@ -567,7 +620,8 @@ internal static class LitIceEdgeMaskBaker
         // use a compact random identifier instead. Unity references the asset by
         // its .meta GUID, not by this human-readable file name.
         string shortId = Guid.NewGuid().ToString("N").Substring(0, 12);
-        string path = $"{OutputFolder}/IceEdges_{shortId}.asset";
+        mesh.name = BakedVersionMarker + shortId;
+        string path = $"{OutputFolder}/{mesh.name}.asset";
         AssetDatabase.CreateAsset(mesh, path);
         return mesh;
     }
@@ -585,34 +639,25 @@ internal static class LitIceEdgeMaskBaker
         private int m_FaceCount;
         private Vector3 m_FirstFaceNormal;
         private bool m_HasHardAngle;
-        private readonly HashSet<EdgeKey> m_TopologicalEdges = new HashSet<EdgeKey>();
 
         public EdgeRecord(Vector3 firstFaceNormal)
         {
             m_FirstFaceNormal = firstFaceNormal;
         }
 
-        public bool IsSelected => m_FaceCount == 1 || m_HasHardAngle || m_TopologicalEdges.Count > 1;
+        // Only an open boundary or a genuine hard angle is an edge. Imported
+        // meshes frequently duplicate vertices along UV seams; treating those
+        // duplicate topology records as edges exposed triangulation diagonals.
+        public bool IsSelected => m_FaceCount == 1 || m_HasHardAngle;
 
-        public void AddFace(Vector3 faceNormal, EdgeKey topologicalEdge, float threshold)
+        public void AddFace(Vector3 faceNormal, float threshold)
         {
             if (m_FaceCount == 0)
                 m_FirstFaceNormal = faceNormal;
             else if (Vector3.Dot(m_FirstFaceNormal, faceNormal) < threshold)
                 m_HasHardAngle = true;
             m_FaceCount++;
-            m_TopologicalEdges.Add(topologicalEdge);
         }
-    }
-
-    private readonly struct EdgeKey : IEquatable<EdgeKey>
-    {
-        private readonly int m_A;
-        private readonly int m_B;
-        public EdgeKey(int a, int b) { m_A = Mathf.Min(a, b); m_B = Mathf.Max(a, b); }
-        public bool Equals(EdgeKey other) => m_A == other.m_A && m_B == other.m_B;
-        public override bool Equals(object obj) => obj is EdgeKey other && Equals(other);
-        public override int GetHashCode() => (m_A * 397) ^ m_B;
     }
 
     private readonly struct GeometricEdgeKey : IEquatable<GeometricEdgeKey>
