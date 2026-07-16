@@ -1,0 +1,182 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7967447803218189727
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da692e001514ec24dbc4cca1949ff7e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Editor::UnityEditor.Rendering.HighDefinition.AssetVersion
+  version: 13
+  hdPluginSubTargetMaterialVersions:
+    m_Keys: []
+    m_Values: 
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Material_LitIceFrostedEdges_sm_GroundStones_01_02_LOD3
+  m_Shader: {fileID: -6465566751694194690, guid: 9f9e61ec575b46ab8b06e31db5cd43bd, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _DISABLE_DECALS
+  - _DISABLE_SSR
+  - _DISABLE_SSR_TRANSPARENT
+  - _DOUBLESIDED_ON
+  - _ENABLE_FOG_ON_TRANSPARENT
+  - _SURFACE_TYPE_TRANSPARENT
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 1
+  m_CustomRenderQueue: 3000
+  stringTagMap:
+    MotionVector: User
+    RenderType: Transparent
+  disabledShaderPasses:
+  - TransparentBackface
+  - RayTracingPrepass
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMetallicTexture:
+        m_Texture: {fileID: 2800000, guid: 0dec7d43ccd757a449224a210965644f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseOcclusionTexture:
+        m_Texture: {fileID: 2800000, guid: 9b8162630ffbac34ab0e657300e02e2a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseRoughnessTexture:
+        m_Texture: {fileID: 2800000, guid: 1edb3760551600a4382cc800fd41ec49, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseTexture:
+        m_Texture: {fileID: 2800000, guid: abc00000000007931011341664068177, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalTexture:
+        m_Texture: {fileID: 2800000, guid: abc00000000011348892861031068474, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaCutoffEnable: 0
+    - _AlphaDstBlend: 10
+    - _AlphaSrcBlend: 1
+    - _BaseMetallic: 0
+    - _BaseNormalStrength: 0.5
+    - _BaseSmoothness: 0.5
+    - _BlendMode: 0
+    - _ConservativeDepthOffsetEnable: 0
+    - _CrackWidth: 0.255
+    - _CullMode: 0
+    - _CullModeForward: 0
+    - _DepthOffsetEnable: 0
+    - _DoubleSidedEnable: 1
+    - _DoubleSidedGIMode: 0
+    - _DoubleSidedNormalMode: 1
+    - _DstBlend: 10
+    - _DstBlend2: 10
+    - _EdgeBakedBoost: 1
+    - _EdgeSensitivity: 30
+    - _EmissionIntensity: 1
+    - _EnableBlendModePreserveSpecularLighting: 1
+    - _EnableFogOnTransparent: 1
+    - _ExcludeFromTUAndAA: 0
+    - _FlameInfluenceRadius: 0
+    - _FresnelIntensity: 0
+    - _FresnelPower: 0.2
+    - _FrostWidth: 2.46
+    - _IceReliefNormalStrength: 0
+    - _IceReliefRoughnessInfluence: 0
+    - _IceScale: 2.26
+    - _MaterialID: 1
+    - _MaterialTypeMask: 2
+    - _Metallic: 0.698
+    - _MicroScale: 11.77
+    - _NormalStrength: 0.7
+    - _OpaqueCullMode: 2
+    - _PerPixelSorting: 0
+    - _RayTracing: 0
+    - _ReceivesSSR: 0
+    - _ReceivesSSRTransparent: 0
+    - _RefractionModel: 0
+    - _RenderQueueType: 4
+    - _RequireSplitLighting: 0
+    - _Smoothness: 0.768
+    - _SrcBlend: 1
+    - _StencilRef: 0
+    - _StencilRefDepth: 0
+    - _StencilRefDistortionVec: 4
+    - _StencilRefGBuffer: 2
+    - _StencilRefMV: 32
+    - _StencilWriteMask: 6
+    - _StencilWriteMaskDepth: 9
+    - _StencilWriteMaskDistortionVec: 4
+    - _StencilWriteMaskGBuffer: 15
+    - _StencilWriteMaskMV: 41
+    - _SupportDecals: 0
+    - _SurfaceType: 1
+    - _TextureEdgeNormalInfluence: 0
+    - _TextureEdgeRoughnessInfluence: 0
+    - _TextureEdgeStrength: 0
+    - _TextureEdgeThreshold: 0
+    - _TextureEdgeWidth: 0.3
+    - _TilingMultiplier: 1
+    - _TransitionProgress: 0
+    - _TransitionSoftness: 1
+    - _TransmissionEnable: 0
+    - _Transparency: 0.8
+    - _TransparentBackfaceEnable: 0
+    - _TransparentCullMode: 0
+    - _TransparentDepthPostpassEnable: 1
+    - _TransparentDepthPrepassEnable: 1
+    - _TransparentSortPriority: 0
+    - _TransparentWritingMotionVec: 0
+    - _TransparentZWrite: 0
+    - _UseBaseMetallicTexture: 0
+    - _UseBaseOcclusionTexture: 0
+    - _UseBaseRoughnessTexture: 0
+    - _UseScaleTiling: 0
+    - _UseShadowThreshold: 0
+    - _VertexEdgeMask: 0
+    - _ZTestDepthEqualForOpaque: 4
+    - _ZTestGBuffer: 4
+    - _ZTestTransparent: 4
+    - _ZWrite: 0
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CrackColor: {r: 0.35247982, g: 0.5287197, b: 0.7490196, a: 1}
+    - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _FrostColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
+    - _IceDeepColor: {r: 0, g: 0.5085181, b: 1, a: 1}
+    - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

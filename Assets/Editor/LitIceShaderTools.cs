@@ -206,7 +206,8 @@ internal static class LitIceShaderInstaller
 internal static class LitIceEdgeMaskBaker
 {
     private const float EdgeAngleDegrees = 32f;
-    private const string BakedVersionMarker = "IceEdgesV3_";
+    internal const int BakeVersion = 3;
+    internal const string BakedVersionMarker = "IceEdgesV3_";
     private const string OutputFolder = "Assets/Materials/IceShader/BakedMeshes";
     private const string IceMaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
     private const string IceMaterialV2Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v2.mat";
@@ -420,6 +421,44 @@ internal static class LitIceEdgeMaskBaker
         }
     }
 
+    internal static Mesh BakeMeshToAsset(Mesh source, string assetPath, bool forceRebuild = false)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        if (string.IsNullOrWhiteSpace(assetPath) || !assetPath.StartsWith("Assets/", StringComparison.Ordinal))
+            throw new ArgumentException("The baked mesh path must be inside Assets.", nameof(assetPath));
+
+        Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
+        if (existing != null && IsCurrentBakedMesh(existing) && !forceRebuild)
+            return existing;
+
+        Mesh baked = BakeMesh(source);
+        string stableName = BakedVersionMarker + Path.GetFileNameWithoutExtension(assetPath);
+        if (existing != null)
+        {
+            EditorUtility.CopySerialized(baked, existing);
+            existing.name = stableName;
+            EditorUtility.SetDirty(existing);
+            UnityEngine.Object.DestroyImmediate(baked);
+            return existing;
+        }
+
+        string folder = Path.GetDirectoryName(assetPath)?.Replace('\\', '/');
+        EnsureAssetFolder(folder);
+        AssetDatabase.CreateAsset(baked, assetPath);
+        // CreateAsset adopts the file name. Restore the explicit version marker
+        // afterwards so old bakes can be upgraded without changing the asset GUID.
+        baked.name = stableName;
+        EditorUtility.SetDirty(baked);
+        return baked;
+    }
+
+    internal static bool IsCurrentBakedMesh(Mesh mesh)
+    {
+        return mesh != null
+            && mesh.name.StartsWith(BakedVersionMarker, StringComparison.Ordinal);
+    }
+
     private static Mesh BakeMesh(Mesh source)
     {
         Vector3[] vertices = source.vertices;
@@ -504,12 +543,6 @@ internal static class LitIceEdgeMaskBaker
         mesh.bindposes = source.bindposes;
         mesh.bounds = source.bounds;
         return mesh;
-    }
-
-    private static bool IsCurrentBakedMesh(Mesh mesh)
-    {
-        return mesh != null
-            && mesh.name.StartsWith(BakedVersionMarker, StringComparison.Ordinal);
     }
 
     private static void RegisterEdge(int a, int b, Vector3[] vertices, float tolerance,
@@ -623,6 +656,8 @@ internal static class LitIceEdgeMaskBaker
         mesh.name = BakedVersionMarker + shortId;
         string path = $"{OutputFolder}/{mesh.name}.asset";
         AssetDatabase.CreateAsset(mesh, path);
+        mesh.name = BakedVersionMarker + shortId;
+        EditorUtility.SetDirty(mesh);
         return mesh;
     }
 
@@ -632,6 +667,17 @@ internal static class LitIceEdgeMaskBaker
             AssetDatabase.CreateFolder("Assets/Materials", "IceShader");
         if (!AssetDatabase.IsValidFolder(OutputFolder))
             AssetDatabase.CreateFolder("Assets/Materials/IceShader", "BakedMeshes");
+    }
+
+    private static void EnsureAssetFolder(string folder)
+    {
+        if (string.IsNullOrEmpty(folder) || AssetDatabase.IsValidFolder(folder))
+            return;
+
+        string parent = Path.GetDirectoryName(folder)?.Replace('\\', '/');
+        string name = Path.GetFileName(folder);
+        EnsureAssetFolder(parent);
+        AssetDatabase.CreateFolder(parent, name);
     }
 
     private sealed class EdgeRecord
