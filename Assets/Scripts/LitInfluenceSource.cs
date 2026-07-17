@@ -44,6 +44,9 @@ public interface ILitInfluenceReceiver
 [Serializable]
 public class LitInfluenceSource
 {
+    private const int InitialHitCapacity = 128;
+    private const int MaximumHitCapacity = 16384;
+
     [SerializeField, Tooltip("Active la zone d'influence quand la source est allumee.")]
     private bool enabled = true;
     [SerializeField, Min(0f), Tooltip("Rayon monde de l'influence lumineuse.")]
@@ -63,7 +66,7 @@ public class LitInfluenceSource
     [SerializeField, Tooltip("Dessine le rayon d'influence dans la Scene view.")]
     private bool drawDebugGizmos = true;
 
-    private readonly Collider[] hits = new Collider[96];
+    private Collider[] hits = new Collider[InitialHitCapacity];
     private readonly HashSet<ILitInfluenceReceiver> activeReceivers = new HashSet<ILitInfluenceReceiver>();
     private readonly HashSet<ILitInfluenceReceiver> scannedReceivers = new HashSet<ILitInfluenceReceiver>();
     private readonly List<ILitInfluenceReceiver> removalBuffer = new List<ILitInfluenceReceiver>();
@@ -186,12 +189,7 @@ public class LitInfluenceSource
 
         Transform ownerTransform = owner.transform;
         Vector3 worldCenter = GetWorldCenter(ownerTransform);
-        int hitCount = Physics.OverlapSphereNonAlloc(
-            worldCenter,
-            radius,
-            hits,
-            layerMask,
-            queryTriggerInteraction);
+        int hitCount = CollectOverlappingColliders(worldCenter);
 
         for (int i = 0; i < hitCount; i++)
         {
@@ -247,6 +245,27 @@ public class LitInfluenceSource
 
         UpdateMaterialInfluence(info);
         removalBuffer.Clear();
+    }
+
+    private int CollectOverlappingColliders(Vector3 worldCenter)
+    {
+        while (true)
+        {
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                worldCenter,
+                radius,
+                hits,
+                layerMask,
+                queryTriggerInteraction);
+
+            if (hitCount < hits.Length || hits.Length >= MaximumHitCapacity)
+            {
+                return hitCount;
+            }
+
+            int expandedCapacity = Mathf.Min(hits.Length * 2, MaximumHitCapacity);
+            Array.Resize(ref hits, expandedCapacity);
+        }
     }
 
     private void AddReceivers(Collider hit)
@@ -387,6 +406,12 @@ public class LitInfluenceSource
 
 internal static class FlameInfluenceMaterialRuntime
 {
+    // ShaderGraph properties cannot expose an arbitrary-length list. V3 therefore
+    // receives the most relevant influences through two fixed-size MPB arrays.
+    // The original single-center properties remain populated for V2 and legacy
+    // materials, and for manual preview in the material inspector.
+    private const int MaxShaderInfluenceCount = 32;
+
     private struct SourceInfluence
     {
         public int SourceId;
@@ -405,6 +430,12 @@ internal static class FlameInfluenceMaterialRuntime
     private static readonly int flameCenterPropertyId = Shader.PropertyToID("_FlameCenter");
     private static readonly int flameRadiusPropertyId = Shader.PropertyToID("_FlameInfluenceRadius");
     private static readonly int transitionProgressPropertyId = Shader.PropertyToID("_TransitionProgress");
+    private static readonly int flameInfluenceCountPropertyId = Shader.PropertyToID("_LitIceFlameInfluenceCount");
+    private static readonly int flameCentersAndRadiiPropertyId = Shader.PropertyToID("_LitIceFlameCentersAndRadii");
+    private static readonly int flameTransitionDataPropertyId = Shader.PropertyToID("_LitIceFlameTransitionData");
+    private static readonly Vector4[] flameCentersAndRadii = new Vector4[MaxShaderInfluenceCount];
+    private static readonly Vector4[] flameTransitionData = new Vector4[MaxShaderInfluenceCount];
+    private static readonly float[] flameInfluenceDistances = new float[MaxShaderInfluenceCount];
     private static MaterialPropertyBlock propertyBlock;
     private static FlameInfluenceMaterialUpdater updater;
 
@@ -615,15 +646,17 @@ internal static class FlameInfluenceMaterialRuntime
             return;
         }
 
-        Vector3 reference = renderer.bounds.center;
-        if (!TryGetClosestInfluence(influences, reference, false, true, out SourceInfluence bestFlame))
+        Bounds rendererBounds = renderer.bounds;
+        if (!TryGetClosestInfluence(influences, rendererBounds, false, true, out SourceInfluence bestFlame))
         {
-            TryGetClosestInfluence(influences, reference, false, false, out bestFlame);
+            TryGetClosestInfluence(influences, rendererBounds, false, false, out bestFlame);
         }
+
+        int shaderInfluenceCount = BuildShaderInfluenceArrays(influences, rendererBounds);
 
         Vector3 ageCenter = Vector3.zero;
         if (refreshAgeProperties
-            && TryGetClosestInfluence(influences, reference, true, true, out SourceInfluence bestAncientFlame))
+            && TryGetClosestInfluence(influences, rendererBounds, true, true, out SourceInfluence bestAncientFlame))
         {
             ageCenter = bestAncientFlame.Center;
         }
@@ -639,7 +672,9 @@ internal static class FlameInfluenceMaterialRuntime
             bestFlame.Center,
             bestFlame.Radius,
             hasTransitionProgress,
-            bestFlame.TransitionProgress);
+            bestFlame.TransitionProgress,
+            hasFlameCenter || hasFlameRadius,
+            shaderInfluenceCount);
     }
 
     private static void ClearInfluence(Renderer renderer, bool clearAgeProperties)
@@ -667,12 +702,14 @@ internal static class FlameInfluenceMaterialRuntime
             Vector3.zero,
             0f,
             hasTransitionProgress,
-            0f);
+            0f,
+            hasFlameCenter || hasFlameRadius,
+            0);
     }
 
     private static bool TryGetClosestInfluence(
         List<SourceInfluence> influences,
-        Vector3 reference,
+        Bounds rendererBounds,
         bool ancientFlamesOnly,
         bool activeOnly,
         out SourceInfluence best)
@@ -698,7 +735,10 @@ internal static class FlameInfluenceMaterialRuntime
                 continue;
             }
 
-            float distanceSqr = (candidate.Center - reference).sqrMagnitude;
+            // A large floor or wall can extend far away from its bounds center.
+            // Distance to the bounds is therefore a better representative than
+            // distance to the renderer pivot/center.
+            float distanceSqr = rendererBounds.SqrDistance(candidate.Center);
             if (!found || distanceSqr < bestDistanceSqr)
             {
                 best = candidate;
@@ -708,6 +748,67 @@ internal static class FlameInfluenceMaterialRuntime
         }
 
         return found;
+    }
+
+    private static int BuildShaderInfluenceArrays(
+        List<SourceInfluence> influences,
+        Bounds rendererBounds)
+    {
+        int count = 0;
+        for (int i = 0; i < influences.Count; i++)
+        {
+            SourceInfluence candidate = influences[i];
+            if (!candidate.Active && candidate.TransitionProgress <= 0f)
+            {
+                continue;
+            }
+
+            float distance = rendererBounds.SqrDistance(candidate.Center);
+            int targetIndex;
+            if (count < MaxShaderInfluenceCount)
+            {
+                targetIndex = count;
+                count++;
+            }
+            else
+            {
+                targetIndex = FindFarthestShaderInfluenceIndex(count);
+                if (distance >= flameInfluenceDistances[targetIndex])
+                {
+                    continue;
+                }
+            }
+
+            flameCentersAndRadii[targetIndex] = new Vector4(
+                candidate.Center.x,
+                candidate.Center.y,
+                candidate.Center.z,
+                Mathf.Max(0f, candidate.Radius));
+            flameTransitionData[targetIndex] = new Vector4(
+                Mathf.Clamp01(candidate.TransitionProgress),
+                candidate.Active ? 1f : 0f,
+                candidate.SourceKind == LitInfluenceSourceKind.AncientFlame ? 1f : 0f,
+                0f);
+            flameInfluenceDistances[targetIndex] = distance;
+        }
+
+        return count;
+    }
+
+    private static int FindFarthestShaderInfluenceIndex(int count)
+    {
+        int farthestIndex = 0;
+        float farthestDistance = flameInfluenceDistances[0];
+        for (int i = 1; i < count; i++)
+        {
+            if (flameInfluenceDistances[i] > farthestDistance)
+            {
+                farthestIndex = i;
+                farthestDistance = flameInfluenceDistances[i];
+            }
+        }
+
+        return farthestIndex;
     }
 
     private static void ApplyProperties(
@@ -721,13 +822,16 @@ internal static class FlameInfluenceMaterialRuntime
         Vector3 flameCenter,
         float flameRadius,
         bool writeTransitionProgress,
-        float transitionProgress)
+        float transitionProgress,
+        bool writeFlameInfluenceArray,
+        int flameInfluenceCount)
     {
         if (!writeAgeCenter
             && !writeAgeAmount
             && !writeFlameCenter
             && !writeFlameRadius
-            && !writeTransitionProgress)
+            && !writeTransitionProgress
+            && !writeFlameInfluenceArray)
         {
             return;
         }
@@ -761,6 +865,15 @@ internal static class FlameInfluenceMaterialRuntime
         if (writeTransitionProgress)
         {
             propertyBlock.SetFloat(transitionProgressPropertyId, Mathf.Clamp01(transitionProgress));
+        }
+
+        if (writeFlameInfluenceArray)
+        {
+            propertyBlock.SetInt(
+                flameInfluenceCountPropertyId,
+                Mathf.Clamp(flameInfluenceCount, 0, MaxShaderInfluenceCount));
+            propertyBlock.SetVectorArray(flameCentersAndRadiiPropertyId, flameCentersAndRadii);
+            propertyBlock.SetVectorArray(flameTransitionDataPropertyId, flameTransitionData);
         }
 
         renderer.SetPropertyBlock(propertyBlock);

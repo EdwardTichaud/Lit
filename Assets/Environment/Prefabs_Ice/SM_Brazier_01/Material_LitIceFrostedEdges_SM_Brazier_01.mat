@@ -88,7 +88,7 @@ Material:
     - _DstBlend2: 10
     - _EdgeBakedBoost: 1
     - _EdgeSensitivity: 30
-    - _EmissionIntensity: 1
+    - _EmissionIntensity: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _ExcludeFromTUAndAA: 0
@@ -160,7 +160,7 @@ Material:
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
     - _FrostColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
-    - _IceDeepColor: {r: 0, g: 0.5085181, b: 1, a: 1}
+    - _IceDeepColor: {r: 0.012415453, g: 0.049371272, b: 0.084905684, a: 1}
     - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

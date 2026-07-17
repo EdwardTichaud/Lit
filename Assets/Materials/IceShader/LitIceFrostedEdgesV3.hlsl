@@ -3,6 +3,14 @@
 
 #include "LitIceFrostedEdges.hlsl"
 
+// Per-renderer influence data supplied by FlameInfluenceMaterialRuntime.
+// The legacy single center remains available for inspector preview and for
+// compatibility, while V3 combines every supplied sphere with a max/union.
+#define LIT_ICE_MAX_FLAME_INFLUENCES 32
+int _LitIceFlameInfluenceCount;
+float4 _LitIceFlameCentersAndRadii[LIT_ICE_MAX_FLAME_INFLUENCES];
+float4 _LitIceFlameTransitionData[LIT_ICE_MAX_FLAME_INFLUENCES];
+
 float2 LitIceReplacementUV(
     float3 positionWS,
     float3 normalWS,
@@ -37,6 +45,37 @@ float LitIceFlameMask(
     float safeSoftness = max(0.0001, transitionSoftness);
     float mask = 1.0 - saturate((distance(positionWS, flameCenter) - radius) / safeSoftness);
     return radius > 0.0 ? mask : 0.0;
+}
+
+float LitIceCombinedFlameMask(
+    float3 positionWS,
+    float3 legacyFlameCenter,
+    float legacyFlameInfluenceRadius,
+    float transitionSoftness,
+    float legacyTransitionProgress)
+{
+    float combinedMask = LitIceFlameMask(
+        positionWS,
+        legacyFlameCenter,
+        legacyFlameInfluenceRadius,
+        transitionSoftness) * saturate(legacyTransitionProgress);
+
+    int influenceCount = clamp(
+        _LitIceFlameInfluenceCount, 0, LIT_ICE_MAX_FLAME_INFLUENCES);
+    [loop]
+    for (int i = 0; i < influenceCount; i++)
+    {
+        float4 centerAndRadius = _LitIceFlameCentersAndRadii[i];
+        float transitionProgress = saturate(_LitIceFlameTransitionData[i].x);
+        float influenceMask = LitIceFlameMask(
+            positionWS,
+            centerAndRadius.xyz,
+            centerAndRadius.w,
+            transitionSoftness) * transitionProgress;
+        combinedMask = max(combinedMask, influenceMask);
+    }
+
+    return saturate(combinedMask);
 }
 
 float3 LitIceScaleTangentNormal(float3 normalTS, float strength)
@@ -202,9 +241,9 @@ void LitIceFrostedEdgesV3_float(
     float textureEdgeCoverage = saturate(textureEdgeEmission);
     iceBaseColor = lerp(iceBaseColor, saturate(FrostColor.rgb), textureEdgeCoverage * 0.92);
     iceEmission += FrostColor.rgb * textureEdgeEmission * max(0.0, EmissionIntensity);
-    float flameMask = LitIceFlameMask(
-        PositionWS, FlameCenter, FlameInfluenceRadius, TransitionSoftness);
-    flameMask *= saturate(TransitionProgress);
+    float flameMask = LitIceCombinedFlameMask(
+        PositionWS, FlameCenter, FlameInfluenceRadius,
+        TransitionSoftness, TransitionProgress);
 
     float3 revealedBaseColor = BaseColor.rgb * baseAppearance.rgb;
     // Autodesk Interactive converts perceptual roughness with 1 - sqrt(roughness).

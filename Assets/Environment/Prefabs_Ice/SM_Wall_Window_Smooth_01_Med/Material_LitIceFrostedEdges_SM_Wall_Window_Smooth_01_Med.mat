@@ -118,7 +118,7 @@ Material:
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0.698
-    - _MicroScale: 11.77
+    - _MicroScale: 3.22
     - _NormalStrength: 0.7
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
