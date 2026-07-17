@@ -142,12 +142,14 @@ internal static class LitIceShaderInstaller
             ApplyRecommendedPresetValues(materialV3);
             ApplyV2Defaults(materialV3);
             ApplyV3Defaults(materialV3);
+            LitIceV3PerformanceUtility.ApplyRuntimePerformanceState(materialV3);
             AssetDatabase.CreateAsset(materialV3, MaterialV3Path);
         }
-        else if (materialV3.shader != shaderV3)
+        else
         {
-            materialV3.shader = shaderV3;
-            EditorUtility.SetDirty(materialV3);
+            if (materialV3.shader != shaderV3)
+                materialV3.shader = shaderV3;
+            LitIceV3PerformanceUtility.ApplyRuntimePerformanceState(materialV3);
         }
 
         AssetDatabase.SaveAssets();

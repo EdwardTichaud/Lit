@@ -864,6 +864,7 @@ internal static class LitIceMaisonPrefabGenerator
                     EditorUtility.SetDirty(material);
                 }
             }
+            LitIceV3PerformanceUtility.ApplyRuntimePerformanceState(material);
             variant.GeneratedMaterials[slot] = material;
         }
 

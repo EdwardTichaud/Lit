@@ -6,6 +6,35 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class VisibilityOptimizationManager : MonoBehaviour
 {
+    private sealed class RendererChunk
+    {
+        public readonly List<Renderer> Renderers = new List<Renderer>(32);
+        public bool[] EnabledStates = System.Array.Empty<bool>();
+        public Bounds Bounds;
+        public bool Visible = true;
+        public bool CapturedState;
+        public float InvisibleSince = -1f;
+
+        public void Add(Renderer renderer)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            if (Renderers.Count == 0)
+            {
+                Bounds = renderer.bounds;
+            }
+            else
+            {
+                Bounds.Encapsulate(renderer.bounds);
+            }
+
+            Renderers.Add(renderer);
+        }
+    }
+
     private static readonly HashSet<OptimizableObject> PendingObjects = new HashSet<OptimizableObject>();
     private static VisibilityOptimizationManager instance;
 
@@ -25,6 +54,19 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
     [SerializeField, Min(1)] private int maxEvaluationsPerFrame = 128;
     [SerializeField, Min(0f)] private float offscreenGraceSeconds = 0.2f;
     [SerializeField] private bool restoreEverythingWhenDisabled = true;
+
+    [Header("Fallback Static Renderer Culling")]
+    [SerializeField, Tooltip("Cull les MeshRenderers statiques qui n'ont pas d'OptimizableObject parent.")]
+    private bool cullUnregisteredStaticRenderers = true;
+    [SerializeField] private LayerMask fallbackRendererLayerMask = ~0;
+    [SerializeField] private bool fallbackStaticRenderersOnly = true;
+    [SerializeField, Min(2f)] private float fallbackChunkSize = 8f;
+    [SerializeField, Min(0f)] private float fallbackChunkBoundsPadding = 1f;
+    [SerializeField, Min(1)] private int maxFallbackChunksPerFrame = 256;
+    [SerializeField, Min(0f)] private float fallbackPassInterval = 0.05f;
+    [SerializeField, Min(0f)] private float fallbackKeepVisibleNearPlayerDistance = 2.5f;
+    [SerializeField, Min(0f)] private float fallbackOffscreenGraceSeconds = 0.1f;
+    [SerializeField] private bool logFallbackRendererStats;
 
     [Header("Obstruction Culling")]
     [SerializeField] private bool obstructionCullingEnabled = true;
@@ -46,13 +88,17 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
     private readonly Dictionary<OptimizableObject, float> lastObstructionCheckTime = new Dictionary<OptimizableObject, float>();
     private readonly Dictionary<OptimizableObject, bool> lastObstructionVisibility = new Dictionary<OptimizableObject, bool>();
     private readonly Plane[] frustumPlanes = new Plane[6];
+    private readonly List<RendererChunk> fallbackRendererChunks = new List<RendererChunk>();
 
     private float nextEvaluationTime;
     private float nextRescanTime;
     private float nextCameraSearchTime;
+    private float nextFallbackPassTime;
     private int nextEvaluationIndex;
+    private int nextFallbackChunkIndex;
     private int obstructionChecksFrame = -1;
     private int obstructionChecksThisFrame;
+    private bool fallbackRendererChunksBuilt;
     private const float CameraSearchInterval = 1f;
 
     public static VisibilityOptimizationManager Instance => instance;
@@ -116,6 +162,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         nextEvaluationIndex = 0;
         nextEvaluationTime = 0f;
         nextRescanTime = Time.unscaledTime + rescanInterval;
+        ResetFallbackRendererCulling();
     }
 
     private void OnDisable()
@@ -123,6 +170,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         if (restoreEverythingWhenDisabled)
         {
             RestoreAllObjects();
+            RestoreFallbackRendererChunks();
         }
 
         nextEvaluationIndex = 0;
@@ -133,6 +181,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         if (restoreEverythingWhenDisabled)
         {
             RestoreAllObjects();
+            RestoreFallbackRendererChunks();
         }
 
         objects.Clear();
@@ -140,6 +189,8 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         invisibleSince.Clear();
         lastObstructionCheckTime.Clear();
         lastObstructionVisibility.Clear();
+        fallbackRendererChunks.Clear();
+        fallbackRendererChunksBuilt = false;
 
         if (instance == this)
         {
@@ -153,6 +204,12 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         evaluationInterval = Mathf.Max(0.05f, evaluationInterval);
         maxEvaluationsPerFrame = Mathf.Max(1, maxEvaluationsPerFrame);
         offscreenGraceSeconds = Mathf.Max(0f, offscreenGraceSeconds);
+        fallbackChunkSize = Mathf.Max(2f, fallbackChunkSize);
+        fallbackChunkBoundsPadding = Mathf.Max(0f, fallbackChunkBoundsPadding);
+        maxFallbackChunksPerFrame = Mathf.Max(1, maxFallbackChunksPerFrame);
+        fallbackPassInterval = Mathf.Max(0f, fallbackPassInterval);
+        fallbackKeepVisibleNearPlayerDistance = Mathf.Max(0f, fallbackKeepVisibleNearPlayerDistance);
+        fallbackOffscreenGraceSeconds = Mathf.Max(0f, fallbackOffscreenGraceSeconds);
         obstructionCheckInterval = Mathf.Max(0.02f, obstructionCheckInterval);
         maxObstructionChecksPerFrame = Mathf.Max(0, maxObstructionChecksPerFrame);
         obstructionNearDistance = Mathf.Max(0f, obstructionNearDistance);
@@ -167,12 +224,14 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         if (!optimizationEnabled)
         {
             RestoreAllObjects();
+            RestoreFallbackRendererChunks();
             return;
         }
 
         if (!ResolveVisibilityContext(out Camera resolvedCamera, out Transform localPlayer))
         {
             RestoreAllObjects();
+            RestoreFallbackRendererChunks();
             return;
         }
 
@@ -193,6 +252,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         }
 
         ProcessEvaluations(resolvedCamera, now, localPlayer);
+        ProcessFallbackRendererCulling(resolvedCamera, now, localPlayer);
     }
 
     private void RegisterInternal(OptimizableObject optimizableObject)
@@ -512,19 +572,317 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
         return now - since < offscreenGraceSeconds;
     }
 
+    private void ProcessFallbackRendererCulling(Camera resolvedCamera, float now, Transform localPlayer)
+    {
+        if (!cullUnregisteredStaticRenderers)
+        {
+            RestoreFallbackRendererChunks();
+            return;
+        }
+
+        EnsureFallbackRendererChunks(resolvedCamera);
+        if (fallbackRendererChunks.Count == 0)
+        {
+            return;
+        }
+
+        if (nextFallbackChunkIndex >= fallbackRendererChunks.Count)
+        {
+            if (now < nextFallbackPassTime)
+            {
+                return;
+            }
+
+            nextFallbackChunkIndex = 0;
+            nextFallbackPassTime = now + fallbackPassInterval;
+        }
+
+        int budget = Mathf.Max(1, maxFallbackChunksPerFrame);
+        while (budget > 0 && nextFallbackChunkIndex < fallbackRendererChunks.Count)
+        {
+            RendererChunk chunk = fallbackRendererChunks[nextFallbackChunkIndex];
+            EvaluateFallbackRendererChunk(chunk, now, localPlayer);
+            nextFallbackChunkIndex++;
+            budget--;
+        }
+    }
+
+    private void EnsureFallbackRendererChunks(Camera resolvedCamera)
+    {
+        if (fallbackRendererChunksBuilt)
+        {
+            return;
+        }
+
+        fallbackRendererChunksBuilt = true;
+        fallbackRendererChunks.Clear();
+        nextFallbackChunkIndex = 0;
+        nextFallbackPassTime = 0f;
+
+        var chunksByCell = new Dictionary<Vector3Int, RendererChunk>(512);
+        Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (!IsFallbackRendererCandidate(renderer, resolvedCamera))
+            {
+                continue;
+            }
+
+            Vector3Int key = GetFallbackChunkKey(renderer.bounds.center);
+            if (!chunksByCell.TryGetValue(key, out RendererChunk chunk))
+            {
+                chunk = new RendererChunk();
+                chunksByCell.Add(key, chunk);
+            }
+
+            chunk.Add(renderer);
+        }
+
+        foreach (RendererChunk chunk in chunksByCell.Values)
+        {
+            if (chunk.Renderers.Count == 0)
+            {
+                continue;
+            }
+
+            if (fallbackChunkBoundsPadding > 0f)
+            {
+                chunk.Bounds.Expand(fallbackChunkBoundsPadding * 2f);
+            }
+
+            fallbackRendererChunks.Add(chunk);
+        }
+
+        if (logFallbackRendererStats)
+        {
+            Debug.Log(
+                $"[VisibilityOptimization] Fallback renderer chunks={fallbackRendererChunks.Count}, renderers={CountFallbackRenderers()}",
+                this);
+        }
+    }
+
+    private bool IsFallbackRendererCandidate(Renderer renderer, Camera resolvedCamera)
+    {
+        if (renderer == null ||
+            !renderer.enabled ||
+            !renderer.gameObject.activeInHierarchy ||
+            renderer is SkinnedMeshRenderer ||
+            renderer is ParticleSystemRenderer)
+        {
+            return false;
+        }
+
+        GameObject rendererObject = renderer.gameObject;
+        if (fallbackStaticRenderersOnly && !rendererObject.isStatic)
+        {
+            return false;
+        }
+
+        int layer = rendererObject.layer;
+        int layerBit = 1 << layer;
+        if ((fallbackRendererLayerMask.value & layerBit) == 0 ||
+            IsExcludedFallbackRendererLayer(layer) ||
+            resolvedCamera != null && (resolvedCamera.cullingMask & layerBit) == 0)
+        {
+            return false;
+        }
+
+        Transform transform = renderer.transform;
+        return renderer.GetComponentInParent<OptimizableObject>() == null &&
+               renderer.GetComponentInParent<Canvas>() == null &&
+               renderer.GetComponentInParent<NetworkObject>() == null &&
+               !HasCameraInParents(transform);
+    }
+
+    private static bool IsExcludedFallbackRendererLayer(int layer)
+    {
+        switch (layer)
+        {
+            case 5:  // UI
+            case 6:  // Character
+            case 8:  // RuntimeOutline
+            case 12: // Player
+            case 26: // Enemy
+            case 28: // VisualEffect
+            case 29: // Overlay
+            case 30: // SubCharacter
+            case 31: // Character
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool HasCameraInParents(Transform transform)
+    {
+        for (Transform current = transform; current != null; current = current.parent)
+        {
+            if (current.GetComponent<Camera>() != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Vector3Int GetFallbackChunkKey(Vector3 position)
+    {
+        float size = Mathf.Max(2f, fallbackChunkSize);
+        return new Vector3Int(
+            Mathf.FloorToInt(position.x / size),
+            Mathf.FloorToInt(position.y / size),
+            Mathf.FloorToInt(position.z / size));
+    }
+
+    private void EvaluateFallbackRendererChunk(RendererChunk chunk, float now, Transform localPlayer)
+    {
+        if (chunk == null || chunk.Renderers.Count == 0)
+        {
+            return;
+        }
+
+        bool visible = GeometryUtility.TestPlanesAABB(frustumPlanes, chunk.Bounds) ||
+                       IsFallbackChunkNearPlayer(chunk, localPlayer);
+
+        visible = ApplyFallbackOffscreenGrace(chunk, visible, now);
+        ApplyFallbackChunkVisibility(chunk, visible);
+    }
+
+    private bool IsFallbackChunkNearPlayer(RendererChunk chunk, Transform localPlayer)
+    {
+        if (localPlayer == null || fallbackKeepVisibleNearPlayerDistance <= 0f)
+        {
+            return false;
+        }
+
+        float keepDistance = fallbackKeepVisibleNearPlayerDistance;
+        return chunk.Bounds.SqrDistance(localPlayer.position) <= keepDistance * keepDistance;
+    }
+
+    private bool ApplyFallbackOffscreenGrace(RendererChunk chunk, bool visible, float now)
+    {
+        if (visible || fallbackOffscreenGraceSeconds <= 0f)
+        {
+            chunk.InvisibleSince = -1f;
+            return visible;
+        }
+
+        if (chunk.InvisibleSince < 0f)
+        {
+            chunk.InvisibleSince = now;
+            return true;
+        }
+
+        return now - chunk.InvisibleSince < fallbackOffscreenGraceSeconds;
+    }
+
+    private void ApplyFallbackChunkVisibility(RendererChunk chunk, bool visible)
+    {
+        if (chunk.Visible == visible)
+        {
+            return;
+        }
+
+        if (!visible)
+        {
+            CaptureFallbackRendererStates(chunk);
+        }
+
+        for (int i = 0; i < chunk.Renderers.Count; i++)
+        {
+            Renderer renderer = chunk.Renderers[i];
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            if (!visible)
+            {
+                if (CameraVisibilityProtection.IsRendererProtected(renderer))
+                {
+                    continue;
+                }
+
+                renderer.enabled = false;
+                continue;
+            }
+
+            if (chunk.CapturedState && chunk.EnabledStates.Length > i)
+            {
+                renderer.enabled = chunk.EnabledStates[i];
+            }
+        }
+
+        if (visible)
+        {
+            chunk.CapturedState = false;
+            chunk.InvisibleSince = -1f;
+        }
+
+        chunk.Visible = visible;
+    }
+
+    private static void CaptureFallbackRendererStates(RendererChunk chunk)
+    {
+        if (chunk.CapturedState)
+        {
+            return;
+        }
+
+        if (chunk.EnabledStates.Length != chunk.Renderers.Count)
+        {
+            chunk.EnabledStates = new bool[chunk.Renderers.Count];
+        }
+
+        for (int i = 0; i < chunk.Renderers.Count; i++)
+        {
+            Renderer renderer = chunk.Renderers[i];
+            chunk.EnabledStates[i] = renderer != null && renderer.enabled;
+        }
+
+        chunk.CapturedState = true;
+    }
+
+    private void RestoreFallbackRendererChunks()
+    {
+        for (int i = 0; i < fallbackRendererChunks.Count; i++)
+        {
+            ApplyFallbackChunkVisibility(fallbackRendererChunks[i], true);
+        }
+    }
+
+    private void ResetFallbackRendererCulling()
+    {
+        RestoreFallbackRendererChunks();
+        fallbackRendererChunks.Clear();
+        fallbackRendererChunksBuilt = false;
+        nextFallbackChunkIndex = 0;
+        nextFallbackPassTime = 0f;
+    }
+
+    private int CountFallbackRenderers()
+    {
+        int count = 0;
+        for (int i = 0; i < fallbackRendererChunks.Count; i++)
+        {
+            RendererChunk chunk = fallbackRendererChunks[i];
+            if (chunk != null)
+            {
+                count += chunk.Renderers.Count;
+            }
+        }
+
+        return count;
+    }
+
     private bool ResolveVisibilityContext(out Camera camera, out Transform localPlayer)
     {
         localPlayer = ResolveLocalPlayerTarget();
         if (localPlayer != null)
         {
             playerTarget = localPlayer;
-        }
-
-        bool multiplayerListening = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-        if (multiplayerListening && localPlayer == null)
-        {
-            camera = null;
-            return false;
         }
 
         if (IsUsableCamera(targetCamera))
@@ -544,7 +902,7 @@ public sealed class VisibilityOptimizationManager : MonoBehaviour
             }
         }
 
-        if (fallbackToMainCamera && (!multiplayerListening || localPlayer != null))
+        if (fallbackToMainCamera)
         {
             Camera mainCamera = Camera.main;
             if (IsUsableCamera(mainCamera))
