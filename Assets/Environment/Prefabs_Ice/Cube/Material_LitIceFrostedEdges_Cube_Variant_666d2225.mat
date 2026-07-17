@@ -50,6 +50,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 54f908fd5eae89c41b5d119780e6a8a5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _CrackTexture:
+        m_Texture: {fileID: 2800000, guid: 9317d89215d40fd46b93f6b2710999d4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _NormalTexture:
         m_Texture: {fileID: 2800000, guid: a9075ea6f1d11fd4991ab7380ee541a6, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -77,6 +81,9 @@ Material:
     - _BaseSmoothness: 0
     - _BlendMode: 0
     - _ConservativeDepthOffsetEnable: 0
+    - _CrackTextureInvert: 0
+    - _CrackTextureScale: 0.3
+    - _CrackTextureStrength: 0.8
     - _CrackWidth: 0.25
     - _CullMode: 0
     - _CullModeForward: 0
@@ -90,15 +97,17 @@ Material:
     - _EdgeSensitivity: 30
     - _EmissionIntensity: 1
     - _EnableBlendModePreserveSpecularLighting: 1
+    - _EnableEmission: 1
     - _EnableFogOnTransparent: 1
     - _ExcludeFromTUAndAA: 0
     - _FlameInfluenceRadius: 0
     - _FresnelIntensity: 0
     - _FresnelPower: 0.2
     - _FrostWidth: 10
-    - _IceReliefNormalStrength: 0.205
+    - _IceReliefNormalStrength: 0
     - _IceReliefRoughnessInfluence: 1
-    - _IceScale: 0.001
+    - _IceScale: 1.06
+    - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _Metallic: 0
@@ -126,16 +135,16 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
     - _SurfaceType: 1
-    - _TextureEdgeNormalInfluence: 1.678
-    - _TextureEdgeRoughnessInfluence: 2
-    - _TextureEdgeStrength: 0.663
-    - _TextureEdgeThreshold: 0.995
-    - _TextureEdgeWidth: 8.9
+    - _TextureEdgeNormalInfluence: 0.3
+    - _TextureEdgeRoughnessInfluence: 0
+    - _TextureEdgeStrength: 2
+    - _TextureEdgeThreshold: 0.155
+    - _TextureEdgeWidth: 9.6
     - _TilingMultiplier: 0.2
     - _TransitionProgress: 0
     - _TransitionSoftness: 1
     - _TransmissionEnable: 0
-    - _Transparency: 0.8
+    - _Transparency: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 0
     - _TransparentDepthPostpassEnable: 1
@@ -143,8 +152,8 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
-    - _UseBaseMetallicTexture: 1
-    - _UseBaseOcclusionTexture: 1
+    - _UseBaseMetallicTexture: 0
+    - _UseBaseOcclusionTexture: 0
     - _UseBaseRoughnessTexture: 1
     - _UseScaleTiling: 1
     - _UseShadowThreshold: 0
@@ -155,12 +164,12 @@ Material:
     - _ZWrite: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CrackColor: {r: 0.35247982, g: 0.5287197, b: 0.7490196, a: 1}
+    - _CrackColor: {r: 0.2728729, g: 0.6336938, b: 0.7924528, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
     - _FrostColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
-    - _IceDeepColor: {r: 0, g: 0.5085181, b: 1, a: 1}
+    - _IceDeepColor: {r: 0.08962262, g: 0.49661505, b: 1, a: 1}
     - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -161,7 +161,7 @@ void LitIceFrostedEdgesV3_float(
     float MicroScale,
     float CrackWidth,
     float FresnelPower,
-    float FresnelIntensity,
+    float EnableEmission,
     float EmissionIntensity,
     float EdgeBakedBoost,
     float3 BoundsSize,
@@ -172,6 +172,10 @@ void LitIceFrostedEdgesV3_float(
     UnityTexture2D BaseRoughnessTexture,
     UnityTexture2D BaseMetallicTexture,
     UnityTexture2D BaseOcclusionTexture,
+    UnityTexture2D CrackTexture,
+    float CrackTextureStrength,
+    float CrackTextureScale,
+    float CrackTextureInvert,
     float UseBaseRoughnessTexture,
     float UseBaseMetallicTexture,
     float UseBaseOcclusionTexture,
@@ -216,13 +220,27 @@ void LitIceFrostedEdgesV3_float(
     LitIceFrostedEdgesCore_float(
         PositionWS, NormalWS, IceDeepColor, FrostColor, VertexEdgeData,
         IceScale, normalizedFrostWidth, CrackColor, Transparency, NormalStrength,
-        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, 1.0,
+        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth,
+        1.0 - saturate(CrackTextureStrength), 1.0,
         0.0, EmissionIntensity, EdgeBakedBoost,
         bakedEdgeWidthPixels, frostEnabled,
         iceBaseColor, iceAlpha, iceNormalTS, iceEmission);
 
     float2 baseUV = LitIceReplacementUV(
         PositionWS, NormalWS, BoundsSize, UV0, UseScaleTiling, TilingMultiplier);
+    float2 crackUV = baseUV * max(0.001, CrackTextureScale);
+    float4 crackSample = CrackTexture.Sample(BaseSampler, crackUV);
+    float crackLuminance = dot(crackSample.rgb, float3(0.2126, 0.7152, 0.0722));
+    float textureCracks = lerp(
+        crackLuminance, 1.0 - crackLuminance, saturate(CrackTextureInvert));
+    // Multiplying by alpha lets transparent sprites work without halos, while
+    // ordinary opaque black/white textures remain unchanged.
+    textureCracks = saturate(textureCracks * crackSample.a)
+                  * saturate(CrackTextureStrength);
+    iceBaseColor = lerp(
+        iceBaseColor, saturate(CrackColor.rgb), textureCracks * 0.55);
+    iceEmission += CrackColor.rgb * textureCracks
+                 * max(0.0, EmissionIntensity) * 0.42;
     float4 baseAppearance = BaseTexture.Sample(BaseSampler, baseUV);
     float3 sampledBaseNormalTS = UnpackNormal(NormalTexture.Sample(BaseSampler, baseUV));
     float sampledRoughness = BaseRoughnessTexture.Sample(BaseSampler, baseUV).r;
@@ -264,11 +282,19 @@ void LitIceFrostedEdgesV3_float(
         * step(0.5, UseBaseRoughnessTexture);
     float iceSmoothnessWithRelief = lerp(
         IceSmoothness, revealedSmoothness, iceRoughnessWeight);
+
     OutBaseColor = lerp(iceBaseColor, revealedBaseColor, flameMask);
     // ShaderGraph_MasterShader is opaque when its dissolve is inactive.
     OutAlpha = lerp(iceAlpha, 1.0, flameMask);
     OutNormalTS = normalize(lerp(iceNormalWithRelief, baseNormalTS, flameMask));
-    OutEmission = lerp(iceEmission, float3(0.0, 0.0, 0.0), flameMask);
+    // Emission is a material-wide V3 choice. The ice state keeps its procedural
+    // frost/crack emission, while the revealed state emits its textured base
+    // color. Interpolating with the same flame mask preserves a continuous
+    // result throughout the transition. OFF is guaranteed black in both states.
+    float emissionEnabled = step(0.5, EnableEmission);
+    float3 revealedEmission = revealedBaseColor * max(0.0, EmissionIntensity);
+    OutEmission = lerp(iceEmission, revealedEmission, flameMask)
+        * emissionEnabled;
     OutSmoothness = lerp(iceSmoothnessWithRelief, revealedSmoothness, flameMask);
     OutMetallic = lerp(IceMetallic, revealedMetallic, flameMask);
     OutOcclusion = lerp(1.0, revealedOcclusion, flameMask);
@@ -290,7 +316,7 @@ void LitIceFrostedEdgesV3_half(
     half MicroScale,
     half CrackWidth,
     half FresnelPower,
-    half FresnelIntensity,
+    half EnableEmission,
     half EmissionIntensity,
     half EdgeBakedBoost,
     half3 BoundsSize,
@@ -301,6 +327,10 @@ void LitIceFrostedEdgesV3_half(
     UnityTexture2D BaseRoughnessTexture,
     UnityTexture2D BaseMetallicTexture,
     UnityTexture2D BaseOcclusionTexture,
+    UnityTexture2D CrackTexture,
+    half CrackTextureStrength,
+    half CrackTextureScale,
+    half CrackTextureInvert,
     half UseBaseRoughnessTexture,
     half UseBaseMetallicTexture,
     half UseBaseOcclusionTexture,
@@ -342,9 +372,10 @@ void LitIceFrostedEdgesV3_half(
         PositionWS, NormalWS, IceDeepColor, FrostColor, VertexEdgeData,
         IceScale, FrostWidth, CrackColor, Transparency, NormalStrength,
         EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, FresnelPower,
-        FresnelIntensity, EmissionIntensity, EdgeBakedBoost,
+        EnableEmission, EmissionIntensity, EdgeBakedBoost,
         BoundsSize, UV0, BaseTexture, BaseSampler, NormalTexture,
         BaseRoughnessTexture, BaseMetallicTexture, BaseOcclusionTexture,
+        CrackTexture, CrackTextureStrength, CrackTextureScale, CrackTextureInvert,
         UseBaseRoughnessTexture, UseBaseMetallicTexture, UseBaseOcclusionTexture,
         BaseColor, BaseNormalStrength, UseScaleTiling,
         TilingMultiplier, FlameCenter, FlameInfluenceRadius, TransitionSoftness,

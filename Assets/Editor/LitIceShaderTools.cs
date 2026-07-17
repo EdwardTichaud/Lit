@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 
 internal static class LitIceShaderInstaller
 {
-    // Keep every Lit Ice variant in one validation pass so graph failures are visible immediately.
+    // Validate legacy graphs when present; V3 remains independently importable when backups are absent.
     private const string GraphPath = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges.shadergraph";
     private const string MaterialPath = "Assets/Materials/IceShader/Material_LitIceFrostedEdges.mat";
     private const string GraphV2Path = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v2.shadergraph";
@@ -33,6 +33,13 @@ internal static class LitIceShaderInstaller
         s_Running = true;
         try
         {
+            if (!File.Exists(Path.GetFullPath(GraphPath))
+                || !File.Exists(Path.GetFullPath(GraphV2Path)))
+            {
+                ImportV3Only();
+                return;
+            }
+
             AssetDatabase.ImportAsset(GraphPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(GraphPath);
             if (shader == null)
@@ -113,6 +120,41 @@ internal static class LitIceShaderInstaller
         }
     }
 
+    private static void ImportV3Only()
+    {
+        if (!File.Exists(Path.GetFullPath(GraphV3Path)))
+            throw new InvalidOperationException("Shader Graph v3 asset is missing.");
+
+        AssetDatabase.ImportAsset(
+            GraphV3Path,
+            ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+        Shader shaderV3 = AssetDatabase.LoadAssetAtPath<Shader>(GraphV3Path);
+        if (shaderV3 == null)
+            throw new InvalidOperationException("Shader Graph v3 import returned a null shader.");
+        if (ShaderUtil.ShaderHasError(shaderV3))
+            throw new InvalidOperationException(
+                "Shader Graph v3 imported, but HDRP reported a shader compilation error.");
+
+        Material materialV3 = AssetDatabase.LoadAssetAtPath<Material>(MaterialV3Path);
+        if (materialV3 == null)
+        {
+            materialV3 = new Material(shaderV3) { name = "Material_LitIceFrostedEdges_v3" };
+            ApplyRecommendedPresetValues(materialV3);
+            ApplyV2Defaults(materialV3);
+            ApplyV3Defaults(materialV3);
+            AssetDatabase.CreateAsset(materialV3, MaterialV3Path);
+        }
+        else if (materialV3.shader != shaderV3)
+        {
+            materialV3.shader = shaderV3;
+            EditorUtility.SetDirty(materialV3);
+        }
+
+        AssetDatabase.SaveAssets();
+        WriteStatus("OK");
+        Debug.Log("[Lit Ice] Shader Graph V3 and its material imported successfully; legacy backups are absent.");
+    }
+
     [MenuItem("Lit/Shadergraph/Apply Recommended Ice Preset")]
     private static void ApplyRecommendedPresetToExistingMaterial()
     {
@@ -171,8 +213,14 @@ internal static class LitIceShaderInstaller
     private static void ApplyV3Defaults(Material material)
     {
         ApplyV2Defaults(material);
+        // New V3 materials start non-emissive but retain their intensity preset,
+        // so the inspector toggle can restore the luminous look immediately.
+        SetFloat(material, "_EnableEmission", 0.0f);
         // V3 maps the complete inspector range 0..10 to the normalized frost width used by the core shader.
         SetFloat(material, "_FrostWidth", 2.2f);
+        SetFloat(material, "_CrackTextureStrength", 0.0f);
+        SetFloat(material, "_CrackTextureScale", 1.0f);
+        SetFloat(material, "_CrackTextureInvert", 0.0f);
         SetFloat(material, "_IceReliefNormalStrength", 0.75f);
         SetFloat(material, "_IceReliefRoughnessInfluence", 0.4f);
         SetFloat(material, "_TextureEdgeStrength", 1.0f);

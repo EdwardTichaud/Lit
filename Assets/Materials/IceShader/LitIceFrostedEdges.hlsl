@@ -67,6 +67,7 @@ void LitIceFrostedEdgesCore_float(
     float3 NoiseOffset,
     float MicroScale,
     float CrackWidth,
+    float ProceduralCrackStrength,
     float FresnelPower,
     float FresnelIntensity,
     float EmissionIntensity,
@@ -85,7 +86,8 @@ void LitIceFrostedEdgesCore_float(
 
     float cloud = LitIceFBM(p * 0.42);
     float detail = LitIceFBM(p * max(MicroScale, 1.0));
-    float cracks = LitIceCracks(p * 0.73, max(CrackWidth, 0.001));
+    float cracks = LitIceCracks(p * 0.73, max(CrackWidth, 0.001))
+                 * saturate(ProceduralCrackStrength);
 
     float fresnel = pow(saturate(1.0 - dot(n, viewDir)), max(FresnelPower, 0.001));
     fresnel = saturate(fresnel * FresnelIntensity);
@@ -184,7 +186,7 @@ void LitIceFrostedEdges_float(
     LitIceFrostedEdgesCore_float(
         PositionWS, NormalWS, IceDeepColor, FrostColor, VertexEdgeData,
         IceScale, legacyWidth, CrackColor, Transparency, NormalStrength,
-        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, FresnelPower,
+        EdgeSensitivity, NoiseOffset, MicroScale, CrackWidth, 1.0, FresnelPower,
         FresnelIntensity, EmissionIntensity, EdgeBakedBoost,
         lerp(0.9, 5.0, legacyWidth), 1.0,
         OutBaseColor, OutAlpha, OutNormalTS, OutEmission);

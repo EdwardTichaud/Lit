@@ -25,7 +25,7 @@ public sealed class LitIceMaisonPrefabGeneratorWindow : EditorWindow
     {
         EditorGUILayout.LabelField("MAISON ICE PREFAB LIBRARY", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Analyse les MeshRenderer statiques sous World, puis crée une bibliothèque V3 "
+            "Analyse les MeshRenderer statiques et les instances de prefab sous World, puis crée une bibliothèque V3 "
             + "dédupliquée avant d'appliquer les références à la scène Maison.",
             MessageType.Info);
 
@@ -190,6 +190,26 @@ internal static class LitIceMaisonPrefabGenerator
         }
     }
 
+    internal sealed class CompletionResult
+    {
+        public int ScannedRendererCount;
+        public int UpdatedRendererCount;
+        public int AlreadyCompleteCount;
+        public int MissingCatalogCount;
+        public int MissingVariantCount;
+        public int ExcludedRendererCount;
+        public readonly List<string> UnmatchedExamples = new List<string>();
+
+        public string ToDisplayMessage()
+        {
+            return $"Maison Ice completion: {UpdatedRendererCount} renderer(s) updated, "
+                + $"{AlreadyCompleteCount} already complete, "
+                + $"{MissingCatalogCount} without a catalogued mesh, "
+                + $"{MissingVariantCount} without an exact material variant, "
+                + $"{ExcludedRendererCount} excluded.";
+        }
+    }
+
     internal sealed class ModelGroup
     {
         public string SourceMeshId;
@@ -258,7 +278,8 @@ internal static class LitIceMaisonPrefabGenerator
             MeshFilter filter = renderer.GetComponent<MeshFilter>();
             if (filter == null || filter.sharedMesh == null || EditorUtility.IsPersistent(renderer))
                 continue;
-            if (!renderer.gameObject.isStatic)
+            if (!renderer.gameObject.isStatic
+                && !PrefabUtility.IsPartOfPrefabInstance(renderer))
                 continue;
             if (IsExcludedRenderer(renderer))
                 continue;
@@ -269,6 +290,13 @@ internal static class LitIceMaisonPrefabGenerator
             Mesh sourceMesh = ResolveSourceMesh(filter, currentMesh, catalog, result.Warnings);
             if (sourceMesh == null)
                 continue;
+            if (!EditorUtility.IsPersistent(sourceMesh))
+            {
+                result.Warnings.Add(
+                    $"{GetHierarchyPath(renderer.transform)}: scene-owned mesh "
+                    + $"'{sourceMesh.name}' cannot be added to the reusable Ice catalog.");
+                continue;
+            }
             if (!string.IsNullOrEmpty(meshNameFilter)
                 && !string.Equals(sourceMesh.name, meshNameFilter, StringComparison.OrdinalIgnoreCase))
                 continue;
@@ -334,6 +362,167 @@ internal static class LitIceMaisonPrefabGenerator
         return result;
     }
 
+    [MenuItem("Lit/Shadergraph/Complete Missing Maison Ice Assignments")]
+    private static void CompleteMissingCatalogAssignmentsMenu()
+    {
+        if (!EditorUtility.DisplayDialog(
+                "Complete missing Maison Ice assignments?",
+                "This pass updates MeshRenderers under World that still use source assets, "
+                + "but only when an exact mesh/material match already exists in the Ice catalog. "
+                + "Unknown renderers and UI are preserved.",
+                "Complete",
+                "Cancel"))
+        {
+            return;
+        }
+
+        try
+        {
+            CompletionResult result = CompleteMissingCatalogAssignments(true);
+            EditorUtility.DisplayDialog("Maison Ice completion", result.ToDisplayMessage(), "OK");
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+            EditorUtility.DisplayDialog("Maison Ice completion failed", exception.Message, "OK");
+        }
+    }
+
+    internal static CompletionResult CompleteMissingCatalogAssignments(bool openIfMissing)
+    {
+        Scene scene = GetMaisonScene(openIfMissing);
+        GameObject world = scene.GetRootGameObjects().FirstOrDefault(root => root.name == "World");
+        LitIcePrefabCatalog catalog = AssetDatabase.LoadAssetAtPath<LitIcePrefabCatalog>(CatalogPath);
+        Shader v3Shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderV3Path);
+        if (world == null || catalog == null || v3Shader == null)
+            throw new InvalidOperationException(
+                "Maison World root, LitIcePrefabCatalog or ShaderGraph V3 is missing.");
+
+        var result = new CompletionResult();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Complete missing Maison Ice assignments");
+        bool sceneChanged = false;
+        try
+        {
+            foreach (MeshRenderer renderer in world.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                result.ScannedRendererCount++;
+                MeshFilter filter = renderer.GetComponent<MeshFilter>();
+                if (filter == null || filter.sharedMesh == null
+                    || EditorUtility.IsPersistent(renderer)
+                    || (renderer.hideFlags & HideFlags.DontSave) != 0
+                    || IsExcludedRenderer(renderer))
+                {
+                    result.ExcludedRendererCount++;
+                    continue;
+                }
+
+                Mesh currentMesh = filter.sharedMesh;
+                LitIcePrefabCatalogEntry entry = catalog.FindByBakedMesh(currentMesh)
+                    ?? catalog.FindBySourceId(GetStableObjectId(currentMesh));
+                if (entry == null || entry.BakedMesh == null)
+                {
+                    result.MissingCatalogCount++;
+                    AddUnmatchedExample(result, renderer, "mesh absent from catalog");
+                    continue;
+                }
+
+                Material[] currentMaterials = renderer.sharedMaterials ?? Array.Empty<Material>();
+                LitIcePrefabVariantEntry variant = entry.Variants.FirstOrDefault(item =>
+                    item != null
+                    && item.Materials != null
+                    && item.Materials.SequenceEqual(currentMaterials));
+                if (variant == null)
+                {
+                    string[] currentMaterialIds = currentMaterials
+                        .Select(GetStableObjectId)
+                        .ToArray();
+                    variant = entry.Variants.FirstOrDefault(item =>
+                        item != null
+                        && item.SourceMaterialIds != null
+                        && item.SourceMaterialIds.SequenceEqual(currentMaterialIds));
+                }
+                if (variant == null || variant.Materials == null
+                    || variant.Materials.Count == 0
+                    || variant.Materials.Any(material => material == null
+                        || material.shader != v3Shader))
+                {
+                    result.MissingVariantCount++;
+                    AddUnmatchedExample(result, renderer, "material variant absent from catalog");
+                    continue;
+                }
+
+                Material[] desiredMaterials = variant.Materials.ToArray();
+                bool meshChanged = currentMesh != entry.BakedMesh;
+                bool materialsChanged = !currentMaterials.SequenceEqual(desiredMaterials);
+                if (!meshChanged && !materialsChanged)
+                {
+                    result.AlreadyCompleteCount++;
+                    continue;
+                }
+
+                if (meshChanged)
+                {
+                    Undo.RecordObject(filter, "Assign catalogued Lit Ice mesh");
+                    filter.sharedMesh = entry.BakedMesh;
+                    EditorUtility.SetDirty(filter);
+                    if (PrefabUtility.IsPartOfPrefabInstance(filter))
+                        PrefabUtility.RecordPrefabInstancePropertyModifications(filter);
+                }
+                if (materialsChanged)
+                {
+                    Undo.RecordObject(renderer, "Assign catalogued Lit Ice materials");
+                    renderer.sharedMaterials = desiredMaterials;
+                    EditorUtility.SetDirty(renderer);
+                    if (PrefabUtility.IsPartOfPrefabInstance(renderer))
+                        PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
+                }
+
+                sceneChanged = true;
+                result.UpdatedRendererCount++;
+            }
+
+            if (sceneChanged)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene, ScenePath))
+                    throw new InvalidOperationException("Maison could not be saved.");
+            }
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+        catch
+        {
+            Undo.RevertAllDownToGroup(undoGroup);
+            throw;
+        }
+
+        foreach (string example in result.UnmatchedExamples)
+            Debug.LogWarning("[Lit Ice Maison Completion] " + example);
+        Debug.Log("[Lit Ice Maison Completion] " + result.ToDisplayMessage());
+        return result;
+    }
+
+    private static void AddUnmatchedExample(
+        CompletionResult result, MeshRenderer renderer, string reason)
+    {
+        const int MaxExamples = 50;
+        if (result.UnmatchedExamples.Count >= MaxExamples)
+            return;
+        Mesh mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
+        result.UnmatchedExamples.Add(
+            $"{GetHierarchyPath(renderer.transform)} ({mesh?.name}): {reason}.");
+    }
+
+    private static string GetHierarchyPath(Transform value)
+    {
+        if (value == null)
+            return "<missing renderer>";
+        var names = new Stack<string>();
+        for (Transform current = value; current != null; current = current.parent)
+            names.Push(current.name);
+        return string.Join("/", names);
+    }
+
     internal static ScopeRepairResult RepairGeneratedScopeToStatic()
     {
         Scene scene = GetMaisonScene(false);
@@ -346,7 +535,9 @@ internal static class LitIceMaisonPrefabGenerator
         bool sceneChanged = false;
         foreach (MeshRenderer renderer in world.GetComponentsInChildren<MeshRenderer>(true))
         {
-            if (renderer.gameObject.isStatic && !IsExcludedRenderer(renderer))
+            if ((renderer.gameObject.isStatic
+                    || PrefabUtility.IsPartOfPrefabInstance(renderer))
+                && !IsExcludedRenderer(renderer))
                 continue;
             MeshFilter filter = renderer.GetComponent<MeshFilter>();
             if (filter == null)
@@ -1145,7 +1336,16 @@ internal static class LitIceMaisonPrefabGenerator
     {
         return renderer == null
             || renderer.GetComponent<TMPro.TMP_Text>() != null
-            || renderer.GetComponentInParent<Canvas>() != null;
+            || renderer.GetComponentInParent<Canvas>() != null
+            || HasAncestorNamed(renderer.transform, "GlobalVolume");
+    }
+
+    private static bool HasAncestorNamed(Transform value, string objectName)
+    {
+        for (Transform current = value; current != null; current = current.parent)
+            if (string.Equals(current.name, objectName, StringComparison.Ordinal))
+                return true;
+        return false;
     }
 
     private static Material FindExistingV3Material(

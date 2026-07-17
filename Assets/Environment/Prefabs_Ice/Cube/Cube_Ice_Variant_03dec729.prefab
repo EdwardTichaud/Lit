@@ -65,9 +65,9 @@ MeshRenderer:
   m_ForceMeshLod: -1
   m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
-  m_RendererPriority: 0
+  m_RendererPriority: 100
   m_Materials:
-  - {fileID: 2100000, guid: b53bb0397ec25ed479c1b11883bf9361, type: 2}
+  - {fileID: 2100000, guid: 4330e959eab518e45b6246e85179cedb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

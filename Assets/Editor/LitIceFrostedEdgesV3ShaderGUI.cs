@@ -8,6 +8,7 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
 {
     private static bool s_FrostExpanded = true;
     private static bool s_NormalExpanded = true;
+    private static bool s_EmissionExpanded = true;
     private static bool s_WallsFloorsExpanded = true;
     private static bool s_TransitionExpanded = true;
     private static string s_LastBakeMessage;
@@ -37,6 +38,8 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             DrawFrostProperties(materialEditor, properties));
         DrawSection("STATE: NORMAL", ref s_NormalExpanded, () =>
             DrawNormalProperties(materialEditor, properties));
+        DrawSection("MATERIAL: EMISSION", ref s_EmissionExpanded, () =>
+            DrawEmissionProperties(materialEditor, properties));
         DrawSection("OPTION: WALLS / FLOORS", ref s_WallsFloorsExpanded, () =>
             DrawWallsAndFloorsProperties(materialEditor, properties));
         DrawSection("FLAME TRANSITION", ref s_TransitionExpanded, () =>
@@ -77,6 +80,11 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             }
             GUI.backgroundColor = previousBackground;
 
+            if (GUILayout.Button("OPEN V3 MATERIAL CENTRALIZER", GUILayout.Height(26f)))
+            {
+                LitIceV3MaterialCentralizerWindow.OpenWindow();
+            }
+
             if (!string.IsNullOrEmpty(s_LastBakeMessage))
                 EditorGUILayout.HelpBox(s_LastBakeMessage, s_LastBakeMessageType);
         }
@@ -87,15 +95,30 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
     private void DrawFrostProperties(MaterialEditor editor, MaterialProperty[] properties)
     {
         DrawProperty(editor, properties, "_IceDeepColor", "Ice Deep Color",
-            "Couleur interne et remplissage des zones profondes de la glace.");
+            "Couleur interne des zones profondes de la glace.");
         DrawProperty(editor, properties, "_FrostColor", "Frost / Edge Color",
-            "Couleur HDR utilisée par le givre, les arêtes et leur émission.");
+            "Couleur visible du givre et des arêtes.");
         DrawProperty(editor, properties, "_FrostWidth", "Frost Width",
             "Largeur du givre automatique et des lignes du bake. 0 coupe le givre d’arête ; 10 crée une bande très large. Toute la plage est progressive.");
         DrawProperty(editor, properties, "_IceScale", "Ice Scale",
             "Échelle du volume procédural de glace et des fissures.");
         DrawProperty(editor, properties, "_CrackColor", "Crack Color",
-            "Couleur HDR des fissures internes.");
+            "Couleur visible des fissures internes.");
+        DrawProperty(editor, properties, "_CrackTexture", "Crack Texture / Sprite",
+            "Image qui remplace progressivement les fissures procédurales. Une texture noir et blanc ou un sprite avec transparence peuvent être utilisés.", true);
+        DrawProperty(editor, properties, "_CrackTextureStrength", "Crack Texture Strength",
+            "0 conserve les fissures procédurales ; 1 les remplace entièrement par l’image.");
+        MaterialProperty crackTextureStrength = FindProperty("_CrackTextureStrength", properties, false);
+        if (crackTextureStrength != null
+            && (crackTextureStrength.hasMixedValue || crackTextureStrength.floatValue > 0.001f))
+        {
+            EditorGUI.indentLevel++;
+            DrawProperty(editor, properties, "_CrackTextureScale", "Crack Texture Scale",
+                "Nombre de répétitions du motif sur les UV ou dans la projection monde.");
+            DrawToggleProperty(editor, properties, "_CrackTextureInvert", "Invert Crack Texture",
+                "À activer lorsque les fissures sont noires sur un fond blanc.");
+            EditorGUI.indentLevel--;
+        }
         DrawProperty(editor, properties, "_Transparency", "Ice Transparency",
             "Opacité de l’état glace.");
         DrawProperty(editor, properties, "_NormalStrength", "Ice Normal Strength",
@@ -108,14 +131,27 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             "Fréquence des micro-aspérités procédurales : faible = détails larges, élevé = détails fins. Son effet est surtout visible avec Ice Normal Strength.");
         DrawProperty(editor, properties, "_CrackWidth", "Crack Width",
             "Largeur et densité apparente des fissures.");
-        DrawProperty(editor, properties, "_EmissionIntensity", "Frost Emission",
-            "Intensité d’émission utilisée par le givre, les arêtes et les fissures.");
         DrawProperty(editor, properties, "_Smoothness", "Ice Smoothness",
             "Lissage et netteté des réflexions de l’état glace.");
         DrawProperty(editor, properties, "_Metallic", "Ice Metallic",
             "Réponse métallique de l’état glace.");
         DrawProperty(editor, properties, "_EdgeBakedBoost", "Baked Edge Boost",
             "Force du masque d’arêtes produit par le bouton Bake.");
+    }
+
+    private void DrawEmissionProperties(MaterialEditor editor, MaterialProperty[] properties)
+    {
+        DrawToggleProperty(editor, properties, "_EnableEmission", "Enable Material Emission",
+            "OFF : aucune émission. ON : la glace et l’apparence révélée par Base Texture émettent de la lumière.");
+        MaterialProperty enableEmission = FindProperty("_EnableEmission", properties, false);
+        if (enableEmission != null
+            && (enableEmission.hasMixedValue || enableEmission.floatValue > 0.5f))
+        {
+            EditorGUI.indentLevel++;
+            DrawProperty(editor, properties, "_EmissionIntensity", "Material Emission Intensity",
+                "Intensité commune à l’émission de la glace et à celle de Base Texture. La transition entre les deux reste progressive.");
+            EditorGUI.indentLevel--;
+        }
     }
 
     private void DrawNormalProperties(MaterialEditor editor, MaterialProperty[] properties)
@@ -166,7 +202,7 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
         EditorGUILayout.Space(4f);
         EditorGUILayout.LabelField("Texture Edge Detection", EditorStyles.miniBoldLabel);
         DrawProperty(editor, properties, "_TextureEdgeStrength", "Texture Edge Strength",
-            "Intensité et émission du givre détecté dans les textures de relief.");
+            "Intensité visuelle du givre détecté dans les textures de relief.");
         DrawProperty(editor, properties, "_TextureEdgeWidth", "Texture Edge Width",
             "Distance d’échantillonnage autour du texel, donc largeur des contours détectés.");
         DrawProperty(editor, properties, "_TextureEdgeThreshold", "Texture Edge Threshold",
@@ -220,6 +256,26 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             editor.TexturePropertySingleLine(content, property);
         else
             editor.ShaderProperty(property, content);
+    }
+
+    private void DrawToggleProperty(MaterialEditor editor, MaterialProperty[] properties,
+        string propertyName, string label, string tooltip)
+    {
+        MaterialProperty property = FindProperty(propertyName, properties, false);
+        if (property == null)
+            return;
+
+        EditorGUI.showMixedValue = property.hasMixedValue;
+        EditorGUI.BeginChangeCheck();
+        bool enabled = EditorGUILayout.Toggle(
+            new GUIContent(label, tooltip),
+            property.floatValue > 0.5f);
+        if (EditorGUI.EndChangeCheck())
+        {
+            editor.RegisterPropertyChangeUndo(label);
+            property.floatValue = enabled ? 1f : 0f;
+        }
+        EditorGUI.showMixedValue = false;
     }
 
     private static GUIStyle SectionHeaderStyle

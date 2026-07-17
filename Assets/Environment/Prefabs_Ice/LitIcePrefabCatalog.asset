@@ -67,7 +67,7 @@ MonoBehaviour:
       SourceMaterials:
       - {fileID: 2100000, guid: 31cb7a576575bca46a5d67f705eef447, type: 2}
       Materials:
-      - {fileID: 2100000, guid: b53bb0397ec25ed479c1b11883bf9361, type: 2}
+      - {fileID: 2100000, guid: 4330e959eab518e45b6246e85179cedb, type: 2}
     - VariantId: 64b90abf
       PrefabPath: Assets/Environment/Prefabs_Ice/Cube/Cube_Ice_Variant_64b90abf.prefab
       Prefab: {fileID: 1328766782464362555, guid: c5fcfb10431bc4644b6d7851a52c8442, type: 3}
@@ -140,6 +140,24 @@ MonoBehaviour:
       - {fileID: 2100000, guid: e25f51c6c9e8a18439842b2c54f64813, type: 2}
       Materials:
       - {fileID: 2100000, guid: 11826a818549b1147946ea8f5a3ccac9, type: 2}
+    - VariantId: 32f913b2
+      PrefabPath: Assets/Environment/Prefabs_Ice/Cube/Cube_Ice_Variant_32f913b2.prefab
+      Prefab: {fileID: 486079925178322551, guid: 8dbe2c7ebcb92464c9361954c7e35f6f, type: 3}
+      SourceMaterialIds:
+      - 91c81a894a74b5e4ebd5ebd2bae6323e:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 91c81a894a74b5e4ebd5ebd2bae6323e, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 226fbada542cce84baed6e76e6953134, type: 2}
+    - VariantId: 3d9d5691
+      PrefabPath: Assets/Environment/Prefabs_Ice/Cube/Cube_Ice_Variant_3d9d5691.prefab
+      Prefab: {fileID: 7164888641991971322, guid: 5207e3316d682a549864b0c3fce6a422, type: 3}
+      SourceMaterialIds:
+      - 022bc8fc020ad2e4e884c042a353391b:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 022bc8fc020ad2e4e884c042a353391b, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 473c81ee92161234b880fa4d9e768463, type: 2}
   - SourceMeshId: abc00000000008114794036364485563:4300002
     SourceMeshName: Cube_LOD0
     SourceAssetPath: Assets/0 - UnityPackages/Fab/MedievalRuins_ScansFactory/MedievalRuins/Art/Meshes/SM_Cube.fbx
@@ -1388,6 +1406,18 @@ MonoBehaviour:
       Materials:
       - {fileID: 2100000, guid: e48d9cb8f326c4b409050fb9ae38068d, type: 2}
       - {fileID: 2100000, guid: 7533d5d3ff20f3e4599e94869a6aa7bb, type: 2}
+    - VariantId: d8c9f516
+      PrefabPath: Assets/Environment/Prefabs_Ice/SM_Floor_Dip_Lshape/SM_Floor_Dip_Lshape_Ice_Variant_d8c9f516.prefab
+      Prefab: {fileID: 5715921462152385064, guid: 034954edfc032c5429642dd77cc5c293, type: 3}
+      SourceMaterialIds:
+      - 2ac483b1a895fd74597db074d914b1d8:2100000
+      - 6faa2ac74eea51e44bad061dcf793d68:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2ac483b1a895fd74597db074d914b1d8, type: 2}
+      - {fileID: 2100000, guid: 6faa2ac74eea51e44bad061dcf793d68, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: d576ee5b3be9daa4488695170af73a99, type: 2}
+      - {fileID: 2100000, guid: e3bb4faf16a3b124cb7a73047da3b57b, type: 2}
   - SourceMeshId: fccf5a8cbb3572f47a01eefb94b60312:-4875405087358140534
     SourceMeshName: SM_Floor_Dip_Tshape
     SourceAssetPath: Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Meshes/SM_Floor_Dip_Tshape.fbx
@@ -21701,3 +21731,410 @@ MonoBehaviour:
       - {fileID: 2100000, guid: b8cd95bd2cd785e48b6d48c735e7c1f6, type: 2}
       Materials:
       - {fileID: 2100000, guid: 91f79f9b764bce647b90834d02430662, type: 2}
+  - SourceMeshId: 851794fc802db464a83cf7b0a785c152:-7786390875159896513
+    SourceMeshName: Angel
+    SourceAssetPath: Assets/Environment/Statue/AngelOfJustice/Import/Angel_Of_Justice_v2.fbx
+    SourceDependencyHash: a164d3073df86606842ea0589b9d21f6
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Angel
+    SourceMesh: {fileID: -7786390875159896513, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 4c937676b51c9a242ab77bfcddabad18, type: 2}
+    Variants:
+    - VariantId: c171f4ad
+      PrefabPath: Assets/Environment/Prefabs_Ice/Angel/Angel_Ice.prefab
+      Prefab: {fileID: 8688052985623124145, guid: d036e033070f8a940a7a597adcc8aa5a, type: 3}
+      SourceMaterialIds:
+      - fec12581174243546a0e14fcedaa5da2:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: fec12581174243546a0e14fcedaa5da2, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 4be3fd3cd7242374f840097d4195be91, type: 2}
+  - SourceMeshId: 851794fc802db464a83cf7b0a785c152:-108168772592183102
+    SourceMeshName: B_002
+    SourceAssetPath: Assets/Environment/Statue/AngelOfJustice/Import/Angel_Of_Justice_v2.fbx
+    SourceDependencyHash: a164d3073df86606842ea0589b9d21f6
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/B_002
+    SourceMesh: {fileID: -108168772592183102, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 40fd6d3bc87326b49a5499e35e10136a, type: 2}
+    Variants:
+    - VariantId: 9819fd7f
+      PrefabPath: Assets/Environment/Prefabs_Ice/B_002/B_002_Ice.prefab
+      Prefab: {fileID: 642760577701428185, guid: 59af99c06a210d94d9dd61895ea83885, type: 3}
+      SourceMaterialIds:
+      - 851794fc802db464a83cf7b0a785c152:-5397144137826800766
+      SourceMaterials:
+      - {fileID: -5397144137826800766, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+      Materials:
+      - {fileID: 2100000, guid: 56fa0d43f0ba0f9468547a44d95562c9, type: 2}
+  - SourceMeshId: 851794fc802db464a83cf7b0a785c152:-7658602771262105911
+    SourceMeshName: B_01
+    SourceAssetPath: Assets/Environment/Statue/AngelOfJustice/Import/Angel_Of_Justice_v2.fbx
+    SourceDependencyHash: a164d3073df86606842ea0589b9d21f6
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/B_01
+    SourceMesh: {fileID: -7658602771262105911, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 335d17b1903d52443a5dc35ea6cd6738, type: 2}
+    Variants:
+    - VariantId: 9819fd7f
+      PrefabPath: Assets/Environment/Prefabs_Ice/B_01/B_01_Ice.prefab
+      Prefab: {fileID: 8684307420203603571, guid: b2f071305f2d8e74a8269f7df39b297e, type: 3}
+      SourceMaterialIds:
+      - 851794fc802db464a83cf7b0a785c152:-5397144137826800766
+      SourceMaterials:
+      - {fileID: -5397144137826800766, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+      Materials:
+      - {fileID: 2100000, guid: 366bab272dbd3664f8ef2036f681d870, type: 2}
+  - SourceMeshId: 851794fc802db464a83cf7b0a785c152:-3635508896863781450
+    SourceMeshName: Balance
+    SourceAssetPath: Assets/Environment/Statue/AngelOfJustice/Import/Angel_Of_Justice_v2.fbx
+    SourceDependencyHash: a164d3073df86606842ea0589b9d21f6
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Balance
+    SourceMesh: {fileID: -3635508896863781450, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+    BakedMesh: {fileID: 4300000, guid: cd5c9e0d245906843aba27a93c8460b6, type: 2}
+    Variants:
+    - VariantId: c0a3476f
+      PrefabPath: Assets/Environment/Prefabs_Ice/Balance/Balance_Ice.prefab
+      Prefab: {fileID: 7751213477371494010, guid: 84eee787b7816724083ed25433562f1d, type: 3}
+      SourceMaterialIds:
+      - 484515f503361424186b5d5c171c2d35:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 484515f503361424186b5d5c171c2d35, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 911c13e8e8f755b4b93bd3fc2b7144be, type: 2}
+  - SourceMeshId: 8b7212ee026e5ec43a952f5c2bf35949:849032210722914114
+    SourceMeshName: Line002
+    SourceAssetPath: Assets/Environment/Church/ChurchPew/Model_ChurchPew.FBX
+    SourceDependencyHash: 5b99758f9c0db83fafedcbfd325569c6
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Line002
+    SourceMesh: {fileID: 849032210722914114, guid: 8b7212ee026e5ec43a952f5c2bf35949, type: 3}
+    BakedMesh: {fileID: 4300000, guid: e81f3c7a8c89e3744a242f9b71fed55a, type: 2}
+    Variants:
+    - VariantId: 2c963a19
+      PrefabPath: Assets/Environment/Prefabs_Ice/Line002/Line002_Ice.prefab
+      Prefab: {fileID: 909350565236869187, guid: 27326cad05bc5664d95a1c73f8acf521, type: 3}
+      SourceMaterialIds:
+      - 37ec1c193debb7d45bae8a97beb42e1e:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 37ec1c193debb7d45bae8a97beb42e1e, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 5e67a5b6584b5ab468c8617c54897313, type: 2}
+  - SourceMeshId: 01e5819bac7448c49b36acac813eecb5:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Fences/Fence01/fi_vil_fence01_1m_C.fbx
+    SourceDependencyHash: 7342dcab657bc820ab08defde64caee9
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__7bcd8fac
+    SourceMesh: {fileID: 4300000, guid: 01e5819bac7448c49b36acac813eecb5, type: 3}
+    BakedMesh: {fileID: 4300000, guid: c89d8ad88a2c3424c9788afcf262c614, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__7bcd8fac/Mesh__7bcd8fac_Ice.prefab
+      Prefab: {fileID: 2677433222826201637, guid: 7c38e30098776cd4a8a8e3061bd77ffa, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 503bef50006bff2449ccb89756fdcfd6, type: 2}
+  - SourceMeshId: de9b6094a6ddca24f96d1cdadeda811b:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Decks/fi_vil_deck_1,5mX3,0m_worn.fbx
+    SourceDependencyHash: 28e8fcce44320c3ee3ed6a08c7959122
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__07a65c50
+    SourceMesh: {fileID: 4300000, guid: de9b6094a6ddca24f96d1cdadeda811b, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 9aac3c0955739e1498297022a45eec69, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__07a65c50/Mesh__07a65c50_Ice.prefab
+      Prefab: {fileID: 2477789894062427431, guid: 2e5ddf8a34dab2341b984eeddcc16853, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: d095e6962bc5fab4a9fd707d9e09317a, type: 2}
+  - SourceMeshId: 7afa59c44acd66644a09d41299937f7e:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Decks/fi_vil_deck_2,0mX4,0m.fbx
+    SourceDependencyHash: cb38f6de958068ce25b363098d3ac55e
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__598a9980
+    SourceMesh: {fileID: 4300000, guid: 7afa59c44acd66644a09d41299937f7e, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 19d74a832140db84da3877ee0dc9d248, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__598a9980/Mesh__598a9980_Ice.prefab
+      Prefab: {fileID: 4282055152541291472, guid: 2aa19af1899ddf344a9a55f0172ea2da, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 065793fcdeb8fce488780ec0dab220f9, type: 2}
+  - SourceMeshId: 1d4a84a5d94e6d440b44d6af3164f275:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Decks/fi_vil_deck_2,0mX4,0m_worn.fbx
+    SourceDependencyHash: fd0428e3cb966c4e91671545607db2da
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__d1dd473d
+    SourceMesh: {fileID: 4300000, guid: 1d4a84a5d94e6d440b44d6af3164f275, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 3ba56b299907f774a9f3214dd6711531, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__d1dd473d/Mesh__d1dd473d_Ice.prefab
+      Prefab: {fileID: 4137641668584519270, guid: 4227996d935981b4281a1db0b9f1967d, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: d2a8de2666119cc4eb6eafd77d76ba4b, type: 2}
+  - SourceMeshId: 8e8dc3723d2bce045ada64e6537d3bff:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Decks/fi_vil_deck_3,0mX6,0m.fbx
+    SourceDependencyHash: 195d9fe82188e8467dd6a97b48c2181e
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__07767099
+    SourceMesh: {fileID: 4300000, guid: 8e8dc3723d2bce045ada64e6537d3bff, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 91572e17e0fdd9343b9f1ffcd170f46d, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__07767099/Mesh__07767099_Ice.prefab
+      Prefab: {fileID: 386307721843544237, guid: 3aaf1cfa4ebd2b349b0cb449059e8427, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 94107f0f7cfd6b44b9ba138c4aeea9a6, type: 2}
+  - SourceMeshId: 14d483e79fba1874894bda6cf378659b:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Decks/fi_vil_deck_3,0mX6,0m_worn.fbx
+    SourceDependencyHash: 46ddf8ed99d441220e037fbf74ad34ce
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__d40dce13
+    SourceMesh: {fileID: 4300000, guid: 14d483e79fba1874894bda6cf378659b, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 5295c62854f6fdd49a57fdaf92eb9a1d, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__d40dce13/Mesh__d40dce13_Ice.prefab
+      Prefab: {fileID: 8827830684421261625, guid: bf236977ed62d624f848300c05645339, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 96bfa8a8b05ea0942b3a4119e98ee72e, type: 2}
+  - SourceMeshId: 4b7d800b796e52b4783b5b34f109eb9c:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Small parts/ToolBox/Uprights/fi_vil_upright06_2.0m.fbx
+    SourceDependencyHash: 46a310ce964a69bd33ee6ebc70dc92b7
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__9b11890d
+    SourceMesh: {fileID: 4300000, guid: 4b7d800b796e52b4783b5b34f109eb9c, type: 3}
+    BakedMesh: {fileID: 4300000, guid: f4c73d5df82e2b04988e5c5cab8879a9, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__9b11890d/Mesh__9b11890d_Ice.prefab
+      Prefab: {fileID: 4165106583773510614, guid: abdbf128d885b984c83dd9cf8103a310, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 8ef97e531ed9c104b964a37b16ea7a0a, type: 2}
+  - SourceMeshId: be859d3e3f813154e86461b43d5c3919:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Small parts/ToolBox/Uprights/fi_vil_upright04_3.0m.fbx
+    SourceDependencyHash: a919940fcbbc31d8a8fb821f7a7d3ace
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__4b252b32
+    SourceMesh: {fileID: 4300000, guid: be859d3e3f813154e86461b43d5c3919, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 4e873325615bb3a4fb33e2e2ead6a37b, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__4b252b32/Mesh__4b252b32_Ice.prefab
+      Prefab: {fileID: 3267520249375170072, guid: 0f318fcf010cf27459cd6eb9b7d0b604, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 597cd1441f380d149a0584fee93802c5, type: 2}
+  - SourceMeshId: 51197caa6143d314dbfaedc25365240c:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Small parts/ToolBox/Uprights/fi_vil_upright06_2.5m.fbx
+    SourceDependencyHash: 94a88ca5fdc304e71d950c558ff6cb17
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__2f5eb9eb
+    SourceMesh: {fileID: 4300000, guid: 51197caa6143d314dbfaedc25365240c, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 6c2296848328ff74ab84fc5e585cd74e, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__2f5eb9eb/Mesh__2f5eb9eb_Ice.prefab
+      Prefab: {fileID: 1351047230350753462, guid: 9d96e1a49b8377b4caa81ee3cc21fa71, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: e3f8142d57794644abd32f18e373eda7, type: 2}
+  - SourceMeshId: 7f89c514182388743b5f5e98d0e44e78:4300000
+    SourceMeshName: Mesh
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/3DForge/FantasyExteriors/Village
+      & Towns/Meshes/Base/Small parts/ToolBox/Uprights/fi_vil_upright06_3.0m.fbx
+    SourceDependencyHash: 786ec527f6f23d88d8cbc9abe9f15190
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Mesh__99e2e8a1
+    SourceMesh: {fileID: 4300000, guid: 7f89c514182388743b5f5e98d0e44e78, type: 3}
+    BakedMesh: {fileID: 4300000, guid: ef4c7d05c5fe9b84b9d7e001ad174213, type: 2}
+    Variants:
+    - VariantId: 35ca50a4
+      PrefabPath: Assets/Environment/Prefabs_Ice/Mesh__99e2e8a1/Mesh__99e2e8a1_Ice.prefab
+      Prefab: {fileID: 1257303629099125660, guid: 93d76e572b68fb741aa2ed7a89315eaf, type: 3}
+      SourceMaterialIds:
+      - 2c4401510f3cbe944a203a24e7eb59b0:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2c4401510f3cbe944a203a24e7eb59b0, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: a1a5ebf2669e1a1498aab0baad05815d, type: 2}
+  - SourceMeshId: c916125806b77b64ca5353134b4addf9:-9032557090061056480
+    SourceMeshName: Model
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/Cathedrale/model.fbx
+    SourceDependencyHash: 9762386c7145b3b0a5f51252655b4086
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Model
+    SourceMesh: {fileID: -9032557090061056480, guid: c916125806b77b64ca5353134b4addf9, type: 3}
+    BakedMesh: {fileID: 4300000, guid: b7bcce79effb00a4bae5854dcc4c6793, type: 2}
+    Variants:
+    - VariantId: 0983cd0e
+      PrefabPath: Assets/Environment/Prefabs_Ice/Model/Model_Ice.prefab
+      Prefab: {fileID: 2341026742418141627, guid: 919e098a1931ff1469f1327163be238f, type: 3}
+      SourceMaterialIds:
+      - aa24ea7a709d75b4184a72f829bb979d:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: aa24ea7a709d75b4184a72f829bb979d, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 914fa1c4b2c964644a235c70fdf218ba, type: 2}
+  - SourceMeshId: b6f919b50ded23e469e3e0cf718f4ed8:4009890519747374878
+    SourceMeshName: SM_Lever_Base_01
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Meshes/SM_Lever_Base_01.fbx
+    SourceDependencyHash: a451ac67282429c307c39af0e13c9094
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/SM_Lever_Base_01
+    SourceMesh: {fileID: 4009890519747374878, guid: b6f919b50ded23e469e3e0cf718f4ed8, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 3c395cf68cd55324e8a48e48ec7b53d0, type: 2}
+    Variants:
+    - VariantId: af90b844
+      PrefabPath: Assets/Environment/Prefabs_Ice/SM_Lever_Base_01/SM_Lever_Base_01_Ice.prefab
+      Prefab: {fileID: 239895858021990839, guid: 6bb198161b12ffd4ca292deee9b57c86, type: 3}
+      SourceMaterialIds:
+      - 6a721817a8e491c40af13f67da559009:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 6a721817a8e491c40af13f67da559009, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: d160d2b447551b1408640b8254386132, type: 2}
+  - SourceMeshId: 612188a23ca632c44be57eb22b85126a:2788656898991144956
+    SourceMeshName: SM_Lever_Handle_01
+    SourceAssetPath: Assets/0 - UnityPackages/Fab/ModularDungeonCollection/Meshes/SM_Lever_Handle_01.fbx
+    SourceDependencyHash: 3014faebc616508d3b9892252128c117
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/SM_Lever_Handle_01
+    SourceMesh: {fileID: 2788656898991144956, guid: 612188a23ca632c44be57eb22b85126a, type: 3}
+    BakedMesh: {fileID: 4300000, guid: 981b2c3347f35bf4a8bbac4d44921f15, type: 2}
+    Variants:
+    - VariantId: af90b844
+      PrefabPath: Assets/Environment/Prefabs_Ice/SM_Lever_Handle_01/SM_Lever_Handle_01_Ice.prefab
+      Prefab: {fileID: 7318593676489522757, guid: 6acd2f705300fe04c9aa584fc242b984, type: 3}
+      SourceMaterialIds:
+      - 6a721817a8e491c40af13f67da559009:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 6a721817a8e491c40af13f67da559009, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: d9ab1e0b0ea063a4a93610c061d417a1, type: 2}
+  - SourceMeshId: 6db9eb77265ea6a4c8947cb145f9b569:4300000
+    SourceMeshName: Symphonie_Sphere
+    SourceAssetPath: Assets/0 - UnityPackages/UnityAssets/Six Elements VFX Mega Pack/FX_Light
+      Skill/Mesh/Symphonie_Sphere.mesh
+    SourceDependencyHash: 16facfc3b11cf15fcdf4932869ad4340
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Symphonie_Sphere
+    SourceMesh: {fileID: 4300000, guid: 6db9eb77265ea6a4c8947cb145f9b569, type: 2}
+    BakedMesh: {fileID: 4300000, guid: b2a5fa79b420db8479269742485f7349, type: 2}
+    Variants:
+    - VariantId: 729893bd
+      PrefabPath: Assets/Environment/Prefabs_Ice/Symphonie_Sphere/Symphonie_Sphere_Ice.prefab
+      Prefab: {fileID: 1546998735563868827, guid: 5ddde0b2c570dd74192ba2a62975baba, type: 3}
+      SourceMaterialIds:
+      - 8e19e1f770fd1d949871fda2d4622ce9:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 8e19e1f770fd1d949871fda2d4622ce9, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 247c3d5fe2999d6459924e5fd6e378ae, type: 2}
+    - VariantId: 8387525c
+      PrefabPath: Assets/Environment/Prefabs_Ice/Symphonie_Sphere/Symphonie_Sphere_Ice_Variant_8387525c.prefab
+      Prefab: {fileID: 3356154580837887939, guid: 1b171a0ea44861f4b95a802fccb866d5, type: 3}
+      SourceMaterialIds:
+      - ee5a20e3de072574180adced1c0ec2e7:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: ee5a20e3de072574180adced1c0ec2e7, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: d10a73851b8e80d46bd94e6f85ab1d50, type: 2}
+    - VariantId: a42fc699
+      PrefabPath: Assets/Environment/Prefabs_Ice/Symphonie_Sphere/Symphonie_Sphere_Ice_Variant_a42fc699.prefab
+      Prefab: {fileID: 7059567969308629535, guid: 505a4fab56a2eeb438dac9ad797b3731, type: 3}
+      SourceMaterialIds:
+      - 2fc1ca772ccfdbc4288d3bd0efde57c1:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 2fc1ca772ccfdbc4288d3bd0efde57c1, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 9330ee5cb2dd522448c789415d25c966, type: 2}
+  - SourceMeshId: 851794fc802db464a83cf7b0a785c152:236335369269791384
+    SourceMeshName: Wings
+    SourceAssetPath: Assets/Environment/Statue/AngelOfJustice/Import/Angel_Of_Justice_v2.fbx
+    SourceDependencyHash: a164d3073df86606842ea0589b9d21f6
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/Wings
+    SourceMesh: {fileID: 236335369269791384, guid: 851794fc802db464a83cf7b0a785c152, type: 3}
+    BakedMesh: {fileID: 4300000, guid: a399bfabbe086ba45b7d80e7aee51bc8, type: 2}
+    Variants:
+    - VariantId: 36bb04dc
+      PrefabPath: Assets/Environment/Prefabs_Ice/Wings/Wings_Ice.prefab
+      Prefab: {fileID: 6234169468558121776, guid: 4549eac1b5cddf646bb0fc66a7ba5574, type: 3}
+      SourceMaterialIds:
+      - d0974a8a98df1bd4eb4b74de08e6135a:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: d0974a8a98df1bd4eb4b74de08e6135a, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 494fc5c34a1a8284bbdccbb4ad3f1be6, type: 2}
+  - SourceMeshId: 75a1620b305873a42bc7f92a4a8d8c93:-6566356225298702364
+    SourceMeshName: wldodgk_LOD0_TIER1_000
+    SourceAssetPath: Assets/Environment/Castle/Books/Book/Book_wldodgk_High.fbx
+    SourceDependencyHash: 054443805cf1bb14aa8e31514d8cdc6e
+    BakeVersion: 3
+    FolderPath: Assets/Environment/Prefabs_Ice/wldodgk_LOD0_TIER1_000
+    SourceMesh: {fileID: -6566356225298702364, guid: 75a1620b305873a42bc7f92a4a8d8c93, type: 3}
+    BakedMesh: {fileID: 4300000, guid: e8ad29837dfc2b548a5e710723c58929, type: 2}
+    Variants:
+    - VariantId: 9b69934a
+      PrefabPath: Assets/Environment/Prefabs_Ice/wldodgk_LOD0_TIER1_000/wldodgk_LOD0_TIER1_000_Ice.prefab
+      Prefab: {fileID: 5213057310063910144, guid: 0b77ad1f5cd9f7e4d87da9264ba22eef, type: 3}
+      SourceMaterialIds:
+      - 4c250d57e11001446ab8498ea58f9060:2100000
+      SourceMaterials:
+      - {fileID: 2100000, guid: 4c250d57e11001446ab8498ea58f9060, type: 2}
+      Materials:
+      - {fileID: 2100000, guid: 65436d4077c928849bc1362754ee1470, type: 2}

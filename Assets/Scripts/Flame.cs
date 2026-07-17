@@ -1211,6 +1211,13 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        // Une flamme allumee ne doit jamais creer ni afficher de sphere runtime.
+        if (isLit)
+        {
+            SetInfluenceSphereVisualActive(false);
+            return;
+        }
+
         EnsureLitInfluence();
         bool shouldShow = showInfluenceSphere
             && litInfluence != null
