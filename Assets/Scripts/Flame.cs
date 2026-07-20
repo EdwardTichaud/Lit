@@ -50,7 +50,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     [Header("Interaction")]
     [Tooltip("Ecoute Interact en plus de TriggerMunin.")]
     public bool useInteractInput = false;
-    [SerializeField, Tooltip("Ecoute TriggerMunin quand la flamme est ciblee par le personnage local.")]
+    [SerializeField, Tooltip("Autorise l'appel de Munin depuis le choix d'interaction de la torche.")]
     private bool useTriggerMuninInput = true;
     [SerializeField, Tooltip("Affiche un dialogue d'etat avec Interact sans changer la flamme.")]
     private bool showStateDialogueOnInteract = true;
@@ -272,11 +272,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             LocalInputRouter.Interact += OnInteractPerformed;
         }
 
-        if (useTriggerMuninInput)
-        {
-            LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
-        }
-
         UpdateLitInfluence(true);
         NotifyAgeManagerDriverAvailabilityChanged();
     }
@@ -284,8 +279,6 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private void OnDisable()
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
-        LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
-
         ClearLitInfluence();
         SetInfluenceSphereVisualActive(false);
         NotifyAgeManagerDriverAvailabilityChanged();
@@ -653,41 +646,22 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         InfoBoxUI.TryShow(isLit ? litStateMessage : unlitStateMessage);
     }
 
-    private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
+    public bool TryStartMuninInteraction(GameObject character)
     {
-        if (!useTriggerMuninInput)
+        if (!useTriggerMuninInput || character == null || interactionInProgress)
         {
-            return;
+            return false;
         }
 
-        if (InputFocusStack.HasAnyFocus())
+        SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
+        if (controller == null || !CanBeDetectedBy(controller) || !IsCharacterWithinInteractDistance(character.transform))
         {
-            return;
-        }
-
-        if (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked())
-        {
-            return;
-        }
-
-        GameObject character = ResolveDetectedInteractionCharacter();
-        if (character == null)
-        {
-            return;
+            return false;
         }
 
         currentCharacter = character;
-        if (!LocalInputRouter.TryConsumeTriggerMunin())
-        {
-            return;
-        }
-
-        if (interactionInProgress)
-        {
-            return;
-        }
-
         StartInteraction();
+        return true;
     }
 
     public override void OnNetworkSpawn()

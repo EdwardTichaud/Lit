@@ -9,6 +9,7 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
     private static bool s_FrostExpanded = true;
     private static bool s_NormalExpanded = true;
     private static bool s_EmissionExpanded = true;
+    private static bool s_ReflectionsExpanded = true;
     private static bool s_WallsFloorsExpanded = true;
     private static bool s_TransitionExpanded = true;
     private static string s_LastBakeMessage;
@@ -40,6 +41,8 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
             DrawNormalProperties(materialEditor, properties));
         DrawSection("MATERIAL: EMISSION", ref s_EmissionExpanded, () =>
             DrawEmissionProperties(materialEditor, properties));
+        DrawSection("MATERIAL: REFLECTIONS", ref s_ReflectionsExpanded, () =>
+            DrawReflectionProperties(materialEditor, properties));
         DrawSection("OPTION: WALLS / FLOORS", ref s_WallsFloorsExpanded, () =>
             DrawWallsAndFloorsProperties(materialEditor, properties));
         DrawSection("FLAME TRANSITION", ref s_TransitionExpanded, () =>
@@ -152,6 +155,12 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
                 "Intensité commune à l’émission de la glace et à celle de Base Texture. La transition entre les deux reste progressive.");
             EditorGUI.indentLevel--;
         }
+    }
+
+    private void DrawReflectionProperties(MaterialEditor editor, MaterialProperty[] properties)
+    {
+        DrawProperty(editor, properties, "_ReflectionStrength", "Reflection Strength",
+            "Renforce et affine progressivement les reflets HDRP des Reflection Probes sur la glace et sur l’état normal. 0 conserve les Smoothness existantes ; 1 donne un reflet presque miroir.");
     }
 
     private void DrawNormalProperties(MaterialEditor editor, MaterialProperty[] properties)

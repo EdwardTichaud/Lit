@@ -34,6 +34,14 @@ public class PersistentContainerState : MonoBehaviour, IPersistentStateProvider
         {
             container = GetComponent<InteractableItem>();
         }
+
+        // Une scene peut conserver un ancien provider apres suppression de
+        // son coffre. Le desactiver empeche la sauvegarde d'ecrire un blob
+        // vide et de signaler une erreur a chaque fermeture du jeu.
+        if (container == null)
+        {
+            enabled = false;
+        }
     }
 
     public byte[] CaptureState(PersistentStateContext context)
@@ -615,6 +623,12 @@ public class PersistentFlameState : MonoBehaviour, IPersistentStateProvider
         if (flame == null)
         {
             flame = GetComponent<Flame>();
+        }
+
+        // Meme cas que les coffres : ne pas enregistrer un provider orphelin.
+        if (flame == null)
+        {
+            enabled = false;
         }
     }
 

@@ -181,18 +181,6 @@ public partial class SquadCharacterController
         return true;
     }
 
-    private bool TryGetUccWorldPosition(out Vector3 worldPosition)
-    {
-        worldPosition = Vector3.zero;
-        if (!TryGetActiveUccLocomotionBridge(out LitOpsiveLocomotionBridge bridge))
-        {
-            return false;
-        }
-
-        worldPosition = bridge.WorldPosition;
-        return true;
-    }
-
     private bool CanUseLitInteractionsWithUcc()
     {
         LitUccInteractionBridge bridge = GetUccInteractionBridge();

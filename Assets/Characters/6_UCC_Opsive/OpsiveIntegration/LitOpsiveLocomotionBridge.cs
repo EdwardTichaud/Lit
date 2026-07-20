@@ -35,7 +35,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [Header("Root Motion Locomotion")]
     [SerializeField, Tooltip("Lets UCC consume Animator root motion for grounded locomotion instead of using motor-force displacement.")]
     private bool useRootMotionLocomotion = false;
-    [SerializeField, Min(0f)] private float rootMotionSpeedMultiplier = 1f;
+    [SerializeField, Min(0f)] private float rootMotionSpeedMultiplier = 1.04f;
     [SerializeField, Min(0f)] private float rootMotionRotationMultiplier = 1f;
     [SerializeField, Tooltip("Lets UCC/look-source rotation drive regular root-motion locomotion so directional clips cannot lock the body facing. Pivot clips can still use authored root rotation.")]
     private bool preferLookSourceRotationForRootMotionLocomotion = true;
@@ -47,11 +47,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private float idleRootMotionVelocityThreshold = 0.06f;
     [SerializeField, Tooltip("Applies additional root-motion tuning based on the active grounded animation phase.")]
     private bool useRootMotionPhaseMultipliers = true;
-    [SerializeField, Min(0f)] private float rootMotionLoopSpeedScale = 1f;
+    [SerializeField, Min(0f)] private float rootMotionLoopSpeedScale = 1.02f;
     [SerializeField, Min(0f)] private float rootMotionLoopRotationScale = 1f;
-    [SerializeField, Min(0f)] private float rootMotionStartSpeedScale = 0.96f;
+    [SerializeField, Min(0f)] private float rootMotionStartSpeedScale = 1.18f;
     [SerializeField, Min(0f)] private float rootMotionStartRotationScale = 1f;
-    [SerializeField, Min(0f)] private float rootMotionStopSpeedScale = 0.82f;
+    [SerializeField, Min(0f)] private float rootMotionStopSpeedScale = 0.7f;
     [SerializeField, Min(0f)] private float rootMotionStopRotationScale = 0.94f;
     [SerializeField, Min(0f)] private float rootMotionPivotSpeedScale = 0.88f;
     [SerializeField, Min(0f)] private float rootMotionPivotRotationScale = 1.12f;
@@ -61,8 +61,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool restoreRootMotionSettingsOnDisable = true;
     [SerializeField, Tooltip("Reapplies root motion multipliers every frame so Play Mode inspector tuning is felt immediately.")]
     private bool refreshRootMotionSettingsEveryFrame = true;
-    [SerializeField, Tooltip("Feeds local X/Y movement to UCC and the Animator so root-motion strafe/diagonal clips can blend in.")]
-    private bool driveDirectionalRootMotionInput = true;
+    [SerializeField, Tooltip("Legacy directional root-motion input. Keep disabled for forward-only grounded locomotion.")]
+    private bool driveDirectionalRootMotionInput = false;
     [SerializeField, Tooltip("When the look source already points toward movement, feeds UCC forward input to avoid double-rotating movement space.")]
     private bool useLookSourceForwardInputForRootMotion = true;
     [SerializeField, Tooltip("Add Lit/UCC companion bridges at runtime so interaction, damage and follower systems can respect UCC state without prefab edits.")]
@@ -971,6 +971,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return Vector2.zero;
         }
 
+        if (useForwardOnlyGroundedLocomotion)
+        {
+            return new Vector2(0f, clampedMagnitude);
+        }
+
         if (!ShouldUseDirectionalRootMotionInput())
         {
             return new Vector2(0f, clampedMagnitude);
@@ -1299,13 +1304,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private float ResolveLocomotionTier(float speed)
     {
-        if (speed <= 0.05f)
-        {
-            return 1f;
-        }
-
-        float jogThreshold = Mathf.Lerp(walkPresentationSpeed, runPresentationSpeed, 0.5f);
-        return speed >= jogThreshold ? 3f : speed >= walkPresentationSpeed * 0.5f ? 2f : 1f;
+        return sprintPressed ? 3f : 1f;
     }
 
     private float ResolveSignedTurn(Vector3 velocity)
@@ -1332,6 +1331,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             localDirection = ResolveGroundedLocalMoveDirection(fallbackVelocity);
             parameterSpeed = Mathf.Max(0f, presentationSpeed);
+        }
+
+        if (useForwardOnlyGroundedLocomotion)
+        {
+            SetAnimatorFloat(horizontalMovementParam, 0f);
+            SetAnimatorFloat(forwardMovementParam, parameterSpeed);
+            return;
         }
 
         Vector2 directionalSpeed = localDirection * parameterSpeed;
@@ -1619,16 +1625,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private RootMotionPhase ResolveRootMotionPhase(AnimatorStateInfo stateInfo)
     {
-        if (stateInfo.IsName("Walk_Start") ||
-            stateInfo.IsName("Jogtrot_Start") ||
-            stateInfo.IsName("Run_Start"))
+        if (stateInfo.IsName("Walk_Start") || stateInfo.IsName("Run_Start"))
         {
             return RootMotionPhase.Start;
         }
 
-        if (stateInfo.IsName("Walk_Stop") ||
-            stateInfo.IsName("Jogtrot_Stop") ||
-            stateInfo.IsName("Run_Stop"))
+        if (stateInfo.IsName("Walk_Stop") || stateInfo.IsName("Run_Stop"))
         {
             return RootMotionPhase.Stop;
         }

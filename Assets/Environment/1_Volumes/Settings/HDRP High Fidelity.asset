@@ -234,9 +234,9 @@ MonoBehaviour:
     waterSimulationResolution: 128
     supportWaterExclusion: 1
     supportWaterHorizontalDeformation: 0
-    supportWaterDecals: 1
+    supportWaterDecals: 0
     waterDecalAtlasSize: 1024
-    maximumWaterDecalCount: 48
+    maximumWaterDecalCount: 1
     waterScriptInteractionsMode: 0
     waterFullCPUSimulation: 0
     waterCausticsMeshResolution: 256
@@ -263,10 +263,10 @@ MonoBehaviour:
       m_Values: 000100000002000000040000
       m_SchemaId:
         m_Id: With3Levels
-    supportDecals: 1
-    supportDecalLayers: 1
-    supportSurfaceGradient: 1
-    decalNormalBufferHP: 1
+    supportDecals: 0
+    supportDecalLayers: 0
+    supportSurfaceGradient: 0
+    decalNormalBufferHP: 0
     supportHighQualityLineRendering: 0
     highQualityLineRenderingMemoryBudget: 128
     msaaSampleCount: 1
@@ -313,7 +313,7 @@ MonoBehaviour:
       maxAreaLightsOnScreen: 64
       maxCubeReflectionOnScreen: 64
       maxPlanarReflectionOnScreen: 16
-      maxDecalsOnScreen: 512
+      maxDecalsOnScreen: 1
       maxLightsPerClusterCell: 16
       maxLocalVolumetricFogSize: 32
       maxLocalVolumetricFogOnScreen: 64

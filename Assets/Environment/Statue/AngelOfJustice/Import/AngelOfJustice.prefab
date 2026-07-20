@@ -364,7 +364,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6937228851401640280}
   - component: {fileID: 7022095738475132869}
-  - component: {fileID: 7445786083374755627}
   m_Layer: 0
   m_Name: AngelOfJustice
   m_TagString: Untagged
@@ -410,48 +409,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &7445786083374755627
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7490359114257671495}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc36bd7052d39854d81e5ef569da5d7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OptimizableObject
-  category: 4
-  optimizationEnabled: 1
-  neverCull: 0
-  preserveForCameraFade: 0
-  boundsRoot: {fileID: 6937228851401640280}
-  autoCollectTargets: 1
-  includeInactiveChildren: 1
-  controlRenderers: 1
-  controlSkinnedMeshRenderers: 1
-  controlLights: 1
-  controlExplicitPausables: 0
-  reduceUpdateRateWhenDistant: 1
-  distantUpdateInterval: 0.35
-  pausedUpdateInterval: 1
-  targetRenderers:
-  - {fileID: 5937903959361599611}
-  - {fileID: 5411212848997068458}
-  - {fileID: 2884734577406307020}
-  - {fileID: 2485131628480730020}
-  - {fileID: 8692400854067639194}
-  targetLights: []
-  explicitPausables: []
-  visibleDistanceOverride: -1
-  lightDistanceOverride: -1
-  pauseDistanceOverride: -1
-  distanceMultiplier: 1
-  boundsPadding: 2
-  minimumBoundsRadius: 0.5
-  drawGizmos: 0
-  logStateChanges: 0
 --- !u!1 &7580184654528326622
 GameObject:
   m_ObjectHideFlags: 0

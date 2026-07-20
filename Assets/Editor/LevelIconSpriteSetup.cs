@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEditor;
+using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.TextCore;
 
@@ -82,20 +83,32 @@ public static class LevelIconSpriteSetup
         importer.mipmapEnabled = false;
         importer.alphaIsTransparency = true;
 
-        List<SpriteMetaData> spritesheet = new List<SpriteMetaData>();
+        SpriteDataProviderFactories providerFactories = new SpriteDataProviderFactories();
+        providerFactories.Init();
+        ISpriteEditorDataProvider dataProvider = providerFactories.GetSpriteEditorDataProviderFromObject(importer);
+        if (dataProvider == null)
+        {
+            Debug.LogWarning("LevelIconSpriteSetup: impossible de configurer les sprites de l'atlas.");
+            return;
+        }
+
+        dataProvider.InitSpriteEditorDataProvider();
+        List<SpriteRect> spriteRects = new List<SpriteRect>();
         for (int i = 0; i < maxLevel; i++)
         {
-            SpriteMetaData meta = new SpriteMetaData
+            SpriteRect spriteRect = new SpriteRect
             {
                 name = $"Level{i + 1}",
                 rect = new Rect(i * 64, 0, 64, 64),
-                alignment = (int)SpriteAlignment.Center,
-                pivot = new Vector2(0.5f, 0.5f)
+                alignment = SpriteAlignment.Center,
+                pivot = new Vector2(0.5f, 0.5f),
+                spriteID = GUID.Generate()
             };
-            spritesheet.Add(meta);
+            spriteRects.Add(spriteRect);
         }
 
-        importer.spritesheet = spritesheet.ToArray();
+        dataProvider.SetSpriteRects(spriteRects.ToArray());
+        dataProvider.Apply();
         importer.SaveAndReimport();
     }
 

@@ -5,11 +5,19 @@ using UnityEngine;
 internal static class ReflectionProbeGizmoEnforcer
 {
     private const double CheckIntervalSeconds = 1d;
+    private const string EnforceContinuouslyKey = "Lit.Editor.EnforceReflectionProbeGizmosContinuously";
     private static double nextCheckTime;
+    private static bool EnforceContinuously =>
+        EditorPrefs.GetBool(EnforceContinuouslyKey, false);
 
     static ReflectionProbeGizmoEnforcer()
     {
         EditorApplication.delayCall += Enforce;
+        if (!EnforceContinuously)
+        {
+            return;
+        }
+
         EditorApplication.update += Update;
     }
 

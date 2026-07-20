@@ -1813,7 +1813,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 6775551591263557490}
+  - {fileID: 1015352300561693851}
   m_Father: {fileID: 2233782780378164146}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2160324580470185257
@@ -1883,6 +1883,7 @@ Transform:
   - {fileID: 4048374513659564924}
   - {fileID: 7769512643678340867}
   - {fileID: 2483246625476558508}
+  - {fileID: 1946871658810921300}
   m_Father: {fileID: 8471450277138128461}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &2242032065261163609
@@ -2364,14 +2365,6 @@ MonoBehaviour:
   forceIdleFacialExpressionWhileMoving: 1
   facialMovementInputThreshold: 0.08
   facialMovementIdleFadeDuration: 0.08
-  speedParam: Speed
-  speedDampTime: 0.06
-  useSpeedDamping: 1
-  isMovingParam: IsMoving
-  locomotionTierParam: LocomotionTier
-  turnParam: Turn
-  turnInPlaceParam: TurnInPlace
-  walkMoveSpeed: 5
   moveSpeed: 6.5
   movementInputDeadZone: 0.08
   useCameraRelative: 1
@@ -2382,7 +2375,9 @@ MonoBehaviour:
   animatePhysics: 0
   allowFlameToggle: 1
   flameParentName: Stuff
-  flameChildName: Flame
+  flameChildName: Torch_01 Variant
+  carriedTorchVisualPrefab: {fileID: 0}
+  carriedTorchAttachBoneName: hand_r
   flameBoolParam: Flame
   flameStartsActive: 1
   initializeFlameFromHierarchy: 1
@@ -3144,10 +3139,10 @@ MonoBehaviour:
   groundedMovingPlatformSeparationVelocity: 7
   groundedMovingPlatformDisconnectMultiplier: 0.65
   groundedMovingPlatformForceDamping: 0.18
-  groundedInputAcceleration: 5.5
-  groundedSprintInputAcceleration: 4.1
-  groundedInputDeceleration: 8.2
-  groundedDirectionChangeAcceleration: 10.5
+  groundedInputAcceleration: 6.2
+  groundedSprintInputAcceleration: 5
+  groundedInputDeceleration: 6.2
+  groundedDirectionChangeAcceleration: 11.2
   groundedDirectionChangeDot: 0.2
   tuneGroundedSprintSpeedChange: 1
   groundedSprintSpeedMultiplier: 1.65
@@ -3157,54 +3152,36 @@ MonoBehaviour:
   turnInPlaceParam: TurnInPlace
   groundedAnimationSpeedToBlend: 0.48
   groundedRootMotionSpeedToBlend: 0.22
-  groundedAnimatorSpeedRiseRate: 11
-  groundedAnimatorSpeedFallRate: 8
-  groundedAnimatorTurnRate: 6.5
+  groundedAnimatorSpeedRiseRate: 13.5
+  groundedAnimatorSpeedFallRate: 5.4
+  groundedAnimatorTurnRate: 5.4
   groundedTurnInPlaceThreshold: 0.55
   groundedTurnInPlaceMaxSpeed: 0.35
-  groundedStopTriggerMinSpeed: 0.35
-  groundedMoveTransitionDirectionHoldTime: 0.34
-  groundedMoveTransitionParameterSpeed: 1.15
+  groundedStopTriggerMinSpeed: 0.48
+  groundedMoveTransitionDirectionHoldTime: 0.18
+  groundedMoveTransitionParameterSpeed: 1.22
+  useForwardOnlyGroundedLocomotion: 1
   enableRootMotionPivotTurns: 1
-  groundedPivotMinAngle: 65
+  groundedPivotMinAngle: 85
   groundedPivot180Angle: 135
+  groundedSnapStationaryTurn: 1
+  groundedSnapStationaryTurnMinAngle: 25
+  groundedSnapStationaryTurnMaxSpeed: 0.22
+  groundedSnapStationaryTurnMaxSmoothedInput: 0.08
   groundedPivotMaxSpeed: 0.45
-  groundedPivotMaxSmoothedInput: 0.24
-  groundedPivotHoldTime: 0.42
-  groundedPivotCooldown: 0.28
+  groundedPivotMaxSmoothedInput: 0.14
+  groundedPivotHoldTime: 0.32
+  groundedPivotCooldown: 0.34
+  groundedPivotStartGraceTime: 0.12
+  groundedPivotStartGraceMinAngle: 128
+  groundedPivotMovementReleaseStart: 0.38
+  groundedPivotMovementReleaseMaxAngle: 72
+  groundedPivotMovementReleaseScale: 0.58
   commitRootRotationDuringPivot: 1
-  groundedPivotRotationCommitRate: 720
-  enableCinematicOrientationFeel: 1
-  orientationInputDeadZone: 0.14
-  orientationWalkTurnRate: 520
-  orientationSprintTurnRate: 420
-  orientationSharpTurnRate: 760
-  orientationSharpTurnAngle: 92
-  orientationVelocityBlend: 0.18
+  groundedPivotRotationCommitRate: 960
   driveJumpLandingAnimatorParameters: 1
   jumpTriggerParam: JumpTrigger
   isAirborneParam: IsAirborne
-  landingTypeParam: LandingType
-  jumpFromMovementParam: JumpFromMovement
-  rollTriggerParam: RollTrigger
-  jumpPhaseParam: JumpPhase
-  normalLandingStateName: Jump_Land
-  hardLandingStateName: Landing_Hard
-  rollLandingStateName: Jump_Roll
-  takeoffPhaseMaxGroundedTime: 0.24
-  airbornePhaseMinTime: 0.08
-  normalLandingMinFallSpeed: 1.35
-  hardLandingMinFallSpeed: 5.75
-  rollLandingMinFallSpeed: 8.25
-  rollLandingMinPlanarSpeed: 2.2
-  normalLandingRecoveryTime: 0.18
-  hardLandingRecoveryTime: 0.34
-  rollLandingRecoveryTime: 0.28
-  normalLandingInputScale: 0.42
-  hardLandingInputScale: 0.1
-  rollLandingInputScale: 0.32
-  crossFadeLandingStates: 1
-  landingCrossFadeDuration: 0.055
   enableObstacleTraversal: 1
   ignoredObstacleMaxHeight: 0.22
   traversableObstacleMaxHeight: 1.05
@@ -3224,6 +3201,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   obstacleTraversalTriggerParam: ObstacleTraversal
+  enableCinematicOrientationFeel: 1
+  orientationInputDeadZone: 0.14
+  orientationWalkTurnRate: 360
+  orientationSprintTurnRate: 300
+  orientationSharpTurnRate: 540
+  orientationSharpTurnAngle: 92
+  orientationVelocityBlend: 0.1
   squadController: {fileID: 0}
   locomotion: {fileID: 0}
   locomotionHandler: {fileID: 0}
@@ -3243,18 +3227,18 @@ MonoBehaviour:
   suppressIdleRootMotionPosition: 1
   idleRootMotionVelocityThreshold: 0.06
   useRootMotionPhaseMultipliers: 1
-  rootMotionLoopSpeedScale: 1
+  rootMotionLoopSpeedScale: 1.02
   rootMotionLoopRotationScale: 1
-  rootMotionStartSpeedScale: 0.96
+  rootMotionStartSpeedScale: 1.18
   rootMotionStartRotationScale: 1
-  rootMotionStopSpeedScale: 0.82
+  rootMotionStopSpeedScale: 0.7
   rootMotionStopRotationScale: 0.94
   rootMotionPivotSpeedScale: 0.88
   rootMotionPivotRotationScale: 1.12
   preserveAnimatorRootMotion: 1
   restoreRootMotionSettingsOnDisable: 1
   refreshRootMotionSettingsEveryFrame: 1
-  driveDirectionalRootMotionInput: 1
+  driveDirectionalRootMotionInput: 0
   useLookSourceForwardInputForRootMotion: 1
   autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
@@ -3652,7 +3636,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d1b0e5c2a7f94f4aa5d23224fe72b48c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocomotionAnimationEvent
   defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
   groundMask:
@@ -9831,7 +9815,7 @@ Cloth:
   - {x: 0.6666667, y: 0.16666667, z: 0.16666667}
   - {x: 0.5, y: 0.5, z: 0}
   m_VirtualParticleIndices: 
---- !u!1001 &7282414248245094916
+--- !u!1001 &3819207392535921133
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -9843,10 +9827,6 @@ PrefabInstance:
       propertyPath: targetPlayer
       value: 
       objectReference: {fileID: 2233782780378164146}
-    - target: {fileID: 1894658953683459710, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      propertyPath: movementDirectionLeadDistance
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 2559203603118137772, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -9891,25 +9871,79 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5861746523418594337, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      propertyPath: m_Range
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 5861746523418594337, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-      propertyPath: m_Intensity
-      value: 9.549296
-      objectReference: {fileID: 0}
     - target: {fileID: 8758297420699082699, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
       propertyPath: m_Name
-      value: Munin_v2
+      value: VFX_Munin_v2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
---- !u!4 &6775551591263557490 stripped
+--- !u!4 &1015352300561693851 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4258097831601814902, guid: bfbd241df881942438dfdf794b25ac66, type: 3}
-  m_PrefabInstance: {fileID: 7282414248245094916}
+  m_PrefabInstance: {fileID: 3819207392535921133}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6724937530051910506
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4664326916147199218}
+    m_Modifications:
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0291
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0889
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.1187
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.72610056
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.6825823
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.08281299
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.0012139779
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 82.327
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 65.935
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 59.305
+      objectReference: {fileID: 0}
+    - target: {fileID: 5556521461363822724, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+      propertyPath: m_Name
+      value: Torch_01 Variant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+--- !u!4 &1946871658810921300 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5068636972644076094, guid: cbf22ed8df8f83d4d8eb0aa0b59585cb, type: 3}
+  m_PrefabInstance: {fileID: 6724937530051910506}
   m_PrefabAsset: {fileID: 0}

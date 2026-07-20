@@ -30,7 +30,7 @@ public class UIManager : MonoBehaviour
         for (int i = 0; i < root.childCount; i++)
         {
             Transform child = root.GetChild(i);
-            if (ContainsStartupPanel(child))
+            if (ContainsStartupPanel(child) || IsSelfManagedVisibility(child))
             {
                 continue;
             }
@@ -112,5 +112,13 @@ public class UIManager : MonoBehaviour
     private static bool ContainsTransform(Transform root, Transform target)
     {
         return root == target || (target != null && target.IsChildOf(root));
+    }
+
+    // Certains panels, comme l'inventaire, pilotent eux-memes leur CanvasGroup et
+    // leur fondu. Les masquer ici peut interrompre un fondu d'ouverture lance
+    // avant Start (notamment lors de la premiere saisie joueur).
+    private static bool IsSelfManagedVisibility(Transform panel)
+    {
+        return panel != null && panel.GetComponent<InventoryUISettings>() != null;
     }
 }

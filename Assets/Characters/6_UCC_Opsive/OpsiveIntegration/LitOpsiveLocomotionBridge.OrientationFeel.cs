@@ -6,12 +6,12 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Tooltip("Smooths the fallback look source so the body turns with weight instead of snapping to movement input.")]
     private bool enableCinematicOrientationFeel = true;
     [SerializeField, Range(0f, 1f)] private float orientationInputDeadZone = 0.14f;
-    [SerializeField, Min(1f)] private float orientationWalkTurnRate = 520f;
-    [SerializeField, Min(1f)] private float orientationSprintTurnRate = 420f;
-    [SerializeField, Min(1f)] private float orientationSharpTurnRate = 760f;
+    [SerializeField, Min(1f)] private float orientationWalkTurnRate = 360f;
+    [SerializeField, Min(1f)] private float orientationSprintTurnRate = 300f;
+    [SerializeField, Min(1f)] private float orientationSharpTurnRate = 540f;
     [SerializeField, Range(0f, 180f)] private float orientationSharpTurnAngle = 92f;
     [SerializeField, Range(0f, 1f), Tooltip("Blends a little current planar velocity into the facing target for smoother diagonals and recoveries.")]
-    private float orientationVelocityBlend = 0.18f;
+    private float orientationVelocityBlend = 0.1f;
 
     private Vector3 smoothedPlanarLookDirection;
     private bool hasSmoothedPlanarLookDirection;

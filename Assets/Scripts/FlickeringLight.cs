@@ -223,7 +223,8 @@ public class FlickeringLight : MonoBehaviour
         }
 
         targetLight.renderMode = renderMode;
-        targetLight.shadows = shadowMode == LightShadows.None ? LightShadows.Soft : shadowMode;
+        LightShadows requestedShadows = shadowMode == LightShadows.None ? LightShadows.Soft : shadowMode;
+        targetLight.shadows = requestedShadows;
         targetLight.shadowStrength = shadowStrength;
         targetLight.shadowBias = shadowBias;
         targetLight.shadowNormalBias = shadowNormalBias;

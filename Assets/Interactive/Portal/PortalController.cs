@@ -7,13 +7,27 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteractable, ILocalInteractHandler
 {
+    public enum DestinationMode
+    {
+        LocalTeleport,
+        SceneTransition
+    }
+
     [Header("Destination")]
+    [SerializeField, Tooltip("Choisit une teleportation dans la scene ou un changement de zone.")]
+    private DestinationMode destinationMode = DestinationMode.LocalTeleport;
     [SerializeField, Tooltip("Point d'arrivee du portail. Son orientation definit celle du personnage si l'option est active.")]
     private Transform destinationPoint;
     [SerializeField, Tooltip("Offset local applique par rapport au point d'arrivee.")]
     private Vector3 destinationLocalOffset;
     [SerializeField, Tooltip("Applique la rotation du point d'arrivee au personnage.")]
     private bool useDestinationRotation = true;
+
+    [Header("Scene Transition")]
+    [SerializeField, Tooltip("Zone chargee quand ce portail est configure en Scene Transition.")]
+    private ZoneManifest destinationZone;
+    [SerializeField, Tooltip("Identifiant optionnel du ZoneSpawnPoint d'arrivee.")]
+    private string destinationSpawnId = "Default";
 
     [Header("Interaction")]
     [SerializeField, Tooltip("Collider utilise pour detecter et mesurer l'interaction. Un SphereCollider Trigger est cree au runtime s'il manque.")]
@@ -53,6 +67,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     private bool awaitingServerResponse;
 
     public Transform DestinationPoint => destinationPoint;
+    public bool IsSceneTransition => destinationMode == DestinationMode.SceneTransition;
 
     private void Reset()
     {
@@ -98,7 +113,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     {
         return controller != null
             && isActiveAndEnabled
-            && destinationPoint != null
+            && HasValidDestination()
             && GetInteractionDetectionCollider() != null;
     }
 
@@ -134,7 +149,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
 
     public bool TryHandleLocalInteract()
     {
-        if (!isActiveAndEnabled || destinationPoint == null || detectedCharacter == null)
+        if (!isActiveAndEnabled || !HasValidDestination() || detectedCharacter == null)
         {
             return false;
         }
@@ -175,6 +190,17 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
             return true;
         }
 
+        if (IsSceneTransition)
+        {
+            if (GameFlowService.TravelToZone(destinationZone, destinationSpawnId))
+            {
+                RegisterCooldown(ResolveCooldownKey(character));
+                PlayTeleportAudio(character.transform.position);
+            }
+
+            return true;
+        }
+
         if (TryTeleportAuthoritative(character, out Vector3 position, out _))
         {
             PlayTeleportAudio(position);
@@ -193,14 +219,27 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
             return false;
         }
 
+        if (IsSceneTransition)
+        {
+            destinationPosition = character.transform.position;
+            destinationRotation = character.transform.rotation;
+            return GameFlowService.TravelToZone(destinationZone, destinationSpawnId);
+        }
+
         return TryTeleportAuthoritative(character, out destinationPosition, out destinationRotation);
     }
 
-    public void HandlePortalUseResult(bool success, Vector3 destinationPosition, Quaternion destinationRotation)
+    public void HandlePortalUseResult(bool success, Vector3 destinationPosition, Quaternion destinationRotation, bool sceneTransition)
     {
         awaitingServerResponse = false;
         if (!success)
         {
+            return;
+        }
+
+        if (sceneTransition)
+        {
+            PlayTeleportAudio(transform.position);
             return;
         }
 
@@ -234,7 +273,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
 
     private bool CanUse(GameObject character, bool requireLocalControl, float rangePadding)
     {
-        if (character == null || destinationPoint == null || GetInteractionDetectionCollider() == null)
+        if (character == null || !HasValidDestination() || GetInteractionDetectionCollider() == null)
         {
             return false;
         }
@@ -255,6 +294,13 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
             GetInteractionDetectionCollider(),
             GetInteractionAnchor(),
             interactionMaxDistance + Mathf.Max(0f, rangePadding));
+    }
+
+    private bool HasValidDestination()
+    {
+        return IsSceneTransition
+            ? destinationZone != null && destinationZone.IsValid
+            : destinationPoint != null;
     }
 
     private void ResolveDestinationPose(

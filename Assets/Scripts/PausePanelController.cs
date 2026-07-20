@@ -438,7 +438,10 @@ public class PausePanelController : MonoBehaviour
             mainMenuSceneName = MainMenuController.DefaultMenuSceneName;
         }
 
-        LoadingScreenService.LoadScene(mainMenuSceneName, "Retour au menu principal...", LoadSceneMode.Single);
+        if (!GameFlowService.OpenMainMenu())
+        {
+            LoadingScreenService.LoadScene(mainMenuSceneName, "Retour au menu principal...", LoadSceneMode.Single);
+        }
     }
 
     private bool EnsureSaveSlot()

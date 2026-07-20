@@ -141733,6 +141733,7 @@ MonoBehaviour:
   baseOffset: {x: 0.7, y: 2.3, z: 0}
   followSmoothTime: 0.22
   targetVelocityLeadTime: 0.08
+  movementDirectionLeadDistance: 0.6
   catchUpDistanceRatio: 0.88
   catchUpSmoothTimeMultiplier: 0.45
   targetVelocitySharpness: 12

@@ -7,7 +7,6 @@ using UnityEngine;
 [RequireComponent(typeof(LitOpsiveLocomotionBridge))]
 public partial class SquadCharacterController : MonoBehaviour
 {
-    private const float WalkLocomotionTier = 1f;
     private const int MaxEnabledCombatItems = 3;
 
     private enum FlameVisualTransition
@@ -24,7 +23,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private static readonly int FlameLocomotionStateHash = Animator.StringToHash("Flame_Locomotion");
     private static readonly int FlameOffStateHash = Animator.StringToHash("Flame_Off");
     private static readonly int FlameUnequipStateHash = Animator.StringToHash("Flame_Unequip");
-    private const bool CharacterFlameSystemEnabled = false;
+    private const bool CharacterFlameSystemEnabled = true;
 
     [Header("Inventory")]
     [SerializeField, HideInInspector] private List<Item> items = new List<Item>();
@@ -70,27 +69,7 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Min(0f), Tooltip("Duree de fade vers Idle quand le mouvement reprend le controle du visage.")]
     private float facialMovementIdleFadeDuration = 0.08f;
 
-    [Header("Animator Params")]
-    [SerializeField, Tooltip("Nom du parametre Speed dans l'Animator.")]
-    private string speedParam = "Speed";
-    [SerializeField, Tooltip("Damping du parametre Speed.")]
-    private float speedDampTime = 0.06f;
-    [SerializeField, Tooltip("Utilise un damping sur Speed.")]
-    private bool useSpeedDamping = false;
-
-    [Header("Animation Feel")]
-    [SerializeField, Tooltip("Nom du bool optionnel pour distinguer idle et locomotion.")]
-    private string isMovingParam = "IsMoving";
-    [SerializeField, Tooltip("Nom du float optionnel qui selectionne le Start/Stop locomotion: 1=Walk, 2=Jogtrot, 3=Run.")]
-    private string locomotionTierParam = "LocomotionTier";
-    [SerializeField, Tooltip("Nom du float optionnel signe (-1..1) mesurant le besoin de rotation.")]
-    private string turnParam = "Turn";
-    [SerializeField, Tooltip("Nom du bool optionnel actif quand un pivot sur place est pertinent.")]
-    private string turnInPlaceParam = "TurnInPlace";
-
     [Header("Movement")]
-    [SerializeField, Tooltip("Vitesse max de marche quand le modificateur de course n'est pas maintenu.")]
-    private float walkMoveSpeed = 5f;
     [SerializeField, Tooltip("Vitesse de deplacement.")]
     private float moveSpeed = 6.5f;
     [SerializeField, Range(0f, 1f), Tooltip("Zone morte gameplay de la locomotion InPlace.")]
@@ -113,18 +92,24 @@ public partial class SquadCharacterController : MonoBehaviour
     private Vector2 storedInput;
 
     [Header("Flame")]
-    [SerializeField, Tooltip("Autorise TriggerMunin a allumer/eteindre la flamme.")]
+    [SerializeField, Tooltip("Autorise ToggleTorch a sortir/ranger la torche portee.")]
     private bool allowFlameToggle = true;
     [SerializeField, Tooltip("Nom du parent de la flamme.")]
     private string flameParentName = "Stuff";
     [SerializeField, Tooltip("Nom du child de la flamme.")]
     private string flameChildName = "Flame";
+    [SerializeField, Tooltip("Prefab de flamme commune instancie si l'ancien visuel porte n'est plus present dans le personnage.")]
+    private GameObject carriedTorchVisualPrefab;
+    [SerializeField, Tooltip("Os auquel rattacher la flamme portee creee au runtime.")]
+    private string carriedTorchAttachBoneName = "hand_r";
     [SerializeField, Tooltip("Parametre bool de flamme.")]
     private string flameBoolParam = "Flame";
     [SerializeField, Tooltip("Flamme active au demarrage.")]
     private bool flameStartsActive = true;
     [SerializeField, Tooltip("Lit l'etat depuis la hierarchie.")]
     private bool initializeFlameFromHierarchy = true;
+    [SerializeField, Tooltip("Active les animations specialisees de torche. Desactive pour conserver la locomotion standard avec la torche portee.")]
+    private bool useFlameAnimationLayer;
     [SerializeField, Range(0f, 1f), Tooltip("Poids du layer flamme a l'arret.")]
     private float flameUpperBodyIdleLayerWeight = 0.92f;
     [SerializeField, Range(0f, 1f), Tooltip("Poids du layer flamme en locomotion rapide.")]
@@ -152,8 +137,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private int scriptedMovementSuppressionCount;
     private int externalLocomotionDriverLockCount;
-    private bool sprintModifierPressed;
-    private bool isGrounded;
     private Transform flameTransform;
     private MuninController syncedMuninChargeController;
     private bool flameInitialized;
@@ -200,7 +183,6 @@ public partial class SquadCharacterController : MonoBehaviour
     public bool IsGrounded => TryGetUccGrounded(out bool uccGrounded) && uccGrounded;
     public bool IsExternalLocomotionDriverActive => externalLocomotionDriverLockCount > 0;
     public bool IsCharacterFlameSystemEnabled => CharacterFlameSystemEnabled;
-    public float WalkMoveSpeed => walkMoveSpeed;
     public float MoveSpeed => moveSpeed;
 
     public bool TryGetHeadWorldY(out float headWorldY)
@@ -2288,13 +2270,10 @@ public partial class SquadCharacterController : MonoBehaviour
         ResolveFacialExpressionController();
         facialMovementInputThreshold = Mathf.Clamp01(facialMovementInputThreshold);
         facialMovementIdleFadeDuration = Mathf.Max(0f, facialMovementIdleFadeDuration);
-        walkMoveSpeed = Mathf.Max(0f, walkMoveSpeed);
         moveSpeed = Mathf.Max(0f, moveSpeed);
-        walkMoveSpeed = Mathf.Min(walkMoveSpeed, moveSpeed);
         movementInputDeadZone = Mathf.Clamp01(movementInputDeadZone);
         fixedCameraMovementInputRefreshAngle = Mathf.Clamp(fixedCameraMovementInputRefreshAngle, 0f, 180f);
         fixedCameraMovementReferenceBlendSharpness = Mathf.Max(0f, fixedCameraMovementReferenceBlendSharpness);
-        speedDampTime = Mathf.Max(0f, speedDampTime);
         ValidateSittingSettings();
         ApplyAnimatorSettings();
         EnsureRigidbodyCollisionSafety();
@@ -2335,7 +2314,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void TriggerMunin()
     {
-        DisableCharacterFlameState();
+        // Munin et la torche sont deux actions independantes.
     }
 
     public void ApplyFlameState(int flameSeconds, bool equipFlame)
@@ -2370,7 +2349,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void SetSprintModifier(bool pressed)
     {
-        sprintModifierPressed = pressed;
         TryForwardSprintToUcc(pressed);
     }
 
@@ -2384,14 +2362,7 @@ public partial class SquadCharacterController : MonoBehaviour
         TryForwardStopToUcc();
 
         ResetUccLocomotionIntent();
-        sprintModifierPressed = false;
         ClearStoredMovementReference();
-        StopHorizontalVelocity();
-        SetAnimatorBoolIfValid(isMovingParam, false);
-        SetAnimatorBoolIfValid(turnInPlaceParam, false);
-        SetAnimatorFloatIfValid(locomotionTierParam, WalkLocomotionTier);
-        SetAnimatorFloatIfValid(turnParam, 0f);
-        SetSpeed(0f);
     }
 
     public void PushScriptedMovementSuppression()
@@ -2415,7 +2386,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         externalLocomotionDriverLockCount = Mathf.Max(0, externalLocomotionDriverLockCount + 1);
         Stop();
-        ClearScriptDrivenHorizontalVelocity();
     }
 
     public void PopExternalLocomotionDriver()
@@ -2431,19 +2401,6 @@ public partial class SquadCharacterController : MonoBehaviour
         {
             Stop();
         }
-    }
-
-    private void FixedUpdate()
-    {
-        if (IsExternalLocomotionDriverActive)
-        {
-            UpdateGroundedState();
-            ClearScriptDrivenHorizontalVelocity();
-            return;
-        }
-
-        UpdateGroundedState();
-        ClearScriptDrivenHorizontalVelocity();
     }
 
     private void ApplyMovementFacialNeutral(float inputMagnitude)
@@ -2490,25 +2447,6 @@ public partial class SquadCharacterController : MonoBehaviour
         facialExpressionController = GetComponentInParent<FacialExpressionController>();
     }
 
-    private void ClearScriptDrivenHorizontalVelocity()
-    {
-    }
-
-    private void StopHorizontalVelocity()
-    {
-    }
-
-    private void UpdateGroundedState()
-    {
-        if (TryGetUccGrounded(out bool uccGrounded))
-        {
-            isGrounded = uccGrounded;
-            return;
-        }
-
-        isGrounded = false;
-    }
-
     private bool TryGetLocomotionCapsule(out Vector3 center, out float radius, out float height)
     {
         CapsuleCollider capsule = locomotionCapsule;
@@ -2544,24 +2482,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
         Transform t = collider.transform;
         return t == transform || t.IsChildOf(transform);
-    }
-
-    private void SetSpeed(float speed)
-    {
-        if (animator == null || string.IsNullOrWhiteSpace(speedParam))
-        {
-            return;
-        }
-
-        if (useSpeedDamping)
-        {
-            float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
-            animator.SetFloat(speedParam, speed, speedDampTime, deltaTime);
-        }
-        else
-        {
-            animator.SetFloat(speedParam, speed);
-        }
     }
 
     private void InitializeFlameState()
@@ -2634,13 +2554,6 @@ public partial class SquadCharacterController : MonoBehaviour
 
         int prevSeconds = flameSecondsRemaining;
         bool prevEquipped = flameEquipped;
-
-        if (!Zone.ShouldConsumeFlame(gameObject))
-        {
-            flameDrainTimer = 0f;
-            SyncFlameStateToCharacterDataIfChanged(prevSeconds, prevEquipped);
-            return;
-        }
 
         if (!flameEquipped)
         {
@@ -2856,7 +2769,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void SetFlameAnimatorBool(bool value, bool syncImmediate)
     {
-        if (!HasAnimatorParameter(flameBoolParam, AnimatorControllerParameterType.Bool))
+        if (!useFlameAnimationLayer || !HasAnimatorParameter(flameBoolParam, AnimatorControllerParameterType.Bool))
         {
             return;
         }
@@ -2918,7 +2831,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private int GetFlameAnimationLayerIndex()
     {
-        if (animator == null || !animator.isActiveAndEnabled)
+        if (!useFlameAnimationLayer || animator == null || !animator.isActiveAndEnabled)
         {
             return -1;
         }
@@ -3094,7 +3007,33 @@ public partial class SquadCharacterController : MonoBehaviour
             flame = root.Find($"{flameParentName}/{flameChildName}");
         }
 
+        if (flame == null)
+        {
+            Transform attachPoint = FindChildByName(root, carriedTorchAttachBoneName) ?? root;
+            GameObject visual = carriedTorchVisualPrefab != null
+                ? Instantiate(carriedTorchVisualPrefab, attachPoint, false)
+                : CreateFallbackCarriedTorchVisual(attachPoint);
+            visual.name = flameChildName;
+            flame = visual.transform;
+        }
+
         return flame;
+    }
+
+    private static GameObject CreateFallbackCarriedTorchVisual(Transform attachPoint)
+    {
+        GameObject visual = new GameObject("Flame");
+        visual.transform.SetParent(attachPoint, false);
+        visual.transform.localPosition = new Vector3(0.03f, 0.08f, 0.02f);
+
+        Light torchLight = visual.AddComponent<Light>();
+        torchLight.type = LightType.Point;
+        torchLight.color = new Color(1f, 0.55f, 0.18f);
+        torchLight.intensity = 4f;
+        torchLight.range = 6f;
+        torchLight.shadows = LightShadows.Soft;
+        visual.AddComponent<FlameLightReceiver>();
+        return visual;
     }
 
     private static Transform FindChildByName(Transform root, string targetName)
@@ -3148,16 +3087,6 @@ public partial class SquadCharacterController : MonoBehaviour
         return Vector3.zero;
     }
 
-    private Vector3 GetWorldPosition()
-    {
-        if (TryGetUccWorldPosition(out Vector3 uccWorldPosition))
-        {
-            return uccWorldPosition;
-        }
-
-        return Vector3.zero;
-    }
-
     private Vector3 GetMoveDirection(Vector2 input, bool inputRepresentsRawMovement = false)
     {
         Vector3 move = new Vector3(input.x, 0f, input.y);
@@ -3197,31 +3126,6 @@ public partial class SquadCharacterController : MonoBehaviour
     {
         Vector3 direction = GetMoveDirection(input, inputRepresentsRawMovement: true);
         return new Vector2(direction.x, direction.z);
-    }
-
-    public Vector2 GetInputFromWorldDirection(Vector3 worldDirection)
-    {
-        Vector3 planar = new Vector3(worldDirection.x, 0f, worldDirection.z);
-        if (planar.sqrMagnitude < 0.0001f)
-        {
-            return Vector2.zero;
-        }
-
-        planar.Normalize();
-
-        if (!ShouldUseCameraRelativeInput())
-        {
-            return new Vector2(planar.x, planar.z);
-        }
-
-        if (!TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight))
-        {
-            return new Vector2(planar.x, planar.z);
-        }
-
-        float x = Vector3.Dot(planar, camRight);
-        float y = Vector3.Dot(planar, camForward);
-        return new Vector2(x, y);
     }
 
     private bool ShouldUseCameraRelativeInput()
@@ -3370,11 +3274,6 @@ public partial class SquadCharacterController : MonoBehaviour
         storedForward = Vector3.zero;
         storedRight = Vector3.zero;
         storedInput = Vector2.zero;
-    }
-
-    private bool TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight)
-    {
-        return TryResolveMovementBasis(out camForward, out camRight, out _);
     }
 
     private bool TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight, out bool fixedCameraBasis)

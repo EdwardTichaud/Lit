@@ -14,6 +14,7 @@ Material:
   m_ValidKeywords:
   - _DISABLE_DECALS
   - _DISABLE_SSR
+  - _DISABLE_SSR_TRANSPARENT
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -21,11 +22,12 @@ Material:
   m_CustomRenderQueue: 2000
   stringTagMap:
     MotionVector: User
-    RenderType: Opaque
   disabledShaderPasses:
   - TransparentBackface
   - RayTracingPrepass
   - MOTIONVECTORS
+  - TransparentDepthPrepass
+  - TransparentDepthPostpass
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -93,7 +95,7 @@ Material:
     - _EdgeSensitivity: 30
     - _EmissionIntensity: 1
     - _EnableBlendModePreserveSpecularLighting: 0
-    - _EnableEmission: 1
+    - _EnableEmission: 0
     - _EnableFogOnTransparent: 0
     - _ExcludeFromTUAndAA: 0
     - _FlameInfluenceRadius: 1000
@@ -106,18 +108,19 @@ Material:
     - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
-    - _Metallic: 0
-    - _MicroScale: 7
-    - _NormalStrength: 0.7
+    - _Metallic: 0.8
+    - _MicroScale: 3
+    - _NormalStrength: 0.1
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
+    - _ReflectionStrength: 1
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Smoothness: 0.7
+    - _Smoothness: 0.5
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 0
@@ -154,7 +157,7 @@ Material:
     - _UseScaleTiling: 1
     - _UseShadowThreshold: 0
     - _VertexEdgeMask: 0
-    - _ZTestDepthEqualForOpaque: 4
+    - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
     - _ZWrite: 1

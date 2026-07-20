@@ -192,6 +192,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""ToggleTorch"",
+                    ""type"": ""Button"",
+                    ""id"": ""4f3487a1-4f84-4a84-a1ea-fbe9aa4b4a1f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""SwitchTarget"",
                     ""type"": ""Button"",
                     ""id"": ""8ce14999-fd56-4e09-8993-4cf09d4f829f"",
@@ -429,7 +438,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""TriggerMunin"",
+                    ""action"": ""ToggleTorch"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -887,6 +896,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_RightShoulder = m_Player.FindAction("RightShoulder", throwIfNotFound: true);
         m_Player_LocomotionMode = m_Player.FindAction("LocomotionMode", throwIfNotFound: true);
         m_Player_TriggerMunin = m_Player.FindAction("TriggerMunin", throwIfNotFound: true);
+        m_Player_ToggleTorch = m_Player.FindAction("ToggleTorch", throwIfNotFound: true);
         m_Player_SwitchTarget = m_Player.FindAction("SwitchTarget", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
@@ -998,6 +1008,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_RightShoulder;
     private readonly InputAction m_Player_LocomotionMode;
     private readonly InputAction m_Player_TriggerMunin;
+    private readonly InputAction m_Player_ToggleTorch;
     private readonly InputAction m_Player_SwitchTarget;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
@@ -1054,6 +1065,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/TriggerMunin".
         /// </summary>
         public InputAction @TriggerMunin => m_Wrapper.m_Player_TriggerMunin;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/ToggleTorch".
+        /// </summary>
+        public InputAction @ToggleTorch => m_Wrapper.m_Player_ToggleTorch;
         /// <summary>
         /// Provides access to the underlying input action "Player/SwitchTarget".
         /// </summary>
@@ -1117,6 +1132,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @TriggerMunin.started += instance.OnTriggerMunin;
             @TriggerMunin.performed += instance.OnTriggerMunin;
             @TriggerMunin.canceled += instance.OnTriggerMunin;
+            @ToggleTorch.started += instance.OnToggleTorch;
+            @ToggleTorch.performed += instance.OnToggleTorch;
+            @ToggleTorch.canceled += instance.OnToggleTorch;
             @SwitchTarget.started += instance.OnSwitchTarget;
             @SwitchTarget.performed += instance.OnSwitchTarget;
             @SwitchTarget.canceled += instance.OnSwitchTarget;
@@ -1164,6 +1182,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @TriggerMunin.started -= instance.OnTriggerMunin;
             @TriggerMunin.performed -= instance.OnTriggerMunin;
             @TriggerMunin.canceled -= instance.OnTriggerMunin;
+            @ToggleTorch.started -= instance.OnToggleTorch;
+            @ToggleTorch.performed -= instance.OnToggleTorch;
+            @ToggleTorch.canceled -= instance.OnToggleTorch;
             @SwitchTarget.started -= instance.OnSwitchTarget;
             @SwitchTarget.performed -= instance.OnSwitchTarget;
             @SwitchTarget.canceled -= instance.OnSwitchTarget;
@@ -1662,6 +1683,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnTriggerMunin(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ToggleTorch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnToggleTorch(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "SwitchTarget" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

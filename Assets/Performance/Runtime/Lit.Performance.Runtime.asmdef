@@ -1,0 +1,14 @@
+{
+  "name": "Lit.Performance.Runtime",
+  "rootNamespace": "Lit.Performance",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

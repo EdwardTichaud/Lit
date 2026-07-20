@@ -3,8 +3,15 @@ using UnityEditor;
 [InitializeOnLoad]
 public static class CharacterDataIdAssigner
 {
+    private const string AutoAssignOnReloadKey = "Lit.CharacterData.AutoAssignIdsOnReload";
+
     static CharacterDataIdAssigner()
     {
+        if (!EditorPrefs.GetBool(AutoAssignOnReloadKey, false))
+        {
+            return;
+        }
+
         AssignIds();
     }
 

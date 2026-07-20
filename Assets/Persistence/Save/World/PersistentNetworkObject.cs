@@ -261,7 +261,8 @@ public class PersistentNetworkObject : NetworkBehaviour
         MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
         for (int i = 0; i < behaviours.Length; i++)
         {
-            if (behaviours[i] is IPersistentStateProvider provider)
+            if (behaviours[i] != null && behaviours[i].isActiveAndEnabled &&
+                behaviours[i] is IPersistentStateProvider provider)
             {
                 string providerId = provider.ProviderId ?? string.Empty;
                 if (!providerIds.Add(providerId))

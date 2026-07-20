@@ -19663,7 +19663,6 @@ GameObject:
   - component: {fileID: 4978514593656585705}
   - component: {fileID: 3019600660757514274}
   - component: {fileID: 383544228686938741}
-  - component: {fileID: 9058846720284945312}
   m_Layer: 0
   m_Name: VFX_RainSplash
   m_TagString: Untagged
@@ -24520,75 +24519,6 @@ ParticleSystemRenderer:
   m_MeshWeighting1: 1
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
---- !u!114 &9058846720284945312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1008745065993787195}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc36bd7052d39854d81e5ef569da5d7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OptimizableObject
-  category: 4
-  optimizationEnabled: 1
-  neverCull: 0
-  preserveForCameraFade: 0
-  boundsRoot: {fileID: 4978514593656585705}
-  autoCollectTargets: 1
-  includeInactiveChildren: 1
-  controlRenderers: 1
-  controlSkinnedMeshRenderers: 1
-  controlLights: 1
-  controlExplicitPausables: 0
-  reduceUpdateRateWhenDistant: 1
-  distantUpdateInterval: 0.35
-  pausedUpdateInterval: 1
-  targetRenderers:
-  - {fileID: 383544228686938741}
-  - {fileID: 4177710599809075286}
-  - {fileID: 7374557534690422802}
-  - {fileID: 917208410140932575}
-  - {fileID: 7086253458592599517}
-  - {fileID: 3947894361851398469}
-  - {fileID: 7012159559515122184}
-  - {fileID: 9022264106622124064}
-  - {fileID: 1663512510707473827}
-  - {fileID: 3681769837377402376}
-  - {fileID: 966592964623768160}
-  - {fileID: 857233393810968442}
-  - {fileID: 5366530261527338749}
-  - {fileID: 1555462138342339830}
-  - {fileID: 3731485669462951521}
-  - {fileID: 3301787359090494110}
-  - {fileID: 2535293794854064747}
-  - {fileID: 9047233204123400592}
-  - {fileID: 6492844311545720587}
-  - {fileID: 6394982239125253986}
-  - {fileID: 2812574539273989840}
-  - {fileID: 4508186364623669839}
-  - {fileID: 1217773927222152281}
-  - {fileID: 4750926271934609959}
-  - {fileID: 4999248639121892320}
-  - {fileID: 5885603060967169935}
-  - {fileID: 2902210769673716862}
-  - {fileID: 2595651631944461836}
-  - {fileID: 5133062192406221650}
-  - {fileID: 8840702852529822641}
-  - {fileID: 5329616229931361267}
-  - {fileID: 926300735247987149}
-  targetLights: []
-  explicitPausables: []
-  visibleDistanceOverride: -1
-  lightDistanceOverride: -1
-  pauseDistanceOverride: -1
-  distanceMultiplier: 1
-  boundsPadding: 2
-  minimumBoundsRadius: 0.5
-  drawGizmos: 0
-  logStateChanges: 0
 --- !u!1 &1115090046333942231
 GameObject:
   m_ObjectHideFlags: 0

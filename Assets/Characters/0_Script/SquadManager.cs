@@ -118,6 +118,9 @@ public class SquadManager : MonoBehaviour
     private readonly HashSet<string> runtimeCharacterIdWarnings = new HashSet<string>();
     private readonly HashSet<CharacterData> runtimeCharacters = new HashSet<CharacterData>();
     private string lastLocalAssignmentRefreshLog = string.Empty;
+    private bool deferSceneInitialization;
+    private bool sceneInitializationStarted;
+
     void Awake()
     {
         if (Instance == null)
@@ -136,6 +139,10 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
+        // GameplaySessionRoot est instancie depuis le menu, avant que la
+        // scene de jeu et ses points de spawn existent. Les personnages
+        // doivent attendre cette scene, pas etre crees dans le menu.
+        deferSceneInitialization = GameFlowService.IsPreparingGameplayScene;
         EnsureRuntimeSquad();
         InitializeSquadPanel();
     }
@@ -146,6 +153,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.Jump += OnJumpPerformed;
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
+        LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.LeftShoulder += OnLeftShoulderPerformed;
@@ -158,6 +166,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.Jump -= OnJumpPerformed;
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
+        LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         LocalInputRouter.LeftShoulder -= OnLeftShoulderPerformed;
@@ -185,6 +194,24 @@ public class SquadManager : MonoBehaviour
 
     void Start()
     {
+        StartSceneInitializationIfNeeded();
+    }
+
+    /// <summary>Appelee par GameFlow une fois la scene de gameplay chargee.</summary>
+    public void InitializeForLoadedGameplayScene()
+    {
+        deferSceneInitialization = false;
+        StartSceneInitializationIfNeeded();
+    }
+
+    private void StartSceneInitializationIfNeeded()
+    {
+        if (deferSceneInitialization || sceneInitializationStarted)
+        {
+            return;
+        }
+
+        sceneInitializationStarted = true;
         StartCoroutine(StartRoutine());
     }
 
@@ -699,6 +726,27 @@ public class SquadManager : MonoBehaviour
 
         TrySetCharacterPositionAndRotation(instance, position, rotation);
         instance.SetActive(true);
+    }
+
+    /// <summary>Place les personnages deja instancies de l'equipe au point d'arrivee d'une scene.</summary>
+    public void MoveSquadToSpawn(Transform spawnPoint)
+    {
+        if (spawnPoint == null || squadCharacters == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < squadCharacters.Count; i++)
+        {
+            GameObject character = squadCharacters[i];
+            if (character == null)
+            {
+                continue;
+            }
+
+            Vector3 position = spawnPoint.position + spawnPoint.right * (i * 1.5f);
+            TrySetCharacterPositionAndRotation(character, position, spawnPoint.rotation);
+        }
     }
 
     private static bool TrySetCharacterPositionAndRotation(GameObject instance, Vector3 position, Quaternion rotation)
@@ -1730,6 +1778,83 @@ public class SquadManager : MonoBehaviour
     private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
     {
         triggerMuninRequested = true;
+    }
+
+    private void OnToggleTorchPerformed(InputAction.CallbackContext context)
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            return;
+        }
+
+        if (currentCharacter == null || IsInputLocked())
+        {
+            return;
+        }
+
+        SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
+        Flame flame = FindFlameInRange(controller);
+        if (flame != null)
+        {
+            if (LocalInputRouter.TryConsumeToggleTorch())
+            {
+                ShowFlameChoice(flame, controller);
+            }
+            return;
+        }
+
+        if (LocalInputRouter.TryConsumeToggleTorch())
+        {
+            controller?.ToggleFlame();
+        }
+    }
+
+    private static Flame FindFlameInRange(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return null;
+        }
+
+        Flame closest = null;
+        float closestSqrDistance = float.MaxValue;
+        Flame[] flames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < flames.Length; i++)
+        {
+            Flame candidate = flames[i];
+            if (candidate == null || !candidate.CanBeDetectedBy(controller) ||
+                !CharacterInteractionDetection.IsCharacterWithinRange(
+                    controller.transform,
+                    candidate.GetInteractionDetectionCollider(),
+                    candidate.GetInteractionAnchor(),
+                    candidate.GetInteractionMaxDistance(controller)))
+            {
+                continue;
+            }
+
+            Transform anchor = candidate.GetInteractionAnchor();
+            Vector3 anchorPosition = anchor != null ? anchor.position : candidate.transform.position;
+            float sqrDistance = (anchorPosition - controller.transform.position).sqrMagnitude;
+            if (sqrDistance < closestSqrDistance)
+            {
+                closest = candidate;
+                closestSqrDistance = sqrDistance;
+            }
+        }
+
+        return closest;
+    }
+
+    private void ShowFlameChoice(Flame flame, SquadCharacterController controller)
+    {
+        ConfirmationManager.TryShow(
+            this,
+            "Que voulez-vous faire ?",
+            () => flame.TryStartMuninInteraction(controller != null ? controller.gameObject : null),
+            () => controller?.ToggleFlame(),
+            "Faire appel a Munin",
+            "Sortir la torche a main",
+            "Flamme a portee");
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext context)
@@ -2819,6 +2944,18 @@ public class SquadManager : MonoBehaviour
         return inputLockCount > 0;
     }
 
+    /// <summary>
+    /// Reinitialise les verrous transitoires (UI, dialogue, combat) au debut
+    /// d'une nouvelle session locale. Les synchronisations multijoueur
+    /// reappliquent ensuite leurs propres verrous si necessaire.
+    /// </summary>
+    public void ResetInputLocksForNewSession()
+    {
+        inputLockCount = 0;
+        jumpRequested = false;
+        locomotionModeRequested = false;
+    }
+
     private void InitializeSquadPanel()
     {
         SquadUISettings ui = GetSquadUI();
@@ -2853,7 +2990,8 @@ public class SquadManager : MonoBehaviour
     private SquadUISettings GetSquadUI()
     {
         SquadUISettings ui = squadUISettings != null ? squadUISettings : SquadUISettings.Instance;
-        if (ui == null && !warnedMissingSquadUI)
+        if (ui == null && !warnedMissingSquadUI &&
+            (!Application.isPlaying || (GameFlowService.Instance != null && GameFlowService.Instance.HasGameplaySession)))
         {
             Debug.LogWarning("SquadManager: SquadUISettings non assigne. Le panel de squad ne pourra pas s'afficher.");
             warnedMissingSquadUI = true;

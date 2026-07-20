@@ -18,6 +18,7 @@ public class NetworkCharacterInput : NetworkBehaviour
     private float lastSentFlightVerticalInput;
     private bool locomotionModeRequested;
     private bool triggerMuninRequested;
+    private bool toggleTorchRequested;
     private float nextSendTime;
 
     private void Awake()
@@ -66,6 +67,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         LocalInputRouter.Jump += OnJump;
         LocalInputRouter.LocomotionMode += OnLocomotionMode;
         LocalInputRouter.TriggerMunin += OnTriggerMunin;
+        LocalInputRouter.ToggleTorch += OnToggleTorch;
     }
 
     private void UnregisterInput()
@@ -74,6 +76,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         LocalInputRouter.Jump -= OnJump;
         LocalInputRouter.LocomotionMode -= OnLocomotionMode;
         LocalInputRouter.TriggerMunin -= OnTriggerMunin;
+        LocalInputRouter.ToggleTorch -= OnToggleTorch;
         rawMoveInput = Vector2.zero;
         pendingMove = Vector2.zero;
         lastSentMove = Vector2.zero;
@@ -83,6 +86,7 @@ public class NetworkCharacterInput : NetworkBehaviour
         lastSentFlightVerticalInput = 0f;
         locomotionModeRequested = false;
         triggerMuninRequested = false;
+        toggleTorchRequested = false;
         if (controller != null)
         {
             controller.SetSprintModifier(false);
@@ -99,6 +103,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             flightVerticalInput = 0f;
             locomotionModeRequested = false;
             triggerMuninRequested = false;
+            toggleTorchRequested = false;
             return;
         }
 
@@ -110,6 +115,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             flightVerticalInput = 0f;
             locomotionModeRequested = false;
             triggerMuninRequested = false;
+            toggleTorchRequested = false;
             if (controller != null)
             {
                 controller.SetSprintModifier(false);
@@ -157,6 +163,7 @@ public class NetworkCharacterInput : NetworkBehaviour
             : rawMoveInput;
 
         HandleTriggerMuninRequest();
+        HandleToggleTorchRequest();
         HandleLocomotionModeRequest();
 
         if (Time.time < nextSendTime &&
@@ -225,6 +232,80 @@ public class NetworkCharacterInput : NetworkBehaviour
         locomotionModeRequested = true;
     }
 
+    private void OnToggleTorch(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    {
+        if (!IsOwner || !IsSpawned || !IsAssignedToLocalClient() || IsGameplayInputBlocked())
+        {
+            return;
+        }
+
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        Flame flame = FindFlameInRange();
+        if (flame != null)
+        {
+            ShowFlameChoice(flame);
+            return;
+        }
+
+        toggleTorchRequested = true;
+    }
+
+    private Flame FindFlameInRange()
+    {
+        if (controller == null)
+        {
+            return null;
+        }
+
+        Flame closest = null;
+        float closestSqrDistance = float.MaxValue;
+        Flame[] flames = FindObjectsByType<Flame>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < flames.Length; i++)
+        {
+            Flame candidate = flames[i];
+            if (candidate == null || !candidate.CanBeDetectedBy(controller))
+            {
+                continue;
+            }
+
+            if (!CharacterInteractionDetection.IsCharacterWithinRange(
+                    controller.transform,
+                    candidate.GetInteractionDetectionCollider(),
+                    candidate.GetInteractionAnchor(),
+                    candidate.GetInteractionMaxDistance(controller)))
+            {
+                continue;
+            }
+
+            Transform anchor = candidate.GetInteractionAnchor();
+            Vector3 anchorPosition = anchor != null ? anchor.position : candidate.transform.position;
+            float sqrDistance = (anchorPosition - controller.transform.position).sqrMagnitude;
+            if (sqrDistance < closestSqrDistance)
+            {
+                closest = candidate;
+                closestSqrDistance = sqrDistance;
+            }
+        }
+
+        return closest;
+    }
+
+    private void ShowFlameChoice(Flame flame)
+    {
+        ConfirmationManager.TryShow(
+            this,
+            "Que voulez-vous faire ?",
+            () => flame.TryStartMuninInteraction(controller != null ? controller.gameObject : gameObject),
+            () => toggleTorchRequested = true,
+            "Faire appel a Munin",
+            "Sortir la torche a main",
+            "Flamme a portee");
+    }
+
     private void HandleTriggerMuninRequest()
     {
         if (!triggerMuninRequested)
@@ -239,6 +320,28 @@ public class NetworkCharacterInput : NetworkBehaviour
         }
 
         TriggerMuninServerRpc();
+    }
+
+    private void HandleToggleTorchRequest()
+    {
+        if (!toggleTorchRequested)
+        {
+            return;
+        }
+
+        toggleTorchRequested = false;
+        if (!LocalInputRouter.TryConsumeToggleTorch())
+        {
+            return;
+        }
+
+        if (ShouldUseHostLocalMovePath())
+        {
+            ToggleTorchLocal();
+            return;
+        }
+
+        ToggleTorchServerRpc();
     }
 
     private void HandleLocomotionModeRequest()
@@ -441,6 +544,23 @@ public class NetworkCharacterInput : NetworkBehaviour
 
         controller.TriggerMunin();
         UpdateFlameClientRpc(controller.IsFlameEquipped, controller.FlameSecondsRemaining);
+    }
+
+    [ServerRpc]
+    private void ToggleTorchServerRpc()
+    {
+        ToggleTorchLocal();
+        UpdateFlameClientRpc(controller != null && controller.IsFlameEquipped, controller != null ? controller.FlameSecondsRemaining : 0);
+    }
+
+    private void ToggleTorchLocal()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<SquadCharacterController>();
+        }
+
+        controller?.ToggleFlame();
     }
 
     [ClientRpc]

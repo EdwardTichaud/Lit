@@ -2808,10 +2808,13 @@ public class CombatSessionManager : NetworkBehaviour
             NetworkManager.Singleton.Shutdown();
         }
 
-        LoadingScreenService.LoadScene(
-            MainMenuController.DefaultMenuSceneName,
-            ReturnToMainMenuLoadingMessage,
-            LoadSceneMode.Single);
+        if (!GameFlowService.OpenMainMenu())
+        {
+            LoadingScreenService.LoadScene(
+                MainMenuController.DefaultMenuSceneName,
+                ReturnToMainMenuLoadingMessage,
+                LoadSceneMode.Single);
+        }
     }
 
     private void CompleteCombatResultReloadCheckpoint(CombatSession session)
@@ -2876,6 +2879,7 @@ public class CombatSessionManager : NetworkBehaviour
             }
         }
 
+        ResetCombatRetryAnimations(session);
         BeginCombatEntryTransition(session, RetryCombatMessage);
     }
 
@@ -3026,6 +3030,39 @@ public class CombatSessionManager : NetworkBehaviour
         session.Player.SetHealth(currentHp, maxHp);
     }
 
+    private void ResetCombatRetryAnimations(CombatSession session)
+    {
+        if (session == null)
+        {
+            return;
+        }
+
+        ResetCombatAnimator(session.Player != null ? session.Player.GetComponent<Animator>() : null);
+        session.Player?.Stop();
+        ResetCombatAnimator(session.SourceEnemy != null ? session.SourceEnemy.ResolveAnimator() : null);
+
+        if (IsNetworkSessionActive() &&
+            IsSpawned &&
+            session.OwnerClientId != ResolveLocalClientId())
+        {
+            CombatRetryAnimationResetClientRpc(
+                session.SessionId,
+                BuildClientRpcParams(session.OwnerClientId));
+        }
+    }
+
+    private static void ResetCombatAnimator(Animator animator)
+    {
+        if (animator == null || !animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
+        {
+            return;
+        }
+
+        animator.speed = 1f;
+        animator.Rebind();
+        animator.Update(0f);
+    }
+
     private static void SuppressNextCharacterAutoSave(string reason)
     {
         CharacterStateStore.Instance?.SuppressNextAutomaticSave(reason);
@@ -3106,6 +3143,24 @@ public class CombatSessionManager : NetworkBehaviour
         PlayCombatResolutionAnimationSequence(
             controller != null ? controller.GetComponent<Animator>() : null,
             ResolveLocalEnemyAnimator(sessionId));
+    }
+
+    [ClientRpc]
+    private void CombatRetryAnimationResetClientRpc(
+        string sessionId,
+        ClientRpcParams rpcParams = default)
+    {
+        if (!string.IsNullOrWhiteSpace(sessionId) &&
+            localCombatPresentation.Active &&
+            !string.Equals(localCombatPresentation.SessionId, sessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SquadCharacterController controller = ResolveControllerForClient(ResolveLocalClientId());
+        ResetCombatAnimator(controller != null ? controller.GetComponent<Animator>() : null);
+        controller?.Stop();
+        ResetCombatAnimator(ResolveLocalEnemyAnimator(sessionId));
     }
 
     [ClientRpc]
@@ -5662,6 +5717,14 @@ public class CombatSessionManager : NetworkBehaviour
                 continue;
             }
 
+            // The player controller owns Taunt's blend and return-to-locomotion
+            // transitions. Other character controllers without this trigger keep
+            // the state-based fallback below.
+            if (TrySetAnimatorTrigger(animator, candidate))
+            {
+                return ResolveAnimationDuration(animator, candidate, DefaultTauntAnimationDuration);
+            }
+
             return PlayNamedAnimation(animator, candidate, DefaultTauntAnimationDuration);
         }
 
@@ -5761,6 +5824,31 @@ public class CombatSessionManager : NetworkBehaviour
         }
 
         return ResolveAnimationDuration(animator, animationName, fallbackDuration);
+    }
+
+    private static bool TrySetAnimatorTrigger(Animator animator, string triggerName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(triggerName))
+        {
+            return false;
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+            if (parameter.type != AnimatorControllerParameterType.Trigger ||
+                !string.Equals(parameter.name, triggerName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            animator.ResetTrigger(parameter.name);
+            animator.SetTrigger(parameter.name);
+            return true;
+        }
+
+        return false;
     }
 
     private static string ResolveAvailableActionAnimationName(Animator animator, string preferredName, string fallbackName)

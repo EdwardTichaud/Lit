@@ -65,6 +65,11 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
         Float("_EmissionIntensity")
     };
 
+    private static readonly PropertySpec[] ReflectionProperties =
+    {
+        Float("_ReflectionStrength")
+    };
+
     private static readonly PropertySpec[] IceSurfaceProperties =
     {
         Float("_Smoothness"),
@@ -89,15 +94,24 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
 
     private static readonly PropertySpec[] TransitionProperties =
     {
-        Float("_TransitionSoftness")
+        Float("_TransitionSoftness"),
+        Float("_TransitionProgress")
     };
 
-    private static readonly PropertySpec[] NormalStateScalarProperties =
+    private static readonly PropertySpec[] NormalStateProperties =
     {
+        Texture("_BaseTexture"),
+        Texture("_NormalTexture"),
+        Texture("_BaseRoughnessTexture"),
+        Texture("_BaseMetallicTexture"),
+        Texture("_BaseOcclusionTexture"),
         Color("_BaseColor"),
         Float("_BaseNormalStrength"),
         Float("_BaseSmoothness"),
-        Float("_BaseMetallic")
+        Float("_BaseMetallic"),
+        Float("_UseBaseRoughnessTexture"),
+        Float("_UseBaseMetallicTexture"),
+        Float("_UseBaseOcclusionTexture")
     };
 
     private static readonly PropertySpec[] ProjectionProperties =
@@ -110,6 +124,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
     [SerializeField] private MaterialScope m_Scope = MaterialScope.AllProjectV3;
     [SerializeField] private bool m_CopyFrostAppearance = true;
     [SerializeField] private bool m_CopyEmission = true;
+    [SerializeField] private bool m_CopyReflections = true;
     [SerializeField] private bool m_CopyIceSurface = true;
     [SerializeField] private bool m_CopyBakedEdges = true;
     [SerializeField] private bool m_CopyReliefAndTextureEdges;
@@ -118,12 +133,24 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
     [SerializeField] private bool m_CopyProjection;
     [SerializeField] private bool m_ConfirmBeforeApply = true;
     [SerializeField] private bool m_MasterInspectorExpanded = true;
+    [SerializeField] private int m_PropertySelectionVersion;
+    [SerializeField] private List<string> m_SelectedPropertyNames = new List<string>();
+    [SerializeField] private bool m_FrostPropertiesExpanded = true;
+    [SerializeField] private bool m_EmissionPropertiesExpanded = true;
+    [SerializeField] private bool m_ReflectionPropertiesExpanded = true;
+    [SerializeField] private bool m_IceSurfacePropertiesExpanded = true;
+    [SerializeField] private bool m_BakedEdgePropertiesExpanded = true;
+    [SerializeField] private bool m_ReliefPropertiesExpanded;
+    [SerializeField] private bool m_TransitionPropertiesExpanded = true;
+    [SerializeField] private bool m_NormalStatePropertiesExpanded;
+    [SerializeField] private bool m_ProjectionPropertiesExpanded;
 
     private readonly List<Material> m_TargetMaterials = new List<Material>();
     private Vector2 m_Scroll;
     private MaterialEditor m_MasterEditor;
     private string m_StatusMessage;
     private MessageType m_StatusType = MessageType.Info;
+    private const int CurrentPropertySelectionVersion = 1;
 
     [MenuItem("Lit/Shadergraph/Ice V3 Material Centralizer")]
     internal static void OpenWindow()
@@ -138,6 +165,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
 
     private void OnEnable()
     {
+        InitializePropertySelection();
         if (m_MasterMaterial == null)
             m_MasterMaterial = AssetDatabase.LoadAssetAtPath<Material>(CanonicalMaterialPath);
 
@@ -174,9 +202,8 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
     {
         EditorGUILayout.LabelField("ICE V3 MATERIAL CENTRALIZER", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Modifiez le matériau maître ci-dessous, choisissez les groupes à synchroniser, "
-            + "puis appliquez-les à tous les matériaux V3. Les textures propres aux modèles "
-            + "et les valeurs runtime des flammes sont toujours préservées.",
+            "Modifiez le matériau maître, puis cochez précisément chaque variable à synchroniser. "
+            + "Les sections servent uniquement à organiser l'affichage ; les choix restent indépendants.",
             MessageType.Info);
     }
 
@@ -257,39 +284,88 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
             EditorGUILayout.LabelField("PROPERTIES TO SYNCHRONIZE", EditorStyles.boldLabel);
-            m_CopyFrostAppearance = EditorGUILayout.ToggleLeft(
-                "Frost appearance (colors, crack image, width, normals, noise)",
-                m_CopyFrostAppearance);
-            m_CopyEmission = EditorGUILayout.ToggleLeft(
-                "Material-wide emission (Ice + BaseTexture)", m_CopyEmission);
-            m_CopyIceSurface = EditorGUILayout.ToggleLeft(
-                "Ice Smoothness and Metallic", m_CopyIceSurface);
-            m_CopyBakedEdges = EditorGUILayout.ToggleLeft(
-                "Baked Edge Boost", m_CopyBakedEdges);
-            m_CopyReliefAndTextureEdges = EditorGUILayout.ToggleLeft(
-                "Walls / Floors relief and texture-edge detection",
-                m_CopyReliefAndTextureEdges);
-            m_CopyTransition = EditorGUILayout.ToggleLeft(
-                "Transition Softness", m_CopyTransition);
-            m_CopyNormalStateScalars = EditorGUILayout.ToggleLeft(
-                "Normal-state scalar values (never textures)", m_CopyNormalStateScalars);
-            m_CopyProjection = EditorGUILayout.ToggleLeft(
-                "UV / world-scale projection", m_CopyProjection);
+            EditorGUILayout.LabelField(
+                $"Selected variables: {BuildSelectedProperties().Count}",
+                EditorStyles.miniLabel);
+
+            DrawPropertyGroup("FROST APPEARANCE", FrostAppearanceProperties,
+                ref m_FrostPropertiesExpanded);
+            DrawPropertyGroup("MATERIAL EMISSION", EmissionProperties,
+                ref m_EmissionPropertiesExpanded);
+            DrawPropertyGroup("REFLECTIONS", ReflectionProperties,
+                ref m_ReflectionPropertiesExpanded);
+            DrawPropertyGroup("ICE SURFACE", IceSurfaceProperties,
+                ref m_IceSurfacePropertiesExpanded);
+            DrawPropertyGroup("BAKED EDGES", BakedEdgeProperties,
+                ref m_BakedEdgePropertiesExpanded);
+            DrawPropertyGroup("WALLS / FLOORS", ReliefAndTextureEdgeProperties,
+                ref m_ReliefPropertiesExpanded);
+            DrawPropertyGroup("FLAME TRANSITION", TransitionProperties,
+                ref m_TransitionPropertiesExpanded);
+            DrawPropertyGroup("NORMAL STATE", NormalStateProperties,
+                ref m_NormalStatePropertiesExpanded);
+            DrawPropertyGroup("TEXTURE PROJECTION", ProjectionProperties,
+                ref m_ProjectionPropertiesExpanded);
 
             EditorGUILayout.Space(3f);
             EditorGUILayout.HelpBox(
-                "CrackTexture, Strength, Scale and Invert are copied with Frost appearance. "
-                + "BaseTexture, NormalTexture, Roughness, Metallic and Occlusion maps are never copied. "
-                + "FlameCenter, FlameInfluenceRadius and TransitionProgress are also excluded.",
+                "Every displayed variable is independent. All and None only change the variables "
+                + "inside their section. Normal-state textures are available but disabled by default; "
+                + "selecting one intentionally replaces that texture on every target material.",
                 MessageType.None);
-            if (m_CopyEmission)
+            EditorGUILayout.HelpBox(
+                "FlameCenter and FlameInfluenceRadius remain excluded because flames write them at runtime. "
+                + "TransitionProgress can be synchronized manually, but an active flame may overwrite it.",
+                MessageType.None);
+            if (IsPropertySelected("_EnableEmission")
+                || IsPropertySelected("_EmissionIntensity"))
             {
                 EditorGUILayout.HelpBox(
-                    "Emission synchronization copies Enable Material Emission and Material Emission Intensity. "
-                    + "The Ice state keeps its procedural emission; the Normal state emits each material's own "
-                    + "BaseTexture multiplied by BaseColor.",
+                    "Emission variables are independent too: enabling only Emission Intensity does not "
+                    + "change the Enable Material Emission switch on target materials.",
                     MessageType.None);
             }
+        }
+    }
+
+    private void DrawPropertyGroup(
+        string title,
+        PropertySpec[] properties,
+        ref bool expanded)
+    {
+        int selectedCount = properties.Count(property => IsPropertySelected(property.Name));
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                expanded = EditorGUILayout.Foldout(
+                    expanded,
+                    $"{title}  ({selectedCount}/{properties.Length})",
+                    true);
+
+                if (GUILayout.Button("All", EditorStyles.miniButtonLeft, GUILayout.Width(38f)))
+                    SetGroupSelection(properties, true);
+                if (GUILayout.Button("None", EditorStyles.miniButtonRight, GUILayout.Width(42f)))
+                    SetGroupSelection(properties, false);
+            }
+
+            if (!expanded)
+                return;
+
+            EditorGUI.indentLevel++;
+            for (int i = 0; i < properties.Length; i++)
+            {
+                PropertySpec property = properties[i];
+                bool selected = IsPropertySelected(property.Name);
+                string displayName = ObjectNames.NicifyVariableName(
+                    property.Name.TrimStart('_'));
+                bool newValue = EditorGUILayout.ToggleLeft(
+                    new GUIContent($"{displayName}  [{property.Name}]"),
+                    selected);
+                if (newValue != selected)
+                    SetPropertySelected(property.Name, newValue);
+            }
+            EditorGUI.indentLevel--;
         }
     }
 
@@ -334,7 +410,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
                 "Apply shared Ice V3 settings?",
                 $"Copy {properties.Count} selected properties from\n{m_MasterMaterial.name}\n\n"
                 + $"to {m_TargetMaterials.Count} V3 materials?\n\n"
-                + "Crack Texture follows Frost appearance. Normal-state textures and flame runtime values will be preserved.",
+                + "Only the individually checked variables will be copied. Flame runtime positions and radii remain protected.",
                 "Apply",
                 "Cancel"))
         {
@@ -396,8 +472,7 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
         AssetDatabase.SaveAssets();
         SceneView.RepaintAll();
         SetStatus(
-            $"Updated {updatedCount} material(s). Crack Texture was synchronized with Frost appearance; "
-            + "normal-state textures and flame runtime values were preserved.",
+            $"Updated {updatedCount} material(s) with {properties.Count} individually selected variable(s).",
             MessageType.Info);
     }
 
@@ -450,27 +525,92 @@ internal sealed class LitIceV3MaterialCentralizerWindow : EditorWindow
             || string.Equals(material.shader.name, ShaderName, StringComparison.Ordinal);
     }
 
-    private List<PropertySpec> BuildSelectedProperties()
+    private void InitializePropertySelection()
     {
-        var result = new List<PropertySpec>(32);
-        AddGroup(result, m_CopyFrostAppearance, FrostAppearanceProperties);
-        AddGroup(result, m_CopyEmission, EmissionProperties);
-        AddGroup(result, m_CopyIceSurface, IceSurfaceProperties);
-        AddGroup(result, m_CopyBakedEdges, BakedEdgeProperties);
-        AddGroup(result, m_CopyReliefAndTextureEdges, ReliefAndTextureEdgeProperties);
-        AddGroup(result, m_CopyTransition, TransitionProperties);
-        AddGroup(result, m_CopyNormalStateScalars, NormalStateScalarProperties);
-        AddGroup(result, m_CopyProjection, ProjectionProperties);
-        return result;
+        if (m_SelectedPropertyNames == null)
+            m_SelectedPropertyNames = new List<string>();
+
+        if (m_PropertySelectionVersion == CurrentPropertySelectionVersion)
+            return;
+
+        m_SelectedPropertyNames.Clear();
+        SetGroupSelection(FrostAppearanceProperties, m_CopyFrostAppearance);
+        SetGroupSelection(EmissionProperties, m_CopyEmission);
+        SetGroupSelection(ReflectionProperties, m_CopyReflections);
+        SetGroupSelection(IceSurfaceProperties, m_CopyIceSurface);
+        SetGroupSelection(BakedEdgeProperties, m_CopyBakedEdges);
+        SetGroupSelection(ReliefAndTextureEdgeProperties, m_CopyReliefAndTextureEdges);
+
+        // Preserve the previous safe defaults during migration. Transition
+        // Progress and model-specific normal-state textures start unchecked.
+        SetPropertySelected("_TransitionSoftness", m_CopyTransition);
+        if (m_CopyNormalStateScalars)
+        {
+            SetPropertySelected("_BaseColor", true);
+            SetPropertySelected("_BaseNormalStrength", true);
+            SetPropertySelected("_BaseSmoothness", true);
+            SetPropertySelected("_BaseMetallic", true);
+        }
+        SetGroupSelection(ProjectionProperties, m_CopyProjection);
+        m_PropertySelectionVersion = CurrentPropertySelectionVersion;
     }
 
-    private static void AddGroup(
-        List<PropertySpec> destination,
-        bool enabled,
-        PropertySpec[] properties)
+    private List<PropertySpec> BuildSelectedProperties()
     {
-        if (enabled)
-            destination.AddRange(properties);
+        return EnumerateCentralizableProperties()
+            .Where(property => IsPropertySelected(property.Name))
+            .ToList();
+    }
+
+    private static IEnumerable<PropertySpec> EnumerateCentralizableProperties()
+    {
+        PropertySpec[][] groups =
+        {
+            FrostAppearanceProperties,
+            EmissionProperties,
+            ReflectionProperties,
+            IceSurfaceProperties,
+            BakedEdgeProperties,
+            ReliefAndTextureEdgeProperties,
+            TransitionProperties,
+            NormalStateProperties,
+            ProjectionProperties
+        };
+
+        for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
+        {
+            PropertySpec[] group = groups[groupIndex];
+            for (int propertyIndex = 0; propertyIndex < group.Length; propertyIndex++)
+                yield return group[propertyIndex];
+        }
+    }
+
+    private bool IsPropertySelected(string propertyName)
+    {
+        return m_SelectedPropertyNames != null
+            && m_SelectedPropertyNames.Contains(propertyName);
+    }
+
+    private void SetPropertySelected(string propertyName, bool selected)
+    {
+        if (m_SelectedPropertyNames == null)
+            m_SelectedPropertyNames = new List<string>();
+
+        if (selected)
+        {
+            if (!m_SelectedPropertyNames.Contains(propertyName))
+                m_SelectedPropertyNames.Add(propertyName);
+        }
+        else
+        {
+            m_SelectedPropertyNames.Remove(propertyName);
+        }
+    }
+
+    private void SetGroupSelection(PropertySpec[] properties, bool selected)
+    {
+        for (int i = 0; i < properties.Length; i++)
+            SetPropertySelected(properties[i].Name, selected);
     }
 
     private bool WouldChange(Material target, List<PropertySpec> properties)

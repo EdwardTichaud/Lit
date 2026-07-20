@@ -111,7 +111,7 @@ Material:
     - _EdgeSensitivity: 30
     - _EmissionIntensity: 1
     - _EnableBlendModePreserveSpecularLighting: 0
-    - _EnableEmission: 1
+    - _EnableEmission: 0
     - _EnableFogOnTransparent: 0
     - _ExcludeFromTUAndAA: 0
     - _FlameInfluenceRadius: 0
@@ -124,18 +124,19 @@ Material:
     - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
-    - _Metallic: 0.679
-    - _MicroScale: 7
-    - _NormalStrength: 0.7
+    - _Metallic: 0.8
+    - _MicroScale: 3
+    - _NormalStrength: 0.1
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
+    - _ReflectionStrength: 1
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Smoothness: 0.472
+    - _Smoothness: 0.5
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 0

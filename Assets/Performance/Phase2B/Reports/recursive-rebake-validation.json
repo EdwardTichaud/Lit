@@ -1,0 +1,6 @@
+{
+  "status": "passed",
+  "generatedMesh": "Assets/Environment/Prefabs_Ice/SM_MERGED_BP_PathRocky_01_2_LOD0/Mesh_IceEdges_SM_MERGED_BP_PathRocky_01_2_LOD0.asset",
+  "outputCreated": false,
+  "message": "'IceEdgesV3_Mesh_IceEdges_SM_MERGED_BP_PathRocky_01_2_LOD0' is already a generated barycentric mesh and cannot be used as a bake source."
+}

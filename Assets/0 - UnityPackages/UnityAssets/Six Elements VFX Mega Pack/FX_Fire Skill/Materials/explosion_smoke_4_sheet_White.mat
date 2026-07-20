@@ -8,10 +8,15 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: explosion_smoke_4_sheet_White
-  m_Shader: {fileID: 4800000, guid: bd6af5d577c618947b73aa60db554e51, type: 3}
+  m_Shader: {fileID: 4800000, guid: b254b5700b375034a82c36f6eec24353, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _USEALPHAPART
+  - _USEDISSOLVEPART
+  - _USEPARTICLECUSTOMDATA
+  - _USEREMAPPART
+  - _USEWARPPART
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -23,6 +28,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -36,6 +45,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DissolveTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -71,41 +84,99 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RemapColTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VertexOffsetTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WarpTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _texcoord:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlphaMul: 1
+    - _AlphaPow: 1
+    - _AlphaTexAlphaByA2R: 0
     - _Blend2: 1
     - _BumpScale: 1
+    - _Cull: 2
     - _CullMode: 0
     - _Cutoff: 0.5
     - _Depthpower: 1
     - _DetailNormalMapScale: 1
+    - _DissolveEdgeWidth: 0
+    - _DissolveMaxCountMul: 1
+    - _DissolveStep: 0
+    - _DissolveTexAlphaByA2R: 0
     - _DstBlend: 0
     - _Emission: 2
+    - _FEmissionLength: 0
+    - _FEmissionPower: 1
+    - _FEmssionFront2Back: 0
+    - _FPower: 1
+    - _FinalAlpha: 1
+    - _Front2Back: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _InvFade: 1
+    - _MainTexAlphaByA2R: 0
+    - _MainTexRotate: 0
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
+    - _OffsetLength: 0
     - _Parallax: 0.02
+    - _RemapTexRotate: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _USEALPHAMULFRESNEL: 0
+    - _USEALPHAPART: 1
+    - _USEDISSOLVEPART: 1
+    - _USEPARTICLECUSTOMDATA: 1
+    - _USEREMAPPART: 1
+    - _USEVERTEXOFFSETPART: 0
+    - _USEWARPPART: 1
     - _UVSec: 0
+    - _UseAlphaMulLength: 1
     - _Usecenterglow: 0
     - _Usecustomrandom: 0
     - _Usedepth: 0
+    - _VertexOffsetTexUseA2R: 0
+    - _WarpTexAlphaByA2R: 0
     - _ZWrite: 1
     m_Colors:
+    - _AlphaTexMoveSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _AlphaTexTillingOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _AlphaTexWarpStrength: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DissolveEdgeCol: {r: 1, g: 1, b: 1, a: 1}
+    - _DissolveTexSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _DissolveTexTillingOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _DissolveTexWarpStrength: {r: 0, g: 0, b: 0, a: 0}
     - _DistortionSpeedXYPowerZ: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FMissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _MainColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MainTexMoveSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _MainTexTillingOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _MainTexWarpStrength: {r: 0, g: 0, b: 0, a: 0}
+    - _RemapColTexMoveSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _RemapColTexTillingOffset: {r: 1, g: 1, b: 0, a: 0}
     - _SpeedMainTexUVNoiseZW: {r: 0, g: 0, b: 0, a: 0}
     - _TintColor: {r: 0.9338235, g: 0.92937225, b: 0.9269572, a: 0.566}
+    - _VertexOffsetTexMoveSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _VertexOffsetTexTillingOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _WarpTexMoveSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _WarpTexTillingOffset: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

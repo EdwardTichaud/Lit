@@ -106,6 +106,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "ToggleTorch",
+                    "type": "Button",
+                    "id": "4f3487a1-4f84-4a84-a1ea-fbe9aa4b4a1f",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "SwitchTarget",
                     "type": "Button",
                     "id": "8ce14999-fd56-4e09-8993-4cf09d4f829f",
@@ -343,7 +352,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "TriggerMunin",
+                    "action": "ToggleTorch",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

@@ -330,6 +330,7 @@ public class WorldInteractionService : NetworkBehaviour
                 false,
                 Vector3.zero,
                 Quaternion.identity,
+                false,
                 BuildClientRpcParams(rpcParams));
             return;
         }
@@ -344,6 +345,7 @@ public class WorldInteractionService : NetworkBehaviour
             success,
             destinationPosition,
             destinationRotation,
+            portal.IsSceneTransition,
             BuildClientRpcParams(rpcParams));
     }
 
@@ -353,6 +355,7 @@ public class WorldInteractionService : NetworkBehaviour
         bool success,
         Vector3 destinationPosition,
         Quaternion destinationRotation,
+        bool sceneTransition,
         ClientRpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetPortal(triggerId, out PortalController portal))
@@ -360,7 +363,7 @@ public class WorldInteractionService : NetworkBehaviour
             return;
         }
 
-        portal.HandlePortalUseResult(success, destinationPosition, destinationRotation);
+        portal.HandlePortalUseResult(success, destinationPosition, destinationRotation, sceneTransition);
     }
 
     [ServerRpc(RequireOwnership = false)]

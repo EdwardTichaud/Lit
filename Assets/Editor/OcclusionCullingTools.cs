@@ -8,7 +8,8 @@ using UnityEngine.SceneManagement;
 public static class OcclusionCullingTools
 {
     private const string MenuRoot = "Tools/Lit/Occlusion Culling/";
-    private const string MaisonScenePath = "Assets/Scenes/Maison.unity";
+    private const string MaisonScenePath = "Assets/Scenes/Maison/Maison.unity";
+    private const string WorldRootName = "World";
     private const float MinOccluderLargestAxis = 3f;
     private const float MinOccluderSecondAxis = 1.15f;
     private const int TransparentRenderQueue = 3000;
@@ -48,6 +49,12 @@ public static class OcclusionCullingTools
     public static void ConfigureAndBakeMaisonScene()
     {
         ConfigureSceneAsset(MaisonScenePath, bakeAfterConfigure: true);
+    }
+
+    [MenuItem(MenuRoot + "Configure And Bake Maison World")]
+    public static void ConfigureAndBakeMaisonWorld()
+    {
+        ConfigureWorldAsset(MaisonScenePath, bakeAfterConfigure: true);
     }
 
     [MenuItem(MenuRoot + "Configure Active Scene")]
@@ -145,6 +152,11 @@ public static class OcclusionCullingTools
         ConfigureSceneAsset(MaisonScenePath, bakeAfterConfigure: true);
     }
 
+    public static void ConfigureAndBakeMaisonWorldFromCommandLine()
+    {
+        ConfigureWorldAsset(MaisonScenePath, bakeAfterConfigure: true);
+    }
+
     private static void ConfigureSceneAsset(string scenePath, bool bakeAfterConfigure)
     {
         Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
@@ -170,6 +182,53 @@ public static class OcclusionCullingTools
 
         AssetDatabase.SaveAssets();
         Debug.Log($"Occlusion culling: scene '{scenePath}' configured. {stats}");
+    }
+
+    private static void ConfigureWorldAsset(string scenePath, bool bakeAfterConfigure)
+    {
+        Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        if (!scene.IsValid() || !scene.isLoaded)
+        {
+            throw new InvalidOperationException($"Could not open scene '{scenePath}'.");
+        }
+
+        GameObject world = FindRootGameObject(scene, WorldRootName);
+        if (world == null)
+        {
+            throw new InvalidOperationException($"Could not find root '{WorldRootName}' in '{scenePath}'.");
+        }
+
+        OcclusionStats stats = ApplyToRoot(world, useUndo: false);
+        EditorSceneManager.MarkSceneDirty(scene);
+
+        if (bakeAfterConfigure)
+        {
+            Debug.Log("Occlusion culling: starting Maison World bake.");
+            StaticOcclusionCulling.Compute();
+            Debug.Log("Occlusion culling: Maison World bake completed.");
+        }
+
+        if (!EditorSceneManager.SaveScene(scene))
+        {
+            throw new InvalidOperationException($"Could not save scene '{scenePath}'.");
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Occlusion culling: Maison World configured. {stats}");
+    }
+
+    private static GameObject FindRootGameObject(Scene scene, string name)
+    {
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            if (roots[i] != null && string.Equals(roots[i].name, name, StringComparison.Ordinal))
+            {
+                return roots[i];
+            }
+        }
+
+        return null;
     }
 
     private static OcclusionStats ApplyToScene(Scene scene, bool useUndo)
@@ -297,11 +356,6 @@ public static class OcclusionCullingTools
                 }
 
                 Type type = behaviour.GetType();
-                if (type == typeof(OptimizableObject))
-                {
-                    continue;
-                }
-
                 string namespaceName = type.Namespace ?? string.Empty;
                 if (namespaceName.StartsWith("Unity.Netcode", StringComparison.Ordinal) ||
                     ExcludedBehaviourNames.Contains(type.Name))

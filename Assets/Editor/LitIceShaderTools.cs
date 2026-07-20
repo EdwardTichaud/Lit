@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Lit.Performance;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -16,11 +17,17 @@ internal static class LitIceShaderInstaller
     private const string GraphV3Path = "Assets/Materials/IceShader/ShaderGraph_LitIceFrostedEdges_v3.shadergraph";
     private const string MaterialV3Path = "Assets/Materials/IceShader/Material_LitIceFrostedEdges_v3.mat";
     private const string StatusPath = "Temp/LitIceShaderGraphStatus.txt";
+    private const string AutoImportShaderGraphsAfterReloadKey = "Lit.Ice.AutoImportShaderGraphsAfterReload";
     private static bool s_Running;
+    private static bool AutoImportShaderGraphsAfterReload =>
+        EditorPrefs.GetBool(AutoImportShaderGraphsAfterReloadKey, false);
 
     [InitializeOnLoadMethod]
     private static void ScheduleImport()
     {
+        if (!AutoImportShaderGraphsAfterReload)
+            return;
+
         EditorApplication.delayCall += ImportAndCreateMaterial;
     }
 
@@ -223,6 +230,7 @@ internal static class LitIceShaderInstaller
         SetFloat(material, "_CrackTextureStrength", 0.0f);
         SetFloat(material, "_CrackTextureScale", 1.0f);
         SetFloat(material, "_CrackTextureInvert", 0.0f);
+        SetFloat(material, "_ReflectionStrength", 0.18f);
         SetFloat(material, "_IceReliefNormalStrength", 0.75f);
         SetFloat(material, "_IceReliefRoughnessInfluence", 0.4f);
         SetFloat(material, "_TextureEdgeStrength", 1.0f);
@@ -478,29 +486,24 @@ internal static class LitIceEdgeMaskBaker
         if (string.IsNullOrWhiteSpace(assetPath) || !assetPath.StartsWith("Assets/", StringComparison.Ordinal))
             throw new ArgumentException("The baked mesh path must be inside Assets.", nameof(assetPath));
 
+        if (IsCurrentBakedMesh(source))
+        {
+            throw new InvalidOperationException(
+                $"'{source.name}' is already a generated barycentric mesh and cannot be used as a bake source.");
+        }
+
         Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
         if (existing != null && IsCurrentBakedMesh(existing) && !forceRebuild)
-            return existing;
-
-        Mesh baked = BakeMesh(source);
-        string stableName = BakedVersionMarker + Path.GetFileNameWithoutExtension(assetPath);
-        if (existing != null)
         {
-            EditorUtility.CopySerialized(baked, existing);
-            existing.name = stableName;
-            EditorUtility.SetDirty(existing);
-            UnityEngine.Object.DestroyImmediate(baked);
+            ValidateExistingGeneratedMesh(existing, assetPath);
             return existing;
         }
 
+        Mesh baked = BakeMesh(source);
+        string stableName = BakedVersionMarker + Path.GetFileNameWithoutExtension(assetPath);
         string folder = Path.GetDirectoryName(assetPath)?.Replace('\\', '/');
         EnsureAssetFolder(folder);
-        AssetDatabase.CreateAsset(baked, assetPath);
-        // CreateAsset adopts the file name. Restore the explicit version marker
-        // afterwards so old bakes can be upgraded without changing the asset GUID.
-        baked.name = stableName;
-        EditorUtility.SetDirty(baked);
-        return baked;
+        return SaveValidatedMesh(baked, assetPath, stableName, existing);
     }
 
     internal static bool IsCurrentBakedMesh(Mesh mesh)
@@ -511,14 +514,13 @@ internal static class LitIceEdgeMaskBaker
 
     private static Mesh BakeMesh(Mesh source)
     {
+        int triangleIndexCount = GetValidatedBakedVertexCount(source);
         Vector3[] vertices = source.vertices;
         float threshold = Mathf.Cos(EdgeAngleDegrees * Mathf.Deg2Rad);
         float tolerance = Mathf.Max(source.bounds.size.magnitude * 0.00001f, 0.000001f);
 
         var submeshTriangles = new List<int[]>(source.subMeshCount);
         var geometricEdges = new Dictionary<GeometricEdgeKey, EdgeRecord>();
-        int triangleIndexCount = 0;
-
         for (int submesh = 0; submesh < source.subMeshCount; submesh++)
         {
             if (source.GetTopology(submesh) != MeshTopology.Triangles)
@@ -527,7 +529,6 @@ internal static class LitIceEdgeMaskBaker
 
             int[] triangles = source.GetTriangles(submesh);
             submeshTriangles.Add(triangles);
-            triangleIndexCount += triangles.Length;
 
             for (int i = 0; i + 2 < triangles.Length; i += 3)
             {
@@ -703,12 +704,120 @@ internal static class LitIceEdgeMaskBaker
         // use a compact random identifier instead. Unity references the asset by
         // its .meta GUID, not by this human-readable file name.
         string shortId = Guid.NewGuid().ToString("N").Substring(0, 12);
-        mesh.name = BakedVersionMarker + shortId;
-        string path = $"{OutputFolder}/{mesh.name}.asset";
-        AssetDatabase.CreateAsset(mesh, path);
-        mesh.name = BakedVersionMarker + shortId;
-        EditorUtility.SetDirty(mesh);
-        return mesh;
+        string stableName = BakedVersionMarker + shortId;
+        string path = $"{OutputFolder}/{stableName}.asset";
+        return SaveValidatedMesh(mesh, path, stableName, null);
+    }
+
+    private static int GetValidatedBakedVertexCount(Mesh source)
+    {
+        long predictedVertexCount = 0L;
+        for (int submesh = 0; submesh < source.subMeshCount; submesh++)
+        {
+            if (source.GetTopology(submesh) != MeshTopology.Triangles)
+            {
+                throw new InvalidOperationException(
+                    $"Submesh {submesh} of '{source.name}' is not made of triangles.");
+            }
+
+            predictedVertexCount += (long)source.GetIndexCount(submesh);
+        }
+
+        if (!IcePerformanceBudgetPolicy.CanGenerateBarycentricMesh(predictedVertexCount))
+        {
+            throw new InvalidOperationException(
+                $"Barycentric bake rejected for '{source.name}': predicted output has "
+                + $"{predictedVertexCount} vertices; budget is "
+                + $"{IcePerformanceBudgetPolicy.MaxGeneratedVertexCount}. "
+                + "Split, decimate, or use the source-mesh fallback before baking.");
+        }
+
+        return checked((int)predictedVertexCount);
+    }
+
+    private static Mesh SaveValidatedMesh(
+        Mesh generated,
+        string destinationPath,
+        string stableName,
+        Mesh existing)
+    {
+        if (generated == null)
+            throw new ArgumentNullException(nameof(generated));
+
+        string folder = Path.GetDirectoryName(destinationPath)?.Replace('\\', '/');
+        EnsureAssetFolder(folder);
+        string temporaryPath = folder + "/__LitIceBudgetValidation_"
+            + Guid.NewGuid().ToString("N") + ".asset";
+        generated.name = stableName;
+
+        try
+        {
+            AssetDatabase.CreateAsset(generated, temporaryPath);
+            AssetDatabase.SaveAssets();
+            long serializedBytes = GetAssetFileSize(temporaryPath);
+            if (!IcePerformanceBudgetPolicy.IsGeneratedMeshWithinBudget(
+                    generated.vertexCount,
+                    serializedBytes))
+            {
+                throw new InvalidOperationException(
+                    $"Generated mesh '{stableName}' exceeds the Ice budget: "
+                    + $"vertices={generated.vertexCount}/"
+                    + $"{IcePerformanceBudgetPolicy.MaxGeneratedVertexCount}, "
+                    + $"serializedBytes={serializedBytes}/"
+                    + $"{IcePerformanceBudgetPolicy.MaxGeneratedMeshBytes}.");
+            }
+
+            if (existing != null)
+            {
+                // Validate the temporary serialization before touching the existing
+                // asset so a failed rebake preserves its GUID and previous data.
+                EditorUtility.CopySerialized(generated, existing);
+                existing.name = stableName;
+                EditorUtility.SetDirty(existing);
+                AssetDatabase.DeleteAsset(temporaryPath);
+                AssetDatabase.SaveAssets();
+                return existing;
+            }
+
+            string moveError = AssetDatabase.MoveAsset(temporaryPath, destinationPath);
+            if (!string.IsNullOrEmpty(moveError))
+                throw new InvalidOperationException(moveError);
+
+            Mesh saved = AssetDatabase.LoadAssetAtPath<Mesh>(destinationPath);
+            if (saved == null)
+                throw new InvalidOperationException($"Could not reload generated mesh '{destinationPath}'.");
+            saved.name = stableName;
+            EditorUtility.SetDirty(saved);
+            return saved;
+        }
+        catch
+        {
+            if (AssetDatabase.LoadAssetAtPath<Mesh>(temporaryPath) != null)
+                AssetDatabase.DeleteAsset(temporaryPath);
+            else if (!EditorUtility.IsPersistent(generated))
+                UnityEngine.Object.DestroyImmediate(generated);
+            throw;
+        }
+    }
+
+    private static void ValidateExistingGeneratedMesh(Mesh mesh, string assetPath)
+    {
+        long serializedBytes = GetAssetFileSize(assetPath);
+        if (!IcePerformanceBudgetPolicy.IsGeneratedMeshWithinBudget(
+                mesh.vertexCount,
+                serializedBytes))
+        {
+            throw new InvalidOperationException(
+                $"Existing generated mesh '{assetPath}' is outside the Ice budget: "
+                + $"vertices={mesh.vertexCount}, serializedBytes={serializedBytes}. "
+                + "It must be split, decimated, or replaced by the source-mesh fallback.");
+        }
+    }
+
+    private static long GetAssetFileSize(string assetPath)
+    {
+        string absolutePath = Path.GetFullPath(assetPath);
+        return File.Exists(absolutePath) ? new FileInfo(absolutePath).Length : 0L;
     }
 
     private static void EnsureOutputFolder()

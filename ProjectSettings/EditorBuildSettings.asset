@@ -6,11 +6,47 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Bootstrap.unity
+    guid: ac1c147d15c9f1244b214f5984fd9ab2
+  - enabled: 1
     path: Assets/Scenes/MainMenu/MainMenu.unity
     guid: 7be43b5cc86f5a24aa190c1b4f2cd1e2
   - enabled: 1
     path: Assets/Scenes/Maison/Maison.unity
     guid: 8124e5870f4fd4c779e7a5f994e84ad1
+  - enabled: 1
+    path: Assets/Scenes/Outdoor.unity
+    guid: 27f6d47f2196e1741b2e14dc5e4599a2
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Critical.unity
+    guid: 9e497449e68f2854e9e47c143bf97c64
+  - enabled: 1
+    path: Assets/Scenes/District_2.unity
+    guid: a85a80413c66af244819edc3bf397474
+  - enabled: 1
+    path: Assets/Scenes/District_3.unity
+    guid: b75a28c2b9f5e53498b36770adc1889b
+  - enabled: 1
+    path: Assets/Scenes/District_4.unity
+    guid: 308d228b523a00e45bfcdcce2a0d3d5a
+  - enabled: 1
+    path: Assets/Scenes/District_5.unity
+    guid: 88cc334ef8a9e7e4a81e82d02d3b06b0
+  - enabled: 1
+    path: Assets/Scenes/Arena.unity
+    guid: e50b12f99f50ec5409daa714d67ad36d
+  - enabled: 1
+    path: Assets/Scenes/AngelOfJustice.unity
+    guid: 947148e529b364b48940a5f2075bb498
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Loading_Environment.unity
+    guid: 10563072638a6a044a92aeeb7ef65d1c
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_PostLoading.unity
+    guid: 59ab7e9c109d27d459eb9cf80bf37616
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Loading_Lights.unity
+    guid: 12cdf1fe1a46efa40915a117779dc0d8
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

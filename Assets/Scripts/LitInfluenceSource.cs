@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lit.Performance;
 using UnityEngine;
 
 public enum LitInfluenceSourceKind
@@ -184,67 +185,83 @@ public class LitInfluenceSource
 
     private void Scan(MonoBehaviour owner, LitInfluenceSourceKind sourceKind)
     {
-        scannedReceivers.Clear();
-        scannedMaterialRenderers.Clear();
-
-        Transform ownerTransform = owner.transform;
-        Vector3 worldCenter = GetWorldCenter(ownerTransform);
-        int hitCount = CollectOverlappingColliders(worldCenter);
-
-        for (int i = 0; i < hitCount; i++)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PerformanceProfilerMetrics.Begin(PerformanceProfilerMetrics.IceInfluenceScan);
+        try
         {
-            Collider hit = hits[i];
-            hits[i] = null;
+#endif
+            scannedReceivers.Clear();
+            scannedMaterialRenderers.Clear();
 
-            if (hit == null || hit.transform == null || hit.transform.IsChildOf(ownerTransform))
+            Transform ownerTransform = owner.transform;
+            Vector3 worldCenter = GetWorldCenter(ownerTransform);
+            int hitCount = CollectOverlappingColliders(worldCenter);
+
+            for (int i = 0; i < hitCount; i++)
             {
-                continue;
+                Collider hit = hits[i];
+                hits[i] = null;
+
+                if (hit == null || hit.transform == null || hit.transform.IsChildOf(ownerTransform))
+                {
+                    continue;
+                }
+
+                AddReceivers(hit);
+                AddMaterialRenderers(hit);
             }
 
-            AddReceivers(hit);
-            AddMaterialRenderers(hit);
+            LitInfluenceInfo info = new LitInfluenceInfo(owner, sourceKind, worldCenter, radius, transitionDuration);
+
+            foreach (ILitInfluenceReceiver receiver in scannedReceivers)
+            {
+                if (!IsReceiverAlive(receiver))
+                {
+                    continue;
+                }
+
+                if (activeReceivers.Add(receiver))
+                {
+                    receiver.OnLitInfluenceEnter(info);
+                }
+                else if (notifyStay)
+                {
+                    receiver.OnLitInfluenceStay(info);
+                }
+            }
+
+            removalBuffer.Clear();
+            foreach (ILitInfluenceReceiver receiver in activeReceivers)
+            {
+                if (!scannedReceivers.Contains(receiver))
+                {
+                    removalBuffer.Add(receiver);
+                }
+            }
+
+            for (int i = 0; i < removalBuffer.Count; i++)
+            {
+                ILitInfluenceReceiver receiver = removalBuffer[i];
+                activeReceivers.Remove(receiver);
+                if (IsReceiverAlive(receiver))
+                {
+                    receiver.OnLitInfluenceExit(info);
+                }
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            int examinedRenderers = scannedMaterialRenderers.Count;
+#endif
+            UpdateMaterialInfluence(info);
+            removalBuffer.Clear();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PerformanceProfilerMetrics.AddIceInfluences(examinedRenderers, examinedRenderers);
         }
-
-        LitInfluenceInfo info = new LitInfluenceInfo(owner, sourceKind, worldCenter, radius, transitionDuration);
-
-        foreach (ILitInfluenceReceiver receiver in scannedReceivers)
+        finally
         {
-            if (!IsReceiverAlive(receiver))
-            {
-                continue;
-            }
-
-            if (activeReceivers.Add(receiver))
-            {
-                receiver.OnLitInfluenceEnter(info);
-            }
-            else if (notifyStay)
-            {
-                receiver.OnLitInfluenceStay(info);
-            }
+            PerformanceProfilerMetrics.End(PerformanceProfilerMetrics.IceInfluenceScan);
         }
-
-        removalBuffer.Clear();
-        foreach (ILitInfluenceReceiver receiver in activeReceivers)
-        {
-            if (!scannedReceivers.Contains(receiver))
-            {
-                removalBuffer.Add(receiver);
-            }
-        }
-
-        for (int i = 0; i < removalBuffer.Count; i++)
-        {
-            ILitInfluenceReceiver receiver = removalBuffer[i];
-            activeReceivers.Remove(receiver);
-            if (IsReceiverAlive(receiver))
-            {
-                receiver.OnLitInfluenceExit(info);
-            }
-        }
-
-        UpdateMaterialInfluence(info);
-        removalBuffer.Clear();
+#endif
     }
 
     private int CollectOverlappingColliders(Vector3 worldCenter)
@@ -410,7 +427,8 @@ internal static class FlameInfluenceMaterialRuntime
     // receives the most relevant influences through two fixed-size MPB arrays.
     // The original single-center properties remain populated for V2 and legacy
     // materials, and for manual preview in the material inspector.
-    private const int MaxShaderInfluenceCount = 32;
+    private const int OptimizedShaderInfluenceCount = IcePerformanceBudgetPolicy.MaxLocalFlameInfluences;
+    private const int LegacyShaderInfluenceCount = 32;
 
     private struct SourceInfluence
     {
@@ -424,6 +442,8 @@ internal static class FlameInfluenceMaterialRuntime
     }
 
     private static readonly Dictionary<Renderer, List<SourceInfluence>> rendererInfluences = new Dictionary<Renderer, List<SourceInfluence>>();
+    private static readonly HashSet<Renderer> transitioningRenderers = new HashSet<Renderer>();
+    private static readonly List<Renderer> completedTransitionRenderers = new List<Renderer>();
     private static readonly List<Renderer> staleRenderers = new List<Renderer>();
     private static readonly int ageCenterPropertyId = Shader.PropertyToID("_AgeCenter");
     private static readonly int ageAmountPropertyId = Shader.PropertyToID("_AgeAmount");
@@ -433,20 +453,44 @@ internal static class FlameInfluenceMaterialRuntime
     private static readonly int flameInfluenceCountPropertyId = Shader.PropertyToID("_LitIceFlameInfluenceCount");
     private static readonly int flameCentersAndRadiiPropertyId = Shader.PropertyToID("_LitIceFlameCentersAndRadii");
     private static readonly int flameTransitionDataPropertyId = Shader.PropertyToID("_LitIceFlameTransitionData");
-    private static readonly Vector4[] flameCentersAndRadii = new Vector4[MaxShaderInfluenceCount];
-    private static readonly Vector4[] flameTransitionData = new Vector4[MaxShaderInfluenceCount];
-    private static readonly float[] flameInfluenceDistances = new float[MaxShaderInfluenceCount];
+    private static readonly Vector4[] optimizedFlameCentersAndRadii = new Vector4[OptimizedShaderInfluenceCount];
+    private static readonly Vector4[] optimizedFlameTransitionData = new Vector4[OptimizedShaderInfluenceCount];
+    private static readonly float[] optimizedFlameInfluenceDistances = new float[OptimizedShaderInfluenceCount];
+    private static readonly Vector4[] legacyFlameCentersAndRadii = new Vector4[LegacyShaderInfluenceCount];
+    private static readonly Vector4[] legacyFlameTransitionData = new Vector4[LegacyShaderInfluenceCount];
+    private static readonly float[] legacyFlameInfluenceDistances = new float[LegacyShaderInfluenceCount];
     private static MaterialPropertyBlock propertyBlock;
     private static FlameInfluenceMaterialUpdater updater;
+    private static bool phase2BLegacyBenchmarkMode;
+
+    private static int ActiveShaderInfluenceLimit =>
+        phase2BLegacyBenchmarkMode ? LegacyShaderInfluenceCount : OptimizedShaderInfluenceCount;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetState()
     {
         rendererInfluences.Clear();
+        transitioningRenderers.Clear();
+        completedTransitionRenderers.Clear();
         staleRenderers.Clear();
         propertyBlock = null;
         updater = null;
+        phase2BLegacyBenchmarkMode = false;
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    internal static void ConfigurePhase2BBenchmark(bool legacyMode)
+    {
+        if (rendererInfluences.Count != 0)
+        {
+            throw new InvalidOperationException(
+                "Phase 2B benchmark mode must be selected before registering ice influences.");
+        }
+
+        phase2BLegacyBenchmarkMode = legacyMode;
+        RefreshUpdaterState();
+    }
+#endif
 
     public static void RegisterOrUpdate(LitInfluenceInfo info, Renderer renderer)
     {
@@ -501,6 +545,7 @@ internal static class FlameInfluenceMaterialRuntime
             });
         }
 
+        UpdateTransitionRegistration(renderer, influences);
         ApplyBestInfluence(renderer, influences, info.SourceKind == LitInfluenceSourceKind.AncientFlame);
     }
 
@@ -538,72 +583,207 @@ internal static class FlameInfluenceMaterialRuntime
         if (influences.Count == 0)
         {
             rendererInfluences.Remove(renderer);
+            transitioningRenderers.Remove(renderer);
+            RefreshUpdaterState();
             ClearInfluence(renderer, removedAncientFlame);
             return;
         }
 
+        UpdateTransitionRegistration(renderer, influences);
         ApplyBestInfluence(renderer, influences, removedAncientFlame);
     }
 
     public static void UpdateTransitions(float deltaTime)
+    {
+        if (phase2BLegacyBenchmarkMode)
+        {
+            UpdateLegacyTransitions(deltaTime);
+            return;
+        }
+
+        if (transitioningRenderers.Count == 0)
+        {
+            return;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PerformanceProfilerMetrics.Begin(PerformanceProfilerMetrics.IceInfluenceTransitions);
+        try
+        {
+#endif
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            int examinedRenderers = 0;
+            int modifiedRenderers = 0;
+#endif
+            float safeDeltaTime = Mathf.Max(0f, deltaTime);
+            staleRenderers.Clear();
+            completedTransitionRenderers.Clear();
+            foreach (Renderer renderer in transitioningRenderers)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                examinedRenderers++;
+#endif
+                if (renderer == null
+                    || !rendererInfluences.TryGetValue(renderer, out List<SourceInfluence> influences))
+                {
+                    staleRenderers.Add(renderer);
+                    completedTransitionRenderers.Add(renderer);
+                    continue;
+                }
+
+                bool changed = false;
+                for (int i = influences.Count - 1; i >= 0; i--)
+                {
+                    SourceInfluence influence = influences[i];
+                    float target = influence.Active ? 1f : 0f;
+                    float step = influence.TransitionDuration <= 0f
+                        ? 1f
+                        : safeDeltaTime / influence.TransitionDuration;
+                    float progress = Mathf.MoveTowards(influence.TransitionProgress, target, step);
+                    if (!Mathf.Approximately(progress, influence.TransitionProgress))
+                    {
+                        influence.TransitionProgress = progress;
+                        influences[i] = influence;
+                        changed = true;
+                    }
+
+                    if (!influence.Active && influence.TransitionProgress <= 0f)
+                    {
+                        influences.RemoveAt(i);
+                        changed = true;
+                    }
+                }
+
+                if (influences.Count == 0)
+                {
+                    ClearInfluence(renderer, false);
+                    staleRenderers.Add(renderer);
+                    completedTransitionRenderers.Add(renderer);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    modifiedRenderers++;
+#endif
+                }
+                else if (changed)
+                {
+                    ApplyBestInfluence(renderer, influences, false);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    modifiedRenderers++;
+#endif
+                }
+
+                if (influences.Count > 0 && !HasActiveTransition(influences))
+                    completedTransitionRenderers.Add(renderer);
+            }
+
+            for (int i = 0; i < staleRenderers.Count; i++)
+            {
+                rendererInfluences.Remove(staleRenderers[i]);
+            }
+
+            for (int i = 0; i < completedTransitionRenderers.Count; i++)
+                transitioningRenderers.Remove(completedTransitionRenderers[i]);
+
+            staleRenderers.Clear();
+            completedTransitionRenderers.Clear();
+            RefreshUpdaterState();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PerformanceProfilerMetrics.AddIceInfluences(examinedRenderers, modifiedRenderers);
+        }
+        finally
+        {
+            PerformanceProfilerMetrics.End(PerformanceProfilerMetrics.IceInfluenceTransitions);
+        }
+#endif
+    }
+
+    private static void UpdateLegacyTransitions(float deltaTime)
     {
         if (rendererInfluences.Count == 0)
         {
             return;
         }
 
-        float safeDeltaTime = Mathf.Max(0f, deltaTime);
-        staleRenderers.Clear();
-        foreach (KeyValuePair<Renderer, List<SourceInfluence>> entry in rendererInfluences)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PerformanceProfilerMetrics.Begin(PerformanceProfilerMetrics.IceInfluenceTransitions);
+        try
         {
-            Renderer renderer = entry.Key;
-            List<SourceInfluence> influences = entry.Value;
-            if (renderer == null)
+            int examinedRenderers = 0;
+            int modifiedRenderers = 0;
+#endif
+            float safeDeltaTime = Mathf.Max(0f, deltaTime);
+            staleRenderers.Clear();
+            foreach (KeyValuePair<Renderer, List<SourceInfluence>> entry in rendererInfluences)
             {
-                staleRenderers.Add(renderer);
-                continue;
-            }
-
-            bool changed = false;
-            for (int i = influences.Count - 1; i >= 0; i--)
-            {
-                SourceInfluence influence = influences[i];
-                float target = influence.Active ? 1f : 0f;
-                float step = influence.TransitionDuration <= 0f
-                    ? 1f
-                    : safeDeltaTime / influence.TransitionDuration;
-                float progress = Mathf.MoveTowards(influence.TransitionProgress, target, step);
-                if (!Mathf.Approximately(progress, influence.TransitionProgress))
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                examinedRenderers++;
+#endif
+                Renderer renderer = entry.Key;
+                List<SourceInfluence> influences = entry.Value;
+                if (renderer == null)
                 {
-                    influence.TransitionProgress = progress;
-                    influences[i] = influence;
+                    staleRenderers.Add(renderer);
+                    continue;
+                }
+
+                bool changed = false;
+                for (int i = influences.Count - 1; i >= 0; i--)
+                {
+                    SourceInfluence influence = influences[i];
+                    float target = influence.Active ? 1f : 0f;
+                    float step = influence.TransitionDuration <= 0f
+                        ? 1f
+                        : safeDeltaTime / influence.TransitionDuration;
+                    float progress = Mathf.MoveTowards(influence.TransitionProgress, target, step);
+                    if (!Mathf.Approximately(progress, influence.TransitionProgress))
+                    {
+                        influence.TransitionProgress = progress;
+                        influences[i] = influence;
+                        changed = true;
+                    }
+
+                    if (!influence.Active && influence.TransitionProgress <= 0f)
+                    {
+                        influences.RemoveAt(i);
+                        changed = true;
+                    }
+                }
+
+                if (influences.Count == 0)
+                {
+                    ClearInfluence(renderer, false);
+                    staleRenderers.Add(renderer);
+                    changed = true;
+                }
+                else
+                {
+                    // This deliberately mirrors the pre-Phase-2A traversal: every
+                    // registered renderer is evaluated and its MPB rewritten each frame.
+                    ApplyBestInfluence(renderer, influences, false);
                     changed = true;
                 }
 
-                if (!influence.Active && influence.TransitionProgress <= 0f)
-                {
-                    influences.RemoveAt(i);
-                    changed = true;
-                }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                if (changed)
+                    modifiedRenderers++;
+#endif
             }
 
-            if (influences.Count == 0)
+            for (int i = 0; i < staleRenderers.Count; i++)
             {
-                ClearInfluence(renderer, false);
-                staleRenderers.Add(renderer);
+                rendererInfluences.Remove(staleRenderers[i]);
+                transitioningRenderers.Remove(staleRenderers[i]);
             }
-            else if (changed)
-            {
-                ApplyBestInfluence(renderer, influences, false);
-            }
+
+            staleRenderers.Clear();
+            RefreshUpdaterState();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PerformanceProfilerMetrics.AddIceInfluences(examinedRenderers, modifiedRenderers);
         }
-
-        for (int i = 0; i < staleRenderers.Count; i++)
+        finally
         {
-            rendererInfluences.Remove(staleRenderers[i]);
+            PerformanceProfilerMetrics.End(PerformanceProfilerMetrics.IceInfluenceTransitions);
         }
-
-        staleRenderers.Clear();
+#endif
     }
 
     public static void CleanupStaleRenderers()
@@ -620,9 +800,39 @@ internal static class FlameInfluenceMaterialRuntime
         for (int i = 0; i < staleRenderers.Count; i++)
         {
             rendererInfluences.Remove(staleRenderers[i]);
+            transitioningRenderers.Remove(staleRenderers[i]);
         }
 
         staleRenderers.Clear();
+        RefreshUpdaterState();
+    }
+
+    private static void UpdateTransitionRegistration(
+        Renderer renderer,
+        List<SourceInfluence> influences)
+    {
+        if (renderer != null
+            && (phase2BLegacyBenchmarkMode || HasActiveTransition(influences)))
+            transitioningRenderers.Add(renderer);
+        else
+            transitioningRenderers.Remove(renderer);
+        RefreshUpdaterState();
+    }
+
+    private static bool HasActiveTransition(List<SourceInfluence> influences)
+    {
+        if (influences == null)
+            return false;
+
+        for (int i = 0; i < influences.Count; i++)
+        {
+            SourceInfluence influence = influences[i];
+            float target = influence.Active ? 1f : 0f;
+            if (!Mathf.Approximately(influence.TransitionProgress, target))
+                return true;
+        }
+
+        return false;
     }
 
     private static void ApplyBestInfluence(
@@ -755,6 +965,17 @@ internal static class FlameInfluenceMaterialRuntime
         Bounds rendererBounds)
     {
         int count = 0;
+        int activeCount = 0;
+        int maxInfluenceCount = ActiveShaderInfluenceLimit;
+        Vector4[] centersAndRadii = phase2BLegacyBenchmarkMode
+            ? legacyFlameCentersAndRadii
+            : optimizedFlameCentersAndRadii;
+        Vector4[] transitionData = phase2BLegacyBenchmarkMode
+            ? legacyFlameTransitionData
+            : optimizedFlameTransitionData;
+        float[] influenceDistances = phase2BLegacyBenchmarkMode
+            ? legacyFlameInfluenceDistances
+            : optimizedFlameInfluenceDistances;
         for (int i = 0; i < influences.Count; i++)
         {
             SourceInfluence candidate = influences[i];
@@ -763,48 +984,55 @@ internal static class FlameInfluenceMaterialRuntime
                 continue;
             }
 
+            activeCount++;
             float distance = rendererBounds.SqrDistance(candidate.Center);
             int targetIndex;
-            if (count < MaxShaderInfluenceCount)
+            if (count < maxInfluenceCount)
             {
                 targetIndex = count;
                 count++;
             }
             else
             {
-                targetIndex = FindFarthestShaderInfluenceIndex(count);
-                if (distance >= flameInfluenceDistances[targetIndex])
+                targetIndex = FindFarthestShaderInfluenceIndex(count, influenceDistances);
+                if (distance >= influenceDistances[targetIndex])
                 {
                     continue;
                 }
             }
 
-            flameCentersAndRadii[targetIndex] = new Vector4(
+            centersAndRadii[targetIndex] = new Vector4(
                 candidate.Center.x,
                 candidate.Center.y,
                 candidate.Center.z,
                 Mathf.Max(0f, candidate.Radius));
-            flameTransitionData[targetIndex] = new Vector4(
+            transitionData[targetIndex] = new Vector4(
                 Mathf.Clamp01(candidate.TransitionProgress),
                 candidate.Active ? 1f : 0f,
                 candidate.SourceKind == LitInfluenceSourceKind.AncientFlame ? 1f : 0f,
                 0f);
-            flameInfluenceDistances[targetIndex] = distance;
+            influenceDistances[targetIndex] = distance;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        PerformanceProfilerMetrics.AddIceInfluenceSelection(
+            activeCount,
+            count,
+            phase2BLegacyBenchmarkMode ? rendererInfluences.Count : transitioningRenderers.Count);
+#endif
         return count;
     }
 
-    private static int FindFarthestShaderInfluenceIndex(int count)
+    private static int FindFarthestShaderInfluenceIndex(int count, float[] influenceDistances)
     {
         int farthestIndex = 0;
-        float farthestDistance = flameInfluenceDistances[0];
+        float farthestDistance = influenceDistances[0];
         for (int i = 1; i < count; i++)
         {
-            if (flameInfluenceDistances[i] > farthestDistance)
+            if (influenceDistances[i] > farthestDistance)
             {
                 farthestIndex = i;
-                farthestDistance = flameInfluenceDistances[i];
+                farthestDistance = influenceDistances[i];
             }
         }
 
@@ -871,9 +1099,17 @@ internal static class FlameInfluenceMaterialRuntime
         {
             propertyBlock.SetInt(
                 flameInfluenceCountPropertyId,
-                Mathf.Clamp(flameInfluenceCount, 0, MaxShaderInfluenceCount));
-            propertyBlock.SetVectorArray(flameCentersAndRadiiPropertyId, flameCentersAndRadii);
-            propertyBlock.SetVectorArray(flameTransitionDataPropertyId, flameTransitionData);
+                Mathf.Clamp(flameInfluenceCount, 0, ActiveShaderInfluenceLimit));
+            propertyBlock.SetVectorArray(
+                flameCentersAndRadiiPropertyId,
+                phase2BLegacyBenchmarkMode
+                    ? legacyFlameCentersAndRadii
+                    : optimizedFlameCentersAndRadii);
+            propertyBlock.SetVectorArray(
+                flameTransitionDataPropertyId,
+                phase2BLegacyBenchmarkMode
+                    ? legacyFlameTransitionData
+                    : optimizedFlameTransitionData);
         }
 
         renderer.SetPropertyBlock(propertyBlock);
@@ -948,6 +1184,15 @@ internal static class FlameInfluenceMaterialRuntime
         };
         UnityEngine.Object.DontDestroyOnLoad(updaterObject);
         updater = updaterObject.AddComponent<FlameInfluenceMaterialUpdater>();
+        RefreshUpdaterState();
+    }
+
+    private static void RefreshUpdaterState()
+    {
+        if (updater != null)
+            updater.enabled = phase2BLegacyBenchmarkMode
+                ? rendererInfluences.Count > 0
+                : transitioningRenderers.Count > 0;
     }
 }
 

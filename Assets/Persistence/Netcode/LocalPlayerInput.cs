@@ -40,6 +40,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         Instance = this;
         if (dontDestroyOnLoad)
         {
+            if (transform.parent != null)
+            {
+                transform.SetParent(null, true);
+            }
+
             DontDestroyOnLoad(gameObject);
         }
 
@@ -140,6 +145,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         if (context.performed && ShouldProcess(context))
         {
             LocalInputRouter.RaiseTriggerMunin(context);
+        }
+    }
+
+    public void OnToggleTorch(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseToggleTorch(context);
         }
     }
 

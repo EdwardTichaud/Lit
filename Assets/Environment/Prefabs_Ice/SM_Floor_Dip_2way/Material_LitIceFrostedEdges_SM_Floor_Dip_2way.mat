@@ -92,7 +92,7 @@ Material:
     - _AlphaSrcBlend: 1
     - _BaseMetallic: 0
     - _BaseNormalStrength: 1
-    - _BaseSmoothness: 0
+    - _BaseSmoothness: 1
     - _BlendMode: 0
     - _ConservativeDepthOffsetEnable: 0
     - _CrackTextureInvert: 0
@@ -111,31 +111,32 @@ Material:
     - _EdgeSensitivity: 30
     - _EmissionIntensity: 1
     - _EnableBlendModePreserveSpecularLighting: 0
-    - _EnableEmission: 1
+    - _EnableEmission: 0
     - _EnableFogOnTransparent: 0
     - _ExcludeFromTUAndAA: 0
     - _FlameInfluenceRadius: 0
     - _FresnelIntensity: 0
     - _FresnelPower: 0.2
     - _FrostWidth: 10
-    - _IceReliefNormalStrength: 2
+    - _IceReliefNormalStrength: 0
     - _IceReliefRoughnessInfluence: 0
     - _IceScale: 1.06
     - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
-    - _Metallic: 0.698
-    - _MicroScale: 7
-    - _NormalStrength: 0.7
+    - _Metallic: 0.8
+    - _MicroScale: 3
+    - _NormalStrength: 0.1
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
+    - _ReflectionStrength: 1
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Smoothness: 0.768
+    - _Smoothness: 1
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 0
@@ -149,11 +150,11 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 0
     - _SurfaceType: 0
-    - _TextureEdgeNormalInfluence: 1.584
+    - _TextureEdgeNormalInfluence: 1.48
     - _TextureEdgeRoughnessInfluence: 0
-    - _TextureEdgeStrength: 0.96
+    - _TextureEdgeStrength: 0.733
     - _TextureEdgeThreshold: 0.777
-    - _TextureEdgeWidth: 11.1
+    - _TextureEdgeWidth: 5.5
     - _TilingMultiplier: 1
     - _TransitionProgress: 0
     - _TransitionSoftness: 1

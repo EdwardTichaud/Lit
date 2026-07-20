@@ -109,8 +109,10 @@ résolution dans le monde.
    combat courant, ou rechargement du dernier checkpoint/sauvegarde active. Le
    retry restaure le snapshot en memoire pris juste avant l'entree en combat :
    etat personnage/inventaire, snapshot monde persistant, PV joueur pre-combat
-   et ennemis reconstruits depuis l'etat monde, puis relance la session sans la
-   terminer. Les sorties menu et checkpoint terminent la session avant chargement
+   et ennemis reconstruits depuis l'etat monde. Il rebind aussi les Animator
+   joueur/ennemi cote autorite et client proprietaire avant de relancer la
+   session, afin d'effacer la mort/taunt de la tentative perdue. Les sorties
+   menu et checkpoint terminent la session avant chargement
    de scene. En cas de defaite, la musique de combat est remplacee par la
    musique `Game Over` configuree dans `CombatAudioLibrary` jusqu'a cette
    sortie. Cette validation restaure alors les positions, la camera et le
@@ -228,7 +230,10 @@ les mots-cles ou les references serializees.
 Le snapshot de retry est strictement runtime et n'ecrit aucun fichier : le
 manager capture `CharacterStateStore.CaptureRuntimeState` et
 `WorldStateManager.CaptureSnapshot` avant tout deplacement vers l'arene, puis
-restaure ces donnees au bouton retry.
+restaure ces donnees au bouton retry. Avant la nouvelle entree combat,
+`CombatSessionManager` appelle aussi `Animator.Rebind()`/`Update(0)` sur le
+joueur et l'ennemi concernes, avec un RPC cible pour le client engage en
+multijoueur.
 `BattleTransition` prechauffe au demarrage une `ShaderVariantCollection`
 optionnelle, les materiaux/prefabs optionnels et une instance cachee de
 BattleSphere dont les colliders sont desactives; il joue puis stoppe ses

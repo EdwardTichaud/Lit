@@ -606,7 +606,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -1268,7 +1274,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -1868,7 +1880,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -2417,7 +2435,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -2939,7 +2963,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -3512,7 +3542,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -4232,7 +4268,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 				if( _EnableDecals )
 				{
 					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
 					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 				}
 				#endif
 
@@ -5533,7 +5575,13 @@ Shader "Ultimate Character Controller/Demo/Overlay HDRP"
 					if (_EnableDecals)
 					{
 						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-						ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#ifdef DECAL_SURFACE_GRADIENT
+					float3 decalNormalTS = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], surfaceData.normalWS);
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, decalNormalTS);
+					GetNormalWS(fragInputs, decalNormalTS, surfaceData.normalWS, doubleSidedConstants);
+#else
+					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
+#endif
 					}
 				#endif
 

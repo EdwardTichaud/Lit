@@ -746,6 +746,13 @@ internal static class LitIceMaisonPrefabGenerator
         ModelGroup group, LitIcePrefabCatalog catalog, GenerationResult result,
         List<string> createdPaths)
     {
+        if (LitIceEdgeMaskBaker.IsCurrentBakedMesh(group.SourceMesh))
+        {
+            throw new InvalidOperationException(
+                $"Generated mesh '{group.SourceMesh.name}' cannot be used as a source. "
+                + "Restore the catalog source or the original prefab mesh before regeneration.");
+        }
+
         string targetPath = group.FolderPath + "/Mesh_IceEdges_" + group.FolderName + ".asset";
         bool targetExisted = AssetDatabase.LoadAssetAtPath<Mesh>(targetPath) != null;
         LitIcePrefabCatalogEntry existingEntry = catalog.FindBySourceId(group.SourceMeshId);
@@ -1259,7 +1266,9 @@ internal static class LitIceMaisonPrefabGenerator
             return collider.sharedMesh;
 
         warnings.Add($"{filter.name}: original mesh could not be resolved from baked mesh '{current.name}'.");
-        return current;
+        // Returning the generated mesh here caused every regeneration pass to
+        // duplicate triangle corners again, multiplying vertices and asset size.
+        return null;
     }
 
     private static Material[] ResolveSourceMaterials(

@@ -6,7 +6,7 @@
 // Per-renderer influence data supplied by FlameInfluenceMaterialRuntime.
 // The legacy single center remains available for inspector preview and for
 // compatibility, while V3 combines every supplied sphere with a max/union.
-#define LIT_ICE_MAX_FLAME_INFLUENCES 32
+#define LIT_ICE_MAX_FLAME_INFLUENCES 4
 int _LitIceFlameInfluenceCount;
 float4 _LitIceFlameCentersAndRadii[LIT_ICE_MAX_FLAME_INFLUENCES];
 float4 _LitIceFlameTransitionData[LIT_ICE_MAX_FLAME_INFLUENCES];
@@ -198,6 +198,7 @@ void LitIceFrostedEdgesV3_float(
     float TextureEdgeThreshold,
     float TextureEdgeNormalInfluence,
     float TextureEdgeRoughnessInfluence,
+    float ReflectionStrength,
     out float3 OutBaseColor,
     out float OutAlpha,
     out float3 OutNormalTS,
@@ -295,7 +296,13 @@ void LitIceFrostedEdgesV3_float(
     float3 revealedEmission = revealedBaseColor * max(0.0, EmissionIntensity);
     OutEmission = lerp(iceEmission, revealedEmission, flameMask)
         * emissionEnabled;
-    OutSmoothness = lerp(iceSmoothnessWithRelief, revealedSmoothness, flameMask);
+    float stateSmoothness = lerp(
+        iceSmoothnessWithRelief, revealedSmoothness, flameMask);
+    // HDRP Reflection Probes are sampled by the Lit specular response. Raising
+    // only smoothness keeps ice and stone dielectric while progressively
+    // sharpening their environment reflection into a subtle mirror layer.
+    OutSmoothness = lerp(
+        saturate(stateSmoothness), 0.98, saturate(ReflectionStrength));
     OutMetallic = lerp(IceMetallic, revealedMetallic, flameMask);
     OutOcclusion = lerp(1.0, revealedOcclusion, flameMask);
 }
@@ -353,6 +360,7 @@ void LitIceFrostedEdgesV3_half(
     half TextureEdgeThreshold,
     half TextureEdgeNormalInfluence,
     half TextureEdgeRoughnessInfluence,
+    half ReflectionStrength,
     out half3 OutBaseColor,
     out half OutAlpha,
     out half3 OutNormalTS,
@@ -382,7 +390,7 @@ void LitIceFrostedEdgesV3_half(
         TransitionProgress, IceSmoothness, IceMetallic, BaseSmoothness, BaseMetallic,
         IceReliefNormalStrength, IceReliefRoughnessInfluence,
         TextureEdgeStrength, TextureEdgeWidth, TextureEdgeThreshold,
-        TextureEdgeNormalInfluence, TextureEdgeRoughnessInfluence,
+        TextureEdgeNormalInfluence, TextureEdgeRoughnessInfluence, ReflectionStrength,
         baseColor, alpha, normalTS, emission, smoothness, metallic, occlusion);
     OutBaseColor = half3(baseColor);
     OutAlpha = half(alpha);

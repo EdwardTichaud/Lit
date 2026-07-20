@@ -12,6 +12,7 @@ public static class LocalInputRouter
         Jump,
         Interact,
         TriggerMunin,
+        ToggleTorch,
         TakeAll,
         Return,
         Inventory,
@@ -30,6 +31,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> Jump;
     public static event Action<InputAction.CallbackContext> Interact;
     public static event Action<InputAction.CallbackContext> TriggerMunin;
+    public static event Action<InputAction.CallbackContext> ToggleTorch;
     public static event Action<InputAction.CallbackContext> TakeAll;
     public static event Action<InputAction.CallbackContext> Return;
     public static event Action<InputAction.CallbackContext> Inventory;
@@ -60,6 +62,7 @@ public static class LocalInputRouter
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
     private static bool interactConsumed;
     private static bool triggerMuninConsumed;
+    private static bool toggleTorchConsumed;
     private static float lastGameplayActivityTime = float.NegativeInfinity;
     private static uint gameplayActivityVersion;
     private static uint characterMovementActivityVersion;
@@ -91,6 +94,7 @@ public static class LocalInputRouter
         Jump = null;
         Interact = null;
         TriggerMunin = null;
+        ToggleTorch = null;
         TakeAll = null;
         Return = null;
         Inventory = null;
@@ -122,6 +126,7 @@ public static class LocalInputRouter
         lastInputTimes.Clear();
         interactConsumed = false;
         triggerMuninConsumed = false;
+        toggleTorchConsumed = false;
         lastGameplayActivityTime = float.NegativeInfinity;
         gameplayActivityVersion = 0;
         characterMovementActivityVersion = 0;
@@ -404,6 +409,28 @@ public static class LocalInputRouter
 
         triggerMuninConsumed = false;
         TriggerMunin?.Invoke(context);
+    }
+
+    internal static bool TryConsumeToggleTorch()
+    {
+        if (toggleTorchConsumed)
+        {
+            return false;
+        }
+
+        toggleTorchConsumed = true;
+        return true;
+    }
+
+    internal static void RaiseToggleTorch(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.ToggleTorch))
+        {
+            return;
+        }
+
+        toggleTorchConsumed = false;
+        ToggleTorch?.Invoke(context);
     }
 
     internal static void RaiseTakeAll(InputAction.CallbackContext context)

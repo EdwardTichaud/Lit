@@ -15,6 +15,13 @@ Le nouveau flux ne depend plus d'une application Python, d'un environnement
 virtuel ou d'un appel LLM local. Les prompts sont prepares manuellement depuis
 `AIAgent/prompts/codex_task.md`.
 
+Le chantier performance repart de zero. Les systemes de culling manuel,
+budget de lumieres, budget de portails, XRay et instrumentation de migration
+ont ete retires des scenes et prefabs. Les LOD et l'Occlusion Culling natif
+Unity de `Maison` sont conserves. La prochaine architecture sera fondee sur
+`Maison` comme hub permanent et sur les environnements `Castle` et `Arena`
+charges progressivement en additif.
+
 Le combat tour par tour pilote maintenant la camera locale par phase via
 `CombatCameraPresentationController`; pendant le combat, Opsive est suspendu
 comme driver camera spatial puis restaure a la sortie.
@@ -144,7 +151,10 @@ checkpoint/sauvegarde active. Les retours menu/checkpoint ignorent la prochaine
 sauvegarde automatique pour ne pas persister l'etat de defaite.
 Le retry capture maintenant un snapshot runtime pre-combat et le restaure avant
 de relancer la session, afin de revenir aux inventaires, PV de bouclier, monde
-persistant et PV joueur du debut de combat.
+persistant et PV joueur du debut de combat. Il remet aussi les Animator joueur
+et ennemi a leur etat par defaut avant la nouvelle entree combat, y compris sur
+le client proprietaire en reseau, pour eviter de conserver une mort ou un taunt
+de la tentative precedente.
 
 ## Contraintes
 

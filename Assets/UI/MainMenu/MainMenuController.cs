@@ -140,7 +140,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string loadingMessage = "Chargement...";
 
     [Header("Netcode")]
-    [SerializeField] private string gameplaySceneName = "OutdoorsScene";
+    [SerializeField] private string gameplaySceneName = "Maison";
     [SerializeField] private ushort basePort = 7000;
     [SerializeField] private ushort portRange = 1000;
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
@@ -4440,9 +4440,10 @@ public class MainMenuController : MonoBehaviour
             NetworkManager.Singleton.Shutdown();
         }
 
-        if (!LoadingScreenService.LoadScene(gameplaySceneName, loadingMessage, LoadSceneMode.Single))
+        if (!GameFlowService.StartOrLoadGame(gameplaySceneName))
         {
             HideLoadingScreen();
+            SetStatus("Impossible de demarrer le chargement de la partie.");
         }
     }
 
@@ -4505,8 +4506,6 @@ public class MainMenuController : MonoBehaviour
         {
             SaveSessionManager.Instance.SetCurrentSessionType(currentSessionType);
         }
-
-        GameplayRuntimeReset.PrepareForGameplayStart("main_menu_start_game");
 
         StartOfflineFlow();
     }

@@ -5,12 +5,20 @@ using UnityEngine;
 public static class BreakableMasterShaderMaterialSync
 {
     private const string BreakableShaderName = "Shader Graphs/ShaderGraph_MasterShader_Breakable";
-    private const double LoadedMaterialScanInterval = 2.0;
+    private const string AutoConfigureLoadedMaterialsKey = "Lit.Shaders.AutoConfigureBreakableLoadedMaterials";
+    private const double LoadedMaterialScanInterval = 10.0;
 
     private static double nextLoadedMaterialScanTime;
+    private static bool AutoConfigureLoadedMaterials =>
+        EditorPrefs.GetBool(AutoConfigureLoadedMaterialsKey, false);
 
     static BreakableMasterShaderMaterialSync()
     {
+        if (!AutoConfigureLoadedMaterials)
+        {
+            return;
+        }
+
         EditorApplication.delayCall += ConfigureLoadedMaterials;
         EditorApplication.projectChanged += ConfigureLoadedMaterials;
         EditorApplication.update += ConfigureLoadedMaterialsPeriodically;
