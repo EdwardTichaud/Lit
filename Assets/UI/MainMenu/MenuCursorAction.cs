@@ -108,6 +108,8 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
             return;
         }
 
+        controller.PlayMenuButtonSfx(action);
+
         switch (action)
         {
             case MenuAction.NewGame:

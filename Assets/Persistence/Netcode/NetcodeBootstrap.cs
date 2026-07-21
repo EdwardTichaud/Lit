@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Lit.Performance;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -92,11 +93,13 @@ public class NetcodeBootstrap : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        SceneTransitionProfiler.Mark($"Initialisation Netcode debut ({scene.name})");
         EnsureNetworkManager();
         NetcodeSceneObjectInstaller.PrepareScene(scene);
         NetcodePrefabRegistry.Refresh();
 
         SyncLobbyUI(scene);
+        SceneTransitionProfiler.Mark($"Initialisation Netcode fin ({scene.name})");
     }
 
     private static bool IsMenuScene(string sceneName)

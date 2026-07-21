@@ -17,7 +17,6 @@ public class MainMenuController : MonoBehaviour
     public const string DefaultMenuSceneName = "MainMenu";
     private const float DefaultTitleCardIntroDelaySeconds = 3f;
     private const float DefaultTitleCardParticleLeadDelaySeconds = 2f;
-    private const float DefaultTitleCardIntroDurationSeconds = 2f;
 
     private enum MenuState
     {
@@ -48,12 +47,17 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private AudioClipSO titleCardProceedSfx;
     [SerializeField] private float titleCardIntroDelay = 3f;
     [SerializeField] private float titleCardParticleLeadDelay = 2f;
-    [SerializeField] private float titleCardIntroDuration = 2f;
+    [SerializeField, Min(0.01f)] private float titleCardIntroDuration = 3f;
     [SerializeField] private float titleCardInputEnableDelay = 2f;
+    [SerializeField, Min(0f)] private float titleCardPointerCursorUnlockDelay = 1f;
     [SerializeField] private string titleCardParticleSortingLayerName = "UI";
     [SerializeField] private int titleCardParticleSortingOrder = 100;
     [SerializeField] private List<AudioClipSO> titleCardParticleSfx = new List<AudioClipSO>();
     public List<GameObject> titleCardParticleRoots = new List<GameObject>();
+
+    [Header("Button Audio")]
+    [SerializeField] private AudioClipSO menuButtonSfx;
+    [SerializeField, Min(0f)] private float menuButtonSfxCooldown = 0.05f;
 
     [Header("Save List")]
     [SerializeField] private Transform sessionsRoot;
@@ -80,6 +84,7 @@ public class MainMenuController : MonoBehaviour
     [Header("Game Options")]
     [Header("Shared Cursor")]
     [SerializeField] private CursorController sharedCursor;
+    [SerializeField] private MainMenuPointerCursor pointerCursor;
     [SerializeField] private RectTransform gameOptionsCursorRoot;
     [SerializeField] private RectTransform soloOptionsCursorRoot;
     [SerializeField] private RectTransform multiOptionsCursorRoot;
@@ -188,6 +193,7 @@ public class MainMenuController : MonoBehaviour
     private Coroutine joinTimeoutRoutine;
     private Coroutine joinSceneSyncRoutine;
     private Coroutine titleCardIntroRoutine;
+    private Coroutine titleCardPointerCursorUnlockRoutine;
     private NetcodeSessionEndpoint activeJoinEndpoint;
     private bool titleCardIntroPlayed;
     private bool titleCardIntroInputLocked;
@@ -196,12 +202,12 @@ public class MainMenuController : MonoBehaviour
     private bool cachedTitleCardCursorAllowInput;
     private bool cachedTitleCardCursorNavigatorEnabled;
     private bool titleCardCursorStateCached;
+    private float lastMenuButtonSfxTime = float.NegativeInfinity;
 
     private void Awake()
     {
         titleCardIntroDelay = DefaultTitleCardIntroDelaySeconds;
         titleCardParticleLeadDelay = DefaultTitleCardParticleLeadDelaySeconds;
-        titleCardIntroDuration = DefaultTitleCardIntroDurationSeconds;
         MainMenuDisplaySettings.ApplySavedModeIfNeeded();
         MainMenuInputSettings.ApplySavedModeIfNeeded();
         EnsureSaveManager();
@@ -595,6 +601,8 @@ public class MainMenuController : MonoBehaviour
             {
                 CancelTitleCardIntro();
                 SetTitleCardIntroInputLock(false);
+                CancelTitleCardPointerCursorUnlock();
+                SetTitleCardPointerCursorLocked(false);
                 SetTitleCardParticleRootsVisible(false);
                 HidePanel(titleCardGroup);
             }
@@ -981,6 +989,7 @@ public class MainMenuController : MonoBehaviour
             ApplyFadeImmediate(group, 0f, false);
             SetTitleCardParticleRootsVisible(false);
             SetTitleCardIntroInputLock(true);
+            SetTitleCardPointerCursorLocked(true);
             waitingForInput = false;
             titleCardIntroRoutine = StartCoroutine(ShowTitleCardIntroRoutine(group));
             titleCardIntroPlayed = true;
@@ -988,6 +997,7 @@ public class MainMenuController : MonoBehaviour
         else
         {
             SetTitleCardIntroInputLock(false);
+            SetTitleCardPointerCursorLocked(false);
             SetTitleCardParticleRootsVisible(true);
             RestartTitleCardParticleSystems();
             PlayTitleCardParticleSfx();
@@ -1015,8 +1025,46 @@ public class MainMenuController : MonoBehaviour
         StartFade(group, 0f, false, panelHideDuration);
     }
 
+    /// <summary>
+    /// Retire toute l'interface propre au menu avant de laisser le service de
+    /// chargement global prendre l'ecran. Celui-ci reste le seul affichage
+    /// visible pendant l'ouverture d'une partie.
+    /// </summary>
+    private void CloseAllMenuPanelsForGameplayTransition()
+    {
+        CancelTitleCardIntro();
+        newGamePromptOpen = false;
+        loadConfirmOpen = false;
+        deleteConfirmOpen = false;
+        waitingForInput = false;
+
+        ApplyFadeImmediate(titleCardGroup, 0f, false);
+        ApplyFadeImmediate(gameOptionsGroup, 0f, false);
+        ApplyFadeImmediate(soloOptionsGroup, 0f, false);
+        ApplyFadeImmediate(multiOptionsGroup, 0f, false);
+        ApplyFadeImmediate(optionsGroup, 0f, false);
+        ApplyFadeImmediate(ResolveLoadMenuGroup(), 0f, false);
+        ApplyFadeImmediate(newGamePanelGroup, 0f, false);
+        ApplyFadeImmediate(joinPanelGroup, 0f, false);
+        ApplyFadeImmediate(loadConfirmGroup, 0f, false);
+        ApplyFadeImmediate(loadingGroup, 0f, false);
+
+        if (confirmRoot != null)
+        {
+            confirmRoot.SetActive(false);
+        }
+
+        HideVirtualKeyboard();
+        SetTitleCardParticleRootsVisible(false);
+        SetTitleCardIntroInputLock(true);
+        SetMainMenuPointerCursorVisible(false);
+        SetActiveMenuInteractable(false);
+        SetSharedCursorChildrenActive(false);
+    }
+
     private void CancelTitleCardIntro()
     {
+        CancelTitleCardPointerCursorUnlock();
         if (titleCardIntroRoutine == null)
         {
             return;
@@ -1038,6 +1086,7 @@ public class MainMenuController : MonoBehaviour
         SetTitleCardParticleRootsVisible(false);
         SetSharedCursorChildrenActive(false);
         SetTitleCardIntroInputLock(waitForAnyInput && titleCardGroup != null && !titleCardIntroPlayed);
+        SetTitleCardPointerCursorLocked(titleCardGroup != null && !titleCardIntroPlayed);
     }
 
     private void SetTitleCardIntroInputLock(bool locked)
@@ -1087,6 +1136,87 @@ public class MainMenuController : MonoBehaviour
         }
 
         titleCardCursorStateCached = false;
+    }
+
+    private void SetTitleCardPointerCursorLocked(bool locked)
+    {
+        ResolvePointerCursorReference();
+        if (pointerCursor != null)
+        {
+            pointerCursor.SetInputLocked(locked);
+        }
+    }
+
+    private void SetMainMenuPointerCursorVisible(bool visible)
+    {
+        ResolvePointerCursorReference();
+        if (pointerCursor != null)
+        {
+            pointerCursor.SetCursorVisible(visible);
+        }
+    }
+
+    private void ScheduleTitleCardPointerCursorUnlock(float delay)
+    {
+        CancelTitleCardPointerCursorUnlock();
+
+        float resolvedDelay = Mathf.Max(0f, delay);
+        if (resolvedDelay <= 0f)
+        {
+            SetTitleCardPointerCursorLocked(false);
+            return;
+        }
+
+        titleCardPointerCursorUnlockRoutine = StartCoroutine(UnlockTitleCardPointerCursorAfterDelay(resolvedDelay));
+    }
+
+    private void CancelTitleCardPointerCursorUnlock()
+    {
+        if (titleCardPointerCursorUnlockRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(titleCardPointerCursorUnlockRoutine);
+        titleCardPointerCursorUnlockRoutine = null;
+    }
+
+    private IEnumerator UnlockTitleCardPointerCursorAfterDelay(float delay)
+    {
+        float elapsed = 0f;
+        while (elapsed < delay)
+        {
+            elapsed += fadeUseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            yield return null;
+        }
+
+        SetTitleCardPointerCursorLocked(false);
+        titleCardPointerCursorUnlockRoutine = null;
+    }
+
+    private void ResolvePointerCursorReference()
+    {
+        if (pointerCursor != null)
+        {
+            return;
+        }
+
+        pointerCursor = GetComponentInChildren<MainMenuPointerCursor>(true);
+        if (pointerCursor != null)
+        {
+            return;
+        }
+
+        MainMenuPointerCursor[] cursors = Resources.FindObjectsOfTypeAll<MainMenuPointerCursor>();
+        for (int i = 0; i < cursors.Length; i++)
+        {
+            MainMenuPointerCursor candidate = cursors[i];
+            if (candidate != null && candidate.gameObject.scene.IsValid() && candidate.gameObject.scene.isLoaded)
+            {
+                pointerCursor = candidate;
+                return;
+            }
+        }
     }
 
     private void ShowVirtualKeyboard()
@@ -1317,6 +1447,7 @@ public class MainMenuController : MonoBehaviour
         bool particlesStarted = !hasParticles;
         bool fadeStarted = false;
         bool inputDelayReached = inputEnableDelay <= 0f;
+        bool pointerCursorUnlockScheduled = false;
         while (true)
         {
             if (!particlesStarted && elapsed >= particleLeadDelay)
@@ -1348,6 +1479,12 @@ public class MainMenuController : MonoBehaviour
             }
 
             bool fadeComplete = fadeStarted && elapsed >= introDelay + duration;
+            if (!pointerCursorUnlockScheduled && fadeComplete)
+            {
+                pointerCursorUnlockScheduled = true;
+                ScheduleTitleCardPointerCursorUnlock(titleCardPointerCursorUnlockDelay);
+            }
+
             if (particlesStarted && fadeComplete && inputDelayReached)
             {
                 break;
@@ -1361,6 +1498,11 @@ public class MainMenuController : MonoBehaviour
         group.alpha = 1f;
         group.interactable = true;
         group.blocksRaycasts = true;
+        if (!pointerCursorUnlockScheduled)
+        {
+            ScheduleTitleCardPointerCursorUnlock(titleCardPointerCursorUnlockDelay);
+        }
+
         SetTitleCardIntroInputLock(false);
         titleCardIntroRoutine = null;
         waitingForInput = waitForAnyInput && currentMenu == MenuState.TitleCard;
@@ -1469,6 +1611,28 @@ public class MainMenuController : MonoBehaviour
         {
             AudioManager.PlayClipAtPoint(titleCardProceedSfx, Vector3.zero);
         }
+    }
+
+    public void PlayMenuButtonSfx(MenuCursorAction.MenuAction action)
+    {
+        if (action == MenuCursorAction.MenuAction.None || (int)action > (int)MenuCursorAction.MenuAction.PasteJoinAddress)
+        {
+            return;
+        }
+
+        if (menuButtonSfx == null || menuButtonSfx.audioClip == null)
+        {
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        if (now - lastMenuButtonSfxTime < menuButtonSfxCooldown)
+        {
+            return;
+        }
+
+        lastMenuButtonSfxTime = now;
+        AudioManager.EnsureInstance()?.PlayUiClip(menuButtonSfx);
     }
 
     private void PlayTitleCardParticleSfx()
@@ -2041,6 +2205,7 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
+        ResolvePointerCursorReference();
 
         ResolveLoadingReferences();
     }
@@ -3344,10 +3509,6 @@ public class MainMenuController : MonoBehaviour
         }
 
         string sessionName = newGameNameInput != null ? newGameNameInput.text : string.Empty;
-        if (!isLoading)
-        {
-            ShowLoadingScreen(loadingMessage);
-        }
         HideNewGamePrompt();
         CreateNewGameAndStart(sessionName);
     }
@@ -3467,14 +3628,8 @@ public class MainMenuController : MonoBehaviour
 
     private void CreateNewGameAndStart(string sessionName)
     {
-        if (!isLoading)
-        {
-            ShowLoadingScreen(loadingMessage);
-        }
-
         if (SaveSessionManager.Instance == null)
         {
-            HideLoadingScreen();
             return;
         }
 
@@ -3483,7 +3638,6 @@ public class MainMenuController : MonoBehaviour
         SaveSlotInfo save = SaveSessionManager.Instance.CreateSave(session.sessionId, initialSaveName);
         if (save == null)
         {
-            HideLoadingScreen();
             SetStatus("Impossible de creer la sauvegarde.");
             return;
         }
@@ -4142,14 +4296,8 @@ public class MainMenuController : MonoBehaviour
 
     private void OnLoadSelected()
     {
-        if (!isLoading)
-        {
-            ShowLoadingScreen(loadingMessage);
-        }
-
         if (SaveSessionManager.Instance == null)
         {
-            HideLoadingScreen();
             SetActiveMenuInteractable(true);
             SetSharedCursorInputEnabled(true);
             return;
@@ -4157,7 +4305,6 @@ public class MainMenuController : MonoBehaviour
 
         if (selectedSave == null)
         {
-            HideLoadingScreen();
             SetStatus("Selectionne une sauvegarde.");
             SetActiveMenuInteractable(true);
             SetSharedCursorInputEnabled(true);
@@ -4211,10 +4358,6 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (!isLoading)
-        {
-            ShowLoadingScreen(loadingMessage);
-        }
         selectedSave = pendingLoad;
         pendingLoad = null;
         loadConfirmOpen = false;
@@ -4430,11 +4573,6 @@ public class MainMenuController : MonoBehaviour
 
     private void StartOfflineFlow()
     {
-        if (!isLoading)
-        {
-            ShowLoadingScreen(loadingMessage);
-        }
-
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             NetworkManager.Singleton.Shutdown();
@@ -4444,27 +4582,23 @@ public class MainMenuController : MonoBehaviour
         {
             HideLoadingScreen();
             SetStatus("Impossible de demarrer le chargement de la partie.");
+            return;
         }
+
+        CloseAllMenuPanelsForGameplayTransition();
     }
 
     private void StartJoinFlow(NetcodeSessionEndpoint endpoint)
     {
-        if (!isLoading)
-        {
-            ShowLoadingScreen(joinConnectingMessage);
-        }
-
         NetcodeLauncher launcher = ResolveLauncher();
         if (launcher == null)
         {
-            HideLoadingScreen();
             SetStatus("NetcodeLauncher manquant.");
             return;
         }
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            HideLoadingScreen();
             SetStatus("Connexion deja active.");
             return;
         }
@@ -4479,10 +4613,13 @@ public class MainMenuController : MonoBehaviour
         bool started = launcher.StartClientWithSessionEndpoint(endpoint);
         if (!started)
         {
-            HideLoadingScreen();
             SetStatus("Client deja actif.");
             return;
         }
+
+        CloseAllMenuPanelsForGameplayTransition();
+        isLoading = true;
+        LoadingScreenService.Show(joinConnectingMessage);
 
         activeJoinEndpoint = endpoint;
         joinInProgress = true;
@@ -4709,6 +4846,7 @@ public class MainMenuController : MonoBehaviour
     private void ShowLoadingScreen(string overrideMessage = null)
     {
         isLoading = true;
+        SetMainMenuPointerCursorVisible(false);
         string message = string.IsNullOrWhiteSpace(overrideMessage) ? loadingMessage : overrideMessage;
         ResolveLoadingReferences();
 
@@ -4736,6 +4874,7 @@ public class MainMenuController : MonoBehaviour
     private void HideLoadingScreen()
     {
         isLoading = false;
+        SetMainMenuPointerCursorVisible(true);
         ResolveLoadingReferences();
         LoadingScreenService.Hide();
 

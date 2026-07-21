@@ -110,6 +110,56 @@ public class MainMenuPointerCursor : MonoBehaviour
     private Vector3 currentFlamePosition;
     private Quaternion currentFlameRotation = Quaternion.identity;
     private bool hasFlamePose;
+    private bool inputLocked;
+    private bool cursorVisible = true;
+    private Graphic cursorGraphic;
+
+    public bool InputLocked => inputLocked;
+
+    public void SetCursorVisible(bool visible)
+    {
+        if (cursorVisible == visible)
+        {
+            return;
+        }
+
+        cursorVisible = visible;
+        ResolveReferences();
+        if (cursorGraphic != null)
+        {
+            cursorGraphic.enabled = cursorVisible;
+        }
+
+        if (flameLight != null)
+        {
+            flameLight.enabled = cursorVisible;
+        }
+
+        if (!cursorVisible)
+        {
+            ClearSyntheticUiHover();
+            SetWorldHover(null);
+        }
+    }
+
+    public void SetInputLocked(bool locked)
+    {
+        if (inputLocked == locked)
+        {
+            return;
+        }
+
+        inputLocked = locked;
+        if (inputLocked)
+        {
+            InitializeScreenPositionFromCursorTransform();
+            ClearSyntheticUiHover();
+            SetWorldHover(null);
+            return;
+        }
+
+        SyncHardwareMouseToScreenPosition();
+    }
 
     private void Awake()
     {
@@ -120,11 +170,19 @@ public class MainMenuPointerCursor : MonoBehaviour
     {
         ResolveReferences();
         CacheAndApplySystemCursor();
-        InitializeScreenPosition();
+        if (inputLocked)
+        {
+            InitializeScreenPositionFromCursorTransform();
+        }
+        else
+        {
+            InitializeScreenPosition();
+        }
+
         RebuildFlameProjectionRail();
         if (flameLight != null)
         {
-            flameLight.enabled = true;
+            flameLight.enabled = cursorVisible;
         }
     }
 
@@ -146,9 +204,34 @@ public class MainMenuPointerCursor : MonoBehaviour
     private void Update()
     {
         ResolveReferences();
-        UpdateScreenPosition();
+        if (!cursorVisible)
+        {
+            ClearSyntheticUiHover();
+            SetWorldHover(null);
+            return;
+        }
+
+        if (inputLocked)
+        {
+            if (!hasScreenPosition)
+            {
+                InitializeScreenPositionFromCursorTransform();
+            }
+        }
+        else
+        {
+            UpdateScreenPosition();
+        }
+
         UpdateCursorVisual();
         UpdateFlame();
+        if (inputLocked)
+        {
+            ClearSyntheticUiHover();
+            SetWorldHover(null);
+            return;
+        }
+
         UpdateWorldHover();
         UpdateSyntheticUiHoverAndClick();
         HandleWorldClick();
@@ -164,6 +247,11 @@ public class MainMenuPointerCursor : MonoBehaviour
         if (cursorVisual == null)
         {
             cursorVisual = transform as RectTransform;
+        }
+
+        if (cursorGraphic == null && cursorVisual != null)
+        {
+            cursorGraphic = cursorVisual.GetComponent<Graphic>();
         }
 
         if (decorCamera == null)
@@ -215,6 +303,29 @@ public class MainMenuPointerCursor : MonoBehaviour
         screenPosition = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         hasScreenPosition = true;
         activeSource = PointerSource.Gamepad;
+    }
+
+    private void InitializeScreenPositionFromCursorTransform()
+    {
+        RectTransform sourceTransform = transform as RectTransform;
+        if (sourceTransform == null)
+        {
+            sourceTransform = cursorVisual;
+        }
+
+        if (sourceTransform == null)
+        {
+            InitializeScreenPosition();
+            return;
+        }
+
+        Camera uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera != null ? canvas.worldCamera : Camera.main
+            : null;
+        screenPosition = ClampToScreen(RectTransformUtility.WorldToScreenPoint(uiCamera, sourceTransform.position));
+        hasScreenPosition = true;
+        activeSource = Mouse.current != null ? PointerSource.Mouse : PointerSource.Gamepad;
+        WarpHardwareMouseIfNeeded();
     }
 
     private void UpdateScreenPosition()
@@ -299,6 +410,16 @@ public class MainMenuPointerCursor : MonoBehaviour
             return;
         }
 
+        SyncHardwareMouseToScreenPosition();
+    }
+
+    private void SyncHardwareMouseToScreenPosition()
+    {
+        if (Mouse.current == null || !hasScreenPosition)
+        {
+            return;
+        }
+
         Mouse.current.WarpCursorPosition(screenPosition);
         InputState.Change(Mouse.current.position, screenPosition);
     }
@@ -317,7 +438,6 @@ public class MainMenuPointerCursor : MonoBehaviour
             return;
         }
 
-        cursorVisual.gameObject.SetActive(true);
         cursorVisual.SetAsLastSibling();
 
         RectTransform canvasRect = canvas != null ? canvas.transform as RectTransform : cursorVisual.parent as RectTransform;

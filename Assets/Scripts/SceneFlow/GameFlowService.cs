@@ -24,12 +24,19 @@ public sealed class GameFlowService : MonoBehaviour
 
     [SerializeField] private string menuSceneName = DefaultMenuSceneName;
     [SerializeField] private string hubSceneName = DefaultHubSceneName;
+    [Tooltip("Manifeste du hub. Tant qu'il reference Maison, le comportement actuel est conserve. Il pourra ensuite pointer vers Maison_Critical et ses sous-scenes.")]
+    [SerializeField] private ZoneManifest hubManifest;
     [SerializeField] private bool loadMenuAfterBootstrap = true;
     [Header("Loading messages")]
     [Tooltip("Texte affiche pendant le retour au menu principal.")]
     public string returnToMenuLoadingMessage = "Retour au menu principal...";
     [Tooltip("Prefab instancie au demarrage d'une partie et detruit au retour au menu.")]
     [SerializeField] private GameplaySessionRoot gameplaySessionPrefab;
+    [Header("Post loading")]
+    [Tooltip("Nombre minimal d'images stables entre deux activations de sous-scenes decoratives.")]
+    [SerializeField, Min(1)] private int postLoadingStableFrames = 15;
+    [Tooltip("Une image depassant ce seuil remet le compteur de stabilite a zero.")]
+    [SerializeField, Min(0.01f)] private float postLoadingMaximumStableFrameSeconds = 0.05f;
 
 #if UNITY_EDITOR
     [Header("Editor test startup")]
@@ -47,10 +54,14 @@ public sealed class GameFlowService : MonoBehaviour
     private Coroutine postLoadingRoutine;
     private int postLoadingGeneration;
     private string activeGameplaySceneName;
+    private bool postLoadingPriorityApplied;
+    private ThreadPriority previousBackgroundLoadingPriority;
 
     public bool IsTransitioning => transitionRoutine != null;
     public bool HasGameplaySession => gameplaySessionRoot != null;
-    public string HubSceneName => hubSceneName;
+    public string HubSceneName => hubManifest != null && hubManifest.IsValid
+        ? hubManifest.PrimarySceneName
+        : hubSceneName;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateApplicationRoot()
@@ -139,7 +150,7 @@ public sealed class GameFlowService : MonoBehaviour
             return false;
         }
 
-        string sceneToTest = string.IsNullOrWhiteSpace(editorStartSceneName) ? hubSceneName : editorStartSceneName;
+        string sceneToTest = string.IsNullOrWhiteSpace(editorStartSceneName) ? HubSceneName : editorStartSceneName;
         if (BeginGameplay(sceneToTest, editorStartSpawnId))
         {
             return true;
@@ -157,7 +168,7 @@ public sealed class GameFlowService : MonoBehaviour
             return false;
         }
 
-        return Instance.BeginGameplay(string.IsNullOrWhiteSpace(initialSceneName) ? Instance.hubSceneName : initialSceneName);
+        return Instance.BeginGameplay(string.IsNullOrWhiteSpace(initialSceneName) ? Instance.HubSceneName : initialSceneName);
     }
 
     public static bool TravelToZone(ZoneManifest destination, string spawnId = null)
@@ -177,7 +188,9 @@ public sealed class GameFlowService : MonoBehaviour
 
     private bool BeginGameplay(string initialSceneName, string initialSpawnId = null)
     {
-        if (IsTransitioning || !CanLoad(initialSceneName))
+        ZoneManifest manifest = ResolveGameplayManifest(initialSceneName);
+        string sceneToLoad = manifest != null ? manifest.PrimarySceneName : initialSceneName;
+        if (IsTransitioning || !CanLoad(sceneToLoad))
         {
             return false;
         }
@@ -189,7 +202,7 @@ public sealed class GameFlowService : MonoBehaviour
             IsPreparingGameplayScene = false;
             return false;
         }
-        transitionRoutine = StartCoroutine(LoadInitialGameplayRoutine(initialSceneName, initialSpawnId));
+        transitionRoutine = StartCoroutine(LoadInitialGameplayRoutine(sceneToLoad, initialSpawnId, manifest));
         return true;
     }
 
@@ -207,7 +220,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     private bool BeginReturnToHub(string spawnId)
     {
-        if (IsTransitioning || !HasGameplaySession || !CanLoad(hubSceneName))
+        if (IsTransitioning || !HasGameplaySession || !CanLoad(HubSceneName))
         {
             return false;
         }
@@ -229,11 +242,19 @@ public sealed class GameFlowService : MonoBehaviour
         return true;
     }
 
-    private IEnumerator LoadInitialGameplayRoutine(string sceneName, string spawnId)
+    private IEnumerator LoadInitialGameplayRoutine(string sceneName, string spawnId, ZoneManifest manifest)
     {
         SceneTransitionProfiler.Begin($"Demarrage -> {sceneName}");
-        yield return LoadSingleRoutine(sceneName, "Chargement de la partie...");
+        string loadingMessage = manifest != null ? manifest.LoadingMessage : "Chargement de la partie...";
+        yield return LoadSingleRoutine(sceneName, loadingMessage);
         SceneTransitionProfiler.Mark("Scene activee");
+        loadedZoneSceneNames.Clear();
+        AddLoadedGameplayScene(sceneName);
+        if (manifest != null)
+        {
+            yield return LoadManifestLoadingScenes(manifest, loadingMessage);
+        }
+
         activeGameplaySceneName = sceneName;
         IsPreparingGameplayScene = false;
         SquadManager.Instance?.InitializeForLoadedGameplayScene();
@@ -249,6 +270,7 @@ public sealed class GameFlowService : MonoBehaviour
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
+        StartPostLoading(manifest);
     }
 
     private IEnumerator TravelToZoneRoutine(ZoneManifest destination, string spawnId)
@@ -263,20 +285,13 @@ public sealed class GameFlowService : MonoBehaviour
         yield return LoadingScreenService.ShowAndWaitForPresentation(destination.LoadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
+        List<string> previousScenes = CaptureLoadedGameplayScenes();
+        loadedZoneSceneNames.Clear();
+
         yield return LoadAdditiveRoutine(destination.PrimarySceneName, destination.LoadingMessage);
         SceneTransitionProfiler.Mark("Scene de zone activee");
-        loadedZoneSceneNames.Add(destination.PrimarySceneName);
-
-        for (int i = 0; i < destination.LoadingSceneNames.Count; i++)
-        {
-            string additionalScene = destination.LoadingSceneNames[i];
-            if (!string.IsNullOrWhiteSpace(additionalScene) && CanLoad(additionalScene))
-            {
-                yield return LoadAdditiveRoutine(additionalScene, destination.LoadingMessage);
-                SceneTransitionProfiler.Mark($"Sous-scene activee ({additionalScene})");
-                loadedZoneSceneNames.Add(additionalScene);
-            }
-        }
+        AddLoadedGameplayScene(destination.PrimarySceneName);
+        yield return LoadManifestLoadingScenes(destination, destination.LoadingMessage);
 
         Scene targetScene = SceneManager.GetSceneByName(destination.PrimarySceneName);
         if (targetScene.IsValid() && targetScene.isLoaded)
@@ -284,10 +299,10 @@ public sealed class GameFlowService : MonoBehaviour
             SceneManager.SetActiveScene(targetScene);
         }
 
-        if (!string.IsNullOrWhiteSpace(activeGameplaySceneName) && !string.Equals(activeGameplaySceneName, destination.PrimarySceneName, StringComparison.OrdinalIgnoreCase))
+        for (int i = previousScenes.Count - 1; i >= 0; i--)
         {
-            yield return UnloadSceneIfLoaded(activeGameplaySceneName);
-            SceneTransitionProfiler.Mark("Scene precedente dechargee");
+            yield return UnloadSceneIfLoaded(previousScenes[i]);
+            SceneTransitionProfiler.Mark($"Sous-scene precedente dechargee ({previousScenes[i]})");
         }
 
         activeGameplaySceneName = destination.PrimarySceneName;
@@ -301,37 +316,41 @@ public sealed class GameFlowService : MonoBehaviour
 
     private IEnumerator ReturnToHubRoutine(string spawnId)
     {
-        SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {hubSceneName}");
+        string hubScene = HubSceneName;
+        SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {hubScene}");
         yield return LoadingScreenService.ShowAndWaitForPresentation("Retour a la Maison...");
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
-        yield return LoadAdditiveRoutine(hubSceneName, "Retour a la Maison...");
-        SceneTransitionProfiler.Mark("Maison activee");
-        Scene hubScene = SceneManager.GetSceneByName(hubSceneName);
-        if (hubScene.IsValid() && hubScene.isLoaded)
-        {
-            SceneManager.SetActiveScene(hubScene);
-        }
-
-        for (int i = loadedZoneSceneNames.Count - 1; i >= 0; i--)
-        {
-            yield return UnloadSceneIfLoaded(loadedZoneSceneNames[i]);
-            SceneTransitionProfiler.Mark($"Sous-scene dechargee ({loadedZoneSceneNames[i]})");
-        }
-
+        List<string> previousScenes = CaptureLoadedGameplayScenes();
         loadedZoneSceneNames.Clear();
-        if (!string.IsNullOrWhiteSpace(activeGameplaySceneName) && !string.Equals(activeGameplaySceneName, hubSceneName, StringComparison.OrdinalIgnoreCase))
+
+        yield return LoadAdditiveRoutine(hubScene, "Retour a la Maison...");
+        SceneTransitionProfiler.Mark("Maison activee");
+        AddLoadedGameplayScene(hubScene);
+        if (hubManifest != null && hubManifest.IsValid)
         {
-            yield return UnloadSceneIfLoaded(activeGameplaySceneName);
-            SceneTransitionProfiler.Mark("Scene precedente dechargee");
+            yield return LoadManifestLoadingScenes(hubManifest, "Retour a la Maison...");
         }
 
-        activeGameplaySceneName = hubSceneName;
+        Scene loadedHubScene = SceneManager.GetSceneByName(hubScene);
+        if (loadedHubScene.IsValid() && loadedHubScene.isLoaded)
+        {
+            SceneManager.SetActiveScene(loadedHubScene);
+        }
+
+        for (int i = previousScenes.Count - 1; i >= 0; i--)
+        {
+            yield return UnloadSceneIfLoaded(previousScenes[i]);
+            SceneTransitionProfiler.Mark($"Sous-scene dechargee ({previousScenes[i]})");
+        }
+
+        activeGameplaySceneName = hubScene;
         PlaceSquadAtSpawn(spawnId);
         SceneTransitionProfiler.Mark("Escouade placee");
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
+        StartPostLoading(hubManifest);
     }
 
     private IEnumerator ReturnToMenuRoutine()
@@ -347,6 +366,14 @@ public sealed class GameFlowService : MonoBehaviour
         activeGameplaySceneName = null;
         yield return LoadSingleRoutine(menuSceneName, returnToMenuLoadingMessage);
         SceneTransitionProfiler.Mark("Menu active");
+        // Le Volume du decor du menu est enregistre lors de l'activation de
+        // MainMenu. On le laisse affecter une image complete derriere
+        // l'overlay opaque afin d'eviter un changement brutal d'exposition
+        // pendant le fondu de sortie.
+        LoadingScreenService.PrepareSceneReveal();
+        yield return null;
+        yield return new WaitForEndOfFrame();
+        SceneTransitionProfiler.Mark("Menu rendu sous overlay");
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
@@ -385,12 +412,13 @@ public sealed class GameFlowService : MonoBehaviour
 
     private void StartPostLoading(ZoneManifest destination)
     {
-        if (destination.PostLoadingSceneNames.Count == 0)
+        if (destination == null || destination.PostLoadingSceneNames.Count == 0)
         {
             return;
         }
 
         int generation = ++postLoadingGeneration;
+        BeginPostLoadingPriority();
         postLoadingRoutine = StartCoroutine(LoadPostLoadingScenesRoutine(destination, generation));
     }
 
@@ -410,25 +438,29 @@ public sealed class GameFlowService : MonoBehaviour
                 continue;
             }
 
+            yield return WaitForStableGameplayFrames(generation);
+            if (generation != postLoadingGeneration)
+            {
+                yield break;
+            }
+
+            SceneTransitionProfiler.Mark($"Post chargement demande ({sceneName})");
             yield return LoadAdditiveAfterGameplayRoutine(sceneName);
             if (generation != postLoadingGeneration)
             {
                 yield break;
             }
 
-            if (!loadedZoneSceneNames.Contains(sceneName))
-            {
-                loadedZoneSceneNames.Add(sceneName);
-            }
+            AddLoadedGameplayScene(sceneName);
+            SceneTransitionProfiler.Mark($"Post chargement active ({sceneName})");
 
-            // Une scene par passage de frame : les futures phases pourront
-            // decouper davantage chaque contenu sans bloquer ce flux.
-            yield return null;
+            yield return WaitForStableGameplayFrames(generation);
         }
 
         if (generation == postLoadingGeneration)
         {
             postLoadingRoutine = null;
+            EndPostLoadingPriority();
         }
     }
 
@@ -457,9 +489,10 @@ public sealed class GameFlowService : MonoBehaviour
             yield return null;
         }
 
-        // Le chargement est volontairement sequentiel pour ne pas empiler les
-        // activations de scenes pendant que le joueur explore la zone.
+        // Le chargement reste sequentiel afin de ne jamais empiler deux
+        // activations pendant que le joueur explore la zone.
         yield return null;
+        SceneTransitionProfiler.Mark($"Post activation demandee ({sceneName})");
         operation.allowSceneActivation = true;
         while (!operation.isDone)
         {
@@ -567,13 +600,13 @@ public sealed class GameFlowService : MonoBehaviour
     private void StopPostLoadingRoutine()
     {
         postLoadingGeneration++;
-        if (postLoadingRoutine == null)
+        if (postLoadingRoutine != null)
         {
-            return;
+            StopCoroutine(postLoadingRoutine);
+            postLoadingRoutine = null;
         }
 
-        StopCoroutine(postLoadingRoutine);
-        postLoadingRoutine = null;
+        EndPostLoadingPriority();
     }
 
     private void AdoptGameplayManagers()
@@ -641,6 +674,107 @@ public sealed class GameFlowService : MonoBehaviour
         InputFocusStack.Clear();
         LocalPlayerInput.SetCombatInputActive(false);
         SquadManager.Instance?.ResetInputLocksForNewSession();
+    }
+
+    private ZoneManifest ResolveGameplayManifest(string sceneName)
+    {
+        if (hubManifest == null || !hubManifest.IsValid)
+        {
+            return null;
+        }
+
+        return string.IsNullOrWhiteSpace(sceneName) ||
+               string.Equals(sceneName, hubSceneName, StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(sceneName, hubManifest.PrimarySceneName, StringComparison.OrdinalIgnoreCase)
+            ? hubManifest
+            : null;
+    }
+
+    private IEnumerator LoadManifestLoadingScenes(ZoneManifest manifest, string loadingMessage)
+    {
+        if (manifest == null)
+        {
+            yield break;
+        }
+
+        for (int i = 0; i < manifest.LoadingSceneNames.Count; i++)
+        {
+            string additionalScene = manifest.LoadingSceneNames[i];
+            if (string.IsNullOrWhiteSpace(additionalScene) || !CanLoad(additionalScene))
+            {
+                continue;
+            }
+
+            yield return LoadAdditiveRoutine(additionalScene, loadingMessage);
+            AddLoadedGameplayScene(additionalScene);
+            SceneTransitionProfiler.Mark($"Sous-scene activee ({additionalScene})");
+        }
+    }
+
+    private List<string> CaptureLoadedGameplayScenes()
+    {
+        List<string> result = new List<string>(loadedZoneSceneNames);
+        if (!string.IsNullOrWhiteSpace(activeGameplaySceneName) &&
+            !result.Contains(activeGameplaySceneName))
+        {
+            result.Add(activeGameplaySceneName);
+        }
+
+        return result;
+    }
+
+    private void AddLoadedGameplayScene(string sceneName)
+    {
+        if (!string.IsNullOrWhiteSpace(sceneName) && !loadedZoneSceneNames.Contains(sceneName))
+        {
+            loadedZoneSceneNames.Add(sceneName);
+        }
+    }
+
+    private IEnumerator WaitForStableGameplayFrames(int generation)
+    {
+        int stableFrames = 0;
+        while (stableFrames < postLoadingStableFrames)
+        {
+            if (generation != postLoadingGeneration)
+            {
+                yield break;
+            }
+
+            if (Time.unscaledDeltaTime <= postLoadingMaximumStableFrameSeconds)
+            {
+                stableFrames++;
+            }
+            else
+            {
+                stableFrames = 0;
+            }
+
+            yield return null;
+        }
+    }
+
+    private void BeginPostLoadingPriority()
+    {
+        if (postLoadingPriorityApplied)
+        {
+            return;
+        }
+
+        previousBackgroundLoadingPriority = Application.backgroundLoadingPriority;
+        Application.backgroundLoadingPriority = ThreadPriority.Low;
+        postLoadingPriorityApplied = true;
+    }
+
+    private void EndPostLoadingPriority()
+    {
+        if (!postLoadingPriorityApplied)
+        {
+            return;
+        }
+
+        Application.backgroundLoadingPriority = previousBackgroundLoadingPriority;
+        postLoadingPriorityApplied = false;
     }
 
     private static bool CanLoad(string sceneName)

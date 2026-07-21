@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Lit.Performance;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -39,7 +40,9 @@ public static class CardinalTextMeshDepthEnforcer
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        ApplyToSceneTextMeshes();
+        SceneTransitionProfiler.Mark($"Initialisation TextMesh debut ({scene.name})");
+        ApplyToSceneTextMeshes(scene);
+        SceneTransitionProfiler.Mark($"Initialisation TextMesh fin ({scene.name})");
     }
 
     private static void OnFontTextureRebuilt(Font rebuiltFont)
@@ -77,6 +80,35 @@ public static class CardinalTextMeshDepthEnforcer
         for (int i = 0; i < textMeshes.Length; i++)
         {
             ApplyToTextMesh(textMeshes[i], shader);
+        }
+    }
+
+    private static void ApplyToSceneTextMeshes(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded)
+        {
+            return;
+        }
+
+        Shader shader = ResolveDepthShader();
+        if (shader == null)
+        {
+            return;
+        }
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
+        {
+            if (roots[rootIndex] == null)
+            {
+                continue;
+            }
+
+            TextMesh[] textMeshes = roots[rootIndex].GetComponentsInChildren<TextMesh>(true);
+            for (int textIndex = 0; textIndex < textMeshes.Length; textIndex++)
+            {
+                ApplyToTextMesh(textMeshes[textIndex], shader);
+            }
         }
     }
 

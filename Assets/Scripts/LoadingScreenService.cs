@@ -157,6 +157,21 @@ public sealed class LoadingScreenService : MonoBehaviour
     }
 
     /// <summary>
+    /// Autorise le rendu de la scene chargee tout en gardant l'overlay noir
+    /// opaque. Utile avant de reveler une scene dont le Volume, les shaders
+    /// ou l'exposition ont besoin d'une premiere image de chauffe.
+    /// </summary>
+    public static void PrepareSceneReveal()
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        instance.ResumeGameplayCameras();
+    }
+
+    /// <summary>
     /// Attend que l'overlay ait termine son delai de stabilisation et son
     /// fondu de sortie. Utilise par les contenus non indispensables qui ne
     /// doivent pas concurrencer le chargement initial de la zone.

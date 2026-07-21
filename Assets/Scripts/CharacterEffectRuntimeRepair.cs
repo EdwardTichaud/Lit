@@ -1,4 +1,5 @@
 using INab.VFXAssets;
+using Lit.Performance;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.VFX;
@@ -29,7 +30,9 @@ public static class CharacterEffectRuntimeRepair
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        RepairLoadedCharacterEffects();
+        SceneTransitionProfiler.Mark($"Initialisation effets debut ({scene.name})");
+        RepairLoadedCharacterEffects(scene);
+        SceneTransitionProfiler.Mark($"Initialisation effets fin ({scene.name})");
     }
 
     private static void RepairLoadedCharacterEffects()
@@ -42,6 +45,29 @@ public static class CharacterEffectRuntimeRepair
         for (int i = 0; i < effects.Length; i++)
         {
             RepairEffect(effects[i]);
+        }
+    }
+
+    private static void RepairLoadedCharacterEffects(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded)
+        {
+            return;
+        }
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
+        {
+            if (roots[rootIndex] == null)
+            {
+                continue;
+            }
+
+            CharacterEffect[] effects = roots[rootIndex].GetComponentsInChildren<CharacterEffect>(true);
+            for (int effectIndex = 0; effectIndex < effects.Length; effectIndex++)
+            {
+                RepairEffect(effects[effectIndex]);
+            }
         }
     }
 

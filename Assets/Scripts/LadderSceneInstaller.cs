@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Lit.Performance;
 
 public static class LadderSceneInstaller
 {
@@ -15,7 +16,9 @@ public static class LadderSceneInstaller
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        SceneTransitionProfiler.Mark($"Initialisation echelles debut ({scene.name})");
         InstallSceneLadders(scene);
+        SceneTransitionProfiler.Mark($"Initialisation echelles fin ({scene.name})");
     }
 
     private static void InstallSceneLadders(Scene scene)
