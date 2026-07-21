@@ -417,6 +417,9 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private void SyncHardwareMouseToScreenPosition()
     {
+#if UNITY_EDITOR
+        return;
+#else
         if (Mouse.current == null || !hasScreenPosition)
         {
             return;
@@ -424,6 +427,7 @@ public class MainMenuPointerCursor : MonoBehaviour
 
         Mouse.current.WarpCursorPosition(screenPosition);
         InputState.Change(Mouse.current.position, screenPosition);
+#endif
     }
 
     private Vector2 ClampToScreen(Vector2 position)

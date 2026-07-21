@@ -36,7 +36,7 @@ public sealed class LoadingScreenService : MonoBehaviour
     private float hideFadeDuration = 0.5f;
     [SerializeField, Min(0f), Tooltip("Temps minimal entre la disparition de l'orbe et le fondu de sortie de l'ecran noir.")]
     private float loadingOrbHideLeadDuration = 0.5f;
-    [SerializeField, Min(0f), Tooltip("Delai entre l'apparition de l'ecran de chargement et celle de l'orbe.")]
+    [SerializeField, Min(0f), Tooltip("Delai apres que l'ecran de chargement soit devenu completement opaque, avant l'apparition de l'orbe.")]
     private float loadingOrbShowDelayDuration = 1f;
 
     [Header("Look")]
@@ -67,6 +67,8 @@ public sealed class LoadingScreenService : MonoBehaviour
     private RawImage loadingOrbImage;
     private Canvas loadingOrbCanvas;
     private CanvasGroup loadingOrbCanvasGroup;
+    private RectTransform loadingOrbOverlayRoot;
+    private GameObject loadingOrbOverlayObject;
     private GameObject loadingOrbInstance;
     private Camera loadingPresentationCamera;
     private RenderTexture loadingOrbTexture;
@@ -256,6 +258,12 @@ public sealed class LoadingScreenService : MonoBehaviour
     private void OnDestroy()
     {
         ResumeGameplayCameras();
+        if (loadingOrbOverlayObject != null)
+        {
+            Destroy(loadingOrbOverlayObject);
+            loadingOrbOverlayObject = null;
+        }
+
         if (loadingOrbTexture != null)
         {
             loadingOrbTexture.Release();
@@ -740,9 +748,7 @@ public sealed class LoadingScreenService : MonoBehaviour
             return;
         }
 
-        RectTransform parent = orbPoint != null && orbPoint.parent is RectTransform pointParent
-            ? pointParent
-            : root;
+        RectTransform parent = CreateLoadingOrbOverlayRoot(root);
         loadingOrbImage = CreateUiObject<RawImage>("LoadingOrb", parent);
         loadingOrbImage.color = Color.white;
         loadingOrbImage.raycastTarget = false;
@@ -782,8 +788,15 @@ public sealed class LoadingScreenService : MonoBehaviour
         }
         else
         {
+            loadingOrbCamera.transform.localPosition = new Vector3(0f, -10000f, -8f);
+            loadingOrbCamera.transform.localRotation = Quaternion.identity;
             loadingOrbCamera.clearFlags = CameraClearFlags.SolidColor;
             loadingOrbCamera.backgroundColor = Color.clear;
+            loadingOrbCamera.orthographic = false;
+            loadingOrbCamera.fieldOfView = 28f;
+            loadingOrbCamera.nearClipPlane = 0.01f;
+            loadingOrbCamera.farClipPlane = 100f;
+            loadingOrbCamera.allowHDR = true;
             loadingOrbCamera.targetTexture = loadingOrbTexture;
             loadingOrbCamera.enabled = true;
         }
@@ -812,42 +825,89 @@ public sealed class LoadingScreenService : MonoBehaviour
                 return;
             }
         }
+
+        // La camera peut etre placee directement a la racine de Bootstrap
+        // plutot que sous LoadingScreenService.
+        cameras = FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            if (cameras[i] != null && cameras[i].name == "LoadingOrbCamera")
+            {
+                loadingOrbCamera = cameras[i];
+                return;
+            }
+        }
     }
 
     private void EnsureLoadingOrbCanvasPriority()
     {
-        if (loadingOrbImage == null)
+        if (loadingOrbOverlayRoot == null)
         {
             return;
         }
 
         if (loadingOrbCanvas == null)
         {
-            loadingOrbCanvas = loadingOrbImage.GetComponent<Canvas>();
-            if (loadingOrbCanvas == null)
-            {
-                loadingOrbCanvas = loadingOrbImage.gameObject.AddComponent<Canvas>();
-            }
+            loadingOrbCanvas = loadingOrbOverlayRoot.GetComponent<Canvas>();
         }
 
+        if (loadingOrbCanvas == null)
+        {
+            return;
+        }
+
+        loadingOrbCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         loadingOrbCanvas.overrideSorting = true;
         loadingOrbCanvas.sortingOrder = short.MaxValue;
 
-        // L'orbe ne doit pas heriter de l'opacite du CanvasGroup du fond
-        // noir : elle reste donc pleinement visible, meme pendant un fondu.
+        // L'orbe est dans un Canvas distinct : elle ne peut donc pas heriter
+        // de l'opacite du CanvasGroup qui pilote le fond noir.
         if (loadingOrbCanvasGroup == null)
         {
-            loadingOrbCanvasGroup = loadingOrbImage.GetComponent<CanvasGroup>();
-            if (loadingOrbCanvasGroup == null)
-            {
-                loadingOrbCanvasGroup = loadingOrbImage.gameObject.AddComponent<CanvasGroup>();
-            }
+            loadingOrbCanvasGroup = loadingOrbOverlayRoot.GetComponent<CanvasGroup>();
+        }
+
+        if (loadingOrbCanvasGroup == null)
+        {
+            return;
         }
 
         loadingOrbCanvasGroup.alpha = 1f;
         loadingOrbCanvasGroup.ignoreParentGroups = true;
         loadingOrbCanvasGroup.interactable = false;
         loadingOrbCanvasGroup.blocksRaycasts = false;
+    }
+
+    private RectTransform CreateLoadingOrbOverlayRoot(RectTransform referenceRoot)
+    {
+        if (loadingOrbOverlayRoot != null)
+        {
+            return loadingOrbOverlayRoot;
+        }
+
+        loadingOrbOverlayObject = new GameObject(
+            "LoadingOrbOverlay",
+            typeof(RectTransform),
+            typeof(Canvas),
+            typeof(CanvasScaler),
+            typeof(CanvasGroup));
+
+        Transform parent = transform.parent != null ? transform.parent : transform;
+        loadingOrbOverlayObject.transform.SetParent(parent, false);
+        loadingOrbOverlayRoot = loadingOrbOverlayObject.GetComponent<RectTransform>();
+        loadingOrbOverlayRoot.anchorMin = Vector2.zero;
+        loadingOrbOverlayRoot.anchorMax = Vector2.one;
+        loadingOrbOverlayRoot.offsetMin = Vector2.zero;
+        loadingOrbOverlayRoot.offsetMax = Vector2.zero;
+
+        loadingOrbCanvas = loadingOrbOverlayObject.GetComponent<Canvas>();
+        CanvasScaler scaler = loadingOrbOverlayObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+        loadingOrbCanvasGroup = loadingOrbOverlayObject.GetComponent<CanvasGroup>();
+        EnsureLoadingOrbCanvasPriority();
+        return loadingOrbOverlayRoot;
     }
 
     private void ResolveLayoutReferences()
@@ -904,13 +964,33 @@ public sealed class LoadingScreenService : MonoBehaviour
 
     private IEnumerator ShowLoadingOrbAfterDelay()
     {
+        // Le decompte ne commence qu'une fois le fondu d'entree termine.
+        // Sinon, l'orbe peut apparaitre alors que l'ecran noir est encore
+        // transparent, ce qui donne une transition visuellement incoherente.
+        while (canvasGroup != null && canvasGroup.alpha < 0.999f)
+        {
+            if (currentFadeTarget < 0.999f)
+            {
+                loadingOrbVisibilityRoutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        if (currentFadeTarget < 0.999f)
+        {
+            loadingOrbVisibilityRoutine = null;
+            yield break;
+        }
+
         if (loadingOrbShowDelayDuration > 0f)
         {
             yield return new WaitForSecondsRealtime(loadingOrbShowDelayDuration);
         }
 
         loadingOrbVisibilityRoutine = null;
-        if (currentFadeTarget <= 0.001f)
+        if (currentFadeTarget < 0.999f)
         {
             yield break;
         }
@@ -939,6 +1019,9 @@ public sealed class LoadingScreenService : MonoBehaviour
         SetLoadingOrbVisible(true);
         foreach (ParticleSystem system in loadingOrbInstance.GetComponentsInChildren<ParticleSystem>(true))
         {
+            ParticleSystem.MainModule main = system.main;
+            main.loop = true;
+            main.useUnscaledTime = true;
             system.Stop(withChildren: false, ParticleSystemStopBehavior.StopEmittingAndClear);
             system.Play(withChildren: false);
         }
