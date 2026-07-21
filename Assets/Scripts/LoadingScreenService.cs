@@ -36,6 +36,8 @@ public sealed class LoadingScreenService : MonoBehaviour
     private float hideFadeDuration = 0.5f;
     [SerializeField, Min(0f), Tooltip("Temps minimal entre la disparition de l'orbe et le fondu de sortie de l'ecran noir.")]
     private float loadingOrbHideLeadDuration = 0.5f;
+    [SerializeField, Min(0f), Tooltip("Delai entre l'apparition de l'ecran de chargement et celle de l'orbe.")]
+    private float loadingOrbShowDelayDuration = 1f;
 
     [Header("Look")]
     [SerializeField, Tooltip("Couleur du fond plein ecran.")]
@@ -57,16 +59,20 @@ public sealed class LoadingScreenService : MonoBehaviour
     private TMP_Text loadingTextReference;
     [SerializeField, Tooltip("Point de reference qui definit la position de l'orbe dans l'interface.")]
     private RectTransform orbPoint;
+    [SerializeField, Tooltip("Camera deja placee dans Bootstrap qui rend l'orbe dans l'interface.")]
+    private Camera loadingOrbCamera;
 
     private CanvasGroup canvasGroup;
     private TMP_Text messageText;
     private RawImage loadingOrbImage;
+    private Canvas loadingOrbCanvas;
+    private CanvasGroup loadingOrbCanvasGroup;
     private GameObject loadingOrbInstance;
-    private Camera loadingOrbCamera;
     private Camera loadingPresentationCamera;
     private RenderTexture loadingOrbTexture;
     private Coroutine sceneLoadRoutine;
     private Coroutine visibilityRoutine;
+    private Coroutine loadingOrbVisibilityRoutine;
     private bool isRuntimeGenerated;
     private float overlayShownAtUnscaledTime = float.NegativeInfinity;
     private float currentFadeTarget;
@@ -318,6 +324,8 @@ public sealed class LoadingScreenService : MonoBehaviour
     {
         if (canvasGroup != null)
         {
+            EnsureTopmostCanvasPriority();
+            EnsureLoadingOrbCanvasPriority();
             CreateLoadingPresentationCameraIfNeeded();
             ResolveLayoutReferences();
             return;
@@ -329,10 +337,7 @@ public sealed class LoadingScreenService : MonoBehaviour
             canvas = gameObject.AddComponent<Canvas>();
         }
 
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        // Doit rester au-dessus de ScreenFade (32767) afin que le joueur voie
-        // le message et la progression, pas uniquement le fondu noir.
-        canvas.sortingOrder = 40000;
+        EnsureTopmostCanvasPriority();
         CreateLoadingPresentationCameraIfNeeded();
 
         CanvasScaler scaler = gameObject.GetComponent<CanvasScaler>();
@@ -398,12 +403,15 @@ public sealed class LoadingScreenService : MonoBehaviour
 
         if (currentFadeTarget >= 0.999f)
         {
+            // Un appel supplementaire a Show pendant un chargement ne doit
+            // pas empecher l'orbe de reapparaitre apres sa marge initiale.
+            EnsureLoadingOrbPresentation();
             return;
         }
 
         overlayShownAtUnscaledTime = Time.unscaledTime;
         PlayChildParticleSystems();
-        PlayLoadingOrb();
+        EnsureLoadingOrbPresentation();
         StartVisibilityFade(1f, showFadeDuration, 0f);
     }
 
@@ -444,8 +452,18 @@ public sealed class LoadingScreenService : MonoBehaviour
         if (targetAlpha <= 0f)
         {
             ResumeGameplayCameras();
+            // La marge de l'orbe est incluse dans le delai de stabilisation :
+            // un ecran minimal de 15 s garde donc une orbe visible 13 s
+            // (apparition +1 s, disparition -1 s), sans ajouter une seconde.
+            float fadeDelay = Mathf.Max(delaySeconds, loadingOrbHideLeadDuration);
+            float orbHideDelay = Mathf.Max(0f, fadeDelay - loadingOrbHideLeadDuration);
+            if (orbHideDelay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(orbHideDelay);
+            }
+
             HideLoadingOrbBeforeScreenFade();
-            delaySeconds = Mathf.Max(delaySeconds, loadingOrbHideLeadDuration);
+            delaySeconds = fadeDelay - orbHideDelay;
         }
 
         if (delaySeconds > 0f)
@@ -506,6 +524,7 @@ public sealed class LoadingScreenService : MonoBehaviour
         StopChildParticleSystems();
         StopLoadingOrb();
         SetLoadingOrbVisible(false);
+        StopLoadingOrbPresentationRoutine();
         ResumeGameplayCameras();
         SetLoadingPresentationCameraActive(false);
     }
@@ -612,7 +631,9 @@ public sealed class LoadingScreenService : MonoBehaviour
         for (int i = 0; i < childParticleSystems.Count; i++)
         {
             ParticleSystem current = childParticleSystems[i];
-            if (current == null || !particleEmissionSnapshots.TryGetValue(current, out ParticleEmissionSnapshot snapshot))
+            if (current == null ||
+                IsLoadingOrbParticleSystem(current) ||
+                !particleEmissionSnapshots.TryGetValue(current, out ParticleEmissionSnapshot snapshot))
             {
                 continue;
             }
@@ -628,7 +649,7 @@ public sealed class LoadingScreenService : MonoBehaviour
         for (int i = 0; i < childParticleSystems.Count; i++)
         {
             ParticleSystem current = childParticleSystems[i];
-            if (current == null)
+            if (current == null || IsLoadingOrbParticleSystem(current))
             {
                 continue;
             }
@@ -642,13 +663,20 @@ public sealed class LoadingScreenService : MonoBehaviour
         for (int i = 0; i < childParticleSystems.Count; i++)
         {
             ParticleSystem current = childParticleSystems[i];
-            if (current == null)
+            if (current == null || IsLoadingOrbParticleSystem(current))
             {
                 continue;
             }
 
             current.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmitting);
         }
+    }
+
+    private bool IsLoadingOrbParticleSystem(ParticleSystem system)
+    {
+        return system != null &&
+               loadingOrbInstance != null &&
+               system.transform.IsChildOf(loadingOrbInstance.transform);
     }
 
     /// <summary>
@@ -676,6 +704,21 @@ public sealed class LoadingScreenService : MonoBehaviour
         loadingPresentationCamera.enabled = false;
     }
 
+    private void EnsureTopmostCanvasPriority()
+    {
+        Canvas canvas = GetComponent<Canvas>();
+        if (canvas == null)
+        {
+            return;
+        }
+
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        // L'orbe utilise le dernier ordre disponible afin de toujours rester
+        // visible au-dessus de ce fond noir.
+        canvas.sortingOrder = short.MaxValue - 1;
+    }
+
     private void SetLoadingPresentationCameraActive(bool isActive)
     {
         if (loadingPresentationCamera != null)
@@ -686,7 +729,13 @@ public sealed class LoadingScreenService : MonoBehaviour
 
     private void CreateLoadingOrbUiIfNeeded(RectTransform root)
     {
-        if (loadingOrbPrefab == null || loadingOrbImage != null)
+        if (loadingOrbImage != null)
+        {
+            EnsureLoadingOrbCanvasPriority();
+            return;
+        }
+
+        if (loadingOrbPrefab == null)
         {
             return;
         }
@@ -697,6 +746,7 @@ public sealed class LoadingScreenService : MonoBehaviour
         loadingOrbImage = CreateUiObject<RawImage>("LoadingOrb", parent);
         loadingOrbImage.color = Color.white;
         loadingOrbImage.raycastTarget = false;
+        EnsureLoadingOrbCanvasPriority();
 
         RectTransform rect = loadingOrbImage.rectTransform;
         if (orbPoint != null)
@@ -725,19 +775,18 @@ public sealed class LoadingScreenService : MonoBehaviour
         loadingOrbTexture.Create();
         loadingOrbImage.texture = loadingOrbTexture;
 
-        GameObject cameraObject = new GameObject("LoadingOrbCamera");
-        cameraObject.transform.SetParent(transform, false);
-        cameraObject.transform.localPosition = new Vector3(0f, -10000f, -8f);
-        cameraObject.transform.localRotation = Quaternion.identity;
-        loadingOrbCamera = cameraObject.AddComponent<Camera>();
-        loadingOrbCamera.clearFlags = CameraClearFlags.SolidColor;
-        loadingOrbCamera.backgroundColor = Color.clear;
-        loadingOrbCamera.orthographic = false;
-        loadingOrbCamera.fieldOfView = 28f;
-        loadingOrbCamera.nearClipPlane = 0.01f;
-        loadingOrbCamera.farClipPlane = 100f;
-        loadingOrbCamera.allowHDR = true;
-        loadingOrbCamera.targetTexture = loadingOrbTexture;
+        ResolveLoadingOrbCameraIfNeeded();
+        if (loadingOrbCamera == null)
+        {
+            Debug.LogWarning("LoadingScreenService : ajoute une camera nommee 'LoadingOrbCamera' dans Bootstrap, ou assigne-la dans l'inspecteur.", this);
+        }
+        else
+        {
+            loadingOrbCamera.clearFlags = CameraClearFlags.SolidColor;
+            loadingOrbCamera.backgroundColor = Color.clear;
+            loadingOrbCamera.targetTexture = loadingOrbTexture;
+            loadingOrbCamera.enabled = true;
+        }
 
         loadingOrbInstance = Instantiate(loadingOrbPrefab, transform);
         loadingOrbInstance.name = "Loading_Orbe_Preview";
@@ -745,6 +794,60 @@ public sealed class LoadingScreenService : MonoBehaviour
         loadingOrbInstance.transform.localRotation = Quaternion.identity;
         loadingOrbInstance.transform.localScale *= loadingOrbScale;
         StopLoadingOrb();
+    }
+
+    private void ResolveLoadingOrbCameraIfNeeded()
+    {
+        if (loadingOrbCamera != null)
+        {
+            return;
+        }
+
+        Camera[] cameras = GetComponentsInChildren<Camera>(true);
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            if (cameras[i] != null && cameras[i].name == "LoadingOrbCamera")
+            {
+                loadingOrbCamera = cameras[i];
+                return;
+            }
+        }
+    }
+
+    private void EnsureLoadingOrbCanvasPriority()
+    {
+        if (loadingOrbImage == null)
+        {
+            return;
+        }
+
+        if (loadingOrbCanvas == null)
+        {
+            loadingOrbCanvas = loadingOrbImage.GetComponent<Canvas>();
+            if (loadingOrbCanvas == null)
+            {
+                loadingOrbCanvas = loadingOrbImage.gameObject.AddComponent<Canvas>();
+            }
+        }
+
+        loadingOrbCanvas.overrideSorting = true;
+        loadingOrbCanvas.sortingOrder = short.MaxValue;
+
+        // L'orbe ne doit pas heriter de l'opacite du CanvasGroup du fond
+        // noir : elle reste donc pleinement visible, meme pendant un fondu.
+        if (loadingOrbCanvasGroup == null)
+        {
+            loadingOrbCanvasGroup = loadingOrbImage.GetComponent<CanvasGroup>();
+            if (loadingOrbCanvasGroup == null)
+            {
+                loadingOrbCanvasGroup = loadingOrbImage.gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        loadingOrbCanvasGroup.alpha = 1f;
+        loadingOrbCanvasGroup.ignoreParentGroups = true;
+        loadingOrbCanvasGroup.interactable = false;
+        loadingOrbCanvasGroup.blocksRaycasts = false;
     }
 
     private void ResolveLayoutReferences()
@@ -787,6 +890,45 @@ public sealed class LoadingScreenService : MonoBehaviour
         }
     }
 
+    private void EnsureLoadingOrbPresentation()
+    {
+        if (loadingOrbInstance == null ||
+            (loadingOrbImage != null && loadingOrbImage.enabled) ||
+            loadingOrbVisibilityRoutine != null)
+        {
+            return;
+        }
+
+        loadingOrbVisibilityRoutine = StartCoroutine(ShowLoadingOrbAfterDelay());
+    }
+
+    private IEnumerator ShowLoadingOrbAfterDelay()
+    {
+        if (loadingOrbShowDelayDuration > 0f)
+        {
+            yield return new WaitForSecondsRealtime(loadingOrbShowDelayDuration);
+        }
+
+        loadingOrbVisibilityRoutine = null;
+        if (currentFadeTarget <= 0.001f)
+        {
+            yield break;
+        }
+
+        PlayLoadingOrb();
+    }
+
+    private void StopLoadingOrbPresentationRoutine()
+    {
+        if (loadingOrbVisibilityRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(loadingOrbVisibilityRoutine);
+        loadingOrbVisibilityRoutine = null;
+    }
+
     private void PlayLoadingOrb()
     {
         if (loadingOrbInstance == null)
@@ -817,6 +959,7 @@ public sealed class LoadingScreenService : MonoBehaviour
 
     private void HideLoadingOrbBeforeScreenFade()
     {
+        StopLoadingOrbPresentationRoutine();
         StopLoadingOrb();
         SetLoadingOrbVisible(false);
     }

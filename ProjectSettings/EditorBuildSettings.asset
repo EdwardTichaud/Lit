@@ -12,8 +12,17 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu/MainMenu.unity
     guid: 7be43b5cc86f5a24aa190c1b4f2cd1e2
   - enabled: 1
-    path: Assets/Scenes/Maison/Maison.unity
-    guid: 8124e5870f4fd4c779e7a5f994e84ad1
+    path: Assets/Scenes/Maison/Maison_Critical.unity
+    guid: 4af4dc28b6ff9a84cba661cd63e3fbbc
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_Loading_Environment_Near.unity
+    guid: 58f3766058d9c2e458128a24d29a2269
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_PostLoading_Environment_Far.unity
+    guid: 7a30aa2a39c80674a82941e3c44b214f
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_PostLoading_NPCs_VFX.unity
+    guid: d9c32c1fbc03d954b8a40c20470baade
   - enabled: 1
     path: Assets/Scenes/Outdoor.unity
     guid: 27f6d47f2196e1741b2e14dc5e4599a2

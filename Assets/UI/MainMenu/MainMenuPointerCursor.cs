@@ -217,6 +217,8 @@ public class MainMenuPointerCursor : MonoBehaviour
             {
                 InitializeScreenPositionFromCursorTransform();
             }
+
+            SyncHardwareMouseToScreenPosition();
         }
         else
         {

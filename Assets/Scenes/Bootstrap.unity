@@ -816,11 +816,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LoadingScreenService
   showFadeDuration: 2
-  minimumVisibleDuration: 1
+  minimumVisibleDuration: 10
   hideDelayAfterSceneLoad: 0.25
   readyHoldDuration: 1.25
   hideFadeDuration: 0.5
-  loadingOrbHideLeadDuration: 0.5
+  loadingOrbHideLeadDuration: 1
+  loadingOrbShowDelayDuration: 1
   backgroundColor: {r: 0, g: 0, b: 0, a: 0.9}
   defaultMessageFont: {fileID: 11400000, guid: e6db03a34d084d04b8f900899b0495eb, type: 2}
   defaultMessageFontSize: 20
@@ -1425,7 +1426,7 @@ Canvas:
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
-  m_OverrideSorting: 0
+  m_OverrideSorting: 1
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
@@ -1433,7 +1434,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 32767
+  m_SortingOrder: 32766
   m_TargetDisplay: 0
 --- !u!114 &6693173123187517997
 MonoBehaviour:

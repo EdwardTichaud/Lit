@@ -145,7 +145,6 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string loadingMessage = "Chargement...";
 
     [Header("Netcode")]
-    [SerializeField] private string gameplaySceneName = "Maison";
     [SerializeField] private ushort basePort = 7000;
     [SerializeField] private ushort portRange = 1000;
     [SerializeField] private string hostLoopbackAddress = "127.0.0.1";
@@ -4578,7 +4577,7 @@ public class MainMenuController : MonoBehaviour
             NetworkManager.Singleton.Shutdown();
         }
 
-        if (!GameFlowService.StartOrLoadGame(gameplaySceneName))
+        if (!GameFlowService.StartOrLoadGame())
         {
             HideLoadingScreen();
             SetStatus("Impossible de demarrer le chargement de la partie.");
@@ -4625,7 +4624,7 @@ public class MainMenuController : MonoBehaviour
         joinInProgress = true;
         RegisterJoinCallbacks(true);
         Debug.Log(
-            $"[NetcodeJoin] start code='{endpoint.Code}' target='{endpoint.EndpointLabel}' scene='{gameplaySceneName}'",
+            $"[NetcodeJoin] start code='{endpoint.Code}' target='{endpoint.EndpointLabel}' scene='{GameFlowService.InitialGameplaySceneName}'",
             this);
         SetJoinStatus($"{joinConnectingMessage} {endpoint.EndpointLabel}");
         SetStatus($"Connexion vers {endpoint.EndpointLabel} (code {endpoint.Code})...");
@@ -4814,7 +4813,7 @@ public class MainMenuController : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(targetSceneName))
         {
-            targetSceneName = gameplaySceneName;
+            targetSceneName = GameFlowService.InitialGameplaySceneName;
         }
 
         joinInProgress = false;

@@ -62,6 +62,13 @@ public sealed class GameFlowService : MonoBehaviour
     public string HubSceneName => hubManifest != null && hubManifest.IsValid
         ? hubManifest.PrimarySceneName
         : hubSceneName;
+    /// <summary>
+    /// Scene primaire du hub resolue par le manifeste. Les appelants externes
+    /// (menu et synchronisation reseau) ne doivent plus coder "Maison".
+    /// </summary>
+    public static string InitialGameplaySceneName => Instance != null
+        ? Instance.HubSceneName
+        : DefaultHubSceneName;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateApplicationRoot()
