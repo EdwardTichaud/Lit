@@ -56,6 +56,7 @@ public class MuninUI : MonoBehaviour
     private float rejectedFlashRemaining;
     private float rewardedFlashRemaining;
     private float spentFlashRemaining;
+    private bool lastGameplayPresentationAllowed;
 
 #if UNITY_EDITOR
     private void Reset()
@@ -73,6 +74,7 @@ public class MuninUI : MonoBehaviour
     {
         ResolveAssignedReferences();
         ResolveLocalMunin();
+        lastGameplayPresentationAllowed = IsGameplayPresentationAllowed();
         Refresh();
     }
 
@@ -95,6 +97,16 @@ public class MuninUI : MonoBehaviour
         {
             nextResolveTime = Time.unscaledTime + Mathf.Max(0.02f, resolveInterval);
             ResolveLocalMunin();
+        }
+
+        // Le personnage et Munin restent persistants pendant les changements
+        // de scene. L'UI doit toutefois attendre la fin complete de la
+        // transition, afin de ne jamais passer devant le menu ou le loading.
+        bool gameplayPresentationAllowed = IsGameplayPresentationAllowed();
+        if (gameplayPresentationAllowed != lastGameplayPresentationAllowed)
+        {
+            lastGameplayPresentationAllowed = gameplayPresentationAllowed;
+            Refresh();
         }
 
         if (rejectedFlashRemaining > 0f)
@@ -198,7 +210,7 @@ public class MuninUI : MonoBehaviour
 
         bool hasMunin = boundMunin != null;
         bool chargesDisabled = hasMunin && !boundMunin.ChargesEnabled;
-        bool visible = hasMunin || !hideWhenNoMunin;
+        bool visible = IsGameplayPresentationAllowed() && (hasMunin || !hideWhenNoMunin);
         if (chargesDisabled && hideWhenChargesDisabled)
         {
             visible = false;
@@ -231,6 +243,15 @@ public class MuninUI : MonoBehaviour
             rootGroup.interactable = false;
             rootGroup.blocksRaycasts = false;
         }
+    }
+
+    private static bool IsGameplayPresentationAllowed()
+    {
+        GameFlowService flow = GameFlowService.Instance;
+        return flow != null &&
+               flow.HasGameplaySession &&
+               !flow.IsTransitioning &&
+               !LoadingScreenService.IsLoading;
     }
 
     private void ApplyFill(int current, int max, bool chargesDisabled)

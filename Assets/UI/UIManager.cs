@@ -1,9 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(2000)]
 public class UIManager : MonoBehaviour
 {
     private const string DefaultOverlayName = "UI_Overlay";
+    private static readonly string[] PersistentHudPanelNames =
+    {
+        "MuninUIPanel",
+        "CompassPanel"
+    };
 
     [Header("Startup Visibility")]
     [SerializeField] private Transform uiRoot;
@@ -12,6 +18,20 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         ApplyStartupVisibility();
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void EnsureRecoveredOverlayVisibilityManager()
+    {
+        GameObject overlay = GameObject.Find(DefaultOverlayName);
+        if (overlay != null && overlay.GetComponent<UIManager>() == null)
+        {
+            // UI_Overlay a ete recupere depuis une ancienne scene et ne porte
+            // donc pas forcement son composant de demarrage. L'ajout runtime
+            // laisse la scene source intacte tout en restaurant son contrat :
+            // aucun menu d'action ne doit etre visible sans action du joueur.
+            overlay.AddComponent<UIManager>();
+        }
     }
 
     public void ApplyStartupVisibility()
@@ -30,7 +50,7 @@ public class UIManager : MonoBehaviour
         for (int i = 0; i < root.childCount; i++)
         {
             Transform child = root.GetChild(i);
-            if (ContainsStartupPanel(child) || IsSelfManagedVisibility(child))
+            if (ContainsStartupPanel(child) || IsPersistentHudPanel(child) || IsSelfManagedVisibility(child))
             {
                 continue;
             }
@@ -64,7 +84,7 @@ public class UIManager : MonoBehaviour
         CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
-            return;
+            canvasGroup = panel.gameObject.AddComponent<CanvasGroup>();
         }
 
         canvasGroup.alpha = visible ? 1f : 0f;
@@ -119,6 +139,63 @@ public class UIManager : MonoBehaviour
     // avant Start (notamment lors de la premiere saisie joueur).
     private static bool IsSelfManagedVisibility(Transform panel)
     {
-        return panel != null && panel.GetComponent<InventoryUISettings>() != null;
+        if (panel == null)
+        {
+            return false;
+        }
+
+        // Ces composants gerent deja l'etat de leur CanvasGroup (et, pour
+        // certains, l'activation de leur racine). Leur imposer un CanvasGroup
+        // parent transparent au demarrage empecherait ensuite leur ouverture.
+        // On laisse donc leur propre contrat d'affichage intact.
+        MonoBehaviour[] behaviours = panel.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            MonoBehaviour behaviour = behaviours[i];
+            if (behaviour == null)
+            {
+                continue;
+            }
+
+            switch (behaviour.GetType().Name)
+            {
+                case "CombatHudController":
+                case "CombatTransitionController":
+                case "DialoguePanelUI":
+                case "BuildingPanelController":
+                case "CraftingConstructionPanel":
+                case "InfoBoxUI":
+                case "InventoryPanelController":
+                case "InventoryUISettings":
+                case "LootUISettings":
+                case "PausePanelController":
+                case "StabReading":
+                case "ConfirmationManager":
+                case "QuantityBox":
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsPersistentHudPanel(Transform panel)
+    {
+        if (panel == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < PersistentHudPanelNames.Length; i++)
+        {
+            if (string.Equals(panel.name, PersistentHudPanelNames[i], System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        // MuninUI applique son propre alpha selon la presence du compagnon et
+        // ses charges. Le cacher ici couperait ce rafraichissement initial.
+        return panel.GetComponent<MuninUI>() != null;
     }
 }
