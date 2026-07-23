@@ -157,6 +157,7 @@ public class ConfirmationManager : MonoBehaviour
 
         SetRootVisible(true);
         confirmationBox.SetQuestion(request.Message);
+        confirmationBox.SetOptions(request.ConfirmLabel, request.CancelLabel);
         SetBoxInteractive(true);
         SetSelectionToConfirm();
         WireButtons();

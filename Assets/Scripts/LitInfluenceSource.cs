@@ -96,6 +96,15 @@ public class LitInfluenceSource
         return owner != null ? owner.TransformPoint(center) : center;
     }
 
+    /// <summary>
+    /// Updates the world radius used by this source. This is intended for sources
+    /// whose gameplay reach is driven by another runtime component, such as a Light.
+    /// </summary>
+    public void SetRadius(float value)
+    {
+        radius = Mathf.Max(0f, value);
+    }
+
     public bool TouchesCollider(Transform owner, Collider targetCollider, Vector3 fallbackPoint)
     {
         if (!enabled || radius <= 0f)

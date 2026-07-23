@@ -1885,14 +1885,35 @@ public class SquadManager : MonoBehaviour
 
     private void ShowFlameChoice(Flame flame, SquadCharacterController controller)
     {
+        bool willLightFlame = !flame.IsLit;
+        int chargeCost = flame.GetChargeCostForTargetState(willLightFlame);
+        string muninAction = willLightFlame ? "allumer" : "eteindre";
+        string chargeDescription = chargeCost > 0
+            ? string.Format("Cela consommera {0} charge{1}.", chargeCost, chargeCost > 1 ? "s" : string.Empty)
+            : "Cette action ne consommera aucune charge.";
+        string torchAction = controller != null && controller.IsFlameEquipped
+            ? "Ranger la torche a main"
+            : "Sortir la torche a main";
+        string muninChoice = chargeCost > 0
+            ? string.Format("MUNIN\n{0}\n{1} charge{2}", willLightFlame ? "Allumer" : "Eteindre", chargeCost, chargeCost > 1 ? "s" : string.Empty)
+            : string.Format("MUNIN\n{0}", willLightFlame ? "Allumer" : "Eteindre");
+        string torchChoice = controller != null && controller.IsFlameEquipped
+            ? "TORCHE\nRanger"
+            : "TORCHE\nSortir";
+        string message = string.Format(
+            "Une flamme est a portee.\n\nMUNIN\nMunin se deplacera pour {0} cette flamme. {1}\n\nTORCHE A MAIN\n{2}, sans modifier cette flamme.",
+            muninAction,
+            chargeDescription,
+            torchAction);
+
         ConfirmationManager.TryShow(
             this,
-            "Que voulez-vous faire ?",
+            message,
             () => flame.TryStartMuninInteraction(controller != null ? controller.gameObject : null),
             () => controller?.ToggleFlame(),
-            "Faire appel a Munin",
-            "Sortir la torche a main",
-            "Flamme a portee");
+            muninChoice,
+            torchChoice,
+            "Choisir une action");
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext context)

@@ -11,6 +11,8 @@ public class ConfirmationBox : MonoBehaviour
     private const string YesObjectName = "Oui";
     private const string NoObjectName = "Non";
     private const string CursorObjectName = "Cursor";
+    private const string DefaultConfirmLabel = "Oui";
+    private const string DefaultCancelLabel = "Non";
 
     [Header("References")]
     [SerializeField] private RectTransform boxRoot;
@@ -21,6 +23,11 @@ public class ConfirmationBox : MonoBehaviour
     [SerializeField] private Button cancelButton;
     [SerializeField] private RectTransform cursorRoot;
     [SerializeField] private CursorController cursorController;
+    private bool optionTextDefaultsCached;
+    private float defaultYesFontSize;
+    private float defaultNoFontSize;
+    private bool defaultYesAutoSizing;
+    private bool defaultNoAutoSizing;
 
     public Button ConfirmButton => confirmButton;
     public Button CancelButton => cancelButton;
@@ -51,6 +58,8 @@ public class ConfirmationBox : MonoBehaviour
         {
             noText = FindText(NoObjectName);
         }
+
+        CacheOptionTextDefaults();
 
         if (confirmButton == null && yesText != null)
         {
@@ -98,6 +107,63 @@ public class ConfirmationBox : MonoBehaviour
         }
 
         questionText.text = !string.IsNullOrWhiteSpace(message) ? message : "Confirmer ?";
+    }
+
+    public void SetOptions(string confirmLabel, string cancelLabel)
+    {
+        if (!ResolveReferences())
+        {
+            return;
+        }
+
+        ApplyOptionLabel(yesText, confirmLabel, DefaultConfirmLabel, defaultYesFontSize, defaultYesAutoSizing);
+        ApplyOptionLabel(noText, cancelLabel, DefaultCancelLabel, defaultNoFontSize, defaultNoAutoSizing);
+    }
+
+    private void CacheOptionTextDefaults()
+    {
+        if (optionTextDefaultsCached)
+        {
+            return;
+        }
+
+        if (yesText != null)
+        {
+            defaultYesFontSize = yesText.fontSize;
+            defaultYesAutoSizing = yesText.enableAutoSizing;
+        }
+
+        if (noText != null)
+        {
+            defaultNoFontSize = noText.fontSize;
+            defaultNoAutoSizing = noText.enableAutoSizing;
+        }
+
+        optionTextDefaultsCached = yesText != null || noText != null;
+    }
+
+    private static void ApplyOptionLabel(
+        TextMeshProUGUI text,
+        string label,
+        string fallback,
+        float defaultFontSize,
+        bool defaultAutoSizing)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        bool hasCustomLabel = !string.IsNullOrWhiteSpace(label);
+        text.text = hasCustomLabel ? label : fallback;
+        text.enableAutoSizing = hasCustomLabel || defaultAutoSizing;
+        text.fontSize = hasCustomLabel ? 56f : defaultFontSize;
+
+        if (hasCustomLabel)
+        {
+            text.fontSizeMin = 24f;
+            text.fontSizeMax = 56f;
+        }
     }
 
     private TextMeshProUGUI FindText(string objectName)
