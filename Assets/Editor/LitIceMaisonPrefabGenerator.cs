@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Lit.Performance;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -122,9 +123,121 @@ public sealed class LitIceMaisonPrefabGeneratorWindow : EditorWindow
     }
 }
 
+public sealed class LitIceMainMenuPrefabGeneratorWindow : EditorWindow
+{
+    private Vector2 m_Scroll;
+    private LitIceMaisonPrefabGenerator.AnalysisResult m_Analysis;
+    private string m_LastMessage;
+    private MessageType m_LastMessageType = MessageType.Info;
+
+    [MenuItem("Lit/Shadergraph/Generate MainMenu Ice Prefabs")]
+    private static void Open()
+    {
+        GetWindow<LitIceMainMenuPrefabGeneratorWindow>("MainMenu Ice Prefabs");
+    }
+
+    private void OnGUI()
+    {
+        EditorGUILayout.LabelField("MAINMENU ICE PREFAB LIBRARY", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Analyse uniquement les MeshRenderer sous MainMenu_TitleDecor/Base, puis reutilise ou "
+            + "complete la bibliotheque V3 partagee avant d'appliquer les references a MainMenu.",
+            MessageType.Info);
+
+        if (GUILayout.Button("1 - ANALYZE MAINMENU BASE", GUILayout.Height(32f)))
+        {
+            try
+            {
+                m_Analysis = LitIceMaisonPrefabGenerator.AnalyzeMainMenu(true);
+                m_LastMessage = m_Analysis.ToDisplayMessage();
+                m_LastMessageType = m_Analysis.Errors.Count > 0
+                    ? MessageType.Error
+                    : m_Analysis.Warnings.Count > 0 ? MessageType.Warning : MessageType.Info;
+            }
+            catch (Exception exception)
+            {
+                m_Analysis = null;
+                m_LastMessage = exception.Message;
+                m_LastMessageType = MessageType.Error;
+                Debug.LogException(exception);
+            }
+        }
+
+        if (m_Analysis != null)
+            DrawAnalysis(m_Analysis);
+
+        using (new EditorGUI.DisabledScope(m_Analysis == null || m_Analysis.Errors.Count > 0))
+        {
+            Color previous = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0.55f, 0.9f, 1f);
+            if (GUILayout.Button("2 - GENERATE / UPDATE AND APPLY", GUILayout.Height(38f))
+                && EditorUtility.DisplayDialog(
+                    "Generate MainMenu Ice Prefabs",
+                    m_Analysis.ToDisplayMessage()
+                    + "\n\nSeuls les objets sous MainMenu_TitleDecor/Base seront modifies en place.",
+                    "Generate", "Cancel"))
+            {
+                try
+                {
+                    m_Analysis = LitIceMaisonPrefabGenerator.AnalyzeMainMenu(true);
+                    LitIceMaisonPrefabGenerator.GenerationResult result =
+                        LitIceMaisonPrefabGenerator.Generate(m_Analysis, true, true);
+                    m_LastMessage = result.ToDisplayMessage();
+                    m_LastMessageType = result.ErrorCount > 0
+                        ? MessageType.Error
+                        : result.WarningCount > 0 ? MessageType.Warning : MessageType.Info;
+                }
+                catch (OperationCanceledException)
+                {
+                    m_LastMessage = "Generation cancelled before MainMenu was modified.";
+                    m_LastMessageType = MessageType.Warning;
+                }
+                catch (Exception exception)
+                {
+                    m_LastMessage = exception.Message;
+                    m_LastMessageType = MessageType.Error;
+                    Debug.LogException(exception);
+                }
+                finally
+                {
+                    EditorUtility.ClearProgressBar();
+                }
+            }
+            GUI.backgroundColor = previous;
+        }
+
+        if (!string.IsNullOrEmpty(m_LastMessage))
+            EditorGUILayout.HelpBox(m_LastMessage, m_LastMessageType);
+    }
+
+    private void DrawAnalysis(LitIceMaisonPrefabGenerator.AnalysisResult analysis)
+    {
+        EditorGUILayout.Space(6f);
+        EditorGUILayout.LabelField("Analysis", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Renderers", analysis.RendererCount.ToString());
+        EditorGUILayout.LabelField("Unique meshes", analysis.Groups.Count.ToString());
+        EditorGUILayout.LabelField("Mesh/material variants", analysis.VariantCount.ToString());
+        EditorGUILayout.LabelField("Multi-material renderers", analysis.MultiMaterialRendererCount.ToString());
+        EditorGUILayout.LabelField("Existing V3 materials", analysis.ExistingV3MaterialCount.ToString());
+
+        if (analysis.Warnings.Count == 0 && analysis.Errors.Count == 0)
+            return;
+
+        m_Scroll = EditorGUILayout.BeginScrollView(m_Scroll, GUILayout.MaxHeight(190f));
+        foreach (string error in analysis.Errors)
+            EditorGUILayout.HelpBox(error, MessageType.Error);
+        foreach (string warning in analysis.Warnings.Take(80))
+            EditorGUILayout.HelpBox(warning, MessageType.Warning);
+        if (analysis.Warnings.Count > 80)
+            EditorGUILayout.LabelField($"... {analysis.Warnings.Count - 80} additional warning(s) in Console.");
+        EditorGUILayout.EndScrollView();
+    }
+}
+
 internal static class LitIceMaisonPrefabGenerator
 {
     internal const string ScenePath = "Assets/Scenes/Maison/Maison.unity";
+    internal const string MainMenuScenePath = "Assets/Scenes/MainMenu/MainMenu.unity";
     internal const string OutputRoot = "Assets/Environment/Prefabs_Ice";
     private const string SharedMapFolder = OutputRoot + "/_SharedMaps";
     private const string CatalogPath = OutputRoot + "/LitIcePrefabCatalog.asset";
@@ -136,6 +249,9 @@ internal static class LitIceMaisonPrefabGenerator
     {
         public Scene Scene;
         public GameObject WorldRoot;
+        public string SceneAssetPath;
+        public string ScopeLabel;
+        public bool PreserveExistingPrefabSettings;
         public readonly List<ModelGroup> Groups = new List<ModelGroup>();
         public readonly List<string> Warnings = new List<string>();
         public readonly List<string> Errors = new List<string>();
@@ -154,8 +270,10 @@ internal static class LitIceMaisonPrefabGenerator
 
     internal sealed class GenerationResult
     {
+        public string ScopeLabel;
         public int CreatedMeshCount;
         public int ReusedMeshCount;
+        public int SourceMeshFallbackCount;
         public int CreatedMaterialCount;
         public int ReusedMaterialCount;
         public int CreatedPrefabCount;
@@ -166,8 +284,9 @@ internal static class LitIceMaisonPrefabGenerator
 
         public string ToDisplayMessage()
         {
-            return $"Maison Ice complete: {CreatedMeshCount} mesh(es) created, "
-                + $"{ReusedMeshCount} reused, {CreatedMaterialCount} material(s) created, "
+            return $"{ScopeLabel ?? "Lit"} Ice complete: {CreatedMeshCount} mesh(es) created, "
+                + $"{ReusedMeshCount} reused, {SourceMeshFallbackCount} source fallback(s), "
+                + $"{CreatedMaterialCount} material(s) created, "
                 + $"{ReusedMaterialCount} reused, {CreatedPrefabCount} prefab(s) created, "
                 + $"{UpdatedPrefabCount} updated, {UpdatedRendererCount} renderer(s) applied, "
                 + $"{WarningCount} warning(s), {ErrorCount} error(s).";
@@ -261,24 +380,90 @@ internal static class LitIceMaisonPrefabGenerator
     internal static AnalysisResult AnalyzeMaison(bool openIfMissing, string meshNameFilter = null)
     {
         Scene scene = GetMaisonScene(openIfMissing);
-        var result = new AnalysisResult { Scene = scene };
-        result.WorldRoot = scene.GetRootGameObjects().FirstOrDefault(root => root.name == "World");
-        if (result.WorldRoot == null)
+        GameObject world = scene.GetRootGameObjects().FirstOrDefault(root => root.name == "World");
+        if (world == null)
         {
+            var result = new AnalysisResult
+            {
+                Scene = scene,
+                SceneAssetPath = ScenePath,
+                ScopeLabel = "Maison"
+            };
             result.Errors.Add("Root GameObject 'World' was not found in Maison.");
             return result;
         }
+
+        return AnalyzeScope(
+            scene, world, ScenePath, "Maison", false, false, meshNameFilter);
+    }
+
+    internal static AnalysisResult AnalyzeMainMenu(
+        bool openIfMissing, string meshNameFilter = null)
+    {
+        Scene scene = GetMainMenuScene(openIfMissing);
+        GameObject titleDecor = scene.GetRootGameObjects()
+            .FirstOrDefault(root => root.name == "MainMenu_TitleDecor");
+        Transform baseTransform = titleDecor != null
+            ? titleDecor.transform.Find("Base")
+            : null;
+        if (titleDecor == null || baseTransform == null)
+        {
+            var result = new AnalysisResult
+            {
+                Scene = scene,
+                SceneAssetPath = MainMenuScenePath,
+                ScopeLabel = "MainMenu Base"
+            };
+            result.Errors.Add(
+                "GameObject path 'MainMenu_TitleDecor/Base' was not found in MainMenu.");
+            return result;
+        }
+
+        // Main-menu decor is intentionally allowed to remain non-static. The
+        // explicit hierarchy scope is the safety boundary for this generation.
+        return AnalyzeScope(
+            scene, baseTransform.gameObject, MainMenuScenePath,
+            "MainMenu Base", true, true, meshNameFilter);
+    }
+
+    public static void GenerateMainMenuFromCommandLine()
+    {
+        AnalysisResult analysis = AnalyzeMainMenu(true);
+        if (analysis.Errors.Count > 0)
+            throw new InvalidOperationException(string.Join("\n", analysis.Errors));
+        GenerationResult result = Generate(analysis, true, false);
+        Debug.Log("[Lit Ice MainMenu Batch] " + result.ToDisplayMessage());
+    }
+
+    private static AnalysisResult AnalyzeScope(
+        Scene scene,
+        GameObject scopeRoot,
+        string sceneAssetPath,
+        string scopeLabel,
+        bool includeNonStatic,
+        bool preserveExistingPrefabSettings,
+        string meshNameFilter)
+    {
+        var result = new AnalysisResult
+        {
+            Scene = scene,
+            WorldRoot = scopeRoot,
+            SceneAssetPath = sceneAssetPath,
+            ScopeLabel = scopeLabel,
+            PreserveExistingPrefabSettings = preserveExistingPrefabSettings
+        };
 
         Shader v3Shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderV3Path);
         LitIcePrefabCatalog catalog = AssetDatabase.LoadAssetAtPath<LitIcePrefabCatalog>(CatalogPath);
         var groups = new Dictionary<string, ModelGroup>(StringComparer.Ordinal);
 
-        foreach (MeshRenderer renderer in result.WorldRoot.GetComponentsInChildren<MeshRenderer>(true))
+        foreach (MeshRenderer renderer in scopeRoot.GetComponentsInChildren<MeshRenderer>(true))
         {
             MeshFilter filter = renderer.GetComponent<MeshFilter>();
             if (filter == null || filter.sharedMesh == null || EditorUtility.IsPersistent(renderer))
                 continue;
-            if (!renderer.gameObject.isStatic
+            if (!includeNonStatic
+                && !renderer.gameObject.isStatic
                 && !PrefabUtility.IsPartOfPrefabInstance(renderer))
                 continue;
             if (IsExcludedRenderer(renderer))
@@ -348,7 +533,7 @@ internal static class LitIceMaisonPrefabGenerator
         }
 
         result.Groups.AddRange(groups.Values.OrderBy(group => group.SafeMeshName, StringComparer.Ordinal));
-        AssignFolderNamesAndPrimaryVariants(result.Groups, v3Shader);
+        AssignFolderNamesAndPrimaryVariants(result.Groups, v3Shader, catalog);
         foreach (ModelGroup group in result.Groups)
         {
             group.FolderPath = OutputRoot + "/" + group.FolderName;
@@ -357,8 +542,8 @@ internal static class LitIceMaisonPrefabGenerator
         }
 
         foreach (string warning in result.Warnings)
-            Debug.LogWarning("[Lit Ice Maison] " + warning);
-        Debug.Log("[Lit Ice Maison] Analysis: " + result.ToDisplayMessage());
+            Debug.LogWarning($"[Lit Ice {scopeLabel}] " + warning);
+        Debug.Log($"[Lit Ice {scopeLabel}] Analysis: " + result.ToDisplayMessage());
         return result;
     }
 
@@ -682,7 +867,11 @@ internal static class LitIceMaisonPrefabGenerator
         if (template == null)
             throw new InvalidOperationException("No V3 template material could be loaded.");
 
-        var result = new GenerationResult { WarningCount = analysis.Warnings.Count };
+        var result = new GenerationResult
+        {
+            ScopeLabel = analysis.ScopeLabel,
+            WarningCount = analysis.Warnings.Count
+        };
         var createdPaths = new List<string>();
         bool catalogExisted = AssetDatabase.LoadAssetAtPath<LitIcePrefabCatalog>(CatalogPath) != null;
         LitIcePrefabCatalog catalog = GetOrCreateCatalog();
@@ -697,24 +886,26 @@ internal static class LitIceMaisonPrefabGenerator
             foreach (ModelGroup group in analysis.Groups)
             {
                 CheckCancelled(showProgress, step++, totalSteps,
-                    "Baking " + group.SourceMesh.name);
+                    "Baking " + group.SourceMesh.name, analysis.ScopeLabel);
                 EnsureAssetFolder(group.FolderPath);
-                GenerateBakedMesh(group, catalog, result, createdPaths);
+                GenerateBakedMesh(
+                    group, catalog, result, createdPaths, analysis.Warnings);
             }
 
             foreach (ModelGroup group in analysis.Groups)
             foreach (ModelVariant variant in group.Variants)
             {
                 CheckCancelled(showProgress, step++, totalSteps,
-                    "Creating " + group.SourceMesh.name);
+                    "Creating " + group.SourceMesh.name, analysis.ScopeLabel);
                 GenerateVariantAssets(
                     group, variant, template, v3Shader, catalog,
-                    extractedMaskCache, analysis.Warnings, result, createdPaths);
+                    extractedMaskCache, analysis.Warnings, result, createdPaths,
+                    analysis.PreserveExistingPrefabSettings);
             }
 
             result.WarningCount = analysis.Warnings.Count;
             foreach (string warning in analysis.Warnings)
-                Debug.LogWarning("[Lit Ice Maison] " + warning);
+                Debug.LogWarning($"[Lit Ice {analysis.ScopeLabel}] " + warning);
             catalog.Version = LitIcePrefabCatalog.CurrentVersion;
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
@@ -723,7 +914,7 @@ internal static class LitIceMaisonPrefabGenerator
                 ApplyToScene(analysis, result);
 
             AssetDatabase.SaveAssets();
-            Debug.Log("[Lit Ice Maison] " + result.ToDisplayMessage());
+            Debug.Log($"[Lit Ice {analysis.ScopeLabel}] " + result.ToDisplayMessage());
             return result;
         }
         catch
@@ -744,7 +935,7 @@ internal static class LitIceMaisonPrefabGenerator
 
     private static void GenerateBakedMesh(
         ModelGroup group, LitIcePrefabCatalog catalog, GenerationResult result,
-        List<string> createdPaths)
+        List<string> createdPaths, List<string> warnings)
     {
         if (LitIceEdgeMaskBaker.IsCurrentBakedMesh(group.SourceMesh))
         {
@@ -756,6 +947,32 @@ internal static class LitIceMaisonPrefabGenerator
         string targetPath = group.FolderPath + "/Mesh_IceEdges_" + group.FolderName + ".asset";
         bool targetExisted = AssetDatabase.LoadAssetAtPath<Mesh>(targetPath) != null;
         LitIcePrefabCatalogEntry existingEntry = catalog.FindBySourceId(group.SourceMeshId);
+
+        if (!LitIceEdgeMaskBaker.CanBakeWithinBudget(
+                group.SourceMesh, out long predictedVertexCount))
+        {
+            group.GeneratedBakedMesh = group.SourceMesh;
+            LitIcePrefabCatalogEntry fallbackEntry = existingEntry
+                ?? new LitIcePrefabCatalogEntry();
+            if (existingEntry == null)
+                catalog.Entries.Add(fallbackEntry);
+            fallbackEntry.SourceMeshId = group.SourceMeshId;
+            fallbackEntry.SourceMeshName = group.SourceMesh.name;
+            fallbackEntry.SourceAssetPath = AssetDatabase.GetAssetPath(group.SourceMesh);
+            fallbackEntry.SourceDependencyHash = group.SourceDependencyHash;
+            fallbackEntry.BakeVersion = LitIceEdgeMaskBaker.BakeVersion;
+            fallbackEntry.FolderPath = group.FolderPath;
+            fallbackEntry.SourceMesh = group.SourceMesh;
+            fallbackEntry.BakedMesh = group.SourceMesh;
+            result.SourceMeshFallbackCount++;
+            warnings.Add(
+                $"{group.SourceMesh.name}: barycentric edge bake skipped because the predicted "
+                + $"mesh has {predictedVertexCount} vertices (budget: "
+                + $"{IcePerformanceBudgetPolicy.MaxGeneratedVertexCount}). The original mesh "
+                + "is kept; texture/normal edges and the complete V3 material remain active.");
+            return;
+        }
+
         bool forceRebuild = existingEntry != null
             && (existingEntry.BakeVersion != LitIceEdgeMaskBaker.BakeVersion
                 || existingEntry.SourceDependencyHash != group.SourceDependencyHash);
@@ -818,7 +1035,8 @@ internal static class LitIceMaisonPrefabGenerator
         Dictionary<Texture, ExtractedMaskMaps> extractedMaskCache,
         List<string> warnings,
         GenerationResult result,
-        List<string> createdPaths)
+        List<string> createdPaths,
+        bool preserveExistingPrefabSettings)
     {
         int slotCount = Math.Max(1, variant.SourceMaterials?.Length ?? 0);
         variant.GeneratedMaterials = new Material[slotCount];
@@ -881,6 +1099,15 @@ internal static class LitIceMaisonPrefabGenerator
         GameObject existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(variant.PrefabPath);
         bool prefabExisted = existingPrefab != null;
         bool prefabNeedsUpdate = !PrefabMatches(existingPrefab, group, variant);
+        if (preserveExistingPrefabSettings
+            && existingPrefab != null
+            && PrefabCoreMatches(existingPrefab, group, variant))
+        {
+            // MainMenu reuses the global Maison library. Renderer flags and
+            // colliders in an established prefab must not be overwritten by a
+            // decor-only representative that intentionally has different setup.
+            prefabNeedsUpdate = false;
+        }
         if (prefabNeedsUpdate)
             CreateOrUpdatePrefab(group, variant, prefabName);
         variant.GeneratedPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(variant.PrefabPath);
@@ -912,7 +1139,7 @@ internal static class LitIceMaisonPrefabGenerator
     private static void ApplyToScene(AnalysisResult analysis, GenerationResult result)
     {
         int undoGroup = Undo.GetCurrentGroup();
-        Undo.SetCurrentGroupName("Apply Maison Ice Prefabs");
+        Undo.SetCurrentGroupName($"Apply {analysis.ScopeLabel} Ice Prefabs");
         bool sceneChanged = false;
         try
         {
@@ -949,8 +1176,9 @@ internal static class LitIceMaisonPrefabGenerator
             if (sceneChanged)
             {
                 EditorSceneManager.MarkSceneDirty(analysis.Scene);
-                if (!EditorSceneManager.SaveScene(analysis.Scene, ScenePath))
-                    throw new InvalidOperationException("Maison could not be saved.");
+                if (!EditorSceneManager.SaveScene(analysis.Scene, analysis.SceneAssetPath))
+                    throw new InvalidOperationException(
+                        $"{analysis.ScopeLabel} scene could not be saved.");
             }
             Undo.CollapseUndoOperations(undoGroup);
         }
@@ -1011,15 +1239,10 @@ internal static class LitIceMaisonPrefabGenerator
     private static bool PrefabMatches(
         GameObject prefab, ModelGroup group, ModelVariant variant)
     {
-        if (prefab == null)
+        if (!PrefabCoreMatches(prefab, group, variant))
             return false;
-        MeshFilter filter = prefab.GetComponent<MeshFilter>();
-        MeshRenderer renderer = prefab.GetComponent<MeshRenderer>();
         MeshRenderer representative = variant.Representative;
-        if (filter == null || renderer == null || representative == null)
-            return false;
-        if (filter.sharedMesh != group.GeneratedBakedMesh
-            || !renderer.sharedMaterials.SequenceEqual(variant.GeneratedMaterials))
+        if (representative == null)
             return false;
         if (prefab.layer != representative.gameObject.layer
             || prefab.tag != representative.gameObject.tag
@@ -1040,6 +1263,19 @@ internal static class LitIceMaisonPrefabGenerator
                 return false;
         }
         return true;
+    }
+
+    private static bool PrefabCoreMatches(
+        GameObject prefab, ModelGroup group, ModelVariant variant)
+    {
+        if (prefab == null)
+            return false;
+        MeshFilter filter = prefab.GetComponent<MeshFilter>();
+        MeshRenderer renderer = prefab.GetComponent<MeshRenderer>();
+        return filter != null
+            && renderer != null
+            && filter.sharedMesh == group.GeneratedBakedMesh
+            && renderer.sharedMaterials.SequenceEqual(variant.GeneratedMaterials);
     }
 
     private static void ApplySourceAppearance(
@@ -1305,7 +1541,8 @@ internal static class LitIceMaisonPrefabGenerator
         return resolved;
     }
 
-    private static void AssignFolderNamesAndPrimaryVariants(List<ModelGroup> groups, Shader v3Shader)
+    private static void AssignFolderNamesAndPrimaryVariants(
+        List<ModelGroup> groups, Shader v3Shader, LitIcePrefabCatalog catalog)
     {
         foreach (IGrouping<string, ModelGroup> sameName in groups.GroupBy(
             group => group.SafeMeshName, StringComparer.OrdinalIgnoreCase))
@@ -1315,6 +1552,20 @@ internal static class LitIceMaisonPrefabGenerator
                 group.FolderName = collision
                     ? group.SafeMeshName + "__" + ShortHash(group.SourceMeshId)
                     : group.SafeMeshName;
+        }
+
+        // The catalog is shared by Maison and MainMenu. Keep the established
+        // deterministic folder for a mesh already generated in another scene,
+        // including the short suffix used to resolve same-name collisions.
+        foreach (ModelGroup group in groups)
+        {
+            LitIcePrefabCatalogEntry existing = catalog?.FindBySourceId(group.SourceMeshId);
+            if (existing == null || string.IsNullOrEmpty(existing.FolderPath))
+                continue;
+            string existingFolderName = Path.GetFileName(
+                existing.FolderPath.TrimEnd('/', '\\'));
+            if (!string.IsNullOrEmpty(existingFolderName))
+                group.FolderName = existingFolderName;
         }
 
         foreach (ModelGroup group in groups)
@@ -1531,6 +1782,22 @@ internal static class LitIceMaisonPrefabGenerator
         return EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
     }
 
+    private static Scene GetMainMenuScene(bool openIfMissing)
+    {
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            Scene loaded = SceneManager.GetSceneAt(i);
+            if (loaded.path == MainMenuScenePath)
+                return loaded;
+        }
+        if (!openIfMissing)
+            throw new InvalidOperationException("MainMenu is not loaded.");
+
+        // Additive loading avoids closing or saving the user's current work
+        // scene. Only MainMenu is marked dirty and saved by ApplyToScene.
+        return EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Additive);
+    }
+
     private static void EnsureAssetFolder(string folder)
     {
         if (string.IsNullOrEmpty(folder) || AssetDatabase.IsValidFolder(folder))
@@ -1541,10 +1808,10 @@ internal static class LitIceMaisonPrefabGenerator
     }
 
     private static void CheckCancelled(
-        bool showProgress, int step, int total, string message)
+        bool showProgress, int step, int total, string message, string scopeLabel = "Maison")
     {
         if (showProgress && EditorUtility.DisplayCancelableProgressBar(
-            "Maison Ice Prefabs", message, Mathf.Clamp01((float)step / total)))
+            $"{scopeLabel} Ice Prefabs", message, Mathf.Clamp01((float)step / total)))
             throw new OperationCanceledException();
     }
 }

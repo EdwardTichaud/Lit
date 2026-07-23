@@ -14,15 +14,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZoneManifest
   primaryScene: {fileID: 102900000, guid: 9e497449e68f2854e9e47c143bf97c64, type: 3}
   loadingScenes:
+  - {fileID: 102900000, guid: 2c1ab3d5561b50d4a9f37d7196df866c, type: 3}
   - {fileID: 102900000, guid: 12cdf1fe1a46efa40915a117779dc0d8, type: 3}
   - {fileID: 102900000, guid: 10563072638a6a044a92aeeb7ef65d1c, type: 3}
-  postLoadingScenes:
+  - {fileID: 102900000, guid: dde8505377f7541428f035c431c9a6f1, type: 3}
   - {fileID: 102900000, guid: 59ab7e9c109d27d459eb9cf80bf37616, type: 3}
+  - {fileID: 102900000, guid: ccaa4921d8a401c4496c4ecfe2f2db73, type: 3}
+  postLoadingScenes: []
   primarySceneName: District_1_Critical
   loadingMessage: Exploration du quartier de la Lune...
   loadingSceneNames:
+  - District_1_Loading_Environment_Rooms
   - District_1_Loading_Lights
-  - District_1_Loading_Environment
-  postLoadingSceneNames:
-  - District_1_PostLoading
+  - District_1_Loading_Environment_Corridor
+  - District_1_Loading_Environment_Crypt
+  - District_1_Loading_Others
+  - District_1_Loading_Environment_Balcony
+  postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1

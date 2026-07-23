@@ -4,6 +4,7 @@ using UnityEngine;
 public static class GameplayRuntimeReset
 {
     private const string ResetLogPrefix = "[GameplayRuntimeReset]";
+    private const bool LogRuntimeResets = false;
 
     public static void ResetForMenuScene(string reason)
     {
@@ -18,7 +19,10 @@ public static class GameplayRuntimeReset
     private static void ResetInternal(string reason, bool destroySceneBackedSingletons)
     {
         string resolvedReason = string.IsNullOrWhiteSpace(reason) ? "runtime_reset" : reason.Trim();
-        Debug.Log($"{ResetLogPrefix} start reason='{resolvedReason}'");
+        if (LogRuntimeResets)
+        {
+            Debug.Log($"{ResetLogPrefix} start reason='{resolvedReason}'");
+        }
 
         InputFocusStack.Clear();
         LocalPlayerContext.Clear($"{ResetLogPrefix}:{resolvedReason}", LocalPlayerContext.Authority.MultiplayerAssignment);
@@ -68,7 +72,10 @@ public static class GameplayRuntimeReset
             DestroySceneBackedSingleton(KnowledgeManager.Instance, resolvedReason);
         }
 
-        Debug.Log($"{ResetLogPrefix} completed reason='{resolvedReason}'");
+        if (LogRuntimeResets)
+        {
+            Debug.Log($"{ResetLogPrefix} completed reason='{resolvedReason}'");
+        }
     }
 
     private static void DestroySceneBackedSingleton(SquadManager manager, string reason)

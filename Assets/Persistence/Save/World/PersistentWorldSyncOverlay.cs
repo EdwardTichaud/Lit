@@ -51,7 +51,34 @@ public class PersistentWorldSyncOverlay : MonoBehaviour
 
     private void EnsureOverlay()
     {
-        if (!createRuntimeOverlayIfMissing || overlayCanvas != null)
+        if (overlayCanvas != null)
+        {
+            return;
+        }
+
+        // Le canvas peut déjà être présent dans Bootstrap (notamment après avoir
+        // sauvegardé la scène). Le réutiliser évite d'en créer un second à chaque
+        // lancement du jeu.
+        Transform existingOverlay = transform.Find("PersistentWorldSyncOverlay");
+        if (existingOverlay != null)
+        {
+            overlayCanvas = existingOverlay.GetComponent<Canvas>();
+            overlayGroup = existingOverlay.GetComponent<CanvasGroup>();
+            overlayImage = existingOverlay.GetComponentInChildren<Image>(true);
+            statusText = existingOverlay.GetComponentInChildren<Text>(true);
+
+            if (overlayCanvas != null && overlayGroup != null)
+            {
+                return;
+            }
+
+            overlayCanvas = null;
+            overlayGroup = null;
+            overlayImage = null;
+            statusText = null;
+        }
+
+        if (!createRuntimeOverlayIfMissing)
         {
             return;
         }

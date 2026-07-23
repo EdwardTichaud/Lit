@@ -59,7 +59,7 @@ public class FacialExpressionController : MonoBehaviour
     private bool enforceControlledWeightsInLateUpdate = true;
 
     [SerializeField, Tooltip("Logs important state changes and validation details.")]
-    private bool verboseLogging = true;
+    private bool verboseLogging;
 
     private readonly Dictionary<string, int> blendShapeCache = new Dictionary<string, int>();
     private readonly Dictionary<string, float> currentWeights = new Dictionary<string, float>();

@@ -2367,7 +2367,7 @@ GameObject:
   - component: {fileID: 6800918242508772571}
   - component: {fileID: -2401253528140462390}
   - component: {fileID: 6197907773269782780}
-  m_Layer: 31
+  m_Layer: 6
   m_Name: Player_Model_Luna
   m_TagString: PNJ
   m_Icon: {fileID: 0}
@@ -2473,7 +2473,7 @@ MonoBehaviour:
   equippedInteractionItems: []
   startingFlameSeconds: 300
   flameSecondsRemaining: 300
-  logInventoryInitialization: 1
+  logInventoryInitialization: 0
   characterData: {fileID: 0}
   maxHp: 10
   currentHp: 10
@@ -2637,7 +2637,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!114 &8659240772369093202
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2673,7 +2673,7 @@ MonoBehaviour:
   playInitialPassiveOnStart: 1
   useUnscaledTime: 0
   enforceControlledWeightsInLateUpdate: 1
-  verboseLogging: 1
+  verboseLogging: 0
 --- !u!114 &5409310138993578963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8479,7 +8479,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4420770973046645378}
   - component: {fileID: 2972204273819095181}
-  m_Layer: 31
+  m_Layer: 6
   m_Name: Colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8849,7 +8849,7 @@ GameObject:
   - component: {fileID: 4236877744633020459}
   - component: {fileID: 91100005213865043}
   - component: {fileID: 5651761376575822}
-  m_Layer: 31
+  m_Layer: 6
   m_Name: CapsuleCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}

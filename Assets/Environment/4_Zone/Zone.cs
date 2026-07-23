@@ -40,6 +40,10 @@ public class Zone : MonoBehaviour
     [Tooltip("Inclut les colliders Trigger lors du polling.")]
     public bool maisonIncludeTriggerColliders = true;
 
+    [Header("Diagnostics")]
+    [SerializeField, Tooltip("Active les warnings de configuration de zone dans la console.")]
+    private bool logConfigurationWarnings;
+
     private static readonly Dictionary<GameObject, int> noConsumeCounts = new Dictionary<GameObject, int>();
     private static readonly Dictionary<GameObject, int> maisonCounts = new Dictionary<GameObject, int>();
     private const int MaisonOverlapBufferSize = 1024;
@@ -82,12 +86,12 @@ public class Zone : MonoBehaviour
         }
 
         isTriggerZone = zoneCollider != null && zoneCollider.isTrigger;
-        if (zoneCollider != null && !zoneCollider.isTrigger)
+        if (logConfigurationWarnings && zoneCollider != null && !zoneCollider.isTrigger)
         {
             Debug.LogWarning("Zone: le collider n'est pas en mode Trigger.");
         }
 
-        if (zoneCollider == null)
+        if (logConfigurationWarnings && zoneCollider == null)
         {
             Debug.LogWarning("Zone: aucun collider trouve sur cette zone.");
         }

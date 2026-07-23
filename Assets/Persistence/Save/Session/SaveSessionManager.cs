@@ -40,7 +40,7 @@ public class SaveSessionManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
         ReloadSessions();
     }

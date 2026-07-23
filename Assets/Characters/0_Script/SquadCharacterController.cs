@@ -35,7 +35,7 @@ public partial class SquadCharacterController : MonoBehaviour
     [SerializeField, Tooltip("Duree restante de la flamme (secondes).")]
     private int flameSecondsRemaining = 300;
     [SerializeField, Tooltip("Active les logs du flux d'initialisation d'inventaire.")]
-    private bool logInventoryInitialization = true;
+    private bool logInventoryInitialization;
 
     [Header("Character Data")]
     [SerializeField, Tooltip("CharacterData lie a ce controller.")]
@@ -78,7 +78,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool useCameraRelative = true;
     [SerializeField, Tooltip("Camera de reference (fallback Main).")]
     private Camera referenceCamera;
-    [SerializeField, Tooltip("Conserve la reference de mouvement tant que l'input est maintenu, notamment pendant les changements de camera fixe.")]
+    [SerializeField, Tooltip("Conserve la reference de mouvement tant que l'input est maintenu, pour eviter les inversions quand la camera bouge en meme temps.")]
     private bool preserveFixedCameraMovementContinuity = true;
     [SerializeField, Range(0f, 180f), Tooltip("Angle d'input qui force la reference de mouvement a se recaler sur la camera active.")]
     private float fixedCameraMovementInputRefreshAngle = 65f;
@@ -159,6 +159,11 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private static readonly List<SquadCharacterController> activeCharacters = new List<SquadCharacterController>();
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
+
+#if UNITY_EDITOR
+    private static float nextDistrictMoveTraceTime;
+    private static float nextDistrictStopTraceTime;
+#endif
 
     public CharacterData CharacterData => characterData;
 
@@ -2339,6 +2344,9 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Move(Vector2 input)
     {
+#if UNITY_EDITOR
+        TraceDistrictMoveIntent(input);
+#endif
         TryForwardMoveToUcc(input, isWorldSpace: false);
     }
 
@@ -2359,11 +2367,55 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public void Stop()
     {
+#if UNITY_EDITOR
+        TraceDistrictStopWhileInputHeld();
+#endif
         TryForwardStopToUcc();
 
         ResetUccLocomotionIntent();
         ClearStoredMovementReference();
     }
+
+#if UNITY_EDITOR
+    private void TraceDistrictMoveIntent(Vector2 input)
+    {
+        if (!Application.isPlaying ||
+            input.sqrMagnitude < 0.01f ||
+            !UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("District_1"))
+        {
+            return;
+        }
+
+        if (Time.unscaledTime < nextDistrictMoveTraceTime)
+        {
+            return;
+        }
+
+        nextDistrictMoveTraceTime = Time.unscaledTime + 1f;
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        Debug.Log(
+            $"[DistrictControl] Move received raw={input:F2} world={GetWorldSpaceInput(input):F2} " +
+            $"grounded={IsGrounded} uccDriving={(bridge != null && bridge.IsDriving)} " +
+            $"uccInputSuppressed={(bridge != null && bridge.IsInputSuppressedByUcc)}",
+            this);
+    }
+
+    private void TraceDistrictStopWhileInputHeld()
+    {
+        if (!Application.isPlaying ||
+            SquadManager.Instance == null ||
+            SquadManager.Instance.currentCharacter != gameObject ||
+            LocalInputRouter.MoveValue.sqrMagnitude < 0.01f ||
+            !UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("District_1") ||
+            Time.unscaledTime < nextDistrictStopTraceTime)
+        {
+            return;
+        }
+
+        nextDistrictStopTraceTime = Time.unscaledTime + 1f;
+        Debug.LogWarning($"[DistrictControl] Stop called while movement input is held. Caller:\n{System.Environment.StackTrace}", this);
+    }
+#endif
 
     public void PushScriptedMovementSuppression()
     {
@@ -2380,6 +2432,20 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         scriptedMovementSuppressionCount--;
+    }
+
+    /// <summary>
+    /// Annule les verrous de mouvement lies a une interaction de la scene
+    /// precedente (echelle, assise, danger, combat local). Une transition de
+    /// zone decharge ces objets : ils ne doivent donc jamais immobiliser le
+    /// personnage dans la scene suivante.
+    /// </summary>
+    public void ClearTransientMovementLocksForSceneTransition()
+    {
+        CancelSittingState();
+        scriptedMovementSuppressionCount = 0;
+        GetUccLocomotionBridge()?.ClearTransientLocksForSceneTransition();
+        Stop();
     }
 
     public void PushExternalLocomotionDriver()
@@ -3096,16 +3162,20 @@ public partial class SquadCharacterController : MonoBehaviour
             return move;
         }
 
-        if (!TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight, out bool fixedCameraBasis))
+        if (!TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight))
         {
-            ClearStoredMovementReference();
-            return move;
-        }
+            if (TryResolveStoredMovementBasis(
+                input,
+                inputRepresentsRawMovement,
+                storedForward,
+                storedRight,
+                out Vector3 fallbackStoredForward,
+                out Vector3 fallbackStoredRight))
+            {
+                return fallbackStoredRight * input.x + fallbackStoredForward * input.y;
+            }
 
-        if (!fixedCameraBasis)
-        {
-            ClearStoredMovementReference();
-            return camRight * input.x + camForward * input.y;
+            return move;
         }
 
         if (TryResolveStoredMovementBasis(
@@ -3276,11 +3346,10 @@ public partial class SquadCharacterController : MonoBehaviour
         storedInput = Vector2.zero;
     }
 
-    private bool TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight, out bool fixedCameraBasis)
+    private bool TryResolveMovementBasis(out Vector3 camForward, out Vector3 camRight)
     {
         camForward = Vector3.zero;
         camRight = Vector3.zero;
-        fixedCameraBasis = false;
 
         Camera cam = ResolveMovementCamera();
         if (cam == null)
@@ -3289,33 +3358,38 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         camForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
-        camRight = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up);
-        if (camForward.sqrMagnitude <= 0.0001f || camRight.sqrMagnitude <= 0.0001f)
+        Vector3 projectedRight = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up);
+        if (camForward.sqrMagnitude <= 0.0001f && projectedRight.sqrMagnitude > 0.0001f)
+        {
+            camForward = Vector3.Cross(projectedRight.normalized, Vector3.up);
+        }
+
+        if (camForward.sqrMagnitude <= 0.0001f)
         {
             return false;
         }
 
         camForward.Normalize();
-        camRight.Normalize();
-        return true;
+        camRight = Vector3.Cross(Vector3.up, camForward);
+        return TryNormalizeMovementBasis(camForward, camRight, out camForward, out camRight);
     }
 
     private Camera ResolveMovementCamera()
     {
-        if (referenceCamera != null && referenceCamera.isActiveAndEnabled)
+        if (IsValidMovementCamera(referenceCamera))
         {
             return referenceCamera;
         }
 
         Camera main = Camera.main;
-        if (main != null && main.isActiveAndEnabled)
+        if (IsValidMovementCamera(main))
         {
             referenceCamera = main;
             return main;
         }
 
 #if UNITY_2023_1_OR_NEWER
-        Camera[] cameras = FindObjectsByType<Camera>();
+        Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 #else
         Camera[] cameras = FindObjectsByType<Camera>();
 #endif
@@ -3324,7 +3398,7 @@ public partial class SquadCharacterController : MonoBehaviour
             for (int i = 0; i < cameras.Length; i++)
             {
                 Camera candidate = cameras[i];
-                if (candidate == null || !candidate.isActiveAndEnabled)
+                if (!IsValidMovementCamera(candidate))
                 {
                     continue;
                 }
@@ -3334,7 +3408,35 @@ public partial class SquadCharacterController : MonoBehaviour
             }
         }
 
+        referenceCamera = null;
         return null;
+    }
+
+    private static bool IsValidMovementCamera(Camera candidate)
+    {
+        if (candidate == null || !candidate.isActiveAndEnabled)
+        {
+            return false;
+        }
+
+        if (candidate.cameraType != CameraType.Game)
+        {
+            return false;
+        }
+
+        if (candidate.targetTexture != null)
+        {
+            return false;
+        }
+
+        string cameraName = candidate.name;
+        if (!string.IsNullOrEmpty(cameraName) &&
+            cameraName.IndexOf("PortalCam", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void ApplyAnimatorSettings()

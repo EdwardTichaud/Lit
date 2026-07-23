@@ -22,11 +22,32 @@ public partial class LitOpsiveLocomotionBridge
     private float groundBlockDiagnosticLastSampleTime;
     private float groundBlockDiagnosticLastLogTime;
     private bool groundBlockDiagnosticHasSample;
+
+    /// <summary>
+    /// Active ponctuellement le diagnostic de collision lors de l'arrivée dans
+    /// une zone. Il n'est utilisé que dans l'éditeur et n'a aucun effet dans un build.
+    /// </summary>
+    public void SetGroundBlockDiagnosticsEnabled(bool enabled)
+    {
+        debugGroundBlockDiagnostics = enabled;
+        ResetGroundBlockDiagnosticSample();
+    }
 #endif
 
     private void TickGroundBlockDiagnostics()
     {
 #if UNITY_EDITOR
+        if (!debugGroundBlockDiagnostics &&
+            Application.isPlaying &&
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("District_1") &&
+            SquadManager.Instance != null &&
+            SquadManager.Instance.currentCharacter == gameObject)
+        {
+            // District_1 est actuellement la seule zone en diagnostic : activer
+            // automatiquement la trace sur le personnage effectivement pilote.
+            debugGroundBlockDiagnostics = true;
+        }
+
         if (!debugGroundBlockDiagnostics ||
             !Application.isPlaying ||
             !IsDriving ||

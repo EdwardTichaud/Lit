@@ -728,7 +728,11 @@ public class SquadManager : MonoBehaviour
         instance.SetActive(true);
     }
 
-    /// <summary>Place les personnages deja instancies de l'equipe au point d'arrivee d'une scene.</summary>
+    /// <summary>
+    /// Teleporte les personnages deja instancies au point d'arrivee d'une
+    /// scene. Cette operation est distincte d'un simple repositionnement :
+    /// elle synchronise explicitement UCC apres le changement de zone.
+    /// </summary>
     public void MoveSquadToSpawn(Transform spawnPoint)
     {
         if (spawnPoint == null || squadCharacters == null)
@@ -736,6 +740,17 @@ public class SquadManager : MonoBehaviour
             return;
         }
 
+        // Le personnage controle doit toujours arriver exactement sur le point
+        // d'arrivee. Les compagnons sont places derriere et suffisamment loin
+        // pour ne pas bloquer immediatement sa capsule de locomotion.
+        int controlledIndex = GetCurrentCharacterIndex();
+        if (controlledIndex < 0)
+        {
+            controlledIndex = 0;
+        }
+
+        const float companionLateralSpacing = 3f;
+        const float companionBackOffset = 2f;
         for (int i = 0; i < squadCharacters.Count; i++)
         {
             GameObject character = squadCharacters[i];
@@ -744,9 +759,32 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
-            Vector3 position = spawnPoint.position + spawnPoint.right * (i * 1.5f);
-            TrySetCharacterPositionAndRotation(character, position, spawnPoint.rotation);
+            int relativeIndex = i - controlledIndex;
+            Vector3 position = spawnPoint.position;
+            if (relativeIndex != 0)
+            {
+                position += spawnPoint.right * (relativeIndex * companionLateralSpacing);
+                position -= spawnPoint.forward * companionBackOffset;
+            }
+
+            TryTeleportCharacterForSceneTransition(character, position, spawnPoint.rotation);
         }
+    }
+
+    private static bool TryTeleportCharacterForSceneTransition(GameObject instance, Vector3 position, Quaternion rotation)
+    {
+        if (instance == null)
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = instance.GetComponent<SquadCharacterController>();
+        if (controller == null)
+        {
+            controller = instance.GetComponentInChildren<SquadCharacterController>(true);
+        }
+
+        return controller != null && controller.TryTeleportForSceneTransition(position, rotation);
     }
 
     private static bool TrySetCharacterPositionAndRotation(GameObject instance, Vector3 position, Quaternion rotation)
@@ -2954,6 +2992,14 @@ public class SquadManager : MonoBehaviour
         inputLockCount = 0;
         jumpRequested = false;
         locomotionModeRequested = false;
+
+        // Les composants qui avaient verrouille le personnage peuvent avoir
+        // ete decharges avec la scene precedente. Le verrou ne doit pas leur
+        // survivre apres un portail.
+        if (currentCharacter != null)
+        {
+            currentCharacter.GetComponent<SquadCharacterController>()?.ClearTransientMovementLocksForSceneTransition();
+        }
     }
 
     private void InitializeSquadPanel()
@@ -2990,7 +3036,7 @@ public class SquadManager : MonoBehaviour
     private SquadUISettings GetSquadUI()
     {
         SquadUISettings ui = squadUISettings != null ? squadUISettings : SquadUISettings.Instance;
-        if (ui == null && !warnedMissingSquadUI &&
+        if (ui == null && charactersSelectionOn && !warnedMissingSquadUI &&
             (!Application.isPlaying || (GameFlowService.Instance != null && GameFlowService.Instance.HasGameplaySession)))
         {
             Debug.LogWarning("SquadManager: SquadUISettings non assigne. Le panel de squad ne pourra pas s'afficher.");

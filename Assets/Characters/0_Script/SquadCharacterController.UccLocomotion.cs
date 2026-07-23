@@ -135,6 +135,42 @@ public partial class SquadCharacterController
         return bridge != null && bridge.SetExternalPositionAndRotation(position, rotation, stopActiveAbilities);
     }
 
+    /// <summary>
+    /// Repositionnement atomique reserve aux changements de scene. UCC doit
+    /// recevoir un snap Animator dans ce cas, contrairement aux petites
+    /// corrections de position utilisees pendant le jeu.
+    /// </summary>
+    public bool TryTeleportForSceneTransition(Vector3 position, Quaternion rotation)
+    {
+        CancelSittingState();
+        scriptedMovementSuppressionCount = 0;
+        ResetUccLocomotionIntent();
+
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        if (bridge != null && bridge.TeleportForSceneTransition(position, rotation))
+        {
+            return true;
+        }
+
+        // Les personnages non-UCC restent compatibles avec les points de
+        // spawn. Ce chemin ne s'applique pas au joueur UCC normal.
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.position = position;
+            body.rotation = rotation;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+        else
+        {
+            transform.SetPositionAndRotation(position, rotation);
+        }
+
+        Physics.SyncTransforms();
+        return true;
+    }
+
     private void ResetUccLocomotionIntent()
     {
         lastUccWorldMoveInput = Vector2.zero;

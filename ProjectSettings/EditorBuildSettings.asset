@@ -15,7 +15,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Maison/Maison_Critical.unity
     guid: 4af4dc28b6ff9a84cba661cd63e3fbbc
   - enabled: 1
-    path: Assets/Scenes/Maison/Maison_Loading_Environment_Near.unity
+    path: Assets/Scenes/Maison/Maison_Loading_Environment_Near_1.unity
     guid: 58f3766058d9c2e458128a24d29a2269
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_PostLoading_Environment_Far.unity
@@ -48,14 +48,38 @@ EditorBuildSettings:
     path: Assets/Scenes/AngelOfJustice.unity
     guid: 947148e529b364b48940a5f2075bb498
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Environment.unity
+    path: Assets/Scenes/District_1/District_1_Loading_Environment_Corridor.unity
     guid: 10563072638a6a044a92aeeb7ef65d1c
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading.unity
+    path: Assets/Scenes/District_1/District_1_Loading_Others.unity
     guid: 59ab7e9c109d27d459eb9cf80bf37616
   - enabled: 1
     path: Assets/Scenes/District_1/District_1_Loading_Lights.unity
     guid: 12cdf1fe1a46efa40915a117779dc0d8
+  - enabled: 0
+    path: Assets/Scenes/District_1/District_1_PostLoading_Lights.unity
+    guid: 9a59c7c8d9ac0f84198e5d29eb03b34e
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Loading_Environment_Rooms.unity
+    guid: 2c1ab3d5561b50d4a9f37d7196df866c
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Loading_Environment_Crypt.unity
+    guid: dde8505377f7541428f035c431c9a6f1
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Loading_Environment_Balcony.unity
+    guid: ccaa4921d8a401c4496c4ecfe2f2db73
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_Loading_Environment_Near_2.unity
+    guid: c95bd34d79e1d184eb6ae8031a653aab
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_Loading_Environment_Near_3.unity
+    guid: 1a8ff779189ab844e93214c342fdc2c1
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_Loading_Environment_Near_4.unity
+    guid: 405309556a65f6744918b2c54b44e578
+  - enabled: 1
+    path: Assets/Scenes/Maison/Maison_Loading_Interactives.unity
+    guid: 40f2412674e008345b1737bf7218be04
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

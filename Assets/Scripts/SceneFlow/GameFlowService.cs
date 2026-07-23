@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Lit.Performance;
+using Opsive.UltimateCharacterController;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -37,6 +38,11 @@ public sealed class GameFlowService : MonoBehaviour
     [SerializeField, Min(1)] private int postLoadingStableFrames = 15;
     [Tooltip("Une image depassant ce seuil remet le compteur de stabilite a zero.")]
     [SerializeField, Min(0.01f)] private float postLoadingMaximumStableFrameSeconds = 0.05f;
+    [Header("Loading scenes")]
+    [Tooltip("Nombre minimal d'images laissees au rendu entre deux sous-scenes obligatoires du manifeste.")]
+    [SerializeField, Min(1)] private int loadingSceneStableFrames = 12;
+    [Tooltip("Une image longue relance la periode de stabilisation avant la sous-scene suivante.")]
+    [SerializeField, Min(0.01f)] private float loadingSceneMaximumStableFrameSeconds = 0.05f;
 
 #if UNITY_EDITOR
     [Header("Editor test startup")]
@@ -269,10 +275,14 @@ public sealed class GameFlowService : MonoBehaviour
         // la scene chargee. On attend une frame avant de les placer.
         yield return null;
         SceneTransitionProfiler.Pulse();
+        PreserveUccSimulationManager();
         AdoptGameplayManagers();
         SceneTransitionProfiler.Mark("Managers prets");
+        yield return PlaceSquadAtSpawnRoutine(spawnId);
         RestoreLocalGameplayInputAfterSessionStart();
-        PlaceSquadAtSpawn(spawnId);
+#if UNITY_EDITOR
+        StartCoroutine(LogZoneControlProbe(sceneName));
+#endif
         SceneTransitionProfiler.Mark("Escouade placee");
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
@@ -306,6 +316,11 @@ public sealed class GameFlowService : MonoBehaviour
             SceneManager.SetActiveScene(targetScene);
         }
 
+        // UCC cree son SimulationManager a la premiere apparition du joueur.
+        // Sans cette promotion, il est cree dans Maison puis detruit avec elle
+        // et UCC ne fait plus qu'actualiser sa vitesse interne sans appliquer
+        // la position au Rigidbody/Transform dans la zone suivante.
+        PreserveUccSimulationManager();
         for (int i = previousScenes.Count - 1; i >= 0; i--)
         {
             yield return UnloadSceneIfLoaded(previousScenes[i]);
@@ -313,7 +328,15 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         activeGameplaySceneName = destination.PrimarySceneName;
-        PlaceSquadAtSpawn(spawnId);
+        // Une transition de zone ferme le contexte de jeu precedent. Sans
+        // cette remise a zero, un focus UI laisse par Maison bloque le moteur
+        // du personnage et la camera, alors que l'Animator peut encore voir
+        // l'input brut et jouer une animation de marche sur place.
+        yield return PlaceSquadAtSpawnRoutine(spawnId);
+        RestoreLocalGameplayInputAfterSessionStart();
+#if UNITY_EDITOR
+        StartCoroutine(LogZoneControlProbe(destination.PrimarySceneName));
+#endif
         SceneTransitionProfiler.Mark("Escouade placee");
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
@@ -345,6 +368,7 @@ public sealed class GameFlowService : MonoBehaviour
             SceneManager.SetActiveScene(loadedHubScene);
         }
 
+        PreserveUccSimulationManager();
         for (int i = previousScenes.Count - 1; i >= 0; i--)
         {
             yield return UnloadSceneIfLoaded(previousScenes[i]);
@@ -352,7 +376,11 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         activeGameplaySceneName = hubScene;
-        PlaceSquadAtSpawn(spawnId);
+        yield return PlaceSquadAtSpawnRoutine(spawnId);
+        RestoreLocalGameplayInputAfterSessionStart();
+#if UNITY_EDITOR
+        StartCoroutine(LogZoneControlProbe(hubScene));
+#endif
         SceneTransitionProfiler.Mark("Escouade placee");
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
@@ -365,7 +393,7 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            NetworkManager.Singleton.Shutdown();
+            NetcodeBootstrap.ShutdownActiveNetworkManager();
         }
 
         DestroyGameplaySession();
@@ -647,11 +675,11 @@ public sealed class GameFlowService : MonoBehaviour
         component.transform.SetParent(gameplaySessionRoot.transform, true);
     }
 
-    private void PlaceSquadAtSpawn(string spawnId)
+    private IEnumerator PlaceSquadAtSpawnRoutine(string spawnId)
     {
         if (string.IsNullOrWhiteSpace(spawnId) || SquadManager.Instance == null)
         {
-            return;
+            yield break;
         }
 
         ZoneSpawnPoint spawn = ZoneSpawnPoint.Find(spawnId);
@@ -661,7 +689,13 @@ public sealed class GameFlowService : MonoBehaviour
             {
                 SquadManager.Instance.MoveSquadToSpawn(spawn.transform);
             }
-            return;
+
+            // UCC traite le snap de l'Animator et le sol dans son cycle de
+            // physique. L'input/camera ne sont rendus qu'apres ce cycle.
+            yield return new WaitForFixedUpdate();
+            Physics.SyncTransforms();
+            LocalInputRouter.RaiseCameraRecenter();
+            yield break;
         }
 
         Debug.LogWarning($"[GameFlow] No ZoneSpawnPoint with id '{spawnId}' was found in the loaded scenes. Squad position was left unchanged.");
@@ -681,7 +715,73 @@ public sealed class GameFlowService : MonoBehaviour
         InputFocusStack.Clear();
         LocalPlayerInput.SetCombatInputActive(false);
         SquadManager.Instance?.ResetInputLocksForNewSession();
+        LocalInputRouter.RaiseCameraRecenter();
     }
+
+    /// <summary>
+    /// SimulationManager est l'infrastructure UCC qui applique les positions
+    /// calculees par les locomotions et les cameras. UCC le cree a la volee;
+    /// il ne doit donc jamais appartenir a une scene de hub ou de zone
+    /// dechargeable.
+    /// </summary>
+    private static void PreserveUccSimulationManager()
+    {
+        SimulationManager simulationManager = FindAnyObjectByType<SimulationManager>(FindObjectsInactive.Include);
+        if (simulationManager == null)
+        {
+            return;
+        }
+
+        Scene managerScene = simulationManager.gameObject.scene;
+        if (managerScene.name == "DontDestroyOnLoad")
+        {
+            return;
+        }
+
+        DontDestroyOnLoad(simulationManager.gameObject);
+        Debug.Log("[GameFlow] UCC SimulationManager moved to DontDestroyOnLoad before scene unloading.", simulationManager);
+    }
+
+#if UNITY_EDITOR
+    private static IEnumerator LogZoneControlProbe(string sceneName)
+    {
+        // Une seule trace, apres que la physique et le binder de camera aient
+        // eu le temps de traiter le teleport. Elle sert a diagnostiquer une
+        // zone sans deviner entre le sol, UCC, l'input et la camera.
+        yield return new WaitForSecondsRealtime(1f);
+
+        GameObject character = SquadManager.Instance != null ? SquadManager.Instance.currentCharacter : null;
+        SquadCharacterController controller = character != null
+            ? character.GetComponent<SquadCharacterController>()
+            : null;
+        Rigidbody body = character != null ? character.GetComponent<Rigidbody>() : null;
+        CapsuleCollider capsule = character != null ? character.GetComponent<CapsuleCollider>() : null;
+
+        string ground = "none";
+        if (character != null && Physics.Raycast(character.transform.position + Vector3.up * 2f, Vector3.down, out RaycastHit hit, 6f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            ground = $"{hit.collider.name} at y={hit.point.y:F2}, distance={hit.distance:F2}";
+        }
+
+        Camera mainCamera = Camera.main;
+        LitOpsiveLocomotionBridge bridge = character != null
+            ? character.GetComponent<LitOpsiveLocomotionBridge>()
+            : null;
+        Debug.Log(
+            $"[ZoneControlProbe] scene='{sceneName}' character='{(character != null ? character.name : "none")}' " +
+            $"position={(character != null ? character.transform.position.ToString("F3") : "n/a")} " +
+            $"grounded={(controller != null && controller.IsGrounded)} " +
+            $"movementSuppressed={(controller != null && controller.IsMovementInputSuppressed)} " +
+            $"externalDriver={(controller != null && controller.IsExternalLocomotionDriverActive)} " +
+            $"uccInputSuppressed={(bridge != null && bridge.IsInputSuppressedByUcc)} " +
+            $"uccExternalLock={(bridge != null && bridge.IsExternalLockActive)} " +
+            $"uccTraversalLock={(bridge != null && bridge.IsScriptedTraversalActive)} " +
+            $"bodyKinematic={(body != null && body.isKinematic)} velocity={(body != null ? body.linearVelocity.ToString("F3") : "n/a")} " +
+            $"capsule={(capsule != null && capsule.enabled)} ground='{ground}' " +
+            $"inputFocus={InputFocusStack.HasAnyFocus()} cameraFocusBlocked={InputFocusStack.HasAnyFocusBlockingCamera()} " +
+            $"mainCamera='{(mainCamera != null ? mainCamera.name : "none")}' cameraEnabled={(mainCamera != null && mainCamera.isActiveAndEnabled)}");
+    }
+#endif
 
     private ZoneManifest ResolveGameplayManifest(string sceneName)
     {
@@ -712,9 +812,16 @@ public sealed class GameFlowService : MonoBehaviour
                 continue;
             }
 
+            // Cette attente est volontaire : LoadingScenes est une file et non
+            // un lot. Unity finit completement une activation et le rendu a le
+            // temps de respirer avant que la scene obligatoire suivante ne soit
+            // demandee.
+            yield return WaitForStableLoadingFrames();
+            SceneTransitionProfiler.Mark($"Phase loading {i + 1}/{manifest.LoadingSceneNames.Count} demandee ({additionalScene})");
             yield return LoadAdditiveRoutine(additionalScene, loadingMessage);
             AddLoadedGameplayScene(additionalScene);
-            SceneTransitionProfiler.Mark($"Sous-scene activee ({additionalScene})");
+            SceneTransitionProfiler.Mark($"Phase loading {i + 1}/{manifest.LoadingSceneNames.Count} activee ({additionalScene})");
+            yield return WaitForStableLoadingFrames();
         }
     }
 
@@ -757,6 +864,25 @@ public sealed class GameFlowService : MonoBehaviour
                 stableFrames = 0;
             }
 
+            yield return null;
+        }
+    }
+
+    private IEnumerator WaitForStableLoadingFrames()
+    {
+        int stableFrames = 0;
+        while (stableFrames < loadingSceneStableFrames)
+        {
+            if (Time.unscaledDeltaTime <= loadingSceneMaximumStableFrameSeconds)
+            {
+                stableFrames++;
+            }
+            else
+            {
+                stableFrames = 0;
+            }
+
+            SceneTransitionProfiler.Pulse();
             yield return null;
         }
     }

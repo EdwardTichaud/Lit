@@ -132,7 +132,7 @@ public class NetcodeLauncher : MonoBehaviour
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            NetworkManager.Singleton.Shutdown();
+            NetcodeBootstrap.ShutdownActiveNetworkManager();
         }
     }
 

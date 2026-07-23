@@ -4,7 +4,7 @@ public static class PersistentWorldDebug
 {
     private const string Prefix = "[PersistentWorld]";
 
-    public static bool Enabled { get; set; } = true;
+    public static bool Enabled { get; set; } = false;
 
     public static void Log(string message, Object context = null)
     {

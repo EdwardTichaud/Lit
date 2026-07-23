@@ -512,6 +512,12 @@ internal static class LitIceEdgeMaskBaker
             && mesh.name.StartsWith(BakedVersionMarker, StringComparison.Ordinal);
     }
 
+    internal static bool CanBakeWithinBudget(Mesh source, out long predictedVertexCount)
+    {
+        predictedVertexCount = GetPredictedBakedVertexCount(source);
+        return IcePerformanceBudgetPolicy.CanGenerateBarycentricMesh(predictedVertexCount);
+    }
+
     private static Mesh BakeMesh(Mesh source)
     {
         int triangleIndexCount = GetValidatedBakedVertexCount(source);
@@ -711,6 +717,24 @@ internal static class LitIceEdgeMaskBaker
 
     private static int GetValidatedBakedVertexCount(Mesh source)
     {
+        long predictedVertexCount = GetPredictedBakedVertexCount(source);
+        if (!IcePerformanceBudgetPolicy.CanGenerateBarycentricMesh(predictedVertexCount))
+        {
+            throw new InvalidOperationException(
+                $"Barycentric bake rejected for '{source.name}': predicted output has "
+                + $"{predictedVertexCount} vertices; budget is "
+                + $"{IcePerformanceBudgetPolicy.MaxGeneratedVertexCount}. "
+                + "Split, decimate, or use the source-mesh fallback before baking.");
+        }
+
+        return checked((int)predictedVertexCount);
+    }
+
+    private static long GetPredictedBakedVertexCount(Mesh source)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+
         long predictedVertexCount = 0L;
         for (int submesh = 0; submesh < source.subMeshCount; submesh++)
         {
@@ -722,17 +746,7 @@ internal static class LitIceEdgeMaskBaker
 
             predictedVertexCount += (long)source.GetIndexCount(submesh);
         }
-
-        if (!IcePerformanceBudgetPolicy.CanGenerateBarycentricMesh(predictedVertexCount))
-        {
-            throw new InvalidOperationException(
-                $"Barycentric bake rejected for '{source.name}': predicted output has "
-                + $"{predictedVertexCount} vertices; budget is "
-                + $"{IcePerformanceBudgetPolicy.MaxGeneratedVertexCount}. "
-                + "Split, decimate, or use the source-mesh fallback before baking.");
-        }
-
-        return checked((int)predictedVertexCount);
+        return predictedVertexCount;
     }
 
     private static Mesh SaveValidatedMesh(

@@ -5,6 +5,8 @@ using UnityEngine;
 // Context local au client pour referencer le personnage controle.
 public static class LocalPlayerContext
 {
+    private const bool LogContextWrites = false;
+
     public enum Authority
     {
         Default = 0,
@@ -133,6 +135,11 @@ public static class LocalPlayerContext
 
     private static void LogContextWrite(string operation, Transform target, Authority authority, string source, string reason)
     {
+        if (!LogContextWrites)
+        {
+            return;
+        }
+
         string path = target != null ? NetcodePlayerUtils.GetTransformPath(target) : string.Empty;
         Debug.Log(
             $"[NetcodeControl] system='local_context' operation='{operation}' path='{path}' authority='{authority}' source='{source ?? string.Empty}' reason='{reason}'");

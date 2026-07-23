@@ -5,9 +5,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Bootstrap runtime pour Netcode (NetworkManager, prefabs, scene objects).
+[DefaultExecutionOrder(-10000)]
 public class NetcodeBootstrap : MonoBehaviour
 {
     private static NetcodeBootstrap instance;
+    private static bool applicationQuitting;
 
     [SerializeField] private bool dontDestroyOnLoad = true;
     [SerializeField] private bool autoCreateNetworkManager = true;
@@ -17,10 +19,12 @@ public class NetcodeBootstrap : MonoBehaviour
     [SerializeField] private bool autoCreateConnectionApproval = true;
     [SerializeField] private bool autoCreatePersistentWorldSystems = true;
     [SerializeField] private bool enableSceneManagement = true;
+    [SerializeField] private bool disablePortalAudioListeners = true;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateRuntime()
     {
+        applicationQuitting = false;
         if (instance != null)
         {
             return;
@@ -56,6 +60,7 @@ public class NetcodeBootstrap : MonoBehaviour
             RuntimePersistenceUtility.DontDestroyOnLoadRoot(gameObject);
         }
 
+        DisablePortalAudioListenersInChildren();
         LocalInputRouter.EnsureInitialized();
         EnsureNetworkManager();
         EnsurePersistentWorldSystems();
@@ -91,9 +96,16 @@ public class NetcodeBootstrap : MonoBehaviour
         }
     }
 
+    private void OnApplicationQuit()
+    {
+        applicationQuitting = true;
+        ShutdownNetworkManagerBeforeUnityTeardown();
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneTransitionProfiler.Mark($"Initialisation Netcode debut ({scene.name})");
+        DisablePortalAudioListenersInChildren();
         EnsureNetworkManager();
         NetcodeSceneObjectInstaller.PrepareScene(scene);
         NetcodePrefabRegistry.Refresh();
@@ -238,11 +250,132 @@ public class NetcodeBootstrap : MonoBehaviour
 
             if (candidate.IsListening)
             {
-                candidate.Shutdown();
+                SafeShutdownNetworkManager(candidate);
             }
 
             Destroy(candidate.gameObject);
         }
+    }
+
+    private static void ShutdownNetworkManagerBeforeUnityTeardown()
+    {
+#if UNITY_EDITOR
+        NetworkManager[] managers = FindNetworkManagers();
+        if (managers == null || managers.Length == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            NetworkManager manager = managers[i];
+            if (manager == null)
+            {
+                continue;
+            }
+
+            PrepareNetworkManagerForEditorTeardown(manager);
+            SafeShutdownNetworkManager(manager);
+        }
+#else
+        ShutdownActiveNetworkManager();
+#endif
+    }
+
+    public static void ShutdownActiveNetworkManager()
+    {
+        SafeShutdownNetworkManager(NetworkManager.Singleton);
+    }
+
+    private static void SafeShutdownNetworkManager(NetworkManager manager)
+    {
+        if (manager == null || !manager.IsListening)
+        {
+            return;
+        }
+
+        try
+        {
+            manager.Shutdown();
+        }
+        catch (System.NullReferenceException ex)
+        {
+            if (!applicationQuitting)
+            {
+                Debug.LogException(ex, manager);
+            }
+        }
+    }
+
+#if UNITY_EDITOR
+    private static void PrepareNetworkManagerForEditorTeardown(NetworkManager manager)
+    {
+        if (manager == null)
+        {
+            return;
+        }
+
+        SetPrivateField(manager, "m_ShuttingDown", true);
+        ClearPrivateField(manager, "<SpawnManager>k__BackingField");
+        ClearPrivateField(manager, "<SceneManager>k__BackingField");
+    }
+
+    private static void ClearPrivateField(object target, string fieldName)
+    {
+        SetPrivateField(target, fieldName, null);
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+        if (target == null || string.IsNullOrEmpty(fieldName))
+        {
+            return;
+        }
+
+        System.Reflection.FieldInfo field = target.GetType().GetField(
+            fieldName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        if (field == null)
+        {
+            return;
+        }
+
+        field.SetValue(target, value);
+    }
+#endif
+
+    private void DisablePortalAudioListenersInChildren()
+    {
+        if (!disablePortalAudioListeners)
+        {
+            return;
+        }
+
+        AudioListener[] listeners = GetComponentsInChildren<AudioListener>(true);
+        for (int i = 0; i < listeners.Length; i++)
+        {
+            AudioListener listener = listeners[i];
+            if (listener == null || !IsPortalAudioListener(listener))
+            {
+                continue;
+            }
+
+            listener.enabled = false;
+        }
+    }
+
+    private static bool IsPortalAudioListener(AudioListener listener)
+    {
+        Camera camera = listener.GetComponent<Camera>();
+        if (camera == null)
+        {
+            return false;
+        }
+
+        string objectName = listener.name;
+        return camera.targetTexture != null ||
+               (!string.IsNullOrEmpty(objectName) &&
+                objectName.IndexOf("PortalCam", System.StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
     private void EnsureNetworkConfig(NetworkManager manager)

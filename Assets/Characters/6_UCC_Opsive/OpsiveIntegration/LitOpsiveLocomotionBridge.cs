@@ -188,7 +188,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Other
     }
 
-    public bool IsDriving => isActiveAndEnabled && driveFromSquadFacade && locomotion != null && locomotionHandler != null;
+    public bool IsDriving => isActiveAndEnabled &&
+                             driveFromSquadFacade &&
+                             locomotion != null && locomotion.isActiveAndEnabled &&
+                             locomotionHandler != null && locomotionHandler.isActiveAndEnabled;
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
@@ -498,6 +501,68 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         AttachLookSourceIfNeeded(true);
     }
 
+    /// <summary>
+    /// Termine les verrous transitoires quand la scene qui les a crees vient
+    /// d'etre dechargee. Une echelle ou une impulsion ne peut pas survivre a
+    /// un changement de zone et ne doit jamais garder l'input/camera bloque.
+    /// </summary>
+    public void ClearTransientLocksForSceneTransition()
+    {
+        ResolveReferences();
+
+        // Une scene dechargee peut avoir desactive le moteur UCC ou son handler
+        // (cinematique, interaction, transition). Le personnage persiste entre
+        // les scenes : remettre explicitement sa pile de locomotion en marche
+        // avant de lui rendre le controle.
+        if (locomotion != null)
+        {
+            locomotion.enabled = true;
+        }
+
+        if (locomotionHandler != null)
+        {
+            locomotionHandler.enabled = true;
+        }
+
+        if (animator != null)
+        {
+            animator.enabled = true;
+            // UCC recoit son delta de root motion via AnimatorMonitor.
+            // Pendant l'overlay de transition il n'y a parfois pas de camera
+            // de jeu active : le culling ne doit jamais interrompre ce flux.
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        }
+
+        if (animatorMonitor != null)
+        {
+            animatorMonitor.enabled = true;
+        }
+
+        CancelObstacleTraversal();
+
+        if (externalImpulseLockRoutine != null)
+        {
+            StopCoroutine(externalImpulseLockRoutine);
+            externalImpulseLockRoutine = null;
+        }
+
+        RestoreAbilitiesAfterScriptedTraversal();
+        RestoreGravityAfterScriptedTraversal();
+        externalLockCount = 0;
+        scriptedTraversalLockCount = 0;
+        // Le portail peut avoir decharge l'objet qui possedait le verrou avant
+        // qu'il ait pu le liberer. Rejouer explicitement l'evenement est
+        // idempotent et garantit que UCC accepte a nouveau l'input local.
+        EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", true);
+
+        externalLockInputDisabled = false;
+        scriptedTraversalInputDisabled = false;
+        ConfigureRigidbody();
+        RefreshRootMotionLocomotionSettings();
+        ForceZeroInput();
+        AttachLookSourceIfNeeded(true);
+    }
+
     public void ApplyScriptedTraversalPose(Vector3 position, Quaternion rotation)
     {
         ResolveReferences();
@@ -523,6 +588,37 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         lastPosition = position;
         hasLastPosition = true;
         ForceZeroInput();
+        return true;
+    }
+
+    /// <summary>
+    /// Teleporte le personnage lors d'un changement de zone. Contrairement a
+    /// un simple correctif de position, cette operation avertit UCC que
+    /// l'Animator, les capacites et la camera doivent etre synchronises
+    /// immediatement avec la nouvelle pose.
+    /// </summary>
+    public bool TeleportForSceneTransition(Vector3 position, Quaternion rotation)
+    {
+        ResolveReferences();
+        if (locomotion == null)
+        {
+            return false;
+        }
+
+        // La scene precedente peut avoir desactive provisoirement le handler.
+        // La remise en etat doit preceder le test et le snap UCC.
+        ClearTransientLocksForSceneTransition();
+        if (!IsDriving)
+        {
+            return false;
+        }
+
+        locomotion.SetPositionAndRotation(position, rotation, snapAnimator: true, stopAllAbilities: true);
+        Physics.SyncTransforms();
+        lastPosition = position;
+        hasLastPosition = true;
+        ForceZeroInput();
+        AttachLookSourceIfNeeded(true);
         return true;
     }
 
@@ -1490,6 +1586,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (animator != null && preserveAnimatorRootMotion)
         {
             animator.applyRootMotion = true;
+            // Le joueur persiste pendant les chargements additifs. Le root
+            // motion doit continuer a etre produit meme lorsqu'aucune camera
+            // ne le rend pendant quelques images.
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         }
     }
 

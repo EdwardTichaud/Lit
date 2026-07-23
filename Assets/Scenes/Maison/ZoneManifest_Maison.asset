@@ -15,14 +15,22 @@ MonoBehaviour:
   primaryScene: {fileID: 102900000, guid: 4af4dc28b6ff9a84cba661cd63e3fbbc, type: 3}
   loadingScenes:
   - {fileID: 102900000, guid: 58f3766058d9c2e458128a24d29a2269, type: 3}
-  postLoadingScenes:
+  - {fileID: 102900000, guid: c95bd34d79e1d184eb6ae8031a653aab, type: 3}
+  - {fileID: 102900000, guid: 1a8ff779189ab844e93214c342fdc2c1, type: 3}
+  - {fileID: 102900000, guid: 405309556a65f6744918b2c54b44e578, type: 3}
+  - {fileID: 102900000, guid: 40f2412674e008345b1737bf7218be04, type: 3}
   - {fileID: 102900000, guid: 7a30aa2a39c80674a82941e3c44b214f, type: 3}
   - {fileID: 102900000, guid: d9c32c1fbc03d954b8a40c20470baade, type: 3}
+  postLoadingScenes: []
   primarySceneName: Maison_Critical
   loadingMessage: On est jamais mieux que chez soi...
   loadingSceneNames:
-  - Maison_Loading_Environment_Near
-  postLoadingSceneNames:
+  - Maison_Loading_Environment_Near_1
+  - Maison_Loading_Environment_Near_2
+  - Maison_Loading_Environment_Near_3
+  - Maison_Loading_Environment_Near_4
+  - Maison_Loading_Interactives
   - Maison_PostLoading_Environment_Far
   - Maison_PostLoading_NPCs_VFX
+  postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1
