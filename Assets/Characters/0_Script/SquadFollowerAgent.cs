@@ -6,6 +6,7 @@ using UnityEngine.AI;
 public class SquadFollowerAgent : MonoBehaviour
 {
     private const float DefaultNavMeshSampleDistance = 1.5f;
+    private const string RuntimeAgentName = "__SquadFollowerNavAgent";
 
     [Header("NavMesh")]
     [SerializeField, Tooltip("NavMeshAgent utilise pour le pathfinding.")]
@@ -77,7 +78,7 @@ public class SquadFollowerAgent : MonoBehaviour
                 return;
             }
 
-            agent = gameObject.AddComponent<NavMeshAgent>();
+            agent = CreateRuntimeAgent();
         }
     }
 
@@ -88,6 +89,37 @@ public class SquadFollowerAgent : MonoBehaviour
             out _,
             Mathf.Max(0.05f, sampleDistance),
             NavMesh.AllAreas);
+    }
+
+    private NavMeshAgent CreateRuntimeAgent()
+    {
+        if (!NavMesh.SamplePosition(transform.position, out NavMeshHit hit, navMeshSampleDistance, NavMesh.AllAreas))
+        {
+            return null;
+        }
+
+        Transform agentTransform = transform.Find(RuntimeAgentName);
+        GameObject agentHost;
+        if (agentTransform != null)
+        {
+            agentHost = agentTransform.gameObject;
+            agentHost.transform.position = hit.position;
+        }
+        else
+        {
+            agentHost = new GameObject(RuntimeAgentName);
+            agentHost.transform.SetParent(transform, true);
+            agentHost.transform.position = hit.position;
+            agentHost.transform.rotation = transform.rotation;
+        }
+
+        NavMeshAgent runtimeAgent = agentHost.GetComponent<NavMeshAgent>();
+        if (runtimeAgent == null)
+        {
+            runtimeAgent = agentHost.AddComponent<NavMeshAgent>();
+        }
+
+        return runtimeAgent;
     }
 
     private void ConfigureAgent()

@@ -64,6 +64,9 @@ La direction d'orbite joueur-vers-ennemi possede son propre lissage
 `orbitDirectionSharpness`, distinct du lissage de position/rotation, et une
 vitesse angulaire maximale `maximumOrbitDegreesPerSecond` pour absorber les
 demi-tours brusques pendant un lock sans retournement instantane.
+Le point de focus joueur/ennemi est lui aussi lisse et borne par
+`focusPointSharpness` et `maximumFocusPointMetersPerSecond`, afin qu'un hit ou
+un deplacement ponctuel du point de lock ne secoue pas brutalement la camera.
 
 Le lock du combat temps reel commence une seule fois quand un ennemi entre dans
 le `VisionField` de Lucian. Il se termine automatiquement hors de la distance de
@@ -72,7 +75,8 @@ manuellement a portee. `SwitchEnemyLock`, lie a `Gamepad/dpad/left`, change de
 cible hors palette. `SquadManager` conserve le panneau d'escouade si aucun lock
 manuel n'est possible. `RealTimeCombatInput` gere reactions, palette et
 changement de cible. Les maps `Player` et `Camera` restent actives pour le
-deplacement libre.
+deplacement libre. Pendant un lock actif, `WestButton` est reserve a
+`BasicAttack` : l'action `Player/ToggleTorch` l'ignore.
 
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas

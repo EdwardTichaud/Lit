@@ -18,6 +18,10 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
     [SerializeField, Min(0f)] private float maximumPositionMetersPerSecond = 12f;
     [SerializeField, Range(1f, 720f)] private float maximumRotationDegreesPerSecond = 180f;
     [SerializeField, Min(0f)] private float maximumFieldOfViewDegreesPerSecond = 35f;
+    [SerializeField, Min(0f), Tooltip("Lissage du point regarde pour filtrer les secousses d'animation de la cible.")]
+    private float focusPointSharpness = 16f;
+    [SerializeField, Min(0f), Tooltip("Vitesse maximale de deplacement du point regarde.")]
+    private float maximumFocusPointMetersPerSecond = 12f;
 
     [Header("Player Framing")]
     [SerializeField, Range(0.1f, 0.95f)] private float playerViewportHeight = 0.72f;
@@ -43,6 +47,8 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
     private float originalFieldOfView;
     private Vector3 smoothedFlatDirection;
     private bool hasSmoothedFlatDirection;
+    private Vector3 smoothedFocusPoint;
+    private bool hasSmoothedFocusPoint;
     private Transform framedPlayer;
     private Renderer[] playerRenderers;
     // A dense environment can produce more than 16 hits. A truncated non-alloc query
@@ -96,7 +102,8 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
         UpdateSmoothedOrbitDirection(flatDirection);
         Vector3 desiredPosition = player.position + Quaternion.LookRotation(smoothedFlatDirection, Vector3.up) * playerOffset;
-        Vector3 lookPoint = Vector3.Lerp(player.position + Vector3.up * 1.25f, enemy.position + Vector3.up * 1.1f, enemyFocusBias);
+        Vector3 rawLookPoint = Vector3.Lerp(player.position + Vector3.up * 1.25f, enemy.position + Vector3.up * 1.1f, enemyFocusBias);
+        Vector3 lookPoint = UpdateSmoothedFocusPoint(rawLookPoint);
         float desiredFieldOfView = lockedFieldOfView;
         ApplyPlayerFraming(ref desiredPosition, lookPoint, player, ref desiredFieldOfView);
         desiredPosition = ResolveObstacleFreePosition(lookPoint, desiredPosition, player, manager.LockedEnemy.transform);
@@ -142,6 +149,24 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             targetDirection,
             Mathf.Min(desiredDegrees, maximumDegrees) * Mathf.Deg2Rad,
             0f).normalized;
+    }
+
+    private Vector3 UpdateSmoothedFocusPoint(Vector3 targetPoint)
+    {
+        if (!hasSmoothedFocusPoint)
+        {
+            smoothedFocusPoint = targetPoint;
+            hasSmoothedFocusPoint = true;
+            return smoothedFocusPoint;
+        }
+
+        float blend = 1f - Mathf.Exp(-focusPointSharpness * Time.unscaledDeltaTime);
+        Vector3 blendedPoint = Vector3.Lerp(smoothedFocusPoint, targetPoint, blend);
+        float maximumStep = maximumFocusPointMetersPerSecond * Time.unscaledDeltaTime;
+        smoothedFocusPoint = maximumFocusPointMetersPerSecond > 0f
+            ? Vector3.MoveTowards(smoothedFocusPoint, blendedPoint, maximumStep)
+            : blendedPoint;
+        return smoothedFocusPoint;
     }
 
     private void ApplyPlayerFraming(ref Vector3 cameraPosition, Vector3 lookPoint, Transform player, ref float desiredFieldOfView)
@@ -323,6 +348,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
         active = true;
         hasSmoothedFlatDirection = false;
+        hasSmoothedFocusPoint = false;
         hasResolvedObstacleDistance = false;
     }
 
@@ -341,6 +367,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         if (controlledCamera != null) controlledCamera.fieldOfView = originalFieldOfView;
         active = false;
         hasSmoothedFlatDirection = false;
+        hasSmoothedFocusPoint = false;
         hasResolvedObstacleDistance = false;
         framedPlayer = null;
         playerRenderers = null;

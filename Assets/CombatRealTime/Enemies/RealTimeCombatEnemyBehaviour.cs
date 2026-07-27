@@ -8,6 +8,10 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 {
     [SerializeField] private RealTimeCombatEnemy enemy;
     [SerializeField] private NavMeshAgent navigationAgent;
+    [SerializeField, Min(0.05f), Tooltip("Distance de recherche pour recaler l'agent sur le NavMesh avant activation.")]
+    private float navMeshSampleDistance = 1.5f;
+    [SerializeField, Min(0.02f), Tooltip("Delai entre deux tentatives de recalage quand le NavMesh n'est pas encore pret.")]
+    private float navMeshRetryInterval = 0.25f;
     [SerializeField, Tooltip("Point de retour optionnel. La position initiale est utilisee s'il est vide.")]
     private Transform patrolPoint;
     [SerializeField, Min(0.1f)] private float meleeAttackDistance = 2.6f;
@@ -42,6 +46,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private float lastSeenPlayerAt;
     private float searchEndsAt;
     private float normalVisionDistance;
+    private float nextNavMeshRetryTime;
     private Vector3 lastKnownPlayerPosition;
 
     public event Action<bool> AttackModeChanged;
@@ -82,6 +87,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         if (navigationAgent != null)
         {
             navigationAgent.updateRotation = false;
+            TryPrepareNavigationAgent();
         }
     }
 
@@ -96,6 +102,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         {
             enemy.LightAbsorbed += OnLightAbsorbed;
         }
+
+        TryPrepareNavigationAgent();
     }
 
     private void Update()
@@ -344,10 +352,15 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void MoveTowards(Vector3 destination, float destinationStoppingDistance)
     {
-        if (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh)
+        if (TryPrepareNavigationAgent())
         {
             navigationAgent.isStopped = false;
             navigationAgent.stoppingDistance = destinationStoppingDistance;
+            if (NavMesh.SamplePosition(destination, out NavMeshHit destinationHit, navMeshSampleDistance, navigationAgent.areaMask))
+            {
+                destination = destinationHit.position;
+            }
+
             navigationAgent.SetDestination(destination);
             return;
         }
@@ -369,6 +382,57 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             navigationAgent.isStopped = true;
             navigationAgent.ResetPath();
         }
+    }
+
+    private bool TryPrepareNavigationAgent()
+    {
+        if (navigationAgent == null || !navigationAgent.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        navigationAgent.updateRotation = false;
+        if (navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh)
+        {
+            return true;
+        }
+
+        if (Time.time < nextNavMeshRetryTime)
+        {
+            return false;
+        }
+
+        int areaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
+        if (!NavMesh.SamplePosition(transform.position, out NavMeshHit hit, navMeshSampleDistance, areaMask))
+        {
+            if (navigationAgent.enabled)
+            {
+                navigationAgent.enabled = false;
+            }
+
+            nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+            return false;
+        }
+
+        transform.position = hit.position;
+        if (!navigationAgent.enabled)
+        {
+            navigationAgent.enabled = true;
+        }
+
+        if (navigationAgent.isOnNavMesh)
+        {
+            return true;
+        }
+
+        if (navigationAgent.Warp(hit.position))
+        {
+            return navigationAgent.isOnNavMesh;
+        }
+
+        navigationAgent.enabled = false;
+        nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+        return false;
     }
 
     private void FacePlayer()

@@ -111,7 +111,16 @@ SkillSO sont masques et exclus de la navigation de la roue.
 Pendant un lock, `WestButton` ajoute le prochain basic skill a un buffer de
 combo : les clips sont joues dans l'ordre de la liste puis bouclent. Les Basic
 Skills reutilisent les memes Animation Events de VFX et de hit que les skills
-de la roue.
+de la roue. Une pause de plus de `0.85 s` entre deux pressions reprend le combo
+au premier basic skill. Une seule attaque peut etre bufferisee derriere celle
+en cours; les pressions excedentaires sont ignorees. `ToggleTorch` ignore
+`WestButton` tant qu'une cible est verrouillee.
+Chaque `SkillSO`, donc aussi chaque `BasicSkillsSO`, expose une distance
+horizontale minimale et maximale de hit. `HitEnemy` ne blesse la cible qu'a la
+frame de son Animation Event si Lucian est dans cette plage autour de
+`EnemyLockPoint`. Les VFX `DirectOnTarget` et `Projectile` sont soumis a la
+meme verification; les cues `PlayerHand` restent joues pour la presentation du
+caster.
 `Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et porte
 le tag `RealTimeCombatRootMotion`, afin que son retour a locomotion ne laisse
 pas une intention UCC residuelle.
@@ -135,6 +144,10 @@ assigner dans son Inspector, sans roue. Ses clips peuvent utiliser le meme
 `HitPlayer` pour synchroniser animation, VFX et impact sur Lucian. La portee,
 le multiplicateur et les reactions ennemies sont portes par le `SkillSO`; les
 degats finaux restent calcules par le ledger de lumiere.
+Les ennemis temps reel ne dependent pas de transitions implicites de leur
+Animator : un `Hit` suspend temporairement son root motion puis revient
+doucement a la state `Idle` configuree, et `EndEnemyAttack` ramene aussi le
+skill ennemi termine a cette state.
 Le `Bow` deja attache a la main de Lucian est pilote strictement par les
 Animation Events `ShowBow` et `HideBow` des clips; les VFX optionnels associes
 sont configures sur le composant `PlayerBow` du modele Lucian.

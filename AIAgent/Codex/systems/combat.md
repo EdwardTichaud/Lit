@@ -72,7 +72,18 @@ navigation. Le loadout de `SkillsManager` n'est pas encore inclus dans
 Quand le lock est actif, `WestButton` (ou `Q`) ajoute le prochain basic skill au
 buffer de combo. Les clips sont joues dans l'ordre de la liste puis bouclent sur
 le premier; cinq skills produisent donc la sequence 1-2-3-4-5-1-2-3 apres huit
-pressions. Les Basic Skills reutilisent les Animation Events de `SkillSO`.
+pressions. Une pause superieure a `basicComboResetDelaySeconds` (0.85 s par
+defaut) reprend la sequence au premier skill. Seul un skill peut etre garde en
+attente derriere l'animation en cours (`maximumBufferedBasicSkills`), afin que
+les pressions tres rapides ne produisent pas une longue file d'animations. Les
+Basic Skills reutilisent les Animation Events de `SkillSO`.
+`SkillSO` porte aussi `minimumHitDistance` et `maximumHitDistance`. Ces champs
+sont herites par `BasicSkillsSO`; lors de `HitEnemy`, le manager compare la
+distance horizontale actuelle entre Lucian et `EnemyLockPoint` a cette plage.
+Hors plage, aucun degat ni animation `Hit` ennemi n'est applique.
+Les cues `DirectOnTarget` et `Projectile` sont aussi ignores hors de cette
+plage; un cue `PlayerHand` reste autorise car il presente le caster, pas la
+cible.
 Les clips peuvent appeler `Dash` sur `RealTimeCombatAnimationEvents` : la force
 est calculee depuis le caster vers `EnemyLockPoint` plus
 `dashOvershootDistance`, afin de traverser la cible. `StopDash` applique ensuite
@@ -119,6 +130,11 @@ Animator `Hit` (nom reglable sur `RealTimeCombatEnemy`).
 `HitPlayer` resout l'impact du `SkillSO` actif via `RealTimeCombatManager`.
 La portee, le multiplicateur et les reactions ennemies sont configures sur ce
 `SkillSO`; le montant final reste celui du ledger de lumiere.
+Les states ennemies sont terminees explicitement : l'Animation Event
+`EndEnemyAttack` finalise le ledger puis ramene l'ennemi a sa state `Idle`
+configuree. `RealTimeCombatEnemy` coupe le root motion seulement pendant `Hit`,
+puis relache cette state a la duree du clip pour eviter un ennemi bloque ou
+decale du sol si son Animator ne contient pas de transition de sortie.
 Le `Bow` existant sous le modele de Lucian est masque par defaut. Les Animation
 Events `ShowBow` et `HideBow` de `RealTimeCombatAnimationEvents` sont la seule
 source de son affichage et de son masquage. Les VFX d'apparition/disparition

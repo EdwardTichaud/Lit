@@ -1820,6 +1820,12 @@ public class SquadManager : MonoBehaviour
 
     private void OnToggleTorchPerformed(InputAction.CallbackContext context)
     {
+        RealTimeCombatManager combatManager = RealTimeCombatManager.Instance;
+        if (combatManager != null && combatManager.IsCombatActive && combatManager.LockedEnemy != null)
+        {
+            return;
+        }
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             return;

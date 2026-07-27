@@ -66,7 +66,9 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
     public void EndEnemyAttack()
     {
-        RealTimeCombatManager.Instance?.CompleteEnemyAttack(ResolveEnemy());
+        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
+        RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
+        ResolveEnemySkills()?.ReturnToIdle();
     }
 
     /// <summary>
@@ -83,9 +85,18 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             return;
         }
 
+        bool canReachTarget = RealTimeCombatManager.Instance != null &&
+            RealTimeCombatManager.Instance.IsLockedEnemyWithinSkillHitRange(skill);
+
         for (int i = 0; i < skill.VfxCues.Count; i++)
         {
-            PlaySkillVfxCue(skill.VfxCues[i], target);
+            SkillVfxCue cue = skill.VfxCues[i];
+            if (cue != null && cue.delivery != SkillVfxDelivery.PlayerHand && !canReachTarget)
+            {
+                continue;
+            }
+
+            PlaySkillVfxCue(cue, target);
         }
     }
 
@@ -103,7 +114,15 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             return;
         }
 
-        PlaySkillVfxCue(skill.VfxCues[cueIndex], target);
+        SkillVfxCue cue = skill.VfxCues[cueIndex];
+        bool canReachTarget = RealTimeCombatManager.Instance != null &&
+            RealTimeCombatManager.Instance.IsLockedEnemyWithinSkillHitRange(skill);
+        if (cue == null || (cue.delivery != SkillVfxDelivery.PlayerHand && !canReachTarget))
+        {
+            return;
+        }
+
+        PlaySkillVfxCue(cue, target);
     }
 
     /// <summary>

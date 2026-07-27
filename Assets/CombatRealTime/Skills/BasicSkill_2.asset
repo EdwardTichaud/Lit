@@ -16,8 +16,10 @@ MonoBehaviour:
   description: 
   icon: {fileID: 0}
   animationClip: {fileID: 7400000, guid: f37f637f20cc5124fbc4e0b68385c979, type: 2}
-  animatorState: 
+  animatorState: Base Layer.BasicSkill_2
   damages: 10
+  minimumHitDistance: 0
+  maximumHitDistance: 5
   vfxCues:
   - displayName: Impact
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}

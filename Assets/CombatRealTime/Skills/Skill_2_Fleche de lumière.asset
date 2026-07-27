@@ -18,14 +18,23 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: caf4ceb2d13b8e444981a4e255c3b4e8, type: 2}
   animatorState: "Base Layer.Skill_2_Fl\xE8che de lumi\xE8re"
   damages: 10
+  minimumHitDistance: 10
+  maximumHitDistance: 30
   vfxCues:
   - displayName: Shoot
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
+    audioClip: {fileID: 0}
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
   - displayName: Eclair
     prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
+    audioClip: {fileID: 0}
     delivery: 0
     holdAtCasterSeconds: 0
-  travelDurationSeconds: 0.25
+    travelDurationSeconds: 0.25
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000
+  requireAllEnemyReactions: 0
+  enemyAttackSfx: {fileID: 0}

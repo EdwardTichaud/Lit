@@ -107,6 +107,8 @@ public sealed class EnemySkills : MonoBehaviour
             return false;
         }
 
+        enemy?.CancelHitRecovery();
+
         string stateName = string.IsNullOrWhiteSpace(activeSkill.AnimatorState)
             ? activeSkill.AnimationClip.name
             : activeSkill.AnimatorState;
@@ -124,6 +126,12 @@ public sealed class EnemySkills : MonoBehaviour
 
         animator.CrossFade(stateHash, 0.08f, 0);
         return true;
+    }
+
+    public void ReturnToIdle()
+    {
+        ResolveReferences();
+        enemy?.ReturnToIdleAnimation();
     }
 
     public void InstantiateSkillVFX()

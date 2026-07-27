@@ -18,9 +18,17 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: 17651a47717f666458106120728c7c07, type: 2}
   animatorState: Base Layer.AnimationClip_Skill_Eclair
   damages: 10
+  minimumHitDistance: 0
+  maximumHitDistance: 5
   vfxCues:
   - displayName: Impact
     prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
+    audioClip: {fileID: 0}
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000
+  requireAllEnemyReactions: 0
+  enemyAttackSfx: {fileID: 0}

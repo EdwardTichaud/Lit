@@ -13,6 +13,10 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     [SerializeField] private SkillWheel skillWheel;
     [SerializeField, Range(0f, 1f)] private float skillWheelVisibleAlpha = 0.4f;
     [SerializeField] private CanvasGroup skillWheelCanvasGroup;
+    [SerializeField, Min(0f), Tooltip("Delai maximal entre deux pressions avant de reprendre le combo d'attaques basiques au premier skill.")]
+    private float basicComboResetDelaySeconds = 0.85f;
+    [SerializeField, Min(1), Tooltip("Nombre maximal d'attaques basiques en attente derriere l'animation en cours.")]
+    private int maximumBufferedBasicSkills = 1;
 
     private InputActionMap actionMap;
     private InputAction dodgeAction;
@@ -27,6 +31,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private int selectedSlot;
     private readonly Queue<BasicSkillsSO> basicSkillQueue = new Queue<BasicSkillsSO>();
     private Coroutine basicComboRoutine;
+    private float lastBasicAttackQueuedAt = float.NegativeInfinity;
 
     public int SelectedSlot => selectedSlot;
 
@@ -155,11 +160,28 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
 
         SkillsManager skillsManager = FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include);
-        if (skillsManager == null || !skillsManager.TryReserveNextBasicSkill(out BasicSkillsSO skill))
+        if (skillsManager == null)
         {
             return;
         }
 
+        if (basicSkillQueue.Count >= maximumBufferedBasicSkills)
+        {
+            return;
+        }
+
+        float currentTime = Time.unscaledTime;
+        if (currentTime - lastBasicAttackQueuedAt > basicComboResetDelaySeconds)
+        {
+            skillsManager.ResetBasicSkillCombo();
+        }
+
+        if (!skillsManager.TryReserveNextBasicSkill(out BasicSkillsSO skill))
+        {
+            return;
+        }
+
+        lastBasicAttackQueuedAt = currentTime;
         basicSkillQueue.Enqueue(skill);
         if (basicComboRoutine == null)
         {
@@ -281,6 +303,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private void ClearBasicSkillCombo()
     {
         basicSkillQueue.Clear();
+        lastBasicAttackQueuedAt = float.NegativeInfinity;
         if (basicComboRoutine != null)
         {
             StopCoroutine(basicComboRoutine);

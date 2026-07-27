@@ -33,6 +33,11 @@ public class SkillSO : ScriptableObject
     [Tooltip("Chemin complet de la state Animator a jouer. Laisser vide pour utiliser le nom du clip.")]
     public string animatorState;
     [Min(0f)] public float damages;
+    [Header("Hit Range")]
+    [Min(0f), Tooltip("Distance horizontale minimale entre le joueur et EnemyLockPoint pour appliquer HitEnemy.")]
+    public float minimumHitDistance;
+    [Min(0.01f), Tooltip("Distance horizontale maximale entre le joueur et EnemyLockPoint pour appliquer HitEnemy.")]
+    public float maximumHitDistance = 2.5f;
 
     [Header("VFX")]
     public List<SkillVfxCue> vfxCues = new List<SkillVfxCue>();
@@ -49,6 +54,8 @@ public class SkillSO : ScriptableObject
     public AnimationClip AnimationClip => animationClip;
     public string AnimatorState => animatorState;
     public float Damages => damages;
+    public float MinimumHitDistance => minimumHitDistance;
+    public float MaximumHitDistance => Mathf.Max(minimumHitDistance, maximumHitDistance);
     public IReadOnlyList<SkillVfxCue> VfxCues => vfxCues;
     public RealTimeCombatRange EnemyRange => enemyRange;
     public float EnemyDamageMultiplier => enemyDamageMultiplier;
@@ -59,5 +66,10 @@ public class SkillSO : ScriptableObject
     public bool AcceptsEnemyReaction(RealTimeCombatReaction reaction)
     {
         return acceptedEnemyReactions != null && acceptedEnemyReactions.Contains(reaction);
+    }
+
+    public bool IsWithinHitRange(float horizontalDistance)
+    {
+        return horizontalDistance >= MinimumHitDistance && horizontalDistance <= MaximumHitDistance;
     }
 }

@@ -318,6 +318,8 @@ public class NetcodeBootstrap : MonoBehaviour
         SetPrivateField(manager, "m_ShuttingDown", true);
         ClearPrivateField(manager, "<SpawnManager>k__BackingField");
         ClearPrivateField(manager, "<SceneManager>k__BackingField");
+        ClearPrivateField(manager, "<NetworkTimeSystem>k__BackingField");
+        ClearPrivateField(manager, "<NetworkTickSystem>k__BackingField");
     }
 
     private static void ClearPrivateField(object target, string fieldName)

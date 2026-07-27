@@ -15,6 +15,10 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     [SerializeField] private CombatLockIndicator lockIndicator;
     [SerializeField] private string hitAnimatorState = "Hit";
     [SerializeField, Min(0f)] private float hitAnimationTransitionSeconds = 0.06f;
+    [SerializeField] private string idleAnimatorState = "Idle";
+    [SerializeField, Range(0.5f, 1f), Tooltip("Part de l'animation Hit jouee avant le retour fluide vers Idle.")]
+    private float hitRecoveryNormalizedTime = 0.9f;
+    [SerializeField, Min(0f)] private float hitRecoveryTransitionSeconds = 0.1f;
     [SerializeField] private string deathAnimatorState = "Death";
     [SerializeField, Min(0f)] private float deathAnimationTransitionSeconds = 0.08f;
     [SerializeField, Tooltip("Point vise par la camera de lock. L'enfant EnemyLockPoint est resolu automatiquement.")]
@@ -27,6 +31,8 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     private SkillSO plannedRetaliationSkill;
     private float retaliationReadyAt;
     private bool deathAnimationPlayed;
+    private Coroutine hitRecoveryRoutine;
+    private bool restoreRootMotionAfterHit;
 
     public event Action<int> LightAbsorbed;
     public event Action<SkillSO, int> RetaliationStarted;
@@ -80,6 +86,11 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         ResolveLockPoint();
+    }
+
+    private void OnDisable()
+    {
+        CancelHitRecovery();
     }
 
 #if UNITY_EDITOR
@@ -210,7 +221,30 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             return;
         }
 
+        if (hitRecoveryRoutine != null)
+        {
+            StopCoroutine(hitRecoveryRoutine);
+        }
+
+        if (!restoreRootMotionAfterHit)
+        {
+            restoreRootMotionAfterHit = animator.applyRootMotion;
+            animator.applyRootMotion = false;
+        }
+
         animator.CrossFade(hitAnimatorState, hitAnimationTransitionSeconds, 0);
+        hitRecoveryRoutine = StartCoroutine(RecoverFromHit());
+    }
+
+    public void CancelHitRecovery()
+    {
+        if (hitRecoveryRoutine != null)
+        {
+            StopCoroutine(hitRecoveryRoutine);
+            hitRecoveryRoutine = null;
+        }
+
+        RestoreRootMotionAfterHit();
     }
 
     public void PlayDeathAnimation()
@@ -221,7 +255,65 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         deathAnimationPlayed = true;
+        CancelHitRecovery();
         animator.CrossFade(deathAnimatorState, deathAnimationTransitionSeconds, 0);
+    }
+
+    public void ReturnToIdleAnimation()
+    {
+        if (deathAnimationPlayed || (health != null && health.IsDead) || animator == null || string.IsNullOrWhiteSpace(idleAnimatorState))
+        {
+            return;
+        }
+
+        animator.CrossFade(idleAnimatorState, hitRecoveryTransitionSeconds, 0);
+    }
+
+    private System.Collections.IEnumerator RecoverFromHit()
+    {
+        yield return null;
+
+        if (animator == null || deathAnimationPlayed)
+        {
+            RestoreRootMotionAfterHit();
+            hitRecoveryRoutine = null;
+            yield break;
+        }
+
+        AnimatorStateInfo hitState = animator.GetCurrentAnimatorStateInfo(0);
+        int hitStateHash = Animator.StringToHash(hitAnimatorState);
+        if (hitState.shortNameHash != hitStateHash)
+        {
+            RestoreRootMotionAfterHit();
+            hitRecoveryRoutine = null;
+            yield break;
+        }
+
+        float animationSpeed = Mathf.Max(0.01f, Mathf.Abs(animator.speed * hitState.speed));
+        float waitSeconds = Mathf.Max(0.01f, hitState.length * hitRecoveryNormalizedTime / animationSpeed);
+        yield return new WaitForSeconds(waitSeconds);
+
+        if (animator != null && !deathAnimationPlayed &&
+            animator.GetCurrentAnimatorStateInfo(0).shortNameHash == hitStateHash &&
+            !string.IsNullOrWhiteSpace(idleAnimatorState))
+        {
+            ReturnToIdleAnimation();
+        }
+
+        yield return null;
+        RestoreRootMotionAfterHit();
+        hitRecoveryRoutine = null;
+    }
+
+    private void RestoreRootMotionAfterHit()
+    {
+        if (!restoreRootMotionAfterHit || animator == null)
+        {
+            return;
+        }
+
+        animator.applyRootMotion = true;
+        restoreRootMotionAfterHit = false;
     }
 
     private Transform ResolveLockPoint()

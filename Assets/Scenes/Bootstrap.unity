@@ -221,7 +221,7 @@ RectTransform:
   m_GameObject: {fileID: 3821463}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5700616, y: 1.5700616, z: 1.5700616}
+  m_LocalScale: {x: 1.6066561, y: 1.6066561, z: 1.6066561}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1889583852}
@@ -43400,7 +43400,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.38061842, y: 0.38061842, z: 0.38061842}
+  m_LocalScale: {x: 0.37684262, y: 0.37684262, z: 0.37684262}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -60842,9 +60842,9 @@ MonoBehaviour:
   loadingSceneStableFrames: 12
   loadingSceneMaximumStableFrameSeconds: 0.05
   editorStartGameplayDirectly: 1
-  editorStartManifest: {fileID: 11400000, guid: 62b4414d370e4c5c9be782b4f0d96f1a, type: 2}
+  editorStartManifest: {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
   editorStartSceneName: 
-  editorStartSpawnId: FallingStartPoint
+  editorStartSpawnId: 
 --- !u!1 &1437226847
 GameObject:
   m_ObjectHideFlags: 0

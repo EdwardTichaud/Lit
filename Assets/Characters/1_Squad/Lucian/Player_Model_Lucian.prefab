@@ -2583,6 +2583,7 @@ MonoBehaviour:
   overrideExistingLocomotionMaterial: 0
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
+  logDistrictInputDiagnostics: 0
 --- !u!114 &9211136743502433845
 MonoBehaviour:
   m_ObjectHideFlags: 0

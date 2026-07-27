@@ -18,6 +18,8 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: 5c02e50f216eb1445a2dccf169ba0c00, type: 2}
   animatorState: Base Layer.Skill_3_Entaille
   damages: 20
+  minimumHitDistance: 0
+  maximumHitDistance: 10
   vfxCues:
   - displayName: Shoot
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
@@ -31,3 +33,8 @@ MonoBehaviour:
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000
+  requireAllEnemyReactions: 0
+  enemyAttackSfx: {fileID: 0}

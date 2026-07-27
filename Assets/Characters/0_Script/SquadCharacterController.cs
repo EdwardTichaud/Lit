@@ -161,6 +161,10 @@ public partial class SquadCharacterController : MonoBehaviour
     private static readonly List<SquadCharacterController> registeredCharacters = new List<SquadCharacterController>();
 
 #if UNITY_EDITOR
+    [Header("Editor Diagnostics")]
+    [SerializeField, Tooltip("Active les traces DistrictControl verbeuses pendant les tests dans l'editeur.")]
+    private bool logDistrictInputDiagnostics;
+
     private static float nextDistrictMoveTraceTime;
     private static float nextDistrictStopTraceTime;
 #endif
@@ -2380,6 +2384,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private void TraceDistrictMoveIntent(Vector2 input)
     {
         if (!Application.isPlaying ||
+            !logDistrictInputDiagnostics ||
             input.sqrMagnitude < 0.01f ||
             !UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("District_1"))
         {
@@ -2403,6 +2408,7 @@ public partial class SquadCharacterController : MonoBehaviour
     private void TraceDistrictStopWhileInputHeld()
     {
         if (!Application.isPlaying ||
+            !logDistrictInputDiagnostics ||
             SquadManager.Instance == null ||
             SquadManager.Instance.currentCharacter != gameObject ||
             LocalInputRouter.MoveValue.sqrMagnitude < 0.01f ||

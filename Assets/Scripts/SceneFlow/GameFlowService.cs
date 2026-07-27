@@ -692,9 +692,13 @@ public sealed class GameFlowService : MonoBehaviour
             yield break;
         }
 
-        ZoneSpawnPoint spawn = string.IsNullOrWhiteSpace(spawnId)
-            ? (usePrimarySceneSpawnFallback ? ZoneSpawnPoint.FindFirstInScene(primarySceneName) : null)
-            : ZoneSpawnPoint.Find(spawnId);
+        bool hasRequestedSpawn = !string.IsNullOrWhiteSpace(spawnId);
+        ZoneSpawnPoint spawn = hasRequestedSpawn ? ZoneSpawnPoint.Find(spawnId) : null;
+        if (spawn == null && usePrimarySceneSpawnFallback)
+        {
+            spawn = ZoneSpawnPoint.FindFirstInScene(primarySceneName);
+        }
+
         if (spawn != null)
         {
             using (SceneTransitionProfiler.SquadPlacement.Auto())
@@ -710,7 +714,10 @@ public sealed class GameFlowService : MonoBehaviour
             yield break;
         }
 
-        Debug.LogWarning($"[GameFlow] No ZoneSpawnPoint with id '{spawnId}' was found in the loaded scenes. Squad position was left unchanged.");
+        if (hasRequestedSpawn)
+        {
+            Debug.LogWarning($"[GameFlow] No ZoneSpawnPoint with id '{spawnId}' was found in the loaded scenes. Squad position was left unchanged.");
+        }
     }
 
     private static void RestoreLocalGameplayInputAfterSessionStart()

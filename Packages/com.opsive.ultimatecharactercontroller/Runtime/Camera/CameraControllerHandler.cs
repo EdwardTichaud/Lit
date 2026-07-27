@@ -86,7 +86,7 @@ namespace Opsive.UltimateCharacterController.Camera
         /// </summary>
         protected virtual void Update()
         {
-            if (!m_AllowGameplayInput) {
+            if (!m_AllowGameplayInput || m_PlayerInput == null) {
                 return;
             }
 
@@ -102,6 +102,10 @@ namespace Opsive.UltimateCharacterController.Camera
         /// </summary>
         protected virtual void UpdateZoomInput()
         {
+            if (m_PlayerInput == null || m_CameraController == null) {
+                return;
+            }
+
             bool zoom;
             if (m_ContinuousZoom) {
                 zoom = m_PlayerInput.GetButton(m_ZoomInputName);
@@ -120,6 +124,10 @@ namespace Opsive.UltimateCharacterController.Camera
         /// </summary>
         protected virtual void UpdatePerspectiveInput()
         {
+            if (m_PlayerInput == null || m_CameraController == null) {
+                return;
+            }
+
             if (m_CameraController.CanChangePerspectives && m_PlayerInput.GetButtonDown(m_TogglePerspectiveInputName)) {
                 m_CameraController.TogglePerspective();
             }
@@ -131,6 +139,10 @@ namespace Opsive.UltimateCharacterController.Camera
         /// </summary>
         protected virtual void UpdateInputEvents()
         {
+            if (m_PlayerInput == null) {
+                return;
+            }
+
             if (m_ActiveInputList != null) {
                 for (int i = 0; i < m_ActiveInputList.Count; ++i) {
                     // Execute the event as soon as the input type becomes true.
@@ -150,6 +162,12 @@ namespace Opsive.UltimateCharacterController.Camera
         /// <param name="verticalMovement">-1 to 1 value specifying the amount of vertical movement.</param>
         public virtual void GetMoveInput(out float horizontalMovement, out float verticalMovement)
         {
+            if (m_PlayerInput == null) {
+                horizontalMovement = 0;
+                verticalMovement = 0;
+                return;
+            }
+
             var lookVector = m_PlayerInput.GetLookVector(true);
             horizontalMovement = lookVector.x;
             verticalMovement = lookVector.y;

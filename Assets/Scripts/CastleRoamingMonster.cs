@@ -356,6 +356,7 @@ public class CastleRoamingMonster : MonoBehaviour
 
         if (agent == null)
         {
+            transform.position = navPosition;
             agent = gameObject.AddComponent<NavMeshAgent>();
             if (disableAgentUntilNavMeshReady)
             {

@@ -126,6 +126,11 @@ public sealed class SkillsManager : MonoBehaviour
         return false;
     }
 
+    public void ResetBasicSkillCombo()
+    {
+        nextBasicSkillIndex = 0;
+    }
+
     public void SetAnimationEventSkill(SkillSO skill)
     {
         AnimationEventSkill = skill;

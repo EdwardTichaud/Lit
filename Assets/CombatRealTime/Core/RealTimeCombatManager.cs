@@ -447,7 +447,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public int ApplySkillDamageToLockedEnemy(SkillSO skill)
     {
         if (!combatActive || skill == null || lockedEnemy == null ||
-            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+            playerRoot == null || (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        {
+            return 0;
+        }
+
+        if (!IsLockedEnemyWithinSkillHitRange(skill))
         {
             return 0;
         }
@@ -460,6 +465,21 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         EvaluateCombatOutcome();
         return applied;
+    }
+
+    public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
+    {
+        if (!combatActive || skill == null || lockedEnemy == null || playerRoot == null ||
+            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        {
+            return false;
+        }
+
+        Vector3 playerPosition = playerRoot.position;
+        Vector3 targetPosition = lockedEnemy.LockPoint.position;
+        playerPosition.y = 0f;
+        targetPosition.y = 0f;
+        return skill.IsWithinHitRange(Vector3.Distance(playerPosition, targetPosition));
     }
 
     /// <summary>

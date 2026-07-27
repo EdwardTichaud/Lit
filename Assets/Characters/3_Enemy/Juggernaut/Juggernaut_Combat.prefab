@@ -215,8 +215,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e656d7bea194d128df1cce3a6d2689c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealth
-  maxHp: 30
-  currentHp: 30
+  maxHp: 300
+  currentHp: 300
   initializeEmptyHealthToMax: 1
 --- !u!114 &8526351049681770628
 MonoBehaviour:
@@ -295,7 +295,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6700739663857040827}
-  m_Enabled: 1
+  m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.7
   m_Speed: 3.6
@@ -324,6 +324,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemyBehaviour
   enemy: {fileID: 900000000000000002}
   navigationAgent: {fileID: 900000000000000015}
+  navMeshSampleDistance: 1.5
+  navMeshRetryInterval: 0.25
   patrolPoint: {fileID: 0}
   meleeAttackDistance: 2.6
   rangedAttackDistance: 8
