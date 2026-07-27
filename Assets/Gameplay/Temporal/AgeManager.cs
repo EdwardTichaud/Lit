@@ -310,7 +310,7 @@ public class AgeManager : MonoBehaviour
             for (int i = 0; i < ancientFlames.Count; i++)
             {
                 Flame flame = ancientFlames[i];
-                if (flame != null && flame.IsAncientFlame && flame.IsLit)
+                if (flame != null && flame.IsAncientFlame && flame.IsEffectivelyLit)
                 {
                     count++;
                 }

@@ -194,7 +194,7 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
         for (int i = 0; i < flames.Count; i++)
         {
             Flame flame = flames[i];
-            if (!IsUsableFlame(flame) || !flame.IsAncientFlame)
+            if (!IsUsableFlame(flame) || !flame.IsAncientFlame || !flame.IsEffectivelyLit)
             {
                 continue;
             }
@@ -253,7 +253,7 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
         for (int i = 0; i < flames.Count; i++)
         {
             Flame flame = flames[i];
-            if (!IsUsableFlame(flame) || flame == excludedFlame || flame.IsLit)
+            if (!IsUsableFlame(flame) || flame == excludedFlame || flame.IsEffectivelyLit)
             {
                 continue;
             }
@@ -281,7 +281,7 @@ public sealed class FlameGuidanceArcRenderer : MonoBehaviour
 
     private void UpdateArc(LineRenderer line, Flame source, Flame target, Color color)
     {
-        if (line == null || !IsUsableFlame(source) || !IsUsableFlame(target) || target.IsLit)
+        if (line == null || !IsUsableFlame(source) || !IsUsableFlame(target) || target.IsEffectivelyLit)
         {
             SetLineVisible(line, false);
             return;

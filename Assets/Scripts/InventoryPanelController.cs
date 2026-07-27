@@ -1716,7 +1716,7 @@ public class InventoryPanelController : MonoBehaviour
         {
             PlayUiActionAudio(ActionAudioCue.InventoryUse);
             ShowActionFeedback(item.GetUseSuccessMessage());
-            CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
+            CombatSessionManager.Instance?.NotifyInventoryItemUsed(controller);
             return true;
         }
 

@@ -8,9 +8,9 @@ public class TrouEtroit : MonoBehaviour
 {
     [Header("Skills")]
     [Tooltip("Skill utilise pour detecter le passage.")]
-    public Skill observateurSkill;
+    public StatsSO observateurSkill;
     [Tooltip("Skill requis pour l'utiliser.")]
-    public Skill saufConduitSkill;
+    public StatsSO saufConduitSkill;
     [Tooltip("Si true, le passage doit etre detecte avant interaction.")]
     public bool requireDetection = true;
 
@@ -644,7 +644,7 @@ public class TrouEtroit : MonoBehaviour
         return true;
     }
 
-    private bool TryCheckSkill(GameObject character, Skill skill)
+    private bool TryCheckSkill(GameObject character, StatsSO skill)
     {
         return SkillCheckSystem.TryCheck(character, skill, out _, out _, out _);
     }

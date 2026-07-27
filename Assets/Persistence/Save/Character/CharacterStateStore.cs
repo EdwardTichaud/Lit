@@ -19,8 +19,8 @@ public class CharacterStateStore : MonoBehaviour
     public List<CharacterData> allCharacters = new List<CharacterData>();
     [Tooltip("Liste d'assets Item disponibles.")]
     public List<Item> allItems = new List<Item>();
-    [Tooltip("Liste d'assets Skill disponibles.")]
-    public List<Skill> allSkills = new List<Skill>();
+    [Tooltip("Liste d'assets StatsSO disponibles.")]
+    public List<StatsSO> allSkills = new List<StatsSO>();
 
     [Header("Maison - Stockage")]
     [Tooltip("Coffre maison principal.")]
@@ -330,7 +330,7 @@ public class CharacterStateStore : MonoBehaviour
 
         Dictionary<string, CharacterData> characterLookup = BuildCharacterLookup(manager);
         Dictionary<string, Item> itemLookup = BuildItemLookup();
-        Dictionary<string, Skill> skillLookup = BuildSkillLookup();
+        Dictionary<string, StatsSO> skillLookup = BuildSkillLookup();
         Dictionary<string, Item> buildingLookup = BuildBuildingLookup();
 
         manager.SetPendingLoadData(loadedData, characterLookup, itemLookup, skillLookup);
@@ -784,7 +784,7 @@ public class CharacterStateStore : MonoBehaviour
                 HashSet<string> skillIds = new HashSet<string>();
                 for (int j = 0; j < character.skills.Count; j++)
                 {
-                    Skill skill = character.skills[j];
+                    StatsSO skill = character.skills[j];
                     string skillId = GetSkillId(skill);
                     if (string.IsNullOrWhiteSpace(skillId))
                     {
@@ -1044,14 +1044,14 @@ public class CharacterStateStore : MonoBehaviour
         lookup[id] = data;
     }
 
-    private Dictionary<string, Skill> BuildSkillLookup()
+    private Dictionary<string, StatsSO> BuildSkillLookup()
     {
-        Dictionary<string, Skill> lookup = new Dictionary<string, Skill>();
+        Dictionary<string, StatsSO> lookup = new Dictionary<string, StatsSO>();
         if (allSkills != null)
         {
             for (int i = 0; i < allSkills.Count; i++)
             {
-                Skill skill = allSkills[i];
+                StatsSO skill = allSkills[i];
                 if (skill == null)
                 {
                     continue;
@@ -1067,10 +1067,10 @@ public class CharacterStateStore : MonoBehaviour
             }
         }
 
-        Skill[] loadedSkills = Resources.FindObjectsOfTypeAll<Skill>();
+        StatsSO[] loadedSkills = Resources.FindObjectsOfTypeAll<StatsSO>();
         for (int i = 0; i < loadedSkills.Length; i++)
         {
-            Skill skill = loadedSkills[i];
+            StatsSO skill = loadedSkills[i];
             if (skill == null)
             {
                 continue;
@@ -1136,7 +1136,7 @@ public class CharacterStateStore : MonoBehaviour
         return item.name;
     }
 
-    private string GetSkillId(Skill skill)
+    private string GetSkillId(StatsSO skill)
     {
         if (skill == null)
         {

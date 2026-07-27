@@ -15,6 +15,11 @@ Le nouveau flux ne depend plus d'une application Python, d'un environnement
 virtuel ou d'un appel LLM local. Les prompts sont prepares manuellement depuis
 `AIAgent/prompts/codex_task.md`.
 
+Le prototype de chute libre est archive dans `Assets/FallingPhase_Legacy/` avec
+sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plus
+partie des scenes de build; l'ActionMap partagee `Falling` est conservee afin que
+l'archive reste testable manuellement.
+
 Le chantier performance repart de zero. Les systemes de culling manuel,
 budget de lumieres, budget de portails, XRay et instrumentation de migration
 ont ete retires des scenes et prefabs. Les LOD et l'Occlusion Culling natif
@@ -22,7 +27,125 @@ Unity de `Maison` sont conserves. La prochaine architecture sera fondee sur
 `Maison` comme hub permanent et sur les environnements `Castle` et `Arena`
 charges progressivement en additif.
 
-Le combat tour par tour pilote maintenant la camera locale par phase via
+Le combat temps reel est actif dans `GameplaySessionRoot` et sur
+`Juggernaut_Combat`. Il porte les definitions d'attaques, le loadout de huit
+slots, le ledger de lumiere des ennemis, les fenetres de reaction pilotees par
+Animation Events, le lock camera, les inputs dedies et les vues HUD/loadout.
+Le verrouillage est entierement manuel : `LeftShoulder` verrouille l'ennemi le
+plus proche a portee, puis le deverrouille au prochain appui. Le lock se ferme
+automatiquement au-dela de 7 metres. Un orbe lumineux pulse et un signal sonore sont joues sur
+`EnemyLockPoint`; la croix directionnelle gauche bascule entre les ennemis
+visibles verrouillables.
+Le verrouillage combat affiche aussi un contour rouge HDRP autonome sur les
+renderers de l'ennemi. Il utilise la layer `CombatOutline` et la passe
+`CombatLockOutlinePass` de `GameplaySessionRoot`, sans partager l'etat ou la
+couleur des contours bleus d'interactables.
+Pendant ce lock, la camera conserve un evitement des obstacles visuels par
+SphereCast, configurable sur `CombatLockOnCameraController`, sans laisser les
+drivers UCC reprendre le cadrage de cible.
+Le lock garantit aussi un cadrage complet de Lucian : il augmente son FOV jusqu'a
+une limite reglable puis recule si necessaire. Son orbite suit la direction
+joueur-ennemi avec un lissage distinct et une vitesse angulaire maximale afin
+que les demi-tours restent fluides. Les vitesses finales de position, rotation
+et FOV sont aussi bornees pour absorber les changements de cadrage pres des
+obstacles.
+Exploration et combat restent dans le meme espace : aucune transition, vague,
+BattleSphere, teleportation ou arene n'est activee.
+Le premier scenario jouable est configure : Lucian dispose de `Lueur faible`
+et `Lueur intense` dans les slots 1 et 2, tandis que le Juggernaut joue
+`Skill_Juggernaut_Assomoir` via `EnemySkills` et ouvre sa fenetre d'esquive par
+Animation Events.
+Le prototype temps reel ne comporte pas encore de contre : les skills sont des
+attaques et les fenetres ennemies acceptent actuellement esquive ou saut. Les
+anciens modificateurs de contre sont conserves dans les donnees de savoir mais
+ne sont pas appliques par le flux temps reel.
+`RealTimeCombatEnemyBehaviour` fournit la poursuite reutilisable : la vision
+reste normale en patrouille, puis passe a son `alertedVisionDistance` apres une
+detection et conserve cette alerte pendant `alertMemorySeconds` sans ligne de
+vue. Le Juggernaut utilise `24 m` et `12 s` par defaut. Le lock combat utilise
+ce rayon alerte plutot que le rayon initial de 7 m. Cette detection seule ne
+declenche pas la musique : elle commence seulement lorsque Lucian inflige son
+premier degat de lumiere, puis reste active pendant l'alerte provoquee.
+Quand un combat se ferme automatiquement, le manager attend le relachement du
+stick puis purge l'input et la vitesse UCC residuels afin que Lucian ne continue
+pas a marcher dans une direction obsolete.
+Un ennemi alerte regarde Lucian, mais ne le poursuit pour convertir son ledger
+en riposte qu'apres avoir recu une attaque de lumiere. Apres une perte de vue,
+il inspecte une fois sa derniere position connue pendant une courte duree, sans
+utiliser la position reelle du joueur hors ligne de vue, puis retourne a son
+point de patrouille. Son inspecteur expose une preference melee en pourcentage :
+quand les deux types sont disponibles, il choisit d'abord melee ou distance
+selon ce tirage, puis s'approche jusqu'a la portee correspondante. Le Juggernaut
+porte actuellement le seul skill melee `Skill_Juggernaut_Assomoir`.
+Tant qu'au moins un ennemi est dans ce mode, le manager applique l'override de
+musique combat; il le relache apres le desengagement, la mort ou la fin de
+l'affrontement.
+Chaque degat du prototype temps reel produit aussi un nombre world-space local,
+attache au combattant touche : cyan pour la lumiere recue par l'ennemi, rouge
+pale pour Lucian. Il est billboard vers la camera, pulse, monte legerement et
+s'efface en temps non scale sans prefab ni Canvas de scene.
+Les `StatsSO` portent exclusivement les checks historiques. Les `SkillSO` de
+combat portent nom, icone, clip, degats, une liste de VFX et une presentation
+d'arme optionnelle, et sont listes dans
+`CharacterData.combatSkills`. `SkillsManager`, place sur `SkillsPanel`, filtre les
+competences de combat connues de Lucian et maintient jusqu'a huit competences equipees,
+repercutees par evenement sur les `SkillWheelSlot` sans creation d'UI runtime
+ni polling `Update`. Ce loadout n'est pas encore persiste dans les sauvegardes
+personnage.
+Tant que `LeftTrigger` est maintenu, l'alpha de `SkillsWheelSlots` passe de
+`0` a `0.4` et le joystick droit survole le slot radial correspondant, avec une
+echelle x1.5 et un alpha renforce; le relachement le ramene a `0`. `SouthButton`
+valide la competence selectionnee et reste prioritaire sur le saut UCC tant que
+le trigger est maintenu, sans bloquer la locomotion. A la fin du clip de skill,
+le joueur revient a sa locomotion normale. Ce retour est borne par la duree du
+clip du SkillSO, synchronise d'abord la pose finale root avec UCC, arrete les capacites UCC residuelles et le controleur personnage, puis declenche
+`MoveStopTrigger` et reprend `Base Layer.Locomotion` avec ses parametres a zero,
+sans ramener Lucian a sa pose initiale. Les attaques root du prototype appliquent
+la meme synchronisation avant leur retour vers la locomotion. Les states taguees
+`RealTimeCombatRootMotion` sont reconnues par UCC comme du root motion actif :
+leur deplacement et leur rotation ne sont donc pas supprimes quand l'input est nul.
+La validation oriente d'abord Lucian horizontalement vers `EnemyLockPoint`, puis joue l'etat Animator explicitement configure sur le `SkillSO` selectionne (avec fallback sur le nom du `AnimationClip`);
+ses Animation Events restent responsables des VFX et degats. Les slots sans
+SkillSO sont masques et exclus de la navigation de la roue.
+`SkillsManager` expose aussi une liste `BasicSkills` de `BasicSkillsSO`.
+Pendant un lock, `WestButton` ajoute le prochain basic skill a un buffer de
+combo : les clips sont joues dans l'ordre de la liste puis bouclent. Les Basic
+Skills reutilisent les memes Animation Events de VFX et de hit que les skills
+de la roue.
+`Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et porte
+le tag `RealTimeCombatRootMotion`, afin que son retour a locomotion ne laisse
+pas une intention UCC residuelle.
+`Skill_2_Fleche de lumiere` cible explicitement sa state root plutot que le
+fallback par nom de clip.
+Les clips de skill peuvent aussi appeler `Dash`, qui propulse Lucian sur la
+droite vers `EnemyLockPoint` avec un depassement reglable, puis `StopDash`, qui
+freine cette impulsion sur une courte duree plutot que de l'annuler instantanement.
+Les clips d'attaque joueur peuvent maintenant declencher `InstantiateSkillVFX`
+ou `InstantiateSkillVFXAtIndex` sur `RealTimeCombatAnimationEvents` : chaque
+VFX du `SkillSO` peut apparaitre directement sur `EnemyLockPoint`, ou rester
+sur la main tenant l'arc, ou rester sur le joueur puis devenir un projectile avec
+ses delais configures. Chaque cue peut aussi jouer son `AudioClipSO` au point de
+depart de sa presentation. `HitEnemy`
+applique ensuite ses degats a l'ennemi locke
+et son etat Animator `Hit` configurable est joue.
+Le Juggernaut possede aussi `EnemySkills`, avec une liste de `SkillSO` a
+assigner dans son Inspector, sans roue. Ses clips peuvent utiliser le meme
+`RealTimeCombatAnimationEvents` avec `SetEnemySkill(int)`, `PlayEnemySkill(int)`,
+`InstantiateEnemySkillVFX`, `InstantiateEnemySkillVFXAtIndex(int)` et
+`HitPlayer` pour synchroniser animation, VFX et impact sur Lucian. La portee,
+le multiplicateur et les reactions ennemies sont portes par le `SkillSO`; les
+degats finaux restent calcules par le ledger de lumiere.
+Le `Bow` deja attache a la main de Lucian est pilote strictement par les
+Animation Events `ShowBow` et `HideBow` des clips; les VFX optionnels associes
+sont configures sur le composant `PlayerBow` du modele Lucian.
+L'epee `Sword` suit le meme flux via `PlayerSword` et les Animation Events
+`ShowSword` et `HideSword`; elle est masquee par defaut et peut posseder ses
+propres VFX optionnels d'apparition/disparition.
+Une Ancient Flame proche d'un ennemi temps reel vivant devient bleue quand elle
+est allumee, mais reste inerte : elle ne revele rien, n'active aucun objet et
+ne compte pas pour la restauration temporelle avant la disparition de l'ennemi.
+
+Le combat tour par tour existant pilote encore la camera locale par phase via
 `CombatCameraPresentationController`; pendant le combat, Opsive est suspendu
 comme driver camera spatial puis restaure a la sortie.
 `CombatSessionManager` peut instancier un prefab public a mi-chemin entre le
@@ -33,7 +156,9 @@ manuelle du combat. L'entree combat est orchestree par `BattleTransition` sur le
 `ScreenWaveController` pilote le `CustomPassVolume` de scene `ScreenWavePass`
 avec le material `MAT_ScreenWave`. Le bouton inspecteur `PlayScreenWave` permet
 de tester une vague unique hors Play Mode depuis le `BattleManager`, sans
-creation runtime. La vague expose son origine, sa direction, sa frequence, sa
+creation runtime. Le composant reste actif afin que son `Update` non scale
+termine toujours le cycle et coupe le Custom Pass. La vague expose son origine,
+sa direction, sa frequence, sa
 vitesse de propagation, son amplitude, sa duree, son attenuation et un lisere
 lumineux reglable pour rester lisible dans les scenes sombres, puis
 `BattleTransition` la declenche au debut du combat pendant que BattleSphere, VFX
@@ -80,6 +205,9 @@ animation de preparation defensive configurable et une voix `AudioClipSO`
 optionnelle, avec fallback animation sur `Defense` puis `Block`.
 Pendant toute la session de combat, le HUD garde l'ActionMap locale `Combat`
 active, prend le focus exclusif et ferme l'inventaire s'il etait deja ouvert;
+Au lancement de l'intro combat, il ferme aussi les UI monde deja ouvertes
+(loot, pause, dialogue, InfoBox, confirmation, lecture, craft et construction)
+afin de ne laisser visibles que les panels pilotes par le combat;
 `UseItem1`, `UseItem2` et `UseItem3` activent les trois slots quand
 `CombatDefensePanel` est visible. Le panel force aussi l'ActionMap `Combat` a
 son affichage afin qu'un AnimationEvent ne laisse jamais NorthButton ouvrir
@@ -157,6 +285,13 @@ le client proprietaire en reseau, pour eviter de conserver une mort ou un taunt
 de la tentative precedente.
 
 ## Contraintes
+
+- Le prototype de combat temps reel route les degats recus par Lucian via
+  `SquadCharacterController.ApplyDamage`, afin de conserver la synchronisation
+  de sante UCC, les retours de degats et la mort. Le degat ennemi est le plus
+  grand degat de lumiere recu depuis sa precedente attaque : avec 10 PV,
+  recevoir une riposte apres un skill a 10 ou 20 degats est volontairement
+  letal et termine le combat.
 
 - Garder `Codex/AGENTS.md` et `Codex/current_work.md` courts.
 - Lire uniquement les fiches pertinentes de `Codex/systems/`.

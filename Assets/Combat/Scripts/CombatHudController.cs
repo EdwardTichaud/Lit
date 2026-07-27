@@ -677,6 +677,48 @@ public class CombatHudController : MonoBehaviour
         combatFocusPushed = true;
     }
 
+    private static void CloseNonCombatUiForCombat()
+    {
+        InventoryPanelController.CloseAllOpenForCombat();
+        InteractableItem.CloseAllOpenLootForCombat();
+        InfoBoxUI.Instance?.HideImmediate();
+        DialoguePanelUI.Instance?.HideImmediate();
+        ConfirmationManager.Dismiss(null, invokeCancel: true);
+
+        PausePanelController[] pausePanels = FindObjectsByType<PausePanelController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < pausePanels.Length; i++)
+        {
+            if (pausePanels[i] != null && pausePanels[i].IsOpen)
+            {
+                pausePanels[i].ClosePanel();
+            }
+        }
+
+        CraftingConstructionPanel[] craftingPanels = FindObjectsByType<CraftingConstructionPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < craftingPanels.Length; i++)
+        {
+            if (craftingPanels[i] != null && craftingPanels[i].IsOpen)
+            {
+                craftingPanels[i].ClosePanel();
+            }
+        }
+
+        BuildingPanelController[] buildingPanels = FindObjectsByType<BuildingPanelController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < buildingPanels.Length; i++)
+        {
+            if (buildingPanels[i] != null && buildingPanels[i].IsOpen)
+            {
+                buildingPanels[i].ClosePanel();
+            }
+        }
+
+        StabReading[] readings = FindObjectsByType<StabReading>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < readings.Length; i++)
+        {
+            readings[i]?.CloseReading();
+        }
+    }
+
     private void ReleaseCombatInputFocus()
     {
         if (!combatFocusPushed)
@@ -704,6 +746,7 @@ public class CombatHudController : MonoBehaviour
     private void StartCombatEngagedIntro(string sessionId)
     {
         ResolveScenePanelsIfNeeded();
+        CloseNonCombatUiForCombat();
         combatEngagedSessionId = sessionId;
         if (combatEngagedCanvasGroup == null && combatEngagedAnimator == null)
         {

@@ -254,6 +254,31 @@ public class InfoBoxUI : MonoBehaviour
         return true;
     }
 
+    public void HideImmediate()
+    {
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+        }
+
+        SetCanvasAlpha(0f);
+        if (hideWhenEmpty && infoText != null)
+        {
+            infoText.text = string.Empty;
+        }
+
+        RestoreLayoutIfNeeded();
+        if (setInactiveOnHide)
+        {
+            SetVisible(false);
+        }
+
+        isShowing = false;
+        InputFocusStack.Pop(this);
+        InvokeAndClearHiddenCallback();
+    }
+
     private IEnumerator ShowAndHideRoutine(float duration)
     {
         float fadeIn = Mathf.Max(0f, fadeDuration);

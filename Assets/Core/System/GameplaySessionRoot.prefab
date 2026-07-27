@@ -5111,6 +5111,7 @@ Transform:
   - {fileID: 383103919083899251}
   - {fileID: 2134442628220835756}
   - {fileID: 151635901628594520}
+  - {fileID: 7802345168921470351}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &809035977521740313
@@ -6096,12 +6097,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1962244032958566552}
   - component: {fileID: 3754094688540085027}
-  - component: {fileID: 7652341441785883377}
-  - component: {fileID: 2596562775950019175}
   - component: {fileID: 1716717823769150378}
-  - component: {fileID: 287456315339509268}
-  - component: {fileID: 7175315330175357517}
-  - component: {fileID: 6119416266814459275}
+  - component: {fileID: 810000000000000001}
+  - component: {fileID: 810000000000000002}
+  - component: {fileID: 810000000000000003}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -6337,7 +6336,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 702c095fa0f1478eb988dd6d6ecf8f11, type: 3}
   m_Name: 
@@ -6390,6 +6389,63 @@ Transform:
   - {fileID: 4319322352126008940}
   m_Father: {fileID: 1540775231359556178}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &810000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4f96c16db834d0980fa0f8b3308071a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatManager
+  playerRoot: {fileID: 0}
+  playerLoadout: {fileID: 0}
+  playerHealth: {fileID: 0}
+  playerController: {fileID: 0}
+  playerAnimator: {fileID: 0}
+  combatInput: {fileID: 810000000000000002}
+  lockedEnemy: {fileID: 0}
+  lockRange: 6
+  clarityForS: 100
+  successfulReactionClarity: 5
+  counterClarity: 10
+--- !u!114 &810000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c251687003c4f408a4a9c71a8b1c026, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatInput
+  actions: {fileID: -944628639613478452, guid: 36d44059f8ef4d3db504f50a8334307d, type: 3}
+  actionMapName: RealTimeCombat
+  enableOnStart: 0
+--- !u!114 &810000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2122c45159d145e6a1bd3a1780673465, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatLockOnCameraController
+  controlledCamera: {fileID: 0}
+  gameplayCameraDrivers: []
+  playerOffset: {x: 0.8, y: 1.5, z: -4.5}
+  enemyFocusBias: 0.68
+  positionSharpness: 9
+  rotationSharpness: 12
+  lockedFieldOfView: 56
 --- !u!1 &3473681246835330875
 GameObject:
   m_ObjectHideFlags: 0
@@ -8090,6 +8146,113 @@ MonoBehaviour:
         passFoldout: 0
         m_Version: 0
         fullscreenPassMaterial: {fileID: 2100000, guid: 48bb50ce1bee72e43818a1ac0a978a1d, type: 2}
+        materialPassIndex: 0
+        materialPassName: Custom Pass 0
+        fetchColorBuffer: 0
+--- !u!1 &7802345168921470350
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7802345168921470351}
+  - component: {fileID: 7802345168921470352}
+  m_Layer: 0
+  m_Name: CombatLockOutlinePass
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7802345168921470351
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7802345168921470350}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9037320159994210700}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7802345168921470352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7802345168921470350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
+  m_IsGlobal: 1
+  fadeRadius: 0
+  priority: 1
+  customPasses:
+  - rid: 7802345168921470353
+  - rid: 7802345168921470354
+  injectionPoint: 6
+  m_TargetCamera: {fileID: 0}
+  useTargetCamera: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 7802345168921470353
+      type: {class: DrawRenderersCustomPass, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
+      data:
+        m_Name: Draw Combat Lock Outline Mask
+        enabled: 1
+        targetColorBuffer: 1
+        targetDepthBuffer: 0
+        clearFlags: 1
+        passFoldout: 0
+        m_Version: 0
+        filterFoldout: 1
+        rendererFoldout: 1
+        renderQueueType: 2
+        layerMask:
+          serializedVersion: 2
+          m_Bits: 32768
+        sortingCriteria: 51
+        overrideMode: 1
+        overrideMaterial: {fileID: 2100000, guid: 9392556703c5d6a4ab78f5120bf86618, type: 2}
+        overrideMaterialPassIndex: 0
+        overrideMaterialPassName: ForwardOnly
+        overrideShader: {fileID: 0}
+        overrideShaderPassIndex: 0
+        overrideShaderPassName: Forward
+        overrideDepthState: 0
+        depthCompareFunction: 4
+        depthWrite: 1
+        overrideStencil: 0
+        stencilReferenceValue: 64
+        stencilWriteMask: 192
+        stencilReadMask: 192
+        stencilCompareFunction: 8
+        stencilPassOperation: 0
+        stencilFailOperation: 0
+        stencilDepthFailOperation: 0
+        shaderPass: 0
+        variableRateShading: 0
+    - rid: 7802345168921470354
+      type: {class: FullScreenCustomPass, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
+      data:
+        m_Name: Draw Combat Lock Outline
+        enabled: 1
+        targetColorBuffer: 0
+        targetDepthBuffer: 0
+        clearFlags: 0
+        passFoldout: 0
+        m_Version: 0
+        fullscreenPassMaterial: {fileID: 2100000, guid: 1d85c1ac6f9f499ca3dcb3da72154cbb, type: 2}
         materialPassIndex: 0
         materialPassName: Custom Pass 0
         fetchColorBuffer: 0

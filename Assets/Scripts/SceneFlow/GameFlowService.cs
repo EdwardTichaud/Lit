@@ -48,8 +48,10 @@ public sealed class GameFlowService : MonoBehaviour
     [Header("Editor test startup")]
     [Tooltip("Ignore le menu lors d'un Play lance depuis Bootstrap et ouvre directement la scene de test avec une session de gameplay complete.")]
     [SerializeField] private bool editorStartGameplayDirectly;
-    [Tooltip("Nom de la scene de gameplay a ouvrir pour le test. Laisser vide pour utiliser Maison.")]
-    [SerializeField] private string editorStartSceneName = DefaultHubSceneName;
+    [Tooltip("Zone a charger lors d'un test direct. Le manifeste garantit que Critical, Loading et PostLoading sont charges dans le meme ordre qu'en jeu.")]
+    [SerializeField] private ZoneManifest editorStartManifest;
+    [SerializeField, HideInInspector, Tooltip("Compatibilite avec les anciennes configurations de test. Utiliser Editor Start Manifest a la place.")]
+    private string editorStartSceneName = DefaultHubSceneName;
     [Tooltip("Identifiant du ZoneSpawnPoint dans la scene de test. Laisser vide pour conserver le spawn normal de la scene.")]
     [SerializeField] private string editorStartSpawnId;
 #endif
@@ -163,8 +165,14 @@ public sealed class GameFlowService : MonoBehaviour
             return false;
         }
 
-        string sceneToTest = string.IsNullOrWhiteSpace(editorStartSceneName) ? HubSceneName : editorStartSceneName;
-        if (BeginGameplay(sceneToTest, editorStartSpawnId))
+        ZoneManifest manifestToTest = editorStartManifest != null && editorStartManifest.IsValid
+            ? editorStartManifest
+            : ResolveGameplayManifest(editorStartSceneName);
+        string sceneToTest = manifestToTest != null
+            ? manifestToTest.PrimarySceneName
+            : (string.IsNullOrWhiteSpace(editorStartSceneName) ? HubSceneName : editorStartSceneName);
+
+        if (BeginGameplay(sceneToTest, editorStartSpawnId, manifestToTest, usePrimarySceneSpawnFallback: true))
         {
             return true;
         }
@@ -199,9 +207,11 @@ public sealed class GameFlowService : MonoBehaviour
         return Instance != null && Instance.BeginReturnToMenu();
     }
 
-    private bool BeginGameplay(string initialSceneName, string initialSpawnId = null)
+    private bool BeginGameplay(string initialSceneName, string initialSpawnId = null, ZoneManifest forcedManifest = null, bool usePrimarySceneSpawnFallback = false)
     {
-        ZoneManifest manifest = ResolveGameplayManifest(initialSceneName);
+        ZoneManifest manifest = forcedManifest != null && forcedManifest.IsValid
+            ? forcedManifest
+            : ResolveGameplayManifest(initialSceneName);
         string sceneToLoad = manifest != null ? manifest.PrimarySceneName : initialSceneName;
         if (IsTransitioning || !CanLoad(sceneToLoad))
         {
@@ -215,7 +225,7 @@ public sealed class GameFlowService : MonoBehaviour
             IsPreparingGameplayScene = false;
             return false;
         }
-        transitionRoutine = StartCoroutine(LoadInitialGameplayRoutine(sceneToLoad, initialSpawnId, manifest));
+        transitionRoutine = StartCoroutine(LoadInitialGameplayRoutine(sceneToLoad, initialSpawnId, manifest, usePrimarySceneSpawnFallback));
         return true;
     }
 
@@ -255,7 +265,7 @@ public sealed class GameFlowService : MonoBehaviour
         return true;
     }
 
-    private IEnumerator LoadInitialGameplayRoutine(string sceneName, string spawnId, ZoneManifest manifest)
+    private IEnumerator LoadInitialGameplayRoutine(string sceneName, string spawnId, ZoneManifest manifest, bool usePrimarySceneSpawnFallback)
     {
         SceneTransitionProfiler.Begin($"Demarrage -> {sceneName}");
         string loadingMessage = manifest != null ? manifest.LoadingMessage : "Chargement de la partie...";
@@ -278,7 +288,7 @@ public sealed class GameFlowService : MonoBehaviour
         PreserveUccSimulationManager();
         AdoptGameplayManagers();
         SceneTransitionProfiler.Mark("Managers prets");
-        yield return PlaceSquadAtSpawnRoutine(spawnId);
+        yield return PlaceSquadAtSpawnRoutine(spawnId, sceneName, usePrimarySceneSpawnFallback);
         RestoreLocalGameplayInputAfterSessionStart();
 #if UNITY_EDITOR
         StartCoroutine(LogZoneControlProbe(sceneName));
@@ -675,14 +685,16 @@ public sealed class GameFlowService : MonoBehaviour
         component.transform.SetParent(gameplaySessionRoot.transform, true);
     }
 
-    private IEnumerator PlaceSquadAtSpawnRoutine(string spawnId)
+    private IEnumerator PlaceSquadAtSpawnRoutine(string spawnId, string primarySceneName = null, bool usePrimarySceneSpawnFallback = false)
     {
-        if (string.IsNullOrWhiteSpace(spawnId) || SquadManager.Instance == null)
+        if (SquadManager.Instance == null)
         {
             yield break;
         }
 
-        ZoneSpawnPoint spawn = ZoneSpawnPoint.Find(spawnId);
+        ZoneSpawnPoint spawn = string.IsNullOrWhiteSpace(spawnId)
+            ? (usePrimarySceneSpawnFallback ? ZoneSpawnPoint.FindFirstInScene(primarySceneName) : null)
+            : ZoneSpawnPoint.Find(spawnId);
         if (spawn != null)
         {
             using (SceneTransitionProfiler.SquadPlacement.Auto())

@@ -3,7 +3,7 @@ using UnityEngine;
 // Systeme statique pour declencher un skill check et afficher le feedback.
 public static class SkillCheckSystem
 {
-    public static bool TryCheck(GameObject character, Skill skill, out int roll, out int modifier, out int total)
+    public static bool TryCheck(GameObject character, StatsSO skill, out int roll, out int modifier, out int total)
     {
         roll = 0;
         modifier = 0;
@@ -52,7 +52,7 @@ public static class SkillCheckSystem
         return manager.currentSquad[index];
     }
 
-    private static void ShowFeedback(GameObject character, Skill skill, int roll, int modifier, int total, bool success)
+    private static void ShowFeedback(GameObject character, StatsSO skill, int roll, int modifier, int total, bool success)
     {
         SkillCheckFeedbackAnchor anchor = character.GetComponentInChildren<SkillCheckFeedbackAnchor>(true);
         if (anchor == null)

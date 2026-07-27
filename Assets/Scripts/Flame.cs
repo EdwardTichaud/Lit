@@ -20,6 +20,8 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private string flameId;
 
     public bool IsLit => isLit;
+    public bool IsEffectivelyLit => isLit && !externalSuppression;
+    public bool IsExternallySuppressed => externalSuppression;
     public string FlameId => flameId;
     public bool IsAncientFlame => ancientFlame;
     public int ChargeCostToLight => ancientFlame
@@ -114,6 +116,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private GameObject detectedCharacter;
     private Coroutine interactionRoutine;
     private bool interactionInProgress;
+    private bool externalSuppression;
     private MuninController activeMuninController;
     private GameObject influenceSphereVisual;
     private MeshRenderer influenceSphereRenderer;
@@ -200,7 +203,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     public bool ProvidesLitInfluenceTo(Collider targetCollider, Vector3 fallbackPoint)
     {
         EnsureLitInfluence();
-        return isLit
+        return IsEffectivelyLit
             && litInfluence != null
             && litInfluence.TouchesCollider(transform, targetCollider, fallbackPoint);
     }
@@ -351,6 +354,21 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         SetLitInternal(!isLit);
     }
 
+    public void SetExternalSuppression(bool suppressed)
+    {
+        if (externalSuppression == suppressed)
+        {
+            return;
+        }
+
+        externalSuppression = suppressed;
+        EnsureRevealSource();
+        flameLightReceiver?.SetWorldRevealSuppressed(suppressed);
+        ApplyVisuals(true);
+        UpdateLitInfluence(true);
+        StateChanged?.Invoke(this, IsEffectivelyLit);
+    }
+
     private void ApplyVisuals(bool immediate)
     {
         if (flameLight != null)
@@ -370,7 +388,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        target.SetActive(isLit);
+        target.SetActive(IsEffectivelyLit);
     }
 
     public void ApplyLitActivationTargets()
@@ -989,7 +1007,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         isLit = lit;
         ApplyVisuals(!Application.isPlaying);
         UpdateLitInfluence(true);
-        StateChanged?.Invoke(this, isLit);
+        StateChanged?.Invoke(this, IsEffectivelyLit);
     }
 
     private void SetLitServer(bool lit)
@@ -1008,7 +1026,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         isLit = lit;
         ApplyVisuals(!Application.isPlaying);
         UpdateLitInfluence(true);
-        StateChanged?.Invoke(this, isLit);
+        StateChanged?.Invoke(this, IsEffectivelyLit);
     }
 
     private void UpdateLitInfluence(bool force)
@@ -1017,7 +1035,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         LitInfluenceSourceKind sourceKind = ancientFlame
             ? LitInfluenceSourceKind.AncientFlame
             : LitInfluenceSourceKind.Flame;
-        litInfluence.Tick(this, sourceKind, isLit, force);
+        litInfluence.Tick(this, sourceKind, IsEffectivelyLit, force);
     }
 
     private void ClearLitInfluence()
@@ -1197,7 +1215,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
             && litInfluence != null
             && litInfluence.Enabled
             && litInfluence.Radius > 0f
-            && (!influenceSphereOnlyWhenLit || isLit);
+            && (!influenceSphereOnlyWhenLit || IsEffectivelyLit);
 
         if (!shouldShow)
         {
@@ -1520,7 +1538,7 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
     private void OnDrawGizmosSelected()
     {
         EnsureLitInfluence();
-        litInfluence.DrawGizmos(transform, isLit);
+        litInfluence.DrawGizmos(transform, IsEffectivelyLit);
     }
 #endif
 

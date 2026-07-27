@@ -22,6 +22,10 @@ connaissances et résoudre les interactions narratives.
   dialogues et étapes, puis restaure le gameplay.
 - Les acteurs sont résolus par ID, squad ou `LocalPlayerContext`.
 - Les connaissances débloquent des réactions de fantômes et des effets de scène.
+- Une `KnowledgeSO` peut aussi porter un `CombatKnowledgeModifier` passif. Si
+  son option combat est active, l'effet s'applique automatiquement au combat
+  temps réel tant que la connaissance est débloquée; elle n'est ni équipée ni
+  consommée.
 - Quand une réaction de connaissance est disponible, le feedback du fantôme joue
   seulement la réponse de résolution, sans répéter la ligne d’apparition, la
   question par défaut ou l’option joueur.

@@ -111,7 +111,7 @@ public class SquadManager : MonoBehaviour
     private CharacterSaveData pendingLoadData;
     private Dictionary<string, CharacterData> pendingCharacterLookup;
     private Dictionary<string, Item> pendingItemLookup;
-    private Dictionary<string, Skill> pendingSkillLookup;
+    private Dictionary<string, StatsSO> pendingSkillLookup;
     private readonly Dictionary<CharacterData, CharacterData> runtimeCharacterMap = new Dictionary<CharacterData, CharacterData>();
     private readonly Dictionary<string, CharacterData> runtimeCharactersById = new Dictionary<string, CharacterData>();
     private readonly Dictionary<string, CharacterData> runtimeCharacterSourceById = new Dictionary<string, CharacterData>();
@@ -552,7 +552,7 @@ public class SquadManager : MonoBehaviour
         record.hubParent = hubParent;
     }
 
-    public void SetPendingLoadData(CharacterSaveData data, Dictionary<string, CharacterData> characterLookup, Dictionary<string, Item> itemLookup, Dictionary<string, Skill> skillLookup)
+    public void SetPendingLoadData(CharacterSaveData data, Dictionary<string, CharacterData> characterLookup, Dictionary<string, Item> itemLookup, Dictionary<string, StatsSO> skillLookup)
     {
         pendingLoadData = data;
         pendingCharacterLookup = characterLookup;
@@ -951,7 +951,7 @@ public class SquadManager : MonoBehaviour
             }
             if (entry.skillsInitialized)
             {
-                List<Skill> skills = BuildSkillsFromEntry(entry);
+                List<StatsSO> skills = BuildSkillsFromEntry(entry);
                 runtimeCharacter.SetSkills(skills);
             }
 
@@ -1227,9 +1227,9 @@ public class SquadManager : MonoBehaviour
         return items;
     }
 
-    private List<Skill> BuildSkillsFromEntry(CharacterSaveEntry entry)
+    private List<StatsSO> BuildSkillsFromEntry(CharacterSaveEntry entry)
     {
-        List<Skill> skills = new List<Skill>();
+        List<StatsSO> skills = new List<StatsSO>();
         if (entry == null || pendingSkillLookup == null || entry.skillIds == null)
         {
             return skills;
@@ -1243,7 +1243,7 @@ public class SquadManager : MonoBehaviour
                 continue;
             }
 
-            if (pendingSkillLookup.TryGetValue(id, out Skill skill) && skill != null)
+            if (pendingSkillLookup.TryGetValue(id, out StatsSO skill) && skill != null)
             {
                 if (!skills.Contains(skill))
                 {
@@ -2621,7 +2621,7 @@ public class SquadManager : MonoBehaviour
         clone.hideFlags = HideFlags.DontSave;
         if (clone.skills != null)
         {
-            clone.skills = new List<Skill>(clone.skills);
+            clone.skills = new List<StatsSO>(clone.skills);
         }
 
         if (clone.starterItemsWithQuantity != null)
@@ -2907,8 +2907,13 @@ public class SquadManager : MonoBehaviour
 
     private void HandleLeftShoulderInput()
     {
-        Debug.Log("Utilise LeftShoulder");
         if (IsInputLocked())
+        {
+            return;
+        }
+
+        RealTimeCombatManager combatManager = RealTimeCombatManager.Instance;
+        if (combatManager != null && combatManager.TryToggleManualLock())
         {
             return;
         }

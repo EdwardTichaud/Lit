@@ -1825,7 +1825,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             for (int i = 0; i < flames.Length; i++)
             {
                 Flame flame = flames[i];
-                if (flame != null && flame.isActiveAndEnabled && flame.IsLit)
+                if (flame != null && flame.isActiveAndEnabled && flame.IsEffectivelyLit)
                 {
                     activeFlames.Add(flame);
                 }

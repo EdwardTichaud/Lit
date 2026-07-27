@@ -60,8 +60,20 @@ public class KnowledgeSO : ScriptableObject
     /// <summary>Temporal age most closely associated with this knowledge.</summary>
     public TemporalAge associatedAge = TemporalAge.Age666;
 
+    [Header("Combat Passif")]
+    [Tooltip("Si actif et si la connaissance est debloquee, ce bonus est applique automatiquement au combat temps reel.")]
+    public bool combatBonusEnabled;
+    [Tooltip("Effet passif permanent de cette connaissance dans le combat temps reel.")]
+    public CombatKnowledgeModifier combatModifier = new CombatKnowledgeModifier
+    {
+        lightDamageMultiplier = 1f,
+        counterDamageMultiplier = 1f
+    };
+
     /// <summary>Stable internal ID, normally the asset GUID in editor.</summary>
     public string UniqueId => uniqueId;
+    public CombatKnowledgeModifier CombatModifier => combatModifier;
+    public bool CombatBonusEnabled => combatBonusEnabled;
 
     public bool HasTag(string tag)
     {

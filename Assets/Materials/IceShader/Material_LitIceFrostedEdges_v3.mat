@@ -115,7 +115,7 @@ Material:
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
-    - _ReflectionStrength: 1
+    - _ReflectionStrength: 0.85
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0

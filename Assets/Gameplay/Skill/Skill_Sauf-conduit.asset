@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f5d7cf48e67ebcc4e8fa9d89898399b7, type: 3}
   m_Name: Skill_Sauf-conduit
-  m_EditorClassIdentifier: Assembly-CSharp::Skill
+  m_EditorClassIdentifier: Assembly-CSharp::StatsSO
   skillName: Sauf_conduit
   description: 
   linkedStat: 1

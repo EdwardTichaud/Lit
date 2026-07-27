@@ -160,7 +160,7 @@ public sealed class LitIceFrostedEdgesV3ShaderGUI : LightingShaderGraphGUI
     private void DrawReflectionProperties(MaterialEditor editor, MaterialProperty[] properties)
     {
         DrawProperty(editor, properties, "_ReflectionStrength", "Reflection Strength",
-            "Renforce et affine progressivement les reflets HDRP des Reflection Probes sur la glace et sur l’état normal. 0 conserve les Smoothness existantes ; 1 donne un reflet presque miroir.");
+            "Renforce les reflets HDRP des Reflection Probes. Sur l'état Frost, la couche miroir lisse aussi progressivement la normale optique : le relief visuel des textures reste lisible, mais les reflets deviennent nettement plus nets. 0 conserve le comportement actuel ; 1 donne un reflet presque miroir.");
     }
 
     private void DrawNormalProperties(MaterialEditor editor, MaterialProperty[] properties)

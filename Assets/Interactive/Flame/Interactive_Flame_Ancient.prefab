@@ -58,6 +58,7 @@ GameObject:
   - component: {fileID: 6040060830839474759}
   - component: {fileID: 6698008000893597056}
   - component: {fileID: 8177418773124164552}
+  - component: {fileID: 900000000000000011}
   m_Layer: 0
   m_Name: Interactive_Flame_Ancient
   m_TagString: Untagged
@@ -182,6 +183,22 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 6
   m_Center: {x: 0, y: 0.75, z: 0}
+--- !u!114 &900000000000000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4458439976358937391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65d03c8c1f4b4e8286276235f37e7a42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AncientFlameEnemyBlocker
+  flame: {fileID: 6698008000893597056}
+  enemyProximityRange: 8
+  refreshInterval: 0.2
+  blockedFlameColor: {r: 0.2, g: 0.65, b: 1, a: 1}
 --- !u!1 &4570062020932597536
 GameObject:
   m_ObjectHideFlags: 0

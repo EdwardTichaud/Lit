@@ -4,7 +4,7 @@ using UnityEngine;
 // Role: ScriptableObject de donnees pour personnages joueurs et ennemis.
 // Usage: reference par les prefabs de personnages, la squad, le combat, les voice lines et l'inventaire de depart.
 // Responsibilities: stocker identite, stats, competences, inventaire runtime et definitions de combat.
-// Dependencies: Item, Skill, CharacterStats, CombatEnemyDefinition, VoiceLineData.
+// Dependencies: Item, StatsSO, CharacterStats, CombatEnemyDefinition, VoiceLineData.
 // Precautions: plusieurs champs publics sont serialises dans des assets; ne pas les renommer sans migration Unity.
 /// <summary>
 /// Donnees centrales d'un personnage jouable ou ennemi.
@@ -43,7 +43,11 @@ public class CharacterData : ScriptableObject
     /// <summary>Prefab monde a utiliser si different du modele.</summary>
     public GameObject worldPrefab;
     /// <summary>Competences possedees par le personnage.</summary>
-    public List<Skill> skills;
+    public List<StatsSO> skills;
+
+    /// <summary>Competences de combat temps reel connues par le personnage.</summary>
+    public List<SkillSO> combatSkills = new List<SkillSO>();
+
     /// <summary>Statistiques de type JDR utilisees par les checks.</summary>
     public CharacterStats stats = new CharacterStats();
     /// <summary>Items donnes au debut ou lors de l'initialisation d'inventaire.</summary>
@@ -391,7 +395,7 @@ public class CharacterData : ScriptableObject
     /// <summary>
     /// Indique si ce personnage possede une competence donnee.
     /// </summary>
-    public bool HasSkill(Skill skill)
+    public bool HasSkill(StatsSO skill)
     {
         if (skill == null || skills == null)
         {
@@ -404,7 +408,7 @@ public class CharacterData : ScriptableObject
     /// <summary>
     /// Ajoute une competence si elle n'est pas deja presente.
     /// </summary>
-    public void AddSkill(Skill skill)
+    public void AddSkill(StatsSO skill)
     {
         if (skill == null)
         {
@@ -413,7 +417,7 @@ public class CharacterData : ScriptableObject
 
         if (skills == null)
         {
-            skills = new List<Skill>();
+            skills = new List<StatsSO>();
         }
 
         if (!skills.Contains(skill))
@@ -425,7 +429,7 @@ public class CharacterData : ScriptableObject
     /// <summary>
     /// Retire une competence de la liste.
     /// </summary>
-    public void RemoveSkill(Skill skill)
+    public void RemoveSkill(StatsSO skill)
     {
         if (skill == null || skills == null)
         {
@@ -438,11 +442,11 @@ public class CharacterData : ScriptableObject
     /// <summary>
     /// Remplace toute la liste de competences en supprimant les doublons et nulls.
     /// </summary>
-    public void SetSkills(List<Skill> newSkills)
+    public void SetSkills(List<StatsSO> newSkills)
     {
         if (skills == null)
         {
-            skills = new List<Skill>();
+            skills = new List<StatsSO>();
         }
         else
         {
@@ -456,7 +460,7 @@ public class CharacterData : ScriptableObject
 
         for (int i = 0; i < newSkills.Count; i++)
         {
-            Skill skill = newSkills[i];
+            StatsSO skill = newSkills[i];
             if (skill != null && !skills.Contains(skill))
             {
                 skills.Add(skill);
@@ -467,7 +471,7 @@ public class CharacterData : ScriptableObject
     /// <summary>
     /// Effectue un test de competence et retourne le detail du jet.
     /// </summary>
-    public bool TryCheckSkill(Skill skill, out int roll, out int modifier, out int total)
+    public bool TryCheckSkill(StatsSO skill, out int roll, out int modifier, out int total)
     {
         roll = 0;
         modifier = 0;

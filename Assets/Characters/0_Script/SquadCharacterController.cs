@@ -78,8 +78,8 @@ public partial class SquadCharacterController : MonoBehaviour
     private bool useCameraRelative = true;
     [SerializeField, Tooltip("Camera de reference (fallback Main).")]
     private Camera referenceCamera;
-    [SerializeField, Tooltip("Conserve la reference de mouvement tant que l'input est maintenu, pour eviter les inversions quand la camera bouge en meme temps.")]
-    private bool preserveFixedCameraMovementContinuity = true;
+    [SerializeField, Tooltip("Conserve la reference de mouvement tant que l'input est maintenu. Desactive pour suivre en continu l'horizon de la camera.")]
+    private bool preserveFixedCameraMovementContinuity;
     [SerializeField, Range(0f, 180f), Tooltip("Angle d'input qui force la reference de mouvement a se recaler sur la camera active.")]
     private float fixedCameraMovementInputRefreshAngle = 65f;
     [SerializeField, Min(0f), Tooltip("Blend optionnel de la reference de mouvement vers la camera active. 0 = reference verrouillee jusqu'au relachement/changement d'input.")]
@@ -175,7 +175,7 @@ public partial class SquadCharacterController : MonoBehaviour
 
     public IReadOnlyList<CombatDefenseItemHitPointData> CombatDefenseItemHitPoints => combatDefenseItemHitPoints;
 
-    public IReadOnlyList<Skill> Skills => characterData != null ? characterData.skills : null;
+    public IReadOnlyList<StatsSO> Skills => characterData != null ? characterData.skills : null;
 
     public int CurrentHp => currentHp;
 
@@ -1322,7 +1322,7 @@ public partial class SquadCharacterController : MonoBehaviour
         return true;
     }
 
-    public bool LearnSkill(Skill skill)
+    public bool LearnSkill(StatsSO skill)
     {
         if (characterData == null || skill == null)
         {
@@ -1338,7 +1338,7 @@ public partial class SquadCharacterController : MonoBehaviour
         return true;
     }
 
-    public bool ForgetSkill(Skill skill)
+    public bool ForgetSkill(StatsSO skill)
     {
         if (characterData == null || skill == null)
         {

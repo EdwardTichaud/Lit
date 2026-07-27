@@ -60,6 +60,7 @@ public static class LocalInputRouter
     private static bool cameraFreeModeActive;
     private static bool rightShoulderPressed;
     private static readonly System.Collections.Generic.Dictionary<InputGate, float> lastInputTimes = new System.Collections.Generic.Dictionary<InputGate, float>();
+    private static readonly System.Collections.Generic.HashSet<object> interactionAndJumpSuppressors = new System.Collections.Generic.HashSet<object>();
     private static bool interactConsumed;
     private static bool triggerMuninConsumed;
     private static bool toggleTorchConsumed;
@@ -124,6 +125,7 @@ public static class LocalInputRouter
         rightShoulderPressed = false;
 
         lastInputTimes.Clear();
+        interactionAndJumpSuppressors.Clear();
         interactConsumed = false;
         triggerMuninConsumed = false;
         toggleTorchConsumed = false;
@@ -335,7 +337,7 @@ public static class LocalInputRouter
 
     internal static void RaiseInteract(InputAction.CallbackContext context)
     {
-        if (!AllowInput(InputGate.Interact))
+        if (IsInteractionAndJumpSuppressed() || !AllowInput(InputGate.Interact))
         {
             return;
         }
@@ -360,12 +362,28 @@ public static class LocalInputRouter
 
     internal static void RaiseJump(InputAction.CallbackContext context)
     {
-        if (!AllowInput(InputGate.Jump))
+        if (IsInteractionAndJumpSuppressed() || !AllowInput(InputGate.Jump))
         {
             return;
         }
 
         Jump?.Invoke(context);
+    }
+
+    public static void PushInteractionAndJumpSuppression(object owner)
+    {
+        if (owner != null)
+        {
+            interactionAndJumpSuppressors.Add(owner);
+        }
+    }
+
+    public static void PopInteractionAndJumpSuppression(object owner)
+    {
+        if (owner != null)
+        {
+            interactionAndJumpSuppressors.Remove(owner);
+        }
     }
 
     internal static void ConsumeInteract()
@@ -585,6 +603,11 @@ public static class LocalInputRouter
         cameraOrbitModifierPressed = false;
         cameraPanModifierPressed = false;
         rightShoulderPressed = false;
+    }
+
+    private static bool IsInteractionAndJumpSuppressed()
+    {
+        return interactionAndJumpSuppressors.Count > 0;
     }
 
     private static bool AllowInput(InputGate gate)

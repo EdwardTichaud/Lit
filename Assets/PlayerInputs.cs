@@ -752,6 +752,140 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             ]
         },
         {
+            ""name"": ""Falling"",
+            ""id"": ""4d3f5c3d-7f97-4b5f-8958-0c69302fa7ad"",
+            ""actions"": [
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Value"",
+                    ""id"": ""50acde82-1a29-4c64-b9dd-f9fdc41dcac7"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Accelerate"",
+                    ""type"": ""Button"",
+                    ""id"": ""dac55d31-0b67-4569-83ce-9c24305d9934"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Grapple"",
+                    ""type"": ""Button"",
+                    ""id"": ""2968fa6a-e4b6-4460-95a9-e85c3096127b"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""285235a6-5798-4595-b809-b3e5e1b4b2bd"",
+                    ""path"": ""<Gamepad>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""WASD"",
+                    ""id"": ""47fcba74-7965-4d42-a670-c649d4d896ca"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""e19c9b85-ffce-4a2a-8e21-7a1ad55f4760"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""e0e582bf-4743-4c78-bb86-cdc5cc96a1a7"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""f2a1207b-b175-4406-a0d6-f78206f54a5a"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""d5b7f424-5f62-4169-acef-eea58e626a2d"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f7cc4a9e-6e53-4e82-826f-3c28a11e6a76"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Accelerate"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e4eb8b0d-b3c5-4e06-845a-580915a0222e"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Accelerate"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""46f8d04d-615e-49b5-ba9f-07a2262fdd9a"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Grapple"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
             ""name"": ""Combat"",
             ""id"": ""e3f4bcd7-4a72-46de-b122-a5006f9b6e04"",
             ""actions"": [
@@ -910,6 +1044,11 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Camera_PanModifier = m_Camera.FindAction("PanModifier", throwIfNotFound: true);
         m_Camera_Recenter = m_Camera.FindAction("Recenter", throwIfNotFound: true);
         m_Camera_ToggleFreeCamera = m_Camera.FindAction("ToggleFreeCamera", throwIfNotFound: true);
+        // Falling
+        m_Falling = asset.FindActionMap("Falling", throwIfNotFound: true);
+        m_Falling_Move = m_Falling.FindAction("Move", throwIfNotFound: true);
+        m_Falling_Accelerate = m_Falling.FindAction("Accelerate", throwIfNotFound: true);
+        m_Falling_Grapple = m_Falling.FindAction("Grapple", throwIfNotFound: true);
         // Combat
         m_Combat = asset.FindActionMap("Combat", throwIfNotFound: true);
         m_Combat_UseItem1 = m_Combat.FindAction("UseItem1", throwIfNotFound: true);
@@ -921,6 +1060,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, PlayerInputs.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Camera.enabled, "This will cause a leak and performance issues, PlayerInputs.Camera.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Falling.enabled, "This will cause a leak and performance issues, PlayerInputs.Falling.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Combat.enabled, "This will cause a leak and performance issues, PlayerInputs.Combat.Disable() has not been called.");
     }
 
@@ -1417,6 +1557,124 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     /// </summary>
     public CameraActions @Camera => new CameraActions(this);
 
+    // Falling
+    private readonly InputActionMap m_Falling;
+    private List<IFallingActions> m_FallingActionsCallbackInterfaces = new List<IFallingActions>();
+    private readonly InputAction m_Falling_Move;
+    private readonly InputAction m_Falling_Accelerate;
+    private readonly InputAction m_Falling_Grapple;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "Falling".
+    /// </summary>
+    public struct FallingActions
+    {
+        private @PlayerInputs m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public FallingActions(@PlayerInputs wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Falling/Move".
+        /// </summary>
+        public InputAction @Move => m_Wrapper.m_Falling_Move;
+        /// <summary>
+        /// Provides access to the underlying input action "Falling/Accelerate".
+        /// </summary>
+        public InputAction @Accelerate => m_Wrapper.m_Falling_Accelerate;
+        /// <summary>
+        /// Provides access to the underlying input action "Falling/Grapple".
+        /// </summary>
+        public InputAction @Grapple => m_Wrapper.m_Falling_Grapple;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_Falling; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="FallingActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(FallingActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="FallingActions" />
+        public void AddCallbacks(IFallingActions instance)
+        {
+            if (instance == null || m_Wrapper.m_FallingActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_FallingActionsCallbackInterfaces.Add(instance);
+            @Move.started += instance.OnMove;
+            @Move.performed += instance.OnMove;
+            @Move.canceled += instance.OnMove;
+            @Accelerate.started += instance.OnAccelerate;
+            @Accelerate.performed += instance.OnAccelerate;
+            @Accelerate.canceled += instance.OnAccelerate;
+            @Grapple.started += instance.OnGrapple;
+            @Grapple.performed += instance.OnGrapple;
+            @Grapple.canceled += instance.OnGrapple;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="FallingActions" />
+        private void UnregisterCallbacks(IFallingActions instance)
+        {
+            @Move.started -= instance.OnMove;
+            @Move.performed -= instance.OnMove;
+            @Move.canceled -= instance.OnMove;
+            @Accelerate.started -= instance.OnAccelerate;
+            @Accelerate.performed -= instance.OnAccelerate;
+            @Accelerate.canceled -= instance.OnAccelerate;
+            @Grapple.started -= instance.OnGrapple;
+            @Grapple.performed -= instance.OnGrapple;
+            @Grapple.canceled -= instance.OnGrapple;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="FallingActions.UnregisterCallbacks(IFallingActions)" />.
+        /// </summary>
+        /// <seealso cref="FallingActions.UnregisterCallbacks(IFallingActions)" />
+        public void RemoveCallbacks(IFallingActions instance)
+        {
+            if (m_Wrapper.m_FallingActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="FallingActions.AddCallbacks(IFallingActions)" />
+        /// <seealso cref="FallingActions.RemoveCallbacks(IFallingActions)" />
+        /// <seealso cref="FallingActions.UnregisterCallbacks(IFallingActions)" />
+        public void SetCallbacks(IFallingActions instance)
+        {
+            foreach (var item in m_Wrapper.m_FallingActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_FallingActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="FallingActions" /> instance referencing this action map.
+    /// </summary>
+    public FallingActions @Falling => new FallingActions(this);
+
     // Combat
     private readonly InputActionMap m_Combat;
     private List<ICombatActions> m_CombatActionsCallbackInterfaces = new List<ICombatActions>();
@@ -1775,6 +2033,35 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleFreeCamera(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Falling" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="FallingActions.AddCallbacks(IFallingActions)" />
+    /// <seealso cref="FallingActions.RemoveCallbacks(IFallingActions)" />
+    public interface IFallingActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Move" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMove(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Accelerate" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAccelerate(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Grapple" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnGrapple(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Combat" which allows adding and removing callbacks.

@@ -161,6 +161,19 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private readonly Dictionary<GameObject, int> characterColliderCounts = new Dictionary<GameObject, int>();
     private GameObject currentCharacter;
     private bool lootOpen;
+
+    public static void CloseAllOpenLootForCombat()
+    {
+        InteractableItem[] interactables = FindObjectsByType<InteractableItem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < interactables.Length; i++)
+        {
+            InteractableItem interactable = interactables[i];
+            if (interactable != null && interactable.lootOpen)
+            {
+                interactable.CloseLoot();
+            }
+        }
+    }
     private bool useSelfTriggerEvents;
     private bool depositInventoryOpen;
     private int suppressReturnFrame = -1;

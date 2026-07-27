@@ -13,7 +13,7 @@ public class SkillCheckFeedbackAnchor : MonoBehaviour
     [Tooltip("Duree de vie fallback si aucun script n'est trouve.")]
     public float fallbackLifetime = 1.6f;
 
-    public void Show(Skill skill, int roll, int modifier, int total, bool success)
+    public void Show(StatsSO skill, int roll, int modifier, int total, bool success)
     {
         if (feedbackPrefab == null)
         {

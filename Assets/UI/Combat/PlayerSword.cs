@@ -1,0 +1,38 @@
+using UnityEngine;
+
+[DisallowMultipleComponent]
+public sealed class PlayerSword : MonoBehaviour
+{
+    [SerializeField] private GameObject appearVfx;
+    [SerializeField] private GameObject disappearVfx;
+
+    public void Show()
+    {
+        if (gameObject.activeSelf)
+        {
+            return;
+        }
+
+        gameObject.SetActive(true);
+        SpawnVfx(appearVfx);
+    }
+
+    public void Hide()
+    {
+        if (!gameObject.activeSelf)
+        {
+            return;
+        }
+
+        SpawnVfx(disappearVfx);
+        gameObject.SetActive(false);
+    }
+
+    private void SpawnVfx(GameObject vfxPrefab)
+    {
+        if (vfxPrefab != null)
+        {
+            Instantiate(vfxPrefab, transform.position, transform.rotation);
+        }
+    }
+}

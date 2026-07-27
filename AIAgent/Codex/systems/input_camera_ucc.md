@@ -46,6 +46,34 @@ Les contres melee configures par item utilisent un override camera local
 `CounterAction` dans `CombatCameraPresentationController`, sans changer la source
 de phase camera du manager.
 
+Le prototype `CombatRealTime` utilise son asset `RealTimeCombat.inputactions`
+plutôt que le wrapper généré de `PlayerInputs`. `RealTimeCombatInput` active
+seulement cette map dédiée pour réactions et palette. Le verrouillage passe
+par `Player/LeftShoulder`; les maps `Player` et `Camera` existantes restent actives pour préserver le déplacement
+libre. La caméra de lock désactive uniquement les drivers renseignés dans
+`CombatLockOnCameraController`, puis restaure leur état exact au déverrouillage.
+
+Comme le lock pilote directement la `Main Camera`, son composant conserve un
+solveur d'obstacles visuels par `SphereCastNonAlloc` : il rapproche la camera
+avant un decor bloquant tout en ignorant Lucian et la cible verrouillee. Le
+masque, rayon, marge et distance minimale sont reglabes dans l'Inspector.
+Il calcule aussi les bounds des renderers de Lucian afin de garder le personnage
+entier dans une zone viewport configurable : le FOV augmente jusqu'a
+`maximumLockedFieldOfView`, puis la camera recule si cette limite ne suffit pas.
+La direction d'orbite joueur-vers-ennemi possede son propre lissage
+`orbitDirectionSharpness`, distinct du lissage de position/rotation, et une
+vitesse angulaire maximale `maximumOrbitDegreesPerSecond` pour absorber les
+demi-tours brusques pendant un lock sans retournement instantane.
+
+Le lock du combat temps reel commence une seule fois quand un ennemi entre dans
+le `VisionField` de Lucian. Il se termine automatiquement hors de la distance de
+desengagement; `Player/LeftShoulder` peut sinon le deverrouiller ou reverrouiller
+manuellement a portee. `SwitchEnemyLock`, lie a `Gamepad/dpad/left`, change de
+cible hors palette. `SquadManager` conserve le panneau d'escouade si aucun lock
+manuel n'est possible. `RealTimeCombatInput` gere reactions, palette et
+changement de cible. Les maps `Player` et `Camera` restent actives pour le
+deplacement libre.
+
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
 franchissables lancent un court traversal scripté avec trigger Animator

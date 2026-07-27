@@ -240,7 +240,7 @@ public class NetworkInventory : NetworkBehaviour
             {
                 PlayActionAudio(ActionAudioCue.InventoryUse);
                 InfoBoxUI.TryShow(item.GetUseSuccessMessage());
-                CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
+                CombatSessionManager.Instance?.NotifyInventoryItemUsed(controller);
                 return true;
             }
 
@@ -519,7 +519,7 @@ public class NetworkInventory : NetworkBehaviour
         if (controller.TryUseItem(item, out string reason))
         {
             SyncFromController();
-            CombatSessionManager.EnsureInstance()?.NotifyInventoryItemUsed(controller);
+            CombatSessionManager.Instance?.NotifyInventoryItemUsed(controller);
             feedback = item.GetUseSuccessMessage();
             return true;
         }

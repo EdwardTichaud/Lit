@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 // Pointeur visible du MainMenu. La souris et la manette pilotent la meme position.
@@ -26,6 +27,8 @@ public class MainMenuPointerCursor : MonoBehaviour
     [SerializeField] private float gamepadDeadzone = 0.15f;
     [SerializeField] private bool warpHardwareMouseForGamepad = true;
     [SerializeField] private bool synthesizeGamepadUiEvents = true;
+    [SerializeField, Tooltip("Secours pour les clics souris si le module UI de la scene n'a plus d'asset d'actions valide.")]
+    private bool synthesizeMouseUiEventsWhenInputModuleUnavailable = true;
 
     [Header("Flame")]
     [SerializeField] private float flameCameraOffset = 0.2f;
@@ -1359,7 +1362,11 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private void UpdateSyntheticUiHoverAndClick()
     {
-        if (!synthesizeGamepadUiEvents || activeSource != PointerSource.Gamepad)
+        bool processGamepad = synthesizeGamepadUiEvents && activeSource == PointerSource.Gamepad;
+        bool processMouse = synthesizeMouseUiEventsWhenInputModuleUnavailable &&
+                            activeSource == PointerSource.Mouse &&
+                            IsMouseUiInputUnavailable();
+        if (!processGamepad && !processMouse)
         {
             ClearSyntheticUiHover();
             return;
@@ -1368,10 +1375,22 @@ public class MainMenuPointerCursor : MonoBehaviour
         GameObject hit = RaycastUi(screenPosition);
         SetSyntheticUiHover(hit);
 
-        if (hit != null && WasGamepadSubmitPressed())
+        bool submitPressed = processGamepad
+            ? WasGamepadSubmitPressed()
+            : Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+        if (hit != null && submitPressed)
         {
             DispatchSyntheticClick(hit);
         }
+    }
+
+    private static bool IsMouseUiInputUnavailable()
+    {
+        EventSystem eventSystem = EventSystem.current;
+        InputSystemUIInputModule inputModule = eventSystem != null
+            ? eventSystem.currentInputModule as InputSystemUIInputModule
+            : null;
+        return inputModule == null || inputModule.actionsAsset == null;
     }
 
     private void HandleWorldClick()

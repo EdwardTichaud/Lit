@@ -5,6 +5,169 @@
 Gérer les combats tour par tour en solo et Netcode, leur présentation et leur
 résolution dans le monde.
 
+## Combat temps réel (prototype isolé)
+
+`Assets/CombatRealTime/` est le systeme actif dans `GameplaySessionRoot` et sur
+`Juggernaut_Combat`. Le combat tour par tour reste archive dans ses assets mais
+ne possede plus de composant actif ni de creation runtime.
+`RealTimeCombatManager` possède le verrouillage, les dégâts de lumière, la
+Clarté et les fenêtres de réaction. `RealTimeCombatEnemy` stocke le plus grand
+dégât de lumière reçu jusqu'à sa prochaine attaque, le verrouille au démarrage
+de l'animation ennemie, puis remet uniquement ce cycle à zéro à sa fin.
+Les Animation Events `ShowReactionPrompt`/`OpenReactionWindow`,
+`ResolveEnemyAttackImpact` et `EndEnemyAttack` de
+`RealTimeCombatAnimationEvents` restent la seule source du timing de prompt,
+fenêtre, impact et clôture. Le prototype n'a pas de fallback temporisé.
+Le prototype ne gere pas encore de contre : les skills joueur sont des attaques
+et les reactions ennemies actives sont seulement `Dodge` ou `Jump`. Les donnees
+de contre conservees sur les savoirs ne modifient pas le combat temps reel.
+`CombatAttackDefinition`, `SkillSO`, `EnemySkills` et
+`RealTimeCombatLoadout` portent les données auteur, avec exactement huit slots
+d'attaque. `CombatLockOnCameraController` est le seul pilote de caméra lorsque
+le verrouillage est actif et doit recevoir explicitement les drivers gameplay à
+suspendre dans la scène.
+Le premier test utilise `Lueur faible` (2 dégâts) et `Lueur intense` (8 dégâts)
+dans les deux premiers slots de Lucian. Le Juggernaut choisit
+`Skill_Juggernaut_Assomoir` dans `EnemySkills`; il joue la state `Assomoir`,
+accepte uniquement `Dodge` et ses events pilotent prompt, VFX, impact et fin.
+Le contour rouge de verrouillage utilise `CombatLockOutline`, la layer
+`CombatOutline` et la passe HDRP `CombatLockOutlinePass` de
+`GameplaySessionRoot`. Il est independant de `RuntimeOutlineSelectionManager`,
+qui reste reserve aux contours bleus d'interactables.
+Le Juggernaut de test utilise 30 PV et un delai de riposte de 1 seconde afin de
+permettre la verification du maximum de son ledger.
+`CombatDamageWorldFeedback` est une presentation locale creee a l'impact : le
+nombre est attache au combattant touche, reste lisible face a la camera, pulse,
+monte puis disparait. Les ennemis recoivent un retour cyan pour les degats de
+lumiere et Lucian un retour rouge pale pour les degats subis. Aucun prefab ni
+Canvas de scene n'est requis.
+Les degats recus par Lucian passent par `SquadCharacterController.ApplyDamage`,
+et non par une ecriture directe de ses PV, afin que UCC conserve son etat de
+sante, ses retours et sa mort. Une riposte lethale termine volontairement la
+session et bloque le controle du personnage jusqu'a sa resolution.
+
+## Skills UI
+
+`StatsSO` sert exclusivement aux checks historiques. `SkillSO` porte les donnees
+de combat : nom, icone, clip, chemin de state Animator optionnel, degats et une liste de `SkillVfxCue`. Chaque cue
+choisit un prefab, un spawn sur la main tenant l'arc, direct sur `EnemyLockPoint` ou un projectile, son
+delai attache au joueur et sa duree de trajet vers la cible. Chaque cue peut
+aussi referencer un `AudioClipSO`, joue au point de depart de son VFX. Un skill peut aussi
+demander le `Bow` attache a Lucian, avec prefabs VFX optionnels d'apparition et
+de disparition. `SkillsManager`, sur
+`SkillsPanel`, ne propose que les competences connues de `CharacterData.combatSkills`
+et conserve au maximum huit `SkillSO` equipes
+sans doublon. Il les synchronise avec les slots persistants de `SkillWheel`; le
+panneau sert a la preparation, tandis que la roue expose les memes slots pendant
+le combat. La roue s'abonne a l'evenement `EquippedSkillsChanged` de
+`SkillsManager` et se met a jour uniquement lors d'un changement reel du
+loadout, sans polling dans `Update`. Cette etape ne declenche pas encore une
+competence : `SouthButton` oriente d'abord le root du joueur horizontalement
+vers `EnemyLockPoint`, puis lance le chemin de state Animator configure sur le
+`SkillSO` selectionne (fallback sur son `AnimationClip`); ses VFX et degats restent appeles par
+Animation Events. Les slots sans `SkillSO` sont masques et ignores par la
+navigation. Le loadout de `SkillsManager` n'est pas encore inclus dans
+`CharacterSaveData`.
+`SkillsManager.BasicSkills` contient une liste distincte de `BasicSkillsSO`.
+Quand le lock est actif, `WestButton` (ou `Q`) ajoute le prochain basic skill au
+buffer de combo. Les clips sont joues dans l'ordre de la liste puis bouclent sur
+le premier; cinq skills produisent donc la sequence 1-2-3-4-5-1-2-3 apres huit
+pressions. Les Basic Skills reutilisent les Animation Events de `SkillSO`.
+Les clips peuvent appeler `Dash` sur `RealTimeCombatAnimationEvents` : la force
+est calculee depuis le caster vers `EnemyLockPoint` plus
+`dashOvershootDistance`, afin de traverser la cible. `StopDash` applique ensuite
+une contre-impulsion pendant `stopDashDuration`, avec une deceleration reglable,
+pour une arret court mais non instantane.
+`LeftTrigger` maintenu passe l'alpha de `SkillsWheelSlots` de `0` a `0.4`, et
+son relachement le repasse a `0`; le joystick droit selectionne le slot le plus
+proche de sa direction et `SouthButton` confirme. Chaque slot selectionne
+interpole vers une echelle x1.5 et un alpha de `CanvasGroup` plus eleve en temps
+non scale; les autres slots sont attenues. Chaque slot resolve son enfant `Icon`
+si la reference n'a pas ete assignee dans le prefab, ce qui garantit l'icone du
+`SkillSO` equipe plutot que le sprite de maquette du slot.
+Tant que la roue est maintenue, elle pousse son focus d'input : `SouthButton`
+est reserve a la confirmation et ne peut pas declencher le fallback
+interaction/saut UCC; la locomotion reste disponible. Cette suppression ciblee
+est relachee uniquement avec `LeftTrigger`.
+Une competence validee revient a `Base Layer.Locomotion` a la fin de son clip;
+sa duree est aussi un garde-fou pour forcer ce retour si une state sans
+transition ne remonte jamais sa fin. Ce retour arrete aussi UCC et remet les
+parametres de mouvement a zero avant `MoveStopTrigger`, apres avoir synchronise
+la position et rotation finales avec le bridge UCC, arrete les capacites UCC et le
+controleur personnage afin que `Locomotion` reprenne sur son idle sans vitesse
+residuelle ni annuler le deplacement root du clip. Les states de skill root
+doivent porter le tag `RealTimeCombatRootMotion` : UCC conserve alors leur
+deplacement et leur rotation meme sans input. Les attaques root du
+prototype appliquent la meme synchronisation. Un nouveau lancement de competence
+ou d'attaque annule ce retour precedent.
+`Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et cette
+state porte le tag `RealTimeCombatRootMotion`, comme toute competence qui peut
+deplacer Lucian pendant son clip.
+`Skill_2_Fleche de lumiere` utilise aussi son chemin de state explicite, afin
+que le retour a locomotion suive toujours le clip root reellement joue.
+Les clips joueur peuvent utiliser `InstantiateSkillVFX` pour jouer tous les
+cues, ou `InstantiateSkillVFXAtIndex(int)` pour les cadencer individuellement,
+puis `HitEnemy` depuis `RealTimeCombatAnimationEvents`. Ces events recuperent
+le `SkillSO` du slot actuellement selectionne, puis appliquent exactement ses
+degats a l'ennemi verrouille et jouent son etat
+Animator `Hit` (nom reglable sur `RealTimeCombatEnemy`).
+`EnemySkills`, place sur la racine d'un ennemi temps reel, expose une liste de
+`SkillSO` sans roue de selection. Le meme receveur
+`RealTimeCombatAnimationEvents` permet aux clips ennemis d'appeler
+`SetEnemySkill(int)`, `PlayEnemySkill(int)`, `InstantiateEnemySkillVFX`,
+`InstantiateEnemySkillVFXAtIndex(int)` et `HitPlayer`. Les VFX ciblent Lucian;
+`HitPlayer` resout l'impact du `SkillSO` actif via `RealTimeCombatManager`.
+La portee, le multiplicateur et les reactions ennemies sont configures sur ce
+`SkillSO`; le montant final reste celui du ledger de lumiere.
+Le `Bow` existant sous le modele de Lucian est masque par defaut. Les Animation
+Events `ShowBow` et `HideBow` de `RealTimeCombatAnimationEvents` sont la seule
+source de son affichage et de son masquage. Les VFX d'apparition/disparition
+sont configures sur `PlayerBow` directement sur le GameObject `Bow`.
+L'epee `Sword` fonctionne de facon identique via `PlayerSword` et les Animation
+Events `ShowSword`/`HideSword`, avec ses propres VFX optionnels sur le composant
+attache a l'epee. Elle est masquee au demarrage.
+
+## Poursuite et musique
+
+`RealTimeCombatEnemyBehaviour` est le comportement reutilisable place sur les
+ennemis temps reel. Il se tourne vers Lucian des que le `VisionField` de son
+`RealTimeCombatEnemy` le voit. Sa vision utilise la portee normale en patrouille
+et passe a `alertedVisionDistance` apres cette premiere detection; elle reste
+alertee pendant `alertMemorySeconds` apres la perte de ligne de vue, puis revient
+a la portee normale. Le `RealTimeCombatManager` garde le lock pendant ce rayon
+d'action alerte au lieu de le fermer au rayon global initial. L'override de
+musique reste inactif a la seule detection et commence uniquement au premier
+degat de lumiere recu par l'ennemi.
+Quand la session temps reel se ferme automatiquement, `RealTimeCombatManager`
+attend le relachement du mouvement local, puis synchronise la pose et remet a
+zero l'input UCC residuel pour eviter une marche involontaire apres le lock.
+La detection seule rend l'ennemi alerte, mais une attaque de lumiere recue est
+necessaire avant qu'il poursuive Lucian via `NavMeshAgent` (ou deplacement direct
+de secours) pour convertir le ledger en riposte. Apres perte de ligne de vue, il
+inspecte une fois sa derniere position connue pendant
+`searchLastKnownPositionSeconds`, a `searchArrivalDistance`, sans suivre la
+position reelle de Lucian hors de sa vision, puis retourne au `patrolPoint`
+optionnel ou a sa pose initiale. Il choisit alors une famille d'attaque selon
+`meleeAttackPreferencePercent`, avec fallback sur l'autre famille si elle est
+indisponible, puis rejoint sa portee melee ou distance configuree.
+Le Juggernaut de prototype possede actuellement le seul skill melee
+`Skill_Juggernaut_Assomoir`. `RealTimeCombatManager` centralise un unique
+override de musique combat tant qu'au moins un de ces comportements est en mode
+attaque, et le relache a leur desengagement ou mort.
+
+## Vision Et Lock
+
+`VisionField` valide la portee, le cone de vision et une ligne de vue physique.
+La vision ne verrouille jamais Lucian automatiquement. `Player/LeftShoulder`
+verrouille ou deverrouille manuellement l'ennemi le plus proche dans
+`lockRange` (6 m); le lock se ferme au-dela de 7 m. `SwitchEnemyLock`, lie a
+`Gamepad/dpad/left`, fait tourner la
+cible parmi les ennemis visibles a portee. La camera vise `EnemyLockPoint`, ou
+la racine si ce point est absent. Son enfant `LockGlow` affiche un orbe lumineux
+et joue `AudioClip_CursorFlames` a chaque nouveau lock. Exploration et combat
+sont continus : aucune transition ecran, BattleSphere, teleportation ou arene
+ne fait partie du flux.
+
 ## Classes principales
 
 - `CombatAggroEnemy` : détection et création des définitions ennemies.
@@ -58,8 +221,9 @@ résolution dans le monde.
    instance sont joues a l'apparition, stoppes a la sortie, puis detruits apres
    un delai par defaut de 2 secondes. Le joueur engage est verrouille au moment
    de cette teleportation.
-4. Le HUD ferme l'inventaire ouvert, prend le focus exclusif, active l'ActionMap
-   locale `Combat` et joue une fois par session l'intro
+4. Le HUD ferme les UI monde ouvertes (inventaire, loot, pause, dialogue,
+   InfoBox, confirmations, lecture, craft et construction), prend le focus
+   exclusif, active l'ActionMap locale `Combat` et joue une fois par session l'intro
    `CombatEngagedPanel_Trigger` sur `CombatEngagedPanel`, des l'entree en
    combat et sans attendre le premier snapshot, puis affiche
    `CombatScreenInfosPanel`.
@@ -249,6 +413,9 @@ vague inversee. Ses parametres
 exposent l'origine viewport, la direction de pousse, la frequence, la vitesse de
 propagation, l'amplitude, la duree, l'attenuation, le fondu de sortie,
 `highlightIntensity`, `highlightColor` et `edgeContrast`.
+Le composant `ScreenWaveController` reste active sur le `BattleManager` : son
+`Update` en temps non scale fait avancer le cycle et desactive le pass apres le
+fondu final.
 La sortie wave vers normal est un release progressif : `StopScreenWave` lance ce
 fondu, puis le pass est coupe seulement apres une frame neutre. Le flux combat
 utilise `PlayScreenWaveCycle(origin)` pour garder le Custom Pass actif entre la

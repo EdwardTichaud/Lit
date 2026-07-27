@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Lit Battle Theme
   composer: Suno
-  audioClip: {fileID: 8300000, guid: 5e06f886feb372644a2c88bda9d7d23b, type: 3}
+  audioClip: {fileID: 8300000, guid: a7c723f38946b9d4280b2939f42864ab, type: 3}
   volume: 1
   loop: 1
   affectedByTimeScale: 0

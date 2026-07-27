@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b0c9fe1cd7d4328ba35f67c6d5dd193, type: 3}
+  m_Name: BasicSkill_3
+  m_EditorClassIdentifier: Assembly-CSharp::BasicSkillsSO
+  skillName: Attaque basique 3
+  description: 
+  icon: {fileID: 0}
+  animationClip: {fileID: 7400000, guid: 2a416762e5197734ebfcee7606c66b81, type: 2}
+  animatorState: 
+  damages: 10
+  vfxCues:
+  - displayName: Impact
+    prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
+    audioClip: {fileID: 0}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000
+  requireAllEnemyReactions: 0
+  enemyAttackSfx: {fileID: 0}

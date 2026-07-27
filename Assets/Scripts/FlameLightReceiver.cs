@@ -38,6 +38,7 @@ public class FlameLightReceiver : MonoBehaviour
     private bool defaultUseColorTemperature;
     private float defaultColorTemperature;
     private bool hasDefault;
+    private bool worldRevealSuppressed;
     private HDAdditionalLightData targetHdLight;
 
     public SquadCharacterController Owner => owner;
@@ -104,9 +105,9 @@ public class FlameLightReceiver : MonoBehaviour
         CacheOwner();
         CacheLight();
 
-        bool active = owner != null
+        bool active = !worldRevealSuppressed && (owner != null
             ? owner.IsFlameEquipped
-            : registerAsWorldRevealSource && worldSourceCountsAsActive;
+            : registerAsWorldRevealSource && worldSourceCountsAsActive);
 
         if (targetLight != null && !targetLight.enabled)
         {
@@ -115,6 +116,11 @@ public class FlameLightReceiver : MonoBehaviour
 
         info = new DissolveRevealSourceInfo(this, owner, FlameWorldPosition, CurrentFlameColor, active);
         return owner != null || registerAsWorldRevealSource || targetLight != null;
+    }
+
+    public void SetWorldRevealSuppressed(bool suppressed)
+    {
+        worldRevealSuppressed = suppressed;
     }
 
     private void CacheLight()

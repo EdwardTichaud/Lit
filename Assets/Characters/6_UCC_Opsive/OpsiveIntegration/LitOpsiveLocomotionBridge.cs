@@ -185,6 +185,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Start,
         Stop,
         Pivot,
+        Combat,
         Other
     }
 
@@ -1605,8 +1606,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return !commitRootRotationDuringPivot;
         }
 
-        return allowRootMotionRotationDuringStartStop &&
-               (phase == RootMotionPhase.Start || phase == RootMotionPhase.Stop);
+        return phase == RootMotionPhase.Combat ||
+               (allowRootMotionRotationDuringStartStop &&
+                (phase == RootMotionPhase.Start || phase == RootMotionPhase.Stop));
     }
 
     private bool ShouldSuppressIdleRootMotionPosition(RootMotionPhase phase)
@@ -1616,7 +1618,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             !locomotion.Grounded ||
             phase == RootMotionPhase.Start ||
             phase == RootMotionPhase.Stop ||
-            phase == RootMotionPhase.Pivot)
+            phase == RootMotionPhase.Pivot ||
+            phase == RootMotionPhase.Combat)
         {
             return false;
         }
@@ -1746,6 +1749,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (stateInfo.IsName("Locomotion"))
         {
             return RootMotionPhase.Locomotion;
+        }
+
+        if (stateInfo.IsTag("RealTimeCombatRootMotion"))
+        {
+            return RootMotionPhase.Combat;
         }
 
         return RootMotionPhase.Other;

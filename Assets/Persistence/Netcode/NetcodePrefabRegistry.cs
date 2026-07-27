@@ -381,41 +381,9 @@ public static class NetcodePrefabRegistry
     {
         GameObject instance = new GameObject("WorldInteractionService");
         instance.AddComponent<WorldInteractionService>();
-        if (!HasExistingCombatSessionManager())
-        {
-            instance.AddComponent<CombatSessionManager>();
-        }
-
         NetworkObject networkObject = instance.AddComponent<NetworkObject>();
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
         return instance;
-    }
-
-    private static bool HasExistingCombatSessionManager()
-    {
-        CombatSessionManager existing = CombatSessionManager.Instance;
-        if (existing == null)
-        {
-#if UNITY_2023_1_OR_NEWER
-            existing = Object.FindAnyObjectByType<CombatSessionManager>();
-#else
-            existing = Object.FindAnyObjectByType<CombatSessionManager>();
-#endif
-        }
-
-        if (existing == null)
-        {
-            return false;
-        }
-
-        NetworkManager manager = NetworkManager.Singleton;
-        if (manager == null || !manager.IsListening)
-        {
-            return true;
-        }
-
-        NetworkObject networkObject = existing.GetComponent<NetworkObject>();
-        return networkObject == null || existing.IsSpawned;
     }
 
     private static GameObject CreateFallbackItemInstance(Vector3 position, Quaternion rotation, bool withLootContainer, uint hash)

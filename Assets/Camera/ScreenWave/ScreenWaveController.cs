@@ -211,6 +211,17 @@ public sealed class ScreenWaveController : MonoBehaviour
 
     private void PlayScreenWavePhase(ScreenWaveSettings settings, bool chainReverse)
     {
+        if (!isActiveAndEnabled)
+        {
+            enabled = true;
+            if (!isActiveAndEnabled)
+            {
+                Debug.LogWarning("ScreenWaveController: the component must stay enabled on the scene BattleManager to animate the screen wave.", this);
+                StopScreenWaveImmediate();
+                return;
+            }
+        }
+
         activeSettings = settings.Sanitized();
         elapsed = 0f;
         releaseElapsed = 0f;

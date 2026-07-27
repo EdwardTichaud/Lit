@@ -52,6 +52,11 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 
 ## Notes recentes
 
+- Une `AncientFlame` a moins de 8 metres d'un ennemi temps reel vivant peut etre
+  allumee mais devient bleue et inerte. Son etat est conserve pour la sauvegarde,
+  tandis que sa revelation, son influence, ses activations et son effet temporel
+  restent suspendus jusqu'a la disparition de l'ennemi.
+
 - Pendant le gel d'entree combat, `BattleTransition` suspend
   `RuntimeOutlineSelectionManager` pour masquer les outlines monde encore actifs
   (par exemple un brasero vise juste avant le combat), puis restaure l'etat a la

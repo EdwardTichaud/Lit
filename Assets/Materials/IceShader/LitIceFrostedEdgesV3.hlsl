@@ -284,10 +284,26 @@ void LitIceFrostedEdgesV3_float(
     float iceSmoothnessWithRelief = lerp(
         IceSmoothness, revealedSmoothness, iceRoughnessWeight);
 
+    // A detailed normal map scatters an IBL/reflection probe. This is
+    // physically correct, but it makes a strongly relieved ice wall lose its
+    // mirror appearance. HDRP Lit exposes one NormalTS output for both surface
+    // lighting and probe reflections, so ReflectionStrength also enables a
+    // controlled optical top layer. The texture-edge frost above is still
+    // derived from the original normal map, keeping the perceived brick/stone
+    // relief visible while the reflection becomes calmer.
+    float mirrorLayer = smoothstep(0.25, 1.0, saturate(ReflectionStrength));
+    float3 calmIceNormalTS = normalize(lerp(
+        float3(0.0, 0.0, 1.0),
+        iceNormalTS,
+        0.18));
+    float3 frostNormalForReflection = normalize(lerp(
+        iceNormalWithRelief, calmIceNormalTS, mirrorLayer));
+
     OutBaseColor = lerp(iceBaseColor, revealedBaseColor, flameMask);
     // ShaderGraph_MasterShader is opaque when its dissolve is inactive.
     OutAlpha = lerp(iceAlpha, 1.0, flameMask);
-    OutNormalTS = normalize(lerp(iceNormalWithRelief, baseNormalTS, flameMask));
+    OutNormalTS = normalize(lerp(
+        frostNormalForReflection, baseNormalTS, flameMask));
     // Emission is a material-wide V3 choice. The ice state keeps its procedural
     // frost/crack emission, while the revealed state emits its textured base
     // color. Interpolating with the same flame mask preserves a continuous
@@ -298,11 +314,11 @@ void LitIceFrostedEdgesV3_float(
         * emissionEnabled;
     float stateSmoothness = lerp(
         iceSmoothnessWithRelief, revealedSmoothness, flameMask);
-    // HDRP Reflection Probes are sampled by the Lit specular response. Raising
-    // only smoothness keeps ice and stone dielectric while progressively
-    // sharpening their environment reflection into a subtle mirror layer.
+    // HDRP Reflection Probes are sampled by the Lit specular response. The
+    // optical layer above calms the Frost normal; this value additionally
+    // sharpens the probe itself into a stronger mirror reflection.
     OutSmoothness = lerp(
-        saturate(stateSmoothness), 0.98, saturate(ReflectionStrength));
+        saturate(stateSmoothness), 0.995, saturate(ReflectionStrength));
     OutMetallic = lerp(IceMetallic, revealedMetallic, flameMask);
     OutOcclusion = lerp(1.0, revealedOcclusion, flameMask);
 }

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
+  m_Name: Skill_Juggernaut_Assomoir
+  m_EditorClassIdentifier: Assembly-CSharp::SkillSO
+  skillName: Assomoir
+  description: 
+  icon: {fileID: 0}
+  animationClip: {fileID: 7400000, guid: 39aa5681d3ef38d4c91d6b7760d13249, type: 2}
+  animatorState: Assomoir
+  damages: 0
+  vfxCues:
+  - displayName: Light
+    prefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}
+    audioClip: {fileID: 0}
+    delivery: 2
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions:
+  - 2
+  requireAllEnemyReactions: 0
+  enemyAttackSfx: {fileID: 0}

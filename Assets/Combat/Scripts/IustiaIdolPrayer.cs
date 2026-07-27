@@ -86,7 +86,7 @@ public class IustiaIdolPrayer : MonoBehaviour, ICharacterDetectedInteractable
         SquadCharacterController controller = currentCharacter.GetComponentInChildren<SquadCharacterController>(true);
         if (controller == null || !IsControllerInRange(controller))
         {
-            CombatSessionManager.EnsureInstance()?.RequestStopPrayerFromLocal();
+            CombatSessionManager.Instance?.RequestStopPrayerFromLocal();
         }
     }
 
@@ -142,7 +142,7 @@ public class IustiaIdolPrayer : MonoBehaviour, ICharacterDetectedInteractable
 
         if (currentCharacter != null && character == null && LocalPrayerActive)
         {
-            CombatSessionManager.EnsureInstance()?.RequestStopPrayerFromLocal();
+            CombatSessionManager.Instance?.RequestStopPrayerFromLocal();
         }
 
         currentCharacter = character;
@@ -199,7 +199,7 @@ public class IustiaIdolPrayer : MonoBehaviour, ICharacterDetectedInteractable
 
         LocalInputRouter.ConsumeInteract();
         // La logique finale de cout/effet reste dans CombatSessionManager.
-        CombatSessionManager.EnsureInstance()?.RequestTogglePrayerFromLocal(controller, this);
+        CombatSessionManager.Instance?.RequestTogglePrayerFromLocal(controller, this);
     }
 
     private bool IsControllerInRange(SquadCharacterController controller)

@@ -118,7 +118,7 @@ Material:
     - _FresnelIntensity: 0
     - _FresnelPower: 0.2
     - _FrostWidth: 10
-    - _IceReliefNormalStrength: 2
+    - _IceReliefNormalStrength: 0.75
     - _IceReliefRoughnessInfluence: 0
     - _IceScale: 1.06
     - _LightReactiveBloom: 1
@@ -132,7 +132,7 @@ Material:
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
-    - _ReflectionStrength: 1
+    - _ReflectionStrength: 0.85
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0

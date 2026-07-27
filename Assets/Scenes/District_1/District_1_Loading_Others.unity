@@ -19284,6 +19284,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7516174841884352516}
   - component: {fileID: 8254344139057166514}
+  - component: {fileID: 900000000000000012}
   - component: {fileID: 9055564409792415605}
   - component: {fileID: 6846966239022409466}
   m_Layer: 0
@@ -65447,6 +65448,22 @@ MonoBehaviour:
   muninController: {fileID: 0}
   muninTargetOffset: {x: 0, y: 0, z: 0}
   chargeCostToLight: 2
+--- !u!114 &900000000000000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416037943166783005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65d03c8c1f4b4e8286276235f37e7a42, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AncientFlameEnemyBlocker
+  flame: {fileID: 8254344139057166514}
+  enemyProximityRange: 8
+  refreshInterval: 0.2
+  blockedFlameColor: {r: 0.2, g: 0.65, b: 1, a: 1}
 --- !u!1 &8345416662947858711
 GameObject:
   m_ObjectHideFlags: 0

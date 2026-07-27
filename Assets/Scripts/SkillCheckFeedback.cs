@@ -31,7 +31,7 @@ public class SkillCheckFeedback : MonoBehaviour
         }
     }
 
-    public void Initialize(Skill skill, int roll, int modifier, int total, bool success)
+    public void Initialize(StatsSO skill, int roll, int modifier, int total, bool success)
     {
         // Construit le texte de feedback.
         string skillName = skill != null && !string.IsNullOrWhiteSpace(skill.skillName)
