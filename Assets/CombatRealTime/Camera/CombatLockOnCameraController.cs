@@ -11,7 +11,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 {
     [SerializeField] private Camera controlledCamera;
     [SerializeField] private UccCameraController cameraController;
-    [SerializeField, Range(0f, 1f)] private float enemyFocusBias = 0.68f;
+    [SerializeField, Range(0f, 1f)] private float enemyFocusBias = 0.74f;
 
     [Header("Combat Lock Framing")]
     [SerializeField] private float playerLookHeight = 1.25f;

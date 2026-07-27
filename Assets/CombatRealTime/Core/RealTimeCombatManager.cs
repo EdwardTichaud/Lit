@@ -474,8 +474,16 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        if (!IsLockedEnemyWithinSkillHitRange(skill))
+        if (!TryGetLockedEnemyHitDistance(out float distance) || !skill.IsWithinHitRange(distance))
         {
+            string message = distance < skill.MinimumHitDistance
+                ? "Raté (trop près)"
+                : "Raté (trop loin)";
+            CombatDamageWorldFeedback.ShowMessage(
+                lockedEnemy.transform,
+                message,
+                new Color(1f, 0.82f, 0.38f),
+                2.25f);
             return 0;
         }
 
@@ -491,7 +499,19 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
     {
-        if (!combatActive || skill == null || lockedEnemy == null || playerRoot == null ||
+        if (!combatActive || skill == null ||
+            !TryGetLockedEnemyHitDistance(out float distance))
+        {
+            return false;
+        }
+
+        return skill.IsWithinHitRange(distance);
+    }
+
+    private bool TryGetLockedEnemyHitDistance(out float distance)
+    {
+        distance = 0f;
+        if (lockedEnemy == null || playerRoot == null ||
             (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
         {
             return false;
@@ -501,7 +521,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         Vector3 targetPosition = lockedEnemy.LockPoint.position;
         playerPosition.y = 0f;
         targetPosition.y = 0f;
-        return skill.IsWithinHitRange(Vector3.Distance(playerPosition, targetPosition));
+        distance = Vector3.Distance(playerPosition, targetPosition);
+        return true;
     }
 
     /// <summary>

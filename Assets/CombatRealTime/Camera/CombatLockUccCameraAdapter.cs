@@ -112,6 +112,25 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         return lockActive && hasSmoothedLookPoint;
     }
 
+    public bool TryGetPlayerToEnemyDirection(out Vector3 direction)
+    {
+        direction = Vector3.zero;
+        if (!lockActive || player == null || enemy == null)
+        {
+            return false;
+        }
+
+        direction = enemy.position - player.position;
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        direction.Normalize();
+        return true;
+    }
+
     private bool ResolveCombatLockView()
     {
         if (cameraController == null)
@@ -150,6 +169,7 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         {
             combatLockView.CopyGameplaySettingsFrom(gameplayView);
         }
+        combatLockView.ApplyCombatFraming();
 
         return true;
     }

@@ -83,7 +83,9 @@ distance horizontale actuelle entre Lucian et `EnemyLockPoint` a cette plage.
 Hors plage, aucun degat ni animation `Hit` ennemi n'est applique.
 Les cues `DirectOnTarget` et `Projectile` sont aussi ignores hors de cette
 plage; un cue `PlayerHand` reste autorise car il presente le caster, pas la
-cible.
+cible. Le `HitEnemy` hors plage affiche un message world-space jaune : `Raté
+(trop près)` sous la distance minimale, ou `Raté (trop loin)` au-dela de la
+distance maximale.
 Les clips peuvent appeler `Dash` sur `RealTimeCombatAnimationEvents` : la force
 est calculee depuis le caster vers `EnemyLockPoint` plus
 `dashOvershootDistance`, afin de traverser la cible. `StopDash` applique ensuite

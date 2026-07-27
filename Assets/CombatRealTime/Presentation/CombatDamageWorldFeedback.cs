@@ -24,6 +24,22 @@ public sealed class CombatDamageWorldFeedback : MonoBehaviour
             return;
         }
 
+        ShowText(target, "-" + amount, color, height, 46f);
+    }
+
+    public static void ShowMessage(Transform target, string message, Color color, float height)
+    {
+        if (target == null || string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        ShowText(target, message, color, height, 30f);
+    }
+
+    private static void ShowText(Transform target, string message, Color color, float height, float fontSize)
+    {
+
         GameObject root = new GameObject(
             "CombatDamageWorldUI",
             typeof(RectTransform),
@@ -55,8 +71,8 @@ public sealed class CombatDamageWorldFeedback : MonoBehaviour
         labelRect.offsetMax = Vector2.zero;
 
         TextMeshProUGUI text = label.GetComponent<TextMeshProUGUI>();
-        text.text = "-" + amount;
-        text.fontSize = 46f;
+        text.text = message;
+        text.fontSize = fontSize;
         text.fontStyle = FontStyles.Bold;
         text.alignment = TextAlignmentOptions.Center;
         text.color = color;

@@ -128,7 +128,8 @@ horizontale minimale et maximale de hit. `HitEnemy` ne blesse la cible qu'a la
 frame de son Animation Event si Lucian est dans cette plage autour de
 `EnemyLockPoint`. Les VFX `DirectOnTarget` et `Projectile` sont soumis a la
 meme verification; les cues `PlayerHand` restent joues pour la presentation du
-caster.
+caster. Un hit refuse affiche aussi un feedback world-space `Raté (trop près)`
+ou `Raté (trop loin)` sur l'ennemi.
 `Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et porte
 le tag `RealTimeCombatRootMotion`, afin que son retour a locomotion ne laisse
 pas une intention UCC residuelle.
