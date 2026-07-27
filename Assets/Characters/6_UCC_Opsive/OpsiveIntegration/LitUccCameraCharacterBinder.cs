@@ -20,6 +20,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
     private Coroutine bindRoutine;
     private Transform boundCharacter;
+    private bool waitingForInitialCharacter;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
@@ -90,6 +91,15 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     {
         ResolveCameraController();
         SetInitCharacterOnAwake(false);
+
+        // UCC registers the camera with its simulation before Start. Do not let
+        // that simulation rotate an unbound camera: CameraController.Rotate
+        // requires a valid CharacterLocomotion.
+        if (cameraController != null && cameraController.Character == null)
+        {
+            waitingForInitialCharacter = true;
+            cameraController.enabled = false;
+        }
     }
 
     private void OnEnable()
@@ -214,6 +224,12 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
         SetInitCharacterOnAwake(false);
         SetCameraCharacter(characterObject, forceReinitialize: !IsCameraBoundAndInitialized(characterObject));
+
+        if (waitingForInitialCharacter && !cameraController.enabled)
+        {
+            cameraController.enabled = true;
+            waitingForInitialCharacter = false;
+        }
 
         boundCharacter = character;
         SnapCameraToBoundCharacter();
