@@ -106,7 +106,10 @@ le trigger est maintenu, sans bloquer la locomotion. A la fin du clip de skill,
 le joueur revient a sa locomotion normale. Ce retour est borne par la duree du
 clip du SkillSO, synchronise d'abord la pose finale root avec UCC, arrete les capacites UCC residuelles et le controleur personnage, puis declenche
 `MoveStopTrigger` et reprend `Base Layer.Locomotion` avec ses parametres a zero,
-sans ramener Lucian a sa pose initiale. Les attaques root du prototype appliquent
+sans ramener Lucian a sa pose initiale. La pose root finale est capturee apres
+la derniere frame evaluee du clip puis reappliquee a UCC apres le `CrossFade`,
+pour que les skills root comme `Skill_2_Fleche de lumiere` conservent leur
+deplacement. Les attaques root du prototype appliquent
 la meme synchronisation avant leur retour vers la locomotion. Les states taguees
 `RealTimeCombatRootMotion` sont reconnues par UCC comme du root motion actif :
 leur deplacement et leur rotation ne sont donc pas supprimes quand l'input est nul.

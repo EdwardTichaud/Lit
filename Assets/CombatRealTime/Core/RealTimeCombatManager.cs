@@ -740,15 +740,23 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (playerAnimator != null)
         {
-            ReturnPlayerToIdle(locomotionState);
+            // Attendre l'evaluation complete de la derniere frame root avant de
+            // quitter la state. Sans cela, UCC peut reprendre sa pose interne
+            // precedente lorsque Locomotion redevient active.
+            yield return new WaitForEndOfFrame();
+            Vector3 finalPosition = playerRoot != null ? playerRoot.position : Vector3.zero;
+            Quaternion finalRotation = playerRoot != null ? playerRoot.rotation : Quaternion.identity;
+            ReturnPlayerToIdle(locomotionState, finalPosition, finalRotation);
+            yield return null;
+            CommitPlayerAnimationEndPose(finalPosition, finalRotation);
         }
 
         playerSkillAnimationRoutine = null;
     }
 
-    private void ReturnPlayerToIdle(string locomotionState)
+    private void ReturnPlayerToIdle(string locomotionState, Vector3 finalPosition, Quaternion finalRotation)
     {
-        PreservePlayerAnimationEndPose();
+        CommitPlayerAnimationEndPose(finalPosition, finalRotation);
         playerAnimator.SetFloat("Speed", 0f);
         playerAnimator.SetFloat("HorizontalMovement", 0f);
         playerAnimator.SetFloat("ForwardMovement", 0f);
@@ -757,6 +765,33 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         playerAnimator.ResetTrigger("MoveStartTrigger");
         playerAnimator.SetTrigger("MoveStopTrigger");
         playerAnimator.CrossFade(locomotionState, 0.08f, 0);
+    }
+
+    private void CommitPlayerAnimationEndPose(Vector3 position, Quaternion rotation)
+    {
+        if (playerRoot == null)
+        {
+            return;
+        }
+
+        if (playerLocomotionBridge == null)
+        {
+            playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
+        }
+
+        // Met a jour explicitement la pose interne de UCC sans re-evaluer
+        // l'Animator. Cette pose est reappliquee apres le CrossFade pour que
+        // l'idle ne puisse pas restaurer le point de depart du clip root.
+        if (playerLocomotionBridge != null)
+        {
+            playerLocomotionBridge.ApplyScriptedTraversalPose(position, rotation);
+        }
+        else
+        {
+            playerRoot.SetPositionAndRotation(position, rotation);
+        }
+
+        playerController?.Stop();
     }
 
     private void PreservePlayerAnimationEndPose()

@@ -102,9 +102,11 @@ Tant que la roue est maintenue, elle pousse son focus d'input : `SouthButton`
 est reserve a la confirmation et ne peut pas declencher le fallback
 interaction/saut UCC; la locomotion reste disponible. Cette suppression ciblee
 est relachee uniquement avec `LeftTrigger`.
-Une competence validee revient a `Base Layer.Locomotion` a la fin de son clip;
-sa duree est aussi un garde-fou pour forcer ce retour si une state sans
-transition ne remonte jamais sa fin. Ce retour arrete aussi UCC et remet les
+Une competence validee revient a `Base Layer.Locomotion` apres la derniere frame
+evaluee de son clip; sa duree est aussi un garde-fou pour forcer ce retour si une state sans
+transition ne remonte jamais sa fin. La pose root finale est alors communiquee
+explicitement a UCC avant et apres le `CrossFade`, afin que l'idle ne restaure
+jamais le point de depart du clip. Ce retour arrete aussi UCC et remet les
 parametres de mouvement a zero avant `MoveStopTrigger`, apres avoir synchronise
 la position et rotation finales avec le bridge UCC, arrete les capacites UCC et le
 controleur personnage afin que `Locomotion` reprenne sur son idle sans vitesse
