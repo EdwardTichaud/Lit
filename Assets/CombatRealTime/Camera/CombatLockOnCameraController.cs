@@ -92,6 +92,8 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             return;
         }
 
+        EnforceExclusiveCameraControl();
+
         Transform player = manager.PlayerRoot;
         Transform enemy = manager.LockedEnemy.LockPoint;
         Vector3 flatDirection = Vector3.ProjectOnPlane(enemy.position - player.position, Vector3.up).normalized;
@@ -398,5 +400,22 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         }
 
         gameplayCameraDrivers = drivers.ToArray();
+    }
+
+    private void EnforceExclusiveCameraControl()
+    {
+        if (gameplayCameraDrivers == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < gameplayCameraDrivers.Length; i++)
+        {
+            Behaviour driver = gameplayCameraDrivers[i];
+            if (driver != null && driver.enabled)
+            {
+                driver.enabled = false;
+            }
+        }
     }
 }

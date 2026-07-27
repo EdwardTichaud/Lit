@@ -391,12 +391,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return false;
         }
 
-        Vector3 targetDirection = lockedEnemy.LockPoint.position - playerRoot.position;
-        targetDirection.y = 0f;
-        if (targetDirection.sqrMagnitude > 0.0001f)
-        {
-            playerRoot.rotation = Quaternion.LookRotation(targetDirection.normalized, Vector3.up);
-        }
+        FaceLockedEnemy();
 
         playerAnimator.CrossFade(stateHash, 0.06f, 0);
         if (playerCombatAnimationRoutine != null)
@@ -437,6 +432,33 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         attemptedStateName = skill.AnimationClip.name;
         stateHash = Animator.StringToHash(attemptedStateName);
         return playerAnimator.HasState(0, stateHash);
+    }
+
+    private void FaceLockedEnemy()
+    {
+        if (playerRoot == null || lockedEnemy == null)
+        {
+            return;
+        }
+
+        Vector3 targetDirection = lockedEnemy.LockPoint.position - playerRoot.position;
+        targetDirection.y = 0f;
+        if (targetDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        Quaternion targetRotation = Quaternion.LookRotation(targetDirection.normalized, Vector3.up);
+        if (playerLocomotionBridge == null)
+        {
+            playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
+        }
+
+        if (playerLocomotionBridge == null ||
+            !playerLocomotionBridge.SetExternalPositionAndRotation(playerRoot.position, targetRotation, false))
+        {
+            playerRoot.rotation = targetRotation;
+        }
     }
 
     /// <summary>

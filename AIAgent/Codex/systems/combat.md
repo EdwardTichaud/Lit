@@ -63,7 +63,7 @@ le combat. La roue s'abonne a l'evenement `EquippedSkillsChanged` de
 `SkillsManager` et se met a jour uniquement lors d'un changement reel du
 loadout, sans polling dans `Update`. Cette etape ne declenche pas encore une
 competence : `SouthButton` oriente d'abord le root du joueur horizontalement
-vers `EnemyLockPoint`, puis lance le chemin de state Animator configure sur le
+vers `EnemyLockPoint` via le bridge UCC, puis lance le chemin de state Animator configure sur le
 `SkillSO` selectionne (fallback sur son `AnimationClip`); ses VFX et degats restent appeles par
 Animation Events. Les slots sans `SkillSO` sont masques et ignores par la
 navigation. Le loadout de `SkillsManager` n'est pas encore inclus dans

@@ -36,6 +36,9 @@ plus proche a portee, puis le deverrouille au prochain appui. Le lock se ferme
 automatiquement au-dela de 7 metres. Un orbe lumineux pulse et un signal sonore sont joues sur
 `EnemyLockPoint`; la croix directionnelle gauche bascule entre les ennemis
 visibles verrouillables.
+Quand aucun ennemi n'est verrouillable, `LeftShoulder` ne declenche aucune UI
+ni focus gameplay : il reste reserve au lock/unlock et ne peut donc plus ouvrir
+le panneau d'escouade ou interrompre le mouvement.
 Le verrouillage combat affiche aussi un contour rouge HDRP autonome sur les
 renderers de l'ennemi. Il utilise la layer `CombatOutline` et la passe
 `CombatLockOutlinePass` de `GameplaySessionRoot`, sans partager l'etat ou la
@@ -43,6 +46,9 @@ couleur des contours bleus d'interactables.
 Pendant ce lock, la camera conserve un evitement des obstacles visuels par
 SphereCast, configurable sur `CombatLockOnCameraController`, sans laisser les
 drivers UCC reprendre le cadrage de cible.
+La Main Camera et ses trois drivers UCC (`CameraController`, handler et binder)
+sont references explicitement dans `GameplaySessionRoot`; le lock les maintient
+desactives a chaque frame jusqu'au deverrouillage.
 Le lock garantit aussi un cadrage complet de Lucian : il augmente son FOV jusqu'a
 une limite reglable puis recule si necessaire. Son orbite suit la direction
 joueur-ennemi avec un lissage distinct et une vitesse angulaire maximale afin
@@ -104,7 +110,9 @@ sans ramener Lucian a sa pose initiale. Les attaques root du prototype appliquen
 la meme synchronisation avant leur retour vers la locomotion. Les states taguees
 `RealTimeCombatRootMotion` sont reconnues par UCC comme du root motion actif :
 leur deplacement et leur rotation ne sont donc pas supprimes quand l'input est nul.
-La validation oriente d'abord Lucian horizontalement vers `EnemyLockPoint`, puis joue l'etat Animator explicitement configure sur le `SkillSO` selectionne (avec fallback sur le nom du `AnimationClip`);
+La validation oriente d'abord Lucian horizontalement vers `EnemyLockPoint` via
+UCC, puis joue l'etat Animator explicitement configure sur le `SkillSO`
+selectionne (avec fallback sur le nom du `AnimationClip`);
 ses Animation Events restent responsables des VFX et degats. Les slots sans
 SkillSO sont masques et exclus de la navigation de la roue.
 `SkillsManager` expose aussi une liste `BasicSkills` de `BasicSkillsSO`.

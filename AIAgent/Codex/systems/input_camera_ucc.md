@@ -53,6 +53,12 @@ par `Player/LeftShoulder`; les maps `Player` et `Camera` existantes restent acti
 libre. La caméra de lock désactive uniquement les drivers renseignés dans
 `CombatLockOnCameraController`, puis restaure leur état exact au déverrouillage.
 
+Dans `GameplaySessionRoot`, ces drivers sont references explicitement :
+`CameraController`, `CameraControllerHandler` et `LitUccCameraCharacterBinder`.
+Pendant le lock, le controleur combat les maintient desactives a chaque frame,
+ce qui empeche UCC de reprendre la transform de la `Main Camera` pendant une
+attaque root ou un rebind de personnage.
+
 Comme le lock pilote directement la `Main Camera`, son composant conserve un
 solveur d'obstacles visuels par `SphereCastNonAlloc` : il rapproche la camera
 avant un decor bloquant tout en ignorant Lucian et la cible verrouillee. Le
@@ -72,10 +78,11 @@ Le lock du combat temps reel commence une seule fois quand un ennemi entre dans
 le `VisionField` de Lucian. Il se termine automatiquement hors de la distance de
 desengagement; `Player/LeftShoulder` peut sinon le deverrouiller ou reverrouiller
 manuellement a portee. `SwitchEnemyLock`, lie a `Gamepad/dpad/left`, change de
-cible hors palette. `SquadManager` conserve le panneau d'escouade si aucun lock
-manuel n'est possible. `RealTimeCombatInput` gere reactions, palette et
-changement de cible. Les maps `Player` et `Camera` restent actives pour le
-deplacement libre. Pendant un lock actif, `WestButton` est reserve a
+cible hors palette. Si aucun lock manuel n'est possible, `LeftShoulder` est
+ignore : il n'ouvre pas le panneau d'escouade et ne prend aucun focus.
+`RealTimeCombatInput` gere reactions, palette et changement de cible. Les maps
+`Player` et `Camera` restent actives pour le deplacement libre. Pendant un lock
+actif, `WestButton` est reserve a
 `BasicAttack` : l'action `Player/ToggleTorch` l'ignore.
 
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :

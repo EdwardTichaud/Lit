@@ -2919,8 +2919,9 @@ public class SquadManager : MonoBehaviour
         }
 
         RealTimeCombatManager combatManager = RealTimeCombatManager.Instance;
-        if (combatManager != null && combatManager.TryToggleManualLock())
+        if (combatManager != null)
         {
+            combatManager.TryToggleManualLock();
             return;
         }
 

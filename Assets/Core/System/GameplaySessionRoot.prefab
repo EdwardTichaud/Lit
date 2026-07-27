@@ -6439,8 +6439,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2122c45159d145e6a1bd3a1780673465, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CombatLockOnCameraController
-  controlledCamera: {fileID: 0}
-  gameplayCameraDrivers: []
+  controlledCamera: {fileID: 2772786180465480446}
+  gameplayCameraDrivers:
+  - {fileID: 8540125469264114897}
+  - {fileID: 2388861861391168863}
+  - {fileID: 1950877512696852749}
   playerOffset: {x: 0.8, y: 1.5, z: -4.5}
   enemyFocusBias: 0.68
   positionSharpness: 9
