@@ -342,7 +342,9 @@ public sealed class MuninOrbAlphaGuard : MonoBehaviour
         Texture texture = ResolveMainTexture(source);
         if (texture == null)
         {
-            WarnInvalidMaterialOnce();
+            // Certains shaders VFX sont proceduraux et ne possedent pas de
+            // texture principale. Leur materiau d'origine est valide : ne pas
+            // le remplacer ni l'annoncer comme une erreur.
             return null;
         }
 

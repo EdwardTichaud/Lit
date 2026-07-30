@@ -68,6 +68,7 @@ public class NetcodeBootstrap : MonoBehaviour
         if (autoCreateLauncher)
         {
             NetcodeRuntimeUtilities.GetOrAdd<NetcodeLauncher>(gameObject);
+            NetcodeRuntimeUtilities.GetOrAdd<NetcodeRelaySessionOverlay>(gameObject);
         }
 
         if (autoCreateSpawner)
@@ -136,28 +137,9 @@ public class NetcodeBootstrap : MonoBehaviour
 
     private bool ShouldCreateLobbyUI(Scene scene)
     {
-        if (!autoCreateLobbyUI || IsMenuScene(scene.name))
-        {
-            return false;
-        }
-
-        if (SaveSessionManager.Instance == null)
-        {
-            return false;
-        }
-
-        if (SaveSessionManager.Instance.CurrentSessionType != SaveSessionType.Multiplayer)
-        {
-            return false;
-        }
-
-        NetworkManager manager = NetworkManager.Singleton;
-        if (manager != null && manager.IsListening && !manager.IsHost)
-        {
-            return false;
-        }
-
-        return true;
+        // L'ancienne UI IP/port ne doit jamais etre exposee dans le flux Relay.
+        // Le code d'invitation est affiche par NetcodeRelaySessionOverlay.
+        return false;
     }
 
     private void EnsureNetworkManager()

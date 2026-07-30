@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Spawner serveur pour attribuer un personnage a chaque client.
 public class NetcodePlayerSpawner : MonoBehaviour
@@ -15,6 +17,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
     private readonly Dictionary<ulong, CharacterData> assignments = new Dictionary<ulong, CharacterData>();
     private readonly HashSet<int> usedRosterIndices = new HashSet<int>();
+    private Coroutine deferredSpawnRoutine;
 
     private void Awake()
     {
@@ -36,6 +39,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
     private void OnEnable()
     {
+        SceneManager.sceneLoaded += OnSceneLoaded;
         if (NetworkManager.Singleton == null)
         {
             return;
@@ -48,6 +52,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
     private void OnDisable()
     {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         if (NetworkManager.Singleton == null)
         {
             return;
@@ -85,7 +90,11 @@ public class NetcodePlayerSpawner : MonoBehaviour
             WorldInteractionService.Instance.ClearAllAssignments();
         }
 
-        SpawnForClient(NetworkManager.Singleton.LocalClientId);
+        // Le host Relay demarre volontairement depuis MainMenu. Ne pas creer
+        // son personnage ici : l'escouade de Maison n'existe pas encore et
+        // l'objet serait detruit au changement de scene, tout en laissant une
+        // attribution fantome qui bloque ensuite les controles.
+        RequestSpawnWhenGameplaySceneIsReady();
     }
 
     private void OnClientConnected(ulong clientId)
@@ -95,7 +104,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return;
         }
 
-        SpawnForClient(clientId);
+        RequestSpawnWhenGameplaySceneIsReady();
     }
 
     private void OnClientDisconnected(ulong clientId)
@@ -108,6 +117,77 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
         NetcodePlayerSessionRegistry.Unregister(clientId);
         UpdateAssignmentRegistry(clientId, null);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
+        RequestSpawnWhenGameplaySceneIsReady();
+    }
+
+    private void RequestSpawnWhenGameplaySceneIsReady()
+    {
+        if (deferredSpawnRoutine == null)
+        {
+            deferredSpawnRoutine = StartCoroutine(SpawnConnectedClientsWhenGameplaySceneIsReady());
+        }
+    }
+
+    private System.Collections.IEnumerator SpawnConnectedClientsWhenGameplaySceneIsReady()
+    {
+        const float timeoutSeconds = 15f;
+        float timeoutAt = Time.unscaledTime + timeoutSeconds;
+
+        while (Time.unscaledTime < timeoutAt)
+        {
+            if (IsGameplayRosterReady())
+            {
+                NetworkManager manager = NetworkManager.Singleton;
+                if (manager != null && manager.IsServer)
+                {
+                    ulong[] clientIds = manager.ConnectedClientsIds.ToArray();
+                    for (int i = 0; i < clientIds.Length; i++)
+                    {
+                        SpawnForClient(clientIds[i]);
+                    }
+                }
+
+                deferredSpawnRoutine = null;
+                yield break;
+            }
+
+            yield return new WaitForSecondsRealtime(0.1f);
+        }
+
+        deferredSpawnRoutine = null;
+        Debug.LogWarning("NetcodePlayerSpawner: l'escouade de Maison n'a pas ete preparee a temps; aucun personnage n'a ete attribue.");
+    }
+
+    private static bool IsGameplayRosterReady()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null || !manager.IsServer)
+        {
+            return false;
+        }
+
+        if (GameFlowService.IsPreparingGameplayScene || GameFlowService.Instance == null || !GameFlowService.Instance.HasGameplaySession)
+        {
+            return false;
+        }
+
+        string gameplaySceneName = GameFlowService.InitialGameplaySceneName;
+        if (string.IsNullOrWhiteSpace(gameplaySceneName) || !SceneManager.GetSceneByName(gameplaySceneName).isLoaded)
+        {
+            return false;
+        }
+
+        SquadManager squad = SquadManager.Instance;
+        return squad != null && squad.currentSquad != null && squad.currentSquad.Any(character => character != null && character.model != null);
     }
 
     private void SpawnForClient(ulong clientId)
@@ -163,12 +243,6 @@ public class NetcodePlayerSpawner : MonoBehaviour
             EnsureStarterInventoryIfEmpty(controller, character);
         }
 
-        NetcodeCharacterIdentity identity = NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
-        if (identity != null)
-        {
-            identity.SetCharacter(character);
-        }
-
         assignments[clientId] = character;
         if (!networkObject.IsSpawned)
         {
@@ -178,6 +252,15 @@ public class NetcodePlayerSpawner : MonoBehaviour
         if (networkObject.OwnerClientId != clientId)
         {
             networkObject.ChangeOwnership(clientId);
+        }
+
+        // Les NetworkVariables de l'identite ne peuvent etre ecrites qu'une
+        // fois le NetworkObject spawn. Cette affectation doit donc rester
+        // apres Spawn, y compris pour l'hote demarre depuis MainMenu.
+        NetcodeCharacterIdentity identity = NetcodeRuntimeUtilities.GetOrAdd<NetcodeCharacterIdentity>(instance);
+        if (identity != null)
+        {
+            identity.SetCharacter(character);
         }
 
         NetworkInventory inventory = instance.GetComponent<NetworkInventory>();

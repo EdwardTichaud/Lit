@@ -219,7 +219,14 @@ public sealed class GameFlowService : MonoBehaviour
             return false;
         }
 
-        GameplayRuntimeReset.PrepareForGameplayStart("game_flow_start_gameplay");
+        // Le menu a deja prepare le runtime avant StartHost. Le refaire apres
+        // l'initialisation NGO effacerait les assignations du spawner pendant
+        // que le NetworkSceneManager commence a charger Maison.
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager == null || !networkManager.IsListening)
+        {
+            GameplayRuntimeReset.PrepareForGameplayStart("game_flow_start_gameplay");
+        }
         IsPreparingGameplayScene = true;
         if (!EnsureGameplaySession())
         {

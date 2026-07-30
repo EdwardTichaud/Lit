@@ -259,6 +259,15 @@ public class MainMenuPointerCursor : MonoBehaviour
             cursorGraphic = cursorVisual.GetComponent<Graphic>();
         }
 
+        // Le visuel du curseur est place au-dessus du Canvas a chaque frame.
+        // Il ne doit jamais devenir le premier Graphic touche par le
+        // GraphicRaycaster, sinon le clic souris est consomme avant d'arriver
+        // au MenuCursorAction situe sous lui.
+        if (cursorGraphic != null)
+        {
+            cursorGraphic.raycastTarget = false;
+        }
+
         if (decorCamera == null)
         {
             decorCamera = canvas != null && canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
@@ -1364,7 +1373,8 @@ public class MainMenuPointerCursor : MonoBehaviour
     {
         bool processGamepad = synthesizeGamepadUiEvents && activeSource == PointerSource.Gamepad;
         bool processMouse = synthesizeMouseUiEventsWhenInputModuleUnavailable &&
-                            activeSource == PointerSource.Mouse &&
+                            Mouse.current != null &&
+                            (activeSource == PointerSource.Mouse || Mouse.current.leftButton.wasPressedThisFrame) &&
                             IsMouseUiInputUnavailable();
         if (!processGamepad && !processMouse)
         {

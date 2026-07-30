@@ -315,7 +315,10 @@ public class PersistentNetworkObject : NetworkBehaviour
 
     private void PushIdentityToNetworkVariables()
     {
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        // Les identites sont preparees avant le spawn pendant le chargement
+        // d'une scene. OnNetworkSpawn les publiera des que NGO pourra les
+        // synchroniser vers les clients.
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || !IsSpawned)
         {
             return;
         }

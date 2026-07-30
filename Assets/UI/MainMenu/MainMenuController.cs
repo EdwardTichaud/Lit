@@ -3530,14 +3530,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (!TryResolveJoinEndpoint(out NetcodeSessionEndpoint endpoint))
-        {
-            SetStatus(joinInvalidMessage);
-            SetJoinStatus(joinInvalidMessage);
-            return;
-        }
-
-        StartJoinFlow(endpoint);
+        StartJoinFlow(NetcodeRelayCode.Normalize(joinCodeInput.text));
     }
 
     private void CancelJoin()
@@ -3955,7 +3948,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        string normalized = NetcodeSessionCode.NormalizeJoinInput(value);
+        string normalized = NetcodeRelayCode.Normalize(value);
         if (!string.Equals(joinCodeInput.text, normalized, StringComparison.Ordinal))
         {
             joinCodeInput.SetTextWithoutNotify(normalized);
@@ -3987,7 +3980,7 @@ public class MainMenuController : MonoBehaviour
             return false;
         }
 
-        return NetcodeSessionCode.IsValidJoinInput(joinCodeInput.text);
+        return NetcodeRelayCode.IsValid(joinCodeInput.text);
     }
 
     private void UpdateJoinConfirmState()
@@ -4587,7 +4580,7 @@ public class MainMenuController : MonoBehaviour
         CloseAllMenuPanelsForGameplayTransition();
     }
 
-    private void StartJoinFlow(NetcodeSessionEndpoint endpoint)
+    private void StartJoinFlow(string relayJoinCode)
     {
         NetcodeLauncher launcher = ResolveLauncher();
         if (launcher == null)
@@ -4609,25 +4602,39 @@ public class MainMenuController : MonoBehaviour
 
         GameplayRuntimeReset.PrepareForGameplayStart("main_menu_join_flow");
 
-        bool started = launcher.StartClientWithSessionEndpoint(endpoint);
-        if (!started)
-        {
-            SetStatus("Client deja actif.");
-            return;
-        }
-
         CloseAllMenuPanelsForGameplayTransition();
         isLoading = true;
-        LoadingScreenService.Show(joinConnectingMessage);
+        ShowLoadingScreen(joinConnectingMessage);
 
-        activeJoinEndpoint = endpoint;
         joinInProgress = true;
+        SetJoinStatus($"{joinConnectingMessage} Relay ({relayJoinCode})...");
+        SetStatus($"Connexion Relay en cours (code {relayJoinCode})...");
+        StartCoroutine(StartRelayClientRoutine(launcher, relayJoinCode));
+    }
+
+    private IEnumerator StartRelayClientRoutine(NetcodeLauncher launcher, string relayJoinCode)
+    {
+        System.Threading.Tasks.Task<NetcodeRelayResult> task = launcher.StartRelayClientAsync(relayJoinCode);
+        while (!task.IsCompleted)
+        {
+            yield return null;
+        }
+
+        if (task.IsFaulted || task.IsCanceled)
+        {
+            HandleJoinFailure("Connexion Relay interrompue avant le demarrage du client.");
+            yield break;
+        }
+
+        NetcodeRelayResult result = task.Result;
+        if (!result.Succeeded)
+        {
+            HandleJoinFailure(result.Error);
+            yield break;
+        }
+
         RegisterJoinCallbacks(true);
-        Debug.Log(
-            $"[NetcodeJoin] start code='{endpoint.Code}' target='{endpoint.EndpointLabel}' scene='{GameFlowService.InitialGameplaySceneName}'",
-            this);
-        SetJoinStatus($"{joinConnectingMessage} {endpoint.EndpointLabel}");
-        SetStatus($"Connexion vers {endpoint.EndpointLabel} (code {endpoint.Code})...");
+        Debug.Log($"[NetcodeJoin] Relay client started code='{result.JoinCode}' scene='{GameFlowService.InitialGameplaySceneName}'", this);
 
         if (joinTimeoutRoutine != null)
         {
@@ -4643,7 +4650,68 @@ public class MainMenuController : MonoBehaviour
             SaveSessionManager.Instance.SetCurrentSessionType(currentSessionType);
         }
 
+        if (currentSessionType == SaveSessionType.Multiplayer)
+        {
+            StartRelayHostFlow();
+            return;
+        }
+
         StartOfflineFlow();
+    }
+
+    private void StartRelayHostFlow()
+    {
+        NetcodeLauncher launcher = ResolveLauncher();
+        if (launcher == null)
+        {
+            SetStatus("NetcodeLauncher manquant.");
+            return;
+        }
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            SetStatus("Une session reseau est deja active.");
+            return;
+        }
+
+        GameplayRuntimeReset.PrepareForGameplayStart("main_menu_host_flow");
+        CloseAllMenuPanelsForGameplayTransition();
+        ShowLoadingScreen("Preparation de la session Relay...");
+        StartCoroutine(StartRelayHostRoutine(launcher));
+    }
+
+    private IEnumerator StartRelayHostRoutine(NetcodeLauncher launcher)
+    {
+        System.Threading.Tasks.Task<NetcodeRelayResult> task = launcher.StartRelayHostAsync();
+        while (!task.IsCompleted)
+        {
+            yield return null;
+        }
+
+        if (task.IsFaulted || task.IsCanceled)
+        {
+            HideLoadingScreen();
+            SetStatus("Creation de la session Relay interrompue.");
+            yield break;
+        }
+
+        NetcodeRelayResult result = task.Result;
+        if (!result.Succeeded)
+        {
+            HideLoadingScreen();
+            SetStatus(result.Error);
+            yield break;
+        }
+
+        GUIUtility.systemCopyBuffer = result.JoinCode;
+        SetStatus($"Session Relay creee. Code copie : {result.JoinCode}");
+        LoadingScreenService.Show("Chargement de Maison...");
+        if (!GameFlowService.StartOrLoadGame())
+        {
+            NetcodeBootstrap.ShutdownActiveNetworkManager();
+            HideLoadingScreen();
+            SetStatus("Impossible de charger Maison. Session Relay arretee.");
+        }
     }
 
     private System.Collections.IEnumerator JoinTimeoutRoutine()
@@ -4816,30 +4884,23 @@ public class MainMenuController : MonoBehaviour
             targetSceneName = GameFlowService.InitialGameplaySceneName;
         }
 
-        joinInProgress = false;
-        RegisterJoinCallbacks(false);
-        activeJoinEndpoint = default;
-        joinSceneSyncRoutine = null;
-
-        Scene activeScene = SceneManager.GetActiveScene();
-        if (string.Equals(activeScene.name, targetSceneName, StringComparison.OrdinalIgnoreCase))
-        {
-            HideLoadingScreen();
-            SetJoinStatus("Connexion et synchronisation terminees.");
-            SetStatus("Connexion et synchronisation terminees.");
-            yield break;
-        }
-
-        string loadingMessageText = $"Synchronisation de la scene {targetSceneName}...";
+        // Le NetworkSceneManager est l'unique proprietaire du chargement de
+        // Maison. Une charge locale ici creerait deux transitions concurrentes
+        // et des objets de scene differents entre host et client.
+        string loadingMessageText = $"Synchronisation reseau de {targetSceneName}...";
         ShowLoadingScreen(loadingMessageText);
         SetJoinStatus(loadingMessageText);
         SetStatus(loadingMessageText);
-        if (!LoadingScreenService.LoadScene(targetSceneName, loadingMessageText, LoadSceneMode.Single))
+
+        while (joinInProgress && !SceneManager.GetSceneByName(targetSceneName).isLoaded)
         {
-            HideLoadingScreen();
-            SetJoinStatus("Echec du chargement de scene.");
-            SetStatus("Echec du chargement de scene.");
+            yield return null;
         }
+
+        // La scene arrive via NGO puis JoinSyncSystem garde le gameplay bloque
+        // jusqu'au snapshot du monde de l'hote. Le changement Single detruit ce
+        // controleur de menu et laisse les overlays persistants finir le flux.
+        joinSceneSyncRoutine = null;
     }
 
     private void ShowLoadingScreen(string overrideMessage = null)
@@ -4851,21 +4912,13 @@ public class MainMenuController : MonoBehaviour
 
         LoadingScreenService.Show(message);
 
-        if (loadingText != null)
-        {
-            if (!string.IsNullOrWhiteSpace(message))
-            {
-                loadingText.text = message;
-            }
-        }
-
-        if (loadingGroup != null)
-        {
-            loadingGroup.gameObject.SetActive(true);
-            loadingGroup.alpha = 1f;
-            loadingGroup.interactable = false;
-            loadingGroup.blocksRaycasts = true;
-        }
+        // Le LoadingScreenService est l'unique overlay de transition. Ne pas
+        // reactiver un CanvasGroup local ici : dans certains prefabs de menu,
+        // cette reference pointe vers MainMenu_Load et affichait a tort la
+        // liste des anciennes sauvegardes pendant la creation d'une partie.
+        ApplyFadeImmediate(ResolveLoadMenuGroup(), 0f, false);
+        ApplyFadeImmediate(newGamePanelGroup, 0f, false);
+        ApplyFadeImmediate(joinPanelGroup, 0f, false);
 
         SetActiveMenuInteractable(false);
     }
@@ -4876,14 +4929,6 @@ public class MainMenuController : MonoBehaviour
         SetMainMenuPointerCursorVisible(true);
         ResolveLoadingReferences();
         LoadingScreenService.Hide();
-
-        if (loadingGroup != null)
-        {
-            loadingGroup.alpha = 0f;
-            loadingGroup.interactable = false;
-            loadingGroup.blocksRaycasts = false;
-            loadingGroup.gameObject.SetActive(false);
-        }
 
         SetActiveMenuInteractable(true);
     }

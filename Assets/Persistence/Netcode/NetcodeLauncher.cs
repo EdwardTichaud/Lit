@@ -1,5 +1,12 @@
+using System;
+using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -48,8 +55,9 @@ public struct NetcodeConnectionAttemptInfo
 // Commandes rapides pour lancer un host/client en runtime.
 public class NetcodeLauncher : MonoBehaviour
 {
-    [Header("Shortcuts")]
-    [SerializeField] private bool enableShortcuts = true;
+    [Header("Legacy direct-IP shortcuts (development only)")]
+    [SerializeField, Tooltip("Desactive par defaut : Relay est le seul parcours joueur expose.")]
+    private bool enableShortcuts = false;
     [SerializeField] private Key startHostKey = Key.F5;
     [SerializeField] private Key startClientKey = Key.F6;
     [SerializeField] private Key shutdownKey = Key.F7;
@@ -66,7 +74,13 @@ public class NetcodeLauncher : MonoBehaviour
     [SerializeField] private string defaultJoinAddress = "127.0.0.1";
     [SerializeField] private bool logConnectionFlow = true;
 
+    [Header("Relay (remote test)")]
+    [SerializeField, Min(1)] private int relayMaxJoiningPlayers = 3;
+    [SerializeField] private string relayConnectionType = "dtls";
+
     private NetcodeConnectionAttemptInfo lastConnectionAttempt;
+
+    public string ActiveRelayJoinCode { get; private set; } = string.Empty;
 
     public ushort SessionBasePort => sessionBasePort;
 
@@ -134,6 +148,153 @@ public class NetcodeLauncher : MonoBehaviour
         {
             NetcodeBootstrap.ShutdownActiveNetworkManager();
         }
+
+        ActiveRelayJoinCode = string.Empty;
+    }
+
+    /// <summary>
+    /// Cree une allocation Relay et demarre le host. Cette voie ne configure
+    /// jamais l'endpoint IP direct utilise uniquement par les raccourcis dev.
+    /// </summary>
+    public async Task<NetcodeRelayResult> StartRelayHostAsync()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null)
+        {
+            return NetcodeRelayResult.Failure("NetworkManager manquant.");
+        }
+
+        if (manager.IsListening)
+        {
+            return NetcodeRelayResult.Failure("Une connexion reseau est deja active.");
+        }
+
+        try
+        {
+            await EnsureUnityServicesSignedInAsync();
+            NetcodePrefabRegistry.EnsureInitialized();
+            NetcodeSceneObjectInstaller.PrepareActiveScene();
+            TryRestoreHostWorldBeforeStart();
+            ApplyConnectionPayload(manager);
+            EnsureTransport(manager);
+
+            int connections = Mathf.Max(1, relayMaxJoiningPlayers);
+            Unity.Services.Relay.Models.Allocation allocation =
+                await RelayService.Instance.CreateAllocationAsync(connections);
+            UnityTransport transport = manager.GetComponent<UnityTransport>();
+            transport.SetRelayServerData(allocation.ToRelayServerData(ResolveRelayConnectionType()));
+
+            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            if (!manager.StartHost())
+            {
+                return NetcodeRelayResult.Failure("Le host Relay n'a pas pu demarrer.");
+            }
+
+            ActiveRelayJoinCode = NetcodeRelayCode.Normalize(joinCode);
+            lastConnectionAttempt = new NetcodeConnectionAttemptInfo
+            {
+                Mode = "relay_host",
+                Code = ActiveRelayJoinCode,
+                Address = "relay",
+                Port = 1,
+                ListenAddress = "relay",
+                SessionDerived = true
+            };
+            Debug.Log($"[NetcodeRelay] host started code='{ActiveRelayJoinCode}' maxJoiners={connections}", this);
+            return NetcodeRelayResult.Success(ActiveRelayJoinCode);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[NetcodeRelay] host start failed: {exception.Message}", this);
+            return NetcodeRelayResult.Failure(ToRelayErrorMessage(exception));
+        }
+    }
+
+    /// <summary>
+    /// Rejoint une allocation Relay existante et demarre le client NGO.
+    /// </summary>
+    public async Task<NetcodeRelayResult> StartRelayClientAsync(string joinCode)
+    {
+        string normalizedCode = NetcodeRelayCode.Normalize(joinCode);
+        if (!NetcodeRelayCode.IsValid(normalizedCode))
+        {
+            return NetcodeRelayResult.Failure("Code d'invitation Relay invalide.");
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null)
+        {
+            return NetcodeRelayResult.Failure("NetworkManager manquant.");
+        }
+
+        if (manager.IsListening)
+        {
+            return NetcodeRelayResult.Failure("Une connexion reseau est deja active.");
+        }
+
+        try
+        {
+            await EnsureUnityServicesSignedInAsync();
+            NetcodePrefabRegistry.EnsureInitialized();
+            NetcodeSceneObjectInstaller.PrepareActiveScene();
+            ApplyConnectionPayload(manager);
+            EnsureTransport(manager);
+
+            Unity.Services.Relay.Models.JoinAllocation allocation =
+                await RelayService.Instance.JoinAllocationAsync(normalizedCode);
+            UnityTransport transport = manager.GetComponent<UnityTransport>();
+            transport.SetRelayServerData(allocation.ToRelayServerData(ResolveRelayConnectionType()));
+
+            if (!manager.StartClient())
+            {
+                return NetcodeRelayResult.Failure("Le client Relay n'a pas pu demarrer.");
+            }
+
+            ActiveRelayJoinCode = normalizedCode;
+            lastConnectionAttempt = new NetcodeConnectionAttemptInfo
+            {
+                Mode = "relay_client",
+                Code = normalizedCode,
+                Address = "relay",
+                Port = 1,
+                ListenAddress = string.Empty,
+                SessionDerived = true
+            };
+            Debug.Log($"[NetcodeRelay] client started code='{normalizedCode}'", this);
+            return NetcodeRelayResult.Success(normalizedCode);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[NetcodeRelay] join failed: {exception.Message}", this);
+            return NetcodeRelayResult.Failure(ToRelayErrorMessage(exception));
+        }
+    }
+
+    private async Task EnsureUnityServicesSignedInAsync()
+    {
+        if (UnityServices.State == ServicesInitializationState.Uninitialized)
+        {
+            await UnityServices.InitializeAsync();
+        }
+
+        if (!AuthenticationService.Instance.IsSignedIn)
+        {
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        }
+    }
+
+    private string ResolveRelayConnectionType()
+    {
+        string value = string.IsNullOrWhiteSpace(relayConnectionType) ? "dtls" : relayConnectionType.Trim().ToLowerInvariant();
+        return value == "udp" || value == "dtls" || value == "wss" ? value : "dtls";
+    }
+
+    private static string ToRelayErrorMessage(Exception exception)
+    {
+        string details = exception != null && !string.IsNullOrWhiteSpace(exception.Message)
+            ? exception.Message
+            : "erreur inconnue";
+        return $"Connexion Relay impossible : {details}";
     }
 
     public bool StartHostWithConnection(string address, ushort port, string listenOverride = null)

@@ -538,6 +538,10 @@ namespace Lit.Story
             {
                 context.Bind("Player.Animator", playerAnimator);
             }
+            if (localPlayer != null)
+            {
+                context.Bind("Player.Transform", localPlayer);
+            }
 
             TimelinePlaybackHandle handle = Lit.Timeline.TimelineManager.Instance.Play(
                 director,

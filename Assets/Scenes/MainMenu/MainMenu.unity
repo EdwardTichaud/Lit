@@ -1607,7 +1607,7 @@ RectTransform:
   m_GameObject: {fileID: 535243508}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.9492526, y: 1.9492526, z: 1.9492526}
+  m_LocalScale: {x: 1.9485531, y: 1.9485531, z: 1.9485531}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2115927368}
@@ -3145,17 +3145,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1063186168}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0.38268343, w: 0.92387956}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 793692853}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 45}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 85, y: 99}
-  m_SizeDelta: {x: 500, y: 500}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1063186170
 MonoBehaviour:
@@ -3177,6 +3177,7 @@ MonoBehaviour:
   gamepadDeadzone: 0.15
   warpHardwareMouseForGamepad: 1
   synthesizeGamepadUiEvents: 1
+  synthesizeMouseUiEventsWhenInputModuleUnavailable: 1
   flameCameraOffset: 0
   worldRayDistance: 80
   interactionLayers:
@@ -3227,7 +3228,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5b86f6ad11262a043b9551305fe27a82, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4e4af259dbf768e4fa70fd1784aceea5, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

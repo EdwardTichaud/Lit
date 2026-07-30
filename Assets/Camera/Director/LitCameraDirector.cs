@@ -28,9 +28,11 @@ public sealed class LitCameraDirector : MonoBehaviour
     private bool uccControllerWasEnabled;
     private bool uccHandlerWasEnabled;
     private bool hasUccState;
+    private bool timelineCinemachineControlActive;
 
     public bool IsCinemachineDriving => activeCinemachineCamera != null && cinemachineBrain != null && cinemachineBrain.enabled;
     public Camera ControlledCamera => controlledCamera;
+    public CinemachineBrain CinemachineBrain => cinemachineBrain;
     public CinemachineCamera ActiveCinemachineCamera => activeCinemachineCamera;
 
     public static LitCameraDirector EnsureInstance()
@@ -101,26 +103,7 @@ public sealed class LitCameraDirector : MonoBehaviour
             return false;
         }
 
-        if (!hasUccState)
-        {
-            uccControllerWasEnabled = uccCameraController != null && uccCameraController.enabled;
-            uccHandlerWasEnabled = uccCameraHandler != null && uccCameraHandler.enabled;
-            hasUccState = true;
-        }
-
-        if (uccCameraHandler != null)
-        {
-            uccCameraHandler.enabled = false;
-        }
-
-        if (uccCameraBinder != null)
-        {
-            uccCameraBinder.BeginExternalCameraControl();
-        }
-        else if (uccCameraController != null)
-        {
-            uccCameraController.enabled = false;
-        }
+        SuspendUccCameraControl();
 
         float duration = blendSeconds >= 0f ? blendSeconds : defaultBlendSeconds;
         cinemachineBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, duration);
@@ -139,6 +122,42 @@ public sealed class LitCameraDirector : MonoBehaviour
         camera.Priority = priority;
         camera.Prioritize();
         return true;
+    }
+
+    /// <summary>
+    /// Gives authority to a Timeline Cinemachine track. The track itself keeps
+    /// ownership of virtual-camera selection and blending.
+    /// </summary>
+    public bool BeginTimelineCinemachineControl()
+    {
+        ResolveDependencies();
+        if (controlledCamera == null)
+        {
+            return false;
+        }
+
+        EnsureBrain();
+        if (cinemachineBrain == null)
+        {
+            return false;
+        }
+
+        SuspendUccCameraControl();
+        cinemachineBrain.enabled = true;
+        timelineCinemachineControlActive = true;
+        return true;
+    }
+
+    /// <summary>Returns authority to UCC after a Timeline Cinemachine track ends.</summary>
+    public void EndTimelineCinemachineControl()
+    {
+        if (!timelineCinemachineControlActive)
+        {
+            return;
+        }
+
+        timelineCinemachineControlActive = false;
+        ReleaseCinemachine();
     }
 
     /// <summary>Returns authority to UCC and rebinds it to the local character.</summary>
@@ -177,6 +196,7 @@ public sealed class LitCameraDirector : MonoBehaviour
 
         activeCinemachineCamera = null;
         hasUccState = false;
+        timelineCinemachineControlActive = false;
     }
 
     private void RestoreActiveCameraPriority()
@@ -187,6 +207,30 @@ public sealed class LitCameraDirector : MonoBehaviour
         }
 
         activeCameraPriorityStored = false;
+    }
+
+    private void SuspendUccCameraControl()
+    {
+        if (!hasUccState)
+        {
+            uccControllerWasEnabled = uccCameraController != null && uccCameraController.enabled;
+            uccHandlerWasEnabled = uccCameraHandler != null && uccCameraHandler.enabled;
+            hasUccState = true;
+        }
+
+        if (uccCameraHandler != null)
+        {
+            uccCameraHandler.enabled = false;
+        }
+
+        if (uccCameraBinder != null)
+        {
+            uccCameraBinder.BeginExternalCameraControl();
+        }
+        else if (uccCameraController != null)
+        {
+            uccCameraController.enabled = false;
+        }
     }
 
     private void ResolveDependencies()
