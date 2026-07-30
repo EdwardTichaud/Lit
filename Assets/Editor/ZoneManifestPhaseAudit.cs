@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -40,6 +41,11 @@ public static class ZoneManifestPhaseAudit
                 AuditScene(manifest.name, "PostLoading", manifest.PostLoadingSceneNames[i]);
             }
         }
+
+        foreach (string sceneName in CollectProximitySceneNames())
+        {
+            AuditScene("Proximity", "Proximity", sceneName);
+        }
     }
 
     private static void AuditScene(string manifestName, string phase, string sceneName)
@@ -57,14 +63,43 @@ public static class ZoneManifestPhaseAudit
         int renderers = Count(contents, @"(?m)^--- !u!23 &");
         int lights = Count(contents, @"(?m)^--- !u!108 &");
         float megabytes = new FileInfo(path).Length / (1024f * 1024f);
+        bool hasNetworkObject = contents.Contains("Unity.Netcode.NetworkObject");
+        int colliders = Count(contents, @"(?m)^--- !u!(64|65|135) &");
         string warning = IsPotentiallyHeavy(phase, gameObjects, behaviours, renderers, lights)
             ? "  <-- a decouper si un pic est observe"
             : string.Empty;
 
+        if (phase == "Proximity" && hasNetworkObject)
+        {
+            warning += "  <-- INTERDIT : NetworkObject dans une cellule locale";
+        }
+
+        if (phase == "Proximity" && colliders > 0)
+        {
+            warning += "  <-- verifier : collisions locales";
+        }
+
         Debug.Log(
             $"[ScenePhaseAudit] {manifestName} / {phase} / {sceneName} | " +
             $"{megabytes:0.00} MB | {gameObjects} objets | {renderers} renderers | " +
-            $"{lights} lights | {behaviours} composants{warning}");
+            $"{lights} lights | {colliders} colliders | {behaviours} composants{warning}");
+    }
+
+    private static HashSet<string> CollectProximitySceneNames()
+    {
+        HashSet<string> names = new HashSet<string>();
+        foreach (string path in Directory.GetFiles("Assets/Scenes", "*.unity", SearchOption.AllDirectories))
+        {
+            string contents = File.ReadAllText(path);
+            MatchCollection matches = Regex.Matches(contents, @"(?m)^\s*proximitySceneName:\s*(.+?)\s*$");
+            foreach (Match match in matches)
+            {
+                string name = match.Groups[1].Value.Trim();
+                if (!string.IsNullOrWhiteSpace(name)) names.Add(name);
+            }
+        }
+
+        return names;
     }
 
     private static bool IsPotentiallyHeavy(string phase, int gameObjects, int behaviours, int renderers, int lights)

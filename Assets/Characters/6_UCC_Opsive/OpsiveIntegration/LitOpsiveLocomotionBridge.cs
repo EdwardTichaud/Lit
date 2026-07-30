@@ -178,6 +178,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool scriptedTraversalGravityPrepared;
     private int externalLockCount;
     private bool externalLockInputDisabled;
+    private bool progressiveExternalStopActive;
 
     private enum RootMotionPhase
     {
@@ -413,6 +414,53 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return true;
     }
 
+    /// <summary>Coupe les nouvelles entrees tout en laissant le filtre de deplacement freiner naturellement.</summary>
+    public bool BeginExternalLockWithProgressiveStop(bool disableGameplayInput = true, bool stopActiveAbilities = false)
+    {
+        ResolveReferences();
+        if (!CanDriveScriptedTraversal)
+        {
+            return false;
+        }
+
+        externalLockCount = Mathf.Max(0, externalLockCount) + 1;
+        if (externalLockCount > 1)
+        {
+            return true;
+        }
+
+        ClearPendingJump();
+        if (stopActiveAbilities && locomotion != null)
+        {
+            locomotion.StopAllAbilities(false);
+        }
+
+        if (disableGameplayInput)
+        {
+            EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", false);
+            externalLockInputDisabled = true;
+        }
+
+        progressiveExternalStopActive = true;
+        sprintPressed = false;
+        ApplyWorldMoveInput(Vector2.zero);
+        return true;
+    }
+
+    public bool IsProgressiveStopComplete(float velocityThreshold)
+    {
+        float threshold = Mathf.Max(0f, velocityThreshold);
+        return !progressiveExternalStopActive ||
+               (currentWorldMoveInput.sqrMagnitude <= movementDeadZone * movementDeadZone &&
+                PlanarVelocity.sqrMagnitude <= threshold * threshold);
+    }
+
+    public void CompleteProgressiveStop()
+    {
+        progressiveExternalStopActive = false;
+        ForceZeroInput();
+    }
+
     public void EndExternalLock()
     {
         if (externalLockCount <= 0)
@@ -427,6 +475,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             ForceZeroInput();
             return;
         }
+
+        progressiveExternalStopActive = false;
 
         if (externalLockInputDisabled)
         {
@@ -722,6 +772,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (IsInputSuppressedByUcc)
         {
+            if (progressiveExternalStopActive)
+            {
+                ApplyWorldMoveInput(Vector2.zero);
+                UpdateAnimatorParameters();
+                RefreshSquadFacadeSystems();
+                return;
+            }
+
             ForceZeroInput();
             RefreshSquadFacadeSystems();
             return;

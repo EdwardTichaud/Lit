@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -74,7 +75,22 @@ internal static class ZoneManifestBuildSettingsSync
             AddSceneNames(sceneNames, manifest.PostLoadingSceneNames);
         }
 
+        AddProximitySceneNames(sceneNames);
+
         return sceneNames;
+    }
+
+    private static void AddProximitySceneNames(HashSet<string> destination)
+    {
+        foreach (string scenePath in Directory.GetFiles(ScenesRoot, "*.unity", SearchOption.AllDirectories))
+        {
+            string contents = File.ReadAllText(scenePath);
+            MatchCollection matches = Regex.Matches(contents, @"(?m)^\s*proximitySceneName:\s*(.+?)\s*$");
+            foreach (Match match in matches)
+            {
+                AddSceneName(destination, match.Groups[1].Value.Trim());
+            }
+        }
     }
 
     private static void AddSceneNames(HashSet<string> destination, IReadOnlyList<string> names)

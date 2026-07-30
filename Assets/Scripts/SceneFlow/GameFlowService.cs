@@ -60,6 +60,7 @@ public sealed class GameFlowService : MonoBehaviour
     private GameplaySessionRoot gameplaySessionRoot;
     private Coroutine transitionRoutine;
     private Coroutine postLoadingRoutine;
+    private ProximitySceneStreamingController proximityStreaming;
     private int postLoadingGeneration;
     private string activeGameplaySceneName;
     private bool postLoadingPriorityApplied;
@@ -290,6 +291,7 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Mark("Managers prets");
         yield return PlaceSquadAtSpawnRoutine(spawnId, sceneName, usePrimarySceneSpawnFallback);
         RestoreLocalGameplayInputAfterSessionStart();
+        StartProximityStreaming(sceneName);
 #if UNITY_EDITOR
         StartCoroutine(LogZoneControlProbe(sceneName));
 #endif
@@ -312,6 +314,7 @@ public sealed class GameFlowService : MonoBehaviour
         yield return LoadingScreenService.ShowAndWaitForPresentation(destination.LoadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
+        yield return StopProximityStreaming();
         List<string> previousScenes = CaptureLoadedGameplayScenes();
         loadedZoneSceneNames.Clear();
 
@@ -344,6 +347,7 @@ public sealed class GameFlowService : MonoBehaviour
         // l'input brut et jouer une animation de marche sur place.
         yield return PlaceSquadAtSpawnRoutine(spawnId);
         RestoreLocalGameplayInputAfterSessionStart();
+        StartProximityStreaming(destination.PrimarySceneName);
 #if UNITY_EDITOR
         StartCoroutine(LogZoneControlProbe(destination.PrimarySceneName));
 #endif
@@ -361,6 +365,7 @@ public sealed class GameFlowService : MonoBehaviour
         yield return LoadingScreenService.ShowAndWaitForPresentation("Retour a la Maison...");
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
+        yield return StopProximityStreaming();
         List<string> previousScenes = CaptureLoadedGameplayScenes();
         loadedZoneSceneNames.Clear();
 
@@ -388,6 +393,7 @@ public sealed class GameFlowService : MonoBehaviour
         activeGameplaySceneName = hubScene;
         yield return PlaceSquadAtSpawnRoutine(spawnId);
         RestoreLocalGameplayInputAfterSessionStart();
+        StartProximityStreaming(hubScene);
 #if UNITY_EDITOR
         StartCoroutine(LogZoneControlProbe(hubScene));
 #endif
@@ -401,6 +407,8 @@ public sealed class GameFlowService : MonoBehaviour
     private IEnumerator ReturnToMenuRoutine()
     {
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
+        yield return LoadingScreenService.ShowAndWaitForPresentation(returnToMenuLoadingMessage);
+        yield return StopProximityStreaming();
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             NetcodeBootstrap.ShutdownActiveNetworkManager();
@@ -422,6 +430,33 @@ public sealed class GameFlowService : MonoBehaviour
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
+    }
+
+    private void StartProximityStreaming(string primarySceneName)
+    {
+        if (string.IsNullOrWhiteSpace(primarySceneName))
+        {
+            return;
+        }
+
+        if (proximityStreaming == null)
+        {
+            proximityStreaming = GetComponent<ProximitySceneStreamingController>();
+            if (proximityStreaming == null)
+            {
+                proximityStreaming = gameObject.AddComponent<ProximitySceneStreamingController>();
+            }
+        }
+
+        proximityStreaming.BeginForPrimaryScene(primarySceneName);
+    }
+
+    private IEnumerator StopProximityStreaming()
+    {
+        if (proximityStreaming != null)
+        {
+            yield return proximityStreaming.StopAndUnload();
+        }
     }
 
     private IEnumerator LoadSingleRoutine(string sceneName, string loadingMessage)

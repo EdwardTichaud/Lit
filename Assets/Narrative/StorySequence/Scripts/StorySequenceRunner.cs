@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
+using Lit.Timeline;
 
 namespace Lit.Story
 {
@@ -145,8 +146,12 @@ namespace Lit.Story
                 }
             }
 
-            AcquirePlayerLock(activeSequence);
-            cameraDriver.BeginCinematic();
+            bool deferPlayerLock = HasProgressivePlayerStop(activeSequence);
+            if (!deferPlayerLock)
+            {
+                AcquirePlayerLock(activeSequence);
+            }
+            cameraDriver?.BeginCinematic();
 
             if (activeSequence.startFromBlack)
             {
@@ -170,6 +175,12 @@ namespace Lit.Story
                     currentStepStartedFrame = Time.frameCount;
                     advanceRequested = false;
                     yield return ExecuteStep(step, activeSequence.useUnscaledTime);
+                    if (deferPlayerLock &&
+                        step.type == StorySequenceStepType.ProgressivePlayerStop &&
+                        !playerLockHeld)
+                    {
+                        AcquirePlayerLock(activeSequence);
+                    }
                 }
             }
 
@@ -250,6 +261,51 @@ namespace Lit.Story
                             this);
                     }
                     break;
+
+                case StorySequenceStepType.ProgressivePlayerStop:
+                    yield return ExecuteProgressivePlayerStop(step, useUnscaledTime);
+                    break;
+            }
+        }
+
+        private IEnumerator ExecuteProgressivePlayerStop(StorySequenceStep step, bool useUnscaledTime)
+        {
+            Transform localRoot = LocalPlayerContext.LocalCharacterRoot;
+            SquadCharacterController controller = localRoot != null
+                ? localRoot.GetComponent<SquadCharacterController>()
+                : null;
+            if (controller == null)
+            {
+                Debug.LogWarning("StorySequenceRunner: impossible d'arreter progressivement le joueur local.", this);
+                yield break;
+            }
+
+            if (!playerLockHeld)
+            {
+                lockedPlayerController = controller;
+                playerLockHeld = controller.TryBeginUccProgressiveStop(
+                    disableGameplayInput: true,
+                    stopActiveAbilities: true);
+            }
+
+            if (!playerLockHeld)
+            {
+                Debug.LogWarning("StorySequenceRunner: verrou UCC progressif refuse pour le joueur local.", this);
+                yield break;
+            }
+
+            float elapsed = 0f;
+            float timeout = Mathf.Max(0.05f, step.playerStopTimeout);
+            while (!controller.IsUccProgressiveStopComplete(step.playerStopVelocityThreshold) && elapsed < timeout)
+            {
+                elapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                yield return null;
+            }
+
+            if (!controller.IsUccProgressiveStopComplete(step.playerStopVelocityThreshold))
+            {
+                Debug.LogWarning("StorySequenceRunner: arret progressif expire; arret complet applique.", this);
+                controller.CompleteUccProgressiveStop();
             }
         }
 
@@ -457,40 +513,59 @@ namespace Lit.Story
         private IEnumerator ExecuteTimeline(StorySequenceStep step)
         {
             PlayableDirector director = bindings.ResolveDirector(step.directorId);
-            if (director == null || step.timeline == null)
+            if (director == null || step.timeline == null || step.timelineBindingProfile == null)
             {
                 Debug.LogWarning(
-                    $"StorySequenceRunner: Timeline ou PlayableDirector manquant pour '{step.label}'.",
+                    $"StorySequenceRunner: Timeline, profile de bindings ou PlayableDirector manquant pour '{step.label}'.",
                     this);
+                yield break;
+            }
+
+            if (Lit.Timeline.TimelineManager.Instance == null)
+            {
+                Debug.LogError("StorySequenceRunner: TimelineManager Bootstrap est absent.", this);
                 yield break;
             }
 
             director.playableAsset = step.timeline;
             director.extrapolationMode = DirectorWrapMode.None;
-            director.time = 0d;
-            director.Play();
+            TimelineBindingContext context = new TimelineBindingContext();
+            Transform localPlayer = LocalPlayerContext.LocalCharacterRoot;
+            Animator playerAnimator = localPlayer != null
+                ? localPlayer.GetComponentInChildren<Animator>(true)
+                : null;
+            if (playerAnimator != null)
+            {
+                context.Bind("Player.Animator", playerAnimator);
+            }
+
+            TimelinePlaybackHandle handle = Lit.Timeline.TimelineManager.Instance.Play(
+                director,
+                step.timelineBindingProfile,
+                context,
+                TimelinePlaybackOptions.Default);
 
             if (!step.waitForTimelineCompletion)
             {
                 yield break;
             }
 
-            while (director.state == PlayState.Playing)
+            while (!handle.IsDone)
             {
                 if (ConsumeAdvanceRequest())
                 {
-                    double duration = director.duration;
-                    if (!double.IsNaN(duration) && !double.IsInfinity(duration) && duration > 0d)
-                    {
-                        director.time = duration;
-                        director.Evaluate();
-                    }
-
-                    director.Stop();
+                    handle.Skip();
                     break;
                 }
 
                 yield return null;
+            }
+
+            if (handle.State == TimelinePlaybackState.Failed)
+            {
+                Debug.LogWarning(
+                    $"StorySequenceRunner: Timeline '{step.label}' non jouee : {handle.FailureReason}",
+                    this);
             }
         }
 
@@ -529,7 +604,7 @@ namespace Lit.Story
 
         private void AcquirePlayerLock(StorySequenceAsset activeSequence)
         {
-            if (!activeSequence.lockPlayerControl)
+            if (!activeSequence.lockPlayerControl || playerLockHeld)
             {
                 return;
             }
@@ -549,6 +624,25 @@ namespace Lit.Story
             playerLockHeld = lockedPlayerController.TryBeginUccExternalLock(
                 disableGameplayInput: true,
                 stopActiveAbilities: activeSequence.stopActiveAbilitiesOnLock);
+        }
+
+        private static bool HasProgressivePlayerStop(StorySequenceAsset sequence)
+        {
+            if (sequence == null || sequence.steps == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < sequence.steps.Count; i++)
+            {
+                if (sequence.steps[i] != null &&
+                    sequence.steps[i].type == StorySequenceStepType.ProgressivePlayerStop)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RestoreGameplay()
@@ -674,19 +768,9 @@ namespace Lit.Story
                 bindings = GetComponent<StorySequenceSceneBindings>();
             }
 
-            if (bindings == null)
-            {
-                bindings = gameObject.AddComponent<StorySequenceSceneBindings>();
-            }
-
             if (cameraDriver == null)
             {
                 cameraDriver = GetComponent<StorySequenceCameraDriver>();
-            }
-
-            if (cameraDriver == null)
-            {
-                cameraDriver = gameObject.AddComponent<StorySequenceCameraDriver>();
             }
 
             if (dialoguePresenter == null)
@@ -694,19 +778,22 @@ namespace Lit.Story
                 dialoguePresenter = GetComponent<StorySequenceDialoguePresenter>();
             }
 
-            if (dialoguePresenter == null)
-            {
-                dialoguePresenter = gameObject.AddComponent<StorySequenceDialoguePresenter>();
-            }
-
             if (fadeController == null)
             {
                 fadeController = GetComponent<StorySequenceFadeController>();
             }
 
-            if (fadeController == null)
+            if (bindings == null || fadeController == null)
             {
-                fadeController = gameObject.AddComponent<StorySequenceFadeController>();
+                Debug.LogError(
+                    "StorySequenceRunner requiert StorySequenceSceneBindings et StorySequenceFadeController preconfigures.",
+                    this);
+            }
+            else if (cameraDriver == null || dialoguePresenter == null)
+            {
+                Debug.LogWarning(
+                    "StorySequenceRunner: CameraDriver et DialoguePresenter sont optionnels pour une sequence ne contenant ni plan camera StorySequence ni dialogue.",
+                    this);
             }
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lit.Timeline;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -14,7 +15,8 @@ namespace Lit.Story
         AnimatorTrigger,
         Sitting,
         Timeline,
-        SceneEvent
+        SceneEvent,
+        ProgressivePlayerStop
     }
 
     [Serializable]
@@ -62,9 +64,17 @@ namespace Lit.Story
         [Tooltip("Commence directement dans Sitting_Idle sans jouer l'animation Sit_Down.")]
         public bool startDirectlyInSittingIdle;
 
+        [Header("Progressive Player Stop")]
+        [Min(0.05f), Tooltip("Duree maximale avant de forcer l'arret complet du joueur.")]
+        public float playerStopTimeout = 2f;
+        [Min(0f), Tooltip("Vitesse horizontale consideree comme un arret.")]
+        public float playerStopVelocityThreshold = 0.05f;
+
         [Header("Timeline")]
         public string directorId;
         public PlayableAsset timeline;
+        [Tooltip("Profile explicite de toutes les pistes a resoudre avant lecture.")]
+        public TimelineBindingProfile timelineBindingProfile;
         public bool waitForTimelineCompletion = true;
 
         [Header("Scene Event")]

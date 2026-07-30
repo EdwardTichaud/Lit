@@ -20,6 +20,7 @@ MonoBehaviour:
   - {fileID: 102900000, guid: dde8505377f7541428f035c431c9a6f1, type: 3}
   - {fileID: 102900000, guid: 59ab7e9c109d27d459eb9cf80bf37616, type: 3}
   - {fileID: 102900000, guid: ccaa4921d8a401c4496c4ecfe2f2db73, type: 3}
+  - {fileID: 102900000, guid: 39c4053b37c182f4e83878ce09cee085, type: 3}
   postLoadingScenes: []
   primarySceneName: District_1_Critical
   loadingMessage: Exploration du quartier de la Lune...
@@ -30,5 +31,6 @@ MonoBehaviour:
   - District_1_Loading_Environment_Crypt
   - District_1_Loading_Others
   - District_1_Loading_Environment_Balcony
+  - District_1_Loading_Environment_Arena
   postLoadingSceneNames: []
   editorSceneReferencesMigrated: 1

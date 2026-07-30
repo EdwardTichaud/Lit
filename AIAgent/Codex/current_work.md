@@ -60,7 +60,7 @@ BattleSphere, teleportation ou arene n'est activee.
 Le premier scenario jouable est configure : Lucian dispose de `Lueur faible`
 et `Lueur intense` dans les slots 1 et 2, tandis que le Juggernaut joue
 `Skill_Juggernaut_Assomoir` via `EnemySkills` et ouvre sa fenetre d'esquive par
-Animation Events.
+Animation Events. Son impact melee est configure entre 0 et 5 metres.
 Le prototype temps reel ne comporte pas encore de contre : les skills sont des
 attaques et les fenetres ennemies acceptent actuellement esquive ou saut. Les
 anciens modificateurs de contre sont conserves dans les donnees de savoir mais
@@ -82,7 +82,14 @@ utiliser la position reelle du joueur hors ligne de vue, puis retourne a son
 point de patrouille. Son inspecteur expose une preference melee en pourcentage :
 quand les deux types sont disponibles, il choisit d'abord melee ou distance
 selon ce tirage, puis s'approche jusqu'a la portee correspondante. Le Juggernaut
-porte actuellement le seul skill melee `Skill_Juggernaut_Assomoir`.
+porte actuellement le seul skill melee `Skill_Juggernaut_Assomoir`. Le
+GiantJuggernaut utilise `Skill_GiantJuggernaut_Jump` via le meme flux : son
+skill est utilisable de 0 a 30 m, sa state Animator est
+`GiantJuggernaut_Jump` et son clip clot la riposte avec `EndEnemyAttack` afin
+de permettre les attaques suivantes.
+`RealTimeCombatEnemyBehaviour.Can Pursue Player` est actif par defaut. S'il est
+desactive, l'ennemi reste immobile pendant son alerte, conserve son regard sur
+Lucian et n'attaque que si la portee du skill choisi est deja respectee.
 Tant qu'au moins un ennemi est dans ce mode, le manager applique l'override de
 musique combat; il le relache apres le desengagement, la mort ou la fin de
 l'affrontement.
@@ -90,6 +97,16 @@ Chaque degat du prototype temps reel produit aussi un nombre world-space local,
 attache au combattant touche : cyan pour la lumiere recue par l'ennemi, rouge
 pale pour Lucian. Il est billboard vers la camera, pulse, monte legerement et
 s'efface en temps non scale sans prefab ni Canvas de scene.
+Quand les PV de Lucian atteignent zero, UCC bloque normalement sa locomotion et
+le manager ferme le combat; les skills de roue et attaques de loadout refusent
+alors aussi toute nouvelle execution. La state `Base Layer.Death` est jouee
+avant l'affichage du `DefeatPanel` de scene, adapte temporairement aux choix
+`Revivre` et `Quitter le jeu`. Revivre recharge la scene du dernier checkpoint
+de la sauvegarde active et supprime l'autosave de mort juste avant ce chargement.
+`Revivre` recoit le focus manette initial; haut/bas navigue entre les deux choix,
+avec une mise en avant visuelle interpolee du bouton selectionne. Sans
+`EventSystem` dans la scene gameplay, la croix directionnelle et le bouton Sud
+de la manette remplacent directement la navigation UI.
 Les `StatsSO` portent exclusivement les checks historiques. Les `SkillSO` de
 combat portent nom, icone, clip, degats, une liste de VFX et une presentation
 d'arme optionnelle, et sont listes dans
@@ -133,6 +150,8 @@ frame de son Animation Event si Lucian est dans cette plage autour de
 meme verification; les cues `PlayerHand` restent joues pour la presentation du
 caster. Un hit refuse affiche aussi un feedback world-space `Raté (trop près)`
 ou `Raté (trop loin)` sur l'ennemi.
+La meme plage est appliquee a l'impact d'un skill ennemi, entre sa racine et
+Lucian : hors plage, le joueur ne subit aucun degat.
 `Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et porte
 le tag `RealTimeCombatRootMotion`, afin que son retour a locomotion ne laisse
 pas une intention UCC residuelle.
@@ -141,6 +160,10 @@ fallback par nom de clip.
 Les clips de skill peuvent aussi appeler `Dash`, qui propulse Lucian sur la
 droite vers `EnemyLockPoint` avec un depassement reglable, puis `StopDash`, qui
 freine cette impulsion sur une courte duree plutot que de l'annuler instantanement.
+Les clips ennemis peuvent appeler `ShowInput(Sprite)` et `HideInput()` sur
+`RealTimeCombatAnimationEvents` pour afficher puis retirer un prompt
+world-space ancre au `EnemyLockPoint`. Le Sprite 2D est assigne directement
+dans l'Animation Event, independamment de la fenetre logique de reaction.
 Les clips d'attaque joueur peuvent maintenant declencher `InstantiateSkillVFX`
 ou `InstantiateSkillVFXAtIndex` sur `RealTimeCombatAnimationEvents` : chaque
 VFX du `SkillSO` peut apparaitre directement sur `EnemyLockPoint`, ou rester
@@ -156,6 +179,11 @@ assigner dans son Inspector, sans roue. Ses clips peuvent utiliser le meme
 `HitPlayer` pour synchroniser animation, VFX et impact sur Lucian. La portee,
 le multiplicateur et les reactions ennemies sont portes par le `SkillSO`; les
 degats finaux restent calcules par le ledger de lumiere.
+`HitPlayerIf("Grounded")` permet maintenant a un Animation Event ennemi de ne
+toucher Lucian que s'il est au sol selon UCC. Les conditions sont des noms
+extensibles; une condition inconnue est refusee avec un avertissement unique.
+Une attaque ennemie active reste prioritaire sur son animation `Hit`, afin de
+ne jamais interrompre le root motion d'un saut comme `Assomoir`.
 Les ennemis temps reel ne dependent pas de transitions implicites de leur
 Animator : un `Hit` suspend temporairement son root motion puis revient
 doucement a la state `Idle` configuree, et `EndEnemyAttack` ramene aussi le

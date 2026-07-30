@@ -18,6 +18,9 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     [SerializeField, Min(0.1f)] private float rangedAttackDistance = 8f;
     [SerializeField, Min(0.1f)] private float disengageDistance = 14f;
     [SerializeField, Min(0f)] private float returnToPatrolAfterSeconds = 5f;
+    [Header("Movement")]
+    [SerializeField, Tooltip("Autorise l'ennemi a poursuivre Lucian, rechercher sa derniere position et retourner a sa patrouille pendant son alerte.")]
+    private bool canPursuePlayer = true;
     [Header("Alertness")]
     [SerializeField, Min(0.1f)] private float alertedVisionDistance = 18f;
     [SerializeField, Min(0f)] private float alertMemorySeconds = 10f;
@@ -154,9 +157,13 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
         if (!attackMode)
         {
-            if (!SearchLastKnownPosition())
+            if (canPursuePlayer && !SearchLastKnownPosition())
             {
                 ReturnToPatrol();
+            }
+            else if (!canPursuePlayer)
+            {
+                StopMovement();
             }
 
             if (enemy.CanSeePlayer)
@@ -177,9 +184,13 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         {
             returnedToPatrolWhilePlayerVisible = enemy.CanSeePlayer;
             SetAttackMode(false);
-            if (!SearchLastKnownPosition())
+            if (canPursuePlayer && !SearchLastKnownPosition())
             {
                 ReturnToPatrol();
+            }
+            else if (!canPursuePlayer)
+            {
+                StopMovement();
             }
             if (enemy.CanSeePlayer)
             {
@@ -203,9 +214,14 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return;
         }
 
-        float attackDistance = plannedSkill.EnemyRange == RealTimeCombatRange.Ranged
+        // La portee du SkillSO est la source auteur de l'attaque. Ainsi une
+        // attaque melee peut aussi etre lancee a distance si son clip le permet
+        // (par exemple le saut du GiantJuggernaut), tout en restant valable au
+        // corps a corps grace a sa distance minimale.
+        float fallbackAttackDistance = plannedSkill.EnemyRange == RealTimeCombatRange.Ranged
             ? rangedAttackDistance
             : meleeAttackDistance;
+        float attackDistance = Mathf.Max(fallbackAttackDistance, plannedSkill.MaximumHitDistance);
 
         if (enemy.CanSeePlayer && distance <= attackDistance && enemy.TryStartRetaliation(meleeAttackPreferencePercent * 0.01f))
         {
@@ -220,7 +236,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return;
         }
 
-        if (!enemy.CanSeePlayer || distance > attackDistance)
+        if (canPursuePlayer && (!enemy.CanSeePlayer || distance > attackDistance))
         {
             MoveTowardsPlayer(attackDistance);
         }

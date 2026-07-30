@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public sealed class RealTimeCombatManager : MonoBehaviour
@@ -26,6 +27,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField, Min(1f)] private float clarityForS = 100f;
     [SerializeField, Min(0f)] private float successfulReactionClarity = 5f;
 
+    [Header("Defeat")]
+    [SerializeField] private string playerDeathAnimatorState = "Base Layer.Death";
+    [SerializeField, Min(0f)] private float defeatPanelExtraDelaySeconds = 0.25f;
+    [SerializeField, Min(0.1f)] private float playerDeathFallbackDuration = 1f;
+
     private readonly Dictionary<CombatAttackDefinition, float> cooldowns = new Dictionary<CombatAttackDefinition, float>();
     private readonly HashSet<RealTimeCombatReaction> receivedReactions = new HashSet<RealTimeCombatReaction>();
     private readonly HashSet<RealTimeCombatEnemy> attackModeEnemies = new HashSet<RealTimeCombatEnemy>();
@@ -37,6 +43,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private int combatMusicOverrideToken;
     private Coroutine playerCombatAnimationRoutine;
     private Coroutine playerSkillAnimationRoutine;
+    private Coroutine playerDefeatRoutine;
 
     public event Action<RealTimeCombatEnemy> LockChanged;
     public event Action<float, CombatClarityRank> ClarityChanged;
@@ -321,7 +328,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public bool TryUseAttack(int slotIndex)
     {
-        if (!combatActive || lockedEnemy == null || playerLoadout == null || (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        if (!combatActive || IsPlayerDead() || lockedEnemy == null || playerLoadout == null ||
+            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
         {
             return false;
         }
@@ -379,7 +387,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool TryUseSkill(SkillSO skill)
     {
-        if (!combatActive || lockedEnemy == null || skill == null || skill.AnimationClip == null ||
+        if (!combatActive || IsPlayerDead() || lockedEnemy == null || skill == null || skill.AnimationClip == null ||
             (lockedEnemy.Health != null && lockedEnemy.Health.IsDead) || playerAnimator == null || playerRoot == null)
         {
             return false;
@@ -536,6 +544,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
+        if (!IsEnemySkillInHitRange(caster, skill))
+        {
+            return 0;
+        }
+
         int damage = caster.ActiveSkill != null
             ? caster.CommittedRetaliationDamage
             : Mathf.Max(0, Mathf.RoundToInt(skill.Damages));
@@ -601,11 +614,22 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(enemy.transform, enemy.ActiveSkill, enemy.CommittedRetaliationDamage, false));
         if (!reactionSucceeded)
         {
-            int damage = enemy.CommittedRetaliationDamage;
-            int applied = ApplyPlayerDamage(damage);
-            PlayerDamaged?.Invoke(applied);
-            EvaluateCombatOutcome();
+            ApplyEnemySkillDamageToPlayer(enemy, enemy.ActiveSkill);
         }
+    }
+
+    private bool IsEnemySkillInHitRange(RealTimeCombatEnemy enemy, SkillSO skill)
+    {
+        if (enemy == null || skill == null || playerRoot == null)
+        {
+            return false;
+        }
+
+        Vector3 enemyPosition = enemy.transform.position;
+        Vector3 playerPosition = playerRoot.position;
+        enemyPosition.y = 0f;
+        playerPosition.y = 0f;
+        return skill.IsWithinHitRange(Vector3.Distance(enemyPosition, playerPosition));
     }
 
     public void CompleteEnemyAttack(RealTimeCombatEnemy enemy)
@@ -826,14 +850,124 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private void EvaluateCombatOutcome()
     {
         bool enemyDead = lockedEnemy != null && lockedEnemy.Health != null && lockedEnemy.Health.IsDead;
-        bool playerDead = playerController != null ? playerController.CurrentHp <= 0 : playerHealth != null && playerHealth.IsDead;
+        bool playerDead = IsPlayerDead();
         if (!enemyDead && !playerDead)
         {
             return;
         }
 
-        CombatResolved?.Invoke(enemyDead && !playerDead);
+        if (playerDead)
+        {
+            CombatResolved?.Invoke(false);
+            EndCombat();
+            if (playerDefeatRoutine == null)
+            {
+                playerDefeatRoutine = StartCoroutine(PlayPlayerDefeatSequence());
+            }
+
+            return;
+        }
+
+        CombatResolved?.Invoke(true);
         EndCombat();
+    }
+
+    private bool IsPlayerDead()
+    {
+        return playerController != null
+            ? playerController.CurrentHp <= 0
+            : playerHealth != null && playerHealth.IsDead;
+    }
+
+    private System.Collections.IEnumerator PlayPlayerDefeatSequence()
+    {
+        PlayPlayerDeathAnimation();
+        yield return null;
+        float deathDuration = ResolvePlayerDeathAnimationDuration();
+        yield return new WaitForSecondsRealtime(deathDuration + defeatPanelExtraDelaySeconds);
+
+        CombatHudController hud = CombatHudController.Instance;
+        if (hud != null)
+        {
+            hud.ShowRealTimeCombatDefeat(ReviveAtLastCheckpoint, QuitGame);
+        }
+        else
+        {
+            Debug.LogWarning("[RealTimeCombat] DefeatPanel non affiche : CombatHudController introuvable.", this);
+        }
+
+        playerDefeatRoutine = null;
+    }
+
+    private void PlayPlayerDeathAnimation()
+    {
+        if (playerSkillAnimationRoutine != null)
+        {
+            StopCoroutine(playerSkillAnimationRoutine);
+            playerSkillAnimationRoutine = null;
+        }
+
+        if (playerCombatAnimationRoutine != null)
+        {
+            StopCoroutine(playerCombatAnimationRoutine);
+            playerCombatAnimationRoutine = null;
+        }
+
+        playerController?.Stop();
+        if (playerAnimator == null || string.IsNullOrWhiteSpace(playerDeathAnimatorState))
+        {
+            return;
+        }
+
+        int stateHash = Animator.StringToHash(playerDeathAnimatorState);
+        if (!playerAnimator.HasState(0, stateHash))
+        {
+            Debug.LogWarning("[RealTimeCombat] State de mort introuvable : " + playerDeathAnimatorState, playerAnimator);
+            return;
+        }
+
+        playerAnimator.CrossFade(stateHash, 0.05f, 0, 0f);
+    }
+
+    private float ResolvePlayerDeathAnimationDuration()
+    {
+        if (playerAnimator == null)
+        {
+            return playerDeathFallbackDuration;
+        }
+
+        AnimatorStateInfo state = playerAnimator.IsInTransition(0)
+            ? playerAnimator.GetNextAnimatorStateInfo(0)
+            : playerAnimator.GetCurrentAnimatorStateInfo(0);
+        if (state.shortNameHash != Animator.StringToHash("Death"))
+        {
+            return playerDeathFallbackDuration;
+        }
+
+        return Mathf.Max(playerDeathFallbackDuration, state.length / Mathf.Max(0.01f, state.speed));
+    }
+
+    private void ReviveAtLastCheckpoint()
+    {
+        string targetSceneName = SaveSessionManager.Instance != null
+            ? SaveSessionManager.Instance.GetActiveSaveSceneName()
+            : null;
+        if (string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            targetSceneName = SceneManager.GetActiveScene().name;
+        }
+
+        CharacterStateStore.Instance?.SuppressNextAutomaticSave("realtime_combat_defeat_checkpoint");
+        LoadingScreenService.LoadScene(targetSceneName, "Retour au dernier checkpoint...", LoadSceneMode.Single);
+    }
+
+    private static void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void RefreshCombatMusicOverride()

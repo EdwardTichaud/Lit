@@ -80,6 +80,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_Loading_Interactives.unity
     guid: 40f2412674e008345b1737bf7218be04
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Loading_Environment_Arena.unity
+    guid: 39c4053b37c182f4e83878ce09cee085
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

@@ -120,6 +120,23 @@ public partial class SquadCharacterController
         return bridge != null && bridge.BeginExternalLock(disableGameplayInput, stopActiveAbilities);
     }
 
+    public bool TryBeginUccProgressiveStop(bool disableGameplayInput = true, bool stopActiveAbilities = false)
+    {
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        return bridge != null && bridge.BeginExternalLockWithProgressiveStop(disableGameplayInput, stopActiveAbilities);
+    }
+
+    public bool IsUccProgressiveStopComplete(float velocityThreshold)
+    {
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        return bridge == null || bridge.IsProgressiveStopComplete(velocityThreshold);
+    }
+
+    public void CompleteUccProgressiveStop()
+    {
+        GetUccLocomotionBridge()?.CompleteProgressiveStop();
+    }
+
     public void EndUccExternalLock()
     {
         LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();

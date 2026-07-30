@@ -7,6 +7,7 @@ using UnityEngine.InputSystem; // Nécessaire pour manipuler les InputAction du 
 using UnityEngine.UI; // 🖼️ Gestion des éléments d'interface (fillAmount)
 using System.Collections; // Requis pour l'utilisation des coroutines
 
+[Obsolete("Le gestionnaire legacy est maintenu pour compatibilite. Utiliser Lit.Timeline.TimelineManager configure dans Bootstrap pour les nouvelles Timeline.")]
 public class TimelineManager : MonoBehaviour
 {
     public static TimelineManager Instance { get; private set; }

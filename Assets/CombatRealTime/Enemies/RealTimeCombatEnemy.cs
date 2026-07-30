@@ -141,7 +141,14 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             LightAbsorbed?.Invoke(applied);
         }
 
-        PlayHitAnimation();
+        // Une attaque deja engagee conserve sa priorite. Interrompre un clip
+        // root (par exemple Assomoir) avec Hit coupe son root motion et peut
+        // laisser l'ennemi suspendu dans sa pose de saut.
+        if (activeSkill == null)
+        {
+            PlayHitAnimation();
+        }
+
         return applied;
     }
 

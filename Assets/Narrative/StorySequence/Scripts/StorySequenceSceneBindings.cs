@@ -190,10 +190,12 @@ namespace Lit.Story
             runtimeLocalPlayerActor = root.GetComponent<StorySequenceActor>();
             if (runtimeLocalPlayerActor == null)
             {
-                runtimeLocalPlayerActor = root.gameObject.AddComponent<StorySequenceActor>();
+                Debug.LogWarning(
+                    $"StorySequenceSceneBindings: StorySequenceActor absent du prefab joueur '{root.name}'. Aucun composant n'est cree au runtime.",
+                    this);
+                return null;
             }
 
-            runtimeLocalPlayerActor.ConfigureRuntime(requestedId, ResolveLocalPlayerName(root));
             return runtimeLocalPlayerActor;
         }
 
@@ -224,13 +226,11 @@ namespace Lit.Story
                 StorySequenceActor actor = characterObject.GetComponent<StorySequenceActor>();
                 if (actor == null)
                 {
-                    actor = characterObject.AddComponent<StorySequenceActor>();
+                    Debug.LogWarning(
+                        $"StorySequenceSceneBindings: StorySequenceActor absent de '{characterObject.name}'. Aucun composant n'est cree au runtime.",
+                        characterObject);
+                    continue;
                 }
-
-                string displayName = data != null && !string.IsNullOrWhiteSpace(data.characterName)
-                    ? data.characterName
-                    : characterObject.name;
-                actor.ConfigureRuntime(requestedId, displayName);
                 return actor;
             }
 

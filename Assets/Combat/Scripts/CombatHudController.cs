@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -22,6 +23,7 @@ public class CombatHudController : MonoBehaviour
     private const string DefaultVictoryPanelName = "VictoryPanel";
     private const string DefaultDefeatPanelName = "DefeatPanel";
     private const string CombatEngagedAnimationName = "CombatEngagedPanel_Trigger";
+    private static readonly string[] DefeatQuitButtonHints = { "quitter", "quit", "exit" };
     private static readonly string[] DefeatMainMenuButtonHints = { "mainmenu", "main menu", "menuprincipal", "menu principal", "menu" };
     private static readonly string[] DefeatRetryButtonHints = { "retry", "reessayer", "réessayer", "recommencer", "relancer" };
     private static readonly string[] DefeatCheckpointButtonHints = { "checkpoint", "derniercheckpoint", "dernier checkpoint" };
@@ -98,6 +100,31 @@ public class CombatHudController : MonoBehaviour
     [SerializeField] private Button defeatCheckpointButton;
     [SerializeField] private Animator combatEngagedAnimator;
     [SerializeField, Min(0.1f)] private float combatEngagedFallbackDuration = 1.2f;
+    [SerializeField, Min(1f)] private float defeatSelectedScale = 1.12f;
+    [SerializeField, Min(0.1f)] private float defeatSelectionLerpSpeed = 16f;
+    [SerializeField] private Color defeatSelectedColor = new Color(1f, 0.78f, 0.28f, 1f);
+
+    private Button realTimeDefeatReviveButton;
+    private Button realTimeDefeatQuitButton;
+    private Button realTimeDefeatHiddenCheckpointButton;
+    private TextMeshProUGUI realTimeDefeatReviveLabel;
+    private TextMeshProUGUI realTimeDefeatQuitLabel;
+    private string realTimeDefeatReviveOriginalLabel;
+    private string realTimeDefeatQuitOriginalLabel;
+    private bool realTimeDefeatCheckpointWasActive;
+    private System.Action realTimeDefeatReviveAction;
+    private System.Action realTimeDefeatQuitAction;
+    private Vector3 realTimeDefeatReviveBaseScale;
+    private Vector3 realTimeDefeatQuitBaseScale;
+    private Color realTimeDefeatReviveBaseColor;
+    private Color realTimeDefeatQuitBaseColor;
+    private Graphic realTimeDefeatReviveGraphic;
+    private Graphic realTimeDefeatQuitGraphic;
+    private Navigation realTimeDefeatReviveOriginalNavigation;
+    private Navigation realTimeDefeatQuitOriginalNavigation;
+    private bool realTimeDefeatVisualsCaptured;
+    private bool realTimeDefeatVisible;
+    private Button realTimeDefeatSelectedButton;
     [SerializeField] private Image playerHpFillImage;
     [SerializeField] private Image enemyHpFillImage;
     [SerializeField] private Image timerFillImage;
@@ -285,6 +312,285 @@ public class CombatHudController : MonoBehaviour
         UpdateCombatInputFocus(true);
     }
 
+    /// <summary>
+    /// Affiche le DefeatPanel deja present dans la scene pour une defaite du combat temps reel.
+    /// </summary>
+    public void ShowRealTimeCombatDefeat(System.Action reviveAction, System.Action quitAction)
+    {
+        HideCombatResult();
+        ResolveSceneResultPanelsIfNeeded();
+        if (defeatPanelCanvasGroup == null)
+        {
+            Debug.LogWarning("[CombatHud] DefeatPanel introuvable : la defaite temps reel ne peut pas etre affichee.", this);
+            return;
+        }
+
+        ClearRealTimeDefeatBindings();
+        realTimeDefeatReviveAction = reviveAction;
+        realTimeDefeatQuitAction = quitAction;
+
+        Button[] buttons = defeatPanelCanvasGroup.GetComponentsInChildren<Button>(true);
+        realTimeDefeatReviveButton = FindButtonByHints(buttons, DefeatRetryButtonHints);
+        realTimeDefeatQuitButton = FindButtonByHints(buttons, DefeatQuitButtonHints);
+        realTimeDefeatHiddenCheckpointButton = FindButtonByHints(buttons, DefeatCheckpointButtonHints);
+
+        ConfigureRealTimeDefeatButton(realTimeDefeatReviveButton, "Revivre", ref realTimeDefeatReviveLabel, ref realTimeDefeatReviveOriginalLabel);
+        ConfigureRealTimeDefeatButton(realTimeDefeatQuitButton, "Quitter le jeu", ref realTimeDefeatQuitLabel, ref realTimeDefeatQuitOriginalLabel);
+        RegisterButton(realTimeDefeatReviveButton, HandleRealTimeDefeatRevive);
+        RegisterButton(realTimeDefeatQuitButton, HandleRealTimeDefeatQuit);
+
+        if (realTimeDefeatHiddenCheckpointButton != null &&
+            realTimeDefeatHiddenCheckpointButton != realTimeDefeatReviveButton &&
+            realTimeDefeatHiddenCheckpointButton != realTimeDefeatQuitButton)
+        {
+            realTimeDefeatCheckpointWasActive = realTimeDefeatHiddenCheckpointButton.gameObject.activeSelf;
+            realTimeDefeatHiddenCheckpointButton.gameObject.SetActive(false);
+        }
+
+        SetScenePanelVisibility(false, false);
+        CombatDefensePanelController.HideActive();
+        SetCombatEngagedVisible(false);
+        if (root != null)
+        {
+            root.SetActive(false);
+        }
+
+        SetCanvasGroupVisible(victoryPanelCanvasGroup, false, blocksRaycasts: false);
+        SetCanvasGroupVisible(defeatPanelCanvasGroup, true, blocksRaycasts: true);
+        SetButtonInteractable(realTimeDefeatReviveButton, true);
+        SetButtonInteractable(realTimeDefeatQuitButton, true);
+        ConfigureRealTimeDefeatNavigation();
+        SelectRealTimeDefeatDefaultButton();
+        realTimeDefeatVisible = true;
+    }
+
+    private void HandleRealTimeDefeatRevive()
+    {
+        SetButtonInteractable(realTimeDefeatReviveButton, false);
+        SetButtonInteractable(realTimeDefeatQuitButton, false);
+        System.Action action = realTimeDefeatReviveAction;
+        SetCanvasGroupVisible(defeatPanelCanvasGroup, false, blocksRaycasts: false);
+        ClearRealTimeDefeatBindings();
+        action?.Invoke();
+    }
+
+    private void HandleRealTimeDefeatQuit()
+    {
+        SetButtonInteractable(realTimeDefeatReviveButton, false);
+        SetButtonInteractable(realTimeDefeatQuitButton, false);
+        System.Action action = realTimeDefeatQuitAction;
+        SetCanvasGroupVisible(defeatPanelCanvasGroup, false, blocksRaycasts: false);
+        ClearRealTimeDefeatBindings();
+        action?.Invoke();
+    }
+
+    private static void ConfigureRealTimeDefeatButton(Button button, string label, ref TextMeshProUGUI labelText, ref string originalLabel)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        labelText = button.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (labelText == null)
+        {
+            return;
+        }
+
+        originalLabel = labelText.text;
+        labelText.text = label;
+    }
+
+    private void ClearRealTimeDefeatBindings()
+    {
+        if (realTimeDefeatReviveButton != null)
+        {
+            realTimeDefeatReviveButton.onClick.RemoveListener(HandleRealTimeDefeatRevive);
+        }
+
+        if (realTimeDefeatQuitButton != null)
+        {
+            realTimeDefeatQuitButton.onClick.RemoveListener(HandleRealTimeDefeatQuit);
+        }
+
+        RestoreRealTimeDefeatLabel(realTimeDefeatReviveLabel, realTimeDefeatReviveOriginalLabel);
+        RestoreRealTimeDefeatLabel(realTimeDefeatQuitLabel, realTimeDefeatQuitOriginalLabel);
+        if (realTimeDefeatHiddenCheckpointButton != null)
+        {
+            realTimeDefeatHiddenCheckpointButton.gameObject.SetActive(realTimeDefeatCheckpointWasActive);
+        }
+
+        RestoreRealTimeDefeatVisuals();
+
+        realTimeDefeatReviveButton = null;
+        realTimeDefeatQuitButton = null;
+        realTimeDefeatHiddenCheckpointButton = null;
+        realTimeDefeatReviveLabel = null;
+        realTimeDefeatQuitLabel = null;
+        realTimeDefeatReviveOriginalLabel = null;
+        realTimeDefeatQuitOriginalLabel = null;
+        realTimeDefeatCheckpointWasActive = false;
+        realTimeDefeatReviveAction = null;
+        realTimeDefeatQuitAction = null;
+        realTimeDefeatVisible = false;
+    }
+
+    private void ConfigureRealTimeDefeatNavigation()
+    {
+        CaptureRealTimeDefeatVisuals();
+        ConfigureVerticalNavigation(realTimeDefeatReviveButton, realTimeDefeatQuitButton);
+        ConfigureVerticalNavigation(realTimeDefeatQuitButton, realTimeDefeatReviveButton);
+    }
+
+    private void CaptureRealTimeDefeatVisuals()
+    {
+        if (realTimeDefeatVisualsCaptured)
+        {
+            return;
+        }
+
+        CaptureRealTimeDefeatVisual(realTimeDefeatReviveButton, out realTimeDefeatReviveBaseScale, out realTimeDefeatReviveGraphic, out realTimeDefeatReviveBaseColor, out realTimeDefeatReviveOriginalNavigation);
+        CaptureRealTimeDefeatVisual(realTimeDefeatQuitButton, out realTimeDefeatQuitBaseScale, out realTimeDefeatQuitGraphic, out realTimeDefeatQuitBaseColor, out realTimeDefeatQuitOriginalNavigation);
+        realTimeDefeatVisualsCaptured = true;
+    }
+
+    private static void CaptureRealTimeDefeatVisual(Button button, out Vector3 baseScale, out Graphic graphic, out Color baseColor, out Navigation navigation)
+    {
+        baseScale = button != null ? button.transform.localScale : Vector3.one;
+        graphic = button != null ? button.targetGraphic : null;
+        baseColor = graphic != null ? graphic.color : Color.white;
+        navigation = button != null ? button.navigation : default;
+    }
+
+    private static void ConfigureVerticalNavigation(Button button, Button otherButton)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        Navigation navigation = button.navigation;
+        navigation.mode = Navigation.Mode.Explicit;
+        navigation.selectOnUp = otherButton;
+        navigation.selectOnDown = otherButton;
+        navigation.selectOnLeft = null;
+        navigation.selectOnRight = null;
+        button.navigation = navigation;
+    }
+
+    private void SelectRealTimeDefeatDefaultButton()
+    {
+        if (realTimeDefeatReviveButton == null || !realTimeDefeatReviveButton.interactable)
+        {
+            return;
+        }
+
+        realTimeDefeatSelectedButton = realTimeDefeatReviveButton;
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(realTimeDefeatReviveButton.gameObject);
+        }
+    }
+
+    private void UpdateRealTimeDefeatSelectionVisuals()
+    {
+        if (!realTimeDefeatVisible)
+        {
+            return;
+        }
+
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+        {
+            UpdateRealTimeDefeatGamepadFallback();
+        }
+
+        GameObject selectedObject = eventSystem != null
+            ? eventSystem.currentSelectedGameObject
+            : realTimeDefeatSelectedButton != null ? realTimeDefeatSelectedButton.gameObject : null;
+        if (eventSystem != null && selectedObject != realTimeDefeatReviveButton?.gameObject && selectedObject != realTimeDefeatQuitButton?.gameObject)
+        {
+            SelectRealTimeDefeatDefaultButton();
+            selectedObject = eventSystem.currentSelectedGameObject;
+        }
+
+        float lerp = 1f - Mathf.Exp(-defeatSelectionLerpSpeed * Time.unscaledDeltaTime);
+        UpdateRealTimeDefeatButtonVisual(realTimeDefeatReviveButton, realTimeDefeatReviveBaseScale, realTimeDefeatReviveGraphic, realTimeDefeatReviveBaseColor, selectedObject == realTimeDefeatReviveButton?.gameObject, lerp);
+        UpdateRealTimeDefeatButtonVisual(realTimeDefeatQuitButton, realTimeDefeatQuitBaseScale, realTimeDefeatQuitGraphic, realTimeDefeatQuitBaseColor, selectedObject == realTimeDefeatQuitButton?.gameObject, lerp);
+    }
+
+    private void UpdateRealTimeDefeatGamepadFallback()
+    {
+        Gamepad gamepad = Gamepad.current;
+        if (gamepad == null)
+        {
+            return;
+        }
+
+        if (gamepad.dpad.up.wasPressedThisFrame || gamepad.dpad.down.wasPressedThisFrame)
+        {
+            realTimeDefeatSelectedButton = realTimeDefeatSelectedButton == realTimeDefeatReviveButton
+                ? realTimeDefeatQuitButton
+                : realTimeDefeatReviveButton;
+        }
+
+        if (gamepad.buttonSouth.wasPressedThisFrame && realTimeDefeatSelectedButton != null && realTimeDefeatSelectedButton.interactable)
+        {
+            realTimeDefeatSelectedButton.onClick.Invoke();
+        }
+    }
+
+    private void UpdateRealTimeDefeatButtonVisual(Button button, Vector3 baseScale, Graphic graphic, Color baseColor, bool selected, float lerp)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        Vector3 targetScale = selected ? baseScale * defeatSelectedScale : baseScale;
+        button.transform.localScale = Vector3.Lerp(button.transform.localScale, targetScale, lerp);
+        if (graphic != null)
+        {
+            Color targetColor = selected ? defeatSelectedColor : baseColor;
+            graphic.color = Color.Lerp(graphic.color, targetColor, lerp);
+        }
+    }
+
+    private void RestoreRealTimeDefeatVisuals()
+    {
+        if (!realTimeDefeatVisualsCaptured)
+        {
+            return;
+        }
+
+        RestoreRealTimeDefeatVisual(realTimeDefeatReviveButton, realTimeDefeatReviveBaseScale, realTimeDefeatReviveGraphic, realTimeDefeatReviveBaseColor, realTimeDefeatReviveOriginalNavigation);
+        RestoreRealTimeDefeatVisual(realTimeDefeatQuitButton, realTimeDefeatQuitBaseScale, realTimeDefeatQuitGraphic, realTimeDefeatQuitBaseColor, realTimeDefeatQuitOriginalNavigation);
+        realTimeDefeatVisualsCaptured = false;
+        realTimeDefeatSelectedButton = null;
+    }
+
+    private static void RestoreRealTimeDefeatVisual(Button button, Vector3 baseScale, Graphic graphic, Color baseColor, Navigation navigation)
+    {
+        if (button != null)
+        {
+            button.transform.localScale = baseScale;
+            button.navigation = navigation;
+        }
+
+        if (graphic != null)
+        {
+            graphic.color = baseColor;
+        }
+    }
+
+    private static void RestoreRealTimeDefeatLabel(TextMeshProUGUI label, string originalValue)
+    {
+        if (label != null && originalValue != null)
+        {
+            label.text = originalValue;
+        }
+    }
+
     private void Awake()
     {
         // Unity appelle Awake au chargement; on initialise le singleton et l'UI disponible.
@@ -307,6 +613,7 @@ public class CombatHudController : MonoBehaviour
     private void OnDestroy()
     {
         // Nettoyage des objets runtime et des panneaux de scene.
+        ClearRealTimeDefeatBindings();
         if (Instance == this)
         {
             ReleaseCombatInputFocus();
@@ -349,6 +656,7 @@ public class CombatHudController : MonoBehaviour
         LocalInputRouter.Return -= OnReturn;
         LocalInputRouter.CombatUseItem -= OnCombatUseItem;
         combatDefensePanelRequested = false;
+        ClearRealTimeDefeatBindings();
         HideCombatResult();
         ReleaseCombatInputFocus();
         LocalPlayerInput.SetCombatInputActive(false);
@@ -356,6 +664,8 @@ public class CombatHudController : MonoBehaviour
 
     private void Update()
     {
+        UpdateRealTimeDefeatSelectionVisuals();
+
         if (combatEngagedIntroActive)
         {
             UpdateCombatEngagedIntro();

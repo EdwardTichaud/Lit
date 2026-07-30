@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -10,6 +11,10 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     [SerializeField] private PlayerBow playerBow;
     [SerializeField] private PlayerSword playerSword;
 
+    [Header("Input Prompt Animation Events")]
+    [SerializeField] private Transform inputPromptAnchor;
+    [SerializeField] private Vector3 inputPromptOffset = new Vector3(0f, 1.25f, 0f);
+
     [Header("Dash Animation Events")]
     [SerializeField, Min(0f)] private float dashOvershootDistance = 1.25f;
     [SerializeField, Min(0f)] private float dashImpulsePerMeter = 8f;
@@ -21,6 +26,8 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
     private Vector3 lastDashDirection;
     private Coroutine stopDashRoutine;
+    private CombatInputWorldPrompt activeInputPrompt;
+    private readonly HashSet<string> warnedUnknownPlayerHitConditions = new HashSet<string>();
 
     private void Reset()
     {
@@ -35,6 +42,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         ResolvePlayerSword();
         HideBow();
         HideSword();
+        HideInput();
     }
 
     private void OnDisable()
@@ -47,6 +55,36 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
         HideBow();
         HideSword();
+        HideInput();
+    }
+
+    /// <summary>
+    /// Animation Event ennemi : affiche le Sprite 2D de l'input a executer au-dessus de l'ennemi.
+    /// </summary>
+    public void ShowInput(Sprite inputSprite)
+    {
+        HideInput();
+
+        Transform anchor = inputPromptAnchor;
+        if (anchor == null)
+        {
+            RealTimeCombatEnemy currentEnemy = ResolveEnemy();
+            anchor = currentEnemy != null ? currentEnemy.LockPoint : transform;
+        }
+
+        activeInputPrompt = CombatInputWorldPrompt.Show(anchor, inputSprite, inputPromptOffset);
+    }
+
+    /// <summary>
+    /// Animation Event ennemi : masque le prompt d'input actif.
+    /// </summary>
+    public void HideInput()
+    {
+        if (activeInputPrompt != null)
+        {
+            activeInputPrompt.Hide();
+            activeInputPrompt = null;
+        }
     }
 
     public void ShowReactionPrompt()
@@ -390,6 +428,47 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     public void HitPlayer()
     {
         ResolveEnemySkills()?.HitPlayer();
+    }
+
+    /// <summary>
+    /// Animation Event ennemi : applique les degats seulement si la condition cible est valide.
+    /// Les conditions sont exprimees par nom pour pouvoir en ajouter sans modifier les clips existants.
+    /// </summary>
+    public void HitPlayerIf(string conditionName)
+    {
+        if (!MeetsPlayerHitCondition(conditionName))
+        {
+            return;
+        }
+
+        HitPlayer();
+    }
+
+    private bool MeetsPlayerHitCondition(string conditionName)
+    {
+        string normalizedCondition = string.IsNullOrWhiteSpace(conditionName)
+            ? "Always"
+            : conditionName.Trim();
+        if (string.Equals(normalizedCondition, "Always", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (string.Equals(normalizedCondition, "Grounded", System.StringComparison.OrdinalIgnoreCase))
+        {
+            RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+            SquadCharacterController player = manager != null && manager.PlayerRoot != null
+                ? manager.PlayerRoot.GetComponentInChildren<SquadCharacterController>(true)
+                : null;
+            return player != null && player.IsGrounded;
+        }
+
+        if (warnedUnknownPlayerHitConditions.Add(normalizedCondition))
+        {
+            Debug.LogWarning("[RealTimeCombatAnimationEvents] Condition HitPlayerIf inconnue : '" + normalizedCondition + "'. L'impact est ignore.", this);
+        }
+
+        return false;
     }
 
     private RealTimeCombatEnemy ResolveEnemy()

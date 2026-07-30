@@ -2993,11 +2993,11 @@ MonoBehaviour:
         m_MinCeilingJumpHeight: 0.05
         m_GroundedGracePeriod: 0.05
         m_PreventSlopeLimitJump: 1
-        m_Force: 0.2
+        m_Force: 0.22
         m_SidewaysForceMultiplier: 0.8
         m_BackwardsForceMultiplier: 0.7
-        m_Frames: 1
-        m_ForceDamping: 0.18
+        m_Frames: 2
+        m_ForceDamping: 0.17
         m_JumpEvent:
           m_WaitForAnimationEvent: 0
           m_Duration: 0
@@ -3373,6 +3373,8 @@ MonoBehaviour:
   driveJumpLandingAnimatorParameters: 1
   jumpTriggerParam: JumpTrigger
   isAirborneParam: IsAirborne
+  softenJumpDescent: 1
+  jumpDescentGravityAmount: 0.56
   enableObstacleTraversal: 1
   ignoredObstacleMaxHeight: 0.22
   traversableObstacleMaxHeight: 1.05
@@ -3436,7 +3438,7 @@ MonoBehaviour:
   jumpRetryWindow: 0.15
   warnWhenJumpRejected: 1
   useJumpForceFallback: 1
-  jumpFallbackVelocity: 7
+  jumpFallbackVelocity: 7.5
   relaxGroundReliefTolerance: 1
   groundReliefMinStepHeight: 0.5
   groundReliefMinSlopeLimit: 60
@@ -3903,6 +3905,8 @@ MonoBehaviour:
   combatInput: {fileID: 0}
   playerBow: {fileID: 625305882505611059}
   playerSword: {fileID: 8349673734219276021}
+  inputPromptAnchor: {fileID: 0}
+  inputPromptOffset: {x: 0, y: 1.25, z: 0}
   dashOvershootDistance: 1.25
   dashImpulsePerMeter: 8
   minimumDashImpulse: 14

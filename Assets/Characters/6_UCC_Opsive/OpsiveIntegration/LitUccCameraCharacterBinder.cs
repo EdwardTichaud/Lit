@@ -1,7 +1,6 @@
 using System.Collections;
 using Opsive.UltimateCharacterController.Character;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UccCameraController = Opsive.UltimateCharacterController.Camera.CameraController;
 
 [DefaultExecutionOrder(100)]
@@ -16,74 +15,46 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
     [SerializeField] private bool snapCameraOnBind = true;
     [SerializeField, Min(0f)] private float retryInterval = 0.1f;
 
-    private static bool sceneHookRegistered;
-
     private Coroutine bindRoutine;
     private Transform boundCharacter;
     private bool waitingForInitialCharacter;
+    private bool timelineControlHeld;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics()
+    /// <summary>Reserve la camera a une Timeline sans creer d'objet ni perdre le personnage actuellement lie.</summary>
+    public void BeginTimelineControl()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        sceneHookRegistered = false;
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void InstallSceneCameraBinders()
-    {
-        RegisterSceneHook();
-        InstallBindersInLoadedScenes();
-    }
-
-    private static void RegisterSceneHook()
-    {
-        if (sceneHookRegistered)
+        timelineControlHeld = true;
+        if (bindRoutine != null)
         {
-            return;
+            StopCoroutine(bindRoutine);
+            bindRoutine = null;
         }
 
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        sceneHookRegistered = true;
-    }
-
-    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        InstallBindersInScene(scene);
-    }
-
-    private static void InstallBindersInLoadedScenes()
-    {
-        for (int i = 0; i < SceneManager.sceneCount; i++)
+        ResolveCameraController();
+        if (cameraController != null)
         {
-            InstallBindersInScene(SceneManager.GetSceneAt(i));
+            cameraController.enabled = false;
         }
     }
 
-    private static void InstallBindersInScene(Scene scene)
+    /// <summary>Generic ownership handoff for Cinemachine, Timeline or another approved camera driver.</summary>
+    public void BeginExternalCameraControl() => BeginTimelineControl();
+
+    /// <summary>Rend le controle a UCC et revalide le binding vers le joueur local.</summary>
+    public void EndTimelineControl(bool restoreController)
     {
-        if (!scene.IsValid() || !scene.isLoaded)
+        timelineControlHeld = false;
+        ResolveCameraController();
+        if (cameraController != null && restoreController)
         {
-            return;
+            cameraController.enabled = true;
         }
 
-        GameObject[] roots = scene.GetRootGameObjects();
-        for (int i = 0; i < roots.Length; i++)
-        {
-            UccCameraController[] controllers = roots[i].GetComponentsInChildren<UccCameraController>(true);
-            for (int j = 0; j < controllers.Length; j++)
-            {
-                UccCameraController controller = controllers[j];
-                if (controller == null || controller.GetComponent<LitUccCameraCharacterBinder>() != null)
-                {
-                    continue;
-                }
-
-                controller.gameObject.AddComponent<LitUccCameraCharacterBinder>();
-            }
-        }
+        QueueBind();
     }
+
+    /// <summary>Returns camera ownership after an external camera sequence.</summary>
+    public void EndExternalCameraControl(bool restoreController) => EndTimelineControl(restoreController);
 
     private void Reset() => ResolveCameraController();
 
@@ -156,7 +127,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
     private void QueueBind(Transform preferredCharacter = null)
     {
-        if (!isActiveAndEnabled) return;
+        if (!isActiveAndEnabled || timelineControlHeld) return;
 
         if (bindRoutine != null)
             StopCoroutine(bindRoutine);

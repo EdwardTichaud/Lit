@@ -44,7 +44,17 @@ Canvas de scene n'est requis.
 Les degats recus par Lucian passent par `SquadCharacterController.ApplyDamage`,
 et non par une ecriture directe de ses PV, afin que UCC conserve son etat de
 sante, ses retours et sa mort. Une riposte lethale termine volontairement la
-session et bloque le controle du personnage jusqu'a sa resolution.
+session et bloque le controle du personnage jusqu'a sa resolution; les deux
+voies d'attaque joueur refusent aussi toute nouvelle action a `0 PV`.
+Une mort temps reel joue la state `Base Layer.Death` de `Player_Model` avant
+d'afficher le `DefeatPanel` existant. Ce panneau est configure temporairement
+avec `Revivre`, qui recharge la scene du dernier checkpoint sauvegarde, et
+`Quitter le jeu`; son ancien bouton checkpoint est masque pour cette issue.
+`Revivre` est selectionne par defaut dans l'`EventSystem`; la navigation UI
+haut/bas relie explicitement les deux choix. Le bouton selectionne est agrandi
+et teinte en or, sans ajouter de nouvel objet UI. En l'absence d'`EventSystem`
+dans une scene gameplay, la croix directionnelle haut/bas et le bouton Sud de
+la manette assurent directement cette navigation et validation.
 
 ## Skills UI
 
@@ -81,6 +91,8 @@ Basic Skills reutilisent les Animation Events de `SkillSO`.
 sont herites par `BasicSkillsSO`; lors de `HitEnemy`, le manager compare la
 distance horizontale actuelle entre Lucian et `EnemyLockPoint` a cette plage.
 Hors plage, aucun degat ni animation `Hit` ennemi n'est applique.
+La meme plage est verifiee a l'impact d'un skill ennemi, entre sa racine et
+Lucian : hors plage, aucun degat ne lui est applique.
 Les cues `DirectOnTarget` et `Projectile` sont aussi ignores hors de cette
 plage; un cue `PlayerHand` reste autorise car il presente le caster, pas la
 cible. Le `HitEnemy` hors plage affiche un message world-space jaune : `Raté
@@ -132,9 +144,15 @@ Animator `Hit` (nom reglable sur `RealTimeCombatEnemy`).
 `SetEnemySkill(int)`, `PlayEnemySkill(int)`, `InstantiateEnemySkillVFX`,
 `InstantiateEnemySkillVFXAtIndex(int)` et `HitPlayer`. Les VFX ciblent Lucian;
 `HitPlayer` resout l'impact du `SkillSO` actif via `RealTimeCombatManager`.
+`HitPlayerIf(string)` conditionne cet impact au moment exact de l'Animation
+Event. `Grounded` ne touche Lucian que lorsque UCC le rapporte au sol; `Always`
+(ou un argument vide) conserve un impact inconditionnel. Une condition inconnue
+annule l'impact et produit un avertissement unique.
 La portee, le multiplicateur et les reactions ennemies sont configures sur ce
 `SkillSO`; le montant final reste celui du ledger de lumiere.
-Les states ennemies sont terminees explicitement : l'Animation Event
+Les states ennemies sont terminees explicitement : une attaque active reste
+prioritaire sur l'animation `Hit`, pour qu'un clip root comme `Assomoir` ne soit
+jamais coupe et ne laisse pas l'ennemi en l'air. L'Animation Event
 `EndEnemyAttack` finalise le ledger puis ramene l'ennemi a sa state `Idle`
 configuree. `RealTimeCombatEnemy` coupe le root motion seulement pendant `Hit`,
 puis relache cette state a la duree du clip pour eviter un ennemi bloque ou
@@ -158,6 +176,10 @@ a la portee normale. Le `RealTimeCombatManager` garde le lock pendant ce rayon
 d'action alerte au lieu de le fermer au rayon global initial. L'override de
 musique reste inactif a la seule detection et commence uniquement au premier
 degat de lumiere recu par l'ennemi.
+L'option `Can Pursue Player` est activee par defaut. Desactivee, l'ennemi ne se
+deplace ni pour poursuivre Lucian, ni pour rechercher sa derniere position ou
+retourner a sa patrouille pendant son alerte : il reste a sa place, regarde la
+cible et ne lance que les attaques deja a portee.
 Quand la session temps reel se ferme automatiquement, `RealTimeCombatManager`
 attend le relachement du mouvement local, puis synchronise la pose et remet a
 zero l'input UCC residuel pour eviter une marche involontaire apres le lock.
@@ -171,9 +193,20 @@ optionnel ou a sa pose initiale. Il choisit alors une famille d'attaque selon
 `meleeAttackPreferencePercent`, avec fallback sur l'autre famille si elle est
 indisponible, puis rejoint sa portee melee ou distance configuree.
 Le Juggernaut de prototype possede actuellement le seul skill melee
-`Skill_Juggernaut_Assomoir`. `RealTimeCombatManager` centralise un unique
+`Skill_Juggernaut_Assomoir`. La portee de lancement d'un skill ennemi est sa
+`maximumHitDistance` lorsque celle-ci depasse la distance de famille
+melee/distance du comportement. Une attaque peut donc etre categorisee melee
+pour la selection tout en restant declenchable a longue distance, si son
+`SkillSO` l'autorise. Le `Skill_GiantJuggernaut_Jump` est configure de 0 a
+30 m, utilise la state `GiantJuggernaut_Jump` et doit terminer par l'Animation
+Event `EndEnemyAttack`. `RealTimeCombatManager` centralise un unique
 override de musique combat tant qu'au moins un de ces comportements est en mode
 attaque, et le relache a leur desengagement ou mort.
+Les clips ennemis de combat temps reel peuvent aussi afficher un prompt
+world-space independant avec `ShowInput(Sprite)` sur
+`RealTimeCombatAnimationEvents`, puis le retirer avec `HideInput()`. Le Sprite
+2D est assigne directement dans l'Animation Event; le prompt est ancre au
+`EnemyLockPoint` par defaut et ne modifie pas la fenetre logique de reaction.
 
 ## Vision Et Lock
 

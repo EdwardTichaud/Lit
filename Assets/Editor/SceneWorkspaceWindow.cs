@@ -17,7 +17,7 @@ using UnityEngine.SceneManagement;
 public sealed class SceneWorkspaceWindow : EditorWindow
 {
     private const string ScenesRoot = "Assets/Scenes";
-    private static readonly string[] PhaseMarkers = { "_Critical", "_Loading", "_PostLoading" };
+    private static readonly string[] PhaseMarkers = { "_Critical", "_Loading", "_PostLoading", "_Proximity" };
 
     private string search = string.Empty;
     private Vector2 scrollPosition;
