@@ -4827,6 +4827,7 @@ public class MainMenuController : MonoBehaviour
 
     private void HandleJoinFailure(string message)
     {
+        string attemptedCode = joinCodeInput != null ? NetcodeRelayCode.Normalize(joinCodeInput.text) : string.Empty;
         NetcodeSessionEndpoint failedEndpoint = ResolveFailedJoinEndpoint();
         string failedCode = failedEndpoint.IsValid ? failedEndpoint.Code : "n/a";
         string failedTarget = failedEndpoint.IsValid ? failedEndpoint.EndpointLabel : "n/a";
@@ -4849,12 +4850,41 @@ public class MainMenuController : MonoBehaviour
         }
 
         HideLoadingScreen();
+        LoadingScreenService.HideImmediately();
         Debug.LogWarning(
             $"[NetcodeJoin] failure code='{failedCode}' target='{failedTarget}' message='{message}'",
             this);
-        SetJoinStatus(message);
-        SetStatus(message);
+
+        string playerMessage = BuildRelayJoinFailureMessage(message);
+        ShowJoinMenu();
+        if (joinCodeInput != null && !string.IsNullOrWhiteSpace(attemptedCode))
+        {
+            joinCodeInput.SetTextWithoutNotify(attemptedCode);
+            UpdateJoinConfirmState();
+        }
+
+        SetJoinStatus(playerMessage);
+        SetStatus(playerMessage);
         activeJoinEndpoint = default;
+    }
+
+    private static string BuildRelayJoinFailureMessage(string technicalMessage)
+    {
+        string details = technicalMessage ?? string.Empty;
+        string normalized = details.ToLowerInvariant();
+        bool invalidOrExpiredCode =
+            normalized.Contains("code") ||
+            normalized.Contains("allocation") ||
+            normalized.Contains("not found") ||
+            normalized.Contains("404") ||
+            normalized.Contains("expired");
+
+        if (invalidOrExpiredCode)
+        {
+            return "Code Relay introuvable ou expire. Verifie le code et assure-toi que l'hote est toujours en session.";
+        }
+
+        return "Connexion Relay impossible : l'hote n'est peut-etre plus en session. Verifie le code puis reessaie.";
     }
 
     private IEnumerator JoinSceneSyncRoutine()

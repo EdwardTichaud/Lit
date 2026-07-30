@@ -158,6 +158,26 @@ public sealed class LoadingScreenService : MonoBehaviour
     }
 
     /// <summary>
+    /// Ferme sans fondu un overlay qui ne precede pas un changement de scene,
+    /// par exemple lorsqu'une tentative de connexion reseau est refusee.
+    /// </summary>
+    public static void HideImmediately()
+    {
+        if (instance == null || instance.sceneLoadRoutine != null)
+        {
+            return;
+        }
+
+        if (instance.visibilityRoutine != null)
+        {
+            instance.StopCoroutine(instance.visibilityRoutine);
+            instance.visibilityRoutine = null;
+        }
+
+        instance.HideOverlayImmediate();
+    }
+
+    /// <summary>
     /// A appeler uniquement lorsque chargements, dechargements et placement
     /// du joueur sont termines. L'overlay reste opaque pendant la marge de
     /// stabilisation, puis disparait progressivement.

@@ -193,6 +193,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
+    public void OnSelect(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseSelect(context);
+        }
+    }
+
     public void OnStart(InputAction.CallbackContext context)
     {
         if (context.performed && ShouldProcess(context))

@@ -20,6 +20,7 @@ public static class LocalInputRouter
         RightShoulder,
         LocomotionMode,
         SwitchTarget,
+        Select,
         Multi,
         Start,
         CombatUseItem1,
@@ -39,6 +40,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> RightShoulder;
     public static event Action<InputAction.CallbackContext> LocomotionMode;
     public static event Action<InputAction.CallbackContext> SwitchTarget;
+    public static event Action<InputAction.CallbackContext> Select;
     public static event Action<InputAction.CallbackContext> Multi;
     public static event Action<InputAction.CallbackContext> Start;
     public static event Action<int> CombatUseItem;
@@ -103,6 +105,7 @@ public static class LocalInputRouter
         RightShoulder = null;
         LocomotionMode = null;
         SwitchTarget = null;
+        Select = null;
         Multi = null;
         Start = null;
         CombatUseItem = null;
@@ -515,6 +518,16 @@ public static class LocalInputRouter
         }
 
         SwitchTarget?.Invoke(context);
+    }
+
+    internal static void RaiseSelect(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.Select))
+        {
+            return;
+        }
+
+        Select?.Invoke(context);
     }
 
     internal static void RaiseMulti(InputAction.CallbackContext context)

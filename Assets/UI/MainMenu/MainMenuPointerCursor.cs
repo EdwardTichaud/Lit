@@ -23,7 +23,9 @@ public class MainMenuPointerCursor : MonoBehaviour
     [SerializeField] private Light flameLight;
 
     [Header("Gamepad Pointer")]
-    [SerializeField] private float gamepadSpeed = 1150f;
+    [SerializeField] private float gamepadSpeed = 920f;
+    [SerializeField, Range(0.1f, 2f), Tooltip("Multiplicateur global de sensibilite du curseur.")]
+    private float cursorSensitivityMultiplier = 0.8f;
     [SerializeField] private float gamepadDeadzone = 0.15f;
     [SerializeField] private bool warpHardwareMouseForGamepad = true;
     [SerializeField] private bool synthesizeGamepadUiEvents = true;
@@ -361,7 +363,7 @@ public class MainMenuPointerCursor : MonoBehaviour
         if (gamepadMove.sqrMagnitude > 0f)
         {
             float deltaTime = Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : Time.deltaTime;
-            screenPosition += gamepadMove * (gamepadSpeed * Mathf.Max(0f, deltaTime));
+            screenPosition += gamepadMove * (gamepadSpeed * cursorSensitivityMultiplier * Mathf.Max(0f, deltaTime));
             screenPosition = ClampToScreen(screenPosition);
             activeSource = PointerSource.Gamepad;
             WarpHardwareMouseIfNeeded();
@@ -1554,6 +1556,7 @@ public class MainMenuPointerCursor : MonoBehaviour
     private void OnValidate()
     {
         gamepadSpeed = Mathf.Max(0f, gamepadSpeed);
+        cursorSensitivityMultiplier = Mathf.Clamp(cursorSensitivityMultiplier, 0.1f, 2f);
         gamepadDeadzone = Mathf.Clamp01(gamepadDeadzone);
         flameCameraOffset = Mathf.Max(0f, flameCameraOffset);
         worldRayDistance = Mathf.Max(0.1f, worldRayDistance);
