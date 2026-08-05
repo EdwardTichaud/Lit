@@ -1887,6 +1887,32 @@ AnimatorController:
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
   m_EvaluateTransitionsOnStart: 0
+--- !u!1102 &28117292312093643
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Skill_4_JumpKick_Rupture
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 7400000, guid: 8a0a8d6b1b6feb24683287416aef46f2, type: 2}
+  m_Tag: RealTimeCombatRootMotion
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!1102 &151912645364141020
 AnimatorState:
   serializedVersion: 6
@@ -4219,7 +4245,7 @@ AnimatorState:
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 7400000, guid: caf4ceb2d13b8e444981a4e255c3b4e8, type: 2}
-  m_Tag: RealTimeCombatRootMotion
+  m_Tag: RealTimeCombatInPlace
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -4412,6 +4438,9 @@ AnimatorStateMachine:
   - serializedVersion: 1
     m_State: {fileID: -4643550427937912156}
     m_Position: {x: 542.8938, y: 831.90845, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: 28117292312093643}
+    m_Position: {x: 1520, y: 1070, z: 0}
   m_ChildStateMachines:
   - serializedVersion: 1
     m_StateMachine: {fileID: -8744604001195188168}

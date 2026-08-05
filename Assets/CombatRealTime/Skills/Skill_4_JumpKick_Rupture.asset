@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
+  m_Name: Skill_4_JumpKick_Rupture
+  m_EditorClassIdentifier: Assembly-CSharp::SkillSO
+  skillName: Saut de rupture
+  description: Lucian prend appui sur sa cible et se projette puissamment en arriere.
+  icon: {fileID: 21300000, guid: 2d089513ae4adfc48a683c362ad9992c, type: 3}
+  animationClip: {fileID: 7400000, guid: 8a0a8d6b1b6feb24683287416aef46f2, type: 2}
+  animatorState: Base Layer.Skill_4_JumpKick_Rupture
+  damages: 15
+  presentation:
+    entryBlendSeconds: 0.05
+    chainNormalizedTime: 1
+    chainTransitionNormalizedTime: 1
+    recoveryNormalizedTime: 0.96
+    exitBlendSeconds: 0.1
+    rootMotionMode: 2
+    facingMode: 0
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
+  minimumHitDistance: 0
+  maximumHitDistance: 3.25
+  requireValidRangeToStart: 1
+  vfxCues:
+  - displayName: Light Impact
+    prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
+    audioClip: {fileID: 0}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+  - displayName: Rupture Shockwave
+    prefab: {fileID: 4661101323380994401, guid: 97bc7e82f9324d77b5f11dc3a91bc4bd, type: 3}
+    audioClip: {fileID: 11400000, guid: bb12751d245f4aeea695bc5ea43a7d1e, type: 2}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.03
+    hitStopSeconds: 0.1
+    camera:
+      lookOffsetKick: {x: 0, y: 0.07, z: 0.42}
+      fieldOfViewKick: -2.8
+      recoverySharpness: 14
+    screenWave:
+      enabled: 1
+      settings:
+        origin: {x: 0.5, y: 0.5}
+        direction: {x: 0, y: 0}
+        reverse: 0
+        frequency: 18
+        propagationSpeed: 2.2
+        amplitude: 0.2
+        duration: 0.38
+        falloff: 6
+        fadeOutDuration: 0.2
+        highlightIntensity: 1.1
+        edgeContrast: 3.2
+        highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 0}
+  retreatImpulse:
+    enabled: 1
+    horizontalImpulse: 24
+    verticalImpulse: 8
+    maximumHorizontalImpulse: 24
+    maximumVerticalImpulse: 8
+    minimumInputLockSeconds: 0.12
+    maximumInputLockSeconds: 3.5
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000
+  requireAllEnemyReactions: 0
+  enemyAttackSfx: {fileID: 0}

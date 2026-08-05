@@ -7366,6 +7366,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LitTimelineLocalPlayerBinder
   director: {fileID: 1250891727}
   editorPreviewActor: {fileID: 1219367764}
+  hidePreviewActorAtRuntime: 1
   rebuildPlayingGraph: 1
 --- !u!114 &1250891730
 MonoBehaviour:
@@ -8389,7 +8390,7 @@ Transform:
   m_GameObject: {fileID: 1477286790}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
-  m_LocalPosition: {x: 0.38, y: -2.45, z: 120.67}
+  m_LocalPosition: {x: -1, y: -1.7, z: 16.2}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9813,7 +9814,7 @@ Transform:
   m_GameObject: {fileID: 1734326070}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 105.9, y: -94, z: 30.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

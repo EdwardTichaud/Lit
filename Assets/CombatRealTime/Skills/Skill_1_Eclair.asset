@@ -18,15 +18,58 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: 17651a47717f666458106120728c7c07, type: 2}
   animatorState: Base Layer.AnimationClip_Skill_Eclair
   damages: 10
+  presentation:
+    entryBlendSeconds: 0.06
+    chainNormalizedTime: 1
+    recoveryNormalizedTime: 0.88
+    exitBlendSeconds: 0.1
+    rootMotionMode: 1
+    facingMode: 0
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
   minimumHitDistance: 0
   maximumHitDistance: 5
   vfxCues:
-  - displayName: Impact
+  - displayName: Sword Trail
+    prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
+    delivery: 3
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+  - displayName: Light Impact
     prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
-    audioClip: {fileID: 0}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.08
+    hitStopSeconds: 0.05
+    camera:
+      lookOffsetKick: {x: 0, y: 0.025, z: 0.2}
+      fieldOfViewKick: -1.2
+      recoverySharpness: 20
+    screenWave:
+      enabled: 1
+      settings:
+        origin: {x: 0.5, y: 0.5}
+        direction: {x: 0, y: 0}
+        reverse: 0
+        frequency: 10
+        propagationSpeed: 1.7
+        amplitude: 0.07
+        duration: 0.22
+        falloff: 4
+        fadeOutDuration: 0.12
+        highlightIntensity: 0.7
+        edgeContrast: 2.5
+        highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 0}
+  retreatImpulse:
+    enabled: 0
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

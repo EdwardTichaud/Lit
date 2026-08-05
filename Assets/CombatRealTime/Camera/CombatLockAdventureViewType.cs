@@ -8,9 +8,26 @@ using UnityEngine;
 [System.Serializable]
 public sealed class CombatLockAdventureViewType : Adventure
 {
-    [SerializeField, Range(1f, 720f)] private float maximumLockRotationDegreesPerSecond = 180f;
+    [SerializeField, Range(1f, 720f)] private float maximumLockRotationDegreesPerSecond = 95f;
+    [SerializeField, Min(0.1f)] private float lockAxisSharpness = 7f;
     [SerializeField] private Vector3 combatLookOffset = new Vector3(0.75f, 0.45f, -5f);
     [SerializeField, Range(15f, 100f)] private float combatFieldOfView = 64f;
+
+    private Vector3 impactLookOffset;
+    private float impactFieldOfView;
+    private Vector3 smoothedPlayerToEnemyAxis;
+    private bool hasSmoothedPlayerToEnemyAxis;
+
+    public void ConfigureLockMotion(float maximumOrbitDegreesPerSecond, float axisSharpness)
+    {
+        maximumLockRotationDegreesPerSecond = Mathf.Max(1f, maximumOrbitDegreesPerSecond);
+        lockAxisSharpness = Mathf.Max(0.1f, axisSharpness);
+    }
+
+    public void ResetLockAxisSmoothing()
+    {
+        hasSmoothedPlayerToEnemyAxis = false;
+    }
 
     public void CopyGameplaySettingsFrom(ThirdPerson source)
     {
@@ -33,8 +50,15 @@ public sealed class CombatLockAdventureViewType : Adventure
     /// </summary>
     public void ApplyCombatFraming()
     {
-        LookOffset = combatLookOffset;
-        FieldOfView = combatFieldOfView;
+        LookOffset = combatLookOffset + impactLookOffset;
+        FieldOfView = Mathf.Clamp(combatFieldOfView + impactFieldOfView, 15f, 100f);
+    }
+
+    public void SetImpactPresentation(Vector3 lookOffsetKick, float fieldOfViewKick)
+    {
+        impactLookOffset = lookOffsetKick;
+        impactFieldOfView = fieldOfViewKick;
+        ApplyCombatFraming();
     }
 
     public override Quaternion Rotate(float horizontalMovement, float verticalMovement, bool immediateUpdate)
@@ -62,6 +86,7 @@ public sealed class CombatLockAdventureViewType : Adventure
         Vector3 direction = lookPoint - m_Transform.position;
         if (adapter.TryGetPlayerToEnemyDirection(out Vector3 playerToEnemy))
         {
+            playerToEnemy = SmoothLockAxis(playerToEnemy, immediateUpdate);
             // Plan the rotation from the player-facing combat axis rather than
             // the current camera side. The following UCC Move places the camera
             // at the negative LookOffset depth, behind the player, with a small
@@ -91,9 +116,23 @@ public sealed class CombatLockAdventureViewType : Adventure
         Quaternion resolvedRotation = Quaternion.RotateTowards(
             fallbackRotation,
             targetRotation,
-            maximumLockRotationDegreesPerSecond * Time.deltaTime);
+            maximumLockRotationDegreesPerSecond * Time.unscaledDeltaTime);
         SynchronizeOrbitAngles(resolvedRotation);
         return resolvedRotation;
+    }
+
+    private Vector3 SmoothLockAxis(Vector3 targetAxis, bool immediateUpdate)
+    {
+        if (!hasSmoothedPlayerToEnemyAxis || immediateUpdate)
+        {
+            smoothedPlayerToEnemyAxis = targetAxis;
+            hasSmoothedPlayerToEnemyAxis = true;
+            return smoothedPlayerToEnemyAxis;
+        }
+
+        float blend = 1f - Mathf.Exp(-lockAxisSharpness * Time.unscaledDeltaTime);
+        smoothedPlayerToEnemyAxis = Vector3.Slerp(smoothedPlayerToEnemyAxis, targetAxis, blend).normalized;
+        return smoothedPlayerToEnemyAxis;
     }
 
     private void SynchronizeOrbitAngles(Quaternion worldRotation)

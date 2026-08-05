@@ -142,6 +142,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             && manager.IsCombatActive
             && manager.LockedEnemy == enemy
             && enemy.IsRetaliationReady;
+        bool hasCombatTarget = enemy.CanSeePlayer || (provokedByPlayer && alerted);
 
         if (!attackMode && enemy.CanSeePlayer)
         {
@@ -177,6 +178,14 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         {
             StopMovement();
             return;
+        }
+
+        // A root attack can leave the enemy briefly turned away from Lucian. While
+        // its alert memory is active, keep reacquiring the combat target instead of
+        // blocking the next stored retaliation on the field-of-view check alone.
+        if (hasCombatTarget)
+        {
+            FacePlayer();
         }
 
         bool hasRetaliationToResolve = enemy.HasStoredLightDamage || enemy.HasRetaliationPending || canRetaliate;
@@ -223,7 +232,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             : meleeAttackDistance;
         float attackDistance = Mathf.Max(fallbackAttackDistance, plannedSkill.MaximumHitDistance);
 
-        if (enemy.CanSeePlayer && distance <= attackDistance && enemy.TryStartRetaliation(meleeAttackPreferencePercent * 0.01f))
+        if (hasCombatTarget && distance <= attackDistance && enemy.TryStartRetaliation(meleeAttackPreferencePercent * 0.01f))
         {
             StopMovement();
             lastAttackStartedAt = Time.time;

@@ -16,7 +16,8 @@ namespace Lit.Story
         Sitting,
         Timeline,
         SceneEvent,
-        ProgressivePlayerStop
+        ProgressivePlayerStop,
+        LaunchCombat
     }
 
     [Serializable]
@@ -40,6 +41,10 @@ namespace Lit.Story
         [Tooltip("Change automatiquement le plan camera vers le locuteur.")]
         public bool focusCameraOnSpeaker = true;
         public StorySequenceCameraProfile dialogueCameraProfile;
+
+        [Header("Step One-Shots")]
+        [Tooltip("Tous les AudioClipSO de cette liste sont joues simultanement au debut de l'etape, sans modifier musique ni ambiance.")]
+        public List<AudioClipSO> oneShotAudioClips = new List<AudioClipSO>();
 
         [Header("Camera")]
         [Tooltip("Point de camera declare dans StorySequenceSceneBindings. Vide = cadrage automatique.")]
@@ -76,9 +81,17 @@ namespace Lit.Story
         [Tooltip("Profile explicite de toutes les pistes a resoudre avant lecture.")]
         public TimelineBindingProfile timelineBindingProfile;
         public bool waitForTimelineCompletion = true;
+        [Tooltip("Lance le fondu vers le noir avant la fin de cette Timeline. Le fondu reste pilote par la StorySequence.")]
+        public bool fadeToBlackBeforeTimelineEnd;
+        [Min(0f), Tooltip("Duree du fondu final. Il commence cette duree avant la fin de la Timeline.")]
+        public float timelineEndFadeDuration = 0.5f;
 
         [Header("Scene Event")]
         public string eventId;
+
+        [Header("Combat")]
+        [Min(0f), Tooltip("Degats de lumiere appliques a l'ennemi au lancement du combat.")]
+        public float openingCombatDamage = 50f;
     }
 
     [CreateAssetMenu(

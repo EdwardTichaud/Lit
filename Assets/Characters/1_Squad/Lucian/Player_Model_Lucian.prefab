@@ -148,8 +148,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.6649225, y: 0.08067018, z: 0.0011821757, w: 0.7425423}
   m_LocalPosition: {x: -0.031802997, y: 0.08318166, z: -0.035107642}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 8668336312069924337}
   m_LocalEulerAnglesHint: {x: 80.85, y: 49.753, z: 43.288}
@@ -2433,6 +2433,7 @@ GameObject:
   - component: {fileID: 900000000000000101}
   - component: {fileID: 900000000000000102}
   - component: {fileID: 900000000000000103}
+  - component: {fileID: 900000000000000104}
   m_Layer: 6
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -3914,6 +3915,29 @@ MonoBehaviour:
   dashInputLockSeconds: 0.1
   stopDashDuration: 0.18
   stopDashDeceleration: 65
+--- !u!114 &900000000000000104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82e1a95b3cba4bcc867d4f3062a9d501, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationGroundRecovery
+  animator: {fileID: 0}
+  lockVerticalRootMotionToGround: 0
+  probeHeight: 3
+  probeDistance: 8
+  minimumGroundNormal: 0.45
+  penetrationTolerance: 0.03
+  recoverySpeed: 18
+  immediateRecoveryDistance: 0.5
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0
@@ -5953,7 +5977,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.0032020747, y: -0.0023693684, z: -0.7092878, w: 0.7049077}
   m_LocalPosition: {x: -0.046912268, y: 0.095308796, z: -0.028376441}
-  m_LocalScale: {x: 1.5030994, y: 1.5031021, z: 1.5031003}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4825169458635080795}

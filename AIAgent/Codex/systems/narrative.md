@@ -39,3 +39,6 @@ connaissances et résoudre les interactions narratives.
 - Les IDs narratifs sont persistants; les renommer nécessite une migration.
 - `GhostData` est une donnée d’auteur; l’état compris/résolu appartient au runtime.
 - Timeline est réservée aux chorégraphies complexes, pas aux dialogues ordinaires.
+- La Timeline `GiantJuggernaut_Intro` est une presentation camera/animation :
+  elle ne porte aucun `TimelinePlayerMoveTrack` et ne doit pas modifier la
+  position de Lucian. Le verrou UCC de la sequence suffit a le maintenir en place.

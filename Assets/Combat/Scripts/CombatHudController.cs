@@ -103,6 +103,7 @@ public class CombatHudController : MonoBehaviour
     [SerializeField, Min(1f)] private float defeatSelectedScale = 1.12f;
     [SerializeField, Min(0.1f)] private float defeatSelectionLerpSpeed = 16f;
     [SerializeField] private Color defeatSelectedColor = new Color(1f, 0.78f, 0.28f, 1f);
+    [SerializeField, Range(0.1f, 1f)] private float defeatUnselectedOpacity = 0.55f;
 
     private Button realTimeDefeatReviveButton;
     private Button realTimeDefeatQuitButton;
@@ -499,27 +500,31 @@ public class CombatHudController : MonoBehaviour
             return;
         }
 
-        EventSystem eventSystem = EventSystem.current;
-        if (eventSystem == null)
-        {
-            UpdateRealTimeDefeatGamepadFallback();
-        }
+        UpdateRealTimeDefeatGamepadSelection();
 
+        EventSystem eventSystem = EventSystem.current;
         GameObject selectedObject = eventSystem != null
             ? eventSystem.currentSelectedGameObject
             : realTimeDefeatSelectedButton != null ? realTimeDefeatSelectedButton.gameObject : null;
-        if (eventSystem != null && selectedObject != realTimeDefeatReviveButton?.gameObject && selectedObject != realTimeDefeatQuitButton?.gameObject)
+        if (selectedObject == realTimeDefeatReviveButton?.gameObject)
+        {
+            realTimeDefeatSelectedButton = realTimeDefeatReviveButton;
+        }
+        else if (selectedObject == realTimeDefeatQuitButton?.gameObject)
+        {
+            realTimeDefeatSelectedButton = realTimeDefeatQuitButton;
+        }
+        else
         {
             SelectRealTimeDefeatDefaultButton();
-            selectedObject = eventSystem.currentSelectedGameObject;
         }
 
         float lerp = 1f - Mathf.Exp(-defeatSelectionLerpSpeed * Time.unscaledDeltaTime);
-        UpdateRealTimeDefeatButtonVisual(realTimeDefeatReviveButton, realTimeDefeatReviveBaseScale, realTimeDefeatReviveGraphic, realTimeDefeatReviveBaseColor, selectedObject == realTimeDefeatReviveButton?.gameObject, lerp);
-        UpdateRealTimeDefeatButtonVisual(realTimeDefeatQuitButton, realTimeDefeatQuitBaseScale, realTimeDefeatQuitGraphic, realTimeDefeatQuitBaseColor, selectedObject == realTimeDefeatQuitButton?.gameObject, lerp);
+        UpdateRealTimeDefeatButtonVisual(realTimeDefeatReviveButton, realTimeDefeatReviveBaseScale, realTimeDefeatReviveGraphic, realTimeDefeatReviveBaseColor, realTimeDefeatSelectedButton == realTimeDefeatReviveButton, lerp);
+        UpdateRealTimeDefeatButtonVisual(realTimeDefeatQuitButton, realTimeDefeatQuitBaseScale, realTimeDefeatQuitGraphic, realTimeDefeatQuitBaseColor, realTimeDefeatSelectedButton == realTimeDefeatQuitButton, lerp);
     }
 
-    private void UpdateRealTimeDefeatGamepadFallback()
+    private void UpdateRealTimeDefeatGamepadSelection()
     {
         Gamepad gamepad = Gamepad.current;
         if (gamepad == null)
@@ -532,9 +537,17 @@ public class CombatHudController : MonoBehaviour
             realTimeDefeatSelectedButton = realTimeDefeatSelectedButton == realTimeDefeatReviveButton
                 ? realTimeDefeatQuitButton
                 : realTimeDefeatReviveButton;
+
+            if (EventSystem.current != null && realTimeDefeatSelectedButton != null)
+            {
+                EventSystem.current.SetSelectedGameObject(realTimeDefeatSelectedButton.gameObject);
+            }
         }
 
-        if (gamepad.buttonSouth.wasPressedThisFrame && realTimeDefeatSelectedButton != null && realTimeDefeatSelectedButton.interactable)
+        if (EventSystem.current == null &&
+            gamepad.buttonSouth.wasPressedThisFrame &&
+            realTimeDefeatSelectedButton != null &&
+            realTimeDefeatSelectedButton.interactable)
         {
             realTimeDefeatSelectedButton.onClick.Invoke();
         }
@@ -551,7 +564,9 @@ public class CombatHudController : MonoBehaviour
         button.transform.localScale = Vector3.Lerp(button.transform.localScale, targetScale, lerp);
         if (graphic != null)
         {
-            Color targetColor = selected ? defeatSelectedColor : baseColor;
+            Color targetColor = selected
+                ? defeatSelectedColor
+                : new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * defeatUnselectedOpacity);
             graphic.color = Color.Lerp(graphic.color, targetColor, lerp);
         }
     }

@@ -32,8 +32,12 @@ Le combat temps reel est actif dans `GameplaySessionRoot` et sur
 slots, le ledger de lumiere des ennemis, les fenetres de reaction pilotees par
 Animation Events, le lock camera, les inputs dedies et les vues HUD/loadout.
 Le verrouillage est entierement manuel : `LeftShoulder` verrouille l'ennemi le
-plus proche a portee, puis le deverrouille au prochain appui. Le lock se ferme
-automatiquement au-dela de 7 metres. Un orbe lumineux pulse et un signal sonore sont joues sur
+plus proche a portee, puis le deverrouille au prochain appui. Les portees de
+lock et de deverrouillage augmentent avec la plus grande composante de scale de
+l'ennemi. Une step finale `LaunchCombat` de `StorySequenceAsset` peut lancer
+le combat a la fin reelle de la sequence : lock de l'ennemi le plus grand puis
+le plus proche, musique combat et degats de lumiere `openingCombatDamage` (50
+par defaut). Un orbe lumineux pulse et un signal sonore sont joues sur
 `EnemyLockPoint`; la croix directionnelle gauche bascule entre les ennemis
 visibles verrouillables.
 Quand aucun ennemi n'est verrouillable, `LeftShoulder` ne declenche aucune UI
@@ -52,7 +56,8 @@ desactives a chaque frame jusqu'au deverrouillage.
 Le lock garantit aussi un cadrage complet de Lucian : il augmente son FOV jusqu'a
 une limite reglable puis recule si necessaire. Son orbite suit la direction
 joueur-ennemi avec un lissage distinct et une vitesse angulaire maximale afin
-que les demi-tours restent fluides. Les vitesses finales de position, rotation
+que les demi-tours et les deplacements root des BasicSkills restent fluides.
+Les vitesses finales de position, rotation
 et FOV sont aussi bornees pour absorber les changements de cadrage pres des
 obstacles.
 Exploration et combat restent dans le meme espace : aucune transition, vague,
@@ -65,6 +70,48 @@ Le prototype temps reel ne comporte pas encore de contre : les skills sont des
 attaques et les fenetres ennemies acceptent actuellement esquive ou saut. Les
 anciens modificateurs de contre sont conserves dans les donnees de savoir mais
 ne sont pas appliques par le flux temps reel.
+`Saut de rupture` est equipe dans le quatrieme slot de Lucian. Son `SkillSO`
+utilise `Skill_3_JumpKick`, refuse de demarrer hors de la plage 0-3.25 m et
+declenche `ResolveSkillImpactAndRetreat` au contact : degats 15, stagger ennemi,
+VFX/Audio d'impact, onde monde et ScreenWave locale cyan. L'impulsion UCC
+projette ensuite Lucian a l'oppose de `EnemyLockPoint`; ses controles restent
+verrouilles jusqu'au prochain atterrissage, avec une borne de secours de 3.5 s.
+Les Skills 1 a 4 et les BasicSkills partagent maintenant un
+`CombatImpactFeedbackProfile` directement configure dans chaque `SkillSO`.
+Apres un hit effectivement applique, `CombatImpactFeedbackController` du
+`BattleManager` joue le hit-stop non scale, la ScreenWave locale, les cues
+optionnels et une impulsion amortie du cadrage UCC. `CombatLockOnCameraController`
+attenue et borne globalement chaque impulsion, puis remplace progressivement la
+precedente : un combo ne peut plus cumuler des deplacements de camera. Les BasicSkills sont regles
+a 5, 10 et 15 degats; leur epee reste visible entre deux coups bufferises puis
+se masque a la sortie effective du combo. Les clips utilisent
+`ResolveSkillImpact` pour les impacts standards et
+`ResolveSkillImpactAndRetreat` pour le Saut de rupture.
+Chaque impact ajoute aussi un micro-tremblement lateral et vertical, tres court
+et amorti en temps non scale; son amplitude, sa duree et sa frequence sont
+reglables globalement dans `GameplaySessionRoot`.
+Le `LightSkillPanel` de `Bootstrap` est maintenant visible uniquement pendant
+un combat temps reel. Sa jauge est alimentee par les degats effectivement
+appliques par Lucian; lorsqu'elle atteint le cout de `LightSkillSO`, l'action
+`RealTimeCombat/LightSkill` lance sa Timeline cinematographique, verrouille
+Lucian puis rend les controles a la fin. L'impact est resolu en fin de Timeline
+par defaut, ou au frame exact d'un Signal appelant `ResolveLightSkillImpact`.
+Une mort ennemie reste volontairement en attente jusqu'a la fin de ce plan afin
+de ne jamais couper une fatality cinematographique au frame d'impact.
+`Skill_2_Fleche de lumiere` restitue maintenant la locomotion a 78 % de son
+clip, apres le tir, au lieu d'attendre sa quasi-totalite.
+Quand les PV de Lucian atteignent zero, `PlayerActionPresentationController`
+verrouille la state `Death` avant la resolution de la defaite. Les actions,
+combos, hurts et retours automatiques vers la locomotion ne peuvent plus la
+remplacer; le verrou ne disparait qu'au rechargement de la partie via
+`Revivre`.
+L'arc et l'epee restent pilotables par leurs Animation Events, mais une fin ou
+interruption d'action notifie aussi `RealTimeCombatAnimationEvents`, qui les
+range automatiquement. Cette securite evenementielle couvre les clips dont le
+`HideBow` ou `HideSword` final n'est pas atteint.
+La sortie des BasicSkills est aussi securisee par le controleur de presentation :
+si une state d'attaque est perdue avant son seuil de recuperation, il force le
+retour a `Locomotion` plutot que de laisser Lucian fige dans sa pose finale.
 `RealTimeCombatEnemyBehaviour` fournit la poursuite reutilisable : la vision
 reste normale en patrouille, puis passe a son `alertedVisionDistance` apres une
 detection et conserve cette alerte pendant `alertMemorySeconds` sans ligne de
@@ -85,8 +132,31 @@ selon ce tirage, puis s'approche jusqu'a la portee correspondante. Le Juggernaut
 porte actuellement le seul skill melee `Skill_Juggernaut_Assomoir`. Le
 GiantJuggernaut utilise `Skill_GiantJuggernaut_Jump` via le meme flux : son
 skill est utilisable de 0 a 30 m, sa state Animator est
-`GiantJuggernaut_Jump` et son clip clot la riposte avec `EndEnemyAttack` afin
-de permettre les attaques suivantes.
+`GiantJuggernaut_Jump` et son clip clot la riposte avec `EndEnemyAttack`. Son
+clip n'est pas boucle. Les degats de lumiere recus pendant une attaque active
+sont conserves dans un ledger suivant : a `EndEnemyAttack`, seul leur maximum
+prepare une nouvelle riposte apres le delai normal, sans interrompre ni
+relancer immediatement l'attaque en cours.
+`RealTimeCombatEnemy` resout toujours l'Animator de gameplay portant un
+Controller, avec priorite a celui configure dans `EnemySkills`; le
+GiantJuggernaut utilise explicitement son Animator `MidPoly` pour ses hits et
+son retour a `Idle`. Sa Timeline d'introduction ne deplace plus Lucian : il
+reste a sa position d'entree jusqu'au lancement du combat.
+Pendant son alerte, un ennemi provoque conserve Lucian comme cible de combat
+meme si une animation root le tourne temporairement hors de son cone de vision :
+il se retourne vers lui et peut consommer son ledger suivant tant que sa memoire
+d'alerte reste active.
+`AnimationGroundRecovery`, dans `Assets/Scripts/Animation/`, est attache aux
+racines de Lucian, Juggernaut et GiantJuggernaut. Apres le root motion, il sonde
+uniquement le support sous le Transform reellement anime et remonte
+progressivement (ou immediatement si la penetration est forte) un personnage
+passe sous le sol. Il ne modifie jamais son axe horizontal et ne le force jamais
+vers le bas, afin de conserver les sauts et les deplacements root.
+`EndEnemyAttack` peut toutefois demander un unique snap vertical apres la
+derniere frame de root motion : le GiantJuggernaut revient ainsi sur son support
+avant son retour a `Idle`, sans aplatir son saut. Son impact de saut appelle
+`HitPlayerIf("Grounded")` : Lucian n'est touche que s'il est au sol a cette
+frame precise.
 `RealTimeCombatEnemyBehaviour.Can Pursue Player` est actif par defaut. S'il est
 desactive, l'ennemi reste immobile pendant son alerte, conserve son regard sur
 Lucian et n'attaque que si la portee du skill choisi est deja respectee.
@@ -97,6 +167,10 @@ Chaque degat du prototype temps reel produit aussi un nombre world-space local,
 attache au combattant touche : cyan pour la lumiere recue par l'ennemi, rouge
 pale pour Lucian. Il est billboard vers la camera, pulse, monte legerement et
 s'efface en temps non scale sans prefab ni Canvas de scene.
+Un impact ennemi non letal effectivement applique joue aussi la state joueur
+`Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root`, configurable
+sur `RealTimeCombatManager`, puis rend la locomotion a Lucian a la fin du clip.
+Un coup letal conserve exclusivement la state `Death`.
 Quand les PV de Lucian atteignent zero, UCC bloque normalement sa locomotion et
 le manager ferme le combat; les skills de roue et attaques de loadout refusent
 alors aussi toute nouvelle execution. La state `Base Layer.Death` est jouee
@@ -104,9 +178,9 @@ avant l'affichage du `DefeatPanel` de scene, adapte temporairement aux choix
 `Revivre` et `Quitter le jeu`. Revivre recharge la scene du dernier checkpoint
 de la sauvegarde active et supprime l'autosave de mort juste avant ce chargement.
 `Revivre` recoit le focus manette initial; haut/bas navigue entre les deux choix,
-avec une mise en avant visuelle interpolee du bouton selectionne. Sans
-`EventSystem` dans la scene gameplay, la croix directionnelle et le bouton Sud
-de la manette remplacent directement la navigation UI.
+avec une mise en avant visuelle interpolee du bouton selectionne et une
+attenuation des autres choix. La croix directionnelle et le bouton Sud de la
+manette pilotent directement cette navigation, meme avec un `EventSystem`.
 Les `StatsSO` portent exclusivement les checks historiques. Les `SkillSO` de
 combat portent nom, icone, clip, degats, une liste de VFX et une presentation
 d'arme optionnelle, et sont listes dans
@@ -141,7 +215,11 @@ combo : les clips sont joues dans l'ordre de la liste puis bouclent. Les Basic
 Skills reutilisent les memes Animation Events de VFX et de hit que les skills
 de la roue. Une pause de plus de `0.85 s` entre deux pressions reprend le combo
 au premier basic skill. Une seule attaque peut etre bufferisee derriere celle
-en cours; les pressions excedentaires sont ignorees. `ToggleTorch` ignore
+en cours; les pressions excedentaires sont ignorees. Chaque profil de
+presentation expose une ouverture de chaine et une transition de chaine : une
+BasicSkill bufferisee interrompt alors le clip courant a cette transition, sans
+attendre sa recuperation. Les trois BasicSkills de Lucian ouvrent a `0.55` et
+transitionnent a `0.72` avec un blend de `0.04 s`. `ToggleTorch` ignore
 `WestButton` tant qu'une cible est verrouillee.
 Chaque `SkillSO`, donc aussi chaque `BasicSkillsSO`, expose une distance
 horizontale minimale et maximale de hit. `HitEnemy` ne blesse la cible qu'a la

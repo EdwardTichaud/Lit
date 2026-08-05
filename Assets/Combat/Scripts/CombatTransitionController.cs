@@ -132,7 +132,7 @@ public sealed class CombatTransitionController : MonoBehaviour
 
         AudioManager manager = AudioManager.EnsureInstance();
         AudioClipSO musicClip = manager.ResolveCombatAudioClip(CombatAudioCue.GameOverMusic);
-        gameOverMusicOverrideToken = manager.PushMusicOverride(musicClip);
+        gameOverMusicOverrideToken = manager.PushCombatMusicOverride(musicClip);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public sealed class CombatTransitionController : MonoBehaviour
         }
 
         AudioClipSO musicClip = manager.ResolveCombatAudioClip(CombatAudioCue.CombatMusic);
-        musicOverrideToken = manager.PushMusicOverride(musicClip);
+        musicOverrideToken = manager.PushCombatMusicOverride(musicClip);
     }
 
     private void ReleaseCombatMusicOverrideIfUnused()

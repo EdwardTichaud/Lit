@@ -5,6 +5,15 @@
 Centraliser les actions locales, les transmettre au bon personnage et adapter
 la façade gameplay Lit à Opsive UCC et à sa caméra.
 
+## Recuperation root motion
+
+`AnimationGroundRecovery`, dans `Assets/Scripts/Animation/`, est un garde-fou
+generique attache aux racines de Lucian, Juggernaut et GiantJuggernaut. Apres
+le root motion, il sonde le support sous le Transform reellement anime et ne
+corrige qu'une penetration vers le haut. Il laisse intacts la trajectoire
+horizontale, les sauts et les animations root valides; ce systeme ne depend pas
+du combat.
+
 ## Classes principales
 
 - `PlayerInputs.inputactions` : source des bindings.
@@ -70,9 +79,25 @@ La direction d'orbite joueur-vers-ennemi possede son propre lissage
 `orbitDirectionSharpness`, distinct du lissage de position/rotation, et une
 vitesse angulaire maximale `maximumOrbitDegreesPerSecond` pour absorber les
 demi-tours brusques pendant un lock sans retournement instantane.
+Le `CombatLockAdventureViewType` lisse aussi cet axe avant de calculer son
+orbite UCC et limite la rotation du lock. Ainsi, le root motion et les
+changements de direction pendant une BasicSkill ne forcent plus un rattrapage
+immediat de la camera. Ces reglages sont exposes par
+`CombatLockOnCameraController` dans `GameplaySessionRoot`.
 Le point de focus joueur/ennemi est lui aussi lisse et borne par
 `focusPointSharpness` et `maximumFocusPointMetersPerSecond`, afin qu'un hit ou
 un deplacement ponctuel du point de lock ne secoue pas brutalement la camera.
+Les impacts de skills passent aussi par `CombatLockOnCameraController` : leur
+offset et leur FOV sont attenues, bornes et remplacent progressivement
+l'impulsion precedente. Les impacts successifs ne peuvent donc pas faire
+deriver la camera pendant un combo; ces limites restent reglables dans
+`GameplaySessionRoot`.
+Le meme controleur peut ajouter un micro-tremblement lateral/vertical a chaque
+impact. Il utilise le temps non scale, s'efface sur quelques centiemes de
+seconde et reste borne par les reglages de `GameplaySessionRoot`.
+Un `LightSkillSO` cinematographique peut aussi demander une suspension locale
+temporaire de ce pilote : sa Timeline recoit alors la Main Camera, puis UCC
+reprend le meme view de lock lorsque le `PlayableDirector` se termine.
 
 Le lock du combat temps reel commence une seule fois quand un ennemi entre dans
 le `VisionField` de Lucian. Il se termine automatiquement hors de la distance de

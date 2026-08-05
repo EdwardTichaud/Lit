@@ -26,6 +26,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     [SerializeField, Min(0f)] private float retaliationDelaySeconds = 0.15f;
 
     private int storedMaximumLightDamage;
+    private int queuedMaximumLightDamage;
     private int committedRetaliationDamage;
     private SkillSO activeSkill;
     private SkillSO plannedRetaliationSkill;
@@ -62,8 +63,8 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     private void Reset()
     {
         health = GetComponent<CombatHealth>();
-        animator = GetComponentInChildren<Animator>();
         enemySkills = GetComponent<EnemySkills>();
+        animator = ResolveCombatAnimator();
     }
 
     private void Awake()
@@ -75,15 +76,12 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             health = GetComponent<CombatHealth>();
         }
 
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
-        }
-
         if (enemySkills == null)
         {
             enemySkills = GetComponent<EnemySkills>();
         }
+
+        animator = ResolveCombatAnimator();
 
         ResolveLockPoint();
     }
@@ -97,6 +95,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     private void OnValidate()
     {
         MigrateLegacyHitState();
+        animator = ResolveCombatAnimator();
     }
 #endif
 
@@ -136,9 +135,16 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
         if (canPrepareRetaliation)
         {
-            storedMaximumLightDamage = Mathf.Max(storedMaximumLightDamage, applied);
-            retaliationReadyAt = Time.time + retaliationDelaySeconds;
-            LightAbsorbed?.Invoke(applied);
+            if (activeSkill == null)
+            {
+                StoreLightDamageForRetaliation(applied);
+            }
+            else
+            {
+                // The current attack is never interrupted. Keep only the strongest hit
+                // received during it to prepare the following retaliation cycle.
+                queuedMaximumLightDamage = Mathf.Max(queuedMaximumLightDamage, applied);
+            }
         }
 
         // Une attaque deja engagee conserve sa priorite. Interrompre un clip
@@ -197,6 +203,30 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         activeSkill = null;
         plannedRetaliationSkill = null;
         committedRetaliationDamage = 0;
+        storedMaximumLightDamage = 0;
+        queuedMaximumLightDamage = 0;
+        retaliationReadyAt = 0f;
+    }
+
+    /// <summary>
+    /// Ends the active attack and promotes light damage absorbed during it to the
+    /// next retaliation cycle. Called exclusively from the attack-end Animation Event.
+    /// </summary>
+    public void CompleteRetaliationAndPrepareNext()
+    {
+        activeSkill = null;
+        plannedRetaliationSkill = null;
+        committedRetaliationDamage = 0;
+
+        if (queuedMaximumLightDamage <= 0)
+        {
+            return;
+        }
+
+        storedMaximumLightDamage = Mathf.Max(storedMaximumLightDamage, queuedMaximumLightDamage);
+        queuedMaximumLightDamage = 0;
+        retaliationReadyAt = Time.time + retaliationDelaySeconds;
+        LightAbsorbed?.Invoke(storedMaximumLightDamage);
     }
 
     public void SetLockPresentation(bool locked, bool playSound)
@@ -321,6 +351,48 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
         animator.applyRootMotion = true;
         restoreRootMotionAfterHit = false;
+    }
+
+    private void StoreLightDamageForRetaliation(int damage)
+    {
+        storedMaximumLightDamage = Mathf.Max(storedMaximumLightDamage, damage);
+        retaliationReadyAt = Time.time + retaliationDelaySeconds;
+        LightAbsorbed?.Invoke(damage);
+    }
+
+    private Animator ResolveCombatAnimator()
+    {
+        if (HasAnimatorController(animator))
+        {
+            return animator;
+        }
+
+        if (enemySkills == null)
+        {
+            enemySkills = GetComponent<EnemySkills>();
+        }
+
+        Animator skillsAnimator = enemySkills != null ? enemySkills.Animator : null;
+        if (HasAnimatorController(skillsAnimator))
+        {
+            return skillsAnimator;
+        }
+
+        Animator[] animators = GetComponentsInChildren<Animator>(true);
+        for (int i = 0; i < animators.Length; i++)
+        {
+            if (HasAnimatorController(animators[i]))
+            {
+                return animators[i];
+            }
+        }
+
+        return animator;
+    }
+
+    private static bool HasAnimatorController(Animator candidate)
+    {
+        return candidate != null && candidate.runtimeAnimatorController != null;
     }
 
     private Transform ResolveLockPoint()

@@ -23,9 +23,9 @@ MonoBehaviour:
   useUnscaledTime: 1
   startFromBlack: 0
   openingFadeDuration: 1
-  fadeToBlackBeforeGameplay: 1
+  fadeToBlackBeforeGameplay: 0
   closingFadeDuration: 3
-  fadeFromBlackAfterGameplayRestore: 1
+  fadeFromBlackAfterGameplayRestore: 0
   gameplayFadeInDuration: 2
   steps:
   - label: Arret progressif du joueur
@@ -39,6 +39,7 @@ MonoBehaviour:
     dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 0
     dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
     cameraTransitionDuration: 0
@@ -56,7 +57,10 @@ MonoBehaviour:
     timeline: {fileID: 0}
     timelineBindingProfile: {fileID: 0}
     waitForTimelineCompletion: 0
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
     eventId: 
+    openingCombatDamage: 50
   - label: Timeline
     type: 6
     skippable: 0
@@ -68,6 +72,7 @@ MonoBehaviour:
     dialogueMaxDisplayDuration: 0
     focusCameraOnSpeaker: 0
     dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips: []
     cameraPointId: 
     cameraProfile: {fileID: 0}
     cameraTransitionDuration: 0
@@ -85,4 +90,41 @@ MonoBehaviour:
     timeline: {fileID: 11400000, guid: 31102c33aa488064890935879dc584c8, type: 2}
     timelineBindingProfile: {fileID: 11400000, guid: 3f59766f5de223e45b29e1c89ec2fb2d, type: 2}
     waitForTimelineCompletion: 1
+    fadeToBlackBeforeTimelineEnd: 1
+    timelineEndFadeDuration: 3
     eventId: 
+    openingCombatDamage: 50
+  - label: Lancer le combat du Giant Juggernaut
+    type: 9
+    skippable: 0
+    actorId: 
+    listenerId: 
+    speakerNameOverride: 
+    voiceLine: {fileID: 0}
+    waitForInteractAfterLine: 0
+    dialogueMaxDisplayDuration: 0
+    focusCameraOnSpeaker: 0
+    dialogueCameraProfile: {fileID: 0}
+    oneShotAudioClips:
+    - {fileID: 11400000, guid: 40e00d409c53db245b711b64ce8400f5, type: 2}
+    cameraPointId: 
+    cameraProfile: {fileID: 0}
+    cameraTransitionDuration: 0
+    cameraHoldDuration: 0
+    fadeAlpha: 0
+    fadeDuration: 0
+    duration: 0
+    animatorTrigger: 
+    applyToWholeSquad: 0
+    sitting: 0
+    startDirectlyInSittingIdle: 0
+    playerStopTimeout: 2
+    playerStopVelocityThreshold: 0.05
+    directorId: 
+    timeline: {fileID: 0}
+    timelineBindingProfile: {fileID: 0}
+    waitForTimelineCompletion: 0
+    fadeToBlackBeforeTimelineEnd: 0
+    timelineEndFadeDuration: 0.5
+    eventId: 
+    openingCombatDamage: 50

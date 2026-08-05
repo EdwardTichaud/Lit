@@ -60,6 +60,7 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
                 : null;
             lockActive = true;
             hasSmoothedLookPoint = false;
+            combatLockView.ResetLockAxisSmoothing();
         }
 
         cameraController.SetViewType(typeof(CombatLockAdventureViewType), false);
@@ -76,6 +77,22 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         RefreshLookPoint();
     }
 
+    public void SetImpactPresentation(Vector3 lookOffsetKick, float fieldOfViewKick)
+    {
+        if (ResolveCombatLockView())
+        {
+            combatLockView.SetImpactPresentation(lookOffsetKick, fieldOfViewKick);
+        }
+    }
+
+    public void ConfigureLockMotion(float maximumOrbitDegreesPerSecond, float axisSharpness)
+    {
+        if (ResolveCombatLockView())
+        {
+            combatLockView.ConfigureLockMotion(maximumOrbitDegreesPerSecond, axisSharpness);
+        }
+    }
+
     public void DeactivateLock()
     {
         if (!lockActive)
@@ -87,6 +104,8 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         player = null;
         enemy = null;
         hasSmoothedLookPoint = false;
+        combatLockView?.ResetLockAxisSmoothing();
+        SetImpactPresentation(Vector3.zero, 0f);
 
         if (cameraController != null && !string.IsNullOrEmpty(previousViewTypeFullName))
         {

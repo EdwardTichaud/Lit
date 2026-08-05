@@ -13,7 +13,8 @@
                 { "name": "OpenPalette", "type": "Button", "id": "45a649d9-3a09-4a77-b1db-1e59dc83330d", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
                 { "name": "NavigatePalette", "type": "Value", "id": "5b47bffa-7677-481f-a0d7-8e6c87e4c2d0", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": false },
                 { "name": "ConfirmPalette", "type": "Button", "id": "e93600df-b1f7-4cda-ab81-3a9ea3fbd7ba", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
-                { "name": "SwitchEnemyLock", "type": "Button", "id": "610c17de-71fd-4a15-a565-a99661a6654c", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+                { "name": "SwitchEnemyLock", "type": "Button", "id": "610c17de-71fd-4a15-a565-a99661a6654c", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "LightSkill", "type": "Button", "id": "7b02f6e1-52ef-4ed5-bf8d-31a9d761946e", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
             ],
             "bindings": [
                 { "name": "2D Vector", "id": "084be208-ed7d-4fad-a2a2-efc1b2e7da10", "path": "2DVector", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Move", "isComposite": true, "isPartOfComposite": false },
@@ -39,7 +40,9 @@
                 { "name": "", "id": "75e54d50-8ca2-4b69-8ee2-47d360ebde4f", "path": "<Gamepad>/rightStick", "interactions": "", "processors": "stickDeadzone(min=0.5,max=1)", "groups": "Gamepad", "action": "NavigatePalette", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "2ed6a7dc-89b9-4528-9e3a-826763fd0f82", "path": "<Keyboard>/enter", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "ConfirmPalette", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "d99014ec-5c46-4cb4-b6bf-4f470c0f3bc0", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "ConfirmPalette", "isComposite": false, "isPartOfComposite": false },
-                { "name": "", "id": "c4c6a1c1-1d39-4d63-ac67-7f2a3ec1e982", "path": "<Gamepad>/dpad/left", "interactions": "", "processors": "", "groups": "Gamepad", "action": "SwitchEnemyLock", "isComposite": false, "isPartOfComposite": false }
+                { "name": "", "id": "c4c6a1c1-1d39-4d63-ac67-7f2a3ec1e982", "path": "<Gamepad>/dpad/left", "interactions": "", "processors": "", "groups": "Gamepad", "action": "SwitchEnemyLock", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "ae7f5f12-98d1-4912-b0d8-b3c4d4c34b7b", "path": "<Gamepad>/leftStickPress", "interactions": "", "processors": "", "groups": "Gamepad", "action": "LightSkill", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "eaa68a88-9d46-4bc5-b27e-ee1f27e2884d", "path": "<Keyboard>/r", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "LightSkill", "isComposite": false, "isPartOfComposite": false }
             ]
         }
     ],

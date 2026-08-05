@@ -15,6 +15,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private SquadCharacterController playerController;
     [SerializeField] private LitOpsiveLocomotionBridge playerLocomotionBridge;
     [SerializeField] private Animator playerAnimator;
+    [SerializeField] private PlayerActionPresentationController playerActionPresentation;
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private VisionField playerVision;
     [SerializeField] private RealTimeCombatEnemy lockedEnemy;
@@ -22,6 +23,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [Header("Lock")]
     [SerializeField, Min(0.1f)] private float lockRange = 6f;
     [SerializeField, Min(0.1f)] private float automaticUnlockRange = 7f;
+    [SerializeField, Tooltip("Etend les portees de lock selon la plus grande composante de scale de l'ennemi. Les ennemis de scale inferieure a 1 gardent la portee de base.")]
+    private bool scaleLockRangeWithEnemy = true;
 
     [Header("Clarity")]
     [SerializeField, Min(1f)] private float clarityForS = 100f;
@@ -32,6 +35,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField, Min(0f)] private float defeatPanelExtraDelaySeconds = 0.25f;
     [SerializeField, Min(0.1f)] private float playerDeathFallbackDuration = 1f;
 
+    [Header("Damage Reaction")]
+    [SerializeField] private string playerHurtAnimatorState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
+    [SerializeField, Range(0f, 0.25f)] private float playerHurtTransitionDuration = 0.05f;
+
     private readonly Dictionary<CombatAttackDefinition, float> cooldowns = new Dictionary<CombatAttackDefinition, float>();
     private readonly HashSet<RealTimeCombatReaction> receivedReactions = new HashSet<RealTimeCombatReaction>();
     private readonly HashSet<RealTimeCombatEnemy> attackModeEnemies = new HashSet<RealTimeCombatEnemy>();
@@ -41,14 +48,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private bool stopPlayerWhenMovementReleased;
     private float clarity;
     private int combatMusicOverrideToken;
-    private Coroutine playerCombatAnimationRoutine;
-    private Coroutine playerSkillAnimationRoutine;
     private Coroutine playerDefeatRoutine;
 
     public event Action<RealTimeCombatEnemy> LockChanged;
     public event Action<float, CombatClarityRank> ClarityChanged;
     public event Action<RealTimeCombatReactionWindow> ReactionWindowChanged;
     public event Action<CombatAttackDefinition, int> PlayerAttackResolved;
+    public event Action<int> PlayerLightDamageApplied;
     public event Action<SkillSO, int> EnemyAttackStarted;
     public event Action<int> PlayerDamaged;
     public event Action<bool> CombatResolved;
@@ -56,10 +62,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public bool IsCombatActive => combatActive;
     public Transform PlayerRoot => playerRoot;
+    public Animator PlayerAnimator => playerAnimator;
     public RealTimeCombatLoadout PlayerLoadout => playerLoadout;
     public RealTimeCombatEnemy LockedEnemy => lockedEnemy;
     public float Clarity => clarity;
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
+    public bool CanAcceptBasicSkillInput => playerActionPresentation == null || playerActionPresentation.CanAcceptBasicSkillInput;
+    public bool CanChainBasicSkill => playerActionPresentation != null && playerActionPresentation.CanChainBasicSkill;
 
     private void Awake()
     {
@@ -174,13 +183,56 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return true;
         }
 
-        RealTimeCombatEnemy candidate = FindClosestEnemy(lockRange);
+        RealTimeCombatEnemy candidate = FindPreferredLockableEnemy();
         if (candidate == null)
         {
             return false;
         }
 
-        return BeginCombat(playerRoot, candidate);
+        return TryLockEnemy(candidate);
+    }
+
+    /// <summary>
+    /// Lance un combat auteur : verrouille l'ennemi prioritaire, demarre la
+    /// musique et lui applique des degats de lumiere comme un coup joueur.
+    /// </summary>
+    public bool LaunchCombat(float openingDamage = 50f)
+    {
+        ResolvePlayerReferences();
+        RealTimeCombatEnemy enemy = lockedEnemy != null
+            ? lockedEnemy
+            : FindPreferredLockableEnemy();
+        if (enemy == null || !TryLockEnemy(enemy))
+        {
+            return false;
+        }
+
+        SetEnemyAttackMode(enemy, true);
+        int applied = enemy.ReceiveLightDamage(Mathf.Max(0, Mathf.RoundToInt(openingDamage)));
+        if (applied > 0)
+        {
+            EvaluateCombatOutcome();
+        }
+
+        return true;
+    }
+
+    public bool TryLockEnemy(RealTimeCombatEnemy enemy)
+    {
+        ResolvePlayerReferences();
+        if (playerRoot == null || enemy == null || !enemy.gameObject.activeInHierarchy ||
+            (enemy.Health != null && enemy.Health.IsDead) ||
+            Vector3.Distance(playerRoot.position, enemy.transform.position) > GetLockRange(enemy))
+        {
+            return false;
+        }
+
+        if (combatActive)
+        {
+            return lockedEnemy == enemy;
+        }
+
+        return BeginCombat(playerRoot, enemy);
     }
 
     public bool TrySwitchEnemyLock()
@@ -259,11 +311,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
                 return true;
             }
 
-            float alertRange = Mathf.Max(automaticUnlockRange, behaviour.CurrentDisengageDistance);
+            float alertRange = Mathf.Max(GetAutomaticUnlockRange(enemy), behaviour.CurrentDisengageDistance);
             return Vector3.Distance(playerRoot.position, enemy.transform.position) > alertRange;
         }
 
-        return Vector3.Distance(playerRoot.position, enemy.transform.position) > automaticUnlockRange;
+        return Vector3.Distance(playerRoot.position, enemy.transform.position) > GetAutomaticUnlockRange(enemy);
     }
 
     private List<RealTimeCombatEnemy> FindLockableEnemies(bool requireVision)
@@ -283,7 +335,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
                 continue;
             }
 
-            if (Vector3.Distance(playerRoot.position, candidate.transform.position) > lockRange)
+            if (Vector3.Distance(playerRoot.position, candidate.transform.position) > GetLockRange(candidate))
             {
                 continue;
             }
@@ -303,6 +355,66 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return leftDistance.CompareTo(rightDistance);
         });
         return candidates;
+    }
+
+    private RealTimeCombatEnemy FindPreferredLockableEnemy()
+    {
+        if (playerRoot == null)
+        {
+            return null;
+        }
+
+        RealTimeCombatEnemy[] enemies = FindObjectsOfType<RealTimeCombatEnemy>();
+        RealTimeCombatEnemy preferred = null;
+        float preferredScale = float.NegativeInfinity;
+        float preferredDistanceSqr = float.PositiveInfinity;
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            RealTimeCombatEnemy candidate = enemies[i];
+            if (candidate == null || !candidate.gameObject.activeInHierarchy ||
+                (candidate.Health != null && candidate.Health.IsDead))
+            {
+                continue;
+            }
+
+            float distanceSqr = (candidate.transform.position - playerRoot.position).sqrMagnitude;
+            float range = GetLockRange(candidate);
+            if (distanceSqr > range * range)
+            {
+                continue;
+            }
+
+            float scale = GetEnemyLockScaleMultiplier(candidate);
+            if (scale > preferredScale || (Mathf.Approximately(scale, preferredScale) && distanceSqr < preferredDistanceSqr))
+            {
+                preferred = candidate;
+                preferredScale = scale;
+                preferredDistanceSqr = distanceSqr;
+            }
+        }
+
+        return preferred;
+    }
+
+    private float GetLockRange(RealTimeCombatEnemy enemy)
+    {
+        return lockRange * GetEnemyLockScaleMultiplier(enemy);
+    }
+
+    private float GetAutomaticUnlockRange(RealTimeCombatEnemy enemy)
+    {
+        return automaticUnlockRange * GetEnemyLockScaleMultiplier(enemy);
+    }
+
+    private float GetEnemyLockScaleMultiplier(RealTimeCombatEnemy enemy)
+    {
+        if (!scaleLockRangeWithEnemy || enemy == null)
+        {
+            return 1f;
+        }
+
+        Vector3 scale = enemy.transform.lossyScale;
+        return Mathf.Max(1f, Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
     }
 
     public void SetLockedEnemy(RealTimeCombatEnemy enemy)
@@ -340,6 +452,18 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return false;
         }
 
+        if (playerActionPresentation == null || !playerActionPresentation.CanStartAction)
+        {
+            return false;
+        }
+
+        if (playerAnimator != null && !string.IsNullOrWhiteSpace(attack.AnimatorState) &&
+            !playerAnimator.HasState(0, Animator.StringToHash(attack.AnimatorState)))
+        {
+            Debug.LogWarning("[RealTimeCombatManager] Etat Animator introuvable pour l'attaque '" + attack.name + "': " + attack.AnimatorState, this);
+            return false;
+        }
+
         int lightDamage = Mathf.Max(1, Mathf.RoundToInt(attack.LightDamage * ResolveKnowledgeModifier().lightDamageMultiplier));
         int applied = lockedEnemy.ReceiveLightDamage(lightDamage);
         if (applied <= 0)
@@ -349,19 +473,15 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (playerAnimator != null && !string.IsNullOrWhiteSpace(attack.AnimatorState))
         {
-            if (playerSkillAnimationRoutine != null)
+            FaceLockedEnemyForAction();
+            if (playerActionPresentation == null ||
+                !playerActionPresentation.TryPlayCombatState(
+                    attack.AnimatorState,
+                    PlayerActionPresentationProfile.CreateDefault(),
+                    attack.name))
             {
-                StopCoroutine(playerSkillAnimationRoutine);
-                playerSkillAnimationRoutine = null;
+                return false;
             }
-
-            playerAnimator.CrossFade(attack.AnimatorState, 0.06f, 0);
-            if (playerCombatAnimationRoutine != null)
-            {
-                StopCoroutine(playerCombatAnimationRoutine);
-            }
-
-            playerCombatAnimationRoutine = StartCoroutine(ReturnToLocomotionAfterCombatAnimation());
         }
 
         if (attack.ImpactVfxPrefab != null)
@@ -376,6 +496,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         cooldowns[attack] = Time.time + attack.CooldownSeconds;
         AddClarity(attack.ClarityGain * applied);
+        PlayerLightDamageApplied?.Invoke(applied);
         PlayerAttackResolved?.Invoke(attack, applied);
         EvaluateCombatOutcome();
         return true;
@@ -393,28 +514,27 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return false;
         }
 
+        if (skill.RequireValidRangeToStart && !ValidateLockedEnemySkillRange(skill, true))
+        {
+            return false;
+        }
+
         if (!TryResolveSkillAnimatorState(skill, out int stateHash, out string animatorStateName))
         {
             Debug.LogWarning("[RealTimeCombatManager] Etat Animator introuvable pour le SkillSO '" + skill.SkillName + "': " + animatorStateName, this);
             return false;
         }
 
-        FaceLockedEnemy();
+        FaceLockedEnemyForAction();
+        return playerActionPresentation != null && playerActionPresentation.TryPlaySkill(skill, stateHash);
+    }
 
-        playerAnimator.CrossFade(stateHash, 0.06f, 0);
-        if (playerCombatAnimationRoutine != null)
+    public System.Collections.IEnumerator WaitForPlayerActionChainWindow()
+    {
+        if (playerActionPresentation != null)
         {
-            StopCoroutine(playerCombatAnimationRoutine);
-            playerCombatAnimationRoutine = null;
+            yield return playerActionPresentation.WaitForChainWindow();
         }
-
-        if (playerSkillAnimationRoutine != null)
-        {
-            StopCoroutine(playerSkillAnimationRoutine);
-        }
-
-        playerSkillAnimationRoutine = StartCoroutine(ReturnToLocomotionAfterSkillAnimation(stateHash, skill.AnimationClip.length));
-        return true;
     }
 
     private bool TryResolveSkillAnimatorState(SkillSO skill, out int stateHash, out string attemptedStateName)
@@ -442,31 +562,20 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         return playerAnimator.HasState(0, stateHash);
     }
 
-    private void FaceLockedEnemy()
+    private void FaceLockedEnemyForAction()
     {
         if (playerRoot == null || lockedEnemy == null)
         {
             return;
         }
 
-        Vector3 targetDirection = lockedEnemy.LockPoint.position - playerRoot.position;
-        targetDirection.y = 0f;
-        if (targetDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        Quaternion targetRotation = Quaternion.LookRotation(targetDirection.normalized, Vector3.up);
         if (playerLocomotionBridge == null)
         {
             playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
         }
 
-        if (playerLocomotionBridge == null ||
-            !playerLocomotionBridge.SetExternalPositionAndRotation(playerRoot.position, targetRotation, false))
-        {
-            playerRoot.rotation = targetRotation;
-        }
+        Transform target = lockedEnemy.LockPoint != null ? lockedEnemy.LockPoint : lockedEnemy.transform;
+        playerActionPresentation?.SetActionFacingTarget(target);
     }
 
     /// <summary>
@@ -501,8 +610,57 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
+        PlayerLightDamageApplied?.Invoke(applied);
         EvaluateCombatOutcome();
         return applied;
+    }
+
+    /// <summary>
+    /// Resolves the single impact of an active LightSkill cinematic. The
+    /// LightSkill meter is intentionally not fed by this damage.
+    /// </summary>
+    public int ApplyLightSkillDamage(LightSkillSO skill, bool resolveCombatOutcome = true)
+    {
+        if (!combatActive || IsPlayerDead() || skill == null || lockedEnemy == null ||
+            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        {
+            return 0;
+        }
+
+        int applied = lockedEnemy.ReceiveLightDamage(Mathf.Max(0, skill.Damage));
+        if (applied <= 0)
+        {
+            return 0;
+        }
+
+        AddClarity(skill.ClarityGain);
+        if (resolveCombatOutcome)
+        {
+            EvaluateCombatOutcome();
+        }
+        return applied;
+    }
+
+    public void ResolveDeferredCombatOutcome()
+    {
+        EvaluateCombatOutcome();
+    }
+
+    public void CancelPlayerActionForCinematic()
+    {
+        playerActionPresentation?.CancelAction();
+    }
+
+    public bool TryLockPlayerForCinematic()
+    {
+        return playerController != null && playerController.TryBeginUccExternalLock(
+            disableGameplayInput: true,
+            stopActiveAbilities: true);
+    }
+
+    public void UnlockPlayerAfterCinematic()
+    {
+        playerController?.EndUccExternalLock();
     }
 
     public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
@@ -514,6 +672,33 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         return skill.IsWithinHitRange(distance);
+    }
+
+    private bool ValidateLockedEnemySkillRange(SkillSO skill, bool showFeedback)
+    {
+        if (skill == null || !TryGetLockedEnemyHitDistance(out float distance))
+        {
+            return false;
+        }
+
+        if (skill.IsWithinHitRange(distance))
+        {
+            return true;
+        }
+
+        if (showFeedback && lockedEnemy != null)
+        {
+            string message = distance < skill.MinimumHitDistance
+                ? "Raté (trop près)"
+                : "Raté (trop loin)";
+            CombatDamageWorldFeedback.ShowMessage(
+                lockedEnemy.transform,
+                message,
+                new Color(1f, 0.82f, 0.38f),
+                2.25f);
+        }
+
+        return false;
     }
 
     private bool TryGetLockedEnemyHitDistance(out float distance)
@@ -639,7 +824,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
-        enemy.CompleteRetaliation();
+        enemy.CompleteRetaliationAndPrepareNext();
         reactionWindowOpen = false;
         reactionSucceeded = false;
         receivedReactions.Clear();
@@ -674,6 +859,16 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (playerController == null) playerController = playerRoot.GetComponentInChildren<SquadCharacterController>(true);
         if (playerLocomotionBridge == null) playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
         if (playerAnimator == null) playerAnimator = playerRoot.GetComponentInChildren<Animator>(true);
+        if (playerActionPresentation == null)
+        {
+            playerActionPresentation = playerRoot.GetComponentInChildren<PlayerActionPresentationController>(true);
+            if (playerActionPresentation == null)
+            {
+                playerActionPresentation = playerRoot.gameObject.AddComponent<PlayerActionPresentationController>();
+            }
+        }
+
+        playerActionPresentation.ResolveReferences(playerAnimator, playerLocomotionBridge);
         if (playerVision == null) playerVision = playerRoot.GetComponentInChildren<VisionField>(true);
         if (combatInput == null) combatInput = FindAnyObjectByType<RealTimeCombatInput>();
     }
@@ -718,124 +913,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ClarityChanged?.Invoke(clarity, ClarityRank);
     }
 
-    private System.Collections.IEnumerator ReturnToLocomotionAfterCombatAnimation()
-    {
-        const string combatRootMotionTag = "RealTimeCombatRootMotion";
-        const string locomotionState = "Base Layer.Locomotion";
-        bool enteredCombatState = false;
-
-        while (playerAnimator != null)
-        {
-            AnimatorStateInfo state = playerAnimator.GetCurrentAnimatorStateInfo(0);
-            enteredCombatState |= state.IsTag(combatRootMotionTag);
-            if (enteredCombatState && state.IsTag(combatRootMotionTag) && state.normalizedTime >= 0.98f)
-            {
-                PreservePlayerAnimationEndPose();
-                playerAnimator.CrossFade(locomotionState, 0.08f, 0);
-                break;
-            }
-
-            yield return null;
-        }
-
-        playerCombatAnimationRoutine = null;
-    }
-
-    private System.Collections.IEnumerator ReturnToLocomotionAfterSkillAnimation(int stateHash, float clipDuration)
-    {
-        const string locomotionState = "Base Layer.Locomotion";
-        bool enteredSkillState = false;
-        float elapsed = 0f;
-        float maximumWaitSeconds = Mathf.Max(0.1f, clipDuration) + 0.25f;
-
-        while (playerAnimator != null && elapsed < maximumWaitSeconds)
-        {
-            AnimatorStateInfo state = playerAnimator.GetCurrentAnimatorStateInfo(0);
-            bool isSkillState = state.fullPathHash == stateHash || state.shortNameHash == stateHash;
-            enteredSkillState |= isSkillState;
-            if (enteredSkillState && isSkillState && state.normalizedTime >= 0.98f)
-            {
-                break;
-            }
-
-            elapsed += Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        if (playerAnimator != null)
-        {
-            // Attendre l'evaluation complete de la derniere frame root avant de
-            // quitter la state. Sans cela, UCC peut reprendre sa pose interne
-            // precedente lorsque Locomotion redevient active.
-            yield return new WaitForEndOfFrame();
-            Vector3 finalPosition = playerRoot != null ? playerRoot.position : Vector3.zero;
-            Quaternion finalRotation = playerRoot != null ? playerRoot.rotation : Quaternion.identity;
-            ReturnPlayerToIdle(locomotionState, finalPosition, finalRotation);
-            yield return null;
-            CommitPlayerAnimationEndPose(finalPosition, finalRotation);
-        }
-
-        playerSkillAnimationRoutine = null;
-    }
-
-    private void ReturnPlayerToIdle(string locomotionState, Vector3 finalPosition, Quaternion finalRotation)
-    {
-        CommitPlayerAnimationEndPose(finalPosition, finalRotation);
-        playerAnimator.SetFloat("Speed", 0f);
-        playerAnimator.SetFloat("HorizontalMovement", 0f);
-        playerAnimator.SetFloat("ForwardMovement", 0f);
-        playerAnimator.SetBool("Moving", false);
-        playerAnimator.SetBool("IsMoving", false);
-        playerAnimator.ResetTrigger("MoveStartTrigger");
-        playerAnimator.SetTrigger("MoveStopTrigger");
-        playerAnimator.CrossFade(locomotionState, 0.08f, 0);
-    }
-
-    private void CommitPlayerAnimationEndPose(Vector3 position, Quaternion rotation)
-    {
-        if (playerRoot == null)
-        {
-            return;
-        }
-
-        if (playerLocomotionBridge == null)
-        {
-            playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
-        }
-
-        // Met a jour explicitement la pose interne de UCC sans re-evaluer
-        // l'Animator. Cette pose est reappliquee apres le CrossFade pour que
-        // l'idle ne puisse pas restaurer le point de depart du clip root.
-        if (playerLocomotionBridge != null)
-        {
-            playerLocomotionBridge.ApplyScriptedTraversalPose(position, rotation);
-        }
-        else
-        {
-            playerRoot.SetPositionAndRotation(position, rotation);
-        }
-
-        playerController?.Stop();
-    }
-
-    private void PreservePlayerAnimationEndPose()
-    {
-        if (playerRoot == null)
-        {
-            return;
-        }
-
-        if (playerLocomotionBridge == null)
-        {
-            playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
-        }
-
-        // Le clip root motion a fini : synchroniser sa pose puis annuler toute capacite
-        // UCC encore active afin qu'elle ne conserve pas sa vitesse residuelle.
-        playerLocomotionBridge?.SetExternalPositionAndRotation(playerRoot.position, playerRoot.rotation, true);
-        playerController?.Stop();
-    }
-
     private int ApplyPlayerDamage(int damage)
     {
         int sanitizedDamage = Mathf.Max(0, damage);
@@ -844,7 +921,36 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             : playerHealth != null ? playerHealth.ApplyDamage(sanitizedDamage) : sanitizedDamage;
 
         CombatDamageWorldFeedback.Show(playerRoot, applied, new Color(1f, 0.48f, 0.48f), 2.05f);
+        if (applied > 0 && !IsPlayerDead())
+        {
+            PlayPlayerHurtAnimation();
+        }
+
         return applied;
+    }
+
+    private void PlayPlayerHurtAnimation()
+    {
+        if (playerAnimator == null || string.IsNullOrWhiteSpace(playerHurtAnimatorState))
+        {
+            return;
+        }
+
+        int stateHash = Animator.StringToHash(playerHurtAnimatorState);
+        if (!playerAnimator.HasState(0, stateHash))
+        {
+            Debug.LogWarning("[RealTimeCombat] State de hurt introuvable : " + playerHurtAnimatorState, playerAnimator);
+            return;
+        }
+
+        if (playerActionPresentation == null ||
+            !playerActionPresentation.TryPlayCombatState(
+                playerHurtAnimatorState,
+                PlayerActionPresentationProfile.CreateDefault(),
+                "Hurt"))
+        {
+            playerAnimator.CrossFade(stateHash, playerHurtTransitionDuration, 0);
+        }
     }
 
     private void EvaluateCombatOutcome()
@@ -858,6 +964,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (playerDead)
         {
+            PlayPlayerDeathAnimation();
             CombatResolved?.Invoke(false);
             EndCombat();
             if (playerDefeatRoutine == null)
@@ -881,7 +988,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private System.Collections.IEnumerator PlayPlayerDefeatSequence()
     {
-        PlayPlayerDeathAnimation();
         yield return null;
         float deathDuration = ResolvePlayerDeathAnimationDuration();
         yield return new WaitForSecondsRealtime(deathDuration + defeatPanelExtraDelaySeconds);
@@ -901,18 +1007,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private void PlayPlayerDeathAnimation()
     {
-        if (playerSkillAnimationRoutine != null)
-        {
-            StopCoroutine(playerSkillAnimationRoutine);
-            playerSkillAnimationRoutine = null;
-        }
-
-        if (playerCombatAnimationRoutine != null)
-        {
-            StopCoroutine(playerCombatAnimationRoutine);
-            playerCombatAnimationRoutine = null;
-        }
-
         playerController?.Stop();
         if (playerAnimator == null || string.IsNullOrWhiteSpace(playerDeathAnimatorState))
         {
@@ -923,6 +1017,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (!playerAnimator.HasState(0, stateHash))
         {
             Debug.LogWarning("[RealTimeCombat] State de mort introuvable : " + playerDeathAnimatorState, playerAnimator);
+            return;
+        }
+
+        if (playerActionPresentation != null &&
+            playerActionPresentation.LockDeathAnimation(playerDeathAnimatorState, 0.05f))
+        {
             return;
         }
 
@@ -949,6 +1049,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private void ReviveAtLastCheckpoint()
     {
+        playerActionPresentation?.ClearDeathAnimationLock();
         string targetSceneName = SaveSessionManager.Instance != null
             ? SaveSessionManager.Instance.GetActiveSaveSceneName()
             : null;
@@ -981,7 +1082,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             }
 
             AudioManager manager = AudioManager.Instance != null ? AudioManager.Instance : AudioManager.EnsureInstance();
-            combatMusicOverrideToken = manager.PushMusicOverride(manager.ResolveCombatAudioClip(CombatAudioCue.CombatMusic));
+            combatMusicOverrideToken = manager.PushCombatMusicOverride(manager.ResolveCombatAudioClip(CombatAudioCue.CombatMusic));
             return;
         }
 

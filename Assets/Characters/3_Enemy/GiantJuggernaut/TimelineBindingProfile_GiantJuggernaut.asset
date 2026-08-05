@@ -20,6 +20,3 @@ MonoBehaviour:
   - track: {fileID: -9152368791676990450, guid: 31102c33aa488064890935879dc584c8, type: 2}
     bindingId: Player.Animator
     required: 1
-  - track: {fileID: 7319377828198627317, guid: 31102c33aa488064890935879dc584c8, type: 2}
-    bindingId: Player.Transform
-    required: 1

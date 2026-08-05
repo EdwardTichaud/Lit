@@ -14,6 +14,8 @@ public sealed class LitTimelineLocalPlayerBinder : MonoBehaviour
     [SerializeField] private PlayableDirector director;
     [SerializeField, Tooltip("Acteur utilise uniquement pour authorer et previsualiser les pistes dans cette scene.")]
     private Transform editorPreviewActor;
+    [SerializeField, Tooltip("Masque l'acteur de previsualisation pendant le jeu : seul le joueur UCC runtime doit etre visible.")]
+    private bool hidePreviewActorAtRuntime = true;
     [SerializeField, Tooltip("Regenere le graphe si le joueur arrive alors que la Timeline est deja en lecture.")]
     private bool rebuildPlayingGraph = true;
 
@@ -43,6 +45,7 @@ public sealed class LitTimelineLocalPlayerBinder : MonoBehaviour
         }
 
         LocalPlayerContext.LocalCharacterChanged += OnLocalCharacterChanged;
+        SetPreviewActorRuntimeVisibility(false);
         BindLocalPlayer(LocalPlayerContext.LocalCharacterRoot);
     }
 
@@ -51,6 +54,7 @@ public sealed class LitTimelineLocalPlayerBinder : MonoBehaviour
         if (Application.isPlaying)
         {
             LocalPlayerContext.LocalCharacterChanged -= OnLocalCharacterChanged;
+            SetPreviewActorRuntimeVisibility(true);
         }
     }
 
@@ -97,6 +101,23 @@ public sealed class LitTimelineLocalPlayerBinder : MonoBehaviour
         {
             director.RebuildGraph();
         }
+    }
+
+    private void SetPreviewActorRuntimeVisibility(bool visible)
+    {
+        if (!hidePreviewActorAtRuntime || editorPreviewActor == null)
+        {
+            return;
+        }
+
+        // Never hide the real player if this component is accidentally
+        // configured with it. The preview actor is an authoring-only stand-in.
+        if (editorPreviewActor == LocalPlayerContext.LocalCharacterRoot)
+        {
+            return;
+        }
+
+        editorPreviewActor.gameObject.SetActive(visible);
     }
 
     private bool IsBoundToPreviewActor(UnityEngine.Object binding)

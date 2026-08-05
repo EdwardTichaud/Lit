@@ -37,6 +37,8 @@ namespace Lit.Story
         private int currentStepStartedFrame;
         private bool inputSubscribed;
         private bool registeredAsActive;
+        private bool launchCombatOnSequenceEnd;
+        private float launchCombatDamageOnSequenceEnd;
 
         public bool IsPlaying => playbackRoutine != null;
         public static bool IsAnySequencePlaying => activeSequenceCount > 0;
@@ -116,6 +118,8 @@ namespace Lit.Story
 
             dialoguePresenter?.HideImmediate();
             RestoreGameplay();
+            launchCombatOnSequenceEnd = false;
+            launchCombatDamageOnSequenceEnd = 0f;
             UnregisterActiveSequence();
             fadeController?.SetImmediate(0f);
             onSequenceAborted?.Invoke();
@@ -125,6 +129,8 @@ namespace Lit.Story
         {
             advanceRequested = false;
             currentStepSkippable = false;
+            launchCombatOnSequenceEnd = false;
+            launchCombatDamageOnSequenceEnd = 0f;
             PushInputFocus();
             onSequenceStarted?.Invoke();
 
@@ -219,6 +225,8 @@ namespace Lit.Story
 
         private IEnumerator ExecuteStep(StorySequenceStep step, bool useUnscaledTime)
         {
+            PlayStepOneShots(step);
+
             switch (step.type)
             {
                 case StorySequenceStepType.Fade:
@@ -265,6 +273,36 @@ namespace Lit.Story
                 case StorySequenceStepType.ProgressivePlayerStop:
                     yield return ExecuteProgressivePlayerStop(step, useUnscaledTime);
                     break;
+
+                case StorySequenceStepType.LaunchCombat:
+                    launchCombatOnSequenceEnd = true;
+                    launchCombatDamageOnSequenceEnd = step.openingCombatDamage;
+                    break;
+            }
+        }
+
+        private void PlayStepOneShots(StorySequenceStep step)
+        {
+            if (step == null || step.oneShotAudioClips == null || step.oneShotAudioClips.Count == 0)
+            {
+                return;
+            }
+
+            AudioManager manager = AudioManager.Instance;
+            if (manager == null)
+            {
+                Debug.LogWarning("StorySequenceRunner: AudioManager Bootstrap absent, one-shots d'etape ignores.", this);
+                return;
+            }
+
+            Vector3 position = transform.position;
+            for (int i = 0; i < step.oneShotAudioClips.Count; i++)
+            {
+                AudioClipSO clip = step.oneShotAudioClips[i];
+                if (clip != null && clip.audioClip != null)
+                {
+                    manager.PlayOneShotClip(clip, position);
+                }
             }
         }
 
@@ -554,8 +592,26 @@ namespace Lit.Story
                 yield break;
             }
 
+            bool timelineEndFadeStarted = false;
+            double timelineEndFadeStartTime = System.Math.Max(
+                0d,
+                director.duration - Mathf.Max(0f, step.timelineEndFadeDuration));
             while (!handle.IsDone)
             {
+                // StorySequence starts the fade before Timeline hands the
+                // camera back to UCC, so the hand-off is never visible.
+                if (step.fadeToBlackBeforeTimelineEnd &&
+                    !timelineEndFadeStarted &&
+                    director.state == PlayState.Playing &&
+                    director.time >= timelineEndFadeStartTime)
+                {
+                    timelineEndFadeStarted = true;
+                    yield return fadeController.FadeTo(
+                        1f,
+                        Mathf.Max(0f, step.timelineEndFadeDuration),
+                        sequence != null && sequence.useUnscaledTime);
+                }
+
                 if (ConsumeAdvanceRequest())
                 {
                     handle.Skip();
@@ -676,13 +732,22 @@ namespace Lit.Story
 
         private void FinishPlayback(bool completed)
         {
+            bool launchCombat = completed && launchCombatOnSequenceEnd;
+            float openingCombatDamage = launchCombatDamageOnSequenceEnd;
             RestoreGameplay();
             playbackRoutine = null;
+            launchCombatOnSequenceEnd = false;
+            launchCombatDamageOnSequenceEnd = 0f;
             UnregisterActiveSequence();
             currentStepSkippable = false;
             advanceRequested = false;
             if (completed)
             {
+                if (launchCombat)
+                {
+                    RealTimeCombatManager.Instance?.LaunchCombat(openingCombatDamage);
+                }
+
                 onSequenceCompleted?.Invoke();
             }
             else
@@ -810,6 +875,8 @@ namespace Lit.Story
             }
 
             RestoreGameplay();
+            launchCombatOnSequenceEnd = false;
+            launchCombatDamageOnSequenceEnd = 0f;
             UnregisterActiveSequence();
         }
     }

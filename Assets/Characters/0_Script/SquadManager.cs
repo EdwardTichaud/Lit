@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
 // Gere la squad: selection, groupes, spawn et synchronisation des personnages.
 public class SquadManager : MonoBehaviour
@@ -221,6 +222,7 @@ public class SquadManager : MonoBehaviour
         EnsureSpawnOrigin();
         ApplyPendingRoster();
         EnsureRuntimeSquad();
+        KeepOnlyControlledSoloCharacterForDirectSceneStart();
         Maison maisonComponent = GetMaison();
         if (maisonComponent != null)
         {
@@ -749,6 +751,7 @@ public class SquadManager : MonoBehaviour
             controlledIndex = 0;
         }
 
+        bool keepUncontrolledMembersAtMaison = !IsMultiplayerActive() && !IsHubSpawnPoint(spawnPoint);
         const float companionLateralSpacing = 3f;
         const float companionBackOffset = 2f;
         for (int i = 0; i < squadCharacters.Count; i++)
@@ -756,6 +759,16 @@ public class SquadManager : MonoBehaviour
             GameObject character = squadCharacters[i];
             if (character == null)
             {
+                continue;
+            }
+
+            // En solo, les membres qui ne sont pas controles ne suivent pas le
+            // joueur hors de la Maison. Ils conservent ainsi leur position dans
+            // le hub et sont de nouveau disponibles au retour.
+            if (keepUncontrolledMembersAtMaison && i != controlledIndex)
+            {
+                SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
+                controller?.Stop();
                 continue;
             }
 
@@ -769,6 +782,60 @@ public class SquadManager : MonoBehaviour
 
             TryTeleportCharacterForSceneTransition(character, position, spawnPoint.rotation);
         }
+    }
+
+    private void KeepOnlyControlledSoloCharacterForDirectSceneStart()
+    {
+        if (IsMultiplayerActive()
+            || currentSquad == null
+            || currentSquad.Count <= 1
+            || IsHubScene(SceneManager.GetActiveScene()))
+        {
+            return;
+        }
+
+        int controlledIndex = Mathf.Clamp(currentCursorIndex, 0, currentSquad.Count - 1);
+        CharacterData controlledCharacter = currentSquad[controlledIndex];
+        if (controlledCharacter == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < currentSquad.Count; i++)
+        {
+            if (i == controlledIndex || currentSquad[i] == null)
+            {
+                continue;
+            }
+
+            HubRosterManager.Instance?.SetInSquad(currentSquad[i], false);
+        }
+
+        // Un lancement Play direct dans une scene d'exploration n'a jamais
+        // charge la Maison : seuls les membres deployes doivent donc etre
+        // instancies. Cela reproduit le resultat du trajet Maison -> zone.
+        currentSquad = new List<CharacterData> { controlledCharacter };
+        currentCursorIndex = 0;
+        groupIds.Clear();
+        squadGroups.Clear();
+    }
+
+    private static bool IsHubSpawnPoint(Transform spawnPoint)
+    {
+        return spawnPoint != null && IsHubScene(spawnPoint.gameObject.scene);
+    }
+
+    private static bool IsHubScene(Scene scene)
+    {
+        GameFlowService flow = GameFlowService.Instance;
+        if (flow != null && !string.IsNullOrWhiteSpace(flow.HubSceneName))
+        {
+            return scene.name == flow.HubSceneName;
+        }
+
+        Maison maisonComponent = Maison.Instance;
+        return maisonComponent != null
+            && scene == maisonComponent.gameObject.scene;
     }
 
     private static bool TryTeleportCharacterForSceneTransition(GameObject instance, Vector3 position, Quaternion rotation)

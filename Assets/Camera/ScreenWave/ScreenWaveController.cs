@@ -254,6 +254,24 @@ public sealed class ScreenWaveController : MonoBehaviour
         return playing;
     }
 
+    /// <summary>
+    /// Joue une unique phase locale dont l'origine est projetee depuis le monde.
+    /// Les impacts de combat peuvent ainsi utiliser leur propre rendu sans modifier
+    /// le cycle de transition global normal/inverse.
+    /// </summary>
+    public bool TryPlayScreenWavePhase(Vector3 worldOrigin, ScreenWaveSettings settings, Camera camera = null)
+    {
+        if (!TryResolveViewportOrigin(worldOrigin, camera, out Vector2 origin))
+        {
+            origin = new Vector2(0.5f, 0.5f);
+        }
+
+        settings.origin = origin;
+        settings.reverse = false;
+        PlayScreenWavePhase(settings, false);
+        return playing;
+    }
+
     public void StopScreenWave()
     {
         if (!playing)

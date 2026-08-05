@@ -18,21 +18,58 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: caf4ceb2d13b8e444981a4e255c3b4e8, type: 2}
   animatorState: "Base Layer.Skill_2_Fl\xE8che de lumi\xE8re"
   damages: 10
+  presentation:
+    entryBlendSeconds: 0.06
+    chainNormalizedTime: 1
+    recoveryNormalizedTime: 0.78
+    exitBlendSeconds: 0.1
+    rootMotionMode: 0
+    facingMode: 0
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
   minimumHitDistance: 10
   maximumHitDistance: 30
   vfxCues:
-  - displayName: Shoot
+  - displayName: Bow Charge
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
-    audioClip: {fileID: 0}
-    delivery: 0
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}
+    delivery: 2
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
-  - displayName: Eclair
+  - displayName: Light Arrow
     prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
     audioClip: {fileID: 0}
-    delivery: 0
+    delivery: 4
     holdAtCasterSeconds: 0
-    travelDurationSeconds: 0.25
+    travelDurationSeconds: 0.15
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.12
+    hitStopSeconds: 0.04
+    camera:
+      lookOffsetKick: {x: 0, y: 0.015, z: 0.14}
+      fieldOfViewKick: -0.8
+      recoverySharpness: 24
+    screenWave:
+      enabled: 1
+      settings:
+        origin: {x: 0.5, y: 0.5}
+        direction: {x: 0, y: 0}
+        reverse: 0
+        frequency: 12
+        propagationSpeed: 2
+        amplitude: 0.09
+        duration: 0.25
+        falloff: 5
+        fadeOutDuration: 0.15
+        highlightIntensity: 0.85
+        edgeContrast: 2.7
+        highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 11400000, guid: a1000000000000000000000000000004, type: 2}
+  retreatImpulse:
+    enabled: 0
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

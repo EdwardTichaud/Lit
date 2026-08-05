@@ -18,15 +18,41 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: f37f637f20cc5124fbc4e0b68385c979, type: 2}
   animatorState: Base Layer.BasicSkill_2
   damages: 10
+  presentation:
+    entryBlendSeconds: 0.04
+    chainNormalizedTime: 0.55
+    chainTransitionNormalizedTime: 0.72
+    recoveryNormalizedTime: 0.94
+    exitBlendSeconds: 0.1
+    rootMotionMode: 1
+    facingMode: 0
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
   minimumHitDistance: 0
   maximumHitDistance: 5
   vfxCues:
   - displayName: Impact
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
-    audioClip: {fileID: 0}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.1
+    hitStopSeconds: 0.045
+    camera:
+      lookOffsetKick: {x: 0, y: 0.02, z: 0.15}
+      fieldOfViewKick: -0.9
+      recoverySharpness: 22
+    screenWave:
+      enabled: 1
+      settings: { origin: {x: 0.5, y: 0.5}, direction: {x: 0, y: 0}, reverse: 0, frequency: 8, propagationSpeed: 1.55, amplitude: 0.045, duration: 0.16, falloff: 3, fadeOutDuration: 0.1, highlightIntensity: 0.48, edgeContrast: 2.3, highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1} }
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 0}
+  retreatImpulse:
+    enabled: 0
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

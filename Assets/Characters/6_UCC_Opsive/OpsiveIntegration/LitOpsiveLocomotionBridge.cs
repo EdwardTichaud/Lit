@@ -179,6 +179,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private int externalLockCount;
     private bool externalLockInputDisabled;
     private bool progressiveExternalStopActive;
+    private bool hasPlayerActionRootMotionMode;
+    private PlayerActionRootMotionMode playerActionRootMotionMode;
+    private bool suppressPlayerActionRootMotionRotation;
 
     private enum RootMotionPhase
     {
@@ -203,6 +206,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
     public Vector3 WorldPosition => locomotion != null ? locomotion.transform.position : Vector3.zero;
+    public Vector2 CurrentWorldMoveInput => currentWorldMoveInput;
+    public string CurrentRootMotionPhase => ResolveCurrentRootMotionPhase().ToString();
     public bool CanDriveScriptedTraversal
     {
         get
@@ -250,6 +255,34 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         Vector2 worldInput = isWorldSpace || squadController == null ? input : squadController.GetWorldSpaceInput(input);
         ApplyWorldMoveInput(worldInput);
+    }
+
+    public void SetPlayerActionRootMotionMode(PlayerActionRootMotionMode mode, bool suppressRootRotation = false)
+    {
+        hasPlayerActionRootMotionMode = true;
+        playerActionRootMotionMode = mode;
+        suppressPlayerActionRootMotionRotation = suppressRootRotation;
+        RefreshRootMotionLocomotionSettings();
+    }
+
+    public void ClearPlayerActionRootMotionMode()
+    {
+        if (!hasPlayerActionRootMotionMode)
+        {
+            return;
+        }
+
+        hasPlayerActionRootMotionMode = false;
+        suppressPlayerActionRootMotionRotation = false;
+        RefreshRootMotionLocomotionSettings();
+    }
+
+    public void RefreshLocomotionPresentation()
+    {
+        if (IsDriving && !IsInputSuppressedByUcc)
+        {
+            UpdateAnimatorParameters();
+        }
     }
 
     public void SetSprintModifier(bool pressed)
@@ -643,6 +676,33 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// Oriente le personnage sans modifier le LookSource : l'input UCC et
+    /// l'inertie conservent ainsi leur direction monde pendant l'action.
+    /// </summary>
+    public bool SetActionFacingDirection(Vector3 worldDirection)
+    {
+        ResolveReferences();
+        worldDirection.y = 0f;
+        if (!IsDriving || locomotion == null || worldDirection.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        Vector3 direction = worldDirection.normalized;
+        Quaternion rotation = Quaternion.LookRotation(direction, transform.up);
+        Vector2 preservedWorldInput = currentWorldMoveInput;
+        locomotion.SetPositionAndRotation(locomotion.transform.position, rotation, false, false);
+        lastPosition = locomotion.transform.position;
+        hasLastPosition = true;
+
+        // SetPositionAndRotation peut faire reevaluer le mouvement dans le
+        // nouveau repere du personnage. Reinjecter le vecteur monde conserve
+        // l'inertie initiale pendant que seule la rotation change.
+        ApplyWorldMoveInput(preservedWorldInput);
+        return true;
+    }
+
+    /// <summary>
     /// Teleporte le personnage lors d'un changement de zone. Contrairement a
     /// un simple correctif de position, cette operation avertit UCC que
     /// l'Animator, les capacites et la camera doivent etre synchronises
@@ -696,6 +756,43 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockAfter(lockInputForSeconds));
         }
 
+        return true;
+    }
+
+    /// <summary>
+    /// Impulsion auteurisee qui bloque les entrees jusqu'au prochain atterrissage.
+    /// La borne maximale garantit qu'un sol manquant ne verrouille jamais Lucian.
+    /// </summary>
+    public bool AddExternalImpulseUntilGrounded(
+        Vector3 worldImpulse,
+        ForceMode forceMode,
+        float minimumInputLockSeconds,
+        float maximumInputLockSeconds)
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || worldImpulse.sqrMagnitude <= 0f)
+        {
+            return false;
+        }
+
+        bool scaleByMass = forceMode != ForceMode.VelocityChange && forceMode != ForceMode.Acceleration;
+        locomotion.AddForce(worldImpulse, 1, scaleByMass);
+
+        if (externalImpulseLockRoutine != null)
+        {
+            StopCoroutine(externalImpulseLockRoutine);
+            externalImpulseLockRoutine = null;
+            EndExternalLock();
+        }
+
+        if (!BeginExternalLock(disableGameplayInput: true, stopActiveAbilities: false))
+        {
+            return true;
+        }
+
+        externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockWhenGrounded(
+            Mathf.Max(0f, minimumInputLockSeconds),
+            Mathf.Max(0.1f, maximumInputLockSeconds)));
         return true;
     }
 
@@ -821,6 +918,29 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private IEnumerator EndExternalImpulseLockAfter(float delay)
     {
         yield return new WaitForSeconds(delay);
+        externalImpulseLockRoutine = null;
+        EndExternalLock();
+    }
+
+    private IEnumerator EndExternalImpulseLockWhenGrounded(float minimumDelay, float maximumDelay)
+    {
+        float elapsed = 0f;
+        bool leftGround = !Grounded;
+        while (elapsed < maximumDelay)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            leftGround |= !Grounded;
+            // Une petite impulsion peut rester rapportee Grounded par UCC. Dans ce
+            // cas, ce sol deja detecte est une restitution legitime plutot qu'un
+            // verrouillage jusqu'a la borne de secours.
+            if (elapsed >= minimumDelay && Grounded && (leftGround || elapsed >= minimumDelay + 0.2f))
+            {
+                break;
+            }
+
+            yield return null;
+        }
+
         externalImpulseLockRoutine = null;
         EndExternalLock();
     }
@@ -1633,10 +1753,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         RootMotionPhase phase = ResolveCurrentRootMotionPhase();
         bool suppressIdlePosition = ShouldSuppressIdleRootMotionPosition(phase);
         bool useRootMotionRotation = ResolveUseRootMotionRotation(phase);
-        locomotion.UseRootMotionPosition = true;
-        locomotion.RootMotionSpeedMultiplier = suppressIdlePosition
+        bool useAuthoredActionRootMotion = !hasPlayerActionRootMotionMode ||
+            playerActionRootMotionMode == PlayerActionRootMotionMode.AuthoredRootMotion;
+        locomotion.UseRootMotionPosition = useAuthoredActionRootMotion;
+        locomotion.RootMotionSpeedMultiplier = !useAuthoredActionRootMotion || suppressIdlePosition
             ? 0f
             : ResolveEffectiveRootMotionSpeedMultiplier(phase);
+        useRootMotionRotation &= useAuthoredActionRootMotion && !suppressPlayerActionRootMotionRotation;
         locomotion.UseRootMotionRotation = useRootMotionRotation;
         locomotion.RootMotionRotationMultiplier = useRootMotionRotation
             ? ResolveEffectiveRootMotionRotationMultiplier(phase)

@@ -30,11 +30,13 @@ public class AudioManager : MonoBehaviour
     {
         public int token;
         public AudioClipSO clip;
+        public bool suppressesAmbience;
 
-        public MusicOverride(int overrideToken, AudioClipSO overrideClip)
+        public MusicOverride(int overrideToken, AudioClipSO overrideClip, bool overrideSuppressesAmbience)
         {
             token = overrideToken;
             clip = overrideClip;
+            suppressesAmbience = overrideSuppressesAmbience;
         }
     }
 
@@ -51,6 +53,10 @@ public class AudioManager : MonoBehaviour
     public float fadeDuration = 1f;
     [Tooltip("Ne pas detruire au changement de scene.")]
     public bool dontDestroyOnLoad = true;
+
+    [Header("Ambience")]
+    [Tooltip("Ambiance jouee lorsqu'aucune zone active n'en fournit une.")]
+    public AudioClipSO defaultAmbienceClip;
 
     [Header("One Shot")]
     [Range(0f, 1f), Tooltip("Spatial blend des one-shots.")]
@@ -88,8 +94,10 @@ public class AudioManager : MonoBehaviour
     private readonly List<ManagedSfxSource> activeSfxSources = new List<ManagedSfxSource>();
     private readonly List<MusicOverride> musicOverrides = new List<MusicOverride>();
     private int musicDuckCount;
+    private int ambienceDuckCount;
     private int nextMusicOverrideToken = 1;
     private float musicDuckMultiplier = 1f;
+    private float ambienceDuckMultiplier = 1f;
 
     public float MusicVolume => Mathf.Clamp01(musicVolume);
     public float SfxVolume => Mathf.Clamp01(sfxVolume);
@@ -149,6 +157,11 @@ public class AudioManager : MonoBehaviour
 
         RefreshMusicVolume();
         RefreshSfxVolumes();
+    }
+
+    private void Start()
+    {
+        UpdateZoneAudio();
     }
 
     private void LateUpdate()
@@ -255,6 +268,16 @@ public class AudioManager : MonoBehaviour
 
     public int PushMusicOverride(AudioClipSO clip)
     {
+        return PushMusicOverride(clip, false);
+    }
+
+    public int PushCombatMusicOverride(AudioClipSO clip)
+    {
+        return PushMusicOverride(clip, true);
+    }
+
+    private int PushMusicOverride(AudioClipSO clip, bool suppressesAmbience)
+    {
         if (clip == null || clip.audioClip == null)
         {
             return 0;
@@ -266,8 +289,8 @@ public class AudioManager : MonoBehaviour
             nextMusicOverrideToken = 1;
         }
 
-        musicOverrides.Add(new MusicOverride(token, clip));
-        PlayMusic(clip);
+        musicOverrides.Add(new MusicOverride(token, clip, suppressesAmbience));
+        UpdateZoneAudio();
         return token;
     }
 
@@ -294,16 +317,26 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        if (musicOverrides.Count > 0)
-        {
-            PlayMusic(musicOverrides[musicOverrides.Count - 1].clip);
-            return;
-        }
-
         UpdateZoneAudio();
     }
 
     public void PlayAmbience(AudioClipSO clip)
+    {
+        if (HasAmbienceSuppressingMusicOverride())
+        {
+            StopAmbience();
+            return;
+        }
+
+        SetAmbienceClip(ResolveAmbienceClip(clip));
+    }
+
+    private void StopAmbience()
+    {
+        SetAmbienceClip(null);
+    }
+
+    private void SetAmbienceClip(AudioClipSO clip)
     {
         EnsureAmbienceSources();
 
@@ -354,6 +387,99 @@ public class AudioManager : MonoBehaviour
         RefreshMusicVolume();
     }
 
+    /// <summary>Masque temporairement l'ambiance sans perdre la zone active.</summary>
+    public void BeginAmbienceDucking(float multiplier)
+    {
+        multiplier = Mathf.Clamp01(multiplier);
+        ambienceDuckCount++;
+        if (ambienceDuckCount == 1)
+        {
+            ambienceDuckMultiplier = multiplier;
+        }
+        else
+        {
+            ambienceDuckMultiplier = Mathf.Min(ambienceDuckMultiplier, multiplier);
+        }
+
+        RefreshAmbienceVolume();
+    }
+
+    /// <summary>Retire un masquage d'ambiance temporaire.</summary>
+    public void EndAmbienceDucking()
+    {
+        if (ambienceDuckCount <= 0)
+        {
+            return;
+        }
+
+        ambienceDuckCount = Mathf.Max(0, ambienceDuckCount - 1);
+        if (ambienceDuckCount == 0)
+        {
+            ambienceDuckMultiplier = 1f;
+        }
+
+        RefreshAmbienceVolume();
+    }
+
+    /// <summary>
+    /// Cree une voix reservee a une Timeline. Elle est volontairement
+    /// independante des deux voix de zone afin que plusieurs clips puissent
+    /// se chevaucher et etre fondus par Timeline.
+    /// </summary>
+    public AudioSource PlayTimelineClip(AudioClipSO clip, float startTime, bool loop)
+    {
+        if (clip == null || clip.audioClip == null)
+        {
+            return null;
+        }
+
+        AudioSource source = CreateSource("Timeline_" + clip.name);
+        ConfigureOneShotSource(source);
+        source.spatialBlend = 0f;
+        source.clip = clip.audioClip;
+        source.loop = loop;
+        ApplyClipPitch(source, clip);
+        source.volume = 0f;
+        if (clip.audioClip.length > 0f)
+        {
+            source.time = Mathf.Clamp(startTime, 0f, Mathf.Max(0f, clip.audioClip.length - 0.001f));
+        }
+
+        source.Play();
+        return source;
+    }
+
+    /// <summary>Arrete et libere une voix reservee a une Timeline.</summary>
+    public void StopTimelineClip(AudioSource source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        source.Stop();
+        Destroy(source.gameObject);
+    }
+
+    public float GetTimelineMusicVolume(AudioClipSO clip)
+    {
+        // La voix Timeline reste audible pendant que la musique de jeu est
+        // masquee par BeginMusicDucking.
+        return GetMusicSourceVolume(clip);
+    }
+
+    public float GetTimelineAmbienceVolume(AudioClipSO clip)
+    {
+        // La voix Timeline reste audible pendant que l'ambiance de zone est
+        // masquee par BeginAmbienceDucking.
+        return GetSfxSourceVolume(clip);
+    }
+
+    public float GetTimelineSfxVolume(AudioClipSO clip)
+    {
+        return GetSfxSourceVolume(clip);
+    }
+
     public static AudioSource PlayClipAtPoint(AudioClipSO clip, Vector3 position)
     {
         AudioManager manager = Instance != null ? Instance : EnsureInstance();
@@ -383,6 +509,27 @@ public class AudioManager : MonoBehaviour
             StartCoroutine(DestroyAfterPlay(source));
         }
 
+        return source;
+    }
+
+    /// <summary>Joue un AudioClipSO une seule fois, meme si son asset est configure en boucle.</summary>
+    public AudioSource PlayOneShotClip(AudioClipSO clip, Vector3 position)
+    {
+        if (clip == null || clip.audioClip == null)
+        {
+            return null;
+        }
+
+        AudioSource source = CreateSource("OneShot_" + clip.name);
+        ConfigureOneShotSource(source);
+        source.transform.position = position;
+        source.clip = clip.audioClip;
+        source.loop = false;
+        ApplyClipPitch(source, clip);
+        source.volume = GetSfxSourceVolume(clip);
+        source.Play();
+        RegisterSfxSource(source, clip);
+        StartCoroutine(DestroyAfterPlay(source));
         return source;
     }
 
@@ -509,12 +656,40 @@ public class AudioManager : MonoBehaviour
             }
         }
 
-        if (musicOverrides.Count == 0)
+        if (musicOverrides.Count > 0)
+        {
+            PlayMusic(musicOverrides[musicOverrides.Count - 1].clip);
+        }
+        else
         {
             PlayMusic(nextMusicClip);
         }
 
+        if (HasAmbienceSuppressingMusicOverride())
+        {
+            StopAmbience();
+            return;
+        }
+
         PlayAmbience(nextAmbienceClip);
+    }
+
+    private AudioClipSO ResolveAmbienceClip(AudioClipSO clip)
+    {
+        return clip != null && clip.audioClip != null ? clip : defaultAmbienceClip;
+    }
+
+    private bool HasAmbienceSuppressingMusicOverride()
+    {
+        for (int i = 0; i < musicOverrides.Count; i++)
+        {
+            if (musicOverrides[i].suppressesAmbience)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void CleanupNullZones()
@@ -734,6 +909,11 @@ public class AudioManager : MonoBehaviour
         return musicDuckCount > 0 ? Mathf.Clamp01(musicDuckMultiplier) : 1f;
     }
 
+    private float GetAmbienceMultiplier()
+    {
+        return ambienceDuckCount > 0 ? Mathf.Clamp01(ambienceDuckMultiplier) : 1f;
+    }
+
     private float GetMusicSourceVolume(AudioClipSO clip)
     {
         if (clip == null)
@@ -766,7 +946,7 @@ public class AudioManager : MonoBehaviour
             return 0f;
         }
 
-        return GetSfxSourceVolume(Mathf.Clamp01(clip.volume));
+        return GetSfxSourceVolume(Mathf.Clamp01(clip.volume)) * GetAmbienceMultiplier();
     }
 
     public static float GetClipPitch(AudioClipSO clip, float basePitch = 1f)

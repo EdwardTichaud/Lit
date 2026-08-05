@@ -21,6 +21,7 @@ public static class LocalInputRouter
         LocomotionMode,
         SwitchTarget,
         Select,
+        LightSkill,
         Multi,
         Start,
         CombatUseItem1,
@@ -41,6 +42,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> LocomotionMode;
     public static event Action<InputAction.CallbackContext> SwitchTarget;
     public static event Action<InputAction.CallbackContext> Select;
+    public static event Action<InputAction.CallbackContext> LightSkill;
     public static event Action<InputAction.CallbackContext> Multi;
     public static event Action<InputAction.CallbackContext> Start;
     public static event Action<int> CombatUseItem;
@@ -106,6 +108,7 @@ public static class LocalInputRouter
         LocomotionMode = null;
         SwitchTarget = null;
         Select = null;
+        LightSkill = null;
         Multi = null;
         Start = null;
         CombatUseItem = null;
@@ -528,6 +531,16 @@ public static class LocalInputRouter
         }
 
         Select?.Invoke(context);
+    }
+
+    internal static void RaiseLightSkill(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.LightSkill))
+        {
+            return;
+        }
+
+        LightSkill?.Invoke(context);
     }
 
     internal static void RaiseMulti(InputAction.CallbackContext context)

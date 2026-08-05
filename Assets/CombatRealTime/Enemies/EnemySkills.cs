@@ -16,6 +16,7 @@ public sealed class EnemySkills : MonoBehaviour
 
     public IReadOnlyList<SkillSO> Skills => skills;
     public SkillSO ActiveSkill => activeSkill;
+    public Animator Animator => animator;
 
     private void Reset()
     {

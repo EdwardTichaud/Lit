@@ -10,6 +10,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private PlayerBow playerBow;
     [SerializeField] private PlayerSword playerSword;
+    private PlayerActionPresentationController playerActionPresentation;
 
     [Header("Input Prompt Animation Events")]
     [SerializeField] private Transform inputPromptAnchor;
@@ -26,6 +27,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
     private Vector3 lastDashDirection;
     private Coroutine stopDashRoutine;
+    private Coroutine hideSwordAfterComboRoutine;
     private CombatInputWorldPrompt activeInputPrompt;
     private readonly HashSet<string> warnedUnknownPlayerHitConditions = new HashSet<string>();
 
@@ -40,6 +42,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     {
         ResolvePlayerBow();
         ResolvePlayerSword();
+        BindPlayerActionPresentation();
         HideBow();
         HideSword();
         HideInput();
@@ -47,15 +50,27 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
     private void OnDisable()
     {
+        UnbindPlayerActionPresentation();
         if (stopDashRoutine != null)
         {
             StopCoroutine(stopDashRoutine);
             stopDashRoutine = null;
         }
 
+        if (hideSwordAfterComboRoutine != null)
+        {
+            StopCoroutine(hideSwordAfterComboRoutine);
+            hideSwordAfterComboRoutine = null;
+        }
+
         HideBow();
         HideSword();
         HideInput();
+    }
+
+    private void OnEnable()
+    {
+        BindPlayerActionPresentation();
     }
 
     /// <summary>
@@ -107,6 +122,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         RealTimeCombatEnemy currentEnemy = ResolveEnemy();
         RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
         ResolveEnemySkills()?.ReturnToIdle();
+        GetComponentInParent<AnimationGroundRecovery>()?.RequestGroundSnap();
     }
 
     /// <summary>
@@ -168,6 +184,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     /// </summary>
     public void ShowBow()
     {
+        BindPlayerActionPresentation();
         ResolvePlayerBow();
         playerBow?.Show();
     }
@@ -186,6 +203,13 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     /// </summary>
     public void ShowSword()
     {
+        BindPlayerActionPresentation();
+        if (hideSwordAfterComboRoutine != null)
+        {
+            StopCoroutine(hideSwordAfterComboRoutine);
+            hideSwordAfterComboRoutine = null;
+        }
+
         ResolvePlayerSword();
         playerSword?.Show();
     }
@@ -197,6 +221,20 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     {
         ResolvePlayerSword();
         playerSword?.Hide();
+    }
+
+    /// <summary>
+    /// BasicSkill event: the sword remains visible while a buffered combo is
+    /// still active, then is hidden once the final action has recovered.
+    /// </summary>
+    public void HideSwordWhenComboEnds()
+    {
+        if (hideSwordAfterComboRoutine != null)
+        {
+            StopCoroutine(hideSwordAfterComboRoutine);
+        }
+
+        hideSwordAfterComboRoutine = StartCoroutine(HideSwordAfterComboEnds());
     }
 
     /// <summary>
@@ -266,12 +304,19 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             return;
         }
 
-        if (cue.delivery == SkillVfxDelivery.PlayerHand)
+        if (cue.delivery == SkillVfxDelivery.PlayerHand || cue.delivery == SkillVfxDelivery.PlayerSword)
         {
-            ResolvePlayerBow();
-            Transform handPoint = playerBow != null
-                ? playerBow.transform
-                : RealTimeCombatManager.Instance?.PlayerRoot;
+            Transform handPoint;
+            if (cue.delivery == SkillVfxDelivery.PlayerSword)
+            {
+                ResolvePlayerSword();
+                handPoint = playerSword != null ? playerSword.transform : RealTimeCombatManager.Instance?.PlayerRoot;
+            }
+            else
+            {
+                ResolvePlayerBow();
+                handPoint = playerBow != null ? playerBow.transform : RealTimeCombatManager.Instance?.PlayerRoot;
+            }
             if (handPoint != null)
             {
                 PlaySkillVfxCueAudio(cue, handPoint.position);
@@ -301,9 +346,12 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             return;
         }
 
-        Transform caster = RealTimeCombatManager.Instance != null
-            ? RealTimeCombatManager.Instance.PlayerRoot
-            : null;
+        Transform caster = RealTimeCombatManager.Instance != null ? RealTimeCombatManager.Instance.PlayerRoot : null;
+        if (cue.delivery == SkillVfxDelivery.ProjectileFromPlayerHand)
+        {
+            ResolvePlayerBow();
+            caster = playerBow != null ? playerBow.transform : caster;
+        }
         if (caster != null)
         {
             PlaySkillVfxCueAudio(cue, caster.position);
@@ -381,13 +429,75 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     /// </summary>
     public void HitEnemy()
     {
-        SkillSO skill = ResolveSelectedSkill();
-        if (skill == null)
+        ResolveSkillImpact();
+    }
+
+    /// <summary>
+    /// Generic player impact event. Damage is confirmed first, then every
+    /// configurable feedback cue is played exactly once.
+    /// </summary>
+    public void ResolveSkillImpact()
+    {
+        if (!TryResolveSelectedSkillImpact(out SkillSO skill, out RealTimeCombatEnemy target))
         {
             return;
         }
 
-        RealTimeCombatManager.Instance?.ApplySkillDamageToLockedEnemy(skill);
+        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target);
+    }
+
+    /// <summary>
+    /// Animation Event generique d'impact avec recul. La portee est reevaluee au
+    /// contact : aucun VFX, onde ou mouvement n'est joue si la cible s'est echappee.
+    /// </summary>
+    public void ResolveSkillImpactAndRetreat()
+    {
+        SkillSO skill = ResolveSelectedSkill();
+        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+        RealTimeCombatEnemy target = manager != null ? manager.LockedEnemy : null;
+        Transform caster = manager != null ? manager.PlayerRoot : null;
+        if (skill == null || manager == null || target == null || caster == null)
+        {
+            return;
+        }
+
+        if (!TryResolveSelectedSkillImpact(out skill, out target))
+        {
+            return;
+        }
+
+        InstantiateSkillVFX();
+        CombatImpactFeedbackController.EnsureInstance()?.PlayImpact(skill, target);
+
+        SkillRetreatImpulse retreat = skill.RetreatImpulse;
+        if (!retreat.enabled)
+        {
+            return;
+        }
+
+        Vector3 direction = caster.position - target.LockPoint.position;
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            direction = -caster.forward;
+            direction.y = 0f;
+        }
+
+        LitOpsiveLocomotionBridge bridge = caster.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
+        if (bridge != null)
+        {
+            // Les forces trop elevees peuvent faire franchir a la capsule UCC
+            // un obstacle entre deux mises a jour de simulation. Chaque skill
+            // conserve son recul auteurise, mais dans une limite sure.
+            float horizontalImpulse = Mathf.Min(retreat.horizontalImpulse, retreat.maximumHorizontalImpulse);
+            float verticalImpulse = Mathf.Min(retreat.verticalImpulse, retreat.maximumVerticalImpulse);
+            Vector3 impulse = direction.normalized * horizontalImpulse + Vector3.up * verticalImpulse;
+            bridge.AddExternalImpulseUntilGrounded(
+                impulse,
+                ForceMode.VelocityChange,
+                retreat.minimumInputLockSeconds,
+                retreat.maximumInputLockSeconds);
+        }
     }
 
     /// <summary>
@@ -521,6 +631,63 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     private void ResolvePlayerSword()
     {
         playerSword ??= GetComponentInChildren<PlayerSword>(true);
+    }
+
+    private void BindPlayerActionPresentation()
+    {
+        if (playerActionPresentation != null)
+        {
+            return;
+        }
+
+        Transform playerRoot = RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.PlayerRoot
+            : transform.root;
+        playerActionPresentation = playerRoot != null
+            ? playerRoot.GetComponentInChildren<PlayerActionPresentationController>(true)
+            : null;
+        if (playerActionPresentation != null)
+        {
+            playerActionPresentation.ActionEnded += HideEquippedWeapons;
+        }
+    }
+
+    private void UnbindPlayerActionPresentation()
+    {
+        if (playerActionPresentation != null)
+        {
+            playerActionPresentation.ActionEnded -= HideEquippedWeapons;
+            playerActionPresentation = null;
+        }
+    }
+
+    private void HideEquippedWeapons()
+    {
+        HideBow();
+        HideSword();
+    }
+
+    private bool TryResolveSelectedSkillImpact(out SkillSO skill, out RealTimeCombatEnemy target)
+    {
+        skill = ResolveSelectedSkill();
+        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+        target = manager != null ? manager.LockedEnemy : null;
+        return skill != null && target != null && manager != null
+            && manager.ApplySkillDamageToLockedEnemy(skill) > 0;
+    }
+
+    private System.Collections.IEnumerator HideSwordAfterComboEnds()
+    {
+        PlayerActionPresentationController presentation = RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.PlayerRoot?.GetComponentInChildren<PlayerActionPresentationController>(true)
+            : null;
+        while (presentation != null && presentation.IsActionActive)
+        {
+            yield return null;
+        }
+
+        HideSword();
+        hideSwordAfterComboRoutine = null;
     }
 
     private System.Collections.IEnumerator StopDashRoutine(Vector3 dashDirection)

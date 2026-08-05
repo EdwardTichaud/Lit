@@ -217,6 +217,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LightSkill"",
+                    ""type"": ""Button"",
+                    ""id"": ""bb5beca8-86bf-40af-995d-14cc3528cde0"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -470,6 +479,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Select"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ba7ccfa2-59b4-4113-b5f6-9ed111e512d2"",
+                    ""path"": ""<Gamepad>/leftStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LightSkill"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1053,6 +1073,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_ToggleTorch = m_Player.FindAction("ToggleTorch", throwIfNotFound: true);
         m_Player_SwitchTarget = m_Player.FindAction("SwitchTarget", throwIfNotFound: true);
         m_Player_Select = m_Player.FindAction("Select", throwIfNotFound: true);
+        m_Player_LightSkill = m_Player.FindAction("LightSkill", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_Pan = m_Camera.FindAction("Pan", throwIfNotFound: true);
@@ -1172,6 +1193,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ToggleTorch;
     private readonly InputAction m_Player_SwitchTarget;
     private readonly InputAction m_Player_Select;
+    private readonly InputAction m_Player_LightSkill;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1240,6 +1262,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Select => m_Wrapper.m_Player_Select;
         /// <summary>
+        /// Provides access to the underlying input action "Player/LightSkill".
+        /// </summary>
+        public InputAction @LightSkill => m_Wrapper.m_Player_LightSkill;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -1307,6 +1333,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Select.started += instance.OnSelect;
             @Select.performed += instance.OnSelect;
             @Select.canceled += instance.OnSelect;
+            @LightSkill.started += instance.OnLightSkill;
+            @LightSkill.performed += instance.OnLightSkill;
+            @LightSkill.canceled += instance.OnLightSkill;
         }
 
         /// <summary>
@@ -1360,6 +1389,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Select.started -= instance.OnSelect;
             @Select.performed -= instance.OnSelect;
             @Select.canceled -= instance.OnSelect;
+            @LightSkill.started -= instance.OnLightSkill;
+            @LightSkill.performed -= instance.OnLightSkill;
+            @LightSkill.canceled -= instance.OnLightSkill;
         }
 
         /// <summary>
@@ -1994,6 +2026,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSelect(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LightSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLightSkill(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

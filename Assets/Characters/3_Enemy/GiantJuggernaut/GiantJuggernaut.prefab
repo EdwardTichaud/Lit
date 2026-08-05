@@ -1316,7 +1316,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f259a556506a4f45a1d5d781ecc065b4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CombatLockIndicator
   visualRoot: {fileID: 2845147082876959330}
   lockSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
@@ -5404,6 +5404,7 @@ GameObject:
   - component: {fileID: 1507485742872985387}
   - component: {fileID: 1157863950513175024}
   - component: {fileID: 2045073517310351988}
+  - component: {fileID: 975321468012345678}
   m_Layer: 0
   m_Name: GiantJuggernaut
   m_TagString: Untagged
@@ -5428,6 +5429,29 @@ Transform:
   - {fileID: 937648210628518453}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &975321468012345678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82e1a95b3cba4bcc867d4f3062a9d501, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationGroundRecovery
+  animator: {fileID: 88241028141342083}
+  lockVerticalRootMotionToGround: 0
+  probeHeight: 15
+  probeDistance: 40
+  minimumGroundNormal: 0.45
+  penetrationTolerance: 0.03
+  recoverySpeed: 18
+  immediateRecoveryDistance: 0.5
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!135 &6585987432151406195
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -5503,7 +5527,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemy
   health: {fileID: 3473810115628461106}
-  animator: {fileID: 0}
+  animator: {fileID: 88241028141342083}
   visionField: {fileID: 2296660950243021819}
   enemySkills: {fileID: 1507485742872985387}
   lockOutline: {fileID: 0}

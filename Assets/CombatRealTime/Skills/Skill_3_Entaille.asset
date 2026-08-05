@@ -12,27 +12,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
   m_Name: Skill_3_Entaille
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
-  skillName: "Fl\xEAche de lumi\xE8re"
+  skillName: Entaille
   description: 
   icon: {fileID: 21300000, guid: 2c04f4986ebc72e48a8b0c3eb2e42db2, type: 3}
   animationClip: {fileID: 7400000, guid: 5c02e50f216eb1445a2dccf169ba0c00, type: 2}
   animatorState: Base Layer.Skill_3_Entaille
   damages: 20
+  presentation:
+    entryBlendSeconds: 0.06
+    chainNormalizedTime: 1
+    chainTransitionNormalizedTime: 0.78
+    recoveryNormalizedTime: 0.9
+    exitBlendSeconds: 0.1
+    rootMotionMode: 2
+    facingMode: 0
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
   minimumHitDistance: 0
   maximumHitDistance: 10
+  requireValidRangeToStart: 0
   vfxCues:
-  - displayName: Shoot
+  - displayName: Dash Trail
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
-    audioClip: {fileID: 0}
-    delivery: 0
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
+    delivery: 3
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
-  - displayName: Eclair
+  - displayName: Entaille Impact
     prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
-    audioClip: {fileID: 0}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.04
+    hitStopSeconds: 0.085
+    camera:
+      lookOffsetKick: {x: 0, y: 0.05, z: 0.34}
+      fieldOfViewKick: -2.2
+      recoverySharpness: 15
+    screenWave:
+      enabled: 1
+      settings:
+        origin: {x: 0.5, y: 0.5}
+        direction: {x: 0, y: 0}
+        reverse: 0
+        frequency: 15
+        propagationSpeed: 2.1
+        amplitude: 0.14
+        duration: 0.32
+        falloff: 6
+        fadeOutDuration: 0.18
+        highlightIntensity: 1
+        edgeContrast: 3
+        highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 0}
+  retreatImpulse:
+    enabled: 0
+    horizontalImpulse: 24
+    verticalImpulse: 9
+    minimumInputLockSeconds: 0.12
+    maximumInputLockSeconds: 3.5
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

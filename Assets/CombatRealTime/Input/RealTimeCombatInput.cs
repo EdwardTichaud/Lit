@@ -26,6 +26,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private InputAction paletteNavigateAction;
     private InputAction paletteConfirmAction;
     private InputAction switchEnemyLockAction;
+    private InputAction lightSkillAction;
     private bool paletteOpen;
     private bool paletteInputSuppressed;
     private int selectedSlot;
@@ -88,6 +89,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         paletteNavigateAction = actionMap.FindAction("NavigatePalette", false);
         paletteConfirmAction = actionMap.FindAction("ConfirmPalette", false);
         switchEnemyLockAction = actionMap.FindAction("SwitchEnemyLock", false);
+        lightSkillAction = actionMap.FindAction("LightSkill", false);
     }
 
     private void ResolveSkillWheel()
@@ -124,6 +126,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (paletteNavigateAction != null) paletteNavigateAction.performed += OnNavigatePalette;
         if (paletteConfirmAction != null) paletteConfirmAction.performed += OnConfirmPalette;
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed += OnSwitchEnemyLock;
+        if (lightSkillAction != null) lightSkillAction.performed += OnLightSkill;
     }
 
     private void Unsubscribe()
@@ -139,6 +142,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (paletteNavigateAction != null) paletteNavigateAction.performed -= OnNavigatePalette;
         if (paletteConfirmAction != null) paletteConfirmAction.performed -= OnConfirmPalette;
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed -= OnSwitchEnemyLock;
+        if (lightSkillAction != null) lightSkillAction.performed -= OnLightSkill;
     }
 
     private static void OnDodge(InputAction.CallbackContext context)
@@ -155,6 +159,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         if (manager == null || !manager.IsCombatActive || manager.LockedEnemy == null)
+        {
+            return;
+        }
+
+        if (!manager.CanAcceptBasicSkillInput)
         {
             return;
         }
@@ -268,6 +277,14 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         }
     }
 
+    private void OnLightSkill(InputAction.CallbackContext context)
+    {
+        if (!paletteOpen)
+        {
+            GetComponent<LightSkillCombatController>()?.TryUseLightSkill();
+        }
+    }
+
     private IEnumerator PlayBasicSkillCombo(SkillsManager skillsManager)
     {
         while (basicSkillQueue.Count > 0)
@@ -279,6 +296,18 @@ public sealed class RealTimeCombatInput : MonoBehaviour
                 break;
             }
 
+            yield return manager.WaitForPlayerActionChainWindow();
+            if (!manager.IsCombatActive || manager.LockedEnemy == null)
+            {
+                basicSkillQueue.Clear();
+                break;
+            }
+
+            if (!manager.CanChainBasicSkill)
+            {
+                continue;
+            }
+
             BasicSkillsSO skill = basicSkillQueue.Dequeue();
             skillsManager.SetAnimationEventSkill(skill);
             if (!manager.TryUseSkill(skill))
@@ -286,15 +315,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
                 continue;
             }
 
-            float duration = skill.AnimationClip != null ? Mathf.Max(0f, skill.AnimationClip.length) : 0f;
-            if (duration > 0f)
-            {
-                yield return new WaitForSeconds(duration);
-            }
-            else
-            {
-                yield return null;
-            }
         }
 
         basicComboRoutine = null;

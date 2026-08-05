@@ -201,6 +201,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
+    public void OnLightSkill(InputAction.CallbackContext context)
+    {
+        if (context.performed && ShouldProcess(context))
+        {
+            LocalInputRouter.RaiseLightSkill(context);
+        }
+    }
+
     public void OnStart(InputAction.CallbackContext context)
     {
         if (context.performed && ShouldProcess(context))
