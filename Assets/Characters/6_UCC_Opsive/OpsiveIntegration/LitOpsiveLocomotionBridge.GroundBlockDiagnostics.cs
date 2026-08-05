@@ -37,17 +37,6 @@ public partial class LitOpsiveLocomotionBridge
     private void TickGroundBlockDiagnostics()
     {
 #if UNITY_EDITOR
-        if (!debugGroundBlockDiagnostics &&
-            Application.isPlaying &&
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("District_1") &&
-            SquadManager.Instance != null &&
-            SquadManager.Instance.currentCharacter == gameObject)
-        {
-            // District_1 est actuellement la seule zone en diagnostic : activer
-            // automatiquement la trace sur le personnage effectivement pilote.
-            debugGroundBlockDiagnostics = true;
-        }
-
         if (!debugGroundBlockDiagnostics ||
             !Application.isPlaying ||
             !IsDriving ||

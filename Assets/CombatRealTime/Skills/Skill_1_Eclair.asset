@@ -24,7 +24,7 @@ MonoBehaviour:
     recoveryNormalizedTime: 0.88
     exitBlendSeconds: 0.1
     rootMotionMode: 1
-    facingMode: 0
+    facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
   minimumHitDistance: 0

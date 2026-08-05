@@ -93,6 +93,14 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         }
     }
 
+    public void ConfigureLockFraming(Vector3 cameraOffset, float fieldOfView)
+    {
+        if (ResolveCombatLockView())
+        {
+            combatLockView.ConfigureCombatFraming(cameraOffset, fieldOfView);
+        }
+    }
+
     public void DeactivateLock()
     {
         if (!lockActive)
@@ -188,8 +196,6 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         {
             combatLockView.CopyGameplaySettingsFrom(gameplayView);
         }
-        combatLockView.ApplyCombatFraming();
-
         return true;
     }
 

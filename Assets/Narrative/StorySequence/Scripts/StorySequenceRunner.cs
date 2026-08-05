@@ -858,12 +858,6 @@ namespace Lit.Story
                     "StorySequenceRunner requiert StorySequenceSceneBindings et StorySequenceFadeController preconfigures.",
                     this);
             }
-            else if (cameraDriver == null || dialoguePresenter == null)
-            {
-                Debug.LogWarning(
-                    "StorySequenceRunner: CameraDriver et DialoguePresenter sont optionnels pour une sequence ne contenant ni plan camera StorySequence ni dialogue.",
-                    this);
-            }
         }
 
         private void OnDisable()

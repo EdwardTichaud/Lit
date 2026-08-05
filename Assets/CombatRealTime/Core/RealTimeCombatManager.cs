@@ -55,12 +55,14 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public event Action<RealTimeCombatReactionWindow> ReactionWindowChanged;
     public event Action<CombatAttackDefinition, int> PlayerAttackResolved;
     public event Action<int> PlayerLightDamageApplied;
+    public event Action<SkillSO, int> PlayerSkillImpactApplied;
     public event Action<SkillSO, int> EnemyAttackStarted;
     public event Action<int> PlayerDamaged;
     public event Action<bool> CombatResolved;
     public event Action<bool> CombatStateChanged;
 
     public bool IsCombatActive => combatActive;
+    public bool IsCinematicSequenceActive { get; private set; }
     public Transform PlayerRoot => playerRoot;
     public Animator PlayerAnimator => playerAnimator;
     public RealTimeCombatLoadout PlayerLoadout => playerLoadout;
@@ -151,6 +153,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public void EndCombat()
     {
         combatActive = false;
+        IsCinematicSequenceActive = false;
         reactionWindowOpen = false;
         receivedReactions.Clear();
         reactionSucceeded = false;
@@ -611,6 +614,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         PlayerLightDamageApplied?.Invoke(applied);
+        PlayerSkillImpactApplied?.Invoke(skill, applied);
         EvaluateCombatOutcome();
         return applied;
     }
@@ -649,6 +653,18 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public void CancelPlayerActionForCinematic()
     {
         playerActionPresentation?.CancelAction();
+    }
+
+    /// <summary>Prevents enemy reaction windows and impacts while a LightSkill owns the scene.</summary>
+    public void SetCinematicSequenceActive(bool active)
+    {
+        IsCinematicSequenceActive = active;
+        if (active)
+        {
+            reactionWindowOpen = false;
+            receivedReactions.Clear();
+            reactionSucceeded = false;
+        }
     }
 
     public bool TryLockPlayerForCinematic()
@@ -749,7 +765,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void BeginEnemyAttackWindow(RealTimeCombatEnemy enemy)
     {
-        if (!combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
+        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
         {
             return;
         }
@@ -790,7 +806,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void ResolveEnemyAttackImpact(RealTimeCombatEnemy enemy)
     {
-        if (!combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
+        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
         {
             return;
         }

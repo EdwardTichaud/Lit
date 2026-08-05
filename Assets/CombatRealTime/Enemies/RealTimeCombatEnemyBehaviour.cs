@@ -43,6 +43,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private bool searchCompletedForCurrentAlert;
     private bool hasLastKnownPlayerPosition;
     private bool returnedToPatrolWhilePlayerVisible;
+    private bool cinematicSuspended;
     private Vector3 initialPatrolPosition;
     private Quaternion initialPatrolRotation;
     private float lastAttackStartedAt;
@@ -55,6 +56,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     public event Action<bool> AttackModeChanged;
     public bool IsInAttackMode => attackMode && provokedByPlayer;
     public bool IsAlerted => alerted;
+    public bool IsCinematicSuspended => cinematicSuspended;
     public float CurrentDisengageDistance => alerted
         ? Mathf.Max(disengageDistance, alertedVisionDistance)
         : disengageDistance;
@@ -116,6 +118,12 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         {
             ExitAlert();
             SetAttackMode(false);
+            StopMovement();
+            return;
+        }
+
+        if (cinematicSuspended)
+        {
             StopMovement();
             return;
         }
@@ -250,6 +258,16 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             MoveTowardsPlayer(attackDistance);
         }
         else
+        {
+            StopMovement();
+        }
+    }
+
+    /// <summary>Suspends only this behaviour while a player cinematic owns the encounter.</summary>
+    public void SetCinematicSuspended(bool suspended)
+    {
+        cinematicSuspended = suspended;
+        if (suspended)
         {
             StopMovement();
         }

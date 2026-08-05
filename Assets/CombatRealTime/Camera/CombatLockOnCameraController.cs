@@ -16,6 +16,9 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
     [Header("Combat Lock Framing")]
     [SerializeField] private float playerLookHeight = 1.25f;
     [SerializeField] private float enemyLookHeight = 1.1f;
+    [Tooltip("Offset de la camera UCC pendant un lock. Un Z plus negatif recule la camera.")]
+    [SerializeField] private Vector3 lockCameraOffset = new Vector3(0.85f, 0.5f, -6.5f);
+    [SerializeField, Range(15f, 100f)] private float lockFieldOfView = 66f;
 
     [Header("Combat Lock Motion")]
     [SerializeField, Range(20f, 360f)] private float maximumLockOrbitDegreesPerSecond = 95f;
@@ -253,6 +256,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
         uccAdapter.SetCameraController(cameraController);
         uccAdapter.ConfigureLockMotion(maximumLockOrbitDegreesPerSecond, lockAxisSharpness);
+        uccAdapter.ConfigureLockFraming(lockCameraOffset, lockFieldOfView);
         return uccAdapter;
     }
 

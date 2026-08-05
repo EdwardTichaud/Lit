@@ -221,7 +221,7 @@ RectTransform:
   m_GameObject: {fileID: 3821463}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.7598789, y: 2.7598789, z: 2.7598789}
+  m_LocalScale: {x: 2.7481568, y: 2.7481568, z: 2.7481568}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1889583852}
@@ -23926,7 +23926,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5876711, y: 0.5876711, z: 0.5876711}
+  m_LocalScale: {x: 0.52969545, y: 0.52969545, z: 0.52969545}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -25869,7 +25869,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1d0123548bb4c788d01c01e6c4d0344, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightSkillPanelController
   canvasGroup: {fileID: 1010784487}
   chargeSlider: {fileID: 428287449}

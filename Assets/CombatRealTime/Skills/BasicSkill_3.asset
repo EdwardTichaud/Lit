@@ -21,11 +21,11 @@ MonoBehaviour:
   presentation:
     entryBlendSeconds: 0.04
     chainNormalizedTime: 0.55
-    chainTransitionNormalizedTime: 0.72
-    recoveryNormalizedTime: 0.94
-    exitBlendSeconds: 0.1
+    chainTransitionNormalizedTime: 0.7
+    recoveryNormalizedTime: 0.74
+    exitBlendSeconds: 0.05
     rootMotionMode: 1
-    facingMode: 0
+    facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
   minimumHitDistance: 0

@@ -27,21 +27,34 @@ Le prototype ne gere pas encore de contre : les skills joueur sont des attaques
 et les reactions ennemies actives sont seulement `Dodge` ou `Jump`. Les donnees
 de contre conservees sur les savoirs ne modifient pas le combat temps reel.
 Les `LightSkillSO` sont des capacites cinematographiques distinctes de la roue :
-ils portent le cout de jauge, le gain par degat de lumiere recu par l'ennemi, la
+ils portent le cout de jauge; chaque `SkillSO` ou `BasicSkillsSO` porte son gain
+explicite `Light Charge On Hit`, applique seulement apres un impact valide; la
 Timeline, les degats finaux et le gain de Clarte. `LightSkillCombatController`
 sur `BattleManager` suit cette charge pendant une session; les hits rates et
 l'impact du LightSkill ne la rechargent pas. `LightSkillPanel` de scene affiche
 la jauge uniquement en combat et devient cyan lorsqu'elle est prete. L'action
 `RealTimeCombat/LightSkill` (`Left Stick Press` / `R`) vide la jauge, verrouille
 temporairement Lucian et joue la Timeline du SO via le `PlayableDirector` du
-`BattleManager`. Un Signal Timeline peut appeler `ResolveLightSkillImpact` au
-frame d'impact; a defaut, l'impact est applique a l'arret de la Timeline.
+`BattleManager`. Pour `LightSkill_1_Furie`, les Signals `0 s`, `2 s` et `4 s`
+pilotent respectivement le depart, le plan arriere et l'impulsion; l'impact est
+obligatoirement declenche par l'Animation Event `ResolveLightSkillImpact` du
+clip d'attaque, sans fallback de fin de Timeline.
+Le clip de depart est une pose originale `LightSkill_1_Furie_Start_Temp` de
+1.1 s, sans root motion : recul, ouverture, contraction et pose finale. Son
+generateur est disponible via `Lit/Combat/Build LightSkill 1 Invocation Pose`.
 La resolution victoire/defaite est differee jusqu'a la sortie de cette Timeline,
 afin qu'un coup letal ne coupe jamais le plan cinematographique.
-Les tracks nommees `Player.Animator`, `Enemy.Animator` et `Main Camera` sont
-lies au lancement aux acteurs courants et a la camera locale; leurs noms restent
-configurables dans le `LightSkillSO`. Pendant cette Timeline, le lock suspend
-UCC comme pilote de camera puis le restaure proprement a la fin.
+Les tracks nommees `Player.Animator`, `Enemy.Animator`, `Signals` et
+`Cinemachine` sont lies au lancement aux acteurs courants. La Virtual Camera
+`LightSkill_1_Furie_VirtualCamera`, enfant de `BattleManager`, est selectionnee
+par la piste Cinemachine via `LitTimelineCinemachineBridge`: UCC est suspendu
+pendant le plan et restaure a la fin. `LightSkillFurieSequenceDriver` bloque
+l'IA de l'ennemi verrouille pendant les cinq secondes, pilote la traversee UCC
+vers `EnemyLockPoint` et expose trois `AudioClipSO` (depart, impulsion, impact)
+sur le `LightSkillSO`.
+L'impulsion Furie est une traversee UCC pilotee image par image jusqu'a la
+portee d'attaque, sur une duree maximale d'une seconde. Elle ne depend pas
+d'une force physique qui pourrait etre neutralisee par le verrou cinematographique.
 `CombatAttackDefinition`, `SkillSO`, `EnemySkills` et
 `RealTimeCombatLoadout` portent les données auteur, avec exactement huit slots
 d'attaque. `CombatLockOnCameraController` est le seul pilote de caméra lorsque
@@ -142,7 +155,10 @@ valide, il applique les degats et le stagger existants, joue tous les cues VFX/
 Audio, une `ScreenWave` locale optionnelle projetee depuis `EnemyLockPoint`, puis
 une impulsion UCC opposee a la cible. Cette impulsion suspend les controles
 jusqu'au retour au sol (borne de secours configurable), sans gerer le sol via le
-manager de combat. `CombatJumpKickShockwave` est le prefab visuel monde associe.
+manager de combat. `SkillRetreatImpulse` peut maintenir une inertie aerienne :
+apres sa deceleration configuree, une fraction de la vitesse horizontale est
+conservee jusqu'a l'atterrissage. Le Saut de rupture utilise `0.6 s` puis 35 %
+de sa vitesse initiale. `CombatJumpKickShockwave` est le prefab visuel monde associe.
 Les clips peuvent appeler `Dash` sur `RealTimeCombatAnimationEvents` : la force
 est calculee depuis le caster vers `EnemyLockPoint` plus
 `dashOvershootDistance`, afin de traverser la cible. `StopDash` applique ensuite
@@ -172,6 +188,9 @@ doivent porter le tag `RealTimeCombatRootMotion` : UCC conserve alors leur
 deplacement et leur rotation meme sans input. Les attaques root du
 prototype appliquent la meme synchronisation. Un nouveau lancement de competence
 ou d'attaque annule ce retour precedent.
+Les Skills et BasicSkills diriges utilisent `UccBody` : UCC tourne donc le
+corps de Lucian vers `EnemyLockPoint` et conserve cette orientation a la sortie
+du clip. `VisualOnly` reste reserve aux poses qui ne doivent tourner que le rig.
 `Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et cette
 state porte le tag `RealTimeCombatRootMotion`, comme toute competence qui peut
 deplacer Lucian pendant son clip.
@@ -194,6 +213,8 @@ l'arc avec `ProjectileFromPlayerHand`.
 Les BasicSkills 1, 2 et 3 sont regles a 5, 10 et 15 degats. Leurs clips
 appellent `HideSwordWhenComboEnds` : l'epee reste donc visible pendant une
 transition bufferisee et ne disparait qu'apres la recuperation du dernier coup.
+Ils ouvrent leur chaine a `0.55`, transitionnent entre `0.66` et `0.70` et
+rendent la locomotion entre `0.68` et `0.74`, avec un blend de sortie de `0.05 s`.
 `EnemySkills`, place sur la racine d'un ennemi temps reel, expose une liste de
 `SkillSO` sans roue de selection. Le meme receveur
 `RealTimeCombatAnimationEvents` permet aux clips ennemis d'appeler

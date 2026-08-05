@@ -126,6 +126,20 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     }
 
     /// <summary>
+    /// Player Animation Event: resolves the active LightSkill exactly on its authored contact frame.
+    /// </summary>
+    public void ResolveLightSkillImpact()
+    {
+        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+        if (manager == null)
+        {
+            return;
+        }
+
+        manager.GetComponent<LightSkillCombatController>()?.ResolveLightSkillImpact();
+    }
+
+    /// <summary>
     /// Animation Event joueur : joue tous les VFX de la competence selectionnee.
     /// </summary>
     public void InstantiateSkillVFX()
@@ -496,7 +510,9 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
                 impulse,
                 ForceMode.VelocityChange,
                 retreat.minimumInputLockSeconds,
-                retreat.maximumInputLockSeconds);
+                retreat.maximumInputLockSeconds,
+                retreat.airborneInertiaSeconds,
+                retreat.airborneInertiaEndSpeedMultiplier);
         }
     }
 

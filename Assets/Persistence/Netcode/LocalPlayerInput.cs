@@ -14,6 +14,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public static void EnsureInstance()
     {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
         if (Instance != null)
         {
             return;

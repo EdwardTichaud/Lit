@@ -75,6 +75,11 @@ masque, rayon, marge et distance minimale sont reglabes dans l'Inspector.
 Il calcule aussi les bounds des renderers de Lucian afin de garder le personnage
 entier dans une zone viewport configurable : le FOV augmente jusqu'a
 `maximumLockedFieldOfView`, puis la camera recule si cette limite ne suffit pas.
+Le cadrage normal reste configure sur la vue UCC `Adventure`; celui de lock est
+independant et expose par `CombatLockOnCameraController` (`Lock Camera Offset`,
+`Lock Field Of View`). Les valeurs actuelles rapprochent l'exploration (`z =
+-1.9`) et reculent le combat (`z = -6.5`, FOV 66), sans desactiver le solveur
+d'obstacles UCC.
 La direction d'orbite joueur-vers-ennemi possede son propre lissage
 `orbitDirectionSharpness`, distinct du lissage de position/rotation, et une
 vitesse angulaire maximale `maximumOrbitDegreesPerSecond` pour absorber les

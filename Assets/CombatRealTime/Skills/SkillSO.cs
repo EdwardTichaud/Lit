@@ -32,6 +32,11 @@ public sealed class SkillRetreatImpulse
     [Min(0f)] public float maximumVerticalImpulse = 8f;
     [Min(0f)] public float minimumInputLockSeconds = 0.12f;
     [Min(0.1f)] public float maximumInputLockSeconds = 3.5f;
+    [Header("Airborne Inertia")]
+    [Tooltip("Duree durant laquelle l'impulsion maintient progressivement son elan horizontal apres le recul.")]
+    [Min(0f)] public float airborneInertiaSeconds;
+    [Tooltip("Part de la vitesse horizontale initiale conservee jusqu'a l'atterrissage apres la deceleration aerienne.")]
+    [Range(0f, 1f)] public float airborneInertiaEndSpeedMultiplier = 0.3f;
 }
 
 [Serializable]
@@ -102,8 +107,8 @@ public sealed class PlayerActionPresentationProfile
     [Tooltip("InPlace: aucun deplacement racine. AuthoredRootMotion: le clip deplace UCC. ScriptedDash: le script pilote le dash.")]
     public PlayerActionRootMotionMode rootMotionMode = PlayerActionRootMotionMode.AuthoredRootMotion;
     [Header("Facing And Inertia")]
-    [Tooltip("VisualOnly (recommande) : Lucian regarde la cible mais conserve exactement son inertie UCC. UccBody : la capsule UCC tourne aussi, a reserver aux actions dirigees.")]
-    public PlayerActionFacingMode facingMode = PlayerActionFacingMode.VisualOnly;
+    [Tooltip("UccBody : la capsule UCC conserve l'orientation vers la cible apres l'action. VisualOnly ne tourne que le rig et convient aux poses non dirigees.")]
+    public PlayerActionFacingMode facingMode = PlayerActionFacingMode.UccBody;
     public bool allowMoveAfterRecovery = true;
     public bool allowDodgeAfterRecovery = true;
 
@@ -126,6 +131,9 @@ public class SkillSO : ScriptableObject
     [Tooltip("Chemin complet de la state Animator a jouer. Laisser vide pour utiliser le nom du clip.")]
     public string animatorState;
     [Min(0f)] public float damages;
+    [Header("Light Skill Charge")]
+    [Tooltip("Charge ajoutee a la jauge LightSkill lorsqu'un impact de cette competence touche reellement la cible.")]
+    [Min(0f)] public float lightChargeOnHit = 1f;
 
     [Header("Player Presentation")]
     public PlayerActionPresentationProfile presentation = new PlayerActionPresentationProfile();
@@ -157,6 +165,7 @@ public class SkillSO : ScriptableObject
     public string AnimatorState => animatorState;
     public PlayerActionPresentationProfile Presentation => presentation ?? (presentation = PlayerActionPresentationProfile.CreateDefault());
     public float Damages => damages;
+    public float LightChargeOnHit => lightChargeOnHit;
     public float MinimumHitDistance => minimumHitDistance;
     public float MaximumHitDistance => Mathf.Max(minimumHitDistance, maximumHitDistance);
     public bool RequireValidRangeToStart => requireValidRangeToStart;

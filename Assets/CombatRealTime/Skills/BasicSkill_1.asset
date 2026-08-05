@@ -18,18 +18,20 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: c421e761ada49ce41bdbd4f3d05d77cc, type: 2}
   animatorState: Base Layer.BasicSkill_1
   damages: 5
+  lightChargeOnHit: 10
   presentation:
     entryBlendSeconds: 0.04
     chainNormalizedTime: 0.55
-    chainTransitionNormalizedTime: 0.72
-    recoveryNormalizedTime: 0.94
-    exitBlendSeconds: 0.1
+    chainTransitionNormalizedTime: 0.66
+    recoveryNormalizedTime: 0.68
+    exitBlendSeconds: 0.05
     rootMotionMode: 1
-    facingMode: 0
+    facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
   minimumHitDistance: 0
   maximumHitDistance: 5
+  requireValidRangeToStart: 0
   vfxCues:
   - displayName: Impact
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
@@ -48,11 +50,29 @@ MonoBehaviour:
       recoverySharpness: 26
     screenWave:
       enabled: 0
-      settings: { origin: {x: 0.5, y: 0.5}, direction: {x: 0, y: 0}, reverse: 0, frequency: 4, propagationSpeed: 1.45, amplitude: 0.03, duration: 0.9, falloff: 2, fadeOutDuration: 0.35, highlightIntensity: 0.38, edgeContrast: 2.2, highlightColor: {r: 0.72, g: 0.9, b: 1, a: 1} }
+      settings:
+        origin: {x: 0.5, y: 0.5}
+        direction: {x: 0, y: 0}
+        reverse: 0
+        frequency: 4
+        propagationSpeed: 1.45
+        amplitude: 0.03
+        duration: 0.9
+        falloff: 2
+        fadeOutDuration: 0.35
+        highlightIntensity: 0.38
+        edgeContrast: 2.2
+        highlightColor: {r: 0.72, g: 0.9, b: 1, a: 1}
     additionalImpactVfx: {fileID: 0}
     additionalImpactAudio: {fileID: 0}
   retreatImpulse:
     enabled: 0
+    horizontalImpulse: 24
+    verticalImpulse: 9
+    maximumHorizontalImpulse: 24
+    maximumVerticalImpulse: 8
+    minimumInputLockSeconds: 0.12
+    maximumInputLockSeconds: 3.5
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

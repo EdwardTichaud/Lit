@@ -405,6 +405,17 @@ public partial class SquadCharacterController : MonoBehaviour
             }
         }
 
+        // The gameplay camera owns the scene listener. Character listeners are
+        // only a fallback for scenes that deliberately have no gameplay camera.
+        Camera gameplayCamera = Camera.main;
+        AudioListener cameraListener = gameplayCamera != null
+            ? gameplayCamera.GetComponent<AudioListener>()
+            : null;
+        if (cameraListener != null && cameraListener != audioListener && cameraListener.enabled)
+        {
+            shouldBeActive = false;
+        }
+
         if (!force && shouldBeActive == audioListenerActive)
         {
             return;

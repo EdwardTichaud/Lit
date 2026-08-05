@@ -1,5 +1,7 @@
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 [DisallowMultipleComponent]
 public sealed class LightSkillCombatController : MonoBehaviour
@@ -8,7 +10,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private PlayableDirector director;
     [SerializeField] private LightSkillSO lightSkill;
-    [SerializeField] private CombatLockOnCameraController lockCamera;
+    [SerializeField] private LightSkillFurieSequenceDriver furieSequence;
 
     private float charge;
     private bool cinematicPlaying;
@@ -69,6 +71,11 @@ public sealed class LightSkillCombatController : MonoBehaviour
             return false;
         }
 
+        if (furieSequence == null || !furieSequence.BeginSequence(combatManager, lightSkill))
+        {
+            return false;
+        }
+
         cinematicPlaying = true;
         impactResolved = false;
         charge = 0f;
@@ -78,7 +85,6 @@ public sealed class LightSkillCombatController : MonoBehaviour
 
         director.playableAsset = lightSkill.Timeline;
         BindTimelineTargets();
-        lockCamera?.SetCinematicOverride(true);
         director.time = 0d;
         director.Evaluate();
         director.Play();
@@ -97,6 +103,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         impactResolved = true;
+        furieSequence?.NotifyImpactResolved();
         combatManager.ApplyLightSkillDamage(lightSkill, resolveCombatOutcome: false);
     }
 
@@ -115,14 +122,14 @@ public sealed class LightSkillCombatController : MonoBehaviour
         NotifyStateChanged();
     }
 
-    private void OnPlayerLightDamageApplied(int damage)
+    private void OnPlayerSkillImpactApplied(SkillSO skill, int damage)
     {
-        if (!IsCombatActive || cinematicPlaying || lightSkill == null || damage <= 0)
+        if (!IsCombatActive || cinematicPlaying || lightSkill == null || skill == null || damage <= 0)
         {
             return;
         }
 
-        charge = Mathf.Min(RequiredCharge, charge + damage * lightSkill.ChargePerLightDamage);
+        charge = Mathf.Min(RequiredCharge, charge + skill.LightChargeOnHit);
         NotifyStateChanged();
     }
 
@@ -162,7 +169,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
             playerLockHeld = false;
         }
 
-        lockCamera?.SetCinematicOverride(false);
+        furieSequence?.EndSequence();
         if (impactResolved && combatManager != null && combatManager.IsCombatActive)
         {
             combatManager.ResolveDeferredCombatOutcome();
@@ -183,8 +190,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
         {
             combatManager.CombatStateChanged -= OnCombatStateChanged;
             combatManager.CombatStateChanged += OnCombatStateChanged;
-            combatManager.PlayerLightDamageApplied -= OnPlayerLightDamageApplied;
-            combatManager.PlayerLightDamageApplied += OnPlayerLightDamageApplied;
+            combatManager.PlayerSkillImpactApplied -= OnPlayerSkillImpactApplied;
+            combatManager.PlayerSkillImpactApplied += OnPlayerSkillImpactApplied;
         }
 
         if (director != null)
@@ -199,7 +206,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         if (combatManager != null)
         {
             combatManager.CombatStateChanged -= OnCombatStateChanged;
-            combatManager.PlayerLightDamageApplied -= OnPlayerLightDamageApplied;
+            combatManager.PlayerSkillImpactApplied -= OnPlayerSkillImpactApplied;
         }
 
         if (director != null)
@@ -213,7 +220,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
         if (director == null) director = GetComponent<PlayableDirector>();
-        if (lockCamera == null) lockCamera = GetComponent<CombatLockOnCameraController>();
+        if (furieSequence == null) furieSequence = GetComponent<LightSkillFurieSequenceDriver>();
     }
 
     private void BindTimelineTargets()
@@ -238,9 +245,19 @@ public sealed class LightSkillCombatController : MonoBehaviour
             {
                 director.SetGenericBinding(output.sourceObject, combatManager.LockedEnemy.Animator);
             }
-            else if (output.streamName == lightSkill.CameraTrackName && lockCamera != null && lockCamera.ControlledCamera != null)
+            else if (output.sourceObject is SignalTrack && furieSequence != null && furieSequence.SignalReceiver != null)
             {
-                director.SetGenericBinding(output.sourceObject, lockCamera.ControlledCamera);
+                director.SetGenericBinding(output.sourceObject, furieSequence.SignalReceiver);
+            }
+            else if (output.sourceObject is CinemachineTrack cinemachineTrack && furieSequence != null && furieSequence.VirtualCamera != null)
+            {
+                foreach (TimelineClip clip in cinemachineTrack.GetClips())
+                {
+                    if (clip.asset is CinemachineShot shot)
+                    {
+                        director.SetReferenceValue(shot.VirtualCamera.exposedName, furieSequence.VirtualCamera);
+                    }
+                }
             }
         }
     }

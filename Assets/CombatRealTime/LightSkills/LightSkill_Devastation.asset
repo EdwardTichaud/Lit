@@ -16,10 +16,14 @@ MonoBehaviour:
   icon: {fileID: 0}
   requiredCharge: 100
   chargePerLightDamage: 1
-  timeline: {fileID: 0}
+  timeline: {fileID: 11400000, guid: 032dfd3671d483f46b8bba6b969b55a5, type: 2}
   playerAnimatorTrackName: Player.Animator
   enemyAnimatorTrackName: Enemy.Animator
-  cameraTrackName: Main Camera
+  cinemachineTrackName: Cinemachine
+  maximumCinematicStartDistance: 18
+  startSfx: {fileID: 0}
+  impulseSfx: {fileID: 0}
+  impactSfx: {fileID: 0}
   damage: 50
   clarityGain: 15
-  resolveDamageWhenTimelineStops: 1
+  resolveDamageWhenTimelineStops: 0

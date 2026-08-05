@@ -767,7 +767,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Vector3 worldImpulse,
         ForceMode forceMode,
         float minimumInputLockSeconds,
-        float maximumInputLockSeconds)
+        float maximumInputLockSeconds,
+        float airborneInertiaSeconds = 0f,
+        float airborneInertiaEndSpeedMultiplier = 0.3f)
     {
         ResolveReferences();
         if (!IsDriving || locomotion == null || worldImpulse.sqrMagnitude <= 0f)
@@ -792,7 +794,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         externalImpulseLockRoutine = StartCoroutine(EndExternalImpulseLockWhenGrounded(
             Mathf.Max(0f, minimumInputLockSeconds),
-            Mathf.Max(0.1f, maximumInputLockSeconds)));
+            Mathf.Max(0.1f, maximumInputLockSeconds),
+            Vector3.ProjectOnPlane(worldImpulse, transform.up),
+            Mathf.Max(0f, airborneInertiaSeconds),
+            Mathf.Clamp01(airborneInertiaEndSpeedMultiplier)));
         return true;
     }
 
@@ -922,14 +927,31 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         EndExternalLock();
     }
 
-    private IEnumerator EndExternalImpulseLockWhenGrounded(float minimumDelay, float maximumDelay)
+    private IEnumerator EndExternalImpulseLockWhenGrounded(
+        float minimumDelay,
+        float maximumDelay,
+        Vector3 planarImpulse,
+        float airborneInertiaSeconds,
+        float airborneInertiaEndSpeedMultiplier)
     {
         float elapsed = 0f;
         bool leftGround = !Grounded;
+        float initialPlanarSpeed = planarImpulse.magnitude;
+        Vector3 inertiaDirection = initialPlanarSpeed > 0.0001f
+            ? planarImpulse / initialPlanarSpeed
+            : Vector3.zero;
         while (elapsed < maximumDelay)
         {
             elapsed += Time.unscaledDeltaTime;
             leftGround |= !Grounded;
+
+            MaintainAirborneImpulseInertia(
+                elapsed,
+                inertiaDirection,
+                initialPlanarSpeed,
+                airborneInertiaSeconds,
+                airborneInertiaEndSpeedMultiplier);
+
             // Une petite impulsion peut rester rapportee Grounded par UCC. Dans ce
             // cas, ce sol deja detecte est une restitution legitime plutot qu'un
             // verrouillage jusqu'a la borne de secours.
@@ -943,6 +965,31 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         externalImpulseLockRoutine = null;
         EndExternalLock();
+    }
+
+    private void MaintainAirborneImpulseInertia(
+        float elapsed,
+        Vector3 direction,
+        float initialSpeed,
+        float inertiaSeconds,
+        float endSpeedMultiplier)
+    {
+        if (locomotion == null || Grounded || inertiaSeconds <= 0f ||
+            direction.sqrMagnitude <= 0.0001f || initialSpeed <= 0f)
+        {
+            return;
+        }
+
+        float deceleration = Mathf.Clamp01(elapsed / inertiaSeconds);
+        float desiredSpeed = Mathf.Lerp(initialSpeed, initialSpeed * endSpeedMultiplier, deceleration);
+        float currentForwardSpeed = Vector3.Dot(PlanarVelocity, direction);
+        float missingSpeed = desiredSpeed - currentForwardSpeed;
+        if (missingSpeed > 0.01f)
+        {
+            // UCC neutralise l'input pendant un recul. Cette compensation
+            // conserve l'elan auteurise sans accelerer au-dela de sa vitesse cible.
+            locomotion.AddForce(direction * missingSpeed, 1, false);
+        }
     }
 
     private void ForceZeroInput()

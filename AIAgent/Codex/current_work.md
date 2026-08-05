@@ -50,6 +50,9 @@ couleur des contours bleus d'interactables.
 Pendant ce lock, la camera conserve un evitement des obstacles visuels par
 SphereCast, configurable sur `CombatLockOnCameraController`, sans laisser les
 drivers UCC reprendre le cadrage de cible.
+Hors lock, la vue UCC `Adventure` utilise un offset rapproche (`z = -1.9`);
+le lock combat applique un offset distinct plus recule (`z = -6.5`) et un FOV
+de 66, exposes sur `CombatLockOnCameraController` du `GameplaySessionRoot`.
 La Main Camera et ses trois drivers UCC (`CameraController`, handler et binder)
 sont references explicitement dans `GameplaySessionRoot`; le lock les maintient
 desactives a chaque frame jusqu'au deverrouillage.
@@ -76,6 +79,8 @@ declenche `ResolveSkillImpactAndRetreat` au contact : degats 15, stagger ennemi,
 VFX/Audio d'impact, onde monde et ScreenWave locale cyan. L'impulsion UCC
 projette ensuite Lucian a l'oppose de `EnemyLockPoint`; ses controles restent
 verrouilles jusqu'au prochain atterrissage, avec une borne de secours de 3.5 s.
+Son profil conserve un elan horizontal decroissant pendant `0.6 s`, puis 35 %
+de sa vitesse initiale jusqu'a l'atterrissage, pour eviter un arret en plein air.
 Les Skills 1 a 4 et les BasicSkills partagent maintenant un
 `CombatImpactFeedbackProfile` directement configure dans chaque `SkillSO`.
 Apres un hit effectivement applique, `CombatImpactFeedbackController` du
@@ -92,12 +97,23 @@ et amorti en temps non scale; son amplitude, sa duree et sa frequence sont
 reglables globalement dans `GameplaySessionRoot`.
 Le `LightSkillPanel` de `Bootstrap` est maintenant visible uniquement pendant
 un combat temps reel. Sa jauge est alimentee par les degats effectivement
-appliques par Lucian; lorsqu'elle atteint le cout de `LightSkillSO`, l'action
-`RealTimeCombat/LightSkill` lance sa Timeline cinematographique, verrouille
-Lucian puis rend les controles a la fin. L'impact est resolu en fin de Timeline
-par defaut, ou au frame exact d'un Signal appelant `ResolveLightSkillImpact`.
-Une mort ennemie reste volontairement en attente jusqu'a la fin de ce plan afin
-de ne jamais couper une fatality cinematographique au frame d'impact.
+appliques par Lucian, selon `Light Charge On Hit` configure sur le `SkillSO` ou
+le `BasicSkillsSO` qui a touche; lorsqu'elle atteint le cout de `LightSkillSO`, l'action
+`RealTimeCombat/LightSkill` lance une Timeline cinematographique puis rend les
+controles a la fin. `LightSkill_1_Furie` dure cinq secondes: une Virtual Camera
+Cinemachine relative a Lucian ouvre face a lui, passe a 2 s derriere ses pieds
+avec un recul Z de 6, puis suit avec retard son impulsion vers `EnemyLockPoint`
+a 4 s. L'ennemi est suspendu pendant le plan; l'impact depend uniquement de
+l'Animation Event `ResolveLightSkillImpact`, sans fallback. Trois AudioClipSO
+configurables (depart, impulsion, impact) sont exposes par le LightSkill. Une
+mort ennemie reste volontairement en attente jusqu'a la fin de ce plan afin de
+ne jamais couper une fatality cinematographique au frame d'impact. Son clip de
+depart `LightSkill_1_Furie_Start_Temp` est une pose originale de 1.1 s sans
+root motion : recul, ouverture des bras, contraction d'energie puis pose de
+puissance. Il peut etre regenere depuis `Lit/Combat/Build LightSkill 1 Invocation Pose`.
+L'impulsion Furie utilise une traversée UCC pilotee image par image, et non une
+force physique : le verrou cinematographique ne peut donc pas annuler son
+deplacement vers la portee d'attaque.
 `Skill_2_Fleche de lumiere` restitue maintenant la locomotion a 78 % de son
 clip, apres le tir, au lieu d'attendre sa quasi-totalite.
 Quand les PV de Lucian atteignent zero, `PlayerActionPresentationController`
@@ -208,7 +224,9 @@ La validation oriente d'abord Lucian horizontalement vers `EnemyLockPoint` via
 UCC, puis joue l'etat Animator explicitement configure sur le `SkillSO`
 selectionne (avec fallback sur le nom du `AnimationClip`);
 ses Animation Events restent responsables des VFX et degats. Les slots sans
-SkillSO sont masques et exclus de la navigation de la roue.
+SkillSO sont masques et exclus de la navigation de la roue. Les Skills et
+BasicSkills de Lucian utilisent `UccBody` : la capsule conserve donc l'orientation
+vers la cible apres le retour a locomotion, au lieu de ne tourner que le rig.
 `SkillsManager` expose aussi une liste `BasicSkills` de `BasicSkillsSO`.
 Pendant un lock, `WestButton` ajoute le prochain basic skill a un buffer de
 combo : les clips sont joues dans l'ordre de la liste puis bouclent. Les Basic
@@ -218,8 +236,9 @@ au premier basic skill. Une seule attaque peut etre bufferisee derriere celle
 en cours; les pressions excedentaires sont ignorees. Chaque profil de
 presentation expose une ouverture de chaine et une transition de chaine : une
 BasicSkill bufferisee interrompt alors le clip courant a cette transition, sans
-attendre sa recuperation. Les trois BasicSkills de Lucian ouvrent a `0.55` et
-transitionnent a `0.72` avec un blend de `0.04 s`. `ToggleTorch` ignore
+attendre sa recuperation. Les trois BasicSkills de Lucian ouvrent a `0.55`,
+transitionnent entre `0.66` et `0.70` puis restituent la locomotion entre `0.68`
+et `0.74`, avec un blend de sortie de `0.05 s`. `ToggleTorch` ignore
 `WestButton` tant qu'une cible est verrouillee.
 Chaque `SkillSO`, donc aussi chaque `BasicSkillsSO`, expose une distance
 horizontale minimale et maximale de hit. `HitEnemy` ne blesse la cible qu'a la

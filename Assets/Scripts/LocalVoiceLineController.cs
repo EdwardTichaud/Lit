@@ -1250,6 +1250,9 @@ public class LocalVoiceLineController : MonoBehaviour
         {
         }
 
+        // Keep the fallback root owned by the voice-line host. It cannot then
+        // survive the character scene while Unity is tearing Play Mode down.
+        createdRoot.transform.SetParent(transform, false);
         textRoot = createdRoot.transform;
         warnedMissingTextRoot = false;
     }

@@ -25,7 +25,7 @@ MonoBehaviour:
     recoveryNormalizedTime: 0.96
     exitBlendSeconds: 0.1
     rootMotionMode: 2
-    facingMode: 0
+    facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
   minimumHitDistance: 0
@@ -78,6 +78,8 @@ MonoBehaviour:
     maximumVerticalImpulse: 8
     minimumInputLockSeconds: 0.12
     maximumInputLockSeconds: 3.5
+    airborneInertiaSeconds: 0.6
+    airborneInertiaEndSpeedMultiplier: 0.35
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

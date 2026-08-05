@@ -24,6 +24,13 @@ public sealed class CombatLockAdventureViewType : Adventure
         lockAxisSharpness = Mathf.Max(0.1f, axisSharpness);
     }
 
+    public void ConfigureCombatFraming(Vector3 cameraOffset, float fieldOfView)
+    {
+        combatLookOffset = cameraOffset;
+        combatFieldOfView = Mathf.Clamp(fieldOfView, 15f, 100f);
+        ApplyCombatFraming();
+    }
+
     public void ResetLockAxisSmoothing()
     {
         hasSmoothedPlayerToEnemyAxis = false;
