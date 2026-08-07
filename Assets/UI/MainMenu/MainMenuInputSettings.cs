@@ -32,46 +32,18 @@ public static class MainMenuInputSettings
 
     public static InputMode GetSavedMode()
     {
-        if (!PlayerPrefs.HasKey(InputModePrefKey))
-        {
-            if (PlayerPrefs.HasKey(LegacyInputModePrefKey))
-            {
-                PlayerPrefs.DeleteKey(LegacyInputModePrefKey);
-                PlayerPrefs.Save();
-            }
-
-            return InputMode.Automatic;
-        }
-
-        int savedValue = PlayerPrefs.GetInt(InputModePrefKey, (int)InputMode.Automatic);
-        if (savedValue == (int)InputMode.Automatic)
-        {
-            return InputMode.Automatic;
-        }
-
-        if (savedValue == (int)InputMode.Gamepad)
-        {
-            return InputMode.Gamepad;
-        }
-
-        if (savedValue == (int)InputMode.KeyboardMouse)
-        {
-            return InputMode.KeyboardMouse;
-        }
-
-        return InputMode.Automatic;
+        return InputMode.Gamepad;
     }
 
     public static bool SetMode(InputMode mode)
     {
         EnsureInitialized();
-        if (currentMode == mode)
+        if (currentMode == InputMode.Gamepad)
         {
-            SaveCurrentMode();
             return false;
         }
 
-        currentMode = mode;
+        currentMode = InputMode.Gamepad;
         SaveCurrentMode();
         ModeChanged?.Invoke(currentMode);
         return true;
@@ -105,12 +77,12 @@ public static class MainMenuInputSettings
 
     public static bool AllowsKeyboardMouse()
     {
-        return GetCurrentMode() != InputMode.Gamepad;
+        return false;
     }
 
     public static bool AllowsGamepad()
     {
-        return GetCurrentMode() != InputMode.KeyboardMouse;
+        return true;
     }
 
     private static void EnsureInitialized()

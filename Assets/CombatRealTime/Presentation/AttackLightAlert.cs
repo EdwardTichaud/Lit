@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public sealed class AttackLightAlert : MonoBehaviour
@@ -73,6 +74,27 @@ public sealed class AttackLightAlert : MonoBehaviour
         elapsed = 0f;
         isPlaying = true;
         visual.localScale = restingScale * 5f;
+    }
+
+    public void Configure(Color color, float duration, Camera camera)
+    {
+        durationSeconds = Mathf.Max(0.01f, duration);
+        targetCamera = camera;
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null && renderers[i].material.HasProperty("_BaseColor"))
+            {
+                renderers[i].material.SetColor("_BaseColor", color);
+            }
+            else if (renderers[i] != null && renderers[i].material.HasProperty("_Color"))
+            {
+                renderers[i].material.color = color;
+            }
+        }
+
+        Image[] images = GetComponentsInChildren<Image>(true);
+        for (int i = 0; i < images.Length; i++) images[i].color = color;
     }
 
     private void ResolveVisual()

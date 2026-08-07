@@ -12,6 +12,7 @@ public static class LocalInputRouter
         Jump,
         Interact,
         TriggerMunin,
+        CompanionFusion,
         ToggleTorch,
         TakeAll,
         Return,
@@ -33,6 +34,7 @@ public static class LocalInputRouter
     public static event Action<InputAction.CallbackContext> Jump;
     public static event Action<InputAction.CallbackContext> Interact;
     public static event Action<InputAction.CallbackContext> TriggerMunin;
+    public static event Action<InputAction.CallbackContext> CompanionFusion;
     public static event Action<InputAction.CallbackContext> ToggleTorch;
     public static event Action<InputAction.CallbackContext> TakeAll;
     public static event Action<InputAction.CallbackContext> Return;
@@ -99,6 +101,7 @@ public static class LocalInputRouter
         Jump = null;
         Interact = null;
         TriggerMunin = null;
+        CompanionFusion = null;
         ToggleTorch = null;
         TakeAll = null;
         Return = null;
@@ -433,6 +436,16 @@ public static class LocalInputRouter
 
         triggerMuninConsumed = false;
         TriggerMunin?.Invoke(context);
+    }
+
+    internal static void RaiseCompanionFusion(InputAction.CallbackContext context)
+    {
+        if (!AllowInput(InputGate.CompanionFusion))
+        {
+            return;
+        }
+
+        CompanionFusion?.Invoke(context);
     }
 
     internal static bool TryConsumeToggleTorch()

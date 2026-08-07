@@ -63655,6 +63655,7 @@ GameObject:
   - component: {fileID: 676721192920161153}
   - component: {fileID: 9044862137203376082}
   - component: {fileID: 9016713512317957907}
+  - component: {fileID: 2013792231348988201}
   m_Layer: 0
   m_Name: Munin_Orbe
   m_TagString: Untagged
@@ -68503,7 +68504,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4854344400256043577}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1d07b9dc2d5c4ed9a9f95591be2bbbf1, type: 3}
   m_Name: 
@@ -68520,6 +68521,37 @@ MonoBehaviour:
   disableContinuousEnforcementAfterStablePass: 1
   enforceContinuously: 0
   warnOnceOnInvalidMaterial: 1
+--- !u!114 &2013792231348988201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4854344400256043577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b18aa7df57784a779b0d3a56e0790a3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialState: 0
+  stateBlendSpeed: 6
+  attentionPulseScale: 0.035
+  attentionDuration: 0.7
+  actionPulseScale: 0.12
+  actionPulseDuration: 0.28
+  actionDuration: 0.45
+  disableContinuousDistortion: 1
+  actionLayerTokens:
+  - burst
+  - impact
+  haloLayerTokens:
+  - glow
+  - lens
+  coreLayerTokens:
+  - sphere
+  distortionLayerTokens:
+  - distort
+  maxParticleScreenSize: 0.07
 --- !u!1 &5239763095766085114
 GameObject:
   m_ObjectHideFlags: 0

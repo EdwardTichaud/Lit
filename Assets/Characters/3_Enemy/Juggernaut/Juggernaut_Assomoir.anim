@@ -292953,8 +292953,8 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.1
-    functionName: ShowReactionPrompt
+  - time: 0.44000003
+    functionName: BeginReactionTelegraph
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -292967,8 +292967,22 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
+  - time: 0.9820801
+    functionName: OpenReactionWindow
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 1.35
     functionName: HitPlayer
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.5840001
+    functionName: ResolveEnemyAttackImpact
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

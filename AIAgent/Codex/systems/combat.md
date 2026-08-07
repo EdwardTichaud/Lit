@@ -19,13 +19,31 @@ Pendant la mémoire d'alerte, un ennemi provoqué peut consommer ce ledger même
 si une animation root l'a temporairement tourné hors de son champ de vision ; il
 continue alors de se tourner vers Lucian. La perte de vision prolongée conserve
 les règles existantes de désengagement.
-Les Animation Events `ShowReactionPrompt`/`OpenReactionWindow`,
+Les Animation Events `BeginReactionTelegraph`/`OpenReactionWindow`,
 `ResolveEnemyAttackImpact` et `EndEnemyAttack` de
-`RealTimeCombatAnimationEvents` restent la seule source du timing de prompt,
+`RealTimeCombatAnimationEvents` restent la seule source du timing de menace,
 fenêtre, impact et clôture. Le prototype n'a pas de fallback temporisé.
-Le prototype ne gere pas encore de contre : les skills joueur sont des attaques
-et les reactions ennemies actives sont seulement `Dodge` ou `Jump`. Les donnees
-de contre conservees sur les savoirs ne modifient pas le combat temps reel.
+Le combat temps reel gere aussi `Counter`. `SouthButton` maintenu active une
+garde, qui reduit les degats au moment de l'impact; une pression commencee dans
+la fenetre ouverte par l'Animation Event et acceptee par le `SkillSO` ennemi
+suspend l'attaque avant son impact. `CounterSkillCombatController` fige alors le
+temps, l'IA et les actions, puis ouvre `CounterSkillWheel`. Le stick droit choisit
+un `CounterSkillSO`, `SouthButton` confirme et `EastButton` annule. Chaque
+`CounterSkillSO` porte une Timeline, les noms de pistes dynamiques joueur/ennemi/
+Cinemachine, ses degats, sa Clarite et ses AudioClipSO. La Timeline tourne en
+temps non scale; seul `ResolveCounterSkillImpact` applique le hit. Sa fin termine
+definitivement l'attaque suspendue et restaure le temps, le lock et les inputs.
+Les attaques qui ne listent pas `Counter` dans `acceptedEnemyReactions` restent
+gardables mais ne peuvent pas declencher cette riposte.
+La garde visuelle est une state `Guard_Block` de `Player_Model`, alimentee par
+`Anim_SF_Block_v2` du pack Super Fast Fighting. `CounterSkillCombatController`
+la joue au maintien de South et revient a l'Idle de combat au relachement. Tant
+que cette state n'est pas encore installee, il utilise
+`Twinblades_Defense_Hit_Root` comme fallback visuel.
+Le prototype Juggernaut est installe par `Lit/Combat/Build CounterSkill Prototype` :
+ce menu editeur cree la Timeline, le `CounterSkillSO`, la roue `CounterSkillWheel`
+dans `Bootstrap` et la Virtual Camera sous `BattleManager`; aucun de ces objets
+UI n'est cree pendant le jeu.
 Les `LightSkillSO` sont des capacites cinematographiques distinctes de la roue :
 ils portent le cout de jauge; chaque `SkillSO` ou `BasicSkillsSO` porte son gain
 explicite `Light Charge On Hit`, applique seulement apres un impact valide; la
@@ -215,6 +233,16 @@ appellent `HideSwordWhenComboEnds` : l'epee reste donc visible pendant une
 transition bufferisee et ne disparait qu'apres la recuperation du dernier coup.
 Ils ouvrent leur chaine a `0.55`, transitionnent entre `0.66` et `0.70` et
 rendent la locomotion entre `0.68` et `0.74`, avec un blend de sortie de `0.05 s`.
+`CombatMobilityController`, sur `BattleManager`, gere les actions de mobilite
+du combat temps reel. `Dodge` joue une des quatre states root directionnelles,
+avec un startup de 0.05 s, 0.18 s d'invulnerabilite et 0.25 s de cooldown.
+`EastButton` joue l'esquive root directionnelle avec ses i-frames; `SouthButton`
+est reserve a la garde et au contre, et le dash dedie a ete retire du prototype.
+`Jump` appelle la capacite UCC existante. Les actions restent soumises a la priorite mort,
+cinematique et hurt; un unique input de mobilite peut etre conserve 0.12 s
+jusqu'a l'ouverture de l'annulation d'un skill. `PlayerActionPresentationProfile`
+expose `mobilityCancelNormalizedTime` et `allowMobilityCancel`; les trois
+BasicSkills ouvrent respectivement a 0.35, 0.42 et 0.55.
 `EnemySkills`, place sur la racine d'un ennemi temps reel, expose une liste de
 `SkillSO` sans roue de selection. Le meme receveur
 `RealTimeCombatAnimationEvents` permet aux clips ennemis d'appeler
@@ -584,6 +612,28 @@ restent calcules sur la duree principale de la vague, pas sur le fade-out.
 Le snapshot monde du retry combat utilise une capture qui conserve les issues
 de validation mais ne les log pas en erreurs console, afin de ne pas polluer
 l'entree combat avec des providers de scene incomplets deja presents.
+
+### Telegraphie des reactions temps reel
+
+Les attaques ennemies temps reel exposent un `CombatReactionTelegraphProfile`
+dans leur `SkillSO`. Il est optionnel et contient le prefab de pulse, les
+couleurs de menace/fenetre parfaite, les AudioClipSO, le fade et le micro-ralenti.
+Un clip ennemi conserve seul les timings : `BeginReactionTelegraph` affiche la
+menace sans ouvrir de logique, `OpenReactionWindow` ouvre la fenetre et
+`ResolveEnemyAttackImpact` la ferme et resout les degats. Ne pas remettre
+`ShowInput` ou `HideInput` sur ces clips : ils restent reserves aux sequences
+non-combat.
+
+`CombatReactionTelegraphController` est le pilote unique de presentation sur
+`BattleManager`. Il gere un seul prompt world-space et le nettoie sur impact,
+desengagement, mort, changement de lock et contre. Le micro-ralenti est gere
+par `CombatImpactFeedbackController` en temps non scale et ne peut pas
+restaurer `Time.timeScale` pendant une pause de CounterSkill ou un hit-stop.
+Avant chaque phase, le controleur resout a nouveau le prompt actif afin de ne
+pas conserver une reference detruite lors d'un changement de scene. Son Canvas
+world-space se rattache a `Camera.main` et utilise un ordre de rendu eleve.
+Le menu `Lit/Combat/Configure Reaction Telegraph` configure Assomoir et le
+prompt `RealTimeCombatReactionPrompt` de `Bootstrap`.
 
 ## Pièges observés
 

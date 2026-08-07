@@ -70,6 +70,23 @@ public sealed class CombatImpactFeedbackProfile
     public AudioClipSO additionalImpactAudio;
 }
 
+[Serializable]
+public sealed class CombatReactionTelegraphProfile
+{
+    public bool enabled = true;
+    public GameObject alertPrefab;
+    public Color threatColor = new Color(0.85f, 0.08f, 0.4f, 1f);
+    public Color perfectWindowColor = new Color(0.72f, 0.94f, 1f, 1f);
+    [Min(0f)] public float heightOffset = 1.1f;
+    [Min(0.01f)] public float fadeSeconds = 0.12f;
+    public AudioClipSO anticipationAudio;
+    public AudioClipSO perfectWindowAudio;
+    public AudioClipSO successfulReactionAudio;
+    public bool usePerfectWindowSlowMotion = true;
+    [Range(0.1f, 1f)] public float perfectWindowTimeScale = 0.85f;
+    [Min(0f)] public float perfectWindowSlowMotionSeconds = 0.15f;
+}
+
 public enum SkillVfxDelivery
 {
     DirectOnTarget,
@@ -101,6 +118,8 @@ public sealed class PlayerActionPresentationProfile
     [Range(0.05f, 1f)] public float chainNormalizedTime = 0.7f;
     [Range(0.05f, 1f), Tooltip("Instant ou une BasicSkill bufferisee interrompt le clip courant. Il est automatiquement borne entre l'ouverture de chaine et la recuperation.")]
     public float chainTransitionNormalizedTime = 0.78f;
+    [Range(0.05f, 1f), Tooltip("Instant a partir duquel une esquive, un dash ou un saut peut interrompre cette action.")]
+    public float mobilityCancelNormalizedTime = 0.7f;
     [Range(0.05f, 1f)] public float recoveryNormalizedTime = 0.88f;
     [Range(0f, 0.25f)] public float exitBlendSeconds = 0.1f;
     [Header("Root Motion")]
@@ -111,6 +130,8 @@ public sealed class PlayerActionPresentationProfile
     public PlayerActionFacingMode facingMode = PlayerActionFacingMode.UccBody;
     public bool allowMoveAfterRecovery = true;
     public bool allowDodgeAfterRecovery = true;
+    [Tooltip("Autorise les actions de mobilite a interrompre ce skill a partir de Mobility Cancel Normalized Time.")]
+    public bool allowMobilityCancel = true;
 
     public static PlayerActionPresentationProfile CreateDefault()
     {
@@ -158,6 +179,8 @@ public class SkillSO : ScriptableObject
     public List<RealTimeCombatReaction> acceptedEnemyReactions = new List<RealTimeCombatReaction> { RealTimeCombatReaction.Dodge };
     public bool requireAllEnemyReactions;
     public AudioClipSO enemyAttackSfx;
+    [Header("Reaction Telegraph")]
+    public CombatReactionTelegraphProfile reactionTelegraph = new CombatReactionTelegraphProfile();
 
     public string SkillName => string.IsNullOrWhiteSpace(skillName) ? name : skillName;
     public Sprite Icon => icon;
@@ -177,6 +200,7 @@ public class SkillSO : ScriptableObject
     public IReadOnlyList<RealTimeCombatReaction> AcceptedEnemyReactions => acceptedEnemyReactions;
     public bool RequireAllEnemyReactions => requireAllEnemyReactions;
     public AudioClipSO EnemyAttackSfx => enemyAttackSfx;
+    public CombatReactionTelegraphProfile ReactionTelegraph => reactionTelegraph ?? (reactionTelegraph = new CombatReactionTelegraphProfile());
 
     public bool AcceptsEnemyReaction(RealTimeCombatReaction reaction)
     {

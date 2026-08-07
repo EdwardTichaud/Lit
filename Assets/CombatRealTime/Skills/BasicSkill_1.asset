@@ -23,12 +23,14 @@ MonoBehaviour:
     entryBlendSeconds: 0.04
     chainNormalizedTime: 0.55
     chainTransitionNormalizedTime: 0.66
+    mobilityCancelNormalizedTime: 0.35
     recoveryNormalizedTime: 0.68
     exitBlendSeconds: 0.05
     rootMotionMode: 1
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
+    allowMobilityCancel: 1
   minimumHitDistance: 0
   maximumHitDistance: 5
   requireValidRangeToStart: 0

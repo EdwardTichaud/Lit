@@ -183,6 +183,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Melt"",
+                    ""type"": ""Button"",
+                    ""id"": ""0a92e065-bb46-4142-9fd0-8b7368ebcfa0"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""TriggerMunin"",
                     ""type"": ""Button"",
                     ""id"": ""111345cd-be72-451f-852f-4119bbeff9ae"",
@@ -364,7 +373,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""67435425-930c-406d-92eb-118b0d93f754"",
-                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""path"": ""<Gamepad>/dpad/up"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
@@ -441,7 +450,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""fdbddc11-3aac-4e3c-a8a5-70e857509a2b"",
-                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""path"": ""<Gamepad>/dpad/right"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
@@ -463,7 +472,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""2ea15f9b-8737-4f1a-9189-9ea26a4fa612"",
-                    ""path"": ""<Gamepad>/dpad/right"",
+                    ""path"": ""<Gamepad>/dpad/down"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -484,8 +493,19 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""f1ff94dd-c3cf-4c1b-8ae7-f3e90bbd9a13"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": ""tap(duration=0.35)"",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Melt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""ba7ccfa2-59b4-4113-b5f6-9ed111e512d2"",
-                    ""path"": ""<Gamepad>/leftStickPress"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -759,7 +779,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""02e75207-a35b-4a35-9ccd-e66a9feafc8a"",
-                    ""path"": ""<Keyboard>/f"",
+                    ""path"": ""<Keyboard>/c"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse"",
@@ -771,7 +791,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""190a5081-7346-4e93-91b8-5a3f7380e30f"",
                     ""path"": ""<Gamepad>/rightStickPress"",
-                    ""interactions"": """",
+                    ""interactions"": ""hold(duration=0.6)"",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""Recenter"",
@@ -926,6 +946,194 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             ]
         },
         {
+            ""name"": ""RealTimeCombat"",
+            ""id"": ""9d7ebf37-bc60-4bb7-af68-34a14db1b087"",
+            ""actions"": [
+                {
+                    ""name"": ""Counter"",
+                    ""type"": ""Button"",
+                    ""id"": ""a6e25cc2-0024-49b6-a776-60aac20b6716"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Dodge"",
+                    ""type"": ""Button"",
+                    ""id"": ""c8e1b6f8-1f7a-420a-8b00-06545a6acb13"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""BasicAttack"",
+                    ""type"": ""Button"",
+                    ""id"": ""f4136061-a73e-4b08-ad3a-86bcbcd09b50"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Jump"",
+                    ""type"": ""Button"",
+                    ""id"": ""9f596f13-7b4f-4cb0-b2d3-78cfa0984ad1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""OpenPalette"",
+                    ""type"": ""Button"",
+                    ""id"": ""8e168bf7-1d6f-4457-9249-fb351eb50fa2"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""NavigatePalette"",
+                    ""type"": ""Value"",
+                    ""id"": ""09fac925-dffb-4cdd-ae58-594d20d11ef2"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""ConfirmPalette"",
+                    ""type"": ""Button"",
+                    ""id"": ""bb43930d-c7e1-4e2f-8ea8-0f08c581223d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwitchEnemyLock"",
+                    ""type"": ""Button"",
+                    ""id"": ""15dd4a16-4c84-4b89-ab75-82c14ccfe563"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LightSkill"",
+                    ""type"": ""Button"",
+                    ""id"": ""60a38d0c-a3e8-4b4d-ac60-215a72b00b27"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""725d3835-5b9a-4e1e-93ce-8714e42ddf6c"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Dodge"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0a4b552a-ba3d-42ca-9468-851b450bd9e8"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Counter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3c6ed609-38f4-41f5-aa8f-b631c1d1c17a"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""BasicAttack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9b560277-ea61-4e89-aa5e-4b28184526ef"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""48ca3c8c-d945-41df-9708-e4ea9f3bc784"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""OpenPalette"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b06f70a8-42a7-4adf-a83d-549a1a7f6e14"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": ""stickDeadzone(min=0.5,max=1)"",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""NavigatePalette"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""31cfab7d-e9a4-4f55-870d-30ef420e96b6"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""ConfirmPalette"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ef6c57dd-a706-4f87-9be9-60b8521f6e8d"",
+                    ""path"": ""<Gamepad>/dpad/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""SwitchEnemyLock"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""418d388a-a65e-4c98-a1c9-4e6626e5d07e"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""LightSkill"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
             ""name"": ""Combat"",
             ""id"": ""e3f4bcd7-4a72-46de-b122-a5006f9b6e04"",
             ""actions"": [
@@ -1069,6 +1277,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Player_Start = m_Player.FindAction("Start", throwIfNotFound: true);
         m_Player_RightShoulder = m_Player.FindAction("RightShoulder", throwIfNotFound: true);
         m_Player_LocomotionMode = m_Player.FindAction("LocomotionMode", throwIfNotFound: true);
+        m_Player_Melt = m_Player.FindAction("Melt", throwIfNotFound: true);
         m_Player_TriggerMunin = m_Player.FindAction("TriggerMunin", throwIfNotFound: true);
         m_Player_ToggleTorch = m_Player.FindAction("ToggleTorch", throwIfNotFound: true);
         m_Player_SwitchTarget = m_Player.FindAction("SwitchTarget", throwIfNotFound: true);
@@ -1091,6 +1300,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_Falling_Move = m_Falling.FindAction("Move", throwIfNotFound: true);
         m_Falling_Accelerate = m_Falling.FindAction("Accelerate", throwIfNotFound: true);
         m_Falling_Grapple = m_Falling.FindAction("Grapple", throwIfNotFound: true);
+        // RealTimeCombat
+        m_RealTimeCombat = asset.FindActionMap("RealTimeCombat", throwIfNotFound: true);
+        m_RealTimeCombat_Counter = m_RealTimeCombat.FindAction("Counter", throwIfNotFound: true);
+        m_RealTimeCombat_Dodge = m_RealTimeCombat.FindAction("Dodge", throwIfNotFound: true);
+        m_RealTimeCombat_BasicAttack = m_RealTimeCombat.FindAction("BasicAttack", throwIfNotFound: true);
+        m_RealTimeCombat_Jump = m_RealTimeCombat.FindAction("Jump", throwIfNotFound: true);
+        m_RealTimeCombat_OpenPalette = m_RealTimeCombat.FindAction("OpenPalette", throwIfNotFound: true);
+        m_RealTimeCombat_NavigatePalette = m_RealTimeCombat.FindAction("NavigatePalette", throwIfNotFound: true);
+        m_RealTimeCombat_ConfirmPalette = m_RealTimeCombat.FindAction("ConfirmPalette", throwIfNotFound: true);
+        m_RealTimeCombat_SwitchEnemyLock = m_RealTimeCombat.FindAction("SwitchEnemyLock", throwIfNotFound: true);
+        m_RealTimeCombat_LightSkill = m_RealTimeCombat.FindAction("LightSkill", throwIfNotFound: true);
         // Combat
         m_Combat = asset.FindActionMap("Combat", throwIfNotFound: true);
         m_Combat_UseItem1 = m_Combat.FindAction("UseItem1", throwIfNotFound: true);
@@ -1103,6 +1323,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, PlayerInputs.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Camera.enabled, "This will cause a leak and performance issues, PlayerInputs.Camera.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Falling.enabled, "This will cause a leak and performance issues, PlayerInputs.Falling.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_RealTimeCombat.enabled, "This will cause a leak and performance issues, PlayerInputs.RealTimeCombat.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Combat.enabled, "This will cause a leak and performance issues, PlayerInputs.Combat.Disable() has not been called.");
     }
 
@@ -1189,6 +1410,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Start;
     private readonly InputAction m_Player_RightShoulder;
     private readonly InputAction m_Player_LocomotionMode;
+    private readonly InputAction m_Player_Melt;
     private readonly InputAction m_Player_TriggerMunin;
     private readonly InputAction m_Player_ToggleTorch;
     private readonly InputAction m_Player_SwitchTarget;
@@ -1245,6 +1467,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/LocomotionMode".
         /// </summary>
         public InputAction @LocomotionMode => m_Wrapper.m_Player_LocomotionMode;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Melt".
+        /// </summary>
+        public InputAction @Melt => m_Wrapper.m_Player_Melt;
         /// <summary>
         /// Provides access to the underlying input action "Player/TriggerMunin".
         /// </summary>
@@ -1321,6 +1547,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LocomotionMode.started += instance.OnLocomotionMode;
             @LocomotionMode.performed += instance.OnLocomotionMode;
             @LocomotionMode.canceled += instance.OnLocomotionMode;
+            @Melt.started += instance.OnMelt;
+            @Melt.performed += instance.OnMelt;
+            @Melt.canceled += instance.OnMelt;
             @TriggerMunin.started += instance.OnTriggerMunin;
             @TriggerMunin.performed += instance.OnTriggerMunin;
             @TriggerMunin.canceled += instance.OnTriggerMunin;
@@ -1377,6 +1606,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @LocomotionMode.started -= instance.OnLocomotionMode;
             @LocomotionMode.performed -= instance.OnLocomotionMode;
             @LocomotionMode.canceled -= instance.OnLocomotionMode;
+            @Melt.started -= instance.OnMelt;
+            @Melt.performed -= instance.OnMelt;
+            @Melt.canceled -= instance.OnMelt;
             @TriggerMunin.started -= instance.OnTriggerMunin;
             @TriggerMunin.performed -= instance.OnTriggerMunin;
             @TriggerMunin.canceled -= instance.OnTriggerMunin;
@@ -1739,6 +1971,190 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     /// </summary>
     public FallingActions @Falling => new FallingActions(this);
 
+    // RealTimeCombat
+    private readonly InputActionMap m_RealTimeCombat;
+    private List<IRealTimeCombatActions> m_RealTimeCombatActionsCallbackInterfaces = new List<IRealTimeCombatActions>();
+    private readonly InputAction m_RealTimeCombat_Counter;
+    private readonly InputAction m_RealTimeCombat_Dodge;
+    private readonly InputAction m_RealTimeCombat_BasicAttack;
+    private readonly InputAction m_RealTimeCombat_Jump;
+    private readonly InputAction m_RealTimeCombat_OpenPalette;
+    private readonly InputAction m_RealTimeCombat_NavigatePalette;
+    private readonly InputAction m_RealTimeCombat_ConfirmPalette;
+    private readonly InputAction m_RealTimeCombat_SwitchEnemyLock;
+    private readonly InputAction m_RealTimeCombat_LightSkill;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "RealTimeCombat".
+    /// </summary>
+    public struct RealTimeCombatActions
+    {
+        private @PlayerInputs m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public RealTimeCombatActions(@PlayerInputs wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/Counter".
+        /// </summary>
+        public InputAction @Counter => m_Wrapper.m_RealTimeCombat_Counter;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/Dodge".
+        /// </summary>
+        public InputAction @Dodge => m_Wrapper.m_RealTimeCombat_Dodge;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/BasicAttack".
+        /// </summary>
+        public InputAction @BasicAttack => m_Wrapper.m_RealTimeCombat_BasicAttack;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/Jump".
+        /// </summary>
+        public InputAction @Jump => m_Wrapper.m_RealTimeCombat_Jump;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/OpenPalette".
+        /// </summary>
+        public InputAction @OpenPalette => m_Wrapper.m_RealTimeCombat_OpenPalette;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/NavigatePalette".
+        /// </summary>
+        public InputAction @NavigatePalette => m_Wrapper.m_RealTimeCombat_NavigatePalette;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/ConfirmPalette".
+        /// </summary>
+        public InputAction @ConfirmPalette => m_Wrapper.m_RealTimeCombat_ConfirmPalette;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/SwitchEnemyLock".
+        /// </summary>
+        public InputAction @SwitchEnemyLock => m_Wrapper.m_RealTimeCombat_SwitchEnemyLock;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/LightSkill".
+        /// </summary>
+        public InputAction @LightSkill => m_Wrapper.m_RealTimeCombat_LightSkill;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_RealTimeCombat; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="RealTimeCombatActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(RealTimeCombatActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="RealTimeCombatActions" />
+        public void AddCallbacks(IRealTimeCombatActions instance)
+        {
+            if (instance == null || m_Wrapper.m_RealTimeCombatActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_RealTimeCombatActionsCallbackInterfaces.Add(instance);
+            @Counter.started += instance.OnCounter;
+            @Counter.performed += instance.OnCounter;
+            @Counter.canceled += instance.OnCounter;
+            @Dodge.started += instance.OnDodge;
+            @Dodge.performed += instance.OnDodge;
+            @Dodge.canceled += instance.OnDodge;
+            @BasicAttack.started += instance.OnBasicAttack;
+            @BasicAttack.performed += instance.OnBasicAttack;
+            @BasicAttack.canceled += instance.OnBasicAttack;
+            @Jump.started += instance.OnJump;
+            @Jump.performed += instance.OnJump;
+            @Jump.canceled += instance.OnJump;
+            @OpenPalette.started += instance.OnOpenPalette;
+            @OpenPalette.performed += instance.OnOpenPalette;
+            @OpenPalette.canceled += instance.OnOpenPalette;
+            @NavigatePalette.started += instance.OnNavigatePalette;
+            @NavigatePalette.performed += instance.OnNavigatePalette;
+            @NavigatePalette.canceled += instance.OnNavigatePalette;
+            @ConfirmPalette.started += instance.OnConfirmPalette;
+            @ConfirmPalette.performed += instance.OnConfirmPalette;
+            @ConfirmPalette.canceled += instance.OnConfirmPalette;
+            @SwitchEnemyLock.started += instance.OnSwitchEnemyLock;
+            @SwitchEnemyLock.performed += instance.OnSwitchEnemyLock;
+            @SwitchEnemyLock.canceled += instance.OnSwitchEnemyLock;
+            @LightSkill.started += instance.OnLightSkill;
+            @LightSkill.performed += instance.OnLightSkill;
+            @LightSkill.canceled += instance.OnLightSkill;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="RealTimeCombatActions" />
+        private void UnregisterCallbacks(IRealTimeCombatActions instance)
+        {
+            @Counter.started -= instance.OnCounter;
+            @Counter.performed -= instance.OnCounter;
+            @Counter.canceled -= instance.OnCounter;
+            @Dodge.started -= instance.OnDodge;
+            @Dodge.performed -= instance.OnDodge;
+            @Dodge.canceled -= instance.OnDodge;
+            @BasicAttack.started -= instance.OnBasicAttack;
+            @BasicAttack.performed -= instance.OnBasicAttack;
+            @BasicAttack.canceled -= instance.OnBasicAttack;
+            @Jump.started -= instance.OnJump;
+            @Jump.performed -= instance.OnJump;
+            @Jump.canceled -= instance.OnJump;
+            @OpenPalette.started -= instance.OnOpenPalette;
+            @OpenPalette.performed -= instance.OnOpenPalette;
+            @OpenPalette.canceled -= instance.OnOpenPalette;
+            @NavigatePalette.started -= instance.OnNavigatePalette;
+            @NavigatePalette.performed -= instance.OnNavigatePalette;
+            @NavigatePalette.canceled -= instance.OnNavigatePalette;
+            @ConfirmPalette.started -= instance.OnConfirmPalette;
+            @ConfirmPalette.performed -= instance.OnConfirmPalette;
+            @ConfirmPalette.canceled -= instance.OnConfirmPalette;
+            @SwitchEnemyLock.started -= instance.OnSwitchEnemyLock;
+            @SwitchEnemyLock.performed -= instance.OnSwitchEnemyLock;
+            @SwitchEnemyLock.canceled -= instance.OnSwitchEnemyLock;
+            @LightSkill.started -= instance.OnLightSkill;
+            @LightSkill.performed -= instance.OnLightSkill;
+            @LightSkill.canceled -= instance.OnLightSkill;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="RealTimeCombatActions.UnregisterCallbacks(IRealTimeCombatActions)" />.
+        /// </summary>
+        /// <seealso cref="RealTimeCombatActions.UnregisterCallbacks(IRealTimeCombatActions)" />
+        public void RemoveCallbacks(IRealTimeCombatActions instance)
+        {
+            if (m_Wrapper.m_RealTimeCombatActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="RealTimeCombatActions.AddCallbacks(IRealTimeCombatActions)" />
+        /// <seealso cref="RealTimeCombatActions.RemoveCallbacks(IRealTimeCombatActions)" />
+        /// <seealso cref="RealTimeCombatActions.UnregisterCallbacks(IRealTimeCombatActions)" />
+        public void SetCallbacks(IRealTimeCombatActions instance)
+        {
+            foreach (var item in m_Wrapper.m_RealTimeCombatActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_RealTimeCombatActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="RealTimeCombatActions" /> instance referencing this action map.
+    /// </summary>
+    public RealTimeCombatActions @RealTimeCombat => new RealTimeCombatActions(this);
+
     // Combat
     private readonly InputActionMap m_Combat;
     private List<ICombatActions> m_CombatActionsCallbackInterfaces = new List<ICombatActions>();
@@ -1999,6 +2415,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLocomotionMode(InputAction.CallbackContext context);
         /// <summary>
+        /// Method invoked when associated input action "Melt" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMelt(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "TriggerMunin" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -2140,6 +2563,77 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnGrapple(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "RealTimeCombat" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="RealTimeCombatActions.AddCallbacks(IRealTimeCombatActions)" />
+    /// <seealso cref="RealTimeCombatActions.RemoveCallbacks(IRealTimeCombatActions)" />
+    public interface IRealTimeCombatActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Counter" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCounter(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Dodge" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDodge(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "BasicAttack" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnBasicAttack(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Jump" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnJump(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "OpenPalette" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnOpenPalette(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "NavigatePalette" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnNavigatePalette(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ConfirmPalette" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnConfirmPalette(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SwitchEnemyLock" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSwitchEnemyLock(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LightSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLightSkill(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Combat" which allows adding and removing callbacks.

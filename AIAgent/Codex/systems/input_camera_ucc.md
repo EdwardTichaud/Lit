@@ -115,6 +115,43 @@ ignore : il n'ouvre pas le panneau d'escouade et ne prend aucun focus.
 actif, `WestButton` est reserve a
 `BasicAttack` : l'action `Player/ToggleTorch` l'ignore.
 
+La source des actions runtime est maintenant `PlayerInputs.inputactions` : sa
+map `RealTimeCombat` reprend les actions du prototype avec le layout gamepad
+final (South garde/contre, East esquive, West attaque, North saut, LT roue, RT skill de
+lumiere et D-pad bas changement de cible). `RealTimeCombatInput` place un
+contexte `Combat` exclusif pendant son activation; `LocalPlayerInput` laisse
+passer mouvement, camera et lock, mais ne transmet plus les actions monde
+concurrentes (interaction, retour, inventaire, torche, Munin, loot ou multi).
+`GamepadInputContextStack` est la couche de migration des futurs contextes UI,
+placement et cinematique. Elle est purgee a chaque reset de session.
+
+La map `RealTimeCombat` lie `Counter` a `Gamepad/buttonSouth` (`Space`) et
+`Dodge` a `Gamepad/buttonEast` (`LeftAlt`). `SouthButton` maintient une garde et
+peut ouvrir la roue de CounterSkill lors d'une fenetre parfaite; cette roue
+consomme stick droit, South pour confirmer et East pour annuler. `NorthButton`
+reste `Jump`. Les directions d'esquive viennent du vecteur monde deja calcule
+par UCC; sans stick, l'esquive part vers l'arriere. Pendant un lock, la locomotion libre conserve
+l'orientation de Lucian vers son mouvement; seules les actions engagees le
+reorientent vers `EnemyLockPoint`.
+
+Pour une attaque ennemie temps reel, les icones South/East/North ne proviennent
+plus de `ShowInput` pendant les clips de combat. Le prompt world-space unique
+lit les reactions acceptees par le `SkillSO`, les montre attenuees pendant la
+menace, puis nettes pendant la fenetre ouverte. South commence une garde a tout
+moment; seule une pression dans une fenetre qui accepte `Counter` ouvre la roue
+de CounterSkill. East conserve l'esquive et North le saut, qui restent
+enregistres comme reactions uniquement lorsque la fenetre Animation Event est
+ouverte.
+
+Les actions de combat font face a l'ennemi verrouille. Pour `Dodge`, un stick
+gauche non nul a priorite : Lucian s'oriente vers la direction voulue et roule
+dans celle-ci. Sans direction, il reste face a la cible et roule vers l'arriere.
+
+`LocalPlayerInput` est persistant en Play Mode. Pendant un dechargement de
+scene dans l'editeur, son `InputActionAsset` doit etre detruit immediatement :
+une destruction differee laisse Unity signaler un objet `LocalPlayerInput`
+non nettoye.
+
 Le franchissement automatique d'obstacles reste dans `LitOpsiveLocomotionBridge` :
 les obstacles sous le seuil d'ignorance ne déclenchent rien, les obstacles bas
 franchissables lancent un court traversal scripté avec trigger Animator

@@ -10,6 +10,8 @@ public static class RealTimeCombatAnimatorInstaller
     private const string StateMachineName = "RealTimeCombat_RootMotion";
     private const string StateTag = "RealTimeCombatRootMotion";
     private const string Root = "Assets/0 - UnityPackages/Fab/TwinBladesBundle/";
+    private const string GuardClipPath = "Assets/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_Two/Anim_SF_Block_v2.fbx";
+    private const string GuardStateName = "Guard_Block";
 
     private static readonly string[] ClipPaths =
     {
@@ -70,6 +72,15 @@ public static class RealTimeCombatAnimatorInstaller
             state.motion = clip;
             state.tag = StateTag;
             state.writeDefaultValues = true;
+        }
+
+        AnimationClip guardClip = LoadClip(GuardClipPath);
+        if (guardClip != null)
+        {
+            AnimatorState guardState = FindState(machine, GuardStateName)
+                ?? machine.AddState(GuardStateName, new Vector3(1040f, 640f, 0f));
+            guardState.motion = guardClip;
+            guardState.writeDefaultValues = true;
         }
 
         EditorUtility.SetDirty(controller);

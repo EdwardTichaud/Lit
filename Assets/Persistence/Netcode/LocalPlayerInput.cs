@@ -83,7 +83,17 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         if (playerInputs != null)
         {
             playerInputs.Disable();
-            playerInputs.Dispose();
+            if (Application.isPlaying)
+            {
+                playerInputs.Dispose();
+            }
+            else if (playerInputs.asset != null)
+            {
+                // Scene teardown in the editor cannot process a deferred Destroy.
+                DestroyImmediate(playerInputs.asset);
+            }
+
+            playerInputs = null;
         }
 
         MainMenuInputSettings.ModeChanged -= OnInputModeChanged;
@@ -104,7 +114,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnInteract(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseInteract(context);
         }
@@ -147,15 +157,23 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnTriggerMunin(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseTriggerMunin(context);
         }
     }
 
+    public void OnMelt(InputAction.CallbackContext context)
+    {
+        if (context.performed && CanProcessGameplayAction(context))
+        {
+            LocalInputRouter.RaiseCompanionFusion(context);
+        }
+    }
+
     public void OnToggleTorch(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseToggleTorch(context);
         }
@@ -163,7 +181,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnTakeAll(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseTakeAll(context);
         }
@@ -171,7 +189,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnReturn(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseReturn(context);
         }
@@ -184,7 +202,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
             return;
         }
 
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseInventory(context);
         }
@@ -192,7 +210,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnMulti(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseMulti(context);
         }
@@ -200,7 +218,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnSelect(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseSelect(context);
         }
@@ -208,7 +226,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnLightSkill(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseLightSkill(context);
         }
@@ -405,6 +423,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     private static bool ShouldProcess(InputAction.CallbackContext context)
     {
         return MainMenuInputSettings.IsActionAllowed(context);
+    }
+
+    private static bool CanProcessGameplayAction(InputAction.CallbackContext context)
+    {
+        return !GamepadInputContextStack.IsGameplayInputSuppressed && ShouldProcess(context);
     }
 
     private static bool IsLocalCombatActive()

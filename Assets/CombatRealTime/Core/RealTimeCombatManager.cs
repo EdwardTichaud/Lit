@@ -16,6 +16,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private LitOpsiveLocomotionBridge playerLocomotionBridge;
     [SerializeField] private Animator playerAnimator;
     [SerializeField] private PlayerActionPresentationController playerActionPresentation;
+    [SerializeField] private CombatMobilityController playerMobility;
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private VisionField playerVision;
     [SerializeField] private RealTimeCombatEnemy lockedEnemy;
@@ -57,6 +58,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public event Action<int> PlayerLightDamageApplied;
     public event Action<SkillSO, int> PlayerSkillImpactApplied;
     public event Action<SkillSO, int> EnemyAttackStarted;
+    public event Action<SkillSO, bool> ReactionImpactResolved;
     public event Action<int> PlayerDamaged;
     public event Action<bool> CombatResolved;
     public event Action<bool> CombatStateChanged;
@@ -70,6 +72,46 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public float Clarity => clarity;
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
     public bool CanAcceptBasicSkillInput => playerActionPresentation == null || playerActionPresentation.CanAcceptBasicSkillInput;
+
+    /// <summary>Faces Lucian toward the current manual lock without starting an action.</summary>
+    public bool FacePlayerTowardsLockedEnemy()
+    {
+        return lockedEnemy != null && FacePlayerTowards(lockedEnemy.LockPoint.position);
+    }
+
+    /// <summary>Faces Lucian toward a world direction. Used by intentional directional evasions.</summary>
+    public bool FacePlayerTowardsDirection(Vector3 worldDirection)
+    {
+        if (playerRoot == null)
+        {
+            return false;
+        }
+
+        worldDirection.y = 0f;
+        if (worldDirection.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        LitOpsiveLocomotionBridge bridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
+        if (bridge == null || !bridge.SetActionFacingDirection(worldDirection))
+        {
+            playerRoot.rotation = Quaternion.LookRotation(worldDirection.normalized, Vector3.up);
+        }
+
+        return true;
+    }
+
+    private bool FacePlayerTowards(Vector3 worldPosition)
+    {
+        if (playerRoot == null)
+        {
+            return false;
+        }
+
+        Vector3 direction = worldPosition - playerRoot.position;
+        return FacePlayerTowardsDirection(direction);
+    }
     public bool CanChainBasicSkill => playerActionPresentation != null && playerActionPresentation.CanChainBasicSkill;
 
     private void Awake()
@@ -645,6 +687,29 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         return applied;
     }
 
+    /// <summary>Applies a counter cinematic impact without feeding the enemy retaliation ledger.</summary>
+    public int ApplyCounterSkillDamage(CounterSkillSO skill, bool resolveCombatOutcome = true)
+    {
+        if (!combatActive || IsPlayerDead() || skill == null || lockedEnemy == null ||
+            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        {
+            return 0;
+        }
+
+        int applied = lockedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false);
+        if (applied <= 0)
+        {
+            return 0;
+        }
+
+        AddClarity(skill.ClarityGain);
+        if (resolveCombatOutcome)
+        {
+            EvaluateCombatOutcome();
+        }
+        return applied;
+    }
+
     public void ResolveDeferredCombatOutcome()
     {
         EvaluateCombatOutcome();
@@ -665,6 +730,51 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             receivedReactions.Clear();
             reactionSucceeded = false;
         }
+    }
+
+    /// <summary>Closes the current reaction window and freezes its attack for CounterSkill selection.</summary>
+    public bool TryBeginCounterSelection()
+    {
+        if (IsCinematicSequenceActive || !combatActive || !reactionWindowOpen || lockedEnemy == null ||
+            lockedEnemy.ActiveSkill == null || !lockedEnemy.ActiveSkill.AcceptsEnemyReaction(RealTimeCombatReaction.Counter))
+        {
+            return false;
+        }
+
+        reactionWindowOpen = false;
+        reactionSucceeded = true;
+        receivedReactions.Clear();
+        ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(
+            lockedEnemy.transform,
+            lockedEnemy.ActiveSkill,
+            lockedEnemy.CommittedRetaliationDamage,
+            false));
+        SetCinematicSequenceActive(true);
+        return true;
+    }
+
+    public void CancelCounterSelection()
+    {
+        if (IsCinematicSequenceActive)
+        {
+            SetCinematicSequenceActive(false);
+        }
+    }
+
+    /// <summary>Finalizes the suspended attack without allowing its original Animation Events to resume.</summary>
+    public void CompleteCounterAttack()
+    {
+        RealTimeCombatEnemy enemy = lockedEnemy;
+        if (enemy != null)
+        {
+            enemy.CompleteRetaliationAndPrepareNext();
+            enemy.ReturnToIdleAnimation();
+        }
+
+        reactionWindowOpen = false;
+        reactionSucceeded = false;
+        receivedReactions.Clear();
+        SetCinematicSequenceActive(false);
     }
 
     public bool TryLockPlayerForCinematic()
@@ -753,6 +863,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         int damage = caster.ActiveSkill != null
             ? caster.CommittedRetaliationDamage
             : Mathf.Max(0, Mathf.RoundToInt(skill.Damages));
+        damage = CounterSkillCombatController.ModifyGuardDamage(damage);
         int applied = ApplyPlayerDamage(damage);
         if (applied > 0)
         {
@@ -780,7 +891,9 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public void RegisterReaction(RealTimeCombatReaction reaction)
     {
         if (!reactionWindowOpen || lockedEnemy == null || lockedEnemy.ActiveSkill == null ||
-            (reaction != RealTimeCombatReaction.Dodge && reaction != RealTimeCombatReaction.Jump))
+            (reaction != RealTimeCombatReaction.Counter &&
+             reaction != RealTimeCombatReaction.Dodge &&
+             reaction != RealTimeCombatReaction.Jump))
         {
             return;
         }
@@ -813,10 +926,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         reactionWindowOpen = false;
         ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(enemy.transform, enemy.ActiveSkill, enemy.CommittedRetaliationDamage, false));
-        if (!reactionSucceeded)
+        bool succeeded = reactionSucceeded;
+        if (!succeeded)
         {
             ApplyEnemySkillDamageToPlayer(enemy, enemy.ActiveSkill);
         }
+        ReactionImpactResolved?.Invoke(enemy.ActiveSkill, succeeded);
     }
 
     private bool IsEnemySkillInHitRange(RealTimeCombatEnemy enemy, SkillSO skill)
@@ -885,6 +1000,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         playerActionPresentation.ResolveReferences(playerAnimator, playerLocomotionBridge);
+        if (playerMobility == null) playerMobility = GetComponent<CombatMobilityController>();
         if (playerVision == null) playerVision = playerRoot.GetComponentInChildren<VisionField>(true);
         if (combatInput == null) combatInput = FindAnyObjectByType<RealTimeCombatInput>();
     }
@@ -931,6 +1047,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private int ApplyPlayerDamage(int damage)
     {
+        if (playerMobility != null && playerMobility.IsDamageInvulnerable)
+        {
+            return 0;
+        }
+
         int sanitizedDamage = Mathf.Max(0, damage);
         int applied = playerController != null
             ? playerController.ApplyDamage(sanitizedDamage, "RealTimeCombat")

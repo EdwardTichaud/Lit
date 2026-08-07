@@ -14,6 +14,7 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
     [SerializeField] private ScreenWaveController screenWave;
 
     private bool hitStopActive;
+    private int externalPauseCount;
     private float timeScaleBeforeHitStop = 1f;
     private float hitStopReleaseTime;
 
@@ -41,7 +42,7 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
     private void Update()
     {
-        if (hitStopActive && Time.unscaledTime >= hitStopReleaseTime)
+        if (hitStopActive && externalPauseCount == 0 && Time.unscaledTime >= hitStopReleaseTime)
         {
             RestoreTimeScale();
         }
@@ -49,11 +50,21 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (externalPauseCount > 0)
+        {
+            Time.timeScale = timeScaleBeforeHitStop;
+            externalPauseCount = 0;
+        }
         RestoreTimeScale();
     }
 
     private void OnDestroy()
     {
+        if (externalPauseCount > 0)
+        {
+            Time.timeScale = timeScaleBeforeHitStop;
+            externalPauseCount = 0;
+        }
         RestoreTimeScale();
         if (Instance == this)
         {
@@ -92,9 +103,60 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
         StartHitStop(profile);
     }
 
+    public void PushExternalPause()
+    {
+        if (externalPauseCount == 0 && !hitStopActive)
+        {
+            timeScaleBeforeHitStop = Time.timeScale;
+        }
+
+        externalPauseCount++;
+        Time.timeScale = 0f;
+    }
+
+    public void PlayReactionSlowMotion(float timeScale, float durationSeconds)
+    {
+        if (externalPauseCount > 0 || durationSeconds <= 0f)
+        {
+            return;
+        }
+
+        if (!hitStopActive)
+        {
+            timeScaleBeforeHitStop = Time.timeScale;
+            hitStopActive = true;
+        }
+
+        Time.timeScale = Mathf.Min(Time.timeScale, timeScaleBeforeHitStop * Mathf.Clamp01(timeScale));
+        hitStopReleaseTime = Mathf.Max(hitStopReleaseTime, Time.unscaledTime + durationSeconds);
+    }
+
+    public void PopExternalPause()
+    {
+        if (externalPauseCount <= 0)
+        {
+            return;
+        }
+
+        externalPauseCount--;
+        if (externalPauseCount == 0)
+        {
+            if (hitStopActive && Time.unscaledTime < hitStopReleaseTime)
+            {
+                return;
+            }
+
+            RestoreTimeScale();
+            if (!hitStopActive)
+            {
+                Time.timeScale = timeScaleBeforeHitStop;
+            }
+        }
+    }
+
     private void StartHitStop(CombatImpactFeedbackProfile profile)
     {
-        if (!profile.useHitStop || profile.hitStopSeconds <= 0f)
+        if (externalPauseCount > 0 || !profile.useHitStop || profile.hitStopSeconds <= 0f)
         {
             return;
         }

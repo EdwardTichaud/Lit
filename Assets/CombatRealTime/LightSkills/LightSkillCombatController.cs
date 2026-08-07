@@ -17,6 +17,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private bool impactResolved;
     private bool playerLockHeld;
     private bool finishingCinematic;
+    private SpiritBondController activeLightSkillBond;
 
     public event System.Action StateChanged;
 
@@ -76,6 +77,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
             return false;
         }
 
+        activeLightSkillBond = SpiritBondController.FindForCharacter(combatManager.PlayerRoot.gameObject);
+        activeLightSkillBond?.BeginLightSkillFusion();
         cinematicPlaying = true;
         impactResolved = false;
         charge = 0f;
@@ -170,6 +173,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         furieSequence?.EndSequence();
+        activeLightSkillBond?.EndLightSkillFusion();
+        activeLightSkillBond = null;
         if (impactResolved && combatManager != null && combatManager.IsCombatActive)
         {
             combatManager.ResolveDeferredCombatOutcome();

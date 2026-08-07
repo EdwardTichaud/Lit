@@ -1249,6 +1249,7 @@ GameObject:
   - component: {fileID: 1716717823769150378}
   - component: {fileID: 810000000000000001}
   - component: {fileID: 810000000000000002}
+  - component: {fileID: 810000000000000007}
   - component: {fileID: 810000000000000003}
   - component: {fileID: 810000000000000004}
   - component: {fileID: 810000000000000005}
@@ -1261,6 +1262,8 @@ GameObject:
   - component: {fileID: 2872984668119182103}
   - component: {fileID: 6059674322863807500}
   - component: {fileID: 4356935285358481028}
+  - component: {fileID: 9218925662834059794}
+  - component: {fileID: 1205114612473753433}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -1283,6 +1286,7 @@ Transform:
   m_Children:
   - {fileID: 7061287491190634350}
   - {fileID: 8835696500665851550}
+  - {fileID: 2567248197990508734}
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3754094688540085027
@@ -1344,6 +1348,7 @@ MonoBehaviour:
   playerLocomotionBridge: {fileID: 0}
   playerAnimator: {fileID: 0}
   playerActionPresentation: {fileID: 0}
+  playerMobility: {fileID: 810000000000000007}
   combatInput: {fileID: 810000000000000002}
   playerVision: {fileID: 0}
   lockedEnemy: {fileID: 0}
@@ -1369,7 +1374,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c251687003c4f408a4a9c71a8b1c026, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatInput
-  actions: {fileID: -944628639613478452, guid: 36d44059f8ef4d3db504f50a8334307d, type: 3}
+  actions: {fileID: -944628639613478452, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
   actionMapName: RealTimeCombat
   enableOnStart: 0
   skillWheel: {fileID: 0}
@@ -1377,6 +1382,32 @@ MonoBehaviour:
   skillWheelCanvasGroup: {fileID: 0}
   basicComboResetDelaySeconds: 0.85
   maximumBufferedBasicSkills: 1
+--- !u!114 &810000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70b104f2a5e142c1928ebe40cf12fe84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatMobilityController
+  combatInput: {fileID: 810000000000000002}
+  actionPresentation: {fileID: 0}
+  mobilityInputBufferSeconds: 0.12
+  dodgeForwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
+  dodgeBackwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
+  dodgeLeftState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root
+  dodgeRightState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root
+  dodge:
+    cooldownSeconds: 0.25
+    entryBlendSeconds: 0.05
+    recoveryNormalizedTime: 0.72
+    movementCancelNormalizedTime: 0.7
+  dodgeStartupSeconds: 0.05
+  dodgeInvulnerabilitySeconds: 0.18
 --- !u!114 &810000000000000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1750,6 +1781,138 @@ MonoBehaviour:
   preferredDashSpeed: 26
   maximumDashSpeed: 36
   animationTransitionSeconds: 0.05
+--- !u!114 &9218925662834059794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d80b700db72408e9fd31ca38180f276, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CounterSkillCombatController
+  combatManager: {fileID: 810000000000000001}
+  director: {fileID: 810000000000000005}
+  wheel: {fileID: 0}
+  counterVirtualCamera: {fileID: 7926320162611101663}
+  cameraRig: {fileID: 7088912455650331963}
+  impactFeedback: {fileID: 810000000000000004}
+  availableSkills:
+  - {fileID: 11400000, guid: 8418564374f398941bb11ff9df6a6dba, type: 2}
+  guardedDamageMultiplier: 0.4
+  guardStartVfx: {fileID: 0}
+  guardStartAudio: {fileID: 0}
+  guardedImpactVfx: {fileID: 0}
+  guardedImpactAudio: {fileID: 0}
+--- !u!114 &1205114612473753433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf86e4f390341c680727d22a58f96e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatReactionTelegraphController
+  combatManager: {fileID: 810000000000000001}
+  prompt: {fileID: 0}
+  impactFeedback: {fileID: 810000000000000004}
+--- !u!1 &3356031388750873972
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2567248197990508734}
+  - component: {fileID: 7926320162611101663}
+  - component: {fileID: 7088912455650331963}
+  m_Layer: 0
+  m_Name: CounterSkill_VirtualCamera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2567248197990508734
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3356031388750873972}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1962244032958566552}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7926320162611101663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3356031388750873972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+  Priority:
+    Enabled: 0
+    m_Value: 0
+  OutputChannel: 1
+  StandbyUpdate: 2
+  m_StreamingVersion: 0
+  m_LegacyPriority: 0
+  Target:
+    TrackingTarget: {fileID: 0}
+    LookAtTarget: {fileID: 0}
+    CustomLookAtTarget: 0
+  Lens:
+    FieldOfView: 40
+    OrthographicSize: 10
+    NearClipPlane: 0.1
+    FarClipPlane: 5000
+    Dutch: 0
+    ModeOverride: 0
+    PhysicalProperties:
+      GateFit: 2
+      SensorSize: {x: 21.946, y: 16.002}
+      LensShift: {x: 0, y: 0}
+      FocusDistance: 10
+      Iso: 200
+      ShutterSpeed: 0.005
+      Aperture: 16
+      BladeCount: 5
+      Curvature: {x: 2, y: 11}
+      BarrelClipping: 0.25
+      Anamorphism: 0
+  BlendHint: 0
+--- !u!114 &7088912455650331963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3356031388750873972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c7fa600ca614f7d8ec20b927170f165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CounterSkillCameraRig
+  openingOffset: {x: 1.7, y: 1.45, z: -3.6}
+  impactOffset: {x: -1.35, y: 1.1, z: -2.45}
+  impactMoveStartNormalized: 0.35
+  moveSharpness: 8
 --- !u!1 &3473681246835330875
 GameObject:
   m_ObjectHideFlags: 0

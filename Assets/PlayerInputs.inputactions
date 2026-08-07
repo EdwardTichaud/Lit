@@ -97,6 +97,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Melt",
+                    "type": "Button",
+                    "id": "0a92e065-bb46-4142-9fd0-8b7368ebcfa0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "TriggerMunin",
                     "type": "Button",
                     "id": "111345cd-be72-451f-852f-4119bbeff9ae",
@@ -278,7 +287,7 @@
                 {
                     "name": "",
                     "id": "67435425-930c-406d-92eb-118b0d93f754",
-                    "path": "<Gamepad>/buttonNorth",
+                    "path": "<Gamepad>/dpad/up",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -355,7 +364,7 @@
                 {
                     "name": "",
                     "id": "fdbddc11-3aac-4e3c-a8a5-70e857509a2b",
-                    "path": "<Gamepad>/rightStickPress",
+                    "path": "<Gamepad>/dpad/right",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -377,7 +386,7 @@
                 {
                     "name": "",
                     "id": "2ea15f9b-8737-4f1a-9189-9ea26a4fa612",
-                    "path": "<Gamepad>/dpad/right",
+                    "path": "<Gamepad>/dpad/down",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -398,8 +407,19 @@
                 },
                 {
                     "name": "",
+                    "id": "f1ff94dd-c3cf-4c1b-8ae7-f3e90bbd9a13",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "tap(duration=0.35)",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Melt",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "ba7ccfa2-59b4-4113-b5f6-9ed111e512d2",
-                    "path": "<Gamepad>/leftStickPress",
+                    "path": "<Gamepad>/rightTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -673,7 +693,7 @@
                 {
                     "name": "",
                     "id": "02e75207-a35b-4a35-9ccd-e66a9feafc8a",
-                    "path": "<Keyboard>/f",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
@@ -685,7 +705,7 @@
                     "name": "",
                     "id": "190a5081-7346-4e93-91b8-5a3f7380e30f",
                     "path": "<Gamepad>/rightStickPress",
-                    "interactions": "",
+                    "interactions": "hold(duration=0.6)",
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Recenter",
@@ -834,6 +854,194 @@
                     "processors": "",
                     "groups": "",
                     "action": "Grapple",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "RealTimeCombat",
+            "id": "9d7ebf37-bc60-4bb7-af68-34a14db1b087",
+            "actions": [
+                {
+                    "name": "Counter",
+                    "type": "Button",
+                    "id": "a6e25cc2-0024-49b6-a776-60aac20b6716",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Dodge",
+                    "type": "Button",
+                    "id": "c8e1b6f8-1f7a-420a-8b00-06545a6acb13",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "BasicAttack",
+                    "type": "Button",
+                    "id": "f4136061-a73e-4b08-ad3a-86bcbcd09b50",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Jump",
+                    "type": "Button",
+                    "id": "9f596f13-7b4f-4cb0-b2d3-78cfa0984ad1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "OpenPalette",
+                    "type": "Button",
+                    "id": "8e168bf7-1d6f-4457-9249-fb351eb50fa2",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "NavigatePalette",
+                    "type": "Value",
+                    "id": "09fac925-dffb-4cdd-ae58-594d20d11ef2",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "ConfirmPalette",
+                    "type": "Button",
+                    "id": "bb43930d-c7e1-4e2f-8ea8-0f08c581223d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SwitchEnemyLock",
+                    "type": "Button",
+                    "id": "15dd4a16-4c84-4b89-ab75-82c14ccfe563",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "LightSkill",
+                    "type": "Button",
+                    "id": "60a38d0c-a3e8-4b4d-ac60-215a72b00b27",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "725d3835-5b9a-4e1e-93ce-8714e42ddf6c",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Dodge",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0a4b552a-ba3d-42ca-9468-851b450bd9e8",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Counter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3c6ed609-38f4-41f5-aa8f-b631c1d1c17a",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "BasicAttack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9b560277-ea61-4e89-aa5e-4b28184526ef",
+                    "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "48ca3c8c-d945-41df-9708-e4ea9f3bc784",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "OpenPalette",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b06f70a8-42a7-4adf-a83d-549a1a7f6e14",
+                    "path": "<Gamepad>/rightStick",
+                    "interactions": "",
+                    "processors": "stickDeadzone(min=0.5,max=1)",
+                    "groups": "Gamepad",
+                    "action": "NavigatePalette",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "31cfab7d-e9a4-4f55-870d-30ef420e96b6",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ConfirmPalette",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ef6c57dd-a706-4f87-9be9-60b8521f6e8d",
+                    "path": "<Gamepad>/dpad/down",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "SwitchEnemyLock",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "418d388a-a65e-4c98-a1c9-4e6626e5d07e",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "LightSkill",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

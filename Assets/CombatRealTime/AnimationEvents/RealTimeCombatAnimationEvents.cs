@@ -107,6 +107,12 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy());
     }
 
+    /// <summary>Enemy Animation Event: starts presentation only; it never opens the logical reaction window.</summary>
+    public void BeginReactionTelegraph()
+    {
+        CombatReactionTelegraphController.Instance?.BeginTelegraph(ResolveEnemy());
+    }
+
     public void OpenReactionWindow()
     {
         RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy());
@@ -137,6 +143,12 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
 
         manager.GetComponent<LightSkillCombatController>()?.ResolveLightSkillImpact();
+    }
+
+    /// <summary>Player Animation Event: resolves the selected CounterSkill Timeline on its contact frame.</summary>
+    public void ResolveCounterSkillImpact()
+    {
+        CounterSkillCombatController.Instance?.ResolveCounterSkillImpact();
     }
 
     /// <summary>

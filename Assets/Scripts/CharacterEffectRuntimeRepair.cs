@@ -109,4 +109,10 @@ public static class CharacterEffectRuntimeRepair
         effect.ConfigureVFXBinders();
         effect.SetupVfxGraph();
     }
+
+    /// <summary>Ensures an effect added on a runtime-spawned character is ready before use.</summary>
+    public static void EnsureReady(CharacterEffect effect)
+    {
+        RepairEffect(effect);
+    }
 }

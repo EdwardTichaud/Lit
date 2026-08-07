@@ -69,10 +69,23 @@ Le premier scenario jouable est configure : Lucian dispose de `Lueur faible`
 et `Lueur intense` dans les slots 1 et 2, tandis que le Juggernaut joue
 `Skill_Juggernaut_Assomoir` via `EnemySkills` et ouvre sa fenetre d'esquive par
 Animation Events. Son impact melee est configure entre 0 et 5 metres.
-Le prototype temps reel ne comporte pas encore de contre : les skills sont des
-attaques et les fenetres ennemies acceptent actuellement esquive ou saut. Les
-anciens modificateurs de contre sont conserves dans les donnees de savoir mais
-ne sont pas appliques par le flux temps reel.
+Le prototype temps reel distingue maintenant garde, esquive et contre. `SouthButton`
+maintenu active une garde qui reduit les degats recus de 60 % par defaut; une
+pression commencee dans une fenetre Animation Event acceptant `Counter` fige le
+temps, suspend l'attaque ennemie et ouvre une roue de `CounterSkillSO`. Le stick
+droit choisit un contre, `SouthButton` le confirme et `EastButton` annule la
+selection. Un contre joue une Timeline non scale liee dynamiquement a Lucian,
+l'ennemi verrouille et une Virtual Camera, puis son Animation Event applique les
+degats propres au `CounterSkillSO`. `EastButton` est l'unique esquive root avec
+i-frames; le dash combat precedent a ete retire de ce mapping.
+Le maintien de South joue `Guard_Block` depuis le pack Super Fast Fighting,
+avec `Twinblades_Defense_Hit_Root` comme fallback tant que la state n'a pas ete
+installee dans `Player_Model`. Relacher South rend l'Idle de combat; seule une
+pression commencant dans une fenetre qui accepte `Counter` declenche la parade.
+Les actions combat orientent Lucian vers `EnemyLockPoint`. L'esquive fait
+exception : une direction explicite du stick a priorite, Lucian s'oriente alors
+dans cette direction et y roule; sans direction, il reste face a l'ennemi et
+effectue une roulade arriere.
 `Saut de rupture` est equipe dans le quatrieme slot de Lucian. Son `SkillSO`
 utilise `Skill_3_JumpKick`, refuse de demarrer hors de la plage 0-3.25 m et
 declenche `ResolveSkillImpactAndRetreat` au contact : degats 15, stagger ennemi,
@@ -92,6 +105,17 @@ a 5, 10 et 15 degats; leur epee reste visible entre deux coups bufferises puis
 se masque a la sortie effective du combo. Les clips utilisent
 `ResolveSkillImpact` pour les impacts standards et
 `ResolveSkillImpactAndRetreat` pour le Saut de rupture.
+La mobilite temps reel est centralisee par `CombatMobilityController` sur
+`BattleManager`. En combat, `SouthButton` est reserve a la garde et au contre;
+`EastButton` declenche l'esquive root directionnelle avec 0.05 s de preparation
+et 0.18 s d'invulnerabilite; `NorthButton` declenche le saut UCC reel. Esquive
+et saut continuent de valider les fenetres de reaction Animation Event. Une
+seule commande de mobilite peut
+etre bufferisee 0.12 s pendant une action. Chaque `PlayerActionPresentationProfile`
+expose maintenant `mobilityCancelNormalizedTime` et `allowMobilityCancel`;
+les BasicSkills 1, 2 et 3 ouvrent cette annulation a 0.35, 0.42 et 0.55.
+Le lock garde le cadrage cible, mais Lucian se tourne vers son mouvement hors
+d'action engagee.
 Chaque impact ajoute aussi un micro-tremblement lateral et vertical, tres court
 et amorti en temps non scale; son amplitude, sa duree et sa frequence sont
 reglables globalement dans `GameplaySessionRoot`.
@@ -447,6 +471,40 @@ de la tentative precedente.
 - Lire uniquement les fiches pertinentes de `Codex/systems/`.
 - Ne pas recreer l'ancien pipeline AIStudio sans demande explicite.
 - Ne pas stocker de secrets, caches ou environnements virtuels dans `AIAgent`.
+
+La telegraphie de reaction temps reel est maintenant en trois temps et reste
+exclusivement pilotee par les Animation Events ennemis
+`BeginReactionTelegraph`, `OpenReactionWindow` et
+`ResolveEnemyAttackImpact`. `CombatReactionTelegraphController`, sur
+`BattleManager`, pilote le prompt world-space unique, les pulses
+`AttackLightAlert`, les AudioClipSO et le micro-ralenti de fenetre parfaite.
+Le menu Unity `Lit/Combat/Configure Reaction Telegraph` configure le prototype
+Assomoir et cree le prompt de scene lorsqu'il est absent.
+`LocalPlayerInput` detruit son `InputActionAsset` immediatement hors Play Mode,
+afin qu'un dechargement de scene editeur ne laisse plus un GameObject
+`LocalPlayerInput` residuel.
+Le prompt de reaction reacquiert sa reference de scene avant chaque phase et
+force son Canvas world-space sur la camera principale avec un ordre de rendu
+eleve, afin de rester visible apres un changement de scene.
+
+L'orbe de Munin est maintenant visuellement independante de celle du chargement:
+elle conserve ses materiaux HDRP, n'applique plus de transparence derivee du noir
+et utilise des pulses de presentation relies aux evenements de charges. La
+distorsion permanente est desactivee; elle ne joue qu'au court etat d'action.
+
+Munin peut maintenant fusionner avec Lucian en exploration et en combat via
+l'action `Melt`, sur un clic bref du stick droit. Le recentrage reste disponible
+par maintien du stick droit (et `C` au clavier), tandis que le mode locomotion
+est sur la croix droite. `Melt` declenche l'animation `Melt` hors fusion et
+`Rupture` pendant une fusion; leurs AnimationEvents determinent le frame de
+l'effet Holy et confirment l'etat visuel de Munin. Une LightSkill force cette
+fusion, annule sans animation une
+fusion precedente, puis defusionne automatiquement apres sa Timeline. Munin est
+aussi masque tant que l'arc ou l'epee est manifeste, ou qu'une future arme porte
+`SpiritWeaponManifestation`. Un AnimationEvent `InstantiateAtSpine` peut aussi
+instancier un prefab configure sur l'os Spine de Lucian. Les triggers Animator
+`Melt` et `Rupture` partent de `Any State` et reviennent a la locomotion en fin
+de clip.
 
 ## Prochaine utilisation
 

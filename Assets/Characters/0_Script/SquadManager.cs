@@ -105,6 +105,7 @@ public class SquadManager : MonoBehaviour
     private bool jumpRequested;
     private bool locomotionModeRequested;
     private bool triggerMuninRequested;
+    private bool companionFusionRequested;
     private bool takeAllRequested;
     private bool warnedMissingSquadUI;
     private bool warnedMissingMaison;
@@ -154,6 +155,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.Jump += OnJumpPerformed;
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
+        LocalInputRouter.CompanionFusion += OnCompanionFusionPerformed;
         LocalInputRouter.ToggleTorch += OnToggleTorchPerformed;
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
@@ -167,6 +169,7 @@ public class SquadManager : MonoBehaviour
         LocalInputRouter.Jump -= OnJumpPerformed;
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.TriggerMunin -= OnTriggerMuninPerformed;
+        LocalInputRouter.CompanionFusion -= OnCompanionFusionPerformed;
         LocalInputRouter.ToggleTorch -= OnToggleTorchPerformed;
         LocalInputRouter.TakeAll -= OnTakeAllPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
@@ -1414,6 +1417,7 @@ public class SquadManager : MonoBehaviour
             UpdateLeaderGroupFromCurrent();
             HandleControlledCharacterMovement();
             HandleMuninTrigger();
+            HandleCompanionFusion();
         }
     }
 
@@ -1851,6 +1855,22 @@ public class SquadManager : MonoBehaviour
         controller.TriggerMunin();
     }
 
+    private void HandleCompanionFusion()
+    {
+        if (!companionFusionRequested)
+        {
+            return;
+        }
+
+        companionFusionRequested = false;
+        if (currentCharacter == null || IsMultiplayerActive())
+        {
+            return;
+        }
+
+        SpiritBondController.FindForCharacter(currentCharacter)?.RequestMeltAnimation();
+    }
+
     private void HandleGroupingInputs()
     {
         if (!charactersSelectionOn)
@@ -1883,6 +1903,14 @@ public class SquadManager : MonoBehaviour
     private void OnTriggerMuninPerformed(InputAction.CallbackContext context)
     {
         triggerMuninRequested = true;
+    }
+
+    private void OnCompanionFusionPerformed(InputAction.CallbackContext context)
+    {
+        if (!IsInputLocked() && !charactersSelectionOn)
+        {
+            companionFusionRequested = true;
+        }
     }
 
     private void OnToggleTorchPerformed(InputAction.CallbackContext context)

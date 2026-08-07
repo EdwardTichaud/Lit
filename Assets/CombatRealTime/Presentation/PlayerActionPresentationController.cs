@@ -18,7 +18,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private PlayerActionFacingMode activeFacingMode;
     private bool actionActive;
     private bool chainWindowOpen;
+    private bool mobilityCancelOpen;
     private bool recoveryOpen;
+    private bool activeAllowsMobilityCancel;
     private bool hasBufferedAction;
     private int bufferedStateHash;
     private PlayerActionPresentationProfile bufferedProfile;
@@ -30,10 +32,13 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     public bool IsActionActive => actionActive;
     public bool IsChainWindowOpen => chainWindowOpen;
+    public bool IsMobilityCancelOpen => mobilityCancelOpen;
     public bool IsRecoveryOpen => recoveryOpen;
     public bool CanStartAction => !deathAnimationLocked && (!actionActive || recoveryOpen);
     public bool CanAcceptBasicSkillInput => !deathAnimationLocked && !hasBufferedAction;
     public bool CanChainBasicSkill => !deathAnimationLocked && !hasBufferedAction && (!actionActive || recoveryOpen || chainWindowOpen);
+    public bool CanCancelToMobility => !deathAnimationLocked &&
+                                       (!actionActive || (activeAllowsMobilityCancel && (mobilityCancelOpen || recoveryOpen)));
     public bool IsDeathAnimationLocked => deathAnimationLocked;
     public event Action ActionEnded;
 
@@ -58,6 +63,26 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         actionFacingTarget = target;
         FaceActionTarget();
+    }
+
+    public void ClearActionFacingTarget()
+    {
+        actionFacingTarget = null;
+    }
+
+    public bool CancelActionForMobility()
+    {
+        if (!CanCancelToMobility)
+        {
+            return false;
+        }
+
+        if (actionActive)
+        {
+            CancelAction();
+        }
+
+        return true;
     }
 
     public bool TryPlaySkill(SkillSO skill, int stateHash)
@@ -96,7 +121,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         actionActive = false;
         chainWindowOpen = false;
+        mobilityCancelOpen = false;
         recoveryOpen = false;
+        activeAllowsMobilityCancel = false;
         hasBufferedAction = false;
         bufferedStateHash = 0;
         bufferedProfile = null;
@@ -216,7 +243,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         activeFacingMode = profile.facingMode;
         actionActive = true;
         chainWindowOpen = false;
+        mobilityCancelOpen = false;
         recoveryOpen = false;
+        activeAllowsMobilityCancel = profile.allowMobilityCancel;
         locomotionBridge?.SetPlayerActionRootMotionMode(
             profile.rootMotionMode,
             profile.facingMode == PlayerActionFacingMode.VisualOnly);
@@ -234,6 +263,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         float chainTime = Mathf.Clamp01(profile.chainNormalizedTime);
         float recoveryTime = Mathf.Max(chainTime, Mathf.Clamp01(profile.recoveryNormalizedTime));
         float chainTransitionTime = Mathf.Clamp(profile.chainTransitionNormalizedTime, chainTime, recoveryTime);
+        float mobilityCancelTime = Mathf.Clamp(profile.mobilityCancelNormalizedTime, 0.05f, recoveryTime);
 
         while (token == activeToken && elapsed < stateEntryTimeout)
         {
@@ -268,6 +298,12 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             {
                 chainWindowOpen = true;
                 Trace("chain-open", debugName, profile);
+            }
+
+            if (!mobilityCancelOpen && activeAllowsMobilityCancel && state.normalizedTime >= mobilityCancelTime)
+            {
+                mobilityCancelOpen = true;
+                Trace("mobility-cancel-open", debugName, profile);
             }
 
             if (hasBufferedAction && state.normalizedTime >= chainTransitionTime)
@@ -403,7 +439,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         if (token != activeToken) return;
         actionActive = false;
         chainWindowOpen = false;
+        mobilityCancelOpen = false;
         recoveryOpen = false;
+        activeAllowsMobilityCancel = false;
         hasBufferedAction = false;
         bufferedStateHash = 0;
         bufferedProfile = null;

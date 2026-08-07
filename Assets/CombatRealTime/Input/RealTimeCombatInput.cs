@@ -19,6 +19,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private int maximumBufferedBasicSkills = 1;
 
     private InputActionMap actionMap;
+    private InputAction counterAction;
     private InputAction dodgeAction;
     private InputAction basicAttackAction;
     private InputAction jumpAction;
@@ -27,6 +28,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private InputAction paletteConfirmAction;
     private InputAction switchEnemyLockAction;
     private InputAction lightSkillAction;
+    private InputAction companionFusionAction;
     private bool paletteOpen;
     private bool paletteInputSuppressed;
     private int selectedSlot;
@@ -35,6 +37,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private float lastBasicAttackQueuedAt = float.NegativeInfinity;
 
     public int SelectedSlot => selectedSlot;
+    public bool IsInputActive => actionMap != null && actionMap.enabled;
+    private bool IsCounterSelectionOpen => CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsSelectionOpen;
 
     private void OnEnable()
     {
@@ -52,6 +56,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         actionMap?.Disable();
         ClosePalette(resolveIfMissing: false);
         ClearBasicSkillCombo();
+        GamepadInputContextStack.Pop(this);
     }
 
     public void SetInputActive(bool active)
@@ -60,10 +65,12 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (active)
         {
             actionMap?.Enable();
+            GamepadInputContextStack.Push(this, GamepadInputContext.Combat);
             return;
         }
 
         actionMap?.Disable();
+        GamepadInputContextStack.Pop(this);
         ClosePalette();
         ClearBasicSkillCombo();
     }
@@ -82,6 +89,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             return;
         }
 
+        counterAction = actionMap.FindAction("Counter", false);
         dodgeAction = actionMap.FindAction("Dodge", false);
         basicAttackAction = actionMap.FindAction("BasicAttack", false);
         jumpAction = actionMap.FindAction("Jump", false);
@@ -90,6 +98,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         paletteConfirmAction = actionMap.FindAction("ConfirmPalette", false);
         switchEnemyLockAction = actionMap.FindAction("SwitchEnemyLock", false);
         lightSkillAction = actionMap.FindAction("LightSkill", false);
+        companionFusionAction = actionMap.FindAction("Melt", false);
     }
 
     private void ResolveSkillWheel()
@@ -115,6 +124,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void Subscribe()
     {
+        if (counterAction != null)
+        {
+            counterAction.started += OnCounterStarted;
+            counterAction.canceled += OnCounterCanceled;
+        }
         if (dodgeAction != null) dodgeAction.performed += OnDodge;
         if (basicAttackAction != null) basicAttackAction.performed += OnBasicAttack;
         if (jumpAction != null) jumpAction.performed += OnJump;
@@ -127,10 +141,16 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (paletteConfirmAction != null) paletteConfirmAction.performed += OnConfirmPalette;
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed += OnSwitchEnemyLock;
         if (lightSkillAction != null) lightSkillAction.performed += OnLightSkill;
+        if (companionFusionAction != null) companionFusionAction.performed += OnCompanionFusion;
     }
 
     private void Unsubscribe()
     {
+        if (counterAction != null)
+        {
+            counterAction.started -= OnCounterStarted;
+            counterAction.canceled -= OnCounterCanceled;
+        }
         if (dodgeAction != null) dodgeAction.performed -= OnDodge;
         if (basicAttackAction != null) basicAttackAction.performed -= OnBasicAttack;
         if (jumpAction != null) jumpAction.performed -= OnJump;
@@ -143,16 +163,44 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (paletteConfirmAction != null) paletteConfirmAction.performed -= OnConfirmPalette;
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed -= OnSwitchEnemyLock;
         if (lightSkillAction != null) lightSkillAction.performed -= OnLightSkill;
+        if (companionFusionAction != null) companionFusionAction.performed -= OnCompanionFusion;
     }
 
-    private static void OnDodge(InputAction.CallbackContext context)
+    private void OnCounterStarted(InputAction.CallbackContext context)
     {
+        CounterSkillCombatController counter = CounterSkillCombatController.Instance;
+        if (counter != null && counter.IsSelectionOpen)
+        {
+            counter.ConfirmSelection();
+            return;
+        }
+
+        if (!paletteOpen) counter?.BeginGuard();
+    }
+
+    private void OnCounterCanceled(InputAction.CallbackContext context)
+    {
+        CounterSkillCombatController.Instance?.EndGuard();
+    }
+
+    private void OnDodge(InputAction.CallbackContext context)
+    {
+        if (IsCounterSelectionOpen)
+        {
+            CounterSkillCombatController.Instance.CancelSelection();
+            return;
+        }
+
         RealTimeCombatManager.Instance?.RegisterReaction(RealTimeCombatReaction.Dodge);
+        if (!paletteOpen)
+        {
+            GetComponent<CombatMobilityController>()?.RequestDodge();
+        }
     }
 
     private void OnBasicAttack(InputAction.CallbackContext context)
     {
-        if (paletteOpen)
+        if (paletteOpen || IsCounterSelectionOpen)
         {
             return;
         }
@@ -200,16 +248,19 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (paletteOpen)
+        if (paletteOpen || IsCounterSelectionOpen)
         {
             return;
         }
 
+        RealTimeCombatManager.Instance?.FacePlayerTowardsLockedEnemy();
         RealTimeCombatManager.Instance?.RegisterReaction(RealTimeCombatReaction.Jump);
+        GetComponent<CombatMobilityController>()?.RequestJump();
     }
 
     private void OnOpenPalette(InputAction.CallbackContext context)
     {
+        if (IsCounterSelectionOpen) return;
         paletteOpen = true;
         ResolveSkillWheel();
 
@@ -231,6 +282,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnNavigatePalette(InputAction.CallbackContext context)
     {
+        if (IsCounterSelectionOpen)
+        {
+            CounterSkillCombatController.Instance.Navigate(context.ReadValue<Vector2>());
+            return;
+        }
         if (!paletteOpen)
         {
             return;
@@ -254,6 +310,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnConfirmPalette(InputAction.CallbackContext context)
     {
+        if (IsCounterSelectionOpen) return;
         if (!paletteOpen)
         {
             return;
@@ -271,6 +328,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnSwitchEnemyLock(InputAction.CallbackContext context)
     {
+        if (IsCounterSelectionOpen) return;
         if (!paletteOpen)
         {
             RealTimeCombatManager.Instance?.TrySwitchEnemyLock();
@@ -279,10 +337,28 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnLightSkill(InputAction.CallbackContext context)
     {
+        if (IsCounterSelectionOpen) return;
         if (!paletteOpen)
         {
             GetComponent<LightSkillCombatController>()?.TryUseLightSkill();
         }
+    }
+
+    private void OnCompanionFusion(InputAction.CallbackContext context)
+    {
+        if (paletteOpen || IsCounterSelectionOpen)
+        {
+            return;
+        }
+
+        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+        if (manager == null || !manager.IsCombatActive)
+        {
+            return;
+        }
+
+        SpiritBondController.FindForCharacter(manager.PlayerRoot != null ? manager.PlayerRoot.gameObject : null)
+            ?.RequestMeltAnimation();
     }
 
     private IEnumerator PlayBasicSkillCombo(SkillsManager skillsManager)
@@ -329,6 +405,11 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             StopCoroutine(basicComboRoutine);
             basicComboRoutine = null;
         }
+    }
+
+    public void CancelBufferedBasicSkills()
+    {
+        ClearBasicSkillCombo();
     }
 
     private void ClosePalette(bool resolveIfMissing = true)

@@ -1907,6 +1907,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1242590319970422489}
   - component: {fileID: 7224862113781630673}
+  - component: {fileID: 901000000000000201}
   m_Layer: 30
   m_Name: Munin
   m_TagString: Untagged
@@ -2000,6 +2001,22 @@ MonoBehaviour:
   maxCharges: 10
   currentCharges: 10
   noChargeReactionPulseDuration: 0.35
+--- !u!114 &901000000000000201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136388590723494196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a51e381a18d144e58a70b786d24f7298, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpiritBondController
+  hostCharacter: {fileID: 0}
+  spiritVisualRoot: {fileID: 0}
+  holyEffect: {fileID: 0}
+  transitionSeconds: 0.35
 --- !u!1 &2160324580470185257
 GameObject:
   m_ObjectHideFlags: 0
@@ -2434,6 +2451,8 @@ GameObject:
   - component: {fileID: 900000000000000102}
   - component: {fileID: 900000000000000103}
   - component: {fileID: 900000000000000104}
+  - component: {fileID: 901000000000000202}
+  - component: {fileID: 901000000000000203}
   m_Layer: 6
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -2491,7 +2510,12 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'lowerarm_l'\n\tTransform 'clavicle_l'\n\tTransform
+    'hand_l'\n\tTransform 'spine_02'\n\tTransform 'upperarm_r'\n\tTransform 'upperarm_l'\n\tTransform
+    'pelvis'\n\tTransform 'spine_03'\n\tTransform 'spine_01'\n\tTransform 'clavicle_r'\n\tand
+    more ...\n\tFrom animation clip 'LightSkill_1_Furie_Start_Temp'"
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -3860,8 +3884,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatLoadout
   equippedAttacks:
-  - {fileID: 11400000, guid: 9162ea585f314d8c82a035fd4e650d6a, type: 2}
-  - {fileID: 11400000, guid: 09e4ebee27b04d11b682a7cdf2a4add3, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -3938,6 +3962,55 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &901000000000000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bed290d90ff4e5140a672625f874dcc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INab.VFXAssets.CharacterEffect
+  meshRenderer: {fileID: 2772251632162136425}
+  meshBaker:
+    _sampleCount: 4096
+    SampleCountMultiplier: 1
+    UsePerSubmeshBaking: 0
+    SubmeshIndex: 0
+  sampleCountMultiplier: 1
+  usePerSubmeshBaking: 0
+  submeshIndex: 0
+  effectPrefab: {fileID: 8125239696695069680, guid: d504297ecf823d244a67470460b61e67, type: 3}
+  instantiatedEffectPrefab: {fileID: 0}
+  debugMode: 0
+  effectName: Holy
+  vfxComponent: {fileID: 0}
+  vfxBinder: {fileID: 0}
+  currentEffectState: 0
+  _Foldout_1: 1
+  _Foldout_2: 1
+  _Foldout_3: 1
+  _Foldout_4: 1
+  _Foldout_5: 1
+  effectState: 1
+--- !u!114 &901000000000000203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d1cc4cc2634fc8a4cc31e37c8715d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpiritBondAnimationEvents
+  bond: {fileID: 0}
+  spineAnimationPrefab: {fileID: 7736070195497459570, guid: 86a96f2fa2dcfdd40b90118ec14b93f5, type: 3}
+  spineBone: {fileID: 8645191530104281420}
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

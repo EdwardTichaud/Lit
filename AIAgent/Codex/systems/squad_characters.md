@@ -29,6 +29,27 @@ groupes, le follow et les données runtime de chaque membre.
   `MuninController`. L'avance de mouvement utilise le delta de position du
   Transform si la vitesse Rigidbody du personnage ne reflète pas le déplacement
   réel UCC.
+- `Munin_Orbe` est une variante indépendante de l'orbe de chargement. Son rendu
+  est piloté par `MuninOrbVisualController`, qui préserve les matériaux HDRP,
+  désactive la distorsion permanente et joue des états transitoires repos,
+  attention et action à partir des événements de charges de `MuninController`.
+  Le composant historique `MuninOrbAlphaGuard` reste désactivé afin de ne jamais
+  déduire la transparence d'une couleur noire.
+- Le lien esprit/incarnation est porté par `SpiritBondController` sur le
+  compagnon. Il masque seulement sa racine visuelle pendant une fusion ou une
+  manifestation-arme, sans désactiver sa logique de suivi et d'interaction.
+  Lucian utilise `CharacterEffect` avec `Holy`; les LightSkills imposent une
+  fusion temporaire et restaurent Munin à leur fin. `PlayerSword` et
+  `PlayerBow` signalent leur visibilité au lien, tandis que les futures armes
+  peuvent recevoir `SpiritWeaponManifestation`. Le clic bref du stick droit
+  appelle l'action `Melt` : il declenche `Melt` hors fusion et `Rupture` pendant
+  une fusion. Les AnimationEvents sont recus par `SpiritBondAnimationEvents`
+  sur l'incarnation : `TriggerHolyEffect`, `ConfirmMeltFusion` et
+  `ConfirmRuptureDefusion`. `InstantiateAtSpine` instancie le prefab configure
+  sur l'os Spine et le fait suivre l'animation. Le maintien du stick droit
+  conserve le recentrage de caméra (`C` au clavier). Les deux etats sont joints
+  depuis `Any State` par leurs triggers et reviennent automatiquement a l'etat
+  de locomotion a la fin du clip.
 
 ## Pièges observés
 
