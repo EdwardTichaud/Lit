@@ -504,13 +504,15 @@ aussi masque tant que l'arc ou l'epee est manifeste, ou qu'une future arme porte
 `SpiritWeaponManifestation`. Un AnimationEvent `InstantiateAtSpine` peut aussi
 instancier un prefab configure sur l'os Spine de Lucian. Les triggers Animator
 `Melt` et `Rupture` partent de `Any State` et reviennent a la locomotion en fin
-de clip (sans passer par `Sit_Down`). `StopEffect` arrete proprement le graphe
+de clip (sans passer par `Sit_Down`). `StopEffect_CharacterEffect` arrete proprement le graphe
 VFX, sans masquer son GameObject. Holy est porte par `CC_Base_Body` pour rester cale sur son
 `SkinnedMeshRenderer`; l'AnimationEvent historique `PlayEffect_CharacterEffect`
-est relaye depuis la racine Animee de Lucian, et `StopEffect` arrete Holy. Son instance VFX est egalement
+est relaye depuis la racine Animee de Lucian, et `StopEffect_CharacterEffect` arrete Holy. Son instance VFX est egalement
 enfant de `CC_Base_Body`; son binder Transform reste actif pour conserver une
 AABB VFX valide. Les offsets du prefab Holy sont neutralises sur l'origine du
-body de Lucian.
+body de Lucian. `StopEffect_CharacterEffect` est uniquement pilote par l'AnimationEvent de
+`Rupture`; sa sortie attend `1.1` temps normalise pour laisser son evenement de
+fin de clip s'executer.
 
 ## Prochaine utilisation
 

@@ -46,12 +46,13 @@ groupes, le follow et les données runtime de chaque membre.
   une fusion. Les AnimationEvents sont recus par `SpiritBondAnimationEvents`
   sur l'incarnation : `TriggerHolyEffect`, `ConfirmMeltFusion` et
   `ConfirmRuptureDefusion`. L'ancien evenement `PlayEffect_CharacterEffect`
-  est aussi relaie vers Holy, et `StopEffect` l'arrete. `InstantiateAtSpine`
+  est aussi relaie vers Holy, et son pendant
+  `StopEffect_CharacterEffect` l'arrete. `InstantiateAtSpine`
   instancie le prefab configure
   sur l'os Spine et le fait suivre l'animation. Le maintien du stick droit
   conserve le recentrage de caméra (`C` au clavier). Les deux etats sont joints
   depuis `Any State` par leurs triggers et reviennent automatiquement a l'etat
-  `Locomotion` a la fin du clip. `StopEffect` utilise l'arret propre du graphe
+  `Locomotion` a la fin du clip. `StopEffect_CharacterEffect` utilise l'arret propre du graphe
   VFX, sans desactiver son GameObject. Le `CharacterEffect` Holy est porte par
   `CC_Base_Body` (le `SkinnedMeshRenderer`) afin de partager son repere local
   et rester cale sur le personnage; son instance Holy doit aussi rester enfant
@@ -59,6 +60,9 @@ groupes, le follow et les données runtime de chaque membre.
   de Holy doit rester actif : le graphe en depend pour calculer une AABB valide.
   Les offsets `Transform` du prefab Holy sont neutres pour que son origine soit
   celle du body de Lucian, et non celle du modele de demonstration du package.
+  La sortie de `Rupture` attend `1.1` temps normalise, afin que son evenement
+  `StopEffect_CharacterEffect` de fin de clip ne soit pas coupe par la
+  transition de sortie.
 
 ## Pièges observés
 

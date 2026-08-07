@@ -31,14 +31,32 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
     /// </summary>
     public void PlayEffect_CharacterEffect()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[SpiritBond] Frame {Time.frameCount}: PlayEffect_CharacterEffect received.", this);
+#endif
         TriggerHolyEffect();
     }
 
-    /// <summary>AnimationEvent-compatible stop for the active Holy effect.</summary>
-    public void StopEffect()
+    /// <summary>
+    /// AnimationEvent counterpart of PlayEffect_CharacterEffect: stops the
+    /// active CharacterEffect cleanly, without disabling its GameObject.
+    /// </summary>
+    public void StopEffect_CharacterEffect()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[SpiritBond] Frame {Time.frameCount}: StopEffect_CharacterEffect received.", this);
+#endif
         ResolveBond();
         bond?.StopHolyEffectFromAnimationEvent();
+    }
+
+    /// <summary>
+    /// Legacy AnimationEvent entry point. Use StopEffect_CharacterEffect for
+    /// new clips; this forwarding method keeps existing clips functional.
+    /// </summary>
+    public void StopEffect()
+    {
+        StopEffect_CharacterEffect();
     }
 
     /// <summary>AnimationEvent at the moment Melt becomes active.</summary>
