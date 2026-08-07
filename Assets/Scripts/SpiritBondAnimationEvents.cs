@@ -24,6 +24,16 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
         bond?.TriggerHolyEffectFromAnimationEvent();
     }
 
+    /// <summary>
+    /// Compatibility entry point for the existing Melt AnimationEvent. The
+    /// actual CharacterEffect lives on CC_Base_Body, while events are received
+    /// by the Animator root.
+    /// </summary>
+    public void PlayEffect_CharacterEffect()
+    {
+        TriggerHolyEffect();
+    }
+
     /// <summary>AnimationEvent at the moment Melt becomes active.</summary>
     public void ConfirmMeltFusion()
     {

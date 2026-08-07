@@ -1513,6 +1513,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2118640267368316652}
   - component: {fileID: 2772251632162136425}
+  - component: {fileID: 3022999891409226724}
   m_Layer: 30
   m_Name: CC_Base_Body
   m_TagString: Untagged
@@ -1528,11 +1529,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2114580786202522978}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 2.5806618, y: 0.060386658, z: -1.3055725}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4459612782845038088}
   m_Father: {fileID: 2233782780378164146}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!137 &2772251632162136425
@@ -1897,6 +1899,40 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.00013926625, y: -0.08372018, z: 0.0056880265}
     m_Extent: {x: 0.8995292, y: 0.9104209, z: 0.22742754}
   m_DirtyAABB: 0
+--- !u!114 &3022999891409226724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2114580786202522978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bed290d90ff4e5140a672625f874dcc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::INab.VFXAssets.CharacterEffect
+  meshRenderer: {fileID: 2772251632162136425}
+  meshBaker:
+    _sampleCount: 10652
+    SampleCountMultiplier: 1
+    UsePerSubmeshBaking: 0
+    SubmeshIndex: 0
+  sampleCountMultiplier: 1
+  usePerSubmeshBaking: 0
+  submeshIndex: 0
+  effectPrefab: {fileID: 8125239696695069680, guid: d504297ecf823d244a67470460b61e67, type: 3}
+  instantiatedEffectPrefab: {fileID: 6804005499671954758}
+  debugMode: 0
+  effectName: Effect 1
+  vfxComponent: {fileID: 7157972800543119395}
+  vfxBinder: {fileID: 9197411679496039690}
+  currentEffectState: 0
+  _Foldout_1: 1
+  _Foldout_2: 1
+  _Foldout_3: 1
+  _Foldout_4: 1
+  _Foldout_5: 1
+  effectState: 1
 --- !u!1 &2136388590723494196
 GameObject:
   m_ObjectHideFlags: 0
@@ -2451,7 +2487,6 @@ GameObject:
   - component: {fileID: 900000000000000102}
   - component: {fileID: 900000000000000103}
   - component: {fileID: 900000000000000104}
-  - component: {fileID: 901000000000000202}
   - component: {fileID: 901000000000000203}
   m_Layer: 6
   m_Name: Player_Model_Lucian
@@ -3962,40 +3997,6 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &901000000000000202
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bed290d90ff4e5140a672625f874dcc3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::INab.VFXAssets.CharacterEffect
-  meshRenderer: {fileID: 2772251632162136425}
-  meshBaker:
-    _sampleCount: 4096
-    SampleCountMultiplier: 1
-    UsePerSubmeshBaking: 0
-    SubmeshIndex: 0
-  sampleCountMultiplier: 1
-  usePerSubmeshBaking: 0
-  submeshIndex: 0
-  effectPrefab: {fileID: 8125239696695069680, guid: d504297ecf823d244a67470460b61e67, type: 3}
-  instantiatedEffectPrefab: {fileID: 0}
-  debugMode: 0
-  effectName: Holy
-  vfxComponent: {fileID: 0}
-  vfxBinder: {fileID: 0}
-  currentEffectState: 0
-  _Foldout_1: 1
-  _Foldout_2: 1
-  _Foldout_3: 1
-  _Foldout_4: 1
-  _Foldout_5: 1
-  effectState: 1
 --- !u!114 &901000000000000203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10862,6 +10863,97 @@ Cloth:
   - {x: 0.6666667, y: 0.16666667, z: 0.16666667}
   - {x: 0.5, y: 0.5, z: 0}
   m_VirtualParticleIndices: 
+--- !u!1001 &3363635349848444598
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2118640267368316652}
+    m_Modifications:
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1809126896387109522, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: Target
+      value: 
+      objectReference: {fileID: 2118640267368316652}
+    - target: {fileID: 5618296412366050965, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_PropertySheet.m_NamedObject.m_Array.Array.data[4].m_Value
+      value: 
+      objectReference: {fileID: 2772251632162136425}
+    - target: {fileID: 8125239696695069680, guid: d504297ecf823d244a67470460b61e67, type: 3}
+      propertyPath: m_Name
+      value: 'Holy (Instance) [Effect 1]'
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d504297ecf823d244a67470460b61e67, type: 3}
+--- !u!4 &4459612782845038088 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1390964351072780478, guid: d504297ecf823d244a67470460b61e67, type: 3}
+  m_PrefabInstance: {fileID: 3363635349848444598}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &6804005499671954758 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8125239696695069680, guid: d504297ecf823d244a67470460b61e67, type: 3}
+  m_PrefabInstance: {fileID: 3363635349848444598}
+  m_PrefabAsset: {fileID: 0}
+--- !u!2083052967 &7157972800543119395 stripped
+VisualEffect:
+  m_CorrespondingSourceObject: {fileID: 5618296412366050965, guid: d504297ecf823d244a67470460b61e67, type: 3}
+  m_PrefabInstance: {fileID: 3363635349848444598}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9197411679496039690 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5840550476772942780, guid: d504297ecf823d244a67470460b61e67, type: 3}
+  m_PrefabInstance: {fileID: 3363635349848444598}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6804005499671954758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdafc37f32b176349b1684c4455b98e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &6724937530051910506
 PrefabInstance:
   m_ObjectHideFlags: 0
