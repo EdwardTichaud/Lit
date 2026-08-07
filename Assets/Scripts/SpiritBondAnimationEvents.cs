@@ -6,6 +6,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SpiritBondAnimationEvents : MonoBehaviour
 {
+    private static readonly int RuptureStateHash = Animator.StringToHash("Rupture");
+
     [SerializeField] private SpiritBondController bond;
     [SerializeField, Tooltip("Prefab spawned by the InstantiateAtSpine AnimationEvent.")]
     private GameObject spineAnimationPrefab;
@@ -25,16 +27,26 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
     }
 
     /// <summary>
-    /// Compatibility entry point for the existing Melt AnimationEvent. The
-    /// actual CharacterEffect lives on CC_Base_Body, while events are received
-    /// by the Animator root.
+    /// Compatibility entry point for existing clips. The actual CharacterEffect
+    /// lives on CC_Base_Body, while events are received by the Animator root.
+    /// A legacy Play event on Rupture is interpreted as the intended stop.
     /// </summary>
     public void PlayEffect_CharacterEffect()
     {
+        ResolveBond();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: PlayEffect_CharacterEffect received.", this);
 #endif
-        TriggerHolyEffect();
+        if (bond != null && !bond.IsCinematicFusion && (bond.IsFused || IsRupturePlaying()))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[SpiritBond] Frame {Time.frameCount}: legacy PlayEffect on fused bond routed to Holy stop.", this);
+#endif
+            bond.StopHolyEffectFromAnimationEvent();
+            return;
+        }
+
+        bond?.TriggerHolyEffectFromAnimationEvent();
     }
 
     /// <summary>
@@ -102,6 +114,24 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
         {
             bond = SpiritBondController.FindForCharacter(gameObject);
         }
+    }
+
+    private bool IsRupturePlaying()
+    {
+        Animator animator = GetComponent<Animator>();
+        if (animator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        if (current.shortNameHash == RuptureStateHash)
+        {
+            return true;
+        }
+
+        return animator.IsInTransition(0) &&
+               animator.GetNextAnimatorStateInfo(0).shortNameHash == RuptureStateHash;
     }
 
     private Transform ResolveSpineBone()

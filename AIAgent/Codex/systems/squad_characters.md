@@ -46,7 +46,8 @@ groupes, le follow et les données runtime de chaque membre.
   une fusion. Les AnimationEvents sont recus par `SpiritBondAnimationEvents`
   sur l'incarnation : `TriggerHolyEffect`, `ConfirmMeltFusion` et
   `ConfirmRuptureDefusion`. L'ancien evenement `PlayEffect_CharacterEffect`
-  est aussi relaie vers Holy, et son pendant
+  est relaie vers Holy, mais arrete Holy s'il est rencontre pendant une
+  `Rupture` legacy; son pendant explicite
   `StopEffect_CharacterEffect` l'arrete. `InstantiateAtSpine`
   instancie le prefab configure
   sur l'os Spine et le fait suivre l'animation. Le maintien du stick droit

@@ -507,7 +507,8 @@ instancier un prefab configure sur l'os Spine de Lucian. Les triggers Animator
 de clip (sans passer par `Sit_Down`). `StopEffect_CharacterEffect` arrete proprement le graphe
 VFX, sans masquer son GameObject. Holy est porte par `CC_Base_Body` pour rester cale sur son
 `SkinnedMeshRenderer`; l'AnimationEvent historique `PlayEffect_CharacterEffect`
-est relaye depuis la racine Animee de Lucian, et `StopEffect_CharacterEffect` arrete Holy. Son instance VFX est egalement
+est relaye depuis la racine Animee de Lucian; pendant une Rupture legacy, il est
+interprete comme un arret. `StopEffect_CharacterEffect` arrete explicitement Holy. Son instance VFX est egalement
 enfant de `CC_Base_Body`; son binder Transform reste actif pour conserver une
 AABB VFX valide. Les offsets du prefab Holy sont neutralises sur l'origine du
 body de Lucian. `StopEffect_CharacterEffect` est uniquement pilote par l'AnimationEvent de
