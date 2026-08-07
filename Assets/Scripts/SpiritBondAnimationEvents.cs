@@ -34,6 +34,13 @@ public sealed class SpiritBondAnimationEvents : MonoBehaviour
         TriggerHolyEffect();
     }
 
+    /// <summary>AnimationEvent-compatible stop for the active Holy effect.</summary>
+    public void StopEffect()
+    {
+        ResolveBond();
+        bond?.StopHolyEffectFromAnimationEvent();
+    }
+
     /// <summary>AnimationEvent at the moment Melt becomes active.</summary>
     public void ConfirmMeltFusion()
     {

@@ -3113,7 +3113,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions: []
   m_DstStateMachine: {fileID: 0}
-  m_DstState: {fileID: 950330941234569001}
+  m_DstState: {fileID: -234594715202117747}
   m_Solo: 0
   m_Mute: 0
   m_IsExit: 0
@@ -3135,7 +3135,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions: []
   m_DstStateMachine: {fileID: 0}
-  m_DstState: {fileID: 950330941234569001}
+  m_DstState: {fileID: -234594715202117747}
   m_Solo: 0
   m_Mute: 0
   m_IsExit: 0
@@ -4917,7 +4917,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 9d941b0590be9b34787d7c41f152be0e, type: 2}
+  m_Motion: {fileID: 7400000, guid: 92641b99ff3967a4cb61d5f8cae63e13, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

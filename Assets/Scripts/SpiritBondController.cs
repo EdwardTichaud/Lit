@@ -112,6 +112,12 @@ public sealed class SpiritBondController : MonoBehaviour
         PlayHoly();
     }
 
+    /// <summary>AnimationEvent: stops Holy at the precise authored frame.</summary>
+    public void StopHolyEffectFromAnimationEvent()
+    {
+        StopHoly();
+    }
+
     /// <summary>AnimationEvent: completes the Melt animation's fusion.</summary>
     public void ConfirmMeltFusionFromAnimationEvent()
     {
@@ -354,7 +360,12 @@ public sealed class SpiritBondController : MonoBehaviour
 
     private void StopHoly()
     {
-        holyEffect?.StopEffect();
+        if (holyEffect == null)
+        {
+            return;
+        }
+
+        holyEffect.StopEffect();
     }
 
     private void SetSpiritVisible(bool visible)

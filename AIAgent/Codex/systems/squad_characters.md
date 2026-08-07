@@ -46,11 +46,13 @@ groupes, le follow et les données runtime de chaque membre.
   une fusion. Les AnimationEvents sont recus par `SpiritBondAnimationEvents`
   sur l'incarnation : `TriggerHolyEffect`, `ConfirmMeltFusion` et
   `ConfirmRuptureDefusion`. L'ancien evenement `PlayEffect_CharacterEffect`
-  est aussi relaie vers Holy. `InstantiateAtSpine` instancie le prefab configure
+  est aussi relaie vers Holy, et `StopEffect` l'arrete. `InstantiateAtSpine`
+  instancie le prefab configure
   sur l'os Spine et le fait suivre l'animation. Le maintien du stick droit
   conserve le recentrage de caméra (`C` au clavier). Les deux etats sont joints
   depuis `Any State` par leurs triggers et reviennent automatiquement a l'etat
-  de locomotion a la fin du clip. Le `CharacterEffect` Holy est porte par
+  `Locomotion` a la fin du clip. `StopEffect` utilise l'arret propre du graphe
+  VFX, sans desactiver son GameObject. Le `CharacterEffect` Holy est porte par
   `CC_Base_Body` (le `SkinnedMeshRenderer`) afin de partager son repere local
   et rester cale sur le personnage; son instance Holy doit aussi rester enfant
   de `CC_Base_Body` apres un `Load New` dans l'Inspector. Le binder `Transform`
