@@ -1261,9 +1261,9 @@ GameObject:
   - component: {fileID: 7652341441785883377}
   - component: {fileID: 2872984668119182103}
   - component: {fileID: 6059674322863807500}
-  - component: {fileID: 4356935285358481028}
   - component: {fileID: 9218925662834059794}
   - component: {fileID: 1205114612473753433}
+  - component: {fileID: 6062841937014225081}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -1285,7 +1285,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7061287491190634350}
-  - {fileID: 8835696500665851550}
   - {fileID: 2567248197990508734}
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1485,9 +1484,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LightSkillCombatController
   combatManager: {fileID: 810000000000000001}
   combatInput: {fileID: 810000000000000002}
-  director: {fileID: 810000000000000005}
+  cinematicPlayback: {fileID: 0}
   lightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
-  furieSequence: {fileID: 4356935285358481028}
 --- !u!114 &287456315339509268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1711,76 +1709,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
   m_Events:
-    m_Signals:
-    - {fileID: 11400000, guid: 1be0038e2b8c8574596ea59852abda70, type: 2}
-    - {fileID: 11400000, guid: 89e8c9df89108234c8d930b47963b7f8, type: 2}
-    - {fileID: 11400000, guid: 3847bd9b6feeca64ba1a911a5b1be109, type: 2}
-    m_Events:
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 4356935285358481028}
-          m_TargetAssemblyTypeName: LightSkillFurieSequenceDriver, Assembly-CSharp
-          m_MethodName: BeginFurieStart
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 4356935285358481028}
-          m_TargetAssemblyTypeName: LightSkillFurieSequenceDriver, Assembly-CSharp
-          m_MethodName: SetFurieRearShot
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 4356935285358481028}
-          m_TargetAssemblyTypeName: LightSkillFurieSequenceDriver, Assembly-CSharp
-          m_MethodName: BeginFurieImpulse
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
---- !u!114 &4356935285358481028
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6263c9c0f14c3124ab2980f7b6568dcd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LightSkillFurieSequenceDriver
-  virtualCamera: {fileID: 8137369440577487234}
-  cameraRig: {fileID: 8121400637783396159}
-  signalReceiver: {fileID: 6059674322863807500}
-  startState: Base Layer.LightSkill_1_Furie_Start_Temp
-  impulseState: Base Layer.LightSkill_1_Furie_Impulse_Temp
-  attackState: Base Layer.LightSkill_1_Furie_Attack_Temp
-  attackDistance: 2.5
-  maximumImpulseSeconds: 1
-  preferredDashSpeed: 26
-  maximumDashSpeed: 36
-  animationTransitionSeconds: 0.05
+    m_Signals: []
+    m_Events: []
 --- !u!114 &9218925662834059794
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1795,6 +1725,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CounterSkillCombatController
   combatManager: {fileID: 810000000000000001}
   director: {fileID: 810000000000000005}
+  cinematicPlayback: {fileID: 0}
   wheel: {fileID: 0}
   counterVirtualCamera: {fileID: 7926320162611101663}
   cameraRig: {fileID: 7088912455650331963}
@@ -1802,6 +1733,10 @@ MonoBehaviour:
   availableSkills:
   - {fileID: 11400000, guid: 8418564374f398941bb11ff9df6a6dba, type: 2}
   guardedDamageMultiplier: 0.4
+  guardAnimatorState: Base Layer.RealTimeCombat_RootMotion.Guard_Block
+  guardFallbackAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root
+  guardReleaseAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root
+  guardAnimationBlendSeconds: 0.08
   guardStartVfx: {fileID: 0}
   guardStartAudio: {fileID: 0}
   guardedImpactVfx: {fileID: 0}
@@ -1821,6 +1756,19 @@ MonoBehaviour:
   combatManager: {fileID: 810000000000000001}
   prompt: {fileID: 0}
   impactFeedback: {fileID: 810000000000000004}
+--- !u!114 &6062841937014225081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2b9ce61854c9384c9a7e9919d450899, type: 3}
+  m_Name: ""
+  m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicPlaybackService
+  poolRoot: {fileID: 0}
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0
@@ -1871,7 +1819,7 @@ MonoBehaviour:
     m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 0}
@@ -2328,99 +2276,6 @@ MonoBehaviour:
         materialPassIndex: 0
         materialPassName: Custom Pass 0
         fetchColorBuffer: 1
---- !u!1 &5722889685105104389
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8835696500665851550}
-  - component: {fileID: 8137369440577487234}
-  - component: {fileID: 8121400637783396159}
-  m_Layer: 0
-  m_Name: LightSkill_1_Furie_VirtualCamera
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8835696500665851550
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5722889685105104389}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1962244032958566552}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8137369440577487234
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5722889685105104389}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
-  Priority:
-    Enabled: 1
-    m_Value: 0
-  OutputChannel: 1
-  StandbyUpdate: 2
-  m_StreamingVersion: 0
-  m_LegacyPriority: 0
-  Target:
-    TrackingTarget: {fileID: 0}
-    LookAtTarget: {fileID: 0}
-    CustomLookAtTarget: 0
-  Lens:
-    FieldOfView: 40
-    OrthographicSize: 10
-    NearClipPlane: 0.1
-    FarClipPlane: 5000
-    Dutch: 0
-    ModeOverride: 0
-    PhysicalProperties:
-      GateFit: 2
-      SensorSize: {x: 21.946, y: 16.002}
-      LensShift: {x: 0, y: 0}
-      FocusDistance: 10
-      Iso: 200
-      ShutterSpeed: 0.005
-      Aperture: 16
-      BladeCount: 5
-      Curvature: {x: 2, y: 11}
-      BarrelClipping: 0.25
-      Anamorphism: 0
-  BlendHint: 0
---- !u!114 &8121400637783396159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5722889685105104389}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41d86fb89c86c394985de778b87ca858, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LightSkillFurieCameraRig
-  virtualCamera: {fileID: 8137369440577487234}
-  openingLocalOffset: {x: 0, y: 1.35, z: 3.25}
-  openingLookOffset: {x: 0, y: 1.2, z: 0}
-  rearLocalOffset: {x: 0, y: 0, z: -6}
-  dashFollowSharpness: 5.5
 --- !u!1 &6165832214879711617
 GameObject:
   m_ObjectHideFlags: 0

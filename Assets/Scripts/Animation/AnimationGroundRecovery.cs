@@ -118,7 +118,8 @@ public sealed class AnimationGroundRecovery : MonoBehaviour
             RaycastHit hit = hits[i];
             Collider collider = hit.collider;
             if (collider == null || collider.transform == transform ||
-                collider.transform.IsChildOf(transform) || hit.normal.y < minimumGroundNormal)
+                collider.transform.IsChildOf(transform) || IsActorCollider(collider) ||
+                hit.normal.y < minimumGroundNormal)
             {
                 continue;
             }
@@ -131,6 +132,14 @@ public sealed class AnimationGroundRecovery : MonoBehaviour
         }
 
         return closestGround.collider != null;
+    }
+
+    private static bool IsActorCollider(Collider collider)
+    {
+        Transform root = collider.transform.root;
+        return root.GetComponentInChildren<LitOpsiveLocomotionBridge>(true) != null ||
+               root.GetComponentInChildren<SquadCharacterController>(true) != null ||
+               root.GetComponentInChildren<RealTimeCombatEnemy>(true) != null;
     }
 
     private Animator ResolveRootMotionAnimator()

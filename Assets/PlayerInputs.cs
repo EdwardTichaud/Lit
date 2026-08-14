@@ -505,7 +505,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""ba7ccfa2-59b4-4113-b5f6-9ed111e512d2"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""path"": ""<Gamepad>/leftStickPress"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -959,6 +959,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Melt"",
+                    ""type"": ""Button"",
+                    ""id"": ""379522a9-326d-4205-8185-1f0d3b7f0cc8"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Dodge"",
                     ""type"": ""Button"",
                     ""id"": ""c8e1b6f8-1f7a-420a-8b00-06545a6acb13"",
@@ -1056,6 +1065,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""a9b2809b-ace0-48d4-8c97-bc84da9d4578"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": ""tap(duration=0.35)"",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Melt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""3c6ed609-38f4-41f5-aa8f-b631c1d1c17a"",
                     ""path"": ""<Gamepad>/buttonWest"",
                     ""interactions"": """",
@@ -1123,7 +1143,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""418d388a-a65e-4c98-a1c9-4e6626e5d07e"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""path"": ""<Gamepad>/leftStickPress"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
@@ -1303,6 +1323,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         // RealTimeCombat
         m_RealTimeCombat = asset.FindActionMap("RealTimeCombat", throwIfNotFound: true);
         m_RealTimeCombat_Counter = m_RealTimeCombat.FindAction("Counter", throwIfNotFound: true);
+        m_RealTimeCombat_Melt = m_RealTimeCombat.FindAction("Melt", throwIfNotFound: true);
         m_RealTimeCombat_Dodge = m_RealTimeCombat.FindAction("Dodge", throwIfNotFound: true);
         m_RealTimeCombat_BasicAttack = m_RealTimeCombat.FindAction("BasicAttack", throwIfNotFound: true);
         m_RealTimeCombat_Jump = m_RealTimeCombat.FindAction("Jump", throwIfNotFound: true);
@@ -1975,6 +1996,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_RealTimeCombat;
     private List<IRealTimeCombatActions> m_RealTimeCombatActionsCallbackInterfaces = new List<IRealTimeCombatActions>();
     private readonly InputAction m_RealTimeCombat_Counter;
+    private readonly InputAction m_RealTimeCombat_Melt;
     private readonly InputAction m_RealTimeCombat_Dodge;
     private readonly InputAction m_RealTimeCombat_BasicAttack;
     private readonly InputAction m_RealTimeCombat_Jump;
@@ -1998,6 +2020,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "RealTimeCombat/Counter".
         /// </summary>
         public InputAction @Counter => m_Wrapper.m_RealTimeCombat_Counter;
+        /// <summary>
+        /// Provides access to the underlying input action "RealTimeCombat/Melt".
+        /// </summary>
+        public InputAction @Melt => m_Wrapper.m_RealTimeCombat_Melt;
         /// <summary>
         /// Provides access to the underlying input action "RealTimeCombat/Dodge".
         /// </summary>
@@ -2059,6 +2085,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Counter.started += instance.OnCounter;
             @Counter.performed += instance.OnCounter;
             @Counter.canceled += instance.OnCounter;
+            @Melt.started += instance.OnMelt;
+            @Melt.performed += instance.OnMelt;
+            @Melt.canceled += instance.OnMelt;
             @Dodge.started += instance.OnDodge;
             @Dodge.performed += instance.OnDodge;
             @Dodge.canceled += instance.OnDodge;
@@ -2097,6 +2126,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @Counter.started -= instance.OnCounter;
             @Counter.performed -= instance.OnCounter;
             @Counter.canceled -= instance.OnCounter;
+            @Melt.started -= instance.OnMelt;
+            @Melt.performed -= instance.OnMelt;
+            @Melt.canceled -= instance.OnMelt;
             @Dodge.started -= instance.OnDodge;
             @Dodge.performed -= instance.OnDodge;
             @Dodge.canceled -= instance.OnDodge;
@@ -2578,6 +2610,13 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCounter(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Melt" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMelt(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Dodge" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

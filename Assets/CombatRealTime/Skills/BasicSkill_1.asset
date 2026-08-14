@@ -18,7 +18,7 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: c421e761ada49ce41bdbd4f3d05d77cc, type: 2}
   animatorState: Base Layer.BasicSkill_1
   damages: 5
-  lightChargeOnHit: 10
+  lightChargeOnHit: 100
   presentation:
     entryBlendSeconds: 0.04
     chainNormalizedTime: 0.55
@@ -75,8 +75,23 @@ MonoBehaviour:
     maximumVerticalImpulse: 8
     minimumInputLockSeconds: 0.12
     maximumInputLockSeconds: 3.5
+    airborneInertiaSeconds: 0
+    airborneInertiaEndSpeedMultiplier: 0.3
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000
   requireAllEnemyReactions: 0
   enemyAttackSfx: {fileID: 0}
+  reactionTelegraph:
+    enabled: 1
+    alertPrefab: {fileID: 0}
+    threatColor: {r: 0.85, g: 0.08, b: 0.4, a: 1}
+    perfectWindowColor: {r: 0.72, g: 0.94, b: 1, a: 1}
+    heightOffset: 1.1
+    fadeSeconds: 0.12
+    anticipationAudio: {fileID: 0}
+    perfectWindowAudio: {fileID: 0}
+    successfulReactionAudio: {fileID: 0}
+    usePerfectWindowSlowMotion: 1
+    perfectWindowTimeScale: 0.85
+    perfectWindowSlowMotionSeconds: 0.15

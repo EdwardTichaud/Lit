@@ -175,6 +175,11 @@ Après une modification structurelle du menu, utiliser si nécessaire
 
 ## Temps, strates et lumière
 
+Cette section décrit l'implémentation. L'interprétation diégétique des strates
+et des Ancient Flames relève du [lore canonique](../Design/Lore.md) : les
+Explorateurs les parcourent après la fracture, et les Ancient Flames sont des
+mécanismes du rituel interrompu.
+
 Fichiers principaux :
 
 - `Assets/Scripts/Temporal/AgeManager.cs`

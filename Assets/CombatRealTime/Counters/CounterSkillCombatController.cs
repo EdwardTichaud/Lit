@@ -12,6 +12,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     [Header("References")]
     [SerializeField] private RealTimeCombatManager combatManager;
     [SerializeField] private PlayableDirector director;
+    [SerializeField] private CombatCinematicPlaybackService cinematicPlayback;
     [SerializeField] private CounterSkillWheel wheel;
     [SerializeField] private CinemachineCamera counterVirtualCamera;
     [SerializeField] private CounterSkillCameraRig cameraRig;
@@ -40,6 +41,8 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private bool finishing;
     private CounterSkillSO activeSkill;
     private Animator guardAnimator;
+    private bool usingPooledRig;
+    private bool abortingPooledRig;
 
     public bool IsSelectionOpen => selectionOpen;
     public bool IsCinematicPlaying => cinematicPlaying;
@@ -65,7 +68,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
     private void Update()
     {
-        if (cinematicPlaying && director != null && director.duration > 0d)
+        if (!usingPooledRig && cinematicPlaying && director != null && director.duration > 0d)
         {
             cameraRig?.SetTimelineNormalizedTime((float)(director.time / director.duration));
         }
@@ -137,7 +140,8 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         }
 
         CounterSkillSO skill = wheel.SelectedSkill;
-        if (skill == null || skill.Timeline == null || director == null)
+        if (skill == null || skill.Timeline == null ||
+            (skill.CombatCinematicRigPrefab == null && director == null))
         {
             return false;
         }
@@ -147,6 +151,32 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         wheel.Close();
         cinematicPlaying = true;
         impactResolved = false;
+
+        if (skill.CombatCinematicRigPrefab != null)
+        {
+            if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
+            string error = "CombatCinematicPlaybackService manquant.";
+            if (cinematicPlayback == null || !cinematicPlayback.TryPlay(
+                    skill.CombatCinematicRigPrefab,
+                    new CombatCinematicContext(combatManager, skill),
+                    skill.Timeline,
+                    skill.PlayerAnimatorTrackName,
+                    skill.EnemyAnimatorTrackName,
+                    OnRuntimeRigCompleted,
+                    out error))
+            {
+                Debug.LogWarning("[CounterSkill] Impossible de lancer le rig : " + error, this);
+                cinematicPlaying = false;
+                combatManager?.CancelCounterSelection();
+                UnlockPlayer();
+                return false;
+            }
+
+            usingPooledRig = true;
+            if (skill.StartSfx != null && combatManager != null && combatManager.PlayerRoot != null)
+                AudioManager.PlayClipAtPoint(skill.StartSfx, combatManager.PlayerRoot.position);
+            return true;
+        }
 
         director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
         director.playableAsset = skill.Timeline;
@@ -222,13 +252,20 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         UnlockPlayer();
         combatManager?.ResolveDeferredCombatOutcome();
         activeSkill = null;
-        cameraRig?.End();
+        if (!usingPooledRig) cameraRig?.End();
+        usingPooledRig = false;
         finishing = false;
     }
 
     private void AbortAndRestore()
     {
         if (finishing) return;
+        if (usingPooledRig && cinematicPlayback != null && cinematicPlayback.IsPlaying)
+        {
+            abortingPooledRig = true;
+            cinematicPlayback.StopActive();
+            return;
+        }
         finishing = true;
         bool hadCounterState = selectionOpen || cinematicPlaying;
         selectionOpen = false;
@@ -239,7 +276,8 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (hadCounterState) combatManager?.CancelCounterSelection();
         UnlockPlayer();
         activeSkill = null;
-        cameraRig?.End();
+        if (!usingPooledRig) cameraRig?.End();
+        usingPooledRig = false;
         finishing = false;
     }
 
@@ -316,10 +354,36 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     {
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (director == null) director = GetComponent<PlayableDirector>();
+        if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
         if (impactFeedback == null) impactFeedback = GetComponent<CombatImpactFeedbackController>();
         if (wheel == null) wheel = FindAnyObjectByType<CounterSkillWheel>(FindObjectsInactive.Include);
         if (cameraRig == null) cameraRig = GetComponentInChildren<CounterSkillCameraRig>(true);
         if (counterVirtualCamera == null && cameraRig != null) counterVirtualCamera = cameraRig.GetComponent<CinemachineCamera>();
+    }
+
+    private void OnRuntimeRigCompleted(CombatCinematicRig rig)
+    {
+        if (abortingPooledRig)
+        {
+            abortingPooledRig = false;
+            FinishAbortedPooledCinematic();
+        }
+        else if (cinematicPlaying)
+        {
+            FinishCounterCinematic();
+        }
+    }
+
+    private void FinishAbortedPooledCinematic()
+    {
+        selectionOpen = false;
+        cinematicPlaying = false;
+        wheel?.Close();
+        impactFeedback?.PopExternalPause();
+        combatManager?.CancelCounterSelection();
+        UnlockPlayer();
+        activeSkill = null;
+        usingPooledRig = false;
     }
 
     private void BindTimelineTargets(CounterSkillSO skill)

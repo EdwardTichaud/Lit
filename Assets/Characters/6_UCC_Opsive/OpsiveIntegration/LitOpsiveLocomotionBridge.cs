@@ -527,9 +527,20 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     public bool BeginScriptedTraversal()
     {
+        return TryBeginScriptedTraversal(out _);
+    }
+
+    /// <summary>
+    /// Starts a traversal lock while exposing why UCC rejected it.
+    /// </summary>
+    public bool TryBeginScriptedTraversal(out string failureReason)
+    {
         ResolveReferences();
         if (!CanDriveScriptedTraversal)
         {
+            failureReason = !isActiveAndEnabled
+                ? "Le bridge UCC est desactive."
+                : "UltimateCharacterLocomotion est introuvable sur le personnage.";
             return false;
         }
 
@@ -537,6 +548,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (scriptedTraversalLockCount > 1)
         {
             ForceZeroInput();
+            failureReason = null;
             return true;
         }
 
@@ -551,6 +563,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         ForceZeroInput();
         EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", false);
         scriptedTraversalInputDisabled = true;
+        failureReason = null;
         return true;
     }
 

@@ -40,7 +40,7 @@ MonoBehaviour:
     quantity: 300
   - item: {fileID: 11400000, guid: 1c025a0b39ccf564b8d5fe22b4ea5109, type: 2}
     quantity: 1
-  hp: 100
+  hp: 1000
   isEnemy: 0
   combatCurrentHp: 0
   attackDamage: 4

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 [CreateAssetMenu(fileName = "LightSkillSO", menuName = "Scriptable Objects/Combat/Light Skill SO")]
 public sealed class LightSkillSO : ScriptableObject
@@ -13,6 +14,8 @@ public sealed class LightSkillSO : ScriptableObject
 
     [Header("Cinematic Resolution")]
     [SerializeField] private PlayableAsset timeline;
+    [Tooltip("Rig runtime poolé contenant Director, receiver et caméras de cette compétence.")]
+    [SerializeField] private CombatCinematicRig combatCinematicRigPrefab;
     [Header("Timeline Bindings")]
     [Tooltip("Nom de l'Animation Track ciblee par l'Animator de Lucian.")]
     [SerializeField] private string playerAnimatorTrackName = "Player.Animator";
@@ -32,10 +35,27 @@ public sealed class LightSkillSO : ScriptableObject
     [Tooltip("Active l'impact a l'arret de la Timeline si aucun Signal n'a appele ResolveLightSkillImpact.")]
     [SerializeField] private bool resolveDamageWhenTimelineStops = true;
 
+    [Header("Timeline VFX")]
+    [Tooltip("Prefab instancie au premier signal, en enfant du point d'emission du caster.")]
+    [SerializeField] private GameObject projectileVfxPrefab;
+    [Tooltip("Chemin relatif depuis l'Animator du caster. Vide = racine du joueur.")]
+    [SerializeField] private string projectileSpawnTransformPath;
+    [SerializeField] private Vector3 projectileSpawnLocalOffset;
+    [SerializeField, Min(0.01f)] private float projectileSpeed = 18f;
+    [SerializeField] private GameObject impactVfxPrefab;
+    [SerializeField] private Vector3 impactVfxOffset;
+
+    [Header("Timeline Signals")]
+    [SerializeField] private SignalAsset spawnProjectileSignal;
+    [SerializeField] private SignalAsset launchProjectileSignal;
+    [SerializeField] private SignalAsset spawnImpactVfxSignal;
+    [SerializeField] private SignalAsset resolveDamageSignal;
+
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public Sprite Icon => icon;
     public float RequiredCharge => requiredCharge;
     public PlayableAsset Timeline => timeline;
+    public CombatCinematicRig CombatCinematicRigPrefab => combatCinematicRigPrefab;
     public string PlayerAnimatorTrackName => playerAnimatorTrackName;
     public string EnemyAnimatorTrackName => enemyAnimatorTrackName;
     public string CinemachineTrackName => cinemachineTrackName;
@@ -46,4 +66,14 @@ public sealed class LightSkillSO : ScriptableObject
     public int Damage => damage;
     public float ClarityGain => clarityGain;
     public bool ResolveDamageWhenTimelineStops => resolveDamageWhenTimelineStops;
+    public GameObject ProjectileVfxPrefab => projectileVfxPrefab;
+    public string ProjectileSpawnTransformPath => projectileSpawnTransformPath;
+    public Vector3 ProjectileSpawnLocalOffset => projectileSpawnLocalOffset;
+    public float ProjectileSpeed => projectileSpeed;
+    public GameObject ImpactVfxPrefab => impactVfxPrefab;
+    public Vector3 ImpactVfxOffset => impactVfxOffset;
+    public SignalAsset SpawnProjectileSignal => spawnProjectileSignal;
+    public SignalAsset LaunchProjectileSignal => launchProjectileSignal;
+    public SignalAsset SpawnImpactVfxSignal => spawnImpactVfxSignal;
+    public SignalAsset ResolveDamageSignal => resolveDamageSignal;
 }

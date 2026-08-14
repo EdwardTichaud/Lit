@@ -119,25 +119,24 @@ d'action engagee.
 Chaque impact ajoute aussi un micro-tremblement lateral et vertical, tres court
 et amorti en temps non scale; son amplitude, sa duree et sa frequence sont
 reglables globalement dans `GameplaySessionRoot`.
-Le `LightSkillPanel` de `Bootstrap` est maintenant visible uniquement pendant
+Le `LightSkillPanel` de `Bootstrap` est visible uniquement pendant
 un combat temps reel. Sa jauge est alimentee par les degats effectivement
-appliques par Lucian, selon `Light Charge On Hit` configure sur le `SkillSO` ou
-le `BasicSkillsSO` qui a touche; lorsqu'elle atteint le cout de `LightSkillSO`, l'action
-`RealTimeCombat/LightSkill` lance une Timeline cinematographique puis rend les
-controles a la fin. `LightSkill_1_Furie` dure cinq secondes: une Virtual Camera
-Cinemachine relative a Lucian ouvre face a lui, passe a 2 s derriere ses pieds
-avec un recul Z de 6, puis suit avec retard son impulsion vers `EnemyLockPoint`
-a 4 s. L'ennemi est suspendu pendant le plan; l'impact depend uniquement de
-l'Animation Event `ResolveLightSkillImpact`, sans fallback. Trois AudioClipSO
-configurables (depart, impulsion, impact) sont exposes par le LightSkill. Une
-mort ennemie reste volontairement en attente jusqu'a la fin de ce plan afin de
-ne jamais couper une fatality cinematographique au frame d'impact. Son clip de
-depart `LightSkill_1_Furie_Start_Temp` est une pose originale de 1.1 s sans
-root motion : recul, ouverture des bras, contraction d'energie puis pose de
-puissance. Il peut etre regenere depuis `Lit/Combat/Build LightSkill 1 Invocation Pose`.
-L'impulsion Furie utilise une traversée UCC pilotee image par image, et non une
-force physique : le verrou cinematographique ne peut donc pas annuler son
-deplacement vers la portee d'attaque.
+appliques par Lucian selon `Light Charge On Hit`. Les LightSkills sont ecrites
+dans `AnimationLab`, puis exportees avec `Bake LightSkill` dans l'Inspector du
+`LightSkillTimelineAuthoringRig`. Le bake refuse une Timeline invalide, demande
+confirmation avant ecrasement et genere un package runtime fige dans le dossier
+du `LightSkillSO` : prefab de rig et copie `Runtime` de la Timeline. Les
+preview actors, Main Camera de preview, Brain et AudioListener restent dans
+`AnimationLab`. Seules les Cinemachines utilisees et les objets marques
+`LightSkillRuntimeExport` sont copies. Le package lie dynamiquement les tracks
+`Player.Animator`, `Enemy.Animator`, `Cinemachine`, `Signals` et les tracks
+d'objets exportes aux vrais acteurs au lancement. Les cameras peuvent declarer
+leur cible Player, Enemy ou EnemyLockPoint. Un nouveau bake est requis apres
+toute modification de Timeline, camera ou objet exporte.
+`LightSkill_Devastation` est la base active; Furie a ete supprime integralement.
+Le lancement d'une LightSkill resout explicitement le bridge UCC de Lucian;
+tout refus (references combat, portee, locomotion UCC, camera Cinemachine ou sequence deja active)
+est affiche dans la Console et par un feedback world-space.
 `Skill_2_Fleche de lumiere` restitue maintenant la locomotion a 78 % de son
 clip, apres le tir, au lieu d'attendre sa quasi-totalite.
 Quand les PV de Lucian atteignent zero, `PlayerActionPresentationController`

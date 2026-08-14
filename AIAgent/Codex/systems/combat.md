@@ -53,26 +53,22 @@ l'impact du LightSkill ne la rechargent pas. `LightSkillPanel` de scene affiche
 la jauge uniquement en combat et devient cyan lorsqu'elle est prete. L'action
 `RealTimeCombat/LightSkill` (`Left Stick Press` / `R`) vide la jauge, verrouille
 temporairement Lucian et joue la Timeline du SO via le `PlayableDirector` du
-`BattleManager`. Pour `LightSkill_1_Furie`, les Signals `0 s`, `2 s` et `4 s`
-pilotent respectivement le depart, le plan arriere et l'impulsion; l'impact est
-obligatoirement declenche par l'Animation Event `ResolveLightSkillImpact` du
-clip d'attaque, sans fallback de fin de Timeline.
-Le clip de depart est une pose originale `LightSkill_1_Furie_Start_Temp` de
-1.1 s, sans root motion : recul, ouverture, contraction et pose finale. Son
-generateur est disponible via `Lit/Combat/Build LightSkill 1 Invocation Pose`.
-La resolution victoire/defaite est differee jusqu'a la sortie de cette Timeline,
-afin qu'un coup letal ne coupe jamais le plan cinematographique.
-Les tracks nommees `Player.Animator`, `Enemy.Animator`, `Signals` et
-`Cinemachine` sont lies au lancement aux acteurs courants. La Virtual Camera
-`LightSkill_1_Furie_VirtualCamera`, enfant de `BattleManager`, est selectionnee
-par la piste Cinemachine via `LitTimelineCinemachineBridge`: UCC est suspendu
-pendant le plan et restaure a la fin. `LightSkillFurieSequenceDriver` bloque
-l'IA de l'ennemi verrouille pendant les cinq secondes, pilote la traversee UCC
-vers `EnemyLockPoint` et expose trois `AudioClipSO` (depart, impulsion, impact)
-sur le `LightSkillSO`.
-L'impulsion Furie est une traversee UCC pilotee image par image jusqu'a la
-portee d'attaque, sur une duree maximale d'une seconde. Elle ne depend pas
-d'une force physique qui pourrait etre neutralisee par le verrou cinematographique.
+`BattleManager`. Chaque LightSkill est ecrite dans `AnimationLab`, puis exportee
+par l'Inspector du `LightSkillTimelineAuthoringRig`: `Validate Runtime Contract`
+valide les pistes requises, Signals, cameras et objets exportes; `Bake
+LightSkill` demande une confirmation puis cree un package runtime fige dans le
+dossier du SO. Ce package contient un prefab de rig et une copie `Runtime` de
+la Timeline. Les preview actors, camera, Brain et AudioListener restent dans
+`AnimationLab`; les tracks Player/Enemy sont lies aux vrais Animators lors du
+lancement. Les seules copies de GameObjects autorisees sont les Cinemachines
+utilisees et les racines marquees `LightSkillRuntimeExport`; leurs tracks sont
+enregistres dans `CombatCinematicRig`. Chaque camera exportee peut declarer une
+cible de suivi/regard Player, Enemy ou EnemyLockPoint. Le runtime instancie ce
+prefab via `CombatCinematicPlaybackService` et lie le Brain actif.
+`LightSkillCinematicSequenceController` suspend l'IA cible et interprete les
+Signals projectile, impact VFX et degats.
+`ResolveLightSkillImpact` reste la seule resolution lorsque le fallback est
+desactive. `LightSkill_Devastation` est la base active; Furie a ete supprime.
 `CombatAttackDefinition`, `SkillSO`, `EnemySkills` et
 `RealTimeCombatLoadout` portent les données auteur, avec exactement huit slots
 d'attaque. `CombatLockOnCameraController` est le seul pilote de caméra lorsque

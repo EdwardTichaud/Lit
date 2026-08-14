@@ -60,9 +60,9 @@ La direction actuelle privilégie :
 - les familles, registres, lignées et objets transmis ;
 - les connaissances persistantes comme mémoire de l'enquête ;
 - les fantômes apaisés par des connaissances retrouvées ;
-- la progression temporelle de `666` vers `000` ;
-- les Flames communes comme outils d'interaction et les Ancient Flames comme
-  progression temporelle ;
+- l'exploration des strates temporelles de `666` vers `000`, après la fracture ;
+- les Flames communes comme outils d'interaction et les Ancient Flames, mécanismes
+  du rituel interrompu, comme progression entre strates ;
 - les portails comme outils de navigation entre districts, zones et époques ;
 - les compositions coopératives comme moteur principal de rejouabilité ;
 - des systèmes simples et maintenables par un développeur solo ;
@@ -157,6 +157,10 @@ La checklist détaillée se trouve dans
 - La version Unity officielle du projet est `6000.4.9f1`.
 - Les Chanteurs, la statue centrale, le siège de l'an 666, l'armée venue arrêter
   le rituel et les traces bleues font partie du lore canonique.
+- Les années `666` à `000` sont des strates temporelles post-fracture explorées
+  plusieurs siècles après le siège ; elles ne sont pas des voyages historiques.
+- Les Ancient Flames sont des mécanismes du rituel interrompu. Les effets entre
+  strates restent volontairement inexpliqués.
 - `AgeManager` et la grille `TemporalAge` utilisent tous deux des pas de
   111 ans : `666`, `555`, `444`, `333`, `222`, `111`, `000`.
 - La campagne solo et le mode coopératif parcourent le même château ; le coop

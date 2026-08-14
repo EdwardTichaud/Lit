@@ -419,7 +419,7 @@
                 {
                     "name": "",
                     "id": "ba7ccfa2-59b4-4113-b5f6-9ed111e512d2",
-                    "path": "<Gamepad>/rightTrigger",
+                    "path": "<Gamepad>/leftStickPress",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -873,6 +873,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Melt",
+                    "type": "Button",
+                    "id": "379522a9-326d-4205-8185-1f0d3b7f0cc8",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Dodge",
                     "type": "Button",
                     "id": "c8e1b6f8-1f7a-420a-8b00-06545a6acb13",
@@ -970,6 +979,17 @@
                 },
                 {
                     "name": "",
+                    "id": "a9b2809b-ace0-48d4-8c97-bc84da9d4578",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "tap(duration=0.35)",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Melt",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "3c6ed609-38f4-41f5-aa8f-b631c1d1c17a",
                     "path": "<Gamepad>/buttonWest",
                     "interactions": "",
@@ -1037,7 +1057,7 @@
                 {
                     "name": "",
                     "id": "418d388a-a65e-4c98-a1c9-4e6626e5d07e",
-                    "path": "<Gamepad>/rightTrigger",
+                    "path": "<Gamepad>/leftStickPress",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",

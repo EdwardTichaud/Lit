@@ -47,13 +47,16 @@ registres, les fantômes et les événements du château.
 
 ## Progression temporelle
 
-Le joueur commence en année `666`, puis progresse par paliers de `111` ans :
+L'exploration commence dans la strate `666`, puis progresse par paliers de `111`
+ans :
 
 ```text
 666 -> 555 -> 444 -> 333 -> 222 -> 111 -> 000
 ```
 
-L'objectif principal est d'atteindre l'an `000`.
+L'objectif principal est d'atteindre la strate `000`. Ces années ne constituent
+pas un voyage dans la chronologie historique : les Explorateurs parcourent les
+strates nées de la fracture, plusieurs siècles après le siège.
 
 L'implémentation actuelle distingue :
 
@@ -168,8 +171,8 @@ Chaque époque possède son propre état des Flames communes. Une Flame allumée
 
 ### Ancient Flames
 
-Les Ancient Flames modifient la temporalité globale. Chaque Ancient Flame fait
-avancer la progression :
+Les Ancient Flames sont des mécanismes du rituel interrompu. Elles modifient la
+strate temporelle globale ; chaque Ancient Flame fait avancer la progression :
 
 ```text
 666 -> 555 -> 444 -> 333 -> 222 -> 111 -> 000
@@ -180,7 +183,7 @@ marquées `ancientFlame` participent au calcul de `AgeManager`.
 
 ### Conséquences temporelles
 
-Les actions effectuées dans une époque peuvent produire des conséquences dans une
+Les actions effectuées dans une strate peuvent produire des conséquences dans une
 autre. Exemple canonique :
 
 1. Une Flame inaccessible en `555` devient accessible uniquement en `444`.
@@ -188,8 +191,10 @@ autre. Exemple canonique :
 3. En revenant ensuite en `555`, cette Flame est déjà allumée.
 4. Cette conséquence permet d'interagir avec des objets auparavant inaccessibles.
 
-Le gameplay temporel repose donc sur des conséquences entre époques, pas sur un
-simple changement cosmétique de décor.
+Le gameplay temporel repose donc sur des conséquences entre strates, pas sur un
+simple changement cosmétique de décor. Le lien qui produit ces conséquences reste
+volontairement inexpliqué : il ne doit pas être présenté comme une réécriture du
+passé.
 
 ### Portails
 

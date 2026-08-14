@@ -276,10 +276,11 @@ Toute la société existe pour rendre cela possible. Les habitants ignorent cett
 vérité et les institutions qui perpétuent le système l'ont elles-mêmes oubliée.
 
 Le rite utilise la présence, le sang et le chant des Chanteurs. Les salles
-inférieures, les cordes, les roues, les conduits, les portes, les Flames et les
-protocoles transmis pendant des siècles préparent son accomplissement. Les
-habitants donnent à ces mécanismes une fonction religieuse ou administrative sans
-en comprendre l'ensemble.
+inférieures, les cordes, les roues, les conduits, les portes, les Ancient Flames
+et les protocoles transmis pendant des siècles préparent son accomplissement. Les
+Ancient Flames sont donc des mécanismes du rituel interrompu. Les habitants
+donnent à ces mécanismes une fonction religieuse ou administrative sans en
+comprendre l'ensemble.
 
 Les détails suivants restent ouverts :
 
@@ -328,6 +329,13 @@ Cette interruption provoque :
 Le château exploré par les Explorateurs est le résultat de cette fracture. Le
 lien entre le rituel interrompu et chaque phénomène particulier peut rester
 progressif, mais leur origine commune est canonique.
+
+Les années `666`, `555`, `444`, `333`, `222`, `111` et `000` parcourues dans le
+jeu désignent des strates temporelles issues de cette fracture. Les Explorateurs
+les explorent plusieurs siècles après le siège : ils ne voyagent pas dans la
+chronologie historique du château. Les effets observés d'une strate à l'autre
+font partie du mystère de la fracture ; leur mécanisme n'est pas défini par le
+canon.
 
 ## Les Explorateurs
 

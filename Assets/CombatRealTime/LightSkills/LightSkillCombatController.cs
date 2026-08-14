@@ -1,16 +1,12 @@
-using Unity.Cinemachine;
 using UnityEngine;
-using UnityEngine.Playables;
-using UnityEngine.Timeline;
 
 [DisallowMultipleComponent]
 public sealed class LightSkillCombatController : MonoBehaviour
 {
     [SerializeField] private RealTimeCombatManager combatManager;
     [SerializeField] private RealTimeCombatInput combatInput;
-    [SerializeField] private PlayableDirector director;
+    [SerializeField] private CombatCinematicPlaybackService cinematicPlayback;
     [SerializeField] private LightSkillSO lightSkill;
-    [SerializeField] private LightSkillFurieSequenceDriver furieSequence;
 
     private float charge;
     private bool cinematicPlaying;
@@ -18,6 +14,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private bool playerLockHeld;
     private bool finishingCinematic;
     private SpiritBondController activeLightSkillBond;
+    private bool usingPooledRig;
 
     public event System.Action StateChanged;
 
@@ -55,26 +52,33 @@ public sealed class LightSkillCombatController : MonoBehaviour
     public bool TryUseLightSkill()
     {
         ResolveReferences();
-        if (cinematicPlaying || !IsReady || combatManager == null || !combatManager.IsCombatActive ||
-            combatManager.LockedEnemy == null || lightSkill == null || director == null)
+        if (cinematicPlaying) return Reject("LightSkill deja en cours.");
+        if (lightSkill == null) return Reject("Aucune LightSkill n'est assignee.");
+        if (!IsReady) return Reject("Charge de lumiere insuffisante.");
+        if (combatManager == null || !combatManager.IsCombatActive) return Reject("Combat non actif.");
+        if (combatManager.LockedEnemy == null) return Reject("Aucun ennemi verrouille.");
+        if (lightSkill.CombatCinematicRigPrefab == null)
         {
-            return false;
+            return Reject("Prefab cinematographique manquant sur la LightSkill.");
         }
 
         if (lightSkill.Timeline == null)
         {
-            Debug.LogWarning("[LightSkill] Aucune Timeline n'est assignee a '" + lightSkill.DisplayName + "'.", lightSkill);
-            return false;
+            return Reject("Aucune Timeline n'est assignee a '" + lightSkill.DisplayName + "'.");
         }
 
         if (combatManager.LockedEnemy.Health != null && combatManager.LockedEnemy.Health.IsDead)
         {
-            return false;
+            return Reject("La cible verrouillee est deja vaincue.");
         }
 
-        if (furieSequence == null || !furieSequence.BeginSequence(combatManager, lightSkill))
+        Transform player = combatManager.PlayerRoot;
+        Transform target = combatManager.LockedEnemy.LockPoint != null
+            ? combatManager.LockedEnemy.LockPoint
+            : combatManager.LockedEnemy.transform;
+        if (player == null || target == null || HorizontalDistance(player.position, target.position) > lightSkill.MaximumCinematicStartDistance)
         {
-            return false;
+            return Reject("La cible est trop loin pour cette LightSkill.");
         }
 
         activeLightSkillBond = SpiritBondController.FindForCharacter(combatManager.PlayerRoot.gameObject);
@@ -86,11 +90,21 @@ public sealed class LightSkillCombatController : MonoBehaviour
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
         combatInput?.SetInputActive(false);
 
-        director.playableAsset = lightSkill.Timeline;
-        BindTimelineTargets();
-        director.time = 0d;
-        director.Evaluate();
-        director.Play();
+        if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
+        string error = "CombatCinematicPlaybackService manquant.";
+        if (cinematicPlayback == null || !cinematicPlayback.TryPlay(
+                lightSkill.CombatCinematicRigPrefab,
+                new CombatCinematicContext(combatManager, lightSkill, ResolveLightSkillImpact),
+                lightSkill.PlayerAnimatorTrackName,
+                lightSkill.EnemyAnimatorTrackName,
+                OnRuntimeRigCompleted,
+                out error))
+        {
+            Debug.LogWarning("[LightSkill] Impossible de lancer le rig : " + error, this);
+            return AbortStart(error);
+        }
+
+        usingPooledRig = true;
         NotifyStateChanged();
         return true;
     }
@@ -106,7 +120,6 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         impactResolved = true;
-        furieSequence?.NotifyImpactResolved();
         combatManager.ApplyLightSkillDamage(lightSkill, resolveCombatOutcome: false);
     }
 
@@ -136,16 +149,6 @@ public sealed class LightSkillCombatController : MonoBehaviour
         NotifyStateChanged();
     }
 
-    private void OnDirectorStopped(PlayableDirector stoppedDirector)
-    {
-        if (stoppedDirector != director || !cinematicPlaying)
-        {
-            return;
-        }
-
-        StopCinematic(resolveImpact: lightSkill != null && lightSkill.ResolveDamageWhenTimelineStops);
-    }
-
     private void StopCinematic(bool resolveImpact)
     {
         if (!cinematicPlaying || finishingCinematic)
@@ -154,6 +157,12 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         finishingCinematic = true;
+        if (usingPooledRig && cinematicPlayback != null && cinematicPlayback.IsPlaying)
+        {
+            finishingCinematic = false;
+            cinematicPlayback.StopActive();
+            return;
+        }
         if (resolveImpact && !impactResolved)
         {
             impactResolved = true;
@@ -161,18 +170,12 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         cinematicPlaying = false;
-        if (director != null && director.state == PlayState.Playing)
-        {
-            director.Stop();
-        }
-
         if (playerLockHeld)
         {
             combatManager?.UnlockPlayerAfterCinematic();
             playerLockHeld = false;
         }
 
-        furieSequence?.EndSequence();
         activeLightSkillBond?.EndLightSkillFusion();
         activeLightSkillBond = null;
         if (impactResolved && combatManager != null && combatManager.IsCombatActive)
@@ -186,6 +189,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         finishingCinematic = false;
+        usingPooledRig = false;
         NotifyStateChanged();
     }
 
@@ -199,11 +203,12 @@ public sealed class LightSkillCombatController : MonoBehaviour
             combatManager.PlayerSkillImpactApplied += OnPlayerSkillImpactApplied;
         }
 
-        if (director != null)
-        {
-            director.stopped -= OnDirectorStopped;
-            director.stopped += OnDirectorStopped;
-        }
+    }
+
+    private void OnRuntimeRigCompleted(CombatCinematicRig rig)
+    {
+        if (!cinematicPlaying) return;
+        StopCinematic(resolveImpact: lightSkill != null && lightSkill.ResolveDamageWhenTimelineStops);
     }
 
     private void Unbind()
@@ -214,61 +219,53 @@ public sealed class LightSkillCombatController : MonoBehaviour
             combatManager.PlayerSkillImpactApplied -= OnPlayerSkillImpactApplied;
         }
 
-        if (director != null)
-        {
-            director.stopped -= OnDirectorStopped;
-        }
     }
 
     private void ResolveReferences()
     {
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
-        if (director == null) director = GetComponent<PlayableDirector>();
-        if (furieSequence == null) furieSequence = GetComponent<LightSkillFurieSequenceDriver>();
-    }
-
-    private void BindTimelineTargets()
-    {
-        if (director == null || lightSkill == null || lightSkill.Timeline == null || combatManager == null)
-        {
-            return;
-        }
-
-        foreach (PlayableBinding output in lightSkill.Timeline.outputs)
-        {
-            if (output.sourceObject == null)
-            {
-                continue;
-            }
-
-            if (output.streamName == lightSkill.PlayerAnimatorTrackName && combatManager.PlayerAnimator != null)
-            {
-                director.SetGenericBinding(output.sourceObject, combatManager.PlayerAnimator);
-            }
-            else if (output.streamName == lightSkill.EnemyAnimatorTrackName && combatManager.LockedEnemy != null)
-            {
-                director.SetGenericBinding(output.sourceObject, combatManager.LockedEnemy.Animator);
-            }
-            else if (output.sourceObject is SignalTrack && furieSequence != null && furieSequence.SignalReceiver != null)
-            {
-                director.SetGenericBinding(output.sourceObject, furieSequence.SignalReceiver);
-            }
-            else if (output.sourceObject is CinemachineTrack cinemachineTrack && furieSequence != null && furieSequence.VirtualCamera != null)
-            {
-                foreach (TimelineClip clip in cinemachineTrack.GetClips())
-                {
-                    if (clip.asset is CinemachineShot shot)
-                    {
-                        director.SetReferenceValue(shot.VirtualCamera.exposedName, furieSequence.VirtualCamera);
-                    }
-                }
-            }
-        }
+        if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
     }
 
     private void NotifyStateChanged()
     {
         StateChanged?.Invoke();
+    }
+
+    private bool AbortStart(string reason)
+    {
+        cinematicPlaying = false;
+        if (playerLockHeld)
+        {
+            combatManager?.UnlockPlayerAfterCinematic();
+            playerLockHeld = false;
+        }
+
+        combatInput?.SetInputActive(true);
+        activeLightSkillBond?.EndLightSkillFusion();
+        activeLightSkillBond = null;
+        return Reject(reason);
+    }
+
+    private bool Reject(string reason)
+    {
+        Debug.LogWarning("[LightSkill] " + reason, this);
+        Transform feedbackTarget = combatManager != null && combatManager.LockedEnemy != null
+            ? combatManager.LockedEnemy.transform
+            : combatManager != null ? combatManager.PlayerRoot : null;
+        CombatDamageWorldFeedback.ShowMessage(
+            feedbackTarget,
+            reason,
+            new Color(1f, 0.82f, 0.38f),
+            2.25f);
+        return false;
+    }
+
+    private static float HorizontalDistance(Vector3 first, Vector3 second)
+    {
+        first.y = 0f;
+        second.y = 0f;
+        return Vector3.Distance(first, second);
     }
 }

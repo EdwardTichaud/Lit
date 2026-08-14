@@ -68,13 +68,34 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
 
     private void BeginCameraControl()
     {
-        if (!Application.isPlaying || controlsCamera)
+        BeginCameraControlNow();
+    }
+
+    /// <summary>
+    /// Binds the Timeline to the gameplay camera and gives Cinemachine authority
+    /// before the first Timeline frame is evaluated.
+    /// </summary>
+    public bool BeginCameraControlNow()
+    {
+        if (!Application.isPlaying)
         {
-            return;
+            return false;
         }
 
         BindCinemachineTracks();
+        if (controlsCamera)
+        {
+            return true;
+        }
+
         controlsCamera = LitCameraDirector.EnsureInstance()?.BeginTimelineCinemachineControl() == true;
+        if (!controlsCamera)
+        {
+            Debug.LogWarning("[TimelineCamera] Impossible de donner le controle de la camera a la Timeline. " +
+                             "Verifiez la Main Camera et son CinemachineBrain.", this);
+        }
+
+        return controlsCamera;
     }
 
     private void EndCameraControl()

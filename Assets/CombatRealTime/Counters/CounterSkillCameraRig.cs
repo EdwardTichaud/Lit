@@ -3,7 +3,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CinemachineCamera))]
-public sealed class CounterSkillCameraRig : MonoBehaviour
+public sealed class CounterSkillCameraRig : MonoBehaviour, ICombatCinematicParticipant
 {
     [SerializeField] private Vector3 openingOffset = new Vector3(1.7f, 1.45f, -3.6f);
     [SerializeField] private Vector3 impactOffset = new Vector3(-1.35f, 1.1f, -2.45f);
@@ -14,6 +14,7 @@ public sealed class CounterSkillCameraRig : MonoBehaviour
     private Transform enemy;
     private bool active;
     private float normalizedTime;
+    private UnityEngine.Playables.PlayableDirector director;
 
     public void Begin(Transform playerRoot, Transform enemyLockPoint)
     {
@@ -36,9 +37,18 @@ public sealed class CounterSkillCameraRig : MonoBehaviour
         enemy = null;
     }
 
+    public bool Begin(CombatCinematicContext context)
+    {
+        Begin(context != null ? context.PlayerRoot : null, context != null ? context.TargetLockPoint : null);
+        director = GetComponentInParent<UnityEngine.Playables.PlayableDirector>();
+        return active;
+    }
+
     private void LateUpdate()
     {
         if (!active || player == null || enemy == null) return;
+        if (director != null && director.duration > 0d)
+            normalizedTime = Mathf.Clamp01((float)(director.time / director.duration));
         Vector3 targetPosition = GetShotPosition(normalizedTime);
         Vector3 lookTarget = Vector3.Lerp(player.position + Vector3.up * 1.15f, enemy.position, 0.68f);
         Quaternion targetRotation = Quaternion.LookRotation((lookTarget - targetPosition).normalized, Vector3.up);

@@ -10,6 +10,8 @@ public sealed class CounterSkillSO : ScriptableObject
 
     [Header("Resolution")]
     [SerializeField] private PlayableAsset timeline;
+    [Tooltip("Rig runtime poolé contenant Director, receiver et caméras de cette compétence.")]
+    [SerializeField] private CombatCinematicRig combatCinematicRigPrefab;
     [SerializeField, Min(0)] private int damage = 25;
     [SerializeField, Min(0f)] private float clarityGain = 10f;
 
@@ -25,6 +27,7 @@ public sealed class CounterSkillSO : ScriptableObject
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public Sprite Icon => icon;
     public PlayableAsset Timeline => timeline;
+    public CombatCinematicRig CombatCinematicRigPrefab => combatCinematicRigPrefab;
     public int Damage => damage;
     public float ClarityGain => clarityGain;
     public string PlayerAnimatorTrackName => playerAnimatorTrackName;
