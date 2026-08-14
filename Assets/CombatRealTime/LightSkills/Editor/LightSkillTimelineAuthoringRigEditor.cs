@@ -128,11 +128,17 @@ public static class LightSkillRuntimeRigBaker
             Dictionary<LightSkillRuntimeExport, LightSkillRuntimeExport> exports = CopyRuntimeExports(authoringRig, root.transform);
             List<CombatCinematicTrackBinding> tracks = CopyExtraTrackBindings(authoringRig, sourceTimeline, exports);
             ApplyRigBindings(rig, cameras, tracks);
+            int removedMissingScripts = RemoveMissingScripts(root);
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             if (prefab == null)
             {
                 report = "Unity n'a pas pu enregistrer le prefab runtime.";
+                return false;
+            }
+            if (CountMissingScripts(prefabPath) > 0)
+            {
+                report = "Le prefab runtime contient encore un script manquant. Corrigez le rig d'auteur avant de rebaker.";
                 return false;
             }
 
@@ -170,7 +176,8 @@ public static class LightSkillRuntimeRigBaker
             EditorUtility.SetDirty(skill);
             AssetDatabase.SaveAssets();
 
-            report = "Package runtime bake : " + prefabPath + " (" + cameras.Count + " camera(s), " + exports.Count + " export(s)).";
+            report = "Package runtime bake : " + prefabPath + " (" + cameras.Count + " camera(s), " + exports.Count + " export(s)" +
+                (removedMissingScripts > 0 ? ", " + removedMissingScripts + " script(s) manquant(s) purge(s)" : string.Empty) + ").";
             return true;
         }
         finally
@@ -428,6 +435,34 @@ public static class LightSkillRuntimeRigBaker
                 return true;
         }
         return false;
+    }
+
+    private static int RemoveMissingScripts(GameObject root)
+    {
+        int removed = 0;
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            removed += GameObjectUtility.RemoveMonoBehavioursWithMissingScript(child.gameObject);
+        return removed;
+    }
+
+    private static int CountMissingScripts(string prefabPath)
+    {
+        GameObject contents = PrefabUtility.LoadPrefabContents(prefabPath);
+        try
+        {
+            int count = 0;
+            foreach (Transform child in contents.GetComponentsInChildren<Transform>(true))
+            {
+                MonoBehaviour[] behaviours = child.GetComponents<MonoBehaviour>();
+                for (int i = 0; i < behaviours.Length; i++)
+                    if (behaviours[i] == null) count++;
+            }
+            return count;
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(contents);
+        }
     }
 }
 #endif

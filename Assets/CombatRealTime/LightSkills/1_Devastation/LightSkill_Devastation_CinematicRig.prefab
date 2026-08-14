@@ -46,7 +46,7 @@ PlayableDirector:
   m_GameObject: {fileID: 3771822508318002324}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 032dfd3671d483f46b8bba6b969b55a5, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: b9e01ac94a7aa5245a6dc4b9f5cfdf09, type: 2}
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -112,6 +112,7 @@ MonoBehaviour:
   cameraBindings:
   - timelineCameraKey: Devastation.Opening:385302167
     camera: {fileID: 8191161251020965849}
+  trackBindings: []
 --- !u!1 &7544457652828334326
 GameObject:
   m_ObjectHideFlags: 0
@@ -123,6 +124,7 @@ GameObject:
   - component: {fileID: 7722288092304858292}
   - component: {fileID: 8191161251020965849}
   - component: {fileID: 8118734738631441105}
+  - component: {fileID: 2367816300368168228}
   m_Layer: 0
   m_Name: Camera_1
   m_TagString: Untagged
@@ -210,3 +212,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2367816300368168228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7544457652828334326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8d31a1a74cf49e28f5619c2a155147b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LightSkillCinematicCameraAuthoring
+  timelineCameraKey: Devastation.Opening:385302167
+  followTarget: 0
+  lookAtTarget: 0
