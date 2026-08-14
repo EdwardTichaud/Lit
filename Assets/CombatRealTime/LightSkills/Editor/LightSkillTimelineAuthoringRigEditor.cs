@@ -67,15 +67,21 @@ public static class LightSkillRuntimeRigBaker
     public static bool Bake(LightSkillTimelineAuthoringRig authoringRig, out CombatCinematicRig bakedRig, out string report)
     {
         bakedRig = null;
+        report = null;
         if (authoringRig == null || authoringRig.LightSkill == null)
         {
             report = "Rig d'auteur ou LightSkillSO manquant.";
             return false;
         }
 
-        if (!EnsureCameraAuthoring(authoringRig, out string setupError) || !Validate(authoringRig, out report))
+        if (!EnsureCameraAuthoring(authoringRig, out string setupError))
         {
-            report = string.IsNullOrWhiteSpace(setupError) ? report : setupError;
+            report = setupError;
+            return false;
+        }
+
+        if (!Validate(authoringRig, out report))
+        {
             return false;
         }
 
