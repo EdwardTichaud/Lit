@@ -112,7 +112,11 @@ MonoBehaviour:
   cameraBindings:
   - timelineCameraKey: Devastation.Opening:385302167
     camera: {fileID: 8191161251020965849}
-  trackBindings: []
+  trackBindings:
+  - trackName: Animation Track
+    target: {fileID: 8118734738631441105}
+  authoringPlayerLocalPosition: {x: 0, y: 0, z: -4}
+  authoringPlayerLocalRotation: {x: 0, y: 0, z: 0, w: 1}
 --- !u!1 &7544457652828334326
 GameObject:
   m_ObjectHideFlags: 0

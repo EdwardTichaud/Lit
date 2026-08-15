@@ -63,16 +63,79 @@ public sealed class CombatCinematicRig : MonoBehaviour
     [SerializeField] private SignalReceiver signalReceiver;
     [SerializeField] private List<CombatCinematicCameraBinding> cameraBindings = new List<CombatCinematicCameraBinding>();
     [SerializeField] private List<CombatCinematicTrackBinding> trackBindings = new List<CombatCinematicTrackBinding>();
+    [Header("Authoring Stage Layout")]
+    [Tooltip("Pose locale du preview Player dans AnimationLab.")]
+    [SerializeField] private Vector3 authoringPlayerLocalPosition;
+    [SerializeField] private Quaternion authoringPlayerLocalRotation = Quaternion.identity;
+    [Tooltip("Pose locale du preview Enemy dans AnimationLab.")]
+    [SerializeField] private Vector3 authoringEnemyLocalPosition;
+    [SerializeField] private Quaternion authoringEnemyLocalRotation = Quaternion.identity;
+    [Tooltip("Milieu local de la formation Player/Enemy bakee.")]
+    [SerializeField] private Vector3 authoringFormationCenter;
+    [Tooltip("Axe local Player vers Enemy de la formation bakee.")]
+    [SerializeField] private Vector3 authoringFormationForward = Vector3.forward;
+    [SerializeField] private bool logCameraDiagnostics = true;
 
     private readonly List<ICombatCinematicParticipant> participants = new List<ICombatCinematicParticipant>();
     private CombatCinematicContext context;
     private PlayableAsset bakedTimeline;
+    private CinemachineBrain gameplayBrain;
+    private CombatLockOnCameraController gameplayLockCamera;
+    private bool sessionActive;
+    private bool stopRaised;
+    private bool cameraMismatchReported;
+    private int sessionToken;
 
     public PlayableDirector Director => director;
     public SignalReceiver SignalReceiver => signalReceiver;
     public IReadOnlyList<CombatCinematicCameraBinding> CameraBindings => cameraBindings;
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
+    public bool HasAuthoringStageLayout => (authoringEnemyLocalPosition - authoringPlayerLocalPosition).sqrMagnitude > 0.0001f;
     public event Action<CombatCinematicRig> Stopped;
+
+    public void ConfigureAuthoringStageLayout(
+        Vector3 playerLocalPosition,
+        Quaternion playerLocalRotation,
+        Vector3 enemyLocalPosition,
+        Quaternion enemyLocalRotation)
+    {
+        authoringPlayerLocalPosition = playerLocalPosition;
+        authoringPlayerLocalRotation = playerLocalRotation;
+        authoringEnemyLocalPosition = enemyLocalPosition;
+        authoringEnemyLocalRotation = enemyLocalRotation;
+        authoringFormationCenter = (playerLocalPosition + enemyLocalPosition) * 0.5f;
+        authoringFormationForward = enemyLocalPosition - playerLocalPosition;
+        authoringFormationForward.y = 0f;
+        if (authoringFormationForward.sqrMagnitude <= 0.0001f) authoringFormationForward = Vector3.forward;
+        else authoringFormationForward.Normalize();
+    }
+
+    public Quaternion GetStageRotationForFacing(Vector3 liveFacing)
+    {
+        liveFacing.y = 0f;
+        if (liveFacing.sqrMagnitude <= 0.0001f) liveFacing = Vector3.forward;
+        Vector3 authoringFacing = authoringFormationForward.sqrMagnitude <= 0.0001f
+            ? Vector3.forward
+            : authoringFormationForward;
+        return Quaternion.LookRotation(liveFacing.normalized, Vector3.up) *
+               Quaternion.Inverse(Quaternion.LookRotation(authoringFacing.normalized, Vector3.up));
+    }
+
+    public void GetStageActorPoses(
+        Vector3 formationCenterWorld,
+        Quaternion stageRotation,
+        out Vector3 rigPosition,
+        out Vector3 playerPosition,
+        out Quaternion playerRotation,
+        out Vector3 enemyPosition,
+        out Quaternion enemyRotation)
+    {
+        rigPosition = formationCenterWorld - stageRotation * authoringFormationCenter;
+        playerPosition = rigPosition + stageRotation * authoringPlayerLocalPosition;
+        playerRotation = stageRotation * authoringPlayerLocalRotation;
+        enemyPosition = rigPosition + stageRotation * authoringEnemyLocalPosition;
+        enemyRotation = stageRotation * authoringEnemyLocalRotation;
+    }
 
     private void Reset()
     {
@@ -95,13 +158,21 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void OnEnable()
     {
-        if (director != null) director.stopped += OnDirectorStopped;
+        if (director != null)
+        {
+            director.played += OnDirectorPlayed;
+            director.stopped += OnDirectorStopped;
+        }
     }
 
     private void OnDisable()
     {
-        if (director != null) director.stopped -= OnDirectorStopped;
-        EndParticipants();
+        if (director != null)
+        {
+            director.played -= OnDirectorPlayed;
+            director.stopped -= OnDirectorStopped;
+        }
+        EndCameraSession("OnDisable");
     }
 
     public bool TryPlay(
@@ -109,6 +180,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         PlayableAsset timeline,
         string playerAnimatorTrack,
         string enemyAnimatorTrack,
+        CombatCinematicStagePlacement? stagePlacement,
         out string error)
     {
         error = null;
@@ -129,12 +201,26 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
 
         context = playbackContext;
-        PositionAtPlayerFacingTarget();
+        sessionToken++;
+        sessionActive = true;
+        stopRaised = false;
+        cameraMismatchReported = false;
+        if (stagePlacement.HasValue)
+        {
+            if (!ApplyStagePlacement(stagePlacement.Value, out error))
+            {
+                AbortStart("Placement cinematographique invalide");
+                return false;
+            }
+        }
+        else
+        {
+            PositionAtPlayerFacingTarget();
+        }
         if (!BeginParticipants())
         {
             error = "Un participant de cinematique a refuse le contexte courant.";
-            EndParticipants();
-            context = null;
+            AbortStart("Participant refuse");
             return false;
         }
 
@@ -142,15 +228,34 @@ public sealed class CombatCinematicRig : MonoBehaviour
         bakedTimeline ??= timelineAsset;
         if (!TryBindTimeline(timelineAsset, playerAnimatorTrack, enemyAnimatorTrack, out error))
         {
-            EndParticipants();
-            context = null;
+            AbortStart("Binding Timeline invalide");
             return false;
         }
 
+        LitTimelineCinemachineBridge cameraBridge = GetComponent<LitTimelineCinemachineBridge>();
+        if (cameraBridge == null || !cameraBridge.BeginCameraControlNow(gameplayBrain))
+        {
+            error = "Impossible de donner le controle de la camera gameplay explicite a la Timeline.";
+            AbortStart("Camera gameplay invalide");
+            return false;
+        }
+
+        TraceCamera("Bind Timeline -> Brain -> controle Timeline", false);
         director.time = 0d;
         director.Evaluate();
+        TraceCamera("Premiere Evaluate", false);
         director.Play();
         return true;
+    }
+
+    public bool TryPlay(
+        CombatCinematicContext playbackContext,
+        PlayableAsset timeline,
+        string playerAnimatorTrack,
+        string enemyAnimatorTrack,
+        out string error)
+    {
+        return TryPlay(playbackContext, timeline, playerAnimatorTrack, enemyAnimatorTrack, null, out error);
     }
 
     public void Stop()
@@ -183,9 +288,11 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
         }
 
-        EndParticipants();
+        EndCameraSession("Remise en pool");
         director.playableAsset = bakedTimeline;
         context = null;
+        gameplayBrain = null;
+        gameplayLockCamera = null;
         transform.SetParent(null, true);
         gameObject.SetActive(false);
     }
@@ -193,8 +300,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private bool TryBindTimeline(TimelineAsset timeline, string playerTrack, string enemyTrack, out string error)
     {
         error = null;
-        CinemachineBrain brain = LitCameraDirector.EnsureInstance()?.CinemachineBrain;
-        if (brain == null)
+        gameplayBrain = ResolveGameplayBrain();
+        if (gameplayBrain == null)
         {
             error = "CinemachineBrain de la camera de jeu introuvable.";
             return false;
@@ -224,7 +331,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
             else if (output.sourceObject is CinemachineTrack cameraTrack)
             {
-                director.SetGenericBinding(output.sourceObject, brain);
+                director.SetGenericBinding(output.sourceObject, gameplayBrain);
                 foreach (TimelineClip clip in cameraTrack.GetClips())
                 {
                     if (!(clip.asset is CinemachineShot shot)) continue;
@@ -254,6 +361,15 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
         return true;
+    }
+
+    private CinemachineBrain ResolveGameplayBrain()
+    {
+        gameplayLockCamera = context != null && context.CombatManager != null
+            ? context.CombatManager.GetComponent<CombatLockOnCameraController>()
+            : null;
+        Camera gameplayCamera = gameplayLockCamera != null ? gameplayLockCamera.ControlledCamera : null;
+        return gameplayCamera != null ? gameplayCamera.GetComponent<CinemachineBrain>() : null;
     }
 
     private CinemachineCamera ResolveCamera(string key)
@@ -300,12 +416,58 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void PositionAtPlayerFacingTarget()
     {
-        transform.position = context.PlayerRoot.position;
+        Transform playerAnchor = context.PlayerAnimator != null
+            ? context.PlayerAnimator.transform
+            : context.PlayerRoot;
         Transform target = context.TargetLockPoint != null ? context.TargetLockPoint : context.TargetEnemy.transform;
-        Vector3 direction = target.position - context.PlayerRoot.position;
+        Vector3 direction = target.position - playerAnchor.position;
         direction.y = 0f;
-        if (direction.sqrMagnitude > 0.0001f)
-            transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+        Quaternion playerFacing = direction.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(direction.normalized, Vector3.up)
+            : playerAnchor.rotation;
+
+        // AnimationLab records cameras in its stage coordinate system, where the
+        // preview player is not necessarily at the stage origin. Recreate that
+        // exact frame around the live player before Timeline evaluates Camera_1.
+        transform.rotation = playerFacing * Quaternion.Inverse(authoringPlayerLocalRotation);
+        transform.position = playerAnchor.position - transform.rotation * authoringPlayerLocalPosition;
+    }
+
+    private bool ApplyStagePlacement(CombatCinematicStagePlacement placement, out string error)
+    {
+        error = null;
+        transform.SetPositionAndRotation(placement.RigPosition, placement.RigRotation);
+
+        LitOpsiveLocomotionBridge playerBridge = context.PlayerRoot.GetComponent<LitOpsiveLocomotionBridge>();
+        if (playerBridge != null)
+        {
+            if (!playerBridge.SetExternalPositionAndRotation(placement.PlayerPosition, placement.PlayerRotation, true))
+            {
+                error = "UCC a refuse le placement cinematographique de Lucian.";
+                return false;
+            }
+        }
+        else
+        {
+            context.PlayerRoot.SetPositionAndRotation(placement.PlayerPosition, placement.PlayerRotation);
+        }
+
+        RealTimeCombatEnemyBehaviour enemyBehaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+        if (enemyBehaviour != null)
+        {
+            if (!enemyBehaviour.PlaceForCinematic(placement.EnemyPosition, placement.EnemyRotation))
+            {
+                error = "Le NavMesh de l'ennemi refuse le plateau cinematographique.";
+                return false;
+            }
+        }
+        else
+        {
+            context.TargetEnemy.transform.SetPositionAndRotation(placement.EnemyPosition, placement.EnemyRotation);
+        }
+
+        Physics.SyncTransforms();
+        return true;
     }
 
     private void OnDirectorStopped(PlayableDirector stoppedDirector)
@@ -313,8 +475,80 @@ public sealed class CombatCinematicRig : MonoBehaviour
         if (stoppedDirector == director) CompleteStop();
     }
 
+    private void OnDirectorPlayed(PlayableDirector playedDirector)
+    {
+        if (playedDirector != director || !sessionActive) return;
+        TraceCamera("PlayableDirector.played", true, true);
+    }
+
     private void CompleteStop()
     {
+        if (!sessionActive || stopRaised) return;
+        stopRaised = true;
+        EndCameraSession("Fin Timeline");
         Stopped?.Invoke(this);
+    }
+
+    private void AbortStart(string reason)
+    {
+        EndCameraSession(reason);
+        context = null;
+        gameplayBrain = null;
+        gameplayLockCamera = null;
+    }
+
+    private void EndCameraSession(string reason)
+    {
+        if (!sessionActive && context == null) return;
+
+        LitTimelineCinemachineBridge bridge = GetComponent<LitTimelineCinemachineBridge>();
+        bridge?.EndCameraControlNow();
+        EndParticipants();
+        TraceCamera("Restitution camera: " + reason, false);
+        sessionActive = false;
+    }
+
+    private void Update()
+    {
+        if (sessionActive && director != null && director.state == PlayState.Playing)
+            TraceCamera("Verification runtime", true);
+    }
+
+    private void TraceCamera(string phase, bool validateAuthority, bool logDetail = false)
+    {
+        if (!logCameraDiagnostics || gameplayBrain == null) return;
+
+        CinemachineCamera active = gameplayBrain.ActiveVirtualCamera as CinemachineCamera;
+        bool activeCameraMatches = active == null;
+        for (int i = 0; i < cameraBindings.Count; i++)
+        {
+            if (cameraBindings[i] != null && cameraBindings[i].camera == active)
+            {
+                activeCameraMatches = true;
+                break;
+            }
+        }
+
+        if (validateAuthority && !activeCameraMatches && !cameraMismatchReported)
+        {
+            cameraMismatchReported = true;
+            Debug.LogError("[CombatCinematic Camera] Autorite invalide. Brain='" + gameplayBrain.name +
+                           "', active='" + (active != null ? active.name : "None") +
+                           "', rig='" + name + "', token=" + sessionToken + ".", this);
+        }
+
+        if (!validateAuthority || logDetail)
+        {
+            Debug.Log("[CombatCinematic Camera] " + phase + " | rig='" + name + "' | timeline='" +
+                      (director != null && director.playableAsset != null ? director.playableAsset.name : "None") +
+                      "' | brain='" + gameplayBrain.name + "' | gameplayCamera='" +
+                      (gameplayLockCamera != null && gameplayLockCamera.ControlledCamera != null
+                          ? gameplayLockCamera.ControlledCamera.name : "None") +
+                      "' | active='" + (active != null ? active.name : "None") + "' | player='" +
+                      (context != null && context.PlayerRoot != null ? context.PlayerRoot.name : "None") +
+                      "' | enemyLockPoint='" +
+                      (context != null && context.TargetLockPoint != null ? context.TargetLockPoint.name : "None") +
+                      "' | token=" + sessionToken + ".", this);
+        }
     }
 }

@@ -93,7 +93,10 @@ namespace Lit.Timeline
 
             if (totalWeight <= 0f)
             {
-                RestoreRootMotion();
+                // The animation tracks can still be active after this move
+                // clip ends. Keep UCC root motion suppressed until Timeline
+                // actually tears down its graph; otherwise it may apply an
+                // accumulated delta and teleport the player on hand-off.
                 ReapplyLastPose();
                 return;
             }

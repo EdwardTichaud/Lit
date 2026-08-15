@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad6a29de2919a844488319fc463cb884, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceSceneBindings
   actors: []
   cameraPoints: []
@@ -1264,6 +1264,7 @@ GameObject:
   - component: {fileID: 9218925662834059794}
   - component: {fileID: 1205114612473753433}
   - component: {fileID: 6062841937014225081}
+  - component: {fileID: 810000000000000009}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -1288,6 +1289,18 @@ Transform:
   - {fileID: 2567248197990508734}
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &810000000000000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8b39547a7304cbfaccd7a02d23d4e8b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicStageResolver
 --- !u!114 &3754094688540085027
 MonoBehaviour:
   m_ObjectHideFlags: 0

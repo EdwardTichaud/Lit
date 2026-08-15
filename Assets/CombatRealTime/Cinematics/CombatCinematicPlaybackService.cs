@@ -47,6 +47,7 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
         PlayableAsset timeline,
         string playerAnimatorTrack,
         string enemyAnimatorTrack,
+        CombatCinematicStagePlacement? stagePlacement,
         Action<CombatCinematicRig> onCompleted,
         out string error)
     {
@@ -64,16 +65,30 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
 
         CombatCinematicRig rig = Acquire(prefab);
         rig.gameObject.SetActive(true);
-        if (!rig.TryPlay(context, timeline, playerAnimatorTrack, enemyAnimatorTrack, out error))
-        {
-            Release(prefab, rig);
-            return false;
-        }
-
         activeRig = rig;
         completed = onCompleted;
         rig.Stopped += OnRigStopped;
+        if (!rig.TryPlay(context, timeline, playerAnimatorTrack, enemyAnimatorTrack, stagePlacement, out error))
+        {
+            rig.Stopped -= OnRigStopped;
+            activeRig = null;
+            completed = null;
+            Release(prefab, rig);
+            return false;
+        }
         return true;
+    }
+
+    public bool TryPlay(
+        CombatCinematicRig prefab,
+        CombatCinematicContext context,
+        PlayableAsset timeline,
+        string playerAnimatorTrack,
+        string enemyAnimatorTrack,
+        Action<CombatCinematicRig> onCompleted,
+        out string error)
+    {
+        return TryPlay(prefab, context, timeline, playerAnimatorTrack, enemyAnimatorTrack, null, onCompleted, out error);
     }
 
     public void StopActive()

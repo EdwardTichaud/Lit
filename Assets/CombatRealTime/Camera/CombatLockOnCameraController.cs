@@ -42,7 +42,8 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
     private CombatLockUccCameraAdapter uccAdapter;
     private bool active;
-    private bool cinematicOverride;
+    private bool cinematicFramingSuspended;
+    private bool uccCameraOverrideActive;
     private bool cameraControllerEnabledBeforeCinematic;
     private Vector3 impactLookOffset;
     private float impactFieldOfView;
@@ -76,7 +77,7 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!active || cinematicOverride)
+        if (!active || cinematicFramingSuspended || uccCameraOverrideActive)
         {
             return;
         }
@@ -182,13 +183,13 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
     /// </summary>
     public void SetCinematicOverride(bool enabled)
     {
-        if (cinematicOverride == enabled)
+        if (uccCameraOverrideActive == enabled)
         {
             return;
         }
 
         ResolveCameraController();
-        cinematicOverride = enabled;
+        uccCameraOverrideActive = enabled;
         if (enabled)
         {
             if (cameraController != null)
@@ -207,6 +208,25 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             {
                 ResolveAdapter()?.ActivateLock();
             }
+        }
+    }
+
+    /// <summary>
+    /// Suspends only the lock framing while another system owns the gameplay
+    /// camera. Unlike <see cref="SetCinematicOverride"/>, this never changes
+    /// the UCC camera driver's enabled state.
+    /// </summary>
+    public void SetCinematicFramingSuspended(bool suspended)
+    {
+        if (cinematicFramingSuspended == suspended)
+        {
+            return;
+        }
+
+        cinematicFramingSuspended = suspended;
+        if (!suspended && active)
+        {
+            ResolveAdapter()?.ActivateLock();
         }
     }
 

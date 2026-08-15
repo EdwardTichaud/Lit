@@ -40,10 +40,20 @@ public static class LightSkillRuntimeRigBaker
 {
     public static bool Validate(LightSkillTimelineAuthoringRig authoringRig, out string report)
     {
+        return Validate(authoringRig, validateExistingPackage: true, out report);
+    }
+
+    private static bool Validate(
+        LightSkillTimelineAuthoringRig authoringRig,
+        bool validateExistingPackage,
+        out string report)
+    {
         List<string> issues = new List<string>();
         if (authoringRig == null) issues.Add("LightSkillTimelineAuthoringRig manquant.");
         if (authoringRig != null && authoringRig.LightSkill == null) issues.Add("LightSkillSO manquant.");
         if (authoringRig != null && authoringRig.Director == null) issues.Add("PlayableDirector manquant.");
+        if (authoringRig != null && (authoringRig.PreviewPlayerAnimator == null || authoringRig.PreviewEnemyAnimator == null))
+            issues.Add("Les poses preview Player et Enemy sont requises pour baker le plateau runtime.");
 
         if (authoringRig != null && !authoringRig.ApplyPreviewBindings(out string bindingError)) issues.Add(bindingError);
         TimelineAsset timeline = authoringRig != null && authoringRig.LightSkill != null
@@ -56,6 +66,17 @@ public static class LightSkillRuntimeRigBaker
             ValidateCameras(authoringRig, timeline, issues);
             ValidateExtraTrackBindings(authoringRig, timeline, issues);
             ValidateRuntimeExportDependencies(authoringRig, issues);
+
+            if (validateExistingPackage && issues.Count == 0 && authoringRig.LightSkill.CombatCinematicRigPrefab != null)
+            {
+                string expectedRuntimeTimelinePath = GetRuntimeTimelinePath(authoringRig.LightSkill);
+                ValidateBakedPackage(
+                    authoringRig.LightSkill.CombatCinematicRigPrefab,
+                    CaptureAuthorCameraSnapshots(authoringRig, timeline),
+                    expectedRuntimeTimelinePath,
+                    issues,
+                    out _);
+            }
         }
 
         report = issues.Count == 0
@@ -80,7 +101,7 @@ public static class LightSkillRuntimeRigBaker
             return false;
         }
 
-        if (!Validate(authoringRig, out report))
+        if (!Validate(authoringRig, validateExistingPackage: false, out report))
         {
             return false;
         }
@@ -125,10 +146,20 @@ public static class LightSkillRuntimeRigBaker
             CombatCinematicRig rig = root.AddComponent<CombatCinematicRig>();
 
             List<CombatCinematicCameraBinding> cameras = CopyReferencedCameras(authoringRig, runtimeTimeline, root.transform);
+            List<CameraSnapshot> authorCameras = CaptureAuthorCameraSnapshots(authoringRig, sourceTimeline);
             Dictionary<LightSkillRuntimeExport, LightSkillRuntimeExport> exports = CopyRuntimeExports(authoringRig, root.transform);
-            List<CombatCinematicTrackBinding> tracks = CopyExtraTrackBindings(authoringRig, sourceTimeline, exports);
+            List<CombatCinematicTrackBinding> tracks = CopyExtraTrackBindings(authoringRig, sourceTimeline, cameras, exports);
             ApplyRigBindings(rig, cameras, tracks);
-            int removedMissingScripts = RemoveMissingScripts(root);
+            rig.ConfigureAuthoringStageLayout(
+                authoringRig.transform.InverseTransformPoint(authoringRig.PreviewPlayerAnimator.transform.position),
+                Quaternion.Inverse(authoringRig.transform.rotation) * authoringRig.PreviewPlayerAnimator.transform.rotation,
+                authoringRig.transform.InverseTransformPoint(authoringRig.PreviewEnemyAnimator.transform.position),
+                Quaternion.Inverse(authoringRig.transform.rotation) * authoringRig.PreviewEnemyAnimator.transform.rotation);
+            if (CountMissingScripts(root) > 0)
+            {
+                report = "Le package contient un script manquant avant sauvegarde. Corrigez AnimationLab, puis rebakez.";
+                return false;
+            }
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             if (prefab == null)
@@ -169,6 +200,19 @@ public static class LightSkillRuntimeRigBaker
                 return false;
             }
 
+            List<string> packageIssues = new List<string>();
+            ValidateBakedPackage(
+                AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath).GetComponent<CombatCinematicRig>(),
+                authorCameras,
+                runtimeTimelinePath,
+                packageIssues,
+                out string packageReport);
+            if (packageIssues.Count > 0)
+            {
+                report = "Package runtime invalide :\n" + string.Join("\n", packageIssues);
+                return false;
+            }
+
             bakedRig = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath).GetComponent<CombatCinematicRig>();
             SerializedObject skillSerialized = new SerializedObject(skill);
             skillSerialized.FindProperty("combatCinematicRigPrefab").objectReferenceValue = bakedRig;
@@ -176,8 +220,8 @@ public static class LightSkillRuntimeRigBaker
             EditorUtility.SetDirty(skill);
             AssetDatabase.SaveAssets();
 
-            report = "Package runtime bake : " + prefabPath + " (" + cameras.Count + " camera(s), " + exports.Count + " export(s)" +
-                (removedMissingScripts > 0 ? ", " + removedMissingScripts + " script(s) manquant(s) purge(s)" : string.Empty) + ").";
+            report = "Package runtime bake : " + prefabPath + "\nTimeline runtime : " + runtimeTimelinePath + "\n" +
+                packageReport + "\nExports : " + exports.Count + ". Exclus : preview actors, Preview_MainCamera, Brain et AudioListener.";
             return true;
         }
         finally
@@ -204,7 +248,7 @@ public static class LightSkillRuntimeRigBaker
 
             LightSkillCinematicCameraAuthoring config = camera.GetComponent<LightSkillCinematicCameraAuthoring>();
             if (config == null) config = Undo.AddComponent<LightSkillCinematicCameraAuthoring>(camera.gameObject);
-            config.Configure(shot.VirtualCamera.exposedName.ToString());
+            config.Configure(shot.VirtualCamera.exposedName.ToString(), configureDefaults: false);
             EditorUtility.SetDirty(config);
         }
         return true;
@@ -225,7 +269,26 @@ public static class LightSkillRuntimeRigBaker
             bool valid;
             CinemachineCamera camera = rig.Director.GetReferenceValue(shot.VirtualCamera.exposedName, out valid) as CinemachineCamera;
             if (!valid || camera == null || !camera.transform.IsChildOf(rig.transform))
+            {
                 issues.Add("Camera non resolue pour '" + key + "'.");
+                continue;
+            }
+
+            LightSkillCinematicCameraAuthoring config = camera.GetComponent<LightSkillCinematicCameraAuthoring>();
+            if (config == null)
+            {
+                issues.Add("Camera sans configuration runtime : '" + key + "'.");
+                continue;
+            }
+
+            if (config.FollowTarget != LightSkillRuntimeAnchor.None && camera.GetComponent<CinemachineFollow>() == null)
+                issues.Add("Camera '" + key + "' sans CinemachineFollow pour sa cible de suivi.");
+            if (config.LookAtTarget != LightSkillRuntimeAnchor.None &&
+                camera.GetComponent<CinemachineHardLookAt>() == null &&
+                camera.GetComponent<CinemachineRotationComposer>() == null)
+            {
+                issues.Add("Camera '" + key + "' sans module de visee Cinemachine.");
+            }
         }
     }
 
@@ -239,6 +302,13 @@ public static class LightSkillRuntimeRigBaker
             if (target == null)
             {
                 issues.Add("La piste '" + output.streamName + "' contient du contenu mais aucun binding runtime.");
+                continue;
+            }
+
+            if (TryResolveAuthorCameraTarget(target, rig, timeline, out _))
+            {
+                if (!names.Add(output.streamName))
+                    issues.Add("Nom de piste runtime duplique : '" + output.streamName + "'.");
                 continue;
             }
 
@@ -296,6 +366,7 @@ public static class LightSkillRuntimeRigBaker
     private static List<CombatCinematicTrackBinding> CopyExtraTrackBindings(
         LightSkillTimelineAuthoringRig rig,
         TimelineAsset runtimeTimeline,
+        List<CombatCinematicCameraBinding> cameras,
         Dictionary<LightSkillRuntimeExport, LightSkillRuntimeExport> exports)
     {
         List<CombatCinematicTrackBinding> result = new List<CombatCinematicTrackBinding>();
@@ -303,6 +374,21 @@ public static class LightSkillRuntimeRigBaker
         {
             if (IsStandardOutput(output, rig.LightSkill) || !TrackHasContent(output.sourceObject as TrackAsset)) continue;
             UnityEngine.Object sourceTarget = rig.Director.GetGenericBinding(output.sourceObject);
+            if (TryResolveAuthorCameraTarget(sourceTarget, rig, runtimeTimeline, out string cameraKey))
+            {
+                CinemachineCamera copiedCamera = FindCopiedCamera(cameras, cameraKey);
+                UnityEngine.Object copiedTarget = ResolveCopiedCameraTarget(sourceTarget, copiedCamera);
+                if (copiedTarget != null)
+                {
+                    result.Add(new CombatCinematicTrackBinding
+                    {
+                        trackName = output.streamName,
+                        target = copiedTarget
+                    });
+                }
+                continue;
+            }
+
             LightSkillRuntimeExport sourceExport = FindRuntimeExport(sourceTarget);
             if (sourceExport == null || !exports.TryGetValue(sourceExport, out LightSkillRuntimeExport copiedExport)) continue;
             result.Add(new CombatCinematicTrackBinding
@@ -312,6 +398,53 @@ public static class LightSkillRuntimeRigBaker
             });
         }
         return result;
+    }
+
+    private static bool TryResolveAuthorCameraTarget(
+        UnityEngine.Object target,
+        LightSkillTimelineAuthoringRig rig,
+        TimelineAsset timeline,
+        out string cameraKey)
+    {
+        cameraKey = null;
+        if (target == null || rig == null || timeline == null) return false;
+
+        Transform targetTransform = target switch
+        {
+            GameObject gameObject => gameObject.transform,
+            Component component => component.transform,
+            _ => null
+        };
+        if (targetTransform == null) return false;
+
+        foreach (CinemachineShot shot in GetShots(timeline))
+        {
+            bool valid;
+            CinemachineCamera camera = rig.Director.GetReferenceValue(shot.VirtualCamera.exposedName, out valid) as CinemachineCamera;
+            if (!valid || camera == null || targetTransform != camera.transform) continue;
+            cameraKey = shot.VirtualCamera.exposedName.ToString();
+            return true;
+        }
+        return false;
+    }
+
+    private static CinemachineCamera FindCopiedCamera(List<CombatCinematicCameraBinding> cameras, string key)
+    {
+        for (int i = 0; i < cameras.Count; i++)
+        {
+            CombatCinematicCameraBinding binding = cameras[i];
+            if (binding != null && binding.camera != null && string.Equals(binding.timelineCameraKey, key, StringComparison.Ordinal))
+                return binding.camera;
+        }
+        return null;
+    }
+
+    private static UnityEngine.Object ResolveCopiedCameraTarget(UnityEngine.Object source, CinemachineCamera copiedCamera)
+    {
+        if (copiedCamera == null) return null;
+        if (source is GameObject) return copiedCamera.gameObject;
+        if (source is Component component) return copiedCamera.GetComponent(component.GetType());
+        return null;
     }
 
     private static UnityEngine.Object ResolveCopiedTarget(UnityEngine.Object source, LightSkillRuntimeExport copy)
@@ -344,6 +477,126 @@ public static class LightSkillRuntimeRigBaker
     {
         property.arraySize = values.Count;
         for (int i = 0; i < values.Count; i++) apply(property.GetArrayElementAtIndex(i), values[i]);
+    }
+
+    private static List<CameraSnapshot> CaptureAuthorCameraSnapshots(
+        LightSkillTimelineAuthoringRig rig,
+        TimelineAsset timeline)
+    {
+        List<CameraSnapshot> snapshots = new List<CameraSnapshot>();
+        foreach (CinemachineShot shot in GetShots(timeline))
+        {
+            string key = shot.VirtualCamera.exposedName.ToString();
+            bool valid;
+            CinemachineCamera camera = rig.Director.GetReferenceValue(shot.VirtualCamera.exposedName, out valid) as CinemachineCamera;
+            if (valid && camera != null) snapshots.Add(CameraSnapshot.Create(key, camera));
+        }
+        return snapshots;
+    }
+
+    private static string GetRuntimeTimelinePath(LightSkillSO skill)
+    {
+        string folder = skill != null ? Path.GetDirectoryName(AssetDatabase.GetAssetPath(skill))?.Replace('\\', '/') : null;
+        return string.IsNullOrWhiteSpace(folder) || skill == null ? null : folder + "/" + skill.name + "_Runtime.playable";
+    }
+
+    private static void ValidateBakedPackage(
+        CombatCinematicRig bakedRig,
+        List<CameraSnapshot> authorCameras,
+        string expectedRuntimeTimelinePath,
+        List<string> issues,
+        out string report)
+    {
+        List<string> details = new List<string>();
+        if (bakedRig == null)
+        {
+            issues.Add("CombatCinematicRig manquant dans le prefab baked.");
+            report = string.Empty;
+            return;
+        }
+
+        string prefabPath = AssetDatabase.GetAssetPath(bakedRig.gameObject);
+        if (CountMissingScripts(prefabPath) > 0)
+            issues.Add("Le prefab baked contient un ou plusieurs scripts manquants.");
+
+        PlayableDirector bakedDirector = bakedRig.Director;
+        if (bakedDirector == null)
+        {
+            issues.Add("PlayableDirector manquant dans le prefab baked.");
+        }
+        else if (bakedDirector.playableAsset == null ||
+                 !string.Equals(AssetDatabase.GetAssetPath(bakedDirector.playableAsset), expectedRuntimeTimelinePath,
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add("La Timeline runtime du prefab ne correspond pas au package attendu.");
+        }
+        else
+        {
+            ValidateBakedCameraAnimationOffsets(bakedRig, bakedDirector.playableAsset as TimelineAsset, issues);
+        }
+
+        if (bakedRig.CameraBindings.Count != authorCameras.Count)
+            issues.Add("Nombre de cameras baked incorrect : " + bakedRig.CameraBindings.Count + "/" + authorCameras.Count + ".");
+
+        for (int i = 0; i < authorCameras.Count; i++)
+        {
+            CameraSnapshot source = authorCameras[i];
+            CombatCinematicCameraBinding binding = null;
+            for (int j = 0; j < bakedRig.CameraBindings.Count; j++)
+            {
+                CombatCinematicCameraBinding candidate = bakedRig.CameraBindings[j];
+                if (candidate != null && string.Equals(candidate.timelineCameraKey, source.Key, StringComparison.Ordinal))
+                {
+                    binding = candidate;
+                    break;
+                }
+            }
+
+            if (binding == null || binding.camera == null)
+            {
+                issues.Add("Camera baked introuvable pour la cle '" + source.Key + "'.");
+                continue;
+            }
+
+            CameraSnapshot baked = CameraSnapshot.Create(binding.timelineCameraKey, binding.camera);
+            string difference = source.GetDifference(baked);
+            if (!string.IsNullOrEmpty(difference))
+                issues.Add("Camera '" + source.Key + "' differente du rig d'auteur : " + difference);
+            else
+                details.Add(source.Describe());
+        }
+
+        report = details.Count == 0
+            ? "Aucune camera valide exportee."
+            : "Cameras exportees :\n" + string.Join("\n", details);
+    }
+
+    private static void ValidateBakedCameraAnimationOffsets(
+        CombatCinematicRig rig,
+        TimelineAsset timeline,
+        List<string> issues)
+    {
+        if (timeline == null) return;
+
+        foreach (CombatCinematicTrackBinding binding in rig.TrackBindings)
+        {
+            if (binding?.target is not Animator animator || animator.GetComponent<CinemachineCamera>() == null)
+                continue;
+
+            if (FindAnimationTrack(timeline, binding.trackName) == null)
+                issues.Add("La piste camera '" + binding.trackName + "' est absente de la Timeline runtime.");
+        }
+    }
+
+    private static AnimationTrack FindAnimationTrack(TimelineAsset timeline, string trackName)
+    {
+        if (timeline == null || string.IsNullOrWhiteSpace(trackName)) return null;
+        foreach (PlayableBinding output in timeline.outputs)
+        {
+            if (output.sourceObject is AnimationTrack track && string.Equals(output.streamName, trackName, StringComparison.Ordinal))
+                return track;
+        }
+        return null;
     }
 
     private static IEnumerable<CinemachineShot> GetShots(TimelineAsset timeline)
@@ -445,6 +698,18 @@ public static class LightSkillRuntimeRigBaker
         return removed;
     }
 
+    private static int CountMissingScripts(GameObject root)
+    {
+        int count = 0;
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            MonoBehaviour[] behaviours = child.GetComponents<MonoBehaviour>();
+            for (int i = 0; i < behaviours.Length; i++)
+                if (behaviours[i] == null) count++;
+        }
+        return count;
+    }
+
     private static int CountMissingScripts(string prefabPath)
     {
         GameObject contents = PrefabUtility.LoadPrefabContents(prefabPath);
@@ -462,6 +727,73 @@ public static class LightSkillRuntimeRigBaker
         finally
         {
             PrefabUtility.UnloadPrefabContents(contents);
+        }
+    }
+
+    private sealed class CameraSnapshot
+    {
+        private const float PositionTolerance = 0.001f;
+        private const float RotationTolerance = 0.1f;
+        private const float FovTolerance = 0.01f;
+
+        public string Key { get; private set; }
+        public Vector3 LocalPosition { get; private set; }
+        public Quaternion LocalRotation { get; private set; }
+        public float FieldOfView { get; private set; }
+        public string Priority { get; private set; }
+        public string OutputChannel { get; private set; }
+        public string Pipeline { get; private set; }
+        public Vector3 FollowOffset { get; private set; }
+        public LightSkillRuntimeAnchor FollowTarget { get; private set; }
+        public LightSkillRuntimeAnchor LookAtTarget { get; private set; }
+
+        public static CameraSnapshot Create(string key, CinemachineCamera camera)
+        {
+            LightSkillCinematicCameraAuthoring authoring = camera.GetComponent<LightSkillCinematicCameraAuthoring>();
+            CinemachineFollow follow = camera.GetComponent<CinemachineFollow>();
+            List<string> components = new List<string>();
+            foreach (Component component in camera.GetComponents<Component>())
+            {
+                if (component == null || component is Transform || component is Animator) continue;
+                components.Add(component.GetType().FullName);
+            }
+            components.Sort(StringComparer.Ordinal);
+            return new CameraSnapshot
+            {
+                Key = key,
+                LocalPosition = camera.transform.localPosition,
+                LocalRotation = camera.transform.localRotation,
+                FieldOfView = camera.Lens.FieldOfView,
+                Priority = camera.Priority.Value.ToString(),
+                OutputChannel = camera.OutputChannel.ToString(),
+                Pipeline = string.Join(", ", components),
+                FollowOffset = follow != null ? follow.FollowOffset : Vector3.zero,
+                FollowTarget = authoring != null ? authoring.FollowTarget : LightSkillRuntimeAnchor.None,
+                LookAtTarget = authoring != null ? authoring.LookAtTarget : LightSkillRuntimeAnchor.None
+            };
+        }
+
+        public string GetDifference(CameraSnapshot other)
+        {
+            if (other == null) return "snapshot camera manquant";
+            List<string> differences = new List<string>();
+            if (!string.Equals(Key, other.Key, StringComparison.Ordinal)) differences.Add("cle Timeline");
+            if (Vector3.Distance(LocalPosition, other.LocalPosition) > PositionTolerance) differences.Add("position locale");
+            if (Quaternion.Angle(LocalRotation, other.LocalRotation) > RotationTolerance) differences.Add("rotation locale");
+            if (Mathf.Abs(FieldOfView - other.FieldOfView) > FovTolerance) differences.Add("FOV");
+            if (!string.Equals(Priority, other.Priority, StringComparison.Ordinal)) differences.Add("priorite");
+            if (!string.Equals(OutputChannel, other.OutputChannel, StringComparison.Ordinal)) differences.Add("Output Channel");
+            if (!string.Equals(Pipeline, other.Pipeline, StringComparison.Ordinal)) differences.Add("pipeline Cinemachine");
+            if (Vector3.Distance(FollowOffset, other.FollowOffset) > PositionTolerance) differences.Add("offset Follow");
+            if (FollowTarget != other.FollowTarget) differences.Add("Follow cible");
+            if (LookAtTarget != other.LookAtTarget) differences.Add("Look At cible");
+            return string.Join(", ", differences);
+        }
+
+        public string Describe()
+        {
+            return "- " + Key + " | FOV " + FieldOfView.ToString("0.##") + " | Follow " + FollowTarget +
+                   " " + FollowOffset.ToString("F2") + " | LookAt " + LookAtTarget + " | " + Pipeline;
         }
     }
 }

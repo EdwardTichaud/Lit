@@ -15,6 +15,8 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
     [SerializeField] private PlayableDirector director;
 
     private bool controlsCamera;
+    private CinemachineBrain explicitBrain;
+    private LitCameraDirector explicitCameraDirector;
 
     private void Reset()
     {
@@ -38,7 +40,6 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
 
         director.played += OnPlayed;
         director.stopped += OnStopped;
-        BindCinemachineTracks();
         if (Application.isPlaying && director.state == PlayState.Playing)
         {
             BeginCameraControl();
@@ -68,6 +69,12 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
 
     private void BeginCameraControl()
     {
+        if (explicitBrain != null)
+        {
+            BeginCameraControlNow(explicitBrain);
+            return;
+        }
+
         BeginCameraControlNow();
     }
 
@@ -98,6 +105,30 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
         return controlsCamera;
     }
 
+    /// <summary>Uses an explicitly resolved gameplay Brain instead of Camera.main.</summary>
+    public bool BeginCameraControlNow(CinemachineBrain brain)
+    {
+        if (!Application.isPlaying || brain == null) return false;
+
+        BindCinemachineTracks(brain);
+        explicitBrain = brain;
+        Camera gameplayCamera = brain.GetComponent<Camera>();
+        explicitCameraDirector = LitCameraDirector.EnsureInstance(gameplayCamera);
+        controlsCamera = explicitCameraDirector != null &&
+                         explicitCameraDirector.BeginTimelineCinemachineControl();
+        if (!controlsCamera)
+        {
+            explicitBrain = null;
+            Debug.LogError("[TimelineCamera] La Main Camera explicite ne possede pas de LitCameraDirector valide.", this);
+        }
+        return controlsCamera;
+    }
+
+    public void EndCameraControlNow()
+    {
+        EndCameraControl();
+    }
+
     private void EndCameraControl()
     {
         if (!controlsCamera)
@@ -105,7 +136,16 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
             return;
         }
 
-        if (LitCameraDirector.Instance != null)
+        if (explicitBrain != null)
+        {
+            if (explicitCameraDirector != null)
+            {
+                explicitCameraDirector.EndTimelineCinemachineControl();
+                explicitCameraDirector = null;
+            }
+            explicitBrain = null;
+        }
+        else if (LitCameraDirector.Instance != null)
         {
             LitCameraDirector.Instance.EndTimelineCinemachineControl();
         }
@@ -121,11 +161,12 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
         }
 
         LitCameraDirector cameraDirector = LitCameraDirector.EnsureInstance();
-        CinemachineBrain brain = cameraDirector != null ? cameraDirector.CinemachineBrain : null;
-        if (brain == null)
-        {
-            return;
-        }
+        BindCinemachineTracks(cameraDirector != null ? cameraDirector.CinemachineBrain : null);
+    }
+
+    private void BindCinemachineTracks(CinemachineBrain brain)
+    {
+        if (brain == null || director == null || director.playableAsset == null) return;
 
         bool changed = false;
         foreach (PlayableBinding output in director.playableAsset.outputs)

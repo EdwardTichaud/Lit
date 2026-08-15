@@ -130,10 +130,56 @@ preview actors, Main Camera de preview, Brain et AudioListener restent dans
 `AnimationLab`. Seules les Cinemachines utilisees et les objets marques
 `LightSkillRuntimeExport` sont copies. Le package lie dynamiquement les tracks
 `Player.Animator`, `Enemy.Animator`, `Cinemachine`, `Signals` et les tracks
-d'objets exportes aux vrais acteurs au lancement. Les cameras peuvent declarer
-leur cible Player, Enemy ou EnemyLockPoint. Un nouveau bake est requis apres
+d'objets exportes aux vrais acteurs au lancement. Les cameras declarent
+optionnellement leur cible Player, Enemy ou EnemyLockPoint et leurs modules
+Cinemachine dans AnimationLab; une camera sans cible est valide lorsqu'elle est
+entierement cadree par la Timeline. Le bake les conserve a l'identique.
+La Main Camera passe sous Cinemachine avant la premiere evaluation de
+Timeline et la piste reste liee a la Brain de `CombatLockOnCameraController`,
+jamais a une camera de preview. Un nouveau bake est requis apres
 toute modification de Timeline, camera ou objet exporte.
 `LightSkill_Devastation` est la base active; Furie a ete supprime integralement.
+Le bake compare maintenant un snapshot de chaque camera d'auteur (cle Timeline,
+transform, FOV, priorite, Output Channel, targets, Follow offset et pipeline)
+au prefab exporte. Une divergence, un script manquant ou une dependance a
+`AnimationLab` refuse integralement le package : aucun module camera n'est plus
+ajoute en runtime pour masquer un bake incomplet. Au lancement, le rig instancie
+journalise son prefab, sa Timeline, la Brain de la camera explicitement exposee
+par `CombatLockOnCameraController`, la vcam active et ses vraies cibles; il ne
+consulte jamais `Camera.main` ni `AnimationLab`. La restitution est centralisee
+et idempotente a la fin, a l'interruption, a la desactivation et au retour pool.
+Le bridge Timeline remet explicitement l'autorite a `LitCameraDirector` sur la
+Main Camera resolue par `CombatLockOnCameraController`; cette restitution coupe
+la Brain Cinemachine et restaure les drivers UCC, sans arbitrage vers une autre
+vcam.
+Les pistes d'animation qui enregistrent une Cinemachine (transform ou Lens) sont
+des pistes camera bakees : leur binding est copie vers l'Animator de la camera
+exportee. Devastation relie ainsi `Animation Track` a `Camera_1` dans son
+package runtime, au lieu de laisser `None (Animator)` dans la Timeline. Ces
+pistes conservent exactement leur mode d'offset Timeline d'auteur dans le
+package runtime : leurs poses restent fideles au montage de `AnimationLab` tout
+en etant portees par le rig aligne sur Lucian et l'ennemi. `LitCameraDirector`
+est l'unique proprietaire du handoff
+UCC pendant une LightSkill; le lock suspend seulement son cadrage et ne coupe
+plus les drivers UCC une seconde fois.
+Le prefab conserve aussi la pose locale du preview Player dans AnimationLab.
+Avant la premiere evaluation, le rig aligne cette pose sur Lucian reel face a
+la cible, ce qui transpose le cadrage du plateau d'auteur sans decalage.
+Le bake conserve desormais aussi la pose preview Enemy, le centre et l'axe de
+la formation. Avant d'acquerir le prefab runtime, le
+`CombatCinematicStageResolver` de `BattleManager` cherche un plateau autour du
+milieu Lucian-ennemi : dome libre de 10 m de diametre, sol praticable, pente et
+ecart de hauteur controles, capsule de Lucian libre et NavMesh valide si la
+cible en utilise un. Seuls les colliders du `Wall Mask` (layer `Obstacle` par
+defaut) peuvent refuser le dome; le masque de sol reste distinct. Un flash cyan
+tres bref masque le replacement des deux
+acteurs selon cette formation bakee. Si aucun plateau n'est valide, la
+LightSkill est refusee sans consommer sa charge; a la fin, seules l'IA, les
+inputs et la camera sont restaures, jamais les positions atteintes. Toute
+modification des poses preview exige donc un nouveau `Bake LightSkill`.
+La Brain passe en `Cut` pendant une Timeline LightSkill, puis retrouve son
+blend precedent a la restitution : aucun mélange UCC/Cinemachine ne modifie le
+premier plan cinematographique.
 Le lancement d'une LightSkill resout explicitement le bridge UCC de Lucian;
 tout refus (references combat, portee, locomotion UCC, camera Cinemachine ou sequence deja active)
 est affiche dans la Console et par un feedback world-space.

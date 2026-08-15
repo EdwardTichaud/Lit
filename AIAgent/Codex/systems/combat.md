@@ -63,8 +63,54 @@ la Timeline. Les preview actors, camera, Brain et AudioListener restent dans
 lancement. Les seules copies de GameObjects autorisees sont les Cinemachines
 utilisees et les racines marquees `LightSkillRuntimeExport`; leurs tracks sont
 enregistres dans `CombatCinematicRig`. Chaque camera exportee peut declarer une
-cible de suivi/regard Player, Enemy ou EnemyLockPoint. Le runtime instancie ce
-prefab via `CombatCinematicPlaybackService` et lie le Brain actif.
+cible de suivi/regard Player, Enemy ou EnemyLockPoint et les modules
+`CinemachineFollow`/visee correspondants; une camera sans cible est valide si
+son cadrage est entierement pilote par Timeline. Le bake capture et compare
+cle Timeline, transform, FOV, priorite, Output Channel, targets, Follow offset
+et pipeline : toute divergence, script manquant ou dependance a AnimationLab
+refuse le package avant son assignment au SO. Aucun correctif camera n'est
+ajoute en runtime. La piste Cinemachine est liee exclusivement a la Brain de
+la camera explicitement exposee par `CombatLockOnCameraController`, sans
+`Camera.main`. Le rig runtime journalise cette Brain, sa vcam active et ses
+cibles, puis restitue une seule fois la camera UCC a la fin, a l'interruption,
+a la desactivation ou a la remise en pool.
+Pour une LightSkill, cette restitution passe par `LitCameraDirector` attache a
+la Main Camera resolue depuis `CombatLockOnCameraController`. Il coupe la Brain
+et restaure le binder, handler et controller UCC : aucune autre vcam ne peut
+prendre la releve entre la Timeline et UCC.
+Le lock combat ne suspend que son propre cadrage pendant ce handoff; il ne
+desactive pas les drivers UCC. Cette separation garantit que `LitCameraDirector`
+restitue exactement leur etat initial a la fin de Timeline.
+Le prefab runtime conserve la pose locale du preview Player dans AnimationLab.
+Avant la premiere evaluation, `CombatCinematicRig` aligne cette pose sur Lucian
+reel face a l'ennemi, afin que les transformations camera enregistrees dans le
+plateau gardent leur cadrage exact dans chaque combat.
+Le rig conserve egalement les poses locales Player et Enemy, le centre et l'axe
+de leur formation d'auteur. `CombatCinematicStageResolver`, sur
+`BattleManager`, recherche avant toute instanciation un plateau proche du
+milieu Lucian-ennemi : dome libre de 10 m de diametre, sol praticable, pente,
+hauteur, capsule joueur et NavMesh ennemi valides. Il ignore les colliders des
+deux acteurs et les triggers. Seuls les colliders du `Wall Mask` (layer
+`Obstacle` par defaut) peuvent refuser le dome; le sol utilise un masque
+separe. Apres un flash cyan court, UCC et l'ennemi sont
+places relativement au rig bake, puis la Timeline commence. En cas d'echec de
+recherche, la LightSkill est refusee sans cout; a sa fin, les positions
+atteintes sont conservees. Toute modification de formation dans `AnimationLab`
+necessite un nouveau `Bake LightSkill`.
+La Brain Cinemachine utilise temporairement un `Cut` pendant la Timeline, puis
+restaure son blend de gameplay a la sortie. Le premier plan ne peut donc pas
+etre interpole avec la pose UCC precedente.
+Le rig d'auteur ne choisit jamais de camera de remplacement : une cle de
+`CinemachineShot` non resolue est bloquante, afin que le plan previsualise et
+le plan bake soient necessairement le meme.
+Une `AnimationTrack` liee a l'Animator d'une Cinemachine d'auteur est reconnue
+comme une piste camera et est liee a l'Animator de sa copie baked. Cela preserve
+les enregistrements de transform et de Lens de la Timeline sans laisser une
+piste `None (Animator)` au runtime.
+Les pistes d'animation Cinemachine bakees conservent egalement leur mode
+d'offset Timeline d'auteur : le bake ne les convertit jamais vers un autre
+repere, ce qui garantit que le mouvement valide dans `AnimationLab` reste
+identique une fois le rig aligne sur Lucian reel.
 `LightSkillCinematicSequenceController` suspend l'IA cible et interprete les
 Signals projectile, impact VFX et degats.
 `ResolveLightSkillImpact` reste la seule resolution lorsque le fallback est

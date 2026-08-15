@@ -101,7 +101,6 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
                     return false;
                 }
 
-                int fallbackIndex = 0;
                 foreach (TimelineClip clip in cinemachineTrack.GetClips())
                 {
                     if (clip.asset is CinemachineShot shot)
@@ -111,12 +110,10 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
                             shot.VirtualCamera.exposedName, out assigned) as CinemachineCamera;
                         if (!assigned || assignedCamera == null || !assignedCamera.transform.IsChildOf(transform))
                         {
-                            director.SetReferenceValue(
-                                shot.VirtualCamera.exposedName,
-                                cameras[Mathf.Min(fallbackIndex, cameras.Length - 1)]);
+                            error = "Camera de preview non resolue pour la cle Timeline '" +
+                                    shot.VirtualCamera.exposedName + "'.";
+                            return false;
                         }
-
-                        fallbackIndex++;
                     }
                 }
             }

@@ -324,6 +324,52 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
     }
 
+    /// <summary>Validates a destination before a LightSkill moves this enemy onto its baked stage.</summary>
+    public bool CanPlaceForCinematic(Vector3 position)
+    {
+        if (navigationAgent == null || !navigationAgent.gameObject.activeInHierarchy)
+        {
+            return true;
+        }
+
+        int areaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
+        return NavMesh.SamplePosition(position, out _, navMeshSampleDistance, areaMask);
+    }
+
+    /// <summary>Moves the enemy through NavMesh when present, then keeps its AI suspended for the cinematic.</summary>
+    public bool PlaceForCinematic(Vector3 position, Quaternion rotation)
+    {
+        SetCinematicSuspended(true);
+        StopMovement();
+        if (navigationAgent != null && navigationAgent.gameObject.activeInHierarchy)
+        {
+            int areaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
+            if (!NavMesh.SamplePosition(position, out NavMeshHit hit, navMeshSampleDistance, areaMask))
+            {
+                return false;
+            }
+
+            if (!navigationAgent.enabled)
+            {
+                transform.position = hit.position;
+                navigationAgent.enabled = true;
+            }
+
+            if (!navigationAgent.Warp(hit.position))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            transform.position = position;
+        }
+
+        transform.rotation = rotation;
+        Physics.SyncTransforms();
+        return true;
+    }
+
     private void OnDisable()
     {
         if (enemy != null)

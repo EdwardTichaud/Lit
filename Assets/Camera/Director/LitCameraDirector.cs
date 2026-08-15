@@ -29,6 +29,8 @@ public sealed class LitCameraDirector : MonoBehaviour
     private bool uccHandlerWasEnabled;
     private bool hasUccState;
     private bool timelineCinemachineControlActive;
+    private CinemachineBlendDefinition timelineOriginalBlend;
+    private bool timelineBlendStored;
 
     public bool IsCinemachineDriving => activeCinemachineCamera != null && cinemachineBrain != null && cinemachineBrain.enabled;
     public Camera ControlledCamera => controlledCamera;
@@ -50,6 +52,14 @@ public sealed class LitCameraDirector : MonoBehaviour
 
         LitCameraDirector director = mainCamera.GetComponent<LitCameraDirector>();
         return director != null ? director : mainCamera.gameObject.AddComponent<LitCameraDirector>();
+    }
+
+    /// <summary>Returns the director attached to this exact gameplay camera.</summary>
+    public static LitCameraDirector EnsureInstance(Camera camera)
+    {
+        if (camera == null) return null;
+        LitCameraDirector director = camera.GetComponent<LitCameraDirector>();
+        return director != null ? director : camera.gameObject.AddComponent<LitCameraDirector>();
     }
 
     private void Awake()
@@ -143,6 +153,8 @@ public sealed class LitCameraDirector : MonoBehaviour
         }
 
         SuspendUccCameraControl();
+        StoreTimelineBlend();
+        cinemachineBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
         cinemachineBrain.enabled = true;
         timelineCinemachineControlActive = true;
         return true;
@@ -163,7 +175,7 @@ public sealed class LitCameraDirector : MonoBehaviour
     /// <summary>Returns authority to UCC and rebinds it to the local character.</summary>
     public void ReleaseCinemachine()
     {
-        if (!hasUccState && activeCinemachineCamera == null)
+        if (!hasUccState && activeCinemachineCamera == null && !timelineBlendStored)
         {
             return;
         }
@@ -172,6 +184,8 @@ public sealed class LitCameraDirector : MonoBehaviour
         {
             cinemachineBrain.enabled = false;
         }
+
+        RestoreTimelineBlend();
 
         RestoreActiveCameraPriority();
 
@@ -197,6 +211,20 @@ public sealed class LitCameraDirector : MonoBehaviour
         activeCinemachineCamera = null;
         hasUccState = false;
         timelineCinemachineControlActive = false;
+    }
+
+    private void StoreTimelineBlend()
+    {
+        if (timelineBlendStored || cinemachineBrain == null) return;
+        timelineOriginalBlend = cinemachineBrain.DefaultBlend;
+        timelineBlendStored = true;
+    }
+
+    private void RestoreTimelineBlend()
+    {
+        if (!timelineBlendStored || cinemachineBrain == null) return;
+        cinemachineBrain.DefaultBlend = timelineOriginalBlend;
+        timelineBlendStored = false;
     }
 
     private void RestoreActiveCameraPriority()

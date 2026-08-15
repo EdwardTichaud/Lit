@@ -25,6 +25,8 @@ public sealed class LightSkillSO : ScriptableObject
     [SerializeField] private string cinemachineTrackName = "Cinemachine";
     [SerializeField, Min(0.1f), Tooltip("Portee maximale entre Lucian et la cible au lancement de la cinematic.")]
     private float maximumCinematicStartDistance = 18f;
+    [Header("Cinematic Stage")]
+    [SerializeField] private CinematicStageProfile cinematicStage = new CinematicStageProfile();
 
     [Header("Cinematic Audio")]
     [SerializeField] private AudioClipSO startSfx;
@@ -60,6 +62,7 @@ public sealed class LightSkillSO : ScriptableObject
     public string EnemyAnimatorTrackName => enemyAnimatorTrackName;
     public string CinemachineTrackName => cinemachineTrackName;
     public float MaximumCinematicStartDistance => maximumCinematicStartDistance;
+    public CinematicStageProfile CinematicStage => cinematicStage;
     public AudioClipSO StartSfx => startSfx;
     public AudioClipSO ImpulseSfx => impulseSfx;
     public AudioClipSO ImpactSfx => impactSfx;

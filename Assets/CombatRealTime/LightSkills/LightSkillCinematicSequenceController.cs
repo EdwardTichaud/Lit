@@ -12,6 +12,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
     private LightSkillSO lightSkill;
     private RealTimeCombatEnemy targetEnemy;
     private RealTimeCombatEnemyBehaviour enemyBehaviour;
+    private CombatLockOnCameraController lockCamera;
     private System.Action resolveImpact;
     private Coroutine projectileRoutine;
     private GameObject projectileInstance;
@@ -42,6 +43,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         targetEnemy = context.TargetEnemy;
         resolveImpact = context.ResolveImpact;
         enemyBehaviour = targetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+        lockCamera = combatManager.GetComponent<CombatLockOnCameraController>();
         active = true;
         projectileSpawned = false;
         impactVfxSpawned = false;
@@ -49,6 +51,9 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
 
         BindSignals();
         enemyBehaviour?.SetCinematicSuspended(true);
+        // LitCameraDirector owns the UCC driver handoff for a Timeline. The lock
+        // controller only stops updating its combat framing during the shot.
+        lockCamera?.SetCinematicFramingSuspended(true);
         combatManager.SetCinematicSequenceActive(true);
         return true;
     }
@@ -60,6 +65,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         UnbindSignals();
         StopAndDestroyProjectile();
         enemyBehaviour?.SetCinematicSuspended(false);
+        lockCamera?.SetCinematicFramingSuspended(false);
         combatManager?.SetCinematicSequenceActive(false);
 
         active = false;
@@ -67,6 +73,7 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         lightSkill = null;
         targetEnemy = null;
         enemyBehaviour = null;
+        lockCamera = null;
         resolveImpact = null;
     }
 

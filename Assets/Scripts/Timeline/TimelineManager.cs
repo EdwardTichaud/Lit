@@ -418,10 +418,12 @@ namespace Lit.Timeline
             if (playback.director != null)
             {
                 playback.director.stopped -= OnDirectorStopped;
-                if (playback.director.state == PlayState.Playing)
-                {
-                    playback.director.Stop();
-                }
+                // A director which reached DirectorWrapMode.None is already
+                // stopped, but its graph may still retain Timeline playables.
+                // Stopping explicitly releases custom tracks so they can
+                // restore and commit their final gameplay pose before input
+                // is returned to UCC.
+                playback.director.Stop();
             }
 
             for (int i = playback.participants.Count - 1; i >= 0; i--)

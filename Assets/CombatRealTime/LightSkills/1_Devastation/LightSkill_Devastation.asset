@@ -21,6 +21,19 @@ MonoBehaviour:
   enemyAnimatorTrackName: Enemy.Animator
   cinemachineTrackName: Cinemachine
   maximumCinematicStartDistance: 18
+  cinematicStage:
+    clearanceDiameter: 10
+    searchRadius: 12
+    samplesPerRing: 12
+    maximumSlope: 45
+    maximumGroundHeightDifference: 0.15
+    groundMask:
+      serializedVersion: 2
+      m_Bits: 8
+    wallMask:
+      serializedVersion: 2
+      m_Bits: 2048
+    transitionFlashDuration: 0.12
   startSfx: {fileID: 0}
   impulseSfx: {fileID: 0}
   impactSfx: {fileID: 0}
