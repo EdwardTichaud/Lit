@@ -7,6 +7,14 @@ la façade gameplay Lit à Opsive UCC et à sa caméra.
 
 ## Recuperation root motion
 
+## Contrat ActorRoot
+
+Lucian, Juggernaut et GiantJuggernaut utilisent `ActorRoot > AnimationRoot`.
+L'`ActorRoot` est le seul Transform monde. Durant une Timeline LightSkill,
+`CombatActorRootMotionRelay` transmet une seule fois chaque delta de l'Animator
+vers `LitOpsiveLocomotionBridge` ou le comportement ennemi; aucun rig
+cinematique ne deplace directement les acteurs apres leur placement initial.
+
 `AnimationGroundRecovery`, dans `Assets/Scripts/Animation/`, est un garde-fou
 generique attache aux racines de Lucian, Juggernaut et GiantJuggernaut. Apres
 le root motion, il sonde le support sous le Transform reellement anime et ne

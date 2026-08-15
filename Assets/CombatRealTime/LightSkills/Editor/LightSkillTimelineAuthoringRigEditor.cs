@@ -11,6 +11,8 @@ using UnityEngine.Timeline;
 [CustomEditor(typeof(LightSkillTimelineAuthoringRig))]
 public sealed class LightSkillTimelineAuthoringRigEditor : Editor
 {
+    private const string FramingSnapshotTimeKey = "Lit.LightSkill.FramingSnapshotTime";
+
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
@@ -22,6 +24,14 @@ public sealed class LightSkillTimelineAuthoringRigEditor : Editor
         {
             if (LightSkillRuntimeRigBaker.Validate(rig, out string report)) Debug.Log("[LightSkill Bake] " + report, rig);
             else EditorGUILayout.HelpBox(report, MessageType.Error);
+        }
+
+        float snapshotTime = EditorPrefs.GetFloat(FramingSnapshotTimeKey, 1f);
+        snapshotTime = EditorGUILayout.FloatField("Framing Snapshot Time", Mathf.Max(0f, snapshotTime));
+        EditorPrefs.SetFloat(FramingSnapshotTimeKey, snapshotTime);
+        if (GUILayout.Button("Log Framing Snapshot"))
+        {
+            rig.LogFramingSnapshotAt(snapshotTime);
         }
 
         if (GUILayout.Button("Bake LightSkill"))
@@ -179,6 +189,7 @@ public static class LightSkillRuntimeRigBaker
                 authoringRig.transform,
                 authoringRig.PreviewPlayerAnchor,
                 authoringRig.PreviewEnemyAnchor);
+            rig.ConfigureAuthoringCameraContract(authoringRig.PreviewCameraBrain);
             if (CountMissingScripts(root) > 0)
             {
                 report = "Le package contient un script manquant avant sauvegarde. Corrigez AnimationLab, puis rebakez.";
@@ -613,6 +624,8 @@ public static class LightSkillRuntimeRigBaker
 
         if (!bakedRig.HasAuthoringStageLayout)
             issues.Add("Le prefab baked ne contient pas PlayerStageAnchor et EnemyStageAnchor.");
+        if (!bakedRig.HasAuthoringCameraContract)
+            issues.Add("Le prefab baked ne contient pas le contrat de projection AnimationLab. Rebake requis.");
 
         string prefabPath = AssetDatabase.GetAssetPath(bakedRig.gameObject);
         if (CountMissingScripts(prefabPath) > 0)
@@ -711,7 +724,10 @@ public static class LightSkillRuntimeRigBaker
                 continue;
             }
 
-            track.trackOffset = TrackOffset.ApplySceneOffsets;
+            // Actor roots are staged once, then root motion is transported only
+            // by CombatActorRootMotionRelay. Scene Offsets would write them a
+            // second time and reintroduce world-space drift.
+            track.trackOffset = TrackOffset.ApplyTransformOffsets;
         }
     }
 

@@ -40,6 +40,70 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
     public CinemachineCamera PreviewVirtualCamera => previewVirtualCamera;
     public SignalReceiver PreviewSignalReceiver => previewSignalReceiver;
 
+    /// <summary>
+    /// Writes the current authoring-space values that must match the runtime rig values.
+    /// </summary>
+    public void LogFramingSnapshot()
+    {
+        LogFramingSnapshotAt(director != null ? director.time : 0d);
+    }
+
+    /// <summary>
+    /// Samples the authoring Director directly, so the diagnostic does not rely
+    /// on the Timeline window selection or its preview-playhead synchronisation.
+    /// </summary>
+    public void LogFramingSnapshotAt(double time)
+    {
+        if (director == null || previewPlayerAnimator == null || previewEnemyAnimator == null)
+        {
+            Debug.LogWarning("[LightSkill Framing Authoring] Director ou acteurs preview manquants.", this);
+            return;
+        }
+
+        double duration = director.playableAsset != null ? director.playableAsset.duration : 0d;
+        director.time = Mathf.Clamp((float)time, 0f, (float)duration);
+        director.Evaluate();
+
+        CinemachineCamera camera = ResolveCameraAtDirectorTime() ?? previewVirtualCamera;
+        string cameraDescription = camera != null
+            ? "camera='" + camera.name + "' relPos=" + transform.InverseTransformPoint(camera.transform.position).ToString("F4") +
+              " relRot=" + (Quaternion.Inverse(transform.rotation) * camera.transform.rotation).eulerAngles.ToString("F4") +
+              " fov=" + camera.Lens.FieldOfView.ToString("F3")
+            : "camera=None";
+
+        Debug.Log("[LightSkill Framing Authoring] t=" + director.time.ToString("F3") +
+                  " | stagePos=" + transform.position.ToString("F4") +
+                  " stageRot=" + transform.rotation.eulerAngles.ToString("F4") +
+                  " | playerRelPos=" + transform.InverseTransformPoint(previewPlayerAnimator.transform.position).ToString("F4") +
+                  " playerRelRot=" + (Quaternion.Inverse(transform.rotation) * previewPlayerAnimator.transform.rotation).eulerAngles.ToString("F4") +
+                  " | enemyRelPos=" + transform.InverseTransformPoint(previewEnemyAnimator.transform.position).ToString("F4") +
+                  " enemyRelRot=" + (Quaternion.Inverse(transform.rotation) * previewEnemyAnimator.transform.rotation).eulerAngles.ToString("F4") +
+                  " | " + cameraDescription,
+                  this);
+    }
+
+    private CinemachineCamera ResolveCameraAtDirectorTime()
+    {
+        TimelineAsset timeline = director != null ? director.playableAsset as TimelineAsset : null;
+        if (timeline == null) return null;
+
+        foreach (PlayableBinding output in timeline.outputs)
+        {
+            if (output.sourceObject is not CinemachineTrack track) continue;
+            foreach (TimelineClip clip in track.GetClips())
+            {
+                if (director.time < clip.start || director.time > clip.end || clip.asset is not CinemachineShot shot)
+                    continue;
+
+                bool assigned;
+                CinemachineCamera camera = director.GetReferenceValue(shot.VirtualCamera.exposedName, out assigned) as CinemachineCamera;
+                if (assigned && camera != null) return camera;
+            }
+        }
+
+        return null;
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -192,6 +256,9 @@ public static class LightSkillTimelineContract
         if (!HasTrack<SignalTrack>(timeline, SignalsTrack))
             issues.Add("Piste Signal requise absente : '" + SignalsTrack + "'.");
 
+        ValidateActorTrackOffset(FindTrack<AnimationTrack>(timeline, playerTrack), playerTrack, issues);
+        ValidateActorTrackOffset(FindTrack<AnimationTrack>(timeline, enemyTrack), enemyTrack, issues);
+
         SignalTrack signals = FindTrack<SignalTrack>(timeline, SignalsTrack);
         if (skill != null && HasDevastationSignalConfiguration(skill))
         {
@@ -219,6 +286,21 @@ public static class LightSkillTimelineContract
         }
 
         return issues;
+    }
+
+    private static void ValidateActorTrackOffset(AnimationTrack track, string label, List<string> issues)
+    {
+        if (track == null) return;
+        if (track.trackOffset != TrackOffset.ApplyTransformOffsets)
+        {
+            issues.Add("La piste acteur '" + label + "' doit utiliser Apply Transform Offsets. " +
+                       "Les Scene Offsets ecrivent le ActorRoot une seconde fois.");
+        }
+
+        if (track.infiniteClip != null)
+        {
+            issues.Add("La piste acteur '" + label + "' ne peut pas utiliser un Infinite Clip. Utilisez des AnimationPlayableAsset avec root motion.");
+        }
     }
 
     private static bool HasDevastationSignalConfiguration(LightSkillSO skill)

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -15,6 +16,57 @@ public static class CombatActorAnimationContractEditor
     [MenuItem("Lit/Combat/Validate Actor Animation Contract")]
     private static void ValidateAll()
     {
+        string report = BuildValidationReport();
+        Debug.Log("[Combat Actor Contract]\n" + report);
+        EditorUtility.DisplayDialog("Actor Animation Contract", report, "OK");
+    }
+
+    [MenuItem("Lit/Combat/Normalize Actor Animation Hierarchies")]
+    private static void NormalizeAll()
+    {
+        if (EditorUtility.DisplayDialog(
+                "Normalize Actor Animation Hierarchies",
+                "Migrer Lucian, Juggernaut et GiantJuggernaut vers ActorRoot > AnimationRoot ?\n\n" +
+                "La prevalidation doit etre entierement valide. Les skeletons, clips et references sont conserves.",
+                "Migrer", "Annuler"))
+            NormalizeAllInternal(true);
+    }
+
+    // Entry point available to Unity batchmode after scripts compile.
+    public static void NormalizeAllBatch()
+    {
+        NormalizeAllInternal(false);
+    }
+
+    private static void NormalizeAllInternal(bool showDialog)
+    {
+        List<ActorMigrationPlan> plans = new List<ActorMigrationPlan>();
+        List<string> issues = new List<string>();
+        for (int i = 0; i < PrefabPaths.Length; i++)
+        {
+            if (TryCreatePlan(PrefabPaths[i], out ActorMigrationPlan plan, out string error)) plans.Add(plan);
+            else issues.Add(PrefabPaths[i] + ": " + error);
+        }
+
+        if (issues.Count > 0)
+        {
+            string rejected = "Migration annulee. Aucun prefab n'a ete modifie :\n" + string.Join("\n", issues);
+            Debug.LogError("[Combat Actor Contract]\n" + rejected);
+            if (showDialog) EditorUtility.DisplayDialog("Actor Animation Contract", rejected, "OK");
+            throw new InvalidOperationException(rejected);
+        }
+
+        List<string> report = new List<string>();
+        for (int i = 0; i < plans.Count; i++) ApplyPlan(plans[i], report);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        string result = string.Join("\n", report) + "\n\n" + BuildValidationReport();
+        Debug.Log("[Combat Actor Contract]\n" + result);
+        if (showDialog) EditorUtility.DisplayDialog("Actor Animation Contract", result, "OK");
+    }
+
+    private static string BuildValidationReport()
+    {
         List<string> report = new List<string>();
         for (int i = 0; i < PrefabPaths.Length; i++)
         {
@@ -22,144 +74,153 @@ public static class CombatActorAnimationContractEditor
             try
             {
                 CombatActorAnimationRoot contract = root.GetComponent<CombatActorAnimationRoot>();
-                if (contract == null)
-                {
-                    report.Add(PrefabPaths[i] + ": contrat absent.");
-                    continue;
-                }
-
-                report.Add(contract.ValidateContract(out string error)
-                    ? PrefabPaths[i] + ": valide | Animator=" + contract.Animator.name + "."
-                    : PrefabPaths[i] + ": invalide | " + error);
+                string error = null;
+                bool valid = contract != null && contract.ValidateContract(out error);
+                report.Add(valid
+                    ? PrefabPaths[i] + ": valide | AnimationRoot=" + contract.AnimationRoot.name + " | Animator=" + contract.Animator.name + "."
+                    : PrefabPaths[i] + ": invalide | " + (contract == null ? "contrat absent." : error));
             }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(root);
-            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
         }
-
-        string message = string.Join("\n", report);
-        Debug.Log("[Combat Actor Contract]\n" + message);
-        EditorUtility.DisplayDialog("Actor Animation Contract", message, "OK");
+        return string.Join("\n", report);
     }
 
-    [MenuItem("Lit/Combat/Normalize Actor Animation Hierarchies")]
-    private static void NormalizeAll()
+    private static bool TryCreatePlan(string prefabPath, out ActorMigrationPlan plan, out string error)
     {
-        if (!EditorUtility.DisplayDialog(
-                "Normalize Actor Animation Hierarchies",
-                "Normaliser Lucian, Juggernaut et GiantJuggernaut ?\n\n" +
-                "Les skeletons importes restent intacts. Les ennemis recoivent un AnimationRoot; " +
-                "Lucian conserve temporairement son Animator racine afin de ne pas casser ses clips generiques.",
-                "Normaliser", "Annuler"))
-        {
-            return;
-        }
-
-        List<string> report = new List<string>();
-        for (int i = 0; i < PrefabPaths.Length; i++)
-        {
-            NormalizePrefab(PrefabPaths[i], report);
-        }
-
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-        string message = string.Join("\n", report);
-        Debug.Log("[Combat Actor Contract]\n" + message);
-        EditorUtility.DisplayDialog("Actor Animation Contract", message, "OK");
-    }
-
-    private static void NormalizePrefab(string prefabPath, List<string> report)
-    {
+        plan = null;
+        error = null;
         GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
         try
         {
             Animator animator = FindGameplayAnimator(root);
-            if (animator == null)
+            if (animator == null) { error = "aucun Animator avec RuntimeAnimatorController."; return false; }
+
+            Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+            int controllerCount = 0;
+            for (int i = 0; i < animators.Length; i++) if (animators[i].runtimeAnimatorController != null) controllerCount++;
+            if (controllerCount != 1) { error = "plusieurs Animators de gameplay detectes (" + controllerCount + ")."; return false; }
+
+            List<Transform> visualRoots = new List<Transform>();
+            if (animator.transform == root.transform)
             {
-                report.Add(prefabPath + ": ignore, aucun Animator avec Controller.");
-                return;
+                CollectVisualRoots(root.transform, visualRoots);
+                if (visualRoots.Count == 0) { error = "Animator racine sans hierarchy visuelle identifiable; migration refusee."; return false; }
             }
 
-            Transform animationRoot = animator.transform;
-            if (animator.transform != root.transform)
+            plan = new ActorMigrationPlan(prefabPath, animator.transform == root.transform, visualRoots);
+            return true;
+        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
+    }
+
+    private static void ApplyPlan(ActorMigrationPlan plan, List<string> report)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(plan.prefabPath);
+        try
+        {
+            Animator oldAnimator = FindGameplayAnimator(root);
+            Transform animationRoot;
+            Animator animator;
+            if (plan.moveRootAnimator)
             {
-                animationRoot = EnsureAnimationRoot(root.transform, animator.transform);
+                animationRoot = CreateIdentityAnimationRoot(root.transform);
+                for (int i = 0; i < plan.visualRootNames.Count; i++)
+                {
+                    Transform visualRoot = root.transform.Find(plan.visualRootNames[i]);
+                    if (visualRoot != null) visualRoot.SetParent(animationRoot, true);
+                }
+                animator = animationRoot.gameObject.AddComponent<Animator>();
+                EditorUtility.CopySerialized(oldAnimator, animator);
+                ReplaceAnimatorReferences(root, oldAnimator, animator);
+                UnityEngine.Object.DestroyImmediate(oldAnimator);
+            }
+            else
+            {
+                animationRoot = EnsureIdentityAnimationRoot(root.transform, oldAnimator.transform);
+                animator = oldAnimator;
             }
 
             Animator[] rootAnimators = root.GetComponents<Animator>();
             for (int i = 0; i < rootAnimators.Length; i++)
-            {
                 if (rootAnimators[i] != animator && rootAnimators[i].runtimeAnimatorController == null)
-                {
-                    Object.DestroyImmediate(rootAnimators[i]);
-                }
-            }
+                    UnityEngine.Object.DestroyImmediate(rootAnimators[i]);
 
             CombatActorAnimationRoot contract = root.GetComponent<CombatActorAnimationRoot>();
-            if (contract == null)
-            {
-                contract = root.AddComponent<CombatActorAnimationRoot>();
-            }
+            if (contract == null) contract = root.AddComponent<CombatActorAnimationRoot>();
+            contract.Configure(animationRoot, animator, root.transform.Find("EnemyLockPoint"));
 
-            Transform lockPoint = root.transform.Find("EnemyLockPoint");
-            contract.Configure(animationRoot, animator, lockPoint);
-
-            if (animator.GetComponent<CombatActorRootMotionRelay>() == null)
-            {
-                animator.gameObject.AddComponent<CombatActorRootMotionRelay>();
-            }
-
+            CombatActorRootMotionRelay relay = animator.GetComponent<CombatActorRootMotionRelay>();
+            if (relay == null) relay = animator.gameObject.AddComponent<CombatActorRootMotionRelay>();
+            SetObjectReference(relay, "actor", contract);
             AssignAnimatorReferences(root, contract, animator);
-            PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
-            report.Add(prefabPath + ": normalise | AnimationRoot=" + animationRoot.name + " | Animator=" + animator.name + ".");
+            if (!contract.ValidateContract(out string validationError)) throw new InvalidOperationException(validationError);
+
+            PrefabUtility.SaveAsPrefabAsset(root, plan.prefabPath);
+            report.Add(plan.prefabPath + ": migre | AnimationRoot=" + animationRoot.name + " | Animator=" + animator.name + ".");
         }
-        catch (System.Exception exception)
-        {
-            report.Add(prefabPath + ": echec | " + exception.Message);
-        }
-        finally
-        {
-            PrefabUtility.UnloadPrefabContents(root);
-        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
     }
 
-    private static Transform EnsureAnimationRoot(Transform actorRoot, Transform animatorTransform)
+    private static Transform CreateIdentityAnimationRoot(Transform actorRoot)
     {
-        Transform currentParent = animatorTransform.parent;
-        if (currentParent != null && currentParent.name == "AnimationRoot" && currentParent.parent == actorRoot &&
-            IsIdentity(currentParent))
-        {
-            return currentParent;
-        }
-
         GameObject rootObject = new GameObject("AnimationRoot");
         Transform animationRoot = rootObject.transform;
         animationRoot.SetParent(actorRoot, false);
         animationRoot.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
         animationRoot.localScale = Vector3.one;
+        return animationRoot;
+    }
+
+    private static Transform EnsureIdentityAnimationRoot(Transform actorRoot, Transform animatorTransform)
+    {
+        if (animatorTransform.parent != null && animatorTransform.parent.name == "AnimationRoot" &&
+            animatorTransform.parent.parent == actorRoot && IsIdentity(animatorTransform.parent)) return animatorTransform.parent;
+        Transform animationRoot = CreateIdentityAnimationRoot(actorRoot);
         animatorTransform.SetParent(animationRoot, true);
         return animationRoot;
+    }
+
+    private static void CollectVisualRoots(Transform actorRoot, List<Transform> roots)
+    {
+        HashSet<Transform> unique = new HashSet<Transform>();
+        SkinnedMeshRenderer[] renderers = actorRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Transform current = renderers[i].transform;
+            while (current.parent != null && current.parent != actorRoot) current = current.parent;
+            if (current.parent == actorRoot) unique.Add(current);
+        }
+        roots.AddRange(unique);
     }
 
     private static Animator FindGameplayAnimator(GameObject root)
     {
         EnemySkills skills = root.GetComponent<EnemySkills>();
-        if (skills != null && skills.Animator != null && skills.Animator.runtimeAnimatorController != null)
-        {
-            return skills.Animator;
-        }
-
+        if (skills != null && skills.Animator != null && skills.Animator.runtimeAnimatorController != null) return skills.Animator;
         Animator[] animators = root.GetComponentsInChildren<Animator>(true);
-        for (int i = 0; i < animators.Length; i++)
-        {
-            if (animators[i].runtimeAnimatorController != null)
-            {
-                return animators[i];
-            }
-        }
-
+        for (int i = 0; i < animators.Length; i++) if (animators[i].runtimeAnimatorController != null) return animators[i];
         return null;
+    }
+
+    private static void ReplaceAnimatorReferences(GameObject root, Animator oldAnimator, Animator newAnimator)
+    {
+        MonoBehaviour[] components = root.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < components.Length; i++)
+        {
+            if (components[i] == null) continue;
+            SerializedObject serialized = new SerializedObject(components[i]);
+            SerializedProperty property = serialized.GetIterator();
+            bool changed = false;
+            while (property.NextVisible(true))
+            {
+                if (property.propertyType == SerializedPropertyType.ObjectReference && property.objectReferenceValue == oldAnimator)
+                {
+                    property.objectReferenceValue = newAnimator;
+                    changed = true;
+                }
+            }
+            if (changed) serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
     }
 
     private static void AssignAnimatorReferences(GameObject root, CombatActorAnimationRoot contract, Animator animator)
@@ -173,7 +234,7 @@ public static class CombatActorAnimationContractEditor
         SetObjectReference(root.GetComponent<AnimationGroundRecovery>(), "animator", animator);
     }
 
-    private static void SetObjectReference(Object component, string propertyName, Object value)
+    private static void SetObjectReference(UnityEngine.Object component, string propertyName, UnityEngine.Object value)
     {
         if (component == null) return;
         SerializedObject serialized = new SerializedObject(component);
@@ -189,6 +250,19 @@ public static class CombatActorAnimationContractEditor
         return transform.localPosition.sqrMagnitude <= 0.000001f &&
                Quaternion.Angle(transform.localRotation, Quaternion.identity) <= 0.01f &&
                (transform.localScale - Vector3.one).sqrMagnitude <= 0.000001f;
+    }
+
+    private sealed class ActorMigrationPlan
+    {
+        public readonly string prefabPath;
+        public readonly bool moveRootAnimator;
+        public readonly List<string> visualRootNames = new List<string>();
+        public ActorMigrationPlan(string path, bool moveAnimator, List<Transform> visualRoots)
+        {
+            prefabPath = path;
+            moveRootAnimator = moveAnimator;
+            for (int i = 0; i < visualRoots.Count; i++) visualRootNames.Add(visualRoots[i].name);
+        }
     }
 }
 #endif

@@ -17,6 +17,17 @@ public sealed class CombatActorRootMotionRelay : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        animator = GetComponent<Animator>();
+        if (actor == null)
+        {
+            actor = GetComponentInParent<CombatActorAnimationRoot>();
+        }
+    }
+#endif
+
     private void OnAnimatorMove()
     {
         if (!enabled || actor == null || animator == null || !actor.IsCinematicMotionActive)

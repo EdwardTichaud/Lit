@@ -175,13 +175,11 @@ anchors avant la premiere evaluation de Timeline. Il n'y a ni recherche de
 plateau, ni test de sol, mur, collision ou NavMesh, ni flash de transition.
 Les positions finales sont conservees.
 Les pistes `Player.Animator` et `Enemy.Animator` sont converties au bake en
-`ApplySceneOffsets`. Une LightSkill posee sur un plateau laisse alors Timeline
-etre l'unique pilote des transforms acteurs pendant la lecture : le rig ne lit
-ni ne repose UCC ou l'ennemi chaque frame. Cela evite toute boucle de
-retroaction entre Timeline et UCC; le root motion reste relatif au plateau
-runtime. Un package plus ancien est refuse et doit etre rebake. Les
-CounterSkills, qui n'utilisent pas ce placement de plateau, conservent leur
-chemin root motion existant.
+`ApplyTransformOffsets`. Pendant une LightSkill, le
+`CombatActorRootMotionRelay` transporte seul les deltas depuis l'Animator vers
+l'ActorRoot; le rig ne lit, ne compense et ne repose plus UCC ou l'ennemi par
+frame. Un package plus ancien en `ApplySceneOffsets` est refuse et doit etre
+rebake. Les CounterSkills conservent leur chemin root motion existant.
 Le contrat de plateau version 3 enregistre aussi l'orientation monde du rig
 d'auteur; tout prefab LightSkill plus ancien doit etre rebake avant lecture.
 Le contrat `CombatActorAnimationRoot` centralise maintenant le root gameplay,
@@ -189,11 +187,9 @@ son `AnimationRoot`, l'Animator de gameplay et `EnemyLockPoint` lorsqu'il
 existe. Le combat, les skills, UCC et les Timelines resolvent cet Animator
 explicitement au lieu de choisir un enfant. `Lit/Combat/Normalize Actor
 Animation Hierarchies` encapsule sans deformer les skeletons importes les
-Animators des deux ennemis sous un `AnimationRoot` identite, retire l'Animator
-vide du Giant et rebranche les references de combat. Lucian conserve
-provisoirement son Animator racine: ses clips generiques dependants des paths
-ne doivent pas etre reparentes automatiquement. Son comportement passe neanmoins
-par le meme contrat et le meme relais de root motion cinematographique.
+Animators de Lucian et des ennemis sous un `AnimationRoot` identite, retire les
+Animators vides et rebranche les references de combat, UCC et presentation. La
+prevalidation des trois prefabs bloque toute migration partielle.
 En sortie, les poses locales imposees par les Animation Tracks sur les Animators
 Player et Enemy sont remises a zero avant la remise en pool du rig : chaque
 declenchement repart donc d'un etat propre sans reemployer l'offset precedent.
@@ -209,6 +205,17 @@ le liberer.
 La Brain passe en `Cut` pendant une Timeline LightSkill, puis retrouve son
 blend precedent a la restitution : aucun mélange UCC/Cinemachine ne modifie le
 premier plan cinematographique.
+Le bake capture aussi le contrat de projection du Brain/camera d'AnimationLab
+(mode physique, sensor, Gate Fit et Lens Mode Override). Pendant la Timeline,
+le rig l'applique temporairement a la Main Camera UCC et pilote sa Brain en
+`ManualUpdate` apres les poses des acteurs : le cadrage n'utilise plus une
+projection ou une frame de retard propre a la camera gameplay. La restitution
+rend exactement les reglages precedents; Devastation doit etre rebake une fois
+apres cette modification.
+Pour isoler un ecart de cadrage residuel, le bouton `Log Framing Snapshot` du
+rig d'auteur evalue directement son Director au temps renseigne puis journalise
+les poses relatives Player, Enemy et camera. Le rig runtime journalise le meme releve a `1 s` par defaut : les
+deux lignes se comparent dans le meme espace de plateau.
 Le lancement d'une LightSkill resout explicitement le bridge UCC de Lucian;
 tout refus (references combat, portee, locomotion UCC, camera Cinemachine ou sequence deja active)
 est affiche dans la Console et par un feedback world-space.

@@ -73,8 +73,10 @@ cible de suivi/regard Player, Enemy ou EnemyLockPoint et les modules
 son cadrage est entierement pilote par Timeline. Le bake capture et compare
 cle Timeline, transform, FOV, priorite, Output Channel, targets, Follow offset
 et pipeline : toute divergence, script manquant ou dependance a AnimationLab
-refuse le package avant son assignment au SO. Aucun correctif camera n'est
-ajoute en runtime. La piste Cinemachine est liee exclusivement a la Brain de
+refuse le package avant son assignment au SO. Le bake capture aussi le contrat
+de projection de la camera de preview (mode physique, sensor, Gate Fit et Lens
+Mode Override). Pendant la Timeline, il l'applique temporairement a la Main
+Camera de jeu, puis la restitue a l'identique. La piste Cinemachine est liee exclusivement a la Brain de
 la camera explicitement exposee par `CombatLockOnCameraController`, sans
 `Camera.main`. Le rig runtime journalise cette Brain, sa vcam active et ses
 cibles, puis restitue une seule fois la camera UCC a la fin, a l'interruption,
@@ -99,26 +101,22 @@ atteintes sont conservees a la sortie. Toute modification de formation dans
 Les Animators ne sont jamais convertis en poses de root : cette ancienne
 conversion pouvait cumuler un offset de hierarchie et une position monde
 d'auteur. Au bake, les pistes `Player.Animator` et `Enemy.Animator` sont forcees
-en `ApplySceneOffsets`, donc relatives au plateau runtime. Pendant une
-LightSkill midpoint, Timeline est l'unique pilote des transforms acteurs : le
-rig ne les echantillonne ni ne reappelle UCC chaque frame. Cela evite toute
-boucle de retroaction entre Timeline et UCC tout en conservant le root motion et
-les positions finales. Un package bake avec les anciens offsets est refuse et
-doit etre regenere. Les CounterSkills sans plateau gardent le transfert direct
-de `Animator.deltaPosition`. Les poses locales imposees aux enfants Animator
-sont restaurees avant la remise en pool du rig.
+en `ApplyTransformOffsets`. Pendant une LightSkill midpoint,
+`CombatActorRootMotionRelay` est l'unique transport du root motion depuis
+l'Animator vers l'ActorRoot UCC ou ennemi; le rig ne les echantillonne, ne les
+compense et ne les deplace jamais par frame. Les positions finales restent donc
+la continuation gameplay. Un package en `ApplySceneOffsets` est refuse et doit
+etre regenere.
 Le layout runtime version 3 conserve egalement l'orientation monde du rig
 d'auteur; un prefab bake avec une version plus ancienne est refuse et doit etre
 regenere depuis `AnimationLab`.
 `CombatActorAnimationRoot` est la source explicite de l'Animator de combat:
-`ActorRoot` reste le seul transform monde, tandis que l'Animator est declare
-avec son `AnimationRoot`. `CombatActorRootMotionRelay` transfere uniquement le
-root motion cinematographique au root gameplay. Le menu `Lit/Combat/Normalize
-Actor Animation Hierarchies` normalise Juggernaut et GiantJuggernaut sans
-modifier leurs skeletons importes; `Validate Actor Animation Contract` permet
-de verifier Lucian et les deux ennemis avant un test. Lucian garde actuellement
-son Animator sur le root par securite pour ses clips generiques, mais tous les
-systemes le resolvent via le meme contrat explicite.
+`ActorRoot` reste le seul transform monde, tandis que l'unique Animator et son
+skeleton sont sous un enfant direct `AnimationRoot` identite.
+`CombatActorRootMotionRelay` transfere le root motion cinematographique au root
+gameplay. Le menu `Lit/Combat/Normalize Actor Animation Hierarchies` prevalide
+Lucian, Juggernaut et GiantJuggernaut avant toute migration; il rebranche les
+references de combat, UCC et presentation sans modifier les assets de clips.
 La remise en pool efface les bindings Timeline et les references Cinemachine,
 arrete le Director au temps zero et remet le transform du rig a l'identite.
 L'auto-desengagement est suspendu tant qu'une LightSkill est cinematographique :
@@ -129,6 +127,16 @@ autorisee pendant le verrou d'input cinematographique et qui ne le libere pas.
 La Brain Cinemachine utilise temporairement un `Cut` pendant la Timeline, puis
 restaure son blend de gameplay a la sortie. Le premier plan ne peut donc pas
 etre interpole avec la pose UCC precedente.
+Pendant cette meme session, la Brain gameplay passe en `ManualUpdate` et le rig
+la met a jour une fois en `LateUpdate`, apres les anchors, le root motion et les
+Animation Tracks. Cette passe unique evite un decalage d'une frame entre les
+acteurs runtime et le cadrage bake. Un rebake est requis pour enregistrer ce
+contrat sur un LightSkill existant.
+Le bouton `Log Framing Snapshot` de `LightSkillTimelineAuthoringRig` evalue
+directement le Director au temps renseigne puis releve la pose relative Player,
+Enemy et camera. Son equivalent runtime
+est journalise une fois a `1 s` par `CombatCinematicRig`; comparer ces deux
+releves permet d'identifier un decalage de plateau avant de corriger un cadrage.
 Le rig d'auteur ne choisit jamais de camera de remplacement : une cle de
 `CinemachineShot` non resolue est bloquante, afin que le plan previsualise et
 le plan bake soient necessairement le meme.

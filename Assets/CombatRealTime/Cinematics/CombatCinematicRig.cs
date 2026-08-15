@@ -108,11 +108,20 @@ public sealed class CombatCinematicRig : MonoBehaviour
     [Tooltip("Axe local Player vers Enemy de la formation bakee.")]
     [SerializeField] private Vector3 authoringFormationForward = Vector3.forward;
     [SerializeField, HideInInspector] private int authoringStageLayoutVersion;
-    [SerializeField, Tooltip("Transfere le root motion relatif de la Timeline vers le root UCC de Lucian.")]
-    private bool drivePlayerRootMotionFromTimeline = true;
+    [Header("Authoring Camera Contract")]
+    [SerializeField, HideInInspector] private int authoringCameraContractVersion;
+    [SerializeField, HideInInspector] private bool authoringCameraUsesPhysicalProperties;
+    [SerializeField, HideInInspector] private Vector2 authoringCameraSensorSize = new Vector2(36f, 24f);
+    [SerializeField, HideInInspector] private Camera.GateFitMode authoringCameraGateFitMode;
+    [SerializeField, HideInInspector] private CinemachineBrain.LensModeOverrideSettings authoringLensModeOverride;
     [SerializeField] private bool logCameraDiagnostics = true;
     [SerializeField, Tooltip("Journalise les poses bakees et les poses appliquees aux acteurs pendant une LightSkill.")]
     private bool logPlacementDiagnostics = true;
+    [Header("Framing Diagnostics")]
+    [SerializeField, Tooltip("Journalise une pose runtime comparable a AnimationLab a un temps fixe de Timeline.")]
+    private bool logFramingSnapshot = true;
+    [SerializeField, Min(0f), Tooltip("Temps de Timeline utilise pour comparer AnimationLab et runtime.")]
+    private float framingSnapshotTime = 1f;
 
     private readonly List<ICombatCinematicParticipant> participants = new List<ICombatCinematicParticipant>();
     private CombatCinematicContext context;
@@ -123,17 +132,14 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private bool stopRaised;
     private bool cameraMismatchReported;
     private int sessionToken;
-    private float nextRootMotionLogTime;
-    private Vector3 playerAnimatorRestLocalPosition;
-    private Quaternion playerAnimatorRestLocalRotation;
-    private Vector3 enemyAnimatorRestLocalPosition;
-    private Quaternion enemyAnimatorRestLocalRotation;
-    private bool hasEnemyAnimatorRestPose;
-    private bool skipFirstPlayerRootMotionDelta;
-    private bool skipFirstEnemyRootMotionDelta;
-    // A staged LightSkill uses Timeline scene offsets. Timeline is then the sole
-    // owner of the actor roots for the duration of the cinematic.
-    private bool timelineOwnsStagedActorTransforms;
+    private bool gameplayCameraProjectionStored;
+    private bool gameplayCameraUsedPhysicalProperties;
+    private Vector2 gameplayCameraSensorSize;
+    private Camera.GateFitMode gameplayCameraGateFitMode;
+    private CinemachineBrain.LensModeOverrideSettings gameplayBrainLensModeOverride;
+    private CinemachineBrain.UpdateMethods gameplayBrainUpdateMethod;
+    private CinemachineBrain.BrainUpdateMethods gameplayBrainBlendUpdateMethod;
+    private bool framingSnapshotLogged;
 
     public PlayableDirector Director => director;
     public SignalReceiver SignalReceiver => signalReceiver;
@@ -141,6 +147,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
     public bool HasAuthoringStageLayout => authoringStageLayoutVersion >= 3 &&
                                            playerStageAnchor != null && enemyStageAnchor != null;
+    public bool HasAuthoringCameraContract => authoringCameraContractVersion >= 1;
     public event Action<CombatCinematicRig> Stopped;
 
     public void ConfigureAuthoringStageLayout(
@@ -167,6 +174,26 @@ public sealed class CombatCinematicRig : MonoBehaviour
         if (authoringFormationForward.sqrMagnitude <= 0.0001f) authoringFormationForward = Vector3.forward;
         else authoringFormationForward.Normalize();
         authoringStageLayoutVersion = 3;
+    }
+
+    /// <summary>
+    /// Captures only the output-camera projection contract from AnimationLab.
+    /// The baked package still has no dependency on the preview camera itself.
+    /// </summary>
+    public void ConfigureAuthoringCameraContract(CinemachineBrain authoringBrain)
+    {
+        Camera authoringCamera = authoringBrain != null ? authoringBrain.GetComponent<Camera>() : null;
+        if (authoringBrain == null || authoringCamera == null)
+        {
+            authoringCameraContractVersion = 0;
+            return;
+        }
+
+        authoringCameraUsesPhysicalProperties = authoringCamera.usePhysicalProperties;
+        authoringCameraSensorSize = authoringCamera.sensorSize;
+        authoringCameraGateFitMode = authoringCamera.gateFit;
+        authoringLensModeOverride = authoringBrain.LensModeOverride;
+        authoringCameraContractVersion = 1;
     }
 
     private void ConfigureRuntimeAnchor(ref Transform anchor, string anchorName, Vector3 localPosition, Quaternion localRotation)
@@ -277,13 +304,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return;
         }
 
-        if (timelineOwnsStagedActorTransforms)
-        {
-            return;
-        }
-
-        AdvancePlayerRootFromTimelineMotion();
-        AdvanceEnemyRootFromTimelineMotion();
+        UpdateCinematicBrain();
     }
 
     private void OnEnable()
@@ -329,11 +350,20 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
 
+        if (!TryGetActorContract(playbackContext.PlayerRoot, "Lucian", out _) ||
+            !TryGetActorContract(playbackContext.TargetEnemy.transform, "L'ennemi verrouille", out _))
+        {
+            error = "Le contrat ActorRoot > AnimationRoot doit etre valide avant une LightSkill. " +
+                    "Executez Lit/Combat/Normalize Actor Animation Hierarchies puis rebakez le package.";
+            return false;
+        }
+
         context = playbackContext;
         sessionToken++;
         sessionActive = true;
         stopRaised = false;
         cameraMismatchReported = false;
+        framingSnapshotLogged = false;
         TracePlacement("TryPlay | token=" + sessionToken + " | timeline='" + timeline.name + "' | type=" + timeline.GetType().Name +
                        " | placement=" + placement.HasValue + ".");
         if (placement.HasValue)
@@ -365,9 +395,9 @@ public sealed class CombatCinematicRig : MonoBehaviour
             AbortStart("Binding Timeline invalide");
             return false;
         }
-        if (placement.HasValue && !UsesSceneRelativeActorTracks(timeline, playerAnimatorTrack, enemyAnimatorTrack))
+        if (placement.HasValue && !UsesRelativeActorTracks(timeline, playerAnimatorTrack, enemyAnimatorTrack))
         {
-            error = "Le package LightSkill utilise encore des pistes acteur non relatives. Rebakez le LightSkill depuis AnimationLab.";
+            error = "Le package LightSkill utilise encore des pistes acteur en Scene Offsets. Rebakez le LightSkill depuis AnimationLab.";
             AbortStart("Package runtime obsolete");
             return false;
         }
@@ -381,25 +411,23 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
 
+        BeginCameraProjectionContract();
         TraceCamera("Bind Timeline -> Brain -> controle Timeline", false);
         director.time = 0d;
-        CaptureActorAnimatorRestPoses();
         director.Evaluate();
         if (placement.HasValue)
         {
-            // The t=0 evaluation may still touch the actor roots. Restore the
-            // canonical anchors once, then let scene-relative Timeline tracks own
-            // the transforms until the sequence ends. Never feed a moved UCC root
-            // back into Timeline every frame.
+            // The initial sample must never become a second movement source.
+            // ActorRoots are restored once on their stage anchors, then only the
+            // root-motion relay transports Animator deltas for the whole session.
             if (!ApplyPlacement(placement.Value, out error))
             {
                 AbortStart("Reinitialisation des acteurs apres Evaluate invalide");
                 return false;
             }
-            timelineOwnsStagedActorTransforms = true;
         }
-        skipFirstPlayerRootMotionDelta = true;
-        skipFirstEnemyRootMotionDelta = true;
+        Physics.SyncTransforms();
+        UpdateCinematicBrain();
         TraceCamera("Premiere Evaluate", false);
         director.Play();
         return true;
@@ -440,7 +468,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         context = null;
         gameplayBrain = null;
         gameplayLockCamera = null;
-        ResetTimelineActorTransformSampling();
+        framingSnapshotLogged = false;
         transform.SetParent(null, false);
         transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         gameObject.SetActive(false);
@@ -559,6 +587,74 @@ public sealed class CombatCinematicRig : MonoBehaviour
         return null;
     }
 
+    private void BeginCameraProjectionContract()
+    {
+        if (gameplayBrain == null || authoringCameraContractVersion < 1 || gameplayCameraProjectionStored)
+        {
+            return;
+        }
+
+        Camera gameplayCamera = gameplayBrain.GetComponent<Camera>();
+        if (gameplayCamera == null)
+        {
+            return;
+        }
+
+        gameplayCameraUsedPhysicalProperties = gameplayCamera.usePhysicalProperties;
+        gameplayCameraSensorSize = gameplayCamera.sensorSize;
+        gameplayCameraGateFitMode = gameplayCamera.gateFit;
+        gameplayBrainLensModeOverride = gameplayBrain.LensModeOverride;
+        gameplayBrainUpdateMethod = gameplayBrain.UpdateMethod;
+        gameplayBrainBlendUpdateMethod = gameplayBrain.BlendUpdateMethod;
+        gameplayCameraProjectionStored = true;
+
+        gameplayCamera.usePhysicalProperties = authoringCameraUsesPhysicalProperties;
+        gameplayCamera.sensorSize = authoringCameraSensorSize;
+        gameplayCamera.gateFit = authoringCameraGateFitMode;
+        gameplayBrain.LensModeOverride = authoringLensModeOverride;
+
+        // A Timeline evaluates before LateUpdate. Manual mode gives this rig one
+        // deterministic camera pass after the staged actors and animated camera
+        // have reached their final pose for the frame.
+        gameplayBrain.UpdateMethod = CinemachineBrain.UpdateMethods.ManualUpdate;
+        gameplayBrain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
+    }
+
+    private void UpdateCinematicBrain()
+    {
+        if (!gameplayCameraProjectionStored || gameplayBrain == null || !gameplayBrain.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        gameplayBrain.ManualUpdate();
+    }
+
+    private void RestoreCameraProjectionContract()
+    {
+        if (!gameplayCameraProjectionStored)
+        {
+            return;
+        }
+
+        if (gameplayBrain != null)
+        {
+            Camera gameplayCamera = gameplayBrain.GetComponent<Camera>();
+            if (gameplayCamera != null)
+            {
+                gameplayCamera.usePhysicalProperties = gameplayCameraUsedPhysicalProperties;
+                gameplayCamera.sensorSize = gameplayCameraSensorSize;
+                gameplayCamera.gateFit = gameplayCameraGateFitMode;
+            }
+
+            gameplayBrain.LensModeOverride = gameplayBrainLensModeOverride;
+            gameplayBrain.UpdateMethod = gameplayBrainUpdateMethod;
+            gameplayBrain.BlendUpdateMethod = gameplayBrainBlendUpdateMethod;
+        }
+
+        gameplayCameraProjectionStored = false;
+    }
+
     private bool TryResolveTrackBinding(string trackName, out UnityEngine.Object target)
     {
         target = null;
@@ -625,55 +721,29 @@ public sealed class CombatCinematicRig : MonoBehaviour
                        " EnemyStageAnchor=" + enemyStageAnchor.localPosition +
                        " | playerRoot=" + playerRootPosition + " | enemyRoot=" + enemyRootPosition + ".");
 
-        CombatActorAnimationRoot playerContract = context.PlayerRoot.GetComponent<CombatActorAnimationRoot>();
-        if (playerContract != null && playerContract.ValidateContract(out _))
+        if (!TryGetActorContract(context.PlayerRoot, "Lucian", out CombatActorAnimationRoot playerContract))
         {
-            if (!playerContract.SetActorPose(playerRootPosition, playerRootRotation))
-            {
-                error = "Le contrat d'animation de Lucian ne peut pas poser son ActorRoot.";
-                return false;
-            }
-            playerContract.ResetAnimationRootPose();
+            error = "Le contrat d'animation de Lucian ne peut pas poser son ActorRoot.";
+            return false;
         }
-        else
+        if (!playerContract.SetActorPose(playerRootPosition, playerRootRotation))
         {
-            LitOpsiveLocomotionBridge playerBridge = context.PlayerRoot.GetComponent<LitOpsiveLocomotionBridge>();
-            if (playerBridge != null && !playerBridge.SetCinematicPositionAndRotation(playerRootPosition, playerRootRotation, true))
-            {
-                error = "UCC ne possede pas de locomotion disponible pour le placement cinematographique de Lucian.";
-                return false;
-            }
-            if (playerBridge == null)
-            {
-                context.PlayerRoot.SetPositionAndRotation(playerRootPosition, playerRootRotation);
-            }
+            error = "Le contrat d'animation de Lucian ne peut pas poser son ActorRoot.";
+            return false;
         }
+        playerContract.ResetAnimationRootPose();
 
-        CombatActorAnimationRoot enemyContract = context.TargetEnemy.GetComponent<CombatActorAnimationRoot>();
-        if (enemyContract != null && enemyContract.ValidateContract(out _))
+        if (!TryGetActorContract(context.TargetEnemy.transform, "L'ennemi verrouille", out CombatActorAnimationRoot enemyContract))
         {
-            if (!enemyContract.SetActorPose(enemyRootPosition, enemyRootRotation))
-            {
-                error = "Le contrat d'animation ennemi ne peut pas poser son ActorRoot.";
-                return false;
-            }
-            enemyContract.ResetAnimationRootPose();
+            error = "Le contrat d'animation ennemi ne peut pas poser son ActorRoot.";
+            return false;
         }
-        else
+        if (!enemyContract.SetActorPose(enemyRootPosition, enemyRootRotation))
         {
-            RealTimeCombatEnemyBehaviour enemyBehaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
-            if (enemyBehaviour != null && !enemyBehaviour.PlaceForCinematic(
-                    enemyRootPosition,
-                    enemyRootRotation))
-            {
-                error = "Le NavMesh de l'ennemi refuse le plateau cinematographique.";
-                return false;
-            }
-            if (enemyBehaviour == null)
-            {
-                context.TargetEnemy.transform.SetPositionAndRotation(enemyRootPosition, enemyRootRotation);
-            }
+            error = "Le contrat d'animation ennemi ne peut pas poser son ActorRoot.";
+            return false;
         }
+        enemyContract.ResetAnimationRootPose();
 
         Physics.SyncTransforms();
         TracePlacement("Application terminee | rig=" + transform.position + " | player=" + context.PlayerRoot.position +
@@ -683,89 +753,16 @@ public sealed class CombatCinematicRig : MonoBehaviour
         return true;
     }
 
-    private void AdvancePlayerRootFromTimelineMotion()
-    {
-        if (!drivePlayerRootMotionFromTimeline ||
-            context.PlayerRoot == null || context.PlayerAnimator == null)
-        {
-            return;
-        }
-
-        Animator playerAnimator = context.PlayerAnimator;
-        // Timeline may write the authoring Transform pose directly to the child
-        // Animator. It is presentation-only: restore its hierarchy pose and
-        // transport only Animator.deltaPosition to the actual UCC root.
-        RestorePlayerAnimatorRestLocalPose();
-        if (skipFirstPlayerRootMotionDelta)
-        {
-            skipFirstPlayerRootMotionDelta = false;
-            return;
-        }
-        Vector3 deltaPosition = playerAnimator.deltaPosition;
-        Quaternion deltaRotation = playerAnimator.deltaRotation;
-        bool hasPositionDelta = deltaPosition.sqrMagnitude > 0.00000025f;
-        bool hasRotationDelta = Quaternion.Angle(deltaRotation, Quaternion.identity) > 0.01f;
-        if (!hasPositionDelta && !hasRotationDelta)
-        {
-            return;
-        }
-
-        LitOpsiveLocomotionBridge bridge = context.PlayerRoot.GetComponent<LitOpsiveLocomotionBridge>();
-        bool applied = bridge != null
-            ? bridge.ApplyCinematicRootMotion(deltaPosition, deltaRotation)
-            : ApplyTransformDelta(context.PlayerRoot, deltaPosition, deltaRotation);
-        if (!applied) return;
-        TraceRootMotion("Root motion relatif applique | deltaPosition=" + deltaPosition +
-                        " | deltaRotation=" + deltaRotation.eulerAngles +
-                        " | root=" + context.PlayerRoot.position + ".");
-    }
-
-    private void AdvanceEnemyRootFromTimelineMotion()
-    {
-        if (context?.TargetEnemy == null || context.TargetAnimator == null) return;
-
-        RestoreEnemyAnimatorRestLocalPose();
-        if (skipFirstEnemyRootMotionDelta)
-        {
-            skipFirstEnemyRootMotionDelta = false;
-            return;
-        }
-
-        Vector3 deltaPosition = context.TargetAnimator.deltaPosition;
-        Quaternion deltaRotation = context.TargetAnimator.deltaRotation;
-        if (deltaPosition.sqrMagnitude <= 0.00000025f &&
-            Quaternion.Angle(deltaRotation, Quaternion.identity) <= 0.01f)
-        {
-            return;
-        }
-
-        RealTimeCombatEnemyBehaviour behaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
-        if (behaviour != null)
-        {
-            behaviour.ApplyCinematicRootMotion(deltaPosition, deltaRotation);
-        }
-        else
-        {
-            ApplyTransformDelta(context.TargetEnemy.transform, deltaPosition, deltaRotation);
-        }
-    }
-
-    private static bool ApplyTransformDelta(Transform actorRoot, Vector3 deltaPosition, Quaternion deltaRotation)
-    {
-        if (actorRoot == null) return false;
-        actorRoot.SetPositionAndRotation(actorRoot.position + deltaPosition, deltaRotation * actorRoot.rotation);
-        return true;
-    }
-
-    private void ResetTimelineActorTransformSampling()
-    {
-        timelineOwnsStagedActorTransforms = false;
-    }
-
     private void BeginContractCinematicMotion()
     {
         context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.BeginCinematicMotion(sessionToken);
         context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.BeginCinematicMotion(sessionToken);
+    }
+
+    private static bool TryGetActorContract(Transform actorRoot, string label, out CombatActorAnimationRoot contract)
+    {
+        contract = actorRoot != null ? actorRoot.GetComponent<CombatActorAnimationRoot>() : null;
+        return contract != null && contract.ValidateContract(out _);
     }
 
     private void EndContractCinematicMotion()
@@ -774,7 +771,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
     }
 
-    private static bool UsesSceneRelativeActorTracks(PlayableAsset timeline, string playerTrack, string enemyTrack)
+    private static bool UsesRelativeActorTracks(PlayableAsset timeline, string playerTrack, string enemyTrack)
     {
         if (timeline == null) return false;
 
@@ -784,75 +781,12 @@ public sealed class CombatCinematicRig : MonoBehaviour
         {
             if (output.sourceObject is not AnimationTrack track) continue;
             if (output.streamName == playerTrack)
-                playerRelative = track.trackOffset == TrackOffset.ApplySceneOffsets;
+                playerRelative = track.trackOffset == TrackOffset.ApplyTransformOffsets;
             else if (output.streamName == enemyTrack)
-                enemyRelative = track.trackOffset == TrackOffset.ApplySceneOffsets;
+                enemyRelative = track.trackOffset == TrackOffset.ApplyTransformOffsets;
         }
 
         return playerRelative && enemyRelative;
-    }
-
-    private void CaptureActorAnimatorRestPoses()
-    {
-        if (context == null || context.PlayerAnimator == null)
-        {
-            return;
-        }
-
-        Transform animatorTransform = context.PlayerAnimator.transform;
-        playerAnimatorRestLocalPosition = animatorTransform.localPosition;
-        playerAnimatorRestLocalRotation = animatorTransform.localRotation;
-
-        hasEnemyAnimatorRestPose = false;
-        if (context.TargetEnemy == null || context.TargetAnimator == null ||
-            context.TargetAnimator.transform == context.TargetEnemy.transform)
-        {
-            return;
-        }
-
-        Transform enemyAnimatorTransform = context.TargetAnimator.transform;
-        enemyAnimatorRestLocalPosition = enemyAnimatorTransform.localPosition;
-        enemyAnimatorRestLocalRotation = enemyAnimatorTransform.localRotation;
-        hasEnemyAnimatorRestPose = true;
-    }
-
-    private void RestorePlayerAnimatorRestLocalPose()
-    {
-        if (context == null || context.PlayerAnimator == null ||
-            context.PlayerAnimator.transform == context.PlayerRoot)
-        {
-            return;
-        }
-
-        Transform animatorTransform = context.PlayerAnimator.transform;
-        animatorTransform.localPosition = playerAnimatorRestLocalPosition;
-        animatorTransform.localRotation = playerAnimatorRestLocalRotation;
-    }
-
-    private void RestoreEnemyAnimatorRestLocalPose()
-    {
-        if (!hasEnemyAnimatorRestPose || context == null || context.TargetEnemy == null || context.TargetAnimator == null)
-        {
-            return;
-        }
-
-        Transform animatorTransform = context.TargetAnimator.transform;
-        if (animatorTransform == context.TargetEnemy.transform)
-        {
-            return;
-        }
-
-        animatorTransform.localPosition = enemyAnimatorRestLocalPosition;
-        animatorTransform.localRotation = enemyAnimatorRestLocalRotation;
-    }
-
-    private void TraceRootMotion(string message)
-    {
-        if (logPlacementDiagnostics && Time.unscaledTime >= nextRootMotionLogTime)
-        {
-            nextRootMotionLogTime = Time.unscaledTime + 0.5f;
-            TracePlacement(message);
-        }
     }
 
     private void OnDirectorStopped(PlayableDirector stoppedDirector)
@@ -886,29 +820,62 @@ public sealed class CombatCinematicRig : MonoBehaviour
     {
         if (!sessionActive && context == null) return;
 
-        // Animation Tracks can leave bound child transforms on an authored pose.
-        // Reset their local offsets before pooling so a later cinematic cannot
-        // mistake a previous Timeline sample for hierarchy data.
-        RestorePlayerAnimatorRestLocalPose();
-        RestoreEnemyAnimatorRestLocalPose();
         EndContractCinematicMotion();
         Physics.SyncTransforms();
 
         LitTimelineCinemachineBridge bridge = GetComponent<LitTimelineCinemachineBridge>();
         bridge?.EndCameraControlNow();
+        RestoreCameraProjectionContract();
         EndParticipants();
-        skipFirstPlayerRootMotionDelta = false;
-        skipFirstEnemyRootMotionDelta = false;
-        hasEnemyAnimatorRestPose = false;
-        ResetTimelineActorTransformSampling();
         TraceCamera("Restitution camera: " + reason, false);
         sessionActive = false;
     }
 
     private void Update()
     {
-        if (sessionActive && director != null && director.state == PlayState.Playing)
-            TraceCamera("Verification runtime", true);
+        if (!sessionActive || director == null || director.state != PlayState.Playing)
+        {
+            return;
+        }
+
+        TraceCamera("Verification runtime", true);
+        if (logFramingSnapshot && !framingSnapshotLogged && director.time >= framingSnapshotTime)
+        {
+            framingSnapshotLogged = true;
+            TraceFramingSnapshot();
+        }
+    }
+
+    private void TraceFramingSnapshot()
+    {
+        if (context == null || context.PlayerRoot == null || context.TargetEnemy == null)
+        {
+            return;
+        }
+
+        CinemachineCamera camera = gameplayBrain != null
+            ? gameplayBrain.ActiveVirtualCamera as CinemachineCamera
+            : null;
+        if (camera == null && cameraBindings.Count > 0)
+        {
+            camera = cameraBindings[0]?.camera;
+        }
+
+        string cameraDescription = camera != null
+            ? "camera='" + camera.name + "' relPos=" + transform.InverseTransformPoint(camera.transform.position).ToString("F4") +
+              " relRot=" + (Quaternion.Inverse(transform.rotation) * camera.transform.rotation).eulerAngles.ToString("F4") +
+              " fov=" + camera.Lens.FieldOfView.ToString("F3")
+            : "camera=None";
+
+        Debug.Log("[LightSkill Framing Runtime] t=" + director.time.ToString("F3") +
+                  " | stagePos=" + transform.position.ToString("F4") +
+                  " stageRot=" + transform.rotation.eulerAngles.ToString("F4") +
+                  " | playerRelPos=" + transform.InverseTransformPoint(context.PlayerRoot.position).ToString("F4") +
+                  " playerRelRot=" + (Quaternion.Inverse(transform.rotation) * context.PlayerRoot.rotation).eulerAngles.ToString("F4") +
+                  " | enemyRelPos=" + transform.InverseTransformPoint(context.TargetEnemy.transform.position).ToString("F4") +
+                  " enemyRelRot=" + (Quaternion.Inverse(transform.rotation) * context.TargetEnemy.transform.rotation).eulerAngles.ToString("F4") +
+                  " | " + cameraDescription,
+                  this);
     }
 
     private void TraceCamera(string phase, bool validateAuthority, bool logDetail = false)
