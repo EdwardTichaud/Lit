@@ -62,7 +62,12 @@ la Timeline. Les preview actors, camera, Brain et AudioListener restent dans
 `AnimationLab`; les tracks Player/Enemy sont lies aux vrais Animators lors du
 lancement. Les seules copies de GameObjects autorisees sont les Cinemachines
 utilisees et les racines marquees `LightSkillRuntimeExport`; leurs tracks sont
-enregistres dans `CombatCinematicRig`. Chaque camera exportee peut declarer une
+enregistres dans `CombatCinematicRig`. Chaque bake cree une copie Timeline
+runtime versionnee et validee, puis reenregistre le prefab stable au meme chemin
+pour la referencer. Il n'ecrit ni ne deplace une Timeline que Unity garde encore
+chargee; le `LightSkillSO` conserve donc sa seule reference stable vers le
+prefab runtime.
+Chaque camera exportee peut declarer une
 cible de suivi/regard Player, Enemy ou EnemyLockPoint et les modules
 `CinemachineFollow`/visee correspondants; une camera sans cible est valide si
 son cadrage est entierement pilote par Timeline. Le bake capture et compare
@@ -81,22 +86,37 @@ prendre la releve entre la Timeline et UCC.
 Le lock combat ne suspend que son propre cadrage pendant ce handoff; il ne
 desactive pas les drivers UCC. Cette separation garantit que `LitCameraDirector`
 restitue exactement leur etat initial a la fin de Timeline.
-Le prefab runtime conserve la pose locale du preview Player dans AnimationLab.
-Avant la premiere evaluation, `CombatCinematicRig` aligne cette pose sur Lucian
-reel face a l'ennemi, afin que les transformations camera enregistrees dans le
-plateau gardent leur cadrage exact dans chaque combat.
-Le rig conserve egalement les poses locales Player et Enemy, le centre et l'axe
-de leur formation d'auteur. `CombatCinematicStageResolver`, sur
-`BattleManager`, recherche avant toute instanciation un plateau proche du
-milieu Lucian-ennemi : dome libre de 10 m de diametre, sol praticable, pente,
-hauteur, capsule joueur et NavMesh ennemi valides. Il ignore les colliders des
-deux acteurs et les triggers. Seuls les colliders du `Wall Mask` (layer
-`Obstacle` par defaut) peuvent refuser le dome; le sol utilise un masque
-separe. Apres un flash cyan court, UCC et l'ennemi sont
-places relativement au rig bake, puis la Timeline commence. En cas d'echec de
-recherche, la LightSkill est refusee sans cout; a sa fin, les positions
-atteintes sont conservees. Toute modification de formation dans `AnimationLab`
-necessite un nouveau `Bake LightSkill`.
+`Lucian_Anchor` et `Enemy_Anchor` d'AnimationLab sont les reperes canoniques
+des roots Player et Enemy. Le bake les copie comme `PlayerStageAnchor` et
+`EnemyStageAnchor` dans le prefab runtime; il refuse un package auquel il
+manquerait l'un de ces reperes. Une LightSkill place le root du rig au midpoint
+exact des roots de Lucian et de l'ennemi verrouille, aligne l'axe bake sur leur
+axe horizontal, puis pose directement les vrais roots sur ces anchors avant la
+premiere evaluation de Timeline. Il n'y a aucune recherche de plateau, aucun
+test de sol, mur, collision ou NavMesh et aucun effet de masquage. Les positions
+atteintes sont conservees a la sortie. Toute modification de formation dans
+`AnimationLab` necessite un nouveau `Bake LightSkill`.
+Les Animators ne sont jamais convertis en poses de root : cette ancienne
+conversion pouvait cumuler un offset de hierarchie et une position monde
+d'auteur. Au bake, les pistes `Player.Animator` et `Enemy.Animator` sont forcees
+en `ApplySceneOffsets`, donc relatives au plateau runtime. Pendant une
+LightSkill midpoint, Timeline est l'unique pilote des transforms acteurs : le
+rig ne les echantillonne ni ne reappelle UCC chaque frame. Cela evite toute
+boucle de retroaction entre Timeline et UCC tout en conservant le root motion et
+les positions finales. Un package bake avec les anciens offsets est refuse et
+doit etre regenere. Les CounterSkills sans plateau gardent le transfert direct
+de `Animator.deltaPosition`. Les poses locales imposees aux enfants Animator
+sont restaurees avant la remise en pool du rig.
+Le layout runtime version 3 conserve egalement l'orientation monde du rig
+d'auteur; un prefab bake avec une version plus ancienne est refuse et doit etre
+regenere depuis `AnimationLab`.
+La remise en pool efface les bindings Timeline et les references Cinemachine,
+arrete le Director au temps zero et remet le transform du rig a l'identite.
+L'auto-desengagement est suspendu tant qu'une LightSkill est cinematographique :
+l'IA cible est alors arretee intentionnellement et ne peut pas mettre fin au
+combat avant la restitution de la sequence.
+Lucian est pose via `SetCinematicPositionAndRotation` du bridge UCC, une API
+autorisee pendant le verrou d'input cinematographique et qui ne le libere pas.
 La Brain Cinemachine utilise temporairement un `Cut` pendant la Timeline, puis
 restaure son blend de gameplay a la sortie. Le premier plan ne peut donc pas
 etre interpole avec la pose UCC precedente.

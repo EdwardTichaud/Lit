@@ -38,6 +38,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private bool ensurePhysicalBodyCollider = true;
     [SerializeField, Min(0f), Tooltip("Epaissit legerement le rayon physique derive du NavMeshAgent.")]
     private float physicalBodyRadiusPadding = 0.05f;
+    [SerializeField, Tooltip("Journalise le replacement direct de l'ennemi par une LightSkill.")]
+    private bool logCinematicPlacementDiagnostics = true;
 
     private Transform player;
     private VisionField visionField;
@@ -51,6 +53,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private bool hasLastKnownPlayerPosition;
     private bool returnedToPatrolWhilePlayerVisible;
     private bool cinematicSuspended;
+    private bool navigationSuppressedForCinematic;
     private Vector3 initialPatrolPosition;
     private Quaternion initialPatrolRotation;
     private float lastAttackStartedAt;
@@ -321,53 +324,58 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         if (suspended)
         {
             StopMovement();
+            return;
         }
-    }
 
-    /// <summary>Validates a destination before a LightSkill moves this enemy onto its baked stage.</summary>
-    public bool CanPlaceForCinematic(Vector3 position)
-    {
-        if (navigationAgent == null || !navigationAgent.gameObject.activeInHierarchy)
+        if (navigationSuppressedForCinematic)
         {
-            return true;
+            navigationSuppressedForCinematic = false;
+            nextNavMeshRetryTime = 0f;
+            TryPrepareNavigationAgent();
+            if (logCinematicPlacementDiagnostics)
+            {
+                Debug.Log("[LightSkill Debug] Enemy '" + name + "' IA restauree | position=" + transform.position +
+                          " | navEnabled=" + (navigationAgent != null && navigationAgent.enabled) + ".", this);
+            }
         }
-
-        int areaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
-        return NavMesh.SamplePosition(position, out _, navMeshSampleDistance, areaMask);
     }
 
-    /// <summary>Moves the enemy through NavMesh when present, then keeps its AI suspended for the cinematic.</summary>
+    /// <summary>Places the enemy directly for a LightSkill and keeps its AI suspended for the Timeline.</summary>
     public bool PlaceForCinematic(Vector3 position, Quaternion rotation)
     {
+        if (logCinematicPlacementDiagnostics)
+        {
+            Debug.Log("[LightSkill Debug] Enemy '" + name + "' placement | avant=" + transform.position +
+                      " | cible=" + position + " | navEnabled=" + (navigationAgent != null && navigationAgent.enabled) + ".", this);
+        }
         SetCinematicSuspended(true);
         StopMovement();
-        if (navigationAgent != null && navigationAgent.gameObject.activeInHierarchy)
+        if (navigationAgent != null && navigationAgent.enabled)
         {
-            int areaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
-            if (!NavMesh.SamplePosition(position, out NavMeshHit hit, navMeshSampleDistance, areaMask))
-            {
-                return false;
-            }
-
-            if (!navigationAgent.enabled)
-            {
-                transform.position = hit.position;
-                navigationAgent.enabled = true;
-            }
-
-            if (!navigationAgent.Warp(hit.position))
-            {
-                return false;
-            }
+            navigationAgent.enabled = false;
+            navigationSuppressedForCinematic = true;
         }
-        else
-        {
-            transform.position = position;
-        }
-
+        transform.position = position;
         transform.rotation = rotation;
         Physics.SyncTransforms();
+        if (logCinematicPlacementDiagnostics)
+        {
+            Debug.Log("[LightSkill Debug] Enemy '" + name + "' placement termine | apres=" + transform.position +
+                      " | navSuppressed=" + navigationSuppressedForCinematic + ".", this);
+        }
         return true;
+    }
+
+    /// <summary>Applies a relative Timeline root-motion sample while navigation is suspended.</summary>
+    public void ApplyCinematicRootMotion(Vector3 worldDeltaPosition, Quaternion deltaRotation)
+    {
+        if (!cinematicSuspended)
+        {
+            return;
+        }
+
+        transform.SetPositionAndRotation(transform.position + worldDeltaPosition, deltaRotation * transform.rotation);
+        Physics.SyncTransforms();
     }
 
     private void OnDisable()

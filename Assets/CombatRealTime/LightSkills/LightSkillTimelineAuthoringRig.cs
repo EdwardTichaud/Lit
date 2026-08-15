@@ -17,6 +17,11 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
     [SerializeField] private PlayableDirector director;
     [SerializeField] private Animator previewPlayerAnimator;
     [SerializeField] private Animator previewEnemyAnimator;
+    [Header("Runtime Stage Anchors")]
+    [Tooltip("Repere canonique du root Lucian, relatif au root AnimationLab.")]
+    [SerializeField] private Transform previewPlayerAnchor;
+    [Tooltip("Repere canonique du root Enemy, relatif au root AnimationLab.")]
+    [SerializeField] private Transform previewEnemyAnchor;
     [SerializeField] private Transform previewEnemyLockPoint;
     [SerializeField] private CinemachineBrain previewCameraBrain;
     [SerializeField] private CinemachineCamera previewVirtualCamera;
@@ -26,6 +31,8 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
     public PlayableDirector Director => director;
     public Animator PreviewPlayerAnimator => previewPlayerAnimator;
     public Animator PreviewEnemyAnimator => previewEnemyAnimator;
+    public Transform PreviewPlayerAnchor => previewPlayerAnchor;
+    public Transform PreviewEnemyAnchor => previewEnemyAnchor;
     public Transform PreviewEnemyLockPoint => previewEnemyLockPoint != null
         ? previewEnemyLockPoint
         : previewEnemyAnimator != null ? previewEnemyAnimator.transform : null;
@@ -33,11 +40,35 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
     public CinemachineCamera PreviewVirtualCamera => previewVirtualCamera;
     public SignalReceiver PreviewSignalReceiver => previewSignalReceiver;
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // Existing AnimationLab scenes gain the explicit contract without a
+        // manual migration. Future labs still expose the two fields normally.
+        previewPlayerAnchor ??= FindStageAnchor("Lucian_Anchor");
+        previewEnemyAnchor ??= FindStageAnchor("Enemy_Anchor");
+    }
+
+    private Transform FindStageAnchor(string anchorName)
+    {
+        Transform[] transforms = GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            if (string.Equals(transforms[i].name, anchorName, StringComparison.Ordinal))
+                return transforms[i];
+        }
+
+        return null;
+    }
+#endif
+
     public void Configure(
         LightSkillSO skill,
         PlayableDirector playableDirector,
         Animator playerAnimator,
         Animator enemyAnimator,
+        Transform playerAnchor,
+        Transform enemyAnchor,
         CinemachineBrain cameraBrain,
         CinemachineCamera virtualCamera,
         SignalReceiver signalReceiver,
@@ -47,6 +78,8 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
         director = playableDirector;
         previewPlayerAnimator = playerAnimator;
         previewEnemyAnimator = enemyAnimator;
+        previewPlayerAnchor = playerAnchor;
+        previewEnemyAnchor = enemyAnchor;
         previewEnemyLockPoint = enemyLockPoint;
         previewCameraBrain = cameraBrain;
         previewVirtualCamera = virtualCamera;
@@ -64,6 +97,7 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
         }
 
         if (director == null || previewPlayerAnimator == null || previewEnemyAnimator == null ||
+            previewPlayerAnchor == null || previewEnemyAnchor == null ||
             previewCameraBrain == null || previewSignalReceiver == null)
         {
             error = "Le rig d'auteur n'a pas toutes ses references de previsualisation.";

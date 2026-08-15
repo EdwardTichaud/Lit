@@ -7,6 +7,8 @@ using UnityEngine.Playables;
 public sealed class CombatCinematicPlaybackService : MonoBehaviour
 {
     [SerializeField] private Transform poolRoot;
+    [SerializeField, Tooltip("Journalise l'acquisition et la restitution des rigs de LightSkill.")]
+    private bool logCinematicPlaybackDiagnostics = true;
 
     private readonly Dictionary<CombatCinematicRig, Stack<CombatCinematicRig>> available = new Dictionary<CombatCinematicRig, Stack<CombatCinematicRig>>();
     private readonly Dictionary<CombatCinematicRig, CombatCinematicRig> origins = new Dictionary<CombatCinematicRig, CombatCinematicRig>();
@@ -47,7 +49,7 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
         PlayableAsset timeline,
         string playerAnimatorTrack,
         string enemyAnimatorTrack,
-        CombatCinematicStagePlacement? stagePlacement,
+        CombatCinematicPlacement? placement,
         Action<CombatCinematicRig> onCompleted,
         out string error)
     {
@@ -64,11 +66,13 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
         }
 
         CombatCinematicRig rig = Acquire(prefab);
+        Trace("Acquire | prefab='" + prefab.name + "' | runtime='" + rig.name + "' | timeline='" +
+              (timeline != null ? timeline.name : "Baked") + "' | placement=" + placement.HasValue + ".");
         rig.gameObject.SetActive(true);
         activeRig = rig;
         completed = onCompleted;
         rig.Stopped += OnRigStopped;
-        if (!rig.TryPlay(context, timeline, playerAnimatorTrack, enemyAnimatorTrack, stagePlacement, out error))
+        if (!rig.TryPlay(context, timeline, playerAnimatorTrack, enemyAnimatorTrack, placement, out error))
         {
             rig.Stopped -= OnRigStopped;
             activeRig = null;
@@ -76,6 +80,7 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
             Release(prefab, rig);
             return false;
         }
+        Trace("Play accepte | runtime='" + rig.name + "'.");
         return true;
     }
 
@@ -105,7 +110,8 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
         }
         CombatCinematicRig rig = pool.Count > 0 ? pool.Pop() : Instantiate(prefab, poolRoot);
         origins[rig] = prefab;
-        rig.transform.SetParent(null, true);
+        rig.transform.SetParent(null, false);
+        rig.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         rig.name = prefab.name + " (Runtime)";
         return rig;
     }
@@ -124,14 +130,24 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
 
     private void Release(CombatCinematicRig prefab, CombatCinematicRig rig)
     {
+        Trace("Release | runtime='" + rig.name + "' | prefab='" + (prefab != null ? prefab.name : "None") + "'.");
         rig.ResetForPool();
         rig.transform.SetParent(poolRoot, false);
+        rig.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
         if (!available.TryGetValue(prefab, out Stack<CombatCinematicRig> pool))
         {
             pool = new Stack<CombatCinematicRig>();
             available.Add(prefab, pool);
         }
         pool.Push(rig);
+    }
+
+    private void Trace(string message)
+    {
+        if (logCinematicPlaybackDiagnostics)
+        {
+            Debug.Log("[LightSkill Debug] Playback " + message, this);
+        }
     }
 
 }

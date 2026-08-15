@@ -16,24 +16,11 @@ MonoBehaviour:
   icon: {fileID: 0}
   requiredCharge: 100
   timeline: {fileID: 11400000, guid: 032dfd3671d483f46b8bba6b969b55a5, type: 2}
-  combatCinematicRigPrefab: {fileID: 8541598681500352851, guid: 45d670311f15b3d4eb54c7b97c9f176c, type: 3}
+  combatCinematicRigPrefab: {fileID: 6889411731289885747, guid: 7f9f031db7bd47340bc45c549f79859a, type: 3}
   playerAnimatorTrackName: Player.Animator
   enemyAnimatorTrackName: Enemy.Animator
   cinemachineTrackName: Cinemachine
   maximumCinematicStartDistance: 18
-  cinematicStage:
-    clearanceDiameter: 10
-    searchRadius: 12
-    samplesPerRing: 12
-    maximumSlope: 45
-    maximumGroundHeightDifference: 0.15
-    groundMask:
-      serializedVersion: 2
-      m_Bits: 8
-    wallMask:
-      serializedVersion: 2
-      m_Bits: 2048
-    transitionFlashDuration: 0.12
   startSfx: {fileID: 0}
   impulseSfx: {fileID: 0}
   impactSfx: {fileID: 0}

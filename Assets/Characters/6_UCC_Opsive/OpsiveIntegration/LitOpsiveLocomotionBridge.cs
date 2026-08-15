@@ -689,6 +689,66 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// Pose un personnage pour une Timeline pendant qu'un verrou externe coupe
+    /// volontairement l'input UCC. Cette operation ne libere jamais le verrou.
+    /// </summary>
+    public bool SetCinematicPositionAndRotation(
+        Vector3 position,
+        Quaternion rotation,
+        bool stopActiveAbilities,
+        bool logDiagnostics = true)
+    {
+        ResolveReferences();
+        if (logDiagnostics)
+        {
+            Debug.Log("[LightSkill Debug] UCC placement | character='" + name + "' | avant=" + transform.position +
+                      " | cible=" + position + " | isDriving=" + IsDriving + " | externalLock=" + IsExternalLockActive +
+                      " | locomotion=" + (locomotion != null) + ".", this);
+        }
+        if (locomotion == null)
+        {
+            if (logDiagnostics)
+            {
+                Debug.LogWarning("[LightSkill Debug] UCC placement refuse : locomotion absente.", this);
+            }
+            return false;
+        }
+
+        locomotion.SetPositionAndRotation(position, rotation, false, stopActiveAbilities);
+        lastPosition = position;
+        hasLastPosition = true;
+        ForceZeroInput();
+        if (logDiagnostics)
+        {
+            Debug.Log("[LightSkill Debug] UCC placement termine | apres=" + transform.position +
+                      " | externalLock=" + IsExternalLockActive + ".", this);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Applies one relative Timeline root-motion sample while the cinematic
+    /// owns UCC. The current root is deliberately used as the base so a pooled
+    /// cinematic can never reuse an old world-space origin.
+    /// </summary>
+    public bool ApplyCinematicRootMotion(Vector3 worldDeltaPosition, Quaternion deltaRotation)
+    {
+        ResolveReferences();
+        if (locomotion == null)
+        {
+            return false;
+        }
+
+        Vector3 nextPosition = locomotion.transform.position + worldDeltaPosition;
+        Quaternion nextRotation = deltaRotation * locomotion.transform.rotation;
+        locomotion.SetPositionAndRotation(nextPosition, nextRotation, false, false);
+        lastPosition = nextPosition;
+        hasLastPosition = true;
+        ForceZeroInput();
+        return true;
+    }
+
+    /// <summary>
     /// Oriente le personnage sans modifier le LookSource : l'input UCC et
     /// l'inertie conservent ainsi leur direction monde pendant l'action.
     /// </summary>

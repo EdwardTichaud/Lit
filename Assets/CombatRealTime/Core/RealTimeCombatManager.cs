@@ -35,6 +35,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private string playerDeathAnimatorState = "Base Layer.Death";
     [SerializeField, Min(0f)] private float defeatPanelExtraDelaySeconds = 0.25f;
     [SerializeField, Min(0.1f)] private float playerDeathFallbackDuration = 1f;
+    [SerializeField, Tooltip("Journalise les sorties automatiques de combat pour diagnostiquer les cinematiques.")]
+    private bool logCombatDisengageDiagnostics = true;
 
     [Header("Damage Reaction")]
     [SerializeField] private string playerHurtAnimatorState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
@@ -141,8 +143,16 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         ResolvePlayerReferences();
         StopResidualPlayerMovementAfterCombat();
 
-        if (combatActive && lockedEnemy != null && IsOutsideAutomaticUnlockRange(lockedEnemy))
+        // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
+        // suspended then, so it must not be interpreted as a normal combat disengagement.
+        if (combatActive && !IsCinematicSequenceActive && lockedEnemy != null && IsOutsideAutomaticUnlockRange(lockedEnemy))
         {
+            if (logCombatDisengageDiagnostics)
+            {
+                Debug.Log("[RealTimeCombat Debug] EndCombat automatique | enemy='" + lockedEnemy.name +
+                          "' | player=" + (playerRoot != null ? playerRoot.position.ToString("F2") : "None") +
+                          " | enemyPos=" + lockedEnemy.transform.position.ToString("F2") + ".", this);
+            }
             EndCombat();
             return;
         }

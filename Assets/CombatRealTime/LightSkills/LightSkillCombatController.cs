@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -7,8 +6,9 @@ public sealed class LightSkillCombatController : MonoBehaviour
     [SerializeField] private RealTimeCombatManager combatManager;
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private CombatCinematicPlaybackService cinematicPlayback;
-    [SerializeField] private CombatCinematicStageResolver cinematicStageResolver;
     [SerializeField] private LightSkillSO lightSkill;
+    [SerializeField, Tooltip("Journalise chaque etape du lancement et de l'arret d'une LightSkill.")]
+    private bool logLightSkillDiagnostics = true;
 
     private float charge;
     private bool cinematicPlaying;
@@ -17,9 +17,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private bool finishingCinematic;
     private SpiritBondController activeLightSkillBond;
     private bool usingPooledRig;
-    private Coroutine stageRoutine;
     private float chargeBeforeCinematic;
-    private CinematicStageProfile activeStageProfile;
 
     public event System.Action StateChanged;
 
@@ -57,6 +55,9 @@ public sealed class LightSkillCombatController : MonoBehaviour
     public bool TryUseLightSkill()
     {
         ResolveReferences();
+        Trace("Tentative | charge=" + charge + "/" + RequiredCharge +
+              " | combat=" + IsCombatActive + " | verrou=" + (combatManager != null && combatManager.LockedEnemy != null) +
+              " | rig=" + (lightSkill != null && lightSkill.CombatCinematicRigPrefab != null ? lightSkill.CombatCinematicRigPrefab.name : "None") + ".");
         if (cinematicPlaying) return Reject("LightSkill deja en cours.");
         if (lightSkill == null) return Reject("Aucune LightSkill n'est assignee.");
         if (!IsReady) return Reject("Charge de lumiere insuffisante.");
@@ -86,35 +87,46 @@ public sealed class LightSkillCombatController : MonoBehaviour
             return Reject("La cible est trop loin pour cette LightSkill.");
         }
 
-        if (cinematicStageResolver == null)
-        {
-            return Reject("Resolveur de plateau cinematographique manquant.");
-        }
-
         CombatCinematicContext context = new CombatCinematicContext(combatManager, lightSkill, ResolveLightSkillImpact);
-        CinematicStageProfile stageProfile = lightSkill.CinematicStage ?? new CinematicStageProfile();
-        if (!cinematicStageResolver.TryResolve(
-                lightSkill.CombatCinematicRigPrefab,
+        if (!lightSkill.CombatCinematicRigPrefab.TryGetMidpointPlacement(
                 context,
-                stageProfile,
-                out CombatCinematicStagePlacement placement,
-                out string stageError))
+                out CombatCinematicPlacement placement,
+                out string placementError))
         {
-            return Reject(stageError);
+            return Reject(placementError);
         }
+        Trace("Placement calcule | rig=" + placement.RigPosition + " rot=" + placement.RigRotation.eulerAngles +
+              " | player=" + placement.PlayerPosition + " rot=" + placement.PlayerRotation.eulerAngles +
+              " | enemy=" + placement.EnemyPosition + " rot=" + placement.EnemyRotation.eulerAngles + ".");
 
         activeLightSkillBond = SpiritBondController.FindForCharacter(combatManager.PlayerRoot.gameObject);
         activeLightSkillBond?.BeginLightSkillFusion();
         cinematicPlaying = true;
         impactResolved = false;
         chargeBeforeCinematic = charge;
-        activeStageProfile = stageProfile;
         charge = 0f;
         combatManager.CancelPlayerActionForCinematic();
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
         combatInput?.SetInputActive(false);
+        Trace("Verrous appliques | playerLock=" + playerLockHeld + " | inputCombat=false.");
+        if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
+        string error = "CombatCinematicPlaybackService manquant.";
+        if (cinematicPlayback == null || !cinematicPlayback.TryPlay(
+                lightSkill.CombatCinematicRigPrefab,
+                context,
+                null,
+                lightSkill.PlayerAnimatorTrackName,
+                lightSkill.EnemyAnimatorTrackName,
+                placement,
+                OnRuntimeRigCompleted,
+                out error))
+        {
+            Debug.LogWarning("[LightSkill] Impossible de lancer le rig : " + error, this);
+            return AbortStart(error, restoreCharge: true);
+        }
 
-        stageRoutine = StartCoroutine(BeginCinematicAfterStageFlash(context, placement));
+        usingPooledRig = true;
+        Trace("Rig demarre | runtime=" + (cinematicPlayback.ActiveRig != null ? cinematicPlayback.ActiveRig.name : "None") + ".");
         NotifyStateChanged();
         return true;
     }
@@ -167,11 +179,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         finishingCinematic = true;
-        if (stageRoutine != null)
-        {
-            StopCoroutine(stageRoutine);
-            stageRoutine = null;
-        }
+        Trace("Arret cinematic | resolveImpact=" + resolveImpact + " | impactResolved=" + impactResolved +
+              " | pooledRig=" + usingPooledRig + ".");
         if (usingPooledRig && cinematicPlayback != null && cinematicPlayback.IsPlaying)
         {
             finishingCinematic = false;
@@ -206,7 +215,6 @@ public sealed class LightSkillCombatController : MonoBehaviour
         finishingCinematic = false;
         usingPooledRig = false;
         chargeBeforeCinematic = 0f;
-        activeStageProfile = null;
         NotifyStateChanged();
     }
 
@@ -225,6 +233,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private void OnRuntimeRigCompleted(CombatCinematicRig rig)
     {
         if (!cinematicPlaying) return;
+        Trace("Rig termine | runtime=" + (rig != null ? rig.name : "None") + ".");
         StopCinematic(resolveImpact: lightSkill != null && lightSkill.ResolveDamageWhenTimelineStops);
     }
 
@@ -243,7 +252,6 @@ public sealed class LightSkillCombatController : MonoBehaviour
         if (combatManager == null) combatManager = GetComponent<RealTimeCombatManager>();
         if (combatInput == null) combatInput = GetComponent<RealTimeCombatInput>();
         if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
-        if (cinematicStageResolver == null) cinematicStageResolver = GetComponent<CombatCinematicStageResolver>();
     }
 
     private void NotifyStateChanged()
@@ -251,45 +259,15 @@ public sealed class LightSkillCombatController : MonoBehaviour
         StateChanged?.Invoke();
     }
 
-    private IEnumerator BeginCinematicAfterStageFlash(CombatCinematicContext context, CombatCinematicStagePlacement placement)
-    {
-        cinematicStageResolver.PlayTransitionFlash(placement, activeStageProfile);
-        yield return new WaitForSecondsRealtime(activeStageProfile != null ? activeStageProfile.TransitionFlashDuration : 0.12f);
-        stageRoutine = null;
-        if (!cinematicPlaying || lightSkill == null)
-        {
-            yield break;
-        }
-
-        if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
-        string error = "CombatCinematicPlaybackService manquant.";
-        if (cinematicPlayback == null || !cinematicPlayback.TryPlay(
-                lightSkill.CombatCinematicRigPrefab,
-                context,
-                null,
-                lightSkill.PlayerAnimatorTrackName,
-                lightSkill.EnemyAnimatorTrackName,
-                placement,
-                OnRuntimeRigCompleted,
-                out error))
-        {
-            Debug.LogWarning("[LightSkill] Impossible de lancer le rig : " + error, this);
-            AbortStart(error, restoreCharge: true);
-            yield break;
-        }
-
-        usingPooledRig = true;
-    }
-
     private bool AbortStart(string reason, bool restoreCharge = false)
     {
+        Trace("Echec lancement | raison='" + reason + "' | restoreCharge=" + restoreCharge + ".");
         cinematicPlaying = false;
         if (restoreCharge)
         {
             charge = chargeBeforeCinematic;
         }
         chargeBeforeCinematic = 0f;
-        activeStageProfile = null;
         if (playerLockHeld)
         {
             combatManager?.UnlockPlayerAfterCinematic();
@@ -315,6 +293,14 @@ public sealed class LightSkillCombatController : MonoBehaviour
             new Color(1f, 0.82f, 0.38f),
             2.25f);
         return false;
+    }
+
+    private void Trace(string message)
+    {
+        if (logLightSkillDiagnostics)
+        {
+            Debug.Log("[LightSkill Debug] " + message, this);
+        }
     }
 
     private static float HorizontalDistance(Vector3 first, Vector3 second)

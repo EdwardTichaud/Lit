@@ -53,7 +53,9 @@ public static class LightSkillRuntimeRigBaker
         if (authoringRig != null && authoringRig.LightSkill == null) issues.Add("LightSkillSO manquant.");
         if (authoringRig != null && authoringRig.Director == null) issues.Add("PlayableDirector manquant.");
         if (authoringRig != null && (authoringRig.PreviewPlayerAnimator == null || authoringRig.PreviewEnemyAnimator == null))
-            issues.Add("Les poses preview Player et Enemy sont requises pour baker le plateau runtime.");
+            issues.Add("Les Animators preview Player et Enemy sont requis.");
+        if (authoringRig != null && (authoringRig.PreviewPlayerAnchor == null || authoringRig.PreviewEnemyAnchor == null))
+            issues.Add("Lucian_Anchor et Enemy_Anchor sont requis comme reperes des roots du plateau runtime.");
 
         if (authoringRig != null && !authoringRig.ApplyPreviewBindings(out string bindingError)) issues.Add(bindingError);
         TimelineAsset timeline = authoringRig != null && authoringRig.LightSkill != null
@@ -64,12 +66,16 @@ public static class LightSkillRuntimeRigBaker
         if (authoringRig != null && timeline != null)
         {
             ValidateCameras(authoringRig, timeline, issues);
+            ValidateStageAnchors(authoringRig, issues);
             ValidateExtraTrackBindings(authoringRig, timeline, issues);
             ValidateRuntimeExportDependencies(authoringRig, issues);
 
             if (validateExistingPackage && issues.Count == 0 && authoringRig.LightSkill.CombatCinematicRigPrefab != null)
             {
-                string expectedRuntimeTimelinePath = GetRuntimeTimelinePath(authoringRig.LightSkill);
+                CombatCinematicRig existingRig = authoringRig.LightSkill.CombatCinematicRigPrefab.GetComponent<CombatCinematicRig>();
+                string expectedRuntimeTimelinePath = existingRig != null && existingRig.Director != null
+                    ? AssetDatabase.GetAssetPath(existingRig.Director.playableAsset)
+                    : null;
                 ValidateBakedPackage(
                     authoringRig.LightSkill.CombatCinematicRigPrefab,
                     CaptureAuthorCameraSnapshots(authoringRig, timeline),
@@ -116,7 +122,7 @@ public static class LightSkillRuntimeRigBaker
         }
 
         string prefabPath = folder + "/" + skill.name + "_CinematicRig.prefab";
-        string runtimeTimelinePath = folder + "/" + skill.name + "_Runtime.playable";
+        string runtimeTimelinePath = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + skill.name + "_Runtime_Baked.playable");
         if (AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) != null &&
             !EditorUtility.DisplayDialog("Bake LightSkill", "Remplacer le package runtime existant ?\n" + prefabPath,
                 "Remplacer", "Annuler"))
@@ -125,8 +131,10 @@ public static class LightSkillRuntimeRigBaker
             return false;
         }
 
-        string temporaryTimelinePath = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + skill.name + "_Runtime_BakeTmp.playable");
+        string temporaryTimelinePath = runtimeTimelinePath;
+        string temporaryPrefabPath = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + skill.name + "_CinematicRig_BakeTmp.prefab");
         GameObject root = null;
+        bool bakeCompleted = false;
         try
         {
             if (!AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(sourceTimeline), temporaryTimelinePath))
@@ -136,6 +144,18 @@ public static class LightSkillRuntimeRigBaker
             }
 
             TimelineAsset runtimeTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(temporaryTimelinePath);
+            if (runtimeTimeline == null)
+            {
+                report = "La copie temporaire n'est pas un TimelineAsset valide : " + temporaryTimelinePath;
+                return false;
+            }
+
+            // AnimationLab can use absolute preview actor transforms. Runtime actors
+            // must instead keep the stage transform chosen at playback time.
+            ConfigureRuntimeActorTracks(runtimeTimeline);
+            EditorUtility.SetDirty(runtimeTimeline);
+            AssetDatabase.SaveAssets();
+
             root = new GameObject(skill.name + "_CinematicRig");
             PlayableDirector director = root.AddComponent<PlayableDirector>();
             director.playableAsset = runtimeTimeline;
@@ -148,53 +168,36 @@ public static class LightSkillRuntimeRigBaker
             List<CombatCinematicCameraBinding> cameras = CopyReferencedCameras(authoringRig, runtimeTimeline, root.transform);
             List<CameraSnapshot> authorCameras = CaptureAuthorCameraSnapshots(authoringRig, sourceTimeline);
             Dictionary<LightSkillRuntimeExport, LightSkillRuntimeExport> exports = CopyRuntimeExports(authoringRig, root.transform);
-            List<CombatCinematicTrackBinding> tracks = CopyExtraTrackBindings(authoringRig, sourceTimeline, cameras, exports);
+            List<CombatCinematicTrackBinding> tracks = CopyExtraTrackBindings(
+                authoringRig,
+                sourceTimeline,
+                runtimeTimeline,
+                cameras,
+                exports);
             ApplyRigBindings(rig, cameras, tracks);
             rig.ConfigureAuthoringStageLayout(
-                authoringRig.transform.InverseTransformPoint(authoringRig.PreviewPlayerAnimator.transform.position),
-                Quaternion.Inverse(authoringRig.transform.rotation) * authoringRig.PreviewPlayerAnimator.transform.rotation,
-                authoringRig.transform.InverseTransformPoint(authoringRig.PreviewEnemyAnimator.transform.position),
-                Quaternion.Inverse(authoringRig.transform.rotation) * authoringRig.PreviewEnemyAnimator.transform.rotation);
+                authoringRig.transform,
+                authoringRig.PreviewPlayerAnchor,
+                authoringRig.PreviewEnemyAnchor);
             if (CountMissingScripts(root) > 0)
             {
                 report = "Le package contient un script manquant avant sauvegarde. Corrigez AnimationLab, puis rebakez.";
                 return false;
             }
 
-            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, temporaryPrefabPath);
             if (prefab == null)
             {
                 report = "Unity n'a pas pu enregistrer le prefab runtime.";
                 return false;
             }
-            if (CountMissingScripts(prefabPath) > 0)
+            if (CountMissingScripts(temporaryPrefabPath) > 0)
             {
                 report = "Le prefab runtime contient encore un script manquant. Corrigez le rig d'auteur avant de rebaker.";
                 return false;
             }
 
-            if (AssetDatabase.LoadAssetAtPath<TimelineAsset>(runtimeTimelinePath) != null)
-                AssetDatabase.DeleteAsset(runtimeTimelinePath);
-            string moveError = AssetDatabase.MoveAsset(temporaryTimelinePath, runtimeTimelinePath);
-            if (!string.IsNullOrEmpty(moveError))
-            {
-                report = "Prefab cree mais Timeline runtime non finalisee : " + moveError;
-                return false;
-            }
-
-            TimelineAsset finalTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(runtimeTimelinePath);
-            GameObject prefabContents = PrefabUtility.LoadPrefabContents(prefabPath);
-            try
-            {
-                prefabContents.GetComponent<PlayableDirector>().playableAsset = finalTimeline;
-                PrefabUtility.SaveAsPrefabAsset(prefabContents, prefabPath);
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(prefabContents);
-            }
-
-            if (HasAuthoringDependency(prefabPath))
+            if (HasAuthoringDependency(temporaryPrefabPath))
             {
                 report = "Le package runtime reference encore AnimationLab. Corrigez les objets exportes avant de rebaker.";
                 return false;
@@ -202,9 +205,9 @@ public static class LightSkillRuntimeRigBaker
 
             List<string> packageIssues = new List<string>();
             ValidateBakedPackage(
-                AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath).GetComponent<CombatCinematicRig>(),
+                AssetDatabase.LoadAssetAtPath<GameObject>(temporaryPrefabPath).GetComponent<CombatCinematicRig>(),
                 authorCameras,
-                runtimeTimelinePath,
+                temporaryTimelinePath,
                 packageIssues,
                 out string packageReport);
             if (packageIssues.Count > 0)
@@ -213,7 +216,21 @@ public static class LightSkillRuntimeRigBaker
                 return false;
             }
 
-            bakedRig = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath).GetComponent<CombatCinematicRig>();
+            if (!TryFinalizePackage(root, prefabPath, out string finalizeError))
+            {
+                report = "Le bake temporaire est valide, mais le remplacement du package existant a echoue : " + finalizeError;
+                return false;
+            }
+
+            bakeCompleted = true;
+            GameObject bakedPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            bakedRig = bakedPrefab != null ? bakedPrefab.GetComponent<CombatCinematicRig>() : null;
+            if (bakedRig == null)
+            {
+                report = "Le prefab runtime a ete enregistre mais son CombatCinematicRig est introuvable.";
+                return false;
+            }
+
             SerializedObject skillSerialized = new SerializedObject(skill);
             skillSerialized.FindProperty("combatCinematicRigPrefab").objectReferenceValue = bakedRig;
             skillSerialized.ApplyModifiedPropertiesWithoutUndo();
@@ -227,8 +244,37 @@ public static class LightSkillRuntimeRigBaker
         finally
         {
             if (root != null) UnityEngine.Object.DestroyImmediate(root);
-            if (AssetDatabase.LoadAssetAtPath<TimelineAsset>(temporaryTimelinePath) != null)
+            if (!bakeCompleted && AssetDatabase.LoadMainAssetAtPath(temporaryTimelinePath) != null)
                 AssetDatabase.DeleteAsset(temporaryTimelinePath);
+            if (AssetDatabase.LoadMainAssetAtPath(temporaryPrefabPath) != null)
+                AssetDatabase.DeleteAsset(temporaryPrefabPath);
+        }
+    }
+
+    private static bool TryFinalizePackage(GameObject runtimeRigRoot, string prefabPath, out string error)
+    {
+        error = null;
+        if (runtimeRigRoot == null)
+        {
+            error = "Rig runtime temporaire introuvable.";
+            return false;
+        }
+
+        try
+        {
+            if (PrefabUtility.SaveAsPrefabAsset(runtimeRigRoot, prefabPath) == null)
+            {
+                error = "Unity n'a pas pu enregistrer le prefab runtime final.";
+                return false;
+            }
+
+            AssetDatabase.SaveAssets();
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = exception.Message;
+            return false;
         }
     }
 
@@ -289,6 +335,37 @@ public static class LightSkillRuntimeRigBaker
             {
                 issues.Add("Camera '" + key + "' sans module de visee Cinemachine.");
             }
+        }
+    }
+
+    private static void ValidateStageAnchors(LightSkillTimelineAuthoringRig rig, List<string> issues)
+    {
+        if (rig.PreviewPlayerAnchor == null || rig.PreviewEnemyAnchor == null ||
+            rig.PreviewPlayerAnimator == null || rig.PreviewEnemyAnimator == null)
+        {
+            return;
+        }
+
+        if (!rig.PreviewPlayerAnchor.IsChildOf(rig.transform) || !rig.PreviewEnemyAnchor.IsChildOf(rig.transform))
+        {
+            issues.Add("Les anchors de plateau doivent etre des enfants de AnimationLab.");
+        }
+
+        if (rig.PreviewPlayerAnimator.transform != rig.PreviewPlayerAnchor &&
+            !rig.PreviewPlayerAnimator.transform.IsChildOf(rig.PreviewPlayerAnchor))
+        {
+            issues.Add("Preview Player doit etre enfant de Lucian_Anchor.");
+        }
+
+        if (rig.PreviewEnemyAnimator.transform != rig.PreviewEnemyAnchor &&
+            !rig.PreviewEnemyAnimator.transform.IsChildOf(rig.PreviewEnemyAnchor))
+        {
+            issues.Add("Preview Enemy doit etre enfant de Enemy_Anchor.");
+        }
+
+        if (Vector3.Distance(rig.PreviewPlayerAnchor.localPosition, rig.PreviewEnemyAnchor.localPosition) <= 0.001f)
+        {
+            issues.Add("Lucian_Anchor et Enemy_Anchor ne peuvent pas partager la meme pose.");
         }
     }
 
@@ -365,6 +442,7 @@ public static class LightSkillRuntimeRigBaker
 
     private static List<CombatCinematicTrackBinding> CopyExtraTrackBindings(
         LightSkillTimelineAuthoringRig rig,
+        TimelineAsset sourceTimeline,
         TimelineAsset runtimeTimeline,
         List<CombatCinematicCameraBinding> cameras,
         Dictionary<LightSkillRuntimeExport, LightSkillRuntimeExport> exports)
@@ -373,7 +451,13 @@ public static class LightSkillRuntimeRigBaker
         foreach (PlayableBinding output in runtimeTimeline.outputs)
         {
             if (IsStandardOutput(output, rig.LightSkill) || !TrackHasContent(output.sourceObject as TrackAsset)) continue;
-            UnityEngine.Object sourceTarget = rig.Director.GetGenericBinding(output.sourceObject);
+
+            // The runtime Timeline is a clone. Its TrackAsset instances are different from
+            // the authoring Timeline instances held by the preview director, so resolve the
+            // equivalent source track by name before reading its preview binding.
+            PlayableBinding sourceOutput = FindMatchingOutput(sourceTimeline, output);
+            if (sourceOutput.sourceObject == null) continue;
+            UnityEngine.Object sourceTarget = rig.Director.GetGenericBinding(sourceOutput.sourceObject);
             if (TryResolveAuthorCameraTarget(sourceTarget, rig, runtimeTimeline, out string cameraKey))
             {
                 CinemachineCamera copiedCamera = FindCopiedCamera(cameras, cameraKey);
@@ -398,6 +482,24 @@ public static class LightSkillRuntimeRigBaker
             });
         }
         return result;
+    }
+
+    private static PlayableBinding FindMatchingOutput(TimelineAsset sourceTimeline, PlayableBinding runtimeOutput)
+    {
+        if (sourceTimeline == null || runtimeOutput.sourceObject == null) return default;
+        foreach (PlayableBinding candidate in sourceTimeline.outputs)
+        {
+            if (candidate.sourceObject == null ||
+                candidate.sourceObject.GetType() != runtimeOutput.sourceObject.GetType() ||
+                !string.Equals(candidate.streamName, runtimeOutput.streamName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return default;
     }
 
     private static bool TryResolveAuthorCameraTarget(
@@ -494,12 +596,6 @@ public static class LightSkillRuntimeRigBaker
         return snapshots;
     }
 
-    private static string GetRuntimeTimelinePath(LightSkillSO skill)
-    {
-        string folder = skill != null ? Path.GetDirectoryName(AssetDatabase.GetAssetPath(skill))?.Replace('\\', '/') : null;
-        return string.IsNullOrWhiteSpace(folder) || skill == null ? null : folder + "/" + skill.name + "_Runtime.playable";
-    }
-
     private static void ValidateBakedPackage(
         CombatCinematicRig bakedRig,
         List<CameraSnapshot> authorCameras,
@@ -514,6 +610,9 @@ public static class LightSkillRuntimeRigBaker
             report = string.Empty;
             return;
         }
+
+        if (!bakedRig.HasAuthoringStageLayout)
+            issues.Add("Le prefab baked ne contient pas PlayerStageAnchor et EnemyStageAnchor.");
 
         string prefabPath = AssetDatabase.GetAssetPath(bakedRig.gameObject);
         if (CountMissingScripts(prefabPath) > 0)
@@ -599,6 +698,23 @@ public static class LightSkillRuntimeRigBaker
         return null;
     }
 
+    private static void ConfigureRuntimeActorTracks(TimelineAsset timeline)
+    {
+        if (timeline == null) return;
+
+        foreach (PlayableBinding output in timeline.outputs)
+        {
+            if (output.sourceObject is not AnimationTrack track ||
+                (output.streamName != LightSkillTimelineContract.PlayerAnimatorTrack &&
+                 output.streamName != LightSkillTimelineContract.EnemyAnimatorTrack))
+            {
+                continue;
+            }
+
+            track.trackOffset = TrackOffset.ApplySceneOffsets;
+        }
+    }
+
     private static IEnumerable<CinemachineShot> GetShots(TimelineAsset timeline)
     {
         foreach (PlayableBinding output in timeline.outputs)
@@ -620,6 +736,7 @@ public static class LightSkillRuntimeRigBaker
         if (track == null) return false;
         foreach (TimelineClip ignored in track.GetClips()) return true;
         foreach (IMarker ignored in track.GetMarkers()) return true;
+        if (track is AnimationTrack animationTrack && animationTrack.infiniteClip != null) return true;
         return false;
     }
 
