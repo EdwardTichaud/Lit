@@ -169,7 +169,11 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     private void Awake()
     {
-        if (animator == null) animator = GetComponentInChildren<Animator>();
+        CombatActorAnimationRoot animationContract = GetComponent<CombatActorAnimationRoot>();
+        if (animationContract != null && animationContract.ValidateContract(out _))
+        {
+            animator = animationContract.Animator;
+        }
         if (locomotionBridge == null) locomotionBridge = GetComponentInChildren<LitOpsiveLocomotionBridge>();
     }
 

@@ -2487,6 +2487,8 @@ GameObject:
   - component: {fileID: 900000000000000103}
   - component: {fileID: 900000000000000104}
   - component: {fileID: 901000000000000203}
+  - component: {fileID: 7709963485712969020}
+  - component: {fileID: 1542732129525685219}
   m_Layer: 6
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -2544,12 +2546,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
-    are already bound by a Humanoid avatar. These transforms can only be changed
-    by Humanoid clips.\n\tTransform 'lowerarm_l'\n\tTransform 'clavicle_l'\n\tTransform
-    'hand_l'\n\tTransform 'spine_02'\n\tTransform 'upperarm_r'\n\tTransform 'upperarm_l'\n\tTransform
-    'pelvis'\n\tTransform 'spine_03'\n\tTransform 'spine_01'\n\tTransform 'clavicle_r'\n\tand
-    more ...\n\tFrom animation clip 'LightSkill_1_Furie_Start_Temp'"
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -3465,7 +3462,7 @@ MonoBehaviour:
   locomotionHandler: {fileID: 0}
   playerInput: {fileID: 0}
   lookSource: {fileID: 0}
-  animator: {fileID: 0}
+  animator: {fileID: 963045829911085934}
   animatorMonitor: {fileID: 0}
   driveFromSquadFacade: 1
   overrideOpsiveHandlerInput: 1
@@ -3985,7 +3982,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82e1a95b3cba4bcc867d4f3062a9d501, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationGroundRecovery
-  animator: {fileID: 0}
+  animator: {fileID: 963045829911085934}
   lockVerticalRootMotionToGround: 0
   probeHeight: 3
   probeDistance: 8
@@ -4011,6 +4008,34 @@ MonoBehaviour:
   bond: {fileID: 0}
   spineAnimationPrefab: {fileID: 7736070195497459570, guid: 86a96f2fa2dcfdd40b90118ec14b93f5, type: 3}
   spineBone: {fileID: 8645191530104281420}
+--- !u!114 &7709963485712969020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
+  animationRoot: {fileID: 2233782780378164146}
+  animator: {fileID: 963045829911085934}
+  lockPoint: {fileID: 0}
+--- !u!114 &1542732129525685219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
+  actor: {fileID: 0}
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

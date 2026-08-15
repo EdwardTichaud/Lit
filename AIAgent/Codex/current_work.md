@@ -184,6 +184,16 @@ CounterSkills, qui n'utilisent pas ce placement de plateau, conservent leur
 chemin root motion existant.
 Le contrat de plateau version 3 enregistre aussi l'orientation monde du rig
 d'auteur; tout prefab LightSkill plus ancien doit etre rebake avant lecture.
+Le contrat `CombatActorAnimationRoot` centralise maintenant le root gameplay,
+son `AnimationRoot`, l'Animator de gameplay et `EnemyLockPoint` lorsqu'il
+existe. Le combat, les skills, UCC et les Timelines resolvent cet Animator
+explicitement au lieu de choisir un enfant. `Lit/Combat/Normalize Actor
+Animation Hierarchies` encapsule sans deformer les skeletons importes les
+Animators des deux ennemis sous un `AnimationRoot` identite, retire l'Animator
+vide du Giant et rebranche les references de combat. Lucian conserve
+provisoirement son Animator racine: ses clips generiques dependants des paths
+ne doivent pas etre reparentes automatiquement. Son comportement passe neanmoins
+par le meme contrat et le meme relais de root motion cinematographique.
 En sortie, les poses locales imposees par les Animation Tracks sur les Animators
 Player et Enemy sont remises a zero avant la remise en pool du rig : chaque
 declenchement repart donc d'un etat propre sans reemployer l'offset precedent.

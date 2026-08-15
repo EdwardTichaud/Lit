@@ -89796,6 +89796,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemy
   health: {fileID: 0}
+  animationContract: {fileID: 0}
   animator: {fileID: 5122093895041281714}
   visionField: {fileID: 0}
   enemySkills: {fileID: 0}

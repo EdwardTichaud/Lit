@@ -7,6 +7,7 @@ using UnityEngine;
 public sealed class EnemySkills : MonoBehaviour
 {
     [SerializeField] private RealTimeCombatEnemy enemy;
+    [SerializeField] private CombatActorAnimationRoot animationContract;
     [SerializeField] private Animator animator;
     [SerializeField, Tooltip("Point de depart des VFX ennemi. La racine est utilisee si vide.")]
     private Transform casterVfxPoint;
@@ -21,7 +22,8 @@ public sealed class EnemySkills : MonoBehaviour
     private void Reset()
     {
         enemy = GetComponent<RealTimeCombatEnemy>();
-        animator = GetComponentInChildren<Animator>();
+        animationContract = GetComponent<CombatActorAnimationRoot>();
+        animator = animationContract != null ? animationContract.Animator : null;
     }
 
     private void Awake()
@@ -265,9 +267,18 @@ public sealed class EnemySkills : MonoBehaviour
             enemy = GetComponent<RealTimeCombatEnemy>();
         }
 
-        if (animator == null)
+        if (animationContract == null)
         {
-            animator = GetComponentInChildren<Animator>();
+            animationContract = GetComponent<CombatActorAnimationRoot>();
+        }
+
+        if (animationContract != null && animationContract.ValidateContract(out _))
+        {
+            animator = animationContract.Animator;
+        }
+        else
+        {
+            animator = null;
         }
     }
 

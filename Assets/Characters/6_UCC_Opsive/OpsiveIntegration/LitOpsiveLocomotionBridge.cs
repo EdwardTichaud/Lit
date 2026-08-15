@@ -1211,7 +1211,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (animator == null)
         {
-            animator = GetComponent<Animator>();
+            CombatActorAnimationRoot animationContract = GetComponent<CombatActorAnimationRoot>();
+            animator = animationContract != null && animationContract.ValidateContract(out _)
+                ? animationContract.Animator
+                : GetComponent<Animator>();
         }
 
         if (animatorMonitor == null)

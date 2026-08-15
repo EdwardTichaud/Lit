@@ -343,6 +343,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
                 AbortStart("Placement cinematographique invalide");
                 return false;
             }
+
+            BeginContractCinematicMotion();
         }
         else
         {
@@ -623,34 +625,54 @@ public sealed class CombatCinematicRig : MonoBehaviour
                        " EnemyStageAnchor=" + enemyStageAnchor.localPosition +
                        " | playerRoot=" + playerRootPosition + " | enemyRoot=" + enemyRootPosition + ".");
 
-        LitOpsiveLocomotionBridge playerBridge = context.PlayerRoot.GetComponent<LitOpsiveLocomotionBridge>();
-        if (playerBridge != null)
+        CombatActorAnimationRoot playerContract = context.PlayerRoot.GetComponent<CombatActorAnimationRoot>();
+        if (playerContract != null && playerContract.ValidateContract(out _))
         {
-            if (!playerBridge.SetCinematicPositionAndRotation(playerRootPosition, playerRootRotation, true))
+            if (!playerContract.SetActorPose(playerRootPosition, playerRootRotation))
+            {
+                error = "Le contrat d'animation de Lucian ne peut pas poser son ActorRoot.";
+                return false;
+            }
+            playerContract.ResetAnimationRootPose();
+        }
+        else
+        {
+            LitOpsiveLocomotionBridge playerBridge = context.PlayerRoot.GetComponent<LitOpsiveLocomotionBridge>();
+            if (playerBridge != null && !playerBridge.SetCinematicPositionAndRotation(playerRootPosition, playerRootRotation, true))
             {
                 error = "UCC ne possede pas de locomotion disponible pour le placement cinematographique de Lucian.";
                 return false;
             }
+            if (playerBridge == null)
+            {
+                context.PlayerRoot.SetPositionAndRotation(playerRootPosition, playerRootRotation);
+            }
+        }
+
+        CombatActorAnimationRoot enemyContract = context.TargetEnemy.GetComponent<CombatActorAnimationRoot>();
+        if (enemyContract != null && enemyContract.ValidateContract(out _))
+        {
+            if (!enemyContract.SetActorPose(enemyRootPosition, enemyRootRotation))
+            {
+                error = "Le contrat d'animation ennemi ne peut pas poser son ActorRoot.";
+                return false;
+            }
+            enemyContract.ResetAnimationRootPose();
         }
         else
         {
-            context.PlayerRoot.SetPositionAndRotation(playerRootPosition, playerRootRotation);
-        }
-
-        RealTimeCombatEnemyBehaviour enemyBehaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
-        if (enemyBehaviour != null)
-        {
-            if (!enemyBehaviour.PlaceForCinematic(
+            RealTimeCombatEnemyBehaviour enemyBehaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+            if (enemyBehaviour != null && !enemyBehaviour.PlaceForCinematic(
                     enemyRootPosition,
                     enemyRootRotation))
             {
                 error = "Le NavMesh de l'ennemi refuse le plateau cinematographique.";
                 return false;
             }
-        }
-        else
-        {
-            context.TargetEnemy.transform.SetPositionAndRotation(enemyRootPosition, enemyRootRotation);
+            if (enemyBehaviour == null)
+            {
+                context.TargetEnemy.transform.SetPositionAndRotation(enemyRootPosition, enemyRootRotation);
+            }
         }
 
         Physics.SyncTransforms();
@@ -738,6 +760,18 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private void ResetTimelineActorTransformSampling()
     {
         timelineOwnsStagedActorTransforms = false;
+    }
+
+    private void BeginContractCinematicMotion()
+    {
+        context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.BeginCinematicMotion(sessionToken);
+        context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.BeginCinematicMotion(sessionToken);
+    }
+
+    private void EndContractCinematicMotion()
+    {
+        context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
+        context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
     }
 
     private static bool UsesSceneRelativeActorTracks(PlayableAsset timeline, string playerTrack, string enemyTrack)
@@ -857,6 +891,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         // mistake a previous Timeline sample for hierarchy data.
         RestorePlayerAnimatorRestLocalPose();
         RestoreEnemyAnimatorRestLocalPose();
+        EndContractCinematicMotion();
         Physics.SyncTransforms();
 
         LitTimelineCinemachineBridge bridge = GetComponent<LitTimelineCinemachineBridge>();

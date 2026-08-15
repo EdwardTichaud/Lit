@@ -8,6 +8,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     private const string DefaultHitAnimatorState = "Hit";
 
     [SerializeField] private CombatHealth health;
+    [SerializeField] private CombatActorAnimationRoot animationContract;
     [SerializeField] private Animator animator;
     [SerializeField] private VisionField visionField;
     [SerializeField] private EnemySkills enemySkills;
@@ -64,6 +65,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     {
         health = GetComponent<CombatHealth>();
         enemySkills = GetComponent<EnemySkills>();
+        animationContract = GetComponent<CombatActorAnimationRoot>();
         animator = ResolveCombatAnimator();
     }
 
@@ -362,37 +364,17 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     private Animator ResolveCombatAnimator()
     {
-        if (HasAnimatorController(animator))
+        if (animationContract == null)
         {
-            return animator;
+            animationContract = GetComponent<CombatActorAnimationRoot>();
         }
 
-        if (enemySkills == null)
+        if (animationContract != null && animationContract.ValidateContract(out _))
         {
-            enemySkills = GetComponent<EnemySkills>();
-        }
-
-        Animator skillsAnimator = enemySkills != null ? enemySkills.Animator : null;
-        if (HasAnimatorController(skillsAnimator))
-        {
-            return skillsAnimator;
-        }
-
-        Animator[] animators = GetComponentsInChildren<Animator>(true);
-        for (int i = 0; i < animators.Length; i++)
-        {
-            if (HasAnimatorController(animators[i]))
-            {
-                return animators[i];
-            }
+            return animationContract.Animator;
         }
 
         return animator;
-    }
-
-    private static bool HasAnimatorController(Animator candidate)
-    {
-        return candidate != null && candidate.runtimeAnimatorController != null;
     }
 
     private Transform ResolveLockPoint()

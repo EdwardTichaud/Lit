@@ -999,7 +999,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (playerHealth == null) playerHealth = playerRoot.GetComponentInChildren<CombatHealth>(true);
         if (playerController == null) playerController = playerRoot.GetComponentInChildren<SquadCharacterController>(true);
         if (playerLocomotionBridge == null) playerLocomotionBridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
-        if (playerAnimator == null) playerAnimator = playerRoot.GetComponentInChildren<Animator>(true);
+        CombatActorAnimationRoot playerAnimationContract = playerRoot.GetComponent<CombatActorAnimationRoot>();
+        if (playerAnimationContract != null && playerAnimationContract.ValidateContract(out _))
+        {
+            playerAnimator = playerAnimationContract.Animator;
+        }
         if (playerActionPresentation == null)
         {
             playerActionPresentation = playerRoot.GetComponentInChildren<PlayerActionPresentationController>(true);

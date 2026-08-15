@@ -110,6 +110,15 @@ sont restaurees avant la remise en pool du rig.
 Le layout runtime version 3 conserve egalement l'orientation monde du rig
 d'auteur; un prefab bake avec une version plus ancienne est refuse et doit etre
 regenere depuis `AnimationLab`.
+`CombatActorAnimationRoot` est la source explicite de l'Animator de combat:
+`ActorRoot` reste le seul transform monde, tandis que l'Animator est declare
+avec son `AnimationRoot`. `CombatActorRootMotionRelay` transfere uniquement le
+root motion cinematographique au root gameplay. Le menu `Lit/Combat/Normalize
+Actor Animation Hierarchies` normalise Juggernaut et GiantJuggernaut sans
+modifier leurs skeletons importes; `Validate Actor Animation Contract` permet
+de verifier Lucian et les deux ennemis avant un test. Lucian garde actuellement
+son Animator sur le root par securite pour ses clips generiques, mais tous les
+systemes le resolvent via le meme contrat explicite.
 La remise en pool efface les bindings Timeline et les references Cinemachine,
 arrete le Director au temps zero et remet le transform du rig a l'identite.
 L'auto-desengagement est suspendu tant qu'une LightSkill est cinematographique :
