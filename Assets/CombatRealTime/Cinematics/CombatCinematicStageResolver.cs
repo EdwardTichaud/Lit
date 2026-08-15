@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
@@ -67,6 +68,8 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
 
     private readonly Collider[] overlapBuffer = new Collider[128];
     private readonly RaycastHit[] groundHits = new RaycastHit[32];
+    [SerializeField, Tooltip("Ecrit un bilan de recherche de plateau dans la Console pour diagnostiquer un refus de LightSkill.")]
+    private bool logStageSearchDiagnostics = true;
 
     public bool TryResolve(
         CombatCinematicRig rigPrefab,
@@ -80,11 +83,13 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
         if (rigPrefab == null || context == null || context.PlayerRoot == null || context.TargetEnemy == null)
         {
             error = "Plateau cinematographique ou acteurs manquants.";
+            Trace(error);
             return false;
         }
         if (!rigPrefab.HasAuthoringStageLayout)
         {
             error = "Le rig cinematographique doit etre rebake avec les poses Player et Enemy.";
+            Trace(error);
             return false;
         }
 
@@ -104,6 +109,8 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
             : rigPrefab.GetStageRotationForFacing(context.PlayerRoot.forward);
 
         int ringCount = Mathf.CeilToInt(profile.SearchRadius / Mathf.Max(0.5f, profile.ClearanceRadius));
+        int testedCandidates = 0;
+        Dictionary<string, int> rejectionCounts = new Dictionary<string, int>();
         for (int ring = 0; ring <= ringCount; ring++)
         {
             int samples = ring == 0 ? 1 : profile.SamplesPerRing;
@@ -112,14 +119,22 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
             {
                 float angle = ring == 0 ? 0f : sample * 360f / samples;
                 Vector3 candidate = midpoint + Quaternion.AngleAxis(angle, Vector3.up) * facing.normalized * radius;
-                if (!TryBuildPlacement(candidate, stageRotation, rigPrefab, context, profile, out placement))
+                testedCandidates++;
+                if (!TryBuildPlacement(candidate, stageRotation, rigPrefab, context, profile, out placement, out string rejectionReason))
+                {
+                    AddRejection(rejectionCounts, rejectionReason);
                     continue;
+                }
 
+                Trace("Plateau accepte apres " + testedCandidates + " test(s). Midpoint=" + midpoint +
+                      ", centre=" + placement.Center + ", rig=" + placement.RigPosition + ".");
                 return true;
             }
         }
 
         error = "Espace insuffisant pour cette LightSkill.";
+        Trace("Plateau refuse. Midpoint=" + midpoint + ", " + testedCandidates +
+              " position(s) testee(s). " + FormatRejections(rejectionCounts));
         return false;
     }
 
@@ -147,13 +162,20 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
         CombatCinematicRig rig,
         CombatCinematicContext context,
         CinematicStageProfile profile,
-        out CombatCinematicStagePlacement placement)
+        out CombatCinematicStagePlacement placement,
+        out string rejectionReason)
     {
         placement = default;
+        rejectionReason = null;
         if (!TryFindGround(candidate, context, profile, out RaycastHit centerGround) ||
-            Vector3.Angle(centerGround.normal, Vector3.up) > profile.MaximumSlope ||
-            !HasStageClearance(centerGround.point, context, profile))
+            Vector3.Angle(centerGround.normal, Vector3.up) > profile.MaximumSlope)
         {
+            rejectionReason = "sol central absent ou pente trop forte";
+            return false;
+        }
+        if (!HasStageClearance(centerGround.point, context, profile))
+        {
+            rejectionReason = "mur dans le dome";
             return false;
         }
 
@@ -166,6 +188,7 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
             Vector3.Angle(enemyGround.normal, Vector3.up) > profile.MaximumSlope ||
             Mathf.Abs(playerGround.point.y - enemyGround.point.y) > profile.MaximumGroundHeightDifference)
         {
+            rejectionReason = "sol des acteurs invalide, pente ou ecart de hauteur";
             return false;
         }
 
@@ -174,12 +197,14 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
         if (!HasActorClearance(playerPosition, playerRotation, context.PlayerRoot, context, profile, DefaultPlayerRadius, DefaultPlayerHeight) ||
             !HasActorClearance(enemyPosition, enemyRotation, context.TargetEnemy.transform, context, profile, DefaultEnemyRadius, DefaultEnemyHeight))
         {
+            rejectionReason = "mur dans la capsule Player ou Enemy";
             return false;
         }
 
         RealTimeCombatEnemyBehaviour enemyBehaviour = context.TargetEnemy.GetComponent<RealTimeCombatEnemyBehaviour>();
         if (enemyBehaviour != null && !enemyBehaviour.CanPlaceForCinematic(enemyPosition))
         {
+            rejectionReason = "pose Enemy hors NavMesh";
             return false;
         }
 
@@ -271,5 +296,35 @@ public sealed class CombatCinematicStageResolver : MonoBehaviour
         Transform transform = collider.transform;
         return (context.PlayerRoot != null && transform.IsChildOf(context.PlayerRoot)) ||
                (context.TargetEnemy != null && transform.IsChildOf(context.TargetEnemy.transform));
+    }
+
+    private void Trace(string message)
+    {
+        if (logStageSearchDiagnostics)
+        {
+            Debug.Log("[LightSkill Stage] " + message, this);
+        }
+    }
+
+    private static void AddRejection(Dictionary<string, int> counts, string reason)
+    {
+        string key = string.IsNullOrWhiteSpace(reason) ? "raison inconnue" : reason;
+        counts.TryGetValue(key, out int count);
+        counts[key] = count + 1;
+    }
+
+    private static string FormatRejections(Dictionary<string, int> counts)
+    {
+        if (counts.Count == 0) return "Aucune raison de refus remontee.";
+
+        string report = "Refus : ";
+        bool first = true;
+        foreach (KeyValuePair<string, int> rejection in counts)
+        {
+            if (!first) report += ", ";
+            report += rejection.Key + " x" + rejection.Value;
+            first = false;
+        }
+        return report + ".";
     }
 }
