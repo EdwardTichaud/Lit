@@ -24,9 +24,6 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private float guardedDamageMultiplier = 0.4f;
 
     [Header("Guard Feedback")]
-    [SerializeField] private string guardAnimatorState = "Base Layer.RealTimeCombat_RootMotion.Guard_Block";
-    [SerializeField] private string guardFallbackAnimatorState = "Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root";
-    [SerializeField] private string guardReleaseAnimatorState = "Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root";
     [SerializeField, Range(0f, 0.25f)] private float guardAnimationBlendSeconds = 0.08f;
     [SerializeField] private GameObject guardStartVfx;
     [SerializeField] private AudioClipSO guardStartAudio;
@@ -299,13 +296,13 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private void PlayGuardAnimation()
     {
         ResolveGuardAnimator();
-        CrossFadeGuardState(guardAnimatorState);
+        CrossFadeGuardState(PlayerModelAnimationState.Guard, PlayerModelAnimationState.GuardFallback);
     }
 
     private void StopGuardAnimation()
     {
         ResolveGuardAnimator();
-        CrossFadeGuardState(guardReleaseAnimatorState);
+        CrossFadeGuardState(PlayerModelAnimationState.GuardRelease, PlayerModelAnimationState.Locomotion);
     }
 
     private void ResolveGuardAnimator()
@@ -316,19 +313,19 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         }
     }
 
-    private void CrossFadeGuardState(string stateName)
+    private void CrossFadeGuardState(PlayerModelAnimationState state, PlayerModelAnimationState fallback)
     {
-        if (guardAnimator == null || string.IsNullOrWhiteSpace(stateName)) return;
-        int stateHash = Animator.StringToHash(stateName);
-        if (!guardAnimator.HasState(0, stateHash) && stateName == guardAnimatorState)
+        PlayerModelAnimationProfile profile = combatManager != null ? combatManager.PlayerAnimationProfile : null;
+        if (!PlayerAnimatorStateResolver.TryResolve(guardAnimator, profile, state, out int stateHash, out _))
         {
-            stateHash = Animator.StringToHash(guardFallbackAnimatorState);
+            if (!PlayerAnimatorStateResolver.TryResolve(guardAnimator, profile, fallback, out stateHash, out _))
+            {
+                Debug.LogWarning("[CounterSkill] Etat de garde introuvable : " + state, this);
+                return;
+            }
         }
 
-        if (guardAnimator.HasState(0, stateHash))
-        {
-            guardAnimator.CrossFade(stateHash, guardAnimationBlendSeconds, 0);
-        }
+        guardAnimator.CrossFade(stateHash, guardAnimationBlendSeconds, 0);
     }
 
     private void PlayGuardedImpactFeedback()

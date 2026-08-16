@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   icon: {fileID: 21300000, guid: 2d089513ae4adfc48a683c362ad9992c, type: 3}
   animationClip: {fileID: 7400000, guid: 17651a47717f666458106120728c7c07, type: 2}
-  animatorState: Base Layer.AnimationClip_Skill_Eclair
+  animatorState: Base Layer.Skill_1_Eclair
   damages: 10
   presentation:
     entryBlendSeconds: 0.06

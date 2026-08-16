@@ -4023,6 +4023,7 @@ MonoBehaviour:
   animationRoot: {fileID: 2233782780378164146}
   animator: {fileID: 963045829911085934}
   lockPoint: {fileID: 0}
+  animationProfile: {fileID: 11400000, guid: d931f47c273f4f76a3c2e440f8eb0155, type: 2}
 --- !u!114 &1542732129525685219
 MonoBehaviour:
   m_ObjectHideFlags: 0

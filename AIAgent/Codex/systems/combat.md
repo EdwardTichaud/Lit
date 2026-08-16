@@ -15,6 +15,11 @@ Clarté et les fenêtres de réaction. `RealTimeCombatEnemy` stocke le plus gran
 dégât de lumière reçu jusqu'à sa prochaine attaque et le verrouille au démarrage
 de l'animation ennemie. Les dégâts reçus pendant cette animation alimentent un
 ledger suivant, promu uniquement par son événement de fin.
+La portée maximale de lock et de déverrouillage est multipliée par la taille
+réelle rendue de l'ennemi, avec `Lock Range Reference Height` du
+`RealTimeCombatManager` comme coefficient x1. La scale du root reste un
+fallback : un Giant dont le mesh est agrandi sous `AnimationRoot` obtient ainsi
+la même portée adaptée qu'un root directement agrandi.
 Pendant la mémoire d'alerte, un ennemi provoqué peut consommer ce ledger même
 si une animation root l'a temporairement tourné hors de son champ de vision ; il
 continue alors de se tourner vers Lucian. La perte de vision prolongée conserve
@@ -117,13 +122,18 @@ skeleton sont sous un enfant direct `AnimationRoot` identite.
 gameplay. Le menu `Lit/Combat/Normalize Actor Animation Hierarchies` prevalide
 Lucian, Juggernaut et GiantJuggernaut avant toute migration; il rebranche les
 references de combat, UCC et presentation sans modifier les assets de clips.
+Le relay reste desarme pendant `PlayableDirector.Evaluate(0)`, puis est arme
+apres la remise des ActorRoots sur leurs anchors. Son premier delta et tout
+delta superieur a 5 m par frame sont ignores : ce sont des poses Transform
+enregistrees dans Timeline, jamais du root motion de gameplay.
 La remise en pool efface les bindings Timeline et les references Cinemachine,
 arrete le Director au temps zero et remet le transform du rig a l'identite.
 L'auto-desengagement est suspendu tant qu'une LightSkill est cinematographique :
 l'IA cible est alors arretee intentionnellement et ne peut pas mettre fin au
 combat avant la restitution de la sequence.
-Lucian est pose via `SetCinematicPositionAndRotation` du bridge UCC, une API
-autorisee pendant le verrou d'input cinematographique et qui ne le libere pas.
+Lucian est pose via `SetCinematicPositionAndRotation` du bridge UCC, sous un
+verrou de traversee scriptée qui suspend aussi sa gravite et ses capacites : son
+`ActorRoot` ne peut donc pas tomber pendant que Timeline pilote l'animation.
 La Brain Cinemachine utilise temporairement un `Cut` pendant la Timeline, puis
 restaure son blend de gameplay a la sortie. Le premier plan ne peut donc pas
 etre interpole avec la pose UCC precedente.

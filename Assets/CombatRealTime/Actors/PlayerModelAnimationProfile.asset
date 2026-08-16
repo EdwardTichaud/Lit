@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a84b3ca0604f4249af4d2e4e23e55aa1, type: 3}
+  m_Name: PlayerModelAnimationProfile
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerModelAnimationProfile
+  locomotionState: Base Layer.Locomotion
+  deathState: Base Layer.Death
+  hurtState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
+  guardState: Base Layer.RealTimeCombat_RootMotion.Guard_Block
+  guardFallbackState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root
+  guardReleaseState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root
+  dodgeForwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
+  dodgeBackwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
+  dodgeLeftState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root
+  dodgeRightState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root

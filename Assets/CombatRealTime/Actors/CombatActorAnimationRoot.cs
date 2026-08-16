@@ -6,15 +6,19 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     [SerializeField] private Transform animationRoot;
     [SerializeField] private Animator animator;
     [SerializeField] private Transform lockPoint;
+    [SerializeField] private PlayerModelAnimationProfile animationProfile;
 
     private CombatActorRootMotionRelay rootMotionRelay;
     private int cinematicSessionToken = -1;
     private bool firstCinematicDeltaLogged;
+    private bool ignoreFirstCinematicDelta;
+    private const float MaximumCinematicDeltaPerFrame = 5f;
 
     public Transform ActorRoot => transform;
     public Transform AnimationRoot => animationRoot;
     public Animator Animator => animator;
     public Transform LockPoint => lockPoint;
+    public PlayerModelAnimationProfile AnimationProfile => animationProfile;
     public bool IsCinematicMotionActive => cinematicSessionToken >= 0;
 
     private void Reset()
@@ -53,15 +57,18 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
             return false;
         }
 
-        if (animationRoot == transform || animationRoot.parent != transform)
+        // Player_Model currently carries its Animator on ActorRoot. Newer rigs may
+        // use a dedicated direct child; both layouts are valid gameplay roots.
+        if (animationRoot != transform && animationRoot.parent != transform)
         {
-            error = name + ": AnimationRoot doit etre un enfant direct distinct du ActorRoot.";
+            error = name + ": AnimationRoot doit etre ActorRoot ou un enfant direct du ActorRoot.";
             return false;
         }
 
-        if (animationRoot.localPosition.sqrMagnitude > 0.000001f ||
+        if (animationRoot != transform &&
+            (animationRoot.localPosition.sqrMagnitude > 0.000001f ||
             Quaternion.Angle(animationRoot.localRotation, Quaternion.identity) > 0.01f ||
-            (animationRoot.localScale - Vector3.one).sqrMagnitude > 0.000001f)
+            (animationRoot.localScale - Vector3.one).sqrMagnitude > 0.000001f))
         {
             error = name + ": AnimationRoot doit conserver une pose locale identite.";
             return false;
@@ -133,6 +140,23 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         ResetAnimationRootPose();
         cinematicSessionToken = sessionToken;
         firstCinematicDeltaLogged = false;
+        ignoreFirstCinematicDelta = true;
+        if (rootMotionRelay != null)
+        {
+            // Timeline Evaluate(0) may restore an authoring Transform sample.
+            // It is never gameplay root motion and must not reach ActorRoot.
+            rootMotionRelay.enabled = false;
+        }
+    }
+
+    public void ArmCinematicMotion(int sessionToken)
+    {
+        if (cinematicSessionToken != sessionToken)
+        {
+            return;
+        }
+
+        ResetAnimationRootPose();
         if (rootMotionRelay != null)
         {
             rootMotionRelay.enabled = true;
@@ -147,6 +171,7 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         }
 
         cinematicSessionToken = -1;
+        ignoreFirstCinematicDelta = false;
         if (rootMotionRelay != null)
         {
             rootMotionRelay.enabled = false;
@@ -164,6 +189,24 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
             return;
         }
 
+        if (ignoreFirstCinematicDelta)
+        {
+            ignoreFirstCinematicDelta = false;
+            ResetAnimationRootPose();
+            Debug.Log("[Combat Actor Motion] Initial Timeline delta ignored | actor='" + name +
+                      "' | token=" + cinematicSessionToken + " | deltaPos=" + worldDeltaPosition +
+                      " | deltaRot=" + deltaRotation.eulerAngles + ".", this);
+            return;
+        }
+
+        if (worldDeltaPosition.sqrMagnitude > MaximumCinematicDeltaPerFrame * MaximumCinematicDeltaPerFrame)
+        {
+            ResetAnimationRootPose();
+            Debug.LogWarning("[Combat Actor Motion] Delta Timeline invalide ignore | actor='" + name +
+                             "' | token=" + cinematicSessionToken + " | deltaPos=" + worldDeltaPosition + ".", this);
+            return;
+        }
+
         if (!firstCinematicDeltaLogged &&
             (worldDeltaPosition.sqrMagnitude > 0.00000025f ||
              Quaternion.Angle(deltaRotation, Quaternion.identity) > 0.01f))
@@ -178,16 +221,19 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         if (TryGetComponent(out LitOpsiveLocomotionBridge bridge))
         {
             bridge.ApplyCinematicRootMotion(worldDeltaPosition, deltaRotation);
+            ResetAnimationRootPose();
             return;
         }
 
         if (TryGetComponent(out RealTimeCombatEnemyBehaviour enemyBehaviour))
         {
             enemyBehaviour.ApplyCinematicRootMotion(worldDeltaPosition, deltaRotation);
+            ResetAnimationRootPose();
             return;
         }
 
         transform.SetPositionAndRotation(transform.position + worldDeltaPosition, deltaRotation * transform.rotation);
+        ResetAnimationRootPose();
         Physics.SyncTransforms();
     }
 

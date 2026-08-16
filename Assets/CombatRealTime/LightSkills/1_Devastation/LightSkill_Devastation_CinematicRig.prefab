@@ -224,7 +224,7 @@ PlayableDirector:
   m_GameObject: {fileID: 7992036132239899766}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 2d19ee5425987044c8df9d71bd64fdae, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: b75495bed02e1c64f935654b34cf65e2, type: 2}
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -303,7 +303,6 @@ MonoBehaviour:
   authoringFormationCenter: {x: 0, y: 0, z: 0}
   authoringFormationForward: {x: 0, y: 0, z: 1}
   authoringStageLayoutVersion: 3
-  drivePlayerRootMotionFromTimeline: 1
   authoringCameraContractVersion: 1
   authoringCameraUsesPhysicalProperties: 0
   authoringCameraSensorSize: {x: 36, y: 24}
@@ -313,3 +312,5 @@ MonoBehaviour:
     DefaultMode: 2
   logCameraDiagnostics: 1
   logPlacementDiagnostics: 1
+  logFramingSnapshot: 1
+  framingSnapshotTime: 1

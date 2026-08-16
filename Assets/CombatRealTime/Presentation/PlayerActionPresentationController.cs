@@ -5,10 +5,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PlayerActionPresentationController : MonoBehaviour
 {
-    private const string LocomotionState = "Base Layer.Locomotion";
-
     [SerializeField] private Animator animator;
     [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
+    [SerializeField] private PlayerModelAnimationProfile animationProfile;
     [SerializeField] private bool debugTransitions;
 
     private Coroutine actionRoutine;
@@ -48,10 +47,14 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         debugTransitions = !debugTransitions;
     }
 
-    public void ResolveReferences(Animator targetAnimator, LitOpsiveLocomotionBridge targetBridge)
+    public void ResolveReferences(
+        Animator targetAnimator,
+        LitOpsiveLocomotionBridge targetBridge,
+        PlayerModelAnimationProfile targetProfile = null)
     {
         if (targetAnimator != null) animator = targetAnimator;
         if (targetBridge != null) locomotionBridge = targetBridge;
+        if (targetProfile != null) animationProfile = targetProfile;
     }
 
     public void SetActionFacingTarget(Transform target)
@@ -96,8 +99,29 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     public bool TryPlayCombatState(string stateName, PlayerActionPresentationProfile profile, string debugName)
     {
-        if (string.IsNullOrWhiteSpace(stateName)) return false;
-        return TryPlay(Animator.StringToHash(stateName), profile, debugName, false);
+        if (!PlayerAnimatorStateResolver.TryResolve(
+                animator, animationProfile, stateName, out int stateHash, out _))
+        {
+            Debug.LogWarning("[PlayerAnimation] Etat introuvable pour " + debugName + " : " + stateName, this);
+            return false;
+        }
+
+        return TryPlay(stateHash, profile, debugName, false);
+    }
+
+    public bool TryPlayPlayerModelState(
+        PlayerModelAnimationState state,
+        PlayerActionPresentationProfile profile,
+        string debugName)
+    {
+        if (!PlayerAnimatorStateResolver.TryResolve(
+                animator, animationProfile, state, out int stateHash, out _))
+        {
+            Debug.LogWarning("[PlayerAnimation] Etat de profil introuvable pour " + debugName + " : " + state, this);
+            return false;
+        }
+
+        return TryPlay(stateHash, profile, debugName, false);
     }
 
     public IEnumerator WaitForChainWindow()
@@ -147,8 +171,8 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             return false;
         }
 
-        int stateHash = Animator.StringToHash(stateName);
-        if (!animator.HasState(0, stateHash))
+        if (!PlayerAnimatorStateResolver.TryResolve(
+                animator, animationProfile, stateName, out int stateHash, out _))
         {
             return false;
         }
@@ -173,6 +197,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         if (animationContract != null && animationContract.ValidateContract(out _))
         {
             animator = animationContract.Animator;
+            animationProfile = animationContract.AnimationProfile;
         }
         if (locomotionBridge == null) locomotionBridge = GetComponentInChildren<LitOpsiveLocomotionBridge>();
     }
@@ -402,7 +427,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             locomotionBridge.RefreshLocomotionPresentation();
         }
 
-        animator.CrossFade(LocomotionState, Mathf.Clamp(profile.exitBlendSeconds, 0f, 0.25f), 0);
+        CrossFadeProfileState(PlayerModelAnimationState.Locomotion, Mathf.Clamp(profile.exitBlendSeconds, 0f, 0.25f));
         FinishWithoutTransition(token);
     }
 
@@ -415,8 +440,16 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
 
         locomotionBridge?.RefreshLocomotionPresentation();
-        animator.CrossFade(LocomotionState, 0.08f, 0);
+        CrossFadeProfileState(PlayerModelAnimationState.Locomotion, 0.08f);
         FinishWithoutTransition(token);
+    }
+
+    private void CrossFadeProfileState(PlayerModelAnimationState state, float transitionSeconds)
+    {
+        if (PlayerAnimatorStateResolver.TryResolve(animator, animationProfile, state, out int stateHash, out _))
+        {
+            animator.CrossFade(stateHash, transitionSeconds, 0);
+        }
     }
 
     private bool StartBufferedAction(int token)

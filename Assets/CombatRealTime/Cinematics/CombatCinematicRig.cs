@@ -425,6 +425,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
                 AbortStart("Reinitialisation des acteurs apres Evaluate invalide");
                 return false;
             }
+            ArmContractCinematicMotion();
         }
         Physics.SyncTransforms();
         UpdateCinematicBrain();
@@ -769,6 +770,12 @@ public sealed class CombatCinematicRig : MonoBehaviour
     {
         context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
         context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.EndCinematicMotion(sessionToken);
+    }
+
+    private void ArmContractCinematicMotion()
+    {
+        context?.PlayerRoot?.GetComponent<CombatActorAnimationRoot>()?.ArmCinematicMotion(sessionToken);
+        context?.TargetEnemy?.GetComponent<CombatActorAnimationRoot>()?.ArmCinematicMotion(sessionToken);
     }
 
     private static bool UsesRelativeActorTracks(PlayableAsset timeline, string playerTrack, string enemyTrack)

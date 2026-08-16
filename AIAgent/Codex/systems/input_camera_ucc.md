@@ -155,6 +155,21 @@ Les actions de combat font face a l'ennemi verrouille. Pour `Dodge`, un stick
 gauche non nul a priorite : Lucian s'oriente vers la direction voulue et roule
 dans celle-ci. Sans direction, il reste face a la cible et roule vers l'arriere.
 
+### Contrat Animator de Lucian
+
+`Player_Model_Lucian` reference `PlayerModelAnimationProfile` via
+`CombatActorAnimationRoot`. Le contrat accepte un Animator porte directement
+par l'ActorRoot (layout actuel de Lucian) ou par son enfant direct
+`AnimationRoot`. Ce profil est l'unique source des chemins d'etats
+partages par la locomotion de retour, l'esquive, la garde, les reactions de
+degats et la mort. `PlayerAnimatorStateResolver` valide chaque etat sur
+l'Animator reel avant lecture; une configuration invalide est journalisee au
+lieu de faire echouer une action sans diagnostic. Les `SkillSO` conservent leur
+etat specifique, mais passent par la meme validation (notamment
+`Skill_1_Eclair`, qui cible `Base Layer.Skill_1_Eclair`). Le menu Unity
+`Lit/Combat/Audit Player Model Inputs & Animation` verifie le prefab de Lucian,
+les etats requis, les `SkillSO` et les actions gamepad avant une livraison.
+
 `LocalPlayerInput` est persistant en Play Mode. Pendant un dechargement de
 scene dans l'editeur, son `InputActionAsset` doit etre detruit immediatement :
 une destruction differee laisse Unity signaler un objet `LocalPlayerInput`

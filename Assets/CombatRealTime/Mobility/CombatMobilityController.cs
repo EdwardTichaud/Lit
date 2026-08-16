@@ -29,10 +29,6 @@ public sealed class CombatMobilityController : MonoBehaviour
     [SerializeField, Min(0f)] private float mobilityInputBufferSeconds = 0.12f;
 
     [Header("Dodge")]
-    [SerializeField] private string dodgeForwardState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root";
-    [SerializeField] private string dodgeBackwardState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root";
-    [SerializeField] private string dodgeLeftState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root";
-    [SerializeField] private string dodgeRightState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root";
     [SerializeField] private CombatMobilityActionSettings dodge = new CombatMobilityActionSettings
     {
         cooldownSeconds = 0.25f,
@@ -160,18 +156,18 @@ public sealed class CombatMobilityController : MonoBehaviour
         Vector2 movementInput = bridge.CurrentWorldMoveInput;
         bool hasExplicitDirection = movementInput.sqrMagnitude > 0.0001f;
         Vector3 direction;
-        string state;
+        PlayerModelAnimationState state;
         if (hasExplicitDirection)
         {
             direction = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
             manager.FacePlayerTowardsDirection(direction);
-            state = dodgeForwardState;
+            state = ResolveDodgeState(manager.PlayerRoot, direction);
         }
         else
         {
             manager.FacePlayerTowardsLockedEnemy();
             direction = ResolveMovementDirection(manager.PlayerRoot, fallbackBackward: true);
-            state = dodgeBackwardState;
+            state = PlayerModelAnimationState.DodgeBackward;
         }
 
         if (!TryPlayMobilityState(state, dodge, PlayerActionRootMotionMode.AuthoredRootMotion, "Dodge"))
@@ -196,12 +192,12 @@ public sealed class CombatMobilityController : MonoBehaviour
     }
 
     private bool TryPlayMobilityState(
-        string stateName,
+        PlayerModelAnimationState state,
         CombatMobilityActionSettings settings,
         PlayerActionRootMotionMode rootMotionMode,
         string debugName)
     {
-        if (actionPresentation == null || string.IsNullOrWhiteSpace(stateName))
+        if (actionPresentation == null)
         {
             return false;
         }
@@ -222,7 +218,7 @@ public sealed class CombatMobilityController : MonoBehaviour
             allowMobilityCancel = true
         };
 
-        return actionPresentation.TryPlayCombatState(stateName, profile, debugName);
+        return actionPresentation.TryPlayPlayerModelState(state, profile, debugName);
     }
 
     private IEnumerator GrantDodgeInvulnerability()
@@ -269,20 +265,20 @@ public sealed class CombatMobilityController : MonoBehaviour
         return fallbackBackward ? -fallback : fallback;
     }
 
-    private string ResolveDodgeState(Transform player, Vector3 worldDirection)
+    private PlayerModelAnimationState ResolveDodgeState(Transform player, Vector3 worldDirection)
     {
         if (player == null)
         {
-            return dodgeForwardState;
+            return PlayerModelAnimationState.DodgeForward;
         }
 
         float forward = Vector3.Dot(player.forward, worldDirection);
         float right = Vector3.Dot(player.right, worldDirection);
         if (Mathf.Abs(forward) >= Mathf.Abs(right))
         {
-            return forward >= 0f ? dodgeForwardState : dodgeBackwardState;
+            return forward >= 0f ? PlayerModelAnimationState.DodgeForward : PlayerModelAnimationState.DodgeBackward;
         }
 
-        return right >= 0f ? dodgeRightState : dodgeLeftState;
+        return right >= 0f ? PlayerModelAnimationState.DodgeRight : PlayerModelAnimationState.DodgeLeft;
     }
 }

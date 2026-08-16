@@ -146,6 +146,22 @@ public partial class SquadCharacterController
         }
     }
 
+    /// <summary>
+    /// Gives a Timeline exclusive control of the character. Unlike an external
+    /// input lock, this also suppresses UCC gravity so the actor root cannot
+    /// fall while the Timeline owns its presentation.
+    /// </summary>
+    public bool TryBeginUccCinematicTraversal()
+    {
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        return bridge != null && bridge.TryBeginScriptedTraversal(out _);
+    }
+
+    public void EndUccCinematicTraversal()
+    {
+        GetUccLocomotionBridge()?.EndScriptedTraversal();
+    }
+
     public bool TrySetUccExternalPositionAndRotation(Vector3 position, Quaternion rotation, bool stopActiveAbilities = true)
     {
         LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();

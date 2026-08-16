@@ -106,7 +106,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         chargeBeforeCinematic = charge;
         charge = 0f;
         combatManager.CancelPlayerActionForCinematic();
-        playerLockHeld = combatManager.TryLockPlayerForCinematic();
+        playerLockHeld = combatManager.TryBeginPlayerLightSkillCinematic();
         combatInput?.SetInputActive(false);
         Trace("Verrous appliques | playerLock=" + playerLockHeld + " | inputCombat=false.");
         if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
@@ -196,7 +196,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         cinematicPlaying = false;
         if (playerLockHeld)
         {
-            combatManager?.UnlockPlayerAfterCinematic();
+            combatManager?.EndPlayerLightSkillCinematic();
             playerLockHeld = false;
         }
 
@@ -270,7 +270,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         chargeBeforeCinematic = 0f;
         if (playerLockHeld)
         {
-            combatManager?.UnlockPlayerAfterCinematic();
+            combatManager?.EndPlayerLightSkillCinematic();
             playerLockHeld = false;
         }
 

@@ -1356,10 +1356,8 @@ MonoBehaviour:
   scaleLockRangeWithEnemy: 1
   clarityForS: 100
   successfulReactionClarity: 5
-  playerDeathAnimatorState: Base Layer.Death
   defeatPanelExtraDelaySeconds: 0.25
   playerDeathFallbackDuration: 1
-  playerHurtAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   playerHurtTransitionDuration: 0.05
 --- !u!114 &810000000000000002
 MonoBehaviour:
@@ -1396,10 +1394,6 @@ MonoBehaviour:
   combatInput: {fileID: 810000000000000002}
   actionPresentation: {fileID: 0}
   mobilityInputBufferSeconds: 0.12
-  dodgeForwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
-  dodgeBackwardState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
-  dodgeLeftState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root
-  dodgeRightState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root
   dodge:
     cooldownSeconds: 0.25
     entryBlendSeconds: 0.05
@@ -1733,9 +1727,6 @@ MonoBehaviour:
   availableSkills:
   - {fileID: 11400000, guid: 8418564374f398941bb11ff9df6a6dba, type: 2}
   guardedDamageMultiplier: 0.4
-  guardAnimatorState: Base Layer.RealTimeCombat_RootMotion.Guard_Block
-  guardFallbackAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root
-  guardReleaseAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root
   guardAnimationBlendSeconds: 0.08
   guardStartVfx: {fileID: 0}
   guardStartAudio: {fileID: 0}

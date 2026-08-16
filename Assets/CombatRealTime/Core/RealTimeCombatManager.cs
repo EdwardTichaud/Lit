@@ -24,28 +24,29 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [Header("Lock")]
     [SerializeField, Min(0.1f)] private float lockRange = 6f;
     [SerializeField, Min(0.1f)] private float automaticUnlockRange = 7f;
-    [SerializeField, Tooltip("Etend les portees de lock selon la plus grande composante de scale de l'ennemi. Les ennemis de scale inferieure a 1 gardent la portee de base.")]
+    [SerializeField, Tooltip("Etend les portees de lock selon la taille reelle de l'ennemi. Les ennemis de taille inferieure a la reference gardent la portee de base.")]
     private bool scaleLockRangeWithEnemy = true;
+    [SerializeField, Min(0.1f), Tooltip("Hauteur monde qui correspond a un coefficient de lock x1. Augmentez cette valeur si les grands ennemis obtiennent une portee trop importante.")]
+    private float lockRangeReferenceHeight = 2f;
 
     [Header("Clarity")]
     [SerializeField, Min(1f)] private float clarityForS = 100f;
     [SerializeField, Min(0f)] private float successfulReactionClarity = 5f;
 
     [Header("Defeat")]
-    [SerializeField] private string playerDeathAnimatorState = "Base Layer.Death";
     [SerializeField, Min(0f)] private float defeatPanelExtraDelaySeconds = 0.25f;
     [SerializeField, Min(0.1f)] private float playerDeathFallbackDuration = 1f;
     [SerializeField, Tooltip("Journalise les sorties automatiques de combat pour diagnostiquer les cinematiques.")]
     private bool logCombatDisengageDiagnostics = true;
 
     [Header("Damage Reaction")]
-    [SerializeField] private string playerHurtAnimatorState = "Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root";
     [SerializeField, Range(0f, 0.25f)] private float playerHurtTransitionDuration = 0.05f;
 
     private readonly Dictionary<CombatAttackDefinition, float> cooldowns = new Dictionary<CombatAttackDefinition, float>();
     private readonly HashSet<RealTimeCombatReaction> receivedReactions = new HashSet<RealTimeCombatReaction>();
     private readonly HashSet<RealTimeCombatEnemy> attackModeEnemies = new HashSet<RealTimeCombatEnemy>();
     private bool combatActive;
+    private PlayerModelAnimationProfile playerAnimationProfile;
     private bool reactionWindowOpen;
     private bool reactionSucceeded;
     private bool stopPlayerWhenMovementReleased;
@@ -70,6 +71,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public Transform PlayerRoot => playerRoot;
     public Animator PlayerAnimator => playerAnimator;
     public RealTimeCombatLoadout PlayerLoadout => playerLoadout;
+    public PlayerModelAnimationProfile PlayerAnimationProfile => playerAnimationProfile;
     public RealTimeCombatEnemy LockedEnemy => lockedEnemy;
     public float Clarity => clarity;
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
@@ -469,7 +471,37 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         Vector3 scale = enemy.transform.lossyScale;
-        return Mathf.Max(1f, Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+        float rootScale = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+        float visualScale = GetEnemyVisualHeight(enemy) / Mathf.Max(0.1f, lockRangeReferenceHeight);
+        return Mathf.Max(1f, rootScale, visualScale);
+    }
+
+    private static float GetEnemyVisualHeight(RealTimeCombatEnemy enemy)
+    {
+        Renderer[] renderers = enemy.GetComponentsInChildren<Renderer>();
+        bool hasBounds = false;
+        Bounds bounds = default;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy ||
+                renderer is ParticleSystemRenderer || renderer is TrailRenderer || renderer is LineRenderer)
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        return hasBounds ? Mathf.Max(0f, bounds.size.y) : 0f;
     }
 
     public void SetLockedEnemy(RealTimeCombatEnemy enemy)
@@ -513,7 +545,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         if (playerAnimator != null && !string.IsNullOrWhiteSpace(attack.AnimatorState) &&
-            !playerAnimator.HasState(0, Animator.StringToHash(attack.AnimatorState)))
+            !PlayerAnimatorStateResolver.TryResolve(
+                playerAnimator,
+                playerAnimationProfile,
+                attack.AnimatorState,
+                out _,
+                out _))
         {
             Debug.LogWarning("[RealTimeCombatManager] Etat Animator introuvable pour l'attaque '" + attack.name + "': " + attack.AnimatorState, this);
             return false;
@@ -594,27 +631,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private bool TryResolveSkillAnimatorState(SkillSO skill, out int stateHash, out string attemptedStateName)
     {
-        string configuredState = skill.AnimatorState;
-        if (!string.IsNullOrWhiteSpace(configuredState))
-        {
-            attemptedStateName = configuredState.Trim();
-            stateHash = Animator.StringToHash(attemptedStateName);
-            if (playerAnimator.HasState(0, stateHash))
-            {
-                return true;
-            }
-        }
-
-        attemptedStateName = "Base Layer." + skill.AnimationClip.name;
-        stateHash = Animator.StringToHash(attemptedStateName);
-        if (playerAnimator.HasState(0, stateHash))
-        {
-            return true;
-        }
-
-        attemptedStateName = skill.AnimationClip.name;
-        stateHash = Animator.StringToHash(attemptedStateName);
-        return playerAnimator.HasState(0, stateHash);
+        return PlayerAnimatorStateResolver.TryResolve(
+            playerAnimator,
+            playerAnimationProfile,
+            skill != null ? skill.AnimatorState : null,
+            out stateHash,
+            out attemptedStateName);
     }
 
     private void FaceLockedEnemyForAction()
@@ -797,6 +819,21 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public void UnlockPlayerAfterCinematic()
     {
         playerController?.EndUccExternalLock();
+    }
+
+    /// <summary>
+    /// LightSkills move the actor through Timeline root motion. They need the
+    /// stronger UCC traversal lock so gravity cannot move the actor root while
+    /// the Timeline is evaluating.
+    /// </summary>
+    public bool TryBeginPlayerLightSkillCinematic()
+    {
+        return playerController != null && playerController.TryBeginUccCinematicTraversal();
+    }
+
+    public void EndPlayerLightSkillCinematic()
+    {
+        playerController?.EndUccCinematicTraversal();
     }
 
     public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
@@ -1003,6 +1040,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (playerAnimationContract != null && playerAnimationContract.ValidateContract(out _))
         {
             playerAnimator = playerAnimationContract.Animator;
+            playerAnimationProfile = playerAnimationContract.AnimationProfile;
         }
         if (playerActionPresentation == null)
         {
@@ -1013,7 +1051,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             }
         }
 
-        playerActionPresentation.ResolveReferences(playerAnimator, playerLocomotionBridge);
+        playerActionPresentation.ResolveReferences(playerAnimator, playerLocomotionBridge, playerAnimationProfile);
         if (playerMobility == null) playerMobility = GetComponent<CombatMobilityController>();
         if (playerVision == null) playerVision = playerRoot.GetComponentInChildren<VisionField>(true);
         if (combatInput == null) combatInput = FindAnyObjectByType<RealTimeCombatInput>();
@@ -1082,21 +1120,20 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private void PlayPlayerHurtAnimation()
     {
-        if (playerAnimator == null || string.IsNullOrWhiteSpace(playerHurtAnimatorState))
+        if (!PlayerAnimatorStateResolver.TryResolve(
+                playerAnimator,
+                playerAnimationProfile,
+                PlayerModelAnimationState.Hurt,
+                out int stateHash,
+                out _))
         {
-            return;
-        }
-
-        int stateHash = Animator.StringToHash(playerHurtAnimatorState);
-        if (!playerAnimator.HasState(0, stateHash))
-        {
-            Debug.LogWarning("[RealTimeCombat] State de hurt introuvable : " + playerHurtAnimatorState, playerAnimator);
+            Debug.LogWarning("[RealTimeCombat] Etat de hurt Player_Model introuvable.", this);
             return;
         }
 
         if (playerActionPresentation == null ||
-            !playerActionPresentation.TryPlayCombatState(
-                playerHurtAnimatorState,
+            !playerActionPresentation.TryPlayPlayerModelState(
+                PlayerModelAnimationState.Hurt,
                 PlayerActionPresentationProfile.CreateDefault(),
                 "Hurt"))
         {
@@ -1159,20 +1196,19 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private void PlayPlayerDeathAnimation()
     {
         playerController?.Stop();
-        if (playerAnimator == null || string.IsNullOrWhiteSpace(playerDeathAnimatorState))
+        if (!PlayerAnimatorStateResolver.TryResolve(
+                playerAnimator,
+                playerAnimationProfile,
+                PlayerModelAnimationState.Death,
+                out int stateHash,
+                out string deathState))
         {
-            return;
-        }
-
-        int stateHash = Animator.StringToHash(playerDeathAnimatorState);
-        if (!playerAnimator.HasState(0, stateHash))
-        {
-            Debug.LogWarning("[RealTimeCombat] State de mort introuvable : " + playerDeathAnimatorState, playerAnimator);
+            Debug.LogWarning("[RealTimeCombat] Etat de mort Player_Model introuvable.", this);
             return;
         }
 
         if (playerActionPresentation != null &&
-            playerActionPresentation.LockDeathAnimation(playerDeathAnimatorState, 0.05f))
+            playerActionPresentation.LockDeathAnimation(deathState, 0.05f))
         {
             return;
         }

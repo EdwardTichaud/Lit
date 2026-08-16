@@ -33,8 +33,9 @@ slots, le ledger de lumiere des ennemis, les fenetres de reaction pilotees par
 Animation Events, le lock camera, les inputs dedies et les vues HUD/loadout.
 Le verrouillage est entierement manuel : `LeftShoulder` verrouille l'ennemi le
 plus proche a portee, puis le deverrouille au prochain appui. Les portees de
-lock et de deverrouillage augmentent avec la plus grande composante de scale de
-l'ennemi. Une step finale `LaunchCombat` de `StorySequenceAsset` peut lancer
+lock et de deverrouillage augmentent avec la taille visuelle reelle de l'ennemi
+(`Lock Range Reference Height` definit le coefficient x1), avec fallback sur
+sa scale de root. Une step finale `LaunchCombat` de `StorySequenceAsset` peut lancer
 le combat a la fin reelle de la sequence : lock de l'ennemi le plus grand puis
 le plus proche, musique combat et degats de lumiere `openingCombatDamage` (50
 par defaut). Un orbe lumineux pulse et un signal sonore sont joues sur
@@ -79,9 +80,15 @@ l'ennemi verrouille et une Virtual Camera, puis son Animation Event applique les
 degats propres au `CounterSkillSO`. `EastButton` est l'unique esquive root avec
 i-frames; le dash combat precedent a ete retire de ce mapping.
 Le maintien de South joue `Guard_Block` depuis le pack Super Fast Fighting,
-avec `Twinblades_Defense_Hit_Root` comme fallback tant que la state n'a pas ete
-installee dans `Player_Model`. Relacher South rend l'Idle de combat; seule une
-pression commencant dans une fenetre qui accepte `Counter` declenche la parade.
+avec `Twinblades_Defense_Hit_Root` comme fallback. Relacher South rend l'Idle
+de combat; seule une pression commencant dans une fenetre qui accepte `Counter`
+declenche la parade. Les chemins d'etats Player_Model sont centralises dans
+`PlayerModelAnimationProfile`, reference par `CombatActorAnimationRoot` de
+Lucian et valide par `PlayerAnimatorStateResolver`; esquive, garde, hurt, mort
+et retour locomotion ne dupliquent plus de noms d'etats dans les composants.
+`Skill_1_Eclair` pointe vers l'etat reel `Base Layer.Skill_1_Eclair`. Le menu
+`Lit/Combat/Audit Player Model Inputs & Animation` controle le contrat du prefab,
+les etats, les Skills et les actions gamepad.
 Les actions combat orientent Lucian vers `EnemyLockPoint`. L'esquive fait
 exception : une direction explicite du stick a priorite, Lucian s'oriente alors
 dans cette direction et y roule; sans direction, il reste face a l'ennemi et
@@ -190,6 +197,9 @@ Animation Hierarchies` encapsule sans deformer les skeletons importes les
 Animators de Lucian et des ennemis sous un `AnimationRoot` identite, retire les
 Animators vides et rebranche les references de combat, UCC et presentation. La
 prevalidation des trois prefabs bloque toute migration partielle.
+Le relay de root motion est arme seulement apres `Evaluate(0)` et le placement
+sur anchors; il ignore le delta initial et tout delta superieur a 5 m/frame,
+afin qu'une pose Transform d'auteur ne puisse plus teleporter les acteurs.
 En sortie, les poses locales imposees par les Animation Tracks sur les Animators
 Player et Enemy sont remises a zero avant la remise en pool du rig : chaque
 declenchement repart donc d'un etat propre sans reemployer l'offset precedent.
@@ -199,9 +209,9 @@ prochaine acquisition.
 Pendant la Timeline, l'auto-desengagement de combat est suspendu : l'IA cible
 est volontairement inactive et ne doit jamais interrompre la sequence avant sa
 fin.
-La pose de Lucian passe par `SetCinematicPositionAndRotation` du bridge UCC :
-elle reste donc autorisee pendant le verrou d'input de la Timeline, sans jamais
-le liberer.
+La pose de Lucian passe par `SetCinematicPositionAndRotation` du bridge UCC,
+avec un verrou de traversee scriptée propre aux LightSkills : la gravite et les
+capacites UCC sont suspendues pendant Timeline, puis restaurees a sa sortie.
 La Brain passe en `Cut` pendant une Timeline LightSkill, puis retrouve son
 blend precedent a la restitution : aucun mélange UCC/Cinemachine ne modifie le
 premier plan cinematographique.
