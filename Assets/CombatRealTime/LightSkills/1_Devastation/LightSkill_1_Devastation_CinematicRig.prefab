@@ -191,7 +191,7 @@ GameObject:
   - component: {fileID: 111999126406637411}
   - component: {fileID: 6889411731289885747}
   m_Layer: 0
-  m_Name: LightSkill_Devastation_CinematicRig
+  m_Name: LightSkill_1_Devastation_CinematicRig
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -3935,7 +3935,10 @@ MonoBehaviour:
   lightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
   director: {fileID: 9111142501208813963}
   previewPlayerAnimator: {fileID: 4028338658885062955}
-  previewEnemyAnimator: {fileID: 6507037881183918065}
+  previewEnemyAnimator: {fileID: 0}
+  previewPlayerAnchor: {fileID: 0}
+  previewEnemyAnchor: {fileID: 0}
+  previewEnemyLockPoint: {fileID: 0}
   previewCameraBrain: {fileID: 6563474756499325508}
   previewVirtualCamera: {fileID: 972363991334100073}
   previewSignalReceiver: {fileID: 9058773452457398538}
@@ -7762,10 +7765,5 @@ PrefabInstance:
 --- !u!4 &1264755831306985310 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6314463698388112091, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
-  m_PrefabInstance: {fileID: 5056464849357098373}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &6507037881183918065 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 2045073517310351988, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
   m_PrefabInstance: {fileID: 5056464849357098373}
   m_PrefabAsset: {fileID: 0}
