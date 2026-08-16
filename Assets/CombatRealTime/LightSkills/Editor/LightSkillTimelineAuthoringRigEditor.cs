@@ -24,6 +24,19 @@ public sealed class LightSkillTimelineAuthoringRigEditor : Editor
             else EditorGUILayout.HelpBox(report, MessageType.Error);
         }
 
+        if (GUILayout.Button("Log Framing Audit"))
+        {
+            if (LightSkillRuntimeRigBaker.LogFramingAudit(rig, out string report)) Debug.Log("[LightSkill Framing Authoring] " + report, rig);
+            else EditorGUILayout.HelpBox(report, MessageType.Error);
+        }
+
+        if (GUILayout.Button("Attach Framing Audit To Active Rig"))
+        {
+            if (LightSkillRuntimeRigBaker.AttachFramingAuditToActiveRig(rig, out string report))
+                Debug.Log("[LightSkill Framing Audit] " + report, rig);
+            else EditorUtility.DisplayDialog("LightSkill Framing Audit", report, "OK");
+        }
+
         if (GUILayout.Button("Bake LightSkill"))
         {
             if (LightSkillRuntimeRigBaker.Bake(rig, out CombatCinematicRig bakedRig, out string report))
@@ -122,7 +135,7 @@ public static class LightSkillRuntimeRigBaker
         }
 
         string prefabPath = folder + "/" + skill.name + "_CinematicRig.prefab";
-        string runtimeTimelinePath = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + skill.name + "_Runtime_Baked.playable");
+        string runtimeTimelinePath = folder + "/" + skill.name + "_Runtime.playable";
         if (AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) != null &&
             !EditorUtility.DisplayDialog("Bake LightSkill", "Remplacer le package runtime existant ?\n" + prefabPath,
                 "Remplacer", "Annuler"))
@@ -131,7 +144,7 @@ public static class LightSkillRuntimeRigBaker
             return false;
         }
 
-        string temporaryTimelinePath = runtimeTimelinePath;
+        string temporaryTimelinePath = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + skill.name + "_Runtime_BakeTmp.playable");
         string temporaryPrefabPath = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + skill.name + "_CinematicRig_BakeTmp.prefab");
         GameObject root = null;
         bool bakeCompleted = false;
@@ -167,6 +180,12 @@ public static class LightSkillRuntimeRigBaker
 
             List<CombatCinematicCameraBinding> cameras = CopyReferencedCameras(authoringRig, runtimeTimeline, root.transform);
             List<CameraSnapshot> authorCameras = CaptureAuthorCameraSnapshots(authoringRig, sourceTimeline);
+            List<CombatCinematicFramingReference> framingReferences = CaptureAuthorFramingReferences(authoringRig, sourceTimeline, out string framingError);
+            if (!string.IsNullOrEmpty(framingError))
+            {
+                report = framingError;
+                return false;
+            }
             Dictionary<LightSkillRuntimeExport, LightSkillRuntimeExport> exports = CopyRuntimeExports(authoringRig, root.transform);
             List<CombatCinematicTrackBinding> tracks = CopyExtraTrackBindings(
                 authoringRig,
@@ -179,6 +198,18 @@ public static class LightSkillRuntimeRigBaker
                 authoringRig.transform,
                 authoringRig.PreviewPlayerAnchor,
                 authoringRig.PreviewEnemyAnchor);
+            List<CombatCinematicMotionEnvelopeSample> motionEnvelope = CaptureAuthorMotionEnvelope(
+                authoringRig,
+                sourceTimeline,
+                skill.CinematicClearance != null ? skill.CinematicClearance.sampleRate : 30,
+                out string envelopeError);
+            if (motionEnvelope == null)
+            {
+                report = envelopeError;
+                return false;
+            }
+            rig.ConfigureMotionEnvelope(motionEnvelope);
+            rig.ConfigureFramingReferences(framingReferences);
             if (CountMissingScripts(root) > 0)
             {
                 report = "Le package contient un script manquant avant sauvegarde. Corrigez AnimationLab, puis rebakez.";
@@ -216,7 +247,7 @@ public static class LightSkillRuntimeRigBaker
                 return false;
             }
 
-            if (!TryFinalizePackage(root, prefabPath, out string finalizeError))
+            if (!TryFinalizePackage(root, prefabPath, temporaryTimelinePath, runtimeTimelinePath, out string finalizeError))
             {
                 report = "Le bake temporaire est valide, mais le remplacement du package existant a echoue : " + finalizeError;
                 return false;
@@ -236,9 +267,11 @@ public static class LightSkillRuntimeRigBaker
             skillSerialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(skill);
             AssetDatabase.SaveAssets();
+            CleanupObsoleteBakedTimelines(folder, skill.name, runtimeTimelinePath);
 
             report = "Package runtime bake : " + prefabPath + "\nTimeline runtime : " + runtimeTimelinePath + "\n" +
-                packageReport + "\nExports : " + exports.Count + ". Exclus : preview actors, Preview_MainCamera, Brain et AudioListener.";
+                packageReport + "\nTrajectoire : " + motionEnvelope.Count + " echantillon(s)." +
+                "\nExports : " + exports.Count + ". Exclus : preview actors, Preview_MainCamera, Brain et AudioListener.";
             return true;
         }
         finally
@@ -251,7 +284,111 @@ public static class LightSkillRuntimeRigBaker
         }
     }
 
-    private static bool TryFinalizePackage(GameObject runtimeRigRoot, string prefabPath, out string error)
+    public static bool LogFramingAudit(LightSkillTimelineAuthoringRig authoringRig, out string report)
+    {
+        report = null;
+        if (authoringRig == null || authoringRig.LightSkill == null)
+        {
+            report = "Rig d'auteur ou LightSkillSO manquant.";
+            return false;
+        }
+
+        TimelineAsset timeline = authoringRig.LightSkill.Timeline as TimelineAsset;
+        if (timeline == null)
+        {
+            report = "Timeline d'auteur introuvable.";
+            return false;
+        }
+
+        if (!authoringRig.ApplyPreviewBindings(out string bindingError))
+        {
+            report = bindingError;
+            return false;
+        }
+
+        List<CombatCinematicFramingReference> references = CaptureAuthorFramingReferences(authoringRig, timeline, out report);
+        if (references == null)
+        {
+            return false;
+        }
+
+        List<string> lines = new List<string>();
+        for (int i = 0; i < references.Count; i++)
+        {
+            CombatCinematicFramingReference reference = references[i];
+            lines.Add("t=" + reference.timelineTime.ToString("0.000") +
+                      " camera='" + reference.cameraKey + "'" +
+                      " playerStage=" + reference.playerAnimatorStagePosition.ToString("F4") +
+                      " enemyStage=" + reference.enemyAnimatorStagePosition.ToString("F4") +
+                      " cameraStage=" + reference.cameraStagePosition.ToString("F4") +
+                      " cameraRot=" + reference.cameraStageRotation.eulerAngles.ToString("F4") +
+                      " fov=" + reference.cameraFieldOfView.ToString("0.000"));
+        }
+
+        report = "Timeline='" + timeline.name + "'\n" + string.Join("\n", lines);
+        return true;
+    }
+
+    public static bool AttachFramingAuditToActiveRig(LightSkillTimelineAuthoringRig authoringRig, out string report)
+    {
+        report = null;
+        if (authoringRig == null || authoringRig.LightSkill == null || authoringRig.LightSkill.CombatCinematicRigPrefab == null)
+        {
+            report = "Le prefab runtime actif du LightSkill est requis.";
+            return false;
+        }
+
+        TimelineAsset timeline = authoringRig.LightSkill.Timeline as TimelineAsset;
+        if (timeline == null)
+        {
+            report = "Timeline d'auteur introuvable.";
+            return false;
+        }
+
+        List<CombatCinematicFramingReference> references = CaptureAuthorFramingReferences(authoringRig, timeline, out string captureError);
+        if (references == null)
+        {
+            report = captureError;
+            return false;
+        }
+
+        string prefabPath = AssetDatabase.GetAssetPath(authoringRig.LightSkill.CombatCinematicRigPrefab);
+        GameObject prefabContents = PrefabUtility.LoadPrefabContents(prefabPath);
+        try
+        {
+            CombatCinematicRig runtimeRig = prefabContents.GetComponent<CombatCinematicRig>();
+            if (runtimeRig == null)
+            {
+                report = "CombatCinematicRig est absent du prefab runtime actif.";
+                return false;
+            }
+
+            for (int i = 0; i < references.Count; i++)
+            {
+                if (!runtimeRig.HasCameraBinding(references[i].cameraKey))
+                {
+                    report = "La camera d'auteur '" + references[i].cameraKey + "' n'existe pas dans le prefab runtime actif. Rebakerez le package avant de comparer le cadrage.";
+                    return false;
+                }
+            }
+
+            runtimeRig.ConfigureFramingReferences(references);
+            PrefabUtility.SaveAsPrefabAsset(prefabContents, prefabPath);
+            report = "References de cadrage attachees au prefab actif : " + prefabPath + ". " + references.Count + " releve(s) seront compares en runtime.";
+            return true;
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(prefabContents);
+        }
+    }
+
+    private static bool TryFinalizePackage(
+        GameObject runtimeRigRoot,
+        string prefabPath,
+        string temporaryTimelinePath,
+        string runtimeTimelinePath,
+        out string error)
     {
         error = null;
         if (runtimeRigRoot == null)
@@ -260,21 +397,87 @@ public static class LightSkillRuntimeRigBaker
             return false;
         }
 
+        string previousTimelinePath = null;
+        bool runtimeTimelineMoved = false;
         try
         {
+            AssetDatabase.SaveAssets();
+            if (AssetDatabase.LoadMainAssetAtPath(runtimeTimelinePath) != null)
+            {
+                previousTimelinePath = AssetDatabase.GenerateUniqueAssetPath(
+                    Path.GetDirectoryName(runtimeTimelinePath)?.Replace('\\', '/') + "/Runtime_Previous.playable");
+                string movePreviousError = AssetDatabase.MoveAsset(runtimeTimelinePath, previousTimelinePath);
+                if (!string.IsNullOrEmpty(movePreviousError))
+                {
+                    error = movePreviousError;
+                    return false;
+                }
+            }
+
+            string moveRuntimeError = AssetDatabase.MoveAsset(temporaryTimelinePath, runtimeTimelinePath);
+            if (!string.IsNullOrEmpty(moveRuntimeError))
+            {
+                error = moveRuntimeError;
+                RestorePreviousRuntimeTimeline(runtimeTimelinePath, temporaryTimelinePath, previousTimelinePath);
+                return false;
+            }
+            runtimeTimelineMoved = true;
+
             if (PrefabUtility.SaveAsPrefabAsset(runtimeRigRoot, prefabPath) == null)
             {
                 error = "Unity n'a pas pu enregistrer le prefab runtime final.";
+                RestorePreviousRuntimeTimeline(runtimeTimelinePath, temporaryTimelinePath, previousTimelinePath);
                 return false;
             }
 
             AssetDatabase.SaveAssets();
+            if (!string.IsNullOrEmpty(previousTimelinePath))
+            {
+                AssetDatabase.DeleteAsset(previousTimelinePath);
+            }
             return true;
         }
         catch (Exception exception)
         {
             error = exception.Message;
+            if (runtimeTimelineMoved)
+            {
+                RestorePreviousRuntimeTimeline(runtimeTimelinePath, temporaryTimelinePath, previousTimelinePath);
+            }
             return false;
+        }
+    }
+
+    private static void RestorePreviousRuntimeTimeline(
+        string runtimeTimelinePath,
+        string temporaryTimelinePath,
+        string previousTimelinePath)
+    {
+        if (AssetDatabase.LoadMainAssetAtPath(runtimeTimelinePath) != null)
+        {
+            AssetDatabase.MoveAsset(runtimeTimelinePath, temporaryTimelinePath);
+        }
+
+        if (!string.IsNullOrEmpty(previousTimelinePath) && AssetDatabase.LoadMainAssetAtPath(previousTimelinePath) != null)
+        {
+            AssetDatabase.MoveAsset(previousTimelinePath, runtimeTimelinePath);
+        }
+    }
+
+    private static void CleanupObsoleteBakedTimelines(string folder, string skillName, string runtimeTimelinePath)
+    {
+        string obsoletePrefix = folder + "/" + skillName + "_Runtime_Baked";
+        string[] guids = AssetDatabase.FindAssets("t:TimelineAsset", new[] { folder });
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+            if (string.Equals(assetPath, runtimeTimelinePath, StringComparison.Ordinal) ||
+                !assetPath.StartsWith(obsoletePrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            AssetDatabase.DeleteAsset(assetPath);
         }
     }
 
@@ -613,6 +816,8 @@ public static class LightSkillRuntimeRigBaker
 
         if (!bakedRig.HasAuthoringStageLayout)
             issues.Add("Le prefab baked ne contient pas PlayerStageAnchor et EnemyStageAnchor.");
+        if (!bakedRig.HasAuthoringMotionEnvelope)
+            issues.Add("Le prefab baked ne contient pas l'enveloppe de trajectoire. Rebakez la LightSkill.");
 
         string prefabPath = AssetDatabase.GetAssetPath(bakedRig.gameObject);
         if (CountMissingScripts(prefabPath) > 0)
@@ -845,6 +1050,176 @@ public static class LightSkillRuntimeRigBaker
         {
             PrefabUtility.UnloadPrefabContents(contents);
         }
+    }
+
+    private static List<CombatCinematicFramingReference> CaptureAuthorFramingReferences(
+        LightSkillTimelineAuthoringRig rig,
+        TimelineAsset timeline,
+        out string error)
+    {
+        error = null;
+        if (rig == null || rig.Director == null || rig.PreviewPlayerAnimator == null ||
+            rig.PreviewEnemyAnimator == null || timeline == null)
+        {
+            error = "Impossible de capturer le cadrage : rig, Timeline ou acteurs preview manquants.";
+            return null;
+        }
+
+        if (!rig.ApplyPreviewBindings(out error))
+        {
+            return null;
+        }
+
+        PlayableDirector director = rig.Director;
+        double previousTime = director.time;
+        List<CombatCinematicFramingReference> references = new List<CombatCinematicFramingReference>();
+        try
+        {
+            foreach (double time in GetFramingAuditTimes(timeline))
+            {
+                director.time = time;
+                director.Evaluate();
+                CinemachineCamera camera = ResolveAuthorCameraAtTime(rig, timeline, time, out string cameraKey);
+                if (camera == null)
+                {
+                    error = "Camera d'auteur introuvable a t=" + time.ToString("0.000") + ".";
+                    return null;
+                }
+
+                references.Add(new CombatCinematicFramingReference
+                {
+                    timelineTime = time,
+                    cameraKey = cameraKey,
+                    playerAnimatorStagePosition = rig.transform.InverseTransformPoint(rig.PreviewPlayerAnimator.transform.position),
+                    playerAnimatorStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewPlayerAnimator.transform.rotation,
+                    enemyAnimatorStagePosition = rig.transform.InverseTransformPoint(rig.PreviewEnemyAnimator.transform.position),
+                    enemyAnimatorStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewEnemyAnimator.transform.rotation,
+                    cameraStagePosition = rig.transform.InverseTransformPoint(camera.transform.position),
+                    cameraStageRotation = Quaternion.Inverse(rig.transform.rotation) * camera.transform.rotation,
+                    cameraFieldOfView = camera.Lens.FieldOfView
+                });
+            }
+        }
+        finally
+        {
+            director.time = previousTime;
+            director.Evaluate();
+        }
+
+        return references;
+    }
+
+    private static List<CombatCinematicMotionEnvelopeSample> CaptureAuthorMotionEnvelope(
+        LightSkillTimelineAuthoringRig rig,
+        TimelineAsset timeline,
+        int sampleRate,
+        out string error)
+    {
+        error = null;
+        if (rig == null || rig.Director == null || rig.PreviewPlayerAnimator == null ||
+            rig.PreviewEnemyAnimator == null || timeline == null)
+        {
+            error = "Impossible de capturer la trajectoire : rig, Timeline ou acteurs preview manquants.";
+            return null;
+        }
+
+        if (!rig.ApplyPreviewBindings(out error)) return null;
+        sampleRate = Mathf.Max(1, sampleRate);
+        SortedSet<double> sampleTimes = new SortedSet<double> { 0d, timeline.duration };
+        double interval = 1d / sampleRate;
+        for (double time = interval; time < timeline.duration; time += interval)
+            sampleTimes.Add(time);
+
+        foreach (PlayableBinding output in timeline.outputs)
+        {
+            if (output.sourceObject is not AnimationTrack track ||
+                (output.streamName != LightSkillTimelineContract.PlayerAnimatorTrack &&
+                 output.streamName != LightSkillTimelineContract.EnemyAnimatorTrack)) continue;
+            foreach (TimelineClip clip in track.GetClips())
+            {
+                sampleTimes.Add(Math.Max(0d, clip.start));
+                sampleTimes.Add(Math.Min(timeline.duration, clip.end));
+            }
+        }
+
+        PlayableDirector director = rig.Director;
+        double previousTime = director.time;
+        List<CombatCinematicMotionEnvelopeSample> samples = new List<CombatCinematicMotionEnvelopeSample>(sampleTimes.Count);
+        try
+        {
+            foreach (double time in sampleTimes)
+            {
+                director.time = time;
+                director.Evaluate();
+                samples.Add(new CombatCinematicMotionEnvelopeSample
+                {
+                    timelineTime = (float)time,
+                    playerStagePosition = rig.transform.InverseTransformPoint(rig.PreviewPlayerAnimator.transform.position),
+                    playerStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewPlayerAnimator.transform.rotation,
+                    enemyStagePosition = rig.transform.InverseTransformPoint(rig.PreviewEnemyAnimator.transform.position),
+                    enemyStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewEnemyAnimator.transform.rotation
+                });
+            }
+        }
+        finally
+        {
+            director.time = previousTime;
+            director.Evaluate();
+        }
+
+        if (samples.Count == 0)
+        {
+            error = "La Timeline ne produit aucun echantillon de trajectoire.";
+            return null;
+        }
+        return samples;
+    }
+
+    private static List<double> GetFramingAuditTimes(TimelineAsset timeline)
+    {
+        SortedSet<double> times = new SortedSet<double> { 0d };
+        if (timeline == null) return new List<double>(times);
+
+        if (timeline.duration >= 1d)
+        {
+            times.Add(1d);
+        }
+
+        foreach (PlayableBinding output in timeline.outputs)
+        {
+            if (output.sourceObject is not CinemachineTrack track) continue;
+            foreach (TimelineClip clip in track.GetClips())
+            {
+                if (clip.start > 0d && clip.start < timeline.duration)
+                {
+                    times.Add(clip.start);
+                }
+            }
+        }
+
+        return new List<double>(times);
+    }
+
+    private static CinemachineCamera ResolveAuthorCameraAtTime(
+        LightSkillTimelineAuthoringRig rig,
+        TimelineAsset timeline,
+        double time,
+        out string cameraKey)
+    {
+        cameraKey = null;
+        foreach (PlayableBinding output in timeline.outputs)
+        {
+            if (output.sourceObject is not CinemachineTrack track) continue;
+            foreach (TimelineClip clip in track.GetClips())
+            {
+                if (time < clip.start || time > clip.end || clip.asset is not CinemachineShot shot) continue;
+                cameraKey = shot.VirtualCamera.exposedName.ToString();
+                bool assigned;
+                return rig.Director.GetReferenceValue(shot.VirtualCamera.exposedName, out assigned) as CinemachineCamera;
+            }
+        }
+
+        return null;
     }
 
     private sealed class CameraSnapshot

@@ -121,6 +121,18 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// A Timeline using scene offsets already owns the actor transform. In that
+    /// case its Animator deltas must not be applied a second time by the relay.
+    /// </summary>
+    public void SetCinematicRootMotionRelayEnabled(bool enabled)
+    {
+        if (rootMotionRelay != null)
+        {
+            rootMotionRelay.enabled = enabled;
+        }
+    }
+
     public void EndCinematicMotion(int sessionToken)
     {
         if (cinematicSessionToken != sessionToken)

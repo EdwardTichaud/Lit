@@ -88,8 +88,10 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         CombatCinematicContext context = new CombatCinematicContext(combatManager, lightSkill, ResolveLightSkillImpact);
-        if (!lightSkill.CombatCinematicRigPrefab.TryGetMidpointPlacement(
+        if (!CombatCinematicPlacementResolver.TryResolve(
+                lightSkill.CombatCinematicRigPrefab,
                 context,
+                lightSkill.CinematicClearance,
                 out CombatCinematicPlacement placement,
                 out string placementError))
         {

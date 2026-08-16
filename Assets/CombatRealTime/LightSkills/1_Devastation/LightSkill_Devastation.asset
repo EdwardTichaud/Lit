@@ -21,6 +21,17 @@ MonoBehaviour:
   enemyAnimatorTrackName: Enemy.Animator
   cinemachineTrackName: Cinemachine
   maximumCinematicStartDistance: 18
+  cinematicClearance:
+    enabled: 1
+    rotationStepDegrees: 15
+    blockingLayers:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    ignoreCommonNonBlockingLayers: 1
+    safetyMargin: 0.08
+    maximumFinalDepenetration: 0.2
+    sampleRate: 30
+    trajectoryType: 0
   startSfx: {fileID: 0}
   impulseSfx: {fileID: 0}
   impactSfx: {fileID: 0}

@@ -139,10 +139,20 @@ Timeline et la piste reste liee a la Brain de `CombatLockOnCameraController`,
 jamais a une camera de preview. Un nouveau bake est requis apres
 toute modification de Timeline, camera ou objet exporte.
 `LightSkill_Devastation` est la base active; Furie a ete supprime integralement.
-Le bake genere une Timeline runtime versionnee et validee, puis reenregistre le
-prefab stable au meme chemin pour pointer vers elle. Il n'ecrit ni ne deplace
-une Timeline deja chargee par Unity; le `LightSkillSO` continue de referencer le
-seul prefab runtime stable.
+Le bake valide une Timeline temporaire, puis remplace la seule Timeline runtime
+stable `<LightSkill>_Runtime.playable` et le prefab au meme chemin. En cas
+d'echec le package precedent reste intact; apres succes, les anciens assets
+`Runtime_Baked*` sont supprimes. Le bouton `Log Framing Audit` du rig auteur
+capture les poses AnimationLab a `0 s`, `1 s` et aux changements de plan; le
+rig runtime compare automatiquement Player, Enemy, camera, rotation et FOV aux
+memes instants afin d'isoler tout decalage sans compenser le montage.
+`Attach Framing Audit To Active Rig` permet d'ajouter ces seuls releves au
+package runtime deja actif, sans rebaker ni modifier son montage.
+Les LightSkills a pistes acteurs `ApplySceneOffsets` suspendent le relais de
+root motion pendant la Timeline : elle reste l'unique proprietaire du
+deplacement et evite une double application des deltas.
+Le lancement attend une frame de rendu apres `Evaluate(0)` pour que la Brain
+Cinemachine resolve la camera d'ouverture avant la premiere frame jouee.
 Le bake compare maintenant un snapshot de chaque camera d'auteur (cle Timeline,
 transform, FOV, priorite, Output Channel, targets, Follow offset et pipeline)
 au prefab exporte. Une divergence, un script manquant ou une dependance a
@@ -172,8 +182,15 @@ dans AnimationLab. Le bake les exporte comme `PlayerStageAnchor` et
 locators. Au runtime, le rig est pose au midpoint de Lucian et de l'ennemi,
 aligne sur leur axe horizontal et les vrais roots sont poses directement sur les
 anchors avant la premiere evaluation de Timeline. Il n'y a ni recherche de
-plateau, ni test de sol, mur, collision ou NavMesh, ni flash de transition.
-Les positions finales sont conservees.
+plateau, ni deplacement peripherique, ni test de NavMesh ou flash de
+transition. Une enveloppe Player/Enemy bakee a 30 Hz est toutefois verifiee au
+midpoint pour les orientations `0`, `+15`, `-15` degres puis sur 360 degres :
+la premiere trajectoire libre est retenue, ce qui permet a une LightSkill
+longitudinale de s'aligner dans un couloir. Les capsules
+`CombatCinematicClearanceProxy` ignorent les sols, personnages, triggers et
+`CinematicPassThrough`, mais refusent les decors bloquants; sans angle valide,
+la charge est conservee. Les positions finales sont conservees avec une petite
+depenetration finale plafonnee.
 Les pistes `Player.Animator` et `Enemy.Animator` sont converties au bake en
 `ApplySceneOffsets`. Une LightSkill posee sur un plateau laisse alors Timeline
 etre l'unique pilote des transforms acteurs pendant la lecture : le rig ne lit

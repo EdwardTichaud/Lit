@@ -58,8 +58,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2641056579910858047}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.27568254, z: -0, w: 0.96124876}
-  m_LocalPosition: {x: 2.5, y: 1.7, z: -7}
+  m_LocalRotation: {x: -0.13159494, y: 0.2730869, z: -0.037740935, w: -0.95219845}
+  m_LocalPosition: {x: 1.54, y: 1.62, z: -5.46}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -89,7 +89,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 40
+    FieldOfView: 65
     OrthographicSize: 10
     NearClipPlane: 0.1
     FarClipPlane: 5000
@@ -224,7 +224,7 @@ PlayableDirector:
   m_GameObject: {fileID: 7992036132239899766}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 774c7989633426d408db489b820f1dc8, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: 75de0161c2a3347409a57be19407c051, type: 2}
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -293,6 +293,25 @@ MonoBehaviour:
   trackBindings:
   - trackName: Animation Track
     target: {fileID: 8775905700786398892}
+  framingReferences:
+  - timelineTime: 0
+    cameraKey: Devastation.Opening:385302167
+    playerAnimatorStagePosition: {x: 0, y: 0, z: -4}
+    playerAnimatorStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyAnimatorStagePosition: {x: 0, y: 0, z: 4}
+    enemyAnimatorStageRotation: {x: 0, y: 1, z: -0, w: 0}
+    cameraStagePosition: {x: 1.54, y: 1.62, z: -5.46}
+    cameraStageRotation: {x: -0.13159494, y: 0.2730869, z: -0.037740935, w: -0.95219845}
+    cameraFieldOfView: 65
+  - timelineTime: 1
+    cameraKey: Devastation.Opening:385302167
+    playerAnimatorStagePosition: {x: -0.3378979, y: 0, z: -1.8252234}
+    playerAnimatorStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyAnimatorStagePosition: {x: 0, y: 0, z: 4}
+    enemyAnimatorStageRotation: {x: 0, y: 1, z: -0, w: 0}
+    cameraStagePosition: {x: 1.6462142, y: 1.4744997, z: -0.6804881}
+    cameraStageRotation: {x: -0.048682835, y: 0.76128906, z: -0.10753288, w: -0.637578}
+    cameraFieldOfView: 65
   playerStageAnchor: {fileID: 6409483832770504499}
   enemyStageAnchor: {fileID: 5748743492838349259}
   authoringPlayerLocalPosition: {x: 0, y: 0, z: -4}

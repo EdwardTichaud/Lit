@@ -2,6 +2,32 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
+public enum CombatCinematicTrajectoryType
+{
+    Longitudinal,
+    Radial
+}
+
+[System.Serializable]
+public sealed class CombatCinematicClearanceProfile
+{
+    [Tooltip("Active la recherche d'une orientation sure autour du midpoint, sans deplacer le combat.")]
+    public bool enabled = true;
+    [Range(1f, 90f), Tooltip("Pas angulaire de recherche. Les orientations les plus proches de l'axe courant sont testees en premier.")]
+    public float rotationStepDegrees = 15f;
+    [Tooltip("Colliders qui peuvent bloquer une trajectoire cinematographique. Les triggers et les acteurs concernes sont toujours ignores.")]
+    public LayerMask blockingLayers = ~0;
+    [Tooltip("Ignore automatiquement les layers sol/eau/UI/personnages lorsqu'ils existent dans le projet.")]
+    public bool ignoreCommonNonBlockingLayers = true;
+    [Min(0f), Tooltip("Marge ajoutee aux capsules de securite.")]
+    public float safetyMargin = 0.08f;
+    [Min(0f), Tooltip("Correction finale maximale autorisee apres la Timeline. Zero desactive la depenetration finale.")]
+    public float maximumFinalDepenetration = 0.2f;
+    [Min(1), Tooltip("Frequence de l'enveloppe bakee. 30 Hz est recommande pour les clips rapides.")]
+    public int sampleRate = 30;
+    public CombatCinematicTrajectoryType trajectoryType = CombatCinematicTrajectoryType.Longitudinal;
+}
+
 [CreateAssetMenu(fileName = "LightSkillSO", menuName = "Scriptable Objects/Combat/Light Skill SO")]
 public sealed class LightSkillSO : ScriptableObject
 {
@@ -25,6 +51,9 @@ public sealed class LightSkillSO : ScriptableObject
     [SerializeField] private string cinemachineTrackName = "Cinemachine";
     [SerializeField, Min(0.1f), Tooltip("Portee maximale entre Lucian et la cible au lancement de la cinematic.")]
     private float maximumCinematicStartDistance = 18f;
+    [Header("Cinematic Clearance")]
+    [Tooltip("Validation des trajectoires bakees avant le lancement de la Timeline.")]
+    [SerializeField] private CombatCinematicClearanceProfile cinematicClearance = new CombatCinematicClearanceProfile();
     [Header("Cinematic Audio")]
     [SerializeField] private AudioClipSO startSfx;
     [SerializeField] private AudioClipSO impulseSfx;
@@ -59,6 +88,7 @@ public sealed class LightSkillSO : ScriptableObject
     public string EnemyAnimatorTrackName => enemyAnimatorTrackName;
     public string CinemachineTrackName => cinemachineTrackName;
     public float MaximumCinematicStartDistance => maximumCinematicStartDistance;
+    public CombatCinematicClearanceProfile CinematicClearance => cinematicClearance;
     public AudioClipSO StartSfx => startSfx;
     public AudioClipSO ImpulseSfx => impulseSfx;
     public AudioClipSO ImpactSfx => impactSfx;

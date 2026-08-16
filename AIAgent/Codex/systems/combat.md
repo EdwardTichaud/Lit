@@ -62,11 +62,21 @@ la Timeline. Les preview actors, camera, Brain et AudioListener restent dans
 `AnimationLab`; les tracks Player/Enemy sont lies aux vrais Animators lors du
 lancement. Les seules copies de GameObjects autorisees sont les Cinemachines
 utilisees et les racines marquees `LightSkillRuntimeExport`; leurs tracks sont
-enregistres dans `CombatCinematicRig`. Chaque bake cree une copie Timeline
-runtime versionnee et validee, puis reenregistre le prefab stable au meme chemin
-pour la referencer. Il n'ecrit ni ne deplace une Timeline que Unity garde encore
-chargee; le `LightSkillSO` conserve donc sa seule reference stable vers le
-prefab runtime.
+enregistres dans `CombatCinematicRig`. Chaque bake valide d'abord une copie
+temporaire, puis remplace atomiquement la seule Timeline runtime stable
+`<LightSkill>_Runtime.playable` et le prefab stable. En cas d'echec, le package
+precedent reste intact; apres succes, les anciennes Timeline `Runtime_Baked*`
+non utilisees sont supprimees.
+Pour auditer un package deja fige sans le rebaker, `Attach Framing Audit To
+Active Rig` copie uniquement les releves d'AnimationLab dans son prefab actif;
+aucun clip, track, camera ni montage n'est modifie.
+Lorsqu'une LightSkill utilise des pistes acteurs `ApplySceneOffsets`, la Timeline
+est l'unique proprietaire des transforms pendant la sequence : le relais de
+root motion des acteurs est suspendu pour eviter un second deplacement de
+Lucian ou de l'ennemi.
+Le premier lancement attend une frame de rendu apres `Evaluate(0)` avant de
+jouer la Timeline : la Brain Cinemachine a ainsi deja resolu la camera d'ouverture
+au lieu d'afficher une frame de camera gameplay non initialisee.
 Chaque camera exportee peut declarer une
 cible de suivi/regard Player, Enemy ou EnemyLockPoint et les modules
 `CinemachineFollow`/visee correspondants; une camera sans cible est valide si
@@ -92,10 +102,18 @@ des roots Player et Enemy. Le bake les copie comme `PlayerStageAnchor` et
 manquerait l'un de ces reperes. Une LightSkill place le root du rig au midpoint
 exact des roots de Lucian et de l'ennemi verrouille, aligne l'axe bake sur leur
 axe horizontal, puis pose directement les vrais roots sur ces anchors avant la
-premiere evaluation de Timeline. Il n'y a aucune recherche de plateau, aucun
-test de sol, mur, collision ou NavMesh et aucun effet de masquage. Les positions
-atteintes sont conservees a la sortie. Toute modification de formation dans
-`AnimationLab` necessite un nouveau `Bake LightSkill`.
+premiere evaluation de Timeline. Le midpoint ne bouge jamais : avant le
+lancement, `CombatCinematicPlacementResolver` teste toutefois les orientations
+`0`, `+15`, `-15` degres et ainsi de suite sur 360 degres, au moyen de
+l'enveloppe Player/Enemy bakee a 30 Hz. Les capsules de
+`CombatCinematicClearanceProxy` ignorent sol, eau, UI, personnages, triggers et
+les objets marques `CinematicPassThrough`, mais refusent un decor bloquant sur
+la trajectoire. La premiere orientation sure est retenue; aucune orientation
+valide refuse la LightSkill sans consommer sa charge. Les positions atteintes
+sont conservees a la sortie, avec une depenetration finale plafonnee. Toute
+modification de formation dans `AnimationLab` necessite un nouveau
+`Bake LightSkill`; il faut aussi rebaker toute LightSkill creee avant
+l'enveloppe de mouvement.
 Les Animators ne sont jamais convertis en poses de root : cette ancienne
 conversion pouvait cumuler un offset de hierarchie et une position monde
 d'auteur. Au bake, les pistes `Player.Animator` et `Enemy.Animator` sont forcees
@@ -132,6 +150,12 @@ etre interpole avec la pose UCC precedente.
 Le rig d'auteur ne choisit jamais de camera de remplacement : une cle de
 `CinemachineShot` non resolue est bloquante, afin que le plan previsualise et
 le plan bake soient necessairement le meme.
+Le bouton `Log Framing Audit` du rig d'auteur evalue les poses de reference a
+`0 s`, `1 s` et a chaque changement de plan Cinemachine. Ces releves sont
+emballes dans le rig baked; en jeu, `CombatCinematicRig` journalise aux memes
+instants les ecarts Player, Enemy, camera, rotation et FOV, ainsi que la
+camera attendue/active et les verrous UCC. Cette instrumentation sert a isoler
+un decalage de cadrage sans corriger le montage par compensation runtime.
 Une `AnimationTrack` liee a l'Animator d'une Cinemachine d'auteur est reconnue
 comme une piste camera et est liee a l'Animator de sa copie baked. Cela preserve
 les enregistrements de transform et de Lens de la Timeline sans laisser une
