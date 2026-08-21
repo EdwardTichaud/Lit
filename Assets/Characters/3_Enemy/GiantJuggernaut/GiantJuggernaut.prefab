@@ -5435,8 +5435,10 @@ GameObject:
   - component: {fileID: 2855008630490265850}
   - component: {fileID: 1507485742872985387}
   - component: {fileID: 1157863950513175024}
-  - component: {fileID: 975321468012345678}
   - component: {fileID: 8793910659942973289}
+  - component: {fileID: 708000000000000001}
+  - component: {fileID: 708000000000000002}
+  - component: {fileID: 708000000000000003}
   m_Layer: 0
   m_Name: GiantJuggernaut
   m_TagString: Untagged
@@ -5540,6 +5542,7 @@ MonoBehaviour:
   animator: {fileID: 88241028141342083}
   visionField: {fileID: 2296660950243021819}
   enemySkills: {fileID: 1507485742872985387}
+  physicsMotor: {fileID: 708000000000000003}
   lockOutline: {fileID: 0}
   lockIndicator: {fileID: 3580122951686355419}
   hitAnimatorState: Hit
@@ -5593,6 +5596,80 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!54 &708000000000000001
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 1
+  m_Constraints: 80
+  m_CollisionDetection: 3
+--- !u!136 &708000000000000002
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.7
+  m_Height: 2.2
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.1, z: 0}
+--- !u!114 &708000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82fcd1459df94c2da7699f306512c9a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatEnemyPhysicsMotor
+  enemy: {fileID: 847953340343303029}
+  navigationAgent: {fileID: 7177769581939990386}
+  body: {fileID: 708000000000000001}
+  bodyCollider: {fileID: 708000000000000002}
+  groundSkin: 0.03
+  groundProbeStartHeight: 0.35
+  groundProbeDistance: 8
+  minimumGroundNormal: 0.45
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  logStateChanges: 0
 --- !u!114 &2855008630490265850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5713,29 +5790,6 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   keepActorHeight: 1
---- !u!114 &975321468012345678
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82e1a95b3cba4bcc867d4f3062a9d501, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationGroundRecovery
-  animator: {fileID: 88241028141342083}
-  lockVerticalRootMotionToGround: 0
-  probeHeight: 15
-  probeDistance: 40
-  minimumGroundNormal: 0.45
-  penetrationTolerance: 0.03
-  recoverySpeed: 18
-  immediateRecoveryDistance: 0.5
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!114 &8793910659942973289
 MonoBehaviour:
   m_ObjectHideFlags: 0

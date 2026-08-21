@@ -126,9 +126,28 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     public void EndEnemyAttack()
     {
         RealTimeCombatEnemy currentEnemy = ResolveEnemy();
-        RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
-        ResolveEnemySkills()?.ReturnToIdle();
-        GetComponentInParent<AnimationGroundRecovery>()?.RequestGroundSnap();
+        if (currentEnemy == null)
+        {
+            return;
+        }
+
+        currentEnemy.CompleteEnemyAttackWhenGrounded(() =>
+        {
+            RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
+            ResolveEnemySkills()?.ReturnToIdle();
+        });
+    }
+
+    /// <summary>Enemy Animation Event: starts the authored ballistic phase.</summary>
+    public void BeginEnemyAirborne()
+    {
+        ResolveEnemy()?.BeginEnemyAirborne();
+    }
+
+    /// <summary>Enemy Animation Event: asks the physics motor to settle onto the ground.</summary>
+    public void RequestEnemyLanding()
+    {
+        ResolveEnemy()?.RequestEnemyLanding();
     }
 
     /// <summary>

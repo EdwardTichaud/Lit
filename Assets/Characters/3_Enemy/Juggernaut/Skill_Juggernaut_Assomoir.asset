@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   animationClip: {fileID: 7400000, guid: 39aa5681d3ef38d4c91d6b7760d13249, type: 2}
   animatorState: Assomoir
-  damages: 0
+  damages: 20
   lightChargeOnHit: 1
   presentation:
     entryBlendSeconds: 0.06
@@ -82,6 +82,13 @@ MonoBehaviour:
   acceptedEnemyReactions: 0100000002000000
   requireAllEnemyReactions: 0
   enemyAttackSfx: {fileID: 0}
+  enemyActionMotion:
+    movementMode: 0
+    initialUpwardSpeed: 12
+    gravity: 32
+    maximumFallSpeed: 28
+    minimumLandingSpeed: 4
+    maximumAirborneSeconds: 2.5
   reactionTelegraph:
     enabled: 1
     alertPrefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}

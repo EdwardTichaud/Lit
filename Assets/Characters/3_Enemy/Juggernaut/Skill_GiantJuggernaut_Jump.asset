@@ -38,3 +38,10 @@ MonoBehaviour:
   acceptedEnemyReactions: 02000000
   requireAllEnemyReactions: 0
   enemyAttackSfx: {fileID: 0}
+  enemyActionMotion:
+    movementMode: 1
+    initialUpwardSpeed: 18
+    gravity: 38
+    maximumFallSpeed: 32
+    minimumLandingSpeed: 7
+    maximumAirborneSeconds: 2.2

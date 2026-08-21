@@ -111,6 +111,30 @@ public enum PlayerActionFacingMode
     UccBody
 }
 
+public enum EnemyActionMovementMode
+{
+    Grounded,
+    Airborne
+}
+
+[Serializable]
+public sealed class EnemyActionMotionProfile
+{
+    public EnemyActionMovementMode movementMode = EnemyActionMovementMode.Grounded;
+    [Min(0f), Tooltip("Vitesse verticale initiale appliquee par BeginEnemyAirborne.")]
+    public float initialUpwardSpeed = 12f;
+    [Min(0.1f)] public float gravity = 32f;
+    [Min(0.1f)] public float maximumFallSpeed = 28f;
+    [Min(0.01f), Tooltip("Vitesse descendante minimale lorsqu'un atterrissage est demande.")]
+    public float minimumLandingSpeed = 4f;
+    [Min(0.1f), Tooltip("Securite : l'ennemi force son retour au sol apres cette duree.")]
+    public float maximumAirborneSeconds = 2.5f;
+
+    public bool IsAirborne => movementMode == EnemyActionMovementMode.Airborne;
+
+    public static EnemyActionMotionProfile GroundedDefault => new EnemyActionMotionProfile();
+}
+
 [Serializable]
 public sealed class PlayerActionPresentationProfile
 {
@@ -179,6 +203,9 @@ public class SkillSO : ScriptableObject
     public List<RealTimeCombatReaction> acceptedEnemyReactions = new List<RealTimeCombatReaction> { RealTimeCombatReaction.Dodge };
     public bool requireAllEnemyReactions;
     public AudioClipSO enemyAttackSfx;
+    [Header("Enemy Motion")]
+    [Tooltip("Grounded ignore le root motion vertical. Airborne utilise BeginEnemyAirborne et une chute controlee.")]
+    public EnemyActionMotionProfile enemyActionMotion = new EnemyActionMotionProfile();
     [Header("Reaction Telegraph")]
     public CombatReactionTelegraphProfile reactionTelegraph = new CombatReactionTelegraphProfile();
 
@@ -200,6 +227,7 @@ public class SkillSO : ScriptableObject
     public IReadOnlyList<RealTimeCombatReaction> AcceptedEnemyReactions => acceptedEnemyReactions;
     public bool RequireAllEnemyReactions => requireAllEnemyReactions;
     public AudioClipSO EnemyAttackSfx => enemyAttackSfx;
+    public EnemyActionMotionProfile EnemyActionMotion => enemyActionMotion ?? (enemyActionMotion = EnemyActionMotionProfile.GroundedDefault);
     public CombatReactionTelegraphProfile ReactionTelegraph => reactionTelegraph ?? (reactionTelegraph = new CombatReactionTelegraphProfile());
 
     public bool AcceptsEnemyReaction(RealTimeCombatReaction reaction)

@@ -19,7 +19,7 @@ public sealed class CombatActorRootMotionRelay : MonoBehaviour
 
     private void OnAnimatorMove()
     {
-        if (!enabled || actor == null || animator == null || !actor.IsCinematicMotionActive)
+        if (!enabled || actor == null || animator == null || !actor.ShouldConsumeAnimatorRootMotion)
         {
             return;
         }

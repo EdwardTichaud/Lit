@@ -166,6 +166,8 @@ Signals projectile, impact VFX et degats. Un `LightSkillSO` peut aussi definir
 un state Animator optionnel pour Lucian et/ou l'ennemi apres une fin naturelle
 de Timeline (state, fondu, temps normalise). Ces states ne s'appliquent jamais
 apres interruption ou mort; une state `Death` conserve toujours sa priorite.
+`LightSkill_Devastation` utilise actuellement `GetUp` pour le Juggernaut; cette
+state joue `EnterTheBattle_1` en attente d'un clip de releve dedie.
 `ResolveLightSkillImpact` reste la seule resolution lorsque le fallback est
 desactive. `LightSkill_Devastation` est la base active; Furie a ete supprime.
 `CombatAttackDefinition`, `SkillSO`, `EnemySkills` et
@@ -362,10 +364,16 @@ jamais coupe et ne laisse pas l'ennemi en l'air. L'Animation Event
 configuree. `RealTimeCombatEnemy` coupe le root motion seulement pendant `Hit`,
 puis relache cette state a la duree du clip pour eviter un ennemi bloque ou
 decale du sol si son Animator ne contient pas de transition de sortie.
-Pour un skill root qui se termine en l'air, `EndEnemyAttack` demande aussi a
-`AnimationGroundRecovery` un unique snap vertical apres le root motion final.
-Cela ramene l'ennemi au support avant `Idle` sans supprimer la trajectoire du
-saut. Le clip `GiantJuggernaut_Jump` utilise `HitPlayerIf("Grounded")` a son
+`CombatEnemyPhysicsMotor` est l'unique autorite verticale des ennemis temps
+reel. Chaque prefab ennemi porte un `Rigidbody` cinematique et une
+`CapsuleCollider`; pendant une attaque, le `NavMeshAgent` est suspendu, le root
+motion horizontal est applique au `ActorRoot` et son composant vertical est
+ignore pour les skills `Grounded`. Un `SkillSO` ennemi peut declarer une
+trajectoire `Airborne`; ses Animation Events `BeginEnemyAirborne` et
+`RequestEnemyLanding` pilotent une chute controlee. `EndEnemyAttack` ne clot
+la riposte et ne retourne a `Idle` qu'apres le contact sol. Toute mort ou
+interruption force cette meme recuperation, sans laisser l'ennemi en hauteur.
+Le clip `GiantJuggernaut_Jump` utilise `HitPlayerIf("Grounded")` a son
 impact : une esquive par saut n'evite les degats que si Lucian n'est plus
 Grounded a cette frame.
 L'Animator utilise par `RealTimeCombatEnemy` doit posseder un Controller : la

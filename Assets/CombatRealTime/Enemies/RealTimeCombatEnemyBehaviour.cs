@@ -33,18 +33,12 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     [SerializeField, Min(0.05f)] private float patrolArrivalDistance = 0.15f;
     [SerializeField, Min(0f)] private float directMoveSpeed = 3.6f;
     [SerializeField, Min(0f)] private float turnSpeedDegreesPerSecond = 540f;
-    [Header("Physical Presence")]
-    [SerializeField, Tooltip("Option de diagnostic uniquement. Desactive par defaut : UCC gere le joueur et un collider ajoute a chaud peut bloquer son initialisation.")]
-    private bool ensurePhysicalBodyCollider;
-    [SerializeField, Min(0f), Tooltip("Epaissit legerement le rayon physique derive du NavMeshAgent.")]
-    private float physicalBodyRadiusPadding = 0.05f;
     [SerializeField, Tooltip("Journalise le replacement direct de l'ennemi par une LightSkill.")]
     private bool logCinematicPlacementDiagnostics = true;
 
     private Transform player;
     private VisionField visionField;
-    private CapsuleCollider physicalBodyCollider;
-    private Rigidbody physicalBodyRigidbody;
+    private CombatEnemyPhysicsMotor physicsMotor;
     private bool attackMode;
     private bool alerted;
     private bool provokedByPlayer;
@@ -99,55 +93,13 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             navigationAgent = GetComponent<NavMeshAgent>();
         }
 
-        EnsurePhysicalBodyCollider();
+        physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
 
         if (navigationAgent != null)
         {
             navigationAgent.updateRotation = false;
             TryPrepareNavigationAgent();
         }
-    }
-
-    private void EnsurePhysicalBodyCollider()
-    {
-        if (!ensurePhysicalBodyCollider)
-        {
-            return;
-        }
-
-        Collider[] colliders = GetComponents<Collider>();
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            if (colliders[i] is CapsuleCollider capsule && !capsule.isTrigger)
-            {
-                physicalBodyCollider = capsule;
-                break;
-            }
-        }
-
-        if (physicalBodyCollider == null)
-        {
-            physicalBodyCollider = gameObject.AddComponent<CapsuleCollider>();
-        }
-
-        float radius = navigationAgent != null ? navigationAgent.radius : 0.7f;
-        float height = navigationAgent != null ? navigationAgent.height : 2.2f;
-        physicalBodyCollider.isTrigger = false;
-        physicalBodyCollider.direction = 1;
-        physicalBodyCollider.radius = Mathf.Max(0.15f, radius + physicalBodyRadiusPadding);
-        physicalBodyCollider.height = Mathf.Max(physicalBodyCollider.radius * 2f, height);
-        physicalBodyCollider.center = new Vector3(0f, physicalBodyCollider.height * 0.5f, 0f);
-
-        physicalBodyRigidbody = GetComponent<Rigidbody>();
-        if (physicalBodyRigidbody == null)
-        {
-            physicalBodyRigidbody = gameObject.AddComponent<Rigidbody>();
-        }
-
-        physicalBodyRigidbody.isKinematic = true;
-        physicalBodyRigidbody.useGravity = false;
-        physicalBodyRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-        physicalBodyRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
     }
 
     private void OnEnable()
@@ -323,9 +275,12 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         cinematicSuspended = suspended;
         if (suspended)
         {
+            physicsMotor?.EnterCinematic();
             StopMovement();
             return;
         }
+
+        physicsMotor?.ExitCinematic();
 
         if (navigationSuppressedForCinematic)
         {

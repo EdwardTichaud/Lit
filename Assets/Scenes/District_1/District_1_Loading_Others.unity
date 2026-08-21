@@ -3102,6 +3102,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3884761766361048929, guid: f5bf933f572371045aef154a22c977f5, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
     - target: {fileID: 4457472128858001709, guid: f5bf933f572371045aef154a22c977f5, type: 3}
       propertyPath: m_Radius
       value: 5
@@ -6628,6 +6632,7 @@ MonoBehaviour:
   reactionChoiceParent: {fileID: 0}
   reactionChoiceWidth: 680
   closeChoiceText: Reculer
+  reactionChoiceInputRearmDelay: 0.2
   dissolveEffectRules:
   - effectId: lucie_dissolve
     requirement:
@@ -6657,8 +6662,22 @@ MonoBehaviour:
   proximityHiddenDissolveAmount: 0
   addProximityDissolveControllerIfMissing: 1
   drawProximitySpherecastGizmo: 1
+  proximityRevealExitHysteresis: 0.5
+  ghostAppearanceRendererDelay: 0.45
+  ghostDisappearanceRendererDelay: 1
+  enableProximityPresentation: 1
+  proximityPresentationDistance: 1.5
+  proximityFresnelTransitionDuration: 0.35
+  revealedFresnelTexturePower: 0.96
+  closeFresnelTexturePower: 1
+  proximityPresentationTargets: []
+  proximityCharacterEffects: []
+  deactivateGameObjectAfterFinalResolution: 1
+  resolvedEffectMinimumCleanupDelay: 0.15
+  resolvedEffectCleanupTimeout: 3
   outlineVisibleDissolveThreshold: 0.5
   outlineVisibleBelowDissolveThreshold: 1
+  outlineWhileGhostIsRevealed: 1
   requireLitInfluenceForAppearance: 0
   reactToFlameInfluence: 1
   useDirectLitInfluenceFallback: 1

@@ -170,7 +170,6 @@ public static class CombatActorAnimationContractEditor
         SetObjectReference(root.GetComponent<EnemySkills>(), "animator", animator);
         SetObjectReference(root.GetComponent<LitOpsiveLocomotionBridge>(), "animator", animator);
         SetObjectReference(root.GetComponent<PlayerActionPresentationController>(), "animator", animator);
-        SetObjectReference(root.GetComponent<AnimationGroundRecovery>(), "animator", animator);
     }
 
     private static void SetObjectReference(Object component, string propertyName, Object value)

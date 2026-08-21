@@ -19286,7 +19286,12 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'index_03_l'\n\tTransform 'lowerarm_l'\n\tTransform
+    'root'\n\tTransform 'pinky_03_l'\n\tTransform 'neck_01'\n\tTransform 'CC_Base_L_Eye'\n\tTransform
+    'pinky_03_r'\n\tTransform 'clavicle_l'\n\tTransform 'ring_02_l'\n\tTransform
+    'ball_l'\n\tand more ..."
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -21378,14 +21383,19 @@ Animator:
   m_GameObject: {fileID: 1927163759012114034}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
-  m_Controller: {fileID: 9100000, guid: 7d46c52cfbf9f3949a6d268fca8cc77c, type: 2}
+  m_Controller: {fileID: 9100000, guid: 5725d459f34716942a4471953620494a, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'clavicle_r'\n\tTransform 'index_metacarpal_l'\n\tTransform
+    'lowerarm_r'\n\tTransform 'index_metacarpal_r'\n\tTransform 'root'\n\tTransform
+    'spine_04'\n\tTransform 'ring_metacarpal_r'\n\tTransform 'hand_l'\n\tTransform
+    'head'\n\tTransform 'neck_01'\n\tand more ..."
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -25700,6 +25710,7 @@ MonoBehaviour:
   animator: {fileID: 5122093895041281714}
   visionField: {fileID: 0}
   enemySkills: {fileID: 0}
+  physicsMotor: {fileID: 0}
   lockOutline: {fileID: 0}
   lockIndicator: {fileID: 0}
   hitAnimatorState: Hit

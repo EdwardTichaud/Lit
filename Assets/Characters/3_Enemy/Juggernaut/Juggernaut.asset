@@ -19,6 +19,7 @@ MonoBehaviour:
   model: {fileID: 6071546326461560311, guid: 30f25bb4c4d1f2740aaf9204396fa529, type: 3}
   worldPrefab: {fileID: 6071546326461560311, guid: 30f25bb4c4d1f2740aaf9204396fa529, type: 3}
   skills: []
+  combatSkills: []
   stats:
     strength: 10
     dexterity: 10
@@ -26,10 +27,8 @@ MonoBehaviour:
     intelligence: 10
     wisdom: 10
     charisma: 10
-  starterItemsWithQuantity:
-  - item: {fileID: 11400000, guid: 8a93f57dfb7a39b489c2606d28b103e1, type: 2}
-    quantity: 1
-  hp: 10
+  starterItemsWithQuantity: []
+  hp: 1000
   isEnemy: 1
   combatCurrentHp: 0
   attackDamage: 4
@@ -41,6 +40,9 @@ MonoBehaviour:
     vfxLocalOffset: {x: 0, y: 1.1, z: 1.15}
     vfxLocalEulerAngles: {x: 0, y: 0, z: 0}
     vfxLifetime: 2
+    rangeType: 0
+    movementMode: 0
+    approachDistance: 1.25
   - displayName: Pique
     damage: 6
     animationName: Pique
@@ -48,11 +50,16 @@ MonoBehaviour:
     vfxLocalOffset: {x: 0, y: 1.05, z: 1.45}
     vfxLocalEulerAngles: {x: 0, y: 0, z: 0}
     vfxLifetime: 2
+    rangeType: 0
+    movementMode: 0
+    approachDistance: 1.25
   additionalEnemies: []
   voiceLines: []
   maisonWaitingPoint: 0
   inventoryItems: []
   equippedInteractionItems: []
+  enabledCombatItems: []
+  combatDefenseItemHitPoints: []
   flameSecondsRemaining: 0
   flameEquipped: 0
   inventoryInitialized: 0

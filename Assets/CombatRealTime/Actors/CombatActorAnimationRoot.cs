@@ -8,6 +8,7 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     [SerializeField] private Transform lockPoint;
 
     private CombatActorRootMotionRelay rootMotionRelay;
+    private CombatEnemyPhysicsMotor enemyPhysicsMotor;
     private int cinematicSessionToken = -1;
 
     public Transform ActorRoot => transform;
@@ -15,6 +16,8 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     public Animator Animator => animator;
     public Transform LockPoint => lockPoint;
     public bool IsCinematicMotionActive => cinematicSessionToken >= 0;
+    public bool ShouldConsumeAnimatorRootMotion => IsCinematicMotionActive ||
+                                                   (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion);
 
     private void Reset()
     {
@@ -133,6 +136,14 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         }
     }
 
+    public void EnableRootMotionRelay()
+    {
+        if (rootMotionRelay != null)
+        {
+            rootMotionRelay.enabled = true;
+        }
+    }
+
     public void EndCinematicMotion(int sessionToken)
     {
         if (cinematicSessionToken != sessionToken)
@@ -150,6 +161,12 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
 
     public void ApplyAnimationDelta(Vector3 worldDeltaPosition, Quaternion deltaRotation)
     {
+        if (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion)
+        {
+            enemyPhysicsMotor.ApplyActionRootMotion(worldDeltaPosition, deltaRotation);
+            return;
+        }
+
         if (!IsCinematicMotionActive)
         {
             return;
@@ -192,5 +209,7 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         {
             rootMotionRelay = animator.GetComponent<CombatActorRootMotionRelay>();
         }
+
+        enemyPhysicsMotor ??= GetComponent<CombatEnemyPhysicsMotor>();
     }
 }

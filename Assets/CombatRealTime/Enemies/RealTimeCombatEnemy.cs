@@ -12,6 +12,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private VisionField visionField;
     [SerializeField] private EnemySkills enemySkills;
+    [SerializeField] private CombatEnemyPhysicsMotor physicsMotor;
     [SerializeField] private CombatLockOutline lockOutline;
     [SerializeField] private CombatLockIndicator lockIndicator;
     [SerializeField] private string hitAnimatorState = "Hit";
@@ -33,6 +34,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     private SkillSO plannedRetaliationSkill;
     private float retaliationReadyAt;
     private bool deathAnimationPlayed;
+    private bool deathAnimationPendingGrounding;
     private Coroutine hitRecoveryRoutine;
     private bool restoreRootMotionAfterHit;
 
@@ -65,6 +67,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     {
         health = GetComponent<CombatHealth>();
         enemySkills = GetComponent<EnemySkills>();
+        physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
         animationContract = GetComponent<CombatActorAnimationRoot>();
         animator = ResolveCombatAnimator();
     }
@@ -81,6 +84,11 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         if (enemySkills == null)
         {
             enemySkills = GetComponent<EnemySkills>();
+        }
+
+        if (physicsMotor == null)
+        {
+            physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
         }
 
         animator = ResolveCombatAnimator();
@@ -175,6 +183,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         plannedRetaliationSkill = null;
+        physicsMotor?.BeginEnemyAction(activeSkill);
         committedRetaliationDamage = Mathf.CeilToInt(storedMaximumLightDamage * Mathf.Max(0f, activeSkill.EnemyDamageMultiplier));
         storedMaximumLightDamage = 0;
 
@@ -229,6 +238,27 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         queuedMaximumLightDamage = 0;
         retaliationReadyAt = Time.time + retaliationDelaySeconds;
         LightAbsorbed?.Invoke(storedMaximumLightDamage);
+    }
+
+    public void CompleteEnemyAttackWhenGrounded(Action onGrounded)
+    {
+        if (physicsMotor == null)
+        {
+            onGrounded?.Invoke();
+            return;
+        }
+
+        physicsMotor.CompleteEnemyAction(onGrounded);
+    }
+
+    public void BeginEnemyAirborne()
+    {
+        physicsMotor?.BeginEnemyAirborne();
+    }
+
+    public void RequestEnemyLanding()
+    {
+        physicsMotor?.RequestEnemyLanding();
     }
 
     public void SetLockPresentation(bool locked, bool playSound)
@@ -288,6 +318,29 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     public void PlayDeathAnimation()
     {
+        if (deathAnimationPlayed || animator == null || string.IsNullOrWhiteSpace(deathAnimatorState))
+        {
+            return;
+        }
+
+        if (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion)
+        {
+            if (deathAnimationPendingGrounding)
+            {
+                return;
+            }
+
+            deathAnimationPendingGrounding = true;
+            physicsMotor.InterruptEnemyAction(PlayDeathAnimationAfterGrounding);
+            return;
+        }
+
+        PlayDeathAnimationAfterGrounding();
+    }
+
+    private void PlayDeathAnimationAfterGrounding()
+    {
+        deathAnimationPendingGrounding = false;
         if (deathAnimationPlayed || animator == null || string.IsNullOrWhiteSpace(deathAnimatorState))
         {
             return;

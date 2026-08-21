@@ -216,7 +216,9 @@ declenchement repart donc d'un etat propre sans reemployer l'offset precedent.
 Chaque `LightSkillSO` expose aussi deux profils optionnels de state post-Timeline
 (Lucian, ennemi : state, fondu, temps normalise). Ils ne sont appliques qu'a la
 fin naturelle de la Timeline et ne peuvent jamais ecraser une mort. Devastation
-les laisse vides pour conserver l'ennemi dans sa pose finale au sol.
+laisse le profil joueur vide et enchaine l'ennemi vers la state `GetUp` du
+Juggernaut, basee sur le clip `EnterTheBattle_1` en attendant un clip de releve
+dedie.
 Le rig poolé efface aussi tous ses bindings Timeline et references Cinemachine,
 arrete son director au temps zero puis revient a une transform identite avant sa
 prochaine acquisition.
@@ -280,17 +282,15 @@ Pendant son alerte, un ennemi provoque conserve Lucian comme cible de combat
 meme si une animation root le tourne temporairement hors de son cone de vision :
 il se retourne vers lui et peut consommer son ledger suivant tant que sa memoire
 d'alerte reste active.
-`AnimationGroundRecovery`, dans `Assets/Scripts/Animation/`, est attache aux
-racines de Lucian, Juggernaut et GiantJuggernaut. Apres le root motion, il sonde
-uniquement le support sous le Transform reellement anime et remonte
-progressivement (ou immediatement si la penetration est forte) un personnage
-passe sous le sol. Il ne modifie jamais son axe horizontal et ne le force jamais
-vers le bas, afin de conserver les sauts et les deplacements root.
-`EndEnemyAttack` peut toutefois demander un unique snap vertical apres la
-derniere frame de root motion : le GiantJuggernaut revient ainsi sur son support
-avant son retour a `Idle`, sans aplatir son saut. Son impact de saut appelle
-`HitPlayerIf("Grounded")` : Lucian n'est touche que s'il est au sol a cette
-frame precise.
+`AnimationGroundRecovery`, dans `Assets/Scripts/Animation/`, reste reserve a
+Lucian. Les deux ennemis utilisent desormais `CombatEnemyPhysicsMotor` avec un
+`Rigidbody` cinematique et une `CapsuleCollider` configures dans leurs prefabs :
+il est l'unique autorite verticale pendant une attaque, ignore le root motion Y
+des skills au sol et attend un contact sol avant de rendre l'IA et `Idle`.
+Les skills ennemis portent un profil `Grounded` ou `Airborne`; `BeginEnemyAirborne`
+et `RequestEnemyLanding` ouvrent et ferment la trajectoire balistique. Une mort
+ou une interruption force d'abord une chute controlee, ce qui empeche un ennemi
+de rester suspendu.
 `RealTimeCombatEnemyBehaviour.Can Pursue Player` est actif par defaut. S'il est
 desactive, l'ennemi reste immobile pendant son alerte, conserve son regard sur
 Lucian et n'attaque que si la portee du skill choisi est deja respectee.
