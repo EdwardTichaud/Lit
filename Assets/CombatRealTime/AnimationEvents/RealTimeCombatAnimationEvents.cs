@@ -26,6 +26,8 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     [SerializeField, Min(0f)] private float stopDashDeceleration = 65f;
 
     private Vector3 lastDashDirection;
+    private Vector3 enemyDashInitialPosition;
+    private bool hasEnemyDashInitialPosition;
     private Coroutine stopDashRoutine;
     private Coroutine hideSwordAfterComboRoutine;
     private CombatInputWorldPrompt activeInputPrompt;
@@ -46,6 +48,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         HideBow();
         HideSword();
         HideInput();
+        ClearEnemyDashInitialPosition();
     }
 
     private void OnDisable()
@@ -131,6 +134,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
             return;
         }
 
+        ClearEnemyDashInitialPosition();
         currentEnemy.CompleteEnemyAttackWhenGrounded(() =>
         {
             RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
@@ -340,6 +344,61 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
 
         stopDashRoutine = StartCoroutine(StopDashRoutine(lastDashDirection));
+    }
+
+    /// <summary>
+    /// Enemy Animation Event. Moves the enemy from its position at the start of
+    /// the dash towards the player. The float is a normalized Lerp value: 0 keeps
+    /// the initial position and 1 reaches the player's current planar position.
+    /// </summary>
+    public void DashToTarget(float lerp)
+    {
+        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
+        Transform target = ResolveEnemyDashTarget();
+        if (currentEnemy == null || target == null)
+        {
+            return;
+        }
+
+        if (!hasEnemyDashInitialPosition)
+        {
+            enemyDashInitialPosition = currentEnemy.transform.position;
+            hasEnemyDashInitialPosition = true;
+        }
+
+        Vector3 targetPosition = target.position;
+        targetPosition.y = enemyDashInitialPosition.y;
+        Vector3 destination = Vector3.Lerp(
+            enemyDashInitialPosition,
+            targetPosition,
+            Mathf.Clamp01(lerp));
+        currentEnemy.SetActionPlanarPosition(destination);
+    }
+
+    /// <summary>
+    /// Enemy Animation Event. Returns the enemy towards the position recorded by
+    /// DashToTarget. The float is a normalized Lerp value: 0 keeps the current
+    /// position and 1 returns fully to the recorded initial position.
+    /// </summary>
+    public void DashToInitialPosition(float lerp)
+    {
+        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
+        if (currentEnemy == null || !hasEnemyDashInitialPosition)
+        {
+            return;
+        }
+
+        float normalizedLerp = Mathf.Clamp01(lerp);
+        Vector3 destination = Vector3.Lerp(
+            currentEnemy.transform.position,
+            enemyDashInitialPosition,
+            normalizedLerp);
+        currentEnemy.SetActionPlanarPosition(destination);
+
+        if (normalizedLerp >= 1f)
+        {
+            ClearEnemyDashInitialPosition();
+        }
     }
 
     private void PlaySkillVfxCue(SkillVfxCue cue, RealTimeCombatEnemy target)
@@ -636,6 +695,25 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
 
         return enemy;
+    }
+
+    private Transform ResolveEnemyDashTarget()
+    {
+        Transform player = LocalPlayerContext.LocalCharacterRoot;
+        if (player != null)
+        {
+            return player;
+        }
+
+        return RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.PlayerRoot
+            : null;
+    }
+
+    private void ClearEnemyDashInitialPosition()
+    {
+        hasEnemyDashInitialPosition = false;
+        enemyDashInitialPosition = Vector3.zero;
     }
 
     private EnemySkills ResolveEnemySkills()

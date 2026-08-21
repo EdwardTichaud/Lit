@@ -21,6 +21,14 @@ public static class NetcodePrefabRegistry
         public uint hash;
     }
 
+    private class SceneMarkerCharacterSpawnInfo
+    {
+        public string markerId;
+        public CharacterData character;
+        public GameObject sourcePrefab;
+        public uint hash;
+    }
+
     private class ItemPrefabHandler : INetworkPrefabInstanceHandler
     {
         private readonly ItemSpawnInfo info;
@@ -71,6 +79,30 @@ public static class NetcodePrefabRegistry
         }
     }
 
+    private class SceneMarkerCharacterPrefabHandler : INetworkPrefabInstanceHandler
+    {
+        private readonly SceneMarkerCharacterSpawnInfo info;
+
+        public SceneMarkerCharacterPrefabHandler(SceneMarkerCharacterSpawnInfo info)
+        {
+            this.info = info;
+        }
+
+        public NetworkObject Instantiate(ulong ownerClientId, Vector3 position, Quaternion rotation)
+        {
+            GameObject instance = CreateSceneMarkerCharacterInstance(info, position, rotation);
+            return instance != null ? instance.GetComponent<NetworkObject>() : null;
+        }
+
+        public void Destroy(NetworkObject networkObject)
+        {
+            if (networkObject != null)
+            {
+                Object.Destroy(networkObject.gameObject);
+            }
+        }
+    }
+
     private class ServicePrefabHandler : INetworkPrefabInstanceHandler
     {
         private readonly uint hash;
@@ -98,6 +130,7 @@ public static class NetcodePrefabRegistry
     private static bool initialized;
     private static readonly Dictionary<string, ItemSpawnInfo> itemInfos = new Dictionary<string, ItemSpawnInfo>();
     private static readonly Dictionary<string, CharacterSpawnInfo> characterInfos = new Dictionary<string, CharacterSpawnInfo>();
+    private static readonly Dictionary<string, SceneMarkerCharacterSpawnInfo> sceneMarkerCharacterInfos = new Dictionary<string, SceneMarkerCharacterSpawnInfo>();
     private static readonly HashSet<uint> registeredHashes = new HashSet<uint>();
     private static readonly uint worldInteractionHash = NetcodeStableHash.Hash32("service:world-interaction");
 
@@ -129,6 +162,7 @@ public static class NetcodePrefabRegistry
         EnsureItemRegistry(items);
         RegisterItemHandlers(items);
         RegisterCharacterHandlers(CollectCharacters());
+        RegisterSceneMarkerCharacterHandlers();
         RegisterServiceHandler();
     }
 
@@ -165,6 +199,52 @@ public static class NetcodePrefabRegistry
         }
 
         return CreateCharacterInstance(info, position, rotation, parent);
+    }
+
+    /// <summary>
+    /// Creates the world prefab associated with a scene marker. This is intentionally
+    /// separate from squad spawning, which continues to use CharacterData.model.
+    /// </summary>
+    public static GameObject SpawnSceneMarkerCharacterInstance(string markerId, CharacterData character, Vector3 position, Quaternion rotation)
+    {
+        if (string.IsNullOrWhiteSpace(markerId) || character == null || character.worldPrefab == null)
+        {
+            return null;
+        }
+
+        EnsureInitialized();
+        SceneMarkerCharacterSpawnInfo info = GetSceneMarkerCharacterInfo(markerId, character);
+        if (info == null)
+        {
+            return null;
+        }
+
+        RegisterHandler(info.hash, new SceneMarkerCharacterPrefabHandler(info));
+        return CreateSceneMarkerCharacterInstance(info, position, rotation);
+    }
+
+    public static void RegisterSceneMarker(SceneMarker marker)
+    {
+        if (marker == null || string.IsNullOrWhiteSpace(marker.MarkerId) || marker.CharacterData == null || marker.CharacterData.worldPrefab == null)
+        {
+            return;
+        }
+
+        SceneMarkerCharacterSpawnInfo info = GetSceneMarkerCharacterInfo(marker.MarkerId, marker.CharacterData);
+        if (info != null)
+        {
+            RegisterHandler(info.hash, new SceneMarkerCharacterPrefabHandler(info));
+        }
+    }
+
+    public static void UnregisterSceneMarker(SceneMarker marker)
+    {
+        if (marker == null || string.IsNullOrWhiteSpace(marker.MarkerId))
+        {
+            return;
+        }
+
+        sceneMarkerCharacterInfos.Remove(marker.MarkerId);
     }
 
     public static uint GetCharacterPrefabHash(CharacterData character)
@@ -227,6 +307,19 @@ public static class NetcodePrefabRegistry
             }
 
             RegisterHandler(info.hash, new CharacterPrefabHandler(info));
+        }
+    }
+
+    private static void RegisterSceneMarkerCharacterHandlers()
+    {
+#if UNITY_2023_1_OR_NEWER
+        SceneMarker[] markers = Object.FindObjectsByType<SceneMarker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+        SceneMarker[] markers = Object.FindObjectsOfType<SceneMarker>(true);
+#endif
+        for (int i = 0; i < markers.Length; i++)
+        {
+            RegisterSceneMarker(markers[i]);
         }
     }
 
@@ -317,6 +410,29 @@ public static class NetcodePrefabRegistry
         return created;
     }
 
+    private static SceneMarkerCharacterSpawnInfo GetSceneMarkerCharacterInfo(string markerId, CharacterData character)
+    {
+        if (string.IsNullOrWhiteSpace(markerId) || character == null || character.worldPrefab == null)
+        {
+            return null;
+        }
+
+        if (sceneMarkerCharacterInfos.TryGetValue(markerId, out SceneMarkerCharacterSpawnInfo existing))
+        {
+            return existing;
+        }
+
+        SceneMarkerCharacterSpawnInfo created = new SceneMarkerCharacterSpawnInfo
+        {
+            markerId = markerId,
+            character = character,
+            sourcePrefab = character.worldPrefab,
+            hash = NetcodeStableHash.Hash32($"scene-marker-character:{markerId}")
+        };
+        sceneMarkerCharacterInfos[markerId] = created;
+        return created;
+    }
+
     private static GameObject CreateItemInstance(ItemSpawnInfo info, bool withLootContainer, Vector3 position, Quaternion rotation, Transform parent)
     {
         GameObject instance = null;
@@ -373,6 +489,26 @@ public static class NetcodePrefabRegistry
 
         NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
         NetcodeRuntimeUtilities.GetOrAdd<PersistentNetworkObject>(instance);
+        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, info.hash);
+        return instance;
+    }
+
+    private static GameObject CreateSceneMarkerCharacterInstance(SceneMarkerCharacterSpawnInfo info, Vector3 position, Quaternion rotation)
+    {
+        if (info == null || info.sourcePrefab == null)
+        {
+            return null;
+        }
+
+        SceneMarker.TryGetRegisteredMarker(info.markerId, out SceneMarker marker);
+        Transform parent = marker != null ? marker.transform : null;
+        GameObject instance = parent != null
+            ? Object.Instantiate(info.sourcePrefab, position, rotation, parent)
+            : Object.Instantiate(info.sourcePrefab, position, rotation);
+
+        SceneMarker.ConfigureSpawnedCharacter(instance, info.character, info.markerId);
+        NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
+        NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, info.hash);
         return instance;
     }

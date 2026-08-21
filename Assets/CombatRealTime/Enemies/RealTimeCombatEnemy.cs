@@ -261,6 +261,29 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         physicsMotor?.RequestEnemyLanding();
     }
 
+    /// <summary>
+    /// Moves an active enemy action without bypassing its physics motor. Vertical
+    /// position remains exclusively controlled by the motor.
+    /// </summary>
+    public void SetActionPlanarPosition(Vector3 position)
+    {
+        if (physicsMotor == null)
+        {
+            physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
+        }
+
+        if (physicsMotor != null)
+        {
+            physicsMotor.SetActionPlanarPosition(position);
+            return;
+        }
+
+        Vector3 currentPosition = transform.position;
+        currentPosition.x = position.x;
+        currentPosition.z = position.z;
+        transform.position = currentPosition;
+    }
+
     public void SetLockPresentation(bool locked, bool playSound)
     {
         if (lockOutline == null)

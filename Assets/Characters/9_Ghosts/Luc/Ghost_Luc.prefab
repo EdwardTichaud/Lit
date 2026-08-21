@@ -140,6 +140,7 @@ MonoBehaviour:
   outlineVisibleDissolveThreshold: 0.5
   outlineVisibleBelowDissolveThreshold: 1
   outlineWhileGhostIsRevealed: 1
+  ghostOutlineActivationDistance: 1.35
   requireLitInfluenceForAppearance: 0
   reactToFlameInfluence: 1
   useDirectLitInfluenceFallback: 1

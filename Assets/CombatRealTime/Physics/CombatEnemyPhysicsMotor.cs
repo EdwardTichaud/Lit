@@ -171,6 +171,37 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         pendingRootRotation = deltaRotation * pendingRootRotation;
     }
 
+    /// <summary>
+    /// Repositions an enemy on its current ground plane during an authored action.
+    /// This is intended for Animation Events and deliberately leaves vertical motion
+    /// under this motor's control.
+    /// </summary>
+    public void SetActionPlanarPosition(Vector3 position)
+    {
+        ResolveReferences();
+
+        Vector3 currentPosition = body != null ? body.position : transform.position;
+        currentPosition.x = position.x;
+        currentPosition.z = position.z;
+        pendingPlanarRootMotion = Vector3.zero;
+
+        if (body != null)
+        {
+            body.position = currentPosition;
+        }
+        else
+        {
+            transform.position = currentPosition;
+        }
+
+        if (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh)
+        {
+            navigationAgent.nextPosition = currentPosition;
+        }
+
+        Physics.SyncTransforms();
+    }
+
     private void FixedUpdate()
     {
         if (!IsDrivingActionRootMotion || body == null)

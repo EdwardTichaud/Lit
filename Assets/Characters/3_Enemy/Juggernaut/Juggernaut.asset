@@ -16,10 +16,13 @@ MonoBehaviour:
   characterId: juggernaut
   characterName: Juggernaut
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
-  model: {fileID: 6071546326461560311, guid: 30f25bb4c4d1f2740aaf9204396fa529, type: 3}
-  worldPrefab: {fileID: 6071546326461560311, guid: 30f25bb4c4d1f2740aaf9204396fa529, type: 3}
-  skills: []
-  combatSkills: []
+  model: {fileID: 6700739663857040827, guid: f5bf933f572371045aef154a22c977f5, type: 3}
+  worldPrefab: {fileID: 6700739663857040827, guid: f5bf933f572371045aef154a22c977f5, type: 3}
+  skills:
+  - {fileID: 0}
+  - {fileID: 0}
+  combatSkills:
+  - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
   stats:
     strength: 10
     dexterity: 10

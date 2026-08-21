@@ -34,6 +34,7 @@ public class ItemSceneMarkerEditor : Editor
         if (assetType == ItemSceneMarker.MarkerAssetType.Enemy)
         {
             EditorGUILayout.PropertyField(enemyProperty);
+            EditorGUILayout.HelpBox("Les personnages de scene utilisent maintenant SceneMarker et sont instancies au lancement. Convertis ce marker au lieu de le baker.", MessageType.Warning);
         }
         else if (assetType == ItemSceneMarker.MarkerAssetType.Ghost)
         {
@@ -154,15 +155,7 @@ public class ItemSceneMarkerEditor : Editor
 
             if (marker.UsesEnemy)
             {
-                if (marker.Enemy == null)
-                {
-                    return "Assigne un CharacterData ennemi avant le bake.";
-                }
-
-                if (!marker.Enemy.isEnemy)
-                {
-                    return "Le CharacterData selectionne doit avoir isEnemy active.";
-                }
+                return "Les CharacterData ne se bakent plus : utilise SceneMarker pour les instancier au lancement.";
             }
             else if (marker.UsesGhost)
             {
