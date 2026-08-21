@@ -117,6 +117,7 @@ public class SquadManager : MonoBehaviour
     private readonly Dictionary<CharacterData, CharacterData> runtimeCharacterMap = new Dictionary<CharacterData, CharacterData>();
     private readonly Dictionary<string, CharacterData> runtimeCharactersById = new Dictionary<string, CharacterData>();
     private readonly Dictionary<string, CharacterData> runtimeCharacterSourceById = new Dictionary<string, CharacterData>();
+    private readonly Dictionary<string, CharacterRuntimeState> runtimeStatesByCharacterId = new Dictionary<string, CharacterRuntimeState>();
     private readonly HashSet<string> runtimeCharacterIdWarnings = new HashSet<string>();
     private readonly HashSet<CharacterData> runtimeCharacters = new HashSet<CharacterData>();
     private string lastLocalAssignmentRefreshLog = string.Empty;
@@ -559,6 +560,8 @@ public class SquadManager : MonoBehaviour
 
     public void SetPendingLoadData(CharacterSaveData data, Dictionary<string, CharacterData> characterLookup, Dictionary<string, Item> itemLookup, Dictionary<string, StatsSO> skillLookup)
     {
+        // Une nouvelle sauvegarde doit remplacer integralement l'etat de session precedent.
+        runtimeStatesByCharacterId.Clear();
         pendingLoadData = data;
         pendingCharacterLookup = characterLookup;
         pendingItemLookup = itemLookup;
@@ -646,9 +649,9 @@ public class SquadManager : MonoBehaviour
             return null;
         }
 
-        if (character.model == null)
+        if (character.worldPrefab == null)
         {
-            Debug.LogWarning($"SquadManager: aucun modele defini pour {character.name}.");
+            Debug.LogWarning($"SquadManager: aucun WorldPrefab defini pour {character.name}.");
             return null;
         }
 
@@ -667,7 +670,7 @@ public class SquadManager : MonoBehaviour
         }
 
         Transform parent = squadCharactersParent != null ? squadCharactersParent : null;
-        GameObject instance = Instantiate(character.model, position, rotation, parent);
+        GameObject instance = Instantiate(character.worldPrefab, position, rotation, parent);
         if (spawnVfx)
         {
             SpawnVfx(position, rotation);
@@ -993,10 +996,13 @@ public class SquadManager : MonoBehaviour
             }
 
             CharacterData runtimeCharacter = GetRuntimeCharacter(character);
-            ApplyMuninChargeStateToCharacterData(runtimeCharacter, entry);
+            CharacterRuntimeState runtimeState = GetCharacterRuntimeState(runtimeCharacter);
+            ApplyMuninChargeStateToRuntimeState(runtimeState, entry);
             bool hasSavedInventory = entry.items != null && entry.items.Count > 0;
             bool hasSavedFlameState = entry.flameSeconds > 0 || entry.flameEquipped;
-            bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedFlameState;
+            bool hasSavedCombatItems = entry.enabledCombatItemIds != null && entry.enabledCombatItemIds.Count > 0;
+            bool hasSavedDefenseState = entry.combatDefenseItemHitPoints != null && entry.combatDefenseItemHitPoints.Count > 0;
+            bool shouldApplyInventory = entry.itemsInitialized || hasSavedInventory || hasSavedFlameState || hasSavedCombatItems || hasSavedDefenseState;
 
             bool isVersionZeroSave = pendingLoadData != null && pendingLoadData.dataVersion <= 0;
             bool hasStarterItems = runtimeCharacter != null
@@ -1011,13 +1017,14 @@ public class SquadManager : MonoBehaviour
             {
                 List<Item> items = BuildItemsFromEntry(entry);
                 List<Item> enabledCombatItems = BuildEnabledCombatItemsFromEntry(entry);
-                if (ShouldMigrateDefaultEnabledCombatItems(entry, runtimeCharacter) && enabledCombatItems.Count == 0)
-                {
-                    enabledCombatItems = BuildDefaultEnabledCombatItems(runtimeCharacter);
-                }
-
-                runtimeCharacter.SetInventory(items, entry.flameSeconds, entry.flameEquipped, true, null, enabledCombatItems);
-                runtimeCharacter.SetCombatDefenseItemHitPoints(BuildCombatDefenseItemHitPointsFromEntry(entry));
+                runtimeState.ApplyInventory(
+                    items,
+                    entry.flameSeconds,
+                    entry.flameEquipped,
+                    true,
+                    null,
+                    enabledCombatItems,
+                    BuildCombatDefenseItemHitPointsFromEntry(entry));
             }
             if (entry.skillsInitialized)
             {
@@ -1096,17 +1103,17 @@ public class SquadManager : MonoBehaviour
         pendingSkillLookup = null;
     }
 
-    private static void ApplyMuninChargeStateToCharacterData(CharacterData character, CharacterSaveEntry entry)
+    private static void ApplyMuninChargeStateToRuntimeState(CharacterRuntimeState state, CharacterSaveEntry entry)
     {
-        if (character == null || entry == null || !entry.muninChargesInitialized)
+        if (state == null || entry == null || !entry.muninChargesInitialized)
         {
             return;
         }
 
         int maxCharges = Mathf.Max(0, entry.muninMaxCharges);
-        character.muninMaxCharges = maxCharges;
-        character.muninChargesRemaining = Mathf.Clamp(entry.muninCharges, 0, maxCharges);
-        character.muninChargesInitialized = true;
+        state.muninMaxCharges = maxCharges;
+        state.muninChargesRemaining = Mathf.Clamp(entry.muninCharges, 0, maxCharges);
+        state.muninChargesInitialized = true;
     }
 
     private static void ApplyMuninChargeStateToInstance(GameObject instance, CharacterSaveEntry entry)
@@ -1262,39 +1269,6 @@ public class SquadManager : MonoBehaviour
         }
 
         return hitPoints;
-    }
-
-    private bool ShouldMigrateDefaultEnabledCombatItems(CharacterSaveEntry entry, CharacterData character)
-    {
-        return pendingLoadData != null
-            && pendingLoadData.dataVersion < 5
-            && entry != null
-            && (entry.enabledCombatItemIds == null || entry.enabledCombatItemIds.Count == 0)
-            && character != null
-            && character.enabledCombatItems != null
-            && character.enabledCombatItems.Count > 0;
-    }
-
-    private static List<Item> BuildDefaultEnabledCombatItems(CharacterData character)
-    {
-        List<Item> items = new List<Item>();
-        if (character == null || character.enabledCombatItems == null)
-        {
-            return items;
-        }
-
-        for (int i = 0; i < character.enabledCombatItems.Count && items.Count < 3; i++)
-        {
-            Item item = character.enabledCombatItems[i];
-            if (item == null || !item.CanUseInCombatReaction() || items.Contains(item))
-            {
-                continue;
-            }
-
-            items.Add(item);
-        }
-
-        return items;
     }
 
     private List<StatsSO> BuildSkillsFromEntry(CharacterSaveEntry entry)
@@ -2719,8 +2693,6 @@ public class SquadManager : MonoBehaviour
             }
         }
 
-        WarnIfSourceCharacterHasRuntimeInventoryState(character);
-
         CharacterData clone = Instantiate(character);
         clone.name = $"{character.name}_Runtime";
         clone.hideFlags = HideFlags.DontSave;
@@ -2751,16 +2723,6 @@ public class SquadManager : MonoBehaviour
             clone.starterItemsWithQuantity = starterStacks;
         }
 
-        clone.inventoryItems = new List<Item>();
-        clone.equippedInteractionItems = new List<Item>();
-        clone.enabledCombatItems = BuildDefaultEnabledCombatItems(character);
-        clone.flameSecondsRemaining = 0;
-        clone.flameEquipped = false;
-        clone.inventoryInitialized = false;
-        clone.muninChargesRemaining = 0;
-        clone.muninMaxCharges = 0;
-        clone.muninChargesInitialized = false;
-
         runtimeCharacterMap[character] = clone;
         runtimeCharacters.Add(clone);
         if (!string.IsNullOrWhiteSpace(id))
@@ -2784,28 +2746,33 @@ public class SquadManager : MonoBehaviour
         return clone;
     }
 
-    private void WarnIfSourceCharacterHasRuntimeInventoryState(CharacterData character)
+    /// <summary>
+    /// Retourne l'etat mutable de la partie pour ce personnage. CharacterData reste
+    /// une definition d'auteur et ne porte jamais cet etat.
+    /// </summary>
+    public CharacterRuntimeState GetCharacterRuntimeState(CharacterData character)
     {
-        if (character == null || runtimeCharacters.Contains(character))
+        string id = GetCharacterId(character);
+        if (string.IsNullOrWhiteSpace(id))
         {
-            return;
+            return null;
         }
 
-        int inventoryCount = character.inventoryItems != null ? character.inventoryItems.Count : 0;
-        int equippedCount = character.equippedInteractionItems != null ? character.equippedInteractionItems.Count : 0;
-        int combatItemCount = character.enabledCombatItems != null ? character.enabledCombatItems.Count : 0;
-        if (inventoryCount <= 0
-            && equippedCount <= 0
-            && !character.inventoryInitialized
-            && character.flameSecondsRemaining <= 0
-            && !character.flameEquipped)
+        if (!runtimeStatesByCharacterId.TryGetValue(id, out CharacterRuntimeState state) || state == null)
         {
-            return;
+            state = new CharacterRuntimeState();
+            state.EnsureCollections();
+            runtimeStatesByCharacterId[id] = state;
         }
 
-        Debug.LogWarning(
-            $"SquadManager: source CharacterData '{character.name}' contient deja un etat runtime avant clonage. inventoryInitialized={character.inventoryInitialized} inventoryCount={inventoryCount} equippedCount={equippedCount} combatItemCount={combatItemCount} flameSeconds={character.flameSecondsRemaining} flameEquipped={character.flameEquipped}. Cela suggere qu'un ScriptableObject a ete modifie en runtime.",
-            character);
+        return state;
+    }
+
+    public bool TryGetCharacterRuntimeState(CharacterData character, out CharacterRuntimeState state)
+    {
+        state = null;
+        string id = GetCharacterId(character);
+        return !string.IsNullOrWhiteSpace(id) && runtimeStatesByCharacterId.TryGetValue(id, out state) && state != null;
     }
 
     private void EnsureRuntimeSquad()

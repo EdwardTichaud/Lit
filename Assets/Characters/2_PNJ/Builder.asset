@@ -16,7 +16,7 @@ MonoBehaviour:
   characterId: builder
   characterName: Builder
   portrait: {fileID: 21300000, guid: e6b53badd43dee74b8293002a46c7512, type: 3}
-  model: {fileID: 9154674378261969996, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
+  worldPrefab: {fileID: 9154674378261969996, guid: c3515f214200847448e404d7c9ac1d75, type: 3}
   skills: []
   stats:
     strength: 10
@@ -30,7 +30,3 @@ MonoBehaviour:
   voiceLines:
   - {fileID: 11400000, guid: fb8c7324859d38b4bbef408ecb7b381a, type: 2}
   maisonWaitingPoint: 0
-  inventoryItems: []
-  flameSecondsRemaining: 0
-  flameEquipped: 0
-  inventoryInitialized: 0

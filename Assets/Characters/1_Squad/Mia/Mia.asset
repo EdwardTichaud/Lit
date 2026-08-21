@@ -16,8 +16,7 @@ MonoBehaviour:
   characterId: mia
   characterName: Mia
   portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
-  model: {fileID: 2784444758471557209, guid: 3cf1d0ee5d2d7f146b20b31e16b0e489, type: 3}
-  worldPrefab: {fileID: 0}
+  worldPrefab: {fileID: 2784444758471557209, guid: 3cf1d0ee5d2d7f146b20b31e16b0e489, type: 3}
   skills:
   - {fileID: 11400000, guid: a88b20f6f707d1544aa3a09caf466336, type: 2}
   - {fileID: 11400000, guid: 870300d0851943b4a89f1d7eb0da1849, type: 2}
@@ -41,16 +40,5 @@ MonoBehaviour:
     quantity: 300
   hp: 10
   isEnemy: 0
-  combatCurrentHp: 0
-  attackDamage: 4
-  additionalEnemies: []
   voiceLines: []
   maisonWaitingPoint: 4
-  inventoryItems: []
-  equippedInteractionItems: []
-  flameSecondsRemaining: 0
-  flameEquipped: 0
-  inventoryInitialized: 0
-  muninChargesRemaining: 0
-  muninMaxCharges: 10
-  muninChargesInitialized: 0

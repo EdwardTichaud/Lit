@@ -487,7 +487,8 @@ ne fait partie du flux.
   `AnimationEvent`, sans `Time.timeScale`.
 - `CombatTransitionController` : audio/musique de transition, transition de
   sortie et musique de proximite.
-- `CombatHealth` : santé persistante des ennemis de scène.
+- `CombatHealth` : santé persistante des ennemis de scène; initialise son
+  maximum depuis le `CharacterData` résolu via `CharacterInfo`.
 
 ## Flux principaux
 

@@ -40,6 +40,7 @@ public partial class SquadCharacterController : MonoBehaviour
     [Header("Character Data")]
     [SerializeField, Tooltip("CharacterData lie a ce controller.")]
     private CharacterData characterData;
+    private CharacterRuntimeState runtimeState;
 
     [Header("Health")]
     [SerializeField, Tooltip("PV max runtime.")]
@@ -448,6 +449,10 @@ public partial class SquadCharacterController : MonoBehaviour
         }
 
         characterData = data;
+        runtimeState = SquadManager.Instance != null && characterData != null
+            ? SquadManager.Instance.GetCharacterRuntimeState(characterData)
+            : new CharacterRuntimeState();
+        runtimeState.EnsureCollections();
         SyncCharacterInfo(characterData);
         EnsureInventoryList();
         EnsureEquippedInteractionList();
@@ -464,17 +469,17 @@ public partial class SquadCharacterController : MonoBehaviour
         if (initializeInventory)
         {
             bool forceStarterItems = ShouldForceStarterItems(characterData, out string starterReason);
-            if (!characterData.inventoryInitialized || forceStarterItems)
+            if (!runtimeState.inventoryInitialized || forceStarterItems)
             {
                 if (logInventoryInitialization)
                 {
                     Debug.Log(
-                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='apply_starter_items' inventoryInitialized={characterData.inventoryInitialized} forceStarterItems={forceStarterItems} reason='{starterReason}' runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} starterStackCount={characterData.starterItemsWithQuantity?.Count ?? -1} flameSeconds={characterData.flameSecondsRemaining}",
+                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='apply_starter_items' inventoryInitialized={runtimeState.inventoryInitialized} forceStarterItems={forceStarterItems} reason='{starterReason}' runtimeInventoryCount={runtimeState.inventoryItems?.Count ?? -1} starterStackCount={characterData.starterItemsWithQuantity?.Count ?? -1} flameSeconds={runtimeState.flameSecondsRemaining}",
                         this);
                 }
 
                 ApplyStarterItems(characterData, true);
-                characterData.inventoryInitialized = true;
+                runtimeState.inventoryInitialized = true;
                 SyncFlameStateToCharacterData();
             }
             else
@@ -482,7 +487,7 @@ public partial class SquadCharacterController : MonoBehaviour
                 if (logInventoryInitialization)
                 {
                     Debug.Log(
-                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} flameSeconds={characterData.flameSecondsRemaining} flameEquipped={characterData.flameEquipped}",
+                        $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory' inventoryInitialized={runtimeState.inventoryInitialized} runtimeInventoryCount={runtimeState.inventoryItems?.Count ?? -1} equippedCount={runtimeState.equippedInteractionItems?.Count ?? -1} flameSeconds={runtimeState.flameSecondsRemaining} flameEquipped={runtimeState.flameEquipped}",
                         this);
                 }
 
@@ -494,7 +499,7 @@ public partial class SquadCharacterController : MonoBehaviour
             if (logInventoryInitialization)
             {
                 Debug.Log(
-                    $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory_without_init' inventoryInitialized={characterData.inventoryInitialized} runtimeInventoryCount={characterData.inventoryItems?.Count ?? -1} equippedCount={characterData.equippedInteractionItems?.Count ?? -1} flameSeconds={characterData.flameSecondsRemaining} flameEquipped={characterData.flameEquipped}",
+                    $"[InventoryInit] bind='{name}' character='{characterData.name}' initializeInventory={initializeInventory} path='load_runtime_inventory_without_init' inventoryInitialized={runtimeState.inventoryInitialized} runtimeInventoryCount={runtimeState.inventoryItems?.Count ?? -1} equippedCount={runtimeState.equippedInteractionItems?.Count ?? -1} flameSeconds={runtimeState.flameSecondsRemaining} flameEquipped={runtimeState.flameEquipped}",
                     this);
             }
 
@@ -513,13 +518,13 @@ public partial class SquadCharacterController : MonoBehaviour
             return false;
         }
 
-        if (data.inventoryItems != null && data.inventoryItems.Count > 0)
+        if (runtimeState != null && runtimeState.inventoryItems != null && runtimeState.inventoryItems.Count > 0)
         {
             reason = "runtime_inventory_already_present";
             return false;
         }
 
-        if (data.flameSecondsRemaining > 0 || data.flameEquipped)
+        if (runtimeState != null && (runtimeState.flameSecondsRemaining > 0 || runtimeState.flameEquipped))
         {
             reason = "runtime_flame_state_already_present";
             return false;
@@ -1553,16 +1558,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void EnsureInventoryList()
     {
-        if (characterData != null)
+        if (runtimeState != null)
         {
-            if (characterData.inventoryItems == null)
+            runtimeState.EnsureCollections();
+            if (!ReferenceEquals(items, runtimeState.inventoryItems))
             {
-                characterData.inventoryItems = new List<Item>();
-            }
-
-            if (!ReferenceEquals(items, characterData.inventoryItems))
-            {
-                items = characterData.inventoryItems;
+                items = runtimeState.inventoryItems;
             }
 
             return;
@@ -1576,16 +1577,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void EnsureEquippedInteractionList()
     {
-        if (characterData != null)
+        if (runtimeState != null)
         {
-            if (characterData.equippedInteractionItems == null)
+            runtimeState.EnsureCollections();
+            if (!ReferenceEquals(equippedInteractionItems, runtimeState.equippedInteractionItems))
             {
-                characterData.equippedInteractionItems = new List<Item>();
-            }
-
-            if (!ReferenceEquals(equippedInteractionItems, characterData.equippedInteractionItems))
-            {
-                equippedInteractionItems = characterData.equippedInteractionItems;
+                equippedInteractionItems = runtimeState.equippedInteractionItems;
             }
 
             return;
@@ -1599,16 +1596,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void EnsureEnabledCombatList()
     {
-        if (characterData != null)
+        if (runtimeState != null)
         {
-            if (characterData.enabledCombatItems == null)
+            runtimeState.EnsureCollections();
+            if (!ReferenceEquals(enabledCombatItems, runtimeState.enabledCombatItems))
             {
-                characterData.enabledCombatItems = new List<Item>();
-            }
-
-            if (!ReferenceEquals(enabledCombatItems, characterData.enabledCombatItems))
-            {
-                enabledCombatItems = characterData.enabledCombatItems;
+                enabledCombatItems = runtimeState.enabledCombatItems;
             }
 
             return;
@@ -1622,16 +1615,12 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void EnsureCombatDefenseItemHitPointsList()
     {
-        if (characterData != null)
+        if (runtimeState != null)
         {
-            if (characterData.combatDefenseItemHitPoints == null)
+            runtimeState.EnsureCollections();
+            if (!ReferenceEquals(combatDefenseItemHitPoints, runtimeState.combatDefenseItemHitPoints))
             {
-                characterData.combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
-            }
-
-            if (!ReferenceEquals(combatDefenseItemHitPoints, characterData.combatDefenseItemHitPoints))
-            {
-                combatDefenseItemHitPoints = characterData.combatDefenseItemHitPoints;
+                combatDefenseItemHitPoints = runtimeState.combatDefenseItemHitPoints;
             }
 
             return;
@@ -2103,15 +2092,15 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void MarkInventoryInitialized()
     {
-        if (characterData != null)
+        if (runtimeState != null)
         {
-            characterData.inventoryInitialized = true;
+            runtimeState.inventoryInitialized = true;
         }
     }
 
     private void LoadInventoryFromCharacterData()
     {
-        if (characterData == null)
+        if (characterData == null || runtimeState == null)
         {
             return;
         }
@@ -2120,19 +2109,19 @@ public partial class SquadCharacterController : MonoBehaviour
         EnsureEquippedInteractionList();
         EnsureEnabledCombatList();
         EnsureCombatDefenseItemHitPointsList();
-        flameSecondsRemaining = Mathf.Max(0, characterData.flameSecondsRemaining);
+        flameSecondsRemaining = Mathf.Max(0, runtimeState.flameSecondsRemaining);
         InitializeFlameState();
         if (HasFlameItem && flameSecondsRemaining > 0)
         {
-            SetFlameEquipped(characterData.flameEquipped);
+            SetFlameEquipped(runtimeState.flameEquipped);
         }
         else
         {
             SetFlameEquipped(false);
         }
 
-        ApplyEquippedInteractionItems(characterData.equippedInteractionItems);
-        ApplyEnabledCombatItems(characterData.enabledCombatItems);
+        ApplyEquippedInteractionItems(runtimeState.equippedInteractionItems);
+        ApplyEnabledCombatItems(runtimeState.enabledCombatItems);
         SanitizeCombatDefenseItemHitPoints();
 
         if (logInventoryInitialization)
@@ -2145,47 +2134,47 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void SyncFlameStateToCharacterData()
     {
-        if (characterData == null)
+        if (runtimeState == null)
         {
             return;
         }
 
-        characterData.flameSecondsRemaining = CharacterFlameSystemEnabled ? Mathf.Max(0, flameSecondsRemaining) : 0;
-        characterData.flameEquipped = CharacterFlameSystemEnabled && flameEquipped;
-        characterData.inventoryInitialized = true;
+        runtimeState.flameSecondsRemaining = CharacterFlameSystemEnabled ? Mathf.Max(0, flameSecondsRemaining) : 0;
+        runtimeState.flameEquipped = CharacterFlameSystemEnabled && flameEquipped;
+        runtimeState.inventoryInitialized = true;
     }
 
     private void SyncInteractionEquipmentToCharacterData()
     {
-        if (characterData == null)
+        if (runtimeState == null)
         {
             return;
         }
 
         EnsureEquippedInteractionList();
-        characterData.inventoryInitialized = true;
+        runtimeState.inventoryInitialized = true;
     }
 
     private void SyncCombatEquipmentToCharacterData()
     {
-        if (characterData == null)
+        if (runtimeState == null)
         {
             return;
         }
 
         EnsureEnabledCombatList();
-        characterData.inventoryInitialized = true;
+        runtimeState.inventoryInitialized = true;
     }
 
     private void SyncCombatDefenseItemHitPointsToCharacterData()
     {
-        if (characterData == null)
+        if (runtimeState == null)
         {
             return;
         }
 
         EnsureCombatDefenseItemHitPointsList();
-        characterData.inventoryInitialized = true;
+        runtimeState.inventoryInitialized = true;
     }
 
     private void BindMuninChargeController()
@@ -2214,19 +2203,19 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void ApplyMuninChargeStateFromCharacterData()
     {
-        if (characterData == null || syncedMuninChargeController == null)
+        if (runtimeState == null || syncedMuninChargeController == null)
         {
             return;
         }
 
-        if (characterData.muninChargesInitialized)
+        if (runtimeState.muninChargesInitialized)
         {
-            if (characterData.muninMaxCharges > 0)
+            if (runtimeState.muninMaxCharges > 0)
             {
-                syncedMuninChargeController.SetMaxCharges(characterData.muninMaxCharges, false);
+                syncedMuninChargeController.SetMaxCharges(runtimeState.muninMaxCharges, false);
             }
 
-            syncedMuninChargeController.SetCharges(characterData.muninChargesRemaining);
+            syncedMuninChargeController.SetCharges(runtimeState.muninChargesRemaining);
             return;
         }
 
@@ -2245,14 +2234,14 @@ public partial class SquadCharacterController : MonoBehaviour
 
     private void SyncMuninChargesToCharacterData()
     {
-        if (characterData == null || syncedMuninChargeController == null)
+        if (runtimeState == null || syncedMuninChargeController == null)
         {
             return;
         }
 
-        characterData.muninChargesRemaining = syncedMuninChargeController.ChargesRemaining;
-        characterData.muninMaxCharges = syncedMuninChargeController.MaxCharges;
-        characterData.muninChargesInitialized = true;
+        runtimeState.muninChargesRemaining = syncedMuninChargeController.ChargesRemaining;
+        runtimeState.muninMaxCharges = syncedMuninChargeController.MaxCharges;
+        runtimeState.muninChargesInitialized = true;
     }
 
     private void SyncFlameStateToCharacterDataIfChanged(int prevSeconds, bool prevEquipped)

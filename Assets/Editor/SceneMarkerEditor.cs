@@ -54,8 +54,7 @@ public sealed class SceneMarkerEditor : Editor
         }
 
         CharacterInfo characterInfo = source.GetComponentInChildren<CharacterInfo>(true);
-        EnemyInfo enemyInfo = source.GetComponentInChildren<EnemyInfo>(true);
-        CharacterData data = characterInfo != null ? characterInfo.CharacterData : enemyInfo != null ? enemyInfo.CharacterData : null;
+        CharacterData data = characterInfo != null ? characterInfo.CharacterData : null;
         if (data == null)
         {
             Debug.LogWarning("[SceneMarker] Aucun CharacterData trouve sur la selection.", source);
@@ -80,7 +79,7 @@ public sealed class SceneMarkerEditor : Editor
     private static bool CanConvertSelectedCharacter()
     {
         GameObject source = Selection.activeGameObject;
-        return source != null && (source.GetComponentInChildren<CharacterInfo>(true) != null || source.GetComponentInChildren<EnemyInfo>(true) != null);
+        return source != null && source.GetComponentInChildren<CharacterInfo>(true) != null;
     }
 }
 #endif

@@ -52,6 +52,13 @@ persistant est restaure via un `WorldSnapshot` en memoire. Cette capture runtime
 de retry peut conserver les issues de validation sans les log en erreurs console,
 pour ne pas polluer l'entree combat avec des providers de scene incomplets.
 
+`CharacterSaveEntry` reste le format de persistance des inventaires, de la
+flamme, des trois objets combat, des boucliers et de Munin. Au chargement,
+`SquadManager` hydrate d'abord `CharacterRuntimeState`; un controller instancie
+consomme ensuite cet état. A la sauvegarde, le controller actif est prioritaire,
+puis le cache runtime couvre les membres non instanciés. `CharacterData` ne
+porte aucune donnée mutable de partie.
+
 Late join :
 
 client demande le snapshot → serveur sérialise et segmente → client reconstruit

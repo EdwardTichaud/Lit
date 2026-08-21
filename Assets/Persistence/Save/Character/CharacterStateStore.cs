@@ -629,6 +629,7 @@ public class CharacterStateStore : MonoBehaviour
             }
 
             GameObject instance = manager.GetCharacterInstance(character);
+            CharacterRuntimeState runtimeState = manager.GetCharacterRuntimeState(character);
             CharacterSaveEntry entry = new CharacterSaveEntry
             {
                 characterId = GetCharacterId(character),
@@ -637,18 +638,18 @@ public class CharacterStateStore : MonoBehaviour
                 rotation = instance != null ? instance.transform.rotation : Quaternion.identity,
                 flameSeconds = 0,
                 flameEquipped = false,
-                muninChargesInitialized = character != null && character.muninChargesInitialized,
-                muninCharges = character != null ? character.muninChargesRemaining : 0,
-                muninMaxCharges = character != null ? character.muninMaxCharges : 0,
+                muninChargesInitialized = runtimeState != null && runtimeState.muninChargesInitialized,
+                muninCharges = runtimeState != null ? runtimeState.muninChargesRemaining : 0,
+                muninMaxCharges = runtimeState != null ? runtimeState.muninMaxCharges : 0,
                 items = new List<ItemStackData>(),
-                itemsInitialized = character != null && character.inventoryInitialized
+                itemsInitialized = runtimeState != null && runtimeState.inventoryInitialized
             };
 
             SquadCharacterController controller = instance != null ? instance.GetComponent<SquadCharacterController>() : null;
-            int flameSeconds = character != null ? character.flameSecondsRemaining : 0;
-            bool flameEquipped = character != null && character.flameEquipped;
-            IReadOnlyList<Item> items = character != null ? character.InventoryItems : null;
-            IReadOnlyList<Item> enabledCombatItems = character != null ? character.enabledCombatItems : null;
+            int flameSeconds = runtimeState != null ? runtimeState.flameSecondsRemaining : 0;
+            bool flameEquipped = runtimeState != null && runtimeState.flameEquipped;
+            IReadOnlyList<Item> items = runtimeState != null ? runtimeState.inventoryItems : null;
+            IReadOnlyList<Item> enabledCombatItems = runtimeState != null ? runtimeState.enabledCombatItems : null;
             if (controller != null)
             {
                 flameSeconds = controller.FlameSecondsRemaining;
@@ -729,7 +730,7 @@ public class CharacterStateStore : MonoBehaviour
             entry.combatDefenseItemHitPoints.Clear();
             IReadOnlyList<CombatDefenseItemHitPointData> combatDefenseHitPoints = controller != null
                 ? controller.GetCombatDefenseItemHitPointsSnapshot()
-                : character != null ? character.CombatDefenseItemHitPoints : null;
+                : runtimeState != null ? runtimeState.combatDefenseItemHitPoints : null;
             if (combatDefenseHitPoints != null)
             {
                 Dictionary<string, Item> carriedItemById = new Dictionary<string, Item>();

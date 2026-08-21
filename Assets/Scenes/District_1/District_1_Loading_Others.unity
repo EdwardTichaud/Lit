@@ -3050,92 +3050,6 @@ MonoBehaviour:
   targetCamera: {fileID: 0}
   openCue: 24
   closeCue: 26
---- !u!1001 &748776319
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1828650177}
-    m_Modifications:
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -94.16
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 42.7
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3499270933000101234, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457472128858001709, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_Radius
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457472128858001709, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6700739663857040827, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_Name
-      value: Enemy_Juggernaut_Combat
-      objectReference: {fileID: 0}
-    - target: {fileID: 6700739663857040827, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7136339443753286939, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7136339443753286939, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: f5bf933f572371045aef154a22c977f5, type: 3}
---- !u!4 &748776320 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 158977838910440850, guid: f5bf933f572371045aef154a22c977f5, type: 3}
-  m_PrefabInstance: {fileID: 748776319}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &761311086
 GameObject:
   m_ObjectHideFlags: 0
@@ -6678,6 +6592,7 @@ MonoBehaviour:
   outlineVisibleDissolveThreshold: 0.5
   outlineVisibleBelowDissolveThreshold: 1
   outlineWhileGhostIsRevealed: 1
+  ghostOutlineActivationDistance: 1.35
   requireLitInfluenceForAppearance: 0
   reactToFlameInfluence: 1
   useDirectLitInfluenceFallback: 1
@@ -7331,56 +7246,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 748776320}
   - {fileID: 900000000000000101}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &900000000000000100
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 900000000000000101}
-  - component: {fileID: 900000000000000102}
-  m_Layer: 0
-  m_Name: SceneMarker_Juggernaut
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &900000000000000101
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 900000000000000100}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -94.16, z: 42.7}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1828650177}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &900000000000000102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 900000000000000100}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f8c4db6b1a9475e9e5b9d80b20ee401, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneMarker
-  characterData: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
-  markerId: scene-marker:district-1:juggernaut
 --- !u!1 &1861807533
 GameObject:
   m_ObjectHideFlags: 0
@@ -18854,6 +18722,52 @@ MonoBehaviour:
   enemyProximityRange: 8
   refreshInterval: 0.2
   blockedFlameColor: {r: 0.2, g: 0.65, b: 1, a: 1}
+--- !u!1 &900000000000000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 900000000000000101}
+  - component: {fileID: 900000000000000102}
+  m_Layer: 0
+  m_Name: SceneMarker_Juggernaut
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &900000000000000101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000000000000100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -94.16, z: 42.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1828650177}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &900000000000000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000000000000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f8c4db6b1a9475e9e5b9d80b20ee401, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneMarker
+  characterData: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
+  markerId: GlobalObjectId_V1-2-59ab7e9c109d27d459eb9cf80bf37616-900000000000000100-0
 --- !u!1 &1078590162877158787
 GameObject:
   m_ObjectHideFlags: 0

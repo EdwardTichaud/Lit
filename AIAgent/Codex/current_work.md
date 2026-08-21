@@ -20,6 +20,17 @@ sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plu
 partie des scenes de build; l'ActionMap partagee `Falling` est conservee afin que
 l'archive reste testable manuellement.
 
+`CharacterData` est maintenant une definition d'auteur immuable : son unique
+prefab est `WorldPrefab`. Les donnees de session (inventaire, flamme, trois
+objets combat, usure des boucliers et charges Munin) vivent dans
+`CharacterRuntimeState`, possede par `SquadManager` et indexe par personnage.
+`CharacterStateStore` conserve le format de sauvegarde existant et hydrate ce
+cache avant le spawn; les compagnons non instancies gardent donc leurs donnees.
+`CharacterInfo` est le point d'accès commun au `CharacterData` des personnages
+et ennemis de scène; l'ancien `EnemyInfo` a été retiré. `CombatHealth`
+initialise son maximum depuis ce `CharacterData` avant de remplir une vie
+initialement vide.
+
 Le chantier performance repart de zero. Les systemes de culling manuel,
 budget de lumieres, budget de portails, XRay et instrumentation de migration
 ont ete retires des scenes et prefabs. Les LOD et l'Occlusion Culling natif

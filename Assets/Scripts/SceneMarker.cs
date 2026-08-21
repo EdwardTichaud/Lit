@@ -79,20 +79,13 @@ public sealed class SceneMarker : MonoBehaviour
 
         if (data.isEnemy)
         {
-            EnemyInfo enemyInfo = instance.GetComponent<EnemyInfo>();
-            if (enemyInfo == null)
-            {
-                enemyInfo = instance.AddComponent<EnemyInfo>();
-            }
-            enemyInfo.SetEnemy(data);
-
             CombatHealth health = instance.GetComponent<CombatHealth>();
             if (health == null)
             {
                 health = instance.AddComponent<CombatHealth>();
             }
             int maxHp = data.ResolveMaxHp();
-            health.SetHealth(data.ResolveCurrentHp(maxHp), maxHp);
+            health.SetHealth(maxHp, maxHp);
 
             CombatAggroEnemy aggro = instance.GetComponent<CombatAggroEnemy>();
             if (aggro == null)

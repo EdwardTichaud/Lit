@@ -187,7 +187,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         SquadManager squad = SquadManager.Instance;
-        return squad != null && squad.currentSquad != null && squad.currentSquad.Any(character => character != null && character.model != null);
+        return squad != null && squad.currentSquad != null && squad.currentSquad.Any(character => character != null && character.worldPrefab != null);
     }
 
     private void SpawnForClient(ulong clientId)
@@ -200,7 +200,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         CharacterData character = ResolveCharacterForClient(clientId);
-        if (character == null || character.model == null)
+        if (character == null || character.worldPrefab == null)
         {
             Debug.LogWarning("NetcodePlayerSpawner: aucun personnage disponible pour ce client.");
             return;

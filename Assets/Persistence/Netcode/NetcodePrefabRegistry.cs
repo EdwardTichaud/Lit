@@ -203,7 +203,7 @@ public static class NetcodePrefabRegistry
 
     /// <summary>
     /// Creates the world prefab associated with a scene marker. This is intentionally
-    /// separate from squad spawning, which continues to use CharacterData.model.
+    /// separate from squad spawning, although both use CharacterData.worldPrefab.
     /// </summary>
     public static GameObject SpawnSceneMarkerCharacterInstance(string markerId, CharacterData character, Vector3 position, Quaternion rotation)
     {
@@ -295,7 +295,7 @@ public static class NetcodePrefabRegistry
         for (int i = 0; i < characters.Count; i++)
         {
             CharacterData character = characters[i];
-            if (character == null || character.model == null)
+            if (character == null || character.worldPrefab == null)
             {
                 continue;
             }
@@ -402,7 +402,7 @@ public static class NetcodePrefabRegistry
         CharacterSpawnInfo created = new CharacterSpawnInfo
         {
             character = character,
-            sourcePrefab = character.model,
+            sourcePrefab = character.worldPrefab,
             hash = NetcodeStableHash.Hash32($"character:{key}")
         };
 

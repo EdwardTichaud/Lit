@@ -17,6 +17,9 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
 - `NetworkInventory` / `WorldInteractionService` : autorité réseau.
 - `SquadCharacterController` porte aussi les 3 items defensifs actives pour le
   combat, separes de l'inventaire complet.
+- `CharacterRuntimeState`, possédé par `SquadManager`, conserve cet état entre
+  despawn/spawn et sert de fallback de sauvegarde; il ne vit jamais dans
+  `CharacterData`.
 
 ## Flux principaux
 
@@ -81,10 +84,9 @@ gérer loot, inventaire, lecture, placement et actions contextuelles.
   l'inventaire.
 - L'application des starter items preserve les 3 items combat preassignes, puis
   les revalide apres ajout des objets de depart.
-- Les sauvegardes `CharacterSaveData` version 5 persistent aussi les items avec
-  `CombatReactionProfile`. Au chargement d'une sauvegarde plus ancienne sans
-  items combat, les defaults du personnage sont migres si les items existent
-  dans l'inventaire restaure.
+- Les sauvegardes `CharacterSaveData` persistent les items avec
+  `CombatReactionProfile`; les trois assignations combat sont restaurees depuis
+  la sauvegarde, sans default mutable sur `CharacterData`.
 - Un item combat actif peut etre defensif ou porter un `CombatReactionProfile`.
   `Item_Weapon_Sword` est configure comme premier `MeleeCounterImpale` : il ne
   sert pas de bouclier, mais declenche un empalement si l'attaque ennemie est

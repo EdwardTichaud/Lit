@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Role: composant de points de vie reutilisable pour les ennemis de combat en scene.
 // Usage: attache aux ennemis ou objets qui doivent garder des PV entre deux combats.
-// Responsibilities: stocker PV max/courants, appliquer degats, notifier les changements.
+// Responsibilities: initialiser les PV depuis CharacterData, stocker PV max/courants, appliquer degats, notifier les changements.
 // Dependencies: Action indirecte via l'evenement HealthChanged.
 // Precautions: ne pas confondre avec la sante du SquadCharacterController, qui gere les personnages joueurs.
 /// <summary>
@@ -41,6 +41,8 @@ public class CombatHealth : MonoBehaviour
 
     private void Awake()
     {
+        InitializeMaxHealthFromCharacterData();
+
         // Unity appelle Awake au chargement; on nettoie les valeurs avant tout combat.
         if (initializeEmptyHealthToMax && currentHp <= 0)
         {
@@ -48,6 +50,47 @@ public class CombatHealth : MonoBehaviour
         }
 
         currentHp = Mathf.Clamp(currentHp, 0, maxHp);
+    }
+
+    /// <summary>
+    /// Initialise le maximum depuis le CharacterData porte par ce root ou un de
+    /// ses enfants. Les PV courants ne sont remplis que s'ils etaient vides afin
+    /// de ne pas ecraser une restauration de sauvegarde ulterieure.
+    /// </summary>
+    public bool InitializeMaxHealthFromCharacterData()
+    {
+        CharacterData data = ResolveCharacterData();
+        if (data == null)
+        {
+            return false;
+        }
+
+        int previousMaxHp = Mathf.Max(1, maxHp);
+        int resolvedMaxHp = data.ResolveMaxHp();
+        bool wasEmpty = currentHp <= 0;
+        bool wasFull = currentHp >= previousMaxHp;
+        maxHp = Mathf.Max(1, resolvedMaxHp);
+        if (initializeEmptyHealthToMax && (wasEmpty || wasFull))
+        {
+            currentHp = maxHp;
+        }
+        else
+        {
+            currentHp = Mathf.Clamp(currentHp, 0, maxHp);
+        }
+
+        return true;
+    }
+
+    private CharacterData ResolveCharacterData()
+    {
+        CharacterInfo characterInfo = GetComponent<CharacterInfo>() ?? GetComponentInChildren<CharacterInfo>(true);
+        if (characterInfo != null && characterInfo.CharacterData != null)
+        {
+            return characterInfo.CharacterData;
+        }
+
+        return null;
     }
 
     /// <summary>

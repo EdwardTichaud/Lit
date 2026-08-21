@@ -112,33 +112,25 @@ public class CombatAggroEnemy : MonoBehaviour
     /// </summary>
     public List<CombatEnemyDefinition> CreateEnemyDefinitions()
     {
-        List<CombatEnemyDefinition> result;
-        if (enemy != null)
+        int resolvedMaxHp = ResolveMaxHp();
+        int resolvedCurrentHp = ResolveCurrentHp(resolvedMaxHp);
+        List<CombatEnemyDefinition> result = new List<CombatEnemyDefinition>
         {
-            result = enemy.CreateCombatDefinitions(combatHealth);
-        }
-        else
-        {
-            int resolvedMaxHp = ResolveMaxHp();
-            int resolvedCurrentHp = ResolveCurrentHp(resolvedMaxHp);
-            result = new List<CombatEnemyDefinition>
-            {
-                new CombatEnemyDefinition(ResolveDisplayName(), resolvedMaxHp, resolvedCurrentHp, attackDamage)
-            };
+            new CombatEnemyDefinition(ResolveDisplayName(), resolvedMaxHp, resolvedCurrentHp, attackDamage)
+        };
 
-            if (additionalEnemies != null)
+        if (additionalEnemies != null)
+        {
+            int total = result.Count + additionalEnemies.Count;
+            for (int i = 0; i < additionalEnemies.Count; i++)
             {
-                int total = result.Count + additionalEnemies.Count;
-                for (int i = 0; i < additionalEnemies.Count; i++)
+                CombatEnemyDefinition definition = additionalEnemies[i];
+                if (definition == null)
                 {
-                    CombatEnemyDefinition definition = additionalEnemies[i];
-                    if (definition == null)
-                    {
-                        continue;
-                    }
-
-                    result.Add(definition.CreateRuntimeCopy(result.Count, total));
+                    continue;
                 }
+
+                result.Add(definition.CreateRuntimeCopy(result.Count, total));
             }
         }
 
@@ -159,7 +151,6 @@ public class CombatAggroEnemy : MonoBehaviour
         characterData = data;
         enemyDisplayName = data.ResolveDisplayName();
         maxHp = data.ResolveMaxHp();
-        attackDamage = Mathf.Max(0, data.attackDamage);
     }
 
     /// <summary>
@@ -463,8 +454,8 @@ public class CombatAggroEnemy : MonoBehaviour
     {
         if (enemy == null)
         {
-            EnemyInfo enemyInfo = GetComponentInChildren<EnemyInfo>(true);
-            enemy = enemyInfo != null ? enemyInfo.Enemy : null;
+            CharacterInfo info = GetComponentInChildren<CharacterInfo>(true);
+            enemy = info != null ? info.Enemy : null;
         }
 
         if (characterData == null)

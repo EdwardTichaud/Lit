@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Role: ScriptableObject de donnees pour personnages joueurs et ennemis.
 // Usage: reference par les prefabs de personnages, la squad, le combat, les voice lines et l'inventaire de depart.
-// Responsibilities: stocker identite, stats, competences, inventaire runtime et definitions de combat.
+// Responsibilities: stocker identite, apparence, stats, competences et inventaire de depart.
 // Dependencies: Item, StatsSO, CharacterStats, CombatEnemyDefinition, VoiceLineData.
 // Precautions: plusieurs champs publics sont serialises dans des assets; ne pas les renommer sans migration Unity.
 /// <summary>
@@ -38,9 +38,7 @@ public class CharacterData : ScriptableObject
     public string characterName;
     /// <summary>Portrait utilise par les interfaces.</summary>
     public Sprite portrait;
-    /// <summary>Modele visuel principal du personnage.</summary>
-    public GameObject model;
-    /// <summary>Prefab monde a utiliser si different du modele.</summary>
+    /// <summary>Prefab unique utilise pour le monde, la squad et le reseau.</summary>
     public GameObject worldPrefab;
     /// <summary>Competences possedees par le personnage.</summary>
     public List<StatsSO> skills;
@@ -59,20 +57,6 @@ public class CharacterData : ScriptableObject
     /// <summary>Indique si cette donnee represente un ennemi.</summary>
     [Tooltip("Indique que ce CharacterData represente un ennemi.")]
     public bool isEnemy;
-    /// <summary>PV de depart en combat. 0 utilise les PV max.</summary>
-    [Min(0)]
-    [Tooltip("PV au debut du combat. 0 utilise les PV max resolus.")]
-    public int combatCurrentHp;
-    /// <summary>Degats bruts infliges par cet ennemi pendant son tour.</summary>
-    [Min(0)]
-    [Tooltip("Degats bruts infliges pendant le tour ennemi.")]
-    public int attackDamage = 4;
-    /// <summary>Attaques nommees disponibles pour cet ennemi.</summary>
-    [Tooltip("Attaques nommees disponibles pour cet ennemi. Vide conserve l'attaque de base.")]
-    public List<CombatEnemyAttackDefinition> combatAttacks = new List<CombatEnemyAttackDefinition>();
-    /// <summary>Ennemis supplementaires ajoutes a une session de combat.</summary>
-    [Tooltip("Ennemis additionnels ajoutes a la meme session solo.")]
-    public List<CombatEnemyDefinition> additionalEnemies = new List<CombatEnemyDefinition>();
 
     [Header("Voice Lines")]
     /// <summary>Voice lines disponibles pour ce personnage.</summary>
@@ -82,29 +66,6 @@ public class CharacterData : ScriptableObject
     /// <summary>Index de point d'attente dans la maison.</summary>
     public int maisonWaitingPoint = 0;
 
-    [Header("Inventory (Runtime)")]
-    /// <summary>Items runtime portes par le personnage.</summary>
-    public List<Item> inventoryItems = new List<Item>();
-    /// <summary>Items equipes pour les interactions de monde.</summary>
-    public List<Item> equippedInteractionItems = new List<Item>();
-    /// <summary>Items defensifs gardes a portee de main en combat.</summary>
-    public List<Item> enabledCombatItems = new List<Item>();
-    /// <summary>PV restants des items defensifs combat entames.</summary>
-    public List<CombatDefenseItemHitPointData> combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
-    /// <summary>Temps restant de flamme en secondes.</summary>
-    public int flameSecondsRemaining;
-    /// <summary>Indique si la flamme est equipee.</summary>
-    public bool flameEquipped;
-    /// <summary>Indique si l'inventaire runtime a deja ete initialise.</summary>
-    public bool inventoryInitialized;
-
-    [Header("Munin (Runtime)")]
-    /// <summary>Charges runtime restantes de Munin.</summary>
-    public int muninChargesRemaining;
-    /// <summary>Maximum runtime de charges de Munin.</summary>
-    public int muninMaxCharges = 10;
-    /// <summary>Indique si un etat runtime de charges Munin a ete applique.</summary>
-    public bool muninChargesInitialized;
 
     /// <summary>
     /// Identifiant stable derive du GUID d'asset quand disponible.
@@ -136,30 +97,10 @@ public class CharacterData : ScriptableObject
     }
 #endif
 
-    /// <summary>
-    /// Vue lecture seule de l'inventaire runtime, avec creation de liste si besoin.
-    /// </summary>
-    public IReadOnlyList<Item> InventoryItems
-    {
-        get
-        {
-            if (inventoryItems == null)
-            {
-                inventoryItems = new List<Item>();
-            }
-
-            return inventoryItems;
-        }
-    }
-
-    public IReadOnlyList<CombatDefenseItemHitPointData> CombatDefenseItemHitPoints => combatDefenseItemHitPoints;
-
-    /// <summary>
-    /// Retourne le prefab monde, ou le modele si aucun prefab specifique n'est configure.
-    /// </summary>
+    /// <summary>Retourne le prefab unique du personnage.</summary>
     public GameObject ResolveWorldPrefab()
     {
-        return worldPrefab != null ? worldPrefab : model;
+        return worldPrefab;
     }
 
     /// <summary>
@@ -183,214 +124,6 @@ public class CharacterData : ScriptableObject
         return hp > 0 ? hp : 8;
     }
 
-    /// <summary>
-    /// Retourne les PV de depart de combat bornes par les PV max.
-    /// </summary>
-    public int ResolveCurrentHp(int resolvedMaxHp)
-    {
-        return Mathf.Clamp(combatCurrentHp > 0 ? combatCurrentHp : resolvedMaxHp, 0, Mathf.Max(1, resolvedMaxHp));
-    }
-
-    /// <summary>
-    /// Cree la definition de combat de l'ennemi principal.
-    /// </summary>
-    public CombatEnemyDefinition CreatePrimaryCombatDefinition(CombatHealth healthOverride = null)
-    {
-        int resolvedMaxHp = healthOverride != null ? Mathf.Max(1, healthOverride.MaxHp) : ResolveMaxHp();
-        int resolvedCurrentHp = healthOverride != null && healthOverride.CurrentHp > 0
-            ? Mathf.Clamp(healthOverride.CurrentHp, 0, resolvedMaxHp)
-            : ResolveCurrentHp(resolvedMaxHp);
-
-        CombatEnemyDefinition definition = new CombatEnemyDefinition(ResolveDisplayName(), resolvedMaxHp, resolvedCurrentHp, attackDamage)
-        {
-            attacks = CombatEnemyDefinition.CreateRuntimeAttackCopies(combatAttacks, attackDamage)
-        };
-
-        return definition;
-    }
-
-    /// <summary>
-    /// Cree toutes les definitions de combat associees a ce personnage.
-    /// </summary>
-    public List<CombatEnemyDefinition> CreateCombatDefinitions(CombatHealth healthOverride = null)
-    {
-        List<CombatEnemyDefinition> result = new List<CombatEnemyDefinition>
-        {
-            CreatePrimaryCombatDefinition(healthOverride)
-        };
-
-        if (additionalEnemies == null)
-        {
-            return result;
-        }
-
-        int total = additionalEnemies.Count + 1;
-        for (int i = 0; i < additionalEnemies.Count; i++)
-        {
-            CombatEnemyDefinition enemy = additionalEnemies[i];
-            if (enemy != null)
-            {
-                result.Add(enemy.CreateRuntimeCopy(result.Count, total));
-            }
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Remplace l'inventaire runtime sans liste d'items equipes.
-    /// </summary>
-    public void SetInventory(List<Item> items, int flameSeconds, bool equipped, bool markInitialized = true)
-    {
-        SetInventory(items, flameSeconds, equipped, markInitialized, null, null);
-    }
-
-    /// <summary>
-    /// Remplace l'inventaire runtime et les items d'interaction equipes.
-    /// </summary>
-    public void SetInventory(List<Item> items, int flameSeconds, bool equipped, bool markInitialized, List<Item> equippedItems)
-    {
-        SetInventory(items, flameSeconds, equipped, markInitialized, equippedItems, null);
-    }
-
-    /// <summary>
-    /// Remplace l'inventaire runtime, les items d'interaction equipes et les items combat actives.
-    /// </summary>
-    public void SetInventory(
-        List<Item> items,
-        int flameSeconds,
-        bool equipped,
-        bool markInitialized,
-        List<Item> equippedItems,
-        List<Item> combatItems)
-    {
-        if (inventoryItems == null)
-        {
-            inventoryItems = new List<Item>();
-        }
-        else
-        {
-            inventoryItems.Clear();
-        }
-
-        if (items != null && items.Count > 0)
-        {
-            inventoryItems.AddRange(items);
-        }
-
-        flameSecondsRemaining = Mathf.Max(0, flameSeconds);
-        flameEquipped = equipped;
-        if (equippedInteractionItems == null)
-        {
-            equippedInteractionItems = new List<Item>();
-        }
-        else
-        {
-            equippedInteractionItems.Clear();
-        }
-
-        if (equippedItems != null)
-        {
-            for (int i = 0; i < equippedItems.Count; i++)
-            {
-                Item item = equippedItems[i];
-                if (item == null || equippedInteractionItems.Contains(item))
-                {
-                    continue;
-                }
-
-                equippedInteractionItems.Add(item);
-            }
-        }
-
-        if (enabledCombatItems == null)
-        {
-            enabledCombatItems = new List<Item>();
-        }
-        else
-        {
-            enabledCombatItems.Clear();
-        }
-
-        if (combatItems != null)
-        {
-            for (int i = 0; i < combatItems.Count && enabledCombatItems.Count < 3; i++)
-            {
-                Item item = combatItems[i];
-                if (item == null || enabledCombatItems.Contains(item) || !item.CanUseInCombatReaction())
-                {
-                    continue;
-                }
-
-                if (inventoryItems != null && !inventoryItems.Contains(item))
-                {
-                    continue;
-                }
-
-                enabledCombatItems.Add(item);
-            }
-        }
-
-        if (markInitialized)
-        {
-            inventoryInitialized = true;
-        }
-    }
-
-    public void SetCombatDefenseItemHitPoints(List<CombatDefenseItemHitPointData> hitPoints)
-    {
-        if (combatDefenseItemHitPoints == null)
-        {
-            combatDefenseItemHitPoints = new List<CombatDefenseItemHitPointData>();
-        }
-        else
-        {
-            combatDefenseItemHitPoints.Clear();
-        }
-
-        if (hitPoints == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < hitPoints.Count; i++)
-        {
-            CombatDefenseItemHitPointData entry = hitPoints[i];
-            if (entry == null || string.IsNullOrWhiteSpace(entry.itemId) || entry.hitPoints <= 0)
-            {
-                continue;
-            }
-
-            AddCombatDefenseItemHitPointStack(entry.itemId, entry.hitPoints, Mathf.Max(1, entry.quantity));
-        }
-    }
-
-    private void AddCombatDefenseItemHitPointStack(string itemId, int hitPoints, int quantity)
-    {
-        if (string.IsNullOrWhiteSpace(itemId) || hitPoints <= 0 || quantity <= 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < combatDefenseItemHitPoints.Count; i++)
-        {
-            CombatDefenseItemHitPointData entry = combatDefenseItemHitPoints[i];
-            if (entry == null || entry.itemId != itemId || entry.hitPoints != hitPoints)
-            {
-                continue;
-            }
-
-            entry.quantity = Mathf.Max(1, entry.quantity) + quantity;
-            return;
-        }
-
-        combatDefenseItemHitPoints.Add(new CombatDefenseItemHitPointData
-        {
-            itemId = itemId,
-            hitPoints = hitPoints,
-            quantity = quantity
-        });
-    }
 
     /// <summary>
     /// Indique si ce personnage possede une competence donnee.

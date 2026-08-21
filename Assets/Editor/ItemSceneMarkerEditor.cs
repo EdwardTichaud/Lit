@@ -563,19 +563,6 @@ public class ItemSceneMarkerEditor : Editor
             return;
         }
 
-        EnemyInfo enemyInfo = CopyComponentToRoot(FindComponentOnRootOrChildren<EnemyInfo>(modelRoot), modelRoot);
-        if (enemyInfo == null)
-        {
-            enemyInfo = EnsureComponent<EnemyInfo>(modelRoot);
-        }
-
-        if (enemyInfo != null)
-        {
-            Undo.RecordObject(enemyInfo, UndoLabel);
-            enemyInfo.SetEnemy(enemy);
-            EditorUtility.SetDirty(enemyInfo);
-        }
-
         CharacterInfo characterInfo = CopyComponentToRoot(FindComponentOnRootOrChildren<CharacterInfo>(modelRoot), modelRoot);
         if (characterInfo == null)
         {
@@ -599,7 +586,7 @@ public class ItemSceneMarkerEditor : Editor
         {
             Undo.RecordObject(health, UndoLabel);
             int maxHp = enemy.ResolveMaxHp();
-            health.SetHealth(enemy.ResolveCurrentHp(maxHp), maxHp);
+            health.SetHealth(maxHp, maxHp);
             EditorUtility.SetDirty(health);
         }
 

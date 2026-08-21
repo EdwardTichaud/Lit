@@ -1165,10 +1165,10 @@ public static class LitOpsiveUccMigrationUtility
             return errors;
         }
 
-        string modelPath = lucianData.model != null ? AssetDatabase.GetAssetPath(lucianData.model) : null;
+        string modelPath = lucianData.worldPrefab != null ? AssetDatabase.GetAssetPath(lucianData.worldPrefab) : null;
         if (string.IsNullOrEmpty(modelPath))
         {
-            errors.Add("Lucian CharacterData model is null.");
+            errors.Add("Lucian CharacterData WorldPrefab is null.");
         }
         else if (!string.Equals(modelPath, LucianPrefabPath, StringComparison.Ordinal))
         {

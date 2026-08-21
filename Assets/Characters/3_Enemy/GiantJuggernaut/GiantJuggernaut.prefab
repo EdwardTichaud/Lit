@@ -5428,7 +5428,6 @@ GameObject:
   - component: {fileID: 6585987432151406195}
   - component: {fileID: 3473810115628461106}
   - component: {fileID: 5600308843543772466}
-  - component: {fileID: 2942639395589255972}
   - component: {fileID: 847953340343303029}
   - component: {fileID: 2296660950243021819}
   - component: {fileID: 7177769581939990386}
@@ -5500,19 +5499,6 @@ MonoBehaviour:
   currentHp: 300
   initializeEmptyHealthToMax: 1
 --- !u!114 &5600308843543772466
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3244a80f4648b321c4e30346da4dc10, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyInfo
-  enemy: {fileID: 11400000, guid: c54e94b14c7826c4482529b6d4d739ec, type: 2}
---- !u!114 &2942639395589255972
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

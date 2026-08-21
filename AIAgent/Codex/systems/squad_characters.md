@@ -11,7 +11,11 @@ groupes, le follow et les données runtime de chaque membre.
 - `SquadCharacterController` : façade gameplay du personnage, inventaire, santé,
   mouvement, interactions, assise et crochetage.
 - `SquadAIManager` / `SquadFollowerAgent` : formation et déplacement des followers.
-- `CharacterData` : données d’auteur; clonées au runtime par `SquadManager`.
+- `CharacterData` : données d’auteur immuables, avec un unique `WorldPrefab`.
+- `CharacterInfo` : référence de `CharacterData` commune aux personnages et ennemis
+  placés en scène; il remplace l'ancien composant `EnemyInfo`.
+- `CharacterRuntimeState` : inventaire, flamme, objets combat, boucliers et Munin
+  de la partie; possédé par `SquadManager`, indexé par `characterId` stable.
 - `LocalPlayerContext` : référence canonique du personnage local.
 
 ## Flux principaux
@@ -71,8 +75,9 @@ groupes, le follow et les données runtime de chaque membre.
 
 ## Pièges observés
 
-- Ne jamais modifier directement les assets `CharacterData`; utiliser
-  `GetRuntimeCharacter`.
+- Ne jamais modifier directement les assets `CharacterData`. Les compétences
+  runtime peuvent encore employer `GetRuntimeCharacter`; tout état d'inventaire
+  ou Munin doit passer par `SquadManager.GetCharacterRuntimeState`.
 - `SquadManager.SetInputLocked` est compté : chaque verrou doit être libéré.
 - Le personnage local n’est pas toujours `SquadManager.currentCharacter` en
   multijoueur; utiliser `LocalPlayerContext`.
