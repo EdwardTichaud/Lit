@@ -74,9 +74,13 @@ Lorsqu'une LightSkill utilise des pistes acteurs `ApplySceneOffsets`, la Timelin
 est l'unique proprietaire des transforms pendant la sequence : le relais de
 root motion des acteurs est suspendu pour eviter un second deplacement de
 Lucian ou de l'ennemi.
-Le premier lancement attend une frame de rendu apres `Evaluate(0)` avant de
-jouer la Timeline : la Brain Cinemachine a ainsi deja resolu la camera d'ouverture
-au lieu d'afficher une frame de camera gameplay non initialisee.
+Le `PlayableDirector` bake est toujours inerte (`Play On Awake` desactive,
+`UnscaledGameTime`, `DirectorWrapMode.None`). A chaque lancement, le rig pose
+les acteurs, lie toutes les pistes, reconstruit explicitement son graphe,
+evalue `t=0`, met a jour manuellement la Brain et verifie la camera du premier
+`CinemachineShot` avant le moindre `Play()`. Un pre-roll dont la camera active
+ne correspond pas exactement au plan attendu est refuse et restitue
+immediatement charge, IA, inputs et camera.
 Chaque camera exportee peut declarer une
 cible de suivi/regard Player, Enemy ou EnemyLockPoint et les modules
 `CinemachineFollow`/visee correspondants; une camera sans cible est valide si
@@ -102,18 +106,11 @@ des roots Player et Enemy. Le bake les copie comme `PlayerStageAnchor` et
 manquerait l'un de ces reperes. Une LightSkill place le root du rig au midpoint
 exact des roots de Lucian et de l'ennemi verrouille, aligne l'axe bake sur leur
 axe horizontal, puis pose directement les vrais roots sur ces anchors avant la
-premiere evaluation de Timeline. Le midpoint ne bouge jamais : avant le
-lancement, `CombatCinematicPlacementResolver` teste toutefois les orientations
-`0`, `+15`, `-15` degres et ainsi de suite sur 360 degres, au moyen de
-l'enveloppe Player/Enemy bakee a 30 Hz. Les capsules de
-`CombatCinematicClearanceProxy` ignorent sol, eau, UI, personnages, triggers et
-les objets marques `CinematicPassThrough`, mais refusent un decor bloquant sur
-la trajectoire. La premiere orientation sure est retenue; aucune orientation
-valide refuse la LightSkill sans consommer sa charge. Les positions atteintes
-sont conservees a la sortie, avec une depenetration finale plafonnee. Toute
-modification de formation dans `AnimationLab` necessite un nouveau
-`Bake LightSkill`; il faut aussi rebaker toute LightSkill creee avant
-l'enveloppe de mouvement.
+premiere evaluation de Timeline. Le midpoint ne bouge jamais : aucune recherche
+d'orientation ou de place, aucun test de collision, sol, NavMesh ou
+depenetration ne peut refuser ou deplacer une LightSkill. Les positions
+atteintes sont conservees a la sortie. Toute modification de formation dans
+`AnimationLab` necessite un nouveau `Bake LightSkill`.
 Les Animators ne sont jamais convertis en poses de root : cette ancienne
 conversion pouvait cumuler un offset de hierarchie et une position monde
 d'auteur. Au bake, les pistes `Player.Animator` et `Enemy.Animator` sont forcees
@@ -165,7 +162,10 @@ d'offset Timeline d'auteur : le bake ne les convertit jamais vers un autre
 repere, ce qui garantit que le mouvement valide dans `AnimationLab` reste
 identique une fois le rig aligne sur Lucian reel.
 `LightSkillCinematicSequenceController` suspend l'IA cible et interprete les
-Signals projectile, impact VFX et degats.
+Signals projectile, impact VFX et degats. Un `LightSkillSO` peut aussi definir
+un state Animator optionnel pour Lucian et/ou l'ennemi apres une fin naturelle
+de Timeline (state, fondu, temps normalise). Ces states ne s'appliquent jamais
+apres interruption ou mort; une state `Death` conserve toujours sa priorite.
 `ResolveLightSkillImpact` reste la seule resolution lorsque le fallback est
 desactive. `LightSkill_Devastation` est la base active; Furie a ete supprime.
 `CombatAttackDefinition`, `SkillSO`, `EnemySkills` et

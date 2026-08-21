@@ -220,11 +220,12 @@ Le combat ne cherche pas à rivaliser avec les JRPG modernes. Il doit rester :
 - nerveux ;
 - spectaculaire.
 
-Les combats sont rares et servent principalement à créer de la tension. Ils ne
-doivent pas déplacer le centre du jeu hors de l'exploration, des enquêtes et de
-la compréhension du château.
+Les combats sont réguliers et participent à la boucle d'exploration : défendre
+une trace, sécuriser un trajet, alimenter une épreuve, délivrer un Savoir
+narratif ou modifier la circulation d'une zone. Ils ne doivent ni exiger de
+farming, ni devenir du remplissage aléatoire.
 
-Les ennemis apparaissent principalement lorsque :
+Les ennemis apparaissent notamment lorsque :
 
 - le joueur se trouve hors des zones éclairées ;
 - le joueur choisit volontairement d'éteindre une Flame.
@@ -293,9 +294,10 @@ Le cœur de `Lit` reste :
 - les fantômes ;
 - la temporalité.
 
-Les combats servent à créer de la tension. Les spécialisations servent à
-renouveler les parties multijoueur. Les connaissances servent à raconter
-l'histoire. Les époques servent à transformer la manière d'explorer le château.
+Les combats servent à créer de la tension et à transformer les parcours. Les
+spécialisations servent à renouveler les parties multijoueur. Les connaissances
+servent à raconter l'histoire. Les époques servent à transformer la manière
+d'explorer le château.
 
 La coopération ne consiste pas simplement à jouer à plusieurs : elle doit offrir
 une expérience différente grâce aux rôles complémentaires, aux compositions
@@ -503,7 +505,6 @@ Les textes doivent être :
 
 ## Hors priorité
 
-- combat central ;
 - crafting massif ;
 - construction et amélioration de bâtiments ;
 - arbres de pouvoirs ;

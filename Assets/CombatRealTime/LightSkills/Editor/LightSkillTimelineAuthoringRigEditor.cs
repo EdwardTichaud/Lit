@@ -80,6 +80,7 @@ public static class LightSkillRuntimeRigBaker
         {
             ValidateCameras(authoringRig, timeline, issues);
             ValidateStageAnchors(authoringRig, issues);
+            ValidatePostTimelineStates(authoringRig, issues);
             ValidateExtraTrackBindings(authoringRig, timeline, issues);
             ValidateRuntimeExportDependencies(authoringRig, issues);
 
@@ -172,6 +173,8 @@ public static class LightSkillRuntimeRigBaker
             root = new GameObject(skill.name + "_CinematicRig");
             PlayableDirector director = root.AddComponent<PlayableDirector>();
             director.playableAsset = runtimeTimeline;
+            director.playOnAwake = false;
+            director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
             director.extrapolationMode = DirectorWrapMode.None;
             root.AddComponent<SignalReceiver>();
             root.AddComponent<LitTimelineCinemachineBridge>();
@@ -198,17 +201,6 @@ public static class LightSkillRuntimeRigBaker
                 authoringRig.transform,
                 authoringRig.PreviewPlayerAnchor,
                 authoringRig.PreviewEnemyAnchor);
-            List<CombatCinematicMotionEnvelopeSample> motionEnvelope = CaptureAuthorMotionEnvelope(
-                authoringRig,
-                sourceTimeline,
-                skill.CinematicClearance != null ? skill.CinematicClearance.sampleRate : 30,
-                out string envelopeError);
-            if (motionEnvelope == null)
-            {
-                report = envelopeError;
-                return false;
-            }
-            rig.ConfigureMotionEnvelope(motionEnvelope);
             rig.ConfigureFramingReferences(framingReferences);
             if (CountMissingScripts(root) > 0)
             {
@@ -270,7 +262,7 @@ public static class LightSkillRuntimeRigBaker
             CleanupObsoleteBakedTimelines(folder, skill.name, runtimeTimelinePath);
 
             report = "Package runtime bake : " + prefabPath + "\nTimeline runtime : " + runtimeTimelinePath + "\n" +
-                packageReport + "\nTrajectoire : " + motionEnvelope.Count + " echantillon(s)." +
+                packageReport + "\nPlacement : midpoint direct sur les anchors bakes." +
                 "\nExports : " + exports.Count + ". Exclus : preview actors, Preview_MainCamera, Brain et AudioListener.";
             return true;
         }
@@ -572,6 +564,48 @@ public static class LightSkillRuntimeRigBaker
         }
     }
 
+    private static void ValidatePostTimelineStates(LightSkillTimelineAuthoringRig rig, List<string> issues)
+    {
+        if (rig == null || rig.LightSkill == null)
+        {
+            return;
+        }
+
+        ValidatePostTimelineState(
+            rig.LightSkill.PostTimelinePlayerState,
+            rig.PreviewPlayerAnimator,
+            "Player",
+            issues);
+        ValidatePostTimelineState(
+            rig.LightSkill.PostTimelineEnemyState,
+            rig.PreviewEnemyAnimator,
+            "Enemy",
+            issues);
+    }
+
+    private static void ValidatePostTimelineState(
+        LightSkillPostTimelineState state,
+        Animator animator,
+        string actorLabel,
+        List<string> issues)
+    {
+        if (state == null || !state.IsConfigured)
+        {
+            return;
+        }
+
+        if (animator == null || animator.runtimeAnimatorController == null)
+        {
+            issues.Add("State de sortie " + actorLabel + " configuree mais Animator preview invalide.");
+            return;
+        }
+
+        if (!animator.HasState(0, Animator.StringToHash(state.AnimatorStateName)))
+        {
+            issues.Add("State de sortie " + actorLabel + " introuvable : '" + state.AnimatorStateName + "'.");
+        }
+    }
+
     private static void ValidateExtraTrackBindings(LightSkillTimelineAuthoringRig rig, TimelineAsset timeline, List<string> issues)
     {
         HashSet<string> names = new HashSet<string>();
@@ -816,9 +850,6 @@ public static class LightSkillRuntimeRigBaker
 
         if (!bakedRig.HasAuthoringStageLayout)
             issues.Add("Le prefab baked ne contient pas PlayerStageAnchor et EnemyStageAnchor.");
-        if (!bakedRig.HasAuthoringMotionEnvelope)
-            issues.Add("Le prefab baked ne contient pas l'enveloppe de trajectoire. Rebakez la LightSkill.");
-
         string prefabPath = AssetDatabase.GetAssetPath(bakedRig.gameObject);
         if (CountMissingScripts(prefabPath) > 0)
             issues.Add("Le prefab baked contient un ou plusieurs scripts manquants.");
@@ -837,6 +868,12 @@ public static class LightSkillRuntimeRigBaker
         else
         {
             ValidateBakedCameraAnimationOffsets(bakedRig, bakedDirector.playableAsset as TimelineAsset, issues);
+            if (bakedDirector.playOnAwake)
+                issues.Add("Le PlayableDirector runtime ne doit jamais avoir Play On Awake active.");
+            if (bakedDirector.timeUpdateMode != DirectorUpdateMode.UnscaledGameTime)
+                issues.Add("Le PlayableDirector runtime doit utiliser UnscaledGameTime.");
+            if (bakedDirector.extrapolationMode != DirectorWrapMode.None)
+                issues.Add("Le PlayableDirector runtime doit utiliser DirectorWrapMode.None.");
         }
 
         if (bakedRig.CameraBindings.Count != authorCameras.Count)
@@ -1107,72 +1144,6 @@ public static class LightSkillRuntimeRigBaker
         }
 
         return references;
-    }
-
-    private static List<CombatCinematicMotionEnvelopeSample> CaptureAuthorMotionEnvelope(
-        LightSkillTimelineAuthoringRig rig,
-        TimelineAsset timeline,
-        int sampleRate,
-        out string error)
-    {
-        error = null;
-        if (rig == null || rig.Director == null || rig.PreviewPlayerAnimator == null ||
-            rig.PreviewEnemyAnimator == null || timeline == null)
-        {
-            error = "Impossible de capturer la trajectoire : rig, Timeline ou acteurs preview manquants.";
-            return null;
-        }
-
-        if (!rig.ApplyPreviewBindings(out error)) return null;
-        sampleRate = Mathf.Max(1, sampleRate);
-        SortedSet<double> sampleTimes = new SortedSet<double> { 0d, timeline.duration };
-        double interval = 1d / sampleRate;
-        for (double time = interval; time < timeline.duration; time += interval)
-            sampleTimes.Add(time);
-
-        foreach (PlayableBinding output in timeline.outputs)
-        {
-            if (output.sourceObject is not AnimationTrack track ||
-                (output.streamName != LightSkillTimelineContract.PlayerAnimatorTrack &&
-                 output.streamName != LightSkillTimelineContract.EnemyAnimatorTrack)) continue;
-            foreach (TimelineClip clip in track.GetClips())
-            {
-                sampleTimes.Add(Math.Max(0d, clip.start));
-                sampleTimes.Add(Math.Min(timeline.duration, clip.end));
-            }
-        }
-
-        PlayableDirector director = rig.Director;
-        double previousTime = director.time;
-        List<CombatCinematicMotionEnvelopeSample> samples = new List<CombatCinematicMotionEnvelopeSample>(sampleTimes.Count);
-        try
-        {
-            foreach (double time in sampleTimes)
-            {
-                director.time = time;
-                director.Evaluate();
-                samples.Add(new CombatCinematicMotionEnvelopeSample
-                {
-                    timelineTime = (float)time,
-                    playerStagePosition = rig.transform.InverseTransformPoint(rig.PreviewPlayerAnimator.transform.position),
-                    playerStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewPlayerAnimator.transform.rotation,
-                    enemyStagePosition = rig.transform.InverseTransformPoint(rig.PreviewEnemyAnimator.transform.position),
-                    enemyStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewEnemyAnimator.transform.rotation
-                });
-            }
-        }
-        finally
-        {
-            director.time = previousTime;
-            director.Evaluate();
-        }
-
-        if (samples.Count == 0)
-        {
-            error = "La Timeline ne produit aucun echantillon de trajectoire.";
-            return null;
-        }
-        return samples;
     }
 
     private static List<double> GetFramingAuditTimes(TimelineAsset timeline)

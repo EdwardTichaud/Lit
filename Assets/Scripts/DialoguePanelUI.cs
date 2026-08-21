@@ -3,9 +3,10 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 // Affiche les dialogues narratifs dans le DialoguePanel de la scene.
-public class DialoguePanelUI : MonoBehaviour
+public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 {
     public static DialoguePanelUI Instance { get; private set; }
 
@@ -143,7 +144,7 @@ public class DialoguePanelUI : MonoBehaviour
 
         isShowing = true;
         shownFrame = Time.frameCount;
-        InputFocusStack.Push(this);
+        InputFocusStack.PushDialogue(this);
 
         if (requireInteractToClose)
         {
@@ -178,6 +179,7 @@ public class DialoguePanelUI : MonoBehaviour
         SetCanvasAlpha(0f);
         isShowing = true;
         shownFrame = Time.frameCount;
+        InputFocusStack.PushDialogue(this);
         hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
         return true;
     }
@@ -296,6 +298,17 @@ public class DialoguePanelUI : MonoBehaviour
         HideManually();
     }
 
+    public bool HandleInputModeAction(InputModeAction action, InputAction.CallbackContext context)
+    {
+        if (!isShowing || !InputFocusStack.HasFocus(this)) return false;
+        if (action == InputModeAction.Submit && !externallyControlled && requireInteractToClose && Time.frameCount != shownFrame)
+        {
+            HideManually();
+            return true;
+        }
+        return action == InputModeAction.Cancel;
+    }
+
     private void HideManually()
     {
         if (!isShowing)
@@ -377,7 +390,45 @@ public class DialoguePanelUI : MonoBehaviour
             }
         }
 
+        EnsureRuntimeFallback();
+
         EnsureCanvasGroup();
+    }
+
+    private void EnsureRuntimeFallback()
+    {
+        if (dialogueText != null) return;
+        GameObject canvasObject = new GameObject("DialoguePanel_RuntimeFallback", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 150;
+        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        GameObject panel = new GameObject("DialoguePanel", typeof(RectTransform), typeof(Image));
+        panel.transform.SetParent(canvasObject.transform, false);
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.1f, 0.08f);
+        panelRect.anchorMax = new Vector2(0.9f, 0.28f);
+        panelRect.offsetMin = panelRect.offsetMax = Vector2.zero;
+        panel.GetComponent<Image>().color = new Color(0.03f, 0.03f, 0.05f, 0.94f);
+
+        GameObject textObject = new GameObject("DialogueBox_Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(panel.transform, false);
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(36f, 24f);
+        textRect.offsetMax = new Vector2(-36f, -24f);
+        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
+        text.font = TMP_Settings.defaultFontAsset;
+        text.fontSize = 30f;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.enableWordWrapping = true;
+        dialoguePanelRoot = panel;
+        dialogueText = text;
+        panel.SetActive(false);
     }
 
     private GameObject FindRootByName(Transform start, string objectName)

@@ -34,6 +34,19 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         Instance = host.AddComponent<LocalPlayerInput>();
     }
 
+    /// <summary>
+    /// Returns an ActionMap from the sole runtime PlayerInputs instance. Runtime
+    /// consumers must subscribe to this map, not to the imported asset, because
+    /// the coordinator enables this instance exclusively.
+    /// </summary>
+    public static InputActionMap FindSharedActionMap(string mapName)
+    {
+        EnsureInstance();
+        return Instance != null && Instance.playerInputs != null
+            ? Instance.playerInputs.asset.FindActionMap(mapName, false)
+            : null;
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -59,6 +72,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         playerInputs.Camera.SetCallbacks(this);
         playerInputs.Combat.SetCallbacks(this);
         MainMenuInputSettings.ModeChanged += OnInputModeChanged;
+        InputModeCoordinator.Configure(playerInputs.asset);
         ApplyCombatInputActive(false);
     }
 
@@ -149,7 +163,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnSwitchTarget(InputAction.CallbackContext context)
     {
-        if (context.performed && ShouldProcess(context))
+        if (context.performed && CanProcessGameplayAction(context))
         {
             LocalInputRouter.RaiseSwitchTarget(context);
         }
@@ -394,19 +408,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
         inputMapsConfigured = true;
         combatInputActive = active;
-        if (active)
-        {
-            playerInputs.Player.Disable();
-            playerInputs.Camera.Disable();
-            playerInputs.Combat.Enable();
-            LocalInputRouter.ResetMove();
-            LocalInputRouter.ResetCamera();
-            return;
-        }
-
-        playerInputs.Combat.Disable();
-        playerInputs.Player.Enable();
-        playerInputs.Camera.Enable();
+        InputModeCoordinator.SetBaseMode(active ? InputMode.Combat : InputMode.Exploration);
     }
 
     private static float ReadFlightVerticalInput()

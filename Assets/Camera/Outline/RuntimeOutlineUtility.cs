@@ -49,7 +49,12 @@ public static class RuntimeOutlineUtility
             return;
         }
 
-        if (owner is IRuntimeOutlineVisibilityGate visibilityGate && !visibilityGate.AllowsRuntimeOutline)
+        // GhostController is only passed here after the interaction resolver selected it.
+        // Its shader dissolve convention can report the inverse visibility value, so do not
+        // suppress the interactable outline for an otherwise valid ghost target.
+        if (owner is IRuntimeOutlineVisibilityGate visibilityGate &&
+            !(owner is GhostController) &&
+            !visibilityGate.AllowsRuntimeOutline)
         {
             return;
         }

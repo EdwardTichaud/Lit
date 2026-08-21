@@ -4,7 +4,7 @@ using UnityEngine.Events;
 using UnityEngine.Timeline;
 
 [DisallowMultipleComponent]
-public sealed class LightSkillCinematicSequenceController : MonoBehaviour, ICombatCinematicParticipant
+public sealed class LightSkillCinematicSequenceController : MonoBehaviour, ICombatCinematicParticipant, ICombatCinematicCompletionParticipant
 {
     [SerializeField] private SignalReceiver signalReceiver;
 
@@ -75,6 +75,24 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         enemyBehaviour = null;
         lockCamera = null;
         resolveImpact = null;
+    }
+
+    /// <summary>
+    /// Called by CombatCinematicRig only for a natural Timeline completion.
+    /// Interrupted sequences deliberately keep their current state untouched.
+    /// </summary>
+    public void Complete(CombatCinematicContext context)
+    {
+        if (!active || lightSkill == null || context == null)
+        {
+            return;
+        }
+
+        ApplyPostTimelineState(
+            context.PlayerRoot != null ? context.PlayerRoot.GetComponent<PlayerActionPresentationController>() : null,
+            context.PlayerAnimator,
+            lightSkill.PostTimelinePlayerState);
+        ApplyPostTimelineState(context.TargetEnemy, context.TargetAnimator, lightSkill.PostTimelineEnemyState);
     }
 
     public void SpawnProjectile()
@@ -179,6 +197,49 @@ public sealed class LightSkillCinematicSequenceController : MonoBehaviour, IComb
         projectileRoutine = null;
         if (projectileInstance != null) Destroy(projectileInstance);
         projectileInstance = null;
+    }
+
+    private static void ApplyPostTimelineState(
+        PlayerActionPresentationController presentation,
+        Animator animator,
+        LightSkillPostTimelineState state)
+    {
+        if (state == null || !state.IsConfigured || animator == null || presentation == null || presentation.IsDeathAnimationLocked)
+        {
+            return;
+        }
+
+        int stateHash = Animator.StringToHash(state.AnimatorStateName);
+        if (!animator.HasState(0, stateHash))
+        {
+            Debug.LogWarning("[LightSkill] State de sortie Player introuvable : '" + state.AnimatorStateName + "'.", animator);
+            return;
+        }
+
+        presentation.CancelAction();
+        animator.CrossFade(stateHash, state.TransitionSeconds, 0, state.NormalizedStartTime);
+    }
+
+    private static void ApplyPostTimelineState(
+        RealTimeCombatEnemy enemy,
+        Animator animator,
+        LightSkillPostTimelineState state)
+    {
+        if (state == null || !state.IsConfigured || animator == null || enemy == null ||
+            (enemy.Health != null && enemy.Health.IsDead))
+        {
+            return;
+        }
+
+        int stateHash = Animator.StringToHash(state.AnimatorStateName);
+        if (!animator.HasState(0, stateHash))
+        {
+            Debug.LogWarning("[LightSkill] State de sortie Enemy introuvable : '" + state.AnimatorStateName + "'.", animator);
+            return;
+        }
+
+        enemy.CancelHitRecovery();
+        animator.CrossFade(stateHash, state.TransitionSeconds, 0, state.NormalizedStartTime);
     }
 
     private static Transform FindTransform(Transform root, string path)

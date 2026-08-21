@@ -145,7 +145,18 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
         // suspended then, so it must not be interpreted as a normal combat disengagement.
-        if (combatActive && !IsCinematicSequenceActive && lockedEnemy != null && IsOutsideAutomaticUnlockRange(lockedEnemy))
+        if (combatActive && !IsCinematicSequenceActive && !HasValidLockedEnemy())
+        {
+            if (logCombatDisengageDiagnostics)
+            {
+                Debug.Log("[RealTimeCombat Debug] EndCombat automatique | cible verrouillee invalide ou detruite.", this);
+            }
+
+            EndCombat();
+            return;
+        }
+
+        if (combatActive && !IsCinematicSequenceActive && IsOutsideAutomaticUnlockRange(lockedEnemy))
         {
             if (logCombatDisengageDiagnostics)
             {
@@ -157,6 +168,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
+    }
+
+    private bool HasValidLockedEnemy()
+    {
+        return lockedEnemy != null &&
+               lockedEnemy.gameObject.activeInHierarchy &&
+               (lockedEnemy.Health == null || !lockedEnemy.Health.IsDead);
     }
 
     /// <summary>

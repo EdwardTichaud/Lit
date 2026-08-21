@@ -3400,7 +3400,7 @@ public class InventoryPanelController : MonoBehaviour
         restoreActionBoxIndex = actionBoxIndex;
 
         CloseInventory();
-        InputFocusStack.Push(this);
+        InputFocusStack.PushPlacement(this);
         SetSquadInputLock(true);
         return true;
     }

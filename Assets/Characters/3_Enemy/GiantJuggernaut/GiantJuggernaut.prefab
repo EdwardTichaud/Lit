@@ -5437,7 +5437,6 @@ GameObject:
   - component: {fileID: 1157863950513175024}
   - component: {fileID: 975321468012345678}
   - component: {fileID: 8793910659942973289}
-  - component: {fileID: 901000000000000303}
   m_Layer: 0
   m_Name: GiantJuggernaut
   m_TagString: Untagged
@@ -5624,7 +5623,7 @@ MonoBehaviour:
   patrolArrivalDistance: 0.15
   directMoveSpeed: 3.6
   turnSpeedDegreesPerSecond: 540
-  ensurePhysicalBodyCollider: 1
+  ensurePhysicalBodyCollider: 0
   physicalBodyRadiusPadding: 0.05
   logCinematicPlacementDiagnostics: 1
 --- !u!114 &1507485742872985387
@@ -5752,23 +5751,6 @@ MonoBehaviour:
   animationRoot: {fileID: 4030110569289934102}
   animator: {fileID: 88241028141342083}
   lockPoint: {fileID: 937648210628518453}
---- !u!114 &901000000000000303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df0474f45d624ef8b82a55962c28064c, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicClearanceProxy
-  radius: 0.45
-  height: 1.8
-  center: {x: 0, y: 0.9, z: 0}
-  scaleWithActorRoot: 1
-  sourceCollider: {fileID: 0}
 --- !u!1 &4844841144064905090
 GameObject:
   m_ObjectHideFlags: 0

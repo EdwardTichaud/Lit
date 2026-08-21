@@ -775,6 +775,7 @@ public sealed class GameFlowService : MonoBehaviour
 
         InputFocusStack.Clear();
         GamepadInputContextStack.Clear();
+        LocalInputRouter.ClearInteractionAndJumpSuppressions();
         LocalPlayerInput.SetCombatInputActive(false);
         SquadManager.Instance?.ResetInputLocksForNewSession();
         LocalInputRouter.RaiseCameraRecenter();

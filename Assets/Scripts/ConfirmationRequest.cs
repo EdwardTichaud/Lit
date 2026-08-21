@@ -11,6 +11,11 @@ public sealed class ConfirmationRequest
     public string DebugContext;
     public Action OnConfirm;
     public Action OnCancel;
+    /// <summary>
+    /// Quand les deux boutons sont deux actions positives, Retour ferme la
+    /// fenetre sans executer le second choix.
+    /// </summary>
+    public bool DismissOnReturn;
 
     public ConfirmationRequest()
     {

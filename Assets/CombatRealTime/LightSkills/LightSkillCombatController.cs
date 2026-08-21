@@ -88,10 +88,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         CombatCinematicContext context = new CombatCinematicContext(combatManager, lightSkill, ResolveLightSkillImpact);
-        if (!CombatCinematicPlacementResolver.TryResolve(
-                lightSkill.CombatCinematicRigPrefab,
+        if (!lightSkill.CombatCinematicRigPrefab.TryGetMidpointPlacement(
                 context,
-                lightSkill.CinematicClearance,
                 out CombatCinematicPlacement placement,
                 out string placementError))
         {
@@ -109,6 +107,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         charge = 0f;
         combatManager.CancelPlayerActionForCinematic();
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
+        InputModeCoordinator.Enter(this, InputMode.Cinematic);
         combatInput?.SetInputActive(false);
         Trace("Verrous appliques | playerLock=" + playerLockHeld + " | inputCombat=false.");
         if (cinematicPlayback == null) cinematicPlayback = GetComponent<CombatCinematicPlaybackService>();
@@ -209,6 +208,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
             combatManager.ResolveDeferredCombatOutcome();
         }
 
+        InputModeCoordinator.Exit(this);
         if (combatManager != null && combatManager.IsCombatActive)
         {
             combatInput?.SetInputActive(true);
@@ -276,6 +276,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
             playerLockHeld = false;
         }
 
+        InputModeCoordinator.Exit(this);
         combatInput?.SetInputActive(true);
         activeLightSkillBond?.EndLightSkillFusion();
         activeLightSkillBond = null;

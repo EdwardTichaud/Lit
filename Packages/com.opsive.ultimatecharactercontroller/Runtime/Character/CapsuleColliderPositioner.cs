@@ -376,7 +376,13 @@ namespace Opsive.UltimateCharacterController.Character
             Scheduler.Cancel(m_CenterOffsetEvent);
             Scheduler.Cancel(m_RadiusAdjustmentEvent);
 
-            EventHandler.UnregisterEvent(m_CharacterGameObject, "OnAnimatorSnapped", Initialize);
+            // Awake may abort when a prefab is being reconfigured. In that case
+            // no events were registered and there is nothing left to unregister.
+            if (m_CharacterGameObject == null) {
+                return;
+            }
+
+            EventHandler.UnregisterEvent(m_CharacterGameObject, "OnAnimatorSnapped", AnimatorSnapped);
             EventHandler.UnregisterEvent<float>(m_CharacterGameObject, "OnHeightChangeAdjustHeight", AdjustCapsuleColliderHeight);
             EventHandler.UnregisterEvent<bool>(m_CharacterGameObject, "OnCharacterImmediateTransformChange", OnImmediateTransformChange);
             EventHandler.UnregisterEvent<Vector3, Vector3, GameObject>(m_CharacterGameObject, "OnDeath", OnDeath);

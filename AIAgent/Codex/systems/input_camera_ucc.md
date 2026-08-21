@@ -189,6 +189,28 @@ sur le plan perpendiculaire à l'axe réel de l'échelle.
 
 ## Pièges observés
 
+## Orchestration des ActionMaps
+
+`InputModeCoordinator` est l'unique proprietaire runtime des ActionMaps de
+`PlayerInputs`. Les modes actifs sont exclusifs et restaures par pile :
+exploration (`Player` + `Camera`), dialogue (`Dialogue` + `Camera`), UI,
+placement (`Placement` + `Camera`), combat (`Player` + `Camera` +
+`RealTimeCombat`), roue de combat et cinematique.
+`InputFocusStack` continue de servir au focus existant, mais pousse maintenant
+le mode `UI`; un dialogue doit employer `PushDialogue` et une pose
+`PushPlacement`. Ne plus activer ou desactiver directement une ActionMap hors du
+coordinateur. L'audit `Lit/Input/Audit ActionMap Profiles` verifie les maps et
+les bindings concurrents des profils qui partagent la camera.
+
+Les piles de focus et de contexte purgent automatiquement leurs owners Unity
+detruits. Les suppressions temporaires `Interact`/`Jump` sont purgées de la meme
+facon et remises a zero au demarrage d'une nouvelle session. Un interactable ne
+doit retourner `true` de `TryHandleLocalInteract` que s'il a effectivement
+execute son interaction : lorsqu'un verrou de gameplay est deja actif, il doit
+retourner `false` et ne jamais absorber le bouton. Enfin, un combat actif dont
+la cible verrouillee est detruite, inactive ou morte se termine
+automatiquement hors cinematique.
+
 - Modifier l’asset `.inputactions`, jamais le wrapper C# généré.
 - Un input consommable (`Interact`, `TriggerMunin`) ne doit être traité qu’une fois.
 - `InputFocusStack` est une pile : seul le propriétaire au sommet détient le focus.

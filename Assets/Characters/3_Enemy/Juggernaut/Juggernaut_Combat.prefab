@@ -192,7 +192,6 @@ GameObject:
   - component: {fileID: 1710155833844649072}
   - component: {fileID: 900000000000000018}
   - component: {fileID: 4532544328156619208}
-  - component: {fileID: 901000000000000302}
   m_Layer: 0
   m_Name: Juggernaut_Combat
   m_TagString: Untagged
@@ -379,7 +378,7 @@ MonoBehaviour:
   patrolArrivalDistance: 0.15
   directMoveSpeed: 3.6
   turnSpeedDegreesPerSecond: 540
-  ensurePhysicalBodyCollider: 1
+  ensurePhysicalBodyCollider: 0
   physicalBodyRadiusPadding: 0.05
   logCinematicPlacementDiagnostics: 1
 --- !u!114 &900000000000000017
@@ -507,23 +506,6 @@ MonoBehaviour:
   animationRoot: {fileID: 5079696355219812109}
   animator: {fileID: 3884761766361048929}
   lockPoint: {fileID: 900000000000000001}
---- !u!114 &901000000000000302
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6700739663857040827}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df0474f45d624ef8b82a55962c28064c, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicClearanceProxy
-  radius: 0.45
-  height: 1.8
-  center: {x: 0, y: 0.9, z: 0}
-  scaleWithActorRoot: 1
-  sourceCollider: {fileID: 0}
 --- !u!1001 &7242887263535274736
 PrefabInstance:
   m_ObjectHideFlags: 0

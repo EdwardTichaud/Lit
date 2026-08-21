@@ -26,6 +26,8 @@ public sealed class MuninOrbVisualController : MonoBehaviour
     [SerializeField, Min(0f)] private float actionPulseScale = 0.12f;
     [SerializeField, Min(0.01f)] private float actionPulseDuration = 0.28f;
     [SerializeField, Min(0.01f)] private float actionDuration = 0.45f;
+    [SerializeField, Min(0.01f), Tooltip("Visual-only multiplier for the particles' authored start size. Unlike Transform scale, this is safe for the imported HDRP effects.")]
+    private float particleStartSizeMultiplier = 2.5f;
 
     [Header("Layers")]
     [SerializeField, Tooltip("The permanent distortion layer is disabled because it is costly and causes the most visible transparency artifacts near the camera.")]
@@ -38,10 +40,15 @@ public sealed class MuninOrbVisualController : MonoBehaviour
     private string[] coreLayerTokens = { "sphere" };
     [SerializeField, Tooltip("Particle systems whose names contain one of these tokens are disabled outside an explicit action.")]
     private string[] distortionLayerTokens = { "distort" };
+    [SerializeField, Tooltip("Hides the imported wide-flare cards whose HDRP material is visibly rectangular in Game view.")]
+    private bool disableRectangularFlareLayers = true;
     [SerializeField, Range(0.01f, 0.2f)] private float maxParticleScreenSize = 0.07f;
+    [SerializeField, Range(0.01f, 0.2f), Tooltip("Runtime ceiling for particle size on screen. This keeps the authored flare compact in Game view without changing its material, UVs, or render mode.")]
+    private float runtimeParticleScreenSizeCap = 0.06f;
 
     private readonly List<ParticleSystem> actionSystems = new List<ParticleSystem>();
     private readonly List<ParticleSystem> distortionSystems = new List<ParticleSystem>();
+    private readonly Dictionary<ParticleSystem, float> particleStartSizeMultipliers = new Dictionary<ParticleSystem, float>();
     private ParticleSystemRenderer[] particleRenderers = Array.Empty<ParticleSystemRenderer>();
     private MuninController munin;
     private Vector3 baseLocalScale;
@@ -56,6 +63,7 @@ public sealed class MuninOrbVisualController : MonoBehaviour
     private void Awake()
     {
         CachePresentation();
+        ApplyParticleStartSizes();
         state = initialState;
         baseLocalScale = transform.localScale;
         initialized = true;
@@ -65,6 +73,7 @@ public sealed class MuninOrbVisualController : MonoBehaviour
     private void OnEnable()
     {
         CachePresentation();
+        ApplyParticleStartSizes();
         if (!initialized)
         {
             state = initialState;
@@ -83,6 +92,8 @@ public sealed class MuninOrbVisualController : MonoBehaviour
         {
             transform.localScale = baseLocalScale;
         }
+
+        RestoreParticleStartSizes();
     }
 
     private void Update()
@@ -225,16 +236,30 @@ public sealed class MuninOrbVisualController : MonoBehaviour
             {
                 distortionSystems.Add(system);
             }
+
+            if (!particleStartSizeMultipliers.ContainsKey(system))
+            {
+                particleStartSizeMultipliers.Add(system, system.main.startSizeMultiplier);
+            }
         }
 
         particleRenderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
         for (int i = 0; i < particleRenderers.Length; i++)
         {
             ParticleSystemRenderer renderer = particleRenderers[i];
+            bool isRectangularFlareLayer = renderer.name.IndexOf("Flare4_Additive", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                           UsesMaterialNamed(renderer, "Flare_Ultrawide") ||
+                                           UsesMaterialNamed(renderer, "FuzzAdd");
+            renderer.enabled = !disableRectangularFlareLayers || !isRectangularFlareLayer;
+            if (!renderer.enabled)
+            {
+                continue;
+            }
+
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
             renderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
-            renderer.maxParticleSize = maxParticleScreenSize;
+            renderer.maxParticleSize = Mathf.Min(maxParticleScreenSize, runtimeParticleScreenSizeCap);
 
             string name = renderer.name;
             renderer.sortingFudge = ContainsAny(name, coreLayerTokens) ? -0.1f
@@ -283,5 +308,55 @@ public sealed class MuninOrbVisualController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static bool UsesMaterialNamed(ParticleSystemRenderer renderer, string materialNameToken)
+    {
+        if (renderer == null || string.IsNullOrEmpty(materialNameToken))
+        {
+            return false;
+        }
+
+        Material[] materials = renderer.sharedMaterials;
+        for (int i = 0; i < materials.Length; i++)
+        {
+            Material material = materials[i];
+            if (material != null && material.name.IndexOf(materialNameToken, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ApplyParticleStartSizes()
+    {
+        foreach (KeyValuePair<ParticleSystem, float> entry in particleStartSizeMultipliers)
+        {
+            ParticleSystem system = entry.Key;
+            if (system == null)
+            {
+                continue;
+            }
+
+            ParticleSystem.MainModule main = system.main;
+            main.startSizeMultiplier = entry.Value * particleStartSizeMultiplier;
+        }
+    }
+
+    private void RestoreParticleStartSizes()
+    {
+        foreach (KeyValuePair<ParticleSystem, float> entry in particleStartSizeMultipliers)
+        {
+            ParticleSystem system = entry.Key;
+            if (system == null)
+            {
+                continue;
+            }
+
+            ParticleSystem.MainModule main = system.main;
+            main.startSizeMultiplier = entry.Value;
+        }
     }
 }

@@ -151,8 +151,13 @@ package runtime deja actif, sans rebaker ni modifier son montage.
 Les LightSkills a pistes acteurs `ApplySceneOffsets` suspendent le relais de
 root motion pendant la Timeline : elle reste l'unique proprietaire du
 deplacement et evite une double application des deltas.
-Le lancement attend une frame de rendu apres `Evaluate(0)` pour que la Brain
-Cinemachine resolve la camera d'ouverture avant la premiere frame jouee.
+Le `PlayableDirector` baked est inerte (`Play On Awake` desactive,
+`UnscaledGameTime`, `DirectorWrapMode.None`). Le rig est l'unique proprietaire
+du lancement : placement, bindings, reconstruction du graphe, `Evaluate(0)`,
+mise a jour manuelle de la Brain et verification stricte de la premiere
+`CinemachineShot` precedent `Play()`. Une camera d'ouverture non stabilisee
+refuse le lancement et restitue proprement la session; aucun lancement
+approximatif n'est accepte.
 Le bake compare maintenant un snapshot de chaque camera d'auteur (cle Timeline,
 transform, FOV, priorite, Output Channel, targets, Follow offset et pipeline)
 au prefab exporte. Une divergence, un script manquant ou une dependance a
@@ -182,15 +187,9 @@ dans AnimationLab. Le bake les exporte comme `PlayerStageAnchor` et
 locators. Au runtime, le rig est pose au midpoint de Lucian et de l'ennemi,
 aligne sur leur axe horizontal et les vrais roots sont poses directement sur les
 anchors avant la premiere evaluation de Timeline. Il n'y a ni recherche de
-plateau, ni deplacement peripherique, ni test de NavMesh ou flash de
-transition. Une enveloppe Player/Enemy bakee a 30 Hz est toutefois verifiee au
-midpoint pour les orientations `0`, `+15`, `-15` degres puis sur 360 degres :
-la premiere trajectoire libre est retenue, ce qui permet a une LightSkill
-longitudinale de s'aligner dans un couloir. Les capsules
-`CombatCinematicClearanceProxy` ignorent les sols, personnages, triggers et
-`CinematicPassThrough`, mais refusent les decors bloquants; sans angle valide,
-la charge est conservee. Les positions finales sont conservees avec une petite
-depenetration finale plafonnee.
+plateau, ni deplacement peripherique, ni test de collision, NavMesh ou flash de
+transition. La LightSkill joue toujours immediatement sur place selon le
+midpoint et les anchors bakes. Les positions finales sont conservees.
 Les pistes `Player.Animator` et `Enemy.Animator` sont converties au bake en
 `ApplySceneOffsets`. Une LightSkill posee sur un plateau laisse alors Timeline
 etre l'unique pilote des transforms acteurs pendant la lecture : le rig ne lit
@@ -214,6 +213,10 @@ par le meme contrat et le meme relais de root motion cinematographique.
 En sortie, les poses locales imposees par les Animation Tracks sur les Animators
 Player et Enemy sont remises a zero avant la remise en pool du rig : chaque
 declenchement repart donc d'un etat propre sans reemployer l'offset precedent.
+Chaque `LightSkillSO` expose aussi deux profils optionnels de state post-Timeline
+(Lucian, ennemi : state, fondu, temps normalise). Ils ne sont appliques qu'a la
+fin naturelle de la Timeline et ne peuvent jamais ecraser une mort. Devastation
+les laisse vides pour conserver l'ennemi dans sa pose finale au sol.
 Le rig poolé efface aussi tous ses bindings Timeline et references Cinemachine,
 arrete son director au temps zero puis revient a une transform identite avant sa
 prochaine acquisition.
@@ -605,6 +608,17 @@ AABB VFX valide. Les offsets du prefab Holy sont neutralises sur l'origine du
 body de Lucian. `StopEffect_CharacterEffect` est uniquement pilote par l'AnimationEvent de
 `Rupture`; sa sortie attend `1.1` temps normalise pour laisser son evenement de
 fin de clip s'executer.
+`MuninOrbVisualController` ne modifie plus les matériaux, les UV ni le mode de
+rendu des enfants de `Munin_v4` en Play : le rendu de jeu conserve donc celui du
+prefab en édition. Il applique seulement un plafond de taille écran de 0,06 aux
+particules (ou une valeur auteur plus basse), afin d'éviter que les flares ne
+deviennent de grands panneaux près de la caméra. Les couches `Flare4_Additive`,
+`Flare_Ultrawide` et `FuzzAdd`, qui restent rectangulaires avec le shader du
+pack sous HDRP, sont masquées uniquement au runtime.
+La racine de `Munin_v4` ne doit pas être agrandie : certains systèmes du pack
+deviennent invalides sous HDRP; un agrandissement futur doit viser les modules
+de taille des particules. `MuninOrbVisualController` applique actuellement un
+facteur de 2,5 à leur `startSize` et restaure les valeurs auteurs à sa désactivation.
 
 ## Prochaine utilisation
 

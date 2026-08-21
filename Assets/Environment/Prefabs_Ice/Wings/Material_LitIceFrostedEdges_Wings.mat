@@ -98,7 +98,7 @@ Material:
     - _CrackTextureInvert: 0
     - _CrackTextureScale: 0.3
     - _CrackTextureStrength: 0.8
-    - _CrackWidth: 0.25
+    - _CrackWidth: 0.1
     - _CullMode: 2
     - _CullModeForward: 2
     - _DepthOffsetEnable: 0
@@ -117,16 +117,16 @@ Material:
     - _FlameInfluenceRadius: 0
     - _FresnelIntensity: 0
     - _FresnelPower: 0.2
-    - _FrostWidth: 10
+    - _FrostWidth: 0
     - _IceReliefNormalStrength: 0.75
     - _IceReliefRoughnessInfluence: 0
-    - _IceScale: 1.06
+    - _IceScale: 3.5
     - _LightReactiveBloom: 1
     - _MaterialID: 1
     - _MaterialTypeMask: 2
-    - _Metallic: 0.8
-    - _MicroScale: 3
-    - _NormalStrength: 0.1
+    - _Metallic: 0.995
+    - _MicroScale: 12
+    - _NormalStrength: 2
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _RayTracing: 0
@@ -136,7 +136,7 @@ Material:
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Smoothness: 0.5
+    - _Smoothness: 0.6
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 0
@@ -184,7 +184,7 @@ Material:
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _FlameCenter: {r: 0, g: 0, b: 0, a: 0}
     - _FrostColor: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 1}
-    - _IceDeepColor: {r: 0.08962262, g: 0.49661505, b: 1, a: 1}
+    - _IceDeepColor: {r: 0, g: 0.050980393, b: 0.11372549, a: 1}
     - _NoiseOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

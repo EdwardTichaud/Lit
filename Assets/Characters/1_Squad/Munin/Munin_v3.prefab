@@ -85,6 +85,7 @@ MonoBehaviour:
   actionPulseScale: 0.12
   actionPulseDuration: 0.28
   actionDuration: 0.45
+  particleStartSizeMultiplier: 2.5
   disableContinuousDistortion: 1
   actionLayerTokens:
   - burst
@@ -96,7 +97,9 @@ MonoBehaviour:
   - sphere
   distortionLayerTokens:
   - distort
+  disableRectangularFlareLayers: 1
   maxParticleScreenSize: 0.07
+  runtimeParticleScreenSizeCap: 0.025
 --- !u!198 &241378158727002903
 ParticleSystem:
   m_ObjectHideFlags: 0

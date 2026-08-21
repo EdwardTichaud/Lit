@@ -91,7 +91,10 @@ public sealed class Foyer : MonoBehaviour, ICharacterDetectedInteractable, ILoca
         if (InputFocusStack.HasAnyFocus() ||
             (SquadManager.Instance != null && SquadManager.Instance.IsInputLocked()))
         {
-            return true;
+            // Un foyer voisin ne doit jamais absorber un bouton lorsque le
+            // gameplay est deja verrouille par un autre systeme (combat, UI,
+            // sequence). Il n'a alors execute aucune interaction.
+            return false;
         }
 
         SquadCharacterController controller = detectedCharacter.GetComponentInParent<SquadCharacterController>();

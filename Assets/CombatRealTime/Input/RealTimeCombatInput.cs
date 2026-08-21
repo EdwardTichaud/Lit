@@ -31,6 +31,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private InputAction companionFusionAction;
     private bool paletteOpen;
     private bool paletteInputSuppressed;
+    private bool callbacksSubscribed;
     private int selectedSlot;
     private readonly Queue<BasicSkillsSO> basicSkillQueue = new Queue<BasicSkillsSO>();
     private Coroutine basicComboRoutine;
@@ -42,21 +43,23 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnEnable()
     {
+        LocalPlayerInput.EnsureInstance();
         ResolveActions();
         Subscribe();
         if (enableOnStart)
         {
-            actionMap?.Enable();
+            LocalPlayerInput.SetCombatInputActive(true);
         }
     }
 
     private void OnDisable()
     {
         Unsubscribe();
-        actionMap?.Disable();
         ClosePalette(resolveIfMissing: false);
+        LocalInputRouter.PopInteractionAndJumpSuppression(this);
         ClearBasicSkillCombo();
         GamepadInputContextStack.Pop(this);
+        LocalPlayerInput.SetCombatInputActive(false);
     }
 
     public void SetInputActive(bool active)
@@ -64,12 +67,16 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         ResolveActions();
         if (active)
         {
-            actionMap?.Enable();
+            // Le composant peut etre active avant LocalPlayerInput dans une
+            // scene. Revalide les callbacks au lock, lorsque la map partagee
+            // est necessairement disponible.
+            Subscribe();
+            LocalPlayerInput.SetCombatInputActive(true);
             GamepadInputContextStack.Push(this, GamepadInputContext.Combat);
             return;
         }
 
-        actionMap?.Disable();
+        LocalPlayerInput.SetCombatInputActive(false);
         GamepadInputContextStack.Pop(this);
         ClosePalette();
         ClearBasicSkillCombo();
@@ -77,12 +84,12 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void ResolveActions()
     {
-        if (actionMap != null || actions == null)
+        if (actionMap != null)
         {
             return;
         }
 
-        actionMap = actions.FindActionMap(actionMapName, false);
+        actionMap = LocalPlayerInput.FindSharedActionMap(actionMapName);
         if (actionMap == null)
         {
             Debug.LogWarning("[RealTimeCombatInput] ActionMap '" + actionMapName + "' introuvable.", this);
@@ -124,6 +131,17 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void Subscribe()
     {
+        if (callbacksSubscribed)
+        {
+            return;
+        }
+
+        ResolveActions();
+        if (actionMap == null)
+        {
+            return;
+        }
+
         if (counterAction != null)
         {
             counterAction.started += OnCounterStarted;
@@ -142,10 +160,16 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed += OnSwitchEnemyLock;
         if (lightSkillAction != null) lightSkillAction.performed += OnLightSkill;
         if (companionFusionAction != null) companionFusionAction.performed += OnCompanionFusion;
+        callbacksSubscribed = true;
     }
 
     private void Unsubscribe()
     {
+        if (!callbacksSubscribed)
+        {
+            return;
+        }
+
         if (counterAction != null)
         {
             counterAction.started -= OnCounterStarted;
@@ -164,6 +188,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         if (switchEnemyLockAction != null) switchEnemyLockAction.performed -= OnSwitchEnemyLock;
         if (lightSkillAction != null) lightSkillAction.performed -= OnLightSkill;
         if (companionFusionAction != null) companionFusionAction.performed -= OnCompanionFusion;
+        callbacksSubscribed = false;
     }
 
     private void OnCounterStarted(InputAction.CallbackContext context)

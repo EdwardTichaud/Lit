@@ -65,9 +65,10 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
             return false;
         }
 
-        CombatCinematicRig rig = Acquire(prefab);
+        CombatCinematicRig rig = Acquire(prefab, out bool reusedFromPool);
         Trace("Acquire | prefab='" + prefab.name + "' | runtime='" + rig.name + "' | timeline='" +
-              (timeline != null ? timeline.name : "Baked") + "' | placement=" + placement.HasValue + ".");
+              (timeline != null ? timeline.name : "Baked") + "' | placement=" + placement.HasValue +
+              " | source=" + (reusedFromPool ? "pool" : "new") + ".");
         rig.gameObject.SetActive(true);
         activeRig = rig;
         completed = onCompleted;
@@ -101,14 +102,18 @@ public sealed class CombatCinematicPlaybackService : MonoBehaviour
         activeRig?.Stop();
     }
 
-    private CombatCinematicRig Acquire(CombatCinematicRig prefab)
+    private CombatCinematicRig Acquire(CombatCinematicRig prefab, out bool reusedFromPool)
     {
         if (!available.TryGetValue(prefab, out Stack<CombatCinematicRig> pool))
         {
             pool = new Stack<CombatCinematicRig>();
             available.Add(prefab, pool);
         }
-        CombatCinematicRig rig = pool.Count > 0 ? pool.Pop() : Instantiate(prefab, poolRoot);
+        reusedFromPool = pool.Count > 0;
+        CombatCinematicRig rig = reusedFromPool ? pool.Pop() : Instantiate(prefab, poolRoot);
+        // A freshly-instantiated prefab must enter the same inert state as a
+        // pooled one before it can ever be activated for a real session.
+        rig.ResetForPool();
         origins[rig] = prefab;
         rig.transform.SetParent(null, false);
         rig.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);

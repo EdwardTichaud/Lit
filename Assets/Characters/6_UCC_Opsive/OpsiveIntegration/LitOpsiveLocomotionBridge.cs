@@ -939,6 +939,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     {
         RefreshRootMotionLocomotionSettings();
         RefreshGroundReliefTolerance(immediate: false);
+        TickLocomotionDiagnostics();
 
         if (!IsDriving && !IsInputSuppressedByUcc)
         {

@@ -32,9 +32,14 @@ public static class GamepadInputContextStack
 
     public static event Action<GamepadInputContext> Changed;
 
-    public static GamepadInputContext Current => stack.Count == 0
-        ? GamepadInputContext.Gameplay
-        : stack[stack.Count - 1].Context;
+    public static GamepadInputContext Current
+    {
+        get
+        {
+            PurgeDestroyedOwners();
+            return CurrentUnsafe;
+        }
+    }
 
     public static bool IsGameplayInputSuppressed => Current != GamepadInputContext.Gameplay;
 
@@ -47,6 +52,7 @@ public static class GamepadInputContextStack
 
     public static void Push(object owner, GamepadInputContext context)
     {
+        PurgeDestroyedOwners();
         if (owner == null)
         {
             return;
@@ -59,6 +65,7 @@ public static class GamepadInputContextStack
 
     public static void Pop(object owner)
     {
+        PurgeDestroyedOwners();
         Pop(owner, notify: true);
     }
 
@@ -93,6 +100,23 @@ public static class GamepadInputContextStack
         if (removed && notify)
         {
             Changed?.Invoke(Current);
+        }
+    }
+
+    private static GamepadInputContext CurrentUnsafe => stack.Count == 0
+        ? GamepadInputContext.Gameplay
+        : stack[stack.Count - 1].Context;
+
+    // Les contextes proviennent souvent d'elements de scene. Si l'owner est
+    // detruit pendant une transition, il ne doit pas conserver le gamepad.
+    private static void PurgeDestroyedOwners()
+    {
+        for (int i = stack.Count - 1; i >= 0; --i)
+        {
+            if (stack[i].Owner is UnityEngine.Object unityOwner && unityOwner == null)
+            {
+                stack.RemoveAt(i);
+            }
         }
     }
 }

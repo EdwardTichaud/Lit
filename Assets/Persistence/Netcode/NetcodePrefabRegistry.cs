@@ -381,6 +381,7 @@ public static class NetcodePrefabRegistry
     {
         GameObject instance = new GameObject("WorldInteractionService");
         instance.AddComponent<WorldInteractionService>();
+        instance.AddComponent<KnowledgeSynchronizationService>();
         NetworkObject networkObject = instance.AddComponent<NetworkObject>();
         NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, hash);
         return instance;

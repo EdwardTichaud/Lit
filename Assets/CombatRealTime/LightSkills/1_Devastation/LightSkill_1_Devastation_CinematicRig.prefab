@@ -64,7 +64,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 521008492812476476}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -184.591, z: 0}
 --- !u!114 &72465625457695880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -224,10 +224,10 @@ PlayableDirector:
   m_GameObject: {fileID: 7992036132239899766}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 75de0161c2a3347409a57be19407c051, type: 2}
-  m_InitialState: 1
+  m_PlayableAsset: {fileID: 11400000, guid: 59b31e14acc598e45a15b725b69b78ac, type: 2}
+  m_InitialState: 0
   m_WrapMode: 2
-  m_DirectorUpdateMode: 1
+  m_DirectorUpdateMode: 2
   m_InitialTime: 0
   m_SceneBindings: []
   m_ExposedReferences:

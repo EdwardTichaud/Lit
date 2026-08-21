@@ -32,6 +32,8 @@ public partial class LitOpsiveLocomotionBridge
     private bool tuneGroundedSprintSpeedChange = true;
     [SerializeField, Range(1f, 2.4f)] private float groundedSprintSpeedMultiplier = 1.65f;
     [SerializeField, Min(0f)] private float groundedSprintSpeedParameterValue = 2.6f;
+    [SerializeField, Tooltip("Prevents UCC SpeedChange from writing the legacy Animator Speed parameter. The Lit bridge owns locomotion presentation.")]
+    private bool suppressSpeedChangeAnimatorParameter = true;
 
     [Header("Grounded Animation Feel")]
     [SerializeField] private string moveStartTriggerParam = "MoveStartTrigger";
@@ -219,7 +221,9 @@ public partial class LitOpsiveLocomotionBridge
         groundedFeelSpeedChange.SpeedChangeMultiplier = sprintMultiplier;
         groundedFeelSpeedChange.MinSpeedChangeValue = -sprintMultiplier;
         groundedFeelSpeedChange.MaxSpeedChangeValue = sprintMultiplier;
-        groundedFeelSpeedChange.SpeedParameter = Mathf.Max(0f, groundedSprintSpeedParameterValue);
+        groundedFeelSpeedChange.SpeedParameter = suppressSpeedChangeAnimatorParameter
+            ? -1f
+            : Mathf.Max(0f, groundedSprintSpeedParameterValue);
         groundedFeelSpeedChangeApplied = true;
     }
 

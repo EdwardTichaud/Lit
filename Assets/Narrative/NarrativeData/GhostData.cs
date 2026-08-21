@@ -76,6 +76,8 @@ public class GhostEvidenceReference
 [Serializable]
 public class GhostKnowledgeReaction
 {
+    [Tooltip("Identifiant stable de la reponse. Laisse vide pour utiliser son index dans les anciens assets.")]
+    public string reactionId;
     [Header("Player Option")]
     /// <summary>Text representing what the player can say or prove once requirements are met.</summary>
     [TextArea(1, 3)]
@@ -114,6 +116,18 @@ public class GhostKnowledgeReaction
     {
         return Mathf.Max(0, priority) + (requirement != null ? requirement.GetSpecificityScore() : 0);
     }
+}
+
+/// <summary>One ordered question in a ghost investigation.</summary>
+[Serializable]
+public class GhostPuzzleStep
+{
+    [Tooltip("Identifiant stable de l'etape, utilise par les actions de scene et les sauvegardes.")]
+    public string stepId;
+    [TextArea(2, 4)] public string introductionLine;
+    [TextArea(2, 6)] public string question;
+    [TextArea(2, 5)] public string missingKnowledgeLine = "Il manque encore un element pour comprendre ce souvenir.";
+    public List<GhostKnowledgeReaction> reactions = new List<GhostKnowledgeReaction>();
 }
 
 /// <summary>
@@ -159,6 +173,10 @@ public class GhostData : ScriptableObject
     [TextArea(2, 5)]
     public string missingKnowledgeLine = "Il manque encore un élément pour comprendre ce souvenir.";
 
+    [Header("Puzzle Steps")]
+    [Tooltip("Chaine d'enigmes. Vide = compatibilite avec la question et les reactions historiques ci-dessus.")]
+    public List<GhostPuzzleStep> puzzleSteps = new List<GhostPuzzleStep>();
+
     [Header("Evidence")]
     /// <summary>Clues that allow players to solve this ghost investigation.</summary>
     public List<GhostEvidenceReference> evidence = new List<GhostEvidenceReference>();
@@ -181,5 +199,24 @@ public class GhostData : ScriptableObject
     public GameObject ResolveWorldPrefab()
     {
         return worldPrefab;
+    }
+
+    public int StepCount => puzzleSteps != null && puzzleSteps.Count > 0 ? puzzleSteps.Count : 1;
+
+    public GhostPuzzleStep GetStep(int index)
+    {
+        if (puzzleSteps != null && puzzleSteps.Count > 0)
+        {
+            return index >= 0 && index < puzzleSteps.Count ? puzzleSteps[index] : null;
+        }
+
+        if (index != 0) return null;
+        return new GhostPuzzleStep {
+            stepId = "legacy",
+            introductionLine = apparitionLine,
+            question = question,
+            missingKnowledgeLine = missingKnowledgeLine,
+            reactions = reactions
+        };
     }
 }

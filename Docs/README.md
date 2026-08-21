@@ -66,7 +66,7 @@ La direction actuelle privilégie :
 - les portails comme outils de navigation entre districts, zones et époques ;
 - les compositions coopératives comme moteur principal de rejouabilité ;
 - des systèmes simples et maintenables par un développeur solo ;
-- un combat rare, utilisé comme tension ponctuelle.
+- des combats réguliers et signifiants, intégrés à l'exploration sans farming obligatoire.
 
 ## Environnement
 

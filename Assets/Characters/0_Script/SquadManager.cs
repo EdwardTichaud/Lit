@@ -2002,19 +2002,23 @@ public class SquadManager : MonoBehaviour
             ? "TORCHE\nRanger"
             : "TORCHE\nSortir";
         string message = string.Format(
-            "Une flamme est a portee.\n\nMUNIN\nMunin se deplacera pour {0} cette flamme. {1}\n\nTORCHE A MAIN\n{2}, sans modifier cette flamme.",
+            "Une flamme est a portee. Choisissez l'action a effectuer.\n\nMUNIN\nMunin se deplacera pour {0} cette flamme. {1}\n\nTORCHE A MAIN\n{2}, sans modifier cette flamme.\n\nRetour : annuler.",
             muninAction,
             chargeDescription,
             torchAction);
 
-        ConfirmationManager.TryShow(
+        ConfirmationManager.TryShow(new ConfirmationRequest(
             this,
             message,
             () => flame.TryStartMuninInteraction(controller != null ? controller.gameObject : null),
-            () => controller?.ToggleFlame(),
-            muninChoice,
-            torchChoice,
-            "Choisir une action");
+            () => controller?.ToggleFlame())
+        {
+            ConfirmLabel = muninChoice,
+            CancelLabel = torchChoice,
+            Title = "Choisir une action",
+            DebugContext = "FlameChoice",
+            DismissOnReturn = true
+        });
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext context)

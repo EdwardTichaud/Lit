@@ -381,6 +381,7 @@ public static class LocalInputRouter
 
     public static void PushInteractionAndJumpSuppression(object owner)
     {
+        PurgeDestroyedInteractionAndJumpSuppressors();
         if (owner != null)
         {
             interactionAndJumpSuppressors.Add(owner);
@@ -389,10 +390,19 @@ public static class LocalInputRouter
 
     public static void PopInteractionAndJumpSuppression(object owner)
     {
+        PurgeDestroyedInteractionAndJumpSuppressors();
         if (owner != null)
         {
             interactionAndJumpSuppressors.Remove(owner);
         }
+    }
+
+    // Utilise lors d'un retour a un etat de jeu connu (nouvelle session,
+    // changement de scene). Une suppression temporaire ne doit jamais
+    // survivre a son contexte.
+    public static void ClearInteractionAndJumpSuppressions()
+    {
+        interactionAndJumpSuppressors.Clear();
     }
 
     internal static void ConsumeInteract()
@@ -646,7 +656,14 @@ public static class LocalInputRouter
 
     private static bool IsInteractionAndJumpSuppressed()
     {
+        PurgeDestroyedInteractionAndJumpSuppressors();
         return interactionAndJumpSuppressors.Count > 0;
+    }
+
+    private static void PurgeDestroyedInteractionAndJumpSuppressors()
+    {
+        interactionAndJumpSuppressors.RemoveWhere(owner =>
+            owner is UnityEngine.Object unityOwner && unityOwner == null);
     }
 
     private static bool AllowInput(InputGate gate)

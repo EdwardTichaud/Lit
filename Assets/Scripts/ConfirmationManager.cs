@@ -244,6 +244,12 @@ public class ConfirmationManager : MonoBehaviour
             return;
         }
 
+        if (activeRequest.DismissOnReturn)
+        {
+            HandleDismiss();
+            return;
+        }
+
         HandleCancel();
     }
 
@@ -279,6 +285,20 @@ public class ConfirmationManager : MonoBehaviour
             GetLogContext(request.Owner));
 
         SafeInvoke(request.OnCancel, request, "cancel");
+    }
+
+    private void HandleDismiss()
+    {
+        if (activeRequest == null)
+        {
+            return;
+        }
+
+        ConfirmationRequest request = activeRequest;
+        HideAndClear();
+        Debug.Log(
+            $"[Confirmation] dismiss owner='{GetOwnerLabel(request.Owner)}' context='{request.DebugContext}'",
+            GetLogContext(request.Owner));
     }
 
     private void HideAndClear()

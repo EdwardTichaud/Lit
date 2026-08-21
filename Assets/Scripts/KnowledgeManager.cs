@@ -262,6 +262,17 @@ public class KnowledgeManager : MonoBehaviour
     /// </summary>
     public bool UnlockKnowledge(KnowledgeSO knowledge)
     {
+        // Les anciens points d'entree restent compatibles, mais ne doivent plus
+        // modifier un client isole lorsqu'une session reseau est active.
+        return KnowledgeReveal.Reveal(knowledge, LocalPlayerUtils.GetControlledCharacter(), "legacy");
+    }
+
+    /// <summary>
+    /// Applique une connaissance deja validee (solo ou autorite reseau).
+    /// Ne pas appeler depuis une source de gameplay : utiliser UnlockKnowledge.
+    /// </summary>
+    public bool ApplyValidatedKnowledge(KnowledgeSO knowledge)
+    {
         if (knowledge == null)
         {
             return false;

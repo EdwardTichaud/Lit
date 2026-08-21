@@ -67,10 +67,15 @@ public class KnowledgeUnlockTrigger : MonoBehaviour
             return;
         }
 
-        UnlockKnowledge();
+        UnlockKnowledge(character);
     }
 
     public int UnlockKnowledge()
+    {
+        return UnlockKnowledge(null);
+    }
+
+    public int UnlockKnowledge(GameObject revealer)
     {
         if (unlockOnce && unlockedThisSession)
         {
@@ -83,7 +88,7 @@ public class KnowledgeUnlockTrigger : MonoBehaviour
             return 0;
         }
 
-        int count = manager.UnlockKnowledgeList(knowledgeToUnlock);
+        int count = KnowledgeReveal.Reveal(knowledgeToUnlock, revealer, name);
         if (count > 0)
         {
             unlockedThisSession = true;

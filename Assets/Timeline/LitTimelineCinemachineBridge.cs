@@ -1,7 +1,6 @@
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
 
 /// <summary>
 /// Switches camera authority for the lifetime of this PlayableDirector. It
@@ -17,6 +16,9 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
     private bool controlsCamera;
     private CinemachineBrain explicitBrain;
     private LitCameraDirector explicitCameraDirector;
+    private bool savedBrainUpdateMode;
+    private CinemachineBrain.UpdateMethods previousUpdateMethod;
+    private CinemachineBrain.BrainUpdateMethods previousBlendUpdateMethod;
 
     private void Reset()
     {
@@ -89,7 +91,6 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
             return false;
         }
 
-        BindCinemachineTracks();
         if (controlsCamera)
         {
             return true;
@@ -110,7 +111,11 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
     {
         if (!Application.isPlaying || brain == null) return false;
 
-        BindCinemachineTracks(brain);
+        if (controlsCamera && explicitBrain != null && explicitBrain != brain)
+        {
+            EndCameraControl();
+        }
+
         explicitBrain = brain;
         Camera gameplayCamera = brain.GetComponent<Camera>();
         explicitCameraDirector = LitCameraDirector.EnsureInstance(gameplayCamera);
@@ -121,7 +126,23 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
             explicitBrain = null;
             Debug.LogError("[TimelineCamera] La Main Camera explicite ne possede pas de LitCameraDirector valide.", this);
         }
+        else
+        {
+            BeginManualBrainUpdates();
+        }
         return controlsCamera;
+    }
+
+    /// <summary>Updates the already-bound gameplay Brain deterministically after Timeline evaluation.</summary>
+    public bool UpdateTimelineCameraNow()
+    {
+        if (!controlsCamera || explicitBrain == null || explicitBrain.UpdateMethod != CinemachineBrain.UpdateMethods.ManualUpdate)
+        {
+            return false;
+        }
+
+        explicitBrain.ManualUpdate();
+        return true;
     }
 
     public void EndCameraControlNow()
@@ -138,6 +159,7 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
 
         if (explicitBrain != null)
         {
+            RestoreBrainUpdateMode();
             if (explicitCameraDirector != null)
             {
                 explicitCameraDirector.EndTimelineCinemachineControl();
@@ -153,41 +175,30 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
         controlsCamera = false;
     }
 
-    private void BindCinemachineTracks()
+    private void BeginManualBrainUpdates()
     {
-        if (!Application.isPlaying || director == null || director.playableAsset == null)
+        if (explicitBrain == null || savedBrainUpdateMode)
         {
             return;
         }
 
-        LitCameraDirector cameraDirector = LitCameraDirector.EnsureInstance();
-        BindCinemachineTracks(cameraDirector != null ? cameraDirector.CinemachineBrain : null);
+        previousUpdateMethod = explicitBrain.UpdateMethod;
+        previousBlendUpdateMethod = explicitBrain.BlendUpdateMethod;
+        savedBrainUpdateMode = true;
+        explicitBrain.UpdateMethod = CinemachineBrain.UpdateMethods.ManualUpdate;
+        explicitBrain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
     }
 
-    private void BindCinemachineTracks(CinemachineBrain brain)
+    private void RestoreBrainUpdateMode()
     {
-        if (brain == null || director == null || director.playableAsset == null) return;
-
-        bool changed = false;
-        foreach (PlayableBinding output in director.playableAsset.outputs)
+        if (!savedBrainUpdateMode || explicitBrain == null)
         {
-            if (output.sourceObject is not CinemachineTrack)
-            {
-                continue;
-            }
-
-            if (director.GetGenericBinding(output.sourceObject) == brain)
-            {
-                continue;
-            }
-
-            director.SetGenericBinding(output.sourceObject, brain);
-            changed = true;
+            savedBrainUpdateMode = false;
+            return;
         }
 
-        if (changed && director.state == PlayState.Playing)
-        {
-            director.RebuildGraph();
-        }
+        explicitBrain.UpdateMethod = previousUpdateMethod;
+        explicitBrain.BlendUpdateMethod = previousBlendUpdateMethod;
+        savedBrainUpdateMode = false;
     }
 }

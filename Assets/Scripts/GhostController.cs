@@ -11,12 +11,19 @@
 // Precautions:
 // This controller does not replace LocalVoiceLineController. Use voice lines for
 // audio/subtitle delivery, and this component for knowledge-based interaction state.
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using INab.VFXAssets;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.Playables;
 using UnityEngine.UI;
+using Lit.Story;
+using Lit.Timeline;
 
 /// <summary>
 /// Scene-side dissolve effect triggered by a ghost knowledge reaction.
@@ -149,6 +156,50 @@ public class GhostDissolveEffectRule
     }
 }
 
+public enum GhostResolutionActionType { PlayAnimationState, SetDoorOpen, SpawnPrefab, PlayTimeline, PlayStorySequence }
+
+[System.Serializable]
+public class GhostResolutionAction
+{
+    public GhostResolutionActionType actionType;
+    [Tooltip("Une action ne peut etre executee qu'une fois pour ce fantome.")] public bool runOnce = true;
+    [Header("Animation")]
+    public Animator animator;
+    public bool useLocalPlayerAnimator;
+    public string animationState;
+    public int animationLayer;
+    [Min(0f)] public float animationCrossFade = 0.1f;
+    [Header("Door")]
+    public Door door;
+    public bool openDoor = true;
+    [Header("Prefab")]
+    public GameObject prefab;
+    public Transform spawnTarget;
+    public Vector3 localPosition;
+    public Vector3 localEulerAngles;
+    [Header("Timeline")]
+    public PlayableDirector timelineDirector;
+    public TimelineBindingProfile timelineBindingProfile;
+    [Header("Sequence")]
+    public StorySequenceRunner storySequenceRunner;
+}
+
+[System.Serializable]
+public class GhostResolutionActionBinding
+{
+    [Tooltip("ID d'etape. 'legacy' cible la question historique.")] public string stepId;
+    [Tooltip("ID de reaction. Vide applique les actions a toute resolution de l'etape.")] public string reactionId;
+    public List<GhostResolutionAction> actions = new List<GhostResolutionAction>();
+}
+
+/// <summary>Stable marker placed on ghost-spawned content to prevent duplicate instantiation.</summary>
+public sealed class GhostResolutionSpawnMarker : MonoBehaviour
+{
+    [SerializeField] private string actionId;
+    public string ActionId => actionId;
+    public void SetActionId(string value) => actionId = value;
+}
+
 /// <summary>
 /// Assigns a GhostData asset to a scene ghost and resolves reactions from unlocked knowledge.
 /// </summary>
@@ -163,6 +214,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     [SerializeField] private bool playOnce = true;
     /// <summary>If true, listening to the ghost unlocks GhostData.knowledgeUnlockedOnListen.</summary>
     [SerializeField] private bool unlockKnowledgeOnListen = true;
+
+    [Header("Appearance Animation")]
+    [SerializeField] private Animator appearanceAnimator;
+    [SerializeField] private string appearanceAnimationState;
+    [SerializeField, Min(0)] private int appearanceAnimationLayer;
+    [SerializeField, Min(0f)] private float appearanceAnimationCrossFade = 0.1f;
 
     [Header("Interaction")]
     [SerializeField, Tooltip("Collider de reference pour la detection.")]
@@ -211,6 +268,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private float reactionChoiceWidth = 680f;
     [SerializeField, Tooltip("Libelle du bouton de fermeture.")]
     private string closeChoiceText = "Reculer";
+    [SerializeField, Min(0f), Tooltip("Court verrou apres l'ouverture des choix pour ne jamais reutiliser l'action qui a ouvert le dialogue.")]
+    private float reactionChoiceInputRearmDelay = 0.2f;
 
     [Header("Dissolve Effects")]
     [SerializeField, Tooltip("Scene-side dissolve effects triggered by knowledge reactions.")]
@@ -239,6 +298,36 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private bool addProximityDissolveControllerIfMissing = true;
     [SerializeField, Tooltip("Draw the proximity sphere detection radius when the ghost is selected.")]
     private bool drawProximitySpherecastGizmo = true;
+    [SerializeField, Min(0f), Tooltip("Marge conservee apres revelation pour eviter les disparitions lorsque le joueur reste a la limite du rayon.")]
+    private float proximityRevealExitHysteresis = 0.5f;
+    [SerializeField, Min(0f), Tooltip("Temps laisse aux VFX d'apparition avant de rendre le mesh du fantome visible.")]
+    private float ghostAppearanceRendererDelay = 0.45f;
+    [SerializeField, Min(0f), Tooltip("Temps laisse aux VFX de disparition pour se vider avant de masquer le mesh du fantome.")]
+    private float ghostDisappearanceRendererDelay = 1f;
+
+    [Header("Proximity Presentation")]
+    [SerializeField, Tooltip("Active le feedback de Fresnel et d'effets lorsque le joueur est tres proche du fantome.")]
+    private bool enableProximityPresentation = true;
+    [SerializeField, Min(0f), Tooltip("Distance independante du rayon d'apparition qui fige les effets du fantome.")]
+    private float proximityPresentationDistance = 1.5f;
+    [SerializeField, Min(0.01f), Tooltip("Duree de transition de la puissance Fresnel.")]
+    private float proximityFresnelTransitionDuration = 0.35f;
+    [SerializeField, Range(0f, 1f), Tooltip("Valeur Fresnel du fantome revele hors de la distance proche.")]
+    private float revealedFresnelTexturePower = 0.96f;
+    [SerializeField, Range(0f, 1f), Tooltip("Valeur Fresnel appliquee lorsque le joueur est tres proche.")]
+    private float closeFresnelTexturePower = 1f;
+    [SerializeField, Tooltip("Cibles visuelles explicites. Si vide, utilise les cibles de dissolve puis le fantome.")]
+    private List<GameObject> proximityPresentationTargets = new List<GameObject>();
+    [SerializeField, Tooltip("Effets explicites. Si vide, les CharacterEffect des cibles visuelles sont utilises.")]
+    private List<CharacterEffect> proximityCharacterEffects = new List<CharacterEffect>();
+
+    [Header("Resolved Ghost Cleanup")]
+    [SerializeField, Tooltip("Desactive le GameObject du fantome une fois sa resolution et la fin de ses particules terminees.")]
+    private bool deactivateGameObjectAfterFinalResolution = true;
+    [SerializeField, Min(0f), Tooltip("Delai minimal laisse aux VFX arretes pour finir proprement.")]
+    private float resolvedEffectMinimumCleanupDelay = 0.15f;
+    [SerializeField, Min(0.1f), Tooltip("Delai de securite avant desactivation si un VFX ne signale jamais la fin de ses particules.")]
+    private float resolvedEffectCleanupTimeout = 3f;
 
     [Header("Runtime Outline")]
     [SerializeField, Range(0f, 1f), Tooltip("Outline is allowed only when the current ghost dissolve amount is below this threshold.")]
@@ -260,25 +349,65 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     [SerializeField] private UnityEvent onKnowledgeReactionUsed = new UnityEvent();
     [SerializeField] private UnityEvent onNoKnowledgeReactionAvailable = new UnityEvent();
     [SerializeField] private UnityEvent onGhostUnderstood = new UnityEvent();
+    [SerializeField] private UnityEvent onPuzzleStepStarted = new UnityEvent();
+    [SerializeField] private UnityEvent onPuzzleStepResolved = new UnityEvent();
+    [SerializeField] private UnityEvent onResolutionActionFailed = new UnityEvent();
+
+    [Header("Resolution Actions")]
+    [SerializeField, Tooltip("Actions de scene executees apres une reponse de resolution.")]
+    private List<GhostResolutionActionBinding> resolutionActionBindings = new List<GhostResolutionActionBinding>();
 
     private readonly List<GhostKnowledgeReaction> availableReactionBuffer = new List<GhostKnowledgeReaction>();
     private readonly List<GhostKnowledgeReaction> choiceReactionBuffer = new List<GhostKnowledgeReaction>();
     private readonly List<Button> reactionChoiceButtons = new List<Button>();
+    private readonly Dictionary<Button, GhostKnowledgeReaction> reactionByChoiceButton = new Dictionary<Button, GhostKnowledgeReaction>();
     private readonly List<GhostDissolveController> proximityDissolveControllers = new List<GhostDissolveController>();
+    private readonly List<Renderer> ghostVisibilityRenderers = new List<Renderer>();
+    private readonly HashSet<Renderer> ghostVisibilityRendererSet = new HashSet<Renderer>();
+    private readonly List<Renderer> proximityPresentationRenderers = new List<Renderer>();
+    private readonly List<CharacterEffect> resolvedProximityCharacterEffects = new List<CharacterEffect>();
+    private readonly HashSet<Renderer> proximityPresentationRendererSet = new HashSet<Renderer>();
+    private readonly HashSet<CharacterEffect> proximityCharacterEffectSet = new HashSet<CharacterEffect>();
+    // Unity can restore a component without running field initializers after a domain reload.
+    // Keep this lazily-created instead of assuming the initializer is always available.
+    private MaterialPropertyBlock proximityPresentationPropertyBlock;
     private readonly HashSet<int> activeLitInfluenceSourceIds = new HashSet<int>();
     private static readonly Collider[] ProximitySpherecastHits = new Collider[32];
+    private static readonly int FresnelTexturePowerId = Shader.PropertyToID("_Frensel_Texture_Power");
+    private static readonly int DissolveAmountId = Shader.PropertyToID("_DissolveAmount");
 
     private GameObject currentCharacter;
     private GameObject interactionBoxInstance;
     private Canvas interactionCanvas;
     private GameObject reactionChoicePanelInstance;
     private Transform reactionChoiceContentRoot;
+    private GhostKnowledgeReaction defaultChoiceReaction;
+    private int reactionChoiceShownFrame = -1;
+    private bool reactionChoiceAwaitingFreshInteract;
+    private Coroutine reactionChoiceInputRearmRoutine;
     private Collider resolvedInteractionCollider;
     private bool isUnderstood;
+    private int currentPuzzleStepIndex;
+    private bool currentStepQuestionPresented;
+    private bool conversationInProgress;
+    private readonly HashSet<string> completedStepIds = new HashSet<string>(System.StringComparer.Ordinal);
+    private readonly HashSet<string> executedActionIds = new HashSet<string>(System.StringComparer.Ordinal);
     private bool hasAppearedToPlayer;
     private bool isRevealedToPlayer;
     private float currentProximityDissolveAmount = float.NaN;
     private bool proximityDissolveControllersResolved;
+    private bool ghostVisibilityRenderersResolved;
+    private bool ghostRenderersVisible;
+    private bool hasAppliedGhostRendererVisibility;
+    private float currentProximityFresnelTexturePower = float.NaN;
+    private float targetProximityFresnelTexturePower = float.NaN;
+    private bool proximityPresentationResolved;
+    private bool isPlayerInProximityPresentationRange;
+    private bool proximityCharacterEffectsPlaying;
+    private Coroutine resolvedGhostCleanupRoutine;
+    private Coroutine ghostRendererVisibilityTransitionRoutine;
+    private bool ghostRendererVisibilityTransitionTarget;
+    private bool finalResolvedGhostCleanupInProgress;
     private int litInfluenceCacheFrame = -1;
     private bool cachedDirectLitInfluence;
     private int controlledRevealCacheFrame = -1;
@@ -288,6 +417,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     public GhostData Data => ghostData;
     public bool HasData => ghostData != null;
     public bool IsUnderstood => isUnderstood;
+    public IReadOnlyList<GhostResolutionActionBinding> ResolutionActionBindings => resolutionActionBindings;
     public bool HasAppearedToPlayer => hasAppearedToPlayer;
     public bool IsRevealedToPlayer => isRevealedToPlayer;
     public bool AllowsRuntimeOutline => hasAppearedToPlayer && isRevealedToPlayer && CanAppearAtAll() && HasVisibleRuntimeOutlineDissolve();
@@ -315,13 +445,20 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         LocalInputRouter.Interact += OnInteractPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         proximityDissolveControllersResolved = false;
+        proximityPresentationResolved = false;
+        ghostVisibilityRenderersResolved = false;
+        hasAppliedGhostRendererVisibility = false;
         InvalidateRevealCaches();
         ResolveProximityDissolveControllers();
+        ResolveGhostVisibilityRenderers();
+        SetGhostRenderersVisible(false);
         RefreshRevealState(instantDissolve: true);
+        StartCoroutine(RefreshInitialGhostVisibilityNextFrame());
     }
 
     private void OnDisable()
     {
+        StopGhostRendererVisibilityTransition();
         LocalInputRouter.Interact -= OnInteractPerformed;
         LocalInputRouter.Return -= OnReturnPerformed;
         CloseReactionChoiceUi();
@@ -330,6 +467,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         activeLitInfluenceSourceIds.Clear();
         InvalidateRevealCaches();
         ApplyRevealState(false, markAppeared: false);
+        SetGhostRenderersVisible(false);
+        ResetProximityPresentation();
         if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
         {
             RuntimeOutlineSelectionManager.Clear();
@@ -338,6 +477,11 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void LateUpdate()
     {
+        if (finalResolvedGhostCleanupInProgress)
+        {
+            return;
+        }
+
         RefreshRevealState(instantDissolve: false);
         RefreshRuntimeOutlineVisibility();
         UpdateInteractionUiPosition();
@@ -389,6 +533,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
         ghostData = data;
         isUnderstood = false;
+        currentPuzzleStepIndex = 0;
+        currentStepQuestionPresented = false;
+        completedStepIds.Clear();
+        executedActionIds.Clear();
         currentProximityDissolveAmount = float.NaN;
         hasAppearedToPlayer = false;
         ApplyRevealState(false, markAppeared: false);
@@ -435,7 +583,17 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
         currentCharacter = character;
         RefreshRevealStateForCharacter(character, updateDissolve: false, instantDissolve: false);
-        ShowInteraction(ShouldShowInteractionFor(character));
+        bool interactionAvailable = ShouldShowInteractionFor(character);
+        ShowInteraction(interactionAvailable);
+        if (interactionAvailable && isRevealedToPlayer)
+        {
+            RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
+            RuntimeOutlineSelectionManager.SetActiveInteractable(this);
+        }
+        else if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        {
+            RuntimeOutlineSelectionManager.Clear();
+        }
     }
 
     public string GetDisplayName()
@@ -450,12 +608,14 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     public string GetApparitionLine()
     {
-        return ghostData != null ? ghostData.apparitionLine : string.Empty;
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        return step != null ? step.introductionLine : string.Empty;
     }
 
     public string GetQuestion()
     {
-        return ghostData != null ? ghostData.question : string.Empty;
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        return step != null ? step.question : string.Empty;
     }
 
     public int GetAvailableReactions(List<GhostKnowledgeReaction> results)
@@ -466,15 +626,16 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         results.Clear();
-        if (ghostData == null || ghostData.reactions == null || ghostData.reactions.Count == 0)
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        if (step == null || step.reactions == null || step.reactions.Count == 0)
         {
             return 0;
         }
 
         KnowledgeManager manager = KnowledgeManager.Instance;
-        for (int i = 0; i < ghostData.reactions.Count; i++)
+        for (int i = 0; i < step.reactions.Count; i++)
         {
-            GhostKnowledgeReaction reaction = ghostData.reactions[i];
+            GhostKnowledgeReaction reaction = step.reactions[i];
             if (reaction != null && reaction.IsAvailable(manager))
             {
                 results.Add(reaction);
@@ -528,6 +689,11 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             return false;
         }
 
+        if (conversationInProgress)
+        {
+            return false;
+        }
+
         KnowledgeManager manager = KnowledgeManager.GetOrCreate();
         if (unlockKnowledgeOnListen && manager != null)
         {
@@ -535,6 +701,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         onListened.Invoke();
+
+        if (!currentStepQuestionPresented)
+        {
+            currentStepQuestionPresented = true;
+            onPuzzleStepStarted.Invoke();
+            return ShowGhostFeedback(BuildCurrentQuestionFeedback());
+        }
 
         int availableCount = GetAvailableReactions(availableReactionBuffer);
         if (availableCount == 0)
@@ -544,14 +717,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             return false;
         }
 
-        if (showReactionChoiceUi && (!autoUseSingleAvailableReaction || availableCount > 1))
-        {
-            ShowReactionChoiceUi(availableReactionBuffer);
-            return true;
-        }
-
-        GhostKnowledgeReaction reaction = ResolveBestReaction(availableReactionBuffer);
-        return UseKnowledgeReaction(reaction);
+        // A valid answer is always an explicit player choice, even when unique.
+        ShowReactionChoiceUi(availableReactionBuffer);
+        return true;
     }
 
     public bool UseKnowledgeReaction(GhostKnowledgeReaction reaction)
@@ -567,22 +735,12 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             manager.UnlockKnowledgeList(reaction.unlockKnowledge);
         }
 
-        bool marksGhostUnderstood = reaction.marksGhostUnderstood;
-        if (marksGhostUnderstood)
-        {
-            TriggerScriptableObjectDissolveTargets(instant: false);
-        }
-
         TriggerDissolveEffects(reaction, manager);
-        bool feedbackShown = ShowGhostFeedback(
-            BuildReactionFeedback(reaction),
-            marksGhostUnderstood ? CompleteUnderstoodAfterSolvedDialogue : null);
+        conversationInProgress = true;
+        bool feedbackShown = ShowGhostFeedback(BuildReactionFeedback(reaction), () => CompletePuzzleStepAfterSolvedDialogue(reaction));
         onKnowledgeReactionUsed.Invoke();
 
-        if (marksGhostUnderstood && !feedbackShown)
-        {
-            ApplyUnderstoodState(true, invokeEvent: true);
-        }
+        if (!feedbackShown) CompletePuzzleStepAfterSolvedDialogue(reaction);
 
         return true;
     }
@@ -606,8 +764,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void RefreshRevealState(bool instantDissolve)
     {
+        if (finalResolvedGhostCleanupInProgress)
+        {
+            return;
+        }
+
         bool revealed = TryEvaluateControlledCharacterReveal(out float distance01);
         ApplyRevealState(revealed, markAppeared: true);
+        RequestGhostRenderersVisible(revealed);
+        RefreshProximityPresentation(revealed, ResolveCharacterController(LocalPlayerUtils.GetControlledCharacter()));
 
         if (!enableProximityDissolve)
         {
@@ -622,9 +787,16 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void RefreshRevealStateForCharacter(GameObject character, bool updateDissolve, bool instantDissolve)
     {
+        if (finalResolvedGhostCleanupInProgress)
+        {
+            return;
+        }
+
         SquadCharacterController controller = ResolveCharacterController(character);
         bool revealed = TryEvaluateRevealForController(controller, out float distance01);
         ApplyRevealState(revealed, markAppeared: true);
+        RequestGhostRenderersVisible(revealed);
+        RefreshProximityPresentation(revealed, controller);
 
         if (!updateDissolve || !enableProximityDissolve)
         {
@@ -635,6 +807,106 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             ? Mathf.Lerp(proximityVisibleDissolveAmount, proximityHiddenDissolveAmount, Mathf.Clamp01(distance01))
             : proximityHiddenDissolveAmount;
         ApplyProximityDissolveAmount(targetAmount, instantDissolve);
+    }
+
+    private IEnumerator RefreshInitialGhostVisibilityNextFrame()
+    {
+        yield return null;
+        RefreshRevealState(instantDissolve: true);
+    }
+
+    private void ResolveGhostVisibilityRenderers()
+    {
+        ghostVisibilityRenderersResolved = true;
+        ghostVisibilityRenderers.Clear();
+        ghostVisibilityRendererSet.Clear();
+
+        if (proximityDissolveTargets != null && proximityDissolveTargets.Count > 0)
+        {
+            for (int i = 0; i < proximityDissolveTargets.Count; i++) AddGhostVisibilityRenderers(proximityDissolveTargets[i]);
+        }
+        else
+        {
+            AddGhostVisibilityRenderers(gameObject);
+        }
+
+        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
+    }
+
+    private void AddGhostVisibilityRenderers(GameObject target)
+    {
+        if (target == null) return;
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || !(renderer is MeshRenderer) && !(renderer is SkinnedMeshRenderer)) continue;
+            if (ghostVisibilityRendererSet.Add(renderer)) ghostVisibilityRenderers.Add(renderer);
+        }
+    }
+
+    private void SetGhostRenderersVisible(bool visible)
+    {
+        if (!ghostVisibilityRenderersResolved) ResolveGhostVisibilityRenderers();
+        if (hasAppliedGhostRendererVisibility && ghostRenderersVisible == visible && ghostVisibilityRenderers.Count > 0) return;
+
+        ghostRenderersVisible = visible;
+        hasAppliedGhostRendererVisibility = true;
+        for (int i = 0; i < ghostVisibilityRenderers.Count; i++)
+        {
+            Renderer renderer = ghostVisibilityRenderers[i];
+            if (renderer != null) renderer.enabled = visible;
+        }
+    }
+
+    private void RequestGhostRenderersVisible(bool visible)
+    {
+        if (finalResolvedGhostCleanupInProgress)
+        {
+            return;
+        }
+
+        if (ghostRendererVisibilityTransitionRoutine != null && ghostRendererVisibilityTransitionTarget == visible)
+        {
+            return;
+        }
+
+        StopGhostRendererVisibilityTransition();
+        float delay = visible ? ghostAppearanceRendererDelay : ghostDisappearanceRendererDelay;
+        if (delay <= 0f)
+        {
+            SetGhostRenderersVisible(visible);
+            return;
+        }
+
+        if ((visible && ghostRenderersVisible) || (!visible && !ghostRenderersVisible))
+        {
+            return;
+        }
+
+        ghostRendererVisibilityTransitionTarget = visible;
+        ghostRendererVisibilityTransitionRoutine = StartCoroutine(SetGhostRenderersVisibleAfterDelay(visible, delay));
+    }
+
+    private IEnumerator SetGhostRenderersVisibleAfterDelay(bool visible, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ghostRendererVisibilityTransitionRoutine = null;
+        if (!finalResolvedGhostCleanupInProgress)
+        {
+            SetGhostRenderersVisible(visible);
+        }
+    }
+
+    private void StopGhostRendererVisibilityTransition()
+    {
+        if (ghostRendererVisibilityTransitionRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(ghostRendererVisibilityTransitionRoutine);
+        ghostRendererVisibilityTransitionRoutine = null;
     }
 
     private bool TryEvaluateControlledCharacterReveal(out float distance01)
@@ -706,8 +978,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
         Transform anchor = GetInteractionAnchor();
         Vector3 anchorPosition = anchor != null ? anchor.position : transform.position;
-        float fallbackDistance = Mathf.Max(0.1f, proximitySpherecastRadius);
-        if (!IsControllerInsideProximitySphere(controller, anchorPosition, fallbackDistance))
+        float revealDistance = Mathf.Max(0.1f, proximitySpherecastRadius);
+        float detectionDistance = revealDistance + (isRevealedToPlayer ? proximityRevealExitHysteresis : 0f);
+        if (!IsControllerInsideProximitySphere(controller, anchorPosition, detectionDistance))
         {
             return false;
         }
@@ -716,7 +989,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         float distance = Vector3.Distance(anchorPosition, characterPosition);
         distance01 = Mathf.InverseLerp(
             Mathf.Max(0f, proximityFullyVisibleDistance),
-            fallbackDistance,
+            revealDistance,
             distance);
         return true;
     }
@@ -826,6 +1099,182 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
     }
 
+    private void RefreshProximityPresentation(bool revealed, SquadCharacterController controller)
+    {
+        if (!enableProximityPresentation)
+        {
+            return;
+        }
+
+        bool isClose = revealed && IsControllerInProximityPresentationRange(controller);
+        SetProximityPresentationClose(isClose);
+        UpdateProximityFresnelTexturePower();
+    }
+
+    private bool IsControllerInProximityPresentationRange(SquadCharacterController controller)
+    {
+        if (controller == null)
+        {
+            return false;
+        }
+
+        Transform anchor = GetInteractionAnchor();
+        Vector3 anchorPosition = anchor != null ? anchor.position : transform.position;
+        Vector3 characterPosition = controller.GetInteractionOriginWorldPosition();
+        return (characterPosition - anchorPosition).sqrMagnitude <= proximityPresentationDistance * proximityPresentationDistance;
+    }
+
+    private void BeginAppearanceProximityPresentation()
+    {
+        if (!enableProximityPresentation)
+        {
+            return;
+        }
+
+        EnsureProximityPresentationResolved();
+        isPlayerInProximityPresentationRange = false;
+        currentProximityFresnelTexturePower = closeFresnelTexturePower;
+        targetProximityFresnelTexturePower = revealedFresnelTexturePower;
+        ApplyProximityFresnelTexturePower(currentProximityFresnelTexturePower);
+        SetProximityCharacterEffectsPlaying(true);
+    }
+
+    private void ResetProximityPresentation()
+    {
+        isPlayerInProximityPresentationRange = false;
+        currentProximityFresnelTexturePower = float.NaN;
+        targetProximityFresnelTexturePower = float.NaN;
+        SetProximityCharacterEffectsPlaying(false);
+    }
+
+    private void SetProximityPresentationClose(bool isClose)
+    {
+        if (isPlayerInProximityPresentationRange == isClose && !float.IsNaN(targetProximityFresnelTexturePower))
+        {
+            return;
+        }
+
+        EnsureProximityPresentationResolved();
+        isPlayerInProximityPresentationRange = isClose;
+        targetProximityFresnelTexturePower = isClose ? closeFresnelTexturePower : revealedFresnelTexturePower;
+        // The close-range Fresnel feedback must not stop the ghost's own VFX:
+        // those effects represent the apparition and only follow reveal/hide state.
+    }
+
+    private void UpdateProximityFresnelTexturePower()
+    {
+        if (float.IsNaN(targetProximityFresnelTexturePower))
+        {
+            return;
+        }
+
+        if (float.IsNaN(currentProximityFresnelTexturePower))
+        {
+            currentProximityFresnelTexturePower = targetProximityFresnelTexturePower;
+        }
+        else
+        {
+            float delta = Mathf.Abs(closeFresnelTexturePower - revealedFresnelTexturePower);
+            float speed = delta <= 0.0001f ? 1f : delta / Mathf.Max(0.01f, proximityFresnelTransitionDuration);
+            currentProximityFresnelTexturePower = Mathf.MoveTowards(
+                currentProximityFresnelTexturePower,
+                targetProximityFresnelTexturePower,
+                speed * Time.deltaTime);
+        }
+
+        ApplyProximityFresnelTexturePower(currentProximityFresnelTexturePower);
+    }
+
+    private void EnsureProximityPresentationResolved()
+    {
+        if (!proximityPresentationResolved)
+        {
+            ResolveProximityPresentationTargets();
+        }
+    }
+
+    private void ResolveProximityPresentationTargets()
+    {
+        proximityPresentationResolved = true;
+        proximityPresentationRenderers.Clear();
+        resolvedProximityCharacterEffects.Clear();
+        proximityPresentationRendererSet.Clear();
+        proximityCharacterEffectSet.Clear();
+
+        if (proximityPresentationTargets != null && proximityPresentationTargets.Count > 0)
+        {
+            for (int i = 0; i < proximityPresentationTargets.Count; i++) AddProximityPresentationTarget(proximityPresentationTargets[i]);
+        }
+        else if (proximityDissolveTargets != null && proximityDissolveTargets.Count > 0)
+        {
+            for (int i = 0; i < proximityDissolveTargets.Count; i++) AddProximityPresentationTarget(proximityDissolveTargets[i]);
+        }
+        else
+        {
+            AddProximityPresentationTarget(gameObject);
+        }
+
+        if (proximityCharacterEffects != null && proximityCharacterEffects.Count > 0)
+        {
+            for (int i = 0; i < proximityCharacterEffects.Count; i++) AddProximityCharacterEffect(proximityCharacterEffects[i]);
+        }
+    }
+
+    private void AddProximityPresentationTarget(GameObject target)
+    {
+        if (target == null) return;
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || !(renderer is MeshRenderer) && !(renderer is SkinnedMeshRenderer)) continue;
+            if (proximityPresentationRendererSet.Add(renderer)) proximityPresentationRenderers.Add(renderer);
+        }
+
+        CharacterEffect[] effects = target.GetComponentsInChildren<CharacterEffect>(true);
+        for (int i = 0; i < effects.Length; i++) AddProximityCharacterEffect(effects[i]);
+    }
+
+    private void AddProximityCharacterEffect(CharacterEffect effect)
+    {
+        if (effect != null && proximityCharacterEffectSet.Add(effect)) resolvedProximityCharacterEffects.Add(effect);
+    }
+
+    private void ApplyProximityFresnelTexturePower(float value)
+    {
+        EnsureProximityPresentationResolved();
+        if (proximityPresentationPropertyBlock == null) proximityPresentationPropertyBlock = new MaterialPropertyBlock();
+        for (int rendererIndex = 0; rendererIndex < proximityPresentationRenderers.Count; rendererIndex++)
+        {
+            Renderer renderer = proximityPresentationRenderers[rendererIndex];
+            if (renderer == null) continue;
+            Material[] materials = renderer.sharedMaterials;
+            for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+            {
+                Material material = materials[materialIndex];
+                if (material == null || !material.HasProperty(FresnelTexturePowerId)) continue;
+                proximityPresentationPropertyBlock.Clear();
+                renderer.GetPropertyBlock(proximityPresentationPropertyBlock, materialIndex);
+                proximityPresentationPropertyBlock.SetFloat(FresnelTexturePowerId, value);
+                renderer.SetPropertyBlock(proximityPresentationPropertyBlock, materialIndex);
+            }
+        }
+    }
+
+    private void SetProximityCharacterEffectsPlaying(bool shouldPlay)
+    {
+        if (proximityCharacterEffectsPlaying == shouldPlay) return;
+        EnsureProximityPresentationResolved();
+        proximityCharacterEffectsPlaying = shouldPlay;
+        for (int i = 0; i < resolvedProximityCharacterEffects.Count; i++)
+        {
+            CharacterEffect effect = resolvedProximityCharacterEffects[i];
+            if (effect == null) continue;
+            if (shouldPlay) effect.StartEffect();
+            else effect.StopEffect();
+        }
+    }
+
     private void RefreshRuntimeOutlineVisibility()
     {
         if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
@@ -916,7 +1365,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         GhostDissolveController[] controllers = target.GetComponentsInChildren<GhostDissolveController>(true);
-        if ((controllers == null || controllers.Length == 0) && addProximityDissolveControllerIfMissing)
+        if ((controllers == null || controllers.Length == 0) &&
+            addProximityDissolveControllerIfMissing &&
+            TargetSupportsProximityDissolve(target))
         {
             GhostDissolveController created = target.AddComponent<GhostDissolveController>();
             proximityDissolveControllers.Add(created);
@@ -938,6 +1389,25 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
     }
 
+    private static bool TargetSupportsProximityDissolve(GameObject target)
+    {
+        if (target == null) return false;
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
+        for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+        {
+            Renderer renderer = renderers[rendererIndex];
+            if (renderer == null) continue;
+            Material[] materials = renderer.sharedMaterials;
+            for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+            {
+                Material material = materials[materialIndex];
+                if (material != null && material.HasProperty(DissolveAmountId)) return true;
+            }
+        }
+
+        return false;
+    }
+
     private void ApplyRevealState(bool revealed, bool markAppeared)
     {
         if (revealed && markAppeared)
@@ -951,10 +1421,31 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         isRevealedToPlayer = revealed;
-        if (!revealed)
+        if (revealed)
+        {
+            PlayAppearanceAnimation();
+            BeginAppearanceProximityPresentation();
+        }
+        else
         {
             HandleRevealLost();
+            ResetProximityPresentation();
         }
+    }
+
+    private void PlayAppearanceAnimation()
+    {
+        if (appearanceAnimator == null || string.IsNullOrWhiteSpace(appearanceAnimationState)) return;
+        int layer = Mathf.Max(0, appearanceAnimationLayer);
+        int state = Animator.StringToHash(appearanceAnimationState);
+        if (!appearanceAnimator.HasState(layer, state))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[GhostController] Animation state '{appearanceAnimationState}' introuvable sur '{appearanceAnimator.name}'.", this);
+#endif
+            return;
+        }
+        appearanceAnimator.CrossFade(state, Mathf.Max(0f, appearanceAnimationCrossFade), layer);
     }
 
     private void MarkAppearedToPlayer()
@@ -1116,6 +1607,21 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
     }
 
+    public int GetCurrentPuzzleStepIndex() => currentPuzzleStepIndex;
+    public bool HasPresentedCurrentPuzzleStep() => currentStepQuestionPresented;
+    public List<string> GetCompletedPuzzleStepIds() => new List<string>(completedStepIds);
+    public List<string> GetExecutedResolutionActionIds() => new List<string>(executedActionIds);
+
+    public void RestorePuzzleProgress(int stepIndex, bool questionPresented, List<string> completedSteps, List<string> executedActions)
+    {
+        currentPuzzleStepIndex = Mathf.Clamp(stepIndex, 0, ghostData != null ? ghostData.StepCount : 0);
+        currentStepQuestionPresented = questionPresented;
+        completedStepIds.Clear();
+        if (completedSteps != null) foreach (string id in completedSteps) if (!string.IsNullOrWhiteSpace(id)) completedStepIds.Add(id);
+        executedActionIds.Clear();
+        if (executedActions != null) foreach (string id in executedActions) if (!string.IsNullOrWhiteSpace(id)) executedActionIds.Add(id);
+    }
+
     public string GetPersistentGhostId()
     {
         if (ghostData == null)
@@ -1133,6 +1639,18 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        if (IsReactionChoiceOpen())
+        {
+            if (!reactionChoiceAwaitingFreshInteract &&
+                Time.frameCount != reactionChoiceShownFrame &&
+                LocalInputRouter.TryConsumeInteract())
+            {
+                SubmitSelectedReactionChoice();
+            }
+
+            return;
+        }
+
         if (LocalInputRouter.IsInteractConsumed || InputFocusStack.HasAnyFocus())
         {
             return;
@@ -1150,6 +1668,29 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         InteractWithGhost();
+    }
+
+    private bool IsReactionChoiceOpen()
+    {
+        return reactionChoicePanelInstance != null && reactionChoicePanelInstance.activeSelf && InputFocusStack.HasFocus(this);
+    }
+
+    private void SubmitSelectedReactionChoice()
+    {
+        GhostKnowledgeReaction reaction = defaultChoiceReaction;
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem != null && eventSystem.currentSelectedGameObject != null)
+        {
+            Button selectedButton = eventSystem.currentSelectedGameObject.GetComponent<Button>();
+            if (selectedButton != null && reactionByChoiceButton.TryGetValue(selectedButton, out GhostKnowledgeReaction selectedReaction))
+            {
+                reaction = selectedReaction;
+            }
+        }
+
+        if (reaction == null) return;
+        CloseReactionChoiceUi();
+        UseKnowledgeReaction(reaction);
     }
 
     private void OnReturnPerformed(InputAction.CallbackContext context)
@@ -1200,11 +1741,158 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private string BuildMissingKnowledgeFeedback()
     {
-        string line = !string.IsNullOrWhiteSpace(ghostData.missingKnowledgeLine)
-            ? ghostData.missingKnowledgeLine
-            : ghostData.question;
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        string line = step != null && !string.IsNullOrWhiteSpace(step.missingKnowledgeLine)
+            ? step.missingKnowledgeLine
+            : step != null ? step.question : string.Empty;
 
-        return JoinFeedbackLines(ghostData.apparitionLine, ghostData.question, line);
+        return JoinFeedbackLines(step != null ? step.introductionLine : string.Empty, step != null ? step.question : string.Empty, line);
+    }
+
+    private string BuildCurrentQuestionFeedback()
+    {
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        return step == null ? string.Empty : JoinFeedbackLines(step.introductionLine, step.question, string.Empty);
+    }
+
+    private GhostPuzzleStep GetCurrentPuzzleStep()
+    {
+        return ghostData != null ? ghostData.GetStep(currentPuzzleStepIndex) : null;
+    }
+
+    private string GetCurrentStepId()
+    {
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        return step == null || string.IsNullOrWhiteSpace(step.stepId)
+            ? "step_" + currentPuzzleStepIndex
+            : step.stepId.Trim();
+    }
+
+    private string GetReactionId(GhostKnowledgeReaction reaction)
+    {
+        if (reaction != null && !string.IsNullOrWhiteSpace(reaction.reactionId)) return reaction.reactionId.Trim();
+        GhostPuzzleStep step = GetCurrentPuzzleStep();
+        int index = step != null && step.reactions != null ? step.reactions.IndexOf(reaction) : -1;
+        return "reaction_" + index;
+    }
+
+    private void CompletePuzzleStepAfterSolvedDialogue(GhostKnowledgeReaction reaction)
+    {
+        if (this == null) return;
+        StartCoroutine(CompletePuzzleStepRoutine(reaction));
+    }
+
+    private IEnumerator CompletePuzzleStepRoutine(GhostKnowledgeReaction reaction)
+    {
+        string stepId = GetCurrentStepId();
+        completedStepIds.Add(stepId);
+        onPuzzleStepResolved.Invoke();
+        yield return ExecuteResolutionActions(stepId, GetReactionId(reaction));
+
+        currentPuzzleStepIndex++;
+        currentStepQuestionPresented = false;
+        conversationInProgress = false;
+        if (ghostData != null && currentPuzzleStepIndex < ghostData.StepCount)
+        {
+            currentStepQuestionPresented = true;
+            onPuzzleStepStarted.Invoke();
+            ShowGhostFeedback(BuildCurrentQuestionFeedback());
+            yield break;
+        }
+
+        TriggerScriptableObjectDissolveTargets(instant: false);
+        BeginFinalResolvedGhostCleanup();
+        ApplyUnderstoodState(true, invokeEvent: true);
+    }
+
+    private IEnumerator ExecuteResolutionActions(string stepId, string reactionId)
+    {
+        if (resolutionActionBindings == null) yield break;
+        for (int i = 0; i < resolutionActionBindings.Count; i++)
+        {
+            GhostResolutionActionBinding binding = resolutionActionBindings[i];
+            if (binding == null || !MatchesActionBinding(binding, stepId, reactionId) || binding.actions == null) continue;
+            for (int j = 0; j < binding.actions.Count; j++)
+            {
+                GhostResolutionAction action = binding.actions[j];
+                string actionId = GetPersistentGhostId() + ":" + stepId + ":" + reactionId + ":" + i + ":" + j;
+                if (action == null || (action.runOnce && executedActionIds.Contains(actionId))) continue;
+                bool success = false;
+                yield return ExecuteResolutionAction(action, actionId, value => success = value);
+                if (success && action.runOnce) executedActionIds.Add(actionId);
+                if (!success) onResolutionActionFailed.Invoke();
+            }
+        }
+    }
+
+    private static bool MatchesActionBinding(GhostResolutionActionBinding binding, string stepId, string reactionId)
+    {
+        return string.Equals((binding.stepId ?? string.Empty).Trim(), stepId, System.StringComparison.Ordinal) &&
+            (string.IsNullOrWhiteSpace(binding.reactionId) || string.Equals(binding.reactionId.Trim(), reactionId, System.StringComparison.Ordinal));
+    }
+
+    private IEnumerator ExecuteResolutionAction(GhostResolutionAction action, string actionId, System.Action<bool> complete)
+    {
+        bool success = false;
+        switch (action.actionType)
+        {
+            case GhostResolutionActionType.PlayAnimationState:
+                Animator animator = action.useLocalPlayerAnimator ? ResolveLocalPlayerAnimator() : action.animator;
+                int hash = Animator.StringToHash(action.animationState ?? string.Empty);
+                if (animator != null && !string.IsNullOrWhiteSpace(action.animationState) && animator.HasState(Mathf.Max(0, action.animationLayer), hash))
+                { animator.CrossFade(hash, Mathf.Max(0f, action.animationCrossFade), Mathf.Max(0, action.animationLayer)); success = true; }
+                break;
+            case GhostResolutionActionType.SetDoorOpen:
+                if (action.door != null) { action.door.SetOpen(action.openDoor); success = true; }
+                break;
+            case GhostResolutionActionType.SpawnPrefab:
+                if (action.prefab != null)
+                {
+                    if (action.runOnce && HasSpawnMarker(actionId)) { success = true; break; }
+                    Transform target = action.spawnTarget != null ? action.spawnTarget : transform;
+                    GameObject instance = Instantiate(action.prefab, target);
+                    instance.transform.localPosition = action.localPosition;
+                    instance.transform.localRotation = Quaternion.Euler(action.localEulerAngles);
+                    GhostResolutionSpawnMarker marker = instance.GetComponent<GhostResolutionSpawnMarker>();
+                    if (marker == null)
+                    {
+                        marker = instance.AddComponent<GhostResolutionSpawnMarker>();
+                    }
+                    marker.SetActionId(actionId);
+                    success = true;
+                }
+                break;
+            case GhostResolutionActionType.PlayTimeline:
+                if (action.timelineDirector != null && action.timelineBindingProfile != null && TimelineManager.Instance != null)
+                {
+                    TimelinePlaybackHandle handle = TimelineManager.Instance.Play(action.timelineDirector, action.timelineBindingProfile);
+                    while (!handle.IsDone) yield return null;
+                    success = handle.State == TimelinePlaybackState.Completed;
+                }
+                break;
+            case GhostResolutionActionType.PlayStorySequence:
+                if (action.storySequenceRunner != null && action.storySequenceRunner.Play())
+                {
+                    while (action.storySequenceRunner != null && action.storySequenceRunner.IsPlaying) yield return null;
+                    success = true;
+                }
+                break;
+        }
+        complete?.Invoke(success);
+    }
+
+    private Animator ResolveLocalPlayerAnimator()
+    {
+        GameObject player = LocalPlayerUtils.GetControlledCharacter();
+        return player != null ? player.GetComponentInChildren<Animator>(true) : null;
+    }
+
+    private static bool HasSpawnMarker(string actionId)
+    {
+        GhostResolutionSpawnMarker[] markers = FindObjectsByType<GhostResolutionSpawnMarker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < markers.Length; i++)
+            if (markers[i] != null && string.Equals(markers[i].ActionId, actionId, System.StringComparison.Ordinal)) return true;
+        return false;
     }
 
     private string BuildReactionFeedback(GhostKnowledgeReaction reaction)
@@ -1247,6 +1935,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         choiceReactionBuffer.Clear();
+        reactionByChoiceButton.Clear();
+        defaultChoiceReaction = null;
         for (int i = 0; i < reactions.Count; i++)
         {
             if (reactions[i] != null)
@@ -1259,8 +1949,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         CreateReactionChoicePanel();
         if (reactionChoicePanelInstance == null || reactionChoiceContentRoot == null)
         {
-            GhostKnowledgeReaction fallback = ResolveBestReaction(choiceReactionBuffer);
-            UseKnowledgeReaction(fallback);
+            Debug.LogError($"Ghost '{name}' could not create its answer-choice UI. The puzzle step was not resolved.", this);
+            ShowGhostFeedback("Impossible d'afficher les reponses pour le moment.");
             return;
         }
 
@@ -1271,7 +1961,11 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
         CreateReactionCloseButton();
         reactionChoicePanelInstance.SetActive(true);
+        EnsureReactionChoiceEventSystem();
+        SelectDefaultReactionChoice();
+        reactionChoiceShownFrame = Time.frameCount;
         InputFocusStack.Push(this);
+        BeginReactionChoiceInputRearm();
     }
 
     private static int CompareReactionsForChoice(GhostKnowledgeReaction left, GhostKnowledgeReaction right)
@@ -1279,6 +1973,75 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         int leftScore = left != null ? left.GetSpecificityScore() : int.MinValue;
         int rightScore = right != null ? right.GetSpecificityScore() : int.MinValue;
         return rightScore.CompareTo(leftScore);
+    }
+
+    private static void EnsureReactionChoiceEventSystem()
+    {
+        if (EventSystem.current != null)
+        {
+            return;
+        }
+
+        GameObject eventSystemObject = new GameObject("GhostReactionChoiceEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+        DontDestroyOnLoad(eventSystemObject);
+    }
+
+    private void SelectDefaultReactionChoice()
+    {
+        if (EventSystem.current == null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<Button, GhostKnowledgeReaction> pair in reactionByChoiceButton)
+        {
+            if (pair.Key != null && pair.Value == defaultChoiceReaction)
+            {
+                EventSystem.current.SetSelectedGameObject(pair.Key.gameObject);
+                return;
+            }
+        }
+    }
+
+    private void BeginReactionChoiceInputRearm()
+    {
+        reactionChoiceAwaitingFreshInteract = true;
+        SetReactionChoiceAnswerButtonsInteractable(false);
+        if (reactionChoiceInputRearmRoutine != null)
+        {
+            StopCoroutine(reactionChoiceInputRearmRoutine);
+        }
+
+        reactionChoiceInputRearmRoutine = StartCoroutine(RearmReactionChoiceInputRoutine());
+    }
+
+    private IEnumerator RearmReactionChoiceInputRoutine()
+    {
+        float delay = Mathf.Max(0f, reactionChoiceInputRearmDelay);
+        if (delay > 0f)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+        }
+
+        reactionChoiceInputRearmRoutine = null;
+        if (!IsReactionChoiceOpen())
+        {
+            yield break;
+        }
+
+        reactionChoiceAwaitingFreshInteract = false;
+        SetReactionChoiceAnswerButtonsInteractable(true);
+    }
+
+    private void SetReactionChoiceAnswerButtonsInteractable(bool interactable)
+    {
+        foreach (KeyValuePair<Button, GhostKnowledgeReaction> pair in reactionByChoiceButton)
+        {
+            if (pair.Key != null)
+            {
+                pair.Key.interactable = interactable;
+            }
+        }
     }
 
     private void CreateReactionChoicePanel()
@@ -1388,6 +2151,11 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             UseKnowledgeReaction(reaction);
         });
         reactionChoiceButtons.Add(button);
+        reactionByChoiceButton[button] = reaction;
+        if (defaultChoiceReaction == null)
+        {
+            defaultChoiceReaction = reaction;
+        }
     }
 
     private void CreateReactionCloseButton()
@@ -1449,6 +2217,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void CloseReactionChoiceUi()
     {
+        if (reactionChoiceInputRearmRoutine != null)
+        {
+            StopCoroutine(reactionChoiceInputRearmRoutine);
+            reactionChoiceInputRearmRoutine = null;
+        }
+
+        reactionChoiceAwaitingFreshInteract = false;
         if (reactionChoicePanelInstance == null)
         {
             InputFocusStack.Pop(this);
@@ -1464,7 +2239,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         reactionChoiceButtons.Clear();
+        reactionByChoiceButton.Clear();
         choiceReactionBuffer.Clear();
+        defaultChoiceReaction = null;
+        reactionChoiceShownFrame = -1;
 
         GameObject root = reactionChoicePanelInstance;
         Canvas panelCanvas = root.GetComponentInParent<Canvas>();
@@ -1509,7 +2287,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         InvalidateRevealCaches();
         if (playOnce && isUnderstood)
         {
-            ApplyRevealState(false, markAppeared: false);
+            // During the final cleanup, keep the reveal state untouched so the
+            // cleanup controls the visual shutdown in one deterministic place.
+            if (!finalResolvedGhostCleanupInProgress)
+            {
+                ApplyRevealState(false, markAppeared: false);
+            }
+
             if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
             {
                 RuntimeOutlineSelectionManager.Clear();
@@ -1527,6 +2311,65 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             onGhostUnderstood.Invoke();
             Understood?.Invoke(this);
         }
+    }
+
+    private void BeginFinalResolvedGhostCleanup()
+    {
+        if (!playOnce || !deactivateGameObjectAfterFinalResolution || finalResolvedGhostCleanupInProgress)
+        {
+            return;
+        }
+
+        finalResolvedGhostCleanupInProgress = true;
+        StopGhostRendererVisibilityTransition();
+        ShowInteraction(false);
+        SetGhostRenderersVisible(false);
+        SetProximityCharacterEffectsPlaying(false);
+        if (resolvedGhostCleanupRoutine != null)
+        {
+            StopCoroutine(resolvedGhostCleanupRoutine);
+        }
+
+        resolvedGhostCleanupRoutine = StartCoroutine(FinalResolvedGhostCleanupRoutine());
+    }
+
+    private IEnumerator FinalResolvedGhostCleanupRoutine()
+    {
+        float elapsed = 0f;
+        float minimumDelay = Mathf.Max(0f, resolvedEffectMinimumCleanupDelay);
+        float timeout = Mathf.Max(minimumDelay, resolvedEffectCleanupTimeout);
+
+        while (elapsed < timeout)
+        {
+            if (elapsed >= minimumDelay && !HasLiveProximityCharacterEffectParticles())
+            {
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        resolvedGhostCleanupRoutine = null;
+        if (this != null && gameObject != null)
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
+    private bool HasLiveProximityCharacterEffectParticles()
+    {
+        EnsureProximityPresentationResolved();
+        for (int i = 0; i < resolvedProximityCharacterEffects.Count; i++)
+        {
+            CharacterEffect effect = resolvedProximityCharacterEffects[i];
+            if (effect != null && effect.vfxComponent != null && effect.vfxComponent.aliveParticleCount > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void CompleteUnderstoodAfterSolvedDialogue()
@@ -1785,6 +2628,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     {
         proximitySpherecastRadius = Mathf.Max(0.1f, proximitySpherecastRadius);
         proximityFullyVisibleDistance = Mathf.Clamp(proximityFullyVisibleDistance, 0f, proximitySpherecastRadius);
+        proximityRevealExitHysteresis = Mathf.Max(0f, proximityRevealExitHysteresis);
+        proximityPresentationDistance = Mathf.Max(0f, proximityPresentationDistance);
+        proximityFresnelTransitionDuration = Mathf.Max(0.01f, proximityFresnelTransitionDuration);
+        revealedFresnelTexturePower = Mathf.Clamp01(revealedFresnelTexturePower);
+        closeFresnelTexturePower = Mathf.Clamp01(closeFresnelTexturePower);
+        resolvedEffectMinimumCleanupDelay = Mathf.Max(0f, resolvedEffectMinimumCleanupDelay);
+        resolvedEffectCleanupTimeout = Mathf.Max(resolvedEffectMinimumCleanupDelay, resolvedEffectCleanupTimeout);
 
         if (proximityVisibleDissolveAmount < proximityHiddenDissolveAmount)
         {

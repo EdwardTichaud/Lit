@@ -1,0 +1,1054 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1287287655875285352
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3204333238326196919}
+  m_Layer: 0
+  m_Name: EnemyStageAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3204333238326196919
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1287287655875285352}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: -0, w: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5805382610105998439}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5832347056194414340
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5805382610105998439}
+  - component: {fileID: 1259285079340011383}
+  - component: {fileID: 5161614431143586381}
+  - component: {fileID: 1583203378153301930}
+  - component: {fileID: 6344058380775818162}
+  - component: {fileID: 8938278753597388535}
+  m_Layer: 0
+  m_Name: LightSkill_3_Enchainement_CinematicRig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5805382610105998439
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5832347056194414340}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 214843899472984453}
+  - {fileID: 7009338143845237673}
+  - {fileID: 3204333238326196919}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!320 &1259285079340011383
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5832347056194414340}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: 250da4ab6736cbc4c8b8cee1d4801d72, type: 2}
+  m_InitialState: 1
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 1
+  m_InitialTime: 0
+  m_SceneBindings: []
+  m_ExposedReferences:
+    m_References: []
+--- !u!114 &5161614431143586381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5832347056194414340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
+  m_Events:
+    m_Signals: []
+    m_Events: []
+--- !u!114 &1583203378153301930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5832347056194414340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8eb8132753894d729635255ca6a7ceaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LitTimelineCinemachineBridge
+  director: {fileID: 1259285079340011383}
+--- !u!114 &6344058380775818162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5832347056194414340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e0b25aa3bf4451f8dd70c92e9e48a25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LightSkillCinematicSequenceController
+  signalReceiver: {fileID: 5161614431143586381}
+--- !u!114 &8938278753597388535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5832347056194414340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1742c221fbbe9294f8ef031055a02eb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicRig
+  director: {fileID: 1259285079340011383}
+  signalReceiver: {fileID: 5161614431143586381}
+  cameraBindings:
+  - timelineCameraKey: Devastation.Opening:385302167
+    camera: {fileID: 7119347166393420488}
+  trackBindings:
+  - trackName: Animation Track
+    target: {fileID: 9009681156930813043}
+  framingReferences:
+  - timelineTime: 0
+    cameraKey: Devastation.Opening:385302167
+    playerAnimatorStagePosition: {x: 0, y: 0, z: -4}
+    playerAnimatorStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyAnimatorStagePosition: {x: 0, y: 0, z: 4}
+    enemyAnimatorStageRotation: {x: 0, y: 1, z: -0, w: 0}
+    cameraStagePosition: {x: 1.54, y: 1.62, z: -5.46}
+    cameraStageRotation: {x: -0.13159494, y: 0.2730869, z: -0.037740935, w: -0.95219845}
+    cameraFieldOfView: 65
+  - timelineTime: 1
+    cameraKey: Devastation.Opening:385302167
+    playerAnimatorStagePosition: {x: -0.3378979, y: 0, z: -1.8252234}
+    playerAnimatorStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyAnimatorStagePosition: {x: 0, y: 0, z: 4}
+    enemyAnimatorStageRotation: {x: 0, y: 1, z: -0, w: 0}
+    cameraStagePosition: {x: 1.6462142, y: 1.4744997, z: -0.6804881}
+    cameraStageRotation: {x: -0.048682835, y: 0.76128906, z: -0.10753288, w: -0.637578}
+    cameraFieldOfView: 65
+  playerStageAnchor: {fileID: 7009338143845237673}
+  enemyStageAnchor: {fileID: 3204333238326196919}
+  authoringPlayerLocalPosition: {x: 0, y: 0, z: -4}
+  authoringPlayerLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  authoringStageWorldRotation: {x: 0, y: 0, z: 0, w: 1}
+  authoringEnemyLocalPosition: {x: 0, y: 0, z: 4}
+  authoringEnemyLocalRotation: {x: 0, y: 1, z: -0, w: 0}
+  authoringFormationCenter: {x: 0, y: 0, z: 0}
+  authoringFormationForward: {x: 0, y: 0, z: 1}
+  authoringStageLayoutVersion: 3
+  motionEnvelope:
+  - timelineTime: 0
+    playerStagePosition: {x: 0, y: 0, z: -4}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.033333335
+    playerStagePosition: {x: -0.010263162, y: 0, z: -3.9131472}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.06666667
+    playerStagePosition: {x: -0.030321935, y: 0, z: -3.8307157}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.1
+    playerStagePosition: {x: -0.05665692, y: 0, z: -3.755171}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.13333334
+    playerStagePosition: {x: -0.08500821, y: 0, z: -3.6864264}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.16666667
+    playerStagePosition: {x: -0.11422286, y: 0, z: -3.6191463}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.2
+    playerStagePosition: {x: -0.14434402, y: 0, z: -3.543447}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.23333333
+    playerStagePosition: {x: -0.17984839, y: 0, z: -3.455914}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.26666668
+    playerStagePosition: {x: -0.21250103, y: 0, z: -3.3837228}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.3
+    playerStagePosition: {x: -0.22907855, y: 0, z: -3.3270764}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.33333334
+    playerStagePosition: {x: -0.23555438, y: 0, z: -3.2723193}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.36666667
+    playerStagePosition: {x: -0.2430147, y: 0, z: -3.208193}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.4
+    playerStagePosition: {x: -0.25903222, y: 0, z: -3.135425}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.43333334
+    playerStagePosition: {x: -0.27562675, y: 0, z: -3.0649343}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.46666667
+    playerStagePosition: {x: -0.2788999, y: 0, z: -3.000749}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.5
+    playerStagePosition: {x: -0.2626218, y: 0, z: -2.9374814}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.53333336
+    playerStagePosition: {x: -0.24174011, y: 0, z: -2.8683052}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.56666666
+    playerStagePosition: {x: -0.2307653, y: 0, z: -2.7950926}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.6
+    playerStagePosition: {x: -0.22994937, y: 0, z: -2.7197156}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.6333333
+    playerStagePosition: {x: -0.22959825, y: 0, z: -2.644046}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.6666667
+    playerStagePosition: {x: -0.22961038, y: 0, z: -2.5699558}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.7
+    playerStagePosition: {x: -0.23175567, y: 0, z: -2.4957862}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.73333335
+    playerStagePosition: {x: -0.23650981, y: 0, z: -2.4190593}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.76666665
+    playerStagePosition: {x: -0.24434853, y: 0, z: -2.3404183}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.8
+    playerStagePosition: {x: -0.25519913, y: 0, z: -2.2605085}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.8333333
+    playerStagePosition: {x: -0.26261267, y: 0, z: -2.1799724}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.8666667
+    playerStagePosition: {x: -0.2655078, y: 0, z: -2.0994546}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.9
+    playerStagePosition: {x: -0.27440563, y: 0, z: -2.019599}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.93333334
+    playerStagePosition: {x: -0.29562315, y: 0, z: -1.9439037}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 0.96666664
+    playerStagePosition: {x: -0.32202244, y: 0, z: -1.8801634}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1
+    playerStagePosition: {x: -0.3378979, y: 0, z: -1.8252234}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.0333333
+    playerStagePosition: {x: -0.3431409, y: 0, z: -1.7751307}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.0666667
+    playerStagePosition: {x: -0.3542255, y: 0, z: -1.7259314}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.1
+    playerStagePosition: {x: -0.3866876, y: 0, z: -1.6736722}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.1333333
+    playerStagePosition: {x: -0.43125874, y: 0, z: -1.6232023}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.1666666
+    playerStagePosition: {x: -0.46060482, y: 0, z: -1.5918858}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.2
+    playerStagePosition: {x: -0.45901757, y: 0, z: -1.5625136}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.2333333
+    playerStagePosition: {x: -0.44523793, y: 0, z: -1.5153844}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.2666667
+    playerStagePosition: {x: -0.445918, y: 0, z: -1.4428794}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.3
+    playerStagePosition: {x: -0.4499718, y: 0, z: -1.3638086}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.3333334
+    playerStagePosition: {x: -0.44628933, y: 0, z: -1.2598882}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.3666667
+    playerStagePosition: {x: -0.46282786, y: 0, z: -1.1097796}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.4
+    playerStagePosition: {x: -0.4959959, y: 0, z: -0.9293721}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.4333333
+    playerStagePosition: {x: -0.5256381, y: 0, z: -0.7585082}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.4666667
+    playerStagePosition: {x: -0.5527911, y: 0, z: -0.61178637}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.5
+    playerStagePosition: {x: -0.59994274, y: 0, z: -0.5026543}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.5333333
+    playerStagePosition: {x: -0.6789154, y: 0, z: -0.43218327}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.5666667
+    playerStagePosition: {x: -0.7478214, y: 0, z: -0.39393497}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.6
+    playerStagePosition: {x: -0.77345586, y: 0, z: -0.3795414}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.6333333
+    playerStagePosition: {x: -0.7797228, y: 0, z: -0.36211705}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.65
+    playerStagePosition: {x: -0.78223836, y: 0, z: -0.35072112}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: 0, y: 0, z: 4}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.6666666
+    playerStagePosition: {x: -0.78499013, y: 0, z: -0.3383379}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.23709524, y: 0, z: 4.213874}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.7
+    playerStagePosition: {x: -0.79006356, y: 0, z: -0.31301665}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.44871208, y: 0, z: 4.5957117}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.7333333
+    playerStagePosition: {x: -0.7945916, y: 0, z: -0.29096532}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.5046169, y: 0, z: 5.7576623}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.7666667
+    playerStagePosition: {x: -0.79860806, y: 0, z: -0.27699614}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.49465474, y: 0, z: 7.7744713}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.8
+    playerStagePosition: {x: -0.80214673, y: 0, z: -0.27506328}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.37188452, y: 0, z: 9.124348}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.8333334
+    playerStagePosition: {x: -0.8052414, y: 0, z: -0.277359}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.28318506, y: 0, z: 10.194897}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.8666667
+    playerStagePosition: {x: -0.8079259, y: 0, z: -0.28067517}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.22190021, y: 0, z: 11.1467905}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.9
+    playerStagePosition: {x: -0.8102338, y: 0, z: -0.28486824}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.19111294, y: 0, z: 11.892904}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.9333333
+    playerStagePosition: {x: -0.81219906, y: 0, z: -0.28979445}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.20779999, y: 0, z: 12.362666}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 1.9666667
+    playerStagePosition: {x: -0.8138554, y: 0, z: -0.29530978}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.25710863, y: 0, z: 12.668322}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2
+    playerStagePosition: {x: -0.8152366, y: 0, z: -0.3012712}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.3240809, y: 0, z: 12.89011}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.0333333
+    playerStagePosition: {x: -0.8163765, y: 0, z: -0.30753446}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.4033177, y: 0, z: 13.050578}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.0666666
+    playerStagePosition: {x: -0.8173088, y: 0, z: -0.31395602}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.4867722, y: 0, z: 13.172274}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.1
+    playerStagePosition: {x: -0.81806725, y: 0, z: -0.32039213}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.5663974, y: 0, z: 13.277743}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.1333334
+    playerStagePosition: {x: -0.8186857, y: 0, z: -0.32669926}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.63414645, y: 0, z: 13.389534}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.1666667
+    playerStagePosition: {x: -0.8191979, y: 0, z: -0.33273363}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.68581814, y: 0, z: 13.530191}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.2
+    playerStagePosition: {x: -0.81956285, y: 0, z: -0.3383515}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7236865, y: 0, z: 13.699104}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.2333333
+    playerStagePosition: {x: -0.81888145, y: 0, z: -0.34340906}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7494175, y: 0, z: 13.850757}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.2666667
+    playerStagePosition: {x: -0.8170094, y: 0, z: -0.34776258}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7637409, y: 0, z: 13.982907}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.3
+    playerStagePosition: {x: -0.81411105, y: 0, z: -0.35126877}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.76749057, y: 0, z: 14.095655}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.3333333
+    playerStagePosition: {x: -0.8103507, y: 0, z: -0.3537836}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.76504886, y: 0, z: 14.189103}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.3666666
+    playerStagePosition: {x: -0.80589277, y: 0, z: -0.35534024}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.760932, y: 0, z: 14.263348}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.4
+    playerStagePosition: {x: -0.8009016, y: 0, z: -0.35602593}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7586104, y: 0, z: 14.318489}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.4333334
+    playerStagePosition: {x: -0.7955415, y: 0, z: -0.35577846}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7549042, y: 0, z: 14.366235}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.4666667
+    playerStagePosition: {x: -0.78997684, y: 0, z: -0.35453582}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.74965394, y: 0, z: 14.416871}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.5
+    playerStagePosition: {x: -0.784372, y: 0, z: -0.35223556}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.74358845, y: 0, z: 14.468363}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.5333333
+    playerStagePosition: {x: -0.7788913, y: 0, z: -0.34881544}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.73743635, y: 0, z: 14.518675}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.5666666
+    playerStagePosition: {x: -0.77369905, y: 0, z: -0.34421325}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.73192656, y: 0, z: 14.565773}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.6
+    playerStagePosition: {x: -0.76895964, y: 0, z: -0.33836675}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7277877, y: 0, z: 14.607628}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.6333334
+    playerStagePosition: {x: -0.76483744, y: 0, z: -0.33121395}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.72574854, y: 0, z: 14.642199}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.6666667
+    playerStagePosition: {x: -0.7614968, y: 0, z: -0.32269216}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7265378, y: 0, z: 14.667453}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.7
+    playerStagePosition: {x: -0.759151, y: 0, z: -0.3127396}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7308844, y: 0, z: 14.681358}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.7333333
+    playerStagePosition: {x: -0.7580039, y: 0, z: -0.3012936}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.73951685, y: 0, z: 14.681882}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.7666667
+    playerStagePosition: {x: -0.75797844, y: 0, z: -0.2882924}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.75316393, y: 0, z: 14.6669855}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.8
+    playerStagePosition: {x: -0.75898045, y: 0, z: -0.27367306}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7719317, y: 0, z: 14.634637}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.8333333
+    playerStagePosition: {x: -0.76091576, y: 0, z: -0.25928545}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.7949563, y: 0, z: 14.57928}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.8666666
+    playerStagePosition: {x: -0.7636902, y: 0, z: -0.25086188}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.82276225, y: 0, z: 14.488087}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.9
+    playerStagePosition: {x: -0.76720965, y: 0, z: -0.24793553}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.85594183, y: 0, z: 14.354413}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.9333334
+    playerStagePosition: {x: -0.77137995, y: 0, z: -0.24954414}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.8950875, y: 0, z: 14.171953}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 2.9666667
+    playerStagePosition: {x: -0.77610695, y: 0, z: -0.25472617}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.9407913, y: 0, z: 13.934412}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3
+    playerStagePosition: {x: -0.78129643, y: 0, z: -0.26251984}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -0.9927988, y: 0, z: 13.6354885}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.0333333
+    playerStagePosition: {x: -0.78685445, y: 0, z: -0.2719636}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.0453799, y: 0, z: 13.27569}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.0666666
+    playerStagePosition: {x: -0.79268664, y: 0, z: -0.28209567}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.0951029, y: 0, z: 12.895425}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.1
+    playerStagePosition: {x: -0.7986989, y: 0, z: -0.29195404}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.139244, y: 0, z: 12.510169}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.1333334
+    playerStagePosition: {x: -0.8045212, y: 0, z: -0.30057693}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.1750796, y: 0, z: 12.129236}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.1666667
+    playerStagePosition: {x: -0.80925757, y: 0, z: -0.30700278}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.1998864, y: 0, z: 11.761942}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.2
+    playerStagePosition: {x: -0.812946, y: 0, z: -0.31027007}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2163622, y: 0, z: 11.415533}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.2333333
+    playerStagePosition: {x: -0.8156973, y: 0, z: -0.3096676}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2342415, y: 0, z: 11.058392}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.2666667
+    playerStagePosition: {x: -0.81762207, y: 0, z: -0.30779767}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2498628, y: 0, z: 10.697121}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.3
+    playerStagePosition: {x: -0.8188311, y: 0, z: -0.30565238}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2589469, y: 0, z: 10.358562}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.3333333
+    playerStagePosition: {x: -0.81943506, y: 0, z: -0.30329585}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2540333, y: 0, z: 10.069566}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.3666666
+    playerStagePosition: {x: -0.81954473, y: 0, z: -0.30079198}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2328447, y: 0, z: 9.8583355}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.4
+    playerStagePosition: {x: -0.8192708, y: 0, z: -0.29820538}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2411311, y: 0, z: 9.732136}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.4333334
+    playerStagePosition: {x: -0.8181427, y: 0, z: -0.2956004}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2616696, y: 0, z: 9.648348}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.4666667
+    playerStagePosition: {x: -0.8160625, y: 0, z: -0.293041}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2506543, y: 0, z: 9.562553}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.5
+    playerStagePosition: {x: -0.8136996, y: 0, z: -0.29059172}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2501256, y: 0, z: 9.4959545}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.5333333
+    playerStagePosition: {x: -0.8117236, y: 0, z: -0.28831673}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.252994, y: 0, z: 9.460396}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.5666666
+    playerStagePosition: {x: -0.81080395, y: 0, z: -0.2862804}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2545036, y: 0, z: 9.447554}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.6
+    playerStagePosition: {x: -0.8115355, y: 0, z: -0.28454685}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2566227, y: 0, z: 9.449101}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.6333334
+    playerStagePosition: {x: -0.81333447, y: 0, z: -0.28318024}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2590204, y: 0, z: 9.456717}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.6666667
+    playerStagePosition: {x: -0.81569487, y: 0, z: -0.28224516}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2611729, y: 0, z: 9.462074}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.7
+    playerStagePosition: {x: -0.81833977, y: 0, z: -0.28180575}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.262558, y: 0, z: 9.461146}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.7333333
+    playerStagePosition: {x: -0.8209924, y: 0, z: -0.28192616}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.262653, y: 0, z: 9.460323}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.7666667
+    playerStagePosition: {x: -0.8233758, y: 0, z: -0.28267097}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2616079, y: 0, z: 9.4599285}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.8
+    playerStagePosition: {x: -0.8252132, y: 0, z: -0.28372216}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2607925, y: 0, z: 9.459888}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.8333333
+    playerStagePosition: {x: -0.82622766, y: 0, z: -0.28472424}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2602389, y: 0, z: 9.460135}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.8666666
+    playerStagePosition: {x: -0.82621336, y: 0, z: -0.28568363}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2599094, y: 0, z: 9.460597}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.9
+    playerStagePosition: {x: -0.825901, y: 0, z: -0.28660774}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2597668, y: 0, z: 9.461205}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.9333334
+    playerStagePosition: {x: -0.8255598, y: 0, z: -0.28750277}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2597733, y: 0, z: 9.461886}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 3.9666667
+    playerStagePosition: {x: -0.8251957, y: 0, z: -0.2883761}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.259891, y: 0, z: 9.462572}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4
+    playerStagePosition: {x: -0.82481486, y: 0, z: -0.28923416}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.260083, y: 0, z: 9.46319}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.0333333
+    playerStagePosition: {x: -0.8244231, y: 0, z: -0.29008436}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2603115, y: 0, z: 9.463673}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.0666666
+    playerStagePosition: {x: -0.82402635, y: 0, z: -0.2909329}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2605386, y: 0, z: 9.463947}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.1
+    playerStagePosition: {x: -0.8236307, y: 0, z: -0.29178715}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.260727, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.133333
+    playerStagePosition: {x: -0.823242, y: 0, z: -0.2926538}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608392, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.15
+    playerStagePosition: {x: -0.82305217, y: 0, z: -0.29309392}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.1666665
+    playerStagePosition: {x: -0.8228664, y: 0, z: -0.29353976}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.2
+    playerStagePosition: {x: -0.8225097, y: 0, z: -0.2944517}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.233333
+    playerStagePosition: {x: -0.82217795, y: 0, z: -0.2953968}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.266667
+    playerStagePosition: {x: -0.8218771, y: 0, z: -0.2963817}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.3
+    playerStagePosition: {x: -0.82161325, y: 0, z: -0.2974131}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.3333335
+    playerStagePosition: {x: -0.8213922, y: 0, z: -0.298496}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.366667
+    playerStagePosition: {x: -0.82122, y: 0, z: -0.29961753}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.4
+    playerStagePosition: {x: -0.82110256, y: 0, z: -0.30076027}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.4333334
+    playerStagePosition: {x: -0.82103586, y: 0, z: -0.30190563}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.4666667
+    playerStagePosition: {x: -0.8209882, y: 0, z: -0.3030362}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.5
+    playerStagePosition: {x: -0.82095206, y: 0, z: -0.3041339}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.5333333
+    playerStagePosition: {x: -0.82092243, y: 0, z: -0.30518055}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.5666666
+    playerStagePosition: {x: -0.82089436, y: 0, z: -0.30615854}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.6
+    playerStagePosition: {x: -0.82086277, y: 0, z: -0.30704975}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.633333
+    playerStagePosition: {x: -0.82082254, y: 0, z: -0.30783653}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.6666665
+    playerStagePosition: {x: -0.8207687, y: 0, z: -0.30850053}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.7
+    playerStagePosition: {x: -0.8206962, y: 0, z: -0.30902386}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  - timelineTime: 4.711111
+    playerStagePosition: {x: -0.82066697, y: 0, z: -0.30916405}
+    playerStageRotation: {x: 0, y: 0, z: 0, w: 1}
+    enemyStagePosition: {x: -1.2608551, y: 0, z: 9.463985}
+    enemyStageRotation: {x: 0, y: 1, z: -0, w: 0}
+  motionEnvelopeVersion: 1
+  drivePlayerRootMotionFromTimeline: 1
+  logCameraDiagnostics: 1
+  logPlacementDiagnostics: 1
+--- !u!1 &6335002845875281114
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 214843899472984453}
+  - component: {fileID: 7119347166393420488}
+  - component: {fileID: 9009681156930813043}
+  - component: {fileID: 7505197655199715398}
+  m_Layer: 0
+  m_Name: Camera_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &214843899472984453
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6335002845875281114}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.13159494, y: 0.2730869, z: -0.037740935, w: -0.95219845}
+  m_LocalPosition: {x: 1.54, y: 1.62, z: -5.46}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5805382610105998439}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7119347166393420488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6335002845875281114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+  Priority:
+    Enabled: 0
+    m_Value: 0
+  OutputChannel: 1
+  StandbyUpdate: 2
+  m_StreamingVersion: 20241001
+  m_LegacyPriority: 0
+  Target:
+    TrackingTarget: {fileID: 0}
+    LookAtTarget: {fileID: 0}
+    CustomLookAtTarget: 0
+  Lens:
+    FieldOfView: 65
+    OrthographicSize: 10
+    NearClipPlane: 0.1
+    FarClipPlane: 5000
+    Dutch: 0
+    ModeOverride: 0
+    PhysicalProperties:
+      GateFit: 2
+      SensorSize: {x: 21.946, y: 16.002}
+      LensShift: {x: 0, y: 0}
+      FocusDistance: 10
+      Iso: 200
+      ShutterSpeed: 0.005
+      Aperture: 16
+      BladeCount: 5
+      Curvature: {x: 2, y: 11}
+      BarrelClipping: 0.25
+      Anamorphism: 0
+  BlendHint: 0
+--- !u!95 &9009681156930813043
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6335002845875281114}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7505197655199715398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6335002845875281114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8d31a1a74cf49e28f5619c2a155147b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LightSkillCinematicCameraAuthoring
+  timelineCameraKey: Devastation.Opening:385302167
+  followTarget: 0
+  lookAtTarget: 0
+--- !u!1 &8430573615283132225
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7009338143845237673}
+  m_Layer: 0
+  m_Name: PlayerStageAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7009338143845237673
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8430573615283132225}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5805382610105998439}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

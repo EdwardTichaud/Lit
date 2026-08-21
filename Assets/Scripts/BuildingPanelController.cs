@@ -2015,7 +2015,7 @@ public class BuildingPanelController : MonoBehaviour
 
         placementRestoreItem = building;
         ClosePanel(true, true);
-        InputFocusStack.Push(this);
+        InputFocusStack.PushPlacement(this);
         SetSquadInputLock(true);
         return true;
     }

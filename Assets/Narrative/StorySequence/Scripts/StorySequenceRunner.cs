@@ -808,6 +808,7 @@ namespace Lit.Story
         private void PushInputFocus()
         {
             InputFocusStack.Push(this);
+            InputModeCoordinator.Enter(this, InputMode.Cinematic);
             if (inputSubscribed)
             {
                 return;

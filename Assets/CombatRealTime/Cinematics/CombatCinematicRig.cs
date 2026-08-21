@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -36,16 +35,6 @@ public sealed class CombatCinematicFramingReference
     public float cameraFieldOfView;
 }
 
-[Serializable]
-public sealed class CombatCinematicMotionEnvelopeSample
-{
-    public float timelineTime;
-    public Vector3 playerStagePosition;
-    public Quaternion playerStageRotation = Quaternion.identity;
-    public Vector3 enemyStagePosition;
-    public Quaternion enemyStageRotation = Quaternion.identity;
-}
-
 /// <summary>Immutable runtime data supplied to a pooled combat cinematic rig.</summary>
 public sealed class CombatCinematicContext
 {
@@ -78,6 +67,19 @@ public interface ICombatCinematicParticipant
 {
     bool Begin(CombatCinematicContext context);
     void End();
+}
+
+/// <summary>Optional completion hook, invoked only after a Timeline ends naturally.</summary>
+public interface ICombatCinematicCompletionParticipant
+{
+    void Complete(CombatCinematicContext context);
+}
+
+public enum CombatCinematicEndReason
+{
+    Completed,
+    Interrupted,
+    Failed
 }
 
 /// <summary>Relative authoring formation resolved directly at the live combat midpoint.</summary>
@@ -135,10 +137,6 @@ public sealed class CombatCinematicRig : MonoBehaviour
     [Tooltip("Axe local Player vers Enemy de la formation bakee.")]
     [SerializeField] private Vector3 authoringFormationForward = Vector3.forward;
     [SerializeField, HideInInspector] private int authoringStageLayoutVersion;
-    [Header("Baked Motion Envelope")]
-    [Tooltip("Trajectoires Player/Enemy echantillonnees dans AnimationLab, relatives au rig.")]
-    [SerializeField] private List<CombatCinematicMotionEnvelopeSample> motionEnvelope = new List<CombatCinematicMotionEnvelopeSample>();
-    [SerializeField, HideInInspector] private int motionEnvelopeVersion;
     [SerializeField, Tooltip("Transfere le root motion relatif de la Timeline vers le root UCC de Lucian.")]
     private bool drivePlayerRootMotionFromTimeline = true;
     [SerializeField] private bool logCameraDiagnostics = true;
@@ -166,7 +164,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     // owner of the actor roots for the duration of the cinematic.
     private bool timelineOwnsStagedActorTransforms;
     private int nextFramingReferenceIndex;
-    private Coroutine pendingTimelineStart;
+    private CombatCinematicEndReason? requestedEndReason;
 
     public PlayableDirector Director => director;
     public SignalReceiver SignalReceiver => signalReceiver;
@@ -174,8 +172,6 @@ public sealed class CombatCinematicRig : MonoBehaviour
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
     public bool HasAuthoringStageLayout => authoringStageLayoutVersion >= 3 &&
                                            playerStageAnchor != null && enemyStageAnchor != null;
-    public bool HasAuthoringMotionEnvelope => motionEnvelopeVersion >= 1 && motionEnvelope.Count > 0;
-    public int MotionEnvelopeCount => motionEnvelope.Count;
     public event Action<CombatCinematicRig> Stopped;
 
     public void ConfigureFramingReferences(IEnumerable<CombatCinematicFramingReference> references)
@@ -244,29 +240,6 @@ public sealed class CombatCinematicRig : MonoBehaviour
         authoringStageLayoutVersion = 3;
     }
 
-    public void ConfigureMotionEnvelope(IEnumerable<CombatCinematicMotionEnvelopeSample> samples)
-    {
-        motionEnvelope.Clear();
-        if (samples != null)
-        {
-            foreach (CombatCinematicMotionEnvelopeSample sample in samples)
-            {
-                if (sample == null) continue;
-                motionEnvelope.Add(new CombatCinematicMotionEnvelopeSample
-                {
-                    timelineTime = sample.timelineTime,
-                    playerStagePosition = sample.playerStagePosition,
-                    playerStageRotation = sample.playerStageRotation,
-                    enemyStagePosition = sample.enemyStagePosition,
-                    enemyStageRotation = sample.enemyStageRotation
-                });
-            }
-        }
-
-        motionEnvelope.Sort((left, right) => left.timelineTime.CompareTo(right.timelineTime));
-        motionEnvelopeVersion = motionEnvelope.Count > 0 ? 1 : 0;
-    }
-
     private void ConfigureRuntimeAnchor(ref Transform anchor, string anchorName, Vector3 localPosition, Quaternion localRotation)
     {
         if (anchor == null)
@@ -309,11 +282,6 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     public bool TryGetMidpointPlacement(CombatCinematicContext playbackContext, out CombatCinematicPlacement placement, out string error)
     {
-        return TryGetMidpointPlacement(playbackContext, 0f, out placement, out error);
-    }
-
-    public bool TryGetMidpointPlacement(CombatCinematicContext playbackContext, float yawOffsetDegrees, out CombatCinematicPlacement placement, out string error)
-    {
         placement = default;
         error = null;
         if (!HasAuthoringStageLayout)
@@ -337,7 +305,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             direction.y = 0f;
         }
 
-        Quaternion stageRotation = Quaternion.AngleAxis(yawOffsetDegrees, Vector3.up) * GetStageRotationForFacing(direction);
+        Quaternion stageRotation = GetStageRotationForFacing(direction);
         Vector3 midpoint = Vector3.Lerp(playerPosition, enemyPosition, 0.5f);
         Vector3 rigPosition = midpoint;
         Vector3 stagedPlayerPosition = rigPosition + stageRotation * playerStageAnchor.localPosition;
@@ -348,27 +316,10 @@ public sealed class CombatCinematicRig : MonoBehaviour
             rigPosition, stageRotation,
             stagedPlayerPosition, stagedPlayerRotation,
             stagedEnemyPosition, stagedEnemyRotation);
-        TracePlacement("Placement midpoint calcule | layoutVersion=" + authoringStageLayoutVersion + " | yaw=" + yawOffsetDegrees +
+        TracePlacement("Placement midpoint calcule | layoutVersion=" + authoringStageLayoutVersion +
                        " | playerLocal=" + authoringPlayerLocalPosition + " | enemyLocal=" + authoringEnemyLocalPosition +
                        " | rig=" + rigPosition + " | player=" + stagedPlayerPosition + " | enemy=" + stagedEnemyPosition + ".");
         return true;
-    }
-
-    public void GetMotionEnvelopePose(
-        int index,
-        CombatCinematicPlacement placement,
-        out Vector3 playerPosition,
-        out Quaternion playerRotation,
-        out Vector3 enemyPosition,
-        out Quaternion enemyRotation,
-        out float time)
-    {
-        CombatCinematicMotionEnvelopeSample sample = motionEnvelope[Mathf.Clamp(index, 0, motionEnvelope.Count - 1)];
-        playerPosition = placement.RigPosition + placement.RigRotation * sample.playerStagePosition;
-        playerRotation = placement.RigRotation * sample.playerStageRotation;
-        enemyPosition = placement.RigPosition + placement.RigRotation * sample.enemyStagePosition;
-        enemyRotation = placement.RigRotation * sample.enemyStageRotation;
-        time = sample.timelineTime;
     }
 
     private void Reset()
@@ -382,6 +333,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         if (director == null) director = GetComponent<PlayableDirector>();
         if (signalReceiver == null) signalReceiver = GetComponent<SignalReceiver>();
         bakedTimeline = director != null ? director.playableAsset : null;
+        NormalizeRuntimeDirector();
         MonoBehaviour[] behaviours = GetComponentsInChildren<MonoBehaviour>(true);
         for (int i = 0; i < behaviours.Length; i++)
         {
@@ -396,6 +348,9 @@ public sealed class CombatCinematicRig : MonoBehaviour
         {
             return;
         }
+
+        LitTimelineCinemachineBridge cameraBridge = GetComponent<LitTimelineCinemachineBridge>();
+        cameraBridge?.UpdateTimelineCameraNow();
 
         if (timelineOwnsStagedActorTransforms)
         {
@@ -453,6 +408,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         sessionToken++;
         sessionActive = true;
         stopRaised = false;
+        requestedEndReason = null;
         cameraMismatchReported = false;
         nextFramingReferenceIndex = 0;
         TracePlacement("TryPlay | token=" + sessionToken + " | timeline='" + timeline.name + "' | type=" + timeline.GetType().Name +
@@ -485,6 +441,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
         director.playableAsset = timeline;
         bakedTimeline ??= timeline;
+        NormalizeRuntimeDirector();
         if (!TryBindTimeline(timeline, playerAnimatorTrack, enemyAnimatorTrack, out error))
         {
             AbortStart("Binding Timeline invalide");
@@ -507,7 +464,10 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
 
-        TraceCamera("Bind Timeline -> Brain -> controle Timeline", false);
+        // The rig is the single owner of all Timeline bindings and graph setup.
+        // The bridge only hands the gameplay camera to Cinemachine.
+        director.RebuildGraph();
+        TraceCamera("Bind Timeline -> Brain -> controle Timeline -> RebuildGraph", false);
         director.time = 0d;
         CaptureActorAnimatorRestPoses();
         director.Evaluate();
@@ -526,8 +486,27 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
         skipFirstPlayerRootMotionDelta = true;
         skipFirstEnemyRootMotionDelta = true;
-        TraceCamera("Premiere Evaluate", false);
-        BeginTimelineAfterCameraPreroll(sessionToken);
+        if (!cameraBridge.UpdateTimelineCameraNow())
+        {
+            error = "La Brain Cinemachine gameplay n'a pas pu evaluer le pre-roll.";
+            AbortStart("Pre-roll Brain indisponible");
+            return false;
+        }
+
+        CinemachineCamera expectedOpeningCamera = ResolveOpeningCamera();
+        CinemachineCamera activeCamera = gameplayBrain.ActiveVirtualCamera as CinemachineCamera;
+        if (expectedOpeningCamera == null || activeCamera != expectedOpeningCamera)
+        {
+            error = "Pre-roll Cinemachine invalide : attendue='" +
+                    (expectedOpeningCamera != null ? expectedOpeningCamera.name : "None") +
+                    "', active='" + (activeCamera != null ? activeCamera.name : "None") + "'.";
+            AbortStart("Camera d'ouverture non stabilisee");
+            return false;
+        }
+
+        TracePlacement("Pre-roll Cinemachine valide | camera='" + activeCamera.name + "'.");
+        CaptureReachedFramingReferences();
+        director.Play();
         return true;
     }
 
@@ -543,26 +522,21 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     public void Stop()
     {
-        if (director != null && director.state == PlayState.Playing)
-        {
-            director.Stop();
-        }
-        else
-        {
-            CompleteStop();
-        }
+        RequestEnd(CombatCinematicEndReason.Interrupted);
     }
 
     public void ResetForPool()
     {
-        CancelPendingTimelineStart();
-        EndCameraSession("Remise en pool");
+        RequestEnd(CombatCinematicEndReason.Interrupted, false);
+        EndCameraSession("Remise en pool", CombatCinematicEndReason.Interrupted);
         ClearTimelineBindings();
         if (director != null && director.playableAsset != null)
         {
             director.Stop();
             director.time = 0d;
             director.playableAsset = bakedTimeline;
+            NormalizeRuntimeDirector();
+            director.RebuildGraph();
         }
         context = null;
         gameplayBrain = null;
@@ -1011,52 +985,16 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void OnDirectorStopped(PlayableDirector stoppedDirector)
     {
-        if (stoppedDirector == director) CompleteStop();
+        if (stoppedDirector != director || !sessionActive) return;
+
+        CombatCinematicEndReason reason = requestedEndReason ?? CombatCinematicEndReason.Completed;
+        FinalizeSession(reason, true);
     }
 
     private void OnDirectorPlayed(PlayableDirector playedDirector)
     {
         if (playedDirector != director || !sessionActive) return;
         TraceCamera("PlayableDirector.played", true, true);
-    }
-
-    private void BeginTimelineAfterCameraPreroll(int token)
-    {
-        CancelPendingTimelineStart();
-        pendingTimelineStart = StartCoroutine(StartTimelineAfterCameraPreroll(token));
-    }
-
-    private IEnumerator StartTimelineAfterCameraPreroll(int token)
-    {
-        // The first LightSkill needs one rendered frame for the Brain to consume
-        // the t=0 Cinemachine track evaluation. Starting immediately causes the
-        // opening shot to use the previous gameplay camera for one frame.
-        yield return new WaitForEndOfFrame();
-
-        if (!sessionActive || token != sessionToken || director == null)
-        {
-            pendingTimelineStart = null;
-            yield break;
-        }
-
-        CinemachineCamera openingCamera = ResolveOpeningCamera();
-        CinemachineCamera activeCamera = gameplayBrain != null
-            ? gameplayBrain.ActiveVirtualCamera as CinemachineCamera
-            : null;
-        if (openingCamera != null && activeCamera != openingCamera)
-        {
-            TracePlacement("Pre-roll Cinemachine incomplet | attendue='" + openingCamera.name +
-                           "' | active='" + (activeCamera != null ? activeCamera.name : "None") + "'.");
-        }
-        else
-        {
-            TracePlacement("Pre-roll Cinemachine pret | camera='" +
-                           (activeCamera != null ? activeCamera.name : "None") + "'.");
-        }
-
-        CaptureReachedFramingReferences();
-        director.Play();
-        pendingTimelineStart = null;
     }
 
     private CinemachineCamera ResolveOpeningCamera()
@@ -1071,40 +1009,41 @@ public sealed class CombatCinematicRig : MonoBehaviour
             : null;
     }
 
-    private void CancelPendingTimelineStart()
+    private void RequestEnd(CombatCinematicEndReason reason, bool notifyStopped = true)
     {
-        if (pendingTimelineStart == null)
+        if (!sessionActive || stopRaised) return;
+
+        requestedEndReason = reason;
+        if (director != null && director.state == PlayState.Playing)
         {
+            director.Stop();
             return;
         }
 
-        StopCoroutine(pendingTimelineStart);
-        pendingTimelineStart = null;
+        FinalizeSession(reason, notifyStopped);
     }
 
-    private void CompleteStop()
+    private void FinalizeSession(CombatCinematicEndReason reason, bool notifyStopped)
     {
         if (!sessionActive || stopRaised) return;
-        CancelPendingTimelineStart();
+
         stopRaised = true;
-        if (context != null && context.Definition is LightSkillSO lightSkill)
+        EndCameraSession("Fin Timeline: " + reason, reason);
+        if (notifyStopped)
         {
-            CombatCinematicPlacementResolver.ApplyFinalDepenetration(this, context, lightSkill.CinematicClearance);
+            Stopped?.Invoke(this);
         }
-        EndCameraSession("Fin Timeline");
-        Stopped?.Invoke(this);
     }
 
     private void AbortStart(string reason)
     {
-        CancelPendingTimelineStart();
-        EndCameraSession(reason);
+        FinalizeSession(CombatCinematicEndReason.Failed, false);
         context = null;
         gameplayBrain = null;
         gameplayLockCamera = null;
     }
 
-    private void EndCameraSession(string reason)
+    private void EndCameraSession(string reason, CombatCinematicEndReason endReason = CombatCinematicEndReason.Interrupted)
     {
         if (!sessionActive && context == null) return;
 
@@ -1113,6 +1052,10 @@ public sealed class CombatCinematicRig : MonoBehaviour
         // mistake a previous Timeline sample for hierarchy data.
         RestorePlayerAnimatorRestLocalPose();
         RestoreEnemyAnimatorRestLocalPose();
+        if (endReason == CombatCinematicEndReason.Completed)
+        {
+            CompleteParticipants();
+        }
         EndContractCinematicMotion();
         Physics.SyncTransforms();
 
@@ -1125,6 +1068,26 @@ public sealed class CombatCinematicRig : MonoBehaviour
         ResetTimelineActorTransformSampling();
         TraceCamera("Restitution camera: " + reason, false);
         sessionActive = false;
+        requestedEndReason = null;
+    }
+
+    private void CompleteParticipants()
+    {
+        for (int i = 0; i < participants.Count; i++)
+        {
+            if (participants[i] is ICombatCinematicCompletionParticipant completionParticipant)
+            {
+                completionParticipant.Complete(context);
+            }
+        }
+    }
+
+    private void NormalizeRuntimeDirector()
+    {
+        if (director == null) return;
+        director.playOnAwake = false;
+        director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
+        director.extrapolationMode = DirectorWrapMode.None;
     }
 
     private void Update()

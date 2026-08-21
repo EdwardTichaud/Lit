@@ -1,0 +1,295 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3779883059869037527
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 928999184455422515}
+  - component: {fileID: 21717361757298694}
+  - component: {fileID: 9112250133946299520}
+  - component: {fileID: 4306886721176450377}
+  m_Layer: 8
+  m_Name: Ghost_Luc
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &928999184455422515
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3779883059869037527}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -47.96859, y: -94.28796, z: 44.24}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7145762296775979735}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &21717361757298694
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3779883059869037527}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 6
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &9112250133946299520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3779883059869037527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22eb0d1a33414560a75d4a9cac28d6b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GhostController
+  ghostData: {fileID: 11400000, guid: dd17cba48ecc94848a7d7d52bcc001ed, type: 2}
+  playOnce: 1
+  unlockKnowledgeOnListen: 1
+  appearanceAnimator: {fileID: 8070680388374486664}
+  appearanceAnimationState: 
+  appearanceAnimationLayer: 0
+  appearanceAnimationCrossFade: 0.1
+  interactionCollider: {fileID: 21717361757298694}
+  interactionMaxDistance: 2.25
+  interactionPriority: 90
+  interactionText: Ecouter
+  showInteractionUi: 1
+  interactionBox: {fileID: 320819308015763433, guid: bfa88639767bbe44c82b243f221e928b, type: 3}
+  boxesPanel: {fileID: 0}
+  interactionOffset: {x: 0, y: 1.8, z: 0}
+  targetCamera: {fileID: 0}
+  feedbackDuration: 0
+  useDialoguePanelForFeedback: 1
+  alreadyUnderstoodMessage: "Ce souvenir a d\xE9j\xE0 \xE9t\xE9 compris."
+  playerOptionPrefix: 'Vous : '
+  ghostResponsePrefix: 
+  showReactionChoiceUi: 1
+  autoUseSingleAvailableReaction: 1
+  reactionChoiceParent: {fileID: 0}
+  reactionChoiceWidth: 680
+  closeChoiceText: Reculer
+  reactionChoiceInputRearmDelay: 0.2
+  dissolveEffectRules:
+  - effectId: luc_dissolve
+    requirement:
+      requiredKnowledge:
+      - {fileID: 11400000, guid: 422f055239c3a104ea7445057bc960df, type: 2}
+      anyKnowledge: []
+      requiredCategories: 
+      requiredTags: []
+      requiredCategoryCounts: []
+      requiredTagCounts: []
+    targetObjects:
+    - {fileID: 0}
+    includeChildren: 1
+    addControllerIfMissing: 1
+    triggerOnce: 1
+    durationOverride: -1
+  enableProximityDissolve: 1
+  proximityDissolveTargets: []
+  proximitySpherecastRadius: 6
+  proximitySpherecastLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  proximitySpherecastTriggerInteraction: 2
+  proximityFullyVisibleDistance: 0
+  proximityDissolveFollowSpeed: 0
+  proximityVisibleDissolveAmount: 1
+  proximityHiddenDissolveAmount: 0
+  addProximityDissolveControllerIfMissing: 1
+  drawProximitySpherecastGizmo: 1
+  proximityRevealExitHysteresis: 0.5
+  ghostAppearanceRendererDelay: 0.45
+  ghostDisappearanceRendererDelay: 1
+  enableProximityPresentation: 1
+  proximityPresentationDistance: 1.5
+  proximityFresnelTransitionDuration: 0.35
+  revealedFresnelTexturePower: 0.96
+  closeFresnelTexturePower: 1
+  proximityPresentationTargets: []
+  proximityCharacterEffects: []
+  deactivateGameObjectAfterFinalResolution: 1
+  resolvedEffectMinimumCleanupDelay: 0.15
+  resolvedEffectCleanupTimeout: 3
+  outlineVisibleDissolveThreshold: 0.5
+  outlineVisibleBelowDissolveThreshold: 1
+  requireLitInfluenceForAppearance: 0
+  reactToFlameInfluence: 1
+  useDirectLitInfluenceFallback: 1
+  onGhostDataChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onListened:
+    m_PersistentCalls:
+      m_Calls: []
+  onKnowledgeReactionUsed:
+    m_PersistentCalls:
+      m_Calls: []
+  onNoKnowledgeReactionAvailable:
+    m_PersistentCalls:
+      m_Calls: []
+  onGhostUnderstood:
+    m_PersistentCalls:
+      m_Calls: []
+  onPuzzleStepStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onPuzzleStepResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  onResolutionActionFailed:
+    m_PersistentCalls:
+      m_Calls: []
+  resolutionActionBindings: []
+--- !u!114 &4306886721176450377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3779883059869037527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c9ee0f83ce526245b1bc5f74073ad9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PacifiedMemoryReward
+  rewardAmount: 3
+  rewardType: 1
+  refillToMaximum: 0
+  consumeOnUse: 1
+  reuseCooldown: 0
+  optionalKnowledgeRequirement:
+    requiredKnowledge: []
+    anyKnowledge: []
+    requiredCategories: 
+    requiredTags: []
+    requiredCategoryCounts: []
+    requiredTagCounts: []
+  optionalInvestigationRequirement:
+    requiredKnowledge: []
+    anyKnowledge: []
+    requiredCategories: 
+    requiredTags: []
+    requiredCategoryCounts: []
+    requiredTagCounts: []
+  optionalGhostRequirement: {fileID: 9112250133946299520}
+  grantOnInteract: 0
+  grantOnTriggerEnter: 0
+  grantWhenRequirementsBecomeSatisfied: 1
+  grantWhenGhostUnderstood: 1
+  requireControlledCharacter: 1
+  interactionCollider: {fileID: 0}
+  interactionAnchor: {fileID: 928999184455422515}
+  interactionMaxDistance: 2
+  interactionPriority: 95
+  requireLitInfluenceForInteraction: 0
+  reactToFlameInfluence: 1
+  showFeedback: 1
+  feedbackTitle: 
+  feedbackDuration: 1.8
+  rewardSfx: {fileID: 0}
+  rewardVfxPrefab: {fileID: 0}
+  feedbackAnchor: {fileID: 0}
+  onRewardGranted:
+    m_PersistentCalls:
+      m_Calls: []
+  hidePresentationWhenConsumed: 0
+  presentationRoot: {fileID: 0}
+  consumed: 0
+--- !u!1001 &8397828538297450487
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 928999184455422515}
+    m_Modifications:
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4865055466029696179, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: owner
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7005787142804927576, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+      propertyPath: m_Name
+      value: Ghost_Model_Luc
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+--- !u!4 &7145762296775979735 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1702866972060765472, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+  m_PrefabInstance: {fileID: 8397828538297450487}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &8070680388374486664 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 327572561411875199, guid: 2eea5d9846669f1489d93e756d012d3a, type: 3}
+  m_PrefabInstance: {fileID: 8397828538297450487}
+  m_PrefabAsset: {fileID: 0}

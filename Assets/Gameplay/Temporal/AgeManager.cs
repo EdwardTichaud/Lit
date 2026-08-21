@@ -96,6 +96,8 @@ public class AgeManager : MonoBehaviour
             ActiveInstance = this;
         }
 
+        AgeTransitionSafetyController.EnsureFor(this);
+
         CacheShaderPropertyIds();
         RefreshAndResubscribe();
     }

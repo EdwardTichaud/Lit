@@ -30,9 +30,13 @@ groupes, le follow et les données runtime de chaque membre.
   Transform si la vitesse Rigidbody du personnage ne reflète pas le déplacement
   réel UCC.
 - `Munin_Orbe` est une variante indépendante de l'orbe de chargement. Son rendu
-  est piloté par `MuninOrbVisualController`, qui préserve les matériaux HDRP,
-  désactive la distorsion permanente et joue des états transitoires repos,
-  attention et action à partir des événements de charges de `MuninController`.
+  est piloté par `MuninOrbVisualController`, qui préserve strictement les
+  matériaux, UV et modes de rendu auteurs; il désactive la distorsion permanente,
+  plafonne la taille écran des particules à 0,06, masque en jeu les cartes
+  `Flare4_Additive`, `Flare_Ultrawide` et `FuzzAdd` dont le shader HDRP reste rectangulaire, et
+  joue des états transitoires repos, attention et action à partir des événements
+  de charges de `MuninController`. Sa taille visible est multipliée par 2,5 via
+  les modules `startSize` de particules; ne pas agrandir la racine du prefab.
   Le composant historique `MuninOrbAlphaGuard` reste désactivé afin de ne jamais
   déduire la transparence d'une couleur noire.
 - Le lien esprit/incarnation est porté par `SpiritBondController` sur le

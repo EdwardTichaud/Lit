@@ -1134,6 +1134,73 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Dialogue",
+            "id": "c140f420-66cc-4e7f-8b04-e2059c7d0171",
+            "actions": [
+                { "name": "Advance", "type": "Button", "id": "9e799e46-b078-4b70-ae80-e783f7b004c3", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Cancel", "type": "Button", "id": "94fa3a44-f74d-442d-aafd-a4c4d0c5f6bc", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Navigate", "type": "Value", "id": "5063a659-63c1-4cab-adf4-bfa60dbe1571", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true }
+            ],
+            "bindings": [
+                { "name": "", "id": "e8394bbc-fc42-4d3e-a467-ebc2ed765fba", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Advance", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "afb9d269-d52e-487f-9525-fc4b780a013c", "path": "<Gamepad>/buttonEast", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Cancel", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "ed18e6a2-0f8f-4f24-b2f2-21089aeeaa96", "path": "<Gamepad>/leftStick", "interactions": "", "processors": "stickDeadzone(min=0.5,max=1)", "groups": "Gamepad", "action": "Navigate", "isComposite": false, "isPartOfComposite": false }
+            ]
+        },
+        {
+            "name": "UI",
+            "id": "68ab8b49-2156-4887-b3cf-a04cfb74dc93",
+            "actions": [
+                { "name": "Submit", "type": "Button", "id": "4413d050-8e1d-435b-b4f1-b1ab9e3f9c13", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Cancel", "type": "Button", "id": "273c9121-ae55-409a-9dd8-83d572028820", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Navigate", "type": "Value", "id": "0d0fc945-0e1f-4f0f-b90a-c016ea409d6e", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true }
+            ],
+            "bindings": [
+                { "name": "", "id": "a7a4f434-a32b-457e-92e9-58331342b7c5", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Submit", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "710243a6-6228-423a-8041-7d1e4e0be476", "path": "<Gamepad>/buttonEast", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Cancel", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "ef597dcf-e3fe-4b47-bd54-d9b849064a2f", "path": "<Gamepad>/leftStick", "interactions": "", "processors": "stickDeadzone(min=0.5,max=1)", "groups": "Gamepad", "action": "Navigate", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "747eec0b-94dd-42d5-9902-a26b8da05d80", "path": "<Gamepad>/dpad", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Navigate", "isComposite": false, "isPartOfComposite": false }
+            ]
+        },
+        {
+            "name": "Placement",
+            "id": "284f8ea7-36cc-4a0b-9389-513218f961b8",
+            "actions": [
+                { "name": "Confirm", "type": "Button", "id": "3478a9c8-4e4c-4e93-8187-bb7605df635c", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Cancel", "type": "Button", "id": "f2ee8b26-f3a9-4fe6-b910-897762d412f9", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "MovePreview", "type": "Value", "id": "a0ce941d-3d57-4d18-aa8b-49bb52f7eecd", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true }
+            ],
+            "bindings": [
+                { "name": "", "id": "b7cef668-b01a-472f-8b48-973898494aae", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Confirm", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "87f71573-a92b-4490-9cda-34c7fcafd341", "path": "<Gamepad>/buttonEast", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Cancel", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "db44e0c5-da57-445a-9e52-487950bd0dc8", "path": "<Gamepad>/leftStick", "interactions": "", "processors": "", "groups": "Gamepad", "action": "MovePreview", "isComposite": false, "isPartOfComposite": false }
+            ]
+        },
+        {
+            "name": "CombatWheel",
+            "id": "63b8a82e-8177-4b8c-ba6b-b1d54d60bf6d",
+            "actions": [
+                { "name": "Navigate", "type": "Value", "id": "f8f7a387-cfa7-46eb-ab2b-e147218fced4", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                { "name": "Confirm", "type": "Button", "id": "5cdbe3d2-3185-4483-87e6-d4163d05b107", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Cancel", "type": "Button", "id": "c04ffcb2-3d7d-4aef-8faf-c5b857e21d14", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+            ],
+            "bindings": [
+                { "name": "", "id": "8e91b23e-85c0-476f-b4d5-8e2708a2f107", "path": "<Gamepad>/rightStick", "interactions": "", "processors": "stickDeadzone(min=0.5,max=1)", "groups": "Gamepad", "action": "Navigate", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "368b3d14-8fe8-4dd8-8f1b-9e84d5adffb8", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Confirm", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "5d35e9aa-a63d-4d59-bf7b-121718178ad2", "path": "<Gamepad>/buttonEast", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Cancel", "isComposite": false, "isPartOfComposite": false }
+            ]
+        },
+        {
+            "name": "System",
+            "id": "d0f5383a-e9ea-4bbd-a435-f1054142f654",
+            "actions": [
+                { "name": "Pause", "type": "Button", "id": "234e6d8c-f0b2-4f19-830c-3a55d4694407", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+            ],
+            "bindings": [
+                { "name": "", "id": "ac1ca8b2-6f74-49e6-8c50-4f74b5b3b2b6", "path": "<Gamepad>/start", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Pause", "isComposite": false, "isPartOfComposite": false }
+            ]
         }
     ],
     "controlSchemes": [

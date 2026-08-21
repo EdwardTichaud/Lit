@@ -296,14 +296,30 @@ public class NetworkCharacterInput : NetworkBehaviour
 
     private void ShowFlameChoice(Flame flame)
     {
-        ConfirmationManager.TryShow(
+        bool willLightFlame = !flame.IsLit;
+        int chargeCost = flame.GetChargeCostForTargetState(willLightFlame);
+        string muninAction = willLightFlame ? "allumer" : "eteindre";
+        string chargeDescription = chargeCost > 0
+            ? $"Cela consommera {chargeCost} charge{(chargeCost > 1 ? "s" : string.Empty)}."
+            : "Cette action ne consommera aucune charge.";
+        string torchAction = controller != null && controller.IsFlameEquipped
+            ? "Ranger la torche a main"
+            : "Sortir la torche a main";
+
+        ConfirmationManager.TryShow(new ConfirmationRequest(
             this,
-            "Que voulez-vous faire ?",
+            $"Une flamme est a portee. Choisissez l'action a effectuer.\n\nMUNIN\nMunin se deplacera pour {muninAction} cette flamme. {chargeDescription}\n\nTORCHE A MAIN\n{torchAction}, sans modifier cette flamme.\n\nRetour : annuler.",
             () => flame.TryStartMuninInteraction(controller != null ? controller.gameObject : gameObject),
-            () => toggleTorchRequested = true,
-            "Faire appel a Munin",
-            "Sortir la torche a main",
-            "Flamme a portee");
+            () => toggleTorchRequested = true)
+        {
+            ConfirmLabel = chargeCost > 0
+                ? $"MUNIN\n{(willLightFlame ? "Allumer" : "Eteindre")}\n{chargeCost} charge{(chargeCost > 1 ? "s" : string.Empty)}"
+                : $"MUNIN\n{(willLightFlame ? "Allumer" : "Eteindre")}",
+            CancelLabel = controller != null && controller.IsFlameEquipped ? "TORCHE\nRanger" : "TORCHE\nSortir",
+            Title = "Choisir une action",
+            DebugContext = "FlameChoice",
+            DismissOnReturn = true
+        });
     }
 
     private void HandleTriggerMuninRequest()

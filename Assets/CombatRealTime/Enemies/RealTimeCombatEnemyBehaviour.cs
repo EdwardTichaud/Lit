@@ -34,8 +34,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     [SerializeField, Min(0f)] private float directMoveSpeed = 3.6f;
     [SerializeField, Min(0f)] private float turnSpeedDegreesPerSecond = 540f;
     [Header("Physical Presence")]
-    [SerializeField, Tooltip("Ajoute un corps de collision non-trigger pour empecher Lucian de traverser ou de monter sur cet ennemi.")]
-    private bool ensurePhysicalBodyCollider = true;
+    [SerializeField, Tooltip("Option de diagnostic uniquement. Desactive par defaut : UCC gere le joueur et un collider ajoute a chaud peut bloquer son initialisation.")]
+    private bool ensurePhysicalBodyCollider;
     [SerializeField, Min(0f), Tooltip("Epaissit legerement le rayon physique derive du NavMeshAgent.")]
     private float physicalBodyRadiusPadding = 0.05f;
     [SerializeField, Tooltip("Journalise le replacement direct de l'ennemi par une LightSkill.")]

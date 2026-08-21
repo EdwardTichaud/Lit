@@ -387,6 +387,7 @@ public class PersistentKnowledgeState : MonoBehaviour, IPersistentStateProvider
         }
 
         knowledgeManager.RestoreUnlockedKnowledge(restored);
+        KnowledgeSynchronizationService.Instance?.SynchronizeRestoredKnowledge();
 
         List<string> actualIds = new List<string>();
         IReadOnlyList<KnowledgeSO> unlocked = knowledgeManager.UnlockedKnowledge;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Role: persist the resolved/understood state of a knowledge-driven ghost.
@@ -14,6 +15,10 @@ public class PersistentGhostState : MonoBehaviour, IPersistentStateProvider
     {
         public string GhostId;
         public bool Understood;
+        public int CurrentPuzzleStepIndex;
+        public bool CurrentStepQuestionPresented;
+        public List<string> CompletedPuzzleStepIds;
+        public List<string> ExecutedResolutionActionIds;
     }
 
     [SerializeField] private GhostController ghost;
@@ -42,7 +47,11 @@ public class PersistentGhostState : MonoBehaviour, IPersistentStateProvider
         return PersistentStateJson.ToBytes(new GhostStateData
         {
             GhostId = ghost.GetPersistentGhostId(),
-            Understood = ghost.IsUnderstood
+            Understood = ghost.IsUnderstood,
+            CurrentPuzzleStepIndex = ghost.GetCurrentPuzzleStepIndex(),
+            CurrentStepQuestionPresented = ghost.HasPresentedCurrentPuzzleStep(),
+            CompletedPuzzleStepIds = ghost.GetCompletedPuzzleStepIds(),
+            ExecutedResolutionActionIds = ghost.GetExecutedResolutionActionIds()
         });
     }
 
@@ -71,6 +80,11 @@ public class PersistentGhostState : MonoBehaviour, IPersistentStateProvider
         }
 
         ghost.RestoreUnderstoodState(data.Understood);
+        ghost.RestorePuzzleProgress(
+            data.CurrentPuzzleStepIndex,
+            data.CurrentStepQuestionPresented,
+            data.CompletedPuzzleStepIds,
+            data.ExecutedResolutionActionIds);
         string actualGhostId = ghost.GetPersistentGhostId();
         bool sameGhost = string.IsNullOrWhiteSpace(data.GhostId) ||
             string.IsNullOrWhiteSpace(actualGhostId) ||
