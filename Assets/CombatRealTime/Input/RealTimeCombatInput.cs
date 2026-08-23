@@ -96,12 +96,29 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void ResolveActions()
     {
-        if (actionMap != null)
+        InputActionMap sharedMap = LocalPlayerInput.FindSharedActionMap(actionMapName);
+        if (ReferenceEquals(actionMap, sharedMap))
         {
             return;
         }
 
-        actionMap = LocalPlayerInput.FindSharedActionMap(actionMapName);
+        // LocalPlayerInput est persistant mais son PlayerInputs runtime peut
+        // etre recree lors d'une transition. Ne jamais garder les callbacks
+        // sur l'ancienne instance de map : elle ne sera plus activee par le
+        // coordinateur et rendrait toutes les actions combat inertes.
+        Unsubscribe();
+        actionMap = sharedMap;
+        counterAction = null;
+        dodgeAction = null;
+        basicAttackAction = null;
+        jumpAction = null;
+        paletteAction = null;
+        paletteNavigateAction = null;
+        paletteConfirmAction = null;
+        switchEnemyLockAction = null;
+        lightSkillAction = null;
+        companionFusionAction = null;
+
         if (actionMap == null)
         {
             Debug.LogWarning("[RealTimeCombatInput] ActionMap '" + actionMapName + "' introuvable.", this);

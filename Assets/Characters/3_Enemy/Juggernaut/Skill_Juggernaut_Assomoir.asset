@@ -41,6 +41,12 @@ MonoBehaviour:
     delivery: 2
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0
+  - displayName: Slash
+    prefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}
+    audioClip: {fileID: 0}
+    delivery: 2
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0
   impactFeedback:
     enabled: 1
     useHitStop: 1

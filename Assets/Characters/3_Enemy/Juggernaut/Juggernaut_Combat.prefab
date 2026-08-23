@@ -302,7 +302,7 @@ MonoBehaviour:
   minimumGroundNormal: 0.45
   groundMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 8
   logStateChanges: 0
   logPoseAudit: 1
   poseJumpDiagnosticDistance: 0.5
