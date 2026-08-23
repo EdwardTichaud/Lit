@@ -423,50 +423,10 @@ public class CameraController : MonoBehaviour
 
     private bool TryApplyCombatCamera(float deltaTime)
     {
-        if (!combatCameraEnabled)
-        {
-            ResetCombatCameraRuntimeIfNeeded();
-            return false;
-        }
-
-        CombatSessionManager combatManager = CombatSessionManager.Instance;
-        if (combatManager == null ||
-            !combatManager.TryGetLocalCombatCameraContext(out Transform player, out Transform enemy, out bool playerTurn))
-        {
-            ResetCombatCameraRuntimeIfNeeded();
-            return false;
-        }
-
-        if (LocalInputRouter.CameraFreeModeActive)
-        {
-            LocalInputRouter.SetCameraFreeModeActive(false, suppressImmediateCharacterMove: false);
-        }
-
-        cameraFocus.SetFreeCameraMode(false);
-        followOverrideTarget = enemy;
-        mainCamCurrentTarget = enemy;
-        runSpeedEffect?.ResetEffect(mainCam);
-
-        Vector3 desiredPosition = ResolveCombatCameraPosition(player, enemy, playerTurn);
-        Vector3 lookTarget = ResolveCombatLookTarget(enemy);
-        Quaternion desiredRotation = Quaternion.LookRotation((lookTarget - desiredPosition).normalized, Vector3.up);
-
-        if (!combatCameraRuntimeInitialized)
-        {
-            currentCombatCameraPosition = desiredPosition;
-            currentCombatCameraRotation = desiredRotation;
-            combatCameraRuntimeInitialized = true;
-        }
-        else
-        {
-            float combatT = combatCameraSharpness <= 0f ? 1f : 1f - Mathf.Exp(-combatCameraSharpness * deltaTime);
-            currentCombatCameraPosition = Vector3.Lerp(currentCombatCameraPosition, desiredPosition, combatT);
-            currentCombatCameraRotation = Quaternion.Slerp(currentCombatCameraRotation, desiredRotation, combatT);
-        }
-
-        ApplyDirectCameraPose(currentCombatCameraPosition, currentCombatCameraRotation);
-        combatCameraWasActive = true;
-        return true;
+        // The turn-based combat camera was removed. This legacy controller now
+        // always yields to the active UCC or real-time combat camera owner.
+        ResetCombatCameraRuntimeIfNeeded();
+        return false;
     }
 
     private bool TryApplyFixedCamera(float deltaTime)

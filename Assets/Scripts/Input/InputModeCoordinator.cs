@@ -170,6 +170,15 @@ public sealed class InputModeCoordinator : MonoBehaviour
         LocalInputRouter.ResetCamera();
         lastTransition = transition;
         ModeChanged?.Invoke(mode);
+
+        // A disabled ActionMap does not emit a new callback for a stick or
+        // shoulder button that stays held when it comes back. Re-read those
+        // controls on the next frame so a cinematic/UI handoff cannot leave
+        // locomotion permanently at zero.
+        if (mode == InputMode.Exploration || mode == InputMode.Combat)
+        {
+            LocalPlayerInput.RequestHeldLocomotionReconciliation("InputMode " + mode);
+        }
     }
 
     private static IEnumerable<string> GetMaps(InputMode mode)

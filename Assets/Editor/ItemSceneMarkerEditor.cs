@@ -590,18 +590,6 @@ public class ItemSceneMarkerEditor : Editor
             EditorUtility.SetDirty(health);
         }
 
-        CombatAggroEnemy aggro = CopyComponentToRoot(FindComponentOnRootOrChildren<CombatAggroEnemy>(modelRoot), modelRoot);
-        if (aggro == null)
-        {
-            aggro = EnsureComponent<CombatAggroEnemy>(modelRoot);
-        }
-
-        if (aggro != null)
-        {
-            Undo.RecordObject(aggro, UndoLabel);
-            aggro.SetEnemy(enemy);
-            EditorUtility.SetDirty(aggro);
-        }
     }
 
     private static void ConfigureGhost(GameObject modelRoot, GhostData ghost)

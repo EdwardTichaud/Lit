@@ -26,7 +26,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     [Header("Guard Feedback")]
     [SerializeField] private string guardAnimatorState = "Base Layer.RealTimeCombat_RootMotion.Guard_Block";
     [SerializeField] private string guardFallbackAnimatorState = "Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root";
-    [SerializeField] private string guardReleaseAnimatorState = "Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root";
+    [SerializeField] private string guardReleaseAnimatorState = "Base Layer.Locomotion";
     [SerializeField, Range(0f, 0.25f)] private float guardAnimationBlendSeconds = 0.08f;
     [SerializeField] private GameObject guardStartVfx;
     [SerializeField] private AudioClipSO guardStartAudio;
@@ -71,6 +71,16 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (!usingPooledRig && cinematicPlaying && director != null && director.duration > 0d)
         {
             cameraRig?.SetTimelineNormalizedTime((float)(director.time / director.duration));
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // Guard is a committed facing state: camera/look-source updates must
+        // not let Lucian rotate away from the manually locked enemy.
+        if (guardHeld && !cinematicPlaying)
+        {
+            combatManager?.FacePlayerTowardsLockedEnemy();
         }
     }
 
@@ -122,6 +132,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (guardHeld && !selectionOpen && !cinematicPlaying)
         {
             StopGuardAnimation();
+            LocalPlayerInput.RequestHeldLocomotionReconciliation("Guard released");
         }
 
         guardHeld = false;

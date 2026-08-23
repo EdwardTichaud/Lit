@@ -89,6 +89,9 @@ public partial class LitOpsiveLocomotionBridge
     private bool wasGroundedMoveIntentForAge;
     private float groundedPresentationSpeed;
     private float groundedPresentationTurn;
+    private bool groundedMoveStartTierOverrideActive;
+    private float groundedMoveStartTierOverride;
+    private float groundedMoveStartTierOverrideExpiresAt;
     private bool groundedPivotActive;
     private float groundedPivotHoldTimer;
     private float groundedPivotDuration;
@@ -338,7 +341,7 @@ public partial class LitOpsiveLocomotionBridge
         SetAnimatorFloat(speedParam, groundedPresentationSpeed);
         SetGroundedDirectionalAnimatorParameters(groundedPresentationSpeed, velocity);
         SetAnimatorBool(isMovingParam, shouldAnimateMoving);
-        SetAnimatorFloat(locomotionTierParam, ResolveLocomotionTier(groundedPresentationSpeed));
+        SetAnimatorFloat(locomotionTierParam, ResolveGroundedLocomotionTier());
         SetAnimatorFloat(turnParam, groundedPresentationTurn);
         SetAnimatorBool(turnInPlaceParam, ShouldGroundedTurnInPlace(speed, targetTurn));
         UpdateGroundedMoveTriggers(speed, velocity);
@@ -649,6 +652,8 @@ public partial class LitOpsiveLocomotionBridge
         {
             LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
             ResetAnimatorTrigger(moveStopTriggerParam);
+            ArmGroundedMoveStartTierOverride();
+            SetAnimatorFloat(locomotionTierParam, groundedMoveStartTierOverride);
             SetAnimatorTrigger(moveStartTriggerParam);
         }
         else if (!groundedMoveIntent &&
@@ -662,6 +667,34 @@ public partial class LitOpsiveLocomotionBridge
         }
 
         previousGroundedMoveIntent = groundedMoveIntent;
+    }
+
+    private void ArmGroundedMoveStartTierOverride()
+    {
+        groundedMoveStartTierOverride = sprintPressed
+            ? runPresentationSpeed
+            : ResolveLocomotionTier(groundedPresentationSpeed);
+        groundedMoveStartTierOverrideActive = true;
+        groundedMoveStartTierOverrideExpiresAt = Time.unscaledTime + 0.35f;
+    }
+
+    private float ResolveGroundedLocomotionTier()
+    {
+        if (!groundedMoveStartTierOverrideActive)
+        {
+            return ResolveLocomotionTier(groundedPresentationSpeed);
+        }
+
+        // Keep the tier stable until Animator consumes MoveStartTrigger. Without
+        // this hold, the smoothed presentation speed rewrites it to walk before
+        // the state machine can select Run_Start.
+        float selectedTier = groundedMoveStartTierOverride;
+        if (IsGroundedStartStateActive() || Time.unscaledTime >= groundedMoveStartTierOverrideExpiresAt)
+        {
+            groundedMoveStartTierOverrideActive = false;
+        }
+
+        return selectedTier;
     }
 
     private bool IsGroundedStartStateActive()
@@ -783,6 +816,7 @@ public partial class LitOpsiveLocomotionBridge
         ResetGroundedMoveIntentAge();
         groundedPresentationSpeed = 0f;
         groundedPresentationTurn = 0f;
+        ResetGroundedMoveStartTierOverride();
         ResetGroundedPivotTurn();
         ResetGroundedMoveTransitionDirection();
     }
@@ -793,6 +827,7 @@ public partial class LitOpsiveLocomotionBridge
         smoothedGroundedWorldMoveInput = Vector2.zero;
         groundedMoveIntent = false;
         previousGroundedMoveIntent = false;
+        ResetGroundedMoveStartTierOverride();
         ResetGroundedMoveIntentAge();
         ResetGroundedPivotTurn();
         ResetGroundedMoveTransitionDirection();
@@ -819,6 +854,13 @@ public partial class LitOpsiveLocomotionBridge
     {
         groundedMoveTransitionLocalDirection = Vector2.zero;
         groundedMoveTransitionDirectionTimer = 0f;
+    }
+
+    private void ResetGroundedMoveStartTierOverride()
+    {
+        groundedMoveStartTierOverrideActive = false;
+        groundedMoveStartTierOverride = 0f;
+        groundedMoveStartTierOverrideExpiresAt = 0f;
     }
 
     private float ResolveGroundedFeelDeltaTime()

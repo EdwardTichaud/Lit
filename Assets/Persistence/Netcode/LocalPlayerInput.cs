@@ -7,10 +7,14 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     public static LocalPlayerInput Instance { get; private set; }
 
     [SerializeField] private bool dontDestroyOnLoad = true;
+    [SerializeField, Tooltip("Logs the single reconciliation performed after an ActionMap or cinematic handoff.")]
+    private bool logLocomotionReconciliationDiagnostics;
 
     private PlayerInputs playerInputs;
     private bool combatInputActive;
     private bool inputMapsConfigured;
+    private Coroutine locomotionReconciliationRoutine;
+    private int locomotionReconciliationToken;
 
     public static void EnsureInstance()
     {
@@ -72,6 +76,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         playerInputs.Camera.SetCallbacks(this);
         playerInputs.Combat.SetCallbacks(this);
         MainMenuInputSettings.ModeChanged += OnInputModeChanged;
+        InputModeCoordinator.ModeChanged += OnCoordinatorModeChanged;
         InputModeCoordinator.Configure(playerInputs.asset);
         ApplyCombatInputActive(false);
     }
@@ -111,6 +116,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
 
         MainMenuInputSettings.ModeChanged -= OnInputModeChanged;
+        InputModeCoordinator.ModeChanged -= OnCoordinatorModeChanged;
 
         LocalInputRouter.ResetMove();
         LocalInputRouter.ResetCamera();
@@ -211,7 +217,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     public void OnInventory(InputAction.CallbackContext context)
     {
-        if (combatInputActive || CombatHudController.HasCombatInputFocus || CombatDefensePanelController.IsVisible || IsLocalCombatActive())
+        if (combatInputActive || IsLocalCombatActive())
         {
             return;
         }
@@ -399,16 +405,129 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         }
     }
 
-    private void ApplyCombatInputActive(bool active)
+    /// <summary>
+    /// Re-reads held locomotion controls after a map handoff or action exit.
+    /// Input System does not necessarily emit a performed callback for a
+    /// control that was already held while its map was disabled.
+    /// </summary>
+    public static void RequestHeldLocomotionReconciliation(string reason = null)
     {
-        if (playerInputs == null || (inputMapsConfigured && combatInputActive == active))
+        if (!Application.isPlaying)
         {
             return;
         }
 
+        EnsureInstance();
+        Instance?.ScheduleHeldLocomotionReconciliation(reason);
+    }
+
+    private void ApplyCombatInputActive(bool active)
+    {
+        if (playerInputs == null)
+        {
+            return;
+        }
+
+        // InputModeCoordinator may have been reset by a scene/UI transition
+        // while this persistent input host still remembers the previous combat
+        // flag. Always re-apply the requested base profile so RealTimeCombat
+        // cannot remain disabled after a valid manual lock.
         inputMapsConfigured = true;
         combatInputActive = active;
         InputModeCoordinator.SetBaseMode(active ? InputMode.Combat : InputMode.Exploration);
+    }
+
+    private void OnCoordinatorModeChanged(InputMode mode)
+    {
+        if (logLocomotionReconciliationDiagnostics)
+        {
+            Debug.Log("[Locomotion Handoff] Input mode changed | mode=" + mode + ".", this);
+        }
+
+        if (mode == InputMode.Exploration || mode == InputMode.Combat)
+        {
+            ScheduleHeldLocomotionReconciliation("ModeChanged " + mode);
+        }
+        else
+        {
+            CancelHeldLocomotionReconciliation();
+        }
+    }
+
+    private void ScheduleHeldLocomotionReconciliation(string reason)
+    {
+        locomotionReconciliationToken++;
+        if (locomotionReconciliationRoutine != null)
+        {
+            StopCoroutine(locomotionReconciliationRoutine);
+        }
+
+        locomotionReconciliationRoutine = StartCoroutine(ReconcileHeldLocomotionAfterHandoff(
+            locomotionReconciliationToken,
+            string.IsNullOrWhiteSpace(reason) ? "unspecified" : reason));
+    }
+
+    private void CancelHeldLocomotionReconciliation()
+    {
+        locomotionReconciliationToken++;
+        if (locomotionReconciliationRoutine != null)
+        {
+            StopCoroutine(locomotionReconciliationRoutine);
+            locomotionReconciliationRoutine = null;
+        }
+    }
+
+    private System.Collections.IEnumerator ReconcileHeldLocomotionAfterHandoff(int token, string reason)
+    {
+        // Let Input System enable the destination map and let UCC release any
+        // external lock before sampling the controls again.
+        yield return null;
+
+        while (token == locomotionReconciliationToken)
+        {
+            InputMode mode = InputModeCoordinator.CurrentMode;
+            if (mode != InputMode.Exploration && mode != InputMode.Combat)
+            {
+                yield break;
+            }
+
+            if (InputFocusStack.HasAnyFocus())
+            {
+                yield return null;
+                continue;
+            }
+
+            InputAction moveAction = playerInputs != null
+                ? playerInputs.asset.FindAction("Player/Move", false)
+                : null;
+            InputAction sprintAction = playerInputs != null
+                ? playerInputs.asset.FindAction("Player/RightShoulder", false)
+                : null;
+            if (moveAction == null || !moveAction.enabled)
+            {
+                yield return null;
+                continue;
+            }
+
+            Vector2 move = moveAction.ReadValue<Vector2>();
+            bool sprint = sprintAction != null && sprintAction.enabled && sprintAction.ReadValue<float>() > 0.5f;
+            LocalInputRouter.SetRightShoulderPressed(sprint);
+            LocalInputRouter.SetMoveValue(move);
+
+            if (SquadManager.Instance != null && SquadManager.Instance.ReapplyHeldLocomotionIntent())
+            {
+                if (logLocomotionReconciliationDiagnostics)
+                {
+                    Debug.Log("[Locomotion Handoff] Reconciled | reason=" + reason +
+                              " | mode=" + mode + " | move=" + move + " | sprint=" + sprint + ".", this);
+                }
+
+                locomotionReconciliationRoutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
     }
 
     private static float ReadFlightVerticalInput()
@@ -434,7 +553,7 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
 
     private static bool IsLocalCombatActive()
     {
-        CombatSessionManager manager = CombatSessionManager.Instance;
-        return manager != null && manager.IsLocalCombatActive();
+        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+        return manager != null && manager.IsCombatActive;
     }
 }

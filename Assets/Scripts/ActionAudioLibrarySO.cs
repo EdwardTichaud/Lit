@@ -176,15 +176,14 @@ public class ActionAudioLibrarySO : ScriptableObject
     public AudioClipSO combatAttack;
     /// <summary>Clip for combat hits.</summary>
     public AudioClipSO combatHit;
-    /// <summary>Clip for combat turn transitions.</summary>
+    /// <summary>Legacy clip retained until the one-shot combat migration removes its callers.</summary>
     public AudioClipSO combatTurn;
     /// <summary>Clip for combat victory.</summary>
     public AudioClipSO combatVictory;
     /// <summary>Clip for combat defeat.</summary>
     public AudioClipSO combatDefeat;
-    /// <summary>Clip for entering combat slow motion.</summary>
+    /// <summary>Legacy clips retained until the one-shot combat migration removes their callers.</summary>
     public AudioClipSO combatTimeSlow;
-    /// <summary>Clip for returning to normal combat time.</summary>
     public AudioClipSO combatTimeResume;
 
     [Header("Puzzles")]

@@ -817,6 +817,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         playerController?.EndUccExternalLock();
     }
 
+    /// <summary>Restores Lucian's authored locomotion state after a cinematic Timeline releases UCC.</summary>
+    public void ResumePlayerLocomotionAfterCinematic(bool movementHeld, bool sprintHeld)
+    {
+        playerActionPresentation?.ResumeLocomotionFromCinematic(movementHeld, sprintHeld);
+    }
+
     public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
     {
         if (!combatActive || skill == null ||
@@ -1161,14 +1167,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         float deathDuration = ResolvePlayerDeathAnimationDuration();
         yield return new WaitForSecondsRealtime(deathDuration + defeatPanelExtraDelaySeconds);
 
-        CombatHudController hud = CombatHudController.Instance;
-        if (hud != null)
+        if (RealTimeCombatSceneUiController.Instance != null)
         {
-            hud.ShowRealTimeCombatDefeat(ReviveAtLastCheckpoint, QuitGame);
+            RealTimeCombatSceneUiController.Instance.ShowDefeat();
         }
         else
         {
-            Debug.LogWarning("[RealTimeCombat] DefeatPanel non affiche : CombatHudController introuvable.", this);
+            Debug.LogWarning("[RealTimeCombat] DefeatPanel non affiche : RealTimeCombatSceneUiController introuvable.", this);
         }
 
         playerDefeatRoutine = null;
@@ -1216,7 +1221,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         return Mathf.Max(playerDeathFallbackDuration, state.length / Mathf.Max(0.01f, state.speed));
     }
 
-    private void ReviveAtLastCheckpoint()
+    public void ReviveFromDefeat()
     {
         playerActionPresentation?.ClearDeathAnimationLock();
         string targetSceneName = SaveSessionManager.Instance != null
@@ -1231,7 +1236,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         LoadingScreenService.LoadScene(targetSceneName, "Retour au dernier checkpoint...", LoadSceneMode.Single);
     }
 
-    private static void QuitGame()
+    public static void QuitFromDefeat()
     {
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;

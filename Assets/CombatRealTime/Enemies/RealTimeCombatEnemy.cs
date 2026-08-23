@@ -318,6 +318,8 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             StopCoroutine(hitRecoveryRoutine);
         }
 
+        physicsMotor?.AuditPose("Hit:avant CrossFade");
+
         if (!restoreRootMotionAfterHit)
         {
             restoreRootMotionAfterHit = animator.applyRootMotion;
@@ -325,6 +327,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         animator.CrossFade(hitAnimatorState, hitAnimationTransitionSeconds, 0);
+        physicsMotor?.AuditPose("Hit:apres CrossFade");
         hitRecoveryRoutine = StartCoroutine(RecoverFromHit());
     }
 
@@ -417,6 +420,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
         yield return null;
         RestoreRootMotionAfterHit();
+        physicsMotor?.AuditPose("Hit:fin");
         hitRecoveryRoutine = null;
     }
 

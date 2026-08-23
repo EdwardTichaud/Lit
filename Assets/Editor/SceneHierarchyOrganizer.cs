@@ -42,8 +42,7 @@ public static class SceneHierarchyOrganizer
         "ItemPassiveEffectSystem",
         "NetcodeBootstrap",
         "NetcodeLobbyUI",
-        "LocalPlayerInput",
-        "CombatHudController"
+        "LocalPlayerInput"
     };
 
     private sealed class RoomBucket

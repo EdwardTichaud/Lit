@@ -64,6 +64,7 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         }
 
         cameraController.SetViewType(typeof(CombatLockAdventureViewType), false);
+        combatLockView.ResetFollowSmoothing();
         LogTransition("entered CombatLock");
     }
 

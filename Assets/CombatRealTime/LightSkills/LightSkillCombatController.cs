@@ -9,6 +9,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
     [SerializeField] private LightSkillSO lightSkill;
     [SerializeField, Tooltip("Journalise chaque etape du lancement et de l'arret d'une LightSkill.")]
     private bool logLightSkillDiagnostics = true;
+    [SerializeField, Min(0.25f), Tooltip("Delai de securite ajoute a la duree de la Timeline avant de restituer le controle si son rappel de fin n'arrive pas.")]
+    private float cinematicCompletionGraceSeconds = 1.5f;
 
     private float charge;
     private bool cinematicPlaying;
@@ -18,6 +20,9 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private SpiritBondController activeLightSkillBond;
     private bool usingPooledRig;
     private float chargeBeforeCinematic;
+    private Coroutine cinematicCompletionWatchdog;
+    private Coroutine locomotionHandoffRoutine;
+    private int cinematicSessionToken;
 
     public event System.Action StateChanged;
 
@@ -49,7 +54,20 @@ public sealed class LightSkillCombatController : MonoBehaviour
     private void OnDisable()
     {
         Unbind();
+        if (locomotionHandoffRoutine != null)
+        {
+            StopCoroutine(locomotionHandoffRoutine);
+            locomotionHandoffRoutine = null;
+        }
         StopCinematic(resolveImpact: false);
+        if (cinematicPlaying)
+        {
+            // A disabled Director may not emit its stopped callback. Do not
+            // leave this controller holding a stale cinematic session.
+            usingPooledRig = false;
+            StopCinematic(resolveImpact: false);
+        }
+        RestorePlayerControl("LightSkill component disabled");
     }
 
     public bool TryUseLightSkill()
@@ -127,6 +145,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         usingPooledRig = true;
+        StartCinematicCompletionWatchdog();
         Trace("Rig demarre | runtime=" + (cinematicPlayback.ActiveRig != null ? cinematicPlayback.ActiveRig.name : "None") + ".");
         NotifyStateChanged();
         return true;
@@ -195,11 +214,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         }
 
         cinematicPlaying = false;
-        if (playerLockHeld)
-        {
-            combatManager?.UnlockPlayerAfterCinematic();
-            playerLockHeld = false;
-        }
+        StopCinematicCompletionWatchdog();
 
         activeLightSkillBond?.EndLightSkillFusion();
         activeLightSkillBond = null;
@@ -208,11 +223,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
             combatManager.ResolveDeferredCombatOutcome();
         }
 
-        InputModeCoordinator.Exit(this);
-        if (combatManager != null && combatManager.IsCombatActive)
-        {
-            combatInput?.SetInputActive(true);
-        }
+        RestorePlayerControl("LightSkill cinematic completed");
 
         finishingCinematic = false;
         usingPooledRig = false;
@@ -276,12 +287,109 @@ public sealed class LightSkillCombatController : MonoBehaviour
             playerLockHeld = false;
         }
 
-        InputModeCoordinator.Exit(this);
-        combatInput?.SetInputActive(true);
+        StopCinematicCompletionWatchdog();
+        RestorePlayerControl("LightSkill cinematic failed");
         activeLightSkillBond?.EndLightSkillFusion();
         activeLightSkillBond = null;
         usingPooledRig = false;
         return Reject(reason);
+    }
+
+    private void StartCinematicCompletionWatchdog()
+    {
+        StopCinematicCompletionWatchdog();
+        cinematicSessionToken++;
+        float timelineDuration = lightSkill != null && lightSkill.Timeline != null
+            ? (float)lightSkill.Timeline.duration
+            : 0f;
+        float timeout = Mathf.Max(1f, timelineDuration) + cinematicCompletionGraceSeconds;
+        cinematicCompletionWatchdog = StartCoroutine(WatchCinematicCompletion(cinematicSessionToken, timeout));
+    }
+
+    private void StopCinematicCompletionWatchdog()
+    {
+        cinematicSessionToken++;
+        if (cinematicCompletionWatchdog != null)
+        {
+            StopCoroutine(cinematicCompletionWatchdog);
+            cinematicCompletionWatchdog = null;
+        }
+    }
+
+    private System.Collections.IEnumerator WatchCinematicCompletion(int sessionToken, float timeout)
+    {
+        yield return new WaitForSecondsRealtime(timeout);
+        if (sessionToken != cinematicSessionToken || !cinematicPlaying)
+        {
+            yield break;
+        }
+
+        cinematicCompletionWatchdog = null;
+        Trace("Fin de Timeline non recue apres " + timeout.ToString("F2") + "s : restitution de secours.");
+        cinematicPlayback?.StopActive();
+        yield return null;
+
+        if (sessionToken == cinematicSessionToken && cinematicPlaying)
+        {
+            // StopActive normally invokes the completion callback. If a broken
+            // Timeline did not, bypass the pooled-rig wait and close the lease.
+            usingPooledRig = false;
+            StopCinematic(resolveImpact: lightSkill != null && lightSkill.ResolveDamageWhenTimelineStops);
+        }
+    }
+
+    private void RestorePlayerControl(string reason)
+    {
+        if (playerLockHeld)
+        {
+            combatManager?.UnlockPlayerAfterCinematic();
+            playerLockHeld = false;
+        }
+
+        InputModeCoordinator.Exit(this);
+        bool combatStillActive = combatManager != null && combatManager.IsCombatActive;
+        combatInput?.SetInputActive(combatStillActive);
+        LocalPlayerInput.RequestHeldLocomotionReconciliation(reason);
+        ScheduleLocomotionHandoff(reason);
+    }
+
+    private void ScheduleLocomotionHandoff(string reason)
+    {
+        if (!isActiveAndEnabled)
+        {
+            return;
+        }
+
+        if (locomotionHandoffRoutine != null)
+        {
+            StopCoroutine(locomotionHandoffRoutine);
+        }
+
+        locomotionHandoffRoutine = StartCoroutine(CompleteLocomotionHandoff(reason));
+    }
+
+    private System.Collections.IEnumerator CompleteLocomotionHandoff(string reason)
+    {
+        // Input maps and the UCC external lock both settle on the following frame.
+        // Retry briefly so held controls are restored before choosing the state.
+        for (int frame = 0; frame < 4; frame++)
+        {
+            yield return null;
+            SquadManager.Instance?.ReapplyHeldLocomotionIntent();
+            bool hasMovementInput = LocalInputRouter.MoveValue.sqrMagnitude > 0.0001f;
+            // The first sampled frame can still be the zero imposed by UCC's
+            // lock. Keep one extra frame for LocalPlayerInput to read controls.
+            if (hasMovementInput || frame >= 1)
+            {
+                break;
+            }
+        }
+
+        bool movementHeld = LocalInputRouter.MoveValue.sqrMagnitude > 0.0001f;
+        bool sprintHeld = movementHeld && LocalInputRouter.RightShoulderPressed;
+        combatManager?.ResumePlayerLocomotionAfterCinematic(movementHeld, sprintHeld);
+        Trace("Handoff locomotion | reason=" + reason + " | move=" + movementHeld + " | sprint=" + sprintHeld + ".");
+        locomotionHandoffRoutine = null;
     }
 
     private bool Reject(string reason)

@@ -4,7 +4,7 @@ using UnityEngine;
 // Role: ScriptableObject de donnees pour personnages joueurs et ennemis.
 // Usage: reference par les prefabs de personnages, la squad, le combat, les voice lines et l'inventaire de depart.
 // Responsibilities: stocker identite, apparence, stats, competences et inventaire de depart.
-// Dependencies: Item, StatsSO, CharacterStats, CombatEnemyDefinition, VoiceLineData.
+// Dependencies: Item, StatsSO, CharacterStats, VoiceLineData.
 // Precautions: plusieurs champs publics sont serialises dans des assets; ne pas les renommer sans migration Unity.
 /// <summary>
 /// Donnees centrales d'un personnage jouable ou ennemi.

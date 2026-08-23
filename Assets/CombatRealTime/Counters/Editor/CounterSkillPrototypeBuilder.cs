@@ -20,7 +20,7 @@ public static class CounterSkillPrototypeBuilder
     private const string SouthButtonPath = "Assets/UI/Inputs/XBox GamePad SouthButton.png";
     private const string AssomoirPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Assomoir.anim";
     private const string AssomoirSkillPath = "Assets/Characters/3_Enemy/Juggernaut/Skill_Juggernaut_Assomoir.asset";
-    private const string AttackAlertPath = "Assets/Combat/Prefabs/AttackLightAlert.prefab";
+    private const string AttackAlertPath = "Assets/CombatRealTime/Presentation/AttackLightAlert.prefab";
     private const string EastButtonPath = "Assets/UI/Inputs/XBox GamePad EastButton.png";
     private const string NorthButtonPath = "Assets/UI/Inputs/XBox GamePad NorthButton.png";
     private const string ThreatAudioPath = "Assets/Audio/AudioClips/AudioClip_SFX_LightCharge.asset";

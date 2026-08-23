@@ -2,14 +2,23 @@
 
 ## Rôle
 
-Gérer les combats tour par tour en solo et Netcode, leur présentation et leur
-résolution dans le monde.
+Gérer le combat temps réel continu dans le monde, sa présentation, ses réactions
+et sa résolution. Le combat tour par tour actif a été retiré; seul l'import
+`Assets/Legacy/BattleManager_SymphonieImport` reste archivé et hors gameplay.
 
 ## Combat temps réel (prototype isolé)
 
-`Assets/CombatRealTime/` est le systeme actif dans `GameplaySessionRoot` et sur
-`Juggernaut_Combat`. Le combat tour par tour reste archive dans ses assets mais
-ne possede plus de composant actif ni de creation runtime.
+`Assets/CombatRealTime/` est le seul système combat actif dans
+`GameplaySessionRoot` et sur les ennemis temps réel. `CombatHealth`, la
+bibliothèque audio et les feedbacks de dégâts restent partagés car ils sont
+utilisés par ce système.
+`RealTimeCombatSceneUiController`, sur `UI_Overlay` de `Bootstrap` et `Arena`,
+pilote exclusivement les panels déjà écrits dans la scène et se lie au
+`RealTimeCombatManager` existant de `GameplaySessionRoot` :
+`CombatEngagedPanel` joue son intro, puis `CombatScreenInfosPanel` affiche la
+cible, les PV, la Clarté, le rang et le journal. `VictoryPanel` et `DefeatPanel`
+restent les écrans de résultat. `CombatDefensePanel` n'existe plus : garde,
+télégraphie et `CounterSkillWheel` couvrent cette interaction.
 `RealTimeCombatManager` possède le verrouillage, les dégâts de lumière, la
 Clarté et les fenêtres de réaction. `RealTimeCombatEnemy` stocke le plus grand
 dégât de lumière reçu jusqu'à sa prochaine attaque et le verrouille au démarrage
@@ -127,7 +136,9 @@ d'auteur; un prefab bake avec une version plus ancienne est refuse et doit etre
 regenere depuis `AnimationLab`.
 `CombatActorAnimationRoot` est la source explicite de l'Animator de combat:
 `ActorRoot` reste le seul transform monde, tandis que l'Animator est declare
-avec son `AnimationRoot`. `CombatActorRootMotionRelay` transfere uniquement le
+avec son `AnimationRoot`. Ce dernier est maintenu a sa pose locale identite,
+y compris pendant `Hit`, afin qu'un clip importe ne puisse pas deplacer le mesh
+hors de son root gameplay. `CombatActorRootMotionRelay` transfere uniquement le
 root motion cinematographique au root gameplay. Le menu `Lit/Combat/Normalize
 Actor Animation Hierarchies` normalise Juggernaut et GiantJuggernaut sans
 modifier leurs skeletons importes; `Validate Actor Animation Contract` permet
@@ -170,6 +181,11 @@ apres interruption ou mort; une state `Death` conserve toujours sa priorite.
 state joue `EnterTheBattle_1` en attente d'un clip de releve dedie.
 `ResolveLightSkillImpact` reste la seule resolution lorsque le fallback est
 desactive. `LightSkill_Devastation` est la base active; Furie a ete supprime.
+La fin d'une LightSkill restitue le verrou UCC, le mode `Combat` et
+`RealTimeCombatInput` avant de demander une relecture des controles maintenus.
+Le stick et la course tenus pendant la Timeline sont donc reappliques par le
+flux UCC normal au premier frame jouable; aucune roulade n'est necessaire pour
+repartir.
 `CombatAttackDefinition`, `SkillSO`, `EnemySkills` et
 `RealTimeCombatLoadout` portent les données auteur, avec exactement huit slots
 d'attaque. `CombatLockOnCameraController` est le seul pilote de caméra lorsque
@@ -368,8 +384,14 @@ decale du sol si son Animator ne contient pas de transition de sortie.
 reel. Chaque prefab ennemi porte un `Rigidbody` cinematique et une
 `CapsuleCollider`; pendant une attaque, le `NavMeshAgent` est suspendu, le root
 motion horizontal est applique au `ActorRoot` et son composant vertical est
-ignore pour les skills `Grounded`. Un `SkillSO` ennemi peut declarer une
-trajectoire `Airborne`; ses Animation Events `BeginEnemyAirborne` et
+ignore pour les skills `Grounded`. Le moteur expose un audit temporaire de pose : spawn, hit, attaques, NavMesh,
+Rigidbody, Animator, parent et Netcode sont traces, avec alerte a chaque saut
+de plus de 0.5 m. Il permet d'isoler un ecrivain de transform concurrent sans
+modifier les clips d'animation.
+Une sonde de sol ne peut jamais corriger verticalement l'ActorRoot de plus de
+`maximumGroundSnapDistance` (`0.75 m` par defaut) : tout collider d'un autre
+niveau est journalise puis ignore.
+Un `SkillSO` ennemi peut declarer une trajectoire `Airborne`; ses Animation Events `BeginEnemyAirborne` et
 `RequestEnemyLanding` pilotent une chute controlee. `EndEnemyAttack` ne clot
 la riposte et ne retourne a `Idle` qu'apres le contact sol. Toute mort ou
 interruption force cette meme recuperation, sans laisser l'ennemi en hauteur.

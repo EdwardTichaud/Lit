@@ -31,6 +31,20 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         ResolveReferences();
     }
 
+    private void LateUpdate()
+    {
+        // AnimationRoot is purely visual. Some imported clips animate this
+        // transform even while applyRootMotion is disabled (notably Hit), which
+        // moves the whole mesh away from ActorRoot. World movement must always
+        // be handled by the relay and its explicit receiver instead.
+        if (animationRoot != null && animationRoot != transform &&
+            (animationRoot.localPosition.sqrMagnitude > 0.000001f ||
+             Quaternion.Angle(animationRoot.localRotation, Quaternion.identity) > 0.01f))
+        {
+            ResetAnimationRootPose();
+        }
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {

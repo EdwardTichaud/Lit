@@ -1,4 +1,6 @@
 using System;
+using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -30,10 +32,21 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     [SerializeField, Min(0.01f)] private float groundSkin = 0.03f;
     [SerializeField, Min(0.05f)] private float groundProbeStartHeight = 0.35f;
     [SerializeField, Min(0.1f)] private float groundProbeDistance = 4f;
+    [SerializeField, Min(0.05f), Tooltip("Correction verticale maximale autorisee par une sonde de sol. Evite de raccrocher un acteur a un autre niveau du decor.")]
+    private float maximumGroundSnapDistance = 0.75f;
     [SerializeField, Range(0f, 1f)] private float minimumGroundNormal = 0.45f;
     [SerializeField] private LayerMask groundMask = ~0;
     [Header("Diagnostics")]
     [SerializeField] private bool logStateChanges;
+    [SerializeField, Tooltip("Trace les ecritures de pose afin d'identifier un systeme qui deplace l'ennemi hors de son SceneMarker.")]
+    private bool logPoseAudit = true;
+    [SerializeField, Min(0.5f)] private float poseJumpDiagnosticDistance = 0.5f;
+    [SerializeField, Min(0.01f), Tooltip("Distance horizontale maximale acceptee depuis un unique delta de root motion ennemi.")]
+    private float maximumRootMotionDeltaPerFrame = 0.5f;
+    [SerializeField, Min(0.01f), Tooltip("Distance horizontale maximale appliquee par tick physique depuis le root motion accumule.")]
+    private float maximumRootMotionDistancePerFixedUpdate = 0.75f;
+    [SerializeField, Min(0.01f), Tooltip("Distance a partir de laquelle un repositionnement explicite d'action est journalise.")]
+    private float actionRepositionDiagnosticDistance = 1f;
 
     private readonly RaycastHit[] groundHits = new RaycastHit[GroundHitCapacity];
     private CombatActorAnimationRoot animationContract;
@@ -45,6 +58,15 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private float airborneStartedAt;
     private bool landingRequested;
     private bool navigationSuppressed;
+    private bool hasObservedPose;
+    private Vector3 lastObservedPosition;
+    private string lastPosePhase = "initialisation";
+    private Collider lastLoggedGroundCollider;
+    private Collider lastRejectedGroundCollider;
+    private bool hasObservedNetworkState;
+    private bool lastNetworkTransformEnabled;
+    private bool lastNetworkTransformLocalSpace;
+    private Transform lastObservedParent;
 
     public CombatEnemyPhysicsState State { get; private set; } = CombatEnemyPhysicsState.Navigation;
     public bool IsDrivingActionRootMotion => State == CombatEnemyPhysicsState.GroundedAction ||
@@ -64,6 +86,44 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     {
         ResolveReferences();
         ConfigureBody();
+        AuditPose("Awake");
+    }
+
+    private void LateUpdate()
+    {
+        if (!logPoseAudit)
+        {
+            return;
+        }
+
+        Vector3 currentPosition = transform.position;
+        if (hasObservedPose && Vector3.Distance(currentPosition, lastObservedPosition) >= poseJumpDiagnosticDistance)
+        {
+            Debug.LogWarning(
+                "[CombatEnemyPoseAudit] Saut de pose sur '" + name + "' apres " + lastPosePhase +
+                " | precedent=" + lastObservedPosition + " | actuel=" + currentPosition + ".",
+                this);
+            AuditPose("saut detecte");
+        }
+
+        lastObservedPosition = currentPosition;
+        hasObservedPose = true;
+
+        NetworkTransform networkTransform = GetComponent<NetworkTransform>();
+        bool networkTransformEnabled = networkTransform != null && networkTransform.enabled;
+        bool networkTransformLocalSpace = networkTransform != null && networkTransform.InLocalSpace;
+        if (hasObservedNetworkState &&
+            (networkTransformEnabled != lastNetworkTransformEnabled ||
+             networkTransformLocalSpace != lastNetworkTransformLocalSpace ||
+             transform.parent != lastObservedParent))
+        {
+            AuditPose("changement parent ou NetworkTransform");
+        }
+
+        lastNetworkTransformEnabled = networkTransformEnabled;
+        lastNetworkTransformLocalSpace = networkTransformLocalSpace;
+        lastObservedParent = transform.parent;
+        hasObservedNetworkState = true;
     }
 
     private void OnDisable()
@@ -75,6 +135,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void BeginEnemyAction(SkillSO skill)
     {
+        AuditPose("attaque:debut");
         ResolveReferences();
         activeMotionProfile = skill != null ? skill.EnemyActionMotion : EnemyActionMotionProfile.GroundedDefault;
         pendingCompletion = null;
@@ -115,6 +176,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void CompleteEnemyAction(Action completion)
     {
+        AuditPose("attaque:fin demandee");
         pendingCompletion = completion;
         if (State == CombatEnemyPhysicsState.GroundedAction || State == CombatEnemyPhysicsState.Navigation)
         {
@@ -128,6 +190,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void InterruptEnemyAction(Action completion)
     {
+        AuditPose("attaque:interrompue");
         pendingCompletion = completion;
         if (IsAirborne)
         {
@@ -146,6 +209,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         pendingRootRotation = Quaternion.identity;
         SuppressNavigation();
         SetState(CombatEnemyPhysicsState.Cinematic, "cinematique");
+        AuditPose("cinematique:debut");
     }
 
     public void ExitCinematic()
@@ -158,6 +222,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         SnapToGroundIfAvailable();
         ResumeNavigation();
         SetState(CombatEnemyPhysicsState.Navigation, "fin cinematique");
+        AuditPose("cinematique:fin");
     }
 
     public void ApplyActionRootMotion(Vector3 worldDeltaPosition, Quaternion deltaRotation)
@@ -167,7 +232,18 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return;
         }
 
-        pendingPlanarRootMotion += Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
+        Vector3 planarDelta = Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
+        float maximumDistance = Mathf.Max(0.01f, maximumRootMotionDeltaPerFrame);
+        if (planarDelta.sqrMagnitude > maximumDistance * maximumDistance)
+        {
+            Debug.LogWarning(
+                "[CombatEnemyPhysicsMotor] Delta root motion borne sur '" + name + "' : " + planarDelta +
+                " | state=" + State + ".",
+                this);
+            planarDelta = planarDelta.normalized * maximumDistance;
+        }
+
+        pendingPlanarRootMotion += planarDelta;
         pendingRootRotation = deltaRotation * pendingRootRotation;
     }
 
@@ -181,6 +257,15 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         ResolveReferences();
 
         Vector3 currentPosition = body != null ? body.position : transform.position;
+        Vector3 planarOffset = Vector3.ProjectOnPlane(position - currentPosition, Vector3.up);
+        if (planarOffset.sqrMagnitude >= actionRepositionDiagnosticDistance * actionRepositionDiagnosticDistance)
+        {
+            Debug.LogWarning(
+                "[CombatEnemyPhysicsMotor] Repositionnement explicite d'action sur '" + name +
+                "' : " + planarOffset + " | state=" + State + ".",
+                this);
+        }
+
         currentPosition.x = position.x;
         currentPosition.z = position.z;
         pendingPlanarRootMotion = Vector3.zero;
@@ -212,6 +297,16 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         Vector3 position = body.position;
         Vector3 planarDelta = pendingPlanarRootMotion;
         pendingPlanarRootMotion = Vector3.zero;
+        float maximumFixedDistance = Mathf.Max(0.01f, maximumRootMotionDistancePerFixedUpdate);
+        if (planarDelta.sqrMagnitude > maximumFixedDistance * maximumFixedDistance)
+        {
+            Debug.LogWarning(
+                "[CombatEnemyPhysicsMotor] Root motion accumule borne sur '" + name + "' : " +
+                planarDelta + " | state=" + State + ".",
+                this);
+            planarDelta = planarDelta.normalized * maximumFixedDistance;
+        }
+
         Quaternion rotation = pendingRootRotation * body.rotation;
         pendingRootRotation = Quaternion.identity;
 
@@ -260,6 +355,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         activeMotionProfile = null;
         ResumeNavigation();
         SetState(CombatEnemyPhysicsState.Navigation, "sol confirme");
+        AuditPose("recuperation:sol confirme");
         completion?.Invoke();
     }
 
@@ -274,6 +370,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         navigationAgent.ResetPath();
         navigationAgent.updatePosition = false;
         navigationSuppressed = true;
+        AuditPose("NavMesh:suspendu");
     }
 
     private void ResumeNavigation()
@@ -292,8 +389,10 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         if (navigationAgent.isOnNavMesh)
         {
+            AuditPose("NavMesh:avant Warp reprise");
             navigationAgent.Warp(transform.position);
             navigationAgent.nextPosition = transform.position;
+            AuditPose("NavMesh:apres Warp reprise");
         }
 
         navigationAgent.updatePosition = true;
@@ -325,6 +424,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         Physics.SyncTransforms();
+        AuditPose("physique:SnapToGround");
     }
 
     private bool TryGetGroundY(Vector3 actorPosition, out float groundY)
@@ -348,6 +448,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             QueryTriggerInteraction.Ignore);
 
         float closestDistance = float.PositiveInfinity;
+        Collider selectedCollider = null;
         for (int i = 0; i < hitCount; i++)
         {
             RaycastHit hit = groundHits[i];
@@ -356,11 +457,37 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
                 continue;
             }
 
+            float candidateGroundY = hit.point.y - bottomLocalY + groundSkin;
+            float verticalCorrection = Mathf.Abs(candidateGroundY - actorPosition.y);
+            if (verticalCorrection > maximumGroundSnapDistance)
+            {
+                if (logPoseAudit && hit.collider != lastRejectedGroundCollider)
+                {
+                    lastRejectedGroundCollider = hit.collider;
+                    Debug.LogWarning(
+                        "[CombatEnemyPoseAudit] Sol ignore pour '" + name + "' : '" + hit.collider.name +
+                        "' demanderait un decalage vertical de " + verticalCorrection + " m | actorY=" +
+                        actorPosition.y + " | solY=" + candidateGroundY + ".",
+                        this);
+                }
+                continue;
+            }
+
             if (hit.distance < closestDistance)
             {
                 closestDistance = hit.distance;
-                groundY = hit.point.y - bottomLocalY + groundSkin;
+                groundY = candidateGroundY;
+                selectedCollider = hit.collider;
             }
+        }
+
+        if (selectedCollider != null && logPoseAudit && selectedCollider != lastLoggedGroundCollider)
+        {
+            lastLoggedGroundCollider = selectedCollider;
+            Debug.Log(
+                "[CombatEnemyPoseAudit] Sol retenu pour '" + name + "' : '" + selectedCollider.name +
+                "' | point=" + (groundY + bottomLocalY - groundSkin) + " | distance=" + closestDistance + ".",
+                this);
         }
 
         return closestDistance < float.PositiveInfinity;
@@ -396,6 +523,42 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
         body.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         bodyCollider.isTrigger = false;
+    }
+
+    public void AuditPose(string phase)
+    {
+        lastPosePhase = string.IsNullOrWhiteSpace(phase) ? "inconnue" : phase;
+        if (!logPoseAudit)
+        {
+            return;
+        }
+
+        ResolveReferences();
+        NetworkObject networkObject = GetComponent<NetworkObject>();
+        NetworkTransform networkTransform = GetComponent<NetworkTransform>();
+        Animator animator = animationContract != null ? animationContract.Animator : null;
+        string animatorState = animator != null && animator.runtimeAnimatorController != null
+            ? animator.GetCurrentAnimatorStateInfo(0).fullPathHash.ToString()
+            : "aucun";
+        bool navActive = navigationAgent != null && navigationAgent.isActiveAndEnabled;
+        bool navOnMesh = navActive && navigationAgent.isOnNavMesh;
+        string navState = navigationAgent == null
+            ? "absent"
+            : "enabled=" + navigationAgent.enabled + ", onNavMesh=" + navOnMesh +
+              ", stopped=" + (navOnMesh ? navigationAgent.isStopped.ToString() : "n/a") +
+              ", updatePosition=" + navigationAgent.updatePosition +
+              ", next=" + (navOnMesh ? navigationAgent.nextPosition.ToString() : "n/a");
+        string networkState = networkObject == null
+            ? "absent"
+            : "spawned=" + networkObject.IsSpawned + ", networkTransform=" +
+              (networkTransform != null ? "enabled=" + networkTransform.enabled + ", local=" + networkTransform.InLocalSpace : "absent");
+
+        Debug.Log(
+            "[CombatEnemyPoseAudit] " + lastPosePhase + " | actor='" + name + "' | world=" + transform.position +
+            " | local=" + transform.localPosition + " | parent=" + (transform.parent != null ? transform.parent.name : "<none>") +
+            " | rigidbody=" + (body != null ? body.position.ToString() : "absent") +
+            " | nav=" + navState + " | network=" + networkState + " | animator=" + animatorState + ".",
+            this);
     }
 
     private void SetState(CombatEnemyPhysicsState nextState, string reason)

@@ -34,7 +34,7 @@ Le flux se divise ensuite :
 - solo vers `SquadManager` / `SquadCharacterController`;
 - réseau vers `NetworkCharacterInput`;
 - caméra vers les abonnés dédiés.
-- combat vers `CombatDefensePanelController` via `UseItem1/2/3`.
+- combat vers `RealTimeCombatInput` et ses roues de skills/contres.
 
 `SquadCharacterController` convertit l’input en espace monde, puis
 `LitOpsiveLocomotionBridge` pilote UCC.
@@ -44,20 +44,15 @@ La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
 `LocalPlayerContext`. Les anciens pivots `CameraAnchor` / `YawPivot` /
 `PitchPivot` du système legacy ne doivent pas piloter la `Main Camera`.
 
-Exception : en combat, `CombatSessionManager` devient la source de phase camera.
-`CombatCameraPresentationController` suspend temporairement le driver camera
-Opsive et pilote directement la `Main Camera`, puis restaure Opsive a la sortie
-du combat.
-Quand `CombatDefensePanel` est visible, `LocalPlayerInput` active seulement
-l'ActionMap `Combat` et coupe `Player`/`Camera`; a la fermeture du panel, les
-maps gameplay sont restaurees.
-Les contres melee configures par item utilisent un override camera local
-`CounterAction` dans `CombatCameraPresentationController`, sans changer la source
-de phase camera du manager.
+Le combat tour par tour, son ActionMap `Combat`, sa caméra de phase et le
+`CombatDefensePanel` ont été retirés. Le combat temps réel reste continu dans
+le monde : `RealTimeCombat` est l'unique ActionMap de combat et
+`CombatLockOnCameraController` est le pilote de lock; les Timelines de
+LightSkill/CounterSkill reçoivent temporairement la Main Camera puis rendent
+explicitement l'autorité à UCC.
 
-Le prototype `CombatRealTime` utilise son asset `RealTimeCombat.inputactions`
-plutôt que le wrapper généré de `PlayerInputs`. `RealTimeCombatInput` active
-seulement cette map dédiée pour réactions et palette. Le verrouillage passe
+`RealTimeCombatInput` s'abonne a la map partagee `PlayerInputs/RealTimeCombat`
+pour les reactions, la palette et les attaques. Le verrouillage passe
 par `Player/LeftShoulder`; les maps `Player` et `Camera` existantes restent actives pour préserver le déplacement
 libre. La caméra de lock désactive uniquement les drivers renseignés dans
 `CombatLockOnCameraController`, puis restaure leur état exact au déverrouillage.
@@ -115,7 +110,7 @@ ignore : il n'ouvre pas le panneau d'escouade et ne prend aucun focus.
 actif, `WestButton` est reserve a
 `BasicAttack` : l'action `Player/ToggleTorch` l'ignore.
 
-La source des actions runtime est maintenant `PlayerInputs.inputactions` : sa
+La source des actions runtime est `PlayerInputs.inputactions` : sa
 map `RealTimeCombat` reprend les actions du prototype avec le layout gamepad
 final (South garde/contre, East esquive, West attaque, North saut, LT roue, RT skill de
 lumiere et D-pad bas changement de cible). `RealTimeCombatInput` place un
@@ -124,6 +119,24 @@ passer mouvement, camera et lock, mais ne transmet plus les actions monde
 concurrentes (interaction, retour, inventaire, torche, Munin, loot ou multi).
 `GamepadInputContextStack` est la couche de migration des futurs contextes UI,
 placement et cinematique. Elle est purgee a chaque reset de session.
+`LocalPlayerInput` reapplique toujours le profil de base `Combat` a chaque
+verrouillage valide, meme si un reset UI/scene a deja reconfigure les maps du
+singleton persistant. Cela empeche `Player` de rester active sans
+`RealTimeCombat` apres un lock.
+`InputModeCoordinator` remet les valeurs locales a zero lors d'un changement
+de map pour eviter un mouvement residuel, puis `LocalPlayerInput` relit les
+actions `Player/Move` et `Player/RightShoulder` si le mode redevenu actif est
+`Exploration` ou `Combat`. La reinjection attend la fin effective du focus et
+des verrous UCC et reutilise `SquadManager` : un stick maintenu pendant une UI,
+une roulade ou une LightSkill repart sans nouvelle pression.
+`LitOpsiveLocomotionBridge` arme alors une reponse de premier pas optionnelle,
+une faible impulsion UCC horizontale plafonnee et soumise aux collisions. Elle
+ne peut pas se jouer durant une cinematique, un verrou externe, un vol, une
+chute ou sans deplacement; son amplitude et son cooldown sont exposes sur le
+bridge.
+`GameplayRuntimeReset` applique egalement ce retour a `Exploration`: focus,
+contexte gamepad, suppressions locales et map combat sont purges ensemble avant
+le prochain test ou chargement de session.
 
 La map `RealTimeCombat` lie `Counter` a `Gamepad/buttonSouth` (`Space`) et
 `Dodge` a `Gamepad/buttonEast` (`LeftAlt`). `SouthButton` maintient une garde et

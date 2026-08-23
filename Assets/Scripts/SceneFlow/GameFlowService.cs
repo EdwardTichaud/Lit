@@ -705,7 +705,6 @@ public sealed class GameFlowService : MonoBehaviour
 
         Adopt(SquadManager.Instance);
         Adopt(KnowledgeManager.Instance);
-        Adopt(CombatSessionManager.Instance);
     }
 
     private void Adopt(Component component)

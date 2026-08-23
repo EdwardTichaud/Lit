@@ -10,6 +10,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     [SerializeField] private NavMeshAgent navigationAgent;
     [SerializeField, Min(0.05f), Tooltip("Distance de recherche pour recaler l'agent sur le NavMesh avant activation.")]
     private float navMeshSampleDistance = 1.5f;
+    [SerializeField, Min(0f), Tooltip("Ecart maximal autorise pour raccrocher l'agent au NavMesh sans deplacer l'ActorRoot.")]
+    private float navMeshReattachTolerance = 0.15f;
     [SerializeField, Min(0.02f), Tooltip("Delai entre deux tentatives de recalage quand le NavMesh n'est pas encore pret.")]
     private float navMeshRetryInterval = 0.25f;
     [SerializeField, Tooltip("Point de retour optionnel. La position initiale est utilisee s'il est vide.")]
@@ -510,6 +512,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         {
             if (navigationAgent.enabled)
             {
+                physicsMotor?.AuditPose("NavMesh:desactive, aucune projection proche");
                 navigationAgent.enabled = false;
             }
 
@@ -517,9 +520,9 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return false;
         }
 
-        transform.position = hit.position;
         if (!navigationAgent.enabled)
         {
+            physicsMotor?.AuditPose("NavMesh:activation demandee");
             navigationAgent.enabled = true;
         }
 
@@ -528,14 +531,30 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return true;
         }
 
-        if (navigationAgent.Warp(hit.position))
+        // The gameplay root must never be projected onto an arbitrary NavMesh
+        // polygon. A transient off-mesh state after an animation must not turn
+        // into a visible teleport to another floor or corridor.
+        Vector3 offset = hit.position - transform.position;
+        offset.y = 0f;
+        if (offset.sqrMagnitude <= navMeshReattachTolerance * navMeshReattachTolerance &&
+            Mathf.Abs(hit.position.y - transform.position.y) <= navMeshReattachTolerance &&
+            TryWarpNavigationAgent(hit.position))
         {
             return navigationAgent.isOnNavMesh;
         }
 
+        physicsMotor?.AuditPose("NavMesh:desactive, projection trop eloignee=" + hit.position);
         navigationAgent.enabled = false;
         nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
         return false;
+    }
+
+    private bool TryWarpNavigationAgent(Vector3 position)
+    {
+        physicsMotor?.AuditPose("NavMesh:avant Warp=" + position);
+        bool warped = navigationAgent.Warp(position);
+        physicsMotor?.AuditPose("NavMesh:apres Warp=" + warped);
+        return warped;
     }
 
     private void FacePlayer()

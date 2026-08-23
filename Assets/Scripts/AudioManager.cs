@@ -957,7 +957,7 @@ public class AudioManager : MonoBehaviour
             return safeBasePitch;
         }
 
-        return Mathf.Clamp(safeBasePitch * TimeManager.GetAudioTimeScale(), 0f, 3f);
+        return Mathf.Clamp(safeBasePitch * Mathf.Max(0f, Time.timeScale), 0f, 3f);
     }
 
     public static void ApplyClipPitch(AudioSource source, AudioClipSO clip, float basePitch = 1f)
@@ -978,7 +978,7 @@ public class AudioManager : MonoBehaviour
             return basePitch;
         }
 
-        return Mathf.Clamp(basePitch * TimeManager.GetAudioTimeScale(), 0f, 3f);
+        return Mathf.Clamp(basePitch * Mathf.Max(0f, Time.timeScale), 0f, 3f);
     }
 
     private void RefreshTimeScaledPitches()

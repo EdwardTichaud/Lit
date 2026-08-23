@@ -229,18 +229,10 @@ public class NetworkInventory : NetworkBehaviour
                 return false;
             }
 
-            CombatSessionManager combatManager = CombatSessionManager.Instance;
-            if (combatManager != null && !combatManager.CanUseItemNow(controller, out string combatReason))
-            {
-                InfoBoxUI.TryShow(combatReason);
-                return false;
-            }
-
             if (controller.TryUseItem(item, out string reason))
             {
                 PlayActionAudio(ActionAudioCue.InventoryUse);
                 InfoBoxUI.TryShow(item.GetUseSuccessMessage());
-                CombatSessionManager.Instance?.NotifyInventoryItemUsed(controller);
                 return true;
             }
 
@@ -509,17 +501,9 @@ public class NetworkInventory : NetworkBehaviour
             return false;
         }
 
-        CombatSessionManager combatManager = CombatSessionManager.Instance;
-        if (combatManager != null && !combatManager.CanUseItemNow(controller, out string combatReason))
-        {
-            feedback = combatReason;
-            return false;
-        }
-
         if (controller.TryUseItem(item, out string reason))
         {
             SyncFromController();
-            CombatSessionManager.Instance?.NotifyInventoryItemUsed(controller);
             feedback = item.GetUseSuccessMessage();
             return true;
         }

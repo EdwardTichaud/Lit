@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad6a29de2919a844488319fc463cb884, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lit.Story.StorySequenceSceneBindings
   actors: []
   cameraPoints: []
@@ -151,7 +151,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 383103919083899251}
-  - component: {fileID: 5258608456133760718}
   m_Layer: 0
   m_Name: TimeManager
   m_TagString: Untagged
@@ -174,19 +173,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5258608456133760718
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 682870281867579096}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13ce03bbc7cd4f4c854115152fa63e49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  combatSlowMusicDuckMultiplier: 0.72
 --- !u!1 &832734352767664094
 GameObject:
   m_ObjectHideFlags: 0
@@ -1246,7 +1232,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1962244032958566552}
   - component: {fileID: 3754094688540085027}
-  - component: {fileID: 1716717823769150378}
   - component: {fileID: 810000000000000001}
   - component: {fileID: 810000000000000002}
   - component: {fileID: 810000000000000007}
@@ -1254,11 +1239,7 @@ GameObject:
   - component: {fileID: 810000000000000004}
   - component: {fileID: 810000000000000005}
   - component: {fileID: 810000000000000006}
-  - component: {fileID: 287456315339509268}
-  - component: {fileID: 2596562775950019175}
   - component: {fileID: 6119416266814459275}
-  - component: {fileID: 7175315330175357517}
-  - component: {fileID: 7652341441785883377}
   - component: {fileID: 2872984668119182103}
   - component: {fileID: 6059674322863807500}
   - component: {fileID: 9218925662834059794}
@@ -1300,7 +1281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1415440479
+  GlobalObjectIdHash: 3569575547
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1313,21 +1294,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &1716717823769150378
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7f60b46a38ac477b97041a39213ef888, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::IustiaIdolPrayerAutoInstaller
-  interactionCollider: {fileID: 0}
-  interactionMaxDistance: 2
-  stopPrayerWhenOutOfRange: 1
 --- !u!114 &810000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1359,6 +1325,7 @@ MonoBehaviour:
   playerDeathAnimatorState: Base Layer.Death
   defeatPanelExtraDelaySeconds: 0.25
   playerDeathFallbackDuration: 1
+  logCombatDisengageDiagnostics: 1
   playerHurtAnimatorState: Base Layer.RealTimeCombat_RootMotion.TwinSword_Defense_Hit_Root
   playerHurtTransitionDuration: 0.05
 --- !u!114 &810000000000000002
@@ -1486,116 +1453,7 @@ MonoBehaviour:
   combatInput: {fileID: 810000000000000002}
   cinematicPlayback: {fileID: 0}
   lightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
---- !u!114 &287456315339509268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14321a509f2e4f489920e1239acec262, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatCameraPresentationController
-  controlledCamera: {fileID: 0}
-  cameraController: {fileID: 0}
-  cameraControllerHandler: {fileID: 0}
-  cameraBinder: {fileID: 0}
-  additionalGameplayCameraBehaviours: []
-  playerDecisionCameraOffset: {x: 0.75, y: 1.55, z: -3}
-  playerDecisionCameraOffsetMoveSpeed: {x: 0, y: 0, z: 0}
-  playerActionCameraOffset: {x: 0.45, y: 1.35, z: -2.45}
-  playerActionCameraOffsetMoveSpeed: {x: 0, y: 0, z: 0}
-  enemyDecisionCameraOffset: {x: 1.24, y: 1.24, z: -0.87}
-  enemyDecisionCameraOffsetMoveSpeed: {x: 1, y: 0, z: 0}
-  enemyActionCameraOffset: {x: 2.05, y: 1.24, z: -0.87}
-  enemyActionCameraOffsetMoveSpeed: {x: 0, y: 0, z: 0}
-  counterActionCameraOffset: {x: 2.05, y: 1.24, z: -1.23}
-  counterActionCameraOffsetMoveSpeed: {x: 0, y: 0, z: 0}
-  resolvingCameraOffset: {x: 6, y: 1.65, z: -3.2}
-  resolvingCameraOffsetMoveSpeed: {x: -0.3, y: 0, z: 0}
-  victoryResolutionCameraOffset: {x: 2.05, y: 1.24, z: -1.23}
-  victoryResolutionCameraOffsetMoveSpeed: {x: 1, y: 0, z: 1.6}
-  playerDecisionLookBias: 0.62
-  playerActionLookBias: 0.78
-  enemyReactionLookBias: 0.72
-  enemyActionLookBias: 0.82
-  counterActionLookBias: 0.86
-  victoryResolutionLookBias: 0.42
-  playerDecisionFieldOfView: 50
-  playerActionFieldOfView: 54
-  enemyReactionFieldOfView: 60
-  enemyActionFieldOfView: 68
-  counterActionFieldOfView: 58
-  resolvingFieldOfView: 52
-  victoryResolutionFieldOfView: 75.6
-  targetLookHeight: 1.25
-  cinematicLookHeight: 1.1
-  minLookDistance: 0.25
-  decisionBlendSeconds: 2
-  actionBlendSeconds: 0.35
-  enemyActionBlendSeconds: 0.75
-  counterActionBlendSeconds: 0.22
-  victoryResolutionBlendSeconds: 0.85
-  cameraFollowSharpness: 7
-  enemyActionFollowSharpness: 9
-  subtleBreathingAmplitude: {x: 0.08, y: 0.03, z: 0.06}
-  enemyActionBreathingAmplitude: {x: 0.32, y: 0.12, z: 0.26}
-  counterActionBreathingAmplitude: {x: 0.18, y: 0.05, z: 0.12}
-  victoryResolutionBreathingAmplitude: {x: 0.22, y: 0.08, z: 0.16}
-  subtleBreathingFrequency: 0.05
-  enemyActionBreathingFrequency: 0.08
-  enemyReactionRollDegrees: -2.5
-  enemyActionRollDegrees: -1
-  counterActionRollDegrees: 1.75
-  victoryResolutionRollDegrees: -4
---- !u!114 &2596562775950019175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 074c0857d30b487fa108810dad893f58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatHudController
-  allowRuntimeFallback: 0
-  battlePanelCanvasGroup: {fileID: 0}
-  baseAttackCanvasGroup: {fileID: 0}
-  combatEngagedCanvasGroup: {fileID: 0}
-  combatScreenInfosCanvasGroup: {fileID: 0}
-  victoryPanelCanvasGroup: {fileID: 0}
-  defeatPanelCanvasGroup: {fileID: 0}
-  victoryResultMessageText: {fileID: 0}
-  defeatResultMessageText: {fileID: 0}
-  victoryContinueButton: {fileID: 0}
-  defeatContinueButton: {fileID: 0}
-  defeatMainMenuButton: {fileID: 0}
-  defeatRetryButton: {fileID: 0}
-  defeatCheckpointButton: {fileID: 0}
-  combatEngagedAnimator: {fileID: 0}
-  combatEngagedFallbackDuration: 1.2
-  defeatSelectedScale: 1.22
-  defeatSelectionLerpSpeed: 18
-  defeatSelectedColor: {r: 1, g: 0.72, b: 0.16, a: 1}
-  defeatUnselectedOpacity: 0.55
-  playerHpFillImage: {fileID: 0}
-  enemyHpFillImage: {fileID: 0}
-  timerFillImage: {fileID: 0}
-  baseAttackText: {fileID: 0}
-  titleText: {fileID: 0}
-  turnText: {fileID: 0}
-  timerText: {fileID: 0}
-  playerHpText: {fileID: 0}
-  enemyHpText: {fileID: 0}
-  prayerText: {fileID: 0}
-  messageText: {fileID: 0}
-  actionsText: {fileID: 0}
-  combatLogText: {fileID: 0}
-  combatLogMaxLines: 6
+  logLightSkillDiagnostics: 1
 --- !u!114 &6119416266814459275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1624,65 +1482,6 @@ MonoBehaviour:
     highlightIntensity: 0.38
     edgeContrast: 2.2
     highlightColor: {r: 0.72, g: 0.9, b: 1, a: 1}
---- !u!114 &7175315330175357517
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3c0d8f0d5a4479c95e07a22f1d6b501, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BattleTransition
-  screenWaveController: {fileID: 6119416266814459275}
-  fallbackEnterDuration: 0.9
-  freezeTimeScaleDuringEntryWave: 1
-  playInverseWaveAfterPlacement: 1
-  battleSpherePrefab: {fileID: 8137623096542368458, guid: b717dda3296690248af64160ba09cb84, type: 3}
-  shaderVariants: {fileID: 0}
-  preloadMaterials: []
-  preloadPrefabs: []
-  warmBattleSphereOnStart: 1
-  warmupPosition: {x: 0, y: -10000, z: 0}
---- !u!114 &7652341441785883377
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2806913923367657188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5344ff6fa3a403aa130c28ee0967211, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatSessionManager
-  ShowTopMostFoldoutHeaderGroup: 1
-  turnDurationSeconds: 30
-  enemyActionDelay: 1
-  decisionPresentationSeconds: 2
-  defensiveReactionSeconds: 2
-  encounterPlayerAttackWindowSeconds: 2
-  defaultPlayerAttackDamage: 3
-  snapshotInterval: 0.2
-  defaultMeleeApproachDistance: 1.25
-  actionPresentationMoveSpeed: 3.5
-  maxActionPresentationMoveSeconds: 0.75
-  actionImpactNormalizedTime: 0.75
-  enemyAttackDefensePreparationAnimationName: Block
-  enemyAttackDefensePreparationVoice: {fileID: 0}
-  victoryResolutionDelayAfterFatalImpactSeconds: 1
-  victoryPanelExtraSafetySeconds: 0.25
-  victoryResolutionPresentationSeconds: 2.35
-  victoryResolutionTimeScale: 0.28
-  arenaRoot: {fileID: 0}
-  spawnPointPlayer: {fileID: 0}
-  spawnPointEnemy: {fileID: 0}
-  combatEntryMidpointPrefab: {fileID: 8137623096542368458, guid: b717dda3296690248af64160ba09cb84, type: 3}
-  combatEntryMidpointDestroyDelaySeconds: 2
-  prayerDamageReductionPerPlayer: 0.2
-  maxPrayerDamageReduction: 0.8
 --- !u!114 &2872984668119182103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1735,7 +1534,7 @@ MonoBehaviour:
   guardedDamageMultiplier: 0.4
   guardAnimatorState: Base Layer.RealTimeCombat_RootMotion.Guard_Block
   guardFallbackAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Defense_Hit_Root
-  guardReleaseAnimatorState: Base Layer.RealTimeCombat_RootMotion.Twinblades_Idle_Root
+  guardReleaseAnimatorState: Base Layer.Locomotion
   guardAnimationBlendSeconds: 0.08
   guardStartVfx: {fileID: 0}
   guardStartAudio: {fileID: 0}
@@ -1766,9 +1565,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2b9ce61854c9384c9a7e9919d450899, type: 3}
-  m_Name: ""
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicPlaybackService
   poolRoot: {fileID: 0}
+  logCinematicPlaybackDiagnostics: 1
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0
@@ -2338,6 +2138,7 @@ GameObject:
   - component: {fileID: 8540125469264114897}
   - component: {fileID: 2388861861391168863}
   - component: {fileID: 1950877512696852749}
+  - component: {fileID: 3156449220114887421}
   - component: {fileID: 1950877512696852750}
   - component: {fileID: 945441929012122784}
   - component: {fileID: 8509255067673385053}
@@ -2611,12 +2412,12 @@ MonoBehaviour:
         m_LookDirectionDistance: 100
         m_ForwardAxis: {x: 0, y: 0, z: 1}
         m_LookOffset: {x: 0.92, y: 0.08, z: -1.9}
-        m_LookOffsetSmoothing: 0.08
+        m_LookOffsetSmoothing: 0.12
         m_CollisionRadius: 0.25
         m_CollisionAnchorOffset: {x: 0, y: 0, z: 0}
-        m_RotationSpeed: 0.65
+        m_RotationSpeed: 0.6
         m_SecondaryRotationSpeed: 0.8
-        m_HorizontalPivotFreedom: 0
+        m_HorizontalPivotFreedom: 0.12
         m_PositionSpring:
           m_Stiffness: 0.2
           m_Damping: 0.25
@@ -2699,6 +2500,22 @@ MonoBehaviour:
   subscribeToCameraRecenter: 1
   snapCameraOnBind: 1
   retryInterval: 0.1
+--- !u!114 &3156449220114887421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6208594910752237019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d4bd17431940f5800a5800b0802ad5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LitSmoothUccCameraViewAdapter
+  cameraController: {fileID: 8540125469264114897}
+  followSmoothTime: 0.14
+  maximumFollowSpeed: 30
+  teleportSnapDistance: 3
 --- !u!114 &1950877512696852750
 MonoBehaviour:
   m_ObjectHideFlags: 0

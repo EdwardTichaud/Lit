@@ -25,6 +25,9 @@ public static class GameplayRuntimeReset
         }
 
         InputFocusStack.Clear();
+        GamepadInputContextStack.Clear();
+        LocalInputRouter.ClearInteractionAndJumpSuppressions();
+        LocalPlayerInput.SetCombatInputActive(false);
         LocalPlayerContext.Clear($"{ResetLogPrefix}:{resolvedReason}", LocalPlayerContext.Authority.MultiplayerAssignment);
         NetcodePlayerSessionRegistry.Clear();
         ConfirmationManager.Dismiss(null, false);
@@ -32,7 +35,6 @@ public static class GameplayRuntimeReset
         ReadableContentRuntime.ResetRuntimeState(resolvedReason);
         Zone.ResetRuntimeState();
         DissolveRevealSystem.ResetRuntimeState();
-        TimeManager.Instance?.RestoreCombatTime();
 
         if (NetcodePlayerSpawner.Instance != null)
         {

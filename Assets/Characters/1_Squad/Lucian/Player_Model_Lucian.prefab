@@ -7586,6 +7586,7 @@ GameObject:
   - component: {fileID: 8246669574063202957}
   - component: {fileID: 5959914393103543773}
   - component: {fileID: 2760402342699511360}
+  - component: {fileID: 9120017462384659012}
   - component: {fileID: 9118197817539862428}
   - component: {fileID: 7388209704611396571}
   - component: {fileID: 6167225484597321654}
@@ -7593,7 +7594,6 @@ GameObject:
   - component: {fileID: 9095812728330429394}
   - component: {fileID: 6800918242508772571}
   - component: {fileID: -2401253528140462390}
-  - component: {fileID: 1317749357599445725}
   - component: {fileID: 4886044154287277720}
   - component: {fileID: 900000000000000101}
   - component: {fileID: 900000000000000102}
@@ -8160,13 +8160,13 @@ MonoBehaviour:
         m_AbilityMessageIcon: {fileID: 0}
         m_InspectorDescription: 
         m_MinCeilingJumpHeight: 0.05
-        m_GroundedGracePeriod: 0.05
+        m_GroundedGracePeriod: 0.1
         m_PreventSlopeLimitJump: 1
-        m_Force: 0.22
+        m_Force: 0.38
         m_SidewaysForceMultiplier: 0.8
         m_BackwardsForceMultiplier: 0.7
         m_Frames: 2
-        m_ForceDamping: 0.17
+        m_ForceDamping: 0.12
         m_JumpEvent:
           m_WaitForAnimationEvent: 0
           m_Duration: 0
@@ -8358,7 +8358,7 @@ MonoBehaviour:
         m_MinSpeedChangeValue: -1.65
         m_MaxSpeedChangeValue: 1.65
         m_SpeedParameterValue: -1
-        m_RequireMovement: 1
+        m_RequireMovement: 0
     - rid: 2938102941717364753
       type: {class: HeightChange, ns: Opsive.UltimateCharacterController.Character.Abilities, asm: Opsive.UltimateCharacterController}
       data:
@@ -8540,11 +8540,6 @@ MonoBehaviour:
   groundedPivotMovementReleaseScale: 0.58
   commitRootRotationDuringPivot: 1
   groundedPivotRotationCommitRate: 960
-  driveJumpLandingAnimatorParameters: 1
-  jumpTriggerParam: JumpTrigger
-  isAirborneParam: IsAirborne
-  softenJumpDescent: 1
-  jumpDescentGravityAmount: 0.56
   debugLocomotionDiagnostics: 0
   locomotionDiagnosticInterval: 0.1
   enableObstacleTraversal: 1
@@ -8580,6 +8575,7 @@ MonoBehaviour:
   lookSource: {fileID: 0}
   animator: {fileID: 963045829911085934}
   animatorMonitor: {fileID: 0}
+  jumpPresentationController: {fileID: 9120017462384659012}
   driveFromSquadFacade: 1
   overrideOpsiveHandlerInput: 1
   orientLookSourceFromMovement: 1
@@ -8605,12 +8601,17 @@ MonoBehaviour:
   refreshRootMotionSettingsEveryFrame: 1
   driveDirectionalRootMotionInput: 0
   useLookSourceForwardInputForRootMotion: 1
+  enableRunStartResponse: 1
+  runStartVelocityBonus: 0.55
+  runStartResponseCooldown: 0.25
+  runStartResponseMaximumPlanarSpeed: 4.25
+  logLocomotionResponseDiagnostics: 0
   autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
-  jumpRetryWindow: 0.15
+  jumpRetryWindow: 0.12
   warnWhenJumpRejected: 1
-  useJumpForceFallback: 1
-  jumpFallbackVelocity: 7.5
+  useJumpForceFallback: 0
+  jumpFallbackVelocity: 9.2
   relaxGroundReliefTolerance: 1
   groundReliefMinStepHeight: 0.5
   groundReliefMinSlopeLimit: 60
@@ -8656,6 +8657,32 @@ MonoBehaviour:
   flightStartTriggerParam: FlightStartTrigger
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
+--- !u!114 &9120017462384659012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24f35f4f170a4e4c9c38451e1221053d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpPresentationController
+  locomotion: {fileID: 0}
+  animator: {fileID: 963045829911085934}
+  jumpStartTrigger: JumpStartTrigger
+  landingTrigger: LandingTrigger
+  activeParam: JumpPresentationActive
+  airborneParam: IsAirborne
+  phaseParam: JumpPhase
+  landingTypeParam: LandingType
+  landingLockSeconds: 0.25
+  hardLandingHeight: 3
+  apexVelocityThreshold: 0.7
+  apexGravityMultiplier: 0.35
+  descentGravityMultiplier: 0.75
+  debugTrace: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8922,75 +8949,6 @@ MonoBehaviour:
   faceAnchor: {fileID: 8186569390409486965}
   cameraAnchor: {fileID: 8186569390409486965}
   animator: {fileID: 963045829911085934}
---- !u!114 &1317749357599445725
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4542b248a0941cb91396c00e209444b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatAnimationEvents
-  actorRoot: {fileID: 6049574993906610091}
-  victimOverride: {fileID: 0}
-  slowedTimeScale: 0.1
-  slowBlendSeconds: 0.15
-  slowBlendCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  includeVictimInTimeScale: 1
-  victimStopDistance: 1.15
-  moveToVictimSeconds: 0.2
-  returnSeconds: 0.2
-  movementCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  keepActorHeight: 1
 --- !u!114 &4886044154287277720
 MonoBehaviour:
   m_ObjectHideFlags: 0

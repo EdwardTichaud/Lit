@@ -19,7 +19,6 @@ GameObject:
   - component: {fileID: 900000000000000003}
   - component: {fileID: 900000000000000016}
   - component: {fileID: 900000000000000017}
-  - component: {fileID: 1710155833844649072}
   - component: {fileID: 4532544328156619208}
   - component: {fileID: 707000000000000003}
   m_Layer: 0
@@ -230,6 +229,7 @@ MonoBehaviour:
   enemy: {fileID: 900000000000000002}
   navigationAgent: {fileID: 900000000000000015}
   navMeshSampleDistance: 1.5
+  navMeshReattachTolerance: 0.15
   navMeshRetryInterval: 0.25
   patrolPoint: {fileID: 0}
   meleeAttackDistance: 2.6
@@ -264,75 +264,6 @@ MonoBehaviour:
   casterVfxPoint: {fileID: 0}
   skills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
---- !u!114 &1710155833844649072
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6700739663857040827}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4542b248a0941cb91396c00e209444b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatAnimationEvents
-  actorRoot: {fileID: 0}
-  victimOverride: {fileID: 0}
-  slowedTimeScale: 0.1
-  slowBlendSeconds: 0.15
-  slowBlendCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  includeVictimInTimeScale: 1
-  victimStopDistance: 1.15
-  moveToVictimSeconds: 0.2
-  returnSeconds: 0.2
-  movementCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  keepActorHeight: 1
 --- !u!114 &4532544328156619208
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -345,7 +276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
-  animationRoot: {fileID: 158977838910440850}
+  animationRoot: {fileID: 7136339443753286939}
   animator: {fileID: 3884761766361048929}
   lockPoint: {fileID: 0}
 --- !u!114 &707000000000000003
@@ -367,11 +298,17 @@ MonoBehaviour:
   groundSkin: 0.03
   groundProbeStartHeight: 0.35
   groundProbeDistance: 4
+  maximumGroundSnapDistance: 0.75
   minimumGroundNormal: 0.45
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
   logStateChanges: 0
+  logPoseAudit: 1
+  poseJumpDiagnosticDistance: 0.5
+  maximumRootMotionDeltaPerFrame: 0.5
+  maximumRootMotionDistancePerFixedUpdate: 0.75
+  actionRepositionDiagnosticDistance: 1
 --- !u!1001 &7242887263535274736
 PrefabInstance:
   m_ObjectHideFlags: 0

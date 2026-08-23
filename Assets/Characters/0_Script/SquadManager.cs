@@ -1736,9 +1736,7 @@ public class SquadManager : MonoBehaviour
         bool sprintRequested = LocalInputRouter.RightShoulderPressed;
         float flightVerticalInput = LocalInputRouter.FlightVerticalValue;
 
-        controller.SetSprintModifier(sprintRequested);
-        controller.Move(rawMoveInput);
-        controller.TrySetUccFlightInput(worldMoveInput, true, sprintRequested, flightVerticalInput);
+        ApplyLocomotionIntent(controller, rawMoveInput, worldMoveInput, sprintRequested, flightVerticalInput);
 
         if (locomotionModeRequested &&
             (controller.TryToggleUccFlightMode(flightVerticalInput) || controller.TryToggleUccHeightChange()))
@@ -1754,6 +1752,46 @@ public class SquadManager : MonoBehaviour
 
         jumpRequested = false;
         locomotionModeRequested = false;
+    }
+
+    /// <summary>
+    /// Reapplies held move/sprint controls after a cinematic or an action ends.
+    /// It deliberately shares the normal UCC forwarding path.
+    /// </summary>
+    public bool ReapplyHeldLocomotionIntent()
+    {
+        if (currentCharacter == null || IsMultiplayerActive() || InputFocusStack.HasAnyFocus())
+        {
+            return false;
+        }
+
+        SquadCharacterController controller = currentCharacter.GetComponent<SquadCharacterController>();
+        if (controller == null || controller.IsMovementInputSuppressed || controller.IsUccInputSuppressed)
+        {
+            return false;
+        }
+
+        Vector2 rawMoveInput = LocalInputRouter.MoveValue;
+        Vector2 worldMoveInput = controller.GetWorldSpaceInput(rawMoveInput);
+        ApplyLocomotionIntent(
+            controller,
+            rawMoveInput,
+            worldMoveInput,
+            LocalInputRouter.RightShoulderPressed,
+            LocalInputRouter.FlightVerticalValue);
+        return true;
+    }
+
+    private static void ApplyLocomotionIntent(
+        SquadCharacterController controller,
+        Vector2 rawMoveInput,
+        Vector2 worldMoveInput,
+        bool sprintRequested,
+        float flightVerticalInput)
+    {
+        controller.SetSprintModifier(sprintRequested);
+        controller.Move(rawMoveInput);
+        controller.TrySetUccFlightInput(worldMoveInput, true, sprintRequested, flightVerticalInput);
     }
 
     private void StopControlledCharacter()

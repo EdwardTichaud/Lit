@@ -6,6 +6,8 @@ using UnityEngine;
 public sealed class PlayerActionPresentationController : MonoBehaviour
 {
     private const string LocomotionState = "Base Layer.Locomotion";
+    private const string WalkStartState = "Base Layer.Walk_Start";
+    private const string RunStartState = "Base Layer.Run_Start";
 
     [SerializeField] private Animator animator;
     [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
@@ -133,6 +135,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         if (hadAction)
         {
             ActionEnded?.Invoke();
+            RequestLocomotionHandoff();
         }
     }
 
@@ -165,6 +168,28 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         deathAnimationLocked = false;
         deathStateHash = 0;
         CancelAction();
+    }
+
+    /// <summary>Returns Animator ownership to UCC after a Timeline that did not use an action profile.</summary>
+    public void ResumeLocomotionFromCinematic(bool movementHeld, bool sprintHeld, float transitionSeconds = 0.08f)
+    {
+        if (deathAnimationLocked || animator == null)
+        {
+            return;
+        }
+
+        CancelAction();
+        locomotionBridge?.ClearPlayerActionRootMotionMode();
+        locomotionBridge?.RefreshLocomotionPresentation();
+
+        string destination = !movementHeld
+            ? LocomotionState
+            : sprintHeld ? RunStartState : WalkStartState;
+        int destinationHash = Animator.StringToHash(destination);
+        if (animator.HasState(0, destinationHash))
+        {
+            animator.CrossFade(destinationHash, Mathf.Clamp(transitionSeconds, 0f, 0.25f), 0);
+        }
     }
 
     private void Awake()
@@ -454,6 +479,18 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         actionRoutine = null;
         locomotionBridge?.ClearPlayerActionRootMotionMode();
         ActionEnded?.Invoke();
+        RequestLocomotionHandoff();
+    }
+
+    private void RequestLocomotionHandoff()
+    {
+        if (deathAnimationLocked)
+        {
+            return;
+        }
+
+        locomotionBridge?.RequestRunStartResponse();
+        LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat action ended");
     }
 
     private void KeepDeathAnimationActive()

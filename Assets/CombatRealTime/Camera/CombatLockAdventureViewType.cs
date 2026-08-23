@@ -6,10 +6,11 @@ using UnityEngine;
 /// UCC invokes this view to write the camera Transform, preserving its collision solver.
 /// </summary>
 [System.Serializable]
-public sealed class CombatLockAdventureViewType : Adventure
+public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
 {
     [SerializeField, Range(1f, 720f)] private float maximumLockRotationDegreesPerSecond = 95f;
     [SerializeField, Min(0.1f)] private float lockAxisSharpness = 7f;
+    [SerializeField, Min(0f)] private float lockFollowSmoothTime = 0.08f;
     [SerializeField] private Vector3 combatLookOffset = new Vector3(0.75f, 0.45f, -5f);
     [SerializeField, Range(15f, 100f)] private float combatFieldOfView = 64f;
 
@@ -17,6 +18,8 @@ public sealed class CombatLockAdventureViewType : Adventure
     private float impactFieldOfView;
     private Vector3 smoothedPlayerToEnemyAxis;
     private bool hasSmoothedPlayerToEnemyAxis;
+
+    protected override float EffectiveFollowSmoothTime => lockFollowSmoothTime;
 
     public void ConfigureLockMotion(float maximumOrbitDegreesPerSecond, float axisSharpness)
     {
@@ -34,21 +37,6 @@ public sealed class CombatLockAdventureViewType : Adventure
     public void ResetLockAxisSmoothing()
     {
         hasSmoothedPlayerToEnemyAxis = false;
-    }
-
-    public void CopyGameplaySettingsFrom(ThirdPerson source)
-    {
-        FieldOfView = source.FieldOfView;
-        FieldOfViewDamping = source.FieldOfViewDamping;
-        ForwardAxis = source.ForwardAxis;
-        LookOffset = source.LookOffset;
-        LookOffsetSmoothing = source.LookOffsetSmoothing;
-        CollisionRadius = source.CollisionRadius;
-        CollisionAnchorOffset = source.CollisionAnchorOffset;
-        RotationSpeed = source.RotationSpeed;
-        SecondaryRotationSpeed = source.SecondaryRotationSpeed;
-        HorizontalPivotFreedom = source.HorizontalPivotFreedom;
-        PitchLimit = source.PitchLimit;
     }
 
     /// <summary>

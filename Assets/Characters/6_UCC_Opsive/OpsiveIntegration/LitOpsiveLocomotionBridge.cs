@@ -22,6 +22,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private LitOpsiveLookSource lookSource;
     [SerializeField] private Animator animator;
     [SerializeField] private AnimatorMonitor animatorMonitor;
+    [SerializeField] private LucianJumpPresentationController jumpPresentationController;
 
     [Header("Bridge")]
     [SerializeField, Tooltip("When enabled, SquadCharacterController forwards locomotion commands to UCC and keeps Lit simulation disabled.")]
@@ -65,6 +66,19 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool driveDirectionalRootMotionInput = false;
     [SerializeField, Tooltip("When the look source already points toward movement, feeds UCC forward input to avoid double-rotating movement space.")]
     private bool useLookSourceForwardInputForRootMotion = true;
+
+    [Header("Run Start Response")]
+    [SerializeField, Tooltip("Applies a short, collision-respecting UCC impulse when a held sprint starts or resumes after an action.")]
+    private bool enableRunStartResponse = true;
+    [SerializeField, Min(0f), Tooltip("Maximum planar velocity added by the first run step.")]
+    private float runStartVelocityBonus = 0.55f;
+    [SerializeField, Min(0f), Tooltip("Prevents repeated input reconciliation from stacking several run-start impulses.")]
+    private float runStartResponseCooldown = 0.25f;
+    [SerializeField, Min(0f), Tooltip("No run-start impulse is applied once this planar speed is already reached.")]
+    private float runStartResponseMaximumPlanarSpeed = 4.25f;
+    [SerializeField, Tooltip("Logs run-start and external-lock handoffs when troubleshooting locomotion.")]
+    private bool logLocomotionResponseDiagnostics;
+
     [SerializeField, Tooltip("Add Lit/UCC companion bridges at runtime so interaction, damage and follower systems can respect UCC state without prefab edits.")]
     private bool autoInstallCompanionBridges = true;
     [SerializeField, Range(0f, 0.5f)] private float movementDeadZone = 0.08f;
@@ -182,6 +196,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool hasPlayerActionRootMotionMode;
     private PlayerActionRootMotionMode playerActionRootMotionMode;
     private bool suppressPlayerActionRootMotionRotation;
+    private bool runStartResponseArmed;
+    private bool wasSprintMoving;
+    private float nextRunStartResponseTime;
 
     private enum RootMotionPhase
     {
@@ -189,6 +206,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         Start,
         Stop,
         Pivot,
+        Jump,
         Combat,
         Other
     }
@@ -229,6 +247,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rootMotionStopRotationScale = Mathf.Max(0f, rootMotionStopRotationScale);
         rootMotionPivotSpeedScale = Mathf.Max(0f, rootMotionPivotSpeedScale);
         rootMotionPivotRotationScale = Mathf.Max(0f, rootMotionPivotRotationScale);
+        runStartVelocityBonus = Mathf.Max(0f, runStartVelocityBonus);
+        runStartResponseCooldown = Mathf.Max(0f, runStartResponseCooldown);
+        runStartResponseMaximumPlanarSpeed = Mathf.Max(0f, runStartResponseMaximumPlanarSpeed);
         idleRootMotionVelocityThreshold = Mathf.Max(0f, idleRootMotionVelocityThreshold);
         groundReliefMinStepHeight = Mathf.Max(0f, groundReliefMinStepHeight);
         groundReliefMinSlopeLimit = Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f);
@@ -303,6 +324,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (!IsFlightModeActive)
         {
             SyncSpeedChangeAbility();
+        }
+
+        // The movement input may have arrived just before sprint in this frame.
+        // Refresh the authored locomotion parameters now so MoveStart chooses
+        // Run_Start instead of spending one frame in Walk_Start.
+        if (pressed && currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            UpdateAnimatorParameters();
         }
     }
 
@@ -457,6 +486,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         externalLockCount = Mathf.Max(0, externalLockCount) + 1;
+        TraceLocomotionResponse("External lock acquired | count=" + externalLockCount + ".");
         if (externalLockCount > 1)
         {
             return true;
@@ -658,6 +688,18 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         RefreshRootMotionLocomotionSettings();
         ForceZeroInput();
         AttachLookSourceIfNeeded(true);
+        RequestRunStartResponse();
+        TraceLocomotionResponse("External lock released; waiting for held input reconciliation.");
+    }
+
+    /// <summary>
+    /// Arms one small sprint-start response for the next valid held movement.
+    /// Used by action/cinematic handoffs; it never bypasses UCC collision.
+    /// </summary>
+    public void RequestRunStartResponse()
+    {
+        runStartResponseArmed = true;
+        wasSprintMoving = false;
     }
 
     public void ApplyScriptedTraversalPose(Vector3 position, Quaternion rotation)
@@ -1223,6 +1265,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             animatorMonitor = GetComponent<AnimatorMonitor>();
         }
 
+        if (jumpPresentationController == null)
+        {
+            jumpPresentationController = GetComponent<LucianJumpPresentationController>();
+        }
+
         if (rb == null)
         {
             rb = GetComponent<Rigidbody>();
@@ -1354,6 +1401,65 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             locomotionHandler.OverriddenHorizontalMovement = opsiveInput.x;
             locomotionHandler.OverriddenForwardMovement = opsiveInput.y;
             locomotionHandler.OverriddenLookVector = Vector2.zero;
+        }
+
+        // SpeedChange can reject a sprint started while idle. Retry only after
+        // UCC has received this frame's movement, so running starts directly.
+        if (!IsFlightModeActive && sprintPressed && magnitude > movementDeadZone)
+        {
+            SyncSpeedChangeAbility();
+        }
+
+        TryApplyRunStartResponse(magnitude);
+    }
+
+    private void TryApplyRunStartResponse(float movementMagnitude)
+    {
+        bool sprintMoving = sprintPressed && movementMagnitude > movementDeadZone &&
+                            !IsInputSuppressedByUcc && !IsFlightActive && Grounded;
+        if (!sprintMoving)
+        {
+            wasSprintMoving = false;
+            return;
+        }
+
+        bool beganSprint = !wasSprintMoving;
+        wasSprintMoving = true;
+        if (!enableRunStartResponse || (!beganSprint && !runStartResponseArmed) ||
+            Time.unscaledTime < nextRunStartResponseTime || locomotion == null)
+        {
+            return;
+        }
+
+        Vector3 direction = new Vector3(currentWorldMoveInput.x, 0f, currentWorldMoveInput.y);
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        direction.Normalize();
+        float forwardSpeed = Mathf.Max(0f, Vector3.Dot(PlanarVelocity, direction));
+        float availableBonus = Mathf.Min(
+            runStartVelocityBonus,
+            Mathf.Max(0f, runStartResponseMaximumPlanarSpeed - forwardSpeed));
+        runStartResponseArmed = false;
+        nextRunStartResponseTime = Time.unscaledTime + runStartResponseCooldown;
+        if (availableBonus <= 0.0001f)
+        {
+            TraceLocomotionResponse("Run-start response skipped: planar speed already capped.");
+            return;
+        }
+
+        locomotion.AddForce(direction * availableBonus, 1, false);
+        TraceLocomotionResponse("Run-start response applied | bonus=" + availableBonus.ToString("F2") +
+                                " | forwardSpeed=" + forwardSpeed.ToString("F2") + ".");
+    }
+
+    private void TraceLocomotionResponse(string message)
+    {
+        if (logLocomotionResponseDiagnostics)
+        {
+            Debug.Log("[Locomotion Response] " + message, this);
         }
     }
 
@@ -1653,6 +1759,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     {
         UpdateFlightAnimatorParameters();
 
+        if (IsLandingPresentationLocked())
+        {
+            return;
+        }
+
         if (!driveLitLocomotionAnimatorParameters || animator == null || IsFlightModeActive)
         {
             SetLitAnimatorSpeedParameterOverride(false);
@@ -1879,11 +1990,12 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         bool useRootMotionRotation = ResolveUseRootMotionRotation(phase);
         bool useAuthoredActionRootMotion = !hasPlayerActionRootMotionMode ||
             playerActionRootMotionMode == PlayerActionRootMotionMode.AuthoredRootMotion;
-        locomotion.UseRootMotionPosition = useAuthoredActionRootMotion;
-        locomotion.RootMotionSpeedMultiplier = !useAuthoredActionRootMotion || suppressIdlePosition
+        bool useJumpRootMotion = phase != RootMotionPhase.Jump;
+        locomotion.UseRootMotionPosition = useAuthoredActionRootMotion && useJumpRootMotion;
+        locomotion.RootMotionSpeedMultiplier = !useAuthoredActionRootMotion || !useJumpRootMotion || suppressIdlePosition
             ? 0f
             : ResolveEffectiveRootMotionSpeedMultiplier(phase);
-        useRootMotionRotation &= useAuthoredActionRootMotion && !suppressPlayerActionRootMotionRotation;
+        useRootMotionRotation &= useAuthoredActionRootMotion && useJumpRootMotion && !suppressPlayerActionRootMotionRotation;
         locomotion.UseRootMotionRotation = useRootMotionRotation;
         locomotion.RootMotionRotationMultiplier = useRootMotionRotation
             ? ResolveEffectiveRootMotionRotationMultiplier(phase)
@@ -2054,6 +2166,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (stateInfo.IsName("Locomotion"))
         {
             return RootMotionPhase.Locomotion;
+        }
+
+        if (stateInfo.IsName("Jump_Start") ||
+            stateInfo.IsName("Jump_Loop") ||
+            stateInfo.IsName("Falling") ||
+            stateInfo.IsName("Landing") ||
+            stateInfo.IsName("Landing_Hard") ||
+            stateInfo.IsName("Jump_End"))
+        {
+            return RootMotionPhase.Jump;
         }
 
         if (stateInfo.IsTag("RealTimeCombatRootMotion"))

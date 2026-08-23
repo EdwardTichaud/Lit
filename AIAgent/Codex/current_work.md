@@ -30,6 +30,12 @@ cache avant le spawn; les compagnons non instancies gardent donc leurs donnees.
 et ennemis de scène; l'ancien `EnemyInfo` a été retiré. `CombatHealth`
 initialise son maximum depuis ce `CharacterData` avant de remplir une vie
 initialement vide.
+Les ennemis issus d'un `SceneMarker` restent enfants du marker tout en étant
+positionnés en coordonnées monde; hors session Netcode, aucun `NetworkTransform`
+n'est ajouté ou activé sur ce clone. En host/client, le clone est parenté par
+`NetworkObject.TrySetParent` et son `NetworkTransform` bascule en espace local.
+Un état persistant ennemi dont la position diverge de plus de 20 m du marker est
+ignoré pour éviter de restaurer une position invalide d'une ancienne session.
 
 Le chantier performance repart de zero. Les systemes de culling manuel,
 budget de lumieres, budget de portails, XRay et instrumentation de migration
@@ -51,6 +57,21 @@ le plus proche, musique combat et degats de lumiere `openingCombatDamage` (50
 par defaut). Un orbe lumineux pulse et un signal sonore sont joues sur
 `EnemyLockPoint`; la croix directionnelle gauche bascule entre les ennemis
 visibles verrouillables.
+Chaque lock reapplique le profil d'ActionMaps `Combat` au singleton
+`LocalPlayerInput`, ce qui garantit l'activation de `RealTimeCombat` apres un
+reset UI ou scene. `RealTimeCombatInput` journalise egalement les refus de
+BasicAttack afin d'identifier sans ambiguite une map inactive, une roue ouverte
+ou un skill indisponible.
+`GameplayRuntimeReset` purge aussi le contexte gamepad, les suppressions
+locales et la map combat : une session de test ne peut plus heriter d'un
+verrou d'input invisible de la precedente.
+La restitution d'une UI, d'une action combat ou d'une LightSkill relit
+desormais l'etat reel du stick et de `RightShoulder` apres le retour de map :
+un input maintenu pendant `Cinematic` ne laisse plus Lucian immobile jusqu'a
+une nouvelle pression. Cette reinjection repasse par `SquadManager` et le
+bridge UCC normaux. Le bridge ajoute aussi une faible impulsion UCC plafonnee
+au premier pas de course, y compris apres une action, pour rendre la reprise
+plus nette sans contourner les collisions.
 Quand aucun ennemi n'est verrouillable, `LeftShoulder` ne declenche aucune UI
 ni focus gameplay : il reste reserve au lock/unlock et ne peut donc plus ouvrir
 le panneau d'escouade ou interrompre le mouvement.
@@ -76,6 +97,13 @@ et FOV sont aussi bornees pour absorber les changements de cadrage pres des
 obstacles.
 Exploration et combat restent dans le meme espace : aucune transition, vague,
 BattleSphere, teleportation ou arene n'est activee.
+Le combat tour par tour actif a ete retire : `RealTimeCombatSceneUiController`,
+place sur `UI_Overlay`, pilote les panels existants de `Bootstrap` et `Arena` (`CombatEngagedPanel`,
+`CombatScreenInfosPanel`, `VictoryPanel`, `DefeatPanel`) sans creation UI
+runtime. `CombatDefensePanel`, l'ActionMap `Combat`, les transitions d'arene,
+la camera de phase et les composants historiques ne font plus partie du
+gameplay. `Assets/Legacy/BattleManager_SymphonieImport` reste une archive
+intacte et hors compilation/gameplay actif.
 Le premier scenario jouable est configure : Lucian dispose de `Lueur faible`
 et `Lueur intense` dans les slots 1 et 2, tandis que le Juggernaut joue
 `Skill_Juggernaut_Assomoir` via `EnemySkills` et ouvre sa fenetre d'esquive par
@@ -298,6 +326,11 @@ Lucian. Les deux ennemis utilisent desormais `CombatEnemyPhysicsMotor` avec un
 `Rigidbody` cinematique et une `CapsuleCollider` configures dans leurs prefabs :
 il est l'unique autorite verticale pendant une attaque, ignore le root motion Y
 des skills au sol et attend un contact sol avant de rendre l'IA et `Idle`.
+Une sonde de sol ne peut corriger verticalement un `ActorRoot` que de `0.75 m`
+au maximum : un collider d'un autre niveau du decor est journalise puis ignore.
+Son audit de pose journalise temporairement spawn, hit, NavMesh, Rigidbody,
+parent, Animator et synchronisation Netcode ainsi que tout saut superieur a
+0.5 m, afin d'identifier une ecriture de transform concurrente.
 Les skills ennemis portent un profil `Grounded` ou `Airborne`; `BeginEnemyAirborne`
 et `RequestEnemyLanding` ouvrent et ferment la trajectoire balistique. Une mort
 ou une interruption force d'abord une chute controlee, ce qui empeche un ennemi

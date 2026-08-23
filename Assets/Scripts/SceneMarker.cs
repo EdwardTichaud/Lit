@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -15,6 +16,8 @@ using UnityEditor;
 [AddComponentMenu("Lit/Scene Marker")]
 public sealed class SceneMarker : MonoBehaviour
 {
+    private const float MaximumPersistedEnemyPositionOffset = 20f;
+
     [SerializeField] private CharacterData characterData;
     [SerializeField, HideInInspector] private string markerId;
 
@@ -22,6 +25,7 @@ public sealed class SceneMarker : MonoBehaviour
 
     private GameObject runtimeInstance;
     private bool loggedMissingWorldPrefab;
+    private bool loggedNetworkParentWarning;
 
     public CharacterData CharacterData => characterData;
     public string MarkerId => markerId;
@@ -87,12 +91,6 @@ public sealed class SceneMarker : MonoBehaviour
             int maxHp = data.ResolveMaxHp();
             health.SetHealth(maxHp, maxHp);
 
-            CombatAggroEnemy aggro = instance.GetComponent<CombatAggroEnemy>();
-            if (aggro == null)
-            {
-                aggro = instance.AddComponent<CombatAggroEnemy>();
-            }
-            aggro.SetEnemy(data);
         }
 
         if (TryGetRegisteredMarker(persistentId, out SceneMarker marker))
@@ -108,8 +106,19 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
-        runtimeInstance.transform.SetPositionAndRotation(position, rotation);
-        runtimeInstance.transform.localScale = scale;
+        bool hasInvalidEnemyPosition = characterData != null && characterData.isEnemy &&
+            Vector3.Distance(position, transform.position) > MaximumPersistedEnemyPositionOffset;
+        if (hasInvalidEnemyPosition)
+        {
+            Debug.LogWarning("[SceneMarker] Etat persistant ignore pour '" + name +
+                             "' : position trop eloignee du marker | sauvegarde=" + position +
+                             " | marker=" + transform.position + ".", this);
+        }
+        else
+        {
+            runtimeInstance.transform.SetPositionAndRotation(position, rotation);
+            runtimeInstance.transform.localScale = scale;
+        }
         CombatHealth health = runtimeInstance.GetComponent<CombatHealth>();
         if (health != null && maxHp > 0)
         {
@@ -156,7 +165,7 @@ public sealed class SceneMarker : MonoBehaviour
         EnsureServerSpawned(runtimeInstance);
     }
 
-    private static void EnsureServerSpawned(GameObject instance)
+    private void EnsureServerSpawned(GameObject instance)
     {
         NetworkManager manager = NetworkManager.Singleton;
         if (instance == null || manager == null || !manager.IsListening || !manager.IsServer)
@@ -168,6 +177,32 @@ public sealed class SceneMarker : MonoBehaviour
         if (networkObject != null && !networkObject.IsSpawned)
         {
             networkObject.Spawn(true);
+        }
+
+        NetworkObject markerNetworkObject = GetComponent<NetworkObject>();
+        if (networkObject == null || markerNetworkObject == null || !networkObject.IsSpawned || !markerNetworkObject.IsSpawned)
+        {
+            if (!loggedNetworkParentWarning)
+            {
+                loggedNetworkParentWarning = true;
+                Debug.LogWarning(
+                    "[SceneMarker] Parentage Netcode differe pour '" + name +
+                    "' : le NetworkObject du marker doit etre spawn avant celui du clone.",
+                    this);
+            }
+            return;
+        }
+
+        if (networkObject.transform.parent != transform && !networkObject.TrySetParent(markerNetworkObject, true))
+        {
+            Debug.LogError("[SceneMarker] Parentage Netcode impossible pour '" + name + "'.", this);
+        }
+
+        NetworkTransform networkTransform = instance.GetComponent<NetworkTransform>();
+        if (networkTransform != null)
+        {
+            networkTransform.SwitchTransformSpaceWhenParented = true;
+            networkTransform.InLocalSpace = true;
         }
     }
 

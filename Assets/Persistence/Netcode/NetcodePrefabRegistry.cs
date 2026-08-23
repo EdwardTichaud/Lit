@@ -500,16 +500,44 @@ public static class NetcodePrefabRegistry
             return null;
         }
 
-        SceneMarker.TryGetRegisteredMarker(info.markerId, out SceneMarker marker);
-        Transform parent = marker != null ? marker.transform : null;
+        // Offline marker actors use a normal Unity parent. In a listening
+        // session the server applies the same parent after Spawn through NGO,
+        // otherwise NetworkTransform can interpret the marker-relative pose as
+        // a world pose during its initial synchronization.
+        NetworkManager manager = NetworkManager.Singleton;
+        bool isNetworkSession = manager != null && manager.IsListening;
+        Transform parent = null;
+        if (SceneMarker.TryGetRegisteredMarker(info.markerId, out SceneMarker marker))
+        {
+            parent = isNetworkSession ? null : marker.transform;
+        }
+
         GameObject instance = parent != null
-            ? Object.Instantiate(info.sourcePrefab, position, rotation, parent)
-            : Object.Instantiate(info.sourcePrefab, position, rotation);
+            ? Object.Instantiate(info.sourcePrefab, parent)
+            : Object.Instantiate(info.sourcePrefab);
+        instance.transform.SetPositionAndRotation(position, rotation);
+        Physics.SyncTransforms();
 
         SceneMarker.ConfigureSpawnedCharacter(instance, info.character, info.markerId);
-        NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
-        NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
-        NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, info.hash);
+        instance.GetComponent<CombatEnemyPhysicsMotor>()?.AuditPose("SceneMarker:spawn configure");
+        if (isNetworkSession)
+        {
+            NetworkObject networkObject = NetcodeRuntimeUtilities.GetOrAdd<NetworkObject>(instance);
+            NetworkTransform networkTransform = NetcodeRuntimeUtilities.GetOrAdd<NetworkTransform>(instance);
+            networkTransform.SwitchTransformSpaceWhenParented = true;
+            networkTransform.InLocalSpace = false;
+            NetcodeRuntimeUtilities.EnsureNetworkObjectHash(networkObject, info.hash);
+        }
+        else
+        {
+            // A WorldPrefab can still carry this component from an old test.
+            // It must never author an offline SceneMarker actor pose.
+            NetworkTransform networkTransform = instance.GetComponent<NetworkTransform>();
+            if (networkTransform != null)
+            {
+                networkTransform.enabled = false;
+            }
+        }
         return instance;
     }
 

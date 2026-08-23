@@ -159,8 +159,6 @@ public class UIManager : MonoBehaviour
 
             switch (behaviour.GetType().Name)
             {
-                case "CombatHudController":
-                case "CombatTransitionController":
                 case "DialoguePanelUI":
                 case "BuildingPanelController":
                 case "CraftingConstructionPanel":

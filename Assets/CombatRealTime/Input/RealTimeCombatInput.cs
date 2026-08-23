@@ -17,6 +17,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private float basicComboResetDelaySeconds = 0.85f;
     [SerializeField, Min(1), Tooltip("Nombre maximal d'attaques basiques en attente derriere l'animation en cours.")]
     private int maximumBufferedBasicSkills = 1;
+    [SerializeField, Tooltip("Journalise uniquement les refus d'attaque et les activations de la map de combat.")]
+    private bool logInputDiagnostics = true;
 
     private InputActionMap actionMap;
     private InputAction counterAction;
@@ -39,6 +41,14 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     public int SelectedSlot => selectedSlot;
     public bool IsInputActive => actionMap != null && actionMap.enabled;
+    public string InputDiagnostics =>
+        "map=" + (actionMap != null ? actionMap.name : "None") +
+        " enabled=" + IsInputActive +
+        " callbacks=" + callbacksSubscribed +
+        " mode=" + InputModeCoordinator.CurrentMode +
+        " context=" + GamepadInputContextStack.Current +
+        " palette=" + paletteOpen +
+        " counterWheel=" + IsCounterSelectionOpen;
     private bool IsCounterSelectionOpen => CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsSelectionOpen;
 
     private void OnEnable()
@@ -73,6 +83,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             Subscribe();
             LocalPlayerInput.SetCombatInputActive(true);
             GamepadInputContextStack.Push(this, GamepadInputContext.Combat);
+            Trace("Combat input active | " + InputDiagnostics + ".");
             return;
         }
 
@@ -80,6 +91,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         GamepadInputContextStack.Pop(this);
         ClosePalette();
         ClearBasicSkillCombo();
+        Trace("Combat input inactive | " + InputDiagnostics + ".");
     }
 
     private void ResolveActions()
@@ -227,28 +239,33 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     {
         if (paletteOpen || IsCounterSelectionOpen)
         {
+            Trace("BasicAttack ignoree: roue ouverte | " + InputDiagnostics + ".");
             return;
         }
 
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         if (manager == null || !manager.IsCombatActive || manager.LockedEnemy == null)
         {
+            Trace("BasicAttack ignoree: combat ou lock absent | " + InputDiagnostics + ".");
             return;
         }
 
         if (!manager.CanAcceptBasicSkillInput)
         {
+            Trace("BasicAttack ignoree: presentation joueur indisponible.");
             return;
         }
 
         SkillsManager skillsManager = FindAnyObjectByType<SkillsManager>(FindObjectsInactive.Include);
         if (skillsManager == null)
         {
+            Trace("BasicAttack ignoree: SkillsManager introuvable.");
             return;
         }
 
         if (basicSkillQueue.Count >= maximumBufferedBasicSkills)
         {
+            Trace("BasicAttack ignoree: buffer deja plein.");
             return;
         }
 
@@ -260,6 +277,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
         if (!skillsManager.TryReserveNextBasicSkill(out BasicSkillsSO skill))
         {
+            Trace("BasicAttack ignoree: aucun BasicSkillsSO configure.");
             return;
         }
 
@@ -475,5 +493,13 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         skillWheelCanvasGroup.alpha = visible ? skillWheelVisibleAlpha : 0f;
         skillWheelCanvasGroup.interactable = visible;
         skillWheelCanvasGroup.blocksRaycasts = visible;
+    }
+
+    private void Trace(string message)
+    {
+        if (logInputDiagnostics)
+        {
+            Debug.Log("[RealTimeCombatInput] " + message, this);
+        }
     }
 }

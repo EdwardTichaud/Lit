@@ -1628,97 +1628,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4300554973151123375}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1640574442492446550
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8670942681502273833}
-  - component: {fileID: 3145779015711984909}
-  - component: {fileID: 6260377062376959528}
-  m_Layer: 0
-  m_Name: CinemachineCamera_GiantJuggernaut
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8670942681502273833
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1640574442492446550}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.5376277, y: -0.45929983, z: 0.537628, w: 0.45929977}
-  m_LocalPosition: {x: -0.008249248, y: -0.0033690343, z: 0.0020003014}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8791450682501331711}
-  m_LocalEulerAnglesHint: {x: 8.985, y: 0, z: 0}
---- !u!114 &3145779015711984909
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1640574442492446550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
-  Priority:
-    Enabled: 0
-    m_Value: 0
-  OutputChannel: 1
-  StandbyUpdate: 2
-  m_StreamingVersion: 20241001
-  m_LegacyPriority: 0
-  Target:
-    TrackingTarget: {fileID: 0}
-    LookAtTarget: {fileID: 0}
-    CustomLookAtTarget: 0
-  Lens:
-    FieldOfView: 37
-    OrthographicSize: 10
-    NearClipPlane: 0.01
-    FarClipPlane: 1000
-    Dutch: 0
-    ModeOverride: 0
-    PhysicalProperties:
-      GateFit: 2
-      SensorSize: {x: 21.946, y: 16.002}
-      LensShift: {x: 0, y: 0}
-      FocusDistance: 10
-      Iso: 200
-      ShutterSpeed: 0.005
-      Aperture: 16
-      BladeCount: 5
-      Curvature: {x: 2, y: 11}
-      BarrelClipping: 0.25
-      Anamorphism: 0
-  BlendHint: 0
---- !u!114 &6260377062376959528
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1640574442492446550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 23d19cc56014489da6af55930a0f5c3d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LitCinemachineShot
-  cinemachineCamera: {fileID: 3145779015711984909}
-  blendSeconds: 0.35
-  releaseWhenDisabled: 1
 --- !u!1 &1641241405091551678
 GameObject:
   m_ObjectHideFlags: 0
@@ -3427,8 +3336,7 @@ Transform:
   m_LocalPosition: {x: -0.04912922, y: -0.00000018715858, z: 0.000000006514354}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8670942681502273833}
+  m_Children: []
   m_Father: {fileID: 3823693662435142252}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2813625193188115020
@@ -5433,7 +5341,6 @@ GameObject:
   - component: {fileID: 7177769581939990386}
   - component: {fileID: 2855008630490265850}
   - component: {fileID: 1507485742872985387}
-  - component: {fileID: 1157863950513175024}
   - component: {fileID: 8793910659942973289}
   - component: {fileID: 708000000000000001}
   - component: {fileID: 708000000000000002}
@@ -5582,6 +5489,71 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &2855008630490265850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21b7ec7933b64c51b172ca8f8e4d9431, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemyBehaviour
+  enemy: {fileID: 847953340343303029}
+  navigationAgent: {fileID: 7177769581939990386}
+  navMeshSampleDistance: 1.5
+  navMeshReattachTolerance: 0.15
+  navMeshRetryInterval: 0.25
+  patrolPoint: {fileID: 0}
+  meleeAttackDistance: 2.6
+  rangedAttackDistance: 8
+  disengageDistance: 30
+  returnToPatrolAfterSeconds: 5
+  canPursuePlayer: 0
+  alertedVisionDistance: 32
+  alertMemorySeconds: 12
+  searchLastKnownPositionSeconds: 3
+  searchArrivalDistance: 0.65
+  meleeAttackPreferencePercent: 70
+  patrolArrivalDistance: 0.15
+  directMoveSpeed: 3.6
+  turnSpeedDegreesPerSecond: 540
+  logCinematicPlacementDiagnostics: 1
+--- !u!114 &1507485742872985387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 345b9152cdf84d6d95c0ab5f4e108d61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySkills
+  enemy: {fileID: 847953340343303029}
+  animationContract: {fileID: 8793910659942973289}
+  animator: {fileID: 88241028141342083}
+  casterVfxPoint: {fileID: 0}
+  skills:
+  - {fileID: 11400000, guid: 868c6bf11c102084591a5986869d6755, type: 2}
+--- !u!114 &8793910659942973289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
+  animationRoot: {fileID: 4030110569289934102}
+  animator: {fileID: 88241028141342083}
+  lockPoint: {fileID: 937648210628518453}
 --- !u!54 &708000000000000001
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -5651,146 +5623,17 @@ MonoBehaviour:
   groundSkin: 0.03
   groundProbeStartHeight: 0.35
   groundProbeDistance: 8
+  maximumGroundSnapDistance: 0.75
   minimumGroundNormal: 0.45
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
   logStateChanges: 0
---- !u!114 &2855008630490265850
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21b7ec7933b64c51b172ca8f8e4d9431, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemyBehaviour
-  enemy: {fileID: 847953340343303029}
-  navigationAgent: {fileID: 7177769581939990386}
-  navMeshSampleDistance: 1.5
-  navMeshRetryInterval: 0.25
-  patrolPoint: {fileID: 0}
-  meleeAttackDistance: 2.6
-  rangedAttackDistance: 8
-  disengageDistance: 30
-  returnToPatrolAfterSeconds: 5
-  canPursuePlayer: 0
-  alertedVisionDistance: 32
-  alertMemorySeconds: 12
-  searchLastKnownPositionSeconds: 3
-  searchArrivalDistance: 0.65
-  meleeAttackPreferencePercent: 70
-  patrolArrivalDistance: 0.15
-  directMoveSpeed: 3.6
-  turnSpeedDegreesPerSecond: 540
-  ensurePhysicalBodyCollider: 0
-  physicalBodyRadiusPadding: 0.05
-  logCinematicPlacementDiagnostics: 1
---- !u!114 &1507485742872985387
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 345b9152cdf84d6d95c0ab5f4e108d61, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySkills
-  enemy: {fileID: 847953340343303029}
-  animationContract: {fileID: 8793910659942973289}
-  animator: {fileID: 88241028141342083}
-  casterVfxPoint: {fileID: 0}
-  skills:
-  - {fileID: 11400000, guid: 868c6bf11c102084591a5986869d6755, type: 2}
---- !u!114 &1157863950513175024
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4542b248a0941cb91396c00e209444b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatAnimationEvents
-  actorRoot: {fileID: 0}
-  victimOverride: {fileID: 0}
-  slowedTimeScale: 0.1
-  slowBlendSeconds: 0.15
-  slowBlendCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  includeVictimInTimeScale: 1
-  victimStopDistance: 1.15
-  moveToVictimSeconds: 0.2
-  returnSeconds: 0.2
-  movementCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  keepActorHeight: 1
---- !u!114 &8793910659942973289
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4712010629109728797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fc6ed9bc102c09408bfcfad18f44729, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatActorAnimationRoot
-  animationRoot: {fileID: 4030110569289934102}
-  animator: {fileID: 88241028141342083}
-  lockPoint: {fileID: 937648210628518453}
+  logPoseAudit: 1
+  poseJumpDiagnosticDistance: 0.5
+  maximumRootMotionDeltaPerFrame: 0.5
+  maximumRootMotionDistancePerFixedUpdate: 0.75
+  actionRepositionDiagnosticDistance: 1
 --- !u!1 &4844841144064905090
 GameObject:
   m_ObjectHideFlags: 0
