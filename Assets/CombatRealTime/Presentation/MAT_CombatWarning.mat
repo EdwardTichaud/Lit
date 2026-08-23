@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MAT_CombatWarning
+  m_Shader: {fileID: 4800000, guid: 1f67b93a2c8d4ed5a7061949ecbe6b6e, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _WarningChromatic: 0
+    - _WarningIntensity: 0
+    - _WarningPulse: 0.5732873
+    - _WarningVignette: 0
+    m_Colors:
+    - _WarningColor: {r: 1, g: 0.08, b: 0.36, a: 1}
+    - _WarningDirection: {r: -0.21931855, g: -0.9756533, b: 0, a: 0}
+    - _WarningOrigin: {r: 0.47563723, g: 0.39162058, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

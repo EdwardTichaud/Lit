@@ -48,6 +48,7 @@ public sealed class CombatMobilityController : MonoBehaviour
     private float dodgeReadyAt;
     private float damageInvulnerableUntil;
     private Coroutine dodgeInvulnerabilityRoutine;
+    private Coroutine directionalEvasionFacingRoutine;
 
     public bool IsDamageInvulnerable => Time.unscaledTime < damageInvulnerableUntil;
 
@@ -64,6 +65,18 @@ public sealed class CombatMobilityController : MonoBehaviour
         {
             StopCoroutine(dodgeInvulnerabilityRoutine);
             dodgeInvulnerabilityRoutine = null;
+        }
+
+        if (directionalEvasionFacingRoutine != null)
+        {
+            StopCoroutine(directionalEvasionFacingRoutine);
+            directionalEvasionFacingRoutine = null;
+        }
+
+        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
+        if (manager != null && manager.PlayerRoot != null)
+        {
+            manager.PlayerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)?.EndDirectionalEvasionFacing();
         }
     }
 
@@ -157,27 +170,32 @@ public sealed class CombatMobilityController : MonoBehaviour
 
     private bool ExecuteDodge(RealTimeCombatManager manager, LitOpsiveLocomotionBridge bridge)
     {
-        Vector2 movementInput = bridge.CurrentWorldMoveInput;
+        Vector2 movementInput = bridge.IsCombatLockActive
+            ? bridge.CombatLockLocalInput
+            : bridge.CurrentWorldMoveInput;
         bool hasExplicitDirection = movementInput.sqrMagnitude > 0.0001f;
         Vector3 direction;
         string state;
         if (hasExplicitDirection)
         {
-            direction = new Vector3(movementInput.x, 0f, movementInput.y).normalized;
-            manager.FacePlayerTowardsDirection(direction);
-            state = dodgeForwardState;
+            direction = new Vector3(bridge.CurrentWorldMoveInput.x, 0f, bridge.CurrentWorldMoveInput.y).normalized;
+            state = ResolveDodgeState(manager.PlayerRoot, direction);
         }
         else
         {
-            manager.FacePlayerTowardsLockedEnemy();
             direction = ResolveMovementDirection(manager.PlayerRoot, fallbackBackward: true);
             state = dodgeBackwardState;
         }
 
+        bridge.BeginDirectionalEvasionFacing(direction);
+
         if (!TryPlayMobilityState(state, dodge, PlayerActionRootMotionMode.AuthoredRootMotion, "Dodge"))
         {
+            bridge.EndDirectionalEvasionFacing();
             return false;
         }
+
+        BeginDirectionalEvasionRestore(bridge, waitForGrounded: false);
 
         dodgeReadyAt = Time.unscaledTime + dodge.cooldownSeconds;
         if (dodgeInvulnerabilityRoutine != null)
@@ -192,7 +210,23 @@ public sealed class CombatMobilityController : MonoBehaviour
     private bool ExecuteJump(LitOpsiveLocomotionBridge bridge)
     {
         Vector2 worldInput = bridge.CurrentWorldMoveInput;
-        return bridge.Jump(worldInput, worldInput.sqrMagnitude > 0.0001f);
+        Vector3 direction = new Vector3(worldInput.x, 0f, worldInput.y);
+        if (direction.sqrMagnitude > 0.0001f)
+        {
+            bridge.BeginDirectionalEvasionFacing(direction);
+        }
+
+        bool started = bridge.Jump(worldInput, worldInput.sqrMagnitude > 0.0001f);
+        if (started)
+        {
+            BeginDirectionalEvasionRestore(bridge, waitForGrounded: true);
+        }
+        else
+        {
+            bridge.EndDirectionalEvasionFacing();
+        }
+
+        return started;
     }
 
     private bool TryPlayMobilityState(
@@ -240,6 +274,50 @@ public sealed class CombatMobilityController : MonoBehaviour
         }
 
         dodgeInvulnerabilityRoutine = null;
+    }
+
+    private void BeginDirectionalEvasionRestore(LitOpsiveLocomotionBridge bridge, bool waitForGrounded)
+    {
+        if (directionalEvasionFacingRoutine != null)
+        {
+            StopCoroutine(directionalEvasionFacingRoutine);
+        }
+
+        directionalEvasionFacingRoutine = StartCoroutine(RestoreDirectionalEvasionFacing(bridge, waitForGrounded));
+    }
+
+    private IEnumerator RestoreDirectionalEvasionFacing(LitOpsiveLocomotionBridge bridge, bool waitForGrounded)
+    {
+        yield return null;
+        if (waitForGrounded)
+        {
+            bool leftGround = false;
+            float safetyExpiresAt = Time.unscaledTime + 2f;
+            while (bridge != null && Time.unscaledTime < safetyExpiresAt)
+            {
+                if (!bridge.Grounded || bridge.IsFlightActive)
+                {
+                    leftGround = true;
+                }
+
+                if (leftGround && bridge.Grounded && !bridge.IsFlightActive)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+        }
+        else
+        {
+            while (actionPresentation != null && actionPresentation.IsActionActive)
+            {
+                yield return null;
+            }
+        }
+
+        bridge?.EndDirectionalEvasionFacing();
+        directionalEvasionFacingRoutine = null;
     }
 
     private bool IsOffCooldown(MobilityCommand command)

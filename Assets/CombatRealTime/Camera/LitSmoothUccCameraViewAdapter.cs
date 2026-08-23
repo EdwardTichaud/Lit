@@ -21,6 +21,10 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     [SerializeField, Min(0f)] private float followSmoothTime = 0.14f;
     [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
     [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
+    [SerializeField, Min(0f), Tooltip("Distance reduction required before the camera snaps inward for a major wall. Smaller obstacle corrections remain smooth.")]
+    private float hardCollisionSnapDistance = 1.25f;
+    [SerializeField, Tooltip("Keep disabled for smoother lock framing in tight spaces. UCC native camera collision is still used.")]
+    private bool useSupplementalCollisionConstraint;
 
     private void Reset()
     {
@@ -77,7 +81,12 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
             }
         }
 
-        smoothView.ConfigureFollowDamping(followSmoothTime, maximumFollowSpeed, teleportSnapDistance);
+        smoothView.ConfigureFollowDamping(
+            followSmoothTime,
+            maximumFollowSpeed,
+            teleportSnapDistance,
+            hardCollisionSnapDistance,
+            useSupplementalCollisionConstraint);
         cameraController.ThirdPersonViewTypeFullName = typeof(LitSmoothAdventureViewType).FullName;
         cameraController.SetViewType(typeof(LitSmoothAdventureViewType), true);
     }

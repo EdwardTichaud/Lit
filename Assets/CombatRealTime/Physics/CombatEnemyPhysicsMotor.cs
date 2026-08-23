@@ -34,6 +34,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     [SerializeField, Min(0.1f)] private float groundProbeDistance = 4f;
     [SerializeField, Min(0.05f), Tooltip("Correction verticale maximale autorisee par une sonde de sol. Evite de raccrocher un acteur a un autre niveau du decor.")]
     private float maximumGroundSnapDistance = 0.75f;
+    [SerializeField, Min(0.05f), Tooltip("Delai maximal apres une demande d'atterrissage avant le filet de securite vertical.")]
+    private float emergencyLandingDelay = 0.45f;
     [SerializeField, Range(0f, 1f)] private float minimumGroundNormal = 0.45f;
     [SerializeField] private LayerMask groundMask = ~0;
     [Header("Diagnostics")]
@@ -56,7 +58,13 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private Action pendingCompletion;
     private float verticalVelocity;
     private float airborneStartedAt;
+    private float landingRequestedAt;
+    private float lastConfirmedGroundY;
+    private bool hasLastConfirmedGroundY;
     private bool landingRequested;
+    private bool rushActive;
+    private Transform rushTarget;
+    private float rushSpeed;
     private bool navigationSuppressed;
     private bool hasObservedPose;
     private Vector3 lastObservedPosition;
@@ -143,6 +151,12 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         pendingRootRotation = Quaternion.identity;
         verticalVelocity = 0f;
         landingRequested = false;
+        landingRequestedAt = -1f;
+        rushActive = false;
+        rushTarget = null;
+        rushSpeed = 0f;
+        lastConfirmedGroundY = body != null ? body.position.y : transform.position.y;
+        hasLastConfirmedGroundY = true;
         SuppressNavigation();
         animationContract?.EnableRootMotionRelay();
         SetState(CombatEnemyPhysicsState.GroundedAction, "attaque " + (skill != null ? skill.SkillName : "inconnue"));
@@ -159,6 +173,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         verticalVelocity = activeMotionProfile.initialUpwardSpeed;
         airborneStartedAt = Time.time;
         landingRequested = false;
+        landingRequestedAt = -1f;
         SetState(CombatEnemyPhysicsState.AirborneAction, "debut aerien");
     }
 
@@ -170,8 +185,36 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         landingRequested = true;
+        landingRequestedAt = Time.time;
         verticalVelocity = Mathf.Min(verticalVelocity, -Mathf.Max(0.1f, activeMotionProfile.minimumLandingSpeed));
         SetState(CombatEnemyPhysicsState.Recovering, "atterrissage demande");
+    }
+
+    /// <summary>Starts an authored homing rush. It owns only planar motion while the motor keeps vertical physics authoritative.</summary>
+    public void BeginEnemyRush(Transform target)
+    {
+        if (!IsAirborne || activeMotionProfile == null || !activeMotionProfile.HasHomingRush || target == null)
+        {
+            return;
+        }
+
+        rushActive = true;
+        rushTarget = target;
+        rushSpeed = 0f;
+        AuditPose("ruée:debut");
+    }
+
+    public void EndEnemyRush()
+    {
+        if (!rushActive)
+        {
+            return;
+        }
+
+        rushActive = false;
+        rushTarget = null;
+        rushSpeed = 0f;
+        AuditPose("ruée:fin");
     }
 
     public void CompleteEnemyAction(Action completion)
@@ -207,6 +250,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         pendingCompletion = null;
         pendingPlanarRootMotion = Vector3.zero;
         pendingRootRotation = Quaternion.identity;
+        EndEnemyRush();
         SuppressNavigation();
         SetState(CombatEnemyPhysicsState.Cinematic, "cinematique");
         AuditPose("cinematique:debut");
@@ -232,7 +276,9 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return;
         }
 
-        Vector3 planarDelta = Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
+        // A homing rush is the only planar action owner during that phase. The
+        // clip may still contribute visual rotation, never translation.
+        Vector3 planarDelta = rushActive ? Vector3.zero : Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
         float maximumDistance = Mathf.Max(0.01f, maximumRootMotionDeltaPerFrame);
         if (planarDelta.sqrMagnitude > maximumDistance * maximumDistance)
         {
@@ -315,8 +361,10 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             if (TryGetGroundY(position, out float groundY))
             {
                 position.y = groundY;
+                RememberGroundY(groundY);
             }
 
+            planarDelta = ClampPlanarMotionToObstacles(position, planarDelta);
             MoveBody(position + planarDelta, rotation);
             return;
         }
@@ -326,6 +374,13 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             verticalVelocity - gravity * Time.fixedDeltaTime,
             -(activeMotionProfile != null ? activeMotionProfile.maximumFallSpeed : 28f));
 
+        if (rushActive)
+        {
+            planarDelta += ResolveRushPlanarDelta(position);
+        }
+
+        planarDelta = ClampPlanarMotionToObstacles(position, planarDelta);
+
         Vector3 nextPosition = position + planarDelta + Vector3.up * (verticalVelocity * Time.fixedDeltaTime);
         bool forceLanding = landingRequested ||
             (activeMotionProfile != null && Time.time - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds);
@@ -333,6 +388,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             nextPosition.y <= nextGroundY + groundSkin && verticalVelocity <= 0f)
         {
             nextPosition.y = nextGroundY;
+            RememberGroundY(nextGroundY);
             MoveBody(nextPosition, rotation);
             FinishRecovery();
             return;
@@ -341,6 +397,42 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         if (forceLanding && TryGetGroundY(nextPosition, out nextGroundY))
         {
             nextPosition.y = Mathf.Max(nextGroundY, nextPosition.y);
+        }
+
+        // A streamed scene can expose an unrelated collider on another world
+        // height (the pose audit currently proves this for the Crypt floor).
+        // Until a local physical floor is found, the height captured at the
+        // beginning of this action is the only safe lower bound. This prevents
+        // an authored jump from tunnelling below the visible combat floor while
+        // preserving its ascent and all planar rush motion.
+        if (hasLastConfirmedGroundY && verticalVelocity <= 0f && nextPosition.y <= lastConfirmedGroundY)
+        {
+            nextPosition.y = lastConfirmedGroundY;
+            MoveBody(nextPosition, rotation);
+            if (logPoseAudit)
+            {
+                Debug.LogWarning("[CombatEnemyPhysicsMotor] Atterrissage sur hauteur de securite pour '" + name +
+                                 "' : aucune surface locale valide n'a ete detectee.", this);
+            }
+            FinishRecovery();
+            return;
+        }
+
+        // Ground layers can be authored incorrectly in a scene. Never let an
+        // interrupted aerial action fall forever because one probe missed: use
+        // the last physically confirmed floor height, preserving the current X/Z.
+        bool airborneTimedOut = activeMotionProfile != null &&
+                            Time.time - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds;
+        bool emergencyLandingDue = (landingRequested && Time.time - landingRequestedAt >= emergencyLandingDelay) ||
+                                   airborneTimedOut;
+        if (emergencyLandingDue && hasLastConfirmedGroundY)
+        {
+            nextPosition.y = lastConfirmedGroundY;
+            MoveBody(nextPosition, rotation);
+            Debug.LogWarning("[CombatEnemyPhysicsMotor] Atterrissage de securite sur '" + name +
+                             "' : aucune sonde de sol valide pendant la recuperation.", this);
+            FinishRecovery();
+            return;
         }
 
         MoveBody(nextPosition, rotation);
@@ -352,6 +444,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         pendingCompletion = null;
         verticalVelocity = 0f;
         landingRequested = false;
+        landingRequestedAt = -1f;
+        EndEnemyRush();
         activeMotionProfile = null;
         ResumeNavigation();
         SetState(CombatEnemyPhysicsState.Navigation, "sol confirme");
@@ -405,6 +499,92 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         Physics.SyncTransforms();
     }
 
+    private Vector3 ResolveRushPlanarDelta(Vector3 position)
+    {
+        if (rushTarget == null || activeMotionProfile == null)
+        {
+            EndEnemyRush();
+            return Vector3.zero;
+        }
+
+        Vector3 targetPosition = rushTarget.position;
+        Vector3 direction = targetPosition - position;
+        direction.y = 0f;
+        float distance = direction.magnitude;
+        float stopDistance = Mathf.Max(0f, activeMotionProfile.rushStoppingDistance);
+        float deltaTime = Time.fixedDeltaTime;
+
+        if (distance <= stopDistance)
+        {
+            rushSpeed = Mathf.MoveTowards(rushSpeed, 0f, activeMotionProfile.rushDeceleration * deltaTime);
+            if (rushSpeed <= 0.01f)
+            {
+                EndEnemyRush();
+            }
+            return Vector3.zero;
+        }
+
+        rushSpeed = Mathf.MoveTowards(rushSpeed, activeMotionProfile.rushMaximumSpeed, activeMotionProfile.rushAcceleration * deltaTime);
+        float requestedDistance = Mathf.Min(rushSpeed * deltaTime, Mathf.Max(0f, distance - stopDistance));
+        if (requestedDistance <= 0.0001f)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 normalizedDirection = direction / distance;
+        if (TryClampPlanarMotionToObstacle(position, normalizedDirection, requestedDistance, out float allowedDistance))
+        {
+            requestedDistance = allowedDistance;
+            rushSpeed = Mathf.MoveTowards(rushSpeed, 0f, activeMotionProfile.rushDeceleration * deltaTime);
+            if (logStateChanges)
+            {
+                Debug.Log("[CombatEnemyPhysicsMotor] " + name + " ruée bloquee par decor.", this);
+            }
+        }
+
+        return normalizedDirection * Mathf.Max(0f, requestedDistance);
+    }
+
+    private Vector3 ClampPlanarMotionToObstacles(Vector3 position, Vector3 planarDelta)
+    {
+        float requestedDistance = planarDelta.magnitude;
+        if (requestedDistance <= 0.0001f)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 direction = planarDelta / requestedDistance;
+        return TryClampPlanarMotionToObstacle(position, direction, requestedDistance, out float allowedDistance)
+            ? direction * allowedDistance
+            : planarDelta;
+    }
+
+    private bool TryClampPlanarMotionToObstacle(Vector3 position, Vector3 direction, float requestedDistance, out float allowedDistance)
+    {
+        allowedDistance = requestedDistance;
+        if (bodyCollider == null || activeMotionProfile == null || requestedDistance <= 0f)
+        {
+            return false;
+        }
+
+        float scale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.z));
+        float radius = Mathf.Max(0.03f, bodyCollider.radius * scale);
+        float height = Mathf.Max(radius * 2f, bodyCollider.height * Mathf.Abs(transform.lossyScale.y));
+        Vector3 center = position + transform.TransformVector(bodyCollider.center);
+        float cylinderHalf = Mathf.Max(0f, height * 0.5f - radius);
+        Vector3 first = center + Vector3.up * cylinderHalf;
+        Vector3 second = center - Vector3.up * cylinderHalf;
+        if (!Physics.CapsuleCast(first, second, radius, direction, out RaycastHit hit,
+                requestedDistance + activeMotionProfile.rushCollisionSkin,
+                activeMotionProfile.rushBlockingMask, QueryTriggerInteraction.Ignore) || IsOwnCollider(hit.collider))
+        {
+            return false;
+        }
+
+        allowedDistance = Mathf.Max(0f, hit.distance - activeMotionProfile.rushCollisionSkin);
+        return true;
+    }
+
     private void SnapToGroundIfAvailable()
     {
         Vector3 position = body != null ? body.position : transform.position;
@@ -414,6 +594,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         position.y = groundY;
+        RememberGroundY(groundY);
         if (body != null)
         {
             body.position = position;
@@ -425,6 +606,12 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         Physics.SyncTransforms();
         AuditPose("physique:SnapToGround");
+    }
+
+    private void RememberGroundY(float groundY)
+    {
+        lastConfirmedGroundY = groundY;
+        hasLastConfirmedGroundY = true;
     }
 
     private bool TryGetGroundY(Vector3 actorPosition, out float groundY)

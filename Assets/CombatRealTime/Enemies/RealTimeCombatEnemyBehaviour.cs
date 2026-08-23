@@ -33,7 +33,6 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     [SerializeField, Range(0f, 100f), Tooltip("Chance de privilegier une attaque melee quand les deux familles sont disponibles.")]
     private float meleeAttackPreferencePercent = 70f;
     [SerializeField, Min(0.05f)] private float patrolArrivalDistance = 0.15f;
-    [SerializeField, Min(0f)] private float directMoveSpeed = 3.6f;
     [SerializeField, Min(0f)] private float turnSpeedDegreesPerSecond = 540f;
     [SerializeField, Tooltip("Journalise le replacement direct de l'ennemi par une LightSkill.")]
     private bool logCinematicPlacementDiagnostics = true;
@@ -41,6 +40,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private Transform player;
     private VisionField visionField;
     private CombatEnemyPhysicsMotor physicsMotor;
+    private CombatEnemyLocomotionController combatLocomotion;
     private bool attackMode;
     private bool alerted;
     private bool provokedByPlayer;
@@ -96,6 +96,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
 
         physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
+        combatLocomotion = GetComponent<CombatEnemyLocomotionController>();
 
         if (navigationAgent != null)
         {
@@ -137,6 +138,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
 
         float distance = HorizontalDistance(transform.position, player.position);
+        combatLocomotion?.SetCombatTarget(player);
         if (enemy.CanSeePlayer)
         {
             lastKnownPlayerPosition = player.position;
@@ -397,6 +399,12 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void MoveTowardsPlayer(float attackDistance)
     {
+        if (combatLocomotion != null && player != null)
+        {
+            combatLocomotion.NavigateTowardsTarget(attackDistance);
+            return;
+        }
+
         Vector3 destination = enemy.CanSeePlayer || !hasLastKnownPlayerPosition
             ? player.position
             : lastKnownPlayerPosition;
@@ -457,6 +465,12 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void MoveTowards(Vector3 destination, float destinationStoppingDistance)
     {
+        if (combatLocomotion != null)
+        {
+            combatLocomotion.NavigateTo(destination, destinationStoppingDistance);
+            return;
+        }
+
         if (TryPrepareNavigationAgent())
         {
             navigationAgent.isStopped = false;
@@ -467,21 +481,19 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             }
 
             navigationAgent.SetDestination(destination);
+            combatLocomotion?.FaceTarget(player != null ? player.position : destination);
             return;
         }
 
-        Vector3 direction = destination - transform.position;
-        direction.y = 0f;
-        if (direction.sqrMagnitude <= Mathf.Epsilon)
-        {
-            return;
-        }
-
-        transform.position += direction.normalized * (directMoveSpeed * Time.deltaTime);
+        // A missing NavMesh must stop this actor. Direct Transform movement here
+        // used to compete with the physics motor and could move an enemy through
+        // a floor or into a different NavMesh island.
+        StopMovement();
     }
 
     private void StopMovement()
     {
+        combatLocomotion?.StopNavigation();
         if (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh)
         {
             navigationAgent.isStopped = true;
@@ -564,6 +576,11 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void Face(Vector3 targetPosition)
     {
+        if (combatLocomotion != null)
+        {
+            combatLocomotion.FaceTarget(targetPosition);
+            return;
+        }
         Vector3 direction = targetPosition - transform.position;
         direction.y = 0f;
         if (direction.sqrMagnitude <= Mathf.Epsilon)

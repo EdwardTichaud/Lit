@@ -87,6 +87,30 @@ public sealed class CombatReactionTelegraphProfile
     [Min(0f)] public float perfectWindowSlowMotionSeconds = 0.15f;
 }
 
+[Serializable]
+public sealed class CombatWarningProfile
+{
+    [Tooltip("Active l'alerte camera locale declenchee par CombatWarningOn.")]
+    public bool enabled = true;
+    public Color color = new Color(1f, 0.1f, 0.42f, 1f);
+    [Range(0f, 2f)] public float intensity = 0.8f;
+    [Min(0.01f)] public float pulseFrequency = 2.5f;
+    [Range(0f, 1f)] public float vignette = 0.26f;
+    [Range(0f, 0.1f)] public float chromaticAberration = 0.012f;
+    [Range(0f, 1f)] public float enemyFocusBias = 0.9f;
+    [Range(20f, 720f)] public float recenterDegreesPerSecond = 280f;
+    [Min(0.1f)] public float focusSharpness = 28f;
+    [Range(-15f, 15f)] public float fieldOfViewOffset = -2f;
+    [Min(0f)] public float fadeOutSeconds = 0.16f;
+    public AudioClipSO warningAudio;
+
+    [Header("Warning Slow Motion")]
+    [Tooltip("Applique un bref ralentissement local au debut de CombatWarningOn.")]
+    public bool useSlowMotion;
+    [Range(0.05f, 1f)] public float slowMotionTimeScale = 0.85f;
+    [Min(0f)] public float slowMotionSeconds = 0.15f;
+}
+
 public enum SkillVfxDelivery
 {
     DirectOnTarget,
@@ -129,8 +153,21 @@ public sealed class EnemyActionMotionProfile
     public float minimumLandingSpeed = 4f;
     [Min(0.1f), Tooltip("Securite : l'ennemi force son retour au sol apres cette duree.")]
     public float maximumAirborneSeconds = 2.5f;
+    [Header("Scripted Rush")]
+    [Tooltip("Autorise BeginEnemyRush a piloter le plan horizontal. La verticale reste exclusivement physique.")]
+    public bool enableHomingRush;
+    [Min(0.1f)] public float rushMaximumSpeed = 14f;
+    [Min(0.1f)] public float rushAcceleration = 46f;
+    [Min(0.1f)] public float rushDeceleration = 62f;
+    [Min(0f), Tooltip("Distance horizontale conservee avant la cible pendant la ruée.")]
+    public float rushStoppingDistance = 1.25f;
+    [Min(0f), Tooltip("Marge supplementaire employee par le CapsuleCast anti-traversee.")]
+    public float rushCollisionSkin = 0.04f;
+    [Tooltip("Couches de decor qui peuvent interrompre la ruée.")]
+    public LayerMask rushBlockingMask = ~0;
 
     public bool IsAirborne => movementMode == EnemyActionMovementMode.Airborne;
+    public bool HasHomingRush => enableHomingRush;
 
     public static EnemyActionMotionProfile GroundedDefault => new EnemyActionMotionProfile();
 }
@@ -208,6 +245,8 @@ public class SkillSO : ScriptableObject
     public EnemyActionMotionProfile enemyActionMotion = new EnemyActionMotionProfile();
     [Header("Reaction Telegraph")]
     public CombatReactionTelegraphProfile reactionTelegraph = new CombatReactionTelegraphProfile();
+    [Header("Combat Warning")]
+    public CombatWarningProfile combatWarning = new CombatWarningProfile();
 
     public string SkillName => string.IsNullOrWhiteSpace(skillName) ? name : skillName;
     public Sprite Icon => icon;
@@ -229,6 +268,7 @@ public class SkillSO : ScriptableObject
     public AudioClipSO EnemyAttackSfx => enemyAttackSfx;
     public EnemyActionMotionProfile EnemyActionMotion => enemyActionMotion ?? (enemyActionMotion = EnemyActionMotionProfile.GroundedDefault);
     public CombatReactionTelegraphProfile ReactionTelegraph => reactionTelegraph ?? (reactionTelegraph = new CombatReactionTelegraphProfile());
+    public CombatWarningProfile CombatWarning => combatWarning ?? (combatWarning = new CombatWarningProfile());
 
     public bool AcceptsEnemyReaction(RealTimeCombatReaction reaction)
     {

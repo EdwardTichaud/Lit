@@ -16,6 +16,7 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
 
     private Vector3 impactLookOffset;
     private float impactFieldOfView;
+    private float warningFieldOfView;
     private Vector3 smoothedPlayerToEnemyAxis;
     private bool hasSmoothedPlayerToEnemyAxis;
 
@@ -46,13 +47,19 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
     public void ApplyCombatFraming()
     {
         LookOffset = combatLookOffset + impactLookOffset;
-        FieldOfView = Mathf.Clamp(combatFieldOfView + impactFieldOfView, 15f, 100f);
+        FieldOfView = Mathf.Clamp(combatFieldOfView + impactFieldOfView + warningFieldOfView, 15f, 100f);
     }
 
     public void SetImpactPresentation(Vector3 lookOffsetKick, float fieldOfViewKick)
     {
         impactLookOffset = lookOffsetKick;
         impactFieldOfView = fieldOfViewKick;
+        ApplyCombatFraming();
+    }
+
+    public void SetWarningPresentation(float fieldOfViewOffset)
+    {
+        warningFieldOfView = fieldOfViewOffset;
         ApplyCombatFraming();
     }
 

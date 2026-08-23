@@ -2351,6 +2351,13 @@ public partial class SquadCharacterController : MonoBehaviour
 #if UNITY_EDITOR
         TraceDistrictMoveIntent(input);
 #endif
+        LitOpsiveLocomotionBridge bridge = GetUccLocomotionBridge();
+        if (bridge != null && bridge.TryResolveCombatLockMove(input, out Vector2 targetRelativeWorldInput))
+        {
+            TryForwardMoveToUcc(targetRelativeWorldInput, isWorldSpace: true);
+            return;
+        }
+
         TryForwardMoveToUcc(input, isWorldSpace: false);
     }
 

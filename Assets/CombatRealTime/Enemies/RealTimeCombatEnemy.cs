@@ -261,6 +261,16 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         physicsMotor?.RequestEnemyLanding();
     }
 
+    public void BeginEnemyRush(Transform target)
+    {
+        physicsMotor?.BeginEnemyRush(target);
+    }
+
+    public void EndEnemyRush()
+    {
+        physicsMotor?.EndEnemyRush();
+    }
+
     /// <summary>
     /// Moves an active enemy action without bypassing its physics motor. Vertical
     /// position remains exclusively controlled by the motor.

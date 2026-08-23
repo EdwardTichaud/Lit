@@ -48,6 +48,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private bool combatActive;
     private bool reactionWindowOpen;
     private bool reactionSucceeded;
+    private int reactionWindowToken;
+    private Coroutine reactionWindowRoutine;
     private bool stopPlayerWhenMovementReleased;
     private float clarity;
     private int combatMusicOverrideToken;
@@ -96,11 +98,19 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         LitOpsiveLocomotionBridge bridge = playerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
-        if (bridge == null || !bridge.SetActionFacingDirection(worldDirection))
+        if (bridge != null && bridge.SetActionFacingDirection(worldDirection))
         {
-            playerRoot.rotation = Quaternion.LookRotation(worldDirection.normalized, Vector3.up);
+            return true;
         }
 
+        // Lock movement has one yaw authority: the UCC bridge. Do not fall
+        // back to a direct Transform write while combat is active.
+        if (combatActive)
+        {
+            return false;
+        }
+
+        playerRoot.rotation = Quaternion.LookRotation(worldDirection.normalized, Vector3.up);
         return true;
     }
 
@@ -141,6 +151,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private void Update()
     {
         ResolvePlayerReferences();
+        RefreshLockedEnemyStrafeBinding();
         StopResidualPlayerMovementAfterCombat();
 
         // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
@@ -224,9 +235,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     {
         combatActive = false;
         IsCinematicSequenceActive = false;
-        reactionWindowOpen = false;
-        receivedReactions.Clear();
-        reactionSucceeded = false;
+        CloseReactionWindow(notify: false);
         if (lockedEnemy != null)
         {
             lockedEnemy.CompleteRetaliation();
@@ -234,6 +243,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         ReactionWindowChanged?.Invoke(default);
         SetLockedEnemy(null);
+        playerLocomotionBridge?.ClearCombatLockTarget();
         combatInput?.SetInputActive(false);
         stopPlayerWhenMovementReleased = true;
         CombatStateChanged?.Invoke(false);
@@ -329,9 +339,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         lockedEnemy.CompleteRetaliation();
-        reactionWindowOpen = false;
-        reactionSucceeded = false;
-        receivedReactions.Clear();
+        CloseReactionWindow(notify: false);
         ReactionWindowChanged?.Invoke(default);
         SetLockedEnemy(next);
         return true;
@@ -507,6 +515,9 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         {
             lockedEnemy.SetLockPresentation(true, true);
         }
+
+        ResolvePlayerReferences();
+        RefreshLockedEnemyStrafeBinding();
 
         LockChanged?.Invoke(lockedEnemy);
     }
@@ -754,14 +765,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         IsCinematicSequenceActive = active;
         if (active)
         {
-            reactionWindowOpen = false;
-            receivedReactions.Clear();
+            CloseReactionWindow(notify: false);
             reactionSucceeded = false;
         }
     }
 
-    /// <summary>Closes the current reaction window and freezes its attack for CounterSkill selection.</summary>
-    public bool TryBeginCounterSelection()
+    /// <summary>Closes the current reaction window and freezes its attack for an immediate CounterSkill.</summary>
+    public bool TryBeginCounterCinematic()
     {
         if (IsCinematicSequenceActive || !combatActive || !reactionWindowOpen || lockedEnemy == null ||
             lockedEnemy.ActiveSkill == null || !lockedEnemy.ActiveSkill.AcceptsEnemyReaction(RealTimeCombatReaction.Counter))
@@ -769,19 +779,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return false;
         }
 
-        reactionWindowOpen = false;
+        CloseReactionWindow(notify: true);
         reactionSucceeded = true;
-        receivedReactions.Clear();
-        ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(
-            lockedEnemy.transform,
-            lockedEnemy.ActiveSkill,
-            lockedEnemy.CommittedRetaliationDamage,
-            false));
         SetCinematicSequenceActive(true);
         return true;
     }
 
-    public void CancelCounterSelection()
+    public void CancelCounterCinematic()
     {
         if (IsCinematicSequenceActive)
         {
@@ -799,9 +803,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             enemy.ReturnToIdleAnimation();
         }
 
-        reactionWindowOpen = false;
+        CloseReactionWindow(notify: false);
         reactionSucceeded = false;
-        receivedReactions.Clear();
         SetCinematicSequenceActive(false);
     }
 
@@ -910,16 +913,32 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void BeginEnemyAttackWindow(RealTimeCombatEnemy enemy)
     {
+        BeginEnemyAttackWindow(enemy, 0f);
+    }
+
+    /// <summary>
+    /// Opens an authored reaction window. The timeout only closes input eligibility;
+    /// the attack impact remains exclusively driven by its Animation Event.
+    /// </summary>
+    public void BeginEnemyAttackWindow(RealTimeCombatEnemy enemy, float durationSeconds)
+    {
         if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
         {
             return;
         }
 
+        CloseReactionWindow(notify: false);
         receivedReactions.Clear();
         reactionSucceeded = false;
         reactionWindowOpen = true;
         ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(enemy.transform, enemy.ActiveSkill, enemy.CommittedRetaliationDamage, true));
         EnemyAttackStarted?.Invoke(enemy.ActiveSkill, enemy.CommittedRetaliationDamage);
+
+        if (durationSeconds > 0f)
+        {
+            int token = ++reactionWindowToken;
+            reactionWindowRoutine = StartCoroutine(CloseReactionWindowAfterRealtime(enemy, enemy.ActiveSkill, token, durationSeconds));
+        }
     }
 
     public void RegisterReaction(RealTimeCombatReaction reaction)
@@ -951,6 +970,20 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         AddClarity(successfulReactionClarity);
     }
 
+    /// <summary>
+    /// Cancels eligibility for the currently authored attack without resolving
+    /// it. Damage and attack completion remain owned by their Animation Events.
+    /// </summary>
+    public void CancelEnemyAttackWindow(RealTimeCombatEnemy enemy)
+    {
+        if (enemy == null || enemy != lockedEnemy)
+        {
+            return;
+        }
+
+        CloseReactionWindow(notify: true);
+    }
+
     public void ResolveEnemyAttackImpact(RealTimeCombatEnemy enemy)
     {
         if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
@@ -958,14 +991,52 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
-        reactionWindowOpen = false;
-        ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(enemy.transform, enemy.ActiveSkill, enemy.CommittedRetaliationDamage, false));
+        CloseReactionWindow(notify: true);
         bool succeeded = reactionSucceeded;
         if (!succeeded)
         {
             ApplyEnemySkillDamageToPlayer(enemy, enemy.ActiveSkill);
         }
         ReactionImpactResolved?.Invoke(enemy.ActiveSkill, succeeded);
+    }
+
+    private System.Collections.IEnumerator CloseReactionWindowAfterRealtime(
+        RealTimeCombatEnemy enemy,
+        SkillSO skill,
+        int token,
+        float durationSeconds)
+    {
+        yield return new WaitForSecondsRealtime(durationSeconds);
+        if (token != reactionWindowToken || !reactionWindowOpen || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill != skill)
+        {
+            yield break;
+        }
+
+        CloseReactionWindow(notify: true);
+    }
+
+    private void CloseReactionWindow(bool notify)
+    {
+        if (reactionWindowRoutine != null)
+        {
+            StopCoroutine(reactionWindowRoutine);
+            reactionWindowRoutine = null;
+        }
+
+        reactionWindowToken++;
+        bool wasOpen = reactionWindowOpen;
+        RealTimeCombatEnemy enemy = lockedEnemy;
+        SkillSO skill = enemy != null ? enemy.ActiveSkill : null;
+        reactionWindowOpen = false;
+        receivedReactions.Clear();
+        if (notify && wasOpen && enemy != null && skill != null)
+        {
+            ReactionWindowChanged?.Invoke(new RealTimeCombatReactionWindow(
+                enemy.transform,
+                skill,
+                enemy.CommittedRetaliationDamage,
+                false));
+        }
     }
 
     private bool IsEnemySkillInHitRange(RealTimeCombatEnemy enemy, SkillSO skill)
@@ -990,9 +1061,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         enemy.CompleteRetaliationAndPrepareNext();
-        reactionWindowOpen = false;
+        CloseReactionWindow(notify: false);
         reactionSucceeded = false;
-        receivedReactions.Clear();
     }
 
     public static CombatClarityRank ResolveClarityRank(float value, float sThreshold)
@@ -1041,6 +1111,28 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (playerMobility == null) playerMobility = GetComponent<CombatMobilityController>();
         if (playerVision == null) playerVision = playerRoot.GetComponentInChildren<VisionField>(true);
         if (combatInput == null) combatInput = FindAnyObjectByType<RealTimeCombatInput>();
+    }
+
+    private void RefreshLockedEnemyStrafeBinding()
+    {
+        if (playerLocomotionBridge == null)
+        {
+            return;
+        }
+
+        // Timelines own actor orientation themselves. Outside cinematics, the
+        // bridge alone owns the target-relative movement and facing state.
+        Transform target = combatActive && !IsCinematicSequenceActive && HasValidLockedEnemy()
+            ? (lockedEnemy.LockPoint != null ? lockedEnemy.LockPoint : lockedEnemy.transform)
+            : null;
+        if (target != null)
+        {
+            playerLocomotionBridge.SetCombatLockTarget(target);
+        }
+        else
+        {
+            playerLocomotionBridge.ClearCombatLockTarget();
+        }
     }
 
     private void StopResidualPlayerMovementAfterCombat()

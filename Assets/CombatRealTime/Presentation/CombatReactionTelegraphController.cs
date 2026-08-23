@@ -84,7 +84,13 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
 
     private void OnReactionWindowChanged(RealTimeCombatReactionWindow window)
     {
-        if (!window.IsOpen || window.Enemy == null || window.Skill == null) return;
+        if (!window.IsOpen)
+        {
+            prompt?.Clear();
+            return;
+        }
+
+        if (window.Enemy == null || window.Skill == null) return;
         activeEnemy = window.Enemy.GetComponent<RealTimeCombatEnemy>();
         activeSkill = window.Skill;
         CombatReactionTelegraphProfile profile = activeSkill.ReactionTelegraph;

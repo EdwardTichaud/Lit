@@ -16,10 +16,12 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
     [Header("References")]
     [SerializeField] private UltimateCharacterLocomotion locomotion;
     [SerializeField] private Animator animator;
+    [SerializeField] private LitOpsiveLocomotionBridge locomotionBridge;
 
     [Header("Animator")]
     [SerializeField] private string jumpStartTrigger = "JumpStartTrigger";
     [SerializeField] private string landingTrigger = "LandingTrigger";
+    [SerializeField] private string jumpRollTrigger = "JumpRollTrigger";
     [SerializeField] private string activeParam = "JumpPresentationActive";
     [SerializeField] private string airborneParam = "IsAirborne";
     [SerializeField] private string phaseParam = "JumpPhase";
@@ -27,7 +29,12 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
 
     [Header("Feel")]
     [SerializeField, Min(0.05f)] private float landingLockSeconds = 0.25f;
+    [SerializeField, Min(0.05f)] private float rollLockSeconds = 0.48f;
     [SerializeField, Min(0f)] private float hardLandingHeight = 3f;
+    [SerializeField, Range(0f, 1f), Tooltip("Minimum magnitude of the last explicit move input required to roll on landing. The direction itself is preserved in world space.")]
+    private float rollForwardInputThreshold = 0.55f;
+    [SerializeField, Min(0f), Tooltip("How long a released move direction remains eligible for a landing roll.")]
+    private float landingRollInputMemorySeconds = 0.2f;
     [SerializeField, Min(0f)] private float apexVelocityThreshold = 0.7f;
     [SerializeField, Range(0.1f, 1f)] private float apexGravityMultiplier = 0.35f;
     [SerializeField, Range(0.1f, 1f)] private float descentGravityMultiplier = 0.75f;
@@ -39,6 +46,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
     private bool jumpActive;
     private bool leftGround;
     private bool landingRequested;
+    private bool rollingLanding;
     private bool gravityOverridden;
     private float baseGravity;
     private float landingUnlockTime;
@@ -50,6 +58,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
     {
         if (locomotion == null) locomotion = GetComponent<UltimateCharacterLocomotion>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (locomotionBridge == null) locomotionBridge = GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
     }
 
     private void OnEnable()
@@ -65,6 +74,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         EventHandler.UnregisterEvent<Ability, bool>(gameObject, AbilityActiveEvent, OnAbilityActive);
         EventHandler.UnregisterEvent<bool>(gameObject, GroundedEvent, OnGroundedChanged);
         EventHandler.UnregisterEvent<float>(gameObject, LandEvent, OnLanded);
+        locomotionBridge?.EndDirectionalEvasionFacing();
         RestoreGravity();
     }
 
@@ -84,6 +94,8 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
             SetAnimatorBool(activeParam, false);
             jumpActive = false;
             landingRequested = false;
+            rollingLanding = false;
+            locomotionBridge?.EndDirectionalEvasionFacing();
             SetPhase(PresentationPhase.Grounded);
             RestoreGravity();
             Trace("Landing presentation released.");
@@ -107,6 +119,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         jumpActive = true;
         leftGround = false;
         landingRequested = false;
+        rollingLanding = false;
         landingUnlockTime = 0f;
         baseGravity = locomotion != null ? locomotion.GravityAmount : 0f;
         SetAnimatorBool(activeParam, true);
@@ -156,14 +169,33 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
 
         landingRequested = true;
         leftGround = false;
-        landingUnlockTime = Time.unscaledTime + landingLockSeconds;
+        bool hardLanding = fallHeight >= hardLandingHeight;
+        Vector2 rollInput = locomotionBridge != null
+            ? locomotionBridge.LastExplicitWorldMoveInput
+            : locomotion != null ? locomotion.InputVector : Vector2.zero;
+        bool hasRecentRollInput = locomotionBridge == null ||
+                                  locomotionBridge.HasRecentExplicitWorldMoveInput(landingRollInputMemorySeconds);
+        rollingLanding = !hardLanding && hasRecentRollInput &&
+                         rollInput.sqrMagnitude >= rollForwardInputThreshold * rollForwardInputThreshold;
+        landingUnlockTime = Time.unscaledTime + (rollingLanding ? rollLockSeconds : landingLockSeconds);
         RestoreGravity();
         SetAnimatorBool(airborneParam, false);
-        SetAnimatorInteger(landingTypeParam, fallHeight >= hardLandingHeight ? 1 : 0);
+        SetAnimatorInteger(landingTypeParam, hardLanding ? 1 : 0);
         SetPhase(PresentationPhase.Landing);
-        ResetAnimatorTrigger(landingTrigger);
-        SetAnimatorTrigger(landingTrigger);
-        Trace("Landing requested by " + source + ".");
+        if (rollingLanding)
+        {
+            Vector3 rollDirection = new Vector3(rollInput.x, 0f, rollInput.y);
+            locomotionBridge?.BeginDirectionalEvasionFacing(rollDirection);
+            ResetAnimatorTrigger(jumpRollTrigger);
+            SetAnimatorTrigger(jumpRollTrigger);
+            Trace("Directional landing roll requested by " + source + ".");
+        }
+        else
+        {
+            ResetAnimatorTrigger(landingTrigger);
+            SetAnimatorTrigger(landingTrigger);
+            Trace("Landing requested by " + source + ".");
+        }
     }
 
     private void UpdateGravity(float verticalVelocity)
@@ -201,7 +233,9 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         jumpActive = false;
         leftGround = false;
         landingRequested = false;
+        rollingLanding = false;
         landingUnlockTime = 0f;
+        locomotionBridge?.EndDirectionalEvasionFacing();
         SetAnimatorBool(activeParam, false);
         SetAnimatorBool(airborneParam, false);
         SetAnimatorInteger(landingTypeParam, 0);

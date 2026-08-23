@@ -79,6 +79,14 @@ Le verrouillage combat affiche aussi un contour rouge HDRP autonome sur les
 renderers de l'ennemi. Il utilise la layer `CombatOutline` et la passe
 `CombatLockOutlinePass` de `GameplaySessionRoot`, sans partager l'etat ou la
 couleur des contours bleus d'interactables.
+Sous lock, le mouvement de Lucian est maintenant calcule une seule fois dans
+`LitOpsiveLocomotionBridge`, dans le repere de `EnemyLockPoint` (ou du root
+ennemi). Avant et arriere approchent ou eloignent; gauche et droite orbitent.
+Un strafe lateral pur conserve son rayon initial par une faible intention
+radiale UCC, sans ecriture directe de Transform. Lucian reste face a la cible;
+seules roulade et saut peuvent prendre une orientation d'evasion temporaire.
+Le blend tree combat de `Player_Model` contient un echantillon idle neutre afin
+qu'un lock sans Move ne joue plus une animation de marche root.
 Pendant ce lock, la camera conserve un evitement des obstacles visuels par
 SphereCast, configurable sur `CombatLockOnCameraController`, sans laisser les
 drivers UCC reprendre le cadrage de cible.
@@ -108,19 +116,23 @@ Le premier scenario jouable est configure : Lucian dispose de `Lueur faible`
 et `Lueur intense` dans les slots 1 et 2, tandis que le Juggernaut joue
 `Skill_Juggernaut_Assomoir` via `EnemySkills` et ouvre sa fenetre d'esquive par
 Animation Events. Son impact melee est configure entre 0 et 5 metres.
-Le prototype temps reel distingue maintenant garde, esquive et contre. `SouthButton`
+Le prototype temps reel distingue maintenant garde, esquive et contre. `NorthButton`
 maintenu active une garde qui reduit les degats recus de 60 % par defaut; une
-pression commencee dans une fenetre Animation Event acceptant `Counter` fige le
-temps, suspend l'attaque ennemie et ouvre une roue de `CounterSkillSO`. Le stick
-droit choisit un contre, `SouthButton` le confirme et `EastButton` annule la
-selection. Un contre joue une Timeline non scale liee dynamiquement a Lucian,
+nouvelle pression dans une fenetre Animation Event acceptant `Counter` fige le
+temps, suspend l'attaque ennemie et lance le `defaultCounterSkill` configure.
+Un contre joue une Timeline non scale liee dynamiquement a Lucian,
 l'ennemi verrouille et une Virtual Camera, puis son Animation Event applique les
 degats propres au `CounterSkillSO`. `EastButton` est l'unique esquive root avec
 i-frames; le dash combat precedent a ete retire de ce mapping.
-Le maintien de South joue `Guard_Block` depuis le pack Super Fast Fighting,
+Le maintien de North joue `Guard_Block` depuis le pack Super Fast Fighting,
 avec `Twinblades_Defense_Hit_Root` comme fallback tant que la state n'a pas ete
-installee dans `Player_Model`. Relacher South rend l'Idle de combat; seule une
+installee dans `Player_Model`. Relacher North rend l'Idle de combat; seule une
 pression commencant dans une fenetre qui accepte `Counter` declenche la parade.
+`CombatWarningOn` et `CombatWarningOff`, poses sur les clips ennemis, pilotent
+une alerte HDRP locale et une surcharge de focus temporaire vers
+`EnemyLockPoint`. `OpenReactionWindow(float)` ouvre la fenetre en temps reel
+non scale sans jamais resoudre les degats: impact et fin restent les Animation
+Events existants.
 Les actions combat orientent Lucian vers `EnemyLockPoint`. L'esquive fait
 exception : une direction explicite du stick a priorite, Lucian s'oriente alors
 dans cette direction et y roule; sans direction, il reste face a l'ennemi et
@@ -145,9 +157,9 @@ se masque a la sortie effective du combo. Les clips utilisent
 `ResolveSkillImpact` pour les impacts standards et
 `ResolveSkillImpactAndRetreat` pour le Saut de rupture.
 La mobilite temps reel est centralisee par `CombatMobilityController` sur
-`BattleManager`. En combat, `SouthButton` est reserve a la garde et au contre;
+`BattleManager`. En combat, `NorthButton` est reserve a la garde et au contre;
 `EastButton` declenche l'esquive root directionnelle avec 0.05 s de preparation
-et 0.18 s d'invulnerabilite; `NorthButton` declenche le saut UCC reel. Esquive
+et 0.18 s d'invulnerabilite; `SouthButton` declenche le saut UCC reel. Esquive
 et saut continuent de valider les fenetres de reaction Animation Event. Une
 seule commande de mobilite peut
 etre bufferisee 0.12 s pendant une action. Chaque `PlayerActionPresentationProfile`
@@ -624,6 +636,18 @@ afin qu'un dechargement de scene editeur ne laisse plus un GameObject
 Le prompt de reaction reacquiert sa reference de scene avant chaque phase et
 force son Canvas world-space sur la camera principale avec un ordre de rendu
 eleve, afin de rester visible apres un changement de scene.
+
+La locomotion combat est maintenant separee par autorite : le `NavMeshAgent`
+deplace les ennemis hors action, `CombatEnemyLocomotionController` traduit sa
+vitesse en strafe Root (sans lui ceder le deplacement monde), et
+`CombatEnemyPhysicsMotor` possede les actions
+engagees. `Skill_Juggernaut_Assomoir` est aerien : `BeginEnemyAirborne`,
+`BeginEnemyRush`, `EndEnemyRush` et `RequestEnemyLanding` remplacent son ancien
+deplacement ponctuel `DashToTarget`. La ruée suit la cible horizontalement,
+s'arrete avant elle et ne peut pas ajouter de root motion concurrent.
+Le lock ne remet plus a zero une intention de deplacement deja maintenue, et le
+masque sol du Juggernaut couvre maintenant tout le decor afin que sa recuperation
+physique ne puisse pas tomber sous le niveau.
 
 L'orbe de Munin est maintenant visuellement independante de celle du chargement:
 elle conserve ses materiaux HDRP, n'applique plus de transparence derivee du noir

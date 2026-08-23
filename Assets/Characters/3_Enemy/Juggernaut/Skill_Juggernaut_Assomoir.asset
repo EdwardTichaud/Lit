@@ -89,12 +89,21 @@ MonoBehaviour:
   requireAllEnemyReactions: 0
   enemyAttackSfx: {fileID: 0}
   enemyActionMotion:
-    movementMode: 0
-    initialUpwardSpeed: 12
-    gravity: 32
-    maximumFallSpeed: 28
-    minimumLandingSpeed: 4
+    movementMode: 1
+    initialUpwardSpeed: 10.5
+    gravity: 28
+    maximumFallSpeed: 25
+    minimumLandingSpeed: 5
     maximumAirborneSeconds: 2.5
+    enableHomingRush: 1
+    rushMaximumSpeed: 15
+    rushAcceleration: 46
+    rushDeceleration: 62
+    rushStoppingDistance: 1.25
+    rushCollisionSkin: 0.04
+    rushBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   reactionTelegraph:
     enabled: 1
     alertPrefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}
@@ -108,3 +117,19 @@ MonoBehaviour:
     usePerfectWindowSlowMotion: 1
     perfectWindowTimeScale: 0.85
     perfectWindowSlowMotionSeconds: 0.15
+  combatWarning:
+    enabled: 1
+    color: {r: 1, g: 0.08, b: 0.36, a: 1}
+    intensity: 0.9
+    pulseFrequency: 2.8
+    vignette: 0.24
+    chromaticAberration: 0.012
+    enemyFocusBias: 0.92
+    recenterDegreesPerSecond: 300
+    focusSharpness: 30
+    fieldOfViewOffset: -2
+    fadeOutSeconds: 0.16
+    warningAudio: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}
+    useSlowMotion: 1
+    slowMotionTimeScale: 0.85
+    slowMotionSeconds: 0.15

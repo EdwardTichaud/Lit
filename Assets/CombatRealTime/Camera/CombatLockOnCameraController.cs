@@ -50,6 +50,10 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
     private float impactRecoverySharpness = 18f;
     private float impactShakeElapsed;
     private float impactShakePhase;
+    private Transform warningTarget;
+    private CombatWarningProfile warningProfile;
+    private bool warningRequested;
+    private float warningBlend;
 
     private void Awake()
     {
@@ -95,15 +99,34 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
             return;
         }
 
+        float warningFade = warningProfile != null && warningProfile.fadeOutSeconds > 0f
+            ? Time.unscaledDeltaTime / warningProfile.fadeOutSeconds
+            : 1f;
+        warningBlend = Mathf.MoveTowards(warningBlend, warningRequested ? 1f : 0f, warningFade);
+        if (!warningRequested && warningBlend <= 0f)
+        {
+            warningTarget = null;
+            warningProfile = null;
+        }
+
         float blend = 1f - Mathf.Exp(-Mathf.Max(0.1f, impactRecoverySharpness) * Time.unscaledDeltaTime);
         impactLookOffset = Vector3.Lerp(impactLookOffset, Vector3.zero, blend);
         impactFieldOfView = Mathf.Lerp(impactFieldOfView, 0f, blend);
         adapter.SetImpactPresentation(impactLookOffset + GetImpactShakeOffset(), impactFieldOfView);
 
+        CombatWarningProfile profile = warningProfile;
+        float focusBias = profile != null ? Mathf.Lerp(enemyFocusBias, profile.enemyFocusBias, warningBlend) : enemyFocusBias;
+        float maxOrbit = profile != null ? Mathf.Lerp(maximumLockOrbitDegreesPerSecond, profile.recenterDegreesPerSecond, warningBlend) : maximumLockOrbitDegreesPerSecond;
+        float axisSharpness = profile != null ? Mathf.Lerp(lockAxisSharpness, profile.focusSharpness, warningBlend) : lockAxisSharpness;
+        Transform target = warningTarget != null ? warningTarget : manager.LockedEnemy.LockPoint;
+        adapter.ConfigureLockMotion(maxOrbit, axisSharpness);
+        adapter.ConfigureLookPointSharpness(axisSharpness);
+        adapter.SetWarningPresentation(profile != null ? profile.fieldOfViewOffset * warningBlend : 0f);
+
         adapter.UpdateLockContext(
             manager.PlayerRoot,
-            manager.LockedEnemy.LockPoint,
-            enemyFocusBias,
+            target,
+            focusBias,
             playerLookHeight,
             enemyLookHeight);
     }
@@ -150,6 +173,11 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         impactFieldOfView = 0f;
         impactShakeElapsed = impactShakeDuration;
         uccAdapter?.SetImpactPresentation(Vector3.zero, 0f);
+        uccAdapter?.SetWarningPresentation(0f);
+        warningRequested = false;
+        warningBlend = 0f;
+        warningTarget = null;
+        warningProfile = null;
         uccAdapter?.DeactivateLock();
         active = false;
     }
@@ -175,6 +203,29 @@ public sealed class CombatLockOnCameraController : MonoBehaviour
         impactRecoverySharpness = Mathf.Max(minimumImpactRecoverySharpness, profile.recoverySharpness);
         impactShakeElapsed = 0f;
         impactShakePhase += 1.6180339f;
+    }
+
+    /// <summary>Prioritizes an attacking enemy without changing the manual lock target.</summary>
+    public void BeginAttackWarning(Transform enemyLockPoint, CombatWarningProfile profile)
+    {
+        if (!active || enemyLockPoint == null || profile == null || !profile.enabled)
+        {
+            return;
+        }
+
+        warningTarget = enemyLockPoint;
+        warningProfile = profile;
+        warningRequested = true;
+    }
+
+    public void EndAttackWarning(Transform enemyLockPoint = null)
+    {
+        if (enemyLockPoint != null && warningTarget != null && enemyLockPoint != warningTarget)
+        {
+            return;
+        }
+
+        warningRequested = false;
     }
 
     /// <summary>

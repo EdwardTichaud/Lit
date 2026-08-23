@@ -12,6 +12,10 @@ public class LitSmoothAdventureViewType : Adventure
     [SerializeField, Min(0f)] private float followSmoothTime = 0.14f;
     [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
     [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
+    [SerializeField, Min(0f), Tooltip("Only snap the camera inward when UCC had to shorten its distance by at least this amount. Smaller obstacle corrections are eased so narrow corridors remain readable.")]
+    private float hardCollisionSnapDistance = 1.25f;
+    [SerializeField, Tooltip("Optional second collision cast for the smoothed camera position. Leave disabled to favor stable framing around small obstacles; UCC's native collision solver remains active.")]
+    private bool useSupplementalCollisionConstraint;
 
     private Vector3 smoothedPosition;
     private Vector3 followVelocity;
@@ -52,11 +56,18 @@ public class LitSmoothAdventureViewType : Adventure
         }
     }
 
-    public void ConfigureFollowDamping(float smoothTime, float maximumSpeed, float snapDistance)
+    public void ConfigureFollowDamping(
+        float smoothTime,
+        float maximumSpeed,
+        float snapDistance,
+        float hardSnapDistance,
+        bool supplementalCollisionConstraint)
     {
         followSmoothTime = Mathf.Max(0f, smoothTime);
         maximumFollowSpeed = Mathf.Max(0f, maximumSpeed);
         teleportSnapDistance = Mathf.Max(0f, snapDistance);
+        hardCollisionSnapDistance = Mathf.Max(0f, hardSnapDistance);
+        useSupplementalCollisionConstraint = supplementalCollisionConstraint;
     }
 
     /// <summary>Clears follow inertia; the following UCC move seeds from the current camera pose.</summary>
@@ -115,10 +126,13 @@ public class LitSmoothAdventureViewType : Adventure
             maximumFollowSpeed,
             Time.deltaTime);
 
-        candidate = ConstrainSmoothedPosition(anchorPosition, candidate, out bool collisionConstrained);
-        if (collisionConstrained)
+        if (useSupplementalCollisionConstraint)
         {
-            followVelocity = Vector3.zero;
+            candidate = ConstrainSmoothedPosition(anchorPosition, candidate, out bool collisionConstrained);
+            if (collisionConstrained)
+            {
+                followVelocity = Vector3.zero;
+            }
         }
 
         smoothedPosition = candidate;
@@ -140,11 +154,13 @@ public class LitSmoothAdventureViewType : Adventure
             return true;
         }
 
-        // Never ease inward when UCC has pulled the camera towards its anchor
-        // to prevent wall clipping. Easing only occurs while expanding back out.
+        // UCC already resolves its collision position. Small inward corrections
+        // are intentionally eased: in a narrow corridor this favors framing
+        // continuity over constantly bouncing around minor geometry. A large
+        // correction still snaps before the camera can spend visible time in a wall.
         float currentDistance = Vector3.Distance(smoothedPosition, anchorPosition);
         float targetDistance = Vector3.Distance(targetPosition, anchorPosition);
-        return targetDistance < currentDistance - 0.02f;
+        return targetDistance < currentDistance - hardCollisionSnapDistance;
     }
 
     private Vector3 ConstrainSmoothedPosition(Vector3 collisionOrigin, Vector3 candidate, out bool constrained)

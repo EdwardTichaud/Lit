@@ -8649,6 +8649,7 @@ MonoBehaviour:
   forwardMovementParam: ForwardMovement
   isMovingParam: IsMoving
   locomotionTierParam: LocomotionTier
+  combatMoveMagnitudeParam: CombatMoveMagnitude
   turnParam: Turn
   flightStateParam: FlightState
   flightSpeedParam: FlightSpeed
@@ -8657,6 +8658,11 @@ MonoBehaviour:
   flightStartTriggerParam: FlightStartTrigger
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
+  combatFacingSpeedDegreesPerSecond: 1080
+  combatOrbitRadiusCorrection: 0.7
+  combatOrbitMaximumCorrection: 0.35
+  combatOrbitLateralVerticalThreshold: 0.2
+  logCombatLockMotionDiagnostics: 0
 --- !u!114 &9120017462384659012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8673,12 +8679,16 @@ MonoBehaviour:
   animator: {fileID: 963045829911085934}
   jumpStartTrigger: JumpStartTrigger
   landingTrigger: LandingTrigger
+  jumpRollTrigger: JumpRollTrigger
   activeParam: JumpPresentationActive
   airborneParam: IsAirborne
   phaseParam: JumpPhase
   landingTypeParam: LandingType
   landingLockSeconds: 0.25
+  rollLockSeconds: 0.48
   hardLandingHeight: 3
+  rollForwardInputThreshold: 0.55
+  landingRollInputMemorySeconds: 0.2
   apexVelocityThreshold: 0.7
   apexGravityMultiplier: 0.35
   descentGravityMultiplier: 0.75

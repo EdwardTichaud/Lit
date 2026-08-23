@@ -23,6 +23,7 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
     private float enemyFocusBias;
     private float playerLookHeight;
     private float enemyLookHeight;
+    private float runtimeLookPointSharpness;
     private Vector3 smoothedLookPoint;
     private bool hasSmoothedLookPoint;
     private bool lockActive;
@@ -75,7 +76,15 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         enemyFocusBias = Mathf.Clamp01(focusBias);
         playerLookHeight = playerHeight;
         enemyLookHeight = enemyHeight;
-        RefreshLookPoint();
+
+        // CombatLockAdventureView consumes this once from its own camera
+        // update. Refreshing here as well smoothed the same target twice per
+        // rendered frame and produced a subtle oscillation while orbiting.
+    }
+
+    public void ConfigureLookPointSharpness(float sharpness)
+    {
+        runtimeLookPointSharpness = Mathf.Max(0f, sharpness);
     }
 
     public void SetImpactPresentation(Vector3 lookOffsetKick, float fieldOfViewKick)
@@ -83,6 +92,14 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
         if (ResolveCombatLockView())
         {
             combatLockView.SetImpactPresentation(lookOffsetKick, fieldOfViewKick);
+        }
+    }
+
+    public void SetWarningPresentation(float fieldOfViewOffset)
+    {
+        if (ResolveCombatLockView())
+        {
+            combatLockView.SetWarningPresentation(fieldOfViewOffset);
         }
     }
 
@@ -219,9 +236,10 @@ public sealed class CombatLockUccCameraAdapter : MonoBehaviour
             return;
         }
 
-        float blend = lookPointSharpness <= 0f
+        float sharpness = runtimeLookPointSharpness > 0f ? runtimeLookPointSharpness : lookPointSharpness;
+        float blend = sharpness <= 0f
             ? 1f
-            : 1f - Mathf.Exp(-lookPointSharpness * Time.unscaledDeltaTime);
+            : 1f - Mathf.Exp(-sharpness * Time.unscaledDeltaTime);
         smoothedLookPoint = Vector3.Lerp(smoothedLookPoint, target, blend);
     }
 

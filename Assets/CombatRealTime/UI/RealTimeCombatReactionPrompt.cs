@@ -143,8 +143,8 @@ public sealed class RealTimeCombatReactionPrompt : MonoBehaviour
 
     private static string LabelFor(RealTimeCombatReaction reaction)
     {
-        return reaction == RealTimeCombatReaction.Counter ? "SOUTH" :
+        return reaction == RealTimeCombatReaction.Counter ? "NORTH" :
             reaction == RealTimeCombatReaction.Dodge ? "EAST" :
-            reaction == RealTimeCombatReaction.Jump ? "NORTH" : string.Empty;
+            reaction == RealTimeCombatReaction.Jump ? "SOUTH" : string.Empty;
     }
 }

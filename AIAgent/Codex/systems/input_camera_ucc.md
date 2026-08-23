@@ -39,6 +39,15 @@ Le flux se divise ensuite :
 `SquadCharacterController` convertit l’input en espace monde, puis
 `LitOpsiveLocomotionBridge` pilote UCC.
 
+Sous lock, `SquadCharacterController` transmet d'abord l'axe brut au bridge.
+`TryResolveCombatLockMove` le convertit en approche/recul/orbite relatif a
+`EnemyLockPoint`; il ne passe donc pas par le calcul camera-relative libre.
+Le bridge conserve la cible, le rayon d'orbite lateral et le face-a-face. Les
+clips Root de `CombatLocomotion` fournissent la translation, mais leur rotation
+est desactivee afin que le lock reste l'unique autorite de yaw. Une roulade ou
+un saut demande explicitement une orientation temporaire avant de revenir vers
+la cible.
+
 La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
 `LitUccCameraCharacterBinder` sur la caméra active pour suivre
 `LocalPlayerContext`. Les anciens pivots `CameraAnchor` / `YawPivot` /
@@ -138,27 +147,44 @@ bridge.
 contexte gamepad, suppressions locales et map combat sont purges ensemble avant
 le prochain test ou chargement de session.
 
-La map `RealTimeCombat` lie `Counter` a `Gamepad/buttonSouth` (`Space`) et
-`Dodge` a `Gamepad/buttonEast` (`LeftAlt`). `SouthButton` maintient une garde et
-peut ouvrir la roue de CounterSkill lors d'une fenetre parfaite; cette roue
-consomme stick droit, South pour confirmer et East pour annuler. `NorthButton`
-reste `Jump`. Les directions d'esquive viennent du vecteur monde deja calcule
+La map `RealTimeCombat` lie `Counter` a `Gamepad/buttonNorth` (`Space`),
+`Jump` a `Gamepad/buttonSouth` et `Dodge` a `Gamepad/buttonEast` (`LeftAlt`).
+`NorthButton` maintient une garde et declenche immediatement le
+`defaultCounterSkill` lors d'une nouvelle pression dans une fenetre parfaite qui
+accepte `Counter`. `SouthButton` reste `Jump`.
+Les directions d'esquive viennent du vecteur monde deja calcule
 par UCC; sans stick, l'esquive part vers l'arriere. Pendant un lock, la locomotion libre conserve
 l'orientation de Lucian vers son mouvement; seules les actions engagees le
 reorientent vers `EnemyLockPoint`.
+
+`CombatWarningPresentationController`, sur le `BattleManager` existant, est une
+alerte locale pilotee par `CombatWarningOn`/`CombatWarningOff` depuis les clips
+ennemis. Son Custom Pass HDRP est configure dans `GameplaySessionRoot` sous
+`CombatWarningPass`; il dessine une alerte peripherique directionnelle et ne
+cree aucun volume au runtime. Pendant l'alerte, le lock UCC conserve son
+evitement d'obstacles mais recentre temporairement le regard vers
+`EnemyLockPoint`, puis revient progressivement au cadrage de lock normal.
 
 Pour une attaque ennemie temps reel, les icones South/East/North ne proviennent
 plus de `ShowInput` pendant les clips de combat. Le prompt world-space unique
 lit les reactions acceptees par le `SkillSO`, les montre attenuees pendant la
 menace, puis nettes pendant la fenetre ouverte. South commence une garde a tout
-moment; seule une pression dans une fenetre qui accepte `Counter` ouvre la roue
-de CounterSkill. East conserve l'esquive et North le saut, qui restent
+moment; seule une nouvelle pression dans une fenetre qui accepte `Counter` lance
+la Timeline du contre configure. East conserve l'esquive et North le saut, qui restent
 enregistres comme reactions uniquement lorsque la fenetre Animation Event est
 ouverte.
 
 Les actions de combat font face a l'ennemi verrouille. Pour `Dodge`, un stick
 gauche non nul a priorite : Lucian s'oriente vers la direction voulue et roule
 dans celle-ci. Sans direction, il reste face a la cible et roule vers l'arriere.
+
+Pendant un lock, `RealTimeCombatManager` active
+`LitOpsiveLocomotionBridge.SetCombatStrafeMode(true, EnemyLockPoint)`. Le bridge
+quitte alors seulement le profil visuel exploration forward-only, conserve Lucian
+face a `EnemyLockPoint` en fin d'image sans reinjecter d'input, et transmet les
+directions locales au blend tree combat Root; la position reste sous autorite
+UCC. Au deverrouillage, le profil exploration est restaure sans
+modifier ses reglages serialises.
 
 `LocalPlayerInput` est persistant en Play Mode. Pendant un dechargement de
 scene dans l'editeur, son `InputActionAsset` doit etre detruit immediatement :

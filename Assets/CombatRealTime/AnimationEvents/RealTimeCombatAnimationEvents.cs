@@ -116,9 +116,26 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         CombatReactionTelegraphController.Instance?.BeginTelegraph(ResolveEnemy());
     }
 
-    public void OpenReactionWindow()
+    public void CombatWarningOn()
     {
-        RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy());
+        CombatWarningPresentationController.Instance?.BeginWarning(ResolveEnemy());
+    }
+
+    public void CombatWarningOff()
+    {
+        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
+        CombatWarningPresentationController.Instance?.EndWarning(currentEnemy);
+        RealTimeCombatManager.Instance?.CancelEnemyAttackWindow(currentEnemy);
+    }
+
+    /// <summary>
+    /// Enemy Animation Event: opens a reaction window for real-time seconds.
+    /// The timeout closes eligibility only; ResolveEnemyAttackImpact remains
+    /// responsible for the actual attack resolution.
+    /// </summary>
+    public void OpenReactionWindow(float durationSeconds)
+    {
+        RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy(), durationSeconds);
     }
 
     public void ResolveEnemyAttackImpact()
@@ -146,6 +163,18 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     public void BeginEnemyAirborne()
     {
         ResolveEnemy()?.BeginEnemyAirborne();
+    }
+
+    /// <summary>Enemy Animation Event: begins the configured continuous homing rush.</summary>
+    public void BeginEnemyRush()
+    {
+        ResolveEnemy()?.BeginEnemyRush(ResolveEnemyDashTarget());
+    }
+
+    /// <summary>Enemy Animation Event: releases planar rush ownership before landing recovery.</summary>
+    public void EndEnemyRush()
+    {
+        ResolveEnemy()?.EndEnemyRush();
     }
 
     /// <summary>Enemy Animation Event: asks the physics motor to settle onto the ground.</summary>

@@ -5345,6 +5345,7 @@ GameObject:
   - component: {fileID: 708000000000000001}
   - component: {fileID: 708000000000000002}
   - component: {fileID: 708000000000000003}
+  - component: {fileID: 1352659666778279402}
   m_Layer: 0
   m_Name: GiantJuggernaut
   m_TagString: Untagged
@@ -5518,7 +5519,6 @@ MonoBehaviour:
   searchArrivalDistance: 0.65
   meleeAttackPreferencePercent: 70
   patrolArrivalDistance: 0.15
-  directMoveSpeed: 3.6
   turnSpeedDegreesPerSecond: 540
   logCinematicPlacementDiagnostics: 1
 --- !u!114 &1507485742872985387
@@ -5624,6 +5624,7 @@ MonoBehaviour:
   groundProbeStartHeight: 0.35
   groundProbeDistance: 8
   maximumGroundSnapDistance: 0.75
+  emergencyLandingDelay: 0.45
   minimumGroundNormal: 0.45
   groundMask:
     serializedVersion: 2
@@ -5634,6 +5635,35 @@ MonoBehaviour:
   maximumRootMotionDeltaPerFrame: 0.5
   maximumRootMotionDistancePerFixedUpdate: 0.75
   actionRepositionDiagnosticDistance: 1
+--- !u!114 &1352659666778279402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712010629109728797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70c73859ef4c82e43b2341f29df9148b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatEnemyLocomotionController
+  enemy: {fileID: 847953340343303029}
+  navigationAgent: {fileID: 7177769581939990386}
+  animationContract: {fileID: 8793910659942973289}
+  physicsMotor: {fileID: 708000000000000003}
+  positioning:
+    preferredDistance: 2.6
+    minimumRetreatDistance: 1.2
+    strafeRadius: 1.1
+    strafeSideHoldSeconds: 1.35
+    walkSpeedThreshold: 1.2
+    runSpeedThreshold: 3.4
+  facingSpeedDegreesPerSecond: 540
+  animatorDampTime: 0.08
+  navMeshEdgeClearance: 0.45
+  clearanceSearchRadius: 2
+  clearanceSearchSamples: 12
+  logDiagnostics: 0
 --- !u!1 &4844841144064905090
 GameObject:
   m_ObjectHideFlags: 0

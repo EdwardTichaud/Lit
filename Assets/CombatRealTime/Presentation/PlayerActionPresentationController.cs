@@ -6,6 +6,7 @@ using UnityEngine;
 public sealed class PlayerActionPresentationController : MonoBehaviour
 {
     private const string LocomotionState = "Base Layer.Locomotion";
+    private const string CombatLocomotionState = "Base Layer.CombatLocomotion";
     private const string WalkStartState = "Base Layer.Walk_Start";
     private const string RunStartState = "Base Layer.Run_Start";
 
@@ -182,9 +183,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         locomotionBridge?.ClearPlayerActionRootMotionMode();
         locomotionBridge?.RefreshLocomotionPresentation();
 
-        string destination = !movementHeld
-            ? LocomotionState
-            : sprintHeld ? RunStartState : WalkStartState;
+        string destination = ResolveLocomotionDestination(movementHeld, sprintHeld);
         int destinationHash = Animator.StringToHash(destination);
         if (animator.HasState(0, destinationHash))
         {
@@ -394,7 +393,13 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             return;
         }
 
-        if (locomotionBridge == null || !locomotionBridge.SetActionFacingDirection(direction))
+        if (locomotionBridge != null)
+        {
+            locomotionBridge.SetActionFacingDirection(direction);
+            return;
+        }
+
+        if (RealTimeCombatManager.Instance == null || !RealTimeCombatManager.Instance.IsCombatActive)
         {
             transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
         }
@@ -427,7 +432,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             locomotionBridge.RefreshLocomotionPresentation();
         }
 
-        animator.CrossFade(LocomotionState, Mathf.Clamp(profile.exitBlendSeconds, 0f, 0.25f), 0);
+        animator.CrossFade(ResolveLocomotionDestination(false, false), Mathf.Clamp(profile.exitBlendSeconds, 0f, 0.25f), 0);
         FinishWithoutTransition(token);
     }
 
@@ -440,7 +445,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
 
         locomotionBridge?.RefreshLocomotionPresentation();
-        animator.CrossFade(LocomotionState, 0.08f, 0);
+        animator.CrossFade(ResolveLocomotionDestination(false, false), 0.08f, 0);
         FinishWithoutTransition(token);
     }
 
@@ -491,6 +496,18 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         locomotionBridge?.RequestRunStartResponse();
         LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat action ended");
+    }
+
+    private string ResolveLocomotionDestination(bool movementHeld, bool sprintHeld)
+    {
+        if (locomotionBridge != null && locomotionBridge.IsCombatLockActive)
+        {
+            return CombatLocomotionState;
+        }
+
+        return !movementHeld
+            ? LocomotionState
+            : sprintHeld ? RunStartState : WalkStartState;
     }
 
     private void KeepDeathAnimationActive()

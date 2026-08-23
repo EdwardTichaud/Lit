@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
 
@@ -25,6 +26,7 @@ public static class CounterSkillPrototypeBuilder
     private const string NorthButtonPath = "Assets/UI/Inputs/XBox GamePad NorthButton.png";
     private const string ThreatAudioPath = "Assets/Audio/AudioClips/AudioClip_SFX_LightCharge.asset";
     private const string PerfectAudioPath = "Assets/Audio/AudioClips/AudioClip_SFX_LightImpact.asset";
+    private const string WarningMaterialPath = "Assets/CombatRealTime/Presentation/MAT_CombatWarning.mat";
 
     [MenuItem("Lit/Combat/Build CounterSkill Prototype")]
     public static void Build()
@@ -42,8 +44,9 @@ public static class CounterSkillPrototypeBuilder
         ConfigureCounterAnimationEvent(playerClip);
         ConfigureAssomoirReactionTelegraph();
         ConfigureSessionRoot(skill);
-        ConfigureBootstrapWheel();
+        RemoveBootstrapCounterWheel();
         RemoveBootstrapReactionPrompt();
+        RemoveBootstrapCounterWheel();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[CounterSkill] Prototype configure : Timeline, CounterSkillSO, roue Bootstrap et BattleManager.");
@@ -144,7 +147,10 @@ public static class CounterSkillPrototypeBuilder
             SerializedProperty skills = serialized.FindProperty("availableSkills");
             skills.arraySize = 1;
             skills.GetArrayElementAtIndex(0).objectReferenceValue = skill;
+            serialized.FindProperty("defaultCounterSkill").objectReferenceValue = skill;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            ConfigureCombatWarning(battleManager);
 
             CombatReactionTelegraphController telegraph = battleManager.GetComponent<CombatReactionTelegraphController>();
             if (telegraph == null) telegraph = battleManager.gameObject.AddComponent<CombatReactionTelegraphController>();
@@ -162,39 +168,13 @@ public static class CounterSkillPrototypeBuilder
         }
     }
 
-    private static void ConfigureBootstrapWheel()
+    private static void RemoveBootstrapCounterWheel()
     {
         var scene = EditorSceneManager.OpenScene(BootstrapPath, OpenSceneMode.Single);
-        SkillWheel source = Object.FindAnyObjectByType<SkillWheel>(FindObjectsInactive.Include);
-        if (source == null)
-        {
-            Debug.LogError("[CounterSkill] SkillsWheel introuvable dans Bootstrap.");
-            return;
-        }
-
         CounterSkillWheel existing = Object.FindAnyObjectByType<CounterSkillWheel>(FindObjectsInactive.Include);
-        if (existing == null)
+        if (existing != null)
         {
-            GameObject clone = Object.Instantiate(source.gameObject, source.transform.parent);
-            clone.name = "CounterSkillWheel";
-            clone.SetActive(true);
-            RectTransform rect = clone.transform as RectTransform;
-            if (rect != null) rect.anchoredPosition += new Vector2(0f, -210f);
-            Object.DestroyImmediate(clone.GetComponent<SkillWheel>());
-            foreach (SkillWheelSlot oldSlot in clone.GetComponentsInChildren<SkillWheelSlot>(true))
-            {
-                GameObject slotObject = oldSlot.gameObject;
-                Object.DestroyImmediate(oldSlot);
-                slotObject.AddComponent<CounterSkillWheelSlot>();
-            }
-            clone.AddComponent<CounterSkillWheel>();
-            CanvasGroup group = clone.GetComponentInChildren<CanvasGroup>(true);
-            if (group != null)
-            {
-                group.alpha = 0f;
-                group.interactable = false;
-                group.blocksRaycasts = false;
-            }
+            Object.DestroyImmediate(existing.gameObject);
         }
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -245,6 +225,23 @@ public static class CounterSkillPrototypeBuilder
             profile.FindPropertyRelative("usePerfectWindowSlowMotion").boolValue = true;
             profile.FindPropertyRelative("perfectWindowTimeScale").floatValue = 0.85f;
             profile.FindPropertyRelative("perfectWindowSlowMotionSeconds").floatValue = 0.15f;
+
+            SerializedProperty warning = serialized.FindProperty("combatWarning");
+            warning.FindPropertyRelative("enabled").boolValue = true;
+            warning.FindPropertyRelative("color").colorValue = new Color(1f, 0.08f, 0.36f, 1f);
+            warning.FindPropertyRelative("intensity").floatValue = 0.9f;
+            warning.FindPropertyRelative("pulseFrequency").floatValue = 2.8f;
+            warning.FindPropertyRelative("vignette").floatValue = 0.24f;
+            warning.FindPropertyRelative("chromaticAberration").floatValue = 0.012f;
+            warning.FindPropertyRelative("enemyFocusBias").floatValue = 0.92f;
+            warning.FindPropertyRelative("recenterDegreesPerSecond").floatValue = 300f;
+            warning.FindPropertyRelative("focusSharpness").floatValue = 30f;
+            warning.FindPropertyRelative("fieldOfViewOffset").floatValue = -2f;
+            warning.FindPropertyRelative("fadeOutSeconds").floatValue = 0.16f;
+            warning.FindPropertyRelative("warningAudio").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClipSO>(ThreatAudioPath);
+            warning.FindPropertyRelative("useSlowMotion").boolValue = true;
+            warning.FindPropertyRelative("slowMotionTimeScale").floatValue = 0.85f;
+            warning.FindPropertyRelative("slowMotionSeconds").floatValue = 0.15f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(assomoir);
         }
@@ -253,15 +250,30 @@ public static class CounterSkillPrototypeBuilder
         if (assomoirClip == null) return;
         List<AnimationEvent> events = new List<AnimationEvent>(AnimationUtility.GetAnimationEvents(assomoirClip));
         float impactTime = assomoirClip.length * 0.72f;
+        bool foundLegacyHit = false;
         for (int i = 0; i < events.Count; i++)
         {
-            if (events[i].functionName == "ResolveEnemyAttackImpact") impactTime = events[i].time;
+            if (events[i].functionName == "ResolveEnemyAttackImpact" && !foundLegacyHit) impactTime = events[i].time;
+            if (events[i].functionName == "HitPlayer")
+            {
+                // HitPlayer was the former resolution event. Preserve its authored
+                // contact frame but keep a single authority for the damage.
+                impactTime = events[i].time;
+                foundLegacyHit = true;
+                events.RemoveAt(i--);
+                continue;
+            }
             if (events[i].functionName == "ShowReactionPrompt") events[i].functionName = "BeginReactionTelegraph";
             if (events[i].functionName == "ShowInput" || events[i].functionName == "HideInput") events.RemoveAt(i--);
         }
-        EnsureEvent(events, "BeginReactionTelegraph", Mathf.Min(assomoirClip.length * 0.2f, impactTime * 0.45f));
-        EnsureEvent(events, "OpenReactionWindow", Mathf.Min(impactTime - 0.03f, Mathf.Max(0.01f, impactTime * 0.62f)));
+        float warningTime = Mathf.Min(assomoirClip.length * 0.12f, impactTime * 0.28f);
+        float telegraphTime = Mathf.Min(assomoirClip.length * 0.2f, impactTime * 0.45f);
+        float windowTime = Mathf.Min(impactTime - 0.03f, Mathf.Max(0.01f, impactTime * 0.62f));
+        EnsureEvent(events, "CombatWarningOn", warningTime);
+        EnsureEvent(events, "BeginReactionTelegraph", telegraphTime);
+        EnsureFloatEvent(events, "OpenReactionWindow", windowTime, Mathf.Max(0.1f, impactTime - windowTime - 0.02f));
         EnsureEvent(events, "ResolveEnemyAttackImpact", impactTime);
+        EnsureEvent(events, "CombatWarningOff", impactTime + 0.01f);
         AnimationUtility.SetAnimationEvents(assomoirClip, events.ToArray());
         EditorUtility.SetDirty(assomoirClip);
     }
@@ -288,9 +300,9 @@ public static class CounterSkillPrototypeBuilder
         Image[] icons = new Image[3];
         Sprite[] sprites =
         {
-            AssetDatabase.LoadAssetAtPath<Sprite>(SouthButtonPath),
+            AssetDatabase.LoadAssetAtPath<Sprite>(NorthButtonPath),
             AssetDatabase.LoadAssetAtPath<Sprite>(EastButtonPath),
-            AssetDatabase.LoadAssetAtPath<Sprite>(NorthButtonPath)
+            AssetDatabase.LoadAssetAtPath<Sprite>(SouthButtonPath)
         };
         for (int i = 0; i < icons.Length; i++)
         {
@@ -338,6 +350,72 @@ public static class CounterSkillPrototypeBuilder
             return;
         }
         events.Add(new AnimationEvent { functionName = functionName, time = time });
+    }
+
+    private static void EnsureFloatEvent(List<AnimationEvent> events, string functionName, float time, float value)
+    {
+        for (int i = 0; i < events.Count; i++)
+        {
+            if (events[i].functionName != functionName) continue;
+            events[i].time = time;
+            events[i].floatParameter = value;
+            return;
+        }
+
+        events.Add(new AnimationEvent { functionName = functionName, time = time, floatParameter = value });
+    }
+
+    private static void ConfigureCombatWarning(Transform battleManager)
+    {
+        Shader shader = Shader.Find("Hidden/Lit/CombatWarning");
+        if (shader == null)
+        {
+            Debug.LogError("[CombatWarning] Shader Hidden/Lit/CombatWarning introuvable.");
+            return;
+        }
+
+        Material material = AssetDatabase.LoadAssetAtPath<Material>(WarningMaterialPath);
+        if (material == null)
+        {
+            material = new Material(shader) { name = "MAT_CombatWarning" };
+            AssetDatabase.CreateAsset(material, WarningMaterialPath);
+        }
+
+        Transform volumeTransform = battleManager.Find("CombatWarningPass");
+        if (volumeTransform == null)
+        {
+            GameObject volumeObject = new GameObject("CombatWarningPass");
+            volumeTransform = volumeObject.transform;
+            volumeTransform.SetParent(battleManager, false);
+        }
+
+        CustomPassVolume volume = volumeTransform.GetComponent<CustomPassVolume>();
+        if (volume == null) volume = volumeTransform.gameObject.AddComponent<CustomPassVolume>();
+        volume.isGlobal = true;
+        volume.priority = 1001f;
+        volume.injectionPoint = CustomPassInjectionPoint.BeforePostProcess;
+        volume.customPasses.Clear();
+        FullScreenCustomPass pass = new FullScreenCustomPass
+        {
+            name = "Combat Warning",
+            enabled = false,
+            fullscreenPassMaterial = material,
+            fetchColorBuffer = true
+        };
+        volume.customPasses.Add(pass);
+
+        CombatWarningPresentationController warning = battleManager.GetComponent<CombatWarningPresentationController>();
+        if (warning == null) warning = battleManager.gameObject.AddComponent<CombatWarningPresentationController>();
+        SerializedObject serialized = new SerializedObject(warning);
+        serialized.FindProperty("combatManager").objectReferenceValue = battleManager.GetComponent<RealTimeCombatManager>();
+        serialized.FindProperty("lockCamera").objectReferenceValue = battleManager.GetComponent<CombatLockOnCameraController>();
+        serialized.FindProperty("customPassVolume").objectReferenceValue = volume;
+        serialized.FindProperty("warningMaterial").objectReferenceValue = material;
+        serialized.FindProperty("customPassName").stringValue = "Combat Warning";
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(volume);
+        EditorUtility.SetDirty(warning);
+        EditorUtility.SetDirty(material);
     }
 
     private static AnimationClip LoadClip(string guid)

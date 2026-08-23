@@ -48,8 +48,8 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         " mode=" + InputModeCoordinator.CurrentMode +
         " context=" + GamepadInputContextStack.Current +
         " palette=" + paletteOpen +
-        " counterWheel=" + IsCounterSelectionOpen;
-    private bool IsCounterSelectionOpen => CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsSelectionOpen;
+        " counterCinematic=" + IsCounterCinematicPlaying;
+    private bool IsCounterCinematicPlaying => CounterSkillCombatController.Instance != null && CounterSkillCombatController.Instance.IsCinematicPlaying;
 
     private void OnEnable()
     {
@@ -222,14 +222,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnCounterStarted(InputAction.CallbackContext context)
     {
-        CounterSkillCombatController counter = CounterSkillCombatController.Instance;
-        if (counter != null && counter.IsSelectionOpen)
-        {
-            counter.ConfirmSelection();
-            return;
-        }
-
-        if (!paletteOpen) counter?.BeginGuard();
+        if (!paletteOpen && !IsCounterCinematicPlaying) CounterSkillCombatController.Instance?.BeginGuard();
     }
 
     private void OnCounterCanceled(InputAction.CallbackContext context)
@@ -239,11 +232,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnDodge(InputAction.CallbackContext context)
     {
-        if (IsCounterSelectionOpen)
-        {
-            CounterSkillCombatController.Instance.CancelSelection();
-            return;
-        }
+        if (IsCounterCinematicPlaying) return;
 
         RealTimeCombatManager.Instance?.RegisterReaction(RealTimeCombatReaction.Dodge);
         if (!paletteOpen)
@@ -254,7 +243,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnBasicAttack(InputAction.CallbackContext context)
     {
-        if (paletteOpen || IsCounterSelectionOpen)
+        if (paletteOpen || IsCounterCinematicPlaying)
         {
             Trace("BasicAttack ignoree: roue ouverte | " + InputDiagnostics + ".");
             return;
@@ -308,7 +297,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (paletteOpen || IsCounterSelectionOpen)
+        if (paletteOpen || IsCounterCinematicPlaying)
         {
             return;
         }
@@ -320,7 +309,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnOpenPalette(InputAction.CallbackContext context)
     {
-        if (IsCounterSelectionOpen) return;
+        if (IsCounterCinematicPlaying) return;
         paletteOpen = true;
         ResolveSkillWheel();
 
@@ -342,11 +331,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnNavigatePalette(InputAction.CallbackContext context)
     {
-        if (IsCounterSelectionOpen)
-        {
-            CounterSkillCombatController.Instance.Navigate(context.ReadValue<Vector2>());
-            return;
-        }
+        if (IsCounterCinematicPlaying) return;
         if (!paletteOpen)
         {
             return;
@@ -370,7 +355,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnConfirmPalette(InputAction.CallbackContext context)
     {
-        if (IsCounterSelectionOpen) return;
+        if (IsCounterCinematicPlaying) return;
         if (!paletteOpen)
         {
             return;
@@ -388,7 +373,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnSwitchEnemyLock(InputAction.CallbackContext context)
     {
-        if (IsCounterSelectionOpen) return;
+        if (IsCounterCinematicPlaying) return;
         if (!paletteOpen)
         {
             RealTimeCombatManager.Instance?.TrySwitchEnemyLock();
@@ -397,7 +382,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnLightSkill(InputAction.CallbackContext context)
     {
-        if (IsCounterSelectionOpen) return;
+        if (IsCounterCinematicPlaying) return;
         if (!paletteOpen)
         {
             GetComponent<LightSkillCombatController>()?.TryUseLightSkill();
@@ -406,7 +391,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     private void OnCompanionFusion(InputAction.CallbackContext context)
     {
-        if (paletteOpen || IsCounterSelectionOpen)
+        if (paletteOpen || IsCounterCinematicPlaying)
         {
             return;
         }

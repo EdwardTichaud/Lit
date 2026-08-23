@@ -7,7 +7,7 @@ using UnityEngine;
 public static class LucianJumpAnimatorRepairUtility
 {
     private const string ControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
-    private const string SessionRepairKey = "Lit.LucianJumpAnimatorRepair.Completed";
+    private const string SessionRepairKey = "Lit.LucianJumpAnimatorRepair.Completed.RollV1";
 
     static LucianJumpAnimatorRepairUtility()
     {
@@ -45,7 +45,8 @@ public static class LucianJumpAnimatorRepairUtility
         AnimatorState falling = FindState(baseLayer, "Falling");
         AnimatorState landing = FindState(baseLayer, "Landing");
         AnimatorState hardLanding = FindState(baseLayer, "Landing_Hard");
-        if (locomotion == null || jumpStart == null || jumpLoop == null || falling == null || landing == null || hardLanding == null)
+        AnimatorState jumpRoll = FindState(baseLayer, "Jump_Roll");
+        if (locomotion == null || jumpStart == null || jumpLoop == null || falling == null || landing == null || hardLanding == null || jumpRoll == null)
         {
             Debug.LogError("Lucian jump repair could not resolve every required Animator state.");
             return;
@@ -53,6 +54,7 @@ public static class LucianJumpAnimatorRepairUtility
 
         EnsureParameter(controller, "JumpStartTrigger", AnimatorControllerParameterType.Trigger);
         EnsureParameter(controller, "LandingTrigger", AnimatorControllerParameterType.Trigger);
+        EnsureParameter(controller, "JumpRollTrigger", AnimatorControllerParameterType.Trigger);
         EnsureParameter(controller, "JumpPresentationActive", AnimatorControllerParameterType.Bool);
         EnsureParameter(controller, "IsAirborne", AnimatorControllerParameterType.Bool);
         EnsureParameter(controller, "JumpPhase", AnimatorControllerParameterType.Int);
@@ -63,6 +65,7 @@ public static class LucianJumpAnimatorRepairUtility
         ClearTransitions(falling);
         ClearTransitions(landing);
         ClearTransitions(hardLanding);
+        ClearTransitions(jumpRoll);
         ClearJumpAnyStateTransitions(baseLayer);
 
         AddAnyStateTransition(baseLayer, jumpStart, "JumpStartTrigger", "JumpPresentationActive", 0f);
@@ -86,14 +89,17 @@ public static class LucianJumpAnimatorRepairUtility
 
         AddLandingTransition(baseLayer, landing, AnimatorConditionMode.Less, 0.5f);
         AddLandingTransition(baseLayer, hardLanding, AnimatorConditionMode.Greater, 0.5f);
+        AddRollTransition(baseLayer, jumpRoll);
         AddExitTransition(landing, locomotion, 0.28f, 0.08f);
         AddExitTransition(hardLanding, locomotion, 0.65f, 0.1f);
+        AddExitTransition(jumpRoll, locomotion, 0.75f, 0.08f);
 
         AddTraceBehaviour(jumpStart);
         AddTraceBehaviour(jumpLoop);
         AddTraceBehaviour(falling);
         AddTraceBehaviour(landing);
         AddTraceBehaviour(hardLanding);
+        AddTraceBehaviour(jumpRoll);
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
@@ -107,15 +113,18 @@ public static class LucianJumpAnimatorRepairUtility
     {
         AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         AnimatorStateMachine baseLayer = controller != null ? controller.layers[0].stateMachine : null;
-        bool parametersValid = controller != null && new[] { "JumpStartTrigger", "LandingTrigger", "JumpPresentationActive", "IsAirborne", "JumpPhase", "LandingType" }
+        bool parametersValid = controller != null && new[] { "JumpStartTrigger", "LandingTrigger", "JumpRollTrigger", "JumpPresentationActive", "IsAirborne", "JumpPhase", "LandingType" }
             .All(name => controller.parameters.Any(parameter => parameter.name == name));
-        bool statesValid = baseLayer != null && new[] { "Jump_Start", "Jump_Loop", "Falling", "Landing", "Landing_Hard", "Locomotion" }
+        bool statesValid = baseLayer != null && new[] { "Jump_Start", "Jump_Loop", "Falling", "Landing", "Landing_Hard", "Jump_Roll", "Locomotion" }
             .All(name => FindState(baseLayer, name) != null);
         bool landingRouteValid = baseLayer != null && baseLayer.anyStateTransitions.Any(transition =>
             transition.destinationState != null && transition.destinationState.name == "Landing" &&
             transition.conditions.Any(condition => condition.parameter == "LandingTrigger"));
+        bool rollRouteValid = baseLayer != null && baseLayer.anyStateTransitions.Any(transition =>
+            transition.destinationState != null && transition.destinationState.name == "Jump_Roll" &&
+            transition.conditions.Any(condition => condition.parameter == "JumpRollTrigger"));
 
-        if (!parametersValid || !statesValid || !landingRouteValid)
+        if (!parametersValid || !statesValid || !landingRouteValid || !rollRouteValid)
         {
             Debug.LogError("Lucian jump Animator validation failed. Run Lit/Animation/Repair Lucian Jump Animator.");
             return;
@@ -152,7 +161,8 @@ public static class LucianJumpAnimatorRepairUtility
             if (transition.conditions.Any(condition =>
                     condition.parameter == "JumpTrigger" ||
                     condition.parameter == "JumpStartTrigger" ||
-                    condition.parameter == "LandingTrigger"))
+                    condition.parameter == "LandingTrigger" ||
+                    condition.parameter == "JumpRollTrigger"))
             {
                 stateMachine.RemoveAnyStateTransition(transition);
             }
@@ -181,6 +191,17 @@ public static class LucianJumpAnimatorRepairUtility
         transition.AddCondition(AnimatorConditionMode.If, 0f, "LandingTrigger");
         transition.AddCondition(AnimatorConditionMode.If, 0f, "JumpPresentationActive");
         transition.AddCondition(landingTypeMode, landingTypeThreshold, "LandingType");
+    }
+
+    private static void AddRollTransition(AnimatorStateMachine stateMachine, AnimatorState destination)
+    {
+        AnimatorStateTransition transition = stateMachine.AddAnyStateTransition(destination);
+        transition.hasExitTime = false;
+        transition.hasFixedDuration = true;
+        transition.duration = 0.05f;
+        transition.AddCondition(AnimatorConditionMode.If, 0f, "JumpRollTrigger");
+        transition.AddCondition(AnimatorConditionMode.If, 0f, "JumpPresentationActive");
+        transition.AddCondition(AnimatorConditionMode.Less, 0.5f, "LandingType");
     }
 
     private static void AddExitTransition(AnimatorState source, AnimatorState destination, float exitTime, float duration)

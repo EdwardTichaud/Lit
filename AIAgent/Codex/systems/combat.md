@@ -18,12 +18,16 @@ pilote exclusivement les panels déjà écrits dans la scène et se lie au
 `CombatEngagedPanel` joue son intro, puis `CombatScreenInfosPanel` affiche la
 cible, les PV, la Clarté, le rang et le journal. `VictoryPanel` et `DefeatPanel`
 restent les écrans de résultat. `CombatDefensePanel` n'existe plus : garde,
-télégraphie et `CounterSkillWheel` couvrent cette interaction.
+télégraphie et contre cinématique immédiat couvrent cette interaction.
 `RealTimeCombatManager` possède le verrouillage, les dégâts de lumière, la
 Clarté et les fenêtres de réaction. `RealTimeCombatEnemy` stocke le plus grand
 dégât de lumière reçu jusqu'à sa prochaine attaque et le verrouille au démarrage
 de l'animation ennemie. Les dégâts reçus pendant cette animation alimentent un
 ledger suivant, promu uniquement par son événement de fin.
+Le lock ne possede pas le mouvement du joueur: il fournit uniquement la cible.
+`LitOpsiveLocomotionBridge` convertit l'axe brut en repere ennemi et est la
+seule autorite pour l'intention UCC, le facing et l'orbite. Les actions ne
+doivent pas ecrire le Transform de Lucian directement pendant le lock.
 Pendant la mémoire d'alerte, un ennemi provoqué peut consommer ce ledger même
 si une animation root l'a temporairement tourné hors de son champ de vision ; il
 continue alors de se tourner vers Lucian. La perte de vision prolongée conserve
@@ -32,12 +36,18 @@ Les Animation Events `BeginReactionTelegraph`/`OpenReactionWindow`,
 `ResolveEnemyAttackImpact` et `EndEnemyAttack` de
 `RealTimeCombatAnimationEvents` restent la seule source du timing de menace,
 fenêtre, impact et clôture. Le prototype n'a pas de fallback temporisé.
-Le combat temps reel gere aussi `Counter`. `SouthButton` maintenu active une
-garde, qui reduit les degats au moment de l'impact; une pression commencee dans
-la fenetre ouverte par l'Animation Event et acceptee par le `SkillSO` ennemi
-suspend l'attaque avant son impact. `CounterSkillCombatController` fige alors le
-temps, l'IA et les actions, puis ouvre `CounterSkillWheel`. Le stick droit choisit
-un `CounterSkillSO`, `SouthButton` confirme et `EastButton` annule. Chaque
+`CombatWarningOn`/`CombatWarningOff` ajoutent seulement la presentation locale
+de danger et le focus camera; `OpenReactionWindow(float)` ferme son eligibility
+en temps non scale, sans jamais declencher les degats a la place de
+`ResolveEnemyAttackImpact`.
+Le `CombatWarningProfile` du `SkillSO` ennemi porte aussi son ralentissement de
+debut d'alerte (`Use Slow Motion`, echelle et duree); il passe par le meme
+controleur temporel que le hit-stop et ne peut pas liberer une pause de contre.
+Le combat temps reel gere aussi `Counter`. `NorthButton` maintenu active une
+garde, qui reduit les degats au moment de l'impact; une nouvelle pression dans la
+fenetre ouverte par l'Animation Event et acceptee par le `SkillSO` ennemi suspend
+l'attaque avant son impact. `CounterSkillCombatController` fige alors le temps,
+l'IA et les actions, puis lance immediatement son `defaultCounterSkill`. Chaque
 `CounterSkillSO` porte une Timeline, les noms de pistes dynamiques joueur/ennemi/
 Cinemachine, ses degats, sa Clarite et ses AudioClipSO. La Timeline tourne en
 temps non scale; seul `ResolveCounterSkillImpact` applique le hit. Sa fin termine
@@ -50,9 +60,8 @@ la joue au maintien de South et revient a l'Idle de combat au relachement. Tant
 que cette state n'est pas encore installee, il utilise
 `Twinblades_Defense_Hit_Root` comme fallback visuel.
 Le prototype Juggernaut est installe par `Lit/Combat/Build CounterSkill Prototype` :
-ce menu editeur cree la Timeline, le `CounterSkillSO`, la roue `CounterSkillWheel`
-dans `Bootstrap` et la Virtual Camera sous `BattleManager`; aucun de ces objets
-UI n'est cree pendant le jeu.
+ce menu editeur cree la Timeline, le `CounterSkillSO` et la Virtual Camera sous
+`BattleManager`; aucun objet de selection de contre n'est cree pendant le jeu.
 Les `LightSkillSO` sont des capacites cinematographiques distinctes de la roue :
 ils portent le cout de jauge; chaque `SkillSO` ou `BasicSkillsSO` porte son gain
 explicite `Light Charge On Hit`, applique seulement apres un impact valide; la
@@ -349,7 +358,7 @@ rendent la locomotion entre `0.68` et `0.74`, avec un blend de sortie de `0.05 s
 `CombatMobilityController`, sur `BattleManager`, gere les actions de mobilite
 du combat temps reel. `Dodge` joue une des quatre states root directionnelles,
 avec un startup de 0.05 s, 0.18 s d'invulnerabilite et 0.25 s de cooldown.
-`EastButton` joue l'esquive root directionnelle avec ses i-frames; `SouthButton`
+`EastButton` joue l'esquive root directionnelle avec ses i-frames; `NorthButton`
 est reserve a la garde et au contre, et le dash dedie a ete retire du prototype.
 `Jump` appelle la capacite UCC existante. Les actions restent soumises a la priorite mort,
 cinematique et hurt; un unique input de mobilite peut etre conserve 0.12 s
@@ -760,6 +769,32 @@ pas conserver une reference detruite lors d'un changement de scene. Son Canvas
 world-space se rattache a `Camera.main` et utilise un ordre de rendu eleve.
 Le menu `Lit/Combat/Configure Reaction Telegraph` configure Assomoir et le
 prompt `RealTimeCombatReactionPrompt` de `Bootstrap`.
+
+### Locomotion et Assommoir
+
+`CombatEnemyLocomotionController` est le pont reutilisable entre la navigation
+et l'Animator ennemi. Il ne deplace jamais un Transform : `NavMeshAgent` garde
+l'autorite hors action et le controleur traduit sa vitesse locale relative a la
+cible vers `CombatMoveX`, `CombatMoveZ` et `CombatMoveSpeed`. Le menu
+`Lit/Combat/Configure Combat Locomotion` ajoute les blend trees Root et le
+composant aux prefabs Juggernaut et GiantJuggernaut. Le NavMesh conserve le
+deplacement monde pendant cette locomotion, tandis que le controleur reapplique
+l'orientation vers la cible en fin d'image; `Validate Combat
+Locomotion` en controle les etats et parametres.
+
+Pendant une action ennemie, `CombatEnemyPhysicsMotor` est la seule autorite de
+deplacement. Un `EnemyActionMotionProfile` peut demander une ruée homing : la
+verticale reste balistique, la ruée possede seulement le plan horizontal,
+suit la cible jusqu'a sa distance d'arret et applique un CapsuleCast contre le
+decor. `Assomoir` utilise dans cet ordre `BeginEnemyAirborne`, telegraphie et
+fenetre de reaction, `BeginEnemyRush`, impact, `EndEnemyRush`,
+`RequestEnemyLanding`, puis `EndEnemyAttack`; aucun clip ne doit lui ajouter
+`DashToTarget`.
+
+Le moteur conserve aussi une hauteur de sol de secours au debut de chaque
+action. Une demande d'atterrissage ou un timeout sans sonde de sol valide pose
+l'ennemi a cette hauteur, en conservant son plan horizontal : une couche de
+decor mal configuree ne peut donc plus provoquer une chute infinie.
 
 ## Pièges observés
 

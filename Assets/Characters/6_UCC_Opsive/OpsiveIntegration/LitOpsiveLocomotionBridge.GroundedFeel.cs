@@ -253,6 +253,28 @@ public partial class LitOpsiveLocomotionBridge
         groundedMoveIntent = targetMagnitude > movementDeadZone;
         float deltaTime = ResolveGroundedFeelDeltaTime();
 
+        // The combat strafe blend tree uses Root clips. It must have a real
+        // neutral input on release: carrying the exploration input smoothing
+        // into this state makes Lucian walk after the stick is already neutral.
+        // Scripted actions retain their own motion path and never reach here as
+        // a player move input, so this does not cancel dashes or skill inertia.
+        if (combatLockActive && !groundedMoveIntent)
+        {
+            smoothedGroundedWorldMoveInput = Vector2.zero;
+            return Vector2.zero;
+        }
+
+        if (combatLockActive)
+        {
+            // The free-movement pivot system writes root yaw and can only
+            // reason about camera-relative direction. It is incompatible with
+            // face-to-face combat, where the locked target owns yaw.
+            ResetGroundedPivotTurn();
+            ResetGroundedMoveTransitionDirection();
+            smoothedGroundedWorldMoveInput = targetWorldMoveInput;
+            return targetWorldMoveInput;
+        }
+
         if (!enableCinematicGroundedFeel || IsFlightModeActive)
         {
             ResetGroundedPivotTurn();
@@ -319,6 +341,34 @@ public partial class LitOpsiveLocomotionBridge
         if (!enableCinematicGroundedFeel)
         {
             return false;
+        }
+
+        // CombatLocomotion is driven by Root clips. A released stick is the
+        // authority for the visual stop: waiting for residual UCC velocity
+        // keeps a walk/strafe pose alive after the player is already idle.
+        bool hasRawCombatMoveIntent = desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone;
+        bool isStoppedCombatIdle = combatLockActive &&
+                                   !hasRawCombatMoveIntent &&
+                                   currentWorldMoveInput.sqrMagnitude <= movementDeadZone * movementDeadZone;
+        if (isStoppedCombatIdle)
+        {
+            groundedPresentationSpeed = 0f;
+            groundedPresentationTurn = 0f;
+            ResetGroundedMoveTransitionDirection();
+            ResetGroundedMoveStartTierOverride();
+            SetAnimatorFloat(speedParam, 0f);
+            SetGroundedDirectionalAnimatorParameters(0f, Vector3.zero);
+            SetAnimatorFloat(horizontalMovementParam, 0f);
+            SetAnimatorFloat(forwardMovementParam, 0f);
+            SetAnimatorFloat(combatMoveMagnitudeParam, 0f);
+            SetAnimatorBool(isMovingParam, false);
+            SetAnimatorFloat(locomotionTierParam, 0f);
+            SetAnimatorFloat(turnParam, 0f);
+            SetAnimatorBool(turnInPlaceParam, false);
+            ResetAnimatorTrigger(moveStartTriggerParam);
+            ResetAnimatorTrigger(moveStopTriggerParam);
+            EnterCombatIdleFromLocomotion();
+            return true;
         }
 
         float deltaTime = ResolveGroundedFeelDeltaTime();
@@ -775,7 +825,12 @@ public partial class LitOpsiveLocomotionBridge
 
     private Vector2 ResolveGroundedMoveTransitionLocalDirection(Vector3 fallbackVelocity)
     {
-        if (useForwardOnlyGroundedLocomotion)
+        if (combatLockActive && combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            return Vector2.ClampMagnitude(combatLockLocalInput, 1f);
+        }
+
+        if (UseForwardOnlyGroundedLocomotion)
         {
             return Vector2.up;
         }
