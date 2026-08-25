@@ -30,7 +30,7 @@ public class LocomotionAnimationEvent : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float minimumAnimationEventWeight = 0.5f;
 
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
-    private AudioClip lastFootstepClip;
+    private AudioClipSO lastFootstepClip;
     private float nextFootstepTime;
 
     private void Awake()
@@ -131,7 +131,7 @@ public class LocomotionAnimationEvent : MonoBehaviour
             return;
         }
 
-        AudioClip clip = surface.GetRandomFootstepClip(lastFootstepClip);
+        AudioClipSO clip = surface.GetRandomFootstepClip(lastFootstepClip);
         if (clip == null)
         {
             return;

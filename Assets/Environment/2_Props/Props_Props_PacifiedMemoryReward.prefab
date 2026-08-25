@@ -42,7 +42,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4c9ee0f83ce526245b1bc5f74073ad9a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PacifiedMemoryReward
   rewardAmount: 3
   rewardType: 1
@@ -52,14 +52,14 @@ MonoBehaviour:
   optionalKnowledgeRequirement:
     requiredKnowledge: []
     anyKnowledge: []
-    requiredCategories:
+    requiredCategories: 
     requiredTags: []
     requiredCategoryCounts: []
     requiredTagCounts: []
   optionalInvestigationRequirement:
     requiredKnowledge: []
     anyKnowledge: []
-    requiredCategories:
+    requiredCategories: 
     requiredTags: []
     requiredCategoryCounts: []
     requiredTagCounts: []
@@ -76,9 +76,9 @@ MonoBehaviour:
   requireLitInfluenceForInteraction: 0
   reactToFlameInfluence: 1
   showFeedback: 1
-  feedbackTitle:
+  feedbackTitle: 
   feedbackDuration: 1.8
-  rewardSfx: {fileID: 0}
+  rewardSfx: {fileID: 11400000, guid: 06423901ca0ffa94cbc59423272e42a9, type: 2}
   rewardVfxPrefab: {fileID: 0}
   feedbackAnchor: {fileID: 0}
   onRewardGranted:

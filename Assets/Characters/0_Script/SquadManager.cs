@@ -2739,6 +2739,21 @@ public class SquadManager : MonoBehaviour
             clone.skills = new List<StatsSO>(clone.skills);
         }
 
+        if (clone.combatSkills != null)
+        {
+            clone.combatSkills = new List<SkillSO>(clone.combatSkills);
+        }
+
+        if (clone.groundBasicSkills != null)
+        {
+            clone.groundBasicSkills = new List<BasicSkillsSO>(clone.groundBasicSkills);
+        }
+
+        if (clone.airBasicSkills != null)
+        {
+            clone.airBasicSkills = new List<BasicSkillsSO>(clone.airBasicSkills);
+        }
+
         if (clone.starterItemsWithQuantity != null)
         {
             List<CharacterData.StarterItemStack> starterStacks = new List<CharacterData.StarterItemStack>(clone.starterItemsWithQuantity.Count);

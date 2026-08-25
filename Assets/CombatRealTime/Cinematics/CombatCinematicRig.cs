@@ -46,11 +46,15 @@ public sealed class CombatCinematicContext
     public Animator TargetAnimator { get; }
     public Transform TargetLockPoint { get; }
     public Action ResolveImpact { get; }
+    public CombatCinematicCasterRole CasterRole { get; }
+    public RealTimeCombatEnemy CasterEnemy { get; }
 
     public CombatCinematicContext(
         RealTimeCombatManager manager,
         UnityEngine.Object definition,
-        Action resolveImpact = null)
+        Action resolveImpact = null,
+        CombatCinematicCasterRole casterRole = CombatCinematicCasterRole.Player,
+        RealTimeCombatEnemy casterEnemy = null)
     {
         CombatManager = manager;
         Definition = definition;
@@ -60,7 +64,15 @@ public sealed class CombatCinematicContext
         TargetAnimator = TargetEnemy != null ? TargetEnemy.Animator : null;
         TargetLockPoint = TargetEnemy != null ? TargetEnemy.LockPoint : null;
         ResolveImpact = resolveImpact;
+        CasterRole = casterRole;
+        CasterEnemy = casterEnemy;
     }
+}
+
+public enum CombatCinematicCasterRole
+{
+    Player,
+    Enemy
 }
 
 public interface ICombatCinematicParticipant
@@ -172,6 +184,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
     public bool HasAuthoringStageLayout => authoringStageLayoutVersion >= 3 &&
                                            playerStageAnchor != null && enemyStageAnchor != null;
+    public CombatCinematicEndReason LastEndReason { get; private set; } = CombatCinematicEndReason.Interrupted;
     public event Action<CombatCinematicRig> Stopped;
 
     public void ConfigureFramingReferences(IEnumerable<CombatCinematicFramingReference> references)
@@ -421,15 +434,20 @@ public sealed class CombatCinematicRig : MonoBehaviour
                 return false;
             }
 
-            BeginContractCinematicMotion();
-            // Staged LightSkills use Animation Tracks with scene offsets. Those
-            // tracks are the sole transform owner for their duration; keeping
-            // the Animator relay active would apply the same root motion twice.
-            SetContractRootMotionRelayEnabled(false);
         }
         else
         {
             PositionAtPlayerFacingTarget();
+        }
+
+        // Timeline samples Animator.deltaPosition itself in LateUpdate and
+        // transfers it to ActorRoot. Staged LightSkills and the new in-place
+        // SkillSO path therefore disable the normal relay to avoid a double
+        // application. CounterSkill keeps its established path unchanged.
+        if (placement.HasValue || playbackContext.Definition is SkillSO)
+        {
+            BeginContractCinematicMotion();
+            SetContractRootMotionRelayEnabled(false);
         }
         if (!BeginParticipants())
         {
@@ -694,9 +712,10 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     private void PositionAtPlayerFacingTarget()
     {
-        Transform playerAnchor = context.PlayerAnimator != null
-            ? context.PlayerAnimator.transform
-            : context.PlayerRoot;
+        // Stage placement is defined from gameplay roots. A root Animator is
+        // now the enemy convention, while Lucian may still expose a visual
+        // child Animator; neither topology may change the cinematic frame.
+        Transform playerAnchor = context.PlayerRoot;
         Transform target = context.TargetLockPoint != null ? context.TargetLockPoint : context.TargetEnemy.transform;
         Vector3 direction = target.position - playerAnchor.position;
         direction.y = 0f;
@@ -1028,6 +1047,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         if (!sessionActive || stopRaised) return;
 
         stopRaised = true;
+        LastEndReason = reason;
         EndCameraSession("Fin Timeline: " + reason, reason);
         if (notifyStopped)
         {

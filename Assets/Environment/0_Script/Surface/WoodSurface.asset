@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43f3dcaac690983661300bc70234973e, type: 3}
   m_Name: WoodSurface
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceDefinition
-  surfaceId: castle
-  displayName: Castle
+  surfaceId: wood
+  displayName: Wood
   footstepClips:
-  - {fileID: 8300000, guid: 72f526a6a9890f643a88e85a61c86c8a, type: 3}
+  - {fileID: 11400000, guid: bc246753fdf0b7848bffb6f74c9be979, type: 2}
+  - {fileID: 11400000, guid: ad3fd249a116456409e9e7b80a183127, type: 2}
   footstepVolume: 0.5
   footstepPitchMin: 0.95
   footstepPitchMax: 1.05

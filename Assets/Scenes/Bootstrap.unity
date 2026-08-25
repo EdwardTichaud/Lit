@@ -221,7 +221,7 @@ RectTransform:
   m_GameObject: {fileID: 3821463}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.537286, y: 4.537286, z: 4.537286}
+  m_LocalScale: {x: 4.8215756, y: 4.8215756, z: 4.8215756}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1889583852}
@@ -258,7 +258,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -1226,7 +1226,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -24029,7 +24029,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3597203, y: 1.3597203, z: 1.3597203}
+  m_LocalScale: {x: 1.1154115, y: 1.1154115, z: 1.1154115}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -24066,7 +24066,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -26832,7 +26832,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -45252,7 +45252,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -52541,10 +52541,11 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  basicSkills:
+  groundBasicSkills:
   - {fileID: 11400000, guid: 1ddf0c3cda96bc1418077fee3b0f4d9d, type: 2}
   - {fileID: 11400000, guid: c43a7367eab25894d943ab01335bd6de, type: 2}
   - {fileID: 11400000, guid: 33c43d8aa19cfa74bb2947ab1f8e6def, type: 2}
+  airBasicSkills: []
 --- !u!1 &2001936657
 GameObject:
   m_ObjectHideFlags: 0

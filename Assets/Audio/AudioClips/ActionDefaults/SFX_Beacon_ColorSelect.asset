@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Beacon Color Select
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.8
+  audioClip: {fileID: 8300000, guid: 1a90c5991b3504d39a769e5ecb5402d5, type: 3}
+  volume: 0.6
   loop: 0
+  affectedByTimeScale: 0

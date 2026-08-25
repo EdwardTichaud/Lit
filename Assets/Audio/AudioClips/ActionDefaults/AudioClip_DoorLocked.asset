@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3baf3de3ad65d741a0c1b5f0a06f8db, type: 3}
   m_Name: AudioClip_DoorLocked
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
-  title: Inventory Close
+  title: Door Locked
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.85
+  audioClip: {fileID: 8300000, guid: 0f432594e9a9b4f48bc8e452822e2f28, type: 3}
+  volume: 0.65
   loop: 0
+  affectedByTimeScale: 0

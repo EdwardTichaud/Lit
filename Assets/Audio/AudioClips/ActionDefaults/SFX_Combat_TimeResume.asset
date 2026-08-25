@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: SFX_Combat_TimeResume
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Combat Time Resume
-  composer:
-  audioClip: {fileID: 8300000, guid: 67264332227f0954e89b90b6d89a86ec, type: 3}
-  volume: 0.9
+  composer: 
+  audioClip: {fileID: 8300000, guid: b34045e1bf997cf419246929775c1edd, type: 3}
+  volume: 0.65
   loop: 0
+  affectedByTimeScale: 0

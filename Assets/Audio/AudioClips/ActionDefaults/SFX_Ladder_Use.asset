@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Ladder Use
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.9
+  audioClip: {fileID: 8300000, guid: 73213a3db9c865344887d545158c9b30, type: 3}
+  volume: 0.6
   loop: 0
+  affectedByTimeScale: 0

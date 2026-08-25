@@ -205,7 +205,15 @@ public sealed class LitCameraDirector : MonoBehaviour
 
         if (uccCameraController != null && uccCameraController.enabled && uccCameraController.Character != null)
         {
-            uccCameraController.PositionImmediately(true);
+            LitSmoothUccCameraViewAdapter smoothAdapter = uccCameraController.GetComponent<LitSmoothUccCameraViewAdapter>();
+            if (smoothAdapter != null)
+            {
+                smoothAdapter.RequestImmediatePose(CameraSnapReason.ExternalCameraReturn);
+            }
+            else
+            {
+                uccCameraController.PositionImmediately(true);
+            }
         }
 
         activeCinemachineCamera = null;

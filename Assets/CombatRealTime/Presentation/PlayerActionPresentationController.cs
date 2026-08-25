@@ -24,11 +24,15 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private bool mobilityCancelOpen;
     private bool recoveryOpen;
     private bool activeAllowsMobilityCancel;
+    private bool activeRequestsAirborneLanding;
+    private float activeLandingAtAnimationSeconds;
+    private bool activeLandingRequested;
     private bool hasBufferedAction;
     private int bufferedStateHash;
     private PlayerActionPresentationProfile bufferedProfile;
     private string bufferedActionName;
     private bool bufferedActionIsBasic;
+    private BasicSkillsSO bufferedBasicSkill;
     private Transform actionFacingTarget;
     private bool deathAnimationLocked;
     private int deathStateHash;
@@ -90,17 +94,19 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
     public bool TryPlaySkill(SkillSO skill, int stateHash)
     {
+        BasicSkillsSO basicSkill = skill as BasicSkillsSO;
         return skill != null && TryPlay(
             stateHash,
             skill.Presentation,
             skill.SkillName,
-            skill is BasicSkillsSO);
+            basicSkill != null,
+            basicSkill);
     }
 
     public bool TryPlayCombatState(string stateName, PlayerActionPresentationProfile profile, string debugName)
     {
         if (string.IsNullOrWhiteSpace(stateName)) return false;
-        return TryPlay(Animator.StringToHash(stateName), profile, debugName, false);
+        return TryPlay(Animator.StringToHash(stateName), profile, debugName, false, null);
     }
 
     public IEnumerator WaitForChainWindow()
@@ -132,6 +138,10 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         bufferedProfile = null;
         bufferedActionName = null;
         bufferedActionIsBasic = false;
+        bufferedBasicSkill = null;
+        activeRequestsAirborneLanding = false;
+        activeLandingAtAnimationSeconds = 0f;
+        activeLandingRequested = false;
         locomotionBridge?.ClearPlayerActionRootMotionMode();
         if (hadAction)
         {
@@ -220,7 +230,12 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
     }
 
-    private bool TryPlay(int stateHash, PlayerActionPresentationProfile profile, string debugName, bool allowChainInterrupt)
+    private bool TryPlay(
+        int stateHash,
+        PlayerActionPresentationProfile profile,
+        string debugName,
+        bool allowChainInterrupt,
+        BasicSkillsSO basicSkill)
     {
         if (deathAnimationLocked)
         {
@@ -245,6 +260,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             bufferedProfile = profile;
             bufferedActionName = debugName;
             bufferedActionIsBasic = allowChainInterrupt;
+            bufferedBasicSkill = basicSkill;
             Trace("buffered", debugName, profile);
             return true;
         }
@@ -254,10 +270,15 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             return false;
         }
 
-        return StartAction(stateHash, profile, debugName, allowChainInterrupt);
+        return StartAction(stateHash, profile, debugName, allowChainInterrupt, basicSkill);
     }
 
-    private bool StartAction(int stateHash, PlayerActionPresentationProfile profile, string debugName, bool isBasicAction)
+    private bool StartAction(
+        int stateHash,
+        PlayerActionPresentationProfile profile,
+        string debugName,
+        bool isBasicAction,
+        BasicSkillsSO basicSkill)
     {
         if (actionRoutine != null)
         {
@@ -274,9 +295,13 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         mobilityCancelOpen = false;
         recoveryOpen = false;
         activeAllowsMobilityCancel = profile.allowMobilityCancel;
+        activeRequestsAirborneLanding = basicSkill != null && basicSkill.RequestsLandingDuringAnimation;
+        activeLandingAtAnimationSeconds = basicSkill != null ? basicSkill.LandingAtAnimationSeconds : 0f;
+        activeLandingRequested = false;
         locomotionBridge?.SetPlayerActionRootMotionMode(
             profile.rootMotionMode,
-            profile.facingMode == PlayerActionFacingMode.VisualOnly);
+            profile.facingMode == PlayerActionFacingMode.VisualOnly,
+            profile.allowAirborneRootMotion);
         animator.CrossFade(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, 0.25f), 0);
         Trace("enter", debugName, profile);
         actionRoutine = StartCoroutine(TrackAction(activeToken, profile, debugName, isBasicAction));
@@ -321,6 +346,8 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
                 FinishUnexpectedActionExit(token, isBasicAction);
                 yield break;
             }
+
+            RequestAirborneLandingIfDue(state);
 
             if (!chainWindowOpen && state.normalizedTime >= chainTime)
             {
@@ -432,6 +459,15 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             locomotionBridge.RefreshLocomotionPresentation();
         }
 
+        // CombatIdle/CombatLocomotion are ground states. Crossing to either
+        // while the capsule is still airborne cuts the jump presentation and
+        // makes aerial actions feel stuck. UCC owns that handoff instead.
+        if (locomotionBridge != null && !locomotionBridge.Grounded)
+        {
+            FinishWithoutTransition(token);
+            return;
+        }
+
         animator.CrossFade(ResolveLocomotionDestination(false, false), Mathf.Clamp(profile.exitBlendSeconds, 0f, 0.25f), 0);
         FinishWithoutTransition(token);
     }
@@ -445,6 +481,12 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
 
         locomotionBridge?.RefreshLocomotionPresentation();
+        if (locomotionBridge != null && !locomotionBridge.Grounded)
+        {
+            FinishWithoutTransition(token);
+            return;
+        }
+
         animator.CrossFade(ResolveLocomotionDestination(false, false), 0.08f, 0);
         FinishWithoutTransition(token);
     }
@@ -460,12 +502,14 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         PlayerActionPresentationProfile profile = bufferedProfile;
         string actionName = bufferedActionName;
         bool isBasicAction = bufferedActionIsBasic;
+        BasicSkillsSO basicSkill = bufferedBasicSkill;
         hasBufferedAction = false;
         bufferedStateHash = 0;
         bufferedProfile = null;
         bufferedActionName = null;
         bufferedActionIsBasic = false;
-        return StartAction(stateHash, profile, actionName, isBasicAction);
+        bufferedBasicSkill = null;
+        return StartAction(stateHash, profile, actionName, isBasicAction, basicSkill);
     }
 
     private void FinishWithoutTransition(int token)
@@ -481,6 +525,10 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         bufferedProfile = null;
         bufferedActionName = null;
         bufferedActionIsBasic = false;
+        bufferedBasicSkill = null;
+        activeRequestsAirborneLanding = false;
+        activeLandingAtAnimationSeconds = 0f;
+        activeLandingRequested = false;
         actionRoutine = null;
         locomotionBridge?.ClearPlayerActionRootMotionMode();
         ActionEnded?.Invoke();
@@ -496,6 +544,22 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         locomotionBridge?.RequestRunStartResponse();
         LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat action ended");
+    }
+
+    private void RequestAirborneLandingIfDue(AnimatorStateInfo state)
+    {
+        if (!activeRequestsAirborneLanding || activeLandingRequested || locomotionBridge == null || locomotionBridge.Grounded)
+        {
+            return;
+        }
+
+        float animationSeconds = state.normalizedTime * Mathf.Max(0f, state.length);
+        if (animationSeconds < activeLandingAtAnimationSeconds)
+        {
+            return;
+        }
+
+        activeLandingRequested = locomotionBridge.RequestCombatSkillLanding();
     }
 
     private string ResolveLocomotionDestination(bool movementHeld, bool sprintHeld)

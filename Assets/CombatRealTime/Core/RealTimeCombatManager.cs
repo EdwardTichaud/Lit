@@ -18,6 +18,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private PlayerActionPresentationController playerActionPresentation;
     [SerializeField] private CombatMobilityController playerMobility;
     [SerializeField] private RealTimeCombatInput combatInput;
+    [SerializeField] private CombatSkillCinematicController combatSkillCinematicController;
     [SerializeField] private VisionField playerVision;
     [SerializeField] private RealTimeCombatEnemy lockedEnemy;
 
@@ -76,6 +77,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public float Clarity => clarity;
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
     public bool CanAcceptBasicSkillInput => playerActionPresentation == null || playerActionPresentation.CanAcceptBasicSkillInput;
+    public CombatSkillCinematicController CombatSkillCinematicController => combatSkillCinematicController;
+    public bool IsPlayerActionActive => playerActionPresentation != null && playerActionPresentation.IsActionActive;
 
     /// <summary>Faces Lucian toward the current manual lock without starting an action.</summary>
     public bool FacePlayerTowardsLockedEnemy()
@@ -135,6 +138,14 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         Instance = this;
+        if (combatSkillCinematicController == null)
+        {
+            combatSkillCinematicController = GetComponent<CombatSkillCinematicController>();
+            if (combatSkillCinematicController == null)
+            {
+                combatSkillCinematicController = gameObject.AddComponent<CombatSkillCinematicController>();
+            }
+        }
         ResolvePlayerReferences();
         RegisterExistingAttackModes();
     }
@@ -592,13 +603,26 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public bool TryUseSkill(SkillSO skill)
     {
-        if (!combatActive || IsPlayerDead() || lockedEnemy == null || skill == null || skill.AnimationClip == null ||
+        if (!combatActive || IsPlayerDead() || lockedEnemy == null || skill == null ||
             (lockedEnemy.Health != null && lockedEnemy.Health.IsDead) || playerAnimator == null || playerRoot == null)
         {
             return false;
         }
 
         if (skill.RequireValidRangeToStart && !ValidateLockedEnemySkillRange(skill, true))
+        {
+            return false;
+        }
+
+        if (skill.HasCombatCinematic)
+        {
+            FaceLockedEnemyForAction();
+            bool cinematicStarted = combatSkillCinematicController != null && combatSkillCinematicController.TryPlayPlayerSkill(skill);
+            PlayPlayerSkillStartSfx(skill, cinematicStarted);
+            return cinematicStarted;
+        }
+
+        if (skill.AnimationClip == null)
         {
             return false;
         }
@@ -610,7 +634,24 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         FaceLockedEnemyForAction();
-        return playerActionPresentation != null && playerActionPresentation.TryPlaySkill(skill, stateHash);
+        bool actionStarted = playerActionPresentation != null && playerActionPresentation.TryPlaySkill(skill, stateHash);
+        PlayPlayerSkillStartSfx(skill, actionStarted);
+        return actionStarted;
+    }
+
+    private void PlayPlayerSkillStartSfx(SkillSO skill, bool actionStarted)
+    {
+        if (!actionStarted || skill == null || skill.PlayerAttackSfx == null || playerRoot == null)
+        {
+            return;
+        }
+
+        AudioManager.PlayClipAtPoint(skill.PlayerAttackSfx, playerRoot.position);
+    }
+
+    public bool TryPlayEnemySkillCinematic(RealTimeCombatEnemy caster, SkillSO skill)
+    {
+        return combatSkillCinematicController != null && combatSkillCinematicController.TryPlayEnemySkill(caster, skill);
     }
 
     public System.Collections.IEnumerator WaitForPlayerActionChainWindow()

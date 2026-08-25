@@ -402,6 +402,10 @@ SkillSO sont masques et exclus de la navigation de la roue. Les Skills et
 BasicSkills de Lucian utilisent `UccBody` : la capsule conserve donc l'orientation
 vers la cible apres le retour a locomotion, au lieu de ne tourner que le rig.
 `SkillsManager` expose aussi une liste `BasicSkills` de `BasicSkillsSO`.
+Cette preparation distingue maintenant les combos `GroundBasicSkills` et
+`AirBasicSkills`. Chaque BasicSkill aerien peut, dans son Inspector, rester
+en l'air ou demander une descente UCC a une seconde precise de l'animation,
+sans teleporter Lucian au sol.
 Pendant un lock, `WestButton` ajoute le prochain basic skill a un buffer de
 combo : les clips sont joues dans l'ordre de la liste puis bouclent. Les Basic
 Skills reutilisent les memes Animation Events de VFX et de hit que les skills
@@ -419,6 +423,14 @@ horizontale minimale et maximale de hit. `HitEnemy` ne blesse la cible qu'a la
 frame de son Animation Event si Lucian est dans cette plage autour de
 `EnemyLockPoint`. Les VFX `DirectOnTarget` et `Projectile` sont soumis a la
 meme verification; les cues `PlayerHand` restent joues pour la presentation du
+
+Les `SkillSO` peuvent maintenant choisir une Timeline optionnelle bakee depuis
+`CombatSkillTimelineAuthoringRig`. Cette session s'execute sur place et utilise
+le pool de `CombatCinematicRig` deja eprouve par les LightSkills. Elle suspend
+le combat entier sans modifier le temps global; `ResolveCinematicSkillImpact`
+reste l'unique impact valide. Les BasicSkills cinematographiques conservent leur
+combo a la restitution, tandis que les EnemySkills finalisent leur ledger une
+seule fois.
 caster. Un hit refuse affiche aussi un feedback world-space `Raté (trop près)`
 ou `Raté (trop loin)` sur l'ennemi.
 La meme plage est appliquee a l'impact d'un skill ennemi, entre sa racine et
@@ -636,6 +648,15 @@ afin qu'un dechargement de scene editeur ne laisse plus un GameObject
 Le prompt de reaction reacquiert sa reference de scene avant chaque phase et
 force son Canvas world-space sur la camera principale avec un ordre de rendu
 eleve, afin de rester visible apres un changement de scene.
+
+AnimationLab adopte maintenant le meme contrat que `Juggernaut_Combat` pour
+son ennemi preview : `Enemy_Preview` porte l'Animator `Juggernaut.controller`,
+le skeleton `MidPoly` reste visuel et les bakers enregistrent les poses des
+`ActorRoot` plutot que celles d'un enfant Animator. Les rigs de Skills et de
+LightSkills resolvent donc explicitement les roots preview avant de binder les
+pistes `Player.Animator` et `Enemy.Animator`. Le menu
+`Lit/Combat/Update AnimationLab Root Animators` resynchronise la scene et le
+prefab AnimationLab avec ce contrat pour les futures migrations.
 
 La locomotion combat est maintenant separee par autorite : le `NavMeshAgent`
 deplace les ennemis hors action, `CombatEnemyLocomotionController` traduit sa

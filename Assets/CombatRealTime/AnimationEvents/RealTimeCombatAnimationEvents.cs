@@ -204,6 +204,16 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     }
 
     /// <summary>
+    /// Shared Timeline Animation Event for an optional BasicSkill, player Skill
+    /// or EnemySkill cinematic. The active cinematic session owns the selected
+    /// skill and rejects duplicate or late events.
+    /// </summary>
+    public void ResolveCinematicSkillImpact()
+    {
+        RealTimeCombatManager.Instance?.CombatSkillCinematicController?.ResolveCinematicSkillImpact();
+    }
+
+    /// <summary>
     /// Animation Event joueur : joue tous les VFX de la competence selectionnee.
     /// </summary>
     public void InstantiateSkillVFX()

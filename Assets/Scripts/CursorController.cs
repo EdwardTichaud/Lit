@@ -89,6 +89,10 @@ public class CursorController : MonoBehaviour
     public InputActionReference moveActionReference;
     [Tooltip("Autorise la navigation via input.")]
     public bool allowInput = true;
+    [Tooltip("N'accepte la navigation que lorsque le contexte UI est actif.")]
+    public bool requireUiInputMode = true;
+    [Tooltip("Ignore la navigation si le curseur appartient a un panneau CanvasGroup invisible.")]
+    public bool requireVisibleCanvasGroup = true;
     [Tooltip("Desactive l'InputAction externe a la desactivation.")]
     public bool disableExternalActionOnDisable = false;
     [Tooltip("Utilise Time.unscaledTime.")]
@@ -110,6 +114,7 @@ public class CursorController : MonoBehaviour
 
     private InputAction moveAction;
     private bool usingExternalAction;
+    private bool usingSharedUiAction;
     private Vector2 cachedMoveInput;
     private readonly List<RectTransform> items = new List<RectTransform>();
     private int currentIndex = -1;
@@ -153,7 +158,7 @@ public class CursorController : MonoBehaviour
     {
         if (usingExternalAction)
         {
-            if (disableExternalActionOnDisable && moveAction != null)
+            if (disableExternalActionOnDisable && !usingSharedUiAction && moveAction != null)
             {
                 moveAction.Disable();
             }
@@ -162,6 +167,8 @@ public class CursorController : MonoBehaviour
         {
             LocalInputRouter.Move -= OnMoveChanged;
         }
+
+        ResetNavigationRepeat();
     }
 
     private void Update()
@@ -182,9 +189,13 @@ public class CursorController : MonoBehaviour
             return;
         }
 
-        if (allowInput)
+        if (CanProcessNavigationInput())
         {
             HandleNavigation();
+        }
+        else
+        {
+            ResetNavigationRepeat();
         }
     }
 
@@ -306,6 +317,24 @@ public class CursorController : MonoBehaviour
 
     private void SetupInput()
     {
+        moveAction = null;
+        usingExternalAction = false;
+        usingSharedUiAction = false;
+
+        if (requireUiInputMode)
+        {
+            InputActionMap uiMap = LocalPlayerInput.FindSharedActionMap("UI");
+            InputAction uiNavigateAction = uiMap != null ? uiMap.FindAction("Navigate", false) : null;
+            if (uiNavigateAction != null)
+            {
+                // The coordinator owns this shared map. Do not enable or disable it here.
+                moveAction = uiNavigateAction;
+                usingExternalAction = true;
+                usingSharedUiAction = true;
+                return;
+            }
+        }
+
         if (moveActionReference != null && moveActionReference.action != null)
         {
             moveAction = moveActionReference.action;
@@ -321,6 +350,36 @@ public class CursorController : MonoBehaviour
         LocalInputRouter.EnsureInitialized();
         LocalInputRouter.Move += OnMoveChanged;
         moveAction = null;
+    }
+
+    private bool CanProcessNavigationInput()
+    {
+        if (!allowInput)
+        {
+            return false;
+        }
+
+        if (requireUiInputMode && InputModeCoordinator.CurrentMode != InputMode.UserInterface)
+        {
+            return false;
+        }
+
+        return !requireVisibleCanvasGroup || IsVisibleThroughCanvasGroups();
+    }
+
+    private bool IsVisibleThroughCanvasGroups()
+    {
+        CanvasGroup[] canvasGroups = GetComponentsInParent<CanvasGroup>(true);
+        for (int i = 0; i < canvasGroups.Length; i++)
+        {
+            CanvasGroup canvasGroup = canvasGroups[i];
+            if (canvasGroup != null && canvasGroup.alpha <= 0.001f)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private RectTransform GetItemsParent()
@@ -515,15 +574,13 @@ public class CursorController : MonoBehaviour
         int direction = GetMoveDirection(moveInput, moveDeadzone);
         if (direction == 0)
         {
-            lastMoveDirection = 0;
-            nextMoveTime = 0f;
+            ResetNavigationRepeat();
             return;
         }
 
         if (!AllowsDirection(direction))
         {
-            lastMoveDirection = 0;
-            nextMoveTime = 0f;
+            ResetNavigationRepeat();
             return;
         }
 
@@ -546,6 +603,12 @@ public class CursorController : MonoBehaviour
     private void OnMoveChanged(Vector2 value)
     {
         cachedMoveInput = value;
+    }
+
+    private void ResetNavigationRepeat()
+    {
+        lastMoveDirection = 0;
+        nextMoveTime = 0f;
     }
 
     private bool AllowsDirection(int direction)

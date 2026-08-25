@@ -1319,7 +1319,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatLockIndicator
   visualRoot: {fileID: 2845147082876959330}
-  lockSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
+  lockSfx: {fileID: 11400000, guid: 23b77a847a83e654a8aee90ec5a89571, type: 2}
   pulseAmplitude: 0.12
   pulseFrequency: 2
 --- !u!1 &1144275856666032666
@@ -7739,7 +7739,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
-  actor: {fileID: 0}
+  actor: {fileID: 8793910659942973289}
 --- !u!1 &6691210866271643018
 GameObject:
   m_ObjectHideFlags: 0

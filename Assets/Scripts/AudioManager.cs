@@ -488,6 +488,15 @@ public class AudioManager : MonoBehaviour
 
     public AudioSource PlayClip(AudioClipSO clip, Vector3 position)
     {
+        return PlayClip(clip, position, 1f, 1f);
+    }
+
+    /// <summary>
+    /// Plays an AudioClipSO with a caller-provided volume multiplier and base pitch.
+    /// The clip still owns its time-scale behavior and base volume.
+    /// </summary>
+    public AudioSource PlayClip(AudioClipSO clip, Vector3 position, float volumeMultiplier, float basePitch)
+    {
         if (clip == null || clip.audioClip == null)
         {
             return null;
@@ -499,8 +508,8 @@ public class AudioManager : MonoBehaviour
         source.transform.position = position;
         source.clip = clip.audioClip;
         source.loop = clip.loop;
-        ApplyClipPitch(source, clip);
-        source.volume = GetSfxSourceVolume(clip);
+        ApplyClipPitch(source, clip, basePitch);
+        source.volume = GetSfxSourceVolume(clip) * Mathf.Clamp01(volumeMultiplier);
         source.Play();
         RegisterSfxSource(source, clip);
 

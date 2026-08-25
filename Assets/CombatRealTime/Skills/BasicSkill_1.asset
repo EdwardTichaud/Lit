@@ -21,12 +21,13 @@ MonoBehaviour:
   lightChargeOnHit: 100
   presentation:
     entryBlendSeconds: 0.04
-    chainNormalizedTime: 0.55
-    chainTransitionNormalizedTime: 0.66
+    chainNormalizedTime: 0.35
+    chainTransitionNormalizedTime: 0.5
     mobilityCancelNormalizedTime: 0.35
-    recoveryNormalizedTime: 0.68
-    exitBlendSeconds: 0.05
+    recoveryNormalizedTime: 0.6
+    exitBlendSeconds: 0.03
     rootMotionMode: 1
+    allowAirborneRootMotion: 0
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
@@ -34,6 +35,20 @@ MonoBehaviour:
   minimumHitDistance: 0
   maximumHitDistance: 5
   requireValidRangeToStart: 0
+  cinematic:
+    timeline: {fileID: 0}
+    combatCinematicRigPrefab: {fileID: 0}
+    playerAnimatorTrackName: Player.Animator
+    enemyAnimatorTrackName: Enemy.Animator
+    cinemachineTrackName: Cinemachine
+    postTimelinePlayerState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
+    postTimelineEnemyState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
   vfxCues:
   - displayName: Impact
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
@@ -81,7 +96,24 @@ MonoBehaviour:
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000
   requireAllEnemyReactions: 0
-  enemyAttackSfx: {fileID: 0}
+  playerAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
+  enemyAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
+  enemyActionMotion:
+    movementMode: 0
+    initialUpwardSpeed: 12
+    gravity: 32
+    maximumFallSpeed: 28
+    minimumLandingSpeed: 4
+    maximumAirborneSeconds: 2.5
+    enableHomingRush: 0
+    rushMaximumSpeed: 14
+    rushAcceleration: 46
+    rushDeceleration: 62
+    rushStoppingDistance: 1.25
+    rushCollisionSkin: 0.04
+    rushBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   reactionTelegraph:
     enabled: 1
     alertPrefab: {fileID: 0}
@@ -89,9 +121,28 @@ MonoBehaviour:
     perfectWindowColor: {r: 0.72, g: 0.94, b: 1, a: 1}
     heightOffset: 1.1
     fadeSeconds: 0.12
-    anticipationAudio: {fileID: 0}
-    perfectWindowAudio: {fileID: 0}
-    successfulReactionAudio: {fileID: 0}
+    anticipationAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
+    perfectWindowAudio: {fileID: 11400000, guid: 0438d71856ebb2343ad2e5a5508b6b87, type: 2}
+    successfulReactionAudio: {fileID: 11400000, guid: 4851eb51eca50fb4594e1d7418bfaf41, type: 2}
     usePerfectWindowSlowMotion: 1
     perfectWindowTimeScale: 0.85
     perfectWindowSlowMotionSeconds: 0.15
+  combatWarning:
+    enabled: 1
+    color: {r: 1, g: 0.1, b: 0.42, a: 1}
+    intensity: 0.8
+    pulseFrequency: 2.5
+    vignette: 0.26
+    chromaticAberration: 0.012
+    enemyFocusBias: 0.9
+    recenterDegreesPerSecond: 280
+    focusSharpness: 28
+    fieldOfViewOffset: -2
+    fadeOutSeconds: 0.16
+    warningAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
+    useSlowMotion: 0
+    slowMotionTimeScale: 0.85
+    slowMotionSeconds: 0.15
+  context: 0
+  airborneLandingMode: 0
+  landingAtAnimationSeconds: 0

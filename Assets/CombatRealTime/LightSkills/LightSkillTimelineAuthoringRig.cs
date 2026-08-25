@@ -17,6 +17,10 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
     [SerializeField] private PlayableDirector director;
     [SerializeField] private Animator previewPlayerAnimator;
     [SerializeField] private Animator previewEnemyAnimator;
+    [SerializeField, Tooltip("Root de gameplay preview de Lucian. L'Animator doit etre porte par ce root.")]
+    private Transform previewPlayerActorRoot;
+    [SerializeField, Tooltip("Root de gameplay preview de l'ennemi. L'Animator doit etre porte par ce root.")]
+    private Transform previewEnemyActorRoot;
     [Header("Runtime Stage Anchors")]
     [Tooltip("Repere canonique du root Lucian, relatif au root AnimationLab.")]
     [SerializeField] private Transform previewPlayerAnchor;
@@ -29,13 +33,19 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
 
     public LightSkillSO LightSkill => lightSkill;
     public PlayableDirector Director => director;
-    public Animator PreviewPlayerAnimator => previewPlayerAnimator;
-    public Animator PreviewEnemyAnimator => previewEnemyAnimator;
+    public Transform PreviewPlayerActorRoot => CombatCinematicAuthoringActorResolver.ResolveActorRoot(
+        previewPlayerActorRoot, previewPlayerAnchor, previewPlayerAnimator);
+    public Transform PreviewEnemyActorRoot => CombatCinematicAuthoringActorResolver.ResolveActorRoot(
+        previewEnemyActorRoot, previewEnemyAnchor, previewEnemyAnimator);
+    public Animator PreviewPlayerAnimator => CombatCinematicAuthoringActorResolver.ResolveAnimator(
+        PreviewPlayerActorRoot, previewPlayerAnimator);
+    public Animator PreviewEnemyAnimator => CombatCinematicAuthoringActorResolver.ResolveAnimator(
+        PreviewEnemyActorRoot, previewEnemyAnimator);
     public Transform PreviewPlayerAnchor => previewPlayerAnchor;
     public Transform PreviewEnemyAnchor => previewEnemyAnchor;
     public Transform PreviewEnemyLockPoint => previewEnemyLockPoint != null
         ? previewEnemyLockPoint
-        : previewEnemyAnimator != null ? previewEnemyAnimator.transform : null;
+        : PreviewEnemyActorRoot;
     public CinemachineBrain PreviewCameraBrain => previewCameraBrain;
     public CinemachineCamera PreviewVirtualCamera => previewVirtualCamera;
     public SignalReceiver PreviewSignalReceiver => previewSignalReceiver;
@@ -47,6 +57,14 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
         // manual migration. Future labs still expose the two fields normally.
         previewPlayerAnchor ??= FindStageAnchor("Lucian_Anchor");
         previewEnemyAnchor ??= FindStageAnchor("Enemy_Anchor");
+        previewPlayerActorRoot ??= CombatCinematicAuthoringActorResolver.ResolveActorRoot(
+            null, previewPlayerAnchor, previewPlayerAnimator);
+        previewEnemyActorRoot ??= CombatCinematicAuthoringActorResolver.ResolveActorRoot(
+            null, previewEnemyAnchor, previewEnemyAnimator);
+        previewPlayerAnimator = CombatCinematicAuthoringActorResolver.ResolveAnimator(
+            previewPlayerActorRoot, previewPlayerAnimator);
+        previewEnemyAnimator = CombatCinematicAuthoringActorResolver.ResolveAnimator(
+            previewEnemyActorRoot, previewEnemyAnimator);
     }
 
     private Transform FindStageAnchor(string anchorName)
@@ -80,6 +98,8 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
         previewEnemyAnimator = enemyAnimator;
         previewPlayerAnchor = playerAnchor;
         previewEnemyAnchor = enemyAnchor;
+        previewPlayerActorRoot = CombatCinematicAuthoringActorResolver.ResolveActorRoot(null, playerAnchor, playerAnimator);
+        previewEnemyActorRoot = CombatCinematicAuthoringActorResolver.ResolveActorRoot(null, enemyAnchor, enemyAnimator);
         previewEnemyLockPoint = enemyLockPoint;
         previewCameraBrain = cameraBrain;
         previewVirtualCamera = virtualCamera;
@@ -96,7 +116,9 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
             return false;
         }
 
-        if (director == null || previewPlayerAnimator == null || previewEnemyAnimator == null ||
+        Animator playerAnimator = PreviewPlayerAnimator;
+        Animator enemyAnimator = PreviewEnemyAnimator;
+        if (director == null || playerAnimator == null || enemyAnimator == null ||
             previewPlayerAnchor == null || previewEnemyAnchor == null ||
             previewCameraBrain == null || previewSignalReceiver == null)
         {
@@ -118,11 +140,11 @@ public sealed class LightSkillTimelineAuthoringRig : MonoBehaviour
             {
                 if (animationTrack.name == lightSkill.PlayerAnimatorTrackName)
                 {
-                    director.SetGenericBinding(animationTrack, previewPlayerAnimator);
+                    director.SetGenericBinding(animationTrack, playerAnimator);
                 }
                 else if (animationTrack.name == lightSkill.EnemyAnimatorTrackName)
                 {
-                    director.SetGenericBinding(animationTrack, previewEnemyAnimator);
+                    director.SetGenericBinding(animationTrack, enemyAnimator);
                 }
             }
             else if (output.sourceObject is CinemachineTrack cinemachineTrack)

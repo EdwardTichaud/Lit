@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Return Home
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: de9b3a737ec8dd14faeaa33ac6eafd4b, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

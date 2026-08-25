@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3baf3de3ad65d741a0c1b5f0a06f8db, type: 3}
   m_Name: SFX_Inventory_ReadPage
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
-  title: Inventory Read Page
+  title: Read Page
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.75
+  audioClip: {fileID: 8300000, guid: c98a9b363032746599d40a9c6cf33a69, type: 3}
+  volume: 0.55
   loop: 0
+  affectedByTimeScale: 0

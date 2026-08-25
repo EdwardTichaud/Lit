@@ -175,7 +175,15 @@ namespace Lit.Story
                 uccCameraController.Character != null &&
                 uccCameraController.ActiveViewType != null)
             {
-                uccCameraController.PositionImmediately(true);
+                LitSmoothUccCameraViewAdapter smoothAdapter = uccCameraController.GetComponent<LitSmoothUccCameraViewAdapter>();
+                if (smoothAdapter != null)
+                {
+                    smoothAdapter.RequestImmediatePose(CameraSnapReason.ExternalCameraReturn);
+                }
+                else
+                {
+                    uccCameraController.PositionImmediately(true);
+                }
             }
         }
 

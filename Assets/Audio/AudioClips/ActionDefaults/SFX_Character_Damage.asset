@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Character Damage
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: 15cbca38b194aab41b4cca402e36cfd2, type: 3}
+  volume: 0.8
   loop: 0
+  affectedByTimeScale: 0

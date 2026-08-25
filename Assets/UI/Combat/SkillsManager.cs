@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public sealed class SkillsManager : MonoBehaviour
@@ -9,7 +10,11 @@ public sealed class SkillsManager : MonoBehaviour
 
     [SerializeField] private SquadCharacterController playerController;
     [SerializeField] private SkillSO[] equippedSkills = new SkillSO[MaxEquippedSkills];
-    [SerializeField] private List<BasicSkillsSO> basicSkills = new List<BasicSkillsSO>();
+    [FormerlySerializedAs("basicSkills")]
+    [Tooltip("Combo de base utilise lorsque Lucian est au sol. Les BasicSkills Airborne sont refuses ici.")]
+    [SerializeField] private List<BasicSkillsSO> groundBasicSkills = new List<BasicSkillsSO>();
+    [Tooltip("Combo de base utilise lorsque Lucian est en l'air. Les BasicSkills Grounded sont refuses ici.")]
+    [SerializeField] private List<BasicSkillsSO> airBasicSkills = new List<BasicSkillsSO>();
 
     public event Action<IReadOnlyList<SkillSO>> EquippedSkillsChanged;
 
@@ -18,10 +23,12 @@ public sealed class SkillsManager : MonoBehaviour
         : Array.Empty<SkillSO>();
 
     public IReadOnlyList<SkillSO> EquippedSkills => equippedSkills;
-    public IReadOnlyList<BasicSkillsSO> BasicSkills => basicSkills;
+    public IReadOnlyList<BasicSkillsSO> GroundBasicSkills => GetBasicSkillList(BasicSkillContext.Grounded);
+    public IReadOnlyList<BasicSkillsSO> AirBasicSkills => GetBasicSkillList(BasicSkillContext.Airborne);
     public SkillSO AnimationEventSkill { get; private set; }
 
-    private int nextBasicSkillIndex;
+    private int nextGroundBasicSkillIndex;
+    private int nextAirBasicSkillIndex;
 
     private void Awake()
     {
@@ -104,21 +111,24 @@ public sealed class SkillsManager : MonoBehaviour
         EquippedSkillsChanged?.Invoke(equippedSkills);
     }
 
-    public bool TryReserveNextBasicSkill(out BasicSkillsSO skill)
+    public bool TryReserveNextBasicSkill(BasicSkillContext context, out BasicSkillsSO skill)
     {
         skill = null;
-        if (basicSkills == null || basicSkills.Count == 0)
+        IReadOnlyList<BasicSkillsSO> skills = GetBasicSkillList(context);
+        if (skills == null || skills.Count == 0)
         {
             return false;
         }
 
-        for (int offset = 0; offset < basicSkills.Count; offset++)
+        int nextIndex = GetNextBasicSkillIndex(context);
+        for (int offset = 0; offset < skills.Count; offset++)
         {
-            int index = (nextBasicSkillIndex + offset) % basicSkills.Count;
-            if (basicSkills[index] != null)
+            int index = (nextIndex + offset) % skills.Count;
+            BasicSkillsSO candidate = skills[index];
+            if (candidate != null && candidate.Context == context)
             {
-                skill = basicSkills[index];
-                nextBasicSkillIndex = (index + 1) % basicSkills.Count;
+                skill = candidate;
+                SetNextBasicSkillIndex(context, (index + 1) % skills.Count);
                 return true;
             }
         }
@@ -126,9 +136,15 @@ public sealed class SkillsManager : MonoBehaviour
         return false;
     }
 
-    public void ResetBasicSkillCombo()
+    public void ResetBasicSkillCombo(BasicSkillContext context)
     {
-        nextBasicSkillIndex = 0;
+        SetNextBasicSkillIndex(context, 0);
+    }
+
+    public void ResetAllBasicSkillCombos()
+    {
+        nextGroundBasicSkillIndex = 0;
+        nextAirBasicSkillIndex = 0;
     }
 
     public void SetAnimationEventSkill(SkillSO skill)
@@ -139,6 +155,14 @@ public sealed class SkillsManager : MonoBehaviour
     private void OnValidate()
     {
         EnsureSlotCount();
+        ValidateBasicSkillContexts(groundBasicSkills, BasicSkillContext.Grounded, "Ground Basic Skills");
+        ValidateBasicSkillContexts(airBasicSkills, BasicSkillContext.Airborne, "Air Basic Skills");
+
+        if (playerController != null && playerController.CharacterData != null)
+        {
+            ValidateBasicSkillContexts(playerController.CharacterData.groundBasicSkills, BasicSkillContext.Grounded, "CharacterData Ground Basic Skills");
+            ValidateBasicSkillContexts(playerController.CharacterData.airBasicSkills, BasicSkillContext.Airborne, "CharacterData Air Basic Skills");
+        }
     }
 
     private void EnsureSlotCount()
@@ -159,6 +183,22 @@ public sealed class SkillsManager : MonoBehaviour
 
     private void ResolveReferences()
     {
+        // The manager lives in Bootstrap while Lucian can be respawned or
+        // swapped. The combat PlayerRoot is the authoritative owner of the
+        // BasicSkills currently being requested.
+        Transform activePlayerRoot = RealTimeCombatManager.Instance != null
+            ? RealTimeCombatManager.Instance.PlayerRoot
+            : null;
+        if (activePlayerRoot != null)
+        {
+            SquadCharacterController activeController = activePlayerRoot.GetComponentInChildren<SquadCharacterController>(true);
+            if (activeController != null)
+            {
+                playerController = activeController;
+                return;
+            }
+        }
+
         if (playerController == null)
         {
             playerController = FindAnyObjectByType<SquadCharacterController>(FindObjectsInactive.Include);
@@ -182,5 +222,68 @@ public sealed class SkillsManager : MonoBehaviour
             }
         }
         return changed;
+    }
+
+    private IReadOnlyList<BasicSkillsSO> GetBasicSkillList(BasicSkillContext context)
+    {
+        // The local character can spawn after this manager. Resolve again at
+        // selection time so the combo always comes from the active CharacterData.
+        ResolveReferences();
+        CharacterData characterData = playerController != null ? playerController.CharacterData : null;
+        if (characterData != null && HasCharacterBasicSkillConfiguration(characterData))
+        {
+            return context == BasicSkillContext.Airborne
+                ? characterData.airBasicSkills
+                : characterData.groundBasicSkills;
+        }
+
+        // Compatibility for scenes that have not yet migrated their authoring
+        // data to CharacterData. New characters should use CharacterData only.
+        return context == BasicSkillContext.Airborne ? airBasicSkills : groundBasicSkills;
+    }
+
+    private static bool HasCharacterBasicSkillConfiguration(CharacterData characterData)
+    {
+        return characterData != null &&
+               ((characterData.groundBasicSkills != null && characterData.groundBasicSkills.Count > 0) ||
+                (characterData.airBasicSkills != null && characterData.airBasicSkills.Count > 0));
+    }
+
+    private int GetNextBasicSkillIndex(BasicSkillContext context)
+    {
+        return context == BasicSkillContext.Airborne ? nextAirBasicSkillIndex : nextGroundBasicSkillIndex;
+    }
+
+    private void SetNextBasicSkillIndex(BasicSkillContext context, int value)
+    {
+        if (context == BasicSkillContext.Airborne)
+        {
+            nextAirBasicSkillIndex = value;
+            return;
+        }
+
+        nextGroundBasicSkillIndex = value;
+    }
+
+    private void ValidateBasicSkillContexts(
+        List<BasicSkillsSO> skills,
+        BasicSkillContext expectedContext,
+        string listName)
+    {
+        if (skills == null)
+        {
+            return;
+        }
+
+        foreach (BasicSkillsSO skill in skills)
+        {
+            if (skill != null && skill.Context != expectedContext)
+            {
+                Debug.LogWarning(
+                    "[SkillsManager] '" + skill.name + "' est configure " + skill.Context +
+                    " mais se trouve dans '" + listName + "'. Il sera ignore.",
+                    this);
+            }
+        }
     }
 }

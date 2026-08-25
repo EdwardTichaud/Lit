@@ -35,9 +35,22 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     private bool paletteInputSuppressed;
     private bool callbacksSubscribed;
     private int selectedSlot;
-    private readonly Queue<BasicSkillsSO> basicSkillQueue = new Queue<BasicSkillsSO>();
+    private readonly Queue<BasicSkillRequest> basicSkillQueue = new Queue<BasicSkillRequest>();
     private Coroutine basicComboRoutine;
     private float lastBasicAttackQueuedAt = float.NegativeInfinity;
+    private BasicSkillContext? lastBasicSkillContext;
+
+    private readonly struct BasicSkillRequest
+    {
+        public readonly BasicSkillsSO Skill;
+        public readonly BasicSkillContext Context;
+
+        public BasicSkillRequest(BasicSkillsSO skill, BasicSkillContext context)
+        {
+            Skill = skill;
+            Context = context;
+        }
+    }
 
     public int SelectedSlot => selectedSlot;
     public bool IsInputActive => actionMap != null && actionMap.enabled;
@@ -92,6 +105,29 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         ClosePalette();
         ClearBasicSkillCombo();
         Trace("Combat input inactive | " + InputDiagnostics + ".");
+    }
+
+    /// <summary>
+    /// Temporarily hands the map to a combat Timeline without discarding the
+    /// current BasicSkill combo index. A normal combat exit still uses
+    /// SetInputActive(false) and clears the queue as before.
+    /// </summary>
+    public void SetCinematicInputSuspended(bool suspended)
+    {
+        ResolveActions();
+        if (suspended)
+        {
+            LocalPlayerInput.SetCombatInputActive(false);
+            GamepadInputContextStack.Pop(this);
+            ClosePalette();
+            Trace("Combat input suspended for cinematic | " + InputDiagnostics + ".");
+            return;
+        }
+
+        LocalPlayerInput.SetCombatInputActive(true);
+        GamepadInputContextStack.Push(this, GamepadInputContext.Combat);
+        Subscribe();
+        Trace("Combat input restored after cinematic | " + InputDiagnostics + ".");
     }
 
     private void ResolveActions()
@@ -269,6 +305,18 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             return;
         }
 
+        BasicSkillContext basicSkillContext = ResolveBasicSkillContext(manager);
+        if (lastBasicSkillContext.HasValue && lastBasicSkillContext.Value != basicSkillContext)
+        {
+            // A combo never crosses the ground/air boundary. The active clip
+            // is left untouched; only a waiting follow-up is invalidated.
+            BasicSkillContext previousContext = lastBasicSkillContext.Value;
+            ClearBasicSkillCombo();
+            skillsManager.ResetBasicSkillCombo(previousContext);
+            skillsManager.ResetBasicSkillCombo(basicSkillContext);
+            Trace("BasicAttack contexte change: " + previousContext + " -> " + basicSkillContext + ".");
+        }
+
         if (basicSkillQueue.Count >= maximumBufferedBasicSkills)
         {
             Trace("BasicAttack ignoree: buffer deja plein.");
@@ -278,17 +326,40 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         float currentTime = Time.unscaledTime;
         if (currentTime - lastBasicAttackQueuedAt > basicComboResetDelaySeconds)
         {
-            skillsManager.ResetBasicSkillCombo();
+            skillsManager.ResetBasicSkillCombo(basicSkillContext);
         }
 
-        if (!skillsManager.TryReserveNextBasicSkill(out BasicSkillsSO skill))
+        if (!skillsManager.TryReserveNextBasicSkill(basicSkillContext, out BasicSkillsSO skill))
         {
-            Trace("BasicAttack ignoree: aucun BasicSkillsSO configure.");
+            Trace("BasicAttack ignoree: aucun BasicSkillsSO " + basicSkillContext + " configure.");
             return;
         }
 
+        lastBasicSkillContext = basicSkillContext;
         lastBasicAttackQueuedAt = currentTime;
-        basicSkillQueue.Enqueue(skill);
+
+        // Aerial attacks must take over the jump pose in the same input frame.
+        // Waiting for the generic combo coroutine leaves a frame for UCC's jump
+        // presentation to reclaim the Animator, which made the first air hit
+        // appear to be ignored.
+        if (basicSkillContext == BasicSkillContext.Airborne &&
+            !manager.IsPlayerActionActive &&
+            basicSkillQueue.Count == 0)
+        {
+            skillsManager.SetAnimationEventSkill(skill);
+            if (manager.TryUseSkill(skill))
+            {
+                Trace("AirBasicAttack demarree immediatement: " + skill.SkillName + ".");
+                return;
+            }
+
+            skillsManager.ResetBasicSkillCombo(BasicSkillContext.Airborne);
+            lastBasicSkillContext = null;
+            Trace("AirBasicAttack refusee par RealTimeCombatManager: " + skill.SkillName + ".");
+            return;
+        }
+
+        basicSkillQueue.Enqueue(new BasicSkillRequest(skill, basicSkillContext));
         if (basicComboRoutine == null)
         {
             basicComboRoutine = StartCoroutine(PlayBasicSkillCombo(skillsManager));
@@ -429,7 +500,19 @@ public sealed class RealTimeCombatInput : MonoBehaviour
                 continue;
             }
 
-            BasicSkillsSO skill = basicSkillQueue.Dequeue();
+            BasicSkillRequest request = basicSkillQueue.Dequeue();
+            BasicSkillContext currentContext = ResolveBasicSkillContext(manager);
+            if (currentContext != request.Context)
+            {
+                skillsManager.ResetBasicSkillCombo(request.Context);
+                skillsManager.ResetBasicSkillCombo(currentContext);
+                lastBasicSkillContext = null;
+                basicSkillQueue.Clear();
+                Trace("BasicAttack buffer annule: contexte " + request.Context + " devenu " + currentContext + ".");
+                break;
+            }
+
+            BasicSkillsSO skill = request.Skill;
             skillsManager.SetAnimationEventSkill(skill);
             if (!manager.TryUseSkill(skill))
             {
@@ -445,6 +528,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     {
         basicSkillQueue.Clear();
         lastBasicAttackQueuedAt = float.NegativeInfinity;
+        lastBasicSkillContext = null;
         if (basicComboRoutine != null)
         {
             StopCoroutine(basicComboRoutine);
@@ -455,6 +539,26 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     public void CancelBufferedBasicSkills()
     {
         ClearBasicSkillCombo();
+    }
+
+    private static BasicSkillContext ResolveBasicSkillContext(RealTimeCombatManager manager)
+    {
+        Transform player = manager != null ? manager.PlayerRoot : null;
+        if (player == null)
+        {
+            return BasicSkillContext.Grounded;
+        }
+
+        LitOpsiveLocomotionBridge bridge = player.GetComponentInChildren<LitOpsiveLocomotionBridge>(true);
+        if (bridge != null)
+        {
+            return bridge.Grounded ? BasicSkillContext.Grounded : BasicSkillContext.Airborne;
+        }
+
+        SquadCharacterController controller = player.GetComponentInChildren<SquadCharacterController>(true);
+        return controller == null || controller.IsGrounded
+            ? BasicSkillContext.Grounded
+            : BasicSkillContext.Airborne;
     }
 
     private void ClosePalette(bool resolveIfMissing = true)

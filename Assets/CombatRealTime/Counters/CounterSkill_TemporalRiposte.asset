@@ -15,10 +15,11 @@ MonoBehaviour:
   displayName: Riposte temporelle
   icon: {fileID: 0}
   timeline: {fileID: 11400000, guid: 24fa58addbff89e4f829f2bc25d4f32a, type: 2}
+  combatCinematicRigPrefab: {fileID: 0}
   damage: 25
   clarityGain: 10
   playerAnimatorTrackName: Player.Animator
   enemyAnimatorTrackName: Enemy.Animator
   cinemachineTrackName: Cinemachine
-  startSfx: {fileID: 0}
-  impactSfx: {fileID: 0}
+  startSfx: {fileID: 11400000, guid: cea25bb7a3c0b0e4f97f380ee7d0615c, type: 2}
+  impactSfx: {fileID: 11400000, guid: b1e939b15747f81409aa659a95a1d98d, type: 2}

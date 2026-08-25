@@ -46,6 +46,12 @@ public class CharacterData : ScriptableObject
     /// <summary>Competences de combat temps reel connues par le personnage.</summary>
     public List<SkillSO> combatSkills = new List<SkillSO>();
 
+    [Header("Basic Skills")]
+    [Tooltip("Combo d'attaques basiques disponible au sol. L'ordre definit l'enchainement.")]
+    public List<BasicSkillsSO> groundBasicSkills = new List<BasicSkillsSO>();
+    [Tooltip("Combo d'attaques basiques disponible en l'air. L'ordre definit l'enchainement.")]
+    public List<BasicSkillsSO> airBasicSkills = new List<BasicSkillsSO>();
+
     /// <summary>Statistiques de type JDR utilisees par les checks.</summary>
     public CharacterStats stats = new CharacterStats();
     /// <summary>Items donnes au debut ou lors de l'initialisation d'inventaire.</summary>

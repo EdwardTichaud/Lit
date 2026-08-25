@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Combat Attack
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: d87f65e269aa6cb4fbcd95be09d05c8f, type: 3}
+  volume: 0.75
   loop: 0
+  affectedByTimeScale: 0

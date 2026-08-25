@@ -3936,6 +3936,8 @@ MonoBehaviour:
   director: {fileID: 9111142501208813963}
   previewPlayerAnimator: {fileID: 4028338658885062955}
   previewEnemyAnimator: {fileID: 0}
+  previewPlayerActorRoot: {fileID: 2613521702567016951}
+  previewEnemyActorRoot: {fileID: 0}
   previewPlayerAnchor: {fileID: 0}
   previewEnemyAnchor: {fileID: 0}
   previewEnemyLockPoint: {fileID: 0}

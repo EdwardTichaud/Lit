@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: UI Open
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.8
+  audioClip: {fileID: 8300000, guid: 885b296fe633b4600b5425911dfb397c, type: 3}
+  volume: 0.55
   loop: 0
+  affectedByTimeScale: 0

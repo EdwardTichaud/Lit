@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Teleport
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: c013e2c53abacf64caa2b97855ff09da, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

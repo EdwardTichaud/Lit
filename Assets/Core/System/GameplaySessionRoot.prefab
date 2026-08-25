@@ -1,5 +1,74 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &410000000000000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 410000000000000002}
+  - component: {fileID: 410000000000000004}
+  m_Layer: 0
+  m_Name: CombatWarningPass
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &410000000000000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410000000000000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1962244032958566552}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &410000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
+  m_IsGlobal: 1
+  fadeRadius: 0
+  priority: 1001
+  customPasses:
+  - rid: 410000000000000005
+  injectionPoint: 2
+  m_TargetCamera: {fileID: 0}
+  useTargetCamera: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 410000000000000005
+      type: {class: FullScreenCustomPass, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
+      data:
+        m_Name: Combat Warning
+        enabled: 0
+        targetColorBuffer: 0
+        targetDepthBuffer: 2
+        clearFlags: 0
+        passFoldout: 0
+        m_Version: 0
+        fullscreenPassMaterial: {fileID: 2100000, guid: e3ab94fc0721436cb7dba1f3c6f8329d, type: 2}
+        materialPassIndex: 0
+        materialPassName: Custom Pass 0
+        fetchColorBuffer: 1
 --- !u!1 &477363866985607624
 GameObject:
   m_ObjectHideFlags: 0
@@ -1317,6 +1386,7 @@ MonoBehaviour:
   playerActionPresentation: {fileID: 0}
   playerMobility: {fileID: 810000000000000007}
   combatInput: {fileID: 810000000000000002}
+  combatSkillCinematicController: {fileID: 0}
   playerVision: {fileID: 0}
   lockedEnemy: {fileID: 0}
   lockRange: 6
@@ -1350,6 +1420,7 @@ MonoBehaviour:
   skillWheelCanvasGroup: {fileID: 0}
   basicComboResetDelaySeconds: 0.85
   maximumBufferedBasicSkills: 1
+  logInputDiagnostics: 1
 --- !u!114 &810000000000000007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1456,6 +1527,7 @@ MonoBehaviour:
   cinematicPlayback: {fileID: 0}
   lightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
   logLightSkillDiagnostics: 1
+  cinematicCompletionGraceSeconds: 1.5
 --- !u!114 &6119416266814459275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1527,7 +1599,6 @@ MonoBehaviour:
   combatManager: {fileID: 810000000000000001}
   director: {fileID: 810000000000000005}
   cinematicPlayback: {fileID: 0}
-  wheel: {fileID: 0}
   counterVirtualCamera: {fileID: 7926320162611101663}
   cameraRig: {fileID: 7088912455650331963}
   impactFeedback: {fileID: 810000000000000004}
@@ -1540,9 +1611,9 @@ MonoBehaviour:
   guardReleaseAnimatorState: Base Layer.Locomotion
   guardAnimationBlendSeconds: 0.08
   guardStartVfx: {fileID: 0}
-  guardStartAudio: {fileID: 0}
+  guardStartAudio: {fileID: 11400000, guid: cea25bb7a3c0b0e4f97f380ee7d0615c, type: 2}
   guardedImpactVfx: {fileID: 0}
-  guardedImpactAudio: {fileID: 0}
+  guardedImpactAudio: {fileID: 11400000, guid: b1e939b15747f81409aa659a95a1d98d, type: 2}
 --- !u!114 &1205114612473753433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1582,7 +1653,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f7a319f54d247dcb48d5ad86e3ac721, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatWarningPresentationController
   combatManager: {fileID: 810000000000000001}
   lockCamera: {fileID: 810000000000000003}
@@ -2069,7 +2140,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
   m_IsGlobal: 1
   fadeRadius: 0
@@ -2431,7 +2502,7 @@ MonoBehaviour:
         m_FieldOfViewDamping: 0.2
         m_LookDirectionDistance: 100
         m_ForwardAxis: {x: 0, y: 0, z: 1}
-        m_LookOffset: {x: 0.92, y: 0.08, z: -1.9}
+        m_LookOffset: {x: 0.92, y: 0.08, z: -2.5}
         m_LookOffsetSmoothing: 0.12
         m_CollisionRadius: 0.25
         m_CollisionAnchorOffset: {x: 0, y: 0, z: 0}
@@ -2533,11 +2604,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitSmoothUccCameraViewAdapter
   cameraController: {fileID: 8540125469264114897}
-  followSmoothTime: 0.14
+  followSmoothTime: 0.16
   maximumFollowSpeed: 30
   teleportSnapDistance: 3
   hardCollisionSnapDistance: 1.25
   useSupplementalCollisionConstraint: 0
+  recordMotionDiagnostics: 0
+  logFailedStartupHandoff: 1
+  startupRetrySeconds: 3
 --- !u!114 &1950877512696852750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3111,7 +3185,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
   m_IsGlobal: 1
   fadeRadius: 0
@@ -3289,7 +3363,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
   m_IsGlobal: 1
   fadeRadius: 0
@@ -3434,6 +3508,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerInput
   dontDestroyOnLoad: 1
+  logLocomotionReconciliationDiagnostics: 0
 --- !u!1 &8525687569891459498
 GameObject:
   m_ObjectHideFlags: 0
@@ -3818,7 +3893,7 @@ MonoBehaviour:
   unlockVfxPrefab: {fileID: 6712169537145002962, guid: bb3872fd14e363244807625669423a01, type: 3}
   unlockVfxOffset: {x: 0, y: 0, z: 0}
   unlockVfxLifetime: 2
-  unlockSfx: {fileID: 11400000, guid: 3c75036487301a947a0dec4d183b6d33, type: 2}
+  unlockSfx: {fileID: 11400000, guid: 886c90226f19f6640bfd641f552ac32b, type: 2}
   unlockAnimationState: Knowledge_Unlock
   unlockAnimationCrossfade: 0.05
   showUnlockText: 1
@@ -3864,72 +3939,3 @@ Transform:
   - {fileID: 2020268470604883354}
   m_Father: {fileID: 1540775231359556178}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &410000000000000001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 410000000000000002}
-  - component: {fileID: 410000000000000004}
-  m_Layer: 0
-  m_Name: CombatWarningPass
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &410000000000000002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 410000000000000001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1962244032958566552}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &410000000000000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 410000000000000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.CustomPassVolume
-  m_IsGlobal: 1
-  fadeRadius: 0
-  priority: 1001
-  customPasses:
-  - rid: 410000000000000005
-  injectionPoint: 2
-  m_TargetCamera: {fileID: 0}
-  useTargetCamera: 0
-  references:
-    version: 2
-    RefIds:
-    - rid: 410000000000000005
-      type: {class: FullScreenCustomPass, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
-      data:
-        m_Name: Combat Warning
-        enabled: 0
-        targetColorBuffer: 0
-        targetDepthBuffer: 2
-        clearFlags: 0
-        passFoldout: 0
-        m_Version: 0
-        fullscreenPassMaterial: {fileID: 2100000, guid: e3ab94fc0721436cb7dba1f3c6f8329d, type: 2}
-        materialPassIndex: 0
-        materialPassName: Custom Pass 0
-        fetchColorBuffer: 1

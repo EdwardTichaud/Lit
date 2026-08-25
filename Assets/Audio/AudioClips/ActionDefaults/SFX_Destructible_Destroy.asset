@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Destructible Destroy
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: 30be03859448f394d8a36776e4a7b52d, type: 3}
+  volume: 0.8
   loop: 0
+  affectedByTimeScale: 0

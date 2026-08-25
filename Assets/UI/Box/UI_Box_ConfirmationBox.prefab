@@ -103,6 +103,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -239,6 +240,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -375,7 +377,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -693,6 +695,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

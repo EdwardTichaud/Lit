@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Puzzle Failure
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: 6fa66162ad71e324e8d0be12f6d69441, type: 3}
+  volume: 0.55
   loop: 0
+  affectedByTimeScale: 0

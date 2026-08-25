@@ -5,6 +5,15 @@ using Opsive.UltimateCharacterController.Character.Abilities;
 using Opsive.UltimateCharacterController.Character.Abilities.Items;
 using UnityEngine;
 
+public enum LocomotionPresentationState
+{
+    Idle,
+    Starting,
+    Moving,
+    Stopping,
+    Pivoting
+}
+
 // Runtime bridge between Lit's gameplay facade and Opsive UCC locomotion.
 [RequireComponent(typeof(UltimateCharacterLocomotion))]
 [RequireComponent(typeof(UltimateCharacterLocomotionHandler))]
@@ -128,6 +137,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField, Min(0f)] private float flightBoostTurnRate = 460f;
     [SerializeField, Min(0f)] private float flightLandingSpeed = 12f;
     [SerializeField, Min(0f)] private float flightLandingAcceleration = 36f;
+    [SerializeField, Min(0f), Tooltip("Vitesse descendante minimale appliquee lorsqu'un BasicSkill aerien demande un atterrissage.")]
+    private float combatSkillLandingSpeed = 14f;
     [SerializeField, Tooltip("Utilise un pilote autonome si la capacite de vol UCC est absente ou refuse de demarrer.")]
     private bool allowStandaloneFlightFallback = true;
     [SerializeField, Min(0f)] private float fallbackFlightCollisionSkin = 0.03f;
@@ -201,6 +212,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool hasPlayerActionRootMotionMode;
     private PlayerActionRootMotionMode playerActionRootMotionMode;
     private bool suppressPlayerActionRootMotionRotation;
+    private bool allowPlayerActionAirborneRootMotion;
     private bool runStartResponseArmed;
     private bool wasSprintMoving;
     private float nextRunStartResponseTime;
@@ -262,6 +274,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
     private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive;
     public string CurrentRootMotionPhase => ResolveCurrentRootMotionPhase().ToString();
+    public LocomotionPresentationState CurrentLocomotionPresentationState => groundedPresentationState;
     public bool CanDriveScriptedTraversal
     {
         get
@@ -318,11 +331,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         ApplyWorldMoveInput(worldInput);
     }
 
-    public void SetPlayerActionRootMotionMode(PlayerActionRootMotionMode mode, bool suppressRootRotation = false)
+    public void SetPlayerActionRootMotionMode(
+        PlayerActionRootMotionMode mode,
+        bool suppressRootRotation = false,
+        bool allowAirborneRootMotion = false)
     {
         hasPlayerActionRootMotionMode = true;
         playerActionRootMotionMode = mode;
         suppressPlayerActionRootMotionRotation = suppressRootRotation;
+        allowPlayerActionAirborneRootMotion = allowAirborneRootMotion;
         RefreshRootMotionLocomotionSettings();
     }
 
@@ -335,6 +352,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         hasPlayerActionRootMotionMode = false;
         suppressPlayerActionRootMotionRotation = false;
+        allowPlayerActionAirborneRootMotion = false;
         RefreshRootMotionLocomotionSettings();
     }
 
@@ -547,6 +565,35 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         progressiveExternalStopActive = true;
         sprintPressed = false;
         ApplyWorldMoveInput(Vector2.zero);
+        return true;
+    }
+
+    /// <summary>
+    /// Starts a controlled descent without changing the actor pose. The ground
+    /// contact remains fully owned by UCC, so an aerial BasicSkill can land
+    /// safely from any height.
+    /// </summary>
+    public bool RequestCombatSkillLanding()
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || locomotion.Grounded)
+        {
+            return false;
+        }
+
+        Jump jump = locomotion.GetAbility<Jump>();
+        if (jump != null && jump.IsActive)
+        {
+            locomotion.TryStopAbility(jump, true);
+        }
+
+        float currentVerticalSpeed = Vector3.Dot(locomotion.Velocity, transform.up);
+        float requestedVerticalSpeed = -Mathf.Max(0f, combatSkillLandingSpeed);
+        if (currentVerticalSpeed > requestedVerticalSpeed)
+        {
+            locomotion.AddForce(transform.up * (requestedVerticalSpeed - currentVerticalSpeed), 1, false);
+        }
+
         return true;
     }
 
@@ -2302,13 +2349,18 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         bool allowCombatRootMotion = phase != RootMotionPhase.Combat ||
                                      hasPlayerActionRootMotionMode ||
                                      hasCombatMoveIntent;
-        bool useJumpRootMotion = phase != RootMotionPhase.Jump;
-        locomotion.UseRootMotionPosition = useAuthoredActionRootMotion && useJumpRootMotion && allowCombatRootMotion;
-        locomotion.RootMotionSpeedMultiplier = !useAuthoredActionRootMotion || !useJumpRootMotion ||
-                                                !allowCombatRootMotion || suppressIdlePosition
+        // The physical grounded state, rather than an Animator state name,
+        // decides whether an airborne action may move the capsule. This keeps
+        // regular aerial BasicSkills visual by default and makes authored air
+        // movement an explicit per-skill choice.
+        bool allowAirborneRootMotion = locomotion.Grounded ||
+                                        (hasPlayerActionRootMotionMode && allowPlayerActionAirborneRootMotion);
+        locomotion.UseRootMotionPosition = useAuthoredActionRootMotion && allowAirborneRootMotion && allowCombatRootMotion;
+        locomotion.RootMotionSpeedMultiplier = !useAuthoredActionRootMotion || !allowAirborneRootMotion ||
+                                                 !allowCombatRootMotion || suppressIdlePosition
             ? 0f
             : ResolveEffectiveRootMotionSpeedMultiplier(phase);
-        useRootMotionRotation &= useAuthoredActionRootMotion && useJumpRootMotion && !suppressPlayerActionRootMotionRotation;
+        useRootMotionRotation &= useAuthoredActionRootMotion && allowAirborneRootMotion && !suppressPlayerActionRootMotionRotation;
         if (combatLockActive && !combatDirectionalEvasionFacing && phase == RootMotionPhase.Combat)
         {
             // The locked target owns yaw. Root clips remain free to provide

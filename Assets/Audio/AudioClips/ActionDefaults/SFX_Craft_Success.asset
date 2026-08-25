@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Craft Success
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: f26e85d0d30e64ff7900c7262ac65de6, type: 3}
+  volume: 0.75
   loop: 0
+  affectedByTimeScale: 0

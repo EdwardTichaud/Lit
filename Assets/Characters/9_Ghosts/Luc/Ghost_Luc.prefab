@@ -215,7 +215,7 @@ MonoBehaviour:
   showFeedback: 1
   feedbackTitle: 
   feedbackDuration: 1.8
-  rewardSfx: {fileID: 0}
+  rewardSfx: {fileID: 11400000, guid: 06423901ca0ffa94cbc59423272e42a9, type: 2}
   rewardVfxPrefab: {fileID: 0}
   feedbackAnchor: {fileID: 0}
   onRewardGranted:

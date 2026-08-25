@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.InputSystem;
 
 // Objet de monde destructible via une capacite accordee par un item equipe.
@@ -29,7 +30,9 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
     [Tooltip("Effet instancie lors de la destruction.")]
     public GameObject destroyEffectPrefab;
     [Tooltip("Son joue lors de la destruction.")]
-    public AudioClip destroySound;
+    public AudioClipSO destroySfx;
+    [SerializeField, HideInInspector, FormerlySerializedAs("destroySound")]
+    private AudioClip legacyDestroySound;
     [Tooltip("Active des logs de debug.")]
     public bool logDestroyDebug = false;
 
@@ -306,9 +309,9 @@ public class DestructibleObject : NetworkBehaviour, ICharacterDetectedInteractab
             Instantiate(destroyEffectPrefab, transform.position, transform.rotation);
         }
 
-        if (destroySound != null)
+        if (destroySfx != null)
         {
-            AudioSource.PlayClipAtPoint(destroySound, transform.position);
+            AudioManager.PlayClipAtPoint(destroySfx, transform.position);
         }
         else
         {

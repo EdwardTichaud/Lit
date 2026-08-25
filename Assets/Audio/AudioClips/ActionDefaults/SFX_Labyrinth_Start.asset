@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Labyrinth Start
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: b0ec37d6f5cf1ad4288d4aafea9080c1, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

@@ -1,5 +1,6 @@
 using Opsive.UltimateCharacterController.ThirdPersonController.Camera.ViewTypes;
 using UnityEngine;
+using System.Text;
 
 /// <summary>
 /// UCC Adventure view with camera-follow damping. UCC still calculates the
@@ -9,7 +10,7 @@ using UnityEngine;
 public class LitSmoothAdventureViewType : Adventure
 {
     [Header("Lit Follow Damping")]
-    [SerializeField, Min(0f)] private float followSmoothTime = 0.14f;
+    [SerializeField, Min(0f)] private float followSmoothTime = 0.16f;
     [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
     [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
     [SerializeField, Min(0f), Tooltip("Only snap the camera inward when UCC had to shorten its distance by at least this amount. Smaller obstacle corrections are eased so narrow corridors remain readable.")]
@@ -20,6 +21,23 @@ public class LitSmoothAdventureViewType : Adventure
     private Vector3 smoothedPosition;
     private Vector3 followVelocity;
     private bool hasSmoothedPosition;
+    private bool immediatePoseRequested;
+    private CameraSnapReason immediatePoseReason;
+    private bool recordMotionDiagnostics;
+    private const int MotionHistoryCapacity = 120;
+    private readonly MotionSample[] motionHistory = new MotionSample[MotionHistoryCapacity];
+    private int motionHistoryNext;
+    private int motionHistoryCount;
+
+    private struct MotionSample
+    {
+        public float Time;
+        public float DeltaTime;
+        public float TargetError;
+        public bool ImmediateUpdate;
+        public bool Snapped;
+        public CameraSnapReason Reason;
+    }
 
     protected virtual float EffectiveFollowSmoothTime => followSmoothTime;
 
@@ -51,6 +69,7 @@ public class LitSmoothAdventureViewType : Adventure
 
         if (source is LitSmoothAdventureViewType smoothSource)
         {
+            followSmoothTime = smoothSource.followSmoothTime;
             maximumFollowSpeed = smoothSource.maximumFollowSpeed;
             teleportSnapDistance = smoothSource.teleportSnapDistance;
         }
@@ -61,13 +80,40 @@ public class LitSmoothAdventureViewType : Adventure
         float maximumSpeed,
         float snapDistance,
         float hardSnapDistance,
-        bool supplementalCollisionConstraint)
+        bool supplementalCollisionConstraint,
+        bool diagnosticsEnabled)
     {
         followSmoothTime = Mathf.Max(0f, smoothTime);
         maximumFollowSpeed = Mathf.Max(0f, maximumSpeed);
         teleportSnapDistance = Mathf.Max(0f, snapDistance);
         hardCollisionSnapDistance = Mathf.Max(0f, hardSnapDistance);
         useSupplementalCollisionConstraint = supplementalCollisionConstraint;
+        recordMotionDiagnostics = diagnosticsEnabled;
+    }
+
+    public void RequestImmediatePose(CameraSnapReason reason)
+    {
+        immediatePoseRequested = true;
+        immediatePoseReason = reason;
+        ResetFollowSmoothing();
+    }
+
+    public string BuildMotionDiagnosticsReport()
+    {
+        StringBuilder report = new StringBuilder("[UccCameraMotion] samples=").Append(motionHistoryCount);
+        for (int i = 0; i < motionHistoryCount; i++)
+        {
+            int index = (motionHistoryNext - motionHistoryCount + i + MotionHistoryCapacity) % MotionHistoryCapacity;
+            MotionSample sample = motionHistory[index];
+            report.Append('\n').Append(sample.Time.ToString("F3"))
+                .Append(" dt=").Append(sample.DeltaTime.ToString("F3"))
+                .Append(" error=").Append(sample.TargetError.ToString("F3"))
+                .Append(" immediate=").Append(sample.ImmediateUpdate)
+                .Append(" snap=").Append(sample.Snapped)
+                .Append(" reason=").Append(sample.Reason);
+        }
+
+        return report.ToString();
     }
 
     /// <summary>Clears follow inertia; the following UCC move seeds from the current camera pose.</summary>
@@ -100,22 +146,23 @@ public class LitSmoothAdventureViewType : Adventure
         // Keep UCC's native anchor, obstacle and character-clipping solver as
         // the source of truth before applying any presentation smoothing.
         Vector3 targetPosition = base.Move(immediateUpdate);
-        if (immediateUpdate || EffectiveFollowSmoothTime <= 0f)
+        bool explicitSnap = immediatePoseRequested;
+        CameraSnapReason snapReason = immediatePoseReason;
+        immediatePoseRequested = false;
+        if (explicitSnap || EffectiveFollowSmoothTime <= 0f)
         {
-            return SeedFollowPosition(targetPosition);
+            return SeedFollowPositionAndRecord(targetPosition, immediateUpdate, true, explicitSnap ? snapReason : CameraSnapReason.SceneLoad);
         }
 
         if (!hasSmoothedPosition)
         {
-            smoothedPosition = m_Transform.position;
-            followVelocity = Vector3.zero;
-            hasSmoothedPosition = true;
+            return SeedFollowPositionAndRecord(targetPosition, immediateUpdate, true, CameraSnapReason.InitialBind);
         }
 
         Vector3 anchorPosition = GetAnchorPosition() + m_CollisionAnchorOffset;
         if (MustSnapToTarget(anchorPosition, targetPosition))
         {
-            return SeedFollowPosition(targetPosition);
+            return SeedFollowPositionAndRecord(targetPosition, immediateUpdate, true, CameraSnapReason.Collision);
         }
 
         Vector3 candidate = Vector3.SmoothDamp(
@@ -136,7 +183,15 @@ public class LitSmoothAdventureViewType : Adventure
         }
 
         smoothedPosition = candidate;
+        RecordMotion(targetPosition, immediateUpdate, false, CameraSnapReason.InitialBind);
         return candidate;
+    }
+
+    private Vector3 SeedFollowPositionAndRecord(Vector3 position, bool immediateUpdate, bool snapped, CameraSnapReason reason)
+    {
+        Vector3 seeded = SeedFollowPosition(position);
+        RecordMotion(position, immediateUpdate, snapped, reason);
+        return seeded;
     }
 
     private Vector3 SeedFollowPosition(Vector3 position)
@@ -145,6 +200,26 @@ public class LitSmoothAdventureViewType : Adventure
         followVelocity = Vector3.zero;
         hasSmoothedPosition = true;
         return position;
+    }
+
+    private void RecordMotion(Vector3 targetPosition, bool immediateUpdate, bool snapped, CameraSnapReason reason)
+    {
+        if (!recordMotionDiagnostics)
+        {
+            return;
+        }
+
+        motionHistory[motionHistoryNext] = new MotionSample
+        {
+            Time = Time.unscaledTime,
+            DeltaTime = Time.unscaledDeltaTime,
+            TargetError = (targetPosition - smoothedPosition).magnitude,
+            ImmediateUpdate = immediateUpdate,
+            Snapped = snapped,
+            Reason = reason
+        };
+        motionHistoryNext = (motionHistoryNext + 1) % MotionHistoryCapacity;
+        motionHistoryCount = Mathf.Min(motionHistoryCount + 1, MotionHistoryCapacity);
     }
 
     private bool MustSnapToTarget(Vector3 anchorPosition, Vector3 targetPosition)

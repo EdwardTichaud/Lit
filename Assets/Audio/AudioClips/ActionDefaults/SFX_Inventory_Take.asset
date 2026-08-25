@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Inventory Take
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: 9fb26e70eb17a43679b065c70c65c9e8, type: 3}
+  volume: 0.65
   loop: 0
+  affectedByTimeScale: 0

@@ -8,6 +8,13 @@ using UccCameraController = Opsive.UltimateCharacterController.Camera.CameraCont
 [RequireComponent(typeof(UccCameraController))]
 public class LitUccCameraCharacterBinder : MonoBehaviour
 {
+    /// <summary>
+    /// Raised only after UCC has a valid local character and can safely resolve
+    /// its view types. Camera extensions use this instead of guessing a startup
+    /// execution order.
+    /// </summary>
+    public event System.Action<UccCameraController, Transform> CharacterBound;
+
     [SerializeField] private UccCameraController cameraController;
     [SerializeField] private bool bindOnEnable = true;
     [SerializeField] private bool subscribeToLocalPlayerContext = true;
@@ -119,7 +126,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
     private void OnCameraRecenter()
     {
-        if (!SnapCameraToBoundCharacter())
+        if (!SnapCameraToBoundCharacter(CameraSnapReason.ManualRecenter))
         {
             QueueBind();
         }
@@ -189,7 +196,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
         if (boundCharacter == character && IsCameraBoundAndInitialized(characterObject))
         {
-            SnapCameraToBoundCharacter();
+            SnapCameraToBoundCharacter(CameraSnapReason.InitialBind);
             return true;
         }
 
@@ -202,9 +209,16 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
             waitingForInitialCharacter = false;
         }
 
+        bool isCharacterSwitch = boundCharacter != null && boundCharacter != character;
         boundCharacter = character;
-        SnapCameraToBoundCharacter();
-        return IsCameraBoundAndInitialized(characterObject);
+        SnapCameraToBoundCharacter(isCharacterSwitch ? CameraSnapReason.CharacterSwitch : CameraSnapReason.InitialBind);
+        bool bound = IsCameraBoundAndInitialized(characterObject);
+        if (bound)
+        {
+            CharacterBound?.Invoke(cameraController, boundCharacter);
+        }
+
+        return bound;
     }
 
     private void SetCameraCharacter(GameObject character, bool forceReinitialize)
@@ -235,7 +249,7 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
             && cameraController.enabled;
     }
 
-    private bool SnapCameraToBoundCharacter()
+    private bool SnapCameraToBoundCharacter(CameraSnapReason reason)
     {
         if (!snapCameraOnBind
             || cameraController == null
@@ -244,6 +258,12 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
             || cameraController.ActiveViewType == null)
         {
             return false;
+        }
+
+        LitSmoothUccCameraViewAdapter smoothAdapter = GetComponent<LitSmoothUccCameraViewAdapter>();
+        if (smoothAdapter != null)
+        {
+            return smoothAdapter.RequestImmediatePose(reason);
         }
 
         cameraController.PositionImmediately(true);

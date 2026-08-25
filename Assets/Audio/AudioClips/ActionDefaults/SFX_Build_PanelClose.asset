@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Build Panel Close
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.85
+  audioClip: {fileID: 8300000, guid: b2efe528ec7ae497f92332bf593aa836, type: 3}
+  volume: 0.65
   loop: 0
+  affectedByTimeScale: 0

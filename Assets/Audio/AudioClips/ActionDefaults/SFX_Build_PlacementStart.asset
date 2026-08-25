@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Build Placement Start
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.9
+  audioClip: {fileID: 8300000, guid: 61ea60a223f01497aa5f2b1b2ebdbf9e, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

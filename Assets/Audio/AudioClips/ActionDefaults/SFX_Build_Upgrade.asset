@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Build Upgrade
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: f3ac22efb33d94a0d94fed8d00703d40, type: 3}
+  volume: 0.75
   loop: 0
+  affectedByTimeScale: 0

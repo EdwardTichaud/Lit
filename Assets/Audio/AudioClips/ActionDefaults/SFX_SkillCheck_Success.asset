@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Skill Check Success
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.95
+  audioClip: {fileID: 8300000, guid: 86dc4fb142ccae2409a6ff6d2d6c90a0, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

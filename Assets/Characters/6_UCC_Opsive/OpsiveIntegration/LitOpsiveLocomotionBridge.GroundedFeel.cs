@@ -1,5 +1,6 @@
 using Opsive.UltimateCharacterController.Character.Abilities;
 using UnityEngine;
+using System.Text;
 
 public partial class LitOpsiveLocomotionBridge
 {
@@ -48,6 +49,13 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Range(0f, 1f)] private float groundedTurnInPlaceThreshold = 0.55f;
     [SerializeField, Min(0f)] private float groundedTurnInPlaceMaxSpeed = 0.35f;
     [SerializeField, Min(0f)] private float groundedStopTriggerMinSpeed = 0.48f;
+    [SerializeField, Min(0f), Tooltip("Input-release stability required before requesting the authored stop clip.")]
+    private float groundedStopRequestDelay = 0.06f;
+    [SerializeField, Min(0f), Tooltip("Physical speed required before the stop presentation may be considered settled.")]
+    private float groundedStopSettledSpeed = 0.06f;
+    [SerializeField, Min(0f), Tooltip("Stable settled time required after the stop clip reaches its exit pose.")]
+    private float groundedStopSettledDuration = 0.05f;
+    [SerializeField, Range(0f, 1f)] private float groundedStopExitNormalizedTime = 0.9f;
     [SerializeField, Min(0f), Tooltip("Keeps start/stop blend trees aimed after input or physical velocity drops to zero.")]
     private float groundedMoveTransitionDirectionHoldTime = 0.18f;
     [SerializeField, Min(0f), Tooltip("Minimum parameter radius used by directional start/stop blend trees while their direction is latched.")]
@@ -59,7 +67,7 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Range(45f, 180f)] private float groundedPivotMinAngle = 85f;
     [SerializeField, Range(90f, 180f)] private float groundedPivot180Angle = 135f;
     [SerializeField, Tooltip("Snaps starts from rest toward the requested direction instead of playing turn-in-place clips.")]
-    private bool groundedSnapStationaryTurn = true;
+    private bool groundedSnapStationaryTurn = false;
     [SerializeField, Range(0f, 180f)] private float groundedSnapStationaryTurnMinAngle = 25f;
     [SerializeField, Min(0f)] private float groundedSnapStationaryTurnMaxSpeed = 0.22f;
     [SerializeField, Range(0f, 1f)] private float groundedSnapStationaryTurnMaxSmoothedInput = 0.08f;
@@ -101,6 +109,32 @@ public partial class LitOpsiveLocomotionBridge
     private bool hasGroundedPivotTargetDirection;
     private Vector2 groundedMoveTransitionLocalDirection;
     private float groundedMoveTransitionDirectionTimer;
+    private LocomotionPresentationState groundedPresentationState;
+    private float groundedPresentationStateAge;
+    private float groundedStopRequestTimer;
+    private float groundedStopSettledTimer;
+    private bool groundedStopReachedExit;
+
+    [Header("Development Diagnostics")]
+    [SerializeField, Tooltip("Stores a fixed locomotion history for debugging jitter and state cuts. No per-frame allocations are made.")]
+    private bool recordLocomotionDiagnostics;
+    private const int LocomotionHistoryCapacity = 120;
+    private readonly LocomotionSample[] locomotionHistory = new LocomotionSample[LocomotionHistoryCapacity];
+    private int locomotionHistoryNext;
+    private int locomotionHistoryCount;
+
+    private struct LocomotionSample
+    {
+        public float Time;
+        public float InputMagnitude;
+        public float PhysicalSpeed;
+        public float PresentationSpeed;
+        public LocomotionPresentationState State;
+        public int CurrentStateHash;
+        public int NextStateHash;
+        public bool InTransition;
+        public Vector3 RootMotionDelta;
+    }
 
     private bool groundedFeelProfileApplied;
     private Vector3 previousGroundedMotorAcceleration;
@@ -387,14 +421,16 @@ public partial class LitOpsiveLocomotionBridge
             targetTurn,
             Mathf.Max(0f, groundedAnimatorTurnRate) * deltaTime);
 
-        bool shouldAnimateMoving = moving || groundedMoveIntent || groundedPresentationSpeed > 0.05f;
+        UpdateGroundedPresentationState(speed, velocity, deltaTime);
+        bool shouldAnimateMoving = groundedPresentationState != LocomotionPresentationState.Idle ||
+                                  moving || groundedPresentationSpeed > 0.05f;
         SetAnimatorFloat(speedParam, groundedPresentationSpeed);
         SetGroundedDirectionalAnimatorParameters(groundedPresentationSpeed, velocity);
         SetAnimatorBool(isMovingParam, shouldAnimateMoving);
         SetAnimatorFloat(locomotionTierParam, ResolveGroundedLocomotionTier());
         SetAnimatorFloat(turnParam, groundedPresentationTurn);
         SetAnimatorBool(turnInPlaceParam, ShouldGroundedTurnInPlace(speed, targetTurn));
-        UpdateGroundedMoveTriggers(speed, velocity);
+        RecordLocomotionSample(speed);
         return true;
     }
 
@@ -556,19 +592,10 @@ public partial class LitOpsiveLocomotionBridge
 
     private bool ShouldSnapGroundedStationaryTurn(Vector3 planarVelocity, float absAngle)
     {
-        if (!groundedSnapStationaryTurn)
-        {
-            return false;
-        }
-
-        float minAngle = Mathf.Clamp(groundedSnapStationaryTurnMinAngle, 0f, 180f);
-        if (absAngle < minAngle)
-        {
-            return false;
-        }
-
-        return planarVelocity.magnitude <= Mathf.Max(0f, groundedSnapStationaryTurnMaxSpeed) &&
-               smoothedGroundedWorldMoveInput.magnitude <= Mathf.Clamp01(groundedSnapStationaryTurnMaxSmoothedInput);
+        // Exploration turns must remain authored pivots. A serialized legacy
+        // prefab may still carry the old flag, but gameplay no longer permits
+        // a transform snap outside explicit teleport/cinematic flows.
+        return false;
     }
 
     private void SnapGroundedStationaryTurn(Vector3 targetDirection)
@@ -682,11 +709,11 @@ public partial class LitOpsiveLocomotionBridge
         ForceOrientationLookDirection(direction);
     }
 
-    private void UpdateGroundedMoveTriggers(float speed, Vector3 velocity)
+    private void UpdateGroundedPresentationState(float speed, Vector3 velocity, float deltaTime)
     {
         if (animator == null || IsFlightModeActive)
         {
-            previousGroundedMoveIntent = groundedMoveIntent;
+            groundedPresentationState = LocomotionPresentationState.Idle;
             return;
         }
 
@@ -694,29 +721,147 @@ public partial class LitOpsiveLocomotionBridge
         {
             ResetAnimatorTrigger(moveStartTriggerParam);
             ResetAnimatorTrigger(moveStopTriggerParam);
-            previousGroundedMoveIntent = false;
+            SetGroundedPresentationState(LocomotionPresentationState.Pivoting);
             return;
         }
 
-        if (groundedMoveIntent && !previousGroundedMoveIntent)
+        if (groundedPresentationState == LocomotionPresentationState.Pivoting)
         {
-            LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
-            ResetAnimatorTrigger(moveStopTriggerParam);
-            ArmGroundedMoveStartTierOverride();
-            SetAnimatorFloat(locomotionTierParam, groundedMoveStartTierOverride);
-            SetAnimatorTrigger(moveStartTriggerParam);
-        }
-        else if (!groundedMoveIntent &&
-                 previousGroundedMoveIntent &&
-                 (Mathf.Max(speed, groundedPresentationSpeed) >= groundedStopTriggerMinSpeed ||
-                  IsGroundedStartStateActive()))
-        {
-            LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
-            ResetAnimatorTrigger(moveStartTriggerParam);
-            SetAnimatorTrigger(moveStopTriggerParam);
+            if (groundedMoveIntent)
+            {
+                EnterGroundedStart(velocity);
+            }
+            else
+            {
+                SetGroundedPresentationState(LocomotionPresentationState.Idle);
+            }
         }
 
-        previousGroundedMoveIntent = groundedMoveIntent;
+        switch (groundedPresentationState)
+        {
+            case LocomotionPresentationState.Idle:
+                if (groundedMoveIntent)
+                {
+                    EnterGroundedStart(velocity);
+                }
+                break;
+
+            case LocomotionPresentationState.Starting:
+                if (groundedMoveIntent)
+                {
+                    groundedStopRequestTimer = 0f;
+                    if (groundedPresentationStateAge >= 0.08f && !IsGroundedStartStateActive())
+                    {
+                        SetGroundedPresentationState(LocomotionPresentationState.Moving);
+                    }
+                }
+                else if ((groundedStopRequestTimer += deltaTime) >= groundedStopRequestDelay)
+                {
+                    EnterGroundedStop(velocity);
+                }
+                break;
+
+            case LocomotionPresentationState.Moving:
+                if (groundedMoveIntent)
+                {
+                    groundedStopRequestTimer = 0f;
+                }
+                else if ((groundedStopRequestTimer += deltaTime) >= groundedStopRequestDelay)
+                {
+                    EnterGroundedStop(velocity);
+                }
+                break;
+
+            case LocomotionPresentationState.Stopping:
+                if (groundedMoveIntent)
+                {
+                    EnterGroundedStart(velocity);
+                }
+                else
+                {
+                    TrackGroundedStopExit();
+                    if (IsGroundedStopStateReadyToSettle() && speed <= groundedStopSettledSpeed)
+                    {
+                        groundedStopSettledTimer += deltaTime;
+                        if (groundedStopSettledTimer >= groundedStopSettledDuration)
+                        {
+                            SetGroundedPresentationState(LocomotionPresentationState.Idle);
+                        }
+                    }
+                    else
+                    {
+                        groundedStopSettledTimer = 0f;
+                    }
+                }
+                break;
+        }
+    }
+
+    private void EnterGroundedStart(Vector3 velocity)
+    {
+        LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
+        ResetAnimatorTrigger(moveStopTriggerParam);
+        ArmGroundedMoveStartTierOverride();
+        SetAnimatorFloat(locomotionTierParam, groundedMoveStartTierOverride);
+        SetAnimatorTrigger(moveStartTriggerParam);
+        SetGroundedPresentationState(LocomotionPresentationState.Starting);
+    }
+
+    private void EnterGroundedStop(Vector3 velocity)
+    {
+        LatchGroundedMoveTransitionDirection(ResolveGroundedMoveTransitionLocalDirection(velocity));
+        ResetAnimatorTrigger(moveStartTriggerParam);
+        SetAnimatorTrigger(moveStopTriggerParam);
+        groundedStopReachedExit = false;
+        SetGroundedPresentationState(LocomotionPresentationState.Stopping);
+    }
+
+    private void SetGroundedPresentationState(LocomotionPresentationState state)
+    {
+        if (groundedPresentationState == state)
+        {
+            return;
+        }
+
+        groundedPresentationState = state;
+        groundedPresentationStateAge = 0f;
+        groundedStopRequestTimer = 0f;
+        groundedStopSettledTimer = 0f;
+        if (state != LocomotionPresentationState.Stopping)
+        {
+            groundedStopReachedExit = false;
+        }
+    }
+
+    private void TrackGroundedStopExit()
+    {
+        if (animator == null || groundedStopReachedExit)
+        {
+            return;
+        }
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        groundedStopReachedExit =
+            (state.IsName("Walk_Stop") || state.IsName("Run_Stop")) &&
+            state.normalizedTime >= groundedStopExitNormalizedTime;
+    }
+
+    private bool IsGroundedStopStateReadyToSettle()
+    {
+        if (animator == null || !groundedStopReachedExit)
+        {
+            return false;
+        }
+
+        // The Animator begins its authored Stop -> Locomotion blend at the
+        // same normalized time. Waiting for a non-transitioning Stop state
+        // would therefore keep the bridge in Stopping forever. Once that
+        // blend has completed, Locomotion at near-zero presentation speed is
+        // the authoritative settled pose.
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        return !animator.IsInTransition(0) &&
+               state.IsName("Locomotion") &&
+               groundedPresentationSpeed <= 0.05f;
     }
 
     private void ArmGroundedMoveStartTierOverride()
@@ -871,6 +1016,11 @@ public partial class LitOpsiveLocomotionBridge
         ResetGroundedMoveIntentAge();
         groundedPresentationSpeed = 0f;
         groundedPresentationTurn = 0f;
+        groundedPresentationState = LocomotionPresentationState.Idle;
+        groundedPresentationStateAge = 0f;
+        groundedStopRequestTimer = 0f;
+        groundedStopSettledTimer = 0f;
+        groundedStopReachedExit = false;
         ResetGroundedMoveStartTierOverride();
         ResetGroundedPivotTurn();
         ResetGroundedMoveTransitionDirection();
@@ -882,6 +1032,11 @@ public partial class LitOpsiveLocomotionBridge
         smoothedGroundedWorldMoveInput = Vector2.zero;
         groundedMoveIntent = false;
         previousGroundedMoveIntent = false;
+        groundedPresentationState = LocomotionPresentationState.Idle;
+        groundedPresentationStateAge = 0f;
+        groundedStopRequestTimer = 0f;
+        groundedStopSettledTimer = 0f;
+        groundedStopReachedExit = false;
         ResetGroundedMoveStartTierOverride();
         ResetGroundedMoveIntentAge();
         ResetGroundedPivotTurn();
@@ -922,6 +1077,54 @@ public partial class LitOpsiveLocomotionBridge
     {
         float deltaTime = Time.inFixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime;
         return Mathf.Max(deltaTime, 0.0001f);
+    }
+
+    private void RecordLocomotionSample(float physicalSpeed)
+    {
+        groundedPresentationStateAge += ResolveGroundedFeelDeltaTime();
+        if (!recordLocomotionDiagnostics)
+        {
+            return;
+        }
+
+        AnimatorStateInfo current = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+        AnimatorStateInfo next = animator != null && animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
+        locomotionHistory[locomotionHistoryNext] = new LocomotionSample
+        {
+            Time = Time.unscaledTime,
+            InputMagnitude = currentWorldMoveInput.magnitude,
+            PhysicalSpeed = physicalSpeed,
+            PresentationSpeed = groundedPresentationSpeed,
+            State = groundedPresentationState,
+            CurrentStateHash = current.fullPathHash,
+            NextStateHash = next.fullPathHash,
+            InTransition = animator != null && animator.IsInTransition(0),
+            RootMotionDelta = animator != null ? animator.deltaPosition : Vector3.zero
+        };
+        locomotionHistoryNext = (locomotionHistoryNext + 1) % LocomotionHistoryCapacity;
+        locomotionHistoryCount = Mathf.Min(locomotionHistoryCount + 1, LocomotionHistoryCapacity);
+    }
+
+    [ContextMenu("Dump Locomotion Presentation Diagnostics")]
+    private void DumpLocomotionPresentationDiagnostics()
+    {
+        StringBuilder report = new StringBuilder("[LocomotionPresentation] samples=").Append(locomotionHistoryCount);
+        for (int i = 0; i < locomotionHistoryCount; i++)
+        {
+            int index = (locomotionHistoryNext - locomotionHistoryCount + i + LocomotionHistoryCapacity) % LocomotionHistoryCapacity;
+            LocomotionSample sample = locomotionHistory[index];
+            report.Append('\n').Append(sample.Time.ToString("F3"))
+                .Append(" input=").Append(sample.InputMagnitude.ToString("F2"))
+                .Append(" physical=").Append(sample.PhysicalSpeed.ToString("F2"))
+                .Append(" presented=").Append(sample.PresentationSpeed.ToString("F2"))
+                .Append(" state=").Append(sample.State)
+                .Append(" animator=").Append(sample.CurrentStateHash)
+                .Append(" next=").Append(sample.NextStateHash)
+                .Append(" transition=").Append(sample.InTransition)
+                .Append(" rootDelta=").Append(sample.RootMotionDelta);
+        }
+
+        Debug.Log(report.ToString(), this);
     }
 
     private void ResetAnimatorTrigger(string parameter)

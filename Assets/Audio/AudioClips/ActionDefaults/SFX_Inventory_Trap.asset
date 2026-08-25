@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Inventory Trap
   composer: 
-  audioClip: {fileID: 0}
-  volume: 1
+  audioClip: {fileID: 8300000, guid: ebc8de4cf014bb64387056ec0a100103, type: 3}
+  volume: 0.75
   loop: 0
+  affectedByTimeScale: 0

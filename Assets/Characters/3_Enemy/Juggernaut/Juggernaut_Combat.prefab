@@ -7577,7 +7577,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
-  actor: {fileID: 0}
+  actor: {fileID: 4532544328156619208}
 --- !u!135 &4457472128858001709
 SphereCollider:
   m_ObjectHideFlags: 0

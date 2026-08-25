@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Inventory Place Start
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.8
+  audioClip: {fileID: 8300000, guid: 5c47a3866da4f485c9421c3f88613fe5, type: 3}
+  volume: 0.65
   loop: 0
+  affectedByTimeScale: 0

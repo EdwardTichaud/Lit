@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Character Land
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.9
+  audioClip: {fileID: 8300000, guid: 750a57050ab0a41cab9730473e623c1b, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

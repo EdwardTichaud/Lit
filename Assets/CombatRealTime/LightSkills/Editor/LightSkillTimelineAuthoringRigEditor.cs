@@ -546,16 +546,24 @@ public static class LightSkillRuntimeRigBaker
             issues.Add("Les anchors de plateau doivent etre des enfants de AnimationLab.");
         }
 
-        if (rig.PreviewPlayerAnimator.transform != rig.PreviewPlayerAnchor &&
-            !rig.PreviewPlayerAnimator.transform.IsChildOf(rig.PreviewPlayerAnchor))
+        if (!CombatCinematicAuthoringActorResolver.ValidateRootAnimator(
+                rig.PreviewPlayerActorRoot,
+                rig.PreviewPlayerAnchor,
+                rig.PreviewPlayerAnimator,
+                "Player",
+                out string playerError))
         {
-            issues.Add("Preview Player doit etre enfant de Lucian_Anchor.");
+            issues.Add(playerError);
         }
 
-        if (rig.PreviewEnemyAnimator.transform != rig.PreviewEnemyAnchor &&
-            !rig.PreviewEnemyAnimator.transform.IsChildOf(rig.PreviewEnemyAnchor))
+        if (!CombatCinematicAuthoringActorResolver.ValidateRootAnimator(
+                rig.PreviewEnemyActorRoot,
+                rig.PreviewEnemyAnchor,
+                rig.PreviewEnemyAnimator,
+                "Enemy",
+                out string enemyError))
         {
-            issues.Add("Preview Enemy doit etre enfant de Enemy_Anchor.");
+            issues.Add(enemyError);
         }
 
         if (Vector3.Distance(rig.PreviewPlayerAnchor.localPosition, rig.PreviewEnemyAnchor.localPosition) <= 0.001f)
@@ -990,8 +998,11 @@ public static class LightSkillRuntimeRigBaker
             Component component => component.transform,
             _ => null
         };
-        return transform != null && ((rig.PreviewPlayerAnimator != null && transform.IsChildOf(rig.PreviewPlayerAnimator.transform)) ||
-            (rig.PreviewEnemyAnimator != null && transform.IsChildOf(rig.PreviewEnemyAnimator.transform)));
+        return transform != null &&
+               ((rig.PreviewPlayerActorRoot != null &&
+                 (transform == rig.PreviewPlayerActorRoot || transform.IsChildOf(rig.PreviewPlayerActorRoot))) ||
+                (rig.PreviewEnemyActorRoot != null &&
+                 (transform == rig.PreviewEnemyActorRoot || transform.IsChildOf(rig.PreviewEnemyActorRoot))));
     }
 
     private static LightSkillRuntimeExport FindRuntimeExport(UnityEngine.Object target)
@@ -1127,10 +1138,10 @@ public static class LightSkillRuntimeRigBaker
                 {
                     timelineTime = time,
                     cameraKey = cameraKey,
-                    playerAnimatorStagePosition = rig.transform.InverseTransformPoint(rig.PreviewPlayerAnimator.transform.position),
-                    playerAnimatorStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewPlayerAnimator.transform.rotation,
-                    enemyAnimatorStagePosition = rig.transform.InverseTransformPoint(rig.PreviewEnemyAnimator.transform.position),
-                    enemyAnimatorStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewEnemyAnimator.transform.rotation,
+                    playerAnimatorStagePosition = rig.transform.InverseTransformPoint(rig.PreviewPlayerActorRoot.position),
+                    playerAnimatorStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewPlayerActorRoot.rotation,
+                    enemyAnimatorStagePosition = rig.transform.InverseTransformPoint(rig.PreviewEnemyActorRoot.position),
+                    enemyAnimatorStageRotation = Quaternion.Inverse(rig.transform.rotation) * rig.PreviewEnemyActorRoot.rotation,
                     cameraStagePosition = rig.transform.InverseTransformPoint(camera.transform.position),
                     cameraStageRotation = Quaternion.Inverse(rig.transform.rotation) * camera.transform.rotation,
                     cameraFieldOfView = camera.Lens.FieldOfView

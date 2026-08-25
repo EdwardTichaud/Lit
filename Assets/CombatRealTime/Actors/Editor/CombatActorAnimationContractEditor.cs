@@ -49,8 +49,8 @@ public static class CombatActorAnimationContractEditor
         if (!EditorUtility.DisplayDialog(
                 "Normalize Actor Animation Hierarchies",
                 "Normaliser Lucian, Juggernaut et GiantJuggernaut ?\n\n" +
-                "Les skeletons importes restent intacts. Les ennemis recoivent un AnimationRoot; " +
-                "Lucian conserve temporairement son Animator racine afin de ne pas casser ses clips generiques.",
+                "Les skeletons importes restent intacts. Les Animator racine existants sont conserves, " +
+                "en particulier ceux des ennemis; les anciens prefabs enfant restent compatibles.",
                 "Normaliser", "Annuler"))
         {
             return;

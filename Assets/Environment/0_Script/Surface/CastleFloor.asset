@@ -15,7 +15,9 @@ MonoBehaviour:
   surfaceId: castle
   displayName: Castle
   footstepClips:
-  - {fileID: 8300000, guid: 72f526a6a9890f643a88e85a61c86c8a, type: 3}
+  - {fileID: 11400000, guid: f4d1a2dcae646bb4884d7949a02766f5, type: 2}
+  - {fileID: 11400000, guid: 55aae5c152fcbb645bb43ddf08fed3da, type: 2}
+  - {fileID: 11400000, guid: ccd20b6fc6e375345b84e78a76dd1108, type: 2}
   footstepVolume: 0.5
   footstepPitchMin: 0.95
   footstepPitchMax: 1.05

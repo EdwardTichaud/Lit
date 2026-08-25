@@ -186,6 +186,8 @@ public sealed class PlayerActionPresentationProfile
     [Header("Root Motion")]
     [Tooltip("InPlace: aucun deplacement racine. AuthoredRootMotion: le clip deplace UCC. ScriptedDash: le script pilote le dash.")]
     public PlayerActionRootMotionMode rootMotionMode = PlayerActionRootMotionMode.AuthoredRootMotion;
+    [Tooltip("Autorise un BasicSkill aerien a conserver son root motion pendant un saut. La gravite UCC reste toujours active.")]
+    public bool allowAirborneRootMotion;
     [Header("Facing And Inertia")]
     [Tooltip("UccBody : la capsule UCC conserve l'orientation vers la cible apres l'action. VisualOnly ne tourne que le rig et convient aux poses non dirigees.")]
     public PlayerActionFacingMode facingMode = PlayerActionFacingMode.UccBody;
@@ -227,6 +229,10 @@ public class SkillSO : ScriptableObject
     [Tooltip("Si active, le skill ne demarre pas hors de sa portee de hit.")]
     public bool requireValidRangeToStart;
 
+    [Header("Combat Cinematic (Optional)")]
+    [Tooltip("Quand Timeline et Rig sont assignes, cette competence suspend le combat et joue sa Timeline sur place.")]
+    [SerializeField] private CombatSkillCinematicDefinition cinematic = new CombatSkillCinematicDefinition();
+
     [Header("VFX")]
     public List<SkillVfxCue> vfxCues = new List<SkillVfxCue>();
 
@@ -239,6 +245,9 @@ public class SkillSO : ScriptableObject
     [Min(0f)] public float enemyDamageMultiplier = 1f;
     public List<RealTimeCombatReaction> acceptedEnemyReactions = new List<RealTimeCombatReaction> { RealTimeCombatReaction.Dodge };
     public bool requireAllEnemyReactions;
+    [Header("Action Audio")]
+    [Tooltip("Son joue au declenchement de l'action du joueur.")]
+    public AudioClipSO playerAttackSfx;
     public AudioClipSO enemyAttackSfx;
     [Header("Enemy Motion")]
     [Tooltip("Grounded ignore le root motion vertical. Airborne utilise BeginEnemyAirborne et une chute controlee.")]
@@ -258,6 +267,8 @@ public class SkillSO : ScriptableObject
     public float MinimumHitDistance => minimumHitDistance;
     public float MaximumHitDistance => Mathf.Max(minimumHitDistance, maximumHitDistance);
     public bool RequireValidRangeToStart => requireValidRangeToStart;
+    public CombatSkillCinematicDefinition Cinematic => cinematic;
+    public bool HasCombatCinematic => cinematic != null && cinematic.IsConfigured;
     public IReadOnlyList<SkillVfxCue> VfxCues => vfxCues;
     public CombatImpactFeedbackProfile ImpactFeedback => impactFeedback ?? (impactFeedback = new CombatImpactFeedbackProfile());
     public SkillRetreatImpulse RetreatImpulse => retreatImpulse ?? (retreatImpulse = new SkillRetreatImpulse());
@@ -265,6 +276,7 @@ public class SkillSO : ScriptableObject
     public float EnemyDamageMultiplier => enemyDamageMultiplier;
     public IReadOnlyList<RealTimeCombatReaction> AcceptedEnemyReactions => acceptedEnemyReactions;
     public bool RequireAllEnemyReactions => requireAllEnemyReactions;
+    public AudioClipSO PlayerAttackSfx => playerAttackSfx;
     public AudioClipSO EnemyAttackSfx => enemyAttackSfx;
     public EnemyActionMotionProfile EnemyActionMotion => enemyActionMotion ?? (enemyActionMotion = EnemyActionMotionProfile.GroundedDefault);
     public CombatReactionTelegraphProfile ReactionTelegraph => reactionTelegraph ?? (reactionTelegraph = new CombatReactionTelegraphProfile());

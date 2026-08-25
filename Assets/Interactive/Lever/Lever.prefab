@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 9154316756915664896}
   - component: {fileID: 1537959916344500109}
   - component: {fileID: 1654119110914161527}
+  - component: {fileID: 6167772081288210141}
   m_Layer: 0
   m_Name: Lever
   m_TagString: Untagged
@@ -93,6 +94,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!64 &8168315490026300703
 MeshCollider:
@@ -128,18 +130,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e199096d99cedcf48af5c3b0da76455f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lever
+  ShowTopMostFoldoutHeaderGroup: 1
   useInteractInput: 1
   requirePlayerTag: 1
   setAnimatorBoolOnInteract: 1
+  interactCooldown: 0.15
+  logDebug: 0
   useColliderBounds: 1
   interactionRadius: 1.25
   colliderRadiusPadding: 0.1
+  interactionTrigger: {fileID: 1537959916344500109}
+  activationMode: 0
+  allowRetriggerWhileActive: 1
+  singleUse: 0
+  targetBindings: []
+  onActivated:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeactivated:
+    m_PersistentCalls:
+      m_Calls: []
   leverAnimator: {fileID: 1654119110914161527}
   leverBoolParam: Triggered
-  activateSfx: {fileID: 11400000, guid: 9d89389e17267b844be794f35e783296, type: 2}
-  deactivateSfx: {fileID: 11400000, guid: 9d89389e17267b844be794f35e783296, type: 2}
+  activateSfx: {fileID: 11400000, guid: f9c6f5f1214a8d640aa886959c9378c5, type: 2}
+  deactivateSfx: {fileID: 11400000, guid: 2205e4f884c57e94fb62d7902be57e87, type: 2}
   activeDuration: 1
   isActive: 0
+  wasActivatedOnce: 0
 --- !u!135 &1537959916344500109
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -183,6 +200,31 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6167772081288210141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7476577756283911577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &7797931160800139183
 GameObject:
   m_ObjectHideFlags: 0
@@ -272,6 +314,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!64 &2785536596921645709
 MeshCollider:

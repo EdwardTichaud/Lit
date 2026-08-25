@@ -2463,7 +2463,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
   titleCardParticleRoots:
   - {fileID: 0}
-  menuButtonSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
+  menuButtonSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   menuButtonSfxCooldown: 0.05
   sessionsRoot: {fileID: 1286724594}
   savesRoot: {fileID: 785104525}

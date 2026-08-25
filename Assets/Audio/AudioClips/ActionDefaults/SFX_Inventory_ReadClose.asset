@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3baf3de3ad65d741a0c1b5f0a06f8db, type: 3}
   m_Name: SFX_Inventory_ReadClose
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
-  title: Inventory Read Close
+  title: Read Close
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.8
+  audioClip: {fileID: 8300000, guid: 963a0ffeb484f4ac891e88249e1be7dc, type: 3}
+  volume: 0.6
   loop: 0
+  affectedByTimeScale: 0

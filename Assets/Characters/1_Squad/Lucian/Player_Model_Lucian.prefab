@@ -8519,13 +8519,17 @@ MonoBehaviour:
   groundedTurnInPlaceThreshold: 0.55
   groundedTurnInPlaceMaxSpeed: 0.35
   groundedStopTriggerMinSpeed: 0.48
+  groundedStopRequestDelay: 0.06
+  groundedStopSettledSpeed: 0.06
+  groundedStopSettledDuration: 0.05
+  groundedStopExitNormalizedTime: 0.82
   groundedMoveTransitionDirectionHoldTime: 0.18
   groundedMoveTransitionParameterSpeed: 1.22
   useForwardOnlyGroundedLocomotion: 1
   enableRootMotionPivotTurns: 1
   groundedPivotMinAngle: 85
   groundedPivot180Angle: 135
-  groundedSnapStationaryTurn: 1
+  groundedSnapStationaryTurn: 0
   groundedSnapStationaryTurnMinAngle: 25
   groundedSnapStationaryTurnMaxSpeed: 0.22
   groundedSnapStationaryTurnMaxSmoothedInput: 0.08
@@ -8540,6 +8544,7 @@ MonoBehaviour:
   groundedPivotMovementReleaseScale: 0.58
   commitRootRotationDuringPivot: 1
   groundedPivotRotationCommitRate: 960
+  recordLocomotionDiagnostics: 0
   debugLocomotionDiagnostics: 0
   locomotionDiagnosticInterval: 0.1
   enableObstacleTraversal: 1
@@ -8640,6 +8645,7 @@ MonoBehaviour:
   flightBoostTurnRate: 460
   flightLandingSpeed: 12
   flightLandingAcceleration: 36
+  combatSkillLandingSpeed: 14
   allowStandaloneFlightFallback: 1
   fallbackFlightCollisionSkin: 0.03
   fallbackFlightGroundProbeDistance: 0.2
@@ -8677,6 +8683,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LucianJumpPresentationController
   locomotion: {fileID: 0}
   animator: {fileID: 963045829911085934}
+  locomotionBridge: {fileID: 0}
   jumpStartTrigger: JumpStartTrigger
   landingTrigger: LandingTrigger
   jumpRollTrigger: JumpRollTrigger

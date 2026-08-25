@@ -257,6 +257,12 @@ Animation Events. Les slots sans `SkillSO` sont masques et ignores par la
 navigation. Le loadout de `SkillsManager` n'est pas encore inclus dans
 `CharacterSaveData`.
 `SkillsManager.BasicSkills` contient une liste distincte de `BasicSkillsSO`.
+Elle est maintenant scindee en `GroundBasicSkills` et `AirBasicSkills` :
+`WestButton` choisit la famille selon l'etat UCC reel de Lucian et le combo est
+reinitialise lors d'un changement sol/air. Chaque `BasicSkillsSO` declare son
+contexte. Un BasicSkill `Airborne` peut conserver Lucian dans les airs ou
+demander une descente physique a une seconde precise de son clip; UCC reste
+proprietaire de l'atterrissage et aucun repositionnement n'est applique.
 Quand le lock est actif, `WestButton` (ou `Q`) ajoute le prochain basic skill au
 buffer de combo. Les clips sont joues dans l'ordre de la liste puis bouclent sur
 le premier; cinq skills produisent donc la sequence 1-2-3-4-5-1-2-3 apres huit
@@ -331,6 +337,20 @@ ou d'attaque annule ce retour precedent.
 Les Skills et BasicSkills diriges utilisent `UccBody` : UCC tourne donc le
 corps de Lucian vers `EnemyLockPoint` et conserve cette orientation a la sortie
 du clip. `VisualOnly` reste reserve aux poses qui ne doivent tourner que le rig.
+
+## Timelines optionnelles de SkillSO
+
+Chaque `SkillSO`, donc aussi chaque `BasicSkillsSO` et `EnemySkills`, expose une
+definition `Combat Cinematic` optionnelle. Quand elle contient une Timeline et
+un `CombatCinematicRig` baked, `CombatSkillCinematicController` suspend le
+combat, l'IA, UCC et les inputs, puis lit le rig poolé **sur place**. Aucun
+midpoint ni replacement d'acteurs n'est applique. L'unique Animation Event
+`ResolveCinematicSkillImpact` applique les degats; la fin de Timeline ne sert
+jamais de fallback. Les BasicSkills cinematographiques conservent leur index de
+combo et reprennent donc au coup suivant apres restitution. L'outil
+`CombatSkillTimelineAuthoringRig` permet de valider puis baker un package runtime
+depuis AnimationLab; il exige les pistes Player, Enemy, Cinemachine, Signals et
+exactement un evenement d'impact.
 `Skill_3_Entaille` utilise explicitement `Base Layer.Skill_3_Entaille` et cette
 state porte le tag `RealTimeCombatRootMotion`, comme toute competence qui peut
 deplacer Lucian pendant son clip.
@@ -771,6 +791,21 @@ Le menu `Lit/Combat/Configure Reaction Telegraph` configure Assomoir et le
 prompt `RealTimeCombatReactionPrompt` de `Bootstrap`.
 
 ### Locomotion et Assommoir
+
+### AnimationLab et bake cinematographique
+
+Les previews cinematographiques suivent le contrat de gameplay : un
+`ActorRoot` porte l'Animator de gameplay et le skeleton n'est qu'un enfant
+visuel. Pour l'ennemi, `Enemy_Preview` dans `AnimationLab` reproduit ainsi
+`Juggernaut_Combat` et utilise `Juggernaut.controller`; `MidPoly` ne porte pas
+d'Animator. Les bakers de `LightSkillTimelineAuthoringRig` et
+`CombatSkillTimelineAuthoringRig` resolvent/bindent les `ActorRoot` previews
+avant de copier une Timeline runtime, et les releves de cadrage sont pris sur
+ces roots, jamais sur un mesh enfant. Une validation bloque un bake lorsque le
+preview Animator n'est pas sur son root. Le menu
+`Lit/Combat/Update AnimationLab Root Animators` remet la scene et le prefab
+AnimationLab en conformite avec `Juggernaut_Combat` puis rebinde les pistes
+acteurs des Timelines d'auteur.
 
 `CombatEnemyLocomotionController` est le pont reutilisable entre la navigation
 et l'Animator ennemi. Il ne deplace jamais un Transform : `NavMeshAgent` garde

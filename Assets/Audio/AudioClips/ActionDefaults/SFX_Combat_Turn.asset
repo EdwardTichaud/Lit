@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Combat Turn
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.85
+  audioClip: {fileID: 8300000, guid: 94e41782f1edfb3429d16c065065afaa, type: 3}
+  volume: 0.5
   loop: 0
+  affectedByTimeScale: 0

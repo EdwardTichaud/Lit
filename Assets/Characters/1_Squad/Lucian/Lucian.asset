@@ -25,6 +25,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d8019012b40ae1b46af8bfcbec7cb88d, type: 2}
   - {fileID: 11400000, guid: eca322da99dd7bf40b06c5ebae562eb4, type: 2}
   - {fileID: 11400000, guid: 8f1aa2c3f4074d8fbe4697f51f3e0e10, type: 2}
+  groundBasicSkills:
+  - {fileID: 11400000, guid: 1ddf0c3cda96bc1418077fee3b0f4d9d, type: 2}
+  - {fileID: 11400000, guid: c43a7367eab25894d943ab01335bd6de, type: 2}
+  - {fileID: 11400000, guid: 33c43d8aa19cfa74bb2947ab1f8e6def, type: 2}
+  airBasicSkills:
+  - {fileID: 11400000, guid: 8e3bbfaf21cbb1041b08c96e68037647, type: 2}
   stats:
     strength: 10
     dexterity: 10

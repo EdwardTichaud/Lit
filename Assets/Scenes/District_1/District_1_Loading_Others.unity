@@ -768,9 +768,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 0}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -4715,9 +4715,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 0}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -5227,7 +5227,7 @@ MonoBehaviour:
   leverB: {fileID: 150104867}
   subscribeToLeverEvents: 1
   pivotTarget: {fileID: 1482339238}
-  successSfx: {fileID: 11400000, guid: 3c75036487301a947a0dec4d183b6d33, type: 2}
+  successSfx: {fileID: 11400000, guid: 414c24aa6c1048768e9deb4d17f17dac, type: 2}
   playOnce: 1
   logDebug: 0
   leverAActive: 0
@@ -5981,9 +5981,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 0}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -6667,7 +6667,7 @@ MonoBehaviour:
   showFeedback: 1
   feedbackTitle: 
   feedbackDuration: 1.8
-  rewardSfx: {fileID: 0}
+  rewardSfx: {fileID: 11400000, guid: 06423901ca0ffa94cbc59423272e42a9, type: 2}
   rewardVfxPrefab: {fileID: 0}
   feedbackAnchor: {fileID: 0}
   onRewardGranted:
@@ -7100,9 +7100,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 0}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -7326,9 +7326,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 0}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -7736,9 +7736,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 0}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 0}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -29403,9 +29403,9 @@ MonoBehaviour:
   colliderDisableOpenThreshold: 0.75
   openWhenLeverActivated: 0
   closeWhenLeverDeactivated: 0
-  openSfx: {fileID: 11400000, guid: 80e878e015bc61147934f76bd01bff1b, type: 2}
-  closeSfx: {fileID: 0}
-  lockedSfx: {fileID: 11400000, guid: d1cbb1d7330f2ea4caf393b07753b4aa, type: 2}
+  openSfx: {fileID: 11400000, guid: 42dc441f2516397458a4cb1a1d7f6c46, type: 2}
+  closeSfx: {fileID: 11400000, guid: 58b3ac7a4227b00429f73a6ca1d673ee, type: 2}
+  lockedSfx: {fileID: 11400000, guid: 6489863fb163c604cac00c401111df40, type: 2}
   onOpened:
     m_PersistentCalls:
       m_Calls: []

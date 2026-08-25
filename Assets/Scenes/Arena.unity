@@ -24958,7 +24958,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -36683,7 +36683,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -70005,7 +70005,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 11400000, guid: 142127b0f161c694991947645f399659, type: 2}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35
@@ -73223,7 +73223,7 @@ MonoBehaviour:
   rightPlacementTextOverride: {fileID: 0}
   rightTextMargin: 20
   matchTargetSize: 1
-  moveSfx: {fileID: 0}
+  moveSfx: {fileID: 11400000, guid: 0ed6b34f04f7bc948b90a600b60a53b5, type: 2}
   moveSfxCooldown: 0.05
   moveDeadzone: 0.5
   initialRepeatDelay: 0.35

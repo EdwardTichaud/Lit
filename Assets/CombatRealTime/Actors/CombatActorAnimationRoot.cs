@@ -1,5 +1,11 @@
 using UnityEngine;
 
+public enum CombatActorAnimatorContractMode
+{
+    RootAnimator,
+    LegacyChildAnimator
+}
+
 [DisallowMultipleComponent]
 public sealed class CombatActorAnimationRoot : MonoBehaviour
 {
@@ -15,6 +21,10 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     public Transform AnimationRoot => animationRoot;
     public Animator Animator => animator;
     public Transform LockPoint => lockPoint;
+    public CombatActorAnimatorContractMode AnimatorContractMode => animator != null && animator.transform == transform
+        ? CombatActorAnimatorContractMode.RootAnimator
+        : CombatActorAnimatorContractMode.LegacyChildAnimator;
+    public bool UsesRootAnimator => animator != null && animator.transform == transform;
     public bool IsCinematicMotionActive => cinematicSessionToken >= 0;
     public bool ShouldConsumeAnimatorRootMotion => IsCinematicMotionActive ||
                                                    (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion);
@@ -29,6 +39,7 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        LogDevelopmentContractDiagnostic();
     }
 
     private void LateUpdate()
@@ -93,6 +104,18 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         if (animator.transform != animationRoot && !animator.transform.IsChildOf(animationRoot))
         {
             error = name + ": Animator doit etre porte par AnimationRoot ou sa hierarchie.";
+            return false;
+        }
+
+        if (rootMotionRelay == null)
+        {
+            error = name + ": CombatActorRootMotionRelay manquant sur l'Animator de gameplay.";
+            return false;
+        }
+
+        if (rootMotionRelay.transform != animator.transform)
+        {
+            error = name + ": CombatActorRootMotionRelay doit etre porte par le meme GameObject que l'Animator.";
             return false;
         }
 
@@ -204,14 +227,31 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
 
     private void ResolveReferences()
     {
-        if (animationRoot == null)
+        // Root Animator is the current authoring convention. It owns the same
+        // transform as physics, navigation and combat, preventing a visual
+        // hierarchy from silently becoming a second movement authority.
+        Animator rootAnimator = GetComponent<Animator>();
+        if (rootAnimator != null)
         {
             animationRoot = transform;
+            animator = rootAnimator;
         }
-
-        if (animator == null)
+        else
         {
-            animator = animationRoot.GetComponentInChildren<Animator>(true);
+            // Legacy prefabs keep their child Animator contract unchanged.
+            if (animationRoot == null)
+            {
+                animationRoot = transform;
+            }
+
+            if (animator == null)
+            {
+                animator = animationRoot.GetComponent<Animator>();
+                if (animator == null)
+                {
+                    animator = animationRoot.GetComponentInChildren<Animator>(true);
+                }
+            }
         }
 
         if (lockPoint == null)
@@ -225,5 +265,46 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         }
 
         enemyPhysicsMotor ??= GetComponent<CombatEnemyPhysicsMotor>();
+    }
+
+    private void LogDevelopmentContractDiagnostic()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!ValidateContract(out string contractError))
+        {
+            Debug.LogError("[CombatAnimatorContract] " + contractError, this);
+            return;
+        }
+
+        string controllerName = animator.runtimeAnimatorController != null
+            ? animator.runtimeAnimatorController.name
+            : "<aucun>";
+        Debug.Log("[CombatAnimatorContract] actor='" + name + "' mode='" + AnimatorContractMode + "' animator='" + animator.name + "' controller='" + controllerName + "'.", this);
+
+        if (GetComponent<EnemySkills>() != null)
+        {
+            ValidateRequiredEnemyStates();
+        }
+#endif
+    }
+
+    private void ValidateRequiredEnemyStates()
+    {
+        ValidateAnimatorState("Idle");
+        ValidateAnimatorState("Hit");
+        ValidateAnimatorState("Death");
+        ValidateAnimatorState("Assomoir");
+    }
+
+    private void ValidateAnimatorState(string stateName)
+    {
+        int shortHash = Animator.StringToHash(stateName);
+        int fullPathHash = Animator.StringToHash("Base Layer." + stateName);
+        if (animator.HasState(0, shortHash) || animator.HasState(0, fullPathHash))
+        {
+            return;
+        }
+
+        Debug.LogError("[CombatAnimatorContract] actor='" + name + "' controller='" + animator.runtimeAnimatorController.name + "' missing required state='" + stateName + "'.", this);
     }
 }

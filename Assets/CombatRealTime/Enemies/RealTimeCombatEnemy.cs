@@ -176,7 +176,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         }
 
         activeSkill = PeekRetaliationSkill(meleePreference);
-        if (activeSkill == null || enemySkills == null || !enemySkills.SetActiveSkill(activeSkill) || !enemySkills.PlayActiveSkill())
+        if (activeSkill == null || enemySkills == null || !enemySkills.SetActiveSkill(activeSkill))
         {
             activeSkill = null;
             return false;
@@ -186,6 +186,16 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         physicsMotor?.BeginEnemyAction(activeSkill);
         committedRetaliationDamage = Mathf.CeilToInt(storedMaximumLightDamage * Mathf.Max(0f, activeSkill.EnemyDamageMultiplier));
         storedMaximumLightDamage = 0;
+
+        bool cinematicStarted = activeSkill.HasCombatCinematic &&
+                                RealTimeCombatManager.Instance != null &&
+                                RealTimeCombatManager.Instance.TryPlayEnemySkillCinematic(this, activeSkill);
+        if (!cinematicStarted && !enemySkills.PlayActiveSkill())
+        {
+            activeSkill = null;
+            committedRetaliationDamage = 0;
+            return false;
+        }
 
         RetaliationStarted?.Invoke(activeSkill, committedRetaliationDamage);
         return true;

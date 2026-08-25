@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioClipSO
   title: Character Jump
   composer: 
-  audioClip: {fileID: 0}
-  volume: 0.9
+  audioClip: {fileID: 8300000, guid: a2b2ae7b007292f4394193811163a246, type: 3}
+  volume: 0.7
   loop: 0
+  affectedByTimeScale: 0

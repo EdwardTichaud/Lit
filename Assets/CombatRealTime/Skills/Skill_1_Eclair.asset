@@ -18,27 +18,47 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: 17651a47717f666458106120728c7c07, type: 2}
   animatorState: Base Layer.AnimationClip_Skill_Eclair
   damages: 10
+  lightChargeOnHit: 1
   presentation:
     entryBlendSeconds: 0.06
     chainNormalizedTime: 1
+    chainTransitionNormalizedTime: 0.78
+    mobilityCancelNormalizedTime: 0.7
     recoveryNormalizedTime: 0.88
     exitBlendSeconds: 0.1
     rootMotionMode: 1
+    allowAirborneRootMotion: 0
     facingMode: 1
     allowMoveAfterRecovery: 1
     allowDodgeAfterRecovery: 1
+    allowMobilityCancel: 1
   minimumHitDistance: 0
   maximumHitDistance: 5
+  requireValidRangeToStart: 0
+  cinematic:
+    timeline: {fileID: 0}
+    combatCinematicRigPrefab: {fileID: 0}
+    playerAnimatorTrackName: Player.Animator
+    enemyAnimatorTrackName: Enemy.Animator
+    cinemachineTrackName: Cinemachine
+    postTimelinePlayerState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
+    postTimelineEnemyState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
   vfxCues:
   - displayName: Sword Trail
     prefab: {fileID: 5195832738422001350, guid: bfe3fbbb8c70b4b43b0e00e8d76a539e, type: 3}
-    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
+    audioClip: {fileID: 0}
     delivery: 3
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
   - displayName: Light Impact
     prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
-    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000002, type: 2}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000004, type: 2}
     delivery: 0
     holdAtCasterSeconds: 0
     travelDurationSeconds: 0.25
@@ -70,8 +90,62 @@ MonoBehaviour:
     additionalImpactAudio: {fileID: 0}
   retreatImpulse:
     enabled: 0
+    horizontalImpulse: 24
+    verticalImpulse: 9
+    maximumHorizontalImpulse: 24
+    maximumVerticalImpulse: 8
+    minimumInputLockSeconds: 0.12
+    maximumInputLockSeconds: 3.5
+    airborneInertiaSeconds: 0
+    airborneInertiaEndSpeedMultiplier: 0.3
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000
   requireAllEnemyReactions: 0
-  enemyAttackSfx: {fileID: 0}
+  playerAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}
+  enemyAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}
+  enemyActionMotion:
+    movementMode: 0
+    initialUpwardSpeed: 12
+    gravity: 32
+    maximumFallSpeed: 28
+    minimumLandingSpeed: 4
+    maximumAirborneSeconds: 2.5
+    enableHomingRush: 0
+    rushMaximumSpeed: 14
+    rushAcceleration: 46
+    rushDeceleration: 62
+    rushStoppingDistance: 1.25
+    rushCollisionSkin: 0.04
+    rushBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  reactionTelegraph:
+    enabled: 1
+    alertPrefab: {fileID: 0}
+    threatColor: {r: 0.85, g: 0.08, b: 0.4, a: 1}
+    perfectWindowColor: {r: 0.72, g: 0.94, b: 1, a: 1}
+    heightOffset: 1.1
+    fadeSeconds: 0.12
+    anticipationAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
+    perfectWindowAudio: {fileID: 11400000, guid: 0438d71856ebb2343ad2e5a5508b6b87, type: 2}
+    successfulReactionAudio: {fileID: 11400000, guid: 4851eb51eca50fb4594e1d7418bfaf41, type: 2}
+    usePerfectWindowSlowMotion: 1
+    perfectWindowTimeScale: 0.85
+    perfectWindowSlowMotionSeconds: 0.15
+  combatWarning:
+    enabled: 1
+    color: {r: 1, g: 0.1, b: 0.42, a: 1}
+    intensity: 0.8
+    pulseFrequency: 2.5
+    vignette: 0.26
+    chromaticAberration: 0.012
+    enemyFocusBias: 0.9
+    recenterDegreesPerSecond: 280
+    focusSharpness: 28
+    fieldOfViewOffset: -2
+    fadeOutSeconds: 0.16
+    warningAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
+    useSlowMotion: 0
+    slowMotionTimeScale: 0.85
+    slowMotionSeconds: 0.15
