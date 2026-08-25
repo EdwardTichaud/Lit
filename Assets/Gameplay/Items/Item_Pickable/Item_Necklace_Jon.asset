@@ -70,7 +70,7 @@ MonoBehaviour:
     impactVfxLifetime: 2
   canPlace: 0
   isContainer: 0
-  worldPrefab: {fileID: 919132149155446097, guid: 3bd4b4e36eeed304c9ce10f4838404c6, type: 3}
+  worldPrefab: {fileID: 1980994368617209140, guid: aeee2d40459887742891cecf2cf6e9db, type: 3}
   isFlame: 0
   isBeacon: 0
   allowWallPlacement: 0

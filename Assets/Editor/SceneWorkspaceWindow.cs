@@ -142,6 +142,15 @@ public sealed class SceneWorkspaceWindow : EditorWindow
             }
         }
 
+        const string MaisonPrefix = "Maison_";
+        if (sceneName.StartsWith(MaisonPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            string[] parts = sceneName.Split('_');
+            phaseLabel = string.Join(" / ", parts.Skip(1));
+            order = GetSemanticOrder(parts.Skip(1).FirstOrDefault());
+            return "Maison";
+        }
+
         for (int i = 0; i < LegacyPhaseMarkers.Length; i++)
         {
             string marker = LegacyPhaseMarkers[i];
@@ -164,6 +173,9 @@ public sealed class SceneWorkspaceWindow : EditorWindow
         if (string.Equals(category, "Core", StringComparison.OrdinalIgnoreCase)) return 0;
         if (string.Equals(category, "Global", StringComparison.OrdinalIgnoreCase)) return 1;
         if (string.Equals(category, "Enigme", StringComparison.OrdinalIgnoreCase)) return 2;
+        if (string.Equals(category, "Flammes", StringComparison.OrdinalIgnoreCase)) return 3;
+        if (string.Equals(category, "Interactives", StringComparison.OrdinalIgnoreCase)) return 4;
+        if (string.Equals(category, "Environment", StringComparison.OrdinalIgnoreCase)) return 5;
         if (string.Equals(category, "Rooms", StringComparison.OrdinalIgnoreCase)) return 3;
         if (string.Equals(category, "Corridor", StringComparison.OrdinalIgnoreCase)) return 4;
         if (string.Equals(category, "Crypt", StringComparison.OrdinalIgnoreCase)) return 5;

@@ -25,7 +25,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     [SerializeField] private string menuSceneName = DefaultMenuSceneName;
     [SerializeField] private string hubSceneName = DefaultHubSceneName;
-    [Tooltip("Manifeste du hub. Tant qu'il reference Maison, le comportement actuel est conserve. Il pourra ensuite pointer vers Maison_Core et ses sous-scenes.")]
+    [Tooltip("Manifeste du hub : Maison_Core et ses sous-scenes semantiques.")]
     [SerializeField] private ZoneManifest hubManifest;
     [SerializeField] private bool loadMenuAfterBootstrap = true;
     [Header("Loading messages")]

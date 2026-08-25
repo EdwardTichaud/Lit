@@ -672,7 +672,10 @@ public class Flame : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         SquadCharacterController controller = character.GetComponent<SquadCharacterController>();
-        if (controller == null || !CanBeDetectedBy(controller) || !IsCharacterWithinInteractDistance(character.transform))
+        // Le choix est propose jusqu'a la portee de Munin (et non a la seule
+        // portee d'Interact/torche). Reutiliser la meme regle que la detection
+        // evite un refus silencieux apres avoir valide le bouton Munin.
+        if (controller == null || !CanBeDetectedBy(controller) || !IsCharacterInRange(character.transform))
         {
             return false;
         }

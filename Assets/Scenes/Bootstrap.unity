@@ -221,7 +221,7 @@ RectTransform:
   m_GameObject: {fileID: 3821463}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3.9484873, y: 3.9484873, z: 3.9484873}
+  m_LocalScale: {x: 3.9160492, y: 3.9160492, z: 3.9160492}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1889583852}
@@ -24033,7 +24033,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3797585, y: 1.3797585, z: 1.3797585}
+  m_LocalScale: {x: 1.5393803, y: 1.5393803, z: 1.5393803}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -36387,8 +36387,8 @@ MonoBehaviour:
   postLoadingMaximumStableFrameSeconds: 0.05
   loadingSceneStableFrames: 12
   loadingSceneMaximumStableFrameSeconds: 0.05
-  editorStartGameplayDirectly: 0
-  editorStartManifest: {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
+  editorStartGameplayDirectly: 1
+  editorStartManifest: {fileID: 11400000, guid: 62b4414d370e4c5c9be782b4f0d96f1a, type: 2}
   editorStartSceneName: 
   editorStartSpawnId: District_1
 --- !u!1 &1437226847
