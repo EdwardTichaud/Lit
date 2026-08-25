@@ -25,6 +25,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private bool recoveryOpen;
     private bool activeAllowsMobilityCancel;
     private bool activeRequestsAirborneLanding;
+    private bool activeHoldsAirborne;
     private float activeLandingAtAnimationSeconds;
     private bool activeLandingRequested;
     private bool hasBufferedAction;
@@ -140,6 +141,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         bufferedActionIsBasic = false;
         bufferedBasicSkill = null;
         activeRequestsAirborneLanding = false;
+        ReleaseAirborneHold();
         activeLandingAtAnimationSeconds = 0f;
         activeLandingRequested = false;
         locomotionBridge?.ClearPlayerActionRootMotionMode();
@@ -286,6 +288,8 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             actionRoutine = null;
         }
 
+        ReleaseAirborneHold();
+
         activeToken++;
         activeStateHash = stateHash;
         activeRootMotionMode = profile.rootMotionMode;
@@ -296,12 +300,17 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         recoveryOpen = false;
         activeAllowsMobilityCancel = profile.allowMobilityCancel;
         activeRequestsAirborneLanding = basicSkill != null && basicSkill.RequestsLandingDuringAnimation;
+        activeHoldsAirborne = basicSkill != null && basicSkill.HoldsAirborneDuringAnimation;
         activeLandingAtAnimationSeconds = basicSkill != null ? basicSkill.LandingAtAnimationSeconds : 0f;
         activeLandingRequested = false;
         locomotionBridge?.SetPlayerActionRootMotionMode(
             profile.rootMotionMode,
             profile.facingMode == PlayerActionFacingMode.VisualOnly,
             profile.allowAirborneRootMotion);
+        if (activeHoldsAirborne)
+        {
+            locomotionBridge?.BeginCombatAirborneHold();
+        }
         animator.CrossFade(stateHash, Mathf.Clamp(profile.entryBlendSeconds, 0f, 0.25f), 0);
         Trace("enter", debugName, profile);
         actionRoutine = StartCoroutine(TrackAction(activeToken, profile, debugName, isBasicAction));
@@ -315,6 +324,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         const float stateEntryTimeout = 0.35f;
         float chainTime = Mathf.Clamp01(profile.chainNormalizedTime);
         float recoveryTime = Mathf.Max(chainTime, Mathf.Clamp01(profile.recoveryNormalizedTime));
+        float completionTime = activeHoldsAirborne ? 1f : recoveryTime;
         float chainTransitionTime = Mathf.Clamp(profile.chainTransitionNormalizedTime, chainTime, recoveryTime);
         float mobilityCancelTime = Mathf.Clamp(profile.mobilityCancelNormalizedTime, 0.05f, recoveryTime);
 
@@ -370,7 +380,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
                 }
             }
 
-            if (state.normalizedTime >= recoveryTime)
+            if (state.normalizedTime >= completionTime)
             {
                 recoveryOpen = true;
                 Trace("recovery", debugName, profile);
@@ -527,6 +537,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         bufferedActionIsBasic = false;
         bufferedBasicSkill = null;
         activeRequestsAirborneLanding = false;
+        ReleaseAirborneHold();
         activeLandingAtAnimationSeconds = 0f;
         activeLandingRequested = false;
         actionRoutine = null;
@@ -560,6 +571,17 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         }
 
         activeLandingRequested = locomotionBridge.RequestCombatSkillLanding();
+    }
+
+    private void ReleaseAirborneHold()
+    {
+        if (!activeHoldsAirborne)
+        {
+            return;
+        }
+
+        activeHoldsAirborne = false;
+        locomotionBridge?.EndCombatAirborneHold();
     }
 
     private string ResolveLocomotionDestination(bool movementHeld, bool sprintHeld)

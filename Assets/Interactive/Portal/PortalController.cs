@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // Portail interactif sans UI : la detection standard affiche uniquement l'outline,
 // puis l'action Interagir teleporte le personnage vers le point configure.
@@ -16,8 +17,11 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     [Header("Destination")]
     [SerializeField, Tooltip("Choisit une teleportation dans la scene ou un changement de zone.")]
     private DestinationMode destinationMode = DestinationMode.LocalTeleport;
-    [SerializeField, Tooltip("Point d'arrivee du portail. Son orientation definit celle du personnage si l'option est active.")]
-    private Transform destinationPoint;
+    [SerializeField, Tooltip("Points d'arrivee locaux. L'index 0 est toujours reserve au joueur principal, puis les autres joueurs suivent leur ordre d'apparition.")]
+    private List<Transform> destinationPoints = new List<Transform>();
+    [FormerlySerializedAs("destinationPoint")]
+    [SerializeField, HideInInspector]
+    private Transform legacyDestinationPoint;
     [SerializeField, Tooltip("Offset local applique par rapport au point d'arrivee.")]
     private Vector3 destinationLocalOffset;
     [SerializeField, Tooltip("Applique la rotation du point d'arrivee au personnage.")]
@@ -26,8 +30,6 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     [Header("Scene Transition")]
     [SerializeField, Tooltip("Zone chargee quand ce portail est configure en Scene Transition.")]
     private ZoneManifest destinationZone;
-    [SerializeField, Tooltip("Identifiant optionnel du ZoneSpawnPoint d'arrivee.")]
-    private string destinationSpawnId = "Default";
 
     [Header("Interaction")]
     [SerializeField, Tooltip("Collider utilise pour detecter et mesurer l'interaction. Un SphereCollider Trigger est cree au runtime s'il manque.")]
@@ -66,17 +68,19 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     private uint netcodeId;
     private bool awaitingServerResponse;
 
-    public Transform DestinationPoint => destinationPoint;
+    public IReadOnlyList<Transform> DestinationPoints => destinationPoints;
     public bool IsSceneTransition => destinationMode == DestinationMode.SceneTransition;
 
     private void Reset()
     {
+        EnsureDestinationPoints();
         ResolveReferences(createFallback: false);
         RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
     }
 
     private void Awake()
     {
+        EnsureDestinationPoints();
         ResolveReferences(createFallback: true);
         RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         netcodeId = NetcodeSceneIdUtility.GetStableId(transform);
@@ -106,6 +110,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
         interactionMaxDistance = Mathf.Max(0.1f, interactionMaxDistance);
         fallbackColliderRadius = Mathf.Max(0.1f, fallbackColliderRadius);
         reuseCooldown = Mathf.Max(0f, reuseCooldown);
+        EnsureDestinationPoints();
         ResolveReferences(createFallback: false);
     }
 
@@ -192,7 +197,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
 
         if (IsSceneTransition)
         {
-            if (GameFlowService.TravelToZone(destinationZone, destinationSpawnId))
+            if (GameFlowService.TravelToZone(destinationZone, CaptureDestinationPoses()))
             {
                 RegisterCooldown(ResolveCooldownKey(character));
                 PlayTeleportAudio(character.transform.position);
@@ -223,7 +228,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
         {
             destinationPosition = character.transform.position;
             destinationRotation = character.transform.rotation;
-            return GameFlowService.TravelToZone(destinationZone, destinationSpawnId);
+            return GameFlowService.TravelToZone(destinationZone, CaptureDestinationPoses());
         }
 
         return TryTeleportAuthoritative(character, out destinationPosition, out destinationRotation);
@@ -300,7 +305,7 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
     {
         return IsSceneTransition
             ? destinationZone != null && destinationZone.IsValid
-            : destinationPoint != null;
+            : GetDestinationPoint(null) != null;
     }
 
     private void ResolveDestinationPose(
@@ -308,10 +313,76 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
         out Vector3 destinationPosition,
         out Quaternion destinationRotation)
     {
+        Transform destinationPoint = GetDestinationPoint(character);
         destinationPosition = destinationPoint.TransformPoint(destinationLocalOffset);
         destinationRotation = useDestinationRotation
             ? destinationPoint.rotation
             : character.transform.rotation;
+    }
+
+    private Transform GetDestinationPoint(GameObject character)
+    {
+        EnsureDestinationPoints();
+        if (destinationPoints == null || destinationPoints.Count == 0)
+        {
+            return null;
+        }
+
+        int requestedIndex = 0;
+        if (character != null && SquadManager.Instance != null)
+        {
+            requestedIndex = SquadManager.Instance.GetPlayerSpawnIndex(character);
+        }
+
+        requestedIndex = Mathf.Clamp(requestedIndex, 0, destinationPoints.Count - 1);
+        Transform point = destinationPoints[requestedIndex];
+        if (point != null)
+        {
+            return point;
+        }
+
+        for (int i = 0; i < destinationPoints.Count; i++)
+        {
+            if (destinationPoints[i] != null)
+            {
+                return destinationPoints[i];
+            }
+        }
+
+        return null;
+    }
+
+    private List<Pose> CaptureDestinationPoses()
+    {
+        EnsureDestinationPoints();
+        List<Pose> poses = new List<Pose>(destinationPoints.Count);
+        for (int i = 0; i < destinationPoints.Count; i++)
+        {
+            Transform point = destinationPoints[i];
+            if (point == null)
+            {
+                continue;
+            }
+
+            poses.Add(new Pose(
+                point.TransformPoint(destinationLocalOffset),
+                useDestinationRotation ? point.rotation : Quaternion.identity));
+        }
+
+        return poses;
+    }
+
+    private void EnsureDestinationPoints()
+    {
+        if (destinationPoints == null)
+        {
+            destinationPoints = new List<Transform>();
+        }
+
+        if (destinationPoints.Count == 0 && legacyDestinationPoint != null)
+        {
+            destinationPoints.Add(legacyDestinationPoint);
+        }
     }
 
     private bool ApplyTeleportPose(GameObject character, Vector3 position, Quaternion rotation)
@@ -434,9 +505,9 @@ public sealed class PortalController : MonoBehaviour, ICharacterDetectedInteract
             return;
         }
 
-        if (destinationPoint == null)
+        if (!IsSceneTransition && GetDestinationPoint(null) == null)
         {
-            Debug.LogWarning("PortalController: aucun point de destination n'est renseigne.", this);
+            Debug.LogWarning("PortalController: aucun Destination Point n'est renseigne.", this);
         }
 
         if (resolvedInteractionCollider == null)

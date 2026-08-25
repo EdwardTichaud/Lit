@@ -17,7 +17,7 @@ using UnityEngine.SceneManagement;
 public sealed class SceneWorkspaceWindow : EditorWindow
 {
     private const string ScenesRoot = "Assets/Scenes";
-    private static readonly string[] PhaseMarkers = { "_Critical", "_Loading", "_PostLoading", "_Proximity" };
+    private static readonly string[] LegacyPhaseMarkers = { "_Critical", "_Loading", "_PostLoading", "_Proximity" };
 
     private string search = string.Empty;
     private Vector2 scrollPosition;
@@ -130,9 +130,21 @@ public sealed class SceneWorkspaceWindow : EditorWindow
 
     private static string GetWorkspaceName(string sceneName, out string phaseLabel, out int order)
     {
-        for (int i = 0; i < PhaseMarkers.Length; i++)
+        const string DistrictPrefix = "District_";
+        if (sceneName.StartsWith(DistrictPrefix, StringComparison.OrdinalIgnoreCase))
         {
-            string marker = PhaseMarkers[i];
+            string[] parts = sceneName.Split('_');
+            if (parts.Length >= 3 && int.TryParse(parts[1], out _))
+            {
+                phaseLabel = string.Join(" / ", parts.Skip(2));
+                order = GetSemanticOrder(parts.Skip(2).FirstOrDefault());
+                return parts[0] + "_" + parts[1];
+            }
+        }
+
+        for (int i = 0; i < LegacyPhaseMarkers.Length; i++)
+        {
+            string marker = LegacyPhaseMarkers[i];
             int markerIndex = sceneName.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
             if (markerIndex > 0)
             {
@@ -143,8 +155,21 @@ public sealed class SceneWorkspaceWindow : EditorWindow
         }
 
         phaseLabel = "Scene";
-        order = PhaseMarkers.Length;
+        order = LegacyPhaseMarkers.Length;
         return sceneName;
+    }
+
+    private static int GetSemanticOrder(string category)
+    {
+        if (string.Equals(category, "Core", StringComparison.OrdinalIgnoreCase)) return 0;
+        if (string.Equals(category, "Global", StringComparison.OrdinalIgnoreCase)) return 1;
+        if (string.Equals(category, "Enigme", StringComparison.OrdinalIgnoreCase)) return 2;
+        if (string.Equals(category, "Rooms", StringComparison.OrdinalIgnoreCase)) return 3;
+        if (string.Equals(category, "Corridor", StringComparison.OrdinalIgnoreCase)) return 4;
+        if (string.Equals(category, "Crypt", StringComparison.OrdinalIgnoreCase)) return 5;
+        if (string.Equals(category, "Arena", StringComparison.OrdinalIgnoreCase)) return 6;
+        if (string.Equals(category, "Balcony", StringComparison.OrdinalIgnoreCase)) return 7;
+        return 100;
     }
 
     private bool MatchesSearch(SceneWorkspace workspace)

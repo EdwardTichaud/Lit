@@ -30,15 +30,15 @@ public static class ZoneManifestPhaseAudit
                 continue;
             }
 
-            AuditScene(manifest.name, "Critical", manifest.PrimarySceneName);
+            AuditScene(manifest.name, "Core", manifest.PrimarySceneName);
             for (int i = 0; i < manifest.LoadingSceneNames.Count; i++)
             {
-                AuditScene(manifest.name, "Loading", manifest.LoadingSceneNames[i]);
+                AuditScene(manifest.name, "Obligatoire", manifest.LoadingSceneNames[i]);
             }
 
             for (int i = 0; i < manifest.PostLoadingSceneNames.Count; i++)
             {
-                AuditScene(manifest.name, "PostLoading", manifest.PostLoadingSceneNames[i]);
+                AuditScene(manifest.name, "Differe", manifest.PostLoadingSceneNames[i]);
             }
         }
 
@@ -104,7 +104,7 @@ public static class ZoneManifestPhaseAudit
 
     private static bool IsPotentiallyHeavy(string phase, int gameObjects, int behaviours, int renderers, int lights)
     {
-        if (phase == "Critical")
+        if (phase == "Core")
         {
             return gameObjects > 150 || behaviours > 100 || renderers > 100 || lights > 20;
         }

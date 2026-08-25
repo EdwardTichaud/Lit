@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46548cde82ea81340a3ae6bdb5f758ea, type: 3}
+  m_Name: Item_Note_Maelle_Cauldron
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  itemId: item_note_mael_story
+  itemName: Histoire
+  itemSprite: {fileID: 21300000, guid: 4511a381bfb1cf740931784bbb80e702, type: 3}
+  description: Histoire pour enfant.
+  readableKind: 2
+  parchmentText: "La petite flamme et la mer noire.\n\nUne nuit, la mer devint si
+    sombre que m\xEAme les \xE9toiles refus\xE8rent de s\u2019y regarder.\n\nUne
+    petite flamme eut alors tr\xE8s peur et demanda \xE0 la D\xE9esse :\n\n\u201CComment
+    puis-je tenir seule contre toute cette nuit ?\u201D\n\nEt la D\xE9esse lui r\xE9pondit
+    :\n\n\u201CTu n\u2019as pas besoin d\u2019\xEAtre plus forte que la nuit.\nTu
+    dois seulement continuer \xE0 br\xFBler pour ceux qui cherchent leur chemin.\u201D\n\nAlors
+    la petite flamme resta \xE9veill\xE9e jusqu\u2019au matin.\n\nEt lorsqu\u2019enfin
+    la lumi\xE8re revint sur l\u2019eau, elle d\xE9couvrit qu\u2019elle n\u2019avait
+    jamais \xE9t\xE9 seule."
+  bookPages: []
+  useRandomSentences: 0
+  candidateSentences: []
+  generatedSentenceCount: 1
+  readableContentId: 
+  readableGenerationSeedOffset: 0
+  canUse: 1
+  canPlace: 0
+  isContainer: 0
+  worldPrefab: {fileID: 807492333390481600, guid: 85a0fd95eff71014fa29bf98c347a975, type: 3}
+  isFlame: 0
+  isBeacon: 0
+  allowWallPlacement: 0
+  placementRadiusOverride: 0
+  isWetClay: 0
+  driedReplacementItem: {fileID: 0}
+  preservesWetClay: 0
+  preservedWetClayCapacity: 1
+  isKey: 0
+  keyId: 
+  interactionCapabilities: 0
+  toggleEquipOnUse: 0
+  allowDropFromInventory: 1
+  allowPlaceFromInventory: 1
+  allowInstantDropWithoutPrefab: 1
+  useEffects: []
+  requireAllUseEffects: 0
+  consumeOnUse: 0
+  consumeQuantity: 1
+  itemPassiveEffect: {fileID: 0}
+  allowDepositToContainers: 1
+  allowTakeFromContainers: 1
+  cannotPlaceMessage: 
+  cannotPlaceWhileEquippedMessage: 
+  cannotDropMessage: 
+  cannotUseMessage: 
+  useFailedMessage: 
+  cannotPickupMessage: 
+  cannotDepositMessage: 
+  cannotTakeMessage: 
+  cannotBreakMessage: 
+  breakFailedMessage: 
+  useSuccessMessage: 
+  placeSuccessMessage: 
+  dropSuccessMessage: 
+  depositSuccessMessage: 
+  takeSuccessMessage: 
+  breakSuccessMessage: 
+  isBuilding: 0
+  isCraftingBuilding: 0
+  availableCrafts: []
+  buildingPrefab: {fileID: 0}
+  buildingMaxLevel: 10
+  buildingCurrentLevel: 0
+  buildingRequirements: []
+  buildingEffects: []
+  buildingLevelConfigs: []
+  isHomeChest: 0
+  canBreak: 0
+  breakResults:
+  - item: {fileID: 11400000, guid: dcf4dcbde8742dd4e9c0bb7102513fc8, type: 2}
+    quantity: 1

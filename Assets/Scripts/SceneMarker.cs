@@ -8,17 +8,27 @@ using UnityEditor;
 #endif
 
 /// <summary>
-/// Scene authoring point for a CharacterData world prefab. The marker is the
-/// only scene object a designer needs to place; its runtime instance is created
-/// from CharacterData.worldPrefab when the game starts.
+/// Point d'auteur unique pour les personnages, items et fantomes. Les
+/// personnages sont instancies au lancement; les items et fantomes servent de
+/// source de bake pour leurs objets de scene interactifs.
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Scene Marker")]
 public sealed class SceneMarker : MonoBehaviour
 {
+    public enum MarkerAssetType
+    {
+        Character = 0,
+        Item = 1,
+        Ghost = 2
+    }
+
     private const float MaximumPersistedEnemyPositionOffset = 20f;
 
+    [SerializeField] private MarkerAssetType assetType = MarkerAssetType.Character;
     [SerializeField] private CharacterData characterData;
+    [SerializeField] private Item item;
+    [SerializeField] private GhostData ghost;
     [SerializeField, HideInInspector] private string markerId;
 
     private static readonly Dictionary<string, SceneMarker> markersById = new Dictionary<string, SceneMarker>();
@@ -28,11 +38,22 @@ public sealed class SceneMarker : MonoBehaviour
     private bool loggedNetworkParentWarning;
 
     public CharacterData CharacterData => characterData;
+    public Item Item => item;
+    public GhostData Ghost => ghost;
+    public MarkerAssetType AssetType => assetType;
+    public bool UsesCharacter => assetType == MarkerAssetType.Character;
+    public bool UsesItem => assetType == MarkerAssetType.Item;
+    public bool UsesGhost => assetType == MarkerAssetType.Ghost;
     public string MarkerId => markerId;
     public GameObject RuntimeInstance => runtimeInstance;
 
     private void Awake()
     {
+        if (!UsesCharacter)
+        {
+            return;
+        }
+
         RegisterMarker(this);
         EnsurePersistentState();
         NetcodePrefabRegistry.RegisterSceneMarker(this);
@@ -40,24 +61,63 @@ public sealed class SceneMarker : MonoBehaviour
 
     private void Start()
     {
-        TrySpawn();
+        if (UsesCharacter)
+        {
+            TrySpawn();
+        }
     }
 
     private void Update()
     {
-        TrySpawn();
+        if (UsesCharacter)
+        {
+            TrySpawn();
+        }
     }
 
     private void OnDestroy()
     {
+        if (!UsesCharacter)
+        {
+            return;
+        }
+
         UnregisterMarker(this);
         NetcodePrefabRegistry.UnregisterSceneMarker(this);
     }
 
     public void SetCharacterData(CharacterData data)
     {
+        assetType = MarkerAssetType.Character;
         characterData = data;
         loggedMissingWorldPrefab = false;
+    }
+
+    public void SetItem(Item value)
+    {
+        assetType = MarkerAssetType.Item;
+        item = value;
+    }
+
+    public void SetGhost(GhostData value)
+    {
+        assetType = MarkerAssetType.Ghost;
+        ghost = value;
+    }
+
+    public GameObject ResolvePreviewPrefab()
+    {
+        if (UsesItem)
+        {
+            return item != null ? item.ResolveWorldPrefab() : null;
+        }
+
+        if (UsesGhost)
+        {
+            return ghost != null ? ghost.ResolveWorldPrefab() : null;
+        }
+
+        return characterData != null ? characterData.ResolveWorldPrefab() : null;
     }
 
     public static bool TryGetRegisteredMarker(string id, out SceneMarker marker)
@@ -252,6 +312,11 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
+        if (!UsesCharacter)
+        {
+            return;
+        }
+
         string generatedId = PersistentIdUtility.GenerateSceneObjectId(gameObject);
         if (!string.IsNullOrWhiteSpace(generatedId) && !string.Equals(markerId, generatedId, StringComparison.Ordinal))
         {
@@ -267,12 +332,13 @@ public sealed class SceneMarker : MonoBehaviour
 
     private void DrawWorldPrefabGizmo(bool selected)
     {
-        if (characterData == null || characterData.worldPrefab == null)
+        GameObject worldPrefab = ResolvePreviewPrefab();
+        if (worldPrefab == null)
         {
             return;
         }
 
-        Renderer[] renderers = characterData.worldPrefab.GetComponentsInChildren<Renderer>(true);
+        Renderer[] renderers = worldPrefab.GetComponentsInChildren<Renderer>(true);
         Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
         bool hasBounds = false;
         for (int i = 0; i < renderers.Length; i++)
@@ -284,7 +350,7 @@ public sealed class SceneMarker : MonoBehaviour
             }
 
             Bounds localBounds = renderer.localBounds;
-            Matrix4x4 relativeMatrix = characterData.worldPrefab.transform.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
+            Matrix4x4 relativeMatrix = worldPrefab.transform.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
             Vector3 center = relativeMatrix.MultiplyPoint3x4(localBounds.center);
             if (!hasBounds)
             {
@@ -306,7 +372,7 @@ public sealed class SceneMarker : MonoBehaviour
         Color previous = Gizmos.color;
         Matrix4x4 previousMatrix = Gizmos.matrix;
         Gizmos.color = selected ? new Color(1f, 0.65f, 0.15f, 1f) : new Color(0.15f, 0.85f, 1f, 0.95f);
-        Gizmos.matrix = transform.localToWorldMatrix * Matrix4x4.TRS(Vector3.zero, characterData.worldPrefab.transform.localRotation, characterData.worldPrefab.transform.localScale);
+        Gizmos.matrix = transform.localToWorldMatrix * Matrix4x4.TRS(Vector3.zero, worldPrefab.transform.localRotation, worldPrefab.transform.localScale);
         Gizmos.DrawWireCube(bounds.center, bounds.size);
         Gizmos.color = previous;
         Gizmos.matrix = previousMatrix;

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425d793a5e9746b59fd59fab673928eb, type: 3}
+  m_Name: Knowledge_JonLocationClue_1
+  m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
+  uniqueId: e1d45eceb8dd4a35a35ff4ee16ae5baa
+  knowledgeId: jonLocationClue_1
+  title: Le collier de Jon
+  description: Un petit collier use porte une clochette et le nom de Jon grave dans le metal.
+  category: 6
+  sourceType: 3
+  importance: 2
+  tags:
+  - jon
+  - clochette
+  - animal
+  districtId: district_1
+  roomId: 
+  personId: jon
+  lineageId: 
+  objectId: jon_collar
+  readableItem: {fileID: 0}
+  associatedAge: 666
+  combatBonusEnabled: 0
+  combatModifier:
+    lightDamageMultiplier: 1
+    counterDamageMultiplier: 1

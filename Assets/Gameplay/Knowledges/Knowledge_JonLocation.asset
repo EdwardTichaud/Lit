@@ -14,16 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KnowledgeSO
   uniqueId: 422f055239c3a104ea7445057bc960df
   knowledgeId: jonLocation
-  title: Jon Location
-  description: "La localisation de Jon pour le fant\xF4me Luc."
-  category: 3
-  sourceType: 2
+  title: Le destin de Jon
+  description: "Jon etait le chat de Luc. La clochette du collier et celle de sa petite tombe le confirment."
+  category: 16
+  sourceType: 8
   importance: 3
-  tags: []
-  districtId: 
+  tags:
+  - jon
+  - animal
+  - luc
+  districtId: district_1
   roomId: 
-  personId: 
+  personId: jon
   lineageId: 
-  objectId: 
+  objectId: jon_grave
   readableItem: {fileID: 0}
   associatedAge: 666

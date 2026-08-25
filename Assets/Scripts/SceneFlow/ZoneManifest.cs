@@ -16,7 +16,7 @@ public sealed class ZoneManifest : ScriptableObject
 {
     [Header("Scenes")]
 #if UNITY_EDITOR
-    [Tooltip("Scene minimale contenant le spawn, les collisions et les systemes indispensables.")]
+    [Tooltip("Scene Core contenant le spawn, les collisions et les systemes indispensables.")]
     public SceneAsset primaryScene;
     [Tooltip("Scenes chargees sous l'ecran de chargement avant de rendre la main au joueur.")]
     public List<SceneAsset> loadingScenes = new List<SceneAsset>();

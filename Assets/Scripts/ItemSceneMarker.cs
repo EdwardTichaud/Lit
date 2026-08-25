@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
+[System.Obsolete("Utilise SceneMarker avec le type Item ou Ghost.")]
 [DisallowMultipleComponent]
-[AddComponentMenu("Lit/Item/Scene Marker")]
+[AddComponentMenu("")]
 public class ItemSceneMarker : MonoBehaviour
 {
     public enum MarkerAssetType

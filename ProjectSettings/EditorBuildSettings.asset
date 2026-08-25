@@ -27,7 +27,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Outdoor.unity
     guid: 27f6d47f2196e1741b2e14dc5e4599a2
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Critical.unity
+    path: Assets/Scenes/District_1/District_1_Core.unity
     guid: 9e497449e68f2854e9e47c143bf97c64
   - enabled: 1
     path: Assets/Scenes/District_2.unity
@@ -48,25 +48,16 @@ EditorBuildSettings:
     path: Assets/Scenes/AngelOfJustice.unity
     guid: 947148e529b364b48940a5f2075bb498
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Environment_Corridor.unity
+    path: Assets/Scenes/District_1/District_1_Corridor_Environment.unity
     guid: 10563072638a6a044a92aeeb7ef65d1c
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Others.unity
-    guid: 59ab7e9c109d27d459eb9cf80bf37616
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Lights.unity
-    guid: 12cdf1fe1a46efa40915a117779dc0d8
-  - enabled: 0
-    path: Assets/Scenes/District_1/District_1_PostLoading_Lights.unity
-    guid: 9a59c7c8d9ac0f84198e5d29eb03b34e
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Environment_Rooms.unity
+    path: Assets/Scenes/District_1/District_1_Rooms_Environment.unity
     guid: 2c1ab3d5561b50d4a9f37d7196df866c
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Environment_Crypt.unity
+    path: Assets/Scenes/District_1/District_1_Crypt_Environment.unity
     guid: dde8505377f7541428f035c431c9a6f1
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Environment_Balcony.unity
+    path: Assets/Scenes/District_1/District_1_Balcony_Environment.unity
     guid: ccaa4921d8a401c4496c4ecfe2f2db73
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_Loading_Environment_Near_2.unity
@@ -81,89 +72,26 @@ EditorBuildSettings:
     path: Assets/Scenes/Maison/Maison_Loading_Interactives.unity
     guid: 40f2412674e008345b1737bf7218be04
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Environment_Arena.unity
+    path: Assets/Scenes/District_1/District_1_Arena_Environment.unity
     guid: 39c4053b37c182f4e83878ce09cee085
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Proximity_Balcony_Decor.unity
-    guid: 635ec28a59be1134bbc483b5f0186aa6
+    path: Assets/Scenes/District_1/District_1_Global_Lights.unity
+    guid: f4ce0086b8e1ae647aebbb22a40ef753
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Proximity_Crypt_Decor.unity
-    guid: ea6c94274d868614ea143fd2909881ee
+    path: Assets/Scenes/District_1/District_1_Enigme_Moonrise.unity
+    guid: 007201eb6f185f94faeb3a7aa9e0ff3b
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Proximity_Arena_Decor.unity
-    guid: 31a18cbc3ae729c45a68a63312062757
+    path: Assets/Scenes/District_1/District_1_Rooms_Flammes.unity
+    guid: d36b2c156b097be4cbcf48af8bcc44e3
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Arrival_Corridor_Environment.unity
-    guid: 72a0678fa74945a4bba6da401e4d3a56
+    path: Assets/Scenes/District_1/District_1_Corridor_Flammes.unity
+    guid: 3f0e561768f53af46bf56474762ea6d9
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Arrival_Corridor_Lighting_Core.unity
-    guid: a4f9f666adc7c0e43abfe8e736a3ffd4
+    path: Assets/Scenes/District_1/District_1_Crypt_Flammes.unity
+    guid: 283714d43f84dcb488a9aa5f3952db1e
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Arrival_Rooms_Environment.unity
-    guid: bb6bba097991c4f41acaab9a6ae442ec
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Arrival_Rooms_Lighting_Core.unity
-    guid: 3b4e094183b4dbe4286f40a88817bbb4
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Network_Core.unity
-    guid: 42778d1b2d9d4694eab0615c3810902b
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Network_Rooms.unity
-    guid: 6f20558369fa8494f9c233274c29626d
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Crypt_Environment.unity
-    guid: 0ac748d8ecf309845a511f8b09fcd546
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Crypt_Lighting_Core.unity
-    guid: af28332ee2fed5e46840e27197afb078
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Network_Crypt.unity
-    guid: a5f170bf823431445babaaf7d927cead
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Arena_Environment.unity
-    guid: e02e6ec8eb127fc4f8c21c4cd5c4df6f
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Arena_Lighting_Core.unity
-    guid: 953b5871d8eb737408f58f06d39f4a10
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Network_Arena.unity
-    guid: 2371ca1b8deaa7d48888060b251bc20e
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Environment.unity
-    guid: 7e4d8d8eb75146949ba4da05604d667e
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Arrival_Rooms_Environment_Interior.unity
-    guid: 7887dfd404917834f9921690d4859ec4
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Crypt_Environment_Deep.unity
-    guid: 7c37a7ac87992f04eb4044d7430085a9
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Lighting_Core.unity
-    guid: a7f86b571920ce6499d27eead52969bb
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Lighting_Decorative_01.unity
-    guid: 9855cc5a332b0de448af34c98396ea45
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Lighting_Decorative_02.unity
-    guid: 08cee2a7cb1bff446ace69934d5e13d5
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Lighting_Decorative_03.unity
-    guid: 8ffc83d4e9d01f74fab0433363a479e3
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Lighting_Decorative_04.unity
-    guid: 2cf7f3f3058f2bb4288ac8bafe70ef6e
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_PostLoading_Balcony_Lighting_Decorative_05.unity
-    guid: 91b2cc70215c29b42be03cfe2e00e4c2
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Loading_Global_Volumes.unity
-    guid: b6d9fa55f93539b42a234a85f0960f6e
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Proximity_Crypt_Lighting_Decorative.unity
-    guid: 3e92d2de61d03034691f4757d05718c7
-  - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Proximity_Arena_Lighting_Decorative.unity
-    guid: 2fbfcb1e9f2f28749a62205ee99f8520
+    path: Assets/Scenes/District_1/District_1_Arena_Enemies.unity
+    guid: 6f707f864cc6ecd40a182bedabf7a0ee
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: aeb6cd82620c2c34dab663a61cc493b8, type: 2}

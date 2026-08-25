@@ -221,7 +221,7 @@ RectTransform:
   m_GameObject: {fileID: 3821463}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.8215756, y: 4.8215756, z: 4.8215756}
+  m_LocalScale: {x: 3.9484873, y: 3.9484873, z: 3.9484873}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1889583852}
@@ -266,6 +266,8 @@ MonoBehaviour:
   wrap: 0
   moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
   allowInput: 1
+  requireUiInputMode: 1
+  requireVisibleCanvasGroup: 1
   disableExternalActionOnDisable: 0
   useUnscaledTime: 1
   startIndex: 0
@@ -1234,6 +1236,8 @@ MonoBehaviour:
   wrap: 0
   moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
   allowInput: 1
+  requireUiInputMode: 1
+  requireVisibleCanvasGroup: 1
   disableExternalActionOnDisable: 0
   useUnscaledTime: 1
   startIndex: 0
@@ -24029,7 +24033,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1154115, y: 1.1154115, z: 1.1154115}
+  m_LocalScale: {x: 1.3797585, y: 1.3797585, z: 1.3797585}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -24074,6 +24078,8 @@ MonoBehaviour:
   wrap: 0
   moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
   allowInput: 1
+  requireUiInputMode: 1
+  requireVisibleCanvasGroup: 1
   disableExternalActionOnDisable: 0
   useUnscaledTime: 1
   startIndex: 0
@@ -26840,6 +26846,8 @@ MonoBehaviour:
   wrap: 0
   moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
   allowInput: 1
+  requireUiInputMode: 1
+  requireVisibleCanvasGroup: 1
   disableExternalActionOnDisable: 0
   useUnscaledTime: 1
   startIndex: 0
@@ -36379,7 +36387,7 @@ MonoBehaviour:
   postLoadingMaximumStableFrameSeconds: 0.05
   loadingSceneStableFrames: 12
   loadingSceneMaximumStableFrameSeconds: 0.05
-  editorStartGameplayDirectly: 1
+  editorStartGameplayDirectly: 0
   editorStartManifest: {fileID: 11400000, guid: 5368eeab0dc22da4fa464211348e9c7e, type: 2}
   editorStartSceneName: 
   editorStartSpawnId: District_1
@@ -45260,6 +45268,8 @@ MonoBehaviour:
   wrap: 0
   moveActionReference: {fileID: -1680190386980627800, guid: 35845fe01580c41289b024647b1d1c53, type: 3}
   allowInput: 1
+  requireUiInputMode: 1
+  requireVisibleCanvasGroup: 1
   disableExternalActionOnDisable: 0
   useUnscaledTime: 1
   startIndex: 0

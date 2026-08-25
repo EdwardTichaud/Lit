@@ -1539,6 +1539,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return false;
         }
 
+        RevealPickupKnowledge(item, currentCharacter);
+
         entry.quantity = Mathf.Max(0, entry.quantity - quantity);
         if (entry.quantity <= 0)
         {
@@ -2700,6 +2702,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
             if (TryAddItemToCurrentCharacter(entry.item, quantity, !showedFeedback))
             {
+                RevealPickupKnowledge(entry.item, currentCharacter);
                 storedItems.RemoveAt(i);
                 tookAny = true;
             }
@@ -2799,6 +2802,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return false;
         }
 
+        RevealPickupKnowledge(item, currentCharacter);
+
         HandleEmptyContainer();
         SyncNetFromLootItems();
         SyncNetworkInventoryForCurrentCharacter();
@@ -2834,6 +2839,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             }
 
             controller.AddItem(representedPickup, 1);
+            RevealPickupKnowledge(representedPickup, controller.gameObject);
             inventory.SyncFromController();
             HandleEmptyContainer();
             SyncNetFromLootItems();
@@ -2863,6 +2869,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             }
 
             controller.AddItem(entry.item, quantity);
+            RevealPickupKnowledge(entry.item, controller.gameObject);
             entry.quantity = 0;
             storedItems.RemoveAt(i);
             movedAnyItem = true;
@@ -2946,6 +2953,16 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         return null;
+    }
+
+    private static void RevealPickupKnowledge(Item item, GameObject revealer)
+    {
+        if (item == null || item.knowledgeUnlockedOnPickup == null || item.knowledgeUnlockedOnPickup.Count == 0)
+        {
+            return;
+        }
+
+        KnowledgeReveal.Reveal(item.knowledgeUnlockedOnPickup, revealer, "pickup");
     }
 
     private void HandleLootNavigation()
@@ -4055,6 +4072,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         controller.AddItem(item, toTake);
+        RevealPickupKnowledge(item, controller.gameObject);
         inventory.SyncFromController();
 
         entry.quantity = Mathf.Max(0, entry.quantity - toTake);

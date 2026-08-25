@@ -790,6 +790,115 @@ public class SquadManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Place chaque membre de l'equipe sur son point coop dedie. Les points
+    /// doivent etre fournis dans l'ordre stable des slots de la zone.
+    /// </summary>
+    public void MoveSquadToSpawns(IReadOnlyList<ZoneSpawnPoint> spawnPoints)
+    {
+        if (spawnPoints == null || spawnPoints.Count == 0)
+        {
+            return;
+        }
+
+        if (spawnPoints.Count == 1)
+        {
+            MoveSquadToSpawn(spawnPoints[0] != null ? spawnPoints[0].transform : null);
+            return;
+        }
+
+        if (squadCharacters == null)
+        {
+            return;
+        }
+
+        List<GameObject> playersInSpawnOrder = GetPlayersInSpawnOrder();
+        int usablePoints = Mathf.Min(spawnPoints.Count, playersInSpawnOrder.Count);
+        for (int i = 0; i < usablePoints; i++)
+        {
+            GameObject character = playersInSpawnOrder[i];
+            ZoneSpawnPoint point = spawnPoints[i];
+            if (character == null || point == null)
+            {
+                continue;
+            }
+
+            TryTeleportCharacterForSceneTransition(character, point.transform.position, point.transform.rotation);
+        }
+    }
+
+    /// <summary>
+    /// Place l'escouade sur les reperes d'un portail. L'index 0 reste toujours
+    /// le personnage principal, puis les autres joueurs suivent leur ordre.
+    /// </summary>
+    public void MoveSquadToDestinationPoints(IReadOnlyList<Pose> destinationPoints)
+    {
+        if (destinationPoints == null || destinationPoints.Count == 0)
+        {
+            return;
+        }
+
+        List<GameObject> playersInSpawnOrder = GetPlayersInSpawnOrder();
+        for (int i = 0; i < playersInSpawnOrder.Count; i++)
+        {
+            GameObject character = playersInSpawnOrder[i];
+            if (character == null)
+            {
+                continue;
+            }
+
+            Pose destination = destinationPoints[Mathf.Min(i, destinationPoints.Count - 1)];
+            TryTeleportCharacterForSceneTransition(character, destination.position, destination.rotation);
+        }
+    }
+
+    /// <summary>Retourne l'index de spawn d'un joueur : le personnage principal est toujours 0.</summary>
+    public int GetPlayerSpawnIndex(GameObject character)
+    {
+        if (character == null)
+        {
+            return 0;
+        }
+
+        List<GameObject> playersInSpawnOrder = GetPlayersInSpawnOrder();
+        for (int i = 0; i < playersInSpawnOrder.Count; i++)
+        {
+            GameObject candidate = playersInSpawnOrder[i];
+            if (candidate == character ||
+                (candidate != null && character.transform.root == candidate.transform.root))
+            {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
+    private List<GameObject> GetPlayersInSpawnOrder()
+    {
+        List<GameObject> results = new List<GameObject>();
+        if (currentCharacter != null)
+        {
+            results.Add(currentCharacter);
+        }
+
+        if (squadCharacters == null)
+        {
+            return results;
+        }
+
+        for (int i = 0; i < squadCharacters.Count; i++)
+        {
+            GameObject character = squadCharacters[i];
+            if (character != null && !results.Contains(character))
+            {
+                results.Add(character);
+            }
+        }
+
+        return results;
+    }
+
     private void KeepOnlyControlledSoloCharacterForDirectSceneStart()
     {
         if (IsMultiplayerActive()

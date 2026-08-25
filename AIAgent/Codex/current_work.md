@@ -15,6 +15,17 @@ Le nouveau flux ne depend plus d'une application Python, d'un environnement
 virtuel ou d'un appel LLM local. Les prompts sont prepares manuellement depuis
 `AIAgent/prompts/codex_task.md`.
 
+La premiere boucle beta commence a la Maison puis emprunte `Portal_1` vers ses
+quatre `DestinationPoints` dans la chambre de Maelle (index 0 : personnage
+principal). Les `ZoneSpawnPoint` sont reserves au spawn initial de la Maison ;
+les portails de changement de scene memorisent leurs points avant le dechargement
+de la zone source et les appliquent apres le chargement. Les knowledges de Jon sont partages
+par la session : le collier les revele a la recuperation, la petite tombe a la
+lecture, puis Luc se resout apres les deux indices. `SceneMarker` est le marker
+unique (Character, Item ou Ghost) ; `ItemSceneMarker` reste seulement une
+compatibilite migrable. En session reseau, la Maison reste chargee afin qu'un
+joueur tardif y apparaisse toujours.
+
 Le prototype de chute libre est archive dans `Assets/FallingPhase_Legacy/` avec
 sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plus
 partie des scenes de build; l'ActionMap partagee `Falling` est conservee afin que

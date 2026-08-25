@@ -24,6 +24,12 @@ faire respecter l’autorité serveur.
 4. `WorldInteractionService` publie l’assignation.
 5. `NetcodeLocalPlayer` / les utilitaires mettent à jour `LocalPlayerContext`.
 6. Les inputs du propriétaire sont envoyés au serveur, qui pilote le gameplay.
+7. Pendant une exploration réseau, la Maison reste chargée en arrière-plan : un
+   joueur qui rejoint tardivement y apparaît, puis rejoint le groupe par portail.
+   Les destinations de portail réservent toujours l'index 0 au personnage
+   principal. Elles sont memorisees avant le dechargement de la scene source
+   puis appliquees apres le chargement de la destination; `ZoneSpawnPoint`
+   reste reserve au spawn initial de Maison.
 
 ## Pièges observés
 

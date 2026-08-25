@@ -16,31 +16,48 @@ MonoBehaviour:
   displayName: Luc
   apparitionAge: 666
   apparitionLocationId: 
-  targetId: 
-  targetDisplayName: 
-  expectedAnswerType: 2
+  targetId: jon
+  targetDisplayName: Jon
+  expectedAnswerType: 5
   apparitionLine: "O\xF9... es... tu...?"
   question: "O\xF9 es-tu... Jon...?"
   knowledgeUnlockedOnListen: []
   reactions:
-  - optionText: "Je sais o\xF9 se trouve Jon."
+  - reactionId: jon_is_a_cat
+    optionText: "Jon etait ton chat. J'ai trouve son collier et sa tombe."
     requirement:
       requiredKnowledge:
-      - {fileID: 11400000, guid: 422f055239c3a104ea7445057bc960df, type: 2}
+      - {fileID: 11400000, guid: e1d45eceb8dd4a35a35ff4ee16ae5baa, type: 2}
+      - {fileID: 11400000, guid: 45fd1bc4980241aa9366ee3dcebfb90d, type: 2}
       anyKnowledge: []
       requiredCategories: 
       requiredTags: []
       requiredCategoryCounts: []
       requiredTagCounts: []
     priority: 100
-    responseLine: Alors... Ca veut dire qu'il... va bien?
+    responseLine: "Mon Jon... mon petit chat... Il repose donc ici. Je peux enfin le laisser partir."
     marksGhostUnderstood: 1
-    unlockKnowledge: []
+    unlockKnowledge:
+    - {fileID: 11400000, guid: 422f055239c3a104ea7445057bc960df, type: 2}
     triggerEffectIds:
     - luc_dissolve
     notes: 
-  missingKnowledgeLine: "Il manque encore un \xE9l\xE9ment pour comprendre ce souvenir."
-  evidence: []
+  missingKnowledgeLine: "Je cherche Jon... Il y avait toujours cette petite clochette..."
+  evidence:
+  - evidenceType: 6
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 0}
+    locationId: jonLocationClue_1
+    note: Le collier prouve que Jon etait un animal familier.
+  - evidenceType: 6
+    registryEntry: {fileID: 0}
+    familyRecord: {fileID: 0}
+    transgenerationalObject: {fileID: 0}
+    readableItem: {fileID: 0}
+    locationId: jonLocationClue_2
+    note: La petite tombe et la clochette confirment la mort de Jon.
   dissolveTargetGameObjectIds:
   - 7f8c1457474e40a085c9d3acdef714d3
   includeChildrenInDissolveTargets: 1

@@ -206,6 +206,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool[] scriptedTraversalItemAbilityEnabledStates;
     private bool previousLocomotionUseGravity;
     private bool scriptedTraversalGravityPrepared;
+    private int combatAirborneHoldCount;
+    private bool combatAirborneHoldPreviousUseGravity;
     private int externalLockCount;
     private bool externalLockInputDisabled;
     private bool progressiveExternalStopActive;
@@ -595,6 +597,93 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Suspends UCC gravity for an aerial combat action. Horizontal movement
+    /// remains owned by UCC; only the vertical component is neutralized.
+    /// Calls are reference counted so a queued replacement action cannot
+    /// restore gravity while it still owns the hold.
+    /// </summary>
+    public bool BeginCombatAirborneHold()
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || locomotion.Grounded)
+        {
+            return false;
+        }
+
+        if (combatAirborneHoldCount == 0)
+        {
+            combatAirborneHoldPreviousUseGravity = locomotion.UseGravity;
+
+            // The regular Jump ability owns its own vertical curve. Stop it
+            // before the hold begins so it cannot continue moving Lucian up
+            // or down behind the combat action.
+            Jump jump = locomotion.GetAbility<Jump>();
+            if (jump != null && jump.IsActive)
+            {
+                locomotion.TryStopAbility(jump, true);
+            }
+        }
+
+        combatAirborneHoldCount++;
+        MaintainCombatAirborneHold();
+        return true;
+    }
+
+    /// <summary>Releases one aerial combat hold and lets UCC resume gravity.</summary>
+    public void EndCombatAirborneHold()
+    {
+        if (combatAirborneHoldCount <= 0)
+        {
+            combatAirborneHoldCount = 0;
+            return;
+        }
+
+        combatAirborneHoldCount--;
+        if (combatAirborneHoldCount > 0 || locomotion == null)
+        {
+            return;
+        }
+
+        if (!scriptedTraversalGravityPrepared)
+        {
+            locomotion.UseGravity = combatAirborneHoldPreviousUseGravity;
+        }
+
+        // Gravity resumes from the last authored air pose rather than from a
+        // downward force accumulated during the suspended frames.
+        locomotion.GravityAccumulation = 0f;
+    }
+
+    private void MaintainCombatAirborneHold()
+    {
+        if (combatAirborneHoldCount <= 0 || locomotion == null)
+        {
+            return;
+        }
+
+        locomotion.UseGravity = false;
+        locomotion.GravityAccumulation = 0f;
+
+        // A jump ability can still carry an upward or downward velocity for a
+        // frame after the skill starts. Remove only that vertical component;
+        // planar UCC movement remains untouched.
+        Vector3 up = locomotion.Up.sqrMagnitude > 0f ? locomotion.Up.normalized : transform.up;
+        float verticalSpeed = Vector3.Dot(locomotion.Velocity, up);
+        if (Mathf.Abs(verticalSpeed) > 0.001f)
+        {
+            locomotion.AddForce(-up * verticalSpeed, 1, false);
+        }
+    }
+
+    private void ClearCombatAirborneHolds()
+    {
+        while (combatAirborneHoldCount > 0)
+        {
+            EndCombatAirborneHold();
+        }
     }
 
     public bool IsProgressiveStopComplete(float velocityThreshold)
@@ -1034,6 +1123,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private void OnDisable()
     {
         CancelObstacleTraversal();
+        ClearCombatAirborneHolds();
         RestoreAbilitiesAfterScriptedTraversal();
         RestoreGravityAfterScriptedTraversal();
         if (externalLockInputDisabled || scriptedTraversalInputDisabled)
@@ -1068,6 +1158,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         RefreshRootMotionLocomotionSettings();
         RefreshGroundReliefTolerance(immediate: false);
         TickLocomotionDiagnostics();
+        MaintainCombatAirborneHold();
 
         if (!IsDriving && !IsInputSuppressedByUcc)
         {
@@ -1108,6 +1199,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         UpdateJumpLandingAnimatorParameters();
         UpdateAnimatorParameters();
         RefreshSquadFacadeSystems();
+    }
+
+    private void LateUpdate()
+    {
+        // UCC abilities can update after this bridge depending on Script
+        // Execution Order. Repeat the vertical neutralization after their
+        // frame work so StayAirborne remains visually stable.
+        MaintainCombatAirborneHold();
     }
 
     /// <summary>Starts target-relative locomotion for a manual combat lock.</summary>

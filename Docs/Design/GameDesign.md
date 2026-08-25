@@ -393,9 +393,9 @@ classe. Exemples :
 
 Luc est le premier fantôme rencontré. Sa fonction est de servir de tutoriel.
 
-Luc cherche John. Le joueur consulte un registre et découvre que John a été
-déplacé du district 1 vers le district 3. Luc comprend enfin ce qui est arrivé,
-puis disparaît.
+Luc cherche Jon, son chat. Le joueur trouve son collier à clochette, puis une
+petite tombe portant une clochette semblable. En revenant voir Luc, il comprend
+enfin ce qui est arrivé à Jon, puis disparaît.
 
 Cette quête est obligatoire. Sa récompense est la disparition d'un mur permettant
 de continuer l'aventure.
@@ -464,10 +464,9 @@ tutoriel obligatoire.
 Le joueur doit :
 
 1. rencontrer une mémoire incomplète ;
-2. comprendre que Luc cherche John ;
-3. consulter un registre ;
-4. acquérir la connaissance du déplacement de John du district 1 vers le district
-   3 ;
+2. comprendre que Luc cherche Jon ;
+3. récupérer le collier de Jon ;
+4. consulter la petite tombe de Jon ;
 5. revenir voir Luc ;
 6. faire disparaître le mur qui bloque la progression.
 

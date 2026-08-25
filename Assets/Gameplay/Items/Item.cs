@@ -53,7 +53,9 @@ public class Item : ScriptableObject
         /// <summary>Livre avec pages.</summary>
         Book = 1,
         /// <summary>Parchemin avec texte continu.</summary>
-        Parchment = 2
+        Parchment = 2,
+        /// <summary>Inscription dans le monde, affichee dans la boite de dialogue.</summary>
+        Stab = 3
     }
 
     /// <summary>
@@ -282,6 +284,8 @@ public class Item : ScriptableObject
     [Header("Knowledge Unlocks")]
     [Tooltip("Connaissances debloquees quand ce readable est ouvert.")]
     public List<KnowledgeSO> knowledgeUnlockedOnRead = new List<KnowledgeSO>();
+    [Tooltip("Connaissances debloquees des que cet item est recupere depuis le monde ou un conteneur.")]
+    public List<KnowledgeSO> knowledgeUnlockedOnPickup = new List<KnowledgeSO>();
     [Header("Temporal District Registry")]
     [Tooltip("Source de donnees optionnelle pour generer ce livre selon l'age temporel actif.")]
     public DistrictRegistry temporalDistrictRegistry;
@@ -761,6 +765,12 @@ public class Item : ScriptableObject
     public bool IsReadableParchment()
     {
         return readableKind == ReadableKind.Parchment;
+    }
+
+    /// <summary>Indique si l'item est une inscription affichee dans DialoguePanel.</summary>
+    public bool IsReadableStab()
+    {
+        return readableKind == ReadableKind.Stab;
     }
 
     /// <summary>

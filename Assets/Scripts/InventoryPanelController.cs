@@ -1748,11 +1748,7 @@ public class InventoryPanelController : MonoBehaviour
             return;
         }
 
-        KnowledgeManager manager = KnowledgeManager.GetOrCreate();
-        if (manager != null)
-        {
-            manager.UnlockKnowledgeList(item.knowledgeUnlockedOnRead);
-        }
+        KnowledgeReveal.Reveal(item.knowledgeUnlockedOnRead, LocalPlayerUtils.GetControlledCharacter(), "readable");
     }
 
     private void CloseReadablePanel()

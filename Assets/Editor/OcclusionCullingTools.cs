@@ -27,7 +27,7 @@ public static class OcclusionCullingTools
         "DestructibleObject",
         "HubCompanionSwapTrigger",
         "InteractableItem",
-        "ItemSceneMarker",
+        "SceneMarker",
         "LabyrinthStartTrigger",
         "Lever",
         "NavMeshAgent",

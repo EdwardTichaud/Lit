@@ -25,7 +25,7 @@ public sealed class GameFlowService : MonoBehaviour
 
     [SerializeField] private string menuSceneName = DefaultMenuSceneName;
     [SerializeField] private string hubSceneName = DefaultHubSceneName;
-    [Tooltip("Manifeste du hub. Tant qu'il reference Maison, le comportement actuel est conserve. Il pourra ensuite pointer vers Maison_Critical et ses sous-scenes.")]
+    [Tooltip("Manifeste du hub. Tant qu'il reference Maison, le comportement actuel est conserve. Il pourra ensuite pointer vers Maison_Core et ses sous-scenes.")]
     [SerializeField] private ZoneManifest hubManifest;
     [SerializeField] private bool loadMenuAfterBootstrap = true;
     [Header("Loading messages")]
@@ -48,7 +48,7 @@ public sealed class GameFlowService : MonoBehaviour
     [Header("Editor test startup")]
     [Tooltip("Ignore le menu lors d'un Play lance depuis Bootstrap et ouvre directement la scene de test avec une session de gameplay complete.")]
     [SerializeField] private bool editorStartGameplayDirectly;
-    [Tooltip("Zone a charger lors d'un test direct. Le manifeste garantit que Critical, Loading et PostLoading sont charges dans le meme ordre qu'en jeu.")]
+    [Tooltip("Zone a charger lors d'un test direct. Le manifeste garantit que la scene Core et les scenes obligatoires sont chargees dans le meme ordre qu'en jeu.")]
     [SerializeField] private ZoneManifest editorStartManifest;
     [SerializeField, HideInInspector, Tooltip("Compatibilite avec les anciennes configurations de test. Utiliser Editor Start Manifest a la place.")]
     private string editorStartSceneName = DefaultHubSceneName;
@@ -193,9 +193,9 @@ public sealed class GameFlowService : MonoBehaviour
         return Instance.BeginGameplay(string.IsNullOrWhiteSpace(initialSceneName) ? Instance.HubSceneName : initialSceneName);
     }
 
-    public static bool TravelToZone(ZoneManifest destination, string spawnId = null)
+    public static bool TravelToZone(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)
     {
-        return Instance != null && Instance.BeginZoneTravel(destination, spawnId);
+        return Instance != null && Instance.BeginZoneTravel(destination, destinationPoints);
     }
 
     public static bool ReturnToHub(string spawnId = null)
@@ -237,7 +237,7 @@ public sealed class GameFlowService : MonoBehaviour
         return true;
     }
 
-    private bool BeginZoneTravel(ZoneManifest destination, string spawnId)
+    private bool BeginZoneTravel(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)
     {
         if (IsTransitioning || !HasGameplaySession || destination == null || !destination.IsValid || !CanLoad(destination.PrimarySceneName))
         {
@@ -245,7 +245,7 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         StopPostLoadingRoutine();
-        transitionRoutine = StartCoroutine(TravelToZoneRoutine(destination, spawnId));
+        transitionRoutine = StartCoroutine(TravelToZoneRoutine(destination, destinationPoints));
         return true;
     }
 
@@ -309,7 +309,7 @@ public sealed class GameFlowService : MonoBehaviour
         StartPostLoading(manifest);
     }
 
-    private IEnumerator TravelToZoneRoutine(ZoneManifest destination, string spawnId)
+    private IEnumerator TravelToZoneRoutine(ZoneManifest destination, IReadOnlyList<Pose> destinationPoints)
     {
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {destination.PrimarySceneName}");
         // Le son du portail a deja ete lance par PortalController. On attend
@@ -341,8 +341,14 @@ public sealed class GameFlowService : MonoBehaviour
         // et UCC ne fait plus qu'actualiser sa vitesse interne sans appliquer
         // la position au Rigidbody/Transform dans la zone suivante.
         PreserveUccSimulationManager();
+        bool retainHubForLateJoin = ShouldKeepHubLoadedForLateJoin();
         for (int i = previousScenes.Count - 1; i >= 0; i--)
         {
+            if (retainHubForLateJoin && IsHubManifestScene(previousScenes[i]))
+            {
+                continue;
+            }
+
             yield return UnloadSceneIfLoaded(previousScenes[i]);
             SceneTransitionProfiler.Mark($"Sous-scene precedente dechargee ({previousScenes[i]})");
         }
@@ -352,7 +358,7 @@ public sealed class GameFlowService : MonoBehaviour
         // cette remise a zero, un focus UI laisse par Maison bloque le moteur
         // du personnage et la camera, alors que l'Animator peut encore voir
         // l'input brut et jouer une animation de marche sur place.
-        yield return PlaceSquadAtSpawnRoutine(spawnId);
+        yield return PlaceSquadAtPortalDestinationRoutine(destinationPoints);
         RestoreLocalGameplayInputAfterSessionStart();
         StartProximityStreaming(destination.PrimarySceneName);
 #if UNITY_EDITOR
@@ -734,7 +740,10 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         bool hasRequestedSpawn = !string.IsNullOrWhiteSpace(spawnId);
-        ZoneSpawnPoint spawn = hasRequestedSpawn ? ZoneSpawnPoint.Find(spawnId) : null;
+        IReadOnlyList<ZoneSpawnPoint> partySpawns = hasRequestedSpawn
+            ? ZoneSpawnPoint.FindAll(spawnId)
+            : null;
+        ZoneSpawnPoint spawn = partySpawns != null && partySpawns.Count > 0 ? partySpawns[0] : null;
         if (spawn == null && usePrimarySceneSpawnFallback)
         {
             spawn = ZoneSpawnPoint.FindFirstInScene(primarySceneName);
@@ -744,7 +753,14 @@ public sealed class GameFlowService : MonoBehaviour
         {
             using (SceneTransitionProfiler.SquadPlacement.Auto())
             {
-                SquadManager.Instance.MoveSquadToSpawn(spawn.transform);
+                if (partySpawns != null && partySpawns.Count > 1)
+                {
+                    SquadManager.Instance.MoveSquadToSpawns(partySpawns);
+                }
+                else
+                {
+                    SquadManager.Instance.MoveSquadToSpawn(spawn.transform);
+                }
             }
 
             // UCC traite le snap de l'Animator et le sol dans son cycle de
@@ -905,6 +921,67 @@ public sealed class GameFlowService : MonoBehaviour
         {
             loadedZoneSceneNames.Add(sceneName);
         }
+    }
+
+    private IEnumerator PlaceSquadAtPortalDestinationRoutine(IReadOnlyList<Pose> destinationPoints)
+    {
+        if (SquadManager.Instance == null || destinationPoints == null || destinationPoints.Count == 0)
+        {
+            Debug.LogWarning("[GameFlow] Le portail de changement de zone n'a aucun Destination Point. L'escouade conserve sa position.");
+            yield break;
+        }
+
+        using (SceneTransitionProfiler.SquadPlacement.Auto())
+        {
+            SquadManager.Instance.MoveSquadToDestinationPoints(destinationPoints);
+        }
+
+        yield return new WaitForFixedUpdate();
+        Physics.SyncTransforms();
+        LocalInputRouter.RaiseCameraRecenter();
+    }
+
+    // La Maison reste chargee pendant une session reseau hors hub : un nouveau
+    // joueur peut donc toujours y apparaitre et rejoindre le groupe par portail.
+    private static bool ShouldKeepHubLoadedForLateJoin()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager != null && manager.IsListening;
+    }
+
+    private bool IsHubManifestScene(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+        {
+            return false;
+        }
+
+        if (string.Equals(sceneName, HubSceneName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return hubManifest != null && hubManifest.IsValid &&
+               (ContainsSceneName(hubManifest.LoadingSceneNames, sceneName) ||
+                ContainsSceneName(hubManifest.PostLoadingSceneNames, sceneName));
+    }
+
+    private static bool ContainsSceneName(IReadOnlyList<string> sceneNames, string sceneName)
+    {
+        if (sceneNames == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < sceneNames.Count; i++)
+        {
+            if (string.Equals(sceneNames[i], sceneName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private IEnumerator WaitForStableGameplayFrames(int generation)

@@ -22,6 +22,10 @@ connaissances et résoudre les interactions narratives.
   dialogues et étapes, puis restaure le gameplay.
 - Les acteurs sont résolus par ID, squad ou `LocalPlayerContext`.
 - Les connaissances débloquent des réactions de fantômes et des effets de scène.
+- Un `Item` peut débloquer des connaissances à sa récupération
+  (`knowledgeUnlockedOnPickup`) ou à sa consultation (`knowledgeUnlockedOnRead`).
+  Les deux chemins passent par `KnowledgeReveal` : le serveur les valide et la
+  notification est envoyée à toute la session.
 - Une `KnowledgeSO` peut aussi porter un `CombatKnowledgeModifier` passif. Si
   son option combat est active, l'effet s'applique automatiquement au combat
   temps réel tant que la connaissance est débloquée; elle n'est ni équipée ni
@@ -31,6 +35,9 @@ connaissances et résoudre les interactions narratives.
   question par défaut ou l’option joueur.
 - Les contenus lisibles générés sont capturés dans `CharacterStateStore`.
 - Les séquences `playOnce` sont enregistrées dans les métadonnées du slot.
+- `SceneMarker` est le point d'auteur unique pour les personnages, items et
+  fantômes. Les anciens `ItemSceneMarker` se migrent depuis le menu
+  `Lit/Scene Marker`.
 
 ## Pièges observés
 
