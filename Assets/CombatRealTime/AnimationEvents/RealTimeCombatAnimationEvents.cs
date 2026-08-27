@@ -118,11 +118,13 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
     public void CombatWarningOn()
     {
+        TraceEnemyEvent(nameof(CombatWarningOn));
         CombatWarningPresentationController.Instance?.BeginWarning(ResolveEnemy());
     }
 
     public void CombatWarningOff()
     {
+        TraceEnemyEvent(nameof(CombatWarningOff));
         RealTimeCombatEnemy currentEnemy = ResolveEnemy();
         CombatWarningPresentationController.Instance?.EndWarning(currentEnemy);
         RealTimeCombatManager.Instance?.CancelEnemyAttackWindow(currentEnemy);
@@ -135,16 +137,19 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     /// </summary>
     public void OpenReactionWindow(float durationSeconds)
     {
+        TraceEnemyEvent(nameof(OpenReactionWindow) + "(" + durationSeconds.ToString("F3") + ")");
         RealTimeCombatManager.Instance?.BeginEnemyAttackWindow(ResolveEnemy(), durationSeconds);
     }
 
     public void ResolveEnemyAttackImpact()
     {
+        TraceEnemyEvent(nameof(ResolveEnemyAttackImpact));
         RealTimeCombatManager.Instance?.ResolveEnemyAttackImpact(ResolveEnemy());
     }
 
     public void EndEnemyAttack()
     {
+        TraceEnemyEvent(nameof(EndEnemyAttack));
         RealTimeCombatEnemy currentEnemy = ResolveEnemy();
         if (currentEnemy == null)
         {
@@ -163,25 +168,35 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     /// <summary>Enemy Animation Event: starts the authored ballistic phase.</summary>
     public void BeginEnemyAirborne()
     {
+        TraceEnemyEvent(nameof(BeginEnemyAirborne));
         ResolveEnemy()?.BeginEnemyAirborne();
     }
 
     /// <summary>Enemy Animation Event: begins the configured continuous homing rush.</summary>
     public void BeginEnemyRush()
     {
+        TraceEnemyEvent(nameof(BeginEnemyRush));
         ResolveEnemy()?.BeginEnemyRush(ResolveEnemyDashTarget());
     }
 
     /// <summary>Enemy Animation Event: releases planar rush ownership before landing recovery.</summary>
     public void EndEnemyRush()
     {
+        TraceEnemyEvent(nameof(EndEnemyRush));
         ResolveEnemy()?.EndEnemyRush();
     }
 
     /// <summary>Enemy Animation Event: asks the physics motor to settle onto the ground.</summary>
     public void RequestEnemyLanding()
     {
+        TraceEnemyEvent(nameof(RequestEnemyLanding));
         ResolveEnemy()?.RequestEnemyLanding();
+    }
+
+    private void TraceEnemyEvent(string eventName)
+    {
+        RealTimeCombatEnemy currentEnemy = ResolveEnemy();
+        currentEnemy?.GetComponent<CombatEnemyRuntimeContract>()?.TraceAnimationEvent(eventName);
     }
 
     /// <summary>

@@ -40,6 +40,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
     [SerializeField] private CombatEnemyLocomotionController locomotion;
     [SerializeField] private NavMeshAgent navigationAgent;
     [SerializeField] private CombatActorAnimationRoot animationContract;
+    [SerializeField] private RealTimeCombatEnemyBehaviour combatBehaviour;
     [SerializeField] private TacticalProfile profile = new TacticalProfile();
     [SerializeField] private bool logDiagnostics;
 
@@ -85,6 +86,12 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         if (manager == null && RealTimeCombatManager.Instance != null)
         {
             BindManager(RealTimeCombatManager.Instance);
+        }
+
+        if (!IsRuntimeReady())
+        {
+            ClearReaction();
+            return;
         }
 
         if (state == TacticalState.None)
@@ -152,7 +159,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
     private bool CanReact()
     {
         ResolveReferences();
-        if (enemy == null || manager == null || !manager.IsCombatActive || manager.EngagedEnemy != enemy ||
+        if (!IsRuntimeReady() || enemy == null || manager == null || !manager.IsCombatActive || manager.EngagedEnemy != enemy ||
             state != TacticalState.None || (enemy.Health != null && enemy.Health.IsDead) ||
             enemy.ActiveSkill != null || (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion))
         {
@@ -303,6 +310,13 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         locomotion ??= GetComponent<CombatEnemyLocomotionController>();
         navigationAgent ??= GetComponent<NavMeshAgent>();
         animationContract ??= GetComponent<CombatActorAnimationRoot>();
+        combatBehaviour ??= GetComponent<RealTimeCombatEnemyBehaviour>();
+    }
+
+    private bool IsRuntimeReady()
+    {
+        ResolveReferences();
+        return combatBehaviour != null && combatBehaviour.IsRuntimeReady;
     }
 
     private void Trace(string message)

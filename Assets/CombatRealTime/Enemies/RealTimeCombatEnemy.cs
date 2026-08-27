@@ -173,6 +173,21 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             return false;
         }
 
+        CombatEnemyRuntimeContract runtimeContract = GetComponent<CombatEnemyRuntimeContract>();
+        if (runtimeContract != null && !runtimeContract.CanRunCombat)
+        {
+            Debug.LogWarning("[RealTimeCombatEnemy] Riposte refusee pour '" + name +
+                             "' : contrat runtime ou moteur physique indisponible.", this);
+            return false;
+        }
+
+        if (physicsMotor == null || !physicsMotor.IsOperational)
+        {
+            Debug.LogWarning("[RealTimeCombatEnemy] Riposte refusee pour '" + name +
+                             "' : CombatEnemyPhysicsMotor absent ou non operationnel.", this);
+            return false;
+        }
+
         activeSkill = PeekRetaliationSkill(meleePreference);
         if (activeSkill == null || enemySkills == null || !enemySkills.SetActiveSkill(activeSkill))
         {

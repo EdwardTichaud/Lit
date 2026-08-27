@@ -18056,7 +18056,7 @@ RectTransform:
   m_GameObject: {fileID: 666103658}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1030041, y: 1.1030041, z: 1.1030041}
+  m_LocalScale: {x: 1.0822074, y: 1.0822074, z: 1.0822074}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 462443682}
@@ -23964,7 +23964,7 @@ RectTransform:
   m_GameObject: {fileID: 939644959}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7165424, y: 1.7165424, z: 1.7165424}
+  m_LocalScale: {x: 2.1867268, y: 2.1867268, z: 2.1867268}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1920553978}
@@ -24793,7 +24793,7 @@ RectTransform:
   m_GameObject: {fileID: 952026087}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1030041, y: 1.1030041, z: 1.1030041}
+  m_LocalScale: {x: 1.0822074, y: 1.0822074, z: 1.0822074}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 435108}
@@ -25836,7 +25836,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1010784484}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -36586,7 +36586,7 @@ RectTransform:
   m_GameObject: {fileID: 1446893476}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1030041, y: 1.1030041, z: 1.1030041}
+  m_LocalScale: {x: 1.0822074, y: 1.0822074, z: 1.0822074}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1490641718}
@@ -42650,7 +42650,7 @@ RectTransform:
   m_GameObject: {fileID: 1658574989}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1030041, y: 1.1030041, z: 1.1030041}
+  m_LocalScale: {x: 1.0822074, y: 1.0822074, z: 1.0822074}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 741646027}

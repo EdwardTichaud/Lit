@@ -9,6 +9,7 @@ public static class JuggernautCombatSetupUtility
 {
     private const string ControllerPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.controller";
     private const string PrefabPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut_Combat.prefab";
+    private const string CharacterDataPath = "Assets/Characters/3_Enemy/Juggernaut/Juggernaut.asset";
     private const string GuardClipPath = "Assets/0 - UnityPackages/Fab/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Block.fbx";
     private const string DodgeClipPath = "Assets/0 - UnityPackages/Fab/Raise Creation/Super_Fast_Fighting Pack/Animations/Style_One/Anim_SF_Dodge.fbx";
 
@@ -33,7 +34,8 @@ public static class JuggernautCombatSetupUtility
                        FindState(machine, "Dodge") == null ||
                        animator == null || animator.cullingMode != AnimatorCullingMode.AlwaysAnimate ||
                        prefab.GetComponent<EnemyTacticalResponseController>() == null ||
-                       prefab.GetComponent<EnemyAttackRecoverySafety>() == null;
+                       prefab.GetComponent<EnemyAttackRecoverySafety>() == null ||
+                       prefab.GetComponent<CombatEnemyRuntimeContract>() == null;
         if (missing)
         {
             Configure();
@@ -77,6 +79,11 @@ public static class JuggernautCombatSetupUtility
                 {
                     prefabRoot.AddComponent<EnemyAttackRecoverySafety>();
                 }
+                if (prefabRoot.GetComponent<CombatEnemyRuntimeContract>() == null)
+                {
+                    prefabRoot.AddComponent<CombatEnemyRuntimeContract>();
+                }
+                EnsurePhysicsEnvelope(prefabRoot);
 
                 PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
             }
@@ -85,8 +92,11 @@ public static class JuggernautCombatSetupUtility
                 PrefabUtility.UnloadPrefabContents(prefabRoot);
             }
 
+            AssignWorldPrefab();
             AssetDatabase.SaveAssets();
-            Debug.Log("[Juggernaut Combat] Etats Guard/Dodge/CombatIdle et prefab configures.");
+            AssetDatabase.ImportAsset(PrefabPath, ImportAssetOptions.ForceUpdate);
+            NetcodePrefabRegistry.InvalidateSceneMarkerCharacterCache();
+            Debug.Log("[Juggernaut Combat] Etats, enveloppe physique et contrat runtime configures.");
         }
         catch (Exception exception)
         {
@@ -112,7 +122,63 @@ public static class JuggernautCombatSetupUtility
         valid &= animator != null && animator.cullingMode == AnimatorCullingMode.AlwaysAnimate;
         valid &= prefab != null && prefab.GetComponent<EnemyTacticalResponseController>() != null;
         valid &= prefab != null && prefab.GetComponent<EnemyAttackRecoverySafety>() != null;
-        Debug.Log("[Juggernaut Combat] Validation=" + valid + ".");
+        valid &= prefab != null && prefab.GetComponent<CombatEnemyRuntimeContract>() != null;
+        valid &= prefab != null && prefab.GetComponent<Rigidbody>() != null;
+        valid &= prefab != null && prefab.GetComponent<CapsuleCollider>() != null;
+        valid &= prefab != null && prefab.GetComponent<UnityEngine.AI.NavMeshAgent>() != null;
+        CharacterData data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterDataPath);
+        valid &= data != null && data.worldPrefab == prefab;
+        string prefabPath = prefab != null ? AssetDatabase.GetAssetPath(prefab) : "absent";
+        string prefabGuid = prefab != null ? AssetDatabase.AssetPathToGUID(prefabPath) : "absent";
+        Debug.Log("[Juggernaut Combat] Validation=" + valid +
+                  " | worldPrefab=" + (data != null && data.worldPrefab != null ? data.worldPrefab.name : "absent") +
+                  " | prefabPath=" + prefabPath + " | guid=" + prefabGuid +
+                  " | contract={" + CombatEnemyRuntimeContract.DescribeRequiredComponents(prefab) + "}.");
+    }
+
+    [MenuItem("Lit/Combat/Repair Juggernaut Runtime Contract")]
+    private static void RepairRuntimeContract()
+    {
+        Configure();
+        Validate();
+    }
+
+    private static void EnsurePhysicsEnvelope(GameObject root)
+    {
+        Rigidbody body = root.GetComponent<Rigidbody>() ?? root.AddComponent<Rigidbody>();
+        body.isKinematic = true;
+        body.useGravity = false;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        body.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        CapsuleCollider capsule = root.GetComponent<CapsuleCollider>() ?? root.AddComponent<CapsuleCollider>();
+        capsule.isTrigger = false;
+        if (root.GetComponent<UnityEngine.AI.NavMeshAgent>() == null)
+        {
+            root.AddComponent<UnityEngine.AI.NavMeshAgent>();
+        }
+    }
+
+    private static void AssignWorldPrefab()
+    {
+        CharacterData data = AssetDatabase.LoadAssetAtPath<CharacterData>(CharacterDataPath);
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+        if (data == null || prefab == null)
+        {
+            throw new InvalidOperationException("CharacterData ou prefab Juggernaut introuvable.");
+        }
+
+        SerializedObject serializedData = new SerializedObject(data);
+        SerializedProperty worldPrefab = serializedData.FindProperty("worldPrefab");
+        if (worldPrefab == null)
+        {
+            throw new InvalidOperationException("Champ worldPrefab absent de Juggernaut.asset.");
+        }
+
+        worldPrefab.objectReferenceValue = prefab;
+        serializedData.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(data);
     }
 
     private static void EnsureState(AnimatorStateMachine machine, string stateName, Motion motion)

@@ -36,8 +36,12 @@ connaissances et résoudre les interactions narratives.
 - Les contenus lisibles générés sont capturés dans `CharacterStateStore`.
 - Les séquences `playOnce` sont enregistrées dans les métadonnées du slot.
 - `SceneMarker` est le point d'auteur unique pour les personnages, items et
-  fantômes. Les anciens `ItemSceneMarker` se migrent depuis le menu
-  `Lit/Scene Marker`.
+  fantômes. Son Inspector permet `Bake in Scene` pour les items et fantômes :
+  leur `WorldPrefab` devient alors un objet de scène déjà configuré, sans
+  instanciation runtime. Le Bake Character conserve le marker de persistance et
+  place l'acteur immédiatement en solo ; en réseau, cette copie est masquée et
+  le spawn Netcode existant reste autoritaire. Les anciens
+  `ItemSceneMarker` se migrent depuis le menu `Lit/Scene Marker`.
 
 ## Pièges observés
 

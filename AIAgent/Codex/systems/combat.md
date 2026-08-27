@@ -40,6 +40,20 @@ durée du clip plus une marge, afin de récupérer un ennemi dont l'événement 
 fin n'aurait pas été évalué sans doubler l'impact.
 Le Juggernaut peut aussi utiliser `EnemyTacticalResponseController` : garde et
 esquive sont des réponses rares, configurables et distinctes de ses attaques.
+Chaque ennemi auteur peut exposer un `CombatEnemyRuntimeContract`. Pour le
+Juggernaut, il est obligatoire : le clone genere par `SceneMarker` doit porter
+sur son root `RealTimeCombatEnemy`, `EnemySkills`, `CombatEnemyPhysicsMotor`,
+`CombatActorAnimationRoot`, Animator valide, Rigidbody cinematique,
+CapsuleCollider et NavMeshAgent. Si cette enveloppe gameplay manque, le marker
+desactive IA, navigation et combat avec un rapport unique : aucune attaque
+aerienne ne doit pouvoir commencer sans moteur physique operationnel.
+Assomoir reste pilote par ses Animation Events auteur. Le moteur physique est
+le seul proprietaire de sa verticale et de sa ruee; le filet de securite peut
+desormais finaliser idempotemment une attaque sans evenement de fin afin de
+liberer le ledger et permettre la riposte suivante. `CombatEnemyLocomotionController`
+revient explicitement a `CombatIdle` lorsque sa velocite NavMesh retombe a zero.
+`EN GARDE !` n'est plus une annonce d'entree en combat : il est reserve a la
+telegraphie/aux fenetres de reaction d'une attaque menace effective.
 `CombatWarningOn`/`CombatWarningOff` ajoutent seulement la presentation locale
 de danger et le focus camera; `OpenReactionWindow(float)` ferme son eligibility
 en temps non scale, sans jamais declencher les degats a la place de
@@ -850,6 +864,40 @@ Le moteur conserve aussi une hauteur de sol de secours au debut de chaque
 action. Une demande d'atterrissage ou un timeout sans sonde de sol valide pose
 l'ennemi a cette hauteur, en conservant son plan horizontal : une couche de
 decor mal configuree ne peut donc plus provoquer une chute infinie.
+
+### Contrat de spawn ennemi
+
+Les ennemis places par `SceneMarker` relisent leur `CharacterData.worldPrefab`
+au moment du spawn; le cache Netcode ne conserve que l'identite du marker et
+est invalide a chaque nouveau domaine runtime ainsi qu'apres modification d'un
+prefab ou d'un asset personnage dans l'editeur. `CombatEnemyRuntimeContract`
+audite le prefab source puis le clone : Animator avec controller,
+`RealTimeCombatEnemy`, `EnemySkills`, `CombatEnemyPhysicsMotor`,
+`CombatActorAnimationRoot`, Rigidbody cinematique, CapsuleCollider et
+NavMeshAgent doivent etre presents sur le root. Un clone invalide reste visible
+mais son IA, sa navigation et son combat sont desactives, avec un rapport
+source/clone exploitable. L'IA attend egalement une projection NavMesh locale
+coherente avant d'entrer dans sa boucle. Une riposte, en particulier Assomoir,
+ne peut jamais se lancer si le moteur physique est absent ou non operationnel.
+
+Le `SquadAIManager` reconstruit aussi son NavMesh dynamique lors de tout
+chargement de scene. Son volume calcule ses bounds sur les colliders actuellement
+charges, afin de couvrir les districts places loin du root persistant. Un
+NavMeshAgent qui s'initialise avant ce bake peut etre temporairement desactive :
+c'est un etat attendu, il ne constitue pas une divergence de contrat et l'IA
+reprend seulement apres une projection locale valide.
+Les demandes explicites de rebuild (chargement de district ou ennemi en attente)
+sont prioritaires sur `autoUpdateNavMesh`, qui ne pilote que les rebuilds
+periodiques. Elles attendent une frame complete de registration des colliders,
+puis publient colliders trouves, layers retenus, sources et bounds. Un bake sans
+source retire la surface runtime invalide et maintient l'ennemi en attente ; les
+reactions tactiques sont elles aussi suspendues jusqu'a validation du NavMesh.
+
+Lorsqu'un ennemi ne trouve aucune projection locale, il demande un rebuild
+cadence au `SquadAIManager`. Le manager journalise les bounds et le nombre de
+sources du bake: ce rapport doit etre consulte avant de modifier une IA, car une
+absence de surface sous le spawn empeche volontairement toute navigation et
+toute attaque physique.
 
 ## Pièges observés
 

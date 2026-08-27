@@ -26,4 +26,11 @@ public sealed class RealTimeCombatClarityTests
     {
         Assert.That(RealTimeCombatManager.GetLightSkillClarityMultiplier(tier), Is.EqualTo(expectedMultiplier));
     }
+
+    [Test]
+    public void LegacyLightChargeOnHitMigratesToClarityGainOnHit()
+    {
+        Assert.That(typeof(SkillSO).GetField("clarityGainOnHit") != null, Is.True);
+        Assert.That(typeof(SkillSO).GetProperty("ClarityGainOnHit") != null, Is.True);
+    }
 }

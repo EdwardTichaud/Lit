@@ -82,7 +82,25 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public float ClarityForS => clarityForS;
     public float NormalizedClarity => Mathf.Clamp01(clarity / Mathf.Max(1f, clarityForS));
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
-    public bool CanAcceptBasicSkillInput => playerActionPresentation == null || playerActionPresentation.CanAcceptBasicSkillInput;
+    public bool CanAcceptBasicSkillInput
+    {
+        get
+        {
+            ResolvePlayerReferences();
+            return playerActionPresentation != null && playerActionPresentation.CanAcceptBasicSkillInput;
+        }
+    }
+
+    public string BasicSkillInputBlockReason
+    {
+        get
+        {
+            ResolvePlayerReferences();
+            return playerActionPresentation == null
+                ? "PlayerActionPresentationController introuvable"
+                : playerActionPresentation.BasicSkillInputBlockReason;
+        }
+    }
     public CombatSkillCinematicController CombatSkillCinematicController => combatSkillCinematicController;
     public bool IsPlayerActionActive => playerActionPresentation != null && playerActionPresentation.IsActionActive;
 
@@ -774,6 +792,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
+        AddClarity(skill.ClarityGainOnHit);
         PlayerLightDamageApplied?.Invoke(applied);
         PlayerSkillImpactApplied?.Invoke(skill, applied);
         EvaluateCombatOutcome();

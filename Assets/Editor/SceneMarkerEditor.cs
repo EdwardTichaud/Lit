@@ -44,16 +44,17 @@ public sealed class SceneMarkerEditor : Editor
         {
             EditorGUILayout.HelpBox(marker.Item == null
                 ? "Assigne un Item avant de baker le marker."
-                : "Le marker d'item utilise le World Prefab de l'Item. Bake Replace Marker instancie l'objet interactif.",
+                : "Bake in Scene instancie le World Prefab et configure l'objet interactif directement dans la scene.",
                 marker.Item == null ? MessageType.Info : MessageType.None);
-            DrawItemBakeButton(marker);
+            DrawBakeButton(marker);
         }
         else if (marker.UsesGhost)
         {
             EditorGUILayout.HelpBox(marker.Ghost == null
                 ? "Assigne un GhostData."
-                : "Le marker de fantome est une source d'auteur ; utilise le flux de bake narratif existant.",
+                : "Bake in Scene instancie le World Prefab et lie le GhostData au GhostController de la scene.",
                 marker.Ghost == null ? MessageType.Info : MessageType.None);
+            DrawBakeButton(marker);
         }
         else if (marker.CharacterData == null)
         {
@@ -65,7 +66,12 @@ public sealed class SceneMarkerEditor : Editor
         }
         else
         {
-            EditorGUILayout.HelpBox("Le World Prefab sera instancie au lancement. Ne place pas de copie du personnage dans la scene.", MessageType.None);
+            EditorGUILayout.HelpBox(
+                marker.BakedCharacterInstance == null
+                    ? "Bake in Scene place l'acteur immediatement pour le jeu local. En reseau, le spawn Netcode existant reste utilise."
+                    : "Cet acteur est deja baked pour le jeu local. Re-bake le remplace par le World Prefab courant.",
+                MessageType.None);
+            DrawBakeButton(marker);
         }
     }
 
@@ -128,17 +134,86 @@ public sealed class SceneMarkerEditor : Editor
         return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<ItemSceneMarker>() != null;
     }
 
-    private static void DrawItemBakeButton(SceneMarker marker)
+    private static void DrawBakeButton(SceneMarker marker)
     {
-        if (marker == null || marker.Item == null || marker.Item.ResolveWorldPrefab() == null)
+        if (marker == null || marker.ResolvePreviewPrefab() == null)
         {
             return;
         }
 
-        if (GUILayout.Button("Bake Replace Marker"))
+        if (GUILayout.Button("Bake in Scene"))
+        {
+            BakeMarker(marker);
+        }
+    }
+
+    private static void BakeMarker(SceneMarker marker)
+    {
+        if (marker == null)
+        {
+            return;
+        }
+
+        if (marker.UsesItem)
         {
             BakeItemMarker(marker);
+            return;
         }
+
+        if (marker.UsesGhost)
+        {
+            BakeGhostMarker(marker);
+            return;
+        }
+
+        if (marker.UsesCharacter)
+        {
+            BakeCharacterMarker(marker);
+        }
+    }
+
+    private static void BakeCharacterMarker(SceneMarker marker)
+    {
+        CharacterData characterData = marker.CharacterData;
+        GameObject prefab = characterData != null ? characterData.ResolveWorldPrefab() : null;
+        if (prefab == null)
+        {
+            return;
+        }
+
+        GameObject root = marker.gameObject;
+        if (marker.BakedCharacterInstance != null)
+        {
+            Undo.DestroyObjectImmediate(marker.BakedCharacterInstance);
+        }
+
+        GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;
+        if (instance == null)
+        {
+            return;
+        }
+
+        Undo.RegisterCreatedObjectUndo(instance, "Bake Character Scene Marker");
+        instance.transform.SetParent(root.transform, false);
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = prefab.transform.localRotation;
+        instance.transform.localScale = prefab.transform.localScale;
+
+        CharacterInfo characterInfo = instance.GetComponent<CharacterInfo>();
+        if (characterInfo == null)
+        {
+            characterInfo = Undo.AddComponent<CharacterInfo>(instance);
+        }
+
+        Undo.RecordObject(characterInfo, "Bake Character Scene Marker");
+        characterInfo.SetCharacterData(characterData);
+        EditorUtility.SetDirty(characterInfo);
+
+        Undo.RecordObject(marker, "Bake Character Scene Marker");
+        marker.SetBakedCharacterInstance(instance);
+        EditorUtility.SetDirty(marker);
+        EditorSceneManager.MarkSceneDirty(root.scene);
+        Selection.activeGameObject = root;
     }
 
     private static void BakeItemMarker(SceneMarker marker)
@@ -175,6 +250,46 @@ public sealed class SceneMarkerEditor : Editor
         interactable.representedItem = marker.Item;
         interactable.allowTake = true;
         EditorUtility.SetDirty(interactable);
+        Undo.DestroyObjectImmediate(marker);
+        EditorSceneManager.MarkSceneDirty(root.scene);
+        Selection.activeGameObject = root;
+    }
+
+    private static void BakeGhostMarker(SceneMarker marker)
+    {
+        GhostData ghostData = marker.Ghost;
+        GameObject prefab = ghostData != null ? ghostData.ResolveWorldPrefab() : null;
+        if (prefab == null)
+        {
+            return;
+        }
+
+        GameObject root = marker.gameObject;
+        GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;
+        if (instance == null)
+        {
+            return;
+        }
+
+        Undo.RegisterCreatedObjectUndo(instance, "Bake Ghost Scene Marker");
+        instance.transform.SetParent(root.transform, false);
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = prefab.transform.localRotation;
+        instance.transform.localScale = prefab.transform.localScale;
+
+        GhostController ghostController = instance.GetComponentInChildren<GhostController>(true);
+        if (ghostController == null)
+        {
+            Undo.DestroyObjectImmediate(instance);
+            Debug.LogError("[SceneMarker] Le World Prefab du fantome doit contenir un GhostController.", root);
+            return;
+        }
+
+        Undo.RecordObject(ghostController, "Bake Ghost Scene Marker");
+        ghostController.SetGhostData(ghostData);
+        EditorUtility.SetDirty(ghostController);
+
+        root.name = string.IsNullOrWhiteSpace(ghostData.displayName) ? ghostData.name : ghostData.displayName;
         Undo.DestroyObjectImmediate(marker);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;

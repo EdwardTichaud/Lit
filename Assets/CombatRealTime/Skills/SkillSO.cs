@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public sealed class SkillVfxCue
@@ -218,6 +219,9 @@ public class SkillSO : ScriptableObject
     [Tooltip("Chemin complet de la state Animator a jouer. Laisser vide pour utiliser le nom du clip.")]
     public string animatorState;
     [Min(0f)] public float damages;
+    [FormerlySerializedAs("lightChargeOnHit")]
+    [Min(0f), Tooltip("Clarte accordee uniquement lorsque cette competence inflige des degats.")]
+    public float clarityGainOnHit = 1f;
     [Header("Player Presentation")]
     public PlayerActionPresentationProfile presentation = new PlayerActionPresentationProfile();
     [Header("Hit Range")]
@@ -262,6 +266,7 @@ public class SkillSO : ScriptableObject
     public string AnimatorState => animatorState;
     public PlayerActionPresentationProfile Presentation => presentation ?? (presentation = PlayerActionPresentationProfile.CreateDefault());
     public float Damages => damages;
+    public float ClarityGainOnHit => clarityGainOnHit;
     public float MinimumHitDistance => minimumHitDistance;
     public float MaximumHitDistance => Mathf.Max(minimumHitDistance, maximumHitDistance);
     public bool RequireValidRangeToStart => requireValidRangeToStart;

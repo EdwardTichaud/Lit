@@ -31,6 +31,10 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     [Header("Gameplay Follow Damping")]
     [SerializeField, Min(0f)] private float followSmoothTime = 0.16f;
     [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
+    [SerializeField, Min(0f), Tooltip("Extra follow damping used only while the character is airborne. Camera aim remains immediate.")]
+    private float airborneFollowSmoothTime = 0.24f;
+    [SerializeField, Min(0f), Tooltip("Maximum follow speed used only while airborne.")]
+    private float airborneMaximumFollowSpeed = 18f;
     [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
     [SerializeField, Min(0f), Tooltip("Distance reduction required before the camera snaps inward for a major wall. Smaller obstacle corrections remain smooth.")]
     private float hardCollisionSnapDistance = 1.25f;
@@ -195,6 +199,8 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
         smoothView.ConfigureFollowDamping(
             followSmoothTime,
             maximumFollowSpeed,
+            airborneFollowSmoothTime,
+            airborneMaximumFollowSpeed,
             teleportSnapDistance,
             hardCollisionSnapDistance,
             useSupplementalCollisionConstraint,

@@ -83,6 +83,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
                                                State == CombatEnemyPhysicsState.AirborneAction ||
                                                State == CombatEnemyPhysicsState.Recovering;
     public bool IsAirborne => State == CombatEnemyPhysicsState.AirborneAction || State == CombatEnemyPhysicsState.Recovering;
+    public bool IsOperational => enabled && body != null && bodyCollider != null &&
+                                 body.gameObject.activeInHierarchy && bodyCollider.enabled && !bodyCollider.isTrigger;
 
     private void Reset()
     {
@@ -145,8 +147,15 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void BeginEnemyAction(SkillSO skill)
     {
-        AuditPose("attaque:debut");
         ResolveReferences();
+        if (!IsOperational)
+        {
+            Debug.LogError("[CombatEnemyPhysicsMotor] Attaque refusee pour '" + name +
+                           "' : Rigidbody ou CapsuleCollider absent/inactif.", this);
+            return;
+        }
+
+        AuditPose("attaque:debut");
         activeMotionProfile = skill != null ? skill.EnemyActionMotion : EnemyActionMotionProfile.GroundedDefault;
         pendingCompletion = null;
         pendingPlanarRootMotion = Vector3.zero;
@@ -245,6 +254,27 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         SnapToGroundIfAvailable();
         FinishRecovery();
+    }
+
+    /// <summary>
+    /// Last-resort completion for an authored attack which missed its final
+    /// event. Unlike the normal path this remains safe when a scene was loaded
+    /// with a broken motor, so the combat ledger can never stay locked forever.
+    /// </summary>
+    public void ForceCompleteEnemyAction(Action completion, string reason)
+    {
+        ResolveReferences();
+        pendingCompletion = completion;
+        pendingPlanarRootMotion = Vector3.zero;
+        pendingRootRotation = Quaternion.identity;
+        EndEnemyRush();
+
+        if (body != null)
+        {
+            SnapToGroundIfAvailable();
+        }
+
+        FinishRecovery(reason);
     }
 
     public void EnterCinematic()
@@ -440,7 +470,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         MoveBody(nextPosition, rotation);
     }
 
-    private void FinishRecovery()
+    private void FinishRecovery(string reason = "sol confirme")
     {
         Action completion = pendingCompletion;
         pendingCompletion = null;
@@ -450,8 +480,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         EndEnemyRush();
         activeMotionProfile = null;
         ResumeNavigation();
-        SetState(CombatEnemyPhysicsState.Navigation, "sol confirme");
-        AuditPose("recuperation:sol confirme");
+        SetState(CombatEnemyPhysicsState.Navigation, reason);
+        AuditPose("recuperation:" + reason);
         completion?.Invoke();
     }
 
@@ -738,11 +768,14 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     private void ResolveReferences()
     {
-        enemy ??= GetComponent<RealTimeCombatEnemy>();
-        navigationAgent ??= GetComponent<NavMeshAgent>();
-        body ??= GetComponent<Rigidbody>();
-        bodyCollider ??= GetComponent<CapsuleCollider>();
-        animationContract ??= GetComponent<CombatActorAnimationRoot>();
+        // The runtime contract can be added/reloaded while iterating on a
+        // prefab. Refresh every reference so an old serialized null cannot
+        // keep this motor disabled after its Rigidbody/Capsule exists.
+        enemy = GetComponent<RealTimeCombatEnemy>();
+        navigationAgent = GetComponent<NavMeshAgent>();
+        body = GetComponent<Rigidbody>();
+        bodyCollider = GetComponent<CapsuleCollider>();
+        animationContract = GetComponent<CombatActorAnimationRoot>();
     }
 
     private void ConfigureBody()

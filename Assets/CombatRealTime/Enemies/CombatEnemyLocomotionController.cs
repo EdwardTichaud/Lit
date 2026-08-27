@@ -28,7 +28,8 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     // A short-name hash silently prevented the enemy combat blend tree from
     // ever taking over, leaving NavMesh movement visually in Idle.
     private static readonly int CombatLocomotion = Animator.StringToHash("Base Layer.CombatLocomotion");
-    private static readonly int Idle = Animator.StringToHash("Idle");
+    private static readonly int CombatIdle = Animator.StringToHash("Base Layer.CombatIdle");
+    private static readonly int Idle = Animator.StringToHash("Base Layer.Idle");
 
     [SerializeField] private RealTimeCombatEnemy enemy;
     [SerializeField] private NavMeshAgent navigationAgent;
@@ -318,9 +319,10 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         animator.SetFloat(CombatMoveSpeed, 0f);
         wasMovingVisually = false;
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
-        if (animator.HasState(0, Idle) && currentState.fullPathHash == CombatLocomotion)
+        int idleState = animator.HasState(0, CombatIdle) ? CombatIdle : Idle;
+        if (animator.HasState(0, idleState) && currentState.fullPathHash == CombatLocomotion)
         {
-            animator.CrossFade(Idle, 0.08f, 0);
+            animator.CrossFade(idleState, 0.08f, 0);
         }
     }
 

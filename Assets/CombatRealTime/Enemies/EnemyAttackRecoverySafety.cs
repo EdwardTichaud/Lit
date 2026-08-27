@@ -81,7 +81,14 @@ public sealed class EnemyAttackRecoverySafety : MonoBehaviour
         }
 
         Debug.LogWarning("[EnemyAttackSafety] Fin d'attaque manquante pour '" + skill.SkillName + "' sur " + name + ". Recuperation forcee.", this);
-        enemy.CompleteEnemyAttackWhenGrounded(CompleteFallback);
+        if (physicsMotor != null)
+        {
+            physicsMotor.ForceCompleteEnemyAction(CompleteFallback, "watchdog");
+        }
+        else
+        {
+            CompleteFallback();
+        }
     }
 
     private void CompleteFallback()

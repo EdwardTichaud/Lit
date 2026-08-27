@@ -14,6 +14,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private float navMeshReattachTolerance = 0.15f;
     [SerializeField, Min(0.02f), Tooltip("Delai entre deux tentatives de recalage quand le NavMesh n'est pas encore pret.")]
     private float navMeshRetryInterval = 0.25f;
+    [SerializeField, Min(0.1f), Tooltip("Delai minimal entre deux demandes de reconstruction du NavMesh local.")]
+    private float navMeshRebuildRequestInterval = 1f;
     [SerializeField, Tooltip("Point de retour optionnel. La position initiale est utilisee s'il est vide.")]
     private Transform patrolPoint;
     [SerializeField, Min(0.1f)] private float meleeAttackDistance = 2.6f;
@@ -54,6 +56,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private Transform player;
     private VisionField visionField;
     private CombatEnemyPhysicsMotor physicsMotor;
+    private CombatEnemyRuntimeContract runtimeContract;
     private CombatEnemyLocomotionController combatLocomotion;
     private bool attackMode;
     private bool alerted;
@@ -72,10 +75,13 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private float searchEndsAt;
     private float normalVisionDistance;
     private float nextNavMeshRetryTime;
+    private float nextNavMeshRebuildRequestTime;
     private Vector3 lastKnownPlayerPosition;
     private float nextAttackDecisionAt;
     private EnemyCombatPhase combatPhase;
+    private string combatPhaseReason;
     private string lastNavigationFailure;
+    private SquadAIManager navMeshManager;
 
     private enum PursuitDisengageState
     {
@@ -87,6 +93,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private enum EnemyCombatPhase
     {
+        WaitingForRuntimeReady,
         Idle,
         Alert,
         Chase,
@@ -107,6 +114,9 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
                                                HorizontalDistance(initialPatrolPosition, player.position) > pursuitRadius;
     public bool ShouldEndCombatForPursuit => pursuitDisengageState == PursuitDisengageState.Pause ||
                                               pursuitDisengageState == PursuitDisengageState.Returning;
+    public bool IsRuntimeReady => runtimeContract != null && runtimeContract.CanRunCombat &&
+                                  navigationAgent != null && navigationAgent.isActiveAndEnabled &&
+                                  navigationAgent.isOnNavMesh && !cinematicSuspended;
 
     /// <summary>Called only when the authored attack has reached a valid ground recovery.</summary>
     public void NotifyAttackCompleted()
@@ -147,6 +157,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
 
         physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
+        runtimeContract = GetComponent<CombatEnemyRuntimeContract>();
         combatLocomotion = GetComponent<CombatEnemyLocomotionController>();
 
         if (navigationAgent != null)
@@ -168,11 +179,17 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             enemy.LightAbsorbed += OnLightAbsorbed;
         }
 
+        BindNavMeshManager(FindFirstObjectByType<SquadAIManager>());
         TryPrepareNavigationAgent();
     }
 
     private void Update()
     {
+        if (navMeshManager == null)
+        {
+            BindNavMeshManager(FindFirstObjectByType<SquadAIManager>());
+        }
+
         player = LocalPlayerContext.LocalCharacterRoot;
         if (enemy == null || player == null || (enemy.Health != null && enemy.Health.IsDead))
         {
@@ -185,6 +202,20 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         if (cinematicSuspended)
         {
             StopMovement();
+            return;
+        }
+
+        if (runtimeContract != null && !runtimeContract.CanRunCombat)
+        {
+            StopMovement();
+            SetCombatPhase(EnemyCombatPhase.WaitingForRuntimeReady, "contrat runtime invalide");
+            return;
+        }
+
+        if (!TryPrepareNavigationAgent())
+        {
+            StopMovement();
+            SetCombatPhase(EnemyCombatPhase.WaitingForRuntimeReady, "NavMesh local indisponible");
             return;
         }
 
@@ -429,6 +460,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void OnDisable()
     {
+        BindNavMeshManager(null);
         if (enemy != null)
         {
             enemy.LightAbsorbed -= OnLightAbsorbed;
@@ -441,6 +473,13 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void OnLightAbsorbed(int _)
     {
+        if (runtimeContract != null && !runtimeContract.CanRunCombat)
+        {
+            Debug.LogError("[RealTimeCombatEnemyBehaviour] Provocation ignoree sur '" + name +
+                           "' : contrat runtime ennemi invalide.", this);
+            return;
+        }
+
         CancelPursuitDisengagement();
         provokedByPlayer = true;
         EnterAlert();
@@ -695,6 +734,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             }
 
             nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+            RequestLocalNavMeshRebuild();
             ReportNavigationFailure("aucune projection NavMesh locale");
             return false;
         }
@@ -728,6 +768,30 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
         ReportNavigationFailure("projection NavMesh trop eloignee: " + hit.position);
         return false;
+    }
+
+    private void RequestLocalNavMeshRebuild()
+    {
+        if (Time.time < nextNavMeshRebuildRequestTime)
+        {
+            return;
+        }
+
+        nextNavMeshRebuildRequestTime = Time.time + Mathf.Max(0.1f, navMeshRebuildRequestInterval);
+        SquadAIManager manager = FindFirstObjectByType<SquadAIManager>();
+        if (manager == null)
+        {
+            ReportNavigationFailure("SquadAIManager introuvable pour rebuild NavMesh");
+            return;
+        }
+
+        BindNavMeshManager(manager);
+        manager.RequestNavMeshRebuild("ennemi en attente: " + name);
+        if (logCombatDiagnostics)
+        {
+            Debug.Log("[CombatEnemyAI] " + name + " demande un rebuild NavMesh local | position=" +
+                      transform.position + ".", this);
+        }
     }
 
     private bool TryWarpNavigationAgent(Vector3 position)
@@ -782,19 +846,61 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void SetCombatPhase(EnemyCombatPhase next, string reason)
     {
-        if (combatPhase == next)
+        if (combatPhase == next && combatPhaseReason == reason)
         {
             return;
         }
 
         combatPhase = next;
+        combatPhaseReason = reason;
         if (logCombatDiagnostics)
         {
             Debug.Log("[CombatEnemyAI] " + name + " -> " + next + " | " + reason +
                       " | nav=" + (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh) +
                       " | velocity=" + (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh
                           ? navigationAgent.velocity.ToString()
-                          : "n/a"), this);
+                          : "n/a") +
+                      " | provoked=" + provokedByPlayer +
+                      " | ledger=" + (enemy != null && enemy.HasStoredLightDamage) +
+                      " | activeSkill=" + (enemy != null && enemy.ActiveSkill != null ? enemy.ActiveSkill.SkillName : "none") +
+                      " | retaliationReady=" + (enemy != null && enemy.IsRetaliationReady), this);
+        }
+    }
+
+    private void BindNavMeshManager(SquadAIManager nextManager)
+    {
+        if (navMeshManager == nextManager)
+        {
+            return;
+        }
+
+        if (navMeshManager != null)
+        {
+            navMeshManager.NavMeshRebuildCompleted -= OnNavMeshRebuildCompleted;
+        }
+
+        navMeshManager = nextManager;
+        if (navMeshManager != null)
+        {
+            navMeshManager.NavMeshRebuildCompleted += OnNavMeshRebuildCompleted;
+        }
+    }
+
+    private void OnNavMeshRebuildCompleted(SquadAIManager.NavMeshBuildReport report)
+    {
+        nextNavMeshRetryTime = 0f;
+        if (!report.succeeded)
+        {
+            ReportNavigationFailure("bake NavMesh echoue: " + report.reason +
+                                    " (sources=" + report.sourceCount + ")");
+            return;
+        }
+
+        lastNavigationFailure = null;
+        if (logCombatDiagnostics)
+        {
+            Debug.Log("[CombatEnemyAI] " + name + " recu NavMesh valide | sources=" +
+                      report.sourceCount + " | bounds=" + report.bounds + ".", this);
         }
     }
 

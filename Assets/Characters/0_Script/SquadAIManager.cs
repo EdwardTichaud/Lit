@@ -1,13 +1,26 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using Lit.Story;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 using Unity.AI.Navigation;
 
 // Gere le follow de la squad et la generation automatique du NavMesh.
 public class SquadAIManager : MonoBehaviour
 {
+    public struct NavMeshBuildReport
+    {
+        public bool succeeded;
+        public int totalColliderCount;
+        public int includedColliderCount;
+        public int sourceCount;
+        public Bounds bounds;
+        public string reason;
+    }
+
     [Header("References")]
     [SerializeField, Tooltip("Reference au SquadManager (auto-resolve si null).")]
     private SquadManager squadManager;
@@ -83,6 +96,8 @@ public class SquadAIManager : MonoBehaviour
     private bool rebuildNavMeshNow = false;
     [SerializeField, Tooltip("Affiche un warning quand certains meshes ne peuvent pas etre inclus dans le NavMesh.")]
     private bool warnUnreadableMeshes;
+    [SerializeField, Tooltip("Journalise les bounds et le nombre de sources de chaque bake NavMesh.")]
+    private bool logNavMeshBuildDiagnostics = true;
 
     [Header("Follow")]
     [SerializeField, Tooltip("Follow actif meme en mode selection.")]
@@ -134,7 +149,12 @@ public class SquadAIManager : MonoBehaviour
 
     private float nextNavMeshUpdateTime;
     private bool navMeshDirty;
+    private bool explicitNavMeshRebuildRequested;
+    private Coroutine sceneNavMeshRebuildRoutine;
     private readonly HashSet<Mesh> warnedUnreadableMeshes = new HashSet<Mesh>();
+
+    /// <summary>Raised after every explicit or automatic NavMesh bake attempt.</summary>
+    public event Action<NavMeshBuildReport> NavMeshRebuildCompleted;
 
     private class FollowerState
     {
@@ -159,6 +179,21 @@ public class SquadAIManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (sceneNavMeshRebuildRoutine != null)
+        {
+            StopCoroutine(sceneNavMeshRebuildRoutine);
+            sceneNavMeshRebuildRoutine = null;
+        }
+    }
+
     private void Start()
     {
         if (squadManager != null)
@@ -171,6 +206,26 @@ public class SquadAIManager : MonoBehaviour
             BuildNavMesh();
             navMeshDirty = false;
         }
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode _)
+    {
+        // GameplaySessionRoot survives scene loading. Wait until the newly loaded
+        // district has registered its colliders before collecting NavMesh sources.
+        if (sceneNavMeshRebuildRoutine != null)
+        {
+            StopCoroutine(sceneNavMeshRebuildRoutine);
+        }
+
+        sceneNavMeshRebuildRoutine = StartCoroutine(RequestNavMeshRebuildAfterSceneLoad(scene.name));
+    }
+
+    private IEnumerator RequestNavMeshRebuildAfterSceneLoad(string sceneName)
+    {
+        yield return null;
+        yield return new WaitForEndOfFrame();
+        sceneNavMeshRebuildRoutine = null;
+        RequestNavMeshRebuild("scene chargee: " + sceneName);
     }
 
     private void OnValidate()
@@ -200,7 +255,14 @@ public class SquadAIManager : MonoBehaviour
 
     private void Update()
     {
-        // Boucle principale: rebuild navmesh puis update des followers.
+        // NavMesh is owned by the server/local simulation, independently from
+        // squad follow availability or a temporarily locked player input.
+        if (ShouldDriveFollowers())
+        {
+            ProcessNavMeshRebuildRequests();
+        }
+
+        // Boucle principale: update des followers.
         if (squadManager == null)
         {
             squadManager = SquadManager.Instance;
@@ -213,19 +275,6 @@ public class SquadAIManager : MonoBehaviour
         if (!ShouldDriveFollowers())
         {
             return;
-        }
-
-        if (rebuildNavMeshNow)
-        {
-            rebuildNavMeshNow = false;
-            BuildNavMesh();
-            navMeshDirty = false;
-        }
-
-        if (autoUpdateNavMesh && navMeshDirty && Time.time >= nextNavMeshUpdateTime)
-        {
-            BuildNavMesh();
-            navMeshDirty = false;
         }
 
         if (suspendFollowDuringStorySequences && StorySequenceRunner.IsAnySequencePlaying)
@@ -267,44 +316,81 @@ public class SquadAIManager : MonoBehaviour
     {
         BuildNavMesh();
         navMeshDirty = false;
+        explicitNavMeshRebuildRequested = false;
     }
 
-    public void RequestNavMeshRebuild()
+    public void RequestNavMeshRebuild(string reason = null)
     {
+        // An explicit request comes from scene loading or an actor waiting for a
+        // local polygon. It must never be discarded because periodic auto-update
+        // is disabled for performance.
         navMeshDirty = true;
+        explicitNavMeshRebuildRequested = true;
+        rebuildNavMeshNow = true;
+        if (logNavMeshBuildDiagnostics && !string.IsNullOrWhiteSpace(reason))
+        {
+            Debug.Log("[SquadAIManager] Rebuild NavMesh demande | " + reason + ".", this);
+        }
     }
 
-    private void BuildNavMesh()
+    private void ProcessNavMeshRebuildRequests()
+    {
+        if (rebuildNavMeshNow || explicitNavMeshRebuildRequested)
+        {
+            rebuildNavMeshNow = false;
+            explicitNavMeshRebuildRequested = false;
+            BuildNavMesh();
+            navMeshDirty = false;
+            return;
+        }
+
+        if (autoUpdateNavMesh && navMeshDirty && Time.time >= nextNavMeshUpdateTime)
+        {
+            BuildNavMesh();
+            navMeshDirty = false;
+        }
+    }
+
+    private bool BuildNavMesh()
     {
         NavMeshSurface surface = EnsureNavMeshSurface();
         if (surface == null)
         {
-            return;
+            PublishNavMeshBuildReport(false, 0, 0, 0, new Bounds(transform.position, Vector3.zero),
+                "NavMeshSurface introuvable");
+            return false;
         }
 
         ApplySurfaceSettings(surface);
 
+        int totalColliderCount = 0;
+        int includedColliderCount = 0;
+
         if (surface.collectObjects == CollectObjects.Volume)
         {
-            Bounds bounds = CalculateNavMeshBounds();
+            Bounds bounds = CalculateNavMeshBounds(out totalColliderCount, out includedColliderCount);
             Vector3 localCenter = surface.transform.InverseTransformPoint(bounds.center);
             surface.center = localCenter;
             surface.size = bounds.size;
         }
 
-        BuildNavMeshData(surface);
+        bool built = BuildNavMeshData(surface, totalColliderCount, includedColliderCount);
         nextNavMeshUpdateTime = Time.time + Mathf.Max(0.2f, navMeshUpdateInterval);
+        return built;
     }
 
-    private Bounds CalculateNavMeshBounds()
+    private Bounds CalculateNavMeshBounds(out int totalColliderCount, out int includedColliderCount)
     {
+        totalColliderCount = 0;
+        includedColliderCount = 0;
         Vector3 center = navMeshBoundsCenter != null ? navMeshBoundsCenter.position : transform.position;
         if (!autoCalculateBounds)
         {
             return new Bounds(center, navMeshBoundsSize);
         }
 
-        Collider[] colliders = Object.FindObjectsByType<Collider>(FindObjectsInactive.Exclude);
+        Collider[] colliders = UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsInactive.Exclude);
+        totalColliderCount = colliders.Length;
         bool hasBounds = false;
         Bounds bounds = new Bounds(center, Vector3.zero);
         int mask = navMeshLayerMask.value;
@@ -321,6 +407,8 @@ public class SquadAIManager : MonoBehaviour
             {
                 continue;
             }
+
+            includedColliderCount++;
 
             if (!hasBounds)
             {
@@ -374,11 +462,13 @@ public class SquadAIManager : MonoBehaviour
         surface.buildHeightMesh = buildHeightMesh;
     }
 
-    private void BuildNavMeshData(NavMeshSurface surface)
+    private bool BuildNavMeshData(NavMeshSurface surface, int totalColliderCount, int includedColliderCount)
     {
         if (surface == null)
         {
-            return;
+            PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, 0,
+                new Bounds(transform.position, Vector3.zero), "NavMeshSurface introuvable");
+            return false;
         }
 
         List<NavMeshBuildSource> sources = CollectSources(surface);
@@ -390,6 +480,18 @@ public class SquadAIManager : MonoBehaviour
             surfaceBounds = CalculateWorldBounds(surface, sources);
         }
 
+        if (sources.Count == 0)
+        {
+            surface.RemoveData();
+            surface.navMeshData = null;
+            string reason = "aucune source NavMesh collectee";
+            Debug.LogError("[SquadAIManager] Echec du bake NavMesh : " + reason +
+                           " | colliders=" + totalColliderCount + " | retenusLayer=" + includedColliderCount +
+                           " | layerMask=" + surface.layerMask.value + " | bounds=" + surfaceBounds + ".", this);
+            PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, 0, surfaceBounds, reason);
+            return false;
+        }
+
         NavMeshData data = NavMeshBuilder.BuildNavMeshData(
             surface.GetBuildSettings(),
             sources,
@@ -399,7 +501,11 @@ public class SquadAIManager : MonoBehaviour
 
         if (data == null)
         {
-            return;
+            Debug.LogError("[SquadAIManager] Echec du bake NavMesh : aucune donnee produite | sources=" +
+                           sources.Count + " | bounds=" + surfaceBounds + ".", this);
+            PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, sources.Count,
+                surfaceBounds, "NavMeshBuilder n'a produit aucune donnee");
+            return false;
         }
 
         data.name = surface.gameObject.name;
@@ -409,6 +515,36 @@ public class SquadAIManager : MonoBehaviour
         {
             surface.AddData();
         }
+
+        if (logNavMeshBuildDiagnostics)
+        {
+            Debug.Log("[SquadAIManager] NavMesh reconstruit | sources=" + sources.Count +
+                      " | colliders=" + totalColliderCount + " | retenusLayer=" + includedColliderCount +
+                      " | bounds=" + surfaceBounds + " | scene=" + gameObject.scene.name + ".", this);
+        }
+
+        PublishNavMeshBuildReport(true, totalColliderCount, includedColliderCount, sources.Count,
+            surfaceBounds, null);
+        return true;
+    }
+
+    private void PublishNavMeshBuildReport(
+        bool succeeded,
+        int totalColliderCount,
+        int includedColliderCount,
+        int sourceCount,
+        Bounds bounds,
+        string reason)
+    {
+        NavMeshRebuildCompleted?.Invoke(new NavMeshBuildReport
+        {
+            succeeded = succeeded,
+            totalColliderCount = totalColliderCount,
+            includedColliderCount = includedColliderCount,
+            sourceCount = sourceCount,
+            bounds = bounds,
+            reason = reason
+        });
     }
 
     private List<NavMeshBuildSource> CollectSources(NavMeshSurface surface)

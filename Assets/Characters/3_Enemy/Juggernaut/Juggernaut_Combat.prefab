@@ -7494,6 +7494,7 @@ GameObject:
   - component: {fileID: 3353001312763717800}
   - component: {fileID: 1749280591439705950}
   - component: {fileID: 908605419744601082}
+  - component: {fileID: 7678586944222797535}
   m_Layer: 0
   m_Name: Juggernaut_Combat
   m_TagString: Untagged
@@ -7550,7 +7551,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
   enemy: {fileID: 0}
   enemySkills: {fileID: 0}
@@ -7928,6 +7929,27 @@ MonoBehaviour:
   enemySkills: {fileID: 900000000000000017}
   extraRecoverySeconds: 1
   logDiagnostics: 0
+--- !u!114 &7678586944222797535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b8de3419762e864992f95b397c3b03f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatEnemyRuntimeContract
+  enemy: {fileID: 900000000000000002}
+  enemySkills: {fileID: 900000000000000017}
+  physicsMotor: {fileID: 707000000000000003}
+  animationRoot: {fileID: 4532544328156619208}
+  rigidbodyComponent: {fileID: 707000000000000001}
+  capsuleCollider: {fileID: 707000000000000002}
+  navigationAgent: {fileID: 900000000000000015}
+  animator: {fileID: 4280753887478595955}
+  logDiagnostics: 1
 --- !u!1 &6708470238108833500
 GameObject:
   m_ObjectHideFlags: 0

@@ -33,13 +33,17 @@ lecture du JSON → restauration des données de squad → lecture du snapshot �
 résolution des objets de scène → spawn/destruction runtime → transforms →
 providers → références finales.
 
-Un `SceneMarker` instancie son personnage runtime comme enfant du marker, puis
-applique sa pose en coordonnées monde. Hors session réseau, aucun
+Un `SceneMarker` peut utiliser un personnage déjà baked comme enfant du marker
+en solo, ou instancier son personnage runtime lorsqu'aucun bake n'est présent.
+En session réseau, la copie baked est masquée et le spawn serveur existant est
+conservé. Dans tous les cas, le marker applique sa pose en coordonnées monde.
+La vie et l'état actif d'un ennemi restent sauvegardés, mais sa position et sa
+rotation sont réinitialisées au marker à chaque nouvelle session. Hors session réseau, aucun
 `NetworkTransform` n'est créé ou activé pour ce clone. En host/client, le serveur
 applique le parentage via `NetworkObject.TrySetParent` et synchronise le clone en
-espace local. Pour les ennemis, une position persistée éloignée de plus de 20 m
-du marker est rejetée : cela évite qu'une ancienne position invalide replace
-l'acteur à l'origine du monde ou sur un autre niveau du décor.
+espace local. La position persistée d'un ennemi n'est jamais appliquée : cela
+évite qu'une ancienne position invalide replace l'acteur à l'origine du monde
+ou sur un autre niveau du décor.
 
 Les sauvegardes personnage version 7 stockent
 `CharacterSaveEntry.combatDefenseItemHitPoints` comme des piles `itemId` + PV

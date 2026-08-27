@@ -22,9 +22,14 @@ les portails de changement de scene memorisent leurs points avant le dechargemen
 de la zone source et les appliquent apres le chargement. Les knowledges de Jon sont partages
 par la session : le collier les revele a la recuperation, la petite tombe a la
 lecture, puis Luc se resout apres les deux indices. `SceneMarker` est le marker
-unique (Character, Item ou Ghost) ; `ItemSceneMarker` reste seulement une
+unique (Character, Item ou Ghost) ; son `Bake in Scene` fige les items et
+fantomes directement dans la scene et peut placer un personnage déjà actif en
+solo. En session reseau, la copie baked de personnage est masquee et le spawn
+Netcode reste autoritaire. `ItemSceneMarker` reste seulement une
 compatibilite migrable. En session reseau, la Maison reste chargee afin qu'un
 joueur tardif y apparaisse toujours.
+Les ennemis conservent leur vie et leur état actif entre les sessions, mais leur
+pose est toujours réinitialisée à leur `SceneMarker` au lancement.
 
 Le prototype de chute libre est archive dans `Assets/FallingPhase_Legacy/` avec
 sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plus
@@ -127,6 +132,15 @@ Le premier scenario jouable est configure : Lucian dispose de `Lueur faible`
 et `Lueur intense` dans les slots 1 et 2, tandis que le Juggernaut joue
 `Skill_Juggernaut_Assomoir` via `EnemySkills` et ouvre sa fenetre d'esquive par
 Animation Events. Son impact melee est configure entre 0 et 5 metres.
+Le Juggernaut utilise desormais un `CombatEnemyRuntimeContract` sur le root de
+son `WorldPrefab`. Ce contrat exige l'Animator de combat, `RealTimeCombatEnemy`,
+`EnemySkills`, `CombatEnemyPhysicsMotor`, `Rigidbody` cinematique,
+`CapsuleCollider` et `NavMeshAgent`. `SceneMarker` verifie le clone juste apres
+son instanciation et coupe explicitement son IA/combat si le prefab est incomplet,
+au lieu de laisser Assomoir demarrer sans moteur physique. Le menu
+`Lit/Combat/Repair Juggernaut Runtime Contract` repare le prefab auteur et la
+reference `Juggernaut.asset > WorldPrefab`; `Validate Juggernaut Combat AI`
+permet de verifier le resultat avant un test.
 Le prototype temps reel distingue maintenant garde, esquive et contre. `NorthButton`
 maintenu active une garde qui reduit les degats recus de 60 % par defaut; une
 nouvelle pression dans une fenetre Animation Event acceptant `Counter` fige le
@@ -687,6 +701,32 @@ positionnement lateral, observation courte et attaque; les arrets NavMesh et
 les sorties d'animation remontent vers `Idle` explicitement. Les diagnostics
 optionnels du comportement et les validations `SceneMarker` signalent les
 spawns hors NavMesh, sans appliquer de warp lointain.
+
+Le spawn du Juggernaut relit maintenant `CharacterData.worldPrefab` a chaque
+instanciation de `SceneMarker`: le registre Netcode ne peut plus reutiliser une
+reference de prefab perimee entre deux essais editeur. Le contrat runtime
+`CombatEnemyRuntimeContract` compare le prefab source et le clone (Animator,
+combat, skills, physique et NavMesh), puis laisse l'IA en attente tant que le
+NavMesh local n'est pas valide. Assomoir est refuse avant son lancement si son
+moteur physique n'est pas operationnel; le watchdog finalise alors une attaque
+incomplete une seule fois, sur le dernier sol confirme.
+
+`SquadAIManager` reconstruit le NavMesh apres chaque chargement de scene et le
+volume du `GameplaySessionRoot` calcule maintenant ses bounds depuis les
+colliders charges. C'est indispensable pour les districts situes sous l'origine
+du root persistant (notamment District_1 a `Y=-94`): sans cela, les ennemis
+attendent legitimement un NavMesh qui ne peut pas exister sous leurs pieds.
+Le Juggernaut demande egalement ce rebuild de maniere cadencee lorsqu'il ne
+trouve aucune projection locale; `SquadAIManager` journalise alors le nombre de
+sources et les bounds effectivement bakees afin de distinguer un chargement
+retarde d'un decor absent des sources NavMesh.
+Une demande explicite de rebuild est maintenant prioritaire sur
+`autoUpdateNavMesh` : elle s'execute apres une frame complete de chargement,
+publie colliders, layers retenus, sources et bounds, puis reveille les ennemis
+en attente. Un bake a zero source retire la surface invalide et laisse l'IA
+inactive avec un diagnostic exploitable. Les reactions tactiques du Juggernaut
+exigent le meme etat runtime pret, afin qu'une garde isolee ne masque plus une
+navigation absente.
 
 L'orbe de Munin est maintenant visuellement independante de celle du chargement:
 elle conserve ses materiaux HDRP, n'applique plus de transparence derivee du noir

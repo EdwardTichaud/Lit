@@ -1929,13 +1929,13 @@ MonoBehaviour:
   collectObjects: 1
   navMeshLayerMask:
     serializedVersion: 2
-    m_Bits: 4294901823
+    m_Bits: 4294967295
   collectGeometry: 1
   ignoreNavMeshAgents: 1
   ignoreNavMeshObstacles: 1
   buildHeightMesh: 0
   defaultArea: 0
-  autoCalculateBounds: 0
+  autoCalculateBounds: 1
   navMeshBoundsSize: {x: 200, y: 40, z: 200}
   navMeshBoundsPadding: {x: 2, y: 2, z: 2}
   navMeshBoundsCenter: {fileID: 0}
@@ -1955,6 +1955,7 @@ MonoBehaviour:
   gizmoSphereRadius: 0.2
   rebuildNavMeshNow: 0
   warnUnreadableMeshes: 0
+  logNavMeshBuildDiagnostics: 1
   followWhenSelectionOn: 0
   followStopDistance: 0.5
   followCatchUpDistance: 2
@@ -2604,8 +2605,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitSmoothUccCameraViewAdapter
   cameraController: {fileID: 8540125469264114897}
-  followSmoothTime: 0.16
-  maximumFollowSpeed: 30
+  followSmoothTime: 0.18
+  maximumFollowSpeed: 24
+  airborneFollowSmoothTime: 0.26
+  airborneMaximumFollowSpeed: 16
   teleportSnapDistance: 3
   hardCollisionSnapDistance: 1.25
   useSupplementalCollisionConstraint: 0

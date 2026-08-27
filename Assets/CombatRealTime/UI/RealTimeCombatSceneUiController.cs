@@ -181,9 +181,15 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour
         if (entryRoutine != null)
         {
             StopCoroutine(entryRoutine);
+            entryRoutine = null;
         }
 
-        entryRoutine = StartCoroutine(PlayEntryRoutine());
+        // "EN GARDE !" is a threat cue, not a generic combat-entry banner.
+        // CombatThreatPanelController owns it during an authored warning.
+        SetVisible(combatEngagedPanel, false, false);
+        SetVisible(combatScreenInfosPanel, true, false);
+        RefreshHud();
+        AppendCombatLog("Combat engage.");
     }
 
     private IEnumerator PlayEntryRoutine()

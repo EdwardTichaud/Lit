@@ -109,6 +109,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool useJumpForceFallback = true;
     [SerializeField, Min(0f), Tooltip("Velocity-style upward force used by the Lit fallback jump path.")]
     private float jumpFallbackVelocity = 7f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("Scales the authored UCC jump force so takeoff has weight instead of a sharp vertical snap.")]
+    private float jumpTakeoffForceScale = 0.78f;
+    [SerializeField, Min(1), Tooltip("Minimum number of UCC soft-force ticks used to spread the takeoff impulse.")]
+    private int jumpTakeoffMinimumForceFrames = 4;
 
     [Header("Ground Relief")]
     [SerializeField, Tooltip("Raises selected UCC ground settings at runtime so mesh floor reliefs and thresholds do not behave like hard walls.")]
@@ -198,6 +202,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool warnedMissingSpeedChange;
     private bool warnedMissingHeightChange;
     private bool warnedJumpRejected;
+    private Jump configuredJumpTakeoffAbility;
+    private float configuredJumpTakeoffBaseForce;
+    private int configuredJumpTakeoffBaseFrames;
     private bool warnedFlightStartRejected;
     private bool hasPendingJump;
     private float pendingJumpUntil;
@@ -337,6 +344,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rootMotionMovingStickToGroundDistance = Mathf.Max(0f, rootMotionMovingStickToGroundDistance);
         rootMotionIdleStickToGroundDistance = Mathf.Max(0f, rootMotionIdleStickToGroundDistance);
         rootMotionGroundReliefAdaptationSpeed = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        jumpTakeoffForceScale = Mathf.Clamp(jumpTakeoffForceScale, 0.1f, 1f);
+        jumpTakeoffMinimumForceFrames = Mathf.Max(1, jumpTakeoffMinimumForceFrames);
         scriptedTraversalDiagnosticTickInterval = Mathf.Max(1, scriptedTraversalDiagnosticTickInterval);
         scriptedTraversalExternalCorrectionDistance = Mathf.Max(0f, scriptedTraversalExternalCorrectionDistance);
         scriptedTraversalExternalCorrectionDegrees = Mathf.Clamp(scriptedTraversalExternalCorrectionDegrees, 0f, 45f);
@@ -1295,6 +1304,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         UnregisterExternalDriver();
         RestoreGroundedFeelProfile();
         RestoreRootMotionLocomotion();
+        RestoreJumpTakeoffProfile();
         ResetOrientationFeelState();
         ResetGroundedFeelState();
         ResetJumpLandingState();
@@ -2205,6 +2215,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private bool TryStartJumpAbility(Jump jump)
     {
+        ConfigureJumpTakeoffProfile(jump);
         jump.ImmediateJump = true;
         bool started = locomotion != null && locomotion.TryStartAbility(jump);
         if (started)
@@ -2217,6 +2228,41 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         jump.ImmediateJump = false;
         return false;
+    }
+
+    private void ConfigureJumpTakeoffProfile(Jump jump)
+    {
+        if (jump == null)
+        {
+            return;
+        }
+
+        if (configuredJumpTakeoffAbility != jump)
+        {
+            RestoreJumpTakeoffProfile();
+            configuredJumpTakeoffAbility = jump;
+            configuredJumpTakeoffBaseForce = jump.Force;
+            configuredJumpTakeoffBaseFrames = jump.Frames;
+        }
+
+        // UCC's immediate jump is kept for responsiveness, but its force is
+        // distributed over several fixed ticks. This removes the visual and
+        // camera jerk without introducing input latency or animation events.
+        jump.Force = configuredJumpTakeoffBaseForce * jumpTakeoffForceScale;
+        jump.Frames = Mathf.Max(configuredJumpTakeoffBaseFrames, jumpTakeoffMinimumForceFrames);
+    }
+
+    private void RestoreJumpTakeoffProfile()
+    {
+        if (configuredJumpTakeoffAbility != null)
+        {
+            configuredJumpTakeoffAbility.Force = configuredJumpTakeoffBaseForce;
+            configuredJumpTakeoffAbility.Frames = configuredJumpTakeoffBaseFrames;
+        }
+
+        configuredJumpTakeoffAbility = null;
+        configuredJumpTakeoffBaseForce = 0f;
+        configuredJumpTakeoffBaseFrames = 0;
     }
 
     private void QueuePendingJump(Vector2 worldInput, bool hasWorldInput)

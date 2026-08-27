@@ -25,7 +25,6 @@ public static class NetcodePrefabRegistry
     {
         public string markerId;
         public CharacterData character;
-        public GameObject sourcePrefab;
         public uint hash;
     }
 
@@ -133,6 +132,36 @@ public static class NetcodePrefabRegistry
     private static readonly Dictionary<string, SceneMarkerCharacterSpawnInfo> sceneMarkerCharacterInfos = new Dictionary<string, SceneMarkerCharacterSpawnInfo>();
     private static readonly HashSet<uint> registeredHashes = new HashSet<uint>();
     private static readonly uint worldInteractionHash = NetcodeStableHash.Hash32("service:world-interaction");
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeCaches()
+    {
+        initialized = false;
+        itemInfos.Clear();
+        characterInfos.Clear();
+        sceneMarkerCharacterInfos.Clear();
+        registeredHashes.Clear();
+    }
+
+    /// <summary>Clears stale SceneMarker source references after an authoring change.</summary>
+    public static void InvalidateSceneMarkerCharacterCache(string markerId = null)
+    {
+        if (string.IsNullOrWhiteSpace(markerId))
+        {
+            foreach (SceneMarkerCharacterSpawnInfo info in sceneMarkerCharacterInfos.Values)
+            {
+                RemoveSceneMarkerHandler(info);
+            }
+            sceneMarkerCharacterInfos.Clear();
+            return;
+        }
+
+        if (sceneMarkerCharacterInfos.TryGetValue(markerId, out SceneMarkerCharacterSpawnInfo existing))
+        {
+            RemoveSceneMarkerHandler(existing);
+            sceneMarkerCharacterInfos.Remove(markerId);
+        }
+    }
 
     public static void EnsureInitialized()
     {
@@ -244,7 +273,7 @@ public static class NetcodePrefabRegistry
             return;
         }
 
-        sceneMarkerCharacterInfos.Remove(marker.MarkerId);
+        InvalidateSceneMarkerCharacterCache(marker.MarkerId);
     }
 
     public static uint GetCharacterPrefabHash(CharacterData character)
@@ -419,6 +448,7 @@ public static class NetcodePrefabRegistry
 
         if (sceneMarkerCharacterInfos.TryGetValue(markerId, out SceneMarkerCharacterSpawnInfo existing))
         {
+            existing.character = character;
             return existing;
         }
 
@@ -426,7 +456,6 @@ public static class NetcodePrefabRegistry
         {
             markerId = markerId,
             character = character,
-            sourcePrefab = character.worldPrefab,
             hash = NetcodeStableHash.Hash32($"scene-marker-character:{markerId}")
         };
         sceneMarkerCharacterInfos[markerId] = created;
@@ -495,10 +524,13 @@ public static class NetcodePrefabRegistry
 
     private static GameObject CreateSceneMarkerCharacterInstance(SceneMarkerCharacterSpawnInfo info, Vector3 position, Quaternion rotation)
     {
-        if (info == null || info.sourcePrefab == null)
+        GameObject sourcePrefab = info != null && info.character != null ? info.character.ResolveWorldPrefab() : null;
+        if (info == null || sourcePrefab == null)
         {
             return null;
         }
+
+        ValidateEnemyRuntimeSource(info, sourcePrefab, "source");
 
         // Offline marker actors use a normal Unity parent. In a listening
         // session the server applies the same parent after Spawn through NGO,
@@ -512,13 +544,24 @@ public static class NetcodePrefabRegistry
             parent = isNetworkSession ? null : marker.transform;
         }
 
-        GameObject instance = parent != null
-            ? Object.Instantiate(info.sourcePrefab, parent)
-            : Object.Instantiate(info.sourcePrefab);
-        instance.transform.SetPositionAndRotation(position, rotation);
+        GameObject instance;
+        if (parent != null)
+        {
+            // A scene marker is the authored spatial reference for offline
+            // enemies. Do not inherit a serialized root offset from the prefab.
+            instance = Object.Instantiate(sourcePrefab, parent, false);
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            instance = Object.Instantiate(sourcePrefab);
+            instance.transform.SetPositionAndRotation(position, rotation);
+        }
         Physics.SyncTransforms();
 
-        SceneMarker.ConfigureSpawnedCharacter(instance, info.character, info.markerId);
+        ValidateEnemyRuntimeSource(info, instance, "clone");
+        SceneMarker.ConfigureSpawnedCharacter(instance, info.character, info.markerId, sourcePrefab);
         instance.GetComponent<CombatEnemyPhysicsMotor>()?.AuditPose("SceneMarker:spawn configure");
         if (isNetworkSession)
         {
@@ -539,6 +582,60 @@ public static class NetcodePrefabRegistry
             }
         }
         return instance;
+    }
+
+    private static bool ValidateEnemyRuntimeSource(SceneMarkerCharacterSpawnInfo info, GameObject actor, string stage)
+    {
+        if (info.character == null || !info.character.isEnemy)
+        {
+            return true;
+        }
+
+        bool valid = CombatEnemyRuntimeContract.HasRequiredComponents(actor);
+        string report = CombatEnemyRuntimeContract.DescribeRequiredComponents(actor);
+        if (!valid)
+        {
+            Debug.LogError("[SceneMarker] Contrat ennemi invalide (" + stage + ") | CharacterData='" +
+                           info.character.name + "' | prefab='" + actor.name + "' | identity={" +
+                           DescribePrefabIdentity(actor) + "} | " + report + ".", actor);
+        }
+
+        // The clone still spawns so SceneMarker can provide the definitive
+        // runtime report and disable only its combat systems. This keeps an
+        // authoring mistake visible without silently deleting a scene actor.
+        return true;
+    }
+
+    private static string DescribePrefabIdentity(GameObject actor)
+    {
+        if (actor == null)
+        {
+            return "absent";
+        }
+
+#if UNITY_EDITOR
+        string assetPath = UnityEditor.AssetDatabase.GetAssetPath(actor);
+        string guid = string.IsNullOrWhiteSpace(assetPath)
+            ? "runtime"
+            : UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
+        return "name=" + actor.name + ", path=" +
+               (string.IsNullOrWhiteSpace(assetPath) ? "runtime-clone" : assetPath) +
+               ", guid=" + guid + ", fileId=" +
+               UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow(actor).targetObjectId;
+#else
+        return "name=" + actor.name + ", runtime-clone";
+#endif
+    }
+
+    private static void RemoveSceneMarkerHandler(SceneMarkerCharacterSpawnInfo info)
+    {
+        if (info == null || NetworkManager.Singleton == null || NetworkManager.Singleton.PrefabHandler == null)
+        {
+            return;
+        }
+
+        NetworkManager.Singleton.PrefabHandler.RemoveHandler(info.hash);
+        registeredHashes.Remove(info.hash);
     }
 
     private static GameObject CreateWorldInteractionInstance(uint hash)

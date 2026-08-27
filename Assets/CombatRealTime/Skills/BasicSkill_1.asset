@@ -18,7 +18,7 @@ MonoBehaviour:
   animationClip: {fileID: 7400000, guid: c421e761ada49ce41bdbd4f3d05d77cc, type: 2}
   animatorState: Base Layer.BasicSkill_1
   damages: 5
-  lightChargeOnHit: 100
+  clarityGainOnHit: 50
   presentation:
     entryBlendSeconds: 0.05
     chainNormalizedTime: 0.35
@@ -26,6 +26,16 @@ MonoBehaviour:
     mobilityCancelNormalizedTime: 0.35
     recoveryNormalizedTime: 0.6
     exitBlendSeconds: 0.08
+    handoff:
+      minimumContactSeconds: 0
+      animationExitNormalizedTime: 0.82
+      planarSettledSpeed: 0.18
+      verticalSettledSpeed: 0.25
+      planarDampingPerSecond: 0
+      maximumSettleSeconds: 0.2
+      locomotionBlendSeconds: 0.08
+      preLandingProbeDistance: 1.2
+      preLandingLeadSeconds: 0.14
     rootMotionMode: 1
     allowAirborneRootMotion: 0
     facingMode: 1
@@ -145,3 +155,13 @@ MonoBehaviour:
     slowMotionSeconds: 0.15
   context: 0
   airborneLandingMode: 0
+  airborneLandingHandoff:
+    minimumContactSeconds: 0.15
+    animationExitNormalizedTime: 0.82
+    planarSettledSpeed: 0.14
+    verticalSettledSpeed: 0.2
+    planarDampingPerSecond: 7
+    maximumSettleSeconds: 0.55
+    locomotionBlendSeconds: 0.08
+    preLandingProbeDistance: 1.2
+    preLandingLeadSeconds: 0.14

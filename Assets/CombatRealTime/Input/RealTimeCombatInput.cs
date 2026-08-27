@@ -294,7 +294,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
         if (!manager.CanAcceptBasicSkillInput)
         {
-            Trace("BasicAttack ignoree: presentation joueur indisponible.");
+            Trace("BasicAttack ignoree: " + (manager.BasicSkillInputBlockReason ?? "presentation joueur indisponible") + ".");
             return;
         }
 

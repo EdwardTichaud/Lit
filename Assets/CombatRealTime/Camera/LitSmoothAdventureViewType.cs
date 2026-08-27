@@ -12,6 +12,10 @@ public class LitSmoothAdventureViewType : Adventure
     [Header("Lit Follow Damping")]
     [SerializeField, Min(0f)] private float followSmoothTime = 0.16f;
     [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
+    [SerializeField, Min(0f), Tooltip("Additional position damping while the character is airborne. Aim rotation remains fully responsive.")]
+    private float airborneFollowSmoothTime = 0.24f;
+    [SerializeField, Min(0f), Tooltip("Maximum camera follow speed while airborne, preventing a sharp vertical catch-up on takeoff.")]
+    private float airborneMaximumFollowSpeed = 18f;
     [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
     [SerializeField, Min(0f), Tooltip("Only snap the camera inward when UCC had to shorten its distance by at least this amount. Smaller obstacle corrections are eased so narrow corridors remain readable.")]
     private float hardCollisionSnapDistance = 1.25f;
@@ -39,7 +43,13 @@ public class LitSmoothAdventureViewType : Adventure
         public CameraSnapReason Reason;
     }
 
-    protected virtual float EffectiveFollowSmoothTime => followSmoothTime;
+    protected virtual float EffectiveFollowSmoothTime => IsAirborneFollowActive
+        ? Mathf.Max(followSmoothTime, airborneFollowSmoothTime)
+        : followSmoothTime;
+    protected virtual float EffectiveMaximumFollowSpeed => IsAirborneFollowActive && airborneMaximumFollowSpeed > 0f
+        ? Mathf.Min(maximumFollowSpeed, airborneMaximumFollowSpeed)
+        : maximumFollowSpeed;
+    private bool IsAirborneFollowActive => m_CharacterLocomotion != null && !m_CharacterLocomotion.Grounded;
 
     /// <summary>Copies the gameplay ViewType presentation without taking ownership from UCC.</summary>
     public void CopyGameplaySettingsFrom(ThirdPerson source)
@@ -71,6 +81,8 @@ public class LitSmoothAdventureViewType : Adventure
         {
             followSmoothTime = smoothSource.followSmoothTime;
             maximumFollowSpeed = smoothSource.maximumFollowSpeed;
+            airborneFollowSmoothTime = smoothSource.airborneFollowSmoothTime;
+            airborneMaximumFollowSpeed = smoothSource.airborneMaximumFollowSpeed;
             teleportSnapDistance = smoothSource.teleportSnapDistance;
         }
     }
@@ -78,6 +90,8 @@ public class LitSmoothAdventureViewType : Adventure
     public void ConfigureFollowDamping(
         float smoothTime,
         float maximumSpeed,
+        float airborneSmoothTime,
+        float airborneMaximumSpeed,
         float snapDistance,
         float hardSnapDistance,
         bool supplementalCollisionConstraint,
@@ -85,6 +99,8 @@ public class LitSmoothAdventureViewType : Adventure
     {
         followSmoothTime = Mathf.Max(0f, smoothTime);
         maximumFollowSpeed = Mathf.Max(0f, maximumSpeed);
+        airborneFollowSmoothTime = Mathf.Max(0f, airborneSmoothTime);
+        airborneMaximumFollowSpeed = Mathf.Max(0f, airborneMaximumSpeed);
         teleportSnapDistance = Mathf.Max(0f, snapDistance);
         hardCollisionSnapDistance = Mathf.Max(0f, hardSnapDistance);
         useSupplementalCollisionConstraint = supplementalCollisionConstraint;
@@ -170,7 +186,7 @@ public class LitSmoothAdventureViewType : Adventure
             targetPosition,
             ref followVelocity,
             EffectiveFollowSmoothTime,
-            maximumFollowSpeed,
+            EffectiveMaximumFollowSpeed,
             Time.deltaTime);
 
         if (useSupplementalCollisionConstraint)

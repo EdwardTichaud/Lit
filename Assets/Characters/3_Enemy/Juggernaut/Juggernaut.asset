@@ -20,6 +20,8 @@ MonoBehaviour:
   skills: []
   combatSkills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+  groundBasicSkills: []
+  airBasicSkills: []
   stats:
     strength: 10
     dexterity: 10

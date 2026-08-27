@@ -45,6 +45,15 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     public bool IsRecoveryOpen => recoveryOpen;
     public bool CanStartAction => !deathAnimationLocked && (!actionActive || recoveryOpen);
     public bool CanAcceptBasicSkillInput => !deathAnimationLocked && !hasBufferedAction;
+    public string BasicSkillInputBlockReason
+    {
+        get
+        {
+            if (deathAnimationLocked) return "animation de mort verrouillee";
+            if (hasBufferedAction) return "un BasicSkill est deja bufferise";
+            return null;
+        }
+    }
     public bool CanChainBasicSkill => !deathAnimationLocked && !hasBufferedAction && (!actionActive || recoveryOpen || chainWindowOpen);
     public bool CanCancelToMobility => !deathAnimationLocked &&
                                        (!actionActive || (activeAllowsMobilityCancel && (mobilityCancelOpen || recoveryOpen)));
