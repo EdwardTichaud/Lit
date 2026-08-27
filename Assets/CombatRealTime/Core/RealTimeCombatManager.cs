@@ -21,10 +21,11 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private CombatSkillCinematicController combatSkillCinematicController;
     [SerializeField] private VisionField playerVision;
     [SerializeField] private RealTimeCombatEnemy lockedEnemy;
+    [SerializeField, Tooltip("Ennemi qui porte l'agression active. Il reste engage quand la camera est deverrouillee.")]
+    private RealTimeCombatEnemy engagedEnemy;
 
     [Header("Lock")]
     [SerializeField, Min(0.1f)] private float lockRange = 6f;
-    [SerializeField, Min(0.1f)] private float automaticUnlockRange = 7f;
     [SerializeField, Tooltip("Etend les portees de lock selon la plus grande composante de scale de l'ennemi. Les ennemis de scale inferieure a 1 gardent la portee de base.")]
     private bool scaleLockRangeWithEnemy = true;
 
@@ -62,6 +63,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public event Action<CombatAttackDefinition, int> PlayerAttackResolved;
     public event Action<int> PlayerLightDamageApplied;
     public event Action<SkillSO, int> PlayerSkillImpactApplied;
+    /// <summary>Raised when Lucian has committed to an authored combat action, before its impact event.</summary>
+    public event Action<SkillSO, RealTimeCombatEnemy> PlayerSkillStarted;
     public event Action<SkillSO, int> EnemyAttackStarted;
     public event Action<SkillSO, bool> ReactionImpactResolved;
     public event Action<int> PlayerDamaged;
@@ -74,6 +77,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public Animator PlayerAnimator => playerAnimator;
     public RealTimeCombatLoadout PlayerLoadout => playerLoadout;
     public RealTimeCombatEnemy LockedEnemy => lockedEnemy;
+    public RealTimeCombatEnemy EngagedEnemy => engagedEnemy;
     public float Clarity => clarity;
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
     public bool CanAcceptBasicSkillInput => playerActionPresentation == null || playerActionPresentation.CanAcceptBasicSkillInput;
@@ -84,6 +88,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public bool FacePlayerTowardsLockedEnemy()
     {
         return lockedEnemy != null && FacePlayerTowards(lockedEnemy.LockPoint.position);
+    }
+
+    /// <summary>Faces Lucian toward the enemy currently carrying the encounter, even when camera lock is off.</summary>
+    public bool FacePlayerTowardsEngagedEnemy()
+    {
+        return engagedEnemy != null && FacePlayerTowards(engagedEnemy.LockPoint.position);
     }
 
     /// <summary>Faces Lucian toward a world direction. Used by intentional directional evasions.</summary>
@@ -146,6 +156,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
                 combatSkillCinematicController = gameObject.AddComponent<CombatSkillCinematicController>();
             }
         }
+        if (GetComponent<CombatThreatPanelController>() == null)
+        {
+            gameObject.AddComponent<CombatThreatPanelController>();
+        }
         ResolvePlayerReferences();
         RegisterExistingAttackModes();
     }
@@ -167,7 +181,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         // A cinematic owns the player and enemy transforms. The enemy AI is intentionally
         // suspended then, so it must not be interpreted as a normal combat disengagement.
-        if (combatActive && !IsCinematicSequenceActive && !HasValidLockedEnemy())
+        if (combatActive && !IsCinematicSequenceActive && !HasValidEngagedEnemy())
         {
             if (logCombatDisengageDiagnostics)
             {
@@ -178,18 +192,28 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
-        if (combatActive && !IsCinematicSequenceActive && IsOutsideAutomaticUnlockRange(lockedEnemy))
+        RealTimeCombatEnemyBehaviour engagedBehaviour = engagedEnemy != null
+            ? engagedEnemy.GetComponent<RealTimeCombatEnemyBehaviour>()
+            : null;
+        if (combatActive && !IsCinematicSequenceActive && engagedBehaviour != null && engagedBehaviour.ShouldEndCombatForPursuit)
         {
             if (logCombatDisengageDiagnostics)
             {
-                Debug.Log("[RealTimeCombat Debug] EndCombat automatique | enemy='" + lockedEnemy.name +
+                Debug.Log("[RealTimeCombat Debug] EndCombat fuite | enemy='" + engagedEnemy.name +
                           "' | player=" + (playerRoot != null ? playerRoot.position.ToString("F2") : "None") +
-                          " | enemyPos=" + lockedEnemy.transform.position.ToString("F2") + ".", this);
+                          " | spawnRadius=" + engagedBehaviour.PursuitRadius.ToString("F1") + ".", this);
             }
             EndCombat();
             return;
         }
 
+    }
+
+    private bool HasValidEngagedEnemy()
+    {
+        return engagedEnemy != null &&
+               engagedEnemy.gameObject.activeInHierarchy &&
+               (engagedEnemy.Health == null || !engagedEnemy.Health.IsDead);
     }
 
     private bool HasValidLockedEnemy()
@@ -234,6 +258,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         stopPlayerWhenMovementReleased = false;
         clarity = 0f;
         cooldowns.Clear();
+        SetEngagedEnemy(enemy);
         SetLockedEnemy(null);
         SetLockedEnemy(enemy);
         combatInput?.SetInputActive(true);
@@ -247,12 +272,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         combatActive = false;
         IsCinematicSequenceActive = false;
         CloseReactionWindow(notify: false);
-        if (lockedEnemy != null)
+        if (engagedEnemy != null)
         {
-            lockedEnemy.CompleteRetaliation();
+            engagedEnemy.CompleteRetaliation();
         }
 
         ReactionWindowChanged?.Invoke(default);
+        SetEngagedEnemy(null);
         SetLockedEnemy(null);
         playerLocomotionBridge?.ClearCombatLockTarget();
         combatInput?.SetInputActive(false);
@@ -273,7 +299,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (lockedEnemy != null)
         {
-            EndCombat();
+            SetLockedEnemy(null);
             return true;
         }
 
@@ -293,8 +319,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public bool LaunchCombat(float openingDamage = 50f)
     {
         ResolvePlayerReferences();
-        RealTimeCombatEnemy enemy = lockedEnemy != null
-            ? lockedEnemy
+        RealTimeCombatEnemy enemy = engagedEnemy != null
+            ? engagedEnemy
             : FindPreferredLockableEnemy();
         if (enemy == null || !TryLockEnemy(enemy))
         {
@@ -323,7 +349,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (combatActive)
         {
-            return lockedEnemy == enemy;
+            if (engagedEnemy != enemy)
+            {
+                return false;
+            }
+
+            SetLockedEnemy(enemy);
+            return true;
         }
 
         return BeginCombat(playerRoot, enemy);
@@ -349,7 +381,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return false;
         }
 
-        lockedEnemy.CompleteRetaliation();
         CloseReactionWindow(notify: false);
         ReactionWindowChanged?.Invoke(default);
         SetLockedEnemy(next);
@@ -383,31 +414,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         return closest;
-    }
-
-    private bool IsOutsideAutomaticUnlockRange(RealTimeCombatEnemy enemy)
-    {
-        if (playerRoot == null || enemy == null)
-        {
-            return true;
-        }
-
-        RealTimeCombatEnemyBehaviour behaviour = enemy.GetComponent<RealTimeCombatEnemyBehaviour>();
-        if (behaviour != null)
-        {
-            // Une fois l'ennemi alerte, le lock reste valable sur son rayon
-            // d'action et pendant sa memoire. Quand il se calme vraiment, le
-            // combat local peut se fermer meme si le joueur est encore proche.
-            if (!behaviour.IsAlerted && !behaviour.IsInAttackMode)
-            {
-                return true;
-            }
-
-            float alertRange = Mathf.Max(GetAutomaticUnlockRange(enemy), behaviour.CurrentDisengageDistance);
-            return Vector3.Distance(playerRoot.position, enemy.transform.position) > alertRange;
-        }
-
-        return Vector3.Distance(playerRoot.position, enemy.transform.position) > GetAutomaticUnlockRange(enemy);
     }
 
     private List<RealTimeCombatEnemy> FindLockableEnemies(bool requireVision)
@@ -493,11 +499,6 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         return lockRange * GetEnemyLockScaleMultiplier(enemy);
     }
 
-    private float GetAutomaticUnlockRange(RealTimeCombatEnemy enemy)
-    {
-        return automaticUnlockRange * GetEnemyLockScaleMultiplier(enemy);
-    }
-
     private float GetEnemyLockScaleMultiplier(RealTimeCombatEnemy enemy)
     {
         if (!scaleLockRangeWithEnemy || enemy == null)
@@ -531,6 +532,19 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         RefreshLockedEnemyStrafeBinding();
 
         LockChanged?.Invoke(lockedEnemy);
+    }
+
+    private void SetEngagedEnemy(RealTimeCombatEnemy enemy)
+    {
+        engagedEnemy = enemy;
+        if (engagedEnemy != null && engagedEnemy.GetComponent<EnemyTacticalResponseController>() == null)
+        {
+            engagedEnemy.gameObject.AddComponent<EnemyTacticalResponseController>();
+        }
+        if (engagedEnemy != null && engagedEnemy.GetComponent<EnemyAttackRecoverySafety>() == null)
+        {
+            engagedEnemy.gameObject.AddComponent<EnemyAttackRecoverySafety>();
+        }
     }
 
     public bool TryUseAttack(int slotIndex)
@@ -619,6 +633,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             FaceLockedEnemyForAction();
             bool cinematicStarted = combatSkillCinematicController != null && combatSkillCinematicController.TryPlayPlayerSkill(skill);
             PlayPlayerSkillStartSfx(skill, cinematicStarted);
+            if (cinematicStarted)
+            {
+                PlayerSkillStarted?.Invoke(skill, lockedEnemy);
+            }
             return cinematicStarted;
         }
 
@@ -636,6 +654,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         FaceLockedEnemyForAction();
         bool actionStarted = playerActionPresentation != null && playerActionPresentation.TryPlaySkill(skill, stateHash);
         PlayPlayerSkillStartSfx(skill, actionStarted);
+        if (actionStarted)
+        {
+            PlayerSkillStarted?.Invoke(skill, lockedEnemy);
+        }
         return actionStarted;
     }
 
@@ -729,7 +751,22 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int applied = lockedEnemy.ReceiveLightDamage(Mathf.Max(0, Mathf.RoundToInt(skill.Damages)));
+        int requestedDamage = Mathf.Max(0, Mathf.RoundToInt(skill.Damages));
+        EnemyTacticalResponseController tacticalResponse = lockedEnemy.GetComponent<EnemyTacticalResponseController>();
+        int resolvedDamage = tacticalResponse != null
+            ? tacticalResponse.ResolveIncomingPlayerDamage(skill, requestedDamage)
+            : requestedDamage;
+        if (resolvedDamage <= 0)
+        {
+            CombatDamageWorldFeedback.ShowMessage(
+                lockedEnemy.transform,
+                "Esquive",
+                new Color(0.72f, 0.94f, 1f),
+                1.4f);
+            return 0;
+        }
+
+        int applied = lockedEnemy.ReceiveLightDamage(resolvedDamage);
         if (applied <= 0)
         {
             return 0;
@@ -743,23 +780,23 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     /// <summary>
     /// Resolves the single impact of an active LightSkill cinematic. The
-    /// LightSkill meter is intentionally not fed by this damage.
+    /// LightSkills spend Clarity before their cinematic starts, so their impact
+    /// does not refill that resource.
     /// </summary>
     public int ApplyLightSkillDamage(LightSkillSO skill, bool resolveCombatOutcome = true)
     {
-        if (!combatActive || IsPlayerDead() || skill == null || lockedEnemy == null ||
-            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        if (!combatActive || IsPlayerDead() || skill == null || engagedEnemy == null ||
+            (engagedEnemy.Health != null && engagedEnemy.Health.IsDead))
         {
             return 0;
         }
 
-        int applied = lockedEnemy.ReceiveLightDamage(Mathf.Max(0, skill.Damage));
+        int applied = engagedEnemy.ReceiveLightDamage(Mathf.Max(0, skill.Damage));
         if (applied <= 0)
         {
             return 0;
         }
 
-        AddClarity(skill.ClarityGain);
         if (resolveCombatOutcome)
         {
             EvaluateCombatOutcome();
@@ -770,13 +807,13 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>Applies a counter cinematic impact without feeding the enemy retaliation ledger.</summary>
     public int ApplyCounterSkillDamage(CounterSkillSO skill, bool resolveCombatOutcome = true)
     {
-        if (!combatActive || IsPlayerDead() || skill == null || lockedEnemy == null ||
-            (lockedEnemy.Health != null && lockedEnemy.Health.IsDead))
+        if (!combatActive || IsPlayerDead() || skill == null || engagedEnemy == null ||
+            (engagedEnemy.Health != null && engagedEnemy.Health.IsDead))
         {
             return 0;
         }
 
-        int applied = lockedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false);
+        int applied = engagedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false);
         if (applied <= 0)
         {
             return 0;
@@ -814,8 +851,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>Closes the current reaction window and freezes its attack for an immediate CounterSkill.</summary>
     public bool TryBeginCounterCinematic()
     {
-        if (IsCinematicSequenceActive || !combatActive || !reactionWindowOpen || lockedEnemy == null ||
-            lockedEnemy.ActiveSkill == null || !lockedEnemy.ActiveSkill.AcceptsEnemyReaction(RealTimeCombatReaction.Counter))
+        if (IsCinematicSequenceActive || !combatActive || !reactionWindowOpen || engagedEnemy == null ||
+            engagedEnemy.ActiveSkill == null || !engagedEnemy.ActiveSkill.AcceptsEnemyReaction(RealTimeCombatReaction.Counter))
         {
             return false;
         }
@@ -837,7 +874,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>Finalizes the suspended attack without allowing its original Animation Events to resume.</summary>
     public void CompleteCounterAttack()
     {
-        RealTimeCombatEnemy enemy = lockedEnemy;
+        RealTimeCombatEnemy enemy = engagedEnemy;
         if (enemy != null)
         {
             enemy.CompleteRetaliationAndPrepareNext();
@@ -862,9 +899,9 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     }
 
     /// <summary>Restores Lucian's authored locomotion state after a cinematic Timeline releases UCC.</summary>
-    public void ResumePlayerLocomotionAfterCinematic(bool movementHeld, bool sprintHeld)
+    public void ResumePlayerLocomotionAfterCinematic(bool movementHeld, bool sprintHeld, float transitionSeconds = 0.12f)
     {
-        playerActionPresentation?.ResumeLocomotionFromCinematic(movementHeld, sprintHeld);
+        playerActionPresentation?.ResumeLocomotionFromCinematic(movementHeld, sprintHeld, transitionSeconds);
     }
 
     public bool IsLockedEnemyWithinSkillHitRange(SkillSO skill)
@@ -927,7 +964,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public int ApplyEnemySkillDamageToPlayer(RealTimeCombatEnemy caster, SkillSO skill)
     {
-        if (!combatActive || caster == null || caster != lockedEnemy || skill == null ||
+        if (!combatActive || caster == null || caster != engagedEnemy || skill == null ||
             (caster.Health != null && caster.Health.IsDead))
         {
             return 0;
@@ -963,7 +1000,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public void BeginEnemyAttackWindow(RealTimeCombatEnemy enemy, float durationSeconds)
     {
-        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
+        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != engagedEnemy || enemy.ActiveSkill == null)
         {
             return;
         }
@@ -984,7 +1021,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void RegisterReaction(RealTimeCombatReaction reaction)
     {
-        if (!reactionWindowOpen || lockedEnemy == null || lockedEnemy.ActiveSkill == null ||
+        if (!reactionWindowOpen || engagedEnemy == null || engagedEnemy.ActiveSkill == null ||
             (reaction != RealTimeCombatReaction.Counter &&
              reaction != RealTimeCombatReaction.Dodge &&
              reaction != RealTimeCombatReaction.Jump))
@@ -992,7 +1029,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return;
         }
 
-        SkillSO skill = lockedEnemy.ActiveSkill;
+        SkillSO skill = engagedEnemy.ActiveSkill;
         if (!skill.AcceptsEnemyReaction(reaction))
         {
             return;
@@ -1017,7 +1054,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// </summary>
     public void CancelEnemyAttackWindow(RealTimeCombatEnemy enemy)
     {
-        if (enemy == null || enemy != lockedEnemy)
+        if (enemy == null || enemy != engagedEnemy)
         {
             return;
         }
@@ -1027,7 +1064,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void ResolveEnemyAttackImpact(RealTimeCombatEnemy enemy)
     {
-        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill == null)
+        if (IsCinematicSequenceActive || !combatActive || enemy == null || enemy != engagedEnemy || enemy.ActiveSkill == null)
         {
             return;
         }
@@ -1048,7 +1085,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         float durationSeconds)
     {
         yield return new WaitForSecondsRealtime(durationSeconds);
-        if (token != reactionWindowToken || !reactionWindowOpen || enemy == null || enemy != lockedEnemy || enemy.ActiveSkill != skill)
+        if (token != reactionWindowToken || !reactionWindowOpen || enemy == null || enemy != engagedEnemy || enemy.ActiveSkill != skill)
         {
             yield break;
         }
@@ -1066,7 +1103,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         reactionWindowToken++;
         bool wasOpen = reactionWindowOpen;
-        RealTimeCombatEnemy enemy = lockedEnemy;
+        RealTimeCombatEnemy enemy = engagedEnemy;
         SkillSO skill = enemy != null ? enemy.ActiveSkill : null;
         reactionWindowOpen = false;
         receivedReactions.Clear();
@@ -1096,7 +1133,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void CompleteEnemyAttack(RealTimeCombatEnemy enemy)
     {
-        if (enemy == null || enemy != lockedEnemy)
+        if (enemy == null || enemy != engagedEnemy)
         {
             return;
         }
@@ -1116,6 +1153,32 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         if (normalized >= .30f) return CombatClarityRank.D;
         if (normalized >= .15f) return CombatClarityRank.E;
         return CombatClarityRank.F;
+    }
+
+    /// <summary>Depense de la Clarite sans appliquer de bonus de connaissance.</summary>
+    public bool TrySpendClarity(float amount)
+    {
+        amount = Mathf.Max(0f, amount);
+        if (amount > clarity + 0.001f)
+        {
+            return false;
+        }
+
+        clarity = Mathf.Max(0f, clarity - amount);
+        ClarityChanged?.Invoke(clarity, ClarityRank);
+        return true;
+    }
+
+    /// <summary>Rembourse une depense de Clarite annulee avant resolution.</summary>
+    public void RefundClarity(float amount)
+    {
+        if (amount <= 0f)
+        {
+            return;
+        }
+
+        clarity += amount;
+        ClarityChanged?.Invoke(clarity, ClarityRank);
     }
 
     private void ResolvePlayerReferences()
@@ -1263,7 +1326,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     private void EvaluateCombatOutcome()
     {
-        bool enemyDead = lockedEnemy != null && lockedEnemy.Health != null && lockedEnemy.Health.IsDead;
+        bool enemyDead = engagedEnemy != null && engagedEnemy.Health != null && engagedEnemy.Health.IsDead;
         bool playerDead = IsPlayerDead();
         if (!enemyDead && !playerDead)
         {

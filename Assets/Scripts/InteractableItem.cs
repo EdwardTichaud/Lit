@@ -14,7 +14,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     public enum InteractableCategory
     {
         Container = 0,
-        RecoverableItem = 1
+        RecoverableItem = 1,
+        /// <summary>Document fixe en monde : lisible mais jamais recuperable.</summary>
+        ReadableItem = 2
     }
 
     public enum TrapEffectType
@@ -33,7 +35,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     }
 
     [Header("Category")]
-    [Tooltip("Indique si cet objet interactif est pense comme un container ou comme un item recuperable.")]
+    [Tooltip("Indique si cet objet est un container, un item recuperable ou un document lisible fixe.")]
     public InteractableCategory interactableCategory = InteractableCategory.Container;
 
     [Header("Represented Item")]
@@ -208,6 +210,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private bool applyingNetLoot;
     private bool unlockAttemptInProgress;
     private bool trapTriggered;
+    // L'ouverture du loot bascule vers la map UI pendant que South est encore
+    // maintenu. Son relachement ne doit jamais valider le slot initial.
+    private bool suppressLootSubmitUntilInteractReleased;
 
     private void Awake()
     {
@@ -246,7 +251,8 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     public int GetInteractionPriority(SquadCharacterController controller)
     {
-        return interactableCategory == InteractableCategory.RecoverableItem ? 120 : 100;
+        return interactableCategory == InteractableCategory.RecoverableItem ? 120 :
+            interactableCategory == InteractableCategory.ReadableItem ? 110 : 100;
     }
 
     public void SetDetectedCharacter(GameObject character)
@@ -366,6 +372,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     {
         UpdateCurrentCharacter();
 
+        if (suppressLootSubmitUntilInteractReleased && !IsInteractControlPressed())
+        {
+            suppressLootSubmitUntilInteractReleased = false;
+        }
+
         if (lootOpen && HasInputFocus())
         {
             UpdateCursorVisual();
@@ -403,6 +414,12 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         HandleLootNavigation();
     }
 
+    private static bool IsInteractControlPressed()
+    {
+        return (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed) ||
+               (Keyboard.current != null && Keyboard.current.spaceKey.isPressed);
+    }
+
     private LootUISettings GetSettings(bool logWarning = false)
     {
         LootUISettings settings = LootUISettings.Instance;
@@ -437,6 +454,11 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        if (suppressLootSubmitUntilInteractReleased)
+        {
+            return;
+        }
+
         if (!CanProcessInteract())
         {
             return;
@@ -1021,6 +1043,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         PlayActionAudio(ActionAudioCue.InventoryOpen);
         HideActionBoxImmediate();
         lootOpen = true;
+        suppressLootSubmitUntilInteractReleased = true;
         InputFocusStack.Push(this);
         SetSquadInputLock(true);
         settings.UpdateContainerHeader(this);
@@ -1036,11 +1059,35 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
+        if (interactableCategory == InteractableCategory.ReadableItem)
+        {
+            OpenReadableWorldItem();
+            return;
+        }
+
         OpenLoot();
+    }
+
+    private void OpenReadableWorldItem()
+    {
+        // Un ReadableItem est un document de decor : aucun contenu ne peut etre
+        // ouvert ni recupere depuis cette interaction.
+        if (representedItem == null || !representedItem.IsReadable())
+        {
+            ShowActionFeedback("Ce document lisible n'est pas configure.");
+            return;
+        }
+
+        InventoryPanelController inventory = GetInventoryPanelController();
+        if (inventory == null || !inventory.TryOpenReadableItemFromWorld(representedItem, currentCharacter))
+        {
+            ShowActionFeedback("Lecture indisponible.");
+        }
     }
 
     private void CloseLoot()
     {
+        suppressLootSubmitUntilInteractReleased = false;
         if (lootOpen)
         {
             PlayActionAudio(ActionAudioCue.InventoryClose);
@@ -1735,7 +1782,9 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        InfoBoxUI.TryShow(message);
+        // Le retour de ramassage est informatif : il ne doit pas retenir le
+        // focus d'interface ni interrompre la marche de l'escouade.
+        InfoBoxUI.TryShowToast(message);
     }
 
     private void InitializeActionBox()
@@ -2725,17 +2774,25 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private void HandleEmptyContainer()
     {
         RefreshRecoverableWorldInfo();
-        if (!destroyWhenStorageEmpty && interactableCategory != InteractableCategory.RecoverableItem)
-        {
-            return;
-        }
-
         if (storedItems == null || storedItems.Count > 0)
         {
             return;
         }
 
+        // La derniere prise ferme toujours le loot : laisser le panneau ouvert
+        // garderait le focus UI et le verrou de l'escouade, meme pour les
+        // conteneurs qui restent presents une fois vides.
         CloseLoot();
+        if (IsNetworked() && IsServer && IsSpawned)
+        {
+            CloseLootClientRpc();
+        }
+
+        if (!destroyWhenStorageEmpty && interactableCategory != InteractableCategory.RecoverableItem)
+        {
+            return;
+        }
+
         if (IsNetworked() && IsServer)
         {
             NetworkObject networkObject = GetComponent<NetworkObject>();
@@ -2923,12 +2980,14 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         recoverableWorldInfo.destroyPanelOnExit = false;
         recoverableWorldInfo.openCraftingPanelOnInteract = false;
         recoverableWorldInfo.consumeInteractOnProximity = false;
+        recoverableWorldInfo.ignoreVisibilityGateForWorldUi = true;
         if (!displayItem.isBuilding)
         {
             recoverableWorldInfo.localInformationPanelPrefab = null;
         }
         recoverableWorldInfo.Initialize(displayItem, 1);
         recoverableWorldInfo.MarkPresentationOrigin("recoverable_loot", true);
+        ForwardDetectedCharacterToRecoverableInfo(currentCharacter);
     }
 
     private Item ResolveRecoverableDisplayItem()
@@ -4369,6 +4428,15 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         OpenLoot();
+    }
+
+    [ClientRpc]
+    private void CloseLootClientRpc()
+    {
+        if (lootOpen)
+        {
+            CloseLoot();
+        }
     }
 
     private static ClientRpcParams BuildClientRpcParams(ServerRpcParams rpcParams)

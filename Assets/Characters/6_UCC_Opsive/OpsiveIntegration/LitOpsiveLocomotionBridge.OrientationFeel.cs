@@ -8,7 +8,8 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Range(0f, 1f)] private float orientationInputDeadZone = 0.14f;
     [SerializeField, Min(1f)] private float orientationWalkTurnRate = 360f;
     [SerializeField, Min(1f)] private float orientationSprintTurnRate = 300f;
-    [SerializeField, Min(1f)] private float orientationSharpTurnRate = 540f;
+    [SerializeField, Min(1f), Tooltip("Maximum exploration body turn speed. It intentionally matches sprint turning so a 180-degree reversal follows a visible curve instead of becoming a spin in place.")]
+    private float orientationSharpTurnRate = 300f;
     [SerializeField, Range(0f, 180f)] private float orientationSharpTurnAngle = 92f;
     [SerializeField, Range(0f, 1f), Tooltip("Blends a little current planar velocity into the facing target for smoother diagonals and recoveries.")]
     private float orientationVelocityBlend = 0.1f;

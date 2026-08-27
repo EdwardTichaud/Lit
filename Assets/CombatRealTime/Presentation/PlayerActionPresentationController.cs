@@ -26,8 +26,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private bool activeAllowsMobilityCancel;
     private bool activeRequestsAirborneLanding;
     private bool activeHoldsAirborne;
-    private float activeLandingAtAnimationSeconds;
+    private MotionHandoffProfile activeAirborneLandingHandoff;
     private bool activeLandingRequested;
+    private float activeHandoffStartedAt;
     private bool hasBufferedAction;
     private int bufferedStateHash;
     private PlayerActionPresentationProfile bufferedProfile;
@@ -142,8 +143,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         bufferedBasicSkill = null;
         activeRequestsAirborneLanding = false;
         ReleaseAirborneHold();
-        activeLandingAtAnimationSeconds = 0f;
+        activeAirborneLandingHandoff = null;
         activeLandingRequested = false;
+        activeHandoffStartedAt = 0f;
         locomotionBridge?.ClearPlayerActionRootMotionMode();
         if (hadAction)
         {
@@ -184,7 +186,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     }
 
     /// <summary>Returns Animator ownership to UCC after a Timeline that did not use an action profile.</summary>
-    public void ResumeLocomotionFromCinematic(bool movementHeld, bool sprintHeld, float transitionSeconds = 0.08f)
+    public void ResumeLocomotionFromCinematic(bool movementHeld, bool sprintHeld, float transitionSeconds = 0.12f)
     {
         if (deathAnimationLocked || animator == null)
         {
@@ -301,8 +303,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         activeAllowsMobilityCancel = profile.allowMobilityCancel;
         activeRequestsAirborneLanding = basicSkill != null && basicSkill.RequestsLandingDuringAnimation;
         activeHoldsAirborne = basicSkill != null && basicSkill.HoldsAirborneDuringAnimation;
-        activeLandingAtAnimationSeconds = basicSkill != null ? basicSkill.LandingAtAnimationSeconds : 0f;
+        activeAirborneLandingHandoff = basicSkill != null ? basicSkill.AirborneLandingHandoff : null;
         activeLandingRequested = false;
+        activeHandoffStartedAt = 0f;
         locomotionBridge?.SetPlayerActionRootMotionMode(
             profile.rootMotionMode,
             profile.facingMode == PlayerActionFacingMode.VisualOnly,
@@ -357,7 +360,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
                 yield break;
             }
 
-            RequestAirborneLandingIfDue(state);
+            RequestAirborneLandingIfDue();
 
             if (!chainWindowOpen && state.normalizedTime >= chainTime)
             {
@@ -391,7 +394,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
                 if (profile.allowMoveAfterRecovery)
                 {
-                    yield return new WaitForEndOfFrame();
+                    yield return WaitForMotionHandoff(token, profile);
                     ResumeLocomotion(profile, token);
                 }
                 else
@@ -478,8 +481,29 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             return;
         }
 
-        animator.CrossFade(ResolveLocomotionDestination(false, false), Mathf.Clamp(profile.exitBlendSeconds, 0f, 0.25f), 0);
+        MotionHandoffProfile handoff = profile.handoff ?? MotionHandoffProfile.CreateActionDefault();
+        float blend = Mathf.Max(profile.exitBlendSeconds, handoff.locomotionBlendSeconds);
+        animator.CrossFade(ResolveLocomotionDestination(false, false), Mathf.Clamp(blend, 0f, 0.25f), 0);
         FinishWithoutTransition(token);
+    }
+
+    private IEnumerator WaitForMotionHandoff(int token, PlayerActionPresentationProfile profile)
+    {
+        MotionHandoffProfile handoff = profile.handoff ?? MotionHandoffProfile.CreateActionDefault();
+        activeHandoffStartedAt = Time.unscaledTime;
+        while (token == activeToken && locomotionBridge != null && locomotionBridge.Grounded)
+        {
+            locomotionBridge.ApplyPlanarHandoffDamping(handoff.planarDampingPerSecond);
+            if (locomotionBridge.IsMotionHandoffSettled(handoff) ||
+                Time.unscaledTime - activeHandoffStartedAt >= handoff.maximumSettleSeconds)
+            {
+                break;
+            }
+
+            yield return null;
+        }
+
+        activeHandoffStartedAt = 0f;
     }
 
     private void FinishUnexpectedActionExit(int token, bool isBasicAction)
@@ -538,8 +562,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         bufferedBasicSkill = null;
         activeRequestsAirborneLanding = false;
         ReleaseAirborneHold();
-        activeLandingAtAnimationSeconds = 0f;
+        activeAirborneLandingHandoff = null;
         activeLandingRequested = false;
+        activeHandoffStartedAt = 0f;
         actionRoutine = null;
         locomotionBridge?.ClearPlayerActionRootMotionMode();
         ActionEnded?.Invoke();
@@ -557,15 +582,15 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
         LocalPlayerInput.RequestHeldLocomotionReconciliation("Combat action ended");
     }
 
-    private void RequestAirborneLandingIfDue(AnimatorStateInfo state)
+    private void RequestAirborneLandingIfDue()
     {
         if (!activeRequestsAirborneLanding || activeLandingRequested || locomotionBridge == null || locomotionBridge.Grounded)
         {
             return;
         }
 
-        float animationSeconds = state.normalizedTime * Mathf.Max(0f, state.length);
-        if (animationSeconds < activeLandingAtAnimationSeconds)
+        MotionHandoffProfile handoff = activeAirborneLandingHandoff ?? MotionHandoffProfile.CreateActionDefault();
+        if (!locomotionBridge.ShouldBeginMotionHandoff(handoff))
         {
             return;
         }

@@ -54,12 +54,19 @@ public sealed class EnvironmentManager : MonoBehaviour
     private readonly List<VolumeProfile> runtimeProfiles = new List<VolumeProfile>();
     private readonly List<WeightedZone> weightedZones = new List<WeightedZone>();
     private readonly List<EnvironmentZone> zonesToRemove = new List<EnvironmentZone>();
+    private readonly List<BaseProfileOverride> baseProfileOverrides = new List<BaseProfileOverride>();
 
     private struct WeightedZone
     {
         public EnvironmentZone zone;
         public float weight;
         public long order;
+    }
+
+    private struct BaseProfileOverride
+    {
+        public int token;
+        public VolumeProfile profile;
     }
 
     private VolumeProfile baselineProfile;
@@ -73,6 +80,7 @@ public sealed class EnvironmentManager : MonoBehaviour
     private float forcedProfileTimer;
     private float forcedProfileIntensity = 1f;
     private bool forcedProfileHasTimer;
+    private int nextBaseProfileOverrideToken = 1;
 
     public Transform Target => target;
     public EnvironmentZone CurrentZone => currentZone;
@@ -159,6 +167,43 @@ public sealed class EnvironmentManager : MonoBehaviour
         forcedProfileHasTimer = false;
     }
 
+    /// <summary>Ajoute une base HDRP temporaire. Les EnvironmentZone locaux restent melanges au-dessus.</summary>
+    public int PushBaseProfileOverride(VolumeProfile profile)
+    {
+        if (profile == null)
+        {
+            return 0;
+        }
+
+        int token = nextBaseProfileOverrideToken++;
+        if (nextBaseProfileOverrideToken <= 0)
+        {
+            nextBaseProfileOverrideToken = 1;
+        }
+
+        baseProfileOverrides.Add(new BaseProfileOverride { token = token, profile = profile });
+        RefreshBaseProfileImmediately();
+        return token;
+    }
+
+    public void PopBaseProfileOverride(int token)
+    {
+        if (token == 0)
+        {
+            return;
+        }
+
+        for (int index = baseProfileOverrides.Count - 1; index >= 0; index--)
+        {
+            if (baseProfileOverrides[index].token == token)
+            {
+                baseProfileOverrides.RemoveAt(index);
+                RefreshBaseProfileImmediately();
+                return;
+            }
+        }
+    }
+
     public void Reinitialize()
     {
         initialized = false;
@@ -209,9 +254,10 @@ public sealed class EnvironmentManager : MonoBehaviour
 
     private void ResolveBaselineProfile()
     {
-        if (defaultProfile != null)
+        VolumeProfile effectiveDefaultProfile = GetEffectiveDefaultProfile();
+        if (effectiveDefaultProfile != null)
         {
-            EnvironmentRuntimeState.CopyProfile(defaultProfile, baselineProfile);
+            EnvironmentRuntimeState.CopyProfile(effectiveDefaultProfile, baselineProfile);
             return;
         }
 
@@ -303,7 +349,7 @@ public sealed class EnvironmentManager : MonoBehaviour
 
         UpdateZoneWeights(target.position, deltaTime);
         EnvironmentZone bestZone = FindBestZoneFromWeights();
-        VolumeProfile nextProfile = bestZone != null ? bestZone.Profile : defaultProfile;
+        VolumeProfile nextProfile = bestZone != null ? bestZone.Profile : GetEffectiveDefaultProfile();
         float altitudeMultiplier = ResolveAltitudeMultiplier(target.position.y);
 
         if (debugLogging && (currentZone != bestZone || currentProfile != nextProfile))
@@ -330,6 +376,32 @@ public sealed class EnvironmentManager : MonoBehaviour
                 weightedZone.zone.Profile,
                 weightedZone.weight * altitudeMultiplier);
         }
+    }
+
+    private VolumeProfile GetEffectiveDefaultProfile()
+    {
+        for (int index = baseProfileOverrides.Count - 1; index >= 0; index--)
+        {
+            if (baseProfileOverrides[index].profile != null)
+            {
+                return baseProfileOverrides[index].profile;
+            }
+        }
+
+        return defaultProfile;
+    }
+
+    private void RefreshBaseProfileImmediately()
+    {
+        InitializeIfNeeded();
+        if (baselineProfile == null || targetProfile == null)
+        {
+            return;
+        }
+
+        ResolveBaselineProfile();
+        EnvironmentRuntimeState.CopyProfile(baselineProfile, targetProfile);
+        ApplyProfileToVolumes(targetProfile);
     }
 
     private void UpdateZoneWeights(Vector3 position, float deltaTime)

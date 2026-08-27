@@ -20,12 +20,12 @@ MonoBehaviour:
   damages: 5
   lightChargeOnHit: 100
   presentation:
-    entryBlendSeconds: 0.04
+    entryBlendSeconds: 0.05
     chainNormalizedTime: 0.55
     chainTransitionNormalizedTime: 0.66
     mobilityCancelNormalizedTime: 0.35
     recoveryNormalizedTime: 0.68
-    exitBlendSeconds: 0.05
+    exitBlendSeconds: 0.08
     rootMotionMode: 1
     allowAirborneRootMotion: 0
     facingMode: 1
@@ -144,5 +144,14 @@ MonoBehaviour:
     slowMotionTimeScale: 0.85
     slowMotionSeconds: 0.15
   context: 1
-  airborneLandingMode: 0
-  landingAtAnimationSeconds: 0
+  airborneLandingMode: 1
+  airborneLandingHandoff:
+    minimumContactSeconds: 0.15
+    animationExitNormalizedTime: 0.82
+    planarSettledSpeed: 0.14
+    verticalSettledSpeed: 0.2
+    planarDampingPerSecond: 7
+    maximumSettleSeconds: 0.55
+    locomotionBlendSeconds: 0.08
+    preLandingProbeDistance: 1.2
+    preLandingLeadSeconds: 0.14

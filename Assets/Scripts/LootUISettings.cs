@@ -83,6 +83,7 @@ public class LootUISettings : MonoBehaviour
         }
 
         CacheContainerHeaderRefsIfNeeded();
+        ConfigureSlotCursor();
 
         CanvasGroup lootCanvasGroup = GetLootCanvasGroup();
         if (lootCanvasGroup != null && setAlphaToZeroOnStart)
@@ -105,6 +106,7 @@ public class LootUISettings : MonoBehaviour
 
         lootPanel.SetActive(true);
         CacheContainerHeaderRefsIfNeeded();
+        ConfigureSlotCursor();
 
         CanvasGroup lootCanvasGroup = GetLootCanvasGroup();
         if (lootCanvasGroup != null)
@@ -180,6 +182,7 @@ public class LootUISettings : MonoBehaviour
     {
         if (slotCursor != null)
         {
+            ConfigureSlotCursor();
             return slotCursor;
         }
 
@@ -202,7 +205,18 @@ public class LootUISettings : MonoBehaviour
         image.type = Image.Type.Simple;
 
         slotCursor = rect;
+        ConfigureSlotCursor();
         return rect;
+    }
+
+    private void ConfigureSlotCursor()
+    {
+        if (slotCursor == null)
+        {
+            return;
+        }
+
+        UIManager.ConfigureDecorativeCursor(slotCursor, true);
     }
 
     /// <summary>
@@ -432,58 +446,6 @@ public class LootUISettings : MonoBehaviour
         {
             return;
         }
-
-        if (fadeRoutine != null)
-        {
-            StopCoroutine(fadeRoutine);
-        }
-
-        float startAlpha = lootCanvasGroup.alpha;
-        if (duration <= 0f)
-        {
-            lootCanvasGroup.alpha = targetAlpha;
-            if (disableRaycastsWhenHidden)
-            {
-                bool visible = targetAlpha > 0.001f;
-                lootCanvasGroup.interactable = visible;
-                lootCanvasGroup.blocksRaycasts = visible;
-            }
-            return;
-        }
-
-        fadeRoutine = StartCoroutine(FadeRoutine(lootCanvasGroup, startAlpha, targetAlpha, duration));
-    }
-
-    private IEnumerator FadeRoutine(CanvasGroup lootCanvasGroup, float startAlpha, float targetAlpha, float duration)
-    {
-        if (lootCanvasGroup == null)
-        {
-            yield break;
-        }
-
-        float time = 0f;
-
-        if (disableRaycastsWhenHidden)
-        {
-            lootCanvasGroup.interactable = true;
-            lootCanvasGroup.blocksRaycasts = true;
-        }
-
-        while (time < duration)
-        {
-            time += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(time / duration);
-            lootCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            yield return null;
-        }
-
-        lootCanvasGroup.alpha = targetAlpha;
-
-        if (disableRaycastsWhenHidden)
-        {
-            bool visible = targetAlpha > 0.001f;
-            lootCanvasGroup.interactable = visible;
-            lootCanvasGroup.blocksRaycasts = visible;
-        }
+        UIManager.TransitionCanvasGroup(this, lootCanvasGroup, targetAlpha > 0.001f, duration);
     }
 }

@@ -7492,6 +7492,8 @@ GameObject:
   - component: {fileID: 900000000000000016}
   - component: {fileID: 707000000000000003}
   - component: {fileID: 3353001312763717800}
+  - component: {fileID: 1749280591439705950}
+  - component: {fileID: 908605419744601082}
   m_Layer: 0
   m_Name: Juggernaut_Combat
   m_TagString: Untagged
@@ -7527,7 +7529,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
   m_Controller: {fileID: 9100000, guid: 0e4efc510b6b0c94cb63cd144318ac50, type: 2}
-  m_CullingMode: 1
+  m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
@@ -7801,14 +7803,19 @@ MonoBehaviour:
   patrolPoint: {fileID: 0}
   meleeAttackDistance: 2.6
   rangedAttackDistance: 8
-  disengageDistance: 14
-  returnToPatrolAfterSeconds: 5
+  pursuitRadius: 20
+  disengagePauseSeconds: 1
   canPursuePlayer: 1
   alertedVisionDistance: 24
   alertMemorySeconds: 12
   searchLastKnownPositionSeconds: 3
   searchArrivalDistance: 0.65
   meleeAttackPreferencePercent: 70
+  minimumObserveSeconds: 0.18
+  maximumObserveSeconds: 0.48
+  minimumRecoverySeconds: 0.3
+  maximumRecoverySeconds: 0.65
+  logCombatDiagnostics: 0
   patrolArrivalDistance: 0.15
   turnSpeedDegreesPerSecond: 540
   logCinematicPlacementDiagnostics: 1
@@ -7871,6 +7878,55 @@ MonoBehaviour:
   navMeshEdgeClearance: 0.45
   clearanceSearchRadius: 2
   clearanceSearchSamples: 12
+  logDiagnostics: 0
+--- !u!114 &1749280591439705950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aafb55d998795d4b8543500c0fce24f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyTacticalResponseController
+  enemy: {fileID: 900000000000000002}
+  physicsMotor: {fileID: 707000000000000003}
+  locomotion: {fileID: 3353001312763717800}
+  navigationAgent: {fileID: 900000000000000015}
+  animationContract: {fileID: 4532544328156619208}
+  profile:
+    guardChance: 0.12
+    dodgeChance: 0.08
+    reactionMaximumDistance: 3.5
+    reactionMaximumAngle: 110
+    guardCooldownSeconds: 4
+    dodgeCooldownSeconds: 5
+    guardDurationSeconds: 0.58
+    dodgeDurationSeconds: 0.38
+    guardedDamageMultiplier: 0.45
+    dodgeDistance: 1.35
+    guardAnimatorState: Guard
+    dodgeAnimatorState: Dodge
+    transitionSeconds: 0.08
+  logDiagnostics: 0
+--- !u!114 &908605419744601082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07173d5038820864f81c9ee7bcefaad3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackRecoverySafety
+  enemy: {fileID: 900000000000000002}
+  physicsMotor: {fileID: 707000000000000003}
+  enemySkills: {fileID: 900000000000000017}
+  extraRecoverySeconds: 1
   logDiagnostics: 0
 --- !u!1 &6708470238108833500
 GameObject:

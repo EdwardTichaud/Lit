@@ -218,8 +218,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Zone
   flameConsumes: 1
-  zoneAudioProfile: {fileID: 11400000, guid: 29f8ea4e5868a8e4091fd79f8f21a0ef, type: 2}
-  playZoneMusic: 1
+  zoneAudioProfile: {fileID: 0}
+  playZoneMusic: 0
   zoneMusic: {fileID: 0}
   isMaison: 0
   maisonArrivalDistance: 0.1

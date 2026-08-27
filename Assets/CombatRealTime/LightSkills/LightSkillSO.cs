@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Serialization;
 using UnityEngine.Timeline;
 
 [System.Serializable]
@@ -23,8 +24,9 @@ public sealed class LightSkillSO : ScriptableObject
     [SerializeField] private string displayName = "Light Skill";
     [SerializeField] private Sprite icon;
 
-    [Header("Charge")]
-    [SerializeField, Min(1f)] private float requiredCharge = 100f;
+    [Header("Clarte")]
+    [FormerlySerializedAs("requiredCharge")]
+    [SerializeField, Min(1f)] private float requiredClarity = 100f;
 
     [Header("Cinematic Resolution")]
     [SerializeField] private PlayableAsset timeline;
@@ -37,14 +39,15 @@ public sealed class LightSkillSO : ScriptableObject
     [SerializeField] private string enemyAnimatorTrackName = "Enemy.Animator";
     [Tooltip("Nom de la piste Cinemachine de la Timeline.")]
     [SerializeField] private string cinemachineTrackName = "Cinemachine";
-    [SerializeField, Min(0.1f), Tooltip("Portee maximale entre Lucian et la cible au lancement de la cinematic.")]
+    [SerializeField, Min(0f), Tooltip("Distance horizontale minimale entre Lucian et la cible au lancement de la cinematic.")]
+    private float minimumCinematicStartDistance;
+    [SerializeField, Min(0.1f), Tooltip("Distance horizontale maximale entre Lucian et la cible au lancement de la cinematic.")]
     private float maximumCinematicStartDistance = 18f;
     [Header("Cinematic Audio")]
     [SerializeField] private AudioClipSO startSfx;
     [SerializeField] private AudioClipSO impulseSfx;
     [SerializeField] private AudioClipSO impactSfx;
     [SerializeField, Min(0)] private int damage = 50;
-    [SerializeField, Min(0f)] private float clarityGain = 15f;
     [Tooltip("Active l'impact a l'arret de la Timeline si aucun Signal n'a appele ResolveLightSkillImpact.")]
     [SerializeField] private bool resolveDamageWhenTimelineStops = true;
 
@@ -72,18 +75,18 @@ public sealed class LightSkillSO : ScriptableObject
 
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public Sprite Icon => icon;
-    public float RequiredCharge => requiredCharge;
+    public float RequiredClarity => requiredClarity;
     public PlayableAsset Timeline => timeline;
     public CombatCinematicRig CombatCinematicRigPrefab => combatCinematicRigPrefab;
     public string PlayerAnimatorTrackName => playerAnimatorTrackName;
     public string EnemyAnimatorTrackName => enemyAnimatorTrackName;
     public string CinemachineTrackName => cinemachineTrackName;
-    public float MaximumCinematicStartDistance => maximumCinematicStartDistance;
+    public float MinimumCinematicStartDistance => Mathf.Min(minimumCinematicStartDistance, maximumCinematicStartDistance);
+    public float MaximumCinematicStartDistance => Mathf.Max(minimumCinematicStartDistance, maximumCinematicStartDistance);
     public AudioClipSO StartSfx => startSfx;
     public AudioClipSO ImpulseSfx => impulseSfx;
     public AudioClipSO ImpactSfx => impactSfx;
     public int Damage => damage;
-    public float ClarityGain => clarityGain;
     public bool ResolveDamageWhenTimelineStops => resolveDamageWhenTimelineStops;
     public LightSkillPostTimelineState PostTimelinePlayerState => postTimelinePlayerState;
     public LightSkillPostTimelineState PostTimelineEnemyState => postTimelineEnemyState;
@@ -97,4 +100,16 @@ public sealed class LightSkillSO : ScriptableObject
     public SignalAsset LaunchProjectileSignal => launchProjectileSignal;
     public SignalAsset SpawnImpactVfxSignal => spawnImpactVfxSignal;
     public SignalAsset ResolveDamageSignal => resolveDamageSignal;
+
+    public bool IsWithinCinematicStartRange(float horizontalDistance)
+    {
+        return horizontalDistance >= MinimumCinematicStartDistance &&
+               horizontalDistance <= MaximumCinematicStartDistance;
+    }
+
+    private void OnValidate()
+    {
+        minimumCinematicStartDistance = Mathf.Max(0f, minimumCinematicStartDistance);
+        maximumCinematicStartDistance = Mathf.Max(minimumCinematicStartDistance, maximumCinematicStartDistance);
+    }
 }

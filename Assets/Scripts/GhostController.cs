@@ -334,7 +334,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private float outlineVisibleDissolveThreshold = 0.5f;
     [SerializeField, Tooltip("When enabled, lower dissolve values are considered visible for runtime outlines.")]
     private bool outlineVisibleBelowDissolveThreshold = true;
-    [SerializeField, Tooltip("Affiche l'outline tant que le fantome est revele, meme avant sa selection par le detecteur d'interaction.")]
+    [SerializeField, Tooltip("Autorise l'outline du fantome lorsqu'il est la cible interactive actuellement la plus proche du joueur.")]
     private bool outlineWhileGhostIsRevealed = true;
     [SerializeField, Min(0.1f), Tooltip("Distance maximale tres proche a laquelle l'outline du fantome est visible.")]
     private float ghostOutlineActivationDistance = 1.35f;
@@ -372,7 +372,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private readonly List<CharacterEffect> resolvedProximityCharacterEffects = new List<CharacterEffect>();
     private readonly HashSet<Renderer> proximityPresentationRendererSet = new HashSet<Renderer>();
     private readonly HashSet<CharacterEffect> proximityCharacterEffectSet = new HashSet<CharacterEffect>();
-    private readonly List<RuntimeOutlineTarget> ghostRuntimeOutlineTargets = new List<RuntimeOutlineTarget>();
     // Unity can restore a component without running field initializers after a domain reload.
     // Keep this lazily-created instead of assuming the initializer is always available.
     private MaterialPropertyBlock proximityPresentationPropertyBlock;
@@ -404,7 +403,6 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private bool ghostVisibilityRenderersResolved;
     private bool ghostRenderersVisible;
     private bool hasAppliedGhostRendererVisibility;
-    private bool ghostRuntimeOutlineWasApplied;
     private float currentProximityFresnelTexturePower = float.NaN;
     private float targetProximityFresnelTexturePower = float.NaN;
     private bool proximityPresentationResolved;
@@ -426,7 +424,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     public IReadOnlyList<GhostResolutionActionBinding> ResolutionActionBindings => resolutionActionBindings;
     public bool HasAppearedToPlayer => hasAppearedToPlayer;
     public bool IsRevealedToPlayer => isRevealedToPlayer;
-    public bool AllowsRuntimeOutline => isRevealedToPlayer &&
+    public bool AllowsRuntimeOutline => outlineWhileGhostIsRevealed &&
+                                        isRevealedToPlayer &&
                                         ghostRenderersVisible &&
                                         CanAppearAtAll() &&
                                         IsControlledPlayerWithinGhostOutlineRange();
@@ -594,12 +593,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         RefreshRevealStateForCharacter(character, updateDissolve: false, instantDissolve: false);
         bool interactionAvailable = ShouldShowInteractionFor(character);
         ShowInteraction(interactionAvailable);
-        if (interactionAvailable && isRevealedToPlayer)
-        {
-            RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
-            RuntimeOutlineSelectionManager.SetActiveInteractable(this);
-        }
-        else if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
+        if (!interactionAvailable && RuntimeOutlineSelectionManager.IsActiveInteractable(this))
         {
             RuntimeOutlineSelectionManager.Clear();
         }
@@ -1301,38 +1295,13 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void RefreshRuntimeOutlineVisibility()
     {
-        bool shouldOutline = outlineWhileGhostIsRevealed && AllowsRuntimeOutline;
-        SetGhostRuntimeOutlineVisible(shouldOutline);
-
+        // Runtime outlines are owned by RuntimeOutlineSelectionManager. A
+        // revealed ghost must never force its own outline, otherwise it can
+        // visually override a closer item, flame, door, or another ghost.
         if (RuntimeOutlineSelectionManager.IsActiveInteractable(this))
         {
             RuntimeOutlineSelectionManager.RefreshActiveInteractable();
         }
-    }
-
-    private void SetGhostRuntimeOutlineVisible(bool visible)
-    {
-        if (!visible && !ghostRuntimeOutlineWasApplied)
-        {
-            return;
-        }
-
-        RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
-        ghostRuntimeOutlineTargets.Clear();
-        RuntimeOutlineTarget[] targets = GetComponentsInChildren<RuntimeOutlineTarget>(true);
-        for (int i = 0; i < targets.Length; i++)
-        {
-            RuntimeOutlineTarget target = targets[i];
-            if (target == null)
-            {
-                continue;
-            }
-
-            target.SetOutlined(visible);
-            ghostRuntimeOutlineTargets.Add(target);
-        }
-
-        ghostRuntimeOutlineWasApplied = visible;
     }
 
     private bool HasVisibleRuntimeOutlineDissolve()

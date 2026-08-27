@@ -44,6 +44,7 @@ public class InfoBoxUI : MonoBehaviour
     private bool layoutSaved;
     private bool restoreLayoutAfterHide;
     private bool isShowing;
+    private bool holdsInputFocus;
     private int shownFrame = -1;
     private Action onHiddenCallback;
 
@@ -95,7 +96,7 @@ public class InfoBoxUI : MonoBehaviour
     private void OnDisable()
     {
         LocalInputRouter.Interact -= OnInteractPerformed;
-        InputFocusStack.Pop(this);
+        ReleaseInputFocus();
         isShowing = false;
         InvokeAndClearHiddenCallback();
     }
@@ -134,6 +135,32 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         return ui.ShowMessage(message, duration, onHidden);
+    }
+
+    /// <summary>
+    /// Affiche un retour bref sans interrompre le deplacement. A utiliser pour
+    /// les confirmations d'action (ramassage, depot, etc.), pas les dialogues.
+    /// </summary>
+    public static bool TryShowToast(string message, float duration = 0f)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        InfoBoxUI ui = Instance;
+        if (ui == null)
+        {
+            ui = FindAnyObjectByType<InfoBoxUI>();
+        }
+
+        if (ui == null)
+        {
+            GameObject runner = new GameObject("InfoBoxUI_Runtime");
+            ui = runner.AddComponent<InfoBoxUI>();
+        }
+
+        return ui.ShowMessageInternal(message, duration, null, blocksGameplayInput: false);
     }
 
     public static bool TryShowTopLeft(string message, float duration = 0f)
@@ -195,6 +222,11 @@ public class InfoBoxUI : MonoBehaviour
 
     public bool ShowMessage(string message, float duration, Action onHidden)
     {
+        return ShowMessageInternal(message, duration, onHidden, blocksGameplayInput: true);
+    }
+
+    private bool ShowMessageInternal(string message, float duration, Action onHidden, bool blocksGameplayInput)
+    {
         if (string.IsNullOrWhiteSpace(message))
         {
             return false;
@@ -228,9 +260,14 @@ public class InfoBoxUI : MonoBehaviour
 
         isShowing = true;
         shownFrame = Time.frameCount;
-        InputFocusStack.Push(this);
+        ReleaseInputFocus();
+        if (blocksGameplayInput)
+        {
+            InputFocusStack.Push(this);
+            holdsInputFocus = true;
+        }
 
-        if (requireInteractToClose)
+        if (blocksGameplayInput && requireInteractToClose)
         {
             hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
         }
@@ -275,7 +312,7 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         isShowing = false;
-        InputFocusStack.Pop(this);
+        ReleaseInputFocus();
         InvokeAndClearHiddenCallback();
     }
 
@@ -323,7 +360,7 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         isShowing = false;
-        InputFocusStack.Pop(this);
+        ReleaseInputFocus();
         hideRoutine = null;
         InvokeAndClearHiddenCallback();
     }
@@ -377,8 +414,19 @@ public class InfoBoxUI : MonoBehaviour
         }
 
         isShowing = false;
-        InputFocusStack.Pop(this);
+        ReleaseInputFocus();
         hideRoutine = StartCoroutine(HideManualRoutine());
+    }
+
+    private void ReleaseInputFocus()
+    {
+        if (!holdsInputFocus)
+        {
+            return;
+        }
+
+        holdsInputFocus = false;
+        InputFocusStack.Pop(this);
     }
 
     private IEnumerator HideManualRoutine()

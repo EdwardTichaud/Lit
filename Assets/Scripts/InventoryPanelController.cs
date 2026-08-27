@@ -1685,6 +1685,30 @@ public class InventoryPanelController : MonoBehaviour
 
     private bool OpenReadableItem(Item item)
     {
+        return OpenReadableItem(item, LocalPlayerUtils.GetControlledCharacter());
+    }
+
+    /// <summary>Ouvre un document de decor sans l'ajouter a l'inventaire.</summary>
+    public bool TryOpenReadableItemFromWorld(Item item, GameObject revealer)
+    {
+        if (item == null || !item.IsReadable())
+        {
+            return false;
+        }
+
+        if (item.IsReadableStab())
+        {
+            KnowledgeReveal.Reveal(item.knowledgeUnlockedOnRead, revealer, "stab");
+            string text = item.GetParchmentText().Trim();
+            return !string.IsNullOrWhiteSpace(text) && DialoguePanelUI.TryShow($"« {text} »");
+        }
+
+        OpenReadableItem(item, revealer);
+        return readablePanelOpen;
+    }
+
+    private bool OpenReadableItem(Item item, GameObject revealer)
+    {
         if (item == null || !item.IsReadable())
         {
             return false;
@@ -1697,7 +1721,7 @@ public class InventoryPanelController : MonoBehaviour
         }
 
         DistrictRegistryReadable.RefreshReadableItemForCurrentTemporalContext(item);
-        UnlockReadableKnowledge(item);
+        UnlockReadableKnowledge(item, revealer);
 
         HideActionBoxImmediate();
         readableItem = item;
@@ -1741,14 +1765,14 @@ public class InventoryPanelController : MonoBehaviour
         return false;
     }
 
-    private void UnlockReadableKnowledge(Item item)
+    private void UnlockReadableKnowledge(Item item, GameObject revealer)
     {
         if (item == null || item.knowledgeUnlockedOnRead == null || item.knowledgeUnlockedOnRead.Count == 0)
         {
             return;
         }
 
-        KnowledgeReveal.Reveal(item.knowledgeUnlockedOnRead, LocalPlayerUtils.GetControlledCharacter(), "readable");
+        KnowledgeReveal.Reveal(item.knowledgeUnlockedOnRead, revealer, "readable");
     }
 
     private void CloseReadablePanel()

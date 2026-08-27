@@ -82,8 +82,8 @@ public sealed class LightSkillPanelController : MonoBehaviour
         if (chargeSlider != null)
         {
             chargeSlider.minValue = 0f;
-            chargeSlider.maxValue = controller != null ? controller.RequiredCharge : 1f;
-            chargeSlider.SetValueWithoutNotify(controller != null ? controller.Charge : 0f);
+            chargeSlider.maxValue = controller != null ? controller.RequiredClarity : 1f;
+            chargeSlider.SetValueWithoutNotify(controller != null ? controller.Clarity : 0f);
         }
 
         if (fillImage != null)

@@ -245,3 +245,23 @@ Assets/Audio/Musics/\[Music\]\[Starfox Adventures\] Krazoa Palace - Ambience.mp3
 Assets/Environment/Prefabs_Ice/Model/Mesh_IceEdges_Model.asset.meta
 Assets/Environment/Prefabs_Ice/Model/Mesh_IceEdges_Model.asset
 .codex-temp/
+Assets/North Ember Studios/Old Barn/Barn/Material/Wood/Displacement.exr
+Assets/North Ember Studios/Old Barn/Barn/Material/Metal/Displacement.exr
+Assets/North Ember Studios/Old Barn/Barn/Material/Wood/Displacement.exr.meta
+Assets/North Ember Studios/Terrain/Model/Material/Bark/Bark_Displacement.exr
+Assets/North Ember Studios/Old Barn/Barn/Material/Metal/Displacement.exr.meta
+Assets/North Ember Studios/Terrain/Model/Material/Bark/Bark_Displacement.exr.meta
+Assets/North Ember Studios/Terrain/Layer/GroundMoist/Ground/Ground_Displacement.exr
+Assets/North Ember Studios/Terrain/Layer/GroundMoist/Ground/Ground_Displacement.exr.meta
+Assets/North Ember Studios/Terrain/Model/Material/coniferous/coniferous_Displacement.exr
+Assets/North Ember Studios/Terrain/Model/Material/coniferous/coniferous_Displacement.exr.meta
+Assets/North Ember Studios/Terrain/Model/Material/Bark/Bark_Specular.png
+Assets/North Ember Studios/Terrain/Model/Material/Bark/Bark_Specular.png.meta
+Assets/North Ember Studios/Terrain/Layer/GroundMoist/Ground/Ground_Specular.png
+Assets/North Ember Studios/Terrain/Layer/GroundMoist/Ground/Ground_Specular.png.meta
+Assets/North Ember Studios/Terrain/Model/Material/coniferous/coniferous_Specular.png
+Assets/North Ember Studios/Terrain/Model/Material/coniferous/coniferous_Specular.png.meta
+Assets/Audio/AudioClips/AudioClip_Ambiance_Exploration.asset
+Assets/Editor/Tests/UiPanelTests.cs.meta
+Assets/Environment/1_Volumes/Settings/SkyandFogSettingsProfile.asset
+Assets/CombatRealTime/Enemies/Editor/JuggernautCombatSetupUtility.cs.meta

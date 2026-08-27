@@ -46,7 +46,6 @@ public class QuantityBox : MonoBehaviour
 
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
-    private Coroutine fadeRoutine;
     private Coroutine pumpLeftRoutine;
     private Coroutine pumpRightRoutine;
 
@@ -453,39 +452,7 @@ public class QuantityBox : MonoBehaviour
             return;
         }
 
-        if (fadeRoutine != null)
-        {
-            StopCoroutine(fadeRoutine);
-        }
-
-        float startAlpha = canvasGroup.alpha;
-        if (duration <= 0f)
-        {
-            SetAlpha(targetAlpha);
-            return;
-        }
-
-        fadeRoutine = StartCoroutine(FadeRoutine(startAlpha, targetAlpha, duration));
-    }
-
-    private IEnumerator FadeRoutine(float startAlpha, float targetAlpha, float duration)
-    {
-        float time = 0f;
-        if (disableRaycastsWhenHidden)
-        {
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
-
-        while (time < duration)
-        {
-            time += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(time / duration);
-            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            yield return null;
-        }
-
-        SetAlpha(targetAlpha);
+        UIManager.TransitionCanvasGroup(this, canvasGroup, targetAlpha > 0.001f, duration);
     }
 
     private void SetAlpha(float alpha)

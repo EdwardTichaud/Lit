@@ -48,6 +48,8 @@ public partial class LitOpsiveLocomotionBridge
     [SerializeField, Min(0f)] private float groundedAnimatorTurnRate = 5.4f;
     [SerializeField, Range(0f, 1f)] private float groundedTurnInPlaceThreshold = 0.55f;
     [SerializeField, Min(0f)] private float groundedTurnInPlaceMaxSpeed = 0.35f;
+    [SerializeField, Tooltip("Plays authored stationary turn clips. Keep disabled for exploration: direction changes stay in the locomotion loop and the body turns progressively with movement.")]
+    private bool enableGroundedTurnInPlaceClips = false;
     [SerializeField, Min(0f)] private float groundedStopTriggerMinSpeed = 0.48f;
     [SerializeField, Min(0f), Tooltip("Input-release stability required before requesting the authored stop clip.")]
     private float groundedStopRequestDelay = 0.06f;
@@ -62,8 +64,8 @@ public partial class LitOpsiveLocomotionBridge
     private float groundedMoveTransitionParameterSpeed = 1.22f;
     [SerializeField, Tooltip("Keeps grounded locomotion on forward clips only; rotation turns the character instead of blending strafe/backward clips.")]
     private bool useForwardOnlyGroundedLocomotion = true;
-    [SerializeField, Tooltip("Uses root-motion turn clips when movement starts from a sharp angle change.")]
-    private bool enableRootMotionPivotTurns = true;
+    [SerializeField, Tooltip("Uses root-motion turn clips when movement starts from a sharp angle change. Disabled by default because exploration direction changes must keep moving instead of pivoting on the spot.")]
+    private bool enableRootMotionPivotTurns = false;
     [SerializeField, Range(45f, 180f)] private float groundedPivotMinAngle = 85f;
     [SerializeField, Range(90f, 180f)] private float groundedPivot180Angle = 135f;
     [SerializeField, Tooltip("Snaps starts from rest toward the requested direction instead of playing turn-in-place clips.")]
@@ -429,7 +431,7 @@ public partial class LitOpsiveLocomotionBridge
         SetAnimatorBool(isMovingParam, shouldAnimateMoving);
         SetAnimatorFloat(locomotionTierParam, ResolveGroundedLocomotionTier());
         SetAnimatorFloat(turnParam, groundedPresentationTurn);
-        SetAnimatorBool(turnInPlaceParam, ShouldGroundedTurnInPlace(speed, targetTurn));
+        SetAnimatorBool(turnInPlaceParam, enableGroundedTurnInPlaceClips && ShouldGroundedTurnInPlace(speed, targetTurn));
         RecordLocomotionSample(speed);
         return true;
     }

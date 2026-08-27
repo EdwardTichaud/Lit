@@ -7,7 +7,7 @@ using UnityEngine;
 public static class LucianJumpAnimatorRepairUtility
 {
     private const string ControllerPath = "Assets/Characters/4_Animations/Player_Model.controller";
-    private const string SessionRepairKey = "Lit.LucianJumpAnimatorRepair.Completed.RollV1";
+    private const string SessionRepairKey = "Lit.LucianJumpAnimatorRepair.Completed.TakeoffFeelV3";
 
     static LucianJumpAnimatorRepairUtility()
     {
@@ -42,11 +42,10 @@ public static class LucianJumpAnimatorRepairUtility
         AnimatorState locomotion = FindState(baseLayer, "Locomotion");
         AnimatorState jumpStart = FindState(baseLayer, "Jump_Start");
         AnimatorState jumpLoop = FindState(baseLayer, "Jump_Loop");
-        AnimatorState falling = FindState(baseLayer, "Falling");
-        AnimatorState landing = FindState(baseLayer, "Landing");
+        AnimatorState jumpEnd = FindState(baseLayer, "Jump_End");
         AnimatorState hardLanding = FindState(baseLayer, "Landing_Hard");
         AnimatorState jumpRoll = FindState(baseLayer, "Jump_Roll");
-        if (locomotion == null || jumpStart == null || jumpLoop == null || falling == null || landing == null || hardLanding == null || jumpRoll == null)
+        if (locomotion == null || jumpStart == null || jumpLoop == null || jumpEnd == null || hardLanding == null || jumpRoll == null)
         {
             Debug.LogError("Lucian jump repair could not resolve every required Animator state.");
             return;
@@ -62,42 +61,32 @@ public static class LucianJumpAnimatorRepairUtility
 
         ClearTransitions(jumpStart);
         ClearTransitions(jumpLoop);
-        ClearTransitions(falling);
-        ClearTransitions(landing);
+        ClearTransitions(jumpEnd);
         ClearTransitions(hardLanding);
         ClearTransitions(jumpRoll);
         ClearJumpAnyStateTransitions(baseLayer);
 
         AddAnyStateTransition(baseLayer, jumpStart, "JumpStartTrigger", "JumpPresentationActive", 0f);
         AnimatorStateTransition startToLoop = jumpStart.AddTransition(jumpLoop);
-        startToLoop.hasExitTime = false;
+        // Keep a visible anticipation phase even though UCC has already
+        // accepted the input. The jump stays responsive physically while the
+        // presentation carries the weight of the takeoff into Jump_Loop.
+        startToLoop.hasExitTime = true;
+        startToLoop.exitTime = 0.38f;
         startToLoop.hasFixedDuration = true;
-        startToLoop.duration = 0.05f;
+        startToLoop.duration = 0.08f;
         startToLoop.AddCondition(AnimatorConditionMode.If, 0f, "IsAirborne");
 
-        AnimatorStateTransition startToFalling = jumpStart.AddTransition(falling);
-        startToFalling.hasExitTime = false;
-        startToFalling.hasFixedDuration = true;
-        startToFalling.duration = 0.05f;
-        startToFalling.AddCondition(AnimatorConditionMode.Equals, 3f, "JumpPhase");
-
-        AnimatorStateTransition loopToFalling = jumpLoop.AddTransition(falling);
-        loopToFalling.hasExitTime = false;
-        loopToFalling.hasFixedDuration = true;
-        loopToFalling.duration = 0.05f;
-        loopToFalling.AddCondition(AnimatorConditionMode.Equals, 3f, "JumpPhase");
-
-        AddLandingTransition(baseLayer, landing, AnimatorConditionMode.Less, 0.5f);
+        AddLandingTransition(baseLayer, jumpEnd, AnimatorConditionMode.Less, 0.5f);
         AddLandingTransition(baseLayer, hardLanding, AnimatorConditionMode.Greater, 0.5f);
         AddRollTransition(baseLayer, jumpRoll);
-        AddExitTransition(landing, locomotion, 0.28f, 0.08f);
-        AddExitTransition(hardLanding, locomotion, 0.65f, 0.1f);
-        AddExitTransition(jumpRoll, locomotion, 0.75f, 0.08f);
+        AddExitTransition(jumpEnd, locomotion, 0.82f, 0.12f);
+        AddExitTransition(hardLanding, locomotion, 0.82f, 0.12f);
+        AddExitTransition(jumpRoll, locomotion, 0.82f, 0.1f);
 
         AddTraceBehaviour(jumpStart);
         AddTraceBehaviour(jumpLoop);
-        AddTraceBehaviour(falling);
-        AddTraceBehaviour(landing);
+        AddTraceBehaviour(jumpEnd);
         AddTraceBehaviour(hardLanding);
         AddTraceBehaviour(jumpRoll);
 
@@ -115,10 +104,10 @@ public static class LucianJumpAnimatorRepairUtility
         AnimatorStateMachine baseLayer = controller != null ? controller.layers[0].stateMachine : null;
         bool parametersValid = controller != null && new[] { "JumpStartTrigger", "LandingTrigger", "JumpRollTrigger", "JumpPresentationActive", "IsAirborne", "JumpPhase", "LandingType" }
             .All(name => controller.parameters.Any(parameter => parameter.name == name));
-        bool statesValid = baseLayer != null && new[] { "Jump_Start", "Jump_Loop", "Falling", "Landing", "Landing_Hard", "Jump_Roll", "Locomotion" }
+        bool statesValid = baseLayer != null && new[] { "Jump_Start", "Jump_Loop", "Jump_End", "Landing_Hard", "Jump_Roll", "Locomotion" }
             .All(name => FindState(baseLayer, name) != null);
         bool landingRouteValid = baseLayer != null && baseLayer.anyStateTransitions.Any(transition =>
-            transition.destinationState != null && transition.destinationState.name == "Landing" &&
+            transition.destinationState != null && transition.destinationState.name == "Jump_End" &&
             transition.conditions.Any(condition => condition.parameter == "LandingTrigger"));
         bool rollRouteValid = baseLayer != null && baseLayer.anyStateTransitions.Any(transition =>
             transition.destinationState != null && transition.destinationState.name == "Jump_Roll" &&

@@ -26,6 +26,10 @@ MonoBehaviour:
   postLoadingScenes: []
   primarySceneName: Maison_Core
   loadingMessage: On est jamais mieux que chez soi...
+  volumeProfile: {fileID: 11400000, guid: 033ede440f4a6944e91efbd246efb805, type: 2}
+  music: {fileID: 11400000, guid: d50df96919533cf42bdd8c5c11edc6ff, type: 2}
+  ambience: {fileID: 0}
+  presentationAudioFadeDuration: 1
   loadingSceneNames:
   - Maison_Global_Lights
   - Maison_Flammes

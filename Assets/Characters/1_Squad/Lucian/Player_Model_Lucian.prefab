@@ -8518,6 +8518,7 @@ MonoBehaviour:
   groundedAnimatorTurnRate: 5.4
   groundedTurnInPlaceThreshold: 0.55
   groundedTurnInPlaceMaxSpeed: 0.35
+  enableGroundedTurnInPlaceClips: 0
   groundedStopTriggerMinSpeed: 0.48
   groundedStopRequestDelay: 0.06
   groundedStopSettledSpeed: 0.06
@@ -8526,7 +8527,7 @@ MonoBehaviour:
   groundedMoveTransitionDirectionHoldTime: 0.18
   groundedMoveTransitionParameterSpeed: 1.22
   useForwardOnlyGroundedLocomotion: 1
-  enableRootMotionPivotTurns: 1
+  enableRootMotionPivotTurns: 0
   groundedPivotMinAngle: 85
   groundedPivot180Angle: 135
   groundedSnapStationaryTurn: 0
@@ -8570,7 +8571,7 @@ MonoBehaviour:
   orientationInputDeadZone: 0.14
   orientationWalkTurnRate: 360
   orientationSprintTurnRate: 300
-  orientationSharpTurnRate: 540
+  orientationSharpTurnRate: 300
   orientationSharpTurnAngle: 92
   orientationVelocityBlend: 0.1
   squadController: {fileID: 0}
@@ -8581,6 +8582,10 @@ MonoBehaviour:
   animator: {fileID: 963045829911085934}
   animatorMonitor: {fileID: 0}
   jumpPresentationController: {fileID: 9120017462384659012}
+  logScriptedTraversalDiagnostics: 0
+  scriptedTraversalDiagnosticTickInterval: 8
+  scriptedTraversalExternalCorrectionDistance: 0.02
+  scriptedTraversalExternalCorrectionDegrees: 1
   driveFromSquadFacade: 1
   overrideOpsiveHandlerInput: 1
   orientLookSourceFromMovement: 1
@@ -8691,14 +8696,25 @@ MonoBehaviour:
   airborneParam: IsAirborne
   phaseParam: JumpPhase
   landingTypeParam: LandingType
-  landingLockSeconds: 0.25
-  rollLockSeconds: 0.48
+  jumpEndStateName: Jump_End
+  hardLandingStateName: Landing_Hard
+  jumpRollStateName: Jump_Roll
+  landingHandoff:
+    minimumContactSeconds: 0.15
+    animationExitNormalizedTime: 0.82
+    planarSettledSpeed: 0.12
+    verticalSettledSpeed: 0.2
+    planarDampingPerSecond: 7
+    maximumSettleSeconds: 0.55
+    locomotionBlendSeconds: 0.12
+    preLandingProbeDistance: 1.2
+    preLandingLeadSeconds: 0.14
   hardLandingHeight: 3
   rollForwardInputThreshold: 0.55
   landingRollInputMemorySeconds: 0.2
   apexVelocityThreshold: 0.7
   apexGravityMultiplier: 0.35
-  descentGravityMultiplier: 0.75
+  descentGravityMultiplier: 1
   debugTrace: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:

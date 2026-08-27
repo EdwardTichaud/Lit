@@ -57,6 +57,21 @@ EditorBuildSettings:
     path: Assets/Scenes/District_1/District_1_Enigme_Luc.unity
     guid: 007201eb6f185f94faeb3a7aa9e0ff3b
   - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Enigme_Gustave.unity
+    guid: 64701f04d526a1c4aa201eed04716e09
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Enigme_Levers.unity
+    guid: 3ee62994e0e4b9545b270a05b43473ee
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Interactives.unity
+    guid: d053c1550a1973a44b3198c10a3c5768
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Enemies.unity
+    guid: 4ed6ce414acbf9b4f920e536fdfdf360
+  - enabled: 1
+    path: Assets/Scenes/District_1/District_1_Sequences.unity
+    guid: af9b246b67e7e3c4f9396e2e547fc250
+  - enabled: 1
     path: Assets/Scenes/District_1/District_1_Rooms_Flammes.unity
     guid: d36b2c156b097be4cbcf48af8bcc44e3
   - enabled: 1
@@ -66,7 +81,7 @@ EditorBuildSettings:
     path: Assets/Scenes/District_1/District_1_Crypt_Flammes.unity
     guid: 283714d43f84dcb488a9aa5f3952db1e
   - enabled: 1
-    path: Assets/Scenes/District_1/District_1_Arena_Enemies.unity
+    path: Assets/Scenes/District_1/District_1_Enemies.unity
     guid: 6f707f864cc6ecd40a182bedabf7a0ee
   - enabled: 1
     path: Assets/Scenes/Maison/Maison_Core.unity

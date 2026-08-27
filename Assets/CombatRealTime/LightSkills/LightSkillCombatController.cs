@@ -12,14 +12,13 @@ public sealed class LightSkillCombatController : MonoBehaviour
     [SerializeField, Min(0.25f), Tooltip("Delai de securite ajoute a la duree de la Timeline avant de restituer le controle si son rappel de fin n'arrive pas.")]
     private float cinematicCompletionGraceSeconds = 1.5f;
 
-    private float charge;
     private bool cinematicPlaying;
     private bool impactResolved;
     private bool playerLockHeld;
     private bool finishingCinematic;
     private SpiritBondController activeLightSkillBond;
     private bool usingPooledRig;
-    private float chargeBeforeCinematic;
+    private float claritySpentForCinematic;
     private Coroutine cinematicCompletionWatchdog;
     private Coroutine locomotionHandoffRoutine;
     private int cinematicSessionToken;
@@ -27,9 +26,9 @@ public sealed class LightSkillCombatController : MonoBehaviour
     public event System.Action StateChanged;
 
     public LightSkillSO LightSkill => lightSkill;
-    public float Charge => charge;
-    public float RequiredCharge => lightSkill != null ? lightSkill.RequiredCharge : 1f;
-    public bool IsReady => lightSkill != null && charge >= RequiredCharge;
+    public float Clarity => combatManager != null ? combatManager.Clarity : 0f;
+    public float RequiredClarity => lightSkill != null ? lightSkill.RequiredClarity : 1f;
+    public bool IsReady => lightSkill != null && combatManager != null && Clarity >= RequiredClarity;
     public bool IsCombatActive => combatManager != null && combatManager.IsCombatActive;
     public bool IsCinematicPlaying => cinematicPlaying;
 
@@ -73,12 +72,12 @@ public sealed class LightSkillCombatController : MonoBehaviour
     public bool TryUseLightSkill()
     {
         ResolveReferences();
-        Trace("Tentative | charge=" + charge + "/" + RequiredCharge +
+        Trace("Tentative | clarte=" + Clarity + "/" + RequiredClarity +
               " | combat=" + IsCombatActive + " | verrou=" + (combatManager != null && combatManager.LockedEnemy != null) +
               " | rig=" + (lightSkill != null && lightSkill.CombatCinematicRigPrefab != null ? lightSkill.CombatCinematicRigPrefab.name : "None") + ".");
         if (cinematicPlaying) return Reject("LightSkill deja en cours.");
         if (lightSkill == null) return Reject("Aucune LightSkill n'est assignee.");
-        if (!IsReady) return Reject("Charge de lumiere insuffisante.");
+        if (!IsReady) return Reject("Clarte insuffisante.");
         if (combatManager == null || !combatManager.IsCombatActive) return Reject("Combat non actif.");
         if (combatManager.LockedEnemy == null) return Reject("Aucun ennemi verrouille.");
         if (lightSkill.CombatCinematicRigPrefab == null)
@@ -100,9 +99,18 @@ public sealed class LightSkillCombatController : MonoBehaviour
         Transform target = combatManager.LockedEnemy.LockPoint != null
             ? combatManager.LockedEnemy.LockPoint
             : combatManager.LockedEnemy.transform;
-        if (player == null || target == null || HorizontalDistance(player.position, target.position) > lightSkill.MaximumCinematicStartDistance)
+        if (player == null || target == null)
         {
-            return Reject("La cible est trop loin pour cette LightSkill.");
+            return Reject("La position de depart de cette LightSkill est introuvable.");
+        }
+
+        float startDistance = HorizontalDistance(player.position, target.position);
+        if (!lightSkill.IsWithinCinematicStartRange(startDistance))
+        {
+            string reason = startDistance < lightSkill.MinimumCinematicStartDistance
+                ? "La cible est trop proche pour cette LightSkill."
+                : "La cible est trop loin pour cette LightSkill.";
+            return Reject(reason);
         }
 
         CombatCinematicContext context = new CombatCinematicContext(combatManager, lightSkill, ResolveLightSkillImpact);
@@ -117,12 +125,16 @@ public sealed class LightSkillCombatController : MonoBehaviour
               " | player=" + placement.PlayerPosition + " rot=" + placement.PlayerRotation.eulerAngles +
               " | enemy=" + placement.EnemyPosition + " rot=" + placement.EnemyRotation.eulerAngles + ".");
 
+        if (!combatManager.TrySpendClarity(RequiredClarity))
+        {
+            return Reject("Clarte insuffisante.");
+        }
+
         activeLightSkillBond = SpiritBondController.FindForCharacter(combatManager.PlayerRoot.gameObject);
         activeLightSkillBond?.BeginLightSkillFusion();
         cinematicPlaying = true;
         impactResolved = false;
-        chargeBeforeCinematic = charge;
-        charge = 0f;
+        claritySpentForCinematic = RequiredClarity;
         combatManager.CancelPlayerActionForCinematic();
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
         InputModeCoordinator.Enter(this, InputMode.Cinematic);
@@ -141,7 +153,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
                 out error))
         {
             Debug.LogWarning("[LightSkill] Impossible de lancer le rig : " + error, this);
-            return AbortStart(error, restoreCharge: true);
+            return AbortStart(error, restoreClarity: true);
         }
 
         usingPooledRig = true;
@@ -169,25 +181,14 @@ public sealed class LightSkillCombatController : MonoBehaviour
     {
         if (!active)
         {
-            charge = 0f;
             StopCinematic(resolveImpact: false);
-        }
-        else
-        {
-            charge = 0f;
         }
 
         NotifyStateChanged();
     }
 
-    private void OnPlayerSkillImpactApplied(SkillSO skill, int damage)
+    private void OnClarityChanged(float clarity, CombatClarityRank rank)
     {
-        if (!IsCombatActive || cinematicPlaying || lightSkill == null || skill == null || damage <= 0)
-        {
-            return;
-        }
-
-        charge = Mathf.Min(RequiredCharge, charge + skill.LightChargeOnHit);
         NotifyStateChanged();
     }
 
@@ -227,7 +228,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
 
         finishingCinematic = false;
         usingPooledRig = false;
-        chargeBeforeCinematic = 0f;
+        claritySpentForCinematic = 0f;
         NotifyStateChanged();
     }
 
@@ -237,8 +238,8 @@ public sealed class LightSkillCombatController : MonoBehaviour
         {
             combatManager.CombatStateChanged -= OnCombatStateChanged;
             combatManager.CombatStateChanged += OnCombatStateChanged;
-            combatManager.PlayerSkillImpactApplied -= OnPlayerSkillImpactApplied;
-            combatManager.PlayerSkillImpactApplied += OnPlayerSkillImpactApplied;
+            combatManager.ClarityChanged -= OnClarityChanged;
+            combatManager.ClarityChanged += OnClarityChanged;
         }
 
     }
@@ -255,7 +256,7 @@ public sealed class LightSkillCombatController : MonoBehaviour
         if (combatManager != null)
         {
             combatManager.CombatStateChanged -= OnCombatStateChanged;
-            combatManager.PlayerSkillImpactApplied -= OnPlayerSkillImpactApplied;
+            combatManager.ClarityChanged -= OnClarityChanged;
         }
 
     }
@@ -272,15 +273,15 @@ public sealed class LightSkillCombatController : MonoBehaviour
         StateChanged?.Invoke();
     }
 
-    private bool AbortStart(string reason, bool restoreCharge = false)
+    private bool AbortStart(string reason, bool restoreClarity = false)
     {
-        Trace("Echec lancement | raison='" + reason + "' | restoreCharge=" + restoreCharge + ".");
+        Trace("Echec lancement | raison='" + reason + "' | restoreClarity=" + restoreClarity + ".");
         cinematicPlaying = false;
-        if (restoreCharge)
+        if (restoreClarity && claritySpentForCinematic > 0f)
         {
-            charge = chargeBeforeCinematic;
+            combatManager?.RefundClarity(claritySpentForCinematic);
         }
-        chargeBeforeCinematic = 0f;
+        claritySpentForCinematic = 0f;
         if (playerLockHeld)
         {
             combatManager?.UnlockPlayerAfterCinematic();

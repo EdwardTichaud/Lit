@@ -273,7 +273,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour
 
     private void OnEnemyAttackStarted(SkillSO skill, int damage)
     {
-        AppendCombatLog(ResolveEnemyName(manager != null ? manager.LockedEnemy : null) + " prepare " + (skill != null ? skill.SkillName : "une attaque") + ".");
+        AppendCombatLog(ResolveEnemyName(manager != null ? manager.EngagedEnemy : null) + " prepare " + (skill != null ? skill.SkillName : "une attaque") + ".");
     }
 
     private void OnReactionImpactResolved(SkillSO skill, bool succeeded)
@@ -314,7 +314,7 @@ public sealed class RealTimeCombatSceneUiController : MonoBehaviour
         CombatHealth playerHealth = manager.PlayerRoot != null
             ? manager.PlayerRoot.GetComponentInChildren<CombatHealth>(true)
             : null;
-        RealTimeCombatEnemy enemy = manager.LockedEnemy;
+        RealTimeCombatEnemy enemy = manager.EngagedEnemy;
         CombatHealth enemyHealth = enemy != null ? enemy.Health : null;
 
         int playerCurrent = player != null ? player.CurrentHp : playerHealth != null ? playerHealth.CurrentHp : 0;

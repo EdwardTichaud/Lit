@@ -23,6 +23,7 @@ public enum CombatEnemyPhysicsState
 public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 {
     private const int GroundHitCapacity = 16;
+    private const int ObstacleHitCapacity = 16;
 
     [SerializeField] private RealTimeCombatEnemy enemy;
     [SerializeField] private NavMeshAgent navigationAgent;
@@ -51,6 +52,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private float actionRepositionDiagnosticDistance = 1f;
 
     private readonly RaycastHit[] groundHits = new RaycastHit[GroundHitCapacity];
+    private readonly RaycastHit[] obstacleHits = new RaycastHit[ObstacleHitCapacity];
     private CombatActorAnimationRoot animationContract;
     private Vector3 pendingPlanarRootMotion;
     private Quaternion pendingRootRotation = Quaternion.identity;
@@ -481,12 +483,26 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return;
         }
 
-        if (navigationAgent.isOnNavMesh)
+        int areaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
+        if (navigationAgent.isOnNavMesh &&
+            NavMesh.SamplePosition(transform.position, out NavMeshHit localHit, 0.15f, areaMask) &&
+            Vector3.Distance(localHit.position, transform.position) <= 0.15f)
         {
             AuditPose("NavMesh:avant Warp reprise");
             navigationAgent.Warp(transform.position);
             navigationAgent.nextPosition = transform.position;
             AuditPose("NavMesh:apres Warp reprise");
+        }
+        else
+        {
+            // Never let a stale NavMesh island pull an actor to another floor
+            // after an aerial action. Behaviour will retry only a local attach.
+            navigationAgent.enabled = false;
+            if (logPoseAudit)
+            {
+                Debug.LogWarning("[CombatEnemyPhysicsMotor] Reprise NavMesh refusee pour '" + name +
+                                 "' : aucune surface locale coherente.", this);
+            }
         }
 
         navigationAgent.updatePosition = true;
@@ -574,14 +590,27 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         float cylinderHalf = Mathf.Max(0f, height * 0.5f - radius);
         Vector3 first = center + Vector3.up * cylinderHalf;
         Vector3 second = center - Vector3.up * cylinderHalf;
-        if (!Physics.CapsuleCast(first, second, radius, direction, out RaycastHit hit,
-                requestedDistance + activeMotionProfile.rushCollisionSkin,
-                activeMotionProfile.rushBlockingMask, QueryTriggerInteraction.Ignore) || IsOwnCollider(hit.collider))
+        int hitCount = Physics.CapsuleCastNonAlloc(first, second, radius, direction, obstacleHits,
+            requestedDistance + activeMotionProfile.rushCollisionSkin,
+            activeMotionProfile.rushBlockingMask, QueryTriggerInteraction.Ignore);
+        float closestDistance = float.PositiveInfinity;
+        for (int i = 0; i < hitCount; i++)
+        {
+            RaycastHit hit = obstacleHits[i];
+            if (!IsBlockingEnvironmentCollider(hit.collider))
+            {
+                continue;
+            }
+
+            closestDistance = Mathf.Min(closestDistance, hit.distance);
+        }
+
+        if (float.IsPositiveInfinity(closestDistance))
         {
             return false;
         }
 
-        allowedDistance = Mathf.Max(0f, hit.distance - activeMotionProfile.rushCollisionSkin);
+        allowedDistance = Mathf.Max(0f, closestDistance - activeMotionProfile.rushCollisionSkin);
         return true;
     }
 
@@ -639,7 +668,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             RaycastHit hit = groundHits[i];
-            if (hit.collider == null || hit.normal.y < minimumGroundNormal || IsOwnCollider(hit.collider))
+            if (hit.collider == null || hit.normal.y < minimumGroundNormal || !IsGroundCollider(hit.collider))
             {
                 continue;
             }
@@ -684,6 +713,27 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     {
         Transform candidate = collider.transform;
         return candidate == transform || candidate.IsChildOf(transform);
+    }
+
+    private bool IsGroundCollider(Collider collider)
+    {
+        if (collider == null || IsOwnCollider(collider))
+        {
+            return false;
+        }
+
+        int layer = collider.gameObject.layer;
+        return layer != LayerMask.NameToLayer("Character") &&
+               layer != LayerMask.NameToLayer("Player") &&
+               layer != LayerMask.NameToLayer("Enemy") &&
+               layer != LayerMask.NameToLayer("UI") &&
+               layer != LayerMask.NameToLayer("VisualEffect") &&
+               layer != LayerMask.NameToLayer("Ignore Raycast");
+    }
+
+    private bool IsBlockingEnvironmentCollider(Collider collider)
+    {
+        return IsGroundCollider(collider) && !collider.isTrigger;
     }
 
     private void ResolveReferences()

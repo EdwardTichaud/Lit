@@ -33,6 +33,16 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private AnimatorMonitor animatorMonitor;
     [SerializeField] private LucianJumpPresentationController jumpPresentationController;
 
+    [Header("Ladder Traversal Diagnostics")]
+    [SerializeField, Tooltip("Logs the requested and observed UCC pose while a scripted traversal is active. Development aid only.")]
+    private bool logScriptedTraversalDiagnostics;
+    [SerializeField, Min(1), Tooltip("Number of physics ticks between two traversal diagnostic samples.")]
+    private int scriptedTraversalDiagnosticTickInterval = 8;
+    [SerializeField, Min(0f), Tooltip("Warn when another system has moved the actor farther than this from the last requested traversal pose.")]
+    private float scriptedTraversalExternalCorrectionDistance = 0.02f;
+    [SerializeField, Range(0f, 45f), Tooltip("Warn when another system has rotated the actor farther than this from the last requested traversal pose.")]
+    private float scriptedTraversalExternalCorrectionDegrees = 1f;
+
     [Header("Bridge")]
     [SerializeField, Tooltip("When enabled, SquadCharacterController forwards locomotion commands to UCC and keeps Lit simulation disabled.")]
     private bool driveFromSquadFacade = true;
@@ -199,6 +209,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool hasLastPosition;
     private int scriptedTraversalLockCount;
     private bool scriptedTraversalInputDisabled;
+    // The traversal coroutine resumes after UCC's fixed simulation. It submits
+    // the complete authored pose here; no Update or LateUpdate may compete for
+    // this transform while the lock is active.
+    private bool scriptedTraversalPoseActive;
+    private Vector3 scriptedTraversalPosition;
+    private Quaternion scriptedTraversalRotation;
+    private int scriptedTraversalPoseTick;
+    private Coroutine scriptedTraversalReleaseRoutine;
     private Coroutine externalImpulseLockRoutine;
     private Ability[] scriptedTraversalAbilities;
     private bool[] scriptedTraversalAbilityEnabledStates;
@@ -206,6 +224,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool[] scriptedTraversalItemAbilityEnabledStates;
     private bool previousLocomotionUseGravity;
     private bool scriptedTraversalGravityPrepared;
+    private bool scriptedTraversalGroundingPrepared;
+    private bool previousScriptedTraversalStickToGround;
+    private bool previousScriptedTraversalForceStickToGround;
     private int combatAirborneHoldCount;
     private bool combatAirborneHoldPreviousUseGravity;
     private int externalLockCount;
@@ -215,6 +236,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private PlayerActionRootMotionMode playerActionRootMotionMode;
     private bool suppressPlayerActionRootMotionRotation;
     private bool allowPlayerActionAirborneRootMotion;
+    private readonly RaycastHit[] motionHandoffProbeHits = new RaycastHit[8];
     private bool runStartResponseArmed;
     private bool wasSprintMoving;
     private float nextRunStartResponseTime;
@@ -255,7 +277,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                              driveFromSquadFacade &&
                              locomotion != null && locomotion.isActiveAndEnabled &&
                              locomotionHandler != null && locomotionHandler.isActiveAndEnabled;
-    public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0;
+    public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0 || scriptedTraversalReleaseRoutine != null;
     public bool IsExternalLockActive => externalLockCount > 0;
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
     public bool IsFlightActive => IsFlightModeActive;
@@ -263,6 +285,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool ShouldPreserveAnimatorRootMotion => useRootMotionLocomotion && preserveAnimatorRootMotion;
     public Vector3 Velocity => locomotion != null ? locomotion.Velocity : Vector3.zero;
     public Vector3 PlanarVelocity => Vector3.ProjectOnPlane(Velocity, transform.up);
+    public float VerticalVelocity => Vector3.Dot(Velocity, transform.up);
     public Vector3 WorldPosition => locomotion != null ? locomotion.transform.position : Vector3.zero;
     public Vector2 CurrentWorldMoveInput => currentWorldMoveInput;
     public Vector2 LastExplicitWorldMoveInput => lastExplicitWorldMoveInput;
@@ -314,6 +337,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         rootMotionMovingStickToGroundDistance = Mathf.Max(0f, rootMotionMovingStickToGroundDistance);
         rootMotionIdleStickToGroundDistance = Mathf.Max(0f, rootMotionIdleStickToGroundDistance);
         rootMotionGroundReliefAdaptationSpeed = Mathf.Max(0f, rootMotionGroundReliefAdaptationSpeed);
+        scriptedTraversalDiagnosticTickInterval = Mathf.Max(1, scriptedTraversalDiagnosticTickInterval);
+        scriptedTraversalExternalCorrectionDistance = Mathf.Max(0f, scriptedTraversalExternalCorrectionDistance);
+        scriptedTraversalExternalCorrectionDegrees = Mathf.Clamp(scriptedTraversalExternalCorrectionDegrees, 0f, 45f);
         ValidateOrientationFeelSettings();
         ValidateObstacleTraversalSettings();
         ValidateJumpLandingSettings();
@@ -600,6 +626,65 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// Applies a small, collision-safe planar deceleration while a presentation
+    /// is finishing. It never changes vertical velocity, position or rotation.
+    /// </summary>
+    public void ApplyPlanarHandoffDamping(float decelerationPerSecond)
+    {
+        if (locomotion == null || decelerationPerSecond <= 0f || !locomotion.Grounded)
+        {
+            return;
+        }
+
+        Vector3 planarVelocity = PlanarVelocity;
+        float speed = planarVelocity.magnitude;
+        if (speed <= 0.001f)
+        {
+            return;
+        }
+
+        float deltaSpeed = Mathf.Min(speed, decelerationPerSecond * Time.deltaTime);
+        locomotion.AddForce(-planarVelocity.normalized * deltaSpeed, 1, false);
+    }
+
+    public bool IsMotionHandoffSettled(MotionHandoffProfile profile)
+    {
+        if (profile == null || locomotion == null || !locomotion.Grounded)
+        {
+            return false;
+        }
+
+        return PlanarVelocity.sqrMagnitude <= profile.planarSettledSpeed * profile.planarSettledSpeed &&
+               Mathf.Abs(VerticalVelocity) <= profile.verticalSettledSpeed;
+    }
+
+    /// <summary>Returns true when a descending UCC capsule is close enough to the ground to enter its landing approach.</summary>
+    public bool ShouldBeginMotionHandoff(MotionHandoffProfile profile)
+    {
+        if (profile == null || locomotion == null || locomotion.Grounded || VerticalVelocity >= -0.01f)
+        {
+            return false;
+        }
+
+        Vector3 up = locomotion.Up.sqrMagnitude > 0f ? locomotion.Up.normalized : transform.up;
+        Vector3 origin = transform.position + up * 0.08f;
+        float probeDistance = Mathf.Max(0.01f, profile.preLandingProbeDistance + 0.08f);
+        int hitCount = Physics.RaycastNonAlloc(origin, -up, motionHandoffProbeHits, probeDistance, ~0, QueryTriggerInteraction.Ignore);
+        float nearestGroundDistance = float.PositiveInfinity;
+        for (int index = 0; index < hitCount; index++)
+        {
+            RaycastHit hit = motionHandoffProbeHits[index];
+            if (hit.collider != null && !hit.collider.transform.IsChildOf(transform))
+            {
+                nearestGroundDistance = Mathf.Min(nearestGroundDistance, hit.distance);
+            }
+        }
+
+        float leadDistance = Mathf.Max(0.08f, -VerticalVelocity * profile.preLandingLeadSeconds);
+        return nearestGroundDistance <= Mathf.Min(profile.preLandingProbeDistance, leadDistance);
+    }
+
+    /// <summary>
     /// Suspends UCC gravity for an aerial combat action. Horizontal movement
     /// remains owned by UCC; only the vertical component is neutralized.
     /// Calls are reference counted so a queued replacement action cannot
@@ -750,6 +835,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return false;
         }
 
+        // A new traversal may start from the final fixed tick of a previous
+        // one. Keep its suspended UCC state instead of restoring it briefly.
+        if (scriptedTraversalReleaseRoutine != null)
+        {
+            StopCoroutine(scriptedTraversalReleaseRoutine);
+            scriptedTraversalReleaseRoutine = null;
+        }
+
         scriptedTraversalLockCount = Mathf.Max(0, scriptedTraversalLockCount) + 1;
         if (scriptedTraversalLockCount > 1)
         {
@@ -765,6 +858,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         SuppressGravityForScriptedTraversal();
+        SuppressGroundingForScriptedTraversal();
         DisableAbilitiesForScriptedTraversal();
         ForceZeroInput();
         EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", false);
@@ -788,8 +882,34 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
+        // Keep the last authored pose through the following physics tick. This
+        // prevents UCC from correcting the actor while Ladder_End is still
+        // presenting its final contact pose.
+        if (scriptedTraversalReleaseRoutine == null && isActiveAndEnabled)
+        {
+            scriptedTraversalReleaseRoutine = StartCoroutine(ReleaseScriptedTraversalAfterFixedStep());
+        }
+    }
+
+    private IEnumerator ReleaseScriptedTraversalAfterFixedStep()
+    {
+        yield return new WaitForFixedUpdate();
+
+        // The coroutine resumes after UCC's fixed pass. Reapply the final
+        // route pose once, then hand normal simulation back on the next frame.
+        ApplyStoredScriptedTraversalPose();
+        scriptedTraversalReleaseRoutine = null;
+        CompleteScriptedTraversalRelease();
+    }
+
+    private void CompleteScriptedTraversalRelease()
+    {
+        scriptedTraversalPoseActive = false;
+
         RestoreAbilitiesAfterScriptedTraversal();
         RestoreGravityAfterScriptedTraversal();
+        RestoreGroundingAfterScriptedTraversal();
+        RefreshGroundReliefTolerance(immediate: true);
         if (scriptedTraversalInputDisabled)
         {
             if (!externalLockInputDisabled)
@@ -851,8 +971,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         RestoreAbilitiesAfterScriptedTraversal();
         RestoreGravityAfterScriptedTraversal();
+        RestoreGroundingAfterScriptedTraversal();
+        if (scriptedTraversalReleaseRoutine != null)
+        {
+            StopCoroutine(scriptedTraversalReleaseRoutine);
+            scriptedTraversalReleaseRoutine = null;
+        }
         externalLockCount = 0;
         scriptedTraversalLockCount = 0;
+        scriptedTraversalPoseActive = false;
         // Le portail peut avoir decharge l'objet qui possedait le verrou avant
         // qu'il ait pu le liberer. Rejouer explicitement l'evenement est
         // idempotent et garantit que UCC accepte a nouveau l'input local.
@@ -881,14 +1008,29 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public void ApplyScriptedTraversalPose(Vector3 position, Quaternion rotation)
     {
         ResolveReferences();
-        if (locomotion == null)
+        if (locomotion == null || !IsScriptedTraversalActive)
         {
             return;
         }
 
-        locomotion.SetPositionAndRotation(position, rotation, false, false);
-        lastPosition = position;
+        TraceExternalTraversalCorrection();
+        scriptedTraversalPosition = position;
+        scriptedTraversalRotation = rotation;
+        scriptedTraversalPoseActive = true;
+        ApplyStoredScriptedTraversalPose();
+    }
+
+    private void ApplyStoredScriptedTraversalPose()
+    {
+        if (!scriptedTraversalPoseActive || locomotion == null)
+        {
+            return;
+        }
+
+        locomotion.SetPositionAndRotation(scriptedTraversalPosition, scriptedTraversalRotation, false, false);
+        lastPosition = scriptedTraversalPosition;
         hasLastPosition = true;
+        TraceAppliedTraversalPose();
     }
 
     public bool SetExternalPositionAndRotation(Vector3 position, Quaternion rotation, bool stopActiveAbilities)
@@ -1124,8 +1266,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     {
         CancelObstacleTraversal();
         ClearCombatAirborneHolds();
+        if (scriptedTraversalReleaseRoutine != null)
+        {
+            StopCoroutine(scriptedTraversalReleaseRoutine);
+            scriptedTraversalReleaseRoutine = null;
+        }
         RestoreAbilitiesAfterScriptedTraversal();
         RestoreGravityAfterScriptedTraversal();
+        RestoreGroundingAfterScriptedTraversal();
         if (externalLockInputDisabled || scriptedTraversalInputDisabled)
         {
             EventHandler.ExecuteEvent<bool>(gameObject, "OnEnableGameplayInput", true);
@@ -1141,6 +1289,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         externalLockCount = 0;
         scriptedTraversalLockCount = 0;
+        scriptedTraversalPoseActive = false;
         StopBridgeInput();
         SetLitAnimatorSpeedParameterOverride(false);
         UnregisterExternalDriver();
@@ -1371,7 +1520,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void MaintainCombatLockFacing()
     {
-        if (!combatLockActive || combatDirectionalEvasionFacing || combatLockTarget == null)
+        if (IsScriptedTraversalActive || !combatLockActive || combatDirectionalEvasionFacing || combatLockTarget == null)
         {
             return;
         }
@@ -1577,7 +1726,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void SuppressGravityForScriptedTraversal()
     {
-        if (locomotion == null)
+        if (locomotion == null || scriptedTraversalGravityPrepared)
         {
             return;
         }
@@ -1602,6 +1751,83 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         scriptedTraversalGravityPrepared = false;
+    }
+
+    private void SuppressGroundingForScriptedTraversal()
+    {
+        if (locomotion == null || scriptedTraversalGroundingPrepared)
+        {
+            return;
+        }
+
+        // An inclined root makes UCC's normal world-up ground adhesion invalid.
+        // Collision remains enabled, but the ladder owns the pose until release.
+        previousScriptedTraversalStickToGround = locomotion.StickToGround;
+        previousScriptedTraversalForceStickToGround = locomotion.ForceStickToGround;
+        locomotion.StickToGround = false;
+        locomotion.ForceStickToGround = false;
+        locomotion.Grounded = false;
+        scriptedTraversalGroundingPrepared = true;
+    }
+
+    private void RestoreGroundingAfterScriptedTraversal()
+    {
+        if (!scriptedTraversalGroundingPrepared)
+        {
+            return;
+        }
+
+        if (locomotion != null)
+        {
+            locomotion.StickToGround = previousScriptedTraversalStickToGround;
+            locomotion.ForceStickToGround = previousScriptedTraversalForceStickToGround;
+        }
+
+        scriptedTraversalGroundingPrepared = false;
+    }
+
+    private void TraceExternalTraversalCorrection()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!logScriptedTraversalDiagnostics || !scriptedTraversalPoseActive || locomotion == null)
+        {
+            return;
+        }
+
+        float distance = Vector3.Distance(locomotion.transform.position, scriptedTraversalPosition);
+        float angle = Quaternion.Angle(locomotion.transform.rotation, scriptedTraversalRotation);
+        if (distance <= scriptedTraversalExternalCorrectionDistance && angle <= scriptedTraversalExternalCorrectionDegrees)
+        {
+            return;
+        }
+
+        Debug.LogWarning("[LadderTraversal] correction externe detectee before apply: distance=" +
+                         distance.ToString("F3") + "m angle=" + angle.ToString("F1") +
+                         "° grounded=" + locomotion.Grounded + " velocity=" + locomotion.Velocity.ToString("F3"), this);
+#endif
+    }
+
+    private void TraceAppliedTraversalPose()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!logScriptedTraversalDiagnostics)
+        {
+            return;
+        }
+
+        scriptedTraversalPoseTick++;
+        if (scriptedTraversalPoseTick % Mathf.Max(1, scriptedTraversalDiagnosticTickInterval) != 0 || locomotion == null)
+        {
+            return;
+        }
+
+        float distance = Vector3.Distance(locomotion.transform.position, scriptedTraversalPosition);
+        float angle = Quaternion.Angle(locomotion.transform.rotation, scriptedTraversalRotation);
+        Debug.Log("[LadderTraversal] requested=" + scriptedTraversalPosition.ToString("F3") +
+                  " applied=" + locomotion.transform.position.ToString("F3") +
+                  " poseError=" + distance.ToString("F3") + "m/" + angle.ToString("F1") +
+                  "° grounded=" + locomotion.Grounded + " velocity=" + locomotion.Velocity.ToString("F3"), this);
+#endif
     }
 
     private void DisableAbilitiesForScriptedTraversal()
@@ -2702,7 +2928,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void RefreshGroundReliefTolerance(bool immediate)
     {
-        if (!groundReliefToleranceApplied || !relaxGroundReliefTolerance || locomotion == null)
+        if (!groundReliefToleranceApplied || !relaxGroundReliefTolerance || locomotion == null || IsScriptedTraversalActive)
         {
             return;
         }

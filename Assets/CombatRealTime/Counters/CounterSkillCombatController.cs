@@ -79,7 +79,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         // not let Lucian rotate away from the manually locked enemy.
         if (guardHeld && !cinematicPlaying)
         {
-            combatManager?.FacePlayerTowardsLockedEnemy();
+            combatManager?.FacePlayerTowardsEngagedEnemy();
         }
     }
 
@@ -99,7 +99,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     {
         if (!guardHeld)
         {
-            combatManager?.FacePlayerTowardsLockedEnemy();
+            combatManager?.FacePlayerTowardsEngagedEnemy();
             PlayGuardAnimation();
             PlayGuardStartFeedback();
         }
@@ -176,7 +176,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
         director.playableAsset = skill.Timeline;
         BindTimelineTargets(skill);
-        cameraRig?.Begin(combatManager.PlayerRoot, combatManager.LockedEnemy != null ? combatManager.LockedEnemy.LockPoint : null);
+        cameraRig?.Begin(combatManager.PlayerRoot, combatManager.EngagedEnemy != null ? combatManager.EngagedEnemy.LockPoint : null);
         if (skill.StartSfx != null && combatManager != null && combatManager.PlayerRoot != null)
         {
             AudioManager.PlayClipAtPoint(skill.StartSfx, combatManager.PlayerRoot.position);
@@ -198,9 +198,9 @@ public sealed class CounterSkillCombatController : MonoBehaviour
 
         impactResolved = true;
         int applied = combatManager.ApplyCounterSkillDamage(activeSkill, resolveCombatOutcome: false);
-        if (applied > 0 && activeSkill.ImpactSfx != null && combatManager.LockedEnemy != null)
+        if (applied > 0 && activeSkill.ImpactSfx != null && combatManager.EngagedEnemy != null)
         {
-            AudioManager.PlayClipAtPoint(activeSkill.ImpactSfx, combatManager.LockedEnemy.LockPoint.position);
+            AudioManager.PlayClipAtPoint(activeSkill.ImpactSfx, combatManager.EngagedEnemy.LockPoint.position);
         }
     }
 
@@ -377,9 +377,9 @@ public sealed class CounterSkillCombatController : MonoBehaviour
             {
                 director.SetGenericBinding(output.sourceObject, combatManager.PlayerAnimator);
             }
-            else if (output.streamName == skill.EnemyAnimatorTrackName && combatManager.LockedEnemy != null)
+            else if (output.streamName == skill.EnemyAnimatorTrackName && combatManager.EngagedEnemy != null)
             {
-                director.SetGenericBinding(output.sourceObject, combatManager.LockedEnemy.Animator);
+                director.SetGenericBinding(output.sourceObject, combatManager.EngagedEnemy.Animator);
             }
             else if (output.sourceObject is CinemachineTrack track && counterVirtualCamera != null)
             {

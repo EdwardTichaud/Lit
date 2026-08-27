@@ -155,6 +155,7 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         currentEnemy.CompleteEnemyAttackWhenGrounded(() =>
         {
             RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
+            currentEnemy.GetComponent<RealTimeCombatEnemyBehaviour>()?.NotifyAttackCompleted();
             ResolveEnemySkills()?.ReturnToIdle();
         });
     }

@@ -54,6 +54,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private bool hasAnimatorParameters;
     private Animator cachedAnimator;
     private int lastReportedAnimatorStateHash;
+    private bool wasMovingVisually;
 
     public CombatPositioningProfile Positioning => positioning;
     public bool IsNavigating => navigationRequested && navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh && !navigationAgent.isStopped;
@@ -200,6 +201,8 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             navigationAgent.isStopped = true;
             navigationAgent.ResetPath();
         }
+
+        ForceIdlePresentation();
     }
 
     public void FaceTarget(Vector3 worldPosition)
@@ -265,6 +268,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             animator.SetFloat(CombatMoveX, 0f, animatorDampTime, Time.deltaTime);
             animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, Time.deltaTime);
             animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, Time.deltaTime);
+            wasMovingVisually = false;
             return;
         }
 
@@ -282,12 +286,41 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
                     animator.CrossFade(CombatLocomotion, 0.08f, 0);
                 }
             }
+            wasMovingVisually = true;
         }
         else
         {
             animator.SetFloat(CombatMoveX, 0f, animatorDampTime, Time.deltaTime);
             animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, Time.deltaTime);
             animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, Time.deltaTime);
+            if (wasMovingVisually)
+            {
+                ForceIdlePresentation();
+            }
+        }
+    }
+
+    private void ForceIdlePresentation()
+    {
+        if (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion)
+        {
+            return;
+        }
+
+        Animator animator = animationContract != null ? animationContract.Animator : null;
+        if (animator == null || animator.runtimeAnimatorController == null)
+        {
+            return;
+        }
+
+        animator.SetFloat(CombatMoveX, 0f);
+        animator.SetFloat(CombatMoveZ, 0f);
+        animator.SetFloat(CombatMoveSpeed, 0f);
+        wasMovingVisually = false;
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        if (animator.HasState(0, Idle) && currentState.fullPathHash == CombatLocomotion)
+        {
+            animator.CrossFade(Idle, 0.08f, 0);
         }
     }
 

@@ -34,8 +34,12 @@ continue alors de se tourner vers Lucian. La perte de vision prolongée conserve
 les règles existantes de désengagement.
 Les Animation Events `BeginReactionTelegraph`/`OpenReactionWindow`,
 `ResolveEnemyAttackImpact` et `EndEnemyAttack` de
-`RealTimeCombatAnimationEvents` restent la seule source du timing de menace,
-fenêtre, impact et clôture. Le prototype n'a pas de fallback temporisé.
+`RealTimeCombatAnimationEvents` restent la source auteur du timing de menace,
+fenêtre, impact et clôture. `EnemyAttackRecoverySafety` ne s'active qu'après la
+durée du clip plus une marge, afin de récupérer un ennemi dont l'événement de
+fin n'aurait pas été évalué sans doubler l'impact.
+Le Juggernaut peut aussi utiliser `EnemyTacticalResponseController` : garde et
+esquive sont des réponses rares, configurables et distinctes de ses attaques.
 `CombatWarningOn`/`CombatWarningOff` ajoutent seulement la presentation locale
 de danger et le focus camera; `OpenReactionWindow(float)` ferme son eligibility
 en temps non scale, sans jamais declencher les degats a la place de
@@ -791,6 +795,22 @@ Le menu `Lit/Combat/Configure Reaction Telegraph` configure Assomoir et le
 prompt `RealTimeCombatReactionPrompt` de `Bootstrap`.
 
 ### Locomotion et Assommoir
+
+Le Juggernaut conserve maintenant son engagement apres le premier degat de
+lumiere, meme si Lucian quitte ponctuellement son champ de vision. Sa boucle
+temps reel separe `Chase`, `Position`, `Observe`, `Attack` et `Recovery` :
+avant chaque nouvelle attaque, il se replace brievement avec le
+`CombatEnemyLocomotionController` plutot que de figer a portee. Les durees
+d'observation et de recuperation sont exposees sur
+`RealTimeCombatEnemyBehaviour`. L'option `logCombatDiagnostics` permet de
+tracer l'etat IA, le NavMesh et le motif exact d'un arret.
+
+La locomotion retourne explicitement a `Idle` lorsque la vitesse NavMesh est
+nulle; elle ne peut donc plus conserver une pose de marche apres un arret. La
+sonde du `CombatEnemyPhysicsMotor` ignore les personnages, VFX, UI et triggers,
+et sa reprise NavMesh est refusee si aucune surface locale coherente ne peut
+etre prouvee. `SceneMarker` journalise egalement un spawn ennemi hors NavMesh
+sans jamais le teleporter vers une autre hauteur.
 
 ### AnimationLab et bake cinematographique
 

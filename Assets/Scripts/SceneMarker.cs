@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
+using UnityEngine.AI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -223,6 +224,7 @@ public sealed class SceneMarker : MonoBehaviour
             transform.position,
             transform.rotation);
         EnsureServerSpawned(runtimeInstance);
+        ValidateSpawnedEnemyNavigation(runtimeInstance);
     }
 
     private void EnsureServerSpawned(GameObject instance)
@@ -269,6 +271,43 @@ public sealed class SceneMarker : MonoBehaviour
     private void SetRuntimeInstance(GameObject instance)
     {
         runtimeInstance = instance;
+        ValidateSpawnedEnemyNavigation(runtimeInstance);
+    }
+
+    private void ValidateSpawnedEnemyNavigation(GameObject instance)
+    {
+        if (instance == null || characterData == null || !characterData.isEnemy)
+        {
+            return;
+        }
+
+        NavMeshAgent agent = instance.GetComponent<NavMeshAgent>();
+        if (agent == null)
+        {
+            Debug.LogWarning("[SceneMarker] Ennemi '" + name + "' sans NavMeshAgent: il restera statique.", this);
+            return;
+        }
+
+        Vector3 offset = instance.transform.position - transform.position;
+        if (offset.magnitude > 0.15f)
+        {
+            Debug.LogWarning("[SceneMarker] Pose de spawn incoherente pour '" + name +
+                             "' | marker=" + transform.position + " | instance=" + instance.transform.position + ".", this);
+        }
+
+        int areaMask = agent.areaMask == 0 ? NavMesh.AllAreas : agent.areaMask;
+        if (!NavMesh.SamplePosition(instance.transform.position, out NavMeshHit hit, 1.5f, areaMask))
+        {
+            Debug.LogError("[SceneMarker] Ennemi '" + name + "' hors NavMesh a son spawn: " +
+                           instance.transform.position + ". Aucun repositionnement automatique ne sera applique.", this);
+            return;
+        }
+
+        if (Vector3.Distance(hit.position, instance.transform.position) > 0.15f)
+        {
+            Debug.LogError("[SceneMarker] NavMesh trop eloigne pour '" + name + "' | actor=" +
+                           instance.transform.position + " | nav=" + hit.position + ".", this);
+        }
     }
 
     private void EnsurePersistentState()

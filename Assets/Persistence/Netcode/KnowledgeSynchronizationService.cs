@@ -99,7 +99,6 @@ public sealed class KnowledgeSynchronizationService : NetworkBehaviour
         }
 
         KnowledgeManager.GetOrCreate().ApplyValidatedKnowledge(knowledge);
-        KnowledgeRevealNotification.Enqueue(knowledge, revealerName.ToString(), origin.ToString());
     }
 
     private void OnKnowledgeListChanged(NetworkListEvent<FixedString128Bytes> change)

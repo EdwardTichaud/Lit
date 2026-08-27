@@ -40,6 +40,14 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    private struct ZonePresentation
+    {
+        public int token;
+        public AudioClipSO music;
+        public AudioClipSO ambience;
+        public float fadeDuration;
+    }
+
     public static AudioManager Instance { get; private set; }
 
     [Header("Mix")]
@@ -53,10 +61,6 @@ public class AudioManager : MonoBehaviour
     public float fadeDuration = 1f;
     [Tooltip("Ne pas detruire au changement de scene.")]
     public bool dontDestroyOnLoad = true;
-
-    [Header("Ambience")]
-    [Tooltip("Ambiance jouee lorsqu'aucune zone active n'en fournit une.")]
-    public AudioClipSO defaultAmbienceClip;
 
     [Header("One Shot")]
     [Range(0f, 1f), Tooltip("Spatial blend des one-shots.")]
@@ -93,9 +97,12 @@ public class AudioManager : MonoBehaviour
     private readonly List<Zone> zoneStack = new List<Zone>();
     private readonly List<ManagedSfxSource> activeSfxSources = new List<ManagedSfxSource>();
     private readonly List<MusicOverride> musicOverrides = new List<MusicOverride>();
+    private ZonePresentation activeZonePresentation;
+    private bool hasActiveZonePresentation;
     private int musicDuckCount;
     private int ambienceDuckCount;
     private int nextMusicOverrideToken = 1;
+    private int nextZonePresentationToken = 1;
     private float musicDuckMultiplier = 1f;
     private float ambienceDuckMultiplier = 1f;
 
@@ -250,6 +257,11 @@ public class AudioManager : MonoBehaviour
 
     public void PlayMusic(AudioClipSO clip)
     {
+        PlayMusic(clip, fadeDuration);
+    }
+
+    private void PlayMusic(AudioClipSO clip, float requestedFadeDuration)
+    {
         EnsureMusicSources();
 
         // Ignore si deja en cours avec le meme clip.
@@ -263,7 +275,40 @@ public class AudioManager : MonoBehaviour
             StopCoroutine(fadeRoutine);
         }
 
-        fadeRoutine = StartCoroutine(FadeToClip(clip));
+        fadeRoutine = StartCoroutine(FadeToClip(clip, requestedFadeDuration));
+    }
+
+    /// <summary>Installe la presentation globale de la zone active. Les overrides de combat restent prioritaires.</summary>
+    public int PushZonePresentation(AudioClipSO music, AudioClipSO ambience, float requestedFadeDuration)
+    {
+        int token = nextZonePresentationToken++;
+        if (nextZonePresentationToken <= 0)
+        {
+            nextZonePresentationToken = 1;
+        }
+
+        activeZonePresentation = new ZonePresentation
+        {
+            token = token,
+            music = music,
+            ambience = ambience,
+            fadeDuration = Mathf.Max(0.01f, requestedFadeDuration)
+        };
+        hasActiveZonePresentation = true;
+        UpdateZoneAudio();
+        return token;
+    }
+
+    public void PopZonePresentation(int token)
+    {
+        if (!hasActiveZonePresentation || token == 0 || activeZonePresentation.token != token)
+        {
+            return;
+        }
+
+        hasActiveZonePresentation = false;
+        activeZonePresentation = default;
+        UpdateZoneAudio();
     }
 
     public int PushMusicOverride(AudioClipSO clip)
@@ -322,21 +367,26 @@ public class AudioManager : MonoBehaviour
 
     public void PlayAmbience(AudioClipSO clip)
     {
+        PlayAmbience(clip, fadeDuration);
+    }
+
+    private void PlayAmbience(AudioClipSO clip, float requestedFadeDuration)
+    {
         if (HasAmbienceSuppressingMusicOverride())
         {
             StopAmbience();
             return;
         }
 
-        SetAmbienceClip(ResolveAmbienceClip(clip));
+        SetAmbienceClip(clip != null && clip.audioClip != null ? clip : null, requestedFadeDuration);
     }
 
     private void StopAmbience()
     {
-        SetAmbienceClip(null);
+        SetAmbienceClip(null, fadeDuration);
     }
 
-    private void SetAmbienceClip(AudioClipSO clip)
+    private void SetAmbienceClip(AudioClipSO clip, float requestedFadeDuration)
     {
         EnsureAmbienceSources();
 
@@ -352,7 +402,7 @@ public class AudioManager : MonoBehaviour
             StopCoroutine(ambienceFadeRoutine);
         }
 
-        ambienceFadeRoutine = StartCoroutine(FadeAmbienceToClip(clip));
+        ambienceFadeRoutine = StartCoroutine(FadeAmbienceToClip(clip, requestedFadeDuration));
     }
 
     public void BeginMusicDucking(float multiplier)
@@ -639,39 +689,46 @@ public class AudioManager : MonoBehaviour
         // Choisit la derniere zone valide de la pile pour chaque canal.
         CleanupNullZones();
 
-        AudioClipSO nextMusicClip = null;
-        AudioClipSO nextAmbienceClip = null;
-        for (int i = zoneStack.Count - 1; i >= 0; i--)
+        AudioClipSO nextMusicClip = hasActiveZonePresentation ? activeZonePresentation.music : null;
+        AudioClipSO nextAmbienceClip = hasActiveZonePresentation ? activeZonePresentation.ambience : null;
+        if (!hasActiveZonePresentation)
         {
-            Zone zone = zoneStack[i];
-            if (zone == null)
+            for (int i = zoneStack.Count - 1; i >= 0; i--)
             {
-                continue;
-            }
+                Zone zone = zoneStack[i];
+                if (zone == null)
+                {
+                    continue;
+                }
 
-            if (nextMusicClip == null)
-            {
-                nextMusicClip = zone.GetZoneMusicClip();
-            }
+                if (nextMusicClip == null)
+                {
+                    nextMusicClip = zone.GetZoneMusicClip();
+                }
 
-            if (nextAmbienceClip == null)
-            {
-                nextAmbienceClip = zone.GetZoneAmbienceClip();
-            }
+                if (nextAmbienceClip == null)
+                {
+                    nextAmbienceClip = zone.GetZoneAmbienceClip();
+                }
 
-            if (nextMusicClip != null && nextAmbienceClip != null)
-            {
-                break;
+                if (nextMusicClip != null && nextAmbienceClip != null)
+                {
+                    break;
+                }
             }
         }
+
+        float zoneFadeDuration = hasActiveZonePresentation
+            ? activeZonePresentation.fadeDuration
+            : fadeDuration;
 
         if (musicOverrides.Count > 0)
         {
-            PlayMusic(musicOverrides[musicOverrides.Count - 1].clip);
+            PlayMusic(musicOverrides[musicOverrides.Count - 1].clip, fadeDuration);
         }
         else
         {
-            PlayMusic(nextMusicClip);
+            PlayMusic(nextMusicClip, zoneFadeDuration);
         }
 
         if (HasAmbienceSuppressingMusicOverride())
@@ -680,12 +737,7 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        PlayAmbience(nextAmbienceClip);
-    }
-
-    private AudioClipSO ResolveAmbienceClip(AudioClipSO clip)
-    {
-        return clip != null && clip.audioClip != null ? clip : defaultAmbienceClip;
+        PlayAmbience(nextAmbienceClip, zoneFadeDuration);
     }
 
     private bool HasAmbienceSuppressingMusicOverride()
@@ -712,11 +764,11 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FadeToClip(AudioClipSO clip)
+    private IEnumerator FadeToClip(AudioClipSO clip, float requestedFadeDuration)
     {
         EnsureMusicSources();
 
-        float duration = Mathf.Max(0.01f, fadeDuration);
+        float duration = Mathf.Max(0.01f, requestedFadeDuration);
         AudioSource from = activeSource;
         AudioSource to = inactiveSource;
         AudioClipSO previousClip = activeClip;
@@ -801,11 +853,11 @@ public class AudioManager : MonoBehaviour
         activeClip = clip;
     }
 
-    private IEnumerator FadeAmbienceToClip(AudioClipSO clip)
+    private IEnumerator FadeAmbienceToClip(AudioClipSO clip, float requestedFadeDuration)
     {
         EnsureAmbienceSources();
 
-        float duration = Mathf.Max(0.01f, fadeDuration);
+        float duration = Mathf.Max(0.01f, requestedFadeDuration);
         AudioSource from = activeAmbienceSource;
         AudioSource to = inactiveAmbienceSource;
         AudioClipSO previousClip = activeAmbienceClip;

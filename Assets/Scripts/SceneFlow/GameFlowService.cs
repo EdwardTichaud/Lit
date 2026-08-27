@@ -61,6 +61,7 @@ public sealed class GameFlowService : MonoBehaviour
     private Coroutine transitionRoutine;
     private Coroutine postLoadingRoutine;
     private ProximitySceneStreamingController proximityStreaming;
+    private ZoneRuntimeContext activeZoneRuntimeContext;
     private int postLoadingGeneration;
     private string activeGameplaySceneName;
     private bool postLoadingPriorityApplied;
@@ -127,6 +128,7 @@ public sealed class GameFlowService : MonoBehaviour
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        ReleaseZonePresentation();
         if (Instance == this)
         {
             Instance = null;
@@ -281,6 +283,9 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Mark("Scene activee");
         loadedZoneSceneNames.Clear();
         AddLoadedGameplayScene(sceneName);
+        InstallZonePresentation(manifest, sceneName);
+        yield return null;
+        SceneTransitionProfiler.Mark("Presentation de zone appliquee");
         if (manifest != null)
         {
             yield return LoadManifestLoadingScenes(manifest, loadingMessage);
@@ -322,12 +327,16 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
         yield return StopProximityStreaming();
+        ReleaseZonePresentation(preserveAudio: true);
         List<string> previousScenes = CaptureLoadedGameplayScenes();
         loadedZoneSceneNames.Clear();
 
         yield return LoadAdditiveRoutine(destination.PrimarySceneName, destination.LoadingMessage);
         SceneTransitionProfiler.Mark("Scene de zone activee");
         AddLoadedGameplayScene(destination.PrimarySceneName);
+        InstallZonePresentation(destination, destination.PrimarySceneName);
+        yield return null;
+        SceneTransitionProfiler.Mark("Presentation de zone appliquee");
         yield return LoadManifestLoadingScenes(destination, destination.LoadingMessage);
 
         Scene targetScene = SceneManager.GetSceneByName(destination.PrimarySceneName);
@@ -374,20 +383,27 @@ public sealed class GameFlowService : MonoBehaviour
     private IEnumerator ReturnToHubRoutine(string spawnId)
     {
         string hubScene = HubSceneName;
+        string hubLoadingMessage = hubManifest != null && hubManifest.IsValid
+            ? hubManifest.LoadingMessage
+            : "Retour a la Maison...";
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {hubScene}");
-        yield return LoadingScreenService.ShowAndWaitForPresentation("Retour a la Maison...");
+        yield return LoadingScreenService.ShowAndWaitForPresentation(hubLoadingMessage);
         SceneTransitionProfiler.ResetFrameGapMeasurement();
         SceneTransitionProfiler.Mark("Overlay opaque");
         yield return StopProximityStreaming();
+        ReleaseZonePresentation(preserveAudio: true);
         List<string> previousScenes = CaptureLoadedGameplayScenes();
         loadedZoneSceneNames.Clear();
 
-        yield return LoadAdditiveRoutine(hubScene, "Retour a la Maison...");
+        yield return LoadAdditiveRoutine(hubScene, hubLoadingMessage);
         SceneTransitionProfiler.Mark("Maison activee");
         AddLoadedGameplayScene(hubScene);
+        InstallZonePresentation(hubManifest, hubScene);
+        yield return null;
+        SceneTransitionProfiler.Mark("Presentation de zone appliquee");
         if (hubManifest != null && hubManifest.IsValid)
         {
-            yield return LoadManifestLoadingScenes(hubManifest, "Retour a la Maison...");
+            yield return LoadManifestLoadingScenes(hubManifest, hubLoadingMessage);
         }
 
         Scene loadedHubScene = SceneManager.GetSceneByName(hubScene);
@@ -422,6 +438,7 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Begin($"{activeGameplaySceneName} -> {menuSceneName}");
         yield return LoadingScreenService.ShowAndWaitForPresentation(returnToMenuLoadingMessage);
         yield return StopProximityStreaming();
+        ReleaseZonePresentation();
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             NetcodeBootstrap.ShutdownActiveNetworkManager();
@@ -921,6 +938,39 @@ public sealed class GameFlowService : MonoBehaviour
         {
             loadedZoneSceneNames.Add(sceneName);
         }
+    }
+
+    private void InstallZonePresentation(ZoneManifest manifest, string coreSceneName)
+    {
+        ReleaseZonePresentation(preserveAudio: true);
+        if (manifest == null || !manifest.IsValid || string.IsNullOrWhiteSpace(coreSceneName))
+        {
+            return;
+        }
+
+        Scene coreScene = SceneManager.GetSceneByName(coreSceneName);
+        if (!coreScene.IsValid() || !coreScene.isLoaded)
+        {
+            Debug.LogWarning($"[GameFlow] Impossible d'installer la presentation : scene Core '{coreSceneName}' introuvable.", this);
+            return;
+        }
+
+        GameObject host = new GameObject("ZoneRuntimeContext");
+        SceneManager.MoveGameObjectToScene(host, coreScene);
+        activeZoneRuntimeContext = host.AddComponent<ZoneRuntimeContext>();
+        activeZoneRuntimeContext.Configure(manifest);
+    }
+
+    private void ReleaseZonePresentation(bool preserveAudio = false)
+    {
+        if (activeZoneRuntimeContext == null)
+        {
+            return;
+        }
+
+        activeZoneRuntimeContext.ReleasePresentation(preserveAudio);
+        Destroy(activeZoneRuntimeContext.gameObject);
+        activeZoneRuntimeContext = null;
     }
 
     private IEnumerator PlaceSquadAtPortalDestinationRoutine(IReadOnlyList<Pose> destinationPoints)

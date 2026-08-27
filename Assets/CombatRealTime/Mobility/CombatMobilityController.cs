@@ -248,7 +248,7 @@ public sealed class CombatMobilityController : MonoBehaviour
             chainTransitionNormalizedTime = 0.05f,
             mobilityCancelNormalizedTime = settings.movementCancelNormalizedTime,
             recoveryNormalizedTime = settings.recoveryNormalizedTime,
-            exitBlendSeconds = 0.06f,
+            exitBlendSeconds = 0.08f,
             rootMotionMode = rootMotionMode,
             facingMode = PlayerActionFacingMode.UccBody,
             allowMoveAfterRecovery = true,

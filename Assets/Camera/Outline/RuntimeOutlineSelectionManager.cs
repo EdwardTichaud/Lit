@@ -38,6 +38,15 @@ public static class RuntimeOutlineSelectionManager
 
     public static void SetActiveInteractable(Object owner, ICharacterDetectedInteractable interactable)
     {
+        // The local character detector owns the current selection. Some legacy
+        // interactables still report themselves directly (notably when their
+        // trigger state changes); they must not replace a nearer object chosen
+        // by that detector.
+        if (!CanWriteSelection(owner))
+        {
+            return;
+        }
+
         SetActiveComponent(owner, interactable as Component);
         activeInteractable = interactable;
     }
@@ -101,6 +110,11 @@ public static class RuntimeOutlineSelectionManager
 
     public static void SetActiveComponent(Object owner, Component component)
     {
+        if (!CanWriteSelection(owner))
+        {
+            return;
+        }
+
         activeInteractable = null;
         CandidateTargets.Clear();
         RuntimeOutlineUtility.CollectOutlineTargets(component, CandidateTargets, ensureTargets: true);
@@ -109,6 +123,11 @@ public static class RuntimeOutlineSelectionManager
 
     public static void Clear()
     {
+        if (!CanWriteSelection(null))
+        {
+            return;
+        }
+
         activeInteractable = null;
         SetActiveTargets(null, null);
     }
@@ -173,6 +192,14 @@ public static class RuntimeOutlineSelectionManager
 
             target.SetOutlined(!IsSuspended);
         }
+    }
+
+    private static bool CanWriteSelection(Object owner)
+    {
+        // Ownerless callers are only a fallback for legacy interactions. Once
+        // the controlled character has selected a target, it is the sole
+        // authority until it explicitly changes or clears that selection.
+        return owner != null || activeOwner == null;
     }
 
     private static void HideActiveTargets()

@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 651798994}
   - component: {fileID: 651798996}
   - component: {fileID: 651798997}
+  - component: {fileID: 651798998}
   m_Layer: 0
   m_Name: Collier
   m_TagString: Untagged
@@ -145,14 +146,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 651798993}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0.00037452785, y: -0.00459383, z: -0.03704452, w: 0.99930304}
+  m_LocalPosition: {x: -7.5645, y: -93.0739, z: 55.363}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2081343484}
   m_Father: {fileID: 1423774656}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -0.062, y: -0.524, z: -4.246}
 --- !u!114 &651798996
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,7 +193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   ShowTopMostFoldoutHeaderGroup: 1
   interactableCategory: 1
-  representedItem: {fileID: 11400000, guid: e985a76883d1179448961595c53793d7, type: 2}
+  representedItem: {fileID: 11400000, guid: 62e245b53c0947419d6a5ef17ac6b4f9, type: 2}
   storedItems: []
   destroyWhenStorageEmpty: 0
   allowTake: 1
@@ -241,6 +242,81 @@ MonoBehaviour:
   interactionMaxDistance: 1.75
   linkedInventoryPanelController: {fileID: 0}
   recoverableWorldInfo: {fileID: 0}
+--- !u!114 &651798998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651798993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
+--- !u!1001 &1415963778
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6923122111304601163}
+    m_Modifications:
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6411929473796178513, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+      propertyPath: m_Name
+      value: Pierre tombale
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+--- !u!4 &1415963779 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2576509746819005357, guid: 03e53eb4e692dd54880e45f18369b244, type: 3}
+  m_PrefabInstance: {fileID: 1415963778}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1423774655
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,40 +347,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 651798994}
-  - {fileID: 2026849366}
+  - {fileID: 6923122111304601163}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2026849365
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2026849366}
-  m_Layer: 0
-  m_Name: Pierre tombale
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2026849366
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2026849365}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 3909232450181842793}
-  m_Father: {fileID: 1423774656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2081343483
 PrefabInstance:
@@ -314,6 +358,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 651798994}
     m_Modifications:
+    - target: {fileID: 1964807606324042682, guid: aeee2d40459887742891cecf2cf6e9db, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 1642066607988742572, guid: 3651813b8e7f9fb44983f5ee131eb8a3, type: 3}
     - target: {fileID: 1980994368617209140, guid: aeee2d40459887742891cecf2cf6e9db, type: 3}
       propertyPath: m_Name
       value: Necklace_Jon
@@ -358,7 +406,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6156508975942705812, guid: aeee2d40459887742891cecf2cf6e9db, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -368,7 +417,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2455193259634513659, guid: aeee2d40459887742891cecf2cf6e9db, type: 3}
   m_PrefabInstance: {fileID: 2081343483}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1089967122068753332
+--- !u!1 &1957369246601607095
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -376,9 +425,12 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3909232450181842793}
+  - component: {fileID: 6923122111304601163}
+  - component: {fileID: 9018881120849713134}
+  - component: {fileID: 9018881120849713136}
+  - component: {fileID: 9018881120849713135}
   m_Layer: 0
-  m_Name: SM_Tombstone_3_light_RIP
+  m_Name: Petite tombe de Jon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -463,144 +515,123 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 8070680388374486664, guid: 9c5b303a7e175a044ad27a6cb498c1c1, type: 3}
   m_PrefabInstance: {fileID: 2557317206520416560}
   m_PrefabAsset: {fileID: 0}
---- !u!33 &2761752079827835025
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9003541012050797223}
-  m_Mesh: {fileID: -6624926580062850613, guid: 62126fe6e4183c64dbd2b0fe2886abe4, type: 3}
---- !u!4 &3909232450181842793
+--- !u!4 &6923122111304601163
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1089967122068753332}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.7013238, z: -0, w: 0.7128428}
-  m_LocalPosition: {x: 22.178, y: -89.97, z: 50.081}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8579564851721408342}
-  m_Father: {fileID: 2026849366}
-  m_LocalEulerAnglesHint: {x: 0, y: -89.067, z: 0}
---- !u!4 &6097064081729839190
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9003541012050797223}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8579564851721408342}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &6930664172296144800
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9003541012050797223}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: ea18f730d45b39242bcf177e739175d3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!4 &8579564851721408342
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8960875086793430508}
+  m_GameObject: {fileID: 1957369246601607095}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6097064081729839190}
-  m_Father: {fileID: 3909232450181842793}
+  - {fileID: 1415963779}
+  m_Father: {fileID: 1423774656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &8960875086793430508
-GameObject:
+--- !u!114 &9018881120849713134
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8579564851721408342}
-  m_Layer: 0
-  m_Name: Tombstone_3_Unity
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &9003541012050797223
-GameObject:
+  m_GameObject: {fileID: 1957369246601607095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 440887241
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &9018881120849713135
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6097064081729839190}
-  - component: {fileID: 2761752079827835025}
-  - component: {fileID: 6930664172296144800}
-  m_Layer: 0
-  m_Name: Tombstone_3_Unity
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_GameObject: {fileID: 1957369246601607095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 331fc8eb82c8fe34e90f368cb484be84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOutlineTarget
+  outlined: 0
+--- !u!114 &9018881120849713136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1957369246601607095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccd7488eb2c54b14fb0812256450a344, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactableCategory: 2
+  representedItem: {fileID: 11400000, guid: 1fa595bd3c1047b08db53f494f841d02, type: 2}
+  storedItems: []
+  destroyWhenStorageEmpty: 0
+  allowTake: 1
+  maxStoredQuantity: 0
+  isLocked: 0
+  lockId: 
+  consumeKeyOnUse: 0
+  lockedNoKeyMessage: "Le conteneur est verrouill\xE9. Il faut la bonne cl\xE9."
+  unlockSuccessMessage: "Le conteneur est d\xE9verrouill\xE9."
+  allowLockpick: 1
+  lockDifficulty: 12
+  lockpickToolItem: {fileID: 0}
+  lockpickToolItemId: outils_de_crochetage
+  lockpickConfirmationMessage: Utiliser un outil de crochetage pour tenter d'ouvrir
+    ce coffre ?
+  missingLockpickMessage: Il manque des outils de crochetage.
+  lockpickSuccessMessage: "Crochetage r\xE9ussi."
+  lockpickFailureMessage: "Crochetage rat\xE9, votre outil de crochetage se brise..."
+  isTrapped: 0
+  triggerTrapOnOpen: 0
+  disarmTrapAfterTrigger: 1
+  trapEffect: 1
+  trapTeleportTarget: {fileID: 0}
+  trapUseTargetRotation: 1
+  trapTriggeredMessage: "Un pi\xE8ge de t\xE9l\xE9portation se d\xE9clenche !"
+  allowBreakWhenTakeDisabled: 1
+  breakInvalidMessage: Cet objet ne peut pas etre casse.
+  breakNoSpaceMessage: Pas assez de place dans le coffre.
+  takeBlockedMessage: Impossible de prendre cet objet.
+  takeAllSuccessMessage: "Objets r\xE9cup\xE9r\xE9s."
+  depositNoSpaceMessage: Pas assez de place dans le coffre.
+  showWorldInteractionUi: 1
+  requireLitInfluenceForInteraction: 1
+  reactToFlameInfluence: 1
+  actionBox: {fileID: 0}
+  actionBoxOffset: {x: 0, y: 0}
+  actionBoxFadeDuration: 0.15
+  actionBoxSetAlphaToZeroOnStart: 1
+  actionBoxAddCanvasGroupIfMissing: 1
+  actionBoxDisableRaycastsWhenHidden: 1
+  actionBoxEnabledAlpha: 1
+  actionBoxDisabledAlpha: 0.25
+  takeQuantityPanelOffset: {x: 0, y: 0}
+  takeQuantityFormat: '{0}/{1}'
+  interactionTrigger: {fileID: 0}
+  interactionMaxDistance: 1.75
+  linkedInventoryPanelController: {fileID: 0}
+  recoverableWorldInfo: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

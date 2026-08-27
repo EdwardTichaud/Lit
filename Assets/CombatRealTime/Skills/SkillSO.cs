@@ -183,6 +183,9 @@ public sealed class PlayerActionPresentationProfile
     public float mobilityCancelNormalizedTime = 0.7f;
     [Range(0.05f, 1f)] public float recoveryNormalizedTime = 0.88f;
     [Range(0f, 0.25f)] public float exitBlendSeconds = 0.1f;
+    [Header("Motion Handoff")]
+    [Tooltip("Conditions physiques et Animator a satisfaire avant de rendre l'action a la locomotion.")]
+    public MotionHandoffProfile handoff = MotionHandoffProfile.CreateActionDefault();
     [Header("Root Motion")]
     [Tooltip("InPlace: aucun deplacement racine. AuthoredRootMotion: le clip deplace UCC. ScriptedDash: le script pilote le dash.")]
     public PlayerActionRootMotionMode rootMotionMode = PlayerActionRootMotionMode.AuthoredRootMotion;
@@ -215,10 +218,6 @@ public class SkillSO : ScriptableObject
     [Tooltip("Chemin complet de la state Animator a jouer. Laisser vide pour utiliser le nom du clip.")]
     public string animatorState;
     [Min(0f)] public float damages;
-    [Header("Light Skill Charge")]
-    [Tooltip("Charge ajoutee a la jauge LightSkill lorsqu'un impact de cette competence touche reellement la cible.")]
-    [Min(0f)] public float lightChargeOnHit = 1f;
-
     [Header("Player Presentation")]
     public PlayerActionPresentationProfile presentation = new PlayerActionPresentationProfile();
     [Header("Hit Range")]
@@ -263,7 +262,6 @@ public class SkillSO : ScriptableObject
     public string AnimatorState => animatorState;
     public PlayerActionPresentationProfile Presentation => presentation ?? (presentation = PlayerActionPresentationProfile.CreateDefault());
     public float Damages => damages;
-    public float LightChargeOnHit => lightChargeOnHit;
     public float MinimumHitDistance => minimumHitDistance;
     public float MaximumHitDistance => Mathf.Max(minimumHitDistance, maximumHitDistance);
     public bool RequireValidRangeToStart => requireValidRangeToStart;

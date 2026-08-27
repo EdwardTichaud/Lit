@@ -76,13 +76,16 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         ResolveReferences();
         if (active || cinematicPlayback == null || cinematicPlayback.IsPlaying || combatManager == null ||
             !combatManager.IsCombatActive || skill == null || !skill.HasCombatCinematic ||
-            combatManager.LockedEnemy == null || (combatManager.LockedEnemy.Health != null && combatManager.LockedEnemy.Health.IsDead))
+            (casterRole == CombatCinematicCasterRole.Player &&
+             (combatManager.LockedEnemy == null || (combatManager.LockedEnemy.Health != null && combatManager.LockedEnemy.Health.IsDead))) ||
+            (casterRole == CombatCinematicCasterRole.Enemy &&
+             (combatManager.EngagedEnemy == null || (combatManager.EngagedEnemy.Health != null && combatManager.EngagedEnemy.Health.IsDead))))
         {
             return false;
         }
 
         if (casterRole == CombatCinematicCasterRole.Enemy &&
-            (caster == null || caster != combatManager.LockedEnemy || caster.ActiveSkill != skill))
+            (caster == null || caster != combatManager.EngagedEnemy || caster.ActiveSkill != skill))
         {
             return false;
         }
@@ -233,7 +236,7 @@ public sealed class CombatSkillCinematicController : MonoBehaviour
         if (definition == null || combatManager == null) return;
 
         ApplyState(combatManager.PlayerAnimator, definition.PostTimelinePlayerState);
-        ApplyState(combatManager.LockedEnemy != null ? combatManager.LockedEnemy.Animator : null, definition.PostTimelineEnemyState);
+        ApplyState(combatManager.EngagedEnemy != null ? combatManager.EngagedEnemy.Animator : null, definition.PostTimelineEnemyState);
     }
 
     private static void ApplyState(Animator animator, CombatCinematicPostTimelineState state)

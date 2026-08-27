@@ -91,7 +91,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
     public void BeginWarning(RealTimeCombatEnemy enemy)
     {
         if (enemy == null || enemy.ActiveSkill == null || combatManager == null ||
-            !combatManager.IsCombatActive || combatManager.LockedEnemy != enemy)
+            !combatManager.IsCombatActive || combatManager.EngagedEnemy != enemy)
         {
             return;
         }

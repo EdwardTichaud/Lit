@@ -20,7 +20,8 @@ MonoBehaviour:
   playerAnimatorTrackName: Player.Animator
   enemyAnimatorTrackName: Enemy.Animator
   cinemachineTrackName: Cinemachine
-  maximumCinematicStartDistance: 18
+  minimumCinematicStartDistance: 6
+  maximumCinematicStartDistance: 10
   startSfx: {fileID: 11400000, guid: a1000000000000000000000000000003, type: 2}
   impulseSfx: {fileID: 11400000, guid: f492283508dd7944c868bd896717f5f9, type: 2}
   impactSfx: {fileID: 11400000, guid: a1000000000000000000000000000004, type: 2}

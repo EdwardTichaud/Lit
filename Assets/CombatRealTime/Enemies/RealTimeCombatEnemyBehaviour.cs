@@ -18,8 +18,11 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private Transform patrolPoint;
     [SerializeField, Min(0.1f)] private float meleeAttackDistance = 2.6f;
     [SerializeField, Min(0.1f)] private float rangedAttackDistance = 8f;
-    [SerializeField, Min(0.1f)] private float disengageDistance = 14f;
-    [SerializeField, Min(0f)] private float returnToPatrolAfterSeconds = 5f;
+    [Header("Pursuit Zone")]
+    [SerializeField, Min(0.1f), Tooltip("Rayon horizontal autour du spawn. Hors de cette zone, l'ennemi cesse son engagement puis revient a son origine.")]
+    private float pursuitRadius = 20f;
+    [SerializeField, Min(0f), Tooltip("Temps d'arret apres la derniere attaque avant le retour au spawn.")]
+    private float disengagePauseSeconds = 1f;
     [Header("Movement")]
     [SerializeField, Tooltip("Autorise l'ennemi a poursuivre Lucian, rechercher sa derniere position et retourner a sa patrouille pendant son alerte.")]
     private bool canPursuePlayer = true;
@@ -32,6 +35,17 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     [Header("Attack Selection")]
     [SerializeField, Range(0f, 100f), Tooltip("Chance de privilegier une attaque melee quand les deux familles sont disponibles.")]
     private float meleeAttackPreferencePercent = 70f;
+    [Header("Combat Decision")]
+    [SerializeField, Min(0f), Tooltip("Temps minimal d'observation/repositionnement avant une attaque disponible.")]
+    private float minimumObserveSeconds = 0.18f;
+    [SerializeField, Min(0f), Tooltip("Temps maximal d'observation/repositionnement avant une attaque disponible.")]
+    private float maximumObserveSeconds = 0.48f;
+    [SerializeField, Min(0f), Tooltip("Temps minimal entre la fin d'une action et la prochaine decision offensive.")]
+    private float minimumRecoverySeconds = 0.3f;
+    [SerializeField, Min(0f), Tooltip("Temps maximal entre la fin d'une action et la prochaine decision offensive.")]
+    private float maximumRecoverySeconds = 0.65f;
+    [SerializeField, Tooltip("Active un journal compact de decision et de navigation pour cet ennemi.")]
+    private bool logCombatDiagnostics;
     [SerializeField, Min(0.05f)] private float patrolArrivalDistance = 0.15f;
     [SerializeField, Min(0f)] private float turnSpeedDegreesPerSecond = 540f;
     [SerializeField, Tooltip("Journalise le replacement direct de l'ennemi par une LightSkill.")]
@@ -50,6 +64,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private bool returnedToPatrolWhilePlayerVisible;
     private bool cinematicSuspended;
     private bool navigationSuppressedForCinematic;
+    private PursuitDisengageState pursuitDisengageState;
     private Vector3 initialPatrolPosition;
     private Quaternion initialPatrolRotation;
     private float lastAttackStartedAt;
@@ -58,14 +73,49 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private float normalVisionDistance;
     private float nextNavMeshRetryTime;
     private Vector3 lastKnownPlayerPosition;
+    private float nextAttackDecisionAt;
+    private EnemyCombatPhase combatPhase;
+    private string lastNavigationFailure;
+
+    private enum PursuitDisengageState
+    {
+        None,
+        AwaitingActiveAttack,
+        Pause,
+        Returning
+    }
+
+    private enum EnemyCombatPhase
+    {
+        Idle,
+        Alert,
+        Chase,
+        Position,
+        Observe,
+        Attack,
+        Recovery,
+        DisengagePause,
+        Return
+    }
 
     public event Action<bool> AttackModeChanged;
     public bool IsInAttackMode => attackMode && provokedByPlayer;
     public bool IsAlerted => alerted;
     public bool IsCinematicSuspended => cinematicSuspended;
-    public float CurrentDisengageDistance => alerted
-        ? Mathf.Max(disengageDistance, alertedVisionDistance)
-        : disengageDistance;
+    public float PursuitRadius => pursuitRadius;
+    public bool IsPlayerOutsidePursuitZone => player != null &&
+                                               HorizontalDistance(initialPatrolPosition, player.position) > pursuitRadius;
+    public bool ShouldEndCombatForPursuit => pursuitDisengageState == PursuitDisengageState.Pause ||
+                                              pursuitDisengageState == PursuitDisengageState.Returning;
+
+    /// <summary>Called only when the authored attack has reached a valid ground recovery.</summary>
+    public void NotifyAttackCompleted()
+    {
+        nextAttackDecisionAt = Time.time + UnityEngine.Random.Range(
+            Mathf.Min(minimumObserveSeconds, maximumObserveSeconds),
+            Mathf.Max(minimumObserveSeconds, maximumObserveSeconds));
+        SetCombatPhase(EnemyCombatPhase.Recovery, "attaque terminee");
+    }
 
     private void Reset()
     {
@@ -78,6 +128,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         initialPatrolPosition = transform.position;
         initialPatrolRotation = transform.rotation;
         lastAttackStartedAt = Time.time;
+        combatPhase = EnemyCombatPhase.Idle;
 
         if (enemy == null)
         {
@@ -137,6 +188,11 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return;
         }
 
+        if (TickPursuitDisengagement())
+        {
+            return;
+        }
+
         float distance = HorizontalDistance(transform.position, player.position);
         combatLocomotion?.SetCombatTarget(player);
         if (enemy.CanSeePlayer)
@@ -158,22 +214,22 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         RealTimeCombatManager manager = RealTimeCombatManager.Instance;
         bool canRetaliate = manager != null
             && manager.IsCombatActive
-            && manager.LockedEnemy == enemy
+            && manager.EngagedEnemy == enemy
             && enemy.IsRetaliationReady;
-        bool hasCombatTarget = enemy.CanSeePlayer || (provokedByPlayer && alerted);
+        // After a real hit, the engagement and its spawn zone are authoritative.
+        // A transient raycast/FOV loss must not make a provoked enemy forget the player.
+        bool hasCombatTarget = enemy.CanSeePlayer || provokedByPlayer;
 
-        if (!attackMode && enemy.CanSeePlayer)
+        if (provokedByPlayer && IsPlayerOutsidePursuitZone)
         {
-            if (!returnedToPatrolWhilePlayerVisible || canRetaliate)
-            {
-                SetAttackMode(true);
-            }
-        }
-        else if (attackMode && distance > CurrentDisengageDistance)
-        {
-            SetAttackMode(false);
+            BeginPursuitDisengagement();
+            return;
         }
 
+        if (!attackMode && provokedByPlayer)
+        {
+            SetAttackMode(true);
+        }
         if (!attackMode)
         {
             if (canPursuePlayer && !SearchLastKnownPosition())
@@ -194,6 +250,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
         if (enemy.HasRetaliationPending)
         {
+            SetCombatPhase(EnemyCombatPhase.Attack, "skill actif");
             StopMovement();
             return;
         }
@@ -206,31 +263,28 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             FacePlayer();
         }
 
-        bool hasRetaliationToResolve = enemy.HasStoredLightDamage || enemy.HasRetaliationPending || canRetaliate;
-        if (!hasRetaliationToResolve && Time.time - lastAttackStartedAt >= returnToPatrolAfterSeconds)
+        // Voir Lucian rend l'ennemi alerte, mais seule une attaque de lumiere
+        // recue le fait poursuivre pour convertir son ledger en riposte.
+        if (!provokedByPlayer)
         {
-            returnedToPatrolWhilePlayerVisible = enemy.CanSeePlayer;
-            SetAttackMode(false);
-            if (canPursuePlayer && !SearchLastKnownPosition())
-            {
-                ReturnToPatrol();
-            }
-            else if (!canPursuePlayer)
-            {
-                StopMovement();
-            }
-            if (enemy.CanSeePlayer)
-            {
-                FacePlayer();
-            }
+            SetCombatPhase(EnemyCombatPhase.Alert, "pas encore provoque");
+            StopMovement();
             return;
         }
 
-        // Voir Lucian rend l'ennemi alerte, mais seule une attaque de lumiere
-        // recue le fait poursuivre pour convertir son ledger en riposte.
-        if (!provokedByPlayer || !canRetaliate)
+        if (!canRetaliate)
         {
-            StopMovement();
+            SetCombatPhase(EnemyCombatPhase.Recovery, "riposte indisponible");
+            if (canPursuePlayer)
+            {
+                MoveTowardsPlayer(Mathf.Max(meleeAttackDistance, combatLocomotion != null
+                    ? combatLocomotion.Positioning.preferredDistance
+                    : meleeAttackDistance));
+            }
+            else
+            {
+                StopMovement();
+            }
             return;
         }
 
@@ -248,12 +302,47 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         float fallbackAttackDistance = plannedSkill.EnemyRange == RealTimeCombatRange.Ranged
             ? rangedAttackDistance
             : meleeAttackDistance;
+        float attackMinimumDistance = plannedSkill.MinimumHitDistance;
         float attackDistance = Mathf.Max(fallbackAttackDistance, plannedSkill.MaximumHitDistance);
 
-        if (hasCombatTarget && distance <= attackDistance && enemy.TryStartRetaliation(meleeAttackPreferencePercent * 0.01f))
+        if (distance < attackMinimumDistance || distance > attackDistance)
+        {
+            SetCombatPhase(EnemyCombatPhase.Chase, distance < attackMinimumDistance ? "trop proche" : "hors portee");
+            if (canPursuePlayer)
+            {
+                MoveTowardsPlayer(attackDistance);
+            }
+            else
+            {
+                StopMovement();
+            }
+            return;
+        }
+
+        // A readable enemy positions itself briefly in range before committing.
+        // The locomotion controller uses this period to orbit, approach or retreat.
+        if (Time.time < nextAttackDecisionAt)
+        {
+            SetCombatPhase(EnemyCombatPhase.Observe, "fenetre de decision");
+            if (canPursuePlayer)
+            {
+                MoveTowardsPlayer(attackDistance);
+            }
+            else
+            {
+                StopMovement();
+            }
+            return;
+        }
+
+        if (hasCombatTarget && enemy.TryStartRetaliation(meleeAttackPreferencePercent * 0.01f))
         {
             StopMovement();
             lastAttackStartedAt = Time.time;
+            nextAttackDecisionAt = Time.time + UnityEngine.Random.Range(
+                Mathf.Min(minimumRecoverySeconds, maximumRecoverySeconds),
+                Mathf.Max(minimumRecoverySeconds, maximumRecoverySeconds));
+            SetCombatPhase(EnemyCombatPhase.Attack, "attaque lancee");
             AudioClipSO attackSfx = enemy.ActiveSkill != null ? enemy.ActiveSkill.EnemyAttackSfx : null;
             if (attackSfx != null)
             {
@@ -263,7 +352,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return;
         }
 
-        if (canPursuePlayer && (!enemy.CanSeePlayer || distance > attackDistance))
+        SetCombatPhase(EnemyCombatPhase.Position, "skill non lance");
+        if (canPursuePlayer)
         {
             MoveTowardsPlayer(attackDistance);
         }
@@ -351,8 +441,14 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void OnLightAbsorbed(int _)
     {
+        CancelPursuitDisengagement();
         provokedByPlayer = true;
         EnterAlert();
+        SetAttackMode(true);
+        nextAttackDecisionAt = Time.time + UnityEngine.Random.Range(
+            Mathf.Min(minimumObserveSeconds, maximumObserveSeconds),
+            Mathf.Max(minimumObserveSeconds, maximumObserveSeconds));
+        SetCombatPhase(EnemyCombatPhase.Observe, "provocation lumineuse");
         RealTimeCombatManager.Instance?.SetEnemyAttackMode(enemy, true);
     }
 
@@ -369,7 +465,9 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void UpdateAlertness()
     {
-        if (!alerted || Time.time - lastSeenPlayerAt < alertMemorySeconds)
+        // Once Lucian has damaged this enemy, the pursuit zone, rather than
+        // the short visual-memory timer, is the only automatic disengagement.
+        if (!alerted || provokedByPlayer || Time.time - lastSeenPlayerAt < alertMemorySeconds)
         {
             return;
         }
@@ -395,6 +493,70 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         {
             RealTimeCombatManager.Instance?.SetEnemyAttackMode(enemy, false);
         }
+    }
+
+    private void BeginPursuitDisengagement()
+    {
+        if (pursuitDisengageState != PursuitDisengageState.None)
+        {
+            return;
+        }
+
+        StopMovement();
+        SetCombatPhase(EnemyCombatPhase.DisengagePause, "hors zone de poursuite");
+        pursuitDisengageState = enemy != null && enemy.HasRetaliationPending
+            ? PursuitDisengageState.AwaitingActiveAttack
+            : PursuitDisengageState.Pause;
+        if (pursuitDisengageState == PursuitDisengageState.Pause)
+        {
+            BeginPursuitDisengagePause();
+        }
+    }
+
+    private bool TickPursuitDisengagement()
+    {
+        switch (pursuitDisengageState)
+        {
+            case PursuitDisengageState.None:
+                return false;
+            case PursuitDisengageState.AwaitingActiveAttack:
+                StopMovement();
+                if (enemy == null || !enemy.HasRetaliationPending)
+                {
+                    pursuitDisengageState = PursuitDisengageState.Pause;
+                    BeginPursuitDisengagePause();
+                }
+                return true;
+            case PursuitDisengageState.Pause:
+                StopMovement();
+                if (Time.time >= searchEndsAt)
+                {
+                    pursuitDisengageState = PursuitDisengageState.Returning;
+                }
+                return true;
+            case PursuitDisengageState.Returning:
+                SetCombatPhase(EnemyCombatPhase.Return, "retour au spawn");
+                ReturnToPatrol();
+                if (HorizontalDistance(transform.position, initialPatrolPosition) <= patrolArrivalDistance)
+                {
+                    pursuitDisengageState = PursuitDisengageState.None;
+                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void BeginPursuitDisengagePause()
+    {
+        searchEndsAt = Time.time + disengagePauseSeconds;
+        ExitAlert();
+        SetAttackMode(false);
+    }
+
+    private void CancelPursuitDisengagement()
+    {
+        pursuitDisengageState = PursuitDisengageState.None;
     }
 
     private void MoveTowardsPlayer(float attackDistance)
@@ -448,6 +610,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         Vector3 destination = patrolPoint != null ? patrolPoint.position : initialPatrolPosition;
         if (HorizontalDistance(transform.position, destination) <= patrolArrivalDistance)
         {
+            SetCombatPhase(EnemyCombatPhase.Idle, "patrouille atteinte");
             StopMovement();
             if (patrolPoint == null)
             {
@@ -505,17 +668,20 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     {
         if (navigationAgent == null || !navigationAgent.gameObject.activeInHierarchy)
         {
+            ReportNavigationFailure("NavMeshAgent absent ou GameObject inactif");
             return false;
         }
 
         navigationAgent.updateRotation = false;
         if (navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh)
         {
+            lastNavigationFailure = null;
             return true;
         }
 
         if (Time.time < nextNavMeshRetryTime)
         {
+            ReportNavigationFailure("attente prochaine tentative NavMesh");
             return false;
         }
 
@@ -529,6 +695,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             }
 
             nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+            ReportNavigationFailure("aucune projection NavMesh locale");
             return false;
         }
 
@@ -540,6 +707,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
         if (navigationAgent.isOnNavMesh)
         {
+            lastNavigationFailure = null;
             return true;
         }
 
@@ -558,6 +726,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         physicsMotor?.AuditPose("NavMesh:desactive, projection trop eloignee=" + hit.position);
         navigationAgent.enabled = false;
         nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+        ReportNavigationFailure("projection NavMesh trop eloignee: " + hit.position);
         return false;
     }
 
@@ -609,6 +778,39 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         }
 
         AttackModeChanged?.Invoke(value);
+    }
+
+    private void SetCombatPhase(EnemyCombatPhase next, string reason)
+    {
+        if (combatPhase == next)
+        {
+            return;
+        }
+
+        combatPhase = next;
+        if (logCombatDiagnostics)
+        {
+            Debug.Log("[CombatEnemyAI] " + name + " -> " + next + " | " + reason +
+                      " | nav=" + (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh) +
+                      " | velocity=" + (navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh
+                          ? navigationAgent.velocity.ToString()
+                          : "n/a"), this);
+        }
+    }
+
+    private void ReportNavigationFailure(string reason)
+    {
+        if (lastNavigationFailure == reason)
+        {
+            return;
+        }
+
+        lastNavigationFailure = reason;
+        if (logCombatDiagnostics)
+        {
+            Debug.LogWarning("[CombatEnemyAI] " + name + " navigation indisponible: " + reason +
+                             " | position=" + transform.position + ".", this);
+        }
     }
 
     private static float HorizontalDistance(Vector3 first, Vector3 second)

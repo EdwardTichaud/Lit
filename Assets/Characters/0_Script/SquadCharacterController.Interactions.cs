@@ -192,10 +192,19 @@ public partial class SquadCharacterController
         Collider collider = candidate.GetInteractionDetectionCollider();
         Transform anchor = candidate.GetInteractionAnchor();
         usesTriggerZone = CharacterInteractionDetection.UsesTriggerInteractionZone(candidate);
-        Vector3 point = CharacterInteractionDetection.GetInteractionPoint(collider, anchor, origin);
-        Vector3 toPoint = point - origin;
+        // A Flame uses a large trigger volume to grant interaction access. Once
+        // the player is inside it, Collider.ClosestPoint returns the player
+        // position, which used to make its selection distance exactly zero and
+        // let it permanently beat a nearer item. Keep the trigger for range
+        // validation, but rank it from its actual visual/interaction anchor.
+        Vector3 rangePoint = CharacterInteractionDetection.GetInteractionPoint(
+            collider, anchor, origin);
+        Vector3 selectionPoint = usesTriggerZone && anchor != null
+            ? anchor.position
+            : rangePoint;
+        Vector3 toPoint = selectionPoint - origin;
         distanceSqr = toPoint.sqrMagnitude;
-        float distance = Mathf.Sqrt(distanceSqr);
+        float rangeDistance = Vector3.Distance(rangePoint, origin);
         float maxDistance = ResolveInteractionMaxDistance(candidate);
         if (usesTriggerZone)
         {
@@ -210,7 +219,7 @@ public partial class SquadCharacterController
             }
         }
 
-        if (!usesTriggerZone && distance > maxDistance)
+        if (!usesTriggerZone && rangeDistance > maxDistance)
         {
             return false;
         }

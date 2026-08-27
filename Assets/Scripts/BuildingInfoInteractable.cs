@@ -30,6 +30,8 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
     public Vector3 informationOffset = new Vector3(1.75f, 1.6f, 0f);
     [SerializeField, Tooltip("Force le panel local a rester du cote camera par rapport a l'objet qui l'affiche.")]
     private bool keepLocalPanelBetweenAnchorAndCamera = true;
+    [Tooltip("Ignore la barriere de visibilite du monde pour ce panneau. A reserver aux objets recuperables deja valides par leur propre detection.")]
+    public bool ignoreVisibilityGateForWorldUi;
     [SerializeField, Min(0f), Tooltip("Distance minimale vers la camera pour eviter que le panel reste dans ou derriere l'objet.")]
     private float localPanelCameraSideDistance = 0.45f;
     [Tooltip("Camera utilisee pour placer le panel local en screen space.")]
@@ -293,6 +295,16 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private void OnInteractPerformed(InputAction.CallbackContext context)
     {
+        // Les pickups monde reutilisent ce composant uniquement pour leur
+        // etiquette de proximite. Le ramassage est deja traite par
+        // InteractableItem ; l'ecouter une seconde fois peut ouvrir un panel
+        // de craft pendant la destruction du pickup et laisser le joueur
+        // verrouille.
+        if (string.Equals(presentationOrigin, "recoverable_loot", System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
         ResolveRuntimeReferences();
         EnsureBuildingData();
         if (!CanDisplayWorldUi())
@@ -902,6 +914,11 @@ public class BuildingInfoInteractable : MonoBehaviour, ICharacterDetectedInterac
 
     private bool CanDisplayWorldUi()
     {
+        if (ignoreVisibilityGateForWorldUi)
+        {
+            return true;
+        }
+
         ResolveVisibilityGate();
         return visibilityGate == null || visibilityGate.IsWorldUiVisible;
     }

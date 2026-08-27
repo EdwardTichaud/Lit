@@ -60,7 +60,7 @@ public sealed class CombatCinematicContext
         Definition = definition;
         PlayerRoot = manager != null ? manager.PlayerRoot : null;
         PlayerAnimator = manager != null ? manager.PlayerAnimator : null;
-        TargetEnemy = manager != null ? manager.LockedEnemy : null;
+        TargetEnemy = manager != null ? (manager.EngagedEnemy ?? manager.LockedEnemy) : null;
         TargetAnimator = TargetEnemy != null ? TargetEnemy.Animator : null;
         TargetLockPoint = TargetEnemy != null ? TargetEnemy.LockPoint : null;
         ResolveImpact = resolveImpact;

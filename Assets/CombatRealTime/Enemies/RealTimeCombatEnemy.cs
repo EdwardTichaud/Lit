@@ -28,7 +28,9 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     [SerializeField, Min(0f)] private float retaliationDelaySeconds = 0.15f;
 
     private int storedMaximumLightDamage;
-    private int queuedMaximumLightDamage;
+    // Persists for the whole encounter. The temporary stored value is consumed
+    // when an attack starts; this value is what rearms the next attack.
+    private int engagementMaximumLightDamage;
     private int committedRetaliationDamage;
     private SkillSO activeSkill;
     private SkillSO plannedRetaliationSkill;
@@ -57,6 +59,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     public Transform LockPoint => ResolveLockPoint();
     public bool CanSeePlayer { get; private set; }
     public int StoredMaximumLightDamage => storedMaximumLightDamage;
+    public int EngagementMaximumLightDamage => engagementMaximumLightDamage;
     public int CommittedRetaliationDamage => committedRetaliationDamage;
     public SkillSO ActiveSkill => activeSkill;
     public bool HasRetaliationPending => activeSkill != null;
@@ -145,15 +148,10 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
         if (canPrepareRetaliation)
         {
+            engagementMaximumLightDamage = Mathf.Max(engagementMaximumLightDamage, applied);
             if (activeSkill == null)
             {
                 StoreLightDamageForRetaliation(applied);
-            }
-            else
-            {
-                // The current attack is never interrupted. Keep only the strongest hit
-                // received during it to prepare the following retaliation cycle.
-                queuedMaximumLightDamage = Mathf.Max(queuedMaximumLightDamage, applied);
             }
         }
 
@@ -179,12 +177,14 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         if (activeSkill == null || enemySkills == null || !enemySkills.SetActiveSkill(activeSkill))
         {
             activeSkill = null;
+            storedMaximumLightDamage = engagementMaximumLightDamage;
+            retaliationReadyAt = Time.time + retaliationDelaySeconds;
             return false;
         }
 
         plannedRetaliationSkill = null;
         physicsMotor?.BeginEnemyAction(activeSkill);
-        committedRetaliationDamage = Mathf.CeilToInt(storedMaximumLightDamage * Mathf.Max(0f, activeSkill.EnemyDamageMultiplier));
+        committedRetaliationDamage = Mathf.CeilToInt(engagementMaximumLightDamage * Mathf.Max(0f, activeSkill.EnemyDamageMultiplier));
         storedMaximumLightDamage = 0;
 
         bool cinematicStarted = activeSkill.HasCombatCinematic &&
@@ -194,6 +194,8 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         {
             activeSkill = null;
             committedRetaliationDamage = 0;
+            storedMaximumLightDamage = engagementMaximumLightDamage;
+            retaliationReadyAt = Time.time + retaliationDelaySeconds;
             return false;
         }
 
@@ -225,13 +227,14 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         plannedRetaliationSkill = null;
         committedRetaliationDamage = 0;
         storedMaximumLightDamage = 0;
-        queuedMaximumLightDamage = 0;
+        engagementMaximumLightDamage = 0;
         retaliationReadyAt = 0f;
     }
 
     /// <summary>
-    /// Ends the active attack and promotes light damage absorbed during it to the
-    /// next retaliation cycle. Called exclusively from the attack-end Animation Event.
+    /// Ends the active attack and rearms the next one with the strongest light
+    /// damage received during the current engagement. Called from the attack-end
+    /// Animation Event only.
     /// </summary>
     public void CompleteRetaliationAndPrepareNext()
     {
@@ -239,15 +242,13 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         plannedRetaliationSkill = null;
         committedRetaliationDamage = 0;
 
-        if (queuedMaximumLightDamage <= 0)
+        if (engagementMaximumLightDamage <= 0)
         {
             return;
         }
 
-        storedMaximumLightDamage = Mathf.Max(storedMaximumLightDamage, queuedMaximumLightDamage);
-        queuedMaximumLightDamage = 0;
+        storedMaximumLightDamage = engagementMaximumLightDamage;
         retaliationReadyAt = Time.time + retaliationDelaySeconds;
-        LightAbsorbed?.Invoke(storedMaximumLightDamage);
     }
 
     public void CompleteEnemyAttackWhenGrounded(Action onGrounded)
@@ -457,7 +458,7 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     private void StoreLightDamageForRetaliation(int damage)
     {
-        storedMaximumLightDamage = Mathf.Max(storedMaximumLightDamage, damage);
+        storedMaximumLightDamage = Mathf.Max(storedMaximumLightDamage, engagementMaximumLightDamage, damage);
         retaliationReadyAt = Time.time + retaliationDelaySeconds;
         LightAbsorbed?.Invoke(damage);
     }

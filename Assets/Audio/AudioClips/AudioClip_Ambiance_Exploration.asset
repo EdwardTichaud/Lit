@@ -15,6 +15,6 @@ MonoBehaviour:
   title: Exploration
   composer: Fab
   audioClip: {fileID: 8300000, guid: 9b731c89aac00844d81b02c275a616a1, type: 3}
-  volume: 0.3
+  volume: 0.05
   loop: 1
   affectedByTimeScale: 0

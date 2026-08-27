@@ -123,6 +123,12 @@ public class LadderController : MonoBehaviour
     [SerializeField, Tooltip("Duree de transition si le script doit CrossFade vers un state.")]
     private float crossFadeDuration = 0.08f;
 
+    [Header("Development")]
+    [SerializeField, Tooltip("Affiche la base de traversée et vérifie que la pose appliquée respecte l'orientation complète de l'échelle.")]
+    private bool debugTraversalPose;
+    [SerializeField, Range(0.1f, 20f), Tooltip("Ecart angulaire maximal toléré entre la pose demandée et la pose réellement appliquée.")]
+    private float traversalPoseWarningDegrees = 2f;
+
     [Header("NavMesh")]
     [SerializeField, Tooltip("Cree des NavMeshLink runtime pour que le NavMesh considere l'echelle comme un passage.")]
     private bool autoCreateNavMeshLinks = true;
@@ -142,6 +148,9 @@ public class LadderController : MonoBehaviour
     private Transform autoTopPoint;
     private Transform autoTopExitPoint;
     private Transform autoBottomExitPoint;
+    private LadderRoute activeRoute;
+    private bool hasActiveRoute;
+    private bool traversalPoseWarningIssued;
 
     public bool IsBusy => activeRoutine != null;
 
@@ -250,6 +259,12 @@ public class LadderController : MonoBehaviour
         Quaternion climbRotation = keepEntryRotationDuringClimb
             ? route.EntryRotation
             : route.TargetRotation;
+
+        activeRoute = route;
+        hasActiveRoute = true;
+        traversalPoseWarningIssued = false;
+        LogTraversalRoute(route);
+        LogTraversalAnimationContract(animator, animationSet);
 
         activeRoutine = StartCoroutine(UseLadderRoutine(
             controller,
@@ -439,24 +454,6 @@ public class LadderController : MonoBehaviour
                 exitMoveEndTime = endDuration + exitMoveDuration;
             }
 
-            if (uccPrepared && motionTarget.UccBridge != null)
-            {
-                motionTarget.UccBridge.EndScriptedTraversal();
-                uccPrepared = false;
-            }
-
-            if (bodyPrepared)
-            {
-                bodyState.Restore(motionTarget.Body);
-                bodyPrepared = false;
-            }
-
-            if (inputSuppressed && controller != null)
-            {
-                controller.PopScriptedMovementSuppression();
-                inputSuppressed = false;
-            }
-
             float remainingEndDuration = Mathf.Max(0f, endDuration - exitMoveEndTime);
             if (remainingEndDuration > 0f)
             {
@@ -487,6 +484,7 @@ public class LadderController : MonoBehaviour
                 animator.applyRootMotion = previousApplyRootMotion;
             }
 
+            hasActiveRoute = false;
             activeRoutine = null;
         }
     }
@@ -822,6 +820,7 @@ public class LadderController : MonoBehaviour
         if (motionTarget.UccBridge != null)
         {
             motionTarget.UccBridge.ApplyScriptedTraversalPose(position, rotation);
+            ValidateAppliedTraversalPose(motionTarget, rotation);
             return;
         }
 
@@ -835,7 +834,55 @@ public class LadderController : MonoBehaviour
         if (motionTarget.MotionRoot != null)
         {
             motionTarget.MotionRoot.SetPositionAndRotation(position, rotation);
+            ValidateAppliedTraversalPose(motionTarget, rotation);
         }
+    }
+
+    private void ValidateAppliedTraversalPose(ScriptedMotionTarget motionTarget, Quaternion requestedRotation)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!debugTraversalPose || traversalPoseWarningIssued) return;
+        float angle = Quaternion.Angle(ResolveMotionRotation(motionTarget), requestedRotation);
+        if (angle <= traversalPoseWarningDegrees) return;
+        traversalPoseWarningIssued = true;
+        Debug.LogWarning($"LadderController: la pose appliquee s'ecarte de {angle:F1}° de la rotation de route.", this);
+#endif
+    }
+
+    private void LogTraversalRoute(LadderRoute route)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!debugTraversalPose) return;
+        float tiltDegrees = Vector3.Angle(route.ClimbAxis, Vector3.up);
+        string mode = tiltDegrees <= 0.5f ? "verticale" : Mathf.Abs(route.ClimbAxis.y) <= 0.01f ? "degeneree" : "inclinee";
+        Debug.Log($"[Ladder Route] {name} mode={mode} tilt={tiltDegrees:F1}° axis={route.ClimbAxis} approach={route.ApproachNormal} entry={route.EntryRotation.eulerAngles} exit={route.ExitRotation.eulerAngles}", this);
+#endif
+    }
+
+    private void LogTraversalAnimationContract(Animator animator, LadderAnimationSet animationSet)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!debugTraversalPose || animator == null) return;
+        Debug.Log($"[Ladder Animation] {name} start={animationSet.StartName} ({ResolveAnimationDuration(animator, animationSet.StartName, ladderStartFallbackDuration):F2}s) " +
+                  $"loop={animationSet.LoopName} end={animationSet.EndName} ({ResolveAnimationDuration(animator, animationSet.EndName, ladderEndFallbackDuration):F2}s) " +
+                  $"applyRootMotion={animator.applyRootMotion}.", this);
+#endif
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!debugTraversalPose || !hasActiveRoute) return;
+        Vector3 origin = activeRoute.EntryPosition;
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(origin, origin + activeRoute.ClimbAxis);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(origin, origin + activeRoute.ApproachNormal);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(origin, origin + activeRoute.EntryRotation * Vector3.forward);
+        Gizmos.color = new Color(1f, 0.5f, 0f);
+        Gizmos.DrawLine(activeRoute.TargetPosition, activeRoute.TargetPosition + activeRoute.TargetRotation * Vector3.forward);
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawLine(activeRoute.ExitPosition, activeRoute.ExitPosition + activeRoute.ExitRotation * Vector3.forward);
     }
 
     private bool TryApplyStartPhaseMotion(
@@ -1538,6 +1585,13 @@ public class LadderController : MonoBehaviour
             routeBottomPoint = endpoints.BottomPoint;
         }
 
+        if (routeBottomPoint == null || endpoints.TopPoint == null ||
+            Vector3.Distance(routeBottomPoint.position, endpoints.TopPoint.position) <= 0.01f)
+        {
+            Debug.LogWarning("LadderController: trajet refuse, les points bas et haut sont confondus ou incomplets.", this);
+            return false;
+        }
+
         Vector3 climbAxis = ResolveRouteClimbAxis(routeBottomPoint, endpoints.TopPoint);
         Vector3 approachNormal = ResolveRouteApproachNormal(
             climbAxis,
@@ -1546,6 +1600,13 @@ public class LadderController : MonoBehaviour
             endpoints.BottomExitPoint,
             endpoints.TopExitPoint,
             characterPosition);
+        if (climbAxis.sqrMagnitude <= 0.0001f ||
+            Vector3.ProjectOnPlane(approachNormal, climbAxis).sqrMagnitude <= 0.0001f)
+        {
+            Debug.LogWarning("LadderController: trajet refuse, axe de montee ou normale d'approche invalide.", this);
+            return false;
+        }
+
         Quaternion climbRotation = ResolveSafeLookRotation(-approachNormal, climbAxis, transform.rotation);
         Quaternion bottomExitRotation = ResolveExitRotation(endpoints.BottomExitPoint, routeBottomPoint, approachNormal, climbAxis, climbRotation);
         Vector3 topExitPosition = ResolveTopClimbExitPosition(endpoints.TopPoint, endpoints.TopExitPoint, approachNormal, climbAxis);
@@ -1561,7 +1622,9 @@ public class LadderController : MonoBehaviour
                 climbRotation,
                 endpoints.BottomExitPoint.position,
                 bottomExitRotation,
-                false);
+                false,
+                climbAxis,
+                approachNormal);
             return true;
         }
 
@@ -1572,7 +1635,9 @@ public class LadderController : MonoBehaviour
             climbRotation,
             topExitPosition,
             topExitRotation,
-            true);
+            true,
+            climbAxis,
+            approachNormal);
         return true;
     }
 
@@ -2652,7 +2717,9 @@ public class LadderController : MonoBehaviour
             Quaternion targetRotation,
             Vector3 exitPosition,
             Quaternion exitRotation,
-            bool exitsAtTop)
+            bool exitsAtTop,
+            Vector3 climbAxis,
+            Vector3 approachNormal)
         {
             EntryPosition = entryPosition;
             EntryRotation = entryRotation;
@@ -2661,6 +2728,8 @@ public class LadderController : MonoBehaviour
             ExitPosition = exitPosition;
             ExitRotation = exitRotation;
             ExitsAtTop = exitsAtTop;
+            ClimbAxis = climbAxis;
+            ApproachNormal = approachNormal;
         }
 
         public Vector3 EntryPosition { get; }
@@ -2670,6 +2739,8 @@ public class LadderController : MonoBehaviour
         public Vector3 ExitPosition { get; }
         public Quaternion ExitRotation { get; }
         public bool ExitsAtTop { get; }
+        public Vector3 ClimbAxis { get; }
+        public Vector3 ApproachNormal { get; }
     }
 
     private readonly struct LadderAnimationSet

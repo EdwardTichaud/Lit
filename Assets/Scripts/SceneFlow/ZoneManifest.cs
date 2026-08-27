@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -26,6 +27,15 @@ public sealed class ZoneManifest : ScriptableObject
 
     [SerializeField, HideInInspector] private string primarySceneName;
     [SerializeField] private string loadingMessage = "Chargement...";
+    [Header("Zone presentation")]
+    [Tooltip("Profil HDRP global de la zone. Les volumes locaux peuvent ensuite se superposer a cette base.")]
+    [SerializeField] private VolumeProfile volumeProfile;
+    [Tooltip("Musique de fond de la zone. Laisser vide pour ne pas imposer de musique.")]
+    [SerializeField] private AudioClipSO music;
+    [Tooltip("Ambiance de fond de la zone. Laisser vide pour utiliser l'ambiance par defaut de l'application.")]
+    [SerializeField] private AudioClipSO ambience;
+    [SerializeField, Min(0.01f), Tooltip("Duree du fondu audio lors de l'entree ou de la sortie de cette zone.")]
+    private float presentationAudioFadeDuration = 1f;
     [SerializeField, HideInInspector, FormerlySerializedAs("additionalSceneNames")]
     private List<string> loadingSceneNames = new List<string>();
     [SerializeField, HideInInspector] private List<string> postLoadingSceneNames = new List<string>();
@@ -33,6 +43,10 @@ public sealed class ZoneManifest : ScriptableObject
 
     public string PrimarySceneName => primarySceneName;
     public string LoadingMessage => loadingMessage;
+    public VolumeProfile VolumeProfile => volumeProfile;
+    public AudioClipSO Music => music;
+    public AudioClipSO Ambience => ambience;
+    public float PresentationAudioFadeDuration => Mathf.Max(0.01f, presentationAudioFadeDuration);
     /// <summary>Scenes obligatoires avant le fondu de sortie.</summary>
     public IReadOnlyList<string> LoadingSceneNames => loadingSceneNames;
     /// <summary>Scenes chargees apres le retour du joueur en jeu.</summary>
@@ -43,6 +57,7 @@ public sealed class ZoneManifest : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        presentationAudioFadeDuration = Mathf.Max(0.01f, presentationAudioFadeDuration);
         if (!editorSceneReferencesMigrated)
         {
             primaryScene = FindSceneAsset(primarySceneName);

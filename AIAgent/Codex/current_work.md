@@ -681,6 +681,13 @@ Le lock ne remet plus a zero une intention de deplacement deja maintenue, et le
 masque sol du Juggernaut couvre maintenant tout le decor afin que sa recuperation
 physique ne puisse pas tomber sous le niveau.
 
+Le Juggernaut poursuit maintenant un engagement apres le premier impact, meme
+si la vision est brievement perdue. Sa decision alterne entre poursuite,
+positionnement lateral, observation courte et attaque; les arrets NavMesh et
+les sorties d'animation remontent vers `Idle` explicitement. Les diagnostics
+optionnels du comportement et les validations `SceneMarker` signalent les
+spawns hors NavMesh, sans appliquer de warp lointain.
+
 L'orbe de Munin est maintenant visuellement independante de celle du chargement:
 elle conserve ses materiaux HDRP, n'applique plus de transparence derivee du noir
 et utilise des pulses de presentation relies aux evenements de charges. La
@@ -724,3 +731,6 @@ facteur de 2,5 à leur `startSize` et restaure les valeurs auteurs à sa désact
 
 Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 `[TACHE]`, puis fournir le prompt a Codex depuis le contexte `AIAgent`.
+# Juggernaut combat
+
+- Added the real-time tactical reaction and attack-recovery safety contract for the Juggernaut.
