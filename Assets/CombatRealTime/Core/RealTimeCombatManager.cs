@@ -79,6 +79,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public RealTimeCombatEnemy LockedEnemy => lockedEnemy;
     public RealTimeCombatEnemy EngagedEnemy => engagedEnemy;
     public float Clarity => clarity;
+    public float ClarityForS => clarityForS;
+    public float NormalizedClarity => Mathf.Clamp01(clarity / Mathf.Max(1f, clarityForS));
     public CombatClarityRank ClarityRank => ResolveClarityRank(clarity, clarityForS);
     public bool CanAcceptBasicSkillInput => playerActionPresentation == null || playerActionPresentation.CanAcceptBasicSkillInput;
     public CombatSkillCinematicController CombatSkillCinematicController => combatSkillCinematicController;
@@ -1145,14 +1147,32 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public static CombatClarityRank ResolveClarityRank(float value, float sThreshold)
     {
-        float normalized = Mathf.Clamp01(value / Mathf.Max(1f, sThreshold));
+        float normalized = Mathf.Max(0f, value) / Mathf.Max(1f, sThreshold);
         if (normalized >= 1f) return CombatClarityRank.S;
         if (normalized >= .80f) return CombatClarityRank.A;
-        if (normalized >= .62f) return CombatClarityRank.B;
-        if (normalized >= .46f) return CombatClarityRank.C;
-        if (normalized >= .30f) return CombatClarityRank.D;
-        if (normalized >= .15f) return CombatClarityRank.E;
-        return CombatClarityRank.F;
+        if (normalized >= .60f) return CombatClarityRank.B;
+        if (normalized >= .40f) return CombatClarityRank.C;
+        if (normalized >= .20f) return CombatClarityRank.D;
+        return CombatClarityRank.E;
+    }
+
+    public float GetLightSkillRequiredClarity(LightSkillClarityTier tier)
+    {
+        return clarityForS * GetLightSkillClarityMultiplier(tier);
+    }
+
+    public static float GetLightSkillClarityMultiplier(LightSkillClarityTier tier)
+    {
+        return tier switch
+        {
+            LightSkillClarityTier.E => .20f,
+            LightSkillClarityTier.D => .40f,
+            LightSkillClarityTier.C => .60f,
+            LightSkillClarityTier.B => .80f,
+            LightSkillClarityTier.A => 1f,
+            LightSkillClarityTier.S => 1.20f,
+            _ => .20f
+        };
     }
 
     /// <summary>Depense de la Clarite sans appliquer de bonus de connaissance.</summary>

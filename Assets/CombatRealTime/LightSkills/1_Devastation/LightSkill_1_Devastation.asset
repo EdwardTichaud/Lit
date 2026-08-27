@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LightSkillSO
   displayName: Devastation de lumiere
   icon: {fileID: 0}
-  requiredCharge: 100
+  requiredRank: 0
   timeline: {fileID: 11400000, guid: 032dfd3671d483f46b8bba6b969b55a5, type: 2}
   combatCinematicRigPrefab: {fileID: 6889411731289885747, guid: 7f9f031db7bd47340bc45c549f79859a, type: 3}
   playerAnimatorTrackName: Player.Animator

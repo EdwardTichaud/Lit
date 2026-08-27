@@ -9030,6 +9030,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  equippedLightSkill: {fileID: 11400000, guid: e2f7ffb12bf4485f8d3e13aed6ee4dc3, type: 2}
 --- !u!114 &900000000000000102
 MonoBehaviour:
   m_ObjectHideFlags: 0

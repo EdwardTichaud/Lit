@@ -26,6 +26,16 @@ public enum CombatClarityRank
     S
 }
 
+public enum LightSkillClarityTier
+{
+    E,
+    D,
+    C,
+    B,
+    A,
+    S
+}
+
 [Serializable]
 public struct CombatKnowledgeModifier
 {

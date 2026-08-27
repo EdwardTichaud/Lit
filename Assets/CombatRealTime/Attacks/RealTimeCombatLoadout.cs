@@ -8,9 +8,11 @@ public sealed class RealTimeCombatLoadout : MonoBehaviour
     public const int SlotCount = 8;
 
     [SerializeField] private List<CombatAttackDefinition> equippedAttacks = new List<CombatAttackDefinition>(SlotCount);
+    [SerializeField] private LightSkillSO equippedLightSkill;
 
     public event Action LoadoutChanged;
     public IReadOnlyList<CombatAttackDefinition> EquippedAttacks => equippedAttacks;
+    public LightSkillSO EquippedLightSkill => equippedLightSkill;
 
     private void OnValidate()
     {
@@ -36,6 +38,18 @@ public sealed class RealTimeCombatLoadout : MonoBehaviour
         }
 
         equippedAttacks[index] = attack;
+        LoadoutChanged?.Invoke();
+        return true;
+    }
+
+    public bool SetLightSkill(LightSkillSO lightSkill)
+    {
+        if (equippedLightSkill == lightSkill)
+        {
+            return true;
+        }
+
+        equippedLightSkill = lightSkill;
         LoadoutChanged?.Invoke();
         return true;
     }

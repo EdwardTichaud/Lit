@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Serialization;
 using UnityEngine.Timeline;
 
 [System.Serializable]
@@ -25,8 +24,7 @@ public sealed class LightSkillSO : ScriptableObject
     [SerializeField] private Sprite icon;
 
     [Header("Clarte")]
-    [FormerlySerializedAs("requiredCharge")]
-    [SerializeField, Min(1f)] private float requiredClarity = 100f;
+    [SerializeField] private LightSkillClarityTier requiredRank = LightSkillClarityTier.E;
 
     [Header("Cinematic Resolution")]
     [SerializeField] private PlayableAsset timeline;
@@ -75,7 +73,7 @@ public sealed class LightSkillSO : ScriptableObject
 
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public Sprite Icon => icon;
-    public float RequiredClarity => requiredClarity;
+    public LightSkillClarityTier RequiredRank => requiredRank;
     public PlayableAsset Timeline => timeline;
     public CombatCinematicRig CombatCinematicRigPrefab => combatCinematicRigPrefab;
     public string PlayerAnimatorTrackName => playerAnimatorTrackName;

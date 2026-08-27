@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,35 +7,43 @@ public sealed class LightSkillPanelController : MonoBehaviour
 {
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private Slider chargeSlider;
-    [SerializeField] private Image fillImage;
+    [SerializeField] private Image claritySprite;
+    [SerializeField] private TMP_Text rankText;
+    [SerializeField] private RealTimeCombatManager combatManager;
     [SerializeField, Range(0f, 1f)] private float visibleAlpha = 1f;
     [SerializeField] private Color chargingColor = Color.white;
     [SerializeField] private Color readyColor = new Color(0.55f, 0.92f, 1f, 1f);
 
-    private LightSkillCombatController controller;
+    private Material clarityMaterial;
 
     private void Awake()
     {
         ResolveReferences();
+        CreateClarityMaterial();
     }
 
     private void Start()
     {
-        ResolveController();
+        BindCombatManager();
         Refresh();
     }
 
     private void OnEnable()
     {
-        ResolveController();
+        BindCombatManager();
         Refresh();
     }
 
     private void OnDisable()
     {
-        if (controller != null)
+        UnbindCombatManager();
+    }
+
+    private void OnDestroy()
+    {
+        if (clarityMaterial != null)
         {
-            controller.StateChanged -= Refresh;
+            Destroy(clarityMaterial);
         }
     }
 
@@ -42,36 +51,34 @@ public sealed class LightSkillPanelController : MonoBehaviour
     {
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
         if (chargeSlider == null) chargeSlider = GetComponentInChildren<Slider>(true);
-        if (fillImage == null && chargeSlider != null && chargeSlider.fillRect != null)
+        if (claritySprite == null && chargeSlider != null && chargeSlider.fillRect != null)
         {
-            fillImage = chargeSlider.fillRect.GetComponent<Image>();
+            claritySprite = chargeSlider.fillRect.GetComponent<Image>();
         }
     }
 
-    private void ResolveController()
+    private void BindCombatManager()
     {
-        LightSkillCombatController resolved = FindAnyObjectByType<LightSkillCombatController>(FindObjectsInactive.Include);
-        if (resolved == controller)
+        if (combatManager == null)
+        {
+            combatManager = RealTimeCombatManager.Instance;
+        }
+
+        if (combatManager == null)
         {
             return;
         }
 
-        if (controller != null)
-        {
-            controller.StateChanged -= Refresh;
-        }
-
-        controller = resolved;
-        if (controller != null)
-        {
-            controller.StateChanged += Refresh;
-        }
+        combatManager.ClarityChanged -= OnClarityChanged;
+        combatManager.ClarityChanged += OnClarityChanged;
+        combatManager.CombatStateChanged -= OnCombatStateChanged;
+        combatManager.CombatStateChanged += OnCombatStateChanged;
     }
 
     private void Refresh()
     {
         ResolveReferences();
-        bool visible = controller != null && controller.IsCombatActive;
+        bool visible = combatManager != null && combatManager.IsCombatActive;
         if (canvasGroup != null)
         {
             canvasGroup.alpha = visible ? visibleAlpha : 0f;
@@ -82,13 +89,60 @@ public sealed class LightSkillPanelController : MonoBehaviour
         if (chargeSlider != null)
         {
             chargeSlider.minValue = 0f;
-            chargeSlider.maxValue = controller != null ? controller.RequiredClarity : 1f;
-            chargeSlider.SetValueWithoutNotify(controller != null ? controller.Clarity : 0f);
+            chargeSlider.maxValue = combatManager != null ? combatManager.ClarityForS : 1f;
+            chargeSlider.SetValueWithoutNotify(combatManager != null ? Mathf.Min(combatManager.Clarity, combatManager.ClarityForS) : 0f);
         }
 
-        if (fillImage != null)
+        if (rankText != null)
         {
-            fillImage.color = controller != null && controller.IsReady ? readyColor : chargingColor;
+            rankText.text = combatManager != null ? combatManager.ClarityRank.ToString() : CombatClarityRank.E.ToString();
         }
+
+        float normalizedClarity = combatManager != null ? combatManager.NormalizedClarity : 0f;
+        if (clarityMaterial != null)
+        {
+            if (clarityMaterial.HasProperty("_FinalAlpha")) clarityMaterial.SetFloat("_FinalAlpha", normalizedClarity);
+            if (clarityMaterial.HasProperty("_WarpTexTillingOffset"))
+            {
+                clarityMaterial.SetVector("_WarpTexTillingOffset", normalizedClarity >= 1f ? Vector4.zero : new Vector4(1f, 1f, 0f, 0f));
+            }
+        }
+
+        if (claritySprite != null)
+        {
+            LightSkillSO equippedSkill = combatManager != null && combatManager.PlayerLoadout != null
+                ? combatManager.PlayerLoadout.EquippedLightSkill
+                : null;
+            bool isReady = equippedSkill != null && combatManager != null &&
+                           combatManager.Clarity >= combatManager.GetLightSkillRequiredClarity(equippedSkill.RequiredRank);
+            claritySprite.color = isReady ? readyColor : chargingColor;
+        }
+    }
+
+    private void CreateClarityMaterial()
+    {
+        if (claritySprite == null || claritySprite.material == null || clarityMaterial != null)
+        {
+            return;
+        }
+
+        clarityMaterial = new Material(claritySprite.material);
+        clarityMaterial.name = claritySprite.material.name + " (ClarityPanel Runtime)";
+        claritySprite.material = clarityMaterial;
+    }
+
+    private void OnClarityChanged(float clarity, CombatClarityRank rank) => Refresh();
+
+    private void OnCombatStateChanged(bool active) => Refresh();
+
+    private void UnbindCombatManager()
+    {
+        if (combatManager == null)
+        {
+            return;
+        }
+
+        combatManager.ClarityChanged -= OnClarityChanged;
+        combatManager.CombatStateChanged -= OnCombatStateChanged;
     }
 }

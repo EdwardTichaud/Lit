@@ -6,8 +6,10 @@ public sealed class RealTimeCombatLoadoutPanel : MonoBehaviour
 {
     [SerializeField] private RealTimeCombatLoadout loadout;
     [SerializeField] private CombatAttackLibrary attackLibrary;
+    [SerializeField] private LightSkillSO[] lightSkillOptions;
     [SerializeField] private TMP_Text[] slotLabels = new TMP_Text[RealTimeCombatLoadout.SlotCount];
     [SerializeField] private TMP_Text[] libraryLabels;
+    [SerializeField] private TMP_Text equippedLightSkillLabel;
     [SerializeField] private TMP_Text detailsText;
 
     private int selectedSlot;
@@ -56,6 +58,16 @@ public sealed class RealTimeCombatLoadoutPanel : MonoBehaviour
         SelectSlot(selectedSlot);
     }
 
+    public void EquipLightSkill(int optionIndex)
+    {
+        if (loadout == null || lightSkillOptions == null || optionIndex < 0 || optionIndex >= lightSkillOptions.Length)
+        {
+            return;
+        }
+
+        loadout.SetLightSkill(lightSkillOptions[optionIndex]);
+    }
+
     private void Refresh()
     {
         for (int i = 0; i < slotLabels.Length; i++)
@@ -70,6 +82,12 @@ public sealed class RealTimeCombatLoadoutPanel : MonoBehaviour
             if (libraryLabels[i] == null) continue;
             CombatAttackDefinition attack = attackLibrary != null ? attackLibrary.GetAttack(i) : null;
             libraryLabels[i].text = attack == null ? string.Empty : attack.DisplayName;
+        }
+
+        if (equippedLightSkillLabel != null)
+        {
+            LightSkillSO lightSkill = loadout != null ? loadout.EquippedLightSkill : null;
+            equippedLightSkillLabel.text = lightSkill == null ? "-" : lightSkill.DisplayName;
         }
     }
 }
