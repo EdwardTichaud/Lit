@@ -5084,38 +5084,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2014053171242080079, guid: 2f8bcc14aef552540a67b4d6d4b5ce21, type: 3}
   m_PrefabInstance: {fileID: 425682590}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &426118702
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 426118703}
-  m_Layer: 0
-  m_Name: 01_Environment
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &426118703
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 426118702}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2022721195}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &443366185
 GameObject:
   m_ObjectHideFlags: 0
@@ -23570,7 +23538,7 @@ Transform:
   - {fileID: 1059193988}
   - {fileID: 1857597557}
   - {fileID: 2052544149}
-  m_Father: {fileID: 426118703}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2041577268
 MonoBehaviour:
@@ -25418,4 +25386,4 @@ MeshCollider:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 426118703}
+  - {fileID: 2022721195}

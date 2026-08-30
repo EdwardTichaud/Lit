@@ -293,7 +293,32 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         ValidateAnimatorState("Idle");
         ValidateAnimatorState("Hit");
         ValidateAnimatorState("Death");
-        ValidateAnimatorState("Assomoir");
+
+        // A state is required only when this enemy can actually play the
+        // corresponding SkillSO. GiantJuggernaut has its own skill set and
+        // controller, so requiring Juggernaut's "Assomoir" state on every
+        // enemy was a false contract failure.
+        EnemySkills enemySkills = GetComponent<EnemySkills>();
+        if (enemySkills == null)
+        {
+            return;
+        }
+
+        foreach (SkillSO skill in enemySkills.Skills)
+        {
+            if (skill == null)
+            {
+                continue;
+            }
+
+            string stateName = string.IsNullOrWhiteSpace(skill.AnimatorState)
+                ? (skill.AnimationClip != null ? skill.AnimationClip.name : null)
+                : skill.AnimatorState;
+            if (!string.IsNullOrWhiteSpace(stateName))
+            {
+                ValidateAnimatorState(stateName);
+            }
+        }
     }
 
     private void ValidateAnimatorState(string stateName)

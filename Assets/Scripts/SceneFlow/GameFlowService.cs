@@ -247,6 +247,7 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         StopPostLoadingRoutine();
+        SquadAIManager.Instance?.InvalidateNavMeshForSceneTransition();
         transitionRoutine = StartCoroutine(TravelToZoneRoutine(destination, destinationPoints));
         return true;
     }
@@ -259,6 +260,7 @@ public sealed class GameFlowService : MonoBehaviour
         }
 
         StopPostLoadingRoutine();
+        SquadAIManager.Instance?.InvalidateNavMeshForSceneTransition();
         transitionRoutine = StartCoroutine(ReturnToHubRoutine(spawnId));
         return true;
     }
@@ -290,6 +292,8 @@ public sealed class GameFlowService : MonoBehaviour
         {
             yield return LoadManifestLoadingScenes(manifest, loadingMessage);
         }
+
+        yield return RebuildNavigationForLoadedWorldRoutine("demarrage " + sceneName);
 
         activeGameplaySceneName = sceneName;
         IsPreparingGameplayScene = false;
@@ -362,6 +366,8 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark($"Sous-scene precedente dechargee ({previousScenes[i]})");
         }
 
+        yield return RebuildNavigationForLoadedWorldRoutine("arrivee " + destination.PrimarySceneName);
+
         activeGameplaySceneName = destination.PrimarySceneName;
         // Une transition de zone ferme le contexte de jeu precedent. Sans
         // cette remise a zero, un focus UI laisse par Maison bloque le moteur
@@ -419,6 +425,8 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark($"Sous-scene dechargee ({previousScenes[i]})");
         }
 
+        yield return RebuildNavigationForLoadedWorldRoutine("retour " + hubScene);
+
         activeGameplaySceneName = hubScene;
         yield return PlaceSquadAtSpawnRoutine(spawnId);
         RestoreLocalGameplayInputAfterSessionStart();
@@ -460,6 +468,33 @@ public sealed class GameFlowService : MonoBehaviour
         LoadingScreenService.HideWhenSceneIsReady();
         SceneTransitionProfiler.End("Ecran pret a disparaitre");
         transitionRoutine = null;
+    }
+
+    /// <summary>
+    /// Rebuilds navigation once the destination has its complete mandatory
+    /// scene group and the previous zone has gone. This deliberately remains
+    /// under the opaque loading overlay: baking a world NavMesh is not a
+    /// per-sub-scene operation.
+    /// </summary>
+    private static IEnumerator RebuildNavigationForLoadedWorldRoutine(string reason)
+    {
+        // Let newly activated colliders register with Physics before source
+        // collection. A fixed frame also makes this reliable in direct editor
+        // scene starts.
+        Physics.SyncTransforms();
+        yield return new WaitForFixedUpdate();
+        Physics.SyncTransforms();
+
+        SquadAIManager navigation = SquadAIManager.Instance;
+        if (navigation == null)
+        {
+            yield break;
+        }
+
+        bool success = navigation.RebuildNavMeshForLoadedWorld(reason);
+        SceneTransitionProfiler.Mark(success
+            ? "NavMesh destination pret"
+            : "NavMesh destination indisponible");
     }
 
     private void StartProximityStreaming(string primarySceneName)

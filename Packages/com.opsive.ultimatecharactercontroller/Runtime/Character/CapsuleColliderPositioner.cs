@@ -119,12 +119,26 @@ namespace Opsive.UltimateCharacterController.Character
 
             m_Transform = transform;
             m_CapsuleCollider = GetComponent<CapsuleCollider>();
+            if (m_CapsuleCollider == null) {
+                Debug.LogWarning("CapsuleColliderPositioner disabled on '" + name + "': a CapsuleCollider is required on the same GameObject.", this);
+                enabled = false;
+                return;
+            }
             if (m_CapsuleCollider.direction != 1) {
                 Debug.LogError("Error: The CapsuleColliderPositioner only works with capsule colliders that are in the Y-axis direction.");
                 enabled = false;
                 return;
             }
             m_CharacterLocomotion = gameObject.GetCachedParentComponent<UltimateCharacterLocomotion>();
+            if (m_CharacterLocomotion == null) {
+                // This component is sometimes inherited by presentation-only
+                // prefabs (for example ghosts). It cannot operate without an
+                // UCC locomotion root, so disable only this optional helper
+                // rather than throwing during scene activation.
+                Debug.LogWarning("CapsuleColliderPositioner disabled on '" + name + "': no parent UltimateCharacterLocomotion was found.", this);
+                enabled = false;
+                return;
+            }
             m_CharacterGameObject = m_CharacterLocomotion.gameObject;
             m_CharacterTransform = m_CharacterLocomotion.transform;
             m_CharacterLayerManager = gameObject.GetCachedParentComponent<CharacterLayerManager>();

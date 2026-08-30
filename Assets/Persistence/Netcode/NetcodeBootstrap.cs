@@ -100,7 +100,11 @@ public class NetcodeBootstrap : MonoBehaviour
     private void OnApplicationQuit()
     {
         applicationQuitting = true;
-        ShutdownNetworkManagerBeforeUnityTeardown();
+        // NetworkManager already performs its own shutdown from
+        // OnApplicationQuit/OnDestroy. Preparing its private fields here made
+        // that second shutdown dispose an already-cleared SceneManager, which
+        // produced a NullReferenceException while the application closed.
+        // Keep the flag for our diagnostics, but let NGO own its teardown.
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

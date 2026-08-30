@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a79047eeab48374494e724786859abd, type: 3}
+  m_Name: GiantJuggernaut
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  uniqueId: 1199c3a20ee8d744d925af4c7748255b
+  characterId: giantjuggernaut
+  characterName: Giant Juggernaut
+  portrait: {fileID: 21300000, guid: f758ff401a8d8dc4e8e6b7691e808f28, type: 3}
+  worldPrefab: {fileID: 4712010629109728797, guid: 1b2218a0de63d9a4683c06e454228e28, type: 3}
+  skills: []
+  combatSkills:
+  - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+  groundBasicSkills: []
+  airBasicSkills: []
+  stats:
+    strength: 10
+    dexterity: 10
+    constitution: 10
+    intelligence: 10
+    wisdom: 10
+    charisma: 10
+  starterItemsWithQuantity: []
+  hp: 1000
+  isEnemy: 1
+  voiceLines: []
+  maisonWaitingPoint: 0

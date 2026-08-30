@@ -11,6 +11,8 @@ using Unity.AI.Navigation;
 // Gere le follow de la squad et la generation automatique du NavMesh.
 public class SquadAIManager : MonoBehaviour
 {
+    public static SquadAIManager Instance { get; private set; }
+
     public struct NavMeshBuildReport
     {
         public bool succeeded;
@@ -153,6 +155,13 @@ public class SquadAIManager : MonoBehaviour
     private Coroutine sceneNavMeshRebuildRoutine;
     private readonly HashSet<Mesh> warnedUnreadableMeshes = new HashSet<Mesh>();
 
+    /// <summary>
+    /// True only after a successful bake for the currently loaded gameplay
+    /// world. Scene markers use this to avoid spawning agents onto a NavMesh
+    /// that still belongs to the zone being unloaded.
+    /// </summary>
+    public bool IsNavMeshReady { get; private set; }
+
     /// <summary>Raised after every explicit or automatic NavMesh bake attempt.</summary>
     public event Action<NavMeshBuildReport> NavMeshRebuildCompleted;
 
@@ -173,6 +182,7 @@ public class SquadAIManager : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         if (squadManager == null)
         {
             squadManager = SquadManager.Instance;
@@ -194,6 +204,14 @@ public class SquadAIManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     private void Start()
     {
         if (squadManager != null)
@@ -203,15 +221,33 @@ public class SquadAIManager : MonoBehaviour
 
         if (buildNavMeshOnStart)
         {
-            BuildNavMesh();
-            navMeshDirty = false;
+            // GameplaySessionRoot is created before the additive zone scenes.
+            // Building here used to produce an empty NavMesh, then several
+            // more bakes while each District sub-scene was activated.
+            if (IsGameplayWorldBeingPrepared())
+            {
+                InvalidateNavMeshForSceneTransition();
+            }
+            else
+            {
+                RebuildNavMeshForLoadedWorld("demarrage direct");
+            }
         }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode _)
     {
-        // GameplaySessionRoot survives scene loading. Wait until the newly loaded
-        // district has registered its colliders before collecting NavMesh sources.
+        // A zone is an additive group. Do not bake once per sub-scene: at this
+        // point floors, colliders and enemy markers do not necessarily belong
+        // to the same world yet. GameFlowService requests the single bake once
+        // the complete required group is present.
+        InvalidateNavMeshForSceneTransition();
+
+        if (IsGameplayWorldBeingPrepared())
+        {
+            return;
+        }
+
         if (sceneNavMeshRebuildRoutine != null)
         {
             StopCoroutine(sceneNavMeshRebuildRoutine);
@@ -225,7 +261,7 @@ public class SquadAIManager : MonoBehaviour
         yield return null;
         yield return new WaitForEndOfFrame();
         sceneNavMeshRebuildRoutine = null;
-        RequestNavMeshRebuild("scene chargee: " + sceneName);
+        RebuildNavMeshForLoadedWorld("scene chargee hors transition: " + sceneName);
     }
 
     private void OnValidate()
@@ -321,6 +357,15 @@ public class SquadAIManager : MonoBehaviour
 
     public void RequestNavMeshRebuild(string reason = null)
     {
+        if (IsGameplayWorldBeingPrepared())
+        {
+            // Keep the request as an intention, but never execute it against
+            // a half-loaded additive world.
+            navMeshDirty = true;
+            explicitNavMeshRebuildRequested = true;
+            return;
+        }
+
         // An explicit request comes from scene loading or an actor waiting for a
         // local polygon. It must never be discarded because periodic auto-update
         // is disabled for performance.
@@ -335,6 +380,11 @@ public class SquadAIManager : MonoBehaviour
 
     private void ProcessNavMeshRebuildRequests()
     {
+        if (IsGameplayWorldBeingPrepared())
+        {
+            return;
+        }
+
         if (rebuildNavMeshNow || explicitNavMeshRebuildRequested)
         {
             rebuildNavMeshNow = false;
@@ -377,6 +427,46 @@ public class SquadAIManager : MonoBehaviour
         bool built = BuildNavMeshData(surface, totalColliderCount, includedColliderCount);
         nextNavMeshUpdateTime = Time.time + Mathf.Max(0.2f, navMeshUpdateInterval);
         return built;
+    }
+
+    /// <summary>
+    /// Called by GameFlowService after all mandatory scenes of the destination
+    /// are active and all scenes of the previous zone are gone.
+    /// </summary>
+    public bool RebuildNavMeshForLoadedWorld(string reason = null)
+    {
+        bool built = BuildNavMesh();
+        navMeshDirty = false;
+        explicitNavMeshRebuildRequested = false;
+        rebuildNavMeshNow = false;
+
+        if (logNavMeshBuildDiagnostics && !string.IsNullOrWhiteSpace(reason))
+        {
+            Debug.Log("[SquadAIManager] Bake NavMesh de monde termine | " + reason +
+                      " | success=" + built + ".", this);
+        }
+
+        return built;
+    }
+
+    /// <summary>Invalidates stale data before an additive zone transition.</summary>
+    public void InvalidateNavMeshForSceneTransition()
+    {
+        IsNavMeshReady = false;
+        NavMeshSurface surface = EnsureNavMeshSurface();
+        if (surface == null)
+        {
+            return;
+        }
+
+        surface.RemoveData();
+        surface.navMeshData = null;
+    }
+
+    private static bool IsGameplayWorldBeingPrepared()
+    {
+        GameFlowService flow = GameFlowService.Instance;
+        return flow != null && (flow.IsTransitioning || GameFlowService.IsPreparingGameplayScene);
     }
 
     private Bounds CalculateNavMeshBounds(out int totalColliderCount, out int includedColliderCount)
@@ -482,12 +572,16 @@ public class SquadAIManager : MonoBehaviour
 
         if (sources.Count == 0)
         {
+            IsNavMeshReady = false;
             surface.RemoveData();
             surface.navMeshData = null;
             string reason = "aucune source NavMesh collectee";
-            Debug.LogError("[SquadAIManager] Echec du bake NavMesh : " + reason +
-                           " | colliders=" + totalColliderCount + " | retenusLayer=" + includedColliderCount +
-                           " | layerMask=" + surface.layerMask.value + " | bounds=" + surfaceBounds + ".", this);
+            if (logNavMeshBuildDiagnostics)
+            {
+                Debug.LogWarning("[SquadAIManager] Bake NavMesh ignore : " + reason +
+                                 " | colliders=" + totalColliderCount + " | retenusLayer=" + includedColliderCount +
+                                 " | layerMask=" + surface.layerMask.value + " | bounds=" + surfaceBounds + ".", this);
+            }
             PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, 0, surfaceBounds, reason);
             return false;
         }
@@ -501,8 +595,9 @@ public class SquadAIManager : MonoBehaviour
 
         if (data == null)
         {
-            Debug.LogError("[SquadAIManager] Echec du bake NavMesh : aucune donnee produite | sources=" +
-                           sources.Count + " | bounds=" + surfaceBounds + ".", this);
+            IsNavMeshReady = false;
+            Debug.LogWarning("[SquadAIManager] Bake NavMesh ignore : aucune donnee produite | sources=" +
+                             sources.Count + " | bounds=" + surfaceBounds + ".", this);
             PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, sources.Count,
                 surfaceBounds, "NavMeshBuilder n'a produit aucune donnee");
             return false;
@@ -515,6 +610,8 @@ public class SquadAIManager : MonoBehaviour
         {
             surface.AddData();
         }
+
+        IsNavMeshReady = true;
 
         if (logNavMeshBuildDiagnostics)
         {
@@ -728,6 +825,15 @@ public class SquadAIManager : MonoBehaviour
             Mesh mesh = source.sourceObject as Mesh;
             if (mesh != null && !mesh.isReadable)
             {
+                // PhysicsColliders are valid NavMesh sources even when their
+                // imported mesh is not CPU-readable. Removing these sources
+                // discarded most of District_1's floor and made enemies spawn
+                // outside an otherwise successful dynamic NavMesh bake.
+                if (source.component is MeshCollider)
+                {
+                    continue;
+                }
+
                 sources.RemoveAt(i);
                 if (!warnedUnreadableMeshes.Contains(mesh))
                 {

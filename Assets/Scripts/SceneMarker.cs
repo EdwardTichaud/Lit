@@ -158,6 +158,14 @@ public sealed class SceneMarker : MonoBehaviour
             health.SetHealth(maxHp, maxHp);
 
             CombatEnemyRuntimeContract contract = instance.GetComponent<CombatEnemyRuntimeContract>();
+            // A baked scene instance may predate the validator component while
+            // still containing the complete combat setup. The contract itself
+            // is only a validation/coordination component: adding it here does
+            // not alter the authored physics, skills or Animator.
+            if (contract == null && CombatEnemyRuntimeContract.HasRequiredComponents(instance))
+            {
+                contract = instance.AddComponent<CombatEnemyRuntimeContract>();
+            }
             string contractReport;
             bool cloneValid;
             if (contract == null)
@@ -249,6 +257,15 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         if (characterData == null)
+        {
+            return;
+        }
+
+        // En zone additive, les ennemis doivent attendre le bake unique qui
+        // suit le chargement complet des sols. Sans cela ils se materialisent
+        // pendant qu'un NavMesh vide (ou celui de la zone precedente) est
+        // encore actif, puis restent definitivement hors NavMesh.
+        if (ShouldWaitForNavigationWorld())
         {
             return;
         }
@@ -390,6 +407,11 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
+        if (ShouldWaitForNavigationWorld())
+        {
+            return;
+        }
+
         Vector3 offset = instance.transform.position - transform.position;
         if (offset.magnitude > 0.15f)
         {
@@ -410,6 +432,23 @@ public sealed class SceneMarker : MonoBehaviour
             Debug.LogError("[SceneMarker] NavMesh trop eloigne pour '" + name + "' | actor=" +
                            instance.transform.position + " | nav=" + hit.position + ".", this);
         }
+    }
+
+    private bool ShouldWaitForNavigationWorld()
+    {
+        if (characterData == null || !characterData.isEnemy)
+        {
+            return false;
+        }
+
+        GameFlowService flow = GameFlowService.Instance;
+        if (flow != null && (flow.IsTransitioning || GameFlowService.IsPreparingGameplayScene))
+        {
+            return true;
+        }
+
+        SquadAIManager navigation = SquadAIManager.Instance;
+        return navigation != null && !navigation.IsNavMeshReady;
     }
 
     private void EnsurePersistentState()
