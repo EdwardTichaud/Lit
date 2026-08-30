@@ -44,6 +44,11 @@ public partial class LitOpsiveLocomotionBridge
 
     private void ForceOrientationLookDirection(Vector3 direction)
     {
+        if (combatJumpFacingLockCount > 0 && combatLockActive && combatLockTarget != null)
+        {
+            direction = combatLockTarget.position - transform.position;
+        }
+
         direction.y = 0f;
         if (direction.sqrMagnitude <= 0.0001f)
         {

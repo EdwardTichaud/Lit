@@ -9037,6 +9037,9 @@ MonoBehaviour:
   animator: {fileID: 0}
   jumpHeight: 100
   jumpStartTakeoffNormalizedTime: 0.5
+  jumpStartPlanarSlowdown: 0
+  backwardJumpInputDotThreshold: -0.25
+  jumpStartAnimationSafetySeconds: 0.25
   apexGravityEntryVelocity: 25
   apexGravityMultiplier: 0.25
   descentGravityMultiplier: 0.6

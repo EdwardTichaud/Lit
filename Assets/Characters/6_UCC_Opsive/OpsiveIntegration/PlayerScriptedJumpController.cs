@@ -27,6 +27,10 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     public float jumpStartTakeoffNormalizedTime = 0.13f;
     [Range(0f, 1f), Tooltip("Optional fraction of inherited planar speed removed exactly at takeoff. 0 preserves the validated jump feel; 1 removes all planar inertia.")]
     public float jumpStartPlanarSlowdown = 0f;
+    [Range(-1f, 0f), Tooltip("Negative retreat threshold against the locked enemy. Its absolute value is the minimum retreat alignment required to use Jump_Start_Back.")]
+    public float backwardJumpInputDotThreshold = -0.25f;
+    [SerializeField, Min(0.13f), Tooltip("Safety release only: prevents a missing or invalid jump-start Animator state from blocking the physical jump forever.")]
+    private float jumpStartAnimationSafetySeconds = 0.25f;
     [SerializeField, Min(0f)] private float apexGravityEntryVelocity = 2.4f;
     [SerializeField, Range(0.05f, 1f)] private float apexGravityMultiplier = 0.28f;
     [SerializeField, Range(0.05f, 1f)] private float descentGravityMultiplier = 0.72f;
@@ -50,12 +54,17 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private bool leftGround;
     private bool landingRequested;
     private bool takeoffImpulseApplied;
+    private bool backwardJumpStart;
+    private bool combatJumpFacingLocked;
+    private Vector3 backwardJumpPlanarDirection;
+    private float jumpStartRequestedAt;
     private bool gravityOverridden;
     private float baseGravity;
     private float landingContactStartedAt = -1f;
     private Phase phase;
 
     public bool IsActive => jumpActive;
+    public bool IsBackwardCombatJump => jumpActive && backwardJumpStart;
     public float TargetJumpHeight => jumpHeight;
 
     public void SetTargetJumpHeight(float value)
@@ -80,6 +89,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         EventHandler.UnregisterEvent<bool>(gameObject, GroundedEvent, OnGroundedChanged);
         EventHandler.UnregisterEvent<float>(gameObject, LandEvent, OnLanded);
         RestoreGravity();
+        ReleaseCombatJumpFacing();
     }
 
     /// <summary>Starts the only supported player jump arc. Input is accepted
@@ -98,14 +108,26 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         leftGround = false;
         landingRequested = false;
         takeoffImpulseApplied = false;
+        jumpStartRequestedAt = Time.unscaledTime;
         landingContactStartedAt = -1f;
         baseGravity = locomotion.GravityAmount;
         gravityOverridden = false;
+        backwardJumpStart = HasBackwardJumpInput(worldInput, hasWorldInput);
+        backwardJumpPlanarDirection = backwardJumpStart ? ResolvePlanarInputDirection(worldInput) : Vector3.zero;
+        combatJumpFacingLocked = locomotionBridge.BeginCombatJumpFacing();
+        if (backwardJumpStart)
+        {
+            locomotionBridge.ApplyBackwardCombatJumpMoveInput(worldInput);
+        }
         SetBool("JumpPresentationActive", true);
         SetBool("IsAirborne", false);
         SetInteger("LandingType", 0);
         SetPhase(Phase.Takeoff);
         ResetTrigger("JumpStartTrigger");
+        ResetTrigger("JumpStartBackTrigger");
+        if (backwardJumpStart && TryStartBackwardJumpAnimation()) return true;
+
+        backwardJumpStart = false;
         SetTrigger("JumpStartTrigger");
 
         return true;
@@ -117,7 +139,9 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
         if (!takeoffImpulseApplied)
         {
-            if (HasReachedJumpStartTakeoffTime()) ApplyTakeoffImpulse();
+            if (HasReachedJumpStartTakeoffTime() ||
+                Time.unscaledTime - jumpStartRequestedAt >= jumpStartAnimationSafetySeconds)
+                ApplyTakeoffImpulse();
             return;
         }
 
@@ -222,6 +246,10 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         jumpActive = false;
         landingRequested = false;
         takeoffImpulseApplied = false;
+        backwardJumpStart = false;
+        backwardJumpPlanarDirection = Vector3.zero;
+        ReleaseCombatJumpFacing();
+        jumpStartRequestedAt = 0f;
         landingContactStartedAt = -1f;
         SetBool("JumpPresentationActive", false);
         SetBool("IsAirborne", false);
@@ -236,6 +264,10 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         leftGround = false;
         landingRequested = false;
         takeoffImpulseApplied = false;
+        backwardJumpStart = false;
+        backwardJumpPlanarDirection = Vector3.zero;
+        ReleaseCombatJumpFacing();
+        jumpStartRequestedAt = 0f;
         landingContactStartedAt = -1f;
         SetBool("JumpPresentationActive", false);
         SetBool("IsAirborne", false);
@@ -247,6 +279,14 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     {
         if (gravityOverridden && locomotion != null) locomotion.GravityAmount = baseGravity;
         gravityOverridden = false;
+    }
+
+    private void ReleaseCombatJumpFacing()
+    {
+        if (!combatJumpFacingLocked) return;
+
+        combatJumpFacingLocked = false;
+        if (locomotionBridge != null) locomotionBridge.EndCombatJumpFacing();
     }
 
     private float CalculateTakeoffSpeed(float gravity)
@@ -273,7 +313,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private bool HasReachedJumpStartTakeoffTime()
     {
         if (animator == null) return true;
-        int jumpStartHash = Animator.StringToHash("Jump_Start");
+        int jumpStartHash = Animator.StringToHash(backwardJumpStart ? "Jump_Start_Back" : "Jump_Start");
         AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
         AnimatorStateInfo next = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
         return HasReachedTakeoffTime(current, jumpStartHash) || HasReachedTakeoffTime(next, jumpStartHash);
@@ -298,6 +338,14 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
         Vector3 planarVelocity = Vector3.ProjectOnPlane(locomotion.Velocity, transform.up);
         Vector3 slowdownImpulse = -planarVelocity * Mathf.Clamp01(jumpStartPlanarSlowdown);
+        if (backwardJumpStart && backwardJumpPlanarDirection.sqrMagnitude > 0.0001f)
+        {
+            // The combat controller keeps body yaw on the enemy, so its
+            // inherited motor velocity may still point forward. Preserve its
+            // magnitude but put it in the player-requested retreat direction.
+            Vector3 desiredPlanarVelocity = backwardJumpPlanarDirection * planarVelocity.magnitude;
+            slowdownImpulse += desiredPlanarVelocity - planarVelocity;
+        }
         // AddForce is consumed by UCC's motor. No Transform is ever written.
         // A zero slowdown is intentionally a no-op and preserves the approved feel.
         locomotion.AddForce(transform.up * requiredImpulse + slowdownImpulse, 1, false);
@@ -309,6 +357,34 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         if (locomotion == null) locomotion = GetComponent<UltimateCharacterLocomotion>();
         if (locomotionBridge == null) locomotionBridge = GetComponent<LitOpsiveLocomotionBridge>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
+    }
+
+    private bool HasBackwardJumpInput(Vector2 worldInput, bool hasWorldInput)
+    {
+        if (!hasWorldInput || worldInput.sqrMagnitude <= 0.0001f) return false;
+        return locomotionBridge != null && locomotionBridge.IsCombatLockActive &&
+               locomotionBridge.IsWorldInputAwayFromCombatLock(worldInput, -backwardJumpInputDotThreshold);
+    }
+
+    private Vector3 ResolvePlanarInputDirection(Vector2 worldInput)
+    {
+        Vector3 direction = Vector3.ProjectOnPlane(new Vector3(worldInput.x, 0f, worldInput.y), transform.up);
+        return direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.zero;
+    }
+
+    private bool TryStartBackwardJumpAnimation()
+    {
+        if (HasParameter("JumpStartBackTrigger", AnimatorControllerParameterType.Trigger))
+        {
+            SetTrigger("JumpStartBackTrigger");
+            return true;
+        }
+
+        if (animator == null) return false;
+        int stateHash = Animator.StringToHash("Base Layer.Jump_Start_Back");
+        if (!animator.HasState(0, stateHash)) return false;
+        animator.CrossFade(stateHash, 0.05f, 0, 0f);
+        return true;
     }
 
     private void SetPhase(Phase value)
