@@ -180,6 +180,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private float previousUccSlopeLimit;
     private float previousUccStickToGroundDistance;
     private Vector2 currentWorldMoveInput;
+    private Vector2 pendingWorldMoveInputDuringScriptedJump;
+    private bool hasPendingWorldMoveInputDuringScriptedJump;
+    private bool scriptedJumpPlanarControlActive;
+    private Vector3 scriptedJumpPlanarTargetVelocity;
     // Kept independently from facing. A locked target owns body yaw, but a
     // landing roll must still honor the last direction the player actually held.
     private Vector2 lastExplicitWorldMoveInput;
@@ -304,67 +308,78 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public bool IsCombatDirectionalEvasionFacing => combatDirectionalEvasionFacing;
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
 
-    /// <summary>
-    /// Feeds a retreat direction to UCC while a combat backflip keeps its yaw
-    /// on the locked target. This intentionally bypasses the normal
-    /// forward-only root-motion input conversion.
-    /// </summary>
-    public void ApplyBackwardCombatJumpMoveInput(Vector2 worldInput)
+    /// <summary>Returns the stable world-space retreat axis of the active combat lock.</summary>
+    public bool TryGetCombatLockRetreatDirection(out Vector3 retreatDirection)
     {
-        if (!combatLockActive || locomotion == null)
+        retreatDirection = Vector3.zero;
+        if (!combatLockActive || combatLockTarget == null) return false;
+
+        retreatDirection = Vector3.ProjectOnPlane(transform.position - combatLockTarget.position, transform.up);
+        if (retreatDirection.sqrMagnitude <= 0.0001f) return false;
+        retreatDirection.Normalize();
+        return true;
+    }
+
+    /// <summary>
+    /// Gives a scripted jump exclusive ownership of planar velocity. UCC still
+    /// resolves collision, gravity and vertical movement, but receives no
+    /// locomotion motor command until the jump handoff has completed.
+    /// </summary>
+    public void BeginScriptedJumpPlanarControl(Vector3 targetPlanarVelocity)
+    {
+        scriptedJumpPlanarControlActive = true;
+        SetScriptedJumpPlanarTargetVelocity(targetPlanarVelocity);
+        hasPendingWorldMoveInputDuringScriptedJump = false;
+        NeutralizeScriptedJumpMotorInput();
+    }
+
+    /// <summary>Changes the fixed planar target before the scripted jump takes off.</summary>
+    public void SetScriptedJumpPlanarTargetVelocity(Vector3 targetPlanarVelocity)
+    {
+        scriptedJumpPlanarTargetVelocity = Vector3.ProjectOnPlane(targetPlanarVelocity, transform.up);
+    }
+
+    /// <summary>Applies the scripted planar target once per physics tick.</summary>
+    public void TickScriptedJumpPlanarControl()
+    {
+        if (!scriptedJumpPlanarControlActive || locomotion == null) return;
+
+        NeutralizeScriptedJumpMotorInput();
+        Vector3 currentPlanarVelocity = Vector3.ProjectOnPlane(locomotion.Velocity, transform.up);
+        Vector3 correction = scriptedJumpPlanarTargetVelocity - currentPlanarVelocity;
+        if (correction.sqrMagnitude > 0.000001f)
         {
-            return;
+            locomotion.AddForce(correction, 1, false);
         }
+    }
 
-        Vector2 clampedInput = Vector2.ClampMagnitude(worldInput, 1f);
-        if (clampedInput.sqrMagnitude <= movementDeadZone * movementDeadZone)
-        {
-            currentWorldMoveInput = Vector2.zero;
-            combatLockLocalInput = Vector2.zero;
-            if (playerInput != null)
-            {
-                playerInput.SetMovementOverride(Vector2.zero, IsDriving);
-            }
+    /// <summary>Restores regular motor ownership after a scripted jump handoff.</summary>
+    public void EndScriptedJumpPlanarControl()
+    {
+        if (!scriptedJumpPlanarControlActive) return;
 
-            if (overrideOpsiveHandlerInput && locomotionHandler != null)
-            {
-                locomotionHandler.OverrideInput = IsDriving;
-                locomotionHandler.OverriddenHorizontalMovement = 0f;
-                locomotionHandler.OverriddenForwardMovement = 0f;
-                locomotionHandler.OverriddenLookVector = Vector2.zero;
-            }
+        scriptedJumpPlanarControlActive = false;
+        scriptedJumpPlanarTargetVelocity = Vector3.zero;
+        if (!hasPendingWorldMoveInputDuringScriptedJump) return;
 
-            return;
-        }
+        Vector2 pendingInput = pendingWorldMoveInputDuringScriptedJump;
+        hasPendingWorldMoveInputDuringScriptedJump = false;
+        ApplyWorldMoveInput(pendingInput);
+    }
 
-        Vector3 worldDirection = new Vector3(clampedInput.x, 0f, clampedInput.y);
-        if (worldDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        // The actor faces the target. Expressing a retreat input in that local
-        // frame gives UCC a negative forward axis instead of its usual +Z.
-        Vector3 localDirection = transform.InverseTransformDirection(worldDirection.normalized);
-        Vector2 motorInput = Vector2.ClampMagnitude(
-            new Vector2(localDirection.x, localDirection.z) * clampedInput.magnitude,
-            1f);
-        currentWorldMoveInput = clampedInput;
-        combatLockLocalInput = motorInput;
-        lastExplicitWorldMoveInput = clampedInput.normalized;
-        lastExplicitWorldMoveInputTime = Time.unscaledTime;
-
+    private void NeutralizeScriptedJumpMotorInput()
+    {
         if (playerInput != null)
         {
-            playerInput.SetMovementOverride(motorInput, IsDriving);
+            playerInput.SetMovementOverride(Vector2.zero, IsDriving);
             playerInput.SetSprintOverride(sprintPressed, IsDriving);
         }
 
         if (overrideOpsiveHandlerInput && locomotionHandler != null)
         {
             locomotionHandler.OverrideInput = IsDriving;
-            locomotionHandler.OverriddenHorizontalMovement = motorInput.x;
-            locomotionHandler.OverriddenForwardMovement = motorInput.y;
+            locomotionHandler.OverriddenHorizontalMovement = 0f;
+            locomotionHandler.OverriddenForwardMovement = 0f;
             locomotionHandler.OverriddenLookVector = Vector2.zero;
         }
     }
@@ -2053,9 +2068,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void ApplyWorldMoveInput(Vector2 worldInput)
     {
-        if (scriptedJumpController != null && scriptedJumpController.IsBackwardCombatJump)
+        if (scriptedJumpPlanarControlActive)
         {
-            ApplyBackwardCombatJumpMoveInput(worldInput);
+            pendingWorldMoveInputDuringScriptedJump = Vector2.ClampMagnitude(worldInput, 1f);
+            hasPendingWorldMoveInputDuringScriptedJump = true;
+            NeutralizeScriptedJumpMotorInput();
             return;
         }
 

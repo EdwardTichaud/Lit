@@ -32,9 +32,9 @@ atterrissage). Cette contrainte n'agit ni sur la trajectoire physique ni sur le
 root motion : elle est automatiquement levée lorsque l'atterrissage se termine
 ou que le saut est interrompu.
 
-L'appui de saut ne réinjecte jamais un nouvel input de déplacement dans UCC :
-le saut conserve uniquement l'inertie déjà présente. Cela empêche notamment
-un `Jump_Start_Back` de devenir un déplacement vers l'ennemi locké.
+Pendant un saut scripté, le moteur de locomotion UCC est neutralisé : le
+contrôleur de saut est l'unique propriétaire de la vitesse plan. Les inputs
+reçus pendant l'arc sont mémorisés puis repris après l'atterrissage.
 
 `Jump_Start_Back` est un état visuel créé et maintenu manuellement dans le
 controller `Player_Model`. Son clip et son raccord vers `Jump_Loop` sont
@@ -42,12 +42,10 @@ controller `Player_Model`. Son clip et son raccord vers `Jump_Loop` sont
 une cible lockée, lorsque l'input s'éloigne de cette cible ; un paramètre
 `JumpStartBackTrigger` est optionnel, non requis.
 
-Au décollage d'un `Jump_Start_Back`, la vitesse horizontale héritée conserve sa
-norme mais est orientée dans le sens de recul demandé. Le héros reste donc
-face à l'ennemi locké tout en s'éloignant réellement de lui.
-Pendant le backflip, le moteur UCC reçoit explicitement cet axe arrière dans
-le repère local du héros, au lieu de l'axe avant utilisé par la locomotion
-root-motion verrouillée.
+Au déclenchement d'un `Jump_Start_Back`, la norme de vitesse plan présente est
+mémorisée, puis appliquée sur l'axe réel de recul de la cible lockée vers le
+héros. Cette trajectoire reste figée jusqu'au handoff d'atterrissage : le héros
+reste face à l'ennemi tout en s'en éloignant réellement.
 
 ## Validation
 

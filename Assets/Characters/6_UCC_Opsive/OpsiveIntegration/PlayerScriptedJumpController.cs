@@ -56,7 +56,8 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private bool takeoffImpulseApplied;
     private bool backwardJumpStart;
     private bool combatJumpFacingLocked;
-    private Vector3 backwardJumpPlanarDirection;
+    private bool scriptedJumpPlanarControlActive;
+    private Vector3 scriptedJumpPlanarVelocity;
     private float jumpStartRequestedAt;
     private bool gravityOverridden;
     private float baseGravity;
@@ -64,7 +65,6 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
     private Phase phase;
 
     public bool IsActive => jumpActive;
-    public bool IsBackwardCombatJump => jumpActive && backwardJumpStart;
     public float TargetJumpHeight => jumpHeight;
 
     public void SetTargetJumpHeight(float value)
@@ -89,6 +89,7 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         EventHandler.UnregisterEvent<bool>(gameObject, GroundedEvent, OnGroundedChanged);
         EventHandler.UnregisterEvent<float>(gameObject, LandEvent, OnLanded);
         RestoreGravity();
+        ReleaseScriptedJumpPlanarControl();
         ReleaseCombatJumpFacing();
     }
 
@@ -113,12 +114,11 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         baseGravity = locomotion.GravityAmount;
         gravityOverridden = false;
         backwardJumpStart = HasBackwardJumpInput(worldInput, hasWorldInput);
-        backwardJumpPlanarDirection = backwardJumpStart ? ResolvePlanarInputDirection(worldInput) : Vector3.zero;
+        Vector3 inheritedPlanarVelocity = Vector3.ProjectOnPlane(locomotion.Velocity, transform.up);
+        scriptedJumpPlanarVelocity = ResolveJumpPlanarVelocity(inheritedPlanarVelocity);
         combatJumpFacingLocked = locomotionBridge.BeginCombatJumpFacing();
-        if (backwardJumpStart)
-        {
-            locomotionBridge.ApplyBackwardCombatJumpMoveInput(worldInput);
-        }
+        locomotionBridge.BeginScriptedJumpPlanarControl(scriptedJumpPlanarVelocity);
+        scriptedJumpPlanarControlActive = true;
         SetBool("JumpPresentationActive", true);
         SetBool("IsAirborne", false);
         SetInteger("LandingType", 0);
@@ -128,6 +128,8 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         if (backwardJumpStart && TryStartBackwardJumpAnimation()) return true;
 
         backwardJumpStart = false;
+        scriptedJumpPlanarVelocity = inheritedPlanarVelocity;
+        locomotionBridge.SetScriptedJumpPlanarTargetVelocity(scriptedJumpPlanarVelocity);
         SetTrigger("JumpStartTrigger");
 
         return true;
@@ -161,7 +163,13 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!jumpActive || landingRequested || locomotion == null || locomotion.Grounded) return;
+        if (!jumpActive || locomotion == null) return;
+        if (!landingRequested && scriptedJumpPlanarControlActive)
+        {
+            locomotionBridge?.TickScriptedJumpPlanarControl();
+        }
+
+        if (landingRequested || locomotion.Grounded) return;
         if (!gravityOverridden)
         {
             baseGravity = locomotion.GravityAmount;
@@ -247,7 +255,8 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         landingRequested = false;
         takeoffImpulseApplied = false;
         backwardJumpStart = false;
-        backwardJumpPlanarDirection = Vector3.zero;
+        scriptedJumpPlanarVelocity = Vector3.zero;
+        ReleaseScriptedJumpPlanarControl();
         ReleaseCombatJumpFacing();
         jumpStartRequestedAt = 0f;
         landingContactStartedAt = -1f;
@@ -265,7 +274,8 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
         landingRequested = false;
         takeoffImpulseApplied = false;
         backwardJumpStart = false;
-        backwardJumpPlanarDirection = Vector3.zero;
+        scriptedJumpPlanarVelocity = Vector3.zero;
+        ReleaseScriptedJumpPlanarControl();
         ReleaseCombatJumpFacing();
         jumpStartRequestedAt = 0f;
         landingContactStartedAt = -1f;
@@ -287,6 +297,14 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
         combatJumpFacingLocked = false;
         if (locomotionBridge != null) locomotionBridge.EndCombatJumpFacing();
+    }
+
+    private void ReleaseScriptedJumpPlanarControl()
+    {
+        if (!scriptedJumpPlanarControlActive) return;
+
+        scriptedJumpPlanarControlActive = false;
+        if (locomotionBridge != null) locomotionBridge.EndScriptedJumpPlanarControl();
     }
 
     private float CalculateTakeoffSpeed(float gravity)
@@ -338,14 +356,6 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
 
         Vector3 planarVelocity = Vector3.ProjectOnPlane(locomotion.Velocity, transform.up);
         Vector3 slowdownImpulse = -planarVelocity * Mathf.Clamp01(jumpStartPlanarSlowdown);
-        if (backwardJumpStart && backwardJumpPlanarDirection.sqrMagnitude > 0.0001f)
-        {
-            // The combat controller keeps body yaw on the enemy, so its
-            // inherited motor velocity may still point forward. Preserve its
-            // magnitude but put it in the player-requested retreat direction.
-            Vector3 desiredPlanarVelocity = backwardJumpPlanarDirection * planarVelocity.magnitude;
-            slowdownImpulse += desiredPlanarVelocity - planarVelocity;
-        }
         // AddForce is consumed by UCC's motor. No Transform is ever written.
         // A zero slowdown is intentionally a no-op and preserves the approved feel.
         locomotion.AddForce(transform.up * requiredImpulse + slowdownImpulse, 1, false);
@@ -366,10 +376,15 @@ public sealed class PlayerScriptedJumpController : MonoBehaviour
                locomotionBridge.IsWorldInputAwayFromCombatLock(worldInput, -backwardJumpInputDotThreshold);
     }
 
-    private Vector3 ResolvePlanarInputDirection(Vector2 worldInput)
+    private Vector3 ResolveJumpPlanarVelocity(Vector3 inheritedPlanarVelocity)
     {
-        Vector3 direction = Vector3.ProjectOnPlane(new Vector3(worldInput.x, 0f, worldInput.y), transform.up);
-        return direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.zero;
+        if (!backwardJumpStart || locomotionBridge == null ||
+            !locomotionBridge.TryGetCombatLockRetreatDirection(out Vector3 retreatDirection))
+        {
+            return inheritedPlanarVelocity;
+        }
+
+        return retreatDirection * inheritedPlanarVelocity.magnitude;
     }
 
     private bool TryStartBackwardJumpAnimation()
