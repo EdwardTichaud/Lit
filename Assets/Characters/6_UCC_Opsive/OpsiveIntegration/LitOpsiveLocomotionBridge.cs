@@ -230,9 +230,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private Vector2 combatLockLocalInput;
     private float combatOrbitRadius = -1f;
     private bool combatDirectionalEvasionFacing;
-    // A scripted jump temporarily makes the locked target the sole yaw
-    // authority. A count keeps cleanup safe if an action is interrupted.
-    private int combatJumpFacingLockCount;
     [Header("Combat Lock Motion")]
     [SerializeField, Min(1f), Tooltip("Vitesse maximale du face-a-face. Les actions et evasions restent immediates.")]
     private float combatFacingSpeedDegreesPerSecond = 900f;
@@ -283,107 +280,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                Time.unscaledTime - lastExplicitWorldMoveInputTime <= Mathf.Max(0f, memorySeconds);
     }
     public bool IsCombatLockActive => combatLockActive;
-    /// <summary>Returns true only when a world-space input moves the actor away
-    /// from its currently locked target. Used by combat-only presentations.</summary>
-    public bool IsWorldInputAwayFromCombatLock(Vector2 worldInput, float minimumDot)
-    {
-        if (!combatLockActive || combatLockTarget == null || worldInput.sqrMagnitude <= 0.0001f)
-        {
-            return false;
-        }
-
-        Vector3 awayFromTarget = Vector3.ProjectOnPlane(transform.position - combatLockTarget.position, transform.up);
-        Vector3 inputDirection = new Vector3(worldInput.x, 0f, worldInput.y);
-        if (awayFromTarget.sqrMagnitude <= 0.0001f || inputDirection.sqrMagnitude <= 0.0001f)
-        {
-            return false;
-        }
-
-        return Vector3.Dot(inputDirection.normalized, awayFromTarget.normalized) >= Mathf.Clamp01(minimumDot);
-    }
     public bool IsCombatDirectionalEvasionFacing => combatDirectionalEvasionFacing;
     public Vector2 CombatLockLocalInput => combatLockLocalInput;
-
-    /// <summary>
-    /// Feeds a retreat direction to UCC while a combat backflip keeps its yaw
-    /// on the locked target. This intentionally bypasses the normal
-    /// forward-only root-motion input conversion.
-    /// </summary>
-    public void ApplyBackwardCombatJumpMoveInput(Vector2 worldInput)
-    {
-        if (!combatLockActive || locomotion == null)
-        {
-            return;
-        }
-
-        Vector2 clampedInput = Vector2.ClampMagnitude(worldInput, 1f);
-        if (clampedInput.sqrMagnitude <= movementDeadZone * movementDeadZone)
-        {
-            currentWorldMoveInput = Vector2.zero;
-            combatLockLocalInput = Vector2.zero;
-            if (playerInput != null)
-            {
-                playerInput.SetMovementOverride(Vector2.zero, IsDriving);
-            }
-
-            if (overrideOpsiveHandlerInput && locomotionHandler != null)
-            {
-                locomotionHandler.OverrideInput = IsDriving;
-                locomotionHandler.OverriddenHorizontalMovement = 0f;
-                locomotionHandler.OverriddenForwardMovement = 0f;
-                locomotionHandler.OverriddenLookVector = Vector2.zero;
-            }
-
-            return;
-        }
-
-        Vector3 worldDirection = new Vector3(clampedInput.x, 0f, clampedInput.y);
-        if (worldDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        // The actor faces the target. Expressing a retreat input in that local
-        // frame gives UCC a negative forward axis instead of its usual +Z.
-        Vector3 localDirection = transform.InverseTransformDirection(worldDirection.normalized);
-        Vector2 motorInput = Vector2.ClampMagnitude(
-            new Vector2(localDirection.x, localDirection.z) * clampedInput.magnitude,
-            1f);
-        currentWorldMoveInput = clampedInput;
-        combatLockLocalInput = motorInput;
-        lastExplicitWorldMoveInput = clampedInput.normalized;
-        lastExplicitWorldMoveInputTime = Time.unscaledTime;
-
-        if (playerInput != null)
-        {
-            playerInput.SetMovementOverride(motorInput, IsDriving);
-            playerInput.SetSprintOverride(sprintPressed, IsDriving);
-        }
-
-        if (overrideOpsiveHandlerInput && locomotionHandler != null)
-        {
-            locomotionHandler.OverrideInput = IsDriving;
-            locomotionHandler.OverriddenHorizontalMovement = motorInput.x;
-            locomotionHandler.OverriddenForwardMovement = motorInput.y;
-            locomotionHandler.OverriddenLookVector = Vector2.zero;
-        }
-    }
-
-    /// <summary>Locks yaw to the current combat target for a scripted jump.</summary>
-    public bool BeginCombatJumpFacing()
-    {
-        if (!combatLockActive || combatLockTarget == null) return false;
-
-        combatJumpFacingLockCount++;
-        MaintainCombatLockFacing();
-        return true;
-    }
-
-    /// <summary>Releases one scripted-jump yaw lock.</summary>
-    public void EndCombatJumpFacing()
-    {
-        combatJumpFacingLockCount = Mathf.Max(0, combatJumpFacingLockCount - 1);
-    }
     private bool UseForwardOnlyGroundedLocomotion => useForwardOnlyGroundedLocomotion && !combatLockActive;
     public string CurrentRootMotionPhase => ResolveCurrentRootMotionPhase().ToString();
     public LocomotionPresentationState CurrentLocomotionPresentationState => groundedPresentationState;
@@ -526,12 +424,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return false;
         }
 
-        // The jump owns only its vertical impulse. Do not feed its button-frame
-        // movement input back into UCC here: under combat lock UCC resolves a
-        // forward-only motor axis from the locked facing, which made an input
-        // away from the enemy launch the character toward the enemy. Normal
-        // movement has already supplied the current motor velocity, so that
-        // genuine inertia remains available to the scripted jump.
+        if (hasWorldInput && worldInput.sqrMagnitude > movementDeadZone * movementDeadZone)
+        {
+            ApplyWorldMoveInput(worldInput);
+        }
+
         return scriptedJumpController != null && scriptedJumpController.TryStartJump(worldInput, hasWorldInput);
     }
 
@@ -1391,10 +1288,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         // Execution Order. Repeat the vertical neutralization after their
         // frame work so StayAirborne remains visually stable.
         MaintainCombatAirborneHold();
-        if (combatJumpFacingLockCount > 0)
-        {
-            MaintainCombatLockFacing();
-        }
     }
 
     /// <summary>Starts target-relative locomotion for a manual combat lock.</summary>
@@ -1559,8 +1452,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void MaintainCombatLockFacing()
     {
-        if (IsScriptedTraversalActive || !combatLockActive ||
-            (combatDirectionalEvasionFacing && combatJumpFacingLockCount == 0) || combatLockTarget == null)
+        if (IsScriptedTraversalActive || !combatLockActive || combatDirectionalEvasionFacing || combatLockTarget == null)
         {
             return;
         }
@@ -2053,12 +1945,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void ApplyWorldMoveInput(Vector2 worldInput)
     {
-        if (scriptedJumpController != null && scriptedJumpController.IsBackwardCombatJump)
-        {
-            ApplyBackwardCombatJumpMoveInput(worldInput);
-            return;
-        }
-
         Vector2 targetWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f);
         float targetMagnitude = targetWorldMoveInput.magnitude;
         if (targetMagnitude <= movementDeadZone)
@@ -2787,7 +2673,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         if (stateInfo.IsName("Jump_Start") ||
-            stateInfo.IsName("Jump_Start_Back") ||
             stateInfo.IsName("Jump_Loop") ||
             stateInfo.IsName("Falling") ||
             stateInfo.IsName("Landing") ||

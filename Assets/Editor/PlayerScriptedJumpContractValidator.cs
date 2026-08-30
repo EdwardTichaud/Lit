@@ -58,7 +58,6 @@ public static class PlayerScriptedJumpContractValidator
         ValidateMotion(root, "Falling", "jump_falling_loop", failures);
         ValidateMotion(root, "Jump_End", "jump_landing", failures);
         ValidateMotion(root, "Landing_Hard", "Mixamo_Landing_Hard_Inplace", failures);
-        if (FindState(root, "Jump_Start_Back") == null) failures.Add("Player_Model.controller is missing Jump_Start_Back.");
         if (FindState(root, "Jump_Roll") != null) failures.Add("Player_Model.controller still contains Jump_Roll.");
         if (controller.parameters.Any(parameter => parameter.name == "JumpRollTrigger")) failures.Add("Player_Model.controller still contains JumpRollTrigger.");
         if (AssetDatabase.GetDependencies(ControllerPath, true).Any(dependency => dependency.Contains("FallingPhase_Legacy"))) failures.Add("Player_Model.controller references FallingPhase_Legacy.");
