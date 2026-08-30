@@ -210,10 +210,23 @@ public sealed class CombatMobilityController : MonoBehaviour
     private bool ExecuteJump(LitOpsiveLocomotionBridge bridge)
     {
         Vector2 worldInput = bridge.CurrentWorldMoveInput;
-        // Scripted jumps own their planar trajectory and combat-lock yaw.
-        // They are not directional evasions and must not borrow the dodge
-        // facing coroutine, which would compete with the jump lock.
-        return bridge.Jump(worldInput, worldInput.sqrMagnitude > 0.0001f);
+        Vector3 direction = new Vector3(worldInput.x, 0f, worldInput.y);
+        if (direction.sqrMagnitude > 0.0001f)
+        {
+            bridge.BeginDirectionalEvasionFacing(direction);
+        }
+
+        bool started = bridge.Jump(worldInput, worldInput.sqrMagnitude > 0.0001f);
+        if (started)
+        {
+            BeginDirectionalEvasionRestore(bridge, waitForGrounded: true);
+        }
+        else
+        {
+            bridge.EndDirectionalEvasionFacing();
+        }
+
+        return started;
     }
 
     private bool TryPlayMobilityState(
