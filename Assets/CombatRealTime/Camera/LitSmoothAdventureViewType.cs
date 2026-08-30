@@ -1,30 +1,29 @@
 using Opsive.UltimateCharacterController.ThirdPersonController.Camera.ViewTypes;
-using UnityEngine;
 using System.Text;
+using UnityEngine;
 
 /// <summary>
-/// UCC Adventure view with camera-follow damping. UCC still calculates the
-/// desired pose and collision response; only the safe final position is eased.
+/// Exploration Adventure view. UCC remains the sole owner of camera placement,
+/// collision and aim. This extension only configures the native framing slack:
+/// that keeps the composition from being glued to the character without adding
+/// a second, visibly delayed camera follow.
 /// </summary>
 [System.Serializable]
 public class LitSmoothAdventureViewType : Adventure
 {
-    [Header("Lit Follow Damping")]
-    [SerializeField, Min(0f)] private float followSmoothTime = 0.16f;
-    [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
-    [SerializeField, Min(0f), Tooltip("Additional position damping while the character is airborne. Aim rotation remains fully responsive.")]
-    private float airborneFollowSmoothTime = 0.24f;
-    [SerializeField, Min(0f), Tooltip("Maximum camera follow speed while airborne, preventing a sharp vertical catch-up on takeoff.")]
-    private float airborneMaximumFollowSpeed = 18f;
-    [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
-    [SerializeField, Min(0f), Tooltip("Only snap the camera inward when UCC had to shorten its distance by at least this amount. Smaller obstacle corrections are eased so narrow corridors remain readable.")]
-    private float hardCollisionSnapDistance = 1.25f;
-    [SerializeField, Tooltip("Optional second collision cast for the smoothed camera position. Leave disabled to favor stable framing around small obstacles; UCC's native collision solver remains active.")]
-    private bool useSupplementalCollisionConstraint;
+    [Header("Lit Exploration Framing")]
+    [SerializeField, Min(0f), Tooltip("Native UCC horizontal pivot slack. Keep this at zero: its sign-based threshold can oscillate when moving in one lateral direction.")]
+    private float horizontalPivotFreedom;
+    [SerializeField, Min(0f), Tooltip("Native UCC smoothing used only for the look offset.")]
+    private float lookOffsetSmoothing = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Maximum temporary vertical framing offset while the character is airborne. UCC still resolves the final camera collision.")]
+    private float airborneVerticalMaximumOffset = 0.32f;
+    [SerializeField, Min(0f), Tooltip("Height gained since takeoff converted into temporary framing offset while airborne.")]
+    private float airborneVerticalHeightCompression = 0.20f;
+    [SerializeField, Min(0.001f)] private float airborneVerticalRiseSmoothTime = 0.14f;
+    [SerializeField, Min(0.001f)] private float airborneVerticalFallSmoothTime = 0.16f;
+    [SerializeField, Min(0.001f)] private float groundedVerticalRestoreSmoothTime = 0.12f;
 
-    private Vector3 smoothedPosition;
-    private Vector3 followVelocity;
-    private bool hasSmoothedPosition;
     private bool immediatePoseRequested;
     private CameraSnapReason immediatePoseReason;
     private bool recordMotionDiagnostics;
@@ -32,6 +31,14 @@ public class LitSmoothAdventureViewType : Adventure
     private readonly MotionSample[] motionHistory = new MotionSample[MotionHistoryCapacity];
     private int motionHistoryNext;
     private int motionHistoryCount;
+    private Vector3 baseLookOffset;
+    private Vector3 lastAppliedLookOffset;
+    private bool hasBaseLookOffset;
+    private float verticalFramingOffset;
+    private float verticalFramingVelocity;
+    private bool airborneFramingActive;
+    private float airborneStartHeight;
+    private int lastUnexpectedAirborneSnapFrame = -1;
 
     private struct MotionSample
     {
@@ -40,18 +47,18 @@ public class LitSmoothAdventureViewType : Adventure
         public float TargetError;
         public bool ImmediateUpdate;
         public bool Snapped;
+        public bool Airborne;
+        public bool CollisionConstrained;
+        public float HorizontalPivotFreedom;
+        public float VerticalVelocity;
+        public float VerticalOffsetTarget;
+        public float VerticalOffsetApplied;
         public CameraSnapReason Reason;
     }
 
-    protected virtual float EffectiveFollowSmoothTime => IsAirborneFollowActive
-        ? Mathf.Max(followSmoothTime, airborneFollowSmoothTime)
-        : followSmoothTime;
-    protected virtual float EffectiveMaximumFollowSpeed => IsAirborneFollowActive && airborneMaximumFollowSpeed > 0f
-        ? Mathf.Min(maximumFollowSpeed, airborneMaximumFollowSpeed)
-        : maximumFollowSpeed;
-    private bool IsAirborneFollowActive => m_CharacterLocomotion != null && !m_CharacterLocomotion.Grounded;
+    private bool IsAirborne => m_CharacterLocomotion != null && !m_CharacterLocomotion.Grounded;
 
-    /// <summary>Copies the gameplay ViewType presentation without taking ownership from UCC.</summary>
+    /// <summary>Copies only UCC gameplay-view presentation, never follow damping.</summary>
     public void CopyGameplaySettingsFrom(ThirdPerson source)
     {
         if (source == null)
@@ -79,64 +86,46 @@ public class LitSmoothAdventureViewType : Adventure
 
         if (source is LitSmoothAdventureViewType smoothSource)
         {
-            followSmoothTime = smoothSource.followSmoothTime;
-            maximumFollowSpeed = smoothSource.maximumFollowSpeed;
-            airborneFollowSmoothTime = smoothSource.airborneFollowSmoothTime;
-            airborneMaximumFollowSpeed = smoothSource.airborneMaximumFollowSpeed;
-            teleportSnapDistance = smoothSource.teleportSnapDistance;
+            horizontalPivotFreedom = smoothSource.horizontalPivotFreedom;
+            lookOffsetSmoothing = smoothSource.lookOffsetSmoothing;
+            airborneVerticalMaximumOffset = smoothSource.airborneVerticalMaximumOffset;
+            airborneVerticalHeightCompression = smoothSource.airborneVerticalHeightCompression;
+            airborneVerticalRiseSmoothTime = smoothSource.airborneVerticalRiseSmoothTime;
+            airborneVerticalFallSmoothTime = smoothSource.airborneVerticalFallSmoothTime;
+            groundedVerticalRestoreSmoothTime = smoothSource.groundedVerticalRestoreSmoothTime;
         }
+
+        CaptureBaseLookOffset(source.LookOffset);
     }
 
-    public void ConfigureFollowDamping(
-        float smoothTime,
-        float maximumSpeed,
-        float airborneSmoothTime,
-        float airborneMaximumSpeed,
-        float snapDistance,
-        float hardSnapDistance,
-        bool supplementalCollisionConstraint,
-        bool diagnosticsEnabled)
+    public void ConfigureExplorationFraming(
+        float pivotFreedom,
+        float offsetSmoothing,
+        float verticalMaximumOffset,
+        float verticalHeightCompression,
+        float verticalRiseSmoothTime,
+        float verticalFallSmoothTime,
+        float groundedRestoreSmoothTime)
     {
-        followSmoothTime = Mathf.Max(0f, smoothTime);
-        maximumFollowSpeed = Mathf.Max(0f, maximumSpeed);
-        airborneFollowSmoothTime = Mathf.Max(0f, airborneSmoothTime);
-        airborneMaximumFollowSpeed = Mathf.Max(0f, airborneMaximumSpeed);
-        teleportSnapDistance = Mathf.Max(0f, snapDistance);
-        hardCollisionSnapDistance = Mathf.Max(0f, hardSnapDistance);
-        useSupplementalCollisionConstraint = supplementalCollisionConstraint;
-        recordMotionDiagnostics = diagnosticsEnabled;
+        horizontalPivotFreedom = Mathf.Max(0f, pivotFreedom);
+        lookOffsetSmoothing = Mathf.Max(0f, offsetSmoothing);
+        airborneVerticalMaximumOffset = Mathf.Max(0f, verticalMaximumOffset);
+        airborneVerticalHeightCompression = Mathf.Max(0f, verticalHeightCompression);
+        airborneVerticalRiseSmoothTime = Mathf.Max(0.001f, verticalRiseSmoothTime);
+        airborneVerticalFallSmoothTime = Mathf.Max(0.001f, verticalFallSmoothTime);
+        groundedVerticalRestoreSmoothTime = Mathf.Max(0.001f, groundedRestoreSmoothTime);
+        HorizontalPivotFreedom = horizontalPivotFreedom;
+        LookOffsetSmoothing = lookOffsetSmoothing;
+        if (!hasBaseLookOffset)
+        {
+            CaptureBaseLookOffset(LookOffset);
+        }
     }
 
     public void RequestImmediatePose(CameraSnapReason reason)
     {
         immediatePoseRequested = true;
         immediatePoseReason = reason;
-        ResetFollowSmoothing();
-    }
-
-    public string BuildMotionDiagnosticsReport()
-    {
-        StringBuilder report = new StringBuilder("[UccCameraMotion] samples=").Append(motionHistoryCount);
-        for (int i = 0; i < motionHistoryCount; i++)
-        {
-            int index = (motionHistoryNext - motionHistoryCount + i + MotionHistoryCapacity) % MotionHistoryCapacity;
-            MotionSample sample = motionHistory[index];
-            report.Append('\n').Append(sample.Time.ToString("F3"))
-                .Append(" dt=").Append(sample.DeltaTime.ToString("F3"))
-                .Append(" error=").Append(sample.TargetError.ToString("F3"))
-                .Append(" immediate=").Append(sample.ImmediateUpdate)
-                .Append(" snap=").Append(sample.Snapped)
-                .Append(" reason=").Append(sample.Reason);
-        }
-
-        return report.ToString();
-    }
-
-    /// <summary>Clears follow inertia; the following UCC move seeds from the current camera pose.</summary>
-    public void ResetFollowSmoothing()
-    {
-        followVelocity = Vector3.zero;
-        hasSmoothedPosition = false;
     }
 
     public override void Awake()
@@ -157,68 +146,74 @@ public class LitSmoothAdventureViewType : Adventure
         ResetFollowSmoothing();
     }
 
-    public override Vector3 Move(bool immediateUpdate)
+    public string BuildMotionDiagnosticsReport()
     {
-        // Keep UCC's native anchor, obstacle and character-clipping solver as
-        // the source of truth before applying any presentation smoothing.
-        Vector3 targetPosition = base.Move(immediateUpdate);
-        bool explicitSnap = immediatePoseRequested;
-        CameraSnapReason snapReason = immediatePoseReason;
+        StringBuilder report = new StringBuilder("[UccCameraMotion] samples=").Append(motionHistoryCount);
+        for (int i = 0; i < motionHistoryCount; i++)
+        {
+            int index = (motionHistoryNext - motionHistoryCount + i + MotionHistoryCapacity) % MotionHistoryCapacity;
+            MotionSample sample = motionHistory[index];
+            report.Append('\n').Append(sample.Time.ToString("F3"))
+                .Append(" dt=").Append(sample.DeltaTime.ToString("F3"))
+                .Append(" error=").Append(sample.TargetError.ToString("F3"))
+                .Append(" immediate=").Append(sample.ImmediateUpdate)
+                .Append(" snap=").Append(sample.Snapped)
+                .Append(" airborne=").Append(sample.Airborne)
+                .Append(" constrained=").Append(sample.CollisionConstrained)
+                .Append(" pivot=").Append(sample.HorizontalPivotFreedom.ToString("F3"))
+                .Append(" verticalSpeed=").Append(sample.VerticalVelocity.ToString("F3"))
+                .Append(" verticalTarget=").Append(sample.VerticalOffsetTarget.ToString("F3"))
+                .Append(" verticalApplied=").Append(sample.VerticalOffsetApplied.ToString("F3"))
+                .Append(" reason=").Append(sample.Reason);
+        }
+
+        return report.ToString();
+    }
+
+    public void SetMotionDiagnosticsEnabled(bool enabled)
+    {
+        recordMotionDiagnostics = enabled;
+        if (!enabled)
+        {
+            motionHistoryNext = 0;
+            motionHistoryCount = 0;
+        }
+    }
+
+    /// <summary>Clears the presentation inertia after an intentional snap or view change.</summary>
+    public virtual void ResetFollowSmoothing()
+    {
+        if (hasBaseLookOffset)
+        {
+            LookOffset = baseLookOffset;
+            lastAppliedLookOffset = baseLookOffset;
+        }
+        verticalFramingOffset = 0f;
+        verticalFramingVelocity = 0f;
+        airborneFramingActive = false;
+        hasBaseLookOffset = false;
+    }
+
+    /// <summary>
+    /// Gives specialized views access to UCC's resolved camera pose without
+    /// applying an additional presentation filter.
+    /// </summary>
+    protected Vector3 GetUccResolvedPosition(bool immediateUpdate) => base.Move(immediateUpdate);
+
+    protected bool ConsumeImmediatePoseRequest(out CameraSnapReason reason)
+    {
+        reason = immediatePoseReason;
+        bool requested = immediatePoseRequested;
         immediatePoseRequested = false;
-        if (explicitSnap || EffectiveFollowSmoothTime <= 0f)
-        {
-            return SeedFollowPositionAndRecord(targetPosition, immediateUpdate, true, explicitSnap ? snapReason : CameraSnapReason.SceneLoad);
-        }
-
-        if (!hasSmoothedPosition)
-        {
-            return SeedFollowPositionAndRecord(targetPosition, immediateUpdate, true, CameraSnapReason.InitialBind);
-        }
-
-        Vector3 anchorPosition = GetAnchorPosition() + m_CollisionAnchorOffset;
-        if (MustSnapToTarget(anchorPosition, targetPosition))
-        {
-            return SeedFollowPositionAndRecord(targetPosition, immediateUpdate, true, CameraSnapReason.Collision);
-        }
-
-        Vector3 candidate = Vector3.SmoothDamp(
-            smoothedPosition,
-            targetPosition,
-            ref followVelocity,
-            EffectiveFollowSmoothTime,
-            EffectiveMaximumFollowSpeed,
-            Time.deltaTime);
-
-        if (useSupplementalCollisionConstraint)
-        {
-            candidate = ConstrainSmoothedPosition(anchorPosition, candidate, out bool collisionConstrained);
-            if (collisionConstrained)
-            {
-                followVelocity = Vector3.zero;
-            }
-        }
-
-        smoothedPosition = candidate;
-        RecordMotion(targetPosition, immediateUpdate, false, CameraSnapReason.InitialBind);
-        return candidate;
+        return requested;
     }
 
-    private Vector3 SeedFollowPositionAndRecord(Vector3 position, bool immediateUpdate, bool snapped, CameraSnapReason reason)
+    protected void RecordMotion(Vector3 targetPosition, Vector3 resolvedPosition, bool immediateUpdate, bool snapped, CameraSnapReason reason)
     {
-        Vector3 seeded = SeedFollowPosition(position);
-        RecordMotion(position, immediateUpdate, snapped, reason);
-        return seeded;
+        RecordMotion(targetPosition, resolvedPosition, immediateUpdate, snapped, reason, false);
     }
 
-    private Vector3 SeedFollowPosition(Vector3 position)
-    {
-        smoothedPosition = position;
-        followVelocity = Vector3.zero;
-        hasSmoothedPosition = true;
-        return position;
-    }
-
-    private void RecordMotion(Vector3 targetPosition, bool immediateUpdate, bool snapped, CameraSnapReason reason)
+    protected void RecordMotion(Vector3 targetPosition, Vector3 resolvedPosition, bool immediateUpdate, bool snapped, CameraSnapReason reason, bool collisionConstrained)
     {
         if (!recordMotionDiagnostics)
         {
@@ -229,60 +224,132 @@ public class LitSmoothAdventureViewType : Adventure
         {
             Time = Time.unscaledTime,
             DeltaTime = Time.unscaledDeltaTime,
-            TargetError = (targetPosition - smoothedPosition).magnitude,
+            TargetError = (targetPosition - resolvedPosition).magnitude,
             ImmediateUpdate = immediateUpdate,
             Snapped = snapped,
+            Airborne = IsAirborne,
+            CollisionConstrained = collisionConstrained,
+            HorizontalPivotFreedom = HorizontalPivotFreedom,
+            VerticalVelocity = ResolveVerticalVelocity(),
+            VerticalOffsetTarget = ResolveVerticalFramingTarget(),
+            VerticalOffsetApplied = verticalFramingOffset,
             Reason = reason
         };
         motionHistoryNext = (motionHistoryNext + 1) % MotionHistoryCapacity;
         motionHistoryCount = Mathf.Min(motionHistoryCount + 1, MotionHistoryCapacity);
     }
 
-    private bool MustSnapToTarget(Vector3 anchorPosition, Vector3 targetPosition)
+    public override Vector3 Move(bool immediateUpdate)
     {
-        if ((targetPosition - smoothedPosition).sqrMagnitude >= teleportSnapDistance * teleportSnapDistance)
+        bool requestedSnap = ConsumeImmediatePoseRequest(out CameraSnapReason reason);
+        if (requestedSnap)
         {
-            return true;
+            ResetVerticalFraming();
         }
 
-        // UCC already resolves its collision position. Small inward corrections
-        // are intentionally eased: in a narrow corridor this favors framing
-        // continuity over constantly bouncing around minor geometry. A large
-        // correction still snaps before the camera can spend visible time in a wall.
-        float currentDistance = Vector3.Distance(smoothedPosition, anchorPosition);
-        float targetDistance = Vector3.Distance(targetPosition, anchorPosition);
-        return targetDistance < currentDistance - hardCollisionSnapDistance;
+        // The vertical framing changes the UCC look offset before Adventure
+        // calculates its final position and collision. Never post-process the
+        // returned world position: that would detach the camera and cause a
+        // visible catch-up after direction changes.
+        if (!requestedSnap)
+        {
+            UpdateVerticalFraming();
+        }
+        Vector3 targetPosition = GetUccResolvedPosition(immediateUpdate);
+        ReportUnexpectedAirborneSnap(immediateUpdate, requestedSnap);
+        RecordMotion(targetPosition, targetPosition, immediateUpdate, requestedSnap, requestedSnap ? reason : CameraSnapReason.InitialBind);
+        return targetPosition;
     }
 
-    private Vector3 ConstrainSmoothedPosition(Vector3 collisionOrigin, Vector3 candidate, out bool constrained)
+    private void UpdateVerticalFraming()
     {
-        constrained = false;
-        Vector3 direction = candidate - collisionOrigin;
-        float distance = direction.magnitude;
-        if (distance <= 0.0001f || m_CharacterLocomotion == null)
+        SynchronizeBaseLookOffset();
+        float previousOffset = verticalFramingOffset;
+        float targetOffset = ResolveVerticalFramingTarget();
+        float smoothTime = !IsAirborne
+            ? groundedVerticalRestoreSmoothTime
+            : targetOffset < previousOffset ? airborneVerticalRiseSmoothTime : airborneVerticalFallSmoothTime;
+        verticalFramingOffset = Mathf.SmoothDamp(
+            verticalFramingOffset,
+            targetOffset,
+            ref verticalFramingVelocity,
+            smoothTime,
+            Mathf.Infinity,
+            Time.fixedDeltaTime);
+
+        Vector3 offset = baseLookOffset;
+        offset.y += verticalFramingOffset;
+        LookOffset = offset;
+        lastAppliedLookOffset = offset;
+    }
+
+    private void SynchronizeBaseLookOffset()
+    {
+        if (!hasBaseLookOffset || (LookOffset - lastAppliedLookOffset).sqrMagnitude > 0.000001f)
         {
-            return candidate;
+            CaptureBaseLookOffset(LookOffset);
+        }
+    }
+
+    private void CaptureBaseLookOffset(Vector3 offset)
+    {
+        baseLookOffset = offset;
+        lastAppliedLookOffset = offset;
+        hasBaseLookOffset = true;
+    }
+
+    private float ResolveVerticalVelocity()
+    {
+        if (m_CharacterLocomotion == null)
+        {
+            return 0f;
         }
 
-        direction /= distance;
-        bool collisionEnabled = m_CharacterLocomotion.CollisionLayerEnabled;
-        m_CharacterLocomotion.EnableColliderCollisionLayer(false);
-        bool hit = Physics.SphereCast(
-            collisionOrigin - direction * m_CollisionRadius,
-            m_CollisionRadius,
-            direction,
-            out RaycastHit raycastHit,
-            distance,
-            m_CharacterLayerManager.IgnoreInvisibleCharacterWaterLayers,
-            QueryTriggerInteraction.Ignore);
-        m_CharacterLocomotion.EnableColliderCollisionLayer(collisionEnabled);
+        return Vector3.Dot(m_CharacterLocomotion.Velocity, m_CharacterLocomotion.Up);
+    }
 
-        if (!hit)
+    private float ResolveVerticalFramingTarget()
+    {
+        if (!IsAirborne || airborneVerticalMaximumOffset <= 0f)
         {
-            return candidate;
+            airborneFramingActive = false;
+            return 0f;
         }
 
-        constrained = true;
-        return raycastHit.point + raycastHit.normal * m_CollisionRadius;
+        float currentHeight = Vector3.Dot(CharacterPosition, m_CharacterLocomotion.Up);
+        if (!airborneFramingActive)
+        {
+            airborneFramingActive = true;
+            airborneStartHeight = currentHeight;
+        }
+
+        // This is intentionally based on height gained since takeoff rather
+        // than the instantaneous vertical velocity. The target never flips
+        // sign at the apex, eliminating the direction-dependent tremble.
+        float gainedHeight = Mathf.Max(0f, currentHeight - airborneStartHeight);
+        return -Mathf.Min(airborneVerticalMaximumOffset, gainedHeight * airborneVerticalHeightCompression);
+    }
+
+    private void ResetVerticalFraming()
+    {
+        verticalFramingOffset = 0f;
+        verticalFramingVelocity = 0f;
+        airborneFramingActive = false;
+        if (hasBaseLookOffset)
+        {
+            LookOffset = baseLookOffset;
+            lastAppliedLookOffset = baseLookOffset;
+        }
+    }
+
+    private void ReportUnexpectedAirborneSnap(bool immediateUpdate, bool requestedSnap)
+    {
+        if (!recordMotionDiagnostics || !IsAirborne || !immediateUpdate || requestedSnap || lastUnexpectedAirborneSnapFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastUnexpectedAirborneSnapFrame = Time.frameCount;
+        Debug.LogWarning("[UccCameraMotion] Snap caméra non demandé détecté pendant un saut.", m_GameObject);
     }
 }

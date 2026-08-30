@@ -11,6 +11,9 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
     [SerializeField, Range(1f, 720f)] private float maximumLockRotationDegreesPerSecond = 95f;
     [SerializeField, Min(0.1f)] private float lockAxisSharpness = 7f;
     [SerializeField, Min(0f)] private float lockFollowSmoothTime = 0.08f;
+    [SerializeField, Min(0f)] private float lockMaximumFollowSpeed = 30f;
+    [SerializeField, Min(0f)] private float lockTeleportSnapDistance = 3f;
+    [SerializeField, Min(0f)] private float lockHardCollisionSnapDistance = 1.25f;
     [SerializeField] private Vector3 combatLookOffset = new Vector3(0.75f, 0.45f, -5f);
     [SerializeField, Range(15f, 100f)] private float combatFieldOfView = 64f;
 
@@ -19,8 +22,9 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
     private float warningFieldOfView;
     private Vector3 smoothedPlayerToEnemyAxis;
     private bool hasSmoothedPlayerToEnemyAxis;
-
-    protected override float EffectiveFollowSmoothTime => lockFollowSmoothTime;
+    private Vector3 lockSmoothedPosition;
+    private Vector3 lockFollowVelocity;
+    private bool hasLockSmoothedPosition;
 
     public void ConfigureLockMotion(float maximumOrbitDegreesPerSecond, float axisSharpness)
     {
@@ -38,6 +42,50 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
     public void ResetLockAxisSmoothing()
     {
         hasSmoothedPlayerToEnemyAxis = false;
+    }
+
+    /// <summary>
+    /// Combat framing keeps its pre-existing local smoothing. Exploration does
+    /// not use it: its Adventure view returns the native UCC pose directly.
+    /// </summary>
+    public override void ResetFollowSmoothing()
+    {
+        base.ResetFollowSmoothing();
+        lockFollowVelocity = Vector3.zero;
+        hasLockSmoothedPosition = false;
+    }
+
+    public override Vector3 Move(bool immediateUpdate)
+    {
+        Vector3 targetPosition = GetUccResolvedPosition(immediateUpdate);
+        bool explicitSnap = ConsumeImmediatePoseRequest(out CameraSnapReason reason);
+        if (explicitSnap || !hasLockSmoothedPosition)
+        {
+            lockSmoothedPosition = targetPosition;
+            lockFollowVelocity = Vector3.zero;
+            hasLockSmoothedPosition = true;
+            RecordMotion(targetPosition, targetPosition, immediateUpdate, true, explicitSnap ? reason : CameraSnapReason.InitialBind);
+            return targetPosition;
+        }
+
+        Vector3 anchorPosition = GetAnchorPosition() + m_CollisionAnchorOffset;
+        if (MustSnapLockFollow(anchorPosition, targetPosition))
+        {
+            lockSmoothedPosition = targetPosition;
+            lockFollowVelocity = Vector3.zero;
+            RecordMotion(targetPosition, targetPosition, immediateUpdate, true, CameraSnapReason.Collision);
+            return targetPosition;
+        }
+
+        lockSmoothedPosition = Vector3.SmoothDamp(
+            lockSmoothedPosition,
+            targetPosition,
+            ref lockFollowVelocity,
+            lockFollowSmoothTime,
+            lockMaximumFollowSpeed,
+            Time.deltaTime);
+        RecordMotion(targetPosition, lockSmoothedPosition, immediateUpdate, false, CameraSnapReason.InitialBind);
+        return lockSmoothedPosition;
     }
 
     /// <summary>
@@ -135,6 +183,18 @@ public sealed class CombatLockAdventureViewType : LitSmoothAdventureViewType
         float blend = 1f - Mathf.Exp(-lockAxisSharpness * Time.unscaledDeltaTime);
         smoothedPlayerToEnemyAxis = Vector3.Slerp(smoothedPlayerToEnemyAxis, targetAxis, blend).normalized;
         return smoothedPlayerToEnemyAxis;
+    }
+
+    private bool MustSnapLockFollow(Vector3 anchorPosition, Vector3 targetPosition)
+    {
+        if ((targetPosition - lockSmoothedPosition).sqrMagnitude >= lockTeleportSnapDistance * lockTeleportSnapDistance)
+        {
+            return true;
+        }
+
+        float currentDistance = Vector3.Distance(lockSmoothedPosition, anchorPosition);
+        float targetDistance = Vector3.Distance(targetPosition, anchorPosition);
+        return targetDistance < currentDistance - lockHardCollisionSnapDistance;
     }
 
     private void SynchronizeOrbitAngles(Quaternion worldRotation)

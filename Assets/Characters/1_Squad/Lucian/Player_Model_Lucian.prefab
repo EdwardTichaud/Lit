@@ -8487,7 +8487,7 @@ MonoBehaviour:
   groundBlockDiagnosticInterval: 0.75
   groundBlockDiagnosticMinProgress: 0.04
   enableCinematicGroundedFeel: 1
-  tuneGroundedUccPhysics: 1
+  tuneGroundedUccPhysics: 0
   groundedMotorAcceleration: {x: 4.6, y: 0, z: 4.6}
   groundedMotorDamping: 5.7
   groundedPreviousAccelerationInfluence: 0.88
@@ -8504,7 +8504,7 @@ MonoBehaviour:
   groundedInputDeceleration: 6.2
   groundedDirectionChangeAcceleration: 11.2
   groundedDirectionChangeDot: 0.2
-  tuneGroundedSprintSpeedChange: 1
+  tuneGroundedSprintSpeedChange: 0
   groundedSprintSpeedMultiplier: 1.65
   groundedSprintSpeedParameterValue: 2.6
   suppressSpeedChangeAnimatorParameter: 1
@@ -8597,7 +8597,7 @@ MonoBehaviour:
   allowRootMotionRotationDuringStartStop: 0
   suppressIdleRootMotionPosition: 1
   idleRootMotionVelocityThreshold: 0.06
-  useRootMotionPhaseMultipliers: 1
+  useRootMotionPhaseMultipliers: 0
   rootMotionLoopSpeedScale: 1.02
   rootMotionLoopRotationScale: 1
   rootMotionStartSpeedScale: 1.18
@@ -8611,7 +8611,7 @@ MonoBehaviour:
   refreshRootMotionSettingsEveryFrame: 1
   driveDirectionalRootMotionInput: 0
   useLookSourceForwardInputForRootMotion: 1
-  enableRunStartResponse: 1
+  enableRunStartResponse: 0
   runStartVelocityBonus: 0.55
   runStartResponseCooldown: 0.25
   runStartResponseMaximumPlanarSpeed: 4.25
@@ -8620,10 +8620,6 @@ MonoBehaviour:
   movementDeadZone: 0.08
   jumpRetryWindow: 0.12
   warnWhenJumpRejected: 1
-  useJumpForceFallback: 0
-  jumpFallbackVelocity: 9.2
-  jumpTakeoffForceScale: 0.78
-  jumpTakeoffMinimumForceFrames: 4
   relaxGroundReliefTolerance: 1
   groundReliefMinStepHeight: 0.5
   groundReliefMinSlopeLimit: 60
@@ -8714,11 +8710,10 @@ MonoBehaviour:
   hardLandingHeight: 3
   rollForwardInputThreshold: 0.55
   landingRollInputMemorySeconds: 0.2
-  apexVelocityThreshold: 0.7
+  descentAnimationEntryVelocity: -0.1
+  apexGravityEntryVelocity: 2.2
   apexGravityMultiplier: 0.35
-  apexHangDuration: 0.14
-  apexHangGravityMultiplier: 0.16
-  descentGravityMultiplier: 1
+  descentGravityMultiplier: 0.82
   debugTrace: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:

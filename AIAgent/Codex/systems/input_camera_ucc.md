@@ -27,6 +27,44 @@ du combat.
 
 ## Flux principaux
 
+## Contrat exploration UCC
+
+En exploration, UCC est l'unique propriétaire de la position, rotation
+physique, gravité, saut, collision et pose de la caméra. Le bridge Lit fournit
+les entrées et la présentation, mais ne crée aucun saut de secours et ne
+modifie pas la force de `Jump`. `LucianJumpPresentationController` applique
+uniquement un profil de gravité UCC borné : normale au départ, réduite avant
+et pendant la fenêtre d'apex, puis légèrement réduite pendant la descente; elle
+est restaurée dès le contact sol. Le seuil physique est indépendant du seuil
+d'animation afin que la chute ne soit pas jouée trop tôt. Il ne freine pas le
+moteur à l'atterrissage. `Jump_Loop` couvre la montée et l'apex; l'état
+`Falling` ne commence qu'après une vitesse verticale négative et emploie le
+clip `Falling_Loop` archivé sans activer ses anciens scripts de chute libre.
+La transition `Jump_Loop` vers `Falling` fond les poses sur 0,18 s ; les
+transitions d'atterrissage restent courtes afin de conserver leur impact.
+`LitOpsiveLookSource` est le repère enfant de direction requis par le profil
+exploration forward-only ; il peut mettre à jour ce repère, mais ne pilote jamais
+la `Main Camera` ni le root physique du personnage.
+
+La vue Adventure UCC retourne directement la pose résolue par UCC, incluant
+son suivi et ses collisions : aucun `SmoothDamp`, rattrapage de vitesse ou snap
+de collision Lit ne s'ajoute en exploration. `LitSmoothUccCameraViewAdapter`
+conserve le branchement de vue, les diagnostics et les demandes de pose
+immédiate. Les snaps sont limités au bind initial, changement de personnage,
+téléportation, recentrage explicite et retour autorisé d'une caméra externe.
+Un bind déjà valide ne recentre plus la caméra. La vue de lock de combat garde
+son propre lissage, indépendant et hors de ce contrat exploration.
+La liberté de pivot horizontal native d'Adventure est à zéro : la caméra reste
+sur son épaule configurée au lieu de franchir un seuil latéral dont le signe
+peut alterner autour du personnage et créer une vibration directionnelle.
+
+Dans l'Inspector du bridge, **Locomotion Diagnostics** active en même temps le
+relevé locomotion et le buffer de caméra. Les logs ne sont construits qu'au
+dump; ils contiennent input, vitesse, sol/air, gravité, abilities, root motion,
+vue caméra et snaps. Le menu **Lit/UCC/Create Exploration Test Course** génère
+`Assets/Scenes/Tests/UccExplorationCourse.unity`, un parcours additif pour les
+tests de course, demi-tour, marche, pente, saut et couloir caméra.
+
 `PlayerInputs` → `LocalPlayerInput` → `LocalInputRouter`.
 
 Le flux se divise ensuite :

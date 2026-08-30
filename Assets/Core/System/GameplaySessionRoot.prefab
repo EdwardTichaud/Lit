@@ -2466,9 +2466,9 @@ MonoBehaviour:
   m_InitCharacterOnAwake: 0
   m_Character: {fileID: 0}
   m_Anchor: {fileID: 0}
-  m_AutoAnchor: 1
+  m_AutoAnchor: 0
   m_AutoAnchorBone: 10
-  m_AnchorOffset: {x: 0, y: 0, z: 0}
+  m_AnchorOffset: {x: 0, y: 1.35, z: 0}
   m_ViewTypeFullName: Opsive.UltimateCharacterController.ThirdPersonController.Camera.ViewTypes.Adventure
   m_FirstPersonViewTypeFullName: 
   m_ThirdPersonViewTypeFullName: Opsive.UltimateCharacterController.ThirdPersonController.Camera.ViewTypes.Adventure
@@ -2509,7 +2509,7 @@ MonoBehaviour:
         m_CollisionAnchorOffset: {x: 0, y: 0, z: 0}
         m_RotationSpeed: 0.6
         m_SecondaryRotationSpeed: 0.8
-        m_HorizontalPivotFreedom: 0.12
+        m_HorizontalPivotFreedom: 0.14
         m_PositionSpring:
           m_Stiffness: 0.2
           m_Damping: 0.25
@@ -2605,13 +2605,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitSmoothUccCameraViewAdapter
   cameraController: {fileID: 8540125469264114897}
-  followSmoothTime: 0.18
-  maximumFollowSpeed: 24
-  airborneFollowSmoothTime: 0.26
-  airborneMaximumFollowSpeed: 16
-  teleportSnapDistance: 3
-  hardCollisionSnapDistance: 1.25
-  useSupplementalCollisionConstraint: 0
+  horizontalPivotFreedom: 0
+  lookOffsetSmoothing: 0.08
+  airborneVerticalMaximumOffset: 0.32
+  airborneVerticalHeightCompression: 0.2
+  airborneVerticalRiseSmoothTime: 0.14
+  airborneVerticalFallSmoothTime: 0.16
+  groundedVerticalRestoreSmoothTime: 0.12
+  rootAnchorHeightFraction: 0.72
+  minimumRootAnchorHeight: 1.35
   recordMotionDiagnostics: 0
   logFailedStartupHandoff: 1
   startupRetrySeconds: 3

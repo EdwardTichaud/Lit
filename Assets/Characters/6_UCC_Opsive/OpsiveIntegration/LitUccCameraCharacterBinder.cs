@@ -196,7 +196,6 @@ public class LitUccCameraCharacterBinder : MonoBehaviour
 
         if (boundCharacter == character && IsCameraBoundAndInitialized(characterObject))
         {
-            SnapCameraToBoundCharacter(CameraSnapReason.InitialBind);
             return true;
         }
 

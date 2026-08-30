@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -14349,7 +14349,7 @@ Transform:
   m_GameObject: {fileID: 290585904}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.72887963, y: 0.7, z: -0.87419325}
+  m_LocalPosition: {x: -0.7297732, y: 0.7, z: -0.8869399}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14507,8 +14507,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.01
-  m_Range: 0.01
+  m_Intensity: 0.011164392
+  m_Range: 0.010807541
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -45355,7 +45355,7 @@ Transform:
   m_GameObject: {fileID: 962258032}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.8072709, y: 0.7, z: -0.5264101}
+  m_LocalPosition: {x: -0.80913275, y: 0.7, z: -0.51896954}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -45513,8 +45513,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.010307749
-  m_Range: 0.010414941
+  m_Intensity: 0.01
+  m_Range: 0.010177816
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -45585,8 +45585,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncFlameReceiverColor: 1
   deferShadowingToFlameReceiver: 1
-  baseIntensity: 0.01
-  baseRange: 0.01
+  baseIntensity: 0.010307749
+  baseRange: 0.010414941
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -49783,7 +49783,7 @@ Transform:
   m_GameObject: {fileID: 1068951298}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.67453414, y: 0.7, z: -1.0110334}
+  m_LocalPosition: {x: -0.6737092, y: 0.7, z: -1.0163475}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -49941,8 +49941,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.012278788
-  m_Range: 0.011277353
+  m_Intensity: 0.010534029
+  m_Range: 0.010606693
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -50013,8 +50013,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncFlameReceiverColor: 1
   deferShadowingToFlameReceiver: 1
-  baseIntensity: 0.010174954
-  baseRange: 0.010082894
+  baseIntensity: 0.012278788
+  baseRange: 0.011277353
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -50304,7 +50304,7 @@ Transform:
   m_GameObject: {fileID: 1077237955}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071067, z: -0, w: 0.70710695}
-  m_LocalPosition: {x: -0.69426227, y: 0.7, z: -0.6636737}
+  m_LocalPosition: {x: -0.69096506, y: 0.7, z: -0.6623684}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -50463,7 +50463,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   m_Intensity: 0.01
-  m_Range: 0.010073605
+  m_Range: 0.01
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -50535,7 +50535,7 @@ MonoBehaviour:
   syncFlameReceiverColor: 1
   deferShadowingToFlameReceiver: 1
   baseIntensity: 0.01
-  baseRange: 0.0114431605
+  baseRange: 0.010073605
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -68070,7 +68070,7 @@ Transform:
   m_GameObject: {fileID: 1429163556}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.9435089, y: 0.7, z: -0.8261438}
+  m_LocalPosition: {x: -0.93468416, y: 0.7, z: -0.81953126}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -68228,8 +68228,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
-  m_Intensity: 0.010869541
-  m_Range: 0.010949936
+  m_Intensity: 0.01
+  m_Range: 0.010017552
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
@@ -68300,8 +68300,8 @@ MonoBehaviour:
   useCurrentLightAsBase: 1
   syncFlameReceiverColor: 1
   deferShadowingToFlameReceiver: 1
-  baseIntensity: 0.0110460855
-  baseRange: 0.010693557
+  baseIntensity: 0.010869541
+  baseRange: 0.010949936
   emberColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   flameColor: {r: 1, g: 0.87092626, b: 0.7971698, a: 1}
   intensityVariation: 0.75
@@ -85251,7 +85251,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1798172910
 Transform:
   m_ObjectHideFlags: 0

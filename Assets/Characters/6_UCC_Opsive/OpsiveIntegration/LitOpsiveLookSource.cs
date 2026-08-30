@@ -241,6 +241,10 @@ public class LitOpsiveLookSource : MonoBehaviour, ILookSource
         return rotated.sqrMagnitude > 0.0001f ? rotated.normalized : direction;
     }
 
+    // The exploration bridge uses a forward-only root-motion input. This
+    // child transform is its movement reference, not the character root: it
+    // must therefore follow the requested planar direction until directional
+    // root-motion input is introduced.
     private void RefreshStableWorldRotation()
     {
         if (!useStableWorldPlanarDirection)

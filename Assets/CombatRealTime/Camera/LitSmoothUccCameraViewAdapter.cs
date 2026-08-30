@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Opsive.UltimateCharacterController.Camera.ViewTypes;
+using Opsive.UltimateCharacterController.Character;
 using Opsive.UltimateCharacterController.ThirdPersonController.Camera.ViewTypes;
 using UnityEngine;
 using UccCameraController = Opsive.UltimateCharacterController.Camera.CameraController;
@@ -28,18 +29,23 @@ public enum CameraSnapReason
 public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
 {
     [SerializeField] private UccCameraController cameraController;
-    [Header("Gameplay Follow Damping")]
-    [SerializeField, Min(0f)] private float followSmoothTime = 0.16f;
-    [SerializeField, Min(0f)] private float maximumFollowSpeed = 30f;
-    [SerializeField, Min(0f), Tooltip("Extra follow damping used only while the character is airborne. Camera aim remains immediate.")]
-    private float airborneFollowSmoothTime = 0.24f;
-    [SerializeField, Min(0f), Tooltip("Maximum follow speed used only while airborne.")]
-    private float airborneMaximumFollowSpeed = 18f;
-    [SerializeField, Min(0f)] private float teleportSnapDistance = 3f;
-    [SerializeField, Min(0f), Tooltip("Distance reduction required before the camera snaps inward for a major wall. Smaller obstacle corrections remain smooth.")]
-    private float hardCollisionSnapDistance = 1.25f;
-    [SerializeField, Tooltip("Keep disabled for smoother lock framing in tight spaces. UCC native camera collision is still used.")]
-    private bool useSupplementalCollisionConstraint;
+    [Header("Exploration Framing")]
+    [SerializeField, Min(0f), Tooltip("Native UCC horizontal pivot slack. Zero keeps the lateral follow continuous and prevents its sign-based threshold from trembling in one direction.")]
+    private float horizontalPivotFreedom;
+    [SerializeField, Min(0f), Tooltip("Native UCC smoothing for the look offset only; aim input remains immediate.")]
+    private float lookOffsetSmoothing = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Maximum temporary vertical framing offset while the character is airborne.")]
+    private float airborneVerticalMaximumOffset = 0.32f;
+    [SerializeField, Min(0f), Tooltip("Height gained since takeoff converted into temporary framing offset while airborne.")]
+    private float airborneVerticalHeightCompression = 0.20f;
+    [SerializeField, Min(0.001f)] private float airborneVerticalRiseSmoothTime = 0.14f;
+    [SerializeField, Min(0.001f)] private float airborneVerticalFallSmoothTime = 0.16f;
+    [SerializeField, Min(0.001f)] private float groundedVerticalRestoreSmoothTime = 0.12f;
+    [Header("Stable Character Anchor")]
+    [SerializeField, Range(0.1f, 1f), Tooltip("Stable root-anchor height expressed as a fraction of the UCC capsule height. This prevents animation head bob from moving the camera.")]
+    private float rootAnchorHeightFraction = 0.72f;
+    [SerializeField, Min(0f), Tooltip("Minimum world-space root-anchor height used for small avatars.")]
+    private float minimumRootAnchorHeight = 1.35f;
     [Header("Development Diagnostics")]
     [SerializeField, Tooltip("Keeps a fixed-size camera motion history. It is never replicated and allocates only when dumped to the Console.")]
     private bool recordMotionDiagnostics;
@@ -78,6 +84,16 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
             ? cameraController.GetViewType<LitSmoothAdventureViewType>()
             : null;
         Debug.Log(smoothView != null ? smoothView.BuildMotionDiagnosticsReport() : "[UccCameraMotion] Vue lissée indisponible.", this);
+    }
+
+    /// <summary>Called by the character diagnostic toggle; recording uses a fixed-size buffer.</summary>
+    public void SetMotionDiagnosticsEnabled(bool enabled)
+    {
+        recordMotionDiagnostics = enabled;
+        LitSmoothAdventureViewType smoothView = cameraController != null
+            ? cameraController.GetViewType<LitSmoothAdventureViewType>()
+            : null;
+        smoothView?.SetMotionDiagnosticsEnabled(enabled);
     }
 
     private void Reset()
@@ -129,6 +145,28 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
         }
 
         InstallSmoothGameplayView();
+        ConfigureStableRootAnchor();
+    }
+
+    private void LateUpdate()
+    {
+        if (cameraController == null || cameraController.Character == null)
+        {
+            return;
+        }
+
+        ConfigureStableRootAnchor();
+
+        // A late scene or perspective initialization can restore the
+        // serialized Adventure view after this adapter first installs its
+        // extension. Reassert the exploration contract, but never interrupt
+        // the dedicated combat view or an intentional UCC transition.
+        if (!cameraController.IsTransitioning &&
+            cameraController.ActiveViewType is not LitSmoothAdventureViewType)
+        {
+            smoothViewInstalled = false;
+            InstallSmoothGameplayView();
+        }
     }
 
     private System.Collections.IEnumerator InstallWhenUccIsReady()
@@ -196,19 +234,23 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
             smoothView.CopyGameplaySettingsFrom(gameplayView);
         }
 
-        smoothView.ConfigureFollowDamping(
-            followSmoothTime,
-            maximumFollowSpeed,
-            airborneFollowSmoothTime,
-            airborneMaximumFollowSpeed,
-            teleportSnapDistance,
-            hardCollisionSnapDistance,
-            useSupplementalCollisionConstraint,
-            recordMotionDiagnostics);
-        cameraController.ThirdPersonViewTypeFullName = typeof(LitSmoothAdventureViewType).FullName;
-        if (cameraController.enabled && cameraController.Character != null)
+        smoothView.SetMotionDiagnosticsEnabled(recordMotionDiagnostics);
+        smoothView.ConfigureExplorationFraming(
+            horizontalPivotFreedom,
+            lookOffsetSmoothing,
+            airborneVerticalMaximumOffset,
+            airborneVerticalHeightCompression,
+            airborneVerticalRiseSmoothTime,
+            airborneVerticalFallSmoothTime,
+            groundedVerticalRestoreSmoothTime);
+        bool combatViewActive = cameraController.ActiveViewType is CombatLockAdventureViewType;
+        if (!combatViewActive)
         {
-            cameraController.SetViewType(typeof(LitSmoothAdventureViewType), true);
+            cameraController.ThirdPersonViewTypeFullName = typeof(LitSmoothAdventureViewType).FullName;
+            if (cameraController.enabled && cameraController.Character != null)
+            {
+                cameraController.SetViewType(typeof(LitSmoothAdventureViewType), true);
+            }
         }
 
         smoothViewInstalled = true;
@@ -226,6 +268,32 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
         {
             characterBinder = GetComponent<LitUccCameraCharacterBinder>();
         }
+    }
+
+    private void ConfigureStableRootAnchor()
+    {
+        if (cameraController == null || cameraController.Character == null)
+        {
+            return;
+        }
+
+        Transform root = cameraController.Character.transform;
+        if (cameraController.Anchor != root)
+        {
+            cameraController.Anchor = root;
+        }
+
+        UltimateCharacterLocomotion locomotion = cameraController.CharacterLocomotion;
+        float height = locomotion != null ? locomotion.Height : 0f;
+        float stableHeight = Mathf.Max(minimumRootAnchorHeight, height * rootAnchorHeightFraction);
+        Vector3 offset = cameraController.AnchorOffset;
+        if (Mathf.Abs(offset.y - stableHeight) <= 0.001f)
+        {
+            return;
+        }
+
+        offset.y = stableHeight;
+        cameraController.AnchorOffset = offset;
     }
 
     private static ThirdPerson FindGameplayAdventure(UccViewType[] views)

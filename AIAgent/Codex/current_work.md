@@ -31,6 +31,19 @@ joueur tardif y apparaisse toujours.
 Les ennemis conservent leur vie et leur état actif entre les sessions, mais leur
 pose est toujours réinitialisée à leur `SceneMarker` au lancement.
 
+L'exploration UCC a maintenant un contrat d'autorité explicite : UCC possède le
+moteur, saut, gravité, collisions et caméra ; les adaptations Lit se limitent à
+l'input et à la présentation. Le saut de Lucian n'a plus de force ni de
+freinage alternatif : sa gravité UCC est seulement réduite de façon bornée
+autour de l'apex et pendant la descente. La caméra Adventure retourne directement
+la pose et la collision calculées par UCC : aucun filtre Lit de position ne peut
+la faire retarder ou rattraper le personnage. Le binder ne recentre pas une liaison
+déjà valide. La descente visuelle de Lucian emploie le clip `Falling_Loop` du
+prototype archivé uniquement comme ressource d'animation : la transition ne se
+fait qu'après une vitesse verticale négative et n'active aucun système de chute
+libre. Le menu
+`Lit/UCC/Create Exploration Test Course` génère le parcours de validation.
+
 Le prototype de chute libre est archive dans `Assets/FallingPhase_Legacy/` avec
 sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plus
 partie des scenes de build; l'ActionMap partagee `Falling` est conservee afin que

@@ -24,6 +24,12 @@ public partial class LitOpsiveLocomotionBridge
         lastDiagnosticRootMotionPhase = RootMotionPhase.Other;
         lastDiagnosticExternalLockCount = -1;
         lastDiagnosticTraversalLockCount = -1;
+
+        Camera gameplayCamera = Camera.main;
+        LitSmoothUccCameraViewAdapter cameraDiagnostics = gameplayCamera != null
+            ? gameplayCamera.GetComponent<LitSmoothUccCameraViewAdapter>()
+            : null;
+        cameraDiagnostics?.SetMotionDiagnosticsEnabled(enabled);
     }
 #endif
 
@@ -79,6 +85,9 @@ public partial class LitOpsiveLocomotionBridge
             : default;
         Vector3 velocity = locomotion != null ? locomotion.Velocity : Vector3.zero;
         Vector3 rootDelta = animator != null ? animator.deltaPosition : Vector3.zero;
+        bool grounded = locomotion != null && locomotion.Grounded;
+        float gravity = locomotion != null ? locomotion.GravityAmount : 0f;
+        string activeAbilities = ResolveActiveAbilityLabel();
         string currentClip = ResolveAnimatorClipName(current);
         string nextClip = animator != null && animator.IsInTransition(0) ? ResolveNextAnimatorClipName(next) : "-";
         float litSpeed = ReadAnimatorFloat(speedParam);
@@ -93,6 +102,7 @@ public partial class LitOpsiveLocomotionBridge
             $"state='{currentClip}' t={current.normalizedTime:F2} next='{nextClip}' nt={next.normalizedTime:F2} " +
             $"params LitSpeed={litSpeed:F2} Speed={legacySpeed:F2} Forward={forward:F2} IsMoving={moving} " +
             $"rootDelta=({rootDelta.x:F3},{rootDelta.y:F3},{rootDelta.z:F3}) velocity=({velocity.x:F2},{velocity.y:F2},{velocity.z:F2}) " +
+            $"grounded={grounded} gravity={gravity:F3} abilities={activeAbilities} " +
             $"phase={phase} rootPos={(locomotion != null && locomotion.UseRootMotionPosition)} rootScale={(locomotion != null ? locomotion.RootMotionSpeedMultiplier : 0f):F2} " +
             $"driving={IsDriving} suppressed={IsInputSuppressedByUcc} speedChange={speedChangeActive} " +
             $"externalLocks={externalLockCount} traversalLocks={scriptedTraversalLockCount} cinematic={cinematicMotion}",

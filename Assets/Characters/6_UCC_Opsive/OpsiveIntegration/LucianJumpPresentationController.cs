@@ -65,14 +65,14 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
     private float rollForwardInputThreshold = 0.55f;
     [SerializeField, Min(0f), Tooltip("How long a released move direction remains eligible for a landing roll.")]
     private float landingRollInputMemorySeconds = 0.2f;
-    [SerializeField, Min(0f)] private float apexVelocityThreshold = 0.7f;
-    [SerializeField, Range(0.1f, 1f)] private float apexGravityMultiplier = 0.35f;
-    [SerializeField, Min(0f), Tooltip("Short weighted suspension at the top of a jump. It only changes gravity; UCC remains the owner of position and collision.")]
-    private float apexHangDuration = 0.14f;
-    [SerializeField, Range(0.05f, 1f), Tooltip("Gravity multiplier at the start of the apex suspension. Lower values create more float without freezing the character.")]
-    private float apexHangGravityMultiplier = 0.16f;
-    [SerializeField, Range(0.1f, 1f), Tooltip("The physical jump keeps normal UCC gravity during descent; the landing contract, not a reduced gravity timer, creates the weight.")]
-    private float descentGravityMultiplier = 1f;
+    [SerializeField, Tooltip("The visual descent begins only after Lucian is physically falling. A small negative value prevents a phase flicker at the apex.")]
+    private float descentAnimationEntryVelocity = -0.1f;
+    [SerializeField, Min(0f), Tooltip("Starts the lighter UCC gravity while Lucian is still rising. This is separate from the animation apex threshold.")]
+    private float apexGravityEntryVelocity = 2.2f;
+    [SerializeField, Range(0.05f, 1f), Tooltip("UCC gravity multiplier at the apex. Lower values keep Lucian suspended longer without adding an upward force.")]
+    private float apexGravityMultiplier = 0.35f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("UCC gravity multiplier after the apex. Keeps the descent readable while preserving a clear landing.")]
+    private float descentGravityMultiplier = 0.82f;
 
     [Header("Development")]
     [SerializeField] private bool debugTrace;
@@ -90,8 +90,6 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
     private bool rollingLanding;
     private bool gravityOverridden;
     private float baseGravity;
-    private bool apexHangConsumed;
-    private float apexHangStartedAt = -1f;
     // -1 means that the visual landing approach started before the capsule
     // touched the ground. The recovery timer only starts on real contact.
     private float landingContactStartedAt = -1f;
@@ -122,7 +120,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         EventHandler.UnregisterEvent<bool>(gameObject, GroundedEvent, OnGroundedChanged);
         EventHandler.UnregisterEvent<float>(gameObject, LandEvent, OnLanded);
         locomotionBridge?.EndDirectionalEvasionFacing();
-        RestoreGravity();
+        RestoreJumpGravity();
     }
 
     private void Update()
@@ -133,7 +131,12 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         }
 
         float verticalVelocity = Vector3.Dot(locomotion.Velocity, transform.up);
-        SetPhase(verticalVelocity > apexVelocityThreshold ? PresentationPhase.Ascending : PresentationPhase.Falling);
+        // The apex gravity profile intentionally starts while Lucian is still
+        // rising. Animation must not follow that profile: keep Jump_Loop
+        // through the ascent and apex, then enter Falling only on real descent.
+        SetPhase(verticalVelocity < descentAnimationEntryVelocity
+            ? PresentationPhase.Falling
+            : PresentationPhase.Ascending);
 
         if (!landingRequested)
         {
@@ -150,22 +153,11 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
             return;
         }
 
-        locomotionBridge?.ApplyPlanarHandoffDamping(landingHandoff != null ? landingHandoff.planarDampingPerSecond : 0f);
         RecordHandoffDiagnostic();
         if (IsLandingHandoffComplete())
         {
             FinishLandingPresentation();
         }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!jumpActive || landingRequested || locomotion == null)
-        {
-            return;
-        }
-
-        UpdateGravity(Vector3.Dot(locomotion.Velocity, transform.up));
     }
 
     private void OnAbilityActive(Ability ability, bool active)
@@ -178,6 +170,10 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         Trace("UCC Jump " + (active ? "started" : "stopped") + ".");
         if (!active)
         {
+            if (locomotion != null && locomotion.Grounded)
+            {
+                RestoreJumpGravity();
+            }
             return;
         }
 
@@ -187,15 +183,24 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         rollingLanding = false;
         landingContactStartedAt = -1f;
         approachingLanding = false;
-        apexHangConsumed = false;
-        apexHangStartedAt = -1f;
         baseGravity = locomotion != null ? locomotion.GravityAmount : 0f;
+        gravityOverridden = false;
         SetAnimatorBool(activeParam, true);
         SetAnimatorBool(airborneParam, false);
         SetAnimatorInteger(landingTypeParam, 0);
         SetPhase(PresentationPhase.Takeoff);
         ResetAnimatorTrigger(jumpStartTrigger);
         SetAnimatorTrigger(jumpStartTrigger);
+    }
+
+    private void FixedUpdate()
+    {
+        if (!jumpActive || locomotion == null || locomotion.Grounded)
+        {
+            return;
+        }
+
+        UpdateJumpGravity(Vector3.Dot(locomotion.Velocity, transform.up));
     }
 
     private void OnGroundedChanged(bool grounded)
@@ -212,6 +217,8 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
             SetAnimatorBool(airborneParam, true);
             return;
         }
+
+        RestoreJumpGravity();
 
         if (landingRequested && landingContactStartedAt < 0f)
         {
@@ -230,6 +237,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
     private void OnLanded(float fallHeight)
     {
         Trace("UCC OnLand height=" + fallHeight.ToString("F2") + ".");
+        RestoreJumpGravity();
         if (landingRequested && landingContactStartedAt < 0f)
         {
             landingContactStartedAt = Time.unscaledTime;
@@ -289,7 +297,23 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         }
     }
 
-    private void UpdateGravity(float verticalVelocity)
+    private void ResetPresentation()
+    {
+        RestoreJumpGravity();
+        jumpActive = false;
+        leftGround = false;
+        landingRequested = false;
+        rollingLanding = false;
+        landingContactStartedAt = -1f;
+        approachingLanding = false;
+        locomotionBridge?.EndDirectionalEvasionFacing();
+        SetAnimatorBool(activeParam, false);
+        SetAnimatorBool(airborneParam, false);
+        SetAnimatorInteger(landingTypeParam, 0);
+        SetPhase(PresentationPhase.Grounded);
+    }
+
+    private void UpdateJumpGravity(float verticalVelocity)
     {
         if (locomotion == null || landingRequested)
         {
@@ -302,37 +326,15 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
             gravityOverridden = true;
         }
 
-        if (!apexHangConsumed && verticalVelocity <= apexVelocityThreshold)
-        {
-            apexHangConsumed = true;
-            apexHangStartedAt = Time.unscaledTime;
-            Trace("Apex hang started.");
-        }
-
-        float multiplier;
-        if (apexHangStartedAt >= 0f)
-        {
-            float duration = Mathf.Max(0.0001f, apexHangDuration);
-            float progress = Mathf.Clamp01((Time.unscaledTime - apexHangStartedAt) / duration);
-            // Ease out of the lightest point rather than switching straight
-            // from ascent gravity to descent gravity at zero vertical speed.
-            multiplier = Mathf.Lerp(apexHangGravityMultiplier, apexGravityMultiplier, progress * progress);
-            if (progress >= 1f)
-            {
-                apexHangStartedAt = -1f;
-                Trace("Apex hang completed.");
-            }
-        }
-        else
-        {
-            multiplier = verticalVelocity > apexVelocityThreshold ? 1f :
-                verticalVelocity >= -apexVelocityThreshold ? apexGravityMultiplier : descentGravityMultiplier;
-        }
-
+        float multiplier = verticalVelocity > apexGravityEntryVelocity
+            ? 1f
+            : verticalVelocity >= -apexGravityEntryVelocity
+                ? apexGravityMultiplier
+                : descentGravityMultiplier;
         locomotion.GravityAmount = baseGravity * multiplier;
     }
 
-    private void RestoreGravity()
+    private void RestoreJumpGravity()
     {
         if (!gravityOverridden || locomotion == null)
         {
@@ -342,23 +344,6 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
 
         locomotion.GravityAmount = baseGravity;
         gravityOverridden = false;
-    }
-
-    private void ResetPresentation()
-    {
-        jumpActive = false;
-        leftGround = false;
-        landingRequested = false;
-        rollingLanding = false;
-        landingContactStartedAt = -1f;
-        approachingLanding = false;
-        apexHangConsumed = false;
-        apexHangStartedAt = -1f;
-        locomotionBridge?.EndDirectionalEvasionFacing();
-        SetAnimatorBool(activeParam, false);
-        SetAnimatorBool(airborneParam, false);
-        SetAnimatorInteger(landingTypeParam, 0);
-        SetPhase(PresentationPhase.Grounded);
     }
 
     private void SetPhase(PresentationPhase value)
@@ -443,7 +428,7 @@ public sealed class LucianJumpPresentationController : MonoBehaviour
         approachingLanding = false;
         locomotionBridge?.EndDirectionalEvasionFacing();
         SetPhase(PresentationPhase.Grounded);
-        RestoreGravity();
+        RestoreJumpGravity();
         Trace("Landing presentation released after physical/animation handoff.");
         DumpTrace();
     }
