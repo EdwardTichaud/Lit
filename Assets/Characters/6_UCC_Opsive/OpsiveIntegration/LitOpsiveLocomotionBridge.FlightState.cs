@@ -79,7 +79,6 @@ public partial class LitOpsiveLocomotionBridge
 
         flightWorldInput = currentWorldMoveInput;
         flightBoostInput = sprintPressed;
-        ClearPendingJump();
         if (TryStartUccFlight())
         {
             return true;

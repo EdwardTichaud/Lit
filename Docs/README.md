@@ -17,6 +17,8 @@ En cas de contradiction, utiliser cet ordre de priorité :
 4. [Technical/Operations.md](Technical/Operations.md) pour les validations,
    performances et procédures de maintenance.
 5. [Technical/ScriptIndex.md](Technical/ScriptIndex.md) pour retrouver un script.
+6. [Technical/PlayerScriptedJump.md](Technical/PlayerScriptedJump.md) pour le
+   contrat verrouillé du saut jouable.
 
 Une idée absente du lore canonique, ou explicitement placée dans « Questions
 ouvertes », ne doit pas être présentée comme un fait établi dans un nouveau

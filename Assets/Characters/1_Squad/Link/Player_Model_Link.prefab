@@ -2147,6 +2147,8 @@ MonoBehaviour:
   lookTransform: {fileID: 0}
   lookDirectionDistance: 100
   fallbackLookHeight: 1.6
+  useStableWorldPlanarDirection: 1
+  planarDirectionYawOffset: 0
 --- !u!1 &2620071853156195929
 GameObject:
   m_ObjectHideFlags: 0
@@ -2367,6 +2369,7 @@ GameObject:
   - component: {fileID: 6800918242508772571}
   - component: {fileID: -2401253528140462390}
   - component: {fileID: 6197907773269782780}
+  - component: {fileID: 5141343313391345792}
   m_Layer: 6
   m_Name: Player_Model_Link
   m_TagString: PNJ
@@ -2471,6 +2474,8 @@ MonoBehaviour:
   standUpMovementUnlockFallback: 1.5
   items: []
   equippedInteractionItems: []
+  enabledCombatItems: []
+  combatDefenseItemHitPoints: []
   startingFlameSeconds: 300
   flameSecondsRemaining: 300
   logInventoryInitialization: 0
@@ -2486,14 +2491,6 @@ MonoBehaviour:
   forceIdleFacialExpressionWhileMoving: 1
   facialMovementInputThreshold: 0.08
   facialMovementIdleFadeDuration: 0.08
-  speedParam: Speed
-  speedDampTime: 0.06
-  useSpeedDamping: 1
-  isMovingParam: IsMoving
-  locomotionTierParam: LocomotionTier
-  turnParam: Turn
-  turnInPlaceParam: TurnInPlace
-  walkMoveSpeed: 5
   moveSpeed: 6.5
   movementInputDeadZone: 0.08
   useCameraRelative: 1
@@ -2505,9 +2502,12 @@ MonoBehaviour:
   allowFlameToggle: 1
   flameParentName: Stuff
   flameChildName: Flame
+  carriedTorchVisualPrefab: {fileID: 0}
+  carriedTorchAttachBoneName: hand_r
   flameBoolParam: Flame
   flameStartsActive: 1
   initializeFlameFromHierarchy: 1
+  useFlameAnimationLayer: 0
   flameUpperBodyIdleLayerWeight: 0.85
   flameUpperBodyMovingLayerWeight: 0.25
   flameUpperBodyLayerWeightResponsiveness: 12
@@ -2520,6 +2520,7 @@ MonoBehaviour:
   overrideExistingLocomotionMaterial: 0
   audioListener: {fileID: 0}
   searchAudioListenerInChildren: 1
+  logDistrictInputDiagnostics: 0
 --- !u!114 &9211136743502433845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2854,7 +2855,6 @@ MonoBehaviour:
   m_MovementTypes:
   - rid: 2938102941717364748
   m_Abilities:
-  - rid: 2938102941717364749
   - rid: 2938102941717364750
   - rid: 2938102941717364751
   - rid: 2938102941717364752
@@ -2895,83 +2895,6 @@ MonoBehaviour:
           m_Preset: {fileID: 0}
           m_BlockList: []
           m_Default: 1
-    - rid: 2938102941717364749
-      type: {class: Jump, ns: Opsive.UltimateCharacterController.Character.Abilities, asm: Opsive.UltimateCharacterController}
-      data:
-        m_States:
-        - m_Name: Default
-          m_Preset: {fileID: 0}
-          m_BlockList: []
-          m_Default: 1
-        m_Enabled: 1
-        m_StartType: 2
-        m_StopType: 0
-        m_InputNames:
-        - Jump
-        m_WaitForDoublePressTapTimeout: 0
-        m_LongPressDuration: 0.5
-        m_WaitForLongPressRelease: 0
-        m_AbilityStarter:
-          rid: -2
-        m_AbilityStopper:
-          rid: -2
-        m_AttributeModifier:
-          m_AttributeName: 
-          m_Amount: 0
-          m_AutoUpdate: 0
-          m_AutoUpdateStartDelay: 1
-          m_AutoUpdateInterval: 0.1
-          m_AutoUpdateDuration: -1
-        m_State: 
-        m_StateAppendItemIdentifierName: 0
-        m_AbilityIndexParameter: 1
-        m_StartAudioClipSet:
-          m_AudioConfig: {fileID: 0}
-          m_AudioClips: []
-        m_StopAudioClipSet:
-          m_AudioConfig: {fileID: 0}
-          m_AudioClips: []
-        m_AllowPositionalInput: 1
-        m_AllowRotationalInput: 1
-        m_UseGravity: 0
-        m_UseRootMotionPosition: 2
-        m_UseRootMotionRotation: 2
-        m_DetectHorizontalCollisions: 0
-        m_DetectVerticalCollisions: 0
-        m_DetectGroundCollisions: 0
-        m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
-        m_StartEffectIndex: -1
-        m_AllowEquippedSlotsMask: -1
-        m_AllowItemDefinitions: []
-        m_ImmediateUnequip: 0
-        m_ReequipSlots: 1
-        m_AbilityMessageText: 
-        m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
-        m_MinCeilingJumpHeight: 0.05
-        m_GroundedGracePeriod: 0.05
-        m_PreventSlopeLimitJump: 1
-        m_Force: 0.2
-        m_SidewaysForceMultiplier: 0.8
-        m_BackwardsForceMultiplier: 0.7
-        m_Frames: 1
-        m_ForceDamping: 0.18
-        m_JumpEvent:
-          m_WaitForAnimationEvent: 0
-          m_Duration: 0
-        m_JumpSurfaceImpact: {fileID: 0}
-        m_ForceHold: 0.003
-        m_ForceDampingHold: 0.5
-        m_MaxAirborneJumpCount: 0
-        m_AirborneJumpForce: 0.6
-        m_AirborneJumpFrames: 10
-        m_AirborneJumpAudioClipSet:
-          m_AudioConfig: {fileID: 0}
-          m_AudioClips: []
-        m_VerticalVelocityStopThreshold: 0.01
-        m_RecurrenceDelay: 0.2
-        m_ResetGravityAccumulation: 1
     - rid: 2938102941717364750
       type: {class: Fall, ns: Opsive.UltimateCharacterController.Character.Abilities, asm: Opsive.UltimateCharacterController}
       data:
@@ -3273,6 +3196,97 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 113a12078d144b4c86b6e74a3c94edab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LitOpsiveLocomotionBridge
+  debugGroundBlockDiagnostics: 0
+  groundBlockDiagnosticInterval: 0.75
+  groundBlockDiagnosticMinProgress: 0.04
+  enableCinematicGroundedFeel: 1
+  tuneGroundedUccPhysics: 1
+  groundedMotorAcceleration: {x: 4.6, y: 0, z: 4.6}
+  groundedMotorDamping: 5.7
+  groundedPreviousAccelerationInfluence: 0.88
+  groundedBackwardsMultiplier: 0.6
+  groundedGravityAmount: 0.65
+  groundedStickToGroundDistance: 0.72
+  groundedSlopeLimit: 60
+  groundedMaxStepHeight: 0.5
+  groundedMovingPlatformSeparationVelocity: 7
+  groundedMovingPlatformDisconnectMultiplier: 0.65
+  groundedMovingPlatformForceDamping: 0.18
+  groundedInputAcceleration: 6.2
+  groundedSprintInputAcceleration: 5
+  groundedInputDeceleration: 6.2
+  groundedDirectionChangeAcceleration: 11.2
+  groundedDirectionChangeDot: 0.2
+  tuneGroundedSprintSpeedChange: 1
+  groundedSprintSpeedMultiplier: 1.65
+  groundedSprintSpeedParameterValue: 2.6
+  suppressSpeedChangeAnimatorParameter: 1
+  moveStartTriggerParam: MoveStartTrigger
+  moveStopTriggerParam: MoveStopTrigger
+  turnInPlaceParam: TurnInPlace
+  groundedAnimationSpeedToBlend: 0.48
+  groundedRootMotionSpeedToBlend: 0.22
+  groundedAnimatorSpeedRiseRate: 13.5
+  groundedAnimatorSpeedFallRate: 5.4
+  groundedAnimatorTurnRate: 5.4
+  groundedTurnInPlaceThreshold: 0.55
+  groundedTurnInPlaceMaxSpeed: 0.35
+  enableGroundedTurnInPlaceClips: 0
+  groundedStopTriggerMinSpeed: 0.48
+  groundedStopRequestDelay: 0.06
+  groundedStopSettledSpeed: 0.06
+  groundedStopSettledDuration: 0.05
+  groundedStopExitNormalizedTime: 0.9
+  groundedMoveTransitionDirectionHoldTime: 0.18
+  groundedMoveTransitionParameterSpeed: 1.22
+  useForwardOnlyGroundedLocomotion: 1
+  enableRootMotionPivotTurns: 0
+  groundedPivotMinAngle: 85
+  groundedPivot180Angle: 135
+  groundedSnapStationaryTurn: 0
+  groundedSnapStationaryTurnMinAngle: 25
+  groundedSnapStationaryTurnMaxSpeed: 0.22
+  groundedSnapStationaryTurnMaxSmoothedInput: 0.08
+  groundedPivotMaxSpeed: 0.45
+  groundedPivotMaxSmoothedInput: 0.14
+  groundedPivotHoldTime: 0.32
+  groundedPivotCooldown: 0.34
+  groundedPivotStartGraceTime: 0.12
+  groundedPivotStartGraceMinAngle: 128
+  groundedPivotMovementReleaseStart: 0.38
+  groundedPivotMovementReleaseMaxAngle: 72
+  groundedPivotMovementReleaseScale: 0.58
+  commitRootRotationDuringPivot: 1
+  groundedPivotRotationCommitRate: 960
+  recordLocomotionDiagnostics: 0
+  debugLocomotionDiagnostics: 0
+  locomotionDiagnosticInterval: 0.1
+  enableObstacleTraversal: 1
+  ignoredObstacleMaxHeight: 0.18
+  traversableObstacleMaxHeight: 0.9
+  obstacleProbeDistance: 0.75
+  obstacleProbeRadius: 0.22
+  obstacleProbeBaseHeight: 0.25
+  obstacleTraversalMaxSurfaceUpDot: 0.35
+  obstacleLandingDistance: 0.55
+  obstacleTraversalDuration: 0.42
+  obstacleTraversalArcHeight: 0.25
+  obstacleTraversalTopClearance: 0.16
+  obstacleTraversalHeightArcMultiplier: 0.38
+  obstacleTraversalRotationLead: 0.68
+  obstacleTraversalMinInputMagnitude: 0.34
+  obstacleTraversalCooldown: 0.28
+  obstacleTraversalMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  obstacleTraversalTriggerParam: ObstacleTraversal
+  enableCinematicOrientationFeel: 1
+  orientationInputDeadZone: 0.14
+  orientationWalkTurnRate: 360
+  orientationSprintTurnRate: 300
+  orientationSharpTurnRate: 300
+  orientationSharpTurnAngle: 92
+  orientationVelocityBlend: 0.1
   squadController: {fileID: 0}
   locomotion: {fileID: 0}
   locomotionHandler: {fileID: 0}
@@ -3280,16 +3294,53 @@ MonoBehaviour:
   lookSource: {fileID: 0}
   animator: {fileID: 0}
   animatorMonitor: {fileID: 0}
+  scriptedJumpController: {fileID: 0}
+  logScriptedTraversalDiagnostics: 0
+  scriptedTraversalDiagnosticTickInterval: 8
+  scriptedTraversalExternalCorrectionDistance: 0.02
+  scriptedTraversalExternalCorrectionDegrees: 1
   driveFromSquadFacade: 1
   overrideOpsiveHandlerInput: 1
   orientLookSourceFromMovement: 1
   configureRigidbodyForOpsive: 1
+  useRootMotionLocomotion: 0
+  rootMotionSpeedMultiplier: 1.04
+  rootMotionRotationMultiplier: 1
+  preferLookSourceRotationForRootMotionLocomotion: 1
+  allowRootMotionRotationDuringStartStop: 0
+  suppressIdleRootMotionPosition: 1
+  idleRootMotionVelocityThreshold: 0.06
+  useRootMotionPhaseMultipliers: 1
+  rootMotionLoopSpeedScale: 1.02
+  rootMotionLoopRotationScale: 1
+  rootMotionStartSpeedScale: 1.18
+  rootMotionStartRotationScale: 1
+  rootMotionStopSpeedScale: 0.7
+  rootMotionStopRotationScale: 0.94
+  rootMotionPivotSpeedScale: 0.88
+  rootMotionPivotRotationScale: 1.12
+  preserveAnimatorRootMotion: 1
+  restoreRootMotionSettingsOnDisable: 1
+  refreshRootMotionSettingsEveryFrame: 1
+  driveDirectionalRootMotionInput: 0
+  useLookSourceForwardInputForRootMotion: 1
+  enableRunStartResponse: 1
+  runStartVelocityBonus: 0.55
+  runStartResponseCooldown: 0.25
+  runStartResponseMaximumPlanarSpeed: 4.25
+  logLocomotionResponseDiagnostics: 0
   autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
-  jumpRetryWindow: 0.15
-  warnWhenJumpRejected: 1
-  useJumpForceFallback: 1
-  jumpFallbackVelocity: 7
+  relaxGroundReliefTolerance: 1
+  groundReliefMinStepHeight: 0.6
+  groundReliefMinSlopeLimit: 58
+  groundReliefMinStickToGroundDistance: 0.55
+  adaptRootMotionGroundRelief: 1
+  rootMotionMovingStepHeight: 0.58
+  rootMotionMovingSlopeLimit: 62
+  rootMotionMovingStickToGroundDistance: 0.86
+  rootMotionIdleStickToGroundDistance: 0.64
+  rootMotionGroundReliefAdaptationSpeed: 7.5
   enableUccFlight: 1
   flightTakeoffVerticalSpeed: 6.5
   flightTakeoffDuration: 0.45
@@ -3308,13 +3359,17 @@ MonoBehaviour:
   flightBoostTurnRate: 460
   flightLandingSpeed: 12
   flightLandingAcceleration: 36
+  combatSkillLandingSpeed: 14
   allowStandaloneFlightFallback: 1
   fallbackFlightCollisionSkin: 0.03
   fallbackFlightGroundProbeDistance: 0.2
   driveLitLocomotionAnimatorParameters: 1
   speedParam: Speed
+  horizontalMovementParam: HorizontalMovement
+  forwardMovementParam: ForwardMovement
   isMovingParam: IsMoving
   locomotionTierParam: LocomotionTier
+  combatMoveMagnitudeParam: CombatMoveMagnitude
   turnParam: Turn
   flightStateParam: FlightState
   flightSpeedParam: FlightSpeed
@@ -3323,6 +3378,11 @@ MonoBehaviour:
   flightStartTriggerParam: FlightStartTrigger
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
+  combatFacingSpeedDegreesPerSecond: 900
+  combatOrbitRadiusCorrection: 0.7
+  combatOrbitMaximumCorrection: 0.35
+  combatOrbitLateralVerticalThreshold: 0.2
+  logCombatLockMotionDiagnostics: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3599,7 +3659,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d1b0e5c2a7f94f4aa5d23224fe72b48c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocomotionAnimationEvent
   defaultSurface: {fileID: 11400000, guid: 6a725f3a557af054a9bfe13eef5a49ff, type: 2}
   groundMask:
@@ -3616,6 +3676,37 @@ MonoBehaviour:
   footRaycastDistance: 0.8
   minimumFootstepInterval: 0.05
   minimumAnimationEventWeight: 0.5
+--- !u!114 &5141343313391345792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d5984f9578c411db57334064b498ade, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerScriptedJumpController
+  locomotion: {fileID: 0}
+  locomotionBridge: {fileID: 0}
+  animator: {fileID: 0}
+  jumpHeight: 5
+  apexGravityEntryVelocity: 2.4
+  apexGravityMultiplier: 0.28
+  descentGravityMultiplier: 0.72
+  fallingAnimationEntryVelocity: -0.1
+  hardLandingHeight: 3
+  landingHandoff:
+    minimumContactSeconds: 0.15
+    animationExitNormalizedTime: 0.82
+    planarSettledSpeed: 0.12
+    verticalSettledSpeed: 0.2
+    planarDampingPerSecond: 7
+    maximumSettleSeconds: 0.55
+    locomotionBlendSeconds: 0.12
+    preLandingProbeDistance: 1.2
+    preLandingLeadSeconds: 0.14
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0

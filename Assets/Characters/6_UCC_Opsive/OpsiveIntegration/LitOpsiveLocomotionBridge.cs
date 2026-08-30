@@ -20,7 +20,6 @@ public enum LocomotionPresentationState
 [RequireComponent(typeof(LitOpsivePlayerInput))]
 public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 {
-    private const string JumpInputName = "Jump";
     private const string SpeedChangeInputName = "Change Speeds";
     private const string CrouchInputName = "Crouch";
 
@@ -31,7 +30,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private LitOpsiveLookSource lookSource;
     [SerializeField] private Animator animator;
     [SerializeField] private AnimatorMonitor animatorMonitor;
-    [SerializeField] private LucianJumpPresentationController jumpPresentationController;
+    [SerializeField] private PlayerScriptedJumpController scriptedJumpController;
 
     [Header("Ladder Traversal Diagnostics")]
     [SerializeField, Tooltip("Logs the requested and observed UCC pose while a scripted traversal is active. Development aid only.")]
@@ -101,10 +100,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField, Tooltip("Add Lit/UCC companion bridges at runtime so interaction, damage and follower systems can respect UCC state without prefab edits.")]
     private bool autoInstallCompanionBridges = true;
     [SerializeField, Range(0f, 0.5f)] private float movementDeadZone = 0.08f;
-    [SerializeField, Min(0f), Tooltip("Keeps a rejected jump request alive briefly while UCC updates grounded/ability state.")]
-    private float jumpRetryWindow = 0.15f;
-    [SerializeField, Tooltip("Log a diagnostic warning when UCC keeps rejecting a jump request.")]
-    private bool warnWhenJumpRejected = true;
 
     [Header("Ground Relief")]
     [SerializeField, Tooltip("Raises selected UCC ground settings at runtime so mesh floor reliefs and thresholds do not behave like hard walls.")]
@@ -190,15 +185,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private Vector2 lastExplicitWorldMoveInput;
     private float lastExplicitWorldMoveInputTime = float.NegativeInfinity;
     private bool sprintPressed;
-    private bool warnedMissingJump;
     private bool warnedMissingSpeedChange;
     private bool warnedMissingHeightChange;
-    private bool warnedJumpRejected;
     private bool warnedFlightStartRejected;
-    private bool hasPendingJump;
-    private float pendingJumpUntil;
-    private Vector2 pendingJumpWorldInput;
-    private bool pendingJumpHasWorldInput;
     private LitUccFlightAbility flightAbility;
     private Vector3 lastPlanarDirection = Vector3.forward;
     private Vector3 lastPosition;
@@ -338,7 +327,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         scriptedTraversalExternalCorrectionDegrees = Mathf.Clamp(scriptedTraversalExternalCorrectionDegrees, 0f, 45f);
         ValidateOrientationFeelSettings();
         ValidateObstacleTraversalSettings();
-        ValidateJumpLandingSettings();
     }
 
     public void SetMoveInput(Vector2 input, bool isWorldSpace)
@@ -428,7 +416,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         if (IsInputSuppressedByUcc)
         {
-            ClearPendingJump();
             return false;
         }
 
@@ -442,36 +429,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             ApplyWorldMoveInput(worldInput);
         }
 
-        if (playerInput != null)
-        {
-            playerInput.PulseButton(JumpInputName);
-        }
-
-        Jump jump = locomotion != null ? locomotion.GetAbility<Jump>() : null;
-        if (jump == null)
-        {
-            if (TryApplyJumpForceFallback(worldInput, hasWorldInput))
-            {
-                return true;
-            }
-
-            WarnOnce(ref warnedMissingJump, "UCC Jump ability is missing on this character. Add standard movement abilities with the Lit/Opsive UCC migration tool or Opsive Character Manager.");
-            ClearPendingJump();
-            return false;
-        }
-
-        if (TryStartJumpAbility(jump))
-        {
-            return true;
-        }
-
-        if (TryApplyJumpForceFallback(worldInput, hasWorldInput))
-        {
-            return true;
-        }
-
-        QueuePendingJump(worldInput, hasWorldInput);
-        return true;
+        return scriptedJumpController != null && scriptedJumpController.TryStartJump(worldInput, hasWorldInput);
     }
 
     public void StopBridgeInput()
@@ -542,7 +500,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return true;
         }
 
-        ClearPendingJump();
         if (stopActiveAbilities && locomotion != null)
         {
             locomotion.StopAllAbilities(false);
@@ -574,7 +531,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return true;
         }
 
-        ClearPendingJump();
         if (stopActiveAbilities && locomotion != null)
         {
             locomotion.StopAllAbilities(false);
@@ -603,12 +559,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (!IsDriving || locomotion == null || locomotion.Grounded)
         {
             return false;
-        }
-
-        Jump jump = locomotion.GetAbility<Jump>();
-        if (jump != null && jump.IsActive)
-        {
-            locomotion.TryStopAbility(jump, true);
         }
 
         float currentVerticalSpeed = Vector3.Dot(locomotion.Velocity, transform.up);
@@ -698,14 +648,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         {
             combatAirborneHoldPreviousUseGravity = locomotion.UseGravity;
 
-            // The regular Jump ability owns its own vertical curve. Stop it
-            // before the hold begins so it cannot continue moving Lucian up
-            // or down behind the combat action.
-            Jump jump = locomotion.GetAbility<Jump>();
-            if (jump != null && jump.IsActive)
-            {
-                locomotion.TryStopAbility(jump, true);
-            }
         }
 
         combatAirborneHoldCount++;
@@ -847,7 +789,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return true;
         }
 
-        ClearPendingJump();
         if (locomotion != null)
         {
             locomotion.StopAllAbilities(false);
@@ -1238,7 +1179,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         hasLastPosition = true;
         ResetOrientationFeelState();
         ResetGroundedFeelState();
-        ResetJumpLandingState();
     }
 
     private void OnEnable()
@@ -1252,7 +1192,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         ConfigureGroundedFeelProfile();
         ResetOrientationFeelState();
         ResetGroundedFeelState();
-        ResetJumpLandingState();
         RegisterExternalDriver();
         AttachLookSourceIfNeeded(true);
         ApplyWorldMoveInput(currentWorldMoveInput);
@@ -1291,10 +1230,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         UnregisterExternalDriver();
         RestoreGroundedFeelProfile();
         RestoreRootMotionLocomotion();
-        RestoreJumpTakeoffProfile();
         ResetOrientationFeelState();
         ResetGroundedFeelState();
-        ResetJumpLandingState();
         RestoreGroundReliefTolerance();
         RestoreRigidbody();
     }
@@ -1340,9 +1277,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
         AttachLookSourceIfNeeded(false);
         MaintainCombatLockFacing();
-        RetryPendingJump();
         UpdateFlightMode();
-        UpdateJumpLandingAnimatorParameters();
         UpdateAnimatorParameters();
         RefreshSquadFacadeSystems();
     }
@@ -1921,9 +1856,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             animatorMonitor = GetComponent<AnimatorMonitor>();
         }
 
-        if (jumpPresentationController == null)
+        if (scriptedJumpController == null)
         {
-            jumpPresentationController = GetComponent<LucianJumpPresentationController>();
+            scriptedJumpController = GetComponent<PlayerScriptedJumpController>();
         }
 
         if (rb == null)
@@ -2018,8 +1953,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             targetMagnitude = 0f;
         }
 
-        targetWorldMoveInput = ResolveJumpLandingWorldMoveInput(targetWorldMoveInput);
-        targetMagnitude = targetWorldMoveInput.magnitude;
         if (targetMagnitude > movementDeadZone)
         {
             lastExplicitWorldMoveInput = targetWorldMoveInput.normalized;
@@ -2200,91 +2133,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
     }
 
-    private bool TryStartJumpAbility(Jump jump)
-    {
-        jump.ImmediateJump = true;
-        bool started = locomotion != null && locomotion.TryStartAbility(jump);
-        if (started)
-        {
-            ClearPendingJump();
-            warnedJumpRejected = false;
-            NotifyJumpStarted();
-            return true;
-        }
-
-        jump.ImmediateJump = false;
-        return false;
-    }
-
-    private void RestoreJumpTakeoffProfile()
-    {
-        // Lifecycle compatibility for older prefabs. Jump tuning now remains
-        // authored on the UCC ability for the entire session.
-    }
-
-    private void QueuePendingJump(Vector2 worldInput, bool hasWorldInput)
-    {
-        if (jumpRetryWindow <= 0f)
-        {
-            WarnJumpRejected();
-            return;
-        }
-
-        hasPendingJump = true;
-        pendingJumpUntil = Time.time + jumpRetryWindow;
-        pendingJumpWorldInput = worldInput;
-        pendingJumpHasWorldInput = hasWorldInput;
-    }
-
-    private void RetryPendingJump()
-    {
-        if (!hasPendingJump)
-        {
-            return;
-        }
-
-        if (Time.time > pendingJumpUntil)
-        {
-            if (TryApplyJumpForceFallback(pendingJumpWorldInput, pendingJumpHasWorldInput))
-            {
-                return;
-            }
-
-            ClearPendingJump();
-            WarnJumpRejected();
-            return;
-        }
-
-        if (pendingJumpHasWorldInput && pendingJumpWorldInput.sqrMagnitude > movementDeadZone * movementDeadZone)
-        {
-            ApplyWorldMoveInput(pendingJumpWorldInput);
-        }
-
-        Jump jump = locomotion != null ? locomotion.GetAbility<Jump>() : null;
-        if (jump == null)
-        {
-            if (TryApplyJumpForceFallback(pendingJumpWorldInput, pendingJumpHasWorldInput))
-            {
-                return;
-            }
-
-            WarnOnce(ref warnedMissingJump, "UCC Jump ability is missing on this character. Add standard movement abilities with the Lit/Opsive UCC migration tool or Opsive Character Manager.");
-            ClearPendingJump();
-            return;
-        }
-
-        if (!TryStartJumpAbility(jump))
-        {
-            TryApplyJumpForceFallback(pendingJumpWorldInput, pendingJumpHasWorldInput);
-        }
-    }
-
-    private bool TryApplyJumpForceFallback(Vector2 worldInput, bool hasWorldInput)
-    {
-        // A rejected UCC Jump is a configuration error, not an invitation to
-        // add a competing force path with different arc and landing timing.
-        return false;
-    }
 
     private bool EnsureFlightAbility()
     {
@@ -2352,31 +2200,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return locomotion != null && locomotion.TryStopAbility(flightAbility, true);
     }
 
-    private void ClearPendingJump()
-    {
-        hasPendingJump = false;
-        pendingJumpUntil = 0f;
-        pendingJumpWorldInput = Vector2.zero;
-        pendingJumpHasWorldInput = false;
-    }
-
-    private void WarnJumpRejected()
-    {
-        if (!warnWhenJumpRejected)
-        {
-            return;
-        }
-
-        WarnOnce(
-            ref warnedJumpRejected,
-            $"UCC Jump was requested on '{name}' but UltimateCharacterLocomotion rejected it. Grounded={ResolveGroundedLabel()}, ActiveAbilities={ResolveActiveAbilityLabel()}. Check UCC ground detection, slope/ceiling rules, and any ability blocking Jump.");
-    }
-
-    private string ResolveGroundedLabel()
-    {
-        return locomotion != null ? locomotion.Grounded.ToString() : "unknown";
-    }
-
     private string ResolveActiveAbilityLabel()
     {
         if (locomotion == null || locomotion.ActiveAbilityCount <= 0 || locomotion.ActiveAbilities == null)
@@ -2408,11 +2231,6 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private void UpdateAnimatorParameters()
     {
         UpdateFlightAnimatorParameters();
-
-        if (IsLandingPresentationLocked())
-        {
-            return;
-        }
 
         if (!driveLitLocomotionAnimatorParameters || animator == null || IsFlightModeActive)
         {

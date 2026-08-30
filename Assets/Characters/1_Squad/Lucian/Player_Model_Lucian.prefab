@@ -7586,7 +7586,6 @@ GameObject:
   - component: {fileID: 8246669574063202957}
   - component: {fileID: 5959914393103543773}
   - component: {fileID: 2760402342699511360}
-  - component: {fileID: 9120017462384659012}
   - component: {fileID: 9118197817539862428}
   - component: {fileID: 7388209704611396571}
   - component: {fileID: 6167225484597321654}
@@ -7602,6 +7601,7 @@ GameObject:
   - component: {fileID: 901000000000000203}
   - component: {fileID: 7709963485712969020}
   - component: {fileID: 1542732129525685219}
+  - component: {fileID: 5233370284238801096}
   m_Layer: 6
   m_Name: Player_Model_Lucian
   m_TagString: Player
@@ -8064,7 +8064,6 @@ MonoBehaviour:
   m_MovementTypes:
   - rid: 2938102941717364748
   m_Abilities:
-  - rid: 2938102941717364749
   - rid: 2938102941717364750
   - rid: 2938102941717364751
   - rid: 2938102941717364752
@@ -8105,83 +8104,6 @@ MonoBehaviour:
           m_Preset: {fileID: 0}
           m_BlockList: []
           m_Default: 1
-    - rid: 2938102941717364749
-      type: {class: Jump, ns: Opsive.UltimateCharacterController.Character.Abilities, asm: Opsive.UltimateCharacterController}
-      data:
-        m_States:
-        - m_Name: Default
-          m_Preset: {fileID: 0}
-          m_BlockList: []
-          m_Default: 1
-        m_Enabled: 1
-        m_StartType: 2
-        m_StopType: 0
-        m_InputNames:
-        - Jump
-        m_WaitForDoublePressTapTimeout: 0
-        m_LongPressDuration: 0.5
-        m_WaitForLongPressRelease: 0
-        m_AbilityStarter:
-          rid: -2
-        m_AbilityStopper:
-          rid: -2
-        m_AttributeModifier:
-          m_AttributeName: 
-          m_Amount: 0
-          m_AutoUpdate: 0
-          m_AutoUpdateStartDelay: 1
-          m_AutoUpdateInterval: 0.1
-          m_AutoUpdateDuration: -1
-        m_State: 
-        m_StateAppendItemIdentifierName: 0
-        m_AbilityIndexParameter: 1
-        m_StartAudioClipSet:
-          m_AudioConfig: {fileID: 0}
-          m_AudioClips: []
-        m_StopAudioClipSet:
-          m_AudioConfig: {fileID: 0}
-          m_AudioClips: []
-        m_AllowPositionalInput: 1
-        m_AllowRotationalInput: 1
-        m_UseGravity: 0
-        m_UseRootMotionPosition: 2
-        m_UseRootMotionRotation: 2
-        m_DetectHorizontalCollisions: 0
-        m_DetectVerticalCollisions: 0
-        m_DetectGroundCollisions: 0
-        m_AnimatorMotion: {fileID: 0}
-        m_StartEffectName: 
-        m_StartEffectIndex: -1
-        m_AllowEquippedSlotsMask: -1
-        m_AllowItemDefinitions: []
-        m_ImmediateUnequip: 0
-        m_ReequipSlots: 1
-        m_AbilityMessageText: 
-        m_AbilityMessageIcon: {fileID: 0}
-        m_InspectorDescription: 
-        m_MinCeilingJumpHeight: 0.05
-        m_GroundedGracePeriod: 0.1
-        m_PreventSlopeLimitJump: 1
-        m_Force: 0.38
-        m_SidewaysForceMultiplier: 0.8
-        m_BackwardsForceMultiplier: 0.7
-        m_Frames: 2
-        m_ForceDamping: 0.12
-        m_JumpEvent:
-          m_WaitForAnimationEvent: 0
-          m_Duration: 0
-        m_JumpSurfaceImpact: {fileID: 0}
-        m_ForceHold: 0.003
-        m_ForceDampingHold: 0.5
-        m_MaxAirborneJumpCount: 0
-        m_AirborneJumpForce: 0.6
-        m_AirborneJumpFrames: 10
-        m_AirborneJumpAudioClipSet:
-          m_AudioConfig: {fileID: 0}
-          m_AudioClips: []
-        m_VerticalVelocityStopThreshold: 0.01
-        m_RecurrenceDelay: 0.2
-        m_ResetGravityAccumulation: 1
     - rid: 2938102941717364750
       type: {class: Fall, ns: Opsive.UltimateCharacterController.Character.Abilities, asm: Opsive.UltimateCharacterController}
       data:
@@ -8581,7 +8503,7 @@ MonoBehaviour:
   lookSource: {fileID: 0}
   animator: {fileID: 963045829911085934}
   animatorMonitor: {fileID: 0}
-  jumpPresentationController: {fileID: 9120017462384659012}
+  scriptedJumpController: {fileID: 0}
   logScriptedTraversalDiagnostics: 0
   scriptedTraversalDiagnosticTickInterval: 8
   scriptedTraversalExternalCorrectionDistance: 0.02
@@ -8618,8 +8540,6 @@ MonoBehaviour:
   logLocomotionResponseDiagnostics: 0
   autoInstallCompanionBridges: 0
   movementDeadZone: 0.08
-  jumpRetryWindow: 0.12
-  warnWhenJumpRejected: 1
   relaxGroundReliefTolerance: 1
   groundReliefMinStepHeight: 0.5
   groundReliefMinSlopeLimit: 60
@@ -8672,49 +8592,6 @@ MonoBehaviour:
   combatOrbitMaximumCorrection: 0.35
   combatOrbitLateralVerticalThreshold: 0.2
   logCombatLockMotionDiagnostics: 0
---- !u!114 &9120017462384659012
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2784444758471557209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24f35f4f170a4e4c9c38451e1221053d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LucianJumpPresentationController
-  locomotion: {fileID: 0}
-  animator: {fileID: 963045829911085934}
-  locomotionBridge: {fileID: 0}
-  jumpStartTrigger: JumpStartTrigger
-  landingTrigger: LandingTrigger
-  jumpRollTrigger: JumpRollTrigger
-  activeParam: JumpPresentationActive
-  airborneParam: IsAirborne
-  phaseParam: JumpPhase
-  landingTypeParam: LandingType
-  jumpEndStateName: Jump_End
-  hardLandingStateName: Landing_Hard
-  jumpRollStateName: Jump_Roll
-  landingHandoff:
-    minimumContactSeconds: 0.15
-    animationExitNormalizedTime: 0.82
-    planarSettledSpeed: 0.12
-    verticalSettledSpeed: 0.2
-    planarDampingPerSecond: 7
-    maximumSettleSeconds: 0.55
-    locomotionBlendSeconds: 0.12
-    preLandingProbeDistance: 1.2
-    preLandingLeadSeconds: 0.14
-  hardLandingHeight: 3
-  rollForwardInputThreshold: 0.55
-  landingRollInputMemorySeconds: 0.2
-  descentAnimationEntryVelocity: -0.1
-  apexGravityEntryVelocity: 2.2
-  apexGravityMultiplier: 0.35
-  descentGravityMultiplier: 0.82
-  debugTrace: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9142,7 +9019,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28b894976284bd349bc27339f29b304c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatActorRootMotionRelay
-  actor: {fileID: 0}
+  actor: {fileID: 7709963485712969020}
+--- !u!114 &5233370284238801096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2784444758471557209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d5984f9578c411db57334064b498ade, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerScriptedJumpController
+  locomotion: {fileID: 0}
+  locomotionBridge: {fileID: 0}
+  animator: {fileID: 0}
+  jumpHeight: 100
+  jumpStartTakeoffNormalizedTime: 0.5
+  apexGravityEntryVelocity: 25
+  apexGravityMultiplier: 0.25
+  descentGravityMultiplier: 0.6
+  fallingAnimationEntryVelocity: -0.1
+  hardLandingHeight: 3
+  landingHandoff:
+    minimumContactSeconds: 0.15
+    animationExitNormalizedTime: 0.82
+    planarSettledSpeed: 0.12
+    verticalSettledSpeed: 0.2
+    planarDampingPerSecond: 7
+    maximumSettleSeconds: 0.55
+    locomotionBlendSeconds: 0.12
+    preLandingProbeDistance: 1.2
+    preLandingLeadSeconds: 0.14
 --- !u!1 &2839896433893369385
 GameObject:
   m_ObjectHideFlags: 0
