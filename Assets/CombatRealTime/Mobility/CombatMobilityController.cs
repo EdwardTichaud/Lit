@@ -190,6 +190,16 @@ public sealed class CombatMobilityController : MonoBehaviour
             return false;
         }
 
+        if (command == MobilityCommand.Dodge && IsDodgeBlockedByJump(manager.PlayerRoot, bridge))
+        {
+            if (bufferedCommand == MobilityCommand.Dodge)
+            {
+                bufferedCommand = MobilityCommand.None;
+            }
+
+            return false;
+        }
+
         if (!IsOffCooldown(command))
         {
             return false;
@@ -335,6 +345,14 @@ public sealed class CombatMobilityController : MonoBehaviour
             default:
                 return true;
         }
+    }
+
+    private static bool IsDodgeBlockedByJump(Transform playerRoot, LitOpsiveLocomotionBridge bridge)
+    {
+        PlayerScriptedJumpController jump = playerRoot != null
+            ? playerRoot.GetComponentInChildren<PlayerScriptedJumpController>(true)
+            : null;
+        return (jump != null && jump.IsActive) || (bridge != null && !bridge.Grounded);
     }
 
     private static Vector3 ResolveMovementDirection(Transform player, bool fallbackBackward)

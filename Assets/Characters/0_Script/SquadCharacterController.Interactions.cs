@@ -50,7 +50,7 @@ public partial class SquadCharacterController
 
     /// <summary>
     /// Removes the current world-interaction selection immediately. Combat uses
-    /// this on entry so a nearby ladder, item, or other prompt cannot remain
+    /// this on entry so a nearby interaction prompt cannot remain
     /// visible for a frame while the combat HUD takes over.
     /// </summary>
     public void HideLocalInteractionPresentation()

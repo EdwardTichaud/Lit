@@ -296,31 +296,6 @@ public class WorldInteractionService : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RequestLadderUseServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
-    {
-        if (!NetcodeTriggerRegistry.TryGetLadder(triggerId, out LadderInteractable ladder))
-        {
-            SendLadderUseResultClientRpc(triggerId, false, BuildClientRpcParams(rpcParams));
-            return;
-        }
-
-        GameObject character = ResolvePlayerCharacter(rpcParams);
-        bool success = character != null && ladder.IsServerCharacterAllowed(character) && ladder.ServerTryUse(character);
-        SendLadderUseResultClientRpc(triggerId, success, BuildClientRpcParams(rpcParams));
-    }
-
-    [ClientRpc]
-    private void SendLadderUseResultClientRpc(uint triggerId, bool success, ClientRpcParams rpcParams = default)
-    {
-        if (!NetcodeTriggerRegistry.TryGetLadder(triggerId, out LadderInteractable ladder))
-        {
-            return;
-        }
-
-        ladder.HandleLadderUseResult(success);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
     public void RequestPortalUseServerRpc(uint triggerId, ServerRpcParams rpcParams = default)
     {
         if (!NetcodeTriggerRegistry.TryGetPortal(triggerId, out PortalController portal))
@@ -364,6 +339,27 @@ public class WorldInteractionService : NetworkBehaviour
         }
 
         portal.HandlePortalUseResult(success, destinationPosition, destinationRotation, sceneTransition);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestLadderPassageServerRpc(uint ladderId, int sourceEndpoint, ServerRpcParams rpcParams = default)
+    {
+        if (!NetcodeTriggerRegistry.TryGetLadder(ladderId, out LadderController ladder))
+        {
+            SendLadderPassageResultClientRpc(ladderId, false, sourceEndpoint, Vector3.zero, Quaternion.identity, BuildClientRpcParams(rpcParams));
+            return;
+        }
+
+        GameObject character = ResolvePlayerCharacter(rpcParams);
+        bool success = ladder.ServerTryBeginPassage(character, sourceEndpoint, out Vector3 destination, out Quaternion rotation);
+        SendLadderPassageResultClientRpc(ladderId, success, sourceEndpoint, destination, rotation, BuildClientRpcParams(rpcParams));
+    }
+
+    [ClientRpc]
+    private void SendLadderPassageResultClientRpc(uint ladderId, bool success, int sourceEndpoint, Vector3 destination, Quaternion rotation, ClientRpcParams rpcParams = default)
+    {
+        if (NetcodeTriggerRegistry.TryGetLadder(ladderId, out LadderController ladder))
+            ladder.HandlePassageResult(success, sourceEndpoint, destination, rotation);
     }
 
     [ServerRpc(RequireOwnership = false)]

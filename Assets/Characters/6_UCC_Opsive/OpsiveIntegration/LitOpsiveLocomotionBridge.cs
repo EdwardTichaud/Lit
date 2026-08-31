@@ -33,7 +33,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private AnimatorMonitor animatorMonitor;
     [SerializeField] private PlayerScriptedJumpController scriptedJumpController;
 
-    [Header("Ladder Traversal Diagnostics")]
+    [Header("Scripted Traversal Diagnostics")]
     [SerializeField, Tooltip("Logs the requested and observed UCC pose while a scripted traversal is active. Development aid only.")]
     private bool logScriptedTraversalDiagnostics;
     [SerializeField, Min(1), Tooltip("Number of physics ticks between two traversal diagnostic samples.")]
@@ -837,8 +837,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         // Keep the last authored pose through the following physics tick. This
-        // prevents UCC from correcting the actor while Ladder_End is still
-        // presenting its final contact pose.
+        // prevents UCC from correcting the actor while a scripted action is
+        // still presenting its final contact pose.
         if (scriptedTraversalReleaseRoutine == null && isActiveAndEnabled)
         {
             scriptedTraversalReleaseRoutine = StartCoroutine(ReleaseScriptedTraversalAfterFixedStep());
@@ -880,8 +880,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     /// <summary>
     /// Termine les verrous transitoires quand la scene qui les a crees vient
-    /// d'etre dechargee. Une echelle ou une impulsion ne peut pas survivre a
-    /// un changement de zone et ne doit jamais garder l'input/camera bloque.
+    /// d'etre dechargee. Une action scriptée ou une impulsion ne peut pas
+    /// survivre a un changement de zone ni garder l'input/camera bloque.
     /// </summary>
     public void ClearTransientLocksForSceneTransition()
     {
@@ -1929,8 +1929,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
-        // An inclined root makes UCC's normal world-up ground adhesion invalid.
-        // Collision remains enabled, but the ladder owns the pose until release.
+        // An inclined scripted pose makes UCC's normal world-up ground adhesion invalid.
+        // Collision remains enabled until the scripted pose is released.
         previousScriptedTraversalStickToGround = locomotion.StickToGround;
         previousScriptedTraversalForceStickToGround = locomotion.ForceStickToGround;
         locomotion.StickToGround = false;
@@ -1970,7 +1970,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
-        Debug.LogWarning("[LadderTraversal] correction externe detectee before apply: distance=" +
+        Debug.LogWarning("[ScriptedTraversal] correction externe detectee before apply: distance=" +
                          distance.ToString("F3") + "m angle=" + angle.ToString("F1") +
                          "° grounded=" + locomotion.Grounded + " velocity=" + locomotion.Velocity.ToString("F3"), this);
 #endif
@@ -1992,7 +1992,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
         float distance = Vector3.Distance(locomotion.transform.position, scriptedTraversalPosition);
         float angle = Quaternion.Angle(locomotion.transform.rotation, scriptedTraversalRotation);
-        Debug.Log("[LadderTraversal] requested=" + scriptedTraversalPosition.ToString("F3") +
+        Debug.Log("[ScriptedTraversal] requested=" + scriptedTraversalPosition.ToString("F3") +
                   " applied=" + locomotion.transform.position.ToString("F3") +
                   " poseError=" + distance.ToString("F3") + "m/" + angle.ToString("F1") +
                   "° grounded=" + locomotion.Grounded + " velocity=" + locomotion.Velocity.ToString("F3"), this);

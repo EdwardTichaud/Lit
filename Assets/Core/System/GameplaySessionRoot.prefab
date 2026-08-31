@@ -2205,7 +2205,6 @@ MonoBehaviour:
   suspendFollowBeyondMaxActiveDistance: 0
   separationRadius: 1.1
   separationStrength: 1
-  ladderRetryDelay: 0.75
   catchUpDistance: 6
   teleportDistance: 12
   stuckTimeBeforeTeleport: 2.5
@@ -2840,6 +2839,11 @@ MonoBehaviour:
   cameraController: {fileID: 8540125469264114897}
   horizontalPivotFreedom: 0
   lookOffsetSmoothing: 0.08
+  followSmoothTime: 0.16
+  maximumFollowSpeed: 20
+  maximumFollowLag: 0.38
+  followTeleportSnapDistance: 3
+  collisionSnapDistance: 0.75
   airborneVerticalMaximumOffset: 0.32
   airborneVerticalHeightCompression: 0.2
   airborneVerticalRiseSmoothTime: 0.14

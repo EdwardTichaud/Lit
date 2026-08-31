@@ -53,7 +53,6 @@ public enum ActionAudioCue
     CharacterJump = 63,
     CharacterLand = 64,
     FlameToggle = 65,
-    LadderUse = 66,
     Teleport = 67,
     ReturnHome = 68,
     LabyrinthStart = 69,
@@ -156,8 +155,6 @@ public class ActionAudioLibrarySO : ScriptableObject
     public AudioClipSO characterLand;
     /// <summary>Clip for toggling the flame.</summary>
     public AudioClipSO flameToggle;
-    /// <summary>Clip for ladder use.</summary>
-    public AudioClipSO ladderUse;
     /// <summary>Clip for teleportation.</summary>
     public AudioClipSO teleport;
     /// <summary>Clip for returning home.</summary>
@@ -239,7 +236,6 @@ public class ActionAudioLibrarySO : ScriptableObject
             case ActionAudioCue.CharacterJump: return characterJump;
             case ActionAudioCue.CharacterLand: return characterLand;
             case ActionAudioCue.FlameToggle: return flameToggle;
-            case ActionAudioCue.LadderUse: return ladderUse;
             case ActionAudioCue.Teleport: return teleport;
             case ActionAudioCue.ReturnHome: return returnHome;
             case ActionAudioCue.LabyrinthStart: return labyrinthStart;

@@ -34,6 +34,12 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
     private float horizontalPivotFreedom;
     [SerializeField, Min(0f), Tooltip("Native UCC smoothing for the look offset only; aim input remains immediate.")]
     private float lookOffsetSmoothing = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Short, bounded positional inertia used by exploration only. It does not delay aiming or combat lock-on.")]
+    private float followSmoothTime = 0.16f;
+    [SerializeField, Min(0f)] private float maximumFollowSpeed = 20f;
+    [SerializeField, Min(0f)] private float maximumFollowLag = 0.38f;
+    [SerializeField, Min(0f)] private float followTeleportSnapDistance = 3f;
+    [SerializeField, Min(0f)] private float collisionSnapDistance = 0.75f;
     [SerializeField, Min(0f), Tooltip("Maximum temporary vertical framing offset while the character is airborne.")]
     private float airborneVerticalMaximumOffset = 0.32f;
     [SerializeField, Min(0f), Tooltip("Height gained since takeoff converted into temporary framing offset while airborne.")]
@@ -243,6 +249,12 @@ public sealed class LitSmoothUccCameraViewAdapter : MonoBehaviour
             airborneVerticalRiseSmoothTime,
             airborneVerticalFallSmoothTime,
             groundedVerticalRestoreSmoothTime);
+        smoothView.ConfigureExplorationFollow(
+            followSmoothTime,
+            maximumFollowSpeed,
+            maximumFollowLag,
+            followTeleportSnapDistance,
+            collisionSnapDistance);
         bool combatViewActive = cameraController.ActiveViewType is CombatLockAdventureViewType;
         if (!combatViewActive)
         {

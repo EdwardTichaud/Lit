@@ -48,7 +48,6 @@ MonoBehaviour:
   characterJump: {fileID: 11400000, guid: d97b66c20f2140bfa449b56b1a29afd1, type: 2}
   characterLand: {fileID: 11400000, guid: ab23e7ffac40469aaf40463797802354, type: 2}
   flameToggle: {fileID: 11400000, guid: a1f023a1b6274352b4ab018e190846e8, type: 2}
-  ladderUse: {fileID: 11400000, guid: 026d9390a2e341d8a96fd9368b3ce026, type: 2}
   teleport: {fileID: 11400000, guid: 580b6470d8714f6dadacaf2b0a4b9309, type: 2}
   returnHome: {fileID: 11400000, guid: 1a814e76e14845c1a26ea51ca4d0c006, type: 2}
   labyrinthStart: {fileID: 11400000, guid: df5dd2949da949348a0ecc0e9005fb9f, type: 2}

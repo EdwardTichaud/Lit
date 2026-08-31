@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.AI;
 #if UNITY_EDITOR
@@ -9,9 +7,10 @@ using UnityEditor;
 #endif
 
 /// <summary>
-/// Point d'auteur unique pour les personnages, items et fantomes. Les
-/// personnages sont instancies au lancement; les items et fantomes servent de
-/// source de bake pour leurs objets de scene interactifs.
+/// Point d'auteur unique pour les personnages, items et fantomes. Tous les
+/// objets sont materialises par le bake d'editeur. Au runtime le
+/// marker ne cree jamais de prefab : il ne fait que referencer l'objet baked
+/// deja present dans la scene.
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Scene Marker")]
@@ -34,9 +33,6 @@ public sealed class SceneMarker : MonoBehaviour
     private static readonly Dictionary<string, SceneMarker> markersById = new Dictionary<string, SceneMarker>();
 
     private GameObject runtimeInstance;
-    private bool loggedMissingWorldPrefab;
-    private bool loggedNetworkParentWarning;
-
     public CharacterData CharacterData => characterData;
     public Item Item => item;
     public GhostData Ghost => ghost;
@@ -57,23 +53,7 @@ public sealed class SceneMarker : MonoBehaviour
 
         RegisterMarker(this);
         EnsurePersistentState();
-        NetcodePrefabRegistry.RegisterSceneMarker(this);
-    }
-
-    private void Start()
-    {
-        if (UsesCharacter)
-        {
-            TrySpawn();
-        }
-    }
-
-    private void Update()
-    {
-        if (UsesCharacter)
-        {
-            TrySpawn();
-        }
+        runtimeInstance = bakedCharacterInstance;
     }
 
     private void OnDestroy()
@@ -84,14 +64,12 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         UnregisterMarker(this);
-        NetcodePrefabRegistry.UnregisterSceneMarker(this);
     }
 
     public void SetCharacterData(CharacterData data)
     {
         assetType = MarkerAssetType.Character;
         characterData = data;
-        loggedMissingWorldPrefab = false;
     }
 
     public void SetBakedCharacterInstance(GameObject instance)
@@ -248,128 +226,6 @@ public sealed class SceneMarker : MonoBehaviour
         runtimeInstance.SetActive(active);
     }
 
-    private void TrySpawn()
-    {
-        if (runtimeInstance != null)
-        {
-            EnsureServerSpawned(runtimeInstance);
-            return;
-        }
-
-        if (characterData == null)
-        {
-            return;
-        }
-
-        // En zone additive, les ennemis doivent attendre le bake unique qui
-        // suit le chargement complet des sols. Sans cela ils se materialisent
-        // pendant qu'un NavMesh vide (ou celui de la zone precedente) est
-        // encore actif, puis restent definitivement hors NavMesh.
-        if (ShouldWaitForNavigationWorld())
-        {
-            return;
-        }
-
-        if (TryUseBakedCharacterInstance())
-        {
-            return;
-        }
-
-        if (characterData.worldPrefab == null)
-        {
-            if (!loggedMissingWorldPrefab)
-            {
-                Debug.LogError($"[SceneMarker] '{name}' requires CharacterData.worldPrefab for '{characterData.name}'.", this);
-                loggedMissingWorldPrefab = true;
-            }
-            return;
-        }
-
-        NetworkManager manager = NetworkManager.Singleton;
-        if (manager != null && manager.IsListening && !manager.IsServer)
-        {
-            return;
-        }
-
-        runtimeInstance = NetcodePrefabRegistry.SpawnSceneMarkerCharacterInstance(
-            markerId,
-            characterData,
-            transform.position,
-            transform.rotation);
-        AuditEnemyRuntimePose("spawn initial");
-        EnsureServerSpawned(runtimeInstance);
-        ValidateSpawnedEnemyNavigation(runtimeInstance);
-    }
-
-    private bool TryUseBakedCharacterInstance()
-    {
-        if (bakedCharacterInstance == null)
-        {
-            return false;
-        }
-
-        NetworkManager manager = NetworkManager.Singleton;
-        if (manager != null && manager.IsListening)
-        {
-            // Le prefab baked est une copie de scene sans identite NGO. En
-            // reseau, seul le spawn existant du serveur doit etre visible;
-            // autrement chaque client conserverait une copie locale en plus.
-            if (bakedCharacterInstance.activeSelf)
-            {
-                bakedCharacterInstance.SetActive(false);
-            }
-
-            return false;
-        }
-
-        runtimeInstance = bakedCharacterInstance;
-        ConfigureSpawnedCharacter(runtimeInstance, characterData, markerId, characterData.worldPrefab);
-        AuditEnemyRuntimePose("instance baked");
-        ValidateSpawnedEnemyNavigation(runtimeInstance);
-        return true;
-    }
-
-    private void EnsureServerSpawned(GameObject instance)
-    {
-        NetworkManager manager = NetworkManager.Singleton;
-        if (instance == null || manager == null || !manager.IsListening || !manager.IsServer)
-        {
-            return;
-        }
-
-        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
-        if (networkObject != null && !networkObject.IsSpawned)
-        {
-            networkObject.Spawn(true);
-        }
-
-        NetworkObject markerNetworkObject = GetComponent<NetworkObject>();
-        if (networkObject == null || markerNetworkObject == null || !networkObject.IsSpawned || !markerNetworkObject.IsSpawned)
-        {
-            if (!loggedNetworkParentWarning)
-            {
-                loggedNetworkParentWarning = true;
-                Debug.LogWarning(
-                    "[SceneMarker] Parentage Netcode differe pour '" + name +
-                    "' : le NetworkObject du marker doit etre spawn avant celui du clone.",
-                    this);
-            }
-            return;
-        }
-
-        if (networkObject.transform.parent != transform && !networkObject.TrySetParent(markerNetworkObject, true))
-        {
-            Debug.LogError("[SceneMarker] Parentage Netcode impossible pour '" + name + "'.", this);
-        }
-
-        NetworkTransform networkTransform = instance.GetComponent<NetworkTransform>();
-        if (networkTransform != null)
-        {
-            networkTransform.SwitchTransformSpaceWhenParented = true;
-            networkTransform.InLocalSpace = true;
-        }
-    }
-
     private void SetRuntimeInstance(GameObject instance)
     {
         runtimeInstance = instance;
@@ -407,11 +263,6 @@ public sealed class SceneMarker : MonoBehaviour
             return;
         }
 
-        if (ShouldWaitForNavigationWorld())
-        {
-            return;
-        }
-
         Vector3 offset = instance.transform.position - transform.position;
         float horizontalOffset = new Vector2(offset.x, offset.z).magnitude;
         // The physics motor can make a small vertical grounding adjustment as
@@ -436,23 +287,6 @@ public sealed class SceneMarker : MonoBehaviour
             Debug.LogError("[SceneMarker] NavMesh trop eloigne pour '" + name + "' | actor=" +
                            instance.transform.position + " | nav=" + hit.position + ".", this);
         }
-    }
-
-    private bool ShouldWaitForNavigationWorld()
-    {
-        if (characterData == null || !characterData.isEnemy)
-        {
-            return false;
-        }
-
-        GameFlowService flow = GameFlowService.Instance;
-        if (flow != null && (flow.IsTransitioning || GameFlowService.IsPreparingGameplayScene))
-        {
-            return true;
-        }
-
-        SquadAIManager navigation = SquadAIManager.Instance;
-        return navigation != null && !navigation.IsNavMeshReady;
     }
 
     private void EnsurePersistentState()

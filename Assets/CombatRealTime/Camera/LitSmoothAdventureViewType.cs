@@ -16,6 +16,16 @@ public class LitSmoothAdventureViewType : Adventure
     private float horizontalPivotFreedom;
     [SerializeField, Min(0f), Tooltip("Native UCC smoothing used only for the look offset.")]
     private float lookOffsetSmoothing = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Short, bounded positional inertia for the exploration follow. Aim rotation remains immediate.")]
+    private float followSmoothTime = 0.16f;
+    [SerializeField, Min(0f), Tooltip("Maximum camera follow speed while smoothing exploration movement.")]
+    private float maximumFollowSpeed = 20f;
+    [SerializeField, Min(0f), Tooltip("Maximum allowed visual lag before the follow catches up to the resolved UCC pose.")]
+    private float maximumFollowLag = 0.38f;
+    [SerializeField, Min(0f), Tooltip("World displacement considered an intentional teleport and snapped immediately.")]
+    private float followTeleportSnapDistance = 3f;
+    [SerializeField, Min(0f), Tooltip("Immediate correction when UCC collision pulls the camera this much closer to its anchor.")]
+    private float collisionSnapDistance = 0.75f;
     [SerializeField, Min(0f), Tooltip("Maximum temporary vertical framing offset while the character is airborne. UCC still resolves the final camera collision.")]
     private float airborneVerticalMaximumOffset = 0.32f;
     [SerializeField, Min(0f), Tooltip("Height gained since takeoff converted into temporary framing offset while airborne.")]
@@ -39,6 +49,9 @@ public class LitSmoothAdventureViewType : Adventure
     private bool airborneFramingActive;
     private float airborneStartHeight;
     private int lastUnexpectedAirborneSnapFrame = -1;
+    private Vector3 smoothedFollowPosition;
+    private Vector3 followVelocity;
+    private bool hasSmoothedFollowPosition;
 
     private struct MotionSample
     {
@@ -88,6 +101,11 @@ public class LitSmoothAdventureViewType : Adventure
         {
             horizontalPivotFreedom = smoothSource.horizontalPivotFreedom;
             lookOffsetSmoothing = smoothSource.lookOffsetSmoothing;
+            followSmoothTime = smoothSource.followSmoothTime;
+            maximumFollowSpeed = smoothSource.maximumFollowSpeed;
+            maximumFollowLag = smoothSource.maximumFollowLag;
+            followTeleportSnapDistance = smoothSource.followTeleportSnapDistance;
+            collisionSnapDistance = smoothSource.collisionSnapDistance;
             airborneVerticalMaximumOffset = smoothSource.airborneVerticalMaximumOffset;
             airborneVerticalHeightCompression = smoothSource.airborneVerticalHeightCompression;
             airborneVerticalRiseSmoothTime = smoothSource.airborneVerticalRiseSmoothTime;
@@ -120,6 +138,20 @@ public class LitSmoothAdventureViewType : Adventure
         {
             CaptureBaseLookOffset(LookOffset);
         }
+    }
+
+    public void ConfigureExplorationFollow(
+        float smoothTime,
+        float maximumSpeed,
+        float maximumLag,
+        float teleportSnapDistance,
+        float hardCollisionSnapDistance)
+    {
+        followSmoothTime = Mathf.Max(0f, smoothTime);
+        maximumFollowSpeed = Mathf.Max(0f, maximumSpeed);
+        maximumFollowLag = Mathf.Max(0f, maximumLag);
+        followTeleportSnapDistance = Mathf.Max(0f, teleportSnapDistance);
+        collisionSnapDistance = Mathf.Max(0f, hardCollisionSnapDistance);
     }
 
     public void RequestImmediatePose(CameraSnapReason reason)
@@ -192,6 +224,8 @@ public class LitSmoothAdventureViewType : Adventure
         verticalFramingVelocity = 0f;
         airborneFramingActive = false;
         hasBaseLookOffset = false;
+        followVelocity = Vector3.zero;
+        hasSmoothedFollowPosition = false;
     }
 
     /// <summary>
@@ -256,9 +290,63 @@ public class LitSmoothAdventureViewType : Adventure
             UpdateVerticalFraming();
         }
         Vector3 targetPosition = GetUccResolvedPosition(immediateUpdate);
+        bool mustSnap = requestedSnap || !hasSmoothedFollowPosition || MustSnapExplorationFollow(targetPosition);
+        Vector3 resolvedPosition;
+        if (mustSnap || followSmoothTime <= 0f)
+        {
+            smoothedFollowPosition = targetPosition;
+            followVelocity = Vector3.zero;
+            hasSmoothedFollowPosition = true;
+            resolvedPosition = targetPosition;
+        }
+        else
+        {
+            smoothedFollowPosition = Vector3.SmoothDamp(
+                smoothedFollowPosition,
+                targetPosition,
+                ref followVelocity,
+                followSmoothTime,
+                maximumFollowSpeed,
+                Time.unscaledDeltaTime);
+
+            if (maximumFollowLag > 0f)
+            {
+                Vector3 lag = targetPosition - smoothedFollowPosition;
+                if (lag.sqrMagnitude > maximumFollowLag * maximumFollowLag)
+                {
+                    smoothedFollowPosition = targetPosition - lag.normalized * maximumFollowLag;
+                }
+            }
+
+            resolvedPosition = smoothedFollowPosition;
+        }
         ReportUnexpectedAirborneSnap(immediateUpdate, requestedSnap);
-        RecordMotion(targetPosition, targetPosition, immediateUpdate, requestedSnap, requestedSnap ? reason : CameraSnapReason.InitialBind);
-        return targetPosition;
+        RecordMotion(targetPosition, resolvedPosition, immediateUpdate, mustSnap, requestedSnap ? reason : CameraSnapReason.InitialBind);
+        return resolvedPosition;
+    }
+
+    private bool MustSnapExplorationFollow(Vector3 targetPosition)
+    {
+        if (!hasSmoothedFollowPosition)
+        {
+            return true;
+        }
+
+        if (followTeleportSnapDistance > 0f &&
+            (targetPosition - smoothedFollowPosition).sqrMagnitude >= followTeleportSnapDistance * followTeleportSnapDistance)
+        {
+            return true;
+        }
+
+        if (collisionSnapDistance <= 0f)
+        {
+            return false;
+        }
+
+        Vector3 anchorPosition = GetAnchorPosition() + m_CollisionAnchorOffset;
+        float currentDistance = Vector3.Distance(smoothedFollowPosition, anchorPosition);
+        float targetDistance = Vector3.Distance(targetPosition, anchorPosition);
+        return targetDistance < currentDistance - collisionSnapDistance;
     }
 
     private void UpdateVerticalFraming()

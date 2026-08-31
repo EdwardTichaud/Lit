@@ -191,7 +191,6 @@ public static class NetcodePrefabRegistry
         EnsureItemRegistry(items);
         RegisterItemHandlers(items);
         RegisterCharacterHandlers(CollectCharacters());
-        RegisterSceneMarkerCharacterHandlers();
         RegisterServiceHandler();
     }
 
@@ -236,44 +235,19 @@ public static class NetcodePrefabRegistry
     /// </summary>
     public static GameObject SpawnSceneMarkerCharacterInstance(string markerId, CharacterData character, Vector3 position, Quaternion rotation)
     {
-        if (string.IsNullOrWhiteSpace(markerId) || character == null || character.worldPrefab == null)
-        {
-            return null;
-        }
-
-        EnsureInitialized();
-        SceneMarkerCharacterSpawnInfo info = GetSceneMarkerCharacterInfo(markerId, character);
-        if (info == null)
-        {
-            return null;
-        }
-
-        RegisterHandler(info.hash, new SceneMarkerCharacterPrefabHandler(info));
-        return CreateSceneMarkerCharacterInstance(info, position, rotation);
+        Debug.LogError("[SceneMarker] Le spawn runtime est desactive. Bake l'acteur dans la scene depuis l'editeur.");
+        return null;
     }
 
     public static void RegisterSceneMarker(SceneMarker marker)
     {
-        if (marker == null || string.IsNullOrWhiteSpace(marker.MarkerId) || marker.CharacterData == null || marker.CharacterData.worldPrefab == null)
-        {
-            return;
-        }
-
-        SceneMarkerCharacterSpawnInfo info = GetSceneMarkerCharacterInfo(marker.MarkerId, marker.CharacterData);
-        if (info != null)
-        {
-            RegisterHandler(info.hash, new SceneMarkerCharacterPrefabHandler(info));
-        }
+        // Scene markers are baked scene objects. They never register a
+        // dynamic character prefab handler at runtime.
     }
 
     public static void UnregisterSceneMarker(SceneMarker marker)
     {
-        if (marker == null || string.IsNullOrWhiteSpace(marker.MarkerId))
-        {
-            return;
-        }
-
-        InvalidateSceneMarkerCharacterCache(marker.MarkerId);
+        // Kept as a no-op compatibility surface for older callers.
     }
 
     public static uint GetCharacterPrefabHash(CharacterData character)

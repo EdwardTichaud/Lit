@@ -68,8 +68,8 @@ public sealed class SceneMarkerEditor : Editor
         {
             EditorGUILayout.HelpBox(
                 marker.BakedCharacterInstance == null
-                    ? "Bake in Scene place l'acteur immediatement pour le jeu local. En reseau, le spawn Netcode existant reste utilise."
-                    : "Cet acteur est deja baked pour le jeu local. Re-bake le remplace par le World Prefab courant.",
+                    ? "Bake in Scene place l'acteur dans la scene. Aucun prefab de personnage n'est instancie au lancement."
+                    : "Cet acteur est deja baked dans la scene. Re-bake le remplace par le World Prefab courant.",
                 MessageType.None);
             DrawBakeButton(marker);
         }
@@ -211,6 +211,7 @@ public sealed class SceneMarkerEditor : Editor
 
         Undo.RecordObject(marker, "Bake Character Scene Marker");
         marker.SetBakedCharacterInstance(instance);
+        SceneMarker.ConfigureSpawnedCharacter(instance, characterData, marker.MarkerId, characterData.worldPrefab);
         EditorUtility.SetDirty(marker);
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;

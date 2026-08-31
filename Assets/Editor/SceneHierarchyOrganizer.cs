@@ -19,7 +19,6 @@ public static class SceneHierarchyOrganizer
         typeof(InteractableItem),
         typeof(BuildingInfoInteractable),
         typeof(Door),
-        typeof(LadderInteractable),
         typeof(Flame),
         typeof(StabReading),
         typeof(DestructibleObject),

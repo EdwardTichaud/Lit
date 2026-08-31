@@ -305,6 +305,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         combatInput?.SetInputActive(false);
         stopPlayerWhenMovementReleased = true;
         CombatStateChanged?.Invoke(false);
+        playerController?.RefreshLocalInteractionDetectionForExternalLocomotion();
     }
 
     /// <summary>
@@ -320,7 +321,12 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
         if (lockedEnemy != null)
         {
+            bool leaveCombat = combatActive && !IsCinematicSequenceActive && !IsEnemyHostile(engagedEnemy);
             SetLockedEnemy(null);
+            if (leaveCombat)
+            {
+                EndCombat();
+            }
             return true;
         }
 
@@ -380,6 +386,27 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         return BeginCombat(playerRoot, enemy);
+    }
+
+    /// <summary>
+    /// Lock-on may be used to inspect a passive enemy. Only a player-provoked
+    /// enemy keeps the encounter alive after the camera lock is released.
+    /// </summary>
+    private bool IsEnemyHostile(RealTimeCombatEnemy enemy)
+    {
+        if (enemy == null)
+        {
+            return false;
+        }
+
+        if (attackModeEnemies.Contains(enemy) || enemy.HasStoredLightDamage ||
+            enemy.HasRetaliationPending || enemy.EngagementMaximumLightDamage > 0)
+        {
+            return true;
+        }
+
+        RealTimeCombatEnemyBehaviour behaviour = enemy.GetComponent<RealTimeCombatEnemyBehaviour>();
+        return behaviour != null && behaviour.IsInAttackMode;
     }
 
     public bool TrySwitchEnemyLock()

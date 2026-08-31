@@ -62,11 +62,6 @@ public static class CharacterInteractionDetection
                 return buildingInfo;
             }
 
-            if (current.TryGetComponent(out LadderInteractable ladder) && ladder.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(ladder))
-            {
-                return ladder;
-            }
-
             if (current.TryGetComponent(out Door door) && door.isActiveAndEnabled && TimePeriodVisibility.IsVisibleFor(door))
             {
                 return door;

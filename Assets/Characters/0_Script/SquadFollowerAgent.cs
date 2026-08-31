@@ -199,25 +199,6 @@ public class SquadFollowerAgent : MonoBehaviour
         return true;
     }
 
-    public bool TryGetCurrentLadder(out LadderController ladder)
-    {
-        ladder = null;
-        if (agent == null || !agent.isOnNavMesh || !agent.isOnOffMeshLink)
-        {
-            return false;
-        }
-
-        UnityEngine.Object linkOwner = agent.currentOffMeshLinkData.owner;
-        Component linkComponent = linkOwner as Component;
-        if (linkComponent == null)
-        {
-            return false;
-        }
-
-        ladder = linkComponent.GetComponentInParent<LadderController>();
-        return ladder != null;
-    }
-
     public void CompleteCurrentOffMeshLink()
     {
         if (agent == null || !agent.isOnNavMesh)

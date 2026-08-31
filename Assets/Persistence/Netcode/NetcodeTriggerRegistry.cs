@@ -6,8 +6,8 @@ public static class NetcodeTriggerRegistry
     private static readonly Dictionary<uint, ReturnHomeTrigger> returnHomeTriggers = new Dictionary<uint, ReturnHomeTrigger>();
     private static readonly Dictionary<uint, HubCompanionSwapTrigger> hubSwapTriggers = new Dictionary<uint, HubCompanionSwapTrigger>();
     private static readonly Dictionary<uint, LabyrinthStartTrigger> labyrinthTriggers = new Dictionary<uint, LabyrinthStartTrigger>();
-    private static readonly Dictionary<uint, LadderInteractable> ladderTriggers = new Dictionary<uint, LadderInteractable>();
     private static readonly Dictionary<uint, PortalController> portalTriggers = new Dictionary<uint, PortalController>();
+    private static readonly Dictionary<uint, LadderController> ladderControllers = new Dictionary<uint, LadderController>();
 
     public static void Register(ReturnHomeTrigger trigger, uint id)
     {
@@ -93,34 +93,6 @@ public static class NetcodeTriggerRegistry
         return labyrinthTriggers.TryGetValue(id, out trigger);
     }
 
-    public static void Register(LadderInteractable trigger, uint id)
-    {
-        if (trigger == null || id == 0u)
-        {
-            return;
-        }
-
-        ladderTriggers[id] = trigger;
-    }
-
-    public static void Unregister(LadderInteractable trigger, uint id)
-    {
-        if (trigger == null || id == 0u)
-        {
-            return;
-        }
-
-        if (ladderTriggers.TryGetValue(id, out LadderInteractable existing) && existing == trigger)
-        {
-            ladderTriggers.Remove(id);
-        }
-    }
-
-    public static bool TryGetLadder(uint id, out LadderInteractable trigger)
-    {
-        return ladderTriggers.TryGetValue(id, out trigger);
-    }
-
     public static void Register(PortalController trigger, uint id)
     {
         if (trigger == null || id == 0u)
@@ -147,6 +119,22 @@ public static class NetcodeTriggerRegistry
     public static bool TryGetPortal(uint id, out PortalController trigger)
     {
         return portalTriggers.TryGetValue(id, out trigger);
+    }
+
+    public static void Register(LadderController controller, uint id)
+    {
+        if (controller != null && id != 0u) ladderControllers[id] = controller;
+    }
+
+    public static void Unregister(LadderController controller, uint id)
+    {
+        if (controller != null && id != 0u && ladderControllers.TryGetValue(id, out LadderController existing) && existing == controller)
+            ladderControllers.Remove(id);
+    }
+
+    public static bool TryGetLadder(uint id, out LadderController controller)
+    {
+        return ladderControllers.TryGetValue(id, out controller);
     }
 
 }
