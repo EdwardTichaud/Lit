@@ -278,6 +278,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         stopPlayerWhenMovementReleased = false;
         clarity = 0f;
         cooldowns.Clear();
+        playerController?.HideLocalInteractionPresentation();
         SetEngagedEnemy(enemy);
         SetLockedEnemy(null);
         SetLockedEnemy(enemy);

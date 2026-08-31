@@ -80,11 +80,16 @@ Le flux se divise ensuite :
 Sous lock, `SquadCharacterController` transmet d'abord l'axe brut au bridge.
 `TryResolveCombatLockMove` le convertit en approche/recul/orbite relatif a
 `EnemyLockPoint`; il ne passe donc pas par le calcul camera-relative libre.
-Le bridge conserve la cible, le rayon d'orbite lateral et le face-a-face. Les
-clips Root de `CombatLocomotion` fournissent la translation, mais leur rotation
-est desactivee afin que le lock reste l'unique autorite de yaw. Une roulade ou
+Le bridge conserve la cible et le face-a-face. Les
+clips InPlace de `CombatLocomotion` affichent les huit directions sans fournir
+de translation ni de yaw : UCC applique le mouvement physique et le lock reste
+l'unique autorite de rotation. `CombatIdle` est sélectionné dès que l'input est
+neutre; `CombatLocomotion` revient dès qu'un input est maintenu. Une roulade ou
 un saut demande explicitement une orientation temporaire avant de revenir vers
 la cible.
+Un input strictement gauche ou droite produit une tangente autour de la cible,
+stabilisee par une faible correction radiale UCC. Cette correction ne concerne
+ni les diagonales, ni les actions, ni les evasions.
 
 La caméra gameplay doit passer par le `CameraController` Opsive UCC, avec
 `LitUccCameraCharacterBinder` sur la caméra active pour suivre
@@ -220,9 +225,16 @@ Pendant un lock, `RealTimeCombatManager` active
 `LitOpsiveLocomotionBridge.SetCombatStrafeMode(true, EnemyLockPoint)`. Le bridge
 quitte alors seulement le profil visuel exploration forward-only, conserve Lucian
 face a `EnemyLockPoint` en fin d'image sans reinjecter d'input, et transmet les
-directions locales au blend tree combat Root; la position reste sous autorite
-UCC. Au deverrouillage, le profil exploration est restaure sans
+directions locales au blend tree combat InPlace; la position reste sous autorite
+UCC. Ces clips sont maintenant InPlace : l'Animator ne fournit plus de
+translation ni de yaw sous lock. Le bridge synchronise la rotation du moteur
+UCC avec le `LookSource` de combat avant que les forces soient calculees : aucun
+strafe ne peut etre reinterprete dans un repere de personnage obsolete. Au deverrouillage, le profil exploration est restaure sans
 modifier ses reglages serialises.
+Un strafe gauche/droite strict memorise son rayon autour de la cible et applique
+une correction radiale limitee via l'intention UCC. Cette correction est effacee
+des qu'une diagonale, une action, une evasion, une cinematique ou une sortie de
+lock commence; les collisions UCC restent prioritaires sur le cercle parfait.
 
 `LocalPlayerInput` est persistant en Play Mode. Pendant un dechargement de
 scene dans l'editeur, son `InputActionAsset` doit etre detruit immediatement :

@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, PlayerInputs.ICameraActions, PlayerInputs.ICombatActions
 {
     public static LocalPlayerInput Instance { get; private set; }
+    private static bool applicationQuitting;
 
     [SerializeField] private bool dontDestroyOnLoad = true;
     [SerializeField, Tooltip("Logs the single reconciliation performed after an ActionMap or cinematic handoff.")]
@@ -16,9 +17,23 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     private Coroutine locomotionReconciliationRoutine;
     private int locomotionReconciliationToken;
 
+    /// <summary>
+    /// True only while the persistent input host still owns a live runtime
+    /// PlayerInputs instance. Consumers use this to distinguish scene/app
+    /// teardown from a genuinely missing ActionMap.
+    /// </summary>
+    public static bool HasActiveRuntimeInput => !applicationQuitting && Instance != null && Instance.playerInputs != null;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntimeState()
+    {
+        Instance = null;
+        applicationQuitting = false;
+    }
+
     public static void EnsureInstance()
     {
-        if (!Application.isPlaying)
+        if (!Application.isPlaying || applicationQuitting)
         {
             return;
         }
@@ -45,8 +60,15 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
     /// </summary>
     public static InputActionMap FindSharedActionMap(string mapName)
     {
-        EnsureInstance();
-        return Instance != null && Instance.playerInputs != null
+        // This query is also used by OnDisable cleanup paths. Do not create a
+        // fresh persistent input host while the previous one is being torn
+        // down just to resolve a map that can no longer be used.
+        if (!Application.isPlaying || !HasActiveRuntimeInput)
+        {
+            return null;
+        }
+
+        return Instance.playerInputs != null
             ? Instance.playerInputs.asset.FindActionMap(mapName, false)
             : null;
     }
@@ -79,6 +101,11 @@ public class LocalPlayerInput : MonoBehaviour, PlayerInputs.IPlayerActions, Play
         InputModeCoordinator.ModeChanged += OnCoordinatorModeChanged;
         InputModeCoordinator.Configure(playerInputs.asset);
         ApplyCombatInputActive(false);
+    }
+
+    private void OnApplicationQuit()
+    {
+        applicationQuitting = true;
     }
 
     private void Update()

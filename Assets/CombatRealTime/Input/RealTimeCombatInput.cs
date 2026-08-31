@@ -87,9 +87,13 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
     public void SetInputActive(bool active)
     {
-        ResolveActions();
         if (active)
         {
+            if (!ResolveActions())
+            {
+                return;
+            }
+
             // Le composant peut etre active avant LocalPlayerInput dans une
             // scene. Revalide les callbacks au lock, lorsque la map partagee
             // est necessairement disponible.
@@ -114,7 +118,6 @@ public sealed class RealTimeCombatInput : MonoBehaviour
     /// </summary>
     public void SetCinematicInputSuspended(bool suspended)
     {
-        ResolveActions();
         if (suspended)
         {
             LocalPlayerInput.SetCombatInputActive(false);
@@ -124,18 +127,23 @@ public sealed class RealTimeCombatInput : MonoBehaviour
             return;
         }
 
+        if (!ResolveActions())
+        {
+            return;
+        }
+
         LocalPlayerInput.SetCombatInputActive(true);
         GamepadInputContextStack.Push(this, GamepadInputContext.Combat);
         Subscribe();
         Trace("Combat input restored after cinematic | " + InputDiagnostics + ".");
     }
 
-    private void ResolveActions()
+    private bool ResolveActions()
     {
         InputActionMap sharedMap = LocalPlayerInput.FindSharedActionMap(actionMapName);
         if (ReferenceEquals(actionMap, sharedMap))
         {
-            return;
+            return actionMap != null;
         }
 
         // LocalPlayerInput est persistant mais son PlayerInputs runtime peut
@@ -157,8 +165,15 @@ public sealed class RealTimeCombatInput : MonoBehaviour
 
         if (actionMap == null)
         {
-            Debug.LogWarning("[RealTimeCombatInput] ActionMap '" + actionMapName + "' introuvable.", this);
-            return;
+            // A LightSkill can be disabled during scene/app teardown after the
+            // persistent LocalPlayerInput has disposed its PlayerInputs asset.
+            // That is a normal cleanup ordering, not a missing gameplay map.
+            if (isActiveAndEnabled && LocalPlayerInput.HasActiveRuntimeInput)
+            {
+                Debug.LogWarning("[RealTimeCombatInput] ActionMap '" + actionMapName + "' introuvable.", this);
+            }
+
+            return false;
         }
 
         counterAction = actionMap.FindAction("Counter", false);
@@ -171,6 +186,7 @@ public sealed class RealTimeCombatInput : MonoBehaviour
         switchEnemyLockAction = actionMap.FindAction("SwitchEnemyLock", false);
         lightSkillAction = actionMap.FindAction("LightSkill", false);
         companionFusionAction = actionMap.FindAction("Melt", false);
+        return true;
     }
 
     private void ResolveSkillWheel()

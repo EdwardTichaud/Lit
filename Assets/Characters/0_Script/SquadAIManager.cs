@@ -825,15 +825,9 @@ public class SquadAIManager : MonoBehaviour
             Mesh mesh = source.sourceObject as Mesh;
             if (mesh != null && !mesh.isReadable)
             {
-                // PhysicsColliders are valid NavMesh sources even when their
-                // imported mesh is not CPU-readable. Removing these sources
-                // discarded most of District_1's floor and made enemies spawn
-                // outside an otherwise successful dynamic NavMesh bake.
-                if (source.component is MeshCollider)
-                {
-                    continue;
-                }
-
+                // BuildNavMeshData still reads MeshCollider source meshes.
+                // Keeping a non-readable mesh works only in the editor and
+                // floods the console (or fails outright in a player build).
                 sources.RemoveAt(i);
                 if (!warnedUnreadableMeshes.Contains(mesh))
                 {

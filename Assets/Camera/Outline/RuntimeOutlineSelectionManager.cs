@@ -10,7 +10,7 @@ public static class RuntimeOutlineSelectionManager
     private static ICharacterDetectedInteractable activeInteractable;
 
     public static ICharacterDetectedInteractable ActiveInteractable => activeInteractable;
-    public static bool IsSuspended => SuspensionOwners.Count > 0;
+    public static bool IsSuspended => SuspensionOwners.Count > 0 || IsRealTimeCombatActive();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRuntimeState()
@@ -200,6 +200,11 @@ public static class RuntimeOutlineSelectionManager
         // the controlled character has selected a target, it is the sole
         // authority until it explicitly changes or clears that selection.
         return owner != null || activeOwner == null;
+    }
+
+    private static bool IsRealTimeCombatActive()
+    {
+        return RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.IsCombatActive;
     }
 
     private static void HideActiveTargets()

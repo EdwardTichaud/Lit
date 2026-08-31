@@ -77,6 +77,14 @@ Le combat temps reel est actif dans `GameplaySessionRoot` et sur
 `Juggernaut_Combat`. Il porte les definitions d'attaques, le loadout de huit
 slots, le ledger de lumiere des ennemis, les fenetres de reaction pilotees par
 Animation Events, le lock camera, les inputs dedies et les vues HUD/loadout.
+La locomotion continue de Lucian sous lock utilise maintenant les clips
+`Twinblades_Strafe_*_Inplace`. UCC est l'unique proprietaire de la translation,
+des collisions, des pentes et de l'inertie; l'Animator affiche seulement les
+huit directions et le tier marche/course. Les actions engagees restent libres
+d'utiliser leur root motion ou leur mouvement scripté configure.
+Le strafe gauche/droite memorise son rayon autour de `EnemyLockPoint` et le
+stabilise avec une faible intention radiale UCC. Il ne depend jamais du root
+motion et les collisions gameplay conservent la priorite.
 Le verrouillage est entierement manuel : `LeftShoulder` verrouille l'ennemi le
 plus proche a portee, puis le deverrouille au prochain appui. Les portees de
 lock et de deverrouillage augmentent avec la plus grande composante de scale de
@@ -108,12 +116,13 @@ Le verrouillage combat affiche aussi un contour rouge HDRP autonome sur les
 renderers de l'ennemi. Il utilise la layer `CombatOutline` et la passe
 `CombatLockOutlinePass` de `GameplaySessionRoot`, sans partager l'etat ou la
 couleur des contours bleus d'interactables.
-Sous lock, le mouvement de Lucian est maintenant calcule une seule fois dans
+Sous lock, le mouvement de Lucian est calcule une seule fois dans
 `LitOpsiveLocomotionBridge`, dans le repere de `EnemyLockPoint` (ou du root
-ennemi). Avant et arriere approchent ou eloignent; gauche et droite orbitent.
-Un strafe lateral pur conserve son rayon initial par une faible intention
-radiale UCC, sans ecriture directe de Transform. Lucian reste face a la cible;
-seules roulade et saut peuvent prendre une orientation d'evasion temporaire.
+ennemi). Avant et arriere approchent ou eloignent; gauche et droite memorisent
+leur rayon initial et suivent une tangente corrigee par une faible intention
+radiale UCC. Les diagonales ne verrouillent pas ce rayon et conservent donc leur
+arc d'approche ou de recul. Lucian reste face a la cible; seules
+roulade et saut peuvent prendre une orientation d'evasion temporaire.
 Le blend tree combat de `Player_Model` contient un echantillon idle neutre afin
 qu'un lock sans Move ne joue plus une animation de marche root.
 Pendant ce lock, la camera conserve un evitement des obstacles visuels par

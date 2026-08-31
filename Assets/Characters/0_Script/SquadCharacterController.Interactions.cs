@@ -48,8 +48,27 @@ public partial class SquadCharacterController
         UpdateLocalInteractionDetection();
     }
 
+    /// <summary>
+    /// Removes the current world-interaction selection immediately. Combat uses
+    /// this on entry so a nearby ladder, item, or other prompt cannot remain
+    /// visible for a frame while the combat HUD takes over.
+    /// </summary>
+    public void HideLocalInteractionPresentation()
+    {
+        ClearLocalInteractionTarget();
+    }
+
     private void UpdateLocalInteractionDetection()
     {
+        // World interactions must never compete visually with the combat HUD,
+        // reaction prompts, or lock-on presentation. Clearing the current
+        // target also asks each interactable to hide its own world-space UI.
+        if (RealTimeCombatManager.Instance != null && RealTimeCombatManager.Instance.IsCombatActive)
+        {
+            ClearLocalInteractionTarget();
+            return;
+        }
+
         if (!enableCharacterInteractionDetection)
         {
             ClearLocalInteractionTarget();

@@ -7,6 +7,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 {
     private const string LocomotionState = "Base Layer.Locomotion";
     private const string CombatLocomotionState = "Base Layer.CombatLocomotion";
+    private const string CombatIdleState = "Base Layer.CombatIdle";
     private const string WalkStartState = "Base Layer.Walk_Start";
     private const string RunStartState = "Base Layer.Run_Start";
 
@@ -492,7 +493,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
 
         MotionHandoffProfile handoff = profile.handoff ?? MotionHandoffProfile.CreateActionDefault();
         float blend = Mathf.Max(profile.exitBlendSeconds, handoff.locomotionBlendSeconds);
-        animator.CrossFade(ResolveLocomotionDestination(false, false), Mathf.Clamp(blend, 0f, 0.25f), 0);
+        animator.CrossFade(ResolveCurrentLocomotionDestination(), Mathf.Clamp(blend, 0f, 0.25f), 0);
         FinishWithoutTransition(token);
     }
 
@@ -530,7 +531,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
             return;
         }
 
-        animator.CrossFade(ResolveLocomotionDestination(false, false), 0.08f, 0);
+        animator.CrossFade(ResolveCurrentLocomotionDestination(), 0.08f, 0);
         FinishWithoutTransition(token);
     }
 
@@ -622,12 +623,19 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     {
         if (locomotionBridge != null && locomotionBridge.IsCombatLockActive)
         {
-            return CombatLocomotionState;
+            return movementHeld ? CombatLocomotionState : CombatIdleState;
         }
 
         return !movementHeld
             ? LocomotionState
             : sprintHeld ? RunStartState : WalkStartState;
+    }
+
+    private string ResolveCurrentLocomotionDestination()
+    {
+        return ResolveLocomotionDestination(
+            locomotionBridge != null && locomotionBridge.HasLocomotionIntent,
+            locomotionBridge != null && locomotionBridge.IsSprintHeld);
     }
 
     private void KeepDeathAnimationActive()

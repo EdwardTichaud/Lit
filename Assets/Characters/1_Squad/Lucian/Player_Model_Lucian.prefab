@@ -8063,6 +8063,7 @@ MonoBehaviour:
   m_ThirdPersonMovementTypeFullName: Opsive.UltimateCharacterController.ThirdPersonController.Character.MovementTypes.Adventure
   m_MovementTypes:
   - rid: 2938102941717364748
+  - rid: 2938102941717364749
   m_Abilities:
   - rid: 2938102941717364750
   - rid: 2938102941717364751
@@ -8098,6 +8099,14 @@ MonoBehaviour:
       type: {class: , ns: , asm: }
     - rid: 2938102941717364748
       type: {class: Adventure, ns: Opsive.UltimateCharacterController.ThirdPersonController.Character.MovementTypes, asm: Opsive.UltimateCharacterController}
+      data:
+        m_States:
+        - m_Name: Default
+          m_Preset: {fileID: 0}
+          m_BlockList: []
+          m_Default: 1
+    - rid: 2938102941717364749
+      type: {class: LitCombatLockMovementType, ns: , asm: Assembly-CSharp}
       data:
         m_States:
         - m_Name: Default
@@ -8588,9 +8597,10 @@ MonoBehaviour:
   walkPresentationSpeed: 1.35
   runPresentationSpeed: 3.25
   combatFacingSpeedDegreesPerSecond: 1080
-  combatOrbitRadiusCorrection: 0.7
+  combatOrbitPureLateralThreshold: 0.12
+  combatOrbitRadiusDeadZone: 0.035
+  combatOrbitRadiusCorrectionGain: 2.25
   combatOrbitMaximumCorrection: 0.35
-  combatOrbitLateralVerticalThreshold: 0.2
   logCombatLockMotionDiagnostics: 0
 --- !u!114 &9118197817539862428
 MonoBehaviour:

@@ -28,6 +28,18 @@ Le lock ne possede pas le mouvement du joueur: il fournit uniquement la cible.
 `LitOpsiveLocomotionBridge` convertit l'axe brut en repere ennemi et est la
 seule autorite pour l'intention UCC, le facing et l'orbite. Les actions ne
 doivent pas ecrire le Transform de Lucian directement pendant le lock.
+La locomotion continue sous lock est InPlace : `CombatIdle` et
+`CombatLocomotion` utilisent les clips Twinblades InPlace et le tag
+`RealTimeCombatInPlace`. Le bridge impose `UseRootMotionPosition=false` et
+`UseRootMotionRotation=false` dans ces deux états. UCC applique donc seul
+l'approche, le recul, l'orbite, les collisions et l'inertie. Les root motions
+des actions engagées (roulade, saut, skills, impulsions et cinématiques) restent
+pilotés par leurs profils explicites.
+Gauche/droite sous lock memorise le rayon initial autour de `EnemyLockPoint`.
+Le bridge ajoute ensuite une faible correction radiale sous forme d'intention
+UCC, jamais par ecriture directe du Transform : le strafe reste circulaire sur
+sol libre tandis que les collisions gardent la priorite. Les diagonales liberent
+ce rayon et conservent leur arc d'approche ou de recul.
 Pendant la mémoire d'alerte, un ennemi provoqué peut consommer ce ledger même
 si une animation root l'a temporairement tourné hors de son champ de vision ; il
 continue alors de se tourner vers Lucian. La perte de vision prolongée conserve

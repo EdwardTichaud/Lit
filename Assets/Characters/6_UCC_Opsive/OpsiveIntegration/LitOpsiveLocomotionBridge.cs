@@ -22,6 +22,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 {
     private const string SpeedChangeInputName = "Change Speeds";
     private const string CrouchInputName = "Crouch";
+    private const string CombatMovementTypeFullName = "LitCombatLockMovementType";
 
     [SerializeField] private SquadCharacterController squadController;
     [SerializeField] private UltimateCharacterLocomotion locomotion;
@@ -228,24 +229,32 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool combatLockActive;
     private Transform combatLockTarget;
     private Vector2 combatLockLocalInput;
-    private float combatOrbitRadius = -1f;
     private bool combatDirectionalEvasionFacing;
+    private bool combatMovementTypeApplied;
+    private bool warnedMissingCombatMovementType;
+    private string movementTypeBeforeCombatLock;
     [Header("Combat Lock Motion")]
     [SerializeField, Min(1f), Tooltip("Vitesse maximale du face-a-face. Les actions et evasions restent immediates.")]
     private float combatFacingSpeedDegreesPerSecond = 900f;
-    [SerializeField, Min(0f), Tooltip("Correction radiale appliquee pendant un strafe lateral pour conserver le rayon d'orbite initial.")]
-    private float combatOrbitRadiusCorrection = 0.7f;
-    [SerializeField, Min(0f), Tooltip("Correction radiale maximale ajoutee a l'intention de strafe.")]
+    [SerializeField, Range(0.01f, 0.5f), Tooltip("Une composante avant/arriere superieure a ce seuil transforme le strafe en deplacement diagonal et libere le rayon d'orbite.")]
+    private float combatOrbitPureLateralThreshold = 0.12f;
+    [SerializeField, Min(0f), Tooltip("Ecart de rayon ignore pour eviter que de tres petites variations de simulation ne corrigent continuellement le strafe.")]
+    private float combatOrbitRadiusDeadZone = 0.035f;
+    [SerializeField, Min(0f), Tooltip("Intensite de la correction UCC qui maintient le rayon memorise pendant un strafe strict.")]
+    private float combatOrbitRadiusCorrectionGain = 2.25f;
+    [SerializeField, Range(0f, 1f), Tooltip("Part maximale de l'intention deplacement reservee a la correction radiale. Les collisions UCC gardent toujours la priorite.")]
     private float combatOrbitMaximumCorrection = 0.35f;
-    [SerializeField, Range(0f, 1f), Tooltip("Valeur verticale maximale pour considerer l'intention comme un strafe lateral pur.")]
-    private float combatOrbitLateralVerticalThreshold = 0.2f;
     [SerializeField, Tooltip("Active les traces de repere lock pour diagnostiquer une animation ou une direction incorrecte.")]
     private bool logCombatLockMotionDiagnostics;
     private Vector3 smoothedCombatFacingDirection;
     private bool hasSmoothedCombatFacingDirection;
     private bool combatIdlePresentationActive;
+    private bool combatOrbitRadiusActive;
+    private float combatOrbitRadius;
+    private bool lastLoggedCombatOrbitActive;
+    private float nextCombatOrbitDiagnosticTime;
     private static readonly int CombatLocomotionStateHash = Animator.StringToHash("Base Layer.CombatLocomotion");
-    private static readonly int CombatIdleStateHash = Animator.StringToHash("Base Layer.TwinSword_Idle_Root");
+    private static readonly int CombatIdleStateHash = Animator.StringToHash("Base Layer.CombatIdle");
 
     private enum RootMotionPhase
     {
@@ -273,6 +282,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     public float VerticalVelocity => Vector3.Dot(Velocity, transform.up);
     public Vector3 WorldPosition => locomotion != null ? locomotion.transform.position : Vector3.zero;
     public Vector2 CurrentWorldMoveInput => currentWorldMoveInput;
+    public bool HasLocomotionIntent => currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone ||
+                                       (combatLockActive && combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone);
+    public bool IsSprintHeld => sprintPressed;
     public Vector2 LastExplicitWorldMoveInput => lastExplicitWorldMoveInput;
     public bool HasRecentExplicitWorldMoveInput(float memorySeconds)
     {
@@ -311,9 +323,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         runStartResponseMaximumPlanarSpeed = Mathf.Max(0f, runStartResponseMaximumPlanarSpeed);
         idleRootMotionVelocityThreshold = Mathf.Max(0f, idleRootMotionVelocityThreshold);
         combatFacingSpeedDegreesPerSecond = Mathf.Max(1f, combatFacingSpeedDegreesPerSecond);
-        combatOrbitRadiusCorrection = Mathf.Max(0f, combatOrbitRadiusCorrection);
-        combatOrbitMaximumCorrection = Mathf.Max(0f, combatOrbitMaximumCorrection);
-        combatOrbitLateralVerticalThreshold = Mathf.Clamp01(combatOrbitLateralVerticalThreshold);
+        combatOrbitPureLateralThreshold = Mathf.Clamp(combatOrbitPureLateralThreshold, 0.01f, 0.5f);
+        combatOrbitRadiusDeadZone = Mathf.Max(0f, combatOrbitRadiusDeadZone);
+        combatOrbitRadiusCorrectionGain = Mathf.Max(0f, combatOrbitRadiusCorrectionGain);
+        combatOrbitMaximumCorrection = Mathf.Clamp01(combatOrbitMaximumCorrection);
         groundReliefMinStepHeight = Mathf.Max(0f, groundReliefMinStepHeight);
         groundReliefMinSlopeLimit = Mathf.Clamp(groundReliefMinSlopeLimit, 0f, 89f);
         groundReliefMinStickToGroundDistance = Mathf.Max(0f, groundReliefMinStickToGroundDistance);
@@ -348,6 +361,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         bool suppressRootRotation = false,
         bool allowAirborneRootMotion = false)
     {
+        ResetCombatOrbitRadius();
         hasPlayerActionRootMotionMode = true;
         playerActionRootMotionMode = mode;
         suppressPlayerActionRootMotionRotation = suppressRootRotation;
@@ -434,6 +448,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     public void StopBridgeInput()
     {
+        ResetCombatOrbitRadius();
         ApplyWorldMoveInput(Vector2.zero);
         SetSprintModifier(false);
         ShutdownFlightMode();
@@ -1052,8 +1067,10 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// Updates the UCC look source without writing the actor Transform. Under
-    /// lock, root-motion rotation is disabled and this is the sole yaw intent.
+    /// Keeps the UCC motor and its look source in the same combat-facing frame.
+    /// Under lock, root-motion rotation is disabled and this is the sole yaw
+    /// authority. Using the UCC API prevents a world-space input from being
+    /// reinterpreted against a stale motor rotation.
     /// </summary>
     public bool SetCombatFacingDirection(Vector3 worldDirection)
     {
@@ -1068,6 +1085,13 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         smoothedCombatFacingDirection = direction;
         hasSmoothedCombatFacingDirection = true;
         ForceOrientationLookDirection(direction);
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+        if (Quaternion.Angle(locomotion.transform.rotation, targetRotation) > 0.05f)
+        {
+            locomotion.SetRotation(targetRotation, snapAnimator: false);
+        }
+
         return true;
     }
 
@@ -1199,6 +1223,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        RestoreExplorationMovementType();
         CancelObstacleTraversal();
         ClearCombatAirborneHolds();
         if (scriptedTraversalReleaseRoutine != null)
@@ -1288,6 +1313,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         // Execution Order. Repeat the vertical neutralization after their
         // frame work so StayAirborne remains visually stable.
         MaintainCombatAirborneHold();
+
+        // Some UCC view/perspective callbacks can restore the configured
+        // Adventure type late in the frame. Combat locomotion must never
+        // leave one physics tick with that type active: Adventure discards
+        // horizontal/backward input and turns every direction into forward.
+        if (combatLockActive && !combatDirectionalEvasionFacing)
+        {
+            ApplyCombatMovementType();
+        }
     }
 
     /// <summary>Starts target-relative locomotion for a manual combat lock.</summary>
@@ -1304,16 +1338,18 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             combatDirectionalEvasionFacing = false;
             hasSmoothedCombatFacingDirection = false;
             combatIdlePresentationActive = false;
-            ResetCombatOrbit();
+            ResetCombatOrbitRadius();
         }
 
         SetAnimatorBool("CombatStrafeActive", combatLockActive);
         if (combatLockActive)
         {
+            ApplyCombatMovementType();
             MaintainCombatLockFacing();
         }
         else
         {
+            RestoreExplorationMovementType();
             SetCombatAnimatorInput(Vector2.zero);
         }
     }
@@ -1331,9 +1367,89 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         combatDirectionalEvasionFacing = false;
         hasSmoothedCombatFacingDirection = false;
         combatIdlePresentationActive = false;
-        ResetCombatOrbit();
+        ResetCombatOrbitRadius();
+        RestoreExplorationMovementType();
         SetAnimatorBool("CombatStrafeActive", false);
         SetCombatAnimatorInput(Vector2.zero);
+    }
+
+    private void ApplyCombatMovementType()
+    {
+        if (locomotion == null)
+        {
+            return;
+        }
+
+        bool isCombatMovementTypeActive = locomotion.ActiveMovementType != null &&
+                                          locomotion.ActiveMovementType.GetType().FullName == CombatMovementTypeFullName;
+        if (isCombatMovementTypeActive)
+        {
+            combatMovementTypeApplied = true;
+            return;
+        }
+
+        bool combatMovementTypeAvailable = false;
+        var movementTypes = locomotion.MovementTypes;
+        if (movementTypes != null)
+        {
+            for (int i = 0; i < movementTypes.Length; i++)
+            {
+                if (movementTypes[i] != null && movementTypes[i].GetType().FullName == CombatMovementTypeFullName)
+                {
+                    combatMovementTypeAvailable = true;
+                    break;
+                }
+            }
+        }
+
+        if (!combatMovementTypeAvailable)
+        {
+            if (!warnedMissingCombatMovementType)
+            {
+                warnedMissingCombatMovementType = true;
+                Debug.LogError(
+                    "[CombatLockMotion] Le type UCC LitCombatLockMovementType manque sur '" + name +
+                    "'. Le type Adventure ecrase les axes lateral/arriere et empeche le strafe sous lock.",
+                    this);
+            }
+
+            return;
+        }
+
+        if (!combatMovementTypeApplied)
+        {
+            movementTypeBeforeCombatLock = locomotion.MovementTypeFullName;
+        }
+
+        locomotion.SetMovementType(CombatMovementTypeFullName);
+        combatMovementTypeApplied = locomotion.ActiveMovementType != null &&
+                                    locomotion.ActiveMovementType.GetType().FullName == CombatMovementTypeFullName;
+
+        if (!combatMovementTypeApplied && !warnedMissingCombatMovementType)
+        {
+            warnedMissingCombatMovementType = true;
+            Debug.LogError(
+                "[CombatLockMotion] Le type UCC LitCombatLockMovementType n'a pas pu devenir actif sur '" + name +
+                "'. Type actuel : '" + (locomotion.ActiveMovementType != null
+                    ? locomotion.ActiveMovementType.GetType().FullName
+                    : "None") + "'.",
+                this);
+        }
+    }
+
+    private void RestoreExplorationMovementType()
+    {
+        if (!combatMovementTypeApplied || locomotion == null)
+        {
+            return;
+        }
+
+        string restoreType = string.IsNullOrWhiteSpace(movementTypeBeforeCombatLock)
+            ? "Opsive.UltimateCharacterController.ThirdPersonController.Character.MovementTypes.Adventure"
+            : movementTypeBeforeCombatLock;
+        locomotion.SetMovementType(restoreType);
+        combatMovementTypeApplied = false;
+        movementTypeBeforeCombatLock = null;
     }
 
     /// <summary>
@@ -1352,7 +1468,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (clampedInput.sqrMagnitude <= movementDeadZone * movementDeadZone)
         {
             combatLockLocalInput = Vector2.zero;
-            ResetCombatOrbit();
+            ResetCombatOrbitRadius();
             SetCombatAnimatorInput(Vector2.zero);
             return true;
         }
@@ -1376,25 +1492,34 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         radialOut /= currentRadius;
         Vector3 towardTarget = -radialOut;
         Vector3 rightAroundTarget = Vector3.Cross(radialOut, Vector3.up).normalized;
-        bool lateralOnly = Mathf.Abs(clampedInput.x) > movementDeadZone &&
-                           Mathf.Abs(clampedInput.y) <= combatOrbitLateralVerticalThreshold;
+        bool isPureLateral = Mathf.Abs(clampedInput.x) > movementDeadZone &&
+                             Mathf.Abs(clampedInput.y) <= combatOrbitPureLateralThreshold;
+        float radiusError = 0f;
         float radialCorrection = 0f;
-        if (lateralOnly)
+        if (isPureLateral)
         {
-            if (combatOrbitRadius < 0f)
+            if (!combatOrbitRadiusActive)
             {
+                combatOrbitRadiusActive = true;
                 combatOrbitRadius = currentRadius;
             }
 
-            float radiusError = currentRadius - combatOrbitRadius;
-            radialCorrection = Mathf.Clamp(
-                radiusError * combatOrbitRadiusCorrection,
-                -combatOrbitMaximumCorrection,
-                combatOrbitMaximumCorrection);
+            radiusError = currentRadius - combatOrbitRadius;
+            if (Mathf.Abs(radiusError) > combatOrbitRadiusDeadZone)
+            {
+                // This remains an input intent: UCC still resolves every
+                // collision, slope and deceleration before moving Lucian.
+                radialCorrection = Mathf.Clamp(
+                    radiusError * combatOrbitRadiusCorrectionGain,
+                    -combatOrbitMaximumCorrection,
+                    combatOrbitMaximumCorrection);
+            }
         }
         else
         {
-            ResetCombatOrbit();
+            // Diagonals keep their authored approach/recede ratio instead of
+            // being pulled back to a memorised orbit radius.
+            ResetCombatOrbitRadius();
         }
 
         Vector3 relativeDirection = rightAroundTarget * clampedInput.x +
@@ -1410,14 +1535,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetCombatAnimatorInput(combatLockLocalInput);
         MaintainCombatLockFacing();
 
-        if (logCombatLockMotionDiagnostics)
-        {
-            Debug.Log("[CombatLockMotion] raw=" + rawInput.ToString("F2") +
-                      " local=" + combatLockLocalInput.ToString("F2") +
-                      " radius=" + currentRadius.ToString("F2") +
-                      " anchored=" + combatOrbitRadius.ToString("F2") +
-                      " correction=" + radialCorrection.ToString("F2"), this);
-        }
+        LogCombatLockMotion(
+            rawInput,
+            currentRadius,
+            radiusError,
+            radialCorrection,
+            isPureLateral,
+            relativeDirection,
+            towardTarget,
+            rightAroundTarget);
 
         return true;
     }
@@ -1432,7 +1558,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         combatDirectionalEvasionFacing = true;
-        ResetCombatOrbit();
+        ResetCombatOrbitRadius();
         SetCombatFacingDirection(worldDirection);
         RefreshRootMotionLocomotionSettings();
     }
@@ -1480,12 +1606,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                 0f);
         }
 
-        ForceOrientationLookDirection(smoothedCombatFacingDirection);
-    }
-
-    private void ResetCombatOrbit()
-    {
-        combatOrbitRadius = -1f;
+        SetCombatFacingDirection(smoothedCombatFacingDirection);
     }
 
     private void SetCombatAnimatorInput(Vector2 localInput)
@@ -1493,6 +1614,51 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetAnimatorFloat(horizontalMovementParam, localInput.x);
         SetAnimatorFloat(forwardMovementParam, localInput.y);
         SetAnimatorFloat(combatMoveMagnitudeParam, localInput.magnitude);
+    }
+
+    private void ResetCombatOrbitRadius()
+    {
+        combatOrbitRadiusActive = false;
+        combatOrbitRadius = 0f;
+    }
+
+    private void LogCombatLockMotion(
+        Vector2 rawInput,
+        float currentRadius,
+        float radiusError,
+        float radialCorrection,
+        bool isPureLateral,
+        Vector3 relativeDirection,
+        Vector3 towardTarget,
+        Vector3 rightAroundTarget)
+    {
+        if (!logCombatLockMotionDiagnostics)
+        {
+            return;
+        }
+
+        bool errorNeedsReport = isPureLateral && Mathf.Abs(radiusError) > combatOrbitRadiusDeadZone;
+        bool phaseChanged = lastLoggedCombatOrbitActive != isPureLateral;
+        if (!phaseChanged && (!errorNeedsReport || Time.unscaledTime < nextCombatOrbitDiagnosticTime))
+        {
+            return;
+        }
+
+        lastLoggedCombatOrbitActive = isPureLateral;
+        nextCombatOrbitDiagnosticTime = Time.unscaledTime + 0.5f;
+        int animatorState = animator != null ? animator.GetCurrentAnimatorStateInfo(0).fullPathHash : 0;
+        Debug.Log(
+            "[CombatLockMotion] raw=" + rawInput.ToString("F2") +
+            " local=" + combatLockLocalInput.ToString("F2") +
+            " radius=" + currentRadius.ToString("F2") +
+            " targetRadius=" + (combatOrbitRadiusActive ? combatOrbitRadius.ToString("F2") : "none") +
+            " error=" + radiusError.ToString("F3") +
+            " correction=" + radialCorrection.ToString("F3") +
+            " radial=" + Vector3.Dot(relativeDirection, towardTarget).ToString("F3") +
+            " tangent=" + Vector3.Dot(relativeDirection, rightAroundTarget).ToString("F3") +
+            " velocity=" + PlanarVelocity.ToString("F2") +
+            " animatorState=" + animatorState,
+            this);
     }
 
     private void EnterCombatIdleFromLocomotion()
@@ -1945,6 +2111,14 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private void ApplyWorldMoveInput(Vector2 worldInput)
     {
+        // This is the last point before the override reaches UCC. Reassert
+        // the movement type here so another UCC callback cannot collapse the
+        // just-computed target-relative input back into Adventure forward.
+        if (combatLockActive && !combatDirectionalEvasionFacing)
+        {
+            ApplyCombatMovementType();
+        }
+
         Vector2 targetWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f);
         float targetMagnitude = targetWorldMoveInput.magnitude;
         if (targetMagnitude <= movementDeadZone)
@@ -2068,6 +2242,15 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         if (clampedMagnitude <= 0f)
         {
             return Vector2.zero;
+        }
+
+        // Lock locomotion is fully InPlace. The previous Root-motion branch
+        // collapsed every world direction into UCC forward input, which made
+        // pure left/right strafe approach the locked enemy. Convert directly
+        // into the actor's lock-facing local frame instead.
+        if (combatLockActive && !combatDirectionalEvasionFacing)
+        {
+            return ResolveLocalMoveInput(worldDirection, clampedMagnitude);
         }
 
         if (UseForwardOnlyGroundedLocomotion)
@@ -2241,6 +2424,25 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         SetLitAnimatorSpeedParameterOverride(true);
         Vector3 velocity = ResolvePlanarVelocity();
         float speed = velocity.magnitude;
+
+        // In locked combat the visual state follows the held target-relative
+        // input, never residual UCC inertia. This keeps the Animator in
+        // CombatIdle as soon as the stick is released while UCC finishes its
+        // physical deceleration.
+        if (combatLockActive && !combatDirectionalEvasionFacing)
+        {
+            bool hasCombatMoveIntent = combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone;
+            SetAnimatorFloat(speedParam, hasCombatMoveIntent ? speed : 0f);
+            SetAnimatorBool(isMovingParam, hasCombatMoveIntent);
+            SetAnimatorFloat(locomotionTierParam, hasCombatMoveIntent ? ResolveLocomotionTier(speed) : 0f);
+            SetAnimatorFloat(turnParam, 0f);
+            if (!hasCombatMoveIntent)
+            {
+                EnterCombatIdleFromLocomotion();
+            }
+            return;
+        }
+
         bool moving = currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone || speed > 0.05f;
 
         if (TryUpdateGroundedFeelAnimatorParameters(velocity, speed, moving))
@@ -2282,9 +2484,9 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
 
     private float ResolveLocomotionTier(float speed)
     {
-        // Correspond exactement aux seuils du blend tree combat Root.
-        // Evite une interpolation permanente marche/course lorsque le joueur
-        // maintient la course sous lock.
+        // Correspond aux seuils du blend tree combat InPlace. Le sprint garde
+        // une selection franche marche/course sans influencer la translation,
+        // qui reste entierement sous l'autorite UCC.
         return sprintPressed ? 3.25f : 1.1f;
     }
 
@@ -2470,34 +2672,27 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         bool useRootMotionRotation = ResolveUseRootMotionRotation(phase);
         bool useAuthoredActionRootMotion = !hasPlayerActionRootMotionMode ||
             playerActionRootMotionMode == PlayerActionRootMotionMode.AuthoredRootMotion;
-        // CombatLocomotion uses Root clips, but a 2D blend tree has no neutral
-        // root-motion sample at (0, 0). Letting it run without an actual stick
-        // intent creates a slow autonomous drift after a combat action.
-        // Explicit root-motion actions keep their authored movement even when
-        // the player is not holding Move.
-        bool hasCombatMoveIntent = combatLockActive
-            ? combatLockLocalInput.sqrMagnitude > movementDeadZone * movementDeadZone
-            : currentWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone ||
-              desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone;
-        bool allowCombatRootMotion = phase != RootMotionPhase.Combat ||
-                                     hasPlayerActionRootMotionMode ||
-                                     hasCombatMoveIntent;
+        // Continuous lock locomotion is deliberately InPlace. UCC alone owns
+        // its translation, collision, slope handling and inertia. Authored
+        // actions opt in through PlayerActionRootMotionMode and remain intact.
+        bool combatLockLocomotionInPlace = combatLockActive &&
+                                           !hasPlayerActionRootMotionMode &&
+                                           !combatDirectionalEvasionFacing &&
+                                           IsCombatLockLocomotionPresentation();
         // The physical grounded state, rather than an Animator state name,
         // decides whether an airborne action may move the capsule. This keeps
         // regular aerial BasicSkills visual by default and makes authored air
         // movement an explicit per-skill choice.
         bool allowAirborneRootMotion = locomotion.Grounded ||
                                         (hasPlayerActionRootMotionMode && allowPlayerActionAirborneRootMotion);
-        locomotion.UseRootMotionPosition = !isJumpPresentation && useAuthoredActionRootMotion && allowAirborneRootMotion && allowCombatRootMotion;
-        locomotion.RootMotionSpeedMultiplier = isJumpPresentation || !useAuthoredActionRootMotion || !allowAirborneRootMotion ||
-                                                 !allowCombatRootMotion || suppressIdlePosition
+        locomotion.UseRootMotionPosition = !combatLockLocomotionInPlace && !isJumpPresentation && useAuthoredActionRootMotion && allowAirborneRootMotion;
+        locomotion.RootMotionSpeedMultiplier = combatLockLocomotionInPlace || isJumpPresentation || !useAuthoredActionRootMotion || !allowAirborneRootMotion || suppressIdlePosition
             ? 0f
             : ResolveEffectiveRootMotionSpeedMultiplier(phase);
         useRootMotionRotation &= !isJumpPresentation && useAuthoredActionRootMotion && allowAirborneRootMotion && !suppressPlayerActionRootMotionRotation;
-        if (combatLockActive && !combatDirectionalEvasionFacing && phase == RootMotionPhase.Combat)
+        if (combatLockLocomotionInPlace)
         {
-            // The locked target owns yaw. Root clips remain free to provide
-            // translation, but can never pull Lucian away from face-to-face.
+            // The locked target owns yaw during continuous locomotion.
             useRootMotionRotation = false;
         }
         locomotion.UseRootMotionRotation = useRootMotionRotation;
@@ -2513,6 +2708,24 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             // ne le rend pendant quelques images.
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         }
+    }
+
+    private bool IsCombatLockLocomotionPresentation()
+    {
+        if (animator == null)
+        {
+            return true;
+        }
+
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        if (current.fullPathHash == CombatLocomotionStateHash || current.fullPathHash == CombatIdleStateHash)
+        {
+            return true;
+        }
+
+        return animator.IsInTransition(0) &&
+               (animator.GetNextAnimatorStateInfo(0).fullPathHash == CombatLocomotionStateHash ||
+                animator.GetNextAnimatorStateInfo(0).fullPathHash == CombatIdleStateHash);
     }
 
     private bool ResolveUseRootMotionRotation(RootMotionPhase phase)

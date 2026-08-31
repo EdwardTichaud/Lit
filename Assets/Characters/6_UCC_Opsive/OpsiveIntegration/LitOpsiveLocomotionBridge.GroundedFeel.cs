@@ -289,9 +289,9 @@ public partial class LitOpsiveLocomotionBridge
         groundedMoveIntent = targetMagnitude > movementDeadZone;
         float deltaTime = ResolveGroundedFeelDeltaTime();
 
-        // The combat strafe blend tree uses Root clips. It must have a real
-        // neutral input on release: carrying the exploration input smoothing
-        // into this state makes Lucian walk after the stick is already neutral.
+        // The combat strafe blend tree is InPlace. It must have a real neutral
+        // input on release: carrying the exploration input smoothing into this
+        // state keeps a walk/strafe pose alive after the stick is neutral.
         // Scripted actions retain their own motion path and never reach here as
         // a player move input, so this does not cancel dashes or skill inertia.
         if (combatLockActive && !groundedMoveIntent)
@@ -379,9 +379,9 @@ public partial class LitOpsiveLocomotionBridge
             return false;
         }
 
-        // CombatLocomotion is driven by Root clips. A released stick is the
-        // authority for the visual stop: waiting for residual UCC velocity
-        // keeps a walk/strafe pose alive after the player is already idle.
+        // CombatLocomotion is driven by the target-relative input. A released
+        // stick is the authority for the visual stop: residual UCC velocity
+        // must not keep an InPlace walk/strafe pose alive.
         bool hasRawCombatMoveIntent = desiredGroundedWorldMoveInput.sqrMagnitude > movementDeadZone * movementDeadZone;
         bool isStoppedCombatIdle = combatLockActive &&
                                    !hasRawCombatMoveIntent &&

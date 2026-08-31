@@ -413,7 +413,11 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         Vector3 offset = instance.transform.position - transform.position;
-        if (offset.magnitude > 0.15f)
+        float horizontalOffset = new Vector2(offset.x, offset.z).magnitude;
+        // The physics motor can make a small vertical grounding adjustment as
+        // soon as the actor is created. A marker mismatch is only meaningful
+        // when the actor moved sideways or was displaced by a full body height.
+        if (horizontalOffset > 0.15f || Mathf.Abs(offset.y) > 0.75f)
         {
             Debug.LogWarning("[SceneMarker] Pose de spawn incoherente pour '" + name +
                              "' | marker=" + transform.position + " | instance=" + instance.transform.position + ".", this);
