@@ -1389,8 +1389,8 @@ MonoBehaviour:
   combatSkillCinematicController: {fileID: 0}
   playerVision: {fileID: 0}
   lockedEnemy: {fileID: 0}
+  engagedEnemy: {fileID: 0}
   lockRange: 6
-  automaticUnlockRange: 7
   scaleLockRangeWithEnemy: 1
   clarityForS: 100
   successfulReactionClarity: 5
@@ -1445,6 +1445,239 @@ MonoBehaviour:
     entryBlendSeconds: 0.05
     recoveryNormalizedTime: 0.72
     movementCancelNormalizedTime: 0.7
+    dashProfiles:
+    - statePath: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_F_Root
+      distance: 2.5537548
+      durationSeconds: 1.2333333
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_B_Root
+      distance: 5.9688573
+      durationSeconds: 1.5833334
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_L_Root
+      distance: 4.4558682
+      durationSeconds: 1.0833334
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.TwinSword_Dodge_R_Root
+      distance: 4.5093656
+      durationSeconds: 1.0833334
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_F_Root
+      distance: 2.525212
+      durationSeconds: 1.1666667
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_B_Root
+      distance: 5.723923
+      durationSeconds: 1.6666667
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_L_Root
+      distance: 4.6629267
+      durationSeconds: 1
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
+    - statePath: Base Layer.RealTimeCombat_RootMotion.Twinblades_Dodge_R_Root
+      distance: 4.7052145
+      durationSeconds: 1
+      impulseSpeed: 16
+      distanceOverTime:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      blockedStepRatio: 0.35
   dodgeStartupSeconds: 0.05
   dodgeInvulnerabilitySeconds: 0.18
 --- !u!114 &810000000000000003

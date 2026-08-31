@@ -1,6 +1,27 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+
+[Serializable]
+public sealed class CombatDodgeDashProfile
+{
+    [Tooltip("Full Animator state path using this profile.")]
+    public string statePath;
+    [Min(0.01f)] public float distance = 3f;
+    [Min(0.01f)] public float durationSeconds = 0.52f;
+    [Min(0.01f), Tooltip("Initial UCC velocity-change applied once when the dodge begins. The remaining motion comes from UCC inertia.")]
+    public float impulseSpeed = 16f;
+    [Tooltip("Normalized distance travelled over the normalized dodge duration.")]
+    public AnimationCurve distanceOverTime = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [Range(0.05f, 1f), Tooltip("Stops the dash when UCC resolves less than this fraction of a requested movement step.")]
+    public float blockedStepRatio = 0.35f;
+
+    public float EvaluateDistance(float normalizedTime)
+    {
+        return Mathf.Clamp01(distanceOverTime != null ? distanceOverTime.Evaluate(Mathf.Clamp01(normalizedTime)) : normalizedTime);
+    }
+}
 
 [Serializable]
 public sealed class CombatMobilityActionSettings
@@ -9,6 +30,20 @@ public sealed class CombatMobilityActionSettings
     [Range(0f, 0.25f)] public float entryBlendSeconds = 0.05f;
     [Range(0.05f, 1f)] public float recoveryNormalizedTime = 0.72f;
     [Range(0f, 1f)] public float movementCancelNormalizedTime = 0.7f;
+    [Header("In-Place Dodge Dash")]
+    public List<CombatDodgeDashProfile> dashProfiles = new List<CombatDodgeDashProfile>();
+
+    public CombatDodgeDashProfile FindDashProfile(string statePath)
+    {
+        if (dashProfiles == null) return null;
+        for (int i = 0; i < dashProfiles.Count; i++)
+        {
+            CombatDodgeDashProfile profile = dashProfiles[i];
+            if (profile != null && string.Equals(profile.statePath, statePath, StringComparison.Ordinal)) return profile;
+        }
+
+        return null;
+    }
 }
 
 [DisallowMultipleComponent]
@@ -24,6 +59,7 @@ public sealed class CombatMobilityController : MonoBehaviour
     [Header("References")]
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private PlayerActionPresentationController actionPresentation;
+    private PlayerScriptedDodgeController scriptedDodgeController;
 
     [Header("Input Buffer")]
     [SerializeField, Min(0f)] private float mobilityInputBufferSeconds = 0.12f;
@@ -48,9 +84,31 @@ public sealed class CombatMobilityController : MonoBehaviour
     private float dodgeReadyAt;
     private float damageInvulnerableUntil;
     private Coroutine dodgeInvulnerabilityRoutine;
-    private Coroutine directionalEvasionFacingRoutine;
 
     public bool IsDamageInvulnerable => Time.unscaledTime < damageInvulnerableUntil;
+
+    public bool HasDodgeDashProfile(string statePath)
+    {
+        CombatDodgeDashProfile profile = dodge != null ? dodge.FindDashProfile(statePath) : null;
+        return profile != null && profile.distance > 0f && profile.durationSeconds > 0f && profile.impulseSpeed > 0f;
+    }
+
+    public void ConfigureDodgeDashProfile(string statePath, float distance, float durationSeconds, AnimationCurve distanceOverTime)
+    {
+        if (dodge == null || string.IsNullOrWhiteSpace(statePath)) return;
+        if (dodge.dashProfiles == null) dodge.dashProfiles = new List<CombatDodgeDashProfile>();
+
+        CombatDodgeDashProfile profile = dodge.FindDashProfile(statePath);
+        if (profile == null)
+        {
+            profile = new CombatDodgeDashProfile { statePath = statePath };
+            dodge.dashProfiles.Add(profile);
+        }
+
+        profile.distance = Mathf.Max(0.01f, distance);
+        profile.durationSeconds = Mathf.Max(0.01f, durationSeconds);
+        profile.distanceOverTime = distanceOverTime ?? AnimationCurve.Linear(0f, 0f, 1f, 1f);
+    }
 
     private void Awake()
     {
@@ -67,17 +125,7 @@ public sealed class CombatMobilityController : MonoBehaviour
             dodgeInvulnerabilityRoutine = null;
         }
 
-        if (directionalEvasionFacingRoutine != null)
-        {
-            StopCoroutine(directionalEvasionFacingRoutine);
-            directionalEvasionFacingRoutine = null;
-        }
-
-        RealTimeCombatManager manager = RealTimeCombatManager.Instance;
-        if (manager != null && manager.PlayerRoot != null)
-        {
-            manager.PlayerRoot.GetComponentInChildren<LitOpsiveLocomotionBridge>(true)?.EndDirectionalEvasionFacing();
-        }
+        scriptedDodgeController?.CancelDodge();
     }
 
     private void Update()
@@ -116,6 +164,15 @@ public sealed class CombatMobilityController : MonoBehaviour
                 : LocalPlayerContext.LocalCharacterRoot;
             if (player != null) actionPresentation = player.GetComponentInChildren<PlayerActionPresentationController>(true);
         }
+    }
+
+    private PlayerScriptedDodgeController ResolveScriptedDodgeController(RealTimeCombatManager manager)
+    {
+        Transform playerRoot = manager != null ? manager.PlayerRoot : LocalPlayerContext.LocalCharacterRoot;
+        if (playerRoot == null) return null;
+
+        scriptedDodgeController = playerRoot.GetComponentInChildren<PlayerScriptedDodgeController>(true);
+        return scriptedDodgeController;
     }
 
     private bool TryExecute(MobilityCommand command, bool allowBuffer)
@@ -187,15 +244,23 @@ public sealed class CombatMobilityController : MonoBehaviour
             state = dodgeBackwardState;
         }
 
-        bridge.BeginDirectionalEvasionFacing(direction);
-
-        if (!TryPlayMobilityState(state, dodge, PlayerActionRootMotionMode.AuthoredRootMotion, "Dodge"))
+        CombatDodgeDashProfile dashProfile = dodge.FindDashProfile(state);
+        if (dashProfile == null || dashProfile.distance <= 0f || dashProfile.durationSeconds <= 0f)
         {
-            bridge.EndDirectionalEvasionFacing();
+            Debug.LogError("[Combat Dodge] Missing in-place dash profile for '" + state + "'.", this);
             return false;
         }
 
-        BeginDirectionalEvasionRestore(bridge, waitForGrounded: false);
+        if (!TryPlayMobilityState(state, dodge, PlayerActionRootMotionMode.ScriptedDash, "Dodge"))
+        {
+            return false;
+        }
+
+        scriptedDodgeController = ResolveScriptedDodgeController(manager);
+        if (scriptedDodgeController == null || !scriptedDodgeController.TryStartDodge(bridge, actionPresentation, direction, dashProfile))
+        {
+            return false;
+        }
 
         dodgeReadyAt = Time.unscaledTime + dodge.cooldownSeconds;
         if (dodgeInvulnerabilityRoutine != null)
@@ -210,22 +275,7 @@ public sealed class CombatMobilityController : MonoBehaviour
     private bool ExecuteJump(LitOpsiveLocomotionBridge bridge)
     {
         Vector2 worldInput = bridge.CurrentWorldMoveInput;
-        Vector3 direction = new Vector3(worldInput.x, 0f, worldInput.y);
-        if (direction.sqrMagnitude > 0.0001f)
-        {
-            bridge.BeginDirectionalEvasionFacing(direction);
-        }
-
         bool started = bridge.Jump(worldInput, worldInput.sqrMagnitude > 0.0001f);
-        if (started)
-        {
-            BeginDirectionalEvasionRestore(bridge, waitForGrounded: true);
-        }
-        else
-        {
-            bridge.EndDirectionalEvasionFacing();
-        }
-
         return started;
     }
 
@@ -274,50 +324,6 @@ public sealed class CombatMobilityController : MonoBehaviour
         }
 
         dodgeInvulnerabilityRoutine = null;
-    }
-
-    private void BeginDirectionalEvasionRestore(LitOpsiveLocomotionBridge bridge, bool waitForGrounded)
-    {
-        if (directionalEvasionFacingRoutine != null)
-        {
-            StopCoroutine(directionalEvasionFacingRoutine);
-        }
-
-        directionalEvasionFacingRoutine = StartCoroutine(RestoreDirectionalEvasionFacing(bridge, waitForGrounded));
-    }
-
-    private IEnumerator RestoreDirectionalEvasionFacing(LitOpsiveLocomotionBridge bridge, bool waitForGrounded)
-    {
-        yield return null;
-        if (waitForGrounded)
-        {
-            bool leftGround = false;
-            float safetyExpiresAt = Time.unscaledTime + 2f;
-            while (bridge != null && Time.unscaledTime < safetyExpiresAt)
-            {
-                if (!bridge.Grounded || bridge.IsFlightActive)
-                {
-                    leftGround = true;
-                }
-
-                if (leftGround && bridge.Grounded && !bridge.IsFlightActive)
-                {
-                    break;
-                }
-
-                yield return null;
-            }
-        }
-        else
-        {
-            while (actionPresentation != null && actionPresentation.IsActionActive)
-            {
-                yield return null;
-            }
-        }
-
-        bridge?.EndDirectionalEvasionFacing();
-        directionalEvasionFacingRoutine = null;
     }
 
     private bool IsOffCooldown(MobilityCommand command)

@@ -217,6 +217,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     private bool combatAirborneHoldPreviousUseGravity;
     private int externalLockCount;
     private bool externalLockInputDisabled;
+    private int scriptedPlanarMotionLockCount;
     private bool progressiveExternalStopActive;
     private bool hasPlayerActionRootMotionMode;
     private PlayerActionRootMotionMode playerActionRootMotionMode;
@@ -273,6 +274,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
                              locomotionHandler != null && locomotionHandler.isActiveAndEnabled;
     public bool IsScriptedTraversalActive => scriptedTraversalLockCount > 0 || scriptedTraversalReleaseRoutine != null;
     public bool IsExternalLockActive => externalLockCount > 0;
+    public bool IsScriptedPlanarMotionActive => scriptedPlanarMotionLockCount > 0;
     public bool IsInputSuppressedByUcc => IsScriptedTraversalActive || IsExternalLockActive;
     public bool IsFlightActive => IsFlightModeActive;
     public bool Grounded => locomotion != null && locomotion.Grounded;
@@ -930,6 +932,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             scriptedTraversalReleaseRoutine = null;
         }
         externalLockCount = 0;
+        scriptedPlanarMotionLockCount = 0;
         scriptedTraversalLockCount = 0;
         scriptedTraversalPoseActive = false;
         // Le portail peut avoir decharge l'objet qui possedait le verrou avant
@@ -1096,6 +1099,68 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     }
 
     /// <summary>
+    /// Acquires a UCC-only planar motion slot. It is used by in-place combat
+    /// mobility: input is neutralized, but gravity and collision remain UCC's.
+    /// </summary>
+    public bool BeginScriptedPlanarMotion()
+    {
+        if (!BeginExternalLock(disableGameplayInput: false, stopActiveAbilities: false))
+        {
+            return false;
+        }
+
+        scriptedPlanarMotionLockCount++;
+        return true;
+    }
+
+    /// <summary>Sets the desired horizontal velocity without ever writing the Transform directly.</summary>
+    public bool DriveScriptedPlanarMotion(Vector3 desiredWorldVelocity)
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || scriptedPlanarMotionLockCount <= 0)
+        {
+            return false;
+        }
+
+        Vector3 targetPlanarVelocity = Vector3.ProjectOnPlane(desiredWorldVelocity, transform.up);
+        Vector3 currentPlanarVelocity = Vector3.ProjectOnPlane(locomotion.Velocity, transform.up);
+        locomotion.AddForce(targetPlanarVelocity - currentPlanarVelocity, 1, false);
+        return true;
+    }
+
+    /// <summary>Applies one horizontal velocity-change while the scripted motion slot owns input.</summary>
+    public bool ApplyScriptedPlanarImpulse(Vector3 worldImpulse)
+    {
+        ResolveReferences();
+        if (!IsDriving || locomotion == null || scriptedPlanarMotionLockCount <= 0)
+        {
+            return false;
+        }
+
+        Vector3 planarImpulse = Vector3.ProjectOnPlane(worldImpulse, transform.up);
+        if (planarImpulse.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        locomotion.AddForce(planarImpulse, 1, false);
+        return true;
+    }
+
+    /// <summary>Releases a planar motion slot and restores ordinary UCC input on the next frame.</summary>
+    public void EndScriptedPlanarMotion()
+    {
+        if (scriptedPlanarMotionLockCount <= 0)
+        {
+            scriptedPlanarMotionLockCount = 0;
+            return;
+        }
+
+        scriptedPlanarMotionLockCount--;
+        EndExternalLock();
+    }
+
+    /// <summary>
     /// Teleporte le personnage lors d'un changement de zone. Contrairement a
     /// un simple correctif de position, cette operation avertit UCC que
     /// l'Animator, les capacites et la camera doivent etre synchronises
@@ -1248,6 +1313,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
 
         externalLockCount = 0;
+        scriptedPlanarMotionLockCount = 0;
         scriptedTraversalLockCount = 0;
         scriptedTraversalPoseActive = false;
         StopBridgeInput();
@@ -1548,23 +1614,28 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         return true;
     }
 
-    /// <summary>Allows an authored dodge or jump to own facing until it completes.</summary>
-    public void BeginDirectionalEvasionFacing(Vector3 worldDirection)
+    /// <summary>
+    /// Gives a dodge exclusive yaw authority. A forward dodge can align to its
+    /// travel vector; a locked side/back dodge keeps its entry combat facing.
+    /// </summary>
+    public void BeginDodgeDirectionFacing(Vector3 worldDirection, bool alignToTravelDirection)
     {
-        worldDirection.y = 0f;
-        if (!combatLockActive || worldDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
         combatDirectionalEvasionFacing = true;
         ResetCombatOrbitRadius();
-        SetCombatFacingDirection(worldDirection);
+        if (alignToTravelDirection)
+        {
+            worldDirection.y = 0f;
+            if (worldDirection.sqrMagnitude > 0.0001f)
+            {
+                SetCombatFacingDirection(worldDirection);
+            }
+        }
+
         RefreshRootMotionLocomotionSettings();
     }
 
-    /// <summary>Returns yaw authority to the currently locked enemy.</summary>
-    public void EndDirectionalEvasionFacing()
+    /// <summary>Returns yaw authority to lock-on or ordinary locomotion after a dodge.</summary>
+    public void EndDodgeDirectionFacing()
     {
         if (!combatDirectionalEvasionFacing)
         {
