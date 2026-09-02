@@ -27,7 +27,8 @@ public sealed class CombatSkillTimelineAuthoringRigEditor : Editor
             if (CombatSkillRuntimeRigBaker.Bake(rig, out CombatCinematicRig baked, out string report))
             {
                 Selection.activeObject = baked;
-                Debug.Log("[Combat Skill Bake] " + report, baked);
+                if (report.Contains("Avertissements")) Debug.LogWarning("[Combat Skill Bake] " + report, baked);
+                else Debug.Log("[Combat Skill Bake] " + report, baked);
             }
             else EditorUtility.DisplayDialog("Bake Combat Skill", report, "OK");
         }
@@ -71,11 +72,6 @@ public static class CombatSkillRuntimeRigBaker
         }
         TimelineAsset timeline = authoring.Skill.Cinematic.Timeline as TimelineAsset;
         if (timeline == null) { report = "La Timeline du SkillSO est introuvable."; return false; }
-        if (CountCinematicImpactEvents(timeline) != 1)
-        {
-            report = "La Timeline doit contenir exactement un Animation Event 'ResolveCinematicSkillImpact'.";
-            return false;
-        }
 
         foreach (PlayableBinding output in timeline.outputs)
         {
@@ -97,32 +93,30 @@ public static class CombatSkillRuntimeRigBaker
         return true;
     }
 
-    private static int CountCinematicImpactEvents(TimelineAsset timeline)
-    {
-        int count = 0;
-        foreach (PlayableBinding output in timeline.outputs)
-        {
-            if (output.sourceObject is not AnimationTrack track) continue;
-            foreach (TimelineClip timelineClip in track.GetClips())
-            {
-                if (timelineClip.asset is not AnimationPlayableAsset animationAsset || animationAsset.clip == null) continue;
-                AnimationEvent[] events = AnimationUtility.GetAnimationEvents(animationAsset.clip);
-                for (int i = 0; i < events.Length; i++)
-                {
-                    if (events[i].functionName == "ResolveCinematicSkillImpact") count++;
-                }
-            }
-        }
-        return count;
-    }
-
     public static bool Bake(CombatSkillTimelineAuthoringRig authoring, out CombatCinematicRig bakedRig, out string report)
     {
         bakedRig = null;
-        if (!Validate(authoring, out report)) return false;
+        report = null;
+        if (authoring == null || authoring.Skill == null)
+        {
+            report = "Rig d'auteur ou SkillSO manquant.";
+            return false;
+        }
 
         SkillSO skill = authoring.Skill;
         TimelineAsset source = skill.Cinematic.Timeline as TimelineAsset;
+        if (source == null)
+        {
+            report = "La Timeline source du SkillSO est introuvable.";
+            return false;
+        }
+
+        List<string> warnings = new List<string>();
+        if (!Validate(authoring, out string validationReport))
+        {
+            warnings.Add(validationReport);
+        }
+
         string folder = Path.GetDirectoryName(AssetDatabase.GetAssetPath(skill))?.Replace('\\', '/');
         if (string.IsNullOrWhiteSpace(folder)) { report = "Dossier du SkillSO introuvable."; return false; }
 
@@ -156,7 +150,7 @@ public static class CombatSkillRuntimeRigBaker
             root.AddComponent<SignalReceiver>();
             root.AddComponent<LitTimelineCinemachineBridge>();
             CombatCinematicRig rig = root.AddComponent<CombatCinematicRig>();
-            ApplyCameraBindings(authoring, runtime, root.transform, rig);
+            ApplyCameraBindings(authoring, runtime, root.transform, rig, warnings);
 
             PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             AssetDatabase.DeleteAsset(timelinePath);
@@ -171,6 +165,11 @@ public static class CombatSkillRuntimeRigBaker
             EditorUtility.SetDirty(skill);
             AssetDatabase.SaveAssets();
             report = "Package runtime bake : " + prefabPath + "\nTimeline runtime : " + timelinePath;
+            if (warnings.Count > 0)
+            {
+                report += "\n\nAvertissements : le package a ete exporte partiellement.\n- " +
+                          string.Join("\n- ", warnings);
+            }
             return true;
         }
         finally
@@ -192,11 +191,24 @@ public static class CombatSkillRuntimeRigBaker
         }
     }
 
-    private static void ApplyCameraBindings(CombatSkillTimelineAuthoringRig authoring, TimelineAsset timeline, Transform parent, CombatCinematicRig rig)
+    private static void ApplyCameraBindings(
+        CombatSkillTimelineAuthoringRig authoring,
+        TimelineAsset timeline,
+        Transform parent,
+        CombatCinematicRig rig,
+        List<string> warnings)
     {
         SerializedObject serializedRig = new SerializedObject(rig);
         SerializedProperty bindings = serializedRig.FindProperty("cameraBindings");
         List<(string key, CinemachineCamera camera)> copied = new List<(string, CinemachineCamera)>();
+        if (authoring.Director == null)
+        {
+            warnings.Add("PlayableDirector auteur manquant : aucune camera Cinemachine n'a ete exportee.");
+            bindings.arraySize = 0;
+            serializedRig.ApplyModifiedPropertiesWithoutUndo();
+            return;
+        }
+
         foreach (PlayableBinding output in timeline.outputs)
         {
             if (output.sourceObject is not CinemachineTrack track) continue;
@@ -207,7 +219,11 @@ public static class CombatSkillRuntimeRigBaker
                 if (copied.Exists(item => item.key == key)) continue;
                 bool valid;
                 CinemachineCamera source = authoring.Director.GetReferenceValue(shot.VirtualCamera.exposedName, out valid) as CinemachineCamera;
-                if (!valid || source == null) continue;
+                if (!valid || source == null)
+                {
+                    warnings.Add("Camera Cinemachine non resolue pour la cle '" + key + "' : fallback gameplay au runtime.");
+                    continue;
+                }
                 CinemachineCamera copy = Object.Instantiate(source.gameObject, parent).GetComponent<CinemachineCamera>();
                 copy.name = "Camera_" + (copied.Count + 1);
                 copied.Add((key, copy));

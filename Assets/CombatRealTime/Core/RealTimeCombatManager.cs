@@ -19,6 +19,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     [SerializeField] private CombatMobilityController playerMobility;
     [SerializeField] private RealTimeCombatInput combatInput;
     [SerializeField] private CombatSkillCinematicController combatSkillCinematicController;
+    [SerializeField] private CombatHealthThresholdController combatHealthThresholdController;
     [SerializeField] private VisionField playerVision;
     [SerializeField] private RealTimeCombatEnemy lockedEnemy;
     [SerializeField, Tooltip("Ennemi qui porte l'agression active. Il reste engage quand la camera est deverrouillee.")]
@@ -176,6 +177,14 @@ public sealed class RealTimeCombatManager : MonoBehaviour
                 combatSkillCinematicController = gameObject.AddComponent<CombatSkillCinematicController>();
             }
         }
+        if (combatHealthThresholdController == null)
+        {
+            combatHealthThresholdController = GetComponent<CombatHealthThresholdController>();
+            if (combatHealthThresholdController == null)
+            {
+                combatHealthThresholdController = gameObject.AddComponent<CombatHealthThresholdController>();
+            }
+        }
         if (GetComponent<CombatThreatPanelController>() == null)
         {
             gameObject.AddComponent<CombatThreatPanelController>();
@@ -290,6 +299,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
 
     public void EndCombat()
     {
+        combatHealthThresholdController?.AbortActiveSequence("fin de combat");
         combatActive = false;
         IsCinematicSequenceActive = false;
         CloseReactionWindow(notify: false);
@@ -704,6 +714,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         PlayPlayerSkillStartSfx(skill, actionStarted);
         if (actionStarted)
         {
+            playerActionPresentation.BeginTargetLunge(skill, lockedEnemy);
             PlayerSkillStarted?.Invoke(skill, lockedEnemy);
         }
         return actionStarted;
@@ -881,6 +892,26 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         EvaluateCombatOutcome();
     }
 
+    /// <summary>
+    /// Fin authored by a successful health-threshold QTE. This is deliberately
+    /// distinct from a normal victory: the threshold cinematic already carries
+    /// the payoff, so the combat HUD closes without opening a second result UI.
+    /// </summary>
+    public bool CompleteThresholdKill(RealTimeCombatEnemy enemy)
+    {
+        if (enemy == null || !enemy.ForceDefeatFromThreshold())
+        {
+            return false;
+        }
+
+        if (engagedEnemy == enemy || lockedEnemy == enemy)
+        {
+            EndCombat();
+        }
+
+        return true;
+    }
+
     public void CancelPlayerActionForCinematic()
     {
         playerActionPresentation?.CancelAction();
@@ -945,6 +976,68 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public void UnlockPlayerAfterCinematic()
     {
         playerController?.EndUccExternalLock();
+    }
+
+    /// <summary>
+    /// Drives an authored threshold-failure recoil through UCC only. The motion
+    /// ends early when collision prevents progress, never by moving the root.
+    /// </summary>
+    public void ApplyThresholdFailureKnockback(RealTimeCombatEnemy source, float distance = 3f)
+    {
+        ResolvePlayerReferences();
+        if (source == null || playerRoot == null || playerLocomotionBridge == null || distance <= 0f)
+        {
+            return;
+        }
+
+        StartCoroutine(ApplyThresholdFailureKnockbackRoutine(source.transform, distance));
+    }
+
+    private System.Collections.IEnumerator ApplyThresholdFailureKnockbackRoutine(Transform source, float distance)
+    {
+        if (source == null || playerRoot == null || playerLocomotionBridge == null ||
+            !playerLocomotionBridge.BeginScriptedPlanarMotion())
+        {
+            yield break;
+        }
+
+        Vector3 direction = playerRoot.position - source.position;
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = -source.forward;
+            direction.y = 0f;
+        }
+        direction.Normalize();
+
+        const float speed = 10f;
+        float traveled = 0f;
+        float stalledFor = 0f;
+        Vector3 previous = playerRoot.position;
+        try
+        {
+            while (traveled < distance && stalledFor < 0.12f)
+            {
+                playerLocomotionBridge.DriveScriptedPlanarMotion(direction * speed);
+                yield return new WaitForFixedUpdate();
+
+                if (playerRoot == null)
+                {
+                    yield break;
+                }
+
+                Vector3 current = playerRoot.position;
+                float step = Vector3.ProjectOnPlane(current - previous, Vector3.up).magnitude;
+                traveled += step;
+                stalledFor = step < 0.002f ? stalledFor + Time.fixedDeltaTime : 0f;
+                previous = current;
+            }
+        }
+        finally
+        {
+            playerLocomotionBridge?.DriveScriptedPlanarMotion(Vector3.zero);
+            playerLocomotionBridge?.EndScriptedPlanarMotion();
+        }
     }
 
     /// <summary>Restores Lucian's authored locomotion state after a cinematic Timeline releases UCC.</summary>

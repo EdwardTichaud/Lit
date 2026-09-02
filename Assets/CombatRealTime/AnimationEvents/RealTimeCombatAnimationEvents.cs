@@ -144,7 +144,37 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
     public void ResolveEnemyAttackImpact()
     {
         TraceEnemyEvent(nameof(ResolveEnemyAttackImpact));
-        RealTimeCombatManager.Instance?.ResolveEnemyAttackImpact(ResolveEnemy());
+        RealTimeCombatEnemy enemy = ResolveEnemy();
+
+        // A threshold retaliation can reuse any authored enemy attack. Its
+        // ordinary impact event becomes the threshold-specific hit while that
+        // one-off response owns the encounter.
+        if (CombatHealthThresholdController.Instance?.TryResolveThresholdFailureImpact(enemy) == true)
+        {
+            return;
+        }
+
+        RealTimeCombatManager.Instance?.ResolveEnemyAttackImpact(enemy);
+    }
+
+    /// <summary>
+    /// Enemy Animation Event reserved for the retaliation following a missed
+    /// health-threshold QTE. It applies the authored skill impact once, then
+    /// lets UCC perform the collision-aware three metre recoil.
+    /// </summary>
+    public void ResolveThresholdFailureImpact()
+    {
+        TraceEnemyEvent(nameof(ResolveThresholdFailureImpact));
+        CombatHealthThresholdController.Instance?.ResolveThresholdFailureImpact(ResolveEnemy());
+    }
+
+    /// <summary>
+    /// Player animation event for a health-threshold QTE. Valid values are
+    /// Y, B, A and X; the active threshold session owns validation and timing.
+    /// </summary>
+    public void QTE(string input)
+    {
+        CombatHealthThresholdController.Instance?.OpenQte(input);
     }
 
     public void EndEnemyAttack()
@@ -157,6 +187,10 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
 
         ClearEnemyDashInitialPosition();
+        if (CombatHealthThresholdController.Instance?.TryCompleteFailureRetaliation(currentEnemy) == true)
+        {
+            return;
+        }
         currentEnemy.CompleteEnemyAttackWhenGrounded(() =>
         {
             RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);

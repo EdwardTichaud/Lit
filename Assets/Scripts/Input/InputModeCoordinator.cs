@@ -14,6 +14,7 @@ public enum InputMode
     UserInterface,
     Placement,
     Combat,
+    CombatQTE,
     CombatWheel,
     Cinematic,
     Disabled
@@ -197,6 +198,7 @@ public sealed class InputModeCoordinator : MonoBehaviour
                 yield return "RealTimeCombat";
                 yield break;
             case InputMode.CombatWheel: yield return "CombatWheel"; yield break;
+            case InputMode.CombatQTE: yield return "CombatQTE"; yield break;
             case InputMode.Cinematic:
             case InputMode.Disabled: yield break;
         }

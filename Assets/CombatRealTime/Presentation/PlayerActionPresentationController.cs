@@ -16,6 +16,9 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     [SerializeField] private bool debugTransitions;
 
     private Coroutine actionRoutine;
+    private Coroutine targetLungeRoutine;
+    private int targetLungeToken;
+    private bool targetLungeOwnsPlanarMotion;
     private int activeStateHash;
     private int activeToken;
     private PlayerActionRootMotionMode activeRootMotionMode;
@@ -134,6 +137,7 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     {
         bool hadAction = actionActive || hasBufferedAction;
         activeToken++;
+        CancelTargetLunge();
         if (actionRoutine != null)
         {
             StopCoroutine(actionRoutine);
@@ -228,6 +232,120 @@ public sealed class PlayerActionPresentationController : MonoBehaviour
     private void OnDisable()
     {
         CancelAction();
+    }
+
+    /// <summary>
+    /// Starts an optional, entirely UCC-driven approach/rebound for a player
+    /// Skill. It is deliberately independent from Animator root motion.
+    /// </summary>
+    public void BeginTargetLunge(SkillSO skill, RealTimeCombatEnemy target)
+    {
+        PlayerTargetLungeProfile profile = skill != null ? skill.TargetLunge : null;
+        if (profile == null || !profile.enabled || target == null || locomotionBridge == null || !locomotionBridge.IsDriving)
+        {
+            return;
+        }
+
+        CancelTargetLunge();
+        // A target lunge is authored as an in-place animation even if a stale
+        // Skill asset still carries an old root-motion presentation setting.
+        locomotionBridge.SetPlayerActionRootMotionMode(PlayerActionRootMotionMode.InPlace, false, false);
+        targetLungeRoutine = StartCoroutine(RunTargetLunge(profile, target, ++targetLungeToken, activeToken));
+    }
+
+    private void CancelTargetLunge()
+    {
+        targetLungeToken++;
+        if (targetLungeRoutine != null)
+        {
+            StopCoroutine(targetLungeRoutine);
+            targetLungeRoutine = null;
+        }
+
+        if (targetLungeOwnsPlanarMotion)
+        {
+            locomotionBridge?.DriveScriptedPlanarMotion(Vector3.zero);
+            locomotionBridge?.EndScriptedPlanarMotion();
+            targetLungeOwnsPlanarMotion = false;
+        }
+    }
+
+    private IEnumerator RunTargetLunge(PlayerTargetLungeProfile profile, RealTimeCombatEnemy target, int lungeToken, int actionToken)
+    {
+        if (!locomotionBridge.BeginScriptedPlanarMotion())
+        {
+            yield break;
+        }
+
+        targetLungeOwnsPlanarMotion = true;
+        bool reachedTarget = false;
+        float elapsed = 0f;
+        int blockedFrames = 0;
+        try
+        {
+            while (lungeToken == targetLungeToken && actionToken == activeToken && actionActive && target != null)
+            {
+                Transform targetTransform = target.LockPoint != null ? target.LockPoint : target.transform;
+                Vector3 toTarget = Vector3.ProjectOnPlane(targetTransform.position - transform.position, Vector3.up);
+                float distance = toTarget.magnitude;
+                float arrivalDistance = profile.stoppingDistance + profile.contactTolerance;
+                if (distance <= arrivalDistance)
+                {
+                    reachedTarget = true;
+                    break;
+                }
+
+                if (elapsed >= profile.approachDurationSeconds)
+                {
+                    break;
+                }
+
+                Vector3 direction = toTarget / Mathf.Max(0.0001f, distance);
+                locomotionBridge.SetActionFacingDirection(direction);
+                float remaining = Mathf.Max(0.025f, profile.approachDurationSeconds - elapsed);
+                // This is a rapid Lerp-style convergence expressed as an UCC
+                // target velocity, rather than a direct Transform interpolation.
+                float speed = Mathf.Min(profile.maximumApproachSpeed, distance / remaining);
+                Vector3 before = transform.position;
+                if (!locomotionBridge.DriveScriptedPlanarMotion(direction * speed))
+                {
+                    break;
+                }
+
+                yield return null;
+                elapsed += Time.unscaledDeltaTime;
+                float moved = Vector3.ProjectOnPlane(transform.position - before, Vector3.up).magnitude;
+                if (moved < 0.002f) blockedFrames++; else blockedFrames = 0;
+                if (blockedFrames >= 3) break;
+            }
+        }
+        finally
+        {
+            if (targetLungeOwnsPlanarMotion)
+            {
+                locomotionBridge.DriveScriptedPlanarMotion(Vector3.zero);
+                locomotionBridge.EndScriptedPlanarMotion();
+                targetLungeOwnsPlanarMotion = false;
+            }
+            targetLungeRoutine = null;
+        }
+
+        if (lungeToken != targetLungeToken || actionToken != activeToken || !actionActive || !reachedTarget || target == null)
+        {
+            yield break;
+        }
+
+        Vector3 away = Vector3.ProjectOnPlane(transform.position - target.transform.position, Vector3.up);
+        if (away.sqrMagnitude <= 0.0001f) away = -transform.forward;
+        away.Normalize();
+        Vector3 impulse = away * profile.reboundHorizontalImpulse + Vector3.up * profile.reboundVerticalImpulse;
+        locomotionBridge.AddExternalImpulseUntilGrounded(
+            impulse,
+            ForceMode.VelocityChange,
+            profile.minimumInputLockSeconds,
+            profile.maximumInputLockSeconds,
+            profile.airborneInertiaSeconds,
+            profile.airborneInertiaEndSpeedMultiplier);
     }
 
     private void LateUpdate()

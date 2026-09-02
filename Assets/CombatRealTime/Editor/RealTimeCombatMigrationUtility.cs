@@ -31,7 +31,6 @@ public static class RealTimeCombatMigrationUtility
         "CombatDefensePanelController",
         "CombatAggroEnemy",
         "CombatAnimationEvents",
-        "TimeManager",
         "RealTimeCombatHud"
     };
 

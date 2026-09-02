@@ -44,6 +44,8 @@ public class KnowledgeManager : MonoBehaviour
     private string unlockAnimationState = "Knowledge_Unlock";
     [SerializeField, Tooltip("Duree du crossfade d'animation.")]
     private float unlockAnimationCrossfade = 0.05f;
+    [SerializeField, Tooltip("Option legacy. Desactive par defaut : une connaissance ne doit jamais interrompre l'Animator pilote par UCC du personnage.")]
+    private bool playCharacterUnlockAnimation;
 
     [Header("Unlock Text")]
     [SerializeField, Tooltip("Affiche un texte au-dessus du personnage.")]
@@ -453,7 +455,14 @@ public class KnowledgeManager : MonoBehaviour
             ShowUnlockText(anchor, knowledge);
         }
 
-        PlayUnlockAnimationOnSquad();
+        // UCC est l'unique proprietaire des etats de locomotion. Forcer un CrossFade ici
+        // faisait entrer le personnage dans Knowledge_Unlock, dont certaines courbes ecrasent
+        // les parametres de locomotion. Cela bloquait le deplacement jusqu'au prochain saut.
+        // Le feedback de connaissance reste porte par l'UI, le son et le VFX.
+        if (playCharacterUnlockAnimation)
+        {
+            PlayUnlockAnimationOnSquad();
+        }
     }
 
     private Transform ResolveAnchor()
@@ -637,7 +646,9 @@ public class KnowledgeManager : MonoBehaviour
             for (int j = 0; j < animators.Length; j++)
             {
                 Animator animator = animators[j];
-                if (animator == null || !animator.HasState(0, stateHash))
+                // Certains enfants ne sont que des renderers et n'ont pas de controller.
+                // HasState journalise alors un warning Unity inutile.
+                if (animator == null || animator.runtimeAnimatorController == null || !animator.HasState(0, stateHash))
                 {
                     continue;
                 }

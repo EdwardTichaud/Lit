@@ -1315,6 +1315,7 @@ GameObject:
   - component: {fileID: 1205114612473753433}
   - component: {fileID: 6062841937014225081}
   - component: {fileID: 410000000000000003}
+  - component: {fileID: 5055366391145990297}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -1387,6 +1388,7 @@ MonoBehaviour:
   playerMobility: {fileID: 810000000000000007}
   combatInput: {fileID: 810000000000000002}
   combatSkillCinematicController: {fileID: 0}
+  combatHealthThresholdController: {fileID: 0}
   playerVision: {fileID: 0}
   lockedEnemy: {fileID: 0}
   engagedEnemy: {fileID: 0}
@@ -1893,6 +1895,35 @@ MonoBehaviour:
   customPassVolume: {fileID: 410000000000000004}
   warningMaterial: {fileID: 2100000, guid: e3ab94fc0721436cb7dba1f3c6f8329d, type: 2}
   customPassName: Combat Warning
+--- !u!114 &5055366391145990297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806913923367657188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14c16264ee6e6b8428b89e0500662619, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatHealthThresholdController
+  combatManager: {fileID: 0}
+  combatInput: {fileID: 0}
+  qtePanel: {fileID: 0}
+  qteLocalTimeField: {fileID: 0}
+  failureRetaliationGraceSeconds: 1.5
+  stageDistance: 2
+  stageGroundMask:
+    serializedVersion: 2
+    m_Bits: 2080440315
+  stageBlockingMask:
+    serializedVersion: 2
+    m_Bits: 2080440315
+  stageRetrySeconds: 0.15
+  stageClearance: 0.03
+  logDiagnostics: 1
+  qteDurationSeconds: 1
+  qteEventTimeoutSeconds: 3
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0
@@ -4138,6 +4169,7 @@ MonoBehaviour:
   unlockSfx: {fileID: 11400000, guid: 886c90226f19f6640bfd641f552ac32b, type: 2}
   unlockAnimationState: Knowledge_Unlock
   unlockAnimationCrossfade: 0.05
+  playCharacterUnlockAnimation: 0
   showUnlockText: 1
   unlockTextPrefab: {fileID: 5948826745277676634, guid: 7b9a7ee676881344784b44f6d6cfdbba, type: 3}
   unlockTextRoot: {fileID: 0}

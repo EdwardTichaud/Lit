@@ -12,6 +12,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SpiritBondController : MonoBehaviour
 {
+    private static readonly int MeltStateHash = Animator.StringToHash("Melt");
+
     [SerializeField, Tooltip("Incarnation that hosts this spirit. Empty resolves to the parent character.")]
     private Transform hostCharacter;
     [SerializeField, Tooltip("Only this visual root is hidden while the spirit is fused; companion gameplay remains active.")]
@@ -28,6 +30,7 @@ public sealed class SpiritBondController : MonoBehaviour
     private readonly HashSet<SpiritWeaponManifestation> externalManifestations = new HashSet<SpiritWeaponManifestation>();
     private bool fused;
     private bool cinematicFusion;
+    private bool holyEffectAwaitingMeltExit;
 
     public bool IsFused => fused;
     public bool IsCinematicFusion => cinematicFusion;
@@ -47,6 +50,17 @@ public sealed class SpiritBondController : MonoBehaviour
         RefreshSpiritVisibility();
     }
 
+    private void Update()
+    {
+        // A transition can interrupt the clip before its trailing event runs.
+        // Leaving Melt is therefore the fallback authority for its effect.
+        if (holyEffectAwaitingMeltExit && !IsMeltPlaying())
+        {
+            holyEffectAwaitingMeltExit = false;
+            StopHoly();
+        }
+    }
+
     private void OnDisable()
     {
         UnbindWeaponManifestations();
@@ -58,6 +72,7 @@ public sealed class SpiritBondController : MonoBehaviour
 
         cinematicFusion = false;
         fused = false;
+        holyEffectAwaitingMeltExit = false;
         RefreshSpiritVisibility();
         holyEffect?.StopEffect();
     }
@@ -113,6 +128,7 @@ public sealed class SpiritBondController : MonoBehaviour
 #endif
         ResolveReferences();
         PlayHoly();
+        holyEffectAwaitingMeltExit = !cinematicFusion && IsMeltPlaying();
     }
 
     /// <summary>AnimationEvent: stops Holy at the precise authored frame.</summary>
@@ -121,6 +137,7 @@ public sealed class SpiritBondController : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: Holy stop requested by AnimationEvent.", this);
 #endif
+        holyEffectAwaitingMeltExit = false;
         StopHoly();
     }
 
@@ -384,6 +401,23 @@ public sealed class SpiritBondController : MonoBehaviour
         Debug.Log($"[SpiritBond] Frame {Time.frameCount}: CharacterEffect.StopEffect() on '{holyEffect.name}'.", holyEffect);
 #endif
         holyEffect.StopEffect();
+    }
+
+    private bool IsMeltPlaying()
+    {
+        if (hostAnimator == null)
+        {
+            return false;
+        }
+
+        AnimatorStateInfo current = hostAnimator.GetCurrentAnimatorStateInfo(0);
+        if (current.shortNameHash == MeltStateHash)
+        {
+            return true;
+        }
+
+        return hostAnimator.IsInTransition(0) &&
+               hostAnimator.GetNextAnimatorStateInfo(0).shortNameHash == MeltStateHash;
     }
 
     private void SetSpiritVisible(bool visible)

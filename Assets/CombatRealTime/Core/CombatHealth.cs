@@ -120,6 +120,18 @@ public class CombatHealth : MonoBehaviour
         return before - currentHp;
     }
 
+    /// <summary>Defeats this combatant without routing through damage modifiers.</summary>
+    public void ForceDefeat()
+    {
+        if (currentHp <= 0)
+        {
+            return;
+        }
+
+        currentHp = 0;
+        HealthChanged?.Invoke(this);
+    }
+
     /// <summary>
     /// Restaure les PV courants au maximum.
     /// </summary>

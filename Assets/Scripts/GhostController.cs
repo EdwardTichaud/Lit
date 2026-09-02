@@ -19,7 +19,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.Playables;
 using UnityEngine.UI;
 using Lit.Story;
@@ -156,6 +155,32 @@ public class GhostDissolveEffectRule
     }
 }
 
+/// <summary>
+/// Relaye le survol souris et la selection EventSystem d'un choix de fantome
+/// vers le curseur auteur GhostChoiceCursor.
+/// </summary>
+public sealed class GhostReactionChoiceCursorTarget : MonoBehaviour, IPointerEnterHandler, ISelectHandler
+{
+    private GhostController owner;
+    private Button button;
+
+    public void Initialize(GhostController controller, Button sourceButton)
+    {
+        owner = controller;
+        button = sourceButton;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        owner?.FocusReactionChoiceCursor(button);
+    }
+
+    public void OnSelect(BaseEventData eventData)
+    {
+        owner?.FocusReactionChoiceCursor(button);
+    }
+}
+
 public enum GhostResolutionActionType { PlayAnimationState, SetDoorOpen, SpawnPrefab, PlayTimeline, PlayStorySequence }
 
 [System.Serializable]
@@ -205,7 +230,7 @@ public sealed class GhostResolutionSpawnMarker : MonoBehaviour
 /// </summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Lit/Narrative/Ghost Controller")]
-public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver, IRuntimeOutlineVisibilityGate
+public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, ILitInfluenceReceiver, IRuntimeOutlineVisibilityGate, IInputModeHandler
 {
     [Header("Data")]
     /// <summary>Ghost investigation data assigned to this scene object.</summary>
@@ -262,9 +287,9 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private bool showReactionChoiceUi = true;
     [SerializeField, Tooltip("Si une seule reaction est disponible, elle est jouee directement.")]
     private bool autoUseSingleAvailableReaction = true;
-    [SerializeField, Tooltip("Parent UI optionnel pour la fenetre des reactions. Laisse vide pour creer un canvas simple.")]
+    [SerializeField, Tooltip("Compatibilite d'anciens prefabs. Les reactions utilisent le panneau GhostReactionChoicePanel de UI_Overlay.")]
     private Transform reactionChoiceParent;
-    [SerializeField, Tooltip("Largeur cible de la fenetre generee si aucun parent/prefab dedie n'est fourni.")]
+    [SerializeField, Tooltip("Compatibilite d'anciens prefabs. La largeur est desormais authorisee dans GhostReactionChoicePanel.")]
     private float reactionChoiceWidth = 680f;
     [SerializeField, Tooltip("Libelle du bouton de fermeture.")]
     private string closeChoiceText = "Reculer";
@@ -336,7 +361,7 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private bool outlineVisibleBelowDissolveThreshold = true;
     [SerializeField, Tooltip("Autorise l'outline du fantome lorsqu'il est la cible interactive actuellement la plus proche du joueur.")]
     private bool outlineWhileGhostIsRevealed = true;
-    [SerializeField, Min(0.1f), Tooltip("Distance maximale tres proche a laquelle l'outline du fantome est visible.")]
+    [SerializeField, Min(0.1f), Tooltip("Portee supplementaire optionnelle de l'outline. La portee d'interaction est toujours respectee.")]
     private float ghostOutlineActivationDistance = 1.35f;
 
     [Header("Light Influence")]
@@ -364,7 +389,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private readonly List<GhostKnowledgeReaction> availableReactionBuffer = new List<GhostKnowledgeReaction>();
     private readonly List<GhostKnowledgeReaction> choiceReactionBuffer = new List<GhostKnowledgeReaction>();
     private readonly List<Button> reactionChoiceButtons = new List<Button>();
+    private readonly List<Button> sceneReactionChoiceButtons = new List<Button>();
+    private readonly List<Button> runtimeReactionChoiceButtons = new List<Button>();
     private readonly Dictionary<Button, GhostKnowledgeReaction> reactionByChoiceButton = new Dictionary<Button, GhostKnowledgeReaction>();
+    private readonly Dictionary<Button, UnityAction> reactionChoiceButtonListeners = new Dictionary<Button, UnityAction>();
     private readonly List<GhostDissolveController> proximityDissolveControllers = new List<GhostDissolveController>();
     private readonly List<Renderer> ghostVisibilityRenderers = new List<Renderer>();
     private readonly HashSet<Renderer> ghostVisibilityRendererSet = new HashSet<Renderer>();
@@ -385,10 +413,15 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
     private Canvas interactionCanvas;
     private GameObject reactionChoicePanelInstance;
     private Transform reactionChoiceContentRoot;
+    private CanvasGroup reactionChoiceCanvasGroup;
+    private RectTransform reactionChoiceCursor;
+    private RectTransform reactionChoiceCursorTarget;
+    private bool reactionChoicePanelIsSceneOwned;
     private GhostKnowledgeReaction defaultChoiceReaction;
     private int reactionChoiceShownFrame = -1;
     private bool reactionChoiceAwaitingFreshInteract;
     private Coroutine reactionChoiceInputRearmRoutine;
+    private float reactionChoiceNextNavigateTime;
     private Collider resolvedInteractionCollider;
     private bool isUnderstood;
     private int currentPuzzleStepIndex;
@@ -438,6 +471,14 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void Awake()
     {
+        // The shared UI panel is authored in ApplicationRoot. Keep it active
+        // but transparent so its layout remains valid while it is closed.
+        Transform sharedReactionPanel = FindSceneTransformByName("GhostReactionChoicePanel");
+        if (sharedReactionPanel != null)
+        {
+            SetReactionChoicePanelVisibility(sharedReactionPanel.gameObject, false);
+        }
+
         NormalizeProximityDissolveConfiguration();
         RuntimeOutlineUtility.EnsureOutlineTargets(gameObject);
         resolvedInteractionCollider = CharacterInteractionDetection.ResolveInteractionCollider(this, interactionCollider);
@@ -493,6 +534,10 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         RefreshRevealState(instantDissolve: false);
         RefreshRuntimeOutlineVisibility();
         UpdateInteractionUiPosition();
+        if (reactionChoiceCursorTarget != null && reactionChoiceCursor != null && reactionChoiceCursor.gameObject.activeSelf)
+        {
+            UpdateReactionChoiceCursorPosition();
+        }
     }
 
     private void OnValidate()
@@ -1129,17 +1174,20 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private bool IsControlledPlayerWithinGhostOutlineRange()
     {
-        SquadCharacterController controller = ResolveCharacterController(LocalPlayerUtils.GetControlledCharacter());
-        if (controller == null)
+        GameObject controlledCharacter = LocalPlayerUtils.GetControlledCharacter();
+        if (controlledCharacter == null)
         {
             return false;
         }
 
-        Transform anchor = GetInteractionAnchor();
-        Vector3 anchorPosition = anchor != null ? anchor.position : transform.position;
-        Vector3 characterPosition = controller.GetInteractionOriginWorldPosition();
-        float distance = Mathf.Max(0.1f, ghostOutlineActivationDistance);
-        return (characterPosition - anchorPosition).sqrMagnitude <= distance * distance;
+        // An outline is feedback for an interactable candidate. It must not disappear
+        // before that candidate reaches its own valid interaction range.
+        float outlineRange = Mathf.Max(interactionMaxDistance, ghostOutlineActivationDistance);
+        return CharacterInteractionDetection.IsCharacterWithinRange(
+            controlledCharacter.transform,
+            GetInteractionDetectionCollider(),
+            GetInteractionAnchor(),
+            outlineRange);
     }
 
     private void BeginAppearanceProximityPresentation()
@@ -1693,35 +1741,154 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private bool IsReactionChoiceOpen()
     {
-        return reactionChoicePanelInstance != null && reactionChoicePanelInstance.activeSelf && InputFocusStack.HasFocus(this);
+        return reactionChoicePanelInstance != null && reactionChoicePanelInstance.activeInHierarchy &&
+               reactionChoiceCanvasGroup != null && reactionChoiceCanvasGroup.alpha > 0.001f &&
+               InputFocusStack.HasFocus(this);
     }
 
     private void SubmitSelectedReactionChoice()
     {
-        GhostKnowledgeReaction reaction = defaultChoiceReaction;
-        EventSystem eventSystem = EventSystem.current;
-        if (eventSystem != null && eventSystem.currentSelectedGameObject != null)
+        // Le curseur est la representation visible de la selection. Il doit
+        // primer sur l'EventSystem, dont la selection peut rester sur le bouton
+        // precedent pendant le court rearmement de l'UI.
+        Button selectedButton = reactionChoiceCursorTarget != null
+            ? reactionChoiceCursorTarget.GetComponent<Button>()
+            : null;
+
+        if (selectedButton == null)
         {
-            Button selectedButton = eventSystem.currentSelectedGameObject.GetComponent<Button>();
-            if (selectedButton != null && reactionByChoiceButton.TryGetValue(selectedButton, out GhostKnowledgeReaction selectedReaction))
-            {
-                reaction = selectedReaction;
-            }
+            EventSystem eventSystem = EventSystem.current;
+            selectedButton = eventSystem != null && eventSystem.currentSelectedGameObject != null
+                ? eventSystem.currentSelectedGameObject.GetComponent<Button>()
+                : null;
         }
 
-        if (reaction == null) return;
-        CloseReactionChoiceUi();
-        UseKnowledgeReaction(reaction);
+        if (selectedButton != null && reactionByChoiceButton.TryGetValue(selectedButton, out GhostKnowledgeReaction selectedReaction))
+        {
+            CloseReactionChoiceUi();
+            UseKnowledgeReaction(selectedReaction);
+            return;
+        }
+
+        if (selectedButton != null && reactionChoiceButtons.Contains(selectedButton))
+        {
+            // Le bouton "Reculer" n'a pas de reaction associee : il ferme
+            // toujours le panneau, sans reutiliser la reaction par defaut.
+            CloseReactionChoiceUi();
+            return;
+        }
+
+        // Aucun choix n'a pu etre resolu (cas de secours) : ne jamais
+        // appliquer une reaction par defaut qui ne correspond pas au curseur.
+        Debug.LogWarning($"Ghost '{name}': validation ignoree, aucun choix actif n'est selectionne.", this);
     }
 
     private void OnReturnPerformed(InputAction.CallbackContext context)
     {
-        if (reactionChoicePanelInstance == null || !reactionChoicePanelInstance.activeSelf)
+        if (!IsReactionChoiceOpen())
         {
             return;
         }
 
         CloseReactionChoiceUi();
+    }
+
+    /// <summary>
+    /// Recoit les actions de la map UI pendant que les choix du fantome ont le
+    /// focus. Sans ce contrat, Navigate etait active dans PlayerInputs mais
+    /// ignore par le coordinateur avant d'arriver au panneau.
+    /// </summary>
+    public bool HandleInputModeAction(InputModeAction action, InputAction.CallbackContext context)
+    {
+        if (!IsReactionChoiceOpen())
+        {
+            return false;
+        }
+
+        switch (action)
+        {
+            case InputModeAction.Submit:
+                if (!reactionChoiceAwaitingFreshInteract)
+                {
+                    SubmitSelectedReactionChoice();
+                }
+
+                return true;
+            case InputModeAction.Cancel:
+                CloseReactionChoiceUi();
+                return true;
+            case InputModeAction.Navigate:
+                NavigateReactionChoices(context.ReadValue<Vector2>());
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void NavigateReactionChoices(Vector2 navigation)
+    {
+        const float threshold = 0.5f;
+        if (Mathf.Abs(navigation.y) < threshold)
+        {
+            return;
+        }
+
+        if (Time.unscaledTime < reactionChoiceNextNavigateTime)
+        {
+            return;
+        }
+
+        // Le Navigate de l'Input System n'envoie pas necessairement un
+        // callback "performed" au relachement du stick. Un cooldown court est
+        // donc plus fiable qu'une attente de valeur neutre, et laisse haut et
+        // bas fonctionner dans les deux sens.
+        reactionChoiceNextNavigateTime = Time.unscaledTime + 0.14f;
+        MoveReactionChoice(navigation.y > 0f ? -1 : 1);
+    }
+
+    private void MoveReactionChoice(int direction)
+    {
+        if (reactionChoiceButtons.Count == 0)
+        {
+            return;
+        }
+
+        int currentIndex = -1;
+        GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        for (int i = 0; i < reactionChoiceButtons.Count; i++)
+        {
+            Button button = reactionChoiceButtons[i];
+            if (button != null && button.gameObject == selected)
+            {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex < 0 && reactionChoiceCursorTarget != null)
+        {
+            Button cursorButton = reactionChoiceCursorTarget.GetComponent<Button>();
+            currentIndex = reactionChoiceButtons.IndexOf(cursorButton);
+        }
+
+        int count = reactionChoiceButtons.Count;
+        for (int offset = 1; offset <= count; offset++)
+        {
+            int candidateIndex = (currentIndex + (direction * offset) + count) % count;
+            Button candidate = reactionChoiceButtons[candidateIndex];
+            if (candidate == null || !candidate.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            FocusReactionChoiceCursor(candidate);
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(candidate.gameObject);
+            }
+
+            return;
+        }
     }
 
     private GameObject ResolveInteractionCharacter()
@@ -1981,8 +2148,8 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         CreateReactionCloseButton();
-        reactionChoicePanelInstance.SetActive(true);
-        EnsureReactionChoiceEventSystem();
+        SetReactionChoicePanelVisibility(reactionChoicePanelInstance, true);
+        reactionChoiceNextNavigateTime = 0f;
         SelectDefaultReactionChoice();
         reactionChoiceShownFrame = Time.frameCount;
         InputFocusStack.Push(this);
@@ -1996,29 +2163,21 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         return rightScore.CompareTo(leftScore);
     }
 
-    private static void EnsureReactionChoiceEventSystem()
-    {
-        if (EventSystem.current != null)
-        {
-            return;
-        }
-
-        GameObject eventSystemObject = new GameObject("GhostReactionChoiceEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-        DontDestroyOnLoad(eventSystemObject);
-    }
-
     private void SelectDefaultReactionChoice()
     {
-        if (EventSystem.current == null)
-        {
-            return;
-        }
-
         foreach (KeyValuePair<Button, GhostKnowledgeReaction> pair in reactionByChoiceButton)
         {
             if (pair.Key != null && pair.Value == defaultChoiceReaction)
             {
-                EventSystem.current.SetSelectedGameObject(pair.Key.gameObject);
+                // Le curseur ne depend pas de l'EventSystem : il doit etre
+                // visible des l'ouverture, meme lorsqu'aucun module UI n'est
+                // actif dans une scene de jeu.
+                FocusReactionChoiceCursor(pair.Key);
+                if (EventSystem.current != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(pair.Key.gameObject);
+                }
+
                 return;
             }
         }
@@ -2067,90 +2226,136 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
 
     private void CreateReactionChoicePanel()
     {
-        Canvas canvas = null;
-        Transform parent = reactionChoiceParent;
-        if (parent == null)
+        Transform panelTransform = FindSceneTransformByName("GhostReactionChoicePanel");
+        if (panelTransform == null)
         {
-            GameObject canvasObject = new GameObject("GhostReactionChoiceCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 140;
-
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            parent = canvasObject.transform;
+            Debug.LogError("GhostReactionChoicePanel est introuvable dans UI_Overlay. Aucun panneau de secours n'est cree en runtime.", this);
+            return;
         }
 
-        reactionChoicePanelInstance = new GameObject("GhostReactionChoicePanel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-        reactionChoicePanelInstance.transform.SetParent(parent, false);
-
-        RectTransform panelRect = reactionChoicePanelInstance.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRect.pivot = new Vector2(0.5f, 0.5f);
-        panelRect.sizeDelta = new Vector2(Mathf.Max(320f, reactionChoiceWidth), 0f);
-
-        Image image = reactionChoicePanelInstance.GetComponent<Image>();
-        image.color = new Color(0.04f, 0.045f, 0.05f, 0.94f);
-
-        VerticalLayoutGroup layout = reactionChoicePanelInstance.GetComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(24, 24, 22, 22);
-        layout.spacing = 12f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
-
-        ContentSizeFitter fitter = reactionChoicePanelInstance.GetComponent<ContentSizeFitter>();
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        CreateReactionChoiceLabel(GetDisplayName(), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
-        CreateReactionChoiceLabel(GetQuestion(), 18f, FontStyles.Normal, TextAlignmentOptions.Center);
-
-        GameObject content = new GameObject("Options", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-        content.transform.SetParent(reactionChoicePanelInstance.transform, false);
-        reactionChoiceContentRoot = content.transform;
-
-        VerticalLayoutGroup contentLayout = content.GetComponent<VerticalLayoutGroup>();
-        contentLayout.spacing = 8f;
-        contentLayout.childAlignment = TextAnchor.MiddleCenter;
-        contentLayout.childControlWidth = true;
-        contentLayout.childControlHeight = true;
-        contentLayout.childForceExpandWidth = true;
-        contentLayout.childForceExpandHeight = false;
-
-        ContentSizeFitter contentFitter = content.GetComponent<ContentSizeFitter>();
-        contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        if (canvas != null)
+        reactionChoicePanelInstance = panelTransform.gameObject;
+        reactionChoicePanelIsSceneOwned = true;
+        reactionChoiceCanvasGroup = EnsureReactionChoiceCanvasGroup(reactionChoicePanelInstance);
+        reactionChoiceContentRoot = FindDescendantByName(panelTransform, "Options");
+        reactionChoiceCursor = FindDescendantByName(panelTransform, "GhostChoiceCursor") as RectTransform;
+        Transform nameLabel = FindDescendantByName(panelTransform, "Ghost_Name");
+        Transform questionLabel = FindDescendantByName(panelTransform, "Ghost_Question");
+        if (nameLabel == null || questionLabel == null)
         {
-            reactionChoicePanelInstance.transform.SetAsLastSibling();
+            Debug.LogError("GhostReactionChoicePanel doit contenir les labels 'Ghost_Name' et 'Ghost_Question'.", reactionChoicePanelInstance);
         }
+
+        SetReactionChoiceLabel(nameLabel, GetDisplayName());
+        SetReactionChoiceLabel(questionLabel, GetQuestion());
+
+        if (reactionChoiceContentRoot == null)
+        {
+            Debug.LogError("GhostReactionChoicePanel doit contenir un enfant nomme 'Options'.", reactionChoicePanelInstance);
+            reactionChoicePanelInstance = null;
+            reactionChoicePanelIsSceneOwned = false;
+            return;
+        }
+
+        ConfigureReactionChoiceCursor();
+
+        sceneReactionChoiceButtons.Clear();
+        runtimeReactionChoiceButtons.Clear();
+        // Choice_1 et Choice_2 sont des elements auteur de la scene. Les anciennes
+        // versions de la scene les avaient comme Image seulement : complete les
+        // composants manquants sans instancier un autre panneau.
+        for (int i = 0; i < reactionChoiceContentRoot.childCount; i++)
+        {
+            Transform choiceTransform = reactionChoiceContentRoot.GetChild(i);
+            if (choiceTransform == reactionChoiceCursor)
+            {
+                continue;
+            }
+
+            Button button = EnsureSceneReactionChoiceButton(choiceTransform);
+            if (button == null)
+            {
+                continue;
+            }
+
+            button.gameObject.SetActive(false);
+            sceneReactionChoiceButtons.Add(button);
+        }
+
+        reactionChoicePanelInstance.transform.SetAsLastSibling();
     }
 
-    private void CreateReactionChoiceLabel(string text, float fontSize, FontStyles style, TextAlignmentOptions alignment)
+    private void ConfigureReactionChoiceCursor()
     {
-        if (reactionChoicePanelInstance == null || string.IsNullOrWhiteSpace(text))
+        reactionChoiceCursorTarget = null;
+        if (reactionChoiceCursor == null)
+        {
+            Debug.LogWarning("GhostReactionChoicePanel ne contient pas GhostChoiceCursor. Les choix resteront utilisables sans curseur visuel.", reactionChoicePanelInstance);
+            return;
+        }
+
+        Image cursorImage = reactionChoiceCursor.GetComponent<Image>();
+        if (cursorImage != null)
+        {
+            // Le curseur est decoratif : il ne doit jamais intercepter le survol
+            // ni les clics destines au bouton qu'il encadre.
+            cursorImage.raycastTarget = false;
+        }
+
+        LayoutElement layout = reactionChoiceCursor.GetComponent<LayoutElement>();
+        if (layout == null)
+        {
+            layout = reactionChoiceCursor.gameObject.AddComponent<LayoutElement>();
+        }
+
+        layout.ignoreLayout = true;
+        reactionChoiceCursor.gameObject.SetActive(false);
+    }
+
+    private static Button EnsureSceneReactionChoiceButton(Transform choiceTransform)
+    {
+        if (choiceTransform == null)
+        {
+            return null;
+        }
+
+        GameObject choiceObject = choiceTransform.gameObject;
+        Button button = choiceObject.GetComponent<Button>();
+        Image image = choiceObject.GetComponent<Image>();
+        if (image == null)
+        {
+            Debug.LogWarning($"Le choix auteur '{choiceObject.name}' doit contenir un Image pour etre cliquable.", choiceObject);
+            return null;
+        }
+
+        if (button == null)
+        {
+            button = choiceObject.AddComponent<Button>();
+        }
+
+        button.targetGraphic = image;
+        LayoutElement layoutElement = choiceObject.GetComponent<LayoutElement>();
+        if (layoutElement == null)
+        {
+            layoutElement = choiceObject.AddComponent<LayoutElement>();
+            layoutElement.minHeight = 48f;
+            layoutElement.preferredHeight = 56f;
+        }
+
+        return button;
+    }
+
+    private static void SetReactionChoiceLabel(Transform labelTransform, string text)
+    {
+        if (labelTransform == null)
         {
             return;
         }
 
-        GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-        labelObject.transform.SetParent(reactionChoicePanelInstance.transform, false);
-
-        TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
-        label.text = text.Trim();
-        label.fontSize = fontSize;
-        label.fontStyle = style;
-        label.alignment = alignment;
-        label.color = Color.white;
-        label.textWrappingMode = TextWrappingModes.Normal;
-        label.raycastTarget = false;
-
-        LayoutElement layout = labelObject.GetComponent<LayoutElement>();
-        layout.minHeight = Mathf.Max(28f, fontSize + 10f);
+        TMP_Text label = labelTransform.GetComponent<TMP_Text>();
+        if (label != null)
+        {
+            label.text = text != null ? text.Trim() : string.Empty;
+        }
     }
 
     private void CreateReactionChoiceButton(GhostKnowledgeReaction reaction)
@@ -2160,22 +2365,114 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             return;
         }
 
-        Button button = CreateChoiceButton(reaction.optionText, reactionChoiceContentRoot);
+        Button button = GetNextSceneReactionChoiceButton();
+        if (button == null)
+        {
+            button = CreateChoiceButton(reaction.optionText, reactionChoiceContentRoot);
+            if (button != null)
+            {
+                runtimeReactionChoiceButtons.Add(button);
+            }
+        }
+
         if (button == null)
         {
             return;
         }
 
-        button.onClick.AddListener(() =>
+        ConfigureChoiceButton(button, reaction.optionText);
+        EnsureReactionChoiceCursorTarget(button);
+        UnityAction listener = () =>
         {
             CloseReactionChoiceUi();
             UseKnowledgeReaction(reaction);
-        });
+        };
+        button.onClick.AddListener(listener);
+        reactionChoiceButtonListeners[button] = listener;
         reactionChoiceButtons.Add(button);
         reactionByChoiceButton[button] = reaction;
         if (defaultChoiceReaction == null)
         {
             defaultChoiceReaction = reaction;
+        }
+    }
+
+    private Button GetNextSceneReactionChoiceButton()
+    {
+        for (int i = 0; i < sceneReactionChoiceButtons.Count; i++)
+        {
+            Button button = sceneReactionChoiceButtons[i];
+            if (button != null && !reactionChoiceButtons.Contains(button))
+            {
+                return button;
+            }
+        }
+
+        return null;
+    }
+
+    private static void ConfigureChoiceButton(Button button, string label)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.gameObject.SetActive(true);
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            text.text = string.IsNullOrWhiteSpace(label) ? "..." : label.Trim();
+        }
+    }
+
+    private void EnsureReactionChoiceCursorTarget(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        GhostReactionChoiceCursorTarget target = button.GetComponent<GhostReactionChoiceCursorTarget>();
+        if (target == null)
+        {
+            target = button.gameObject.AddComponent<GhostReactionChoiceCursorTarget>();
+        }
+
+        target.Initialize(this, button);
+    }
+
+    internal void FocusReactionChoiceCursor(Button button)
+    {
+        if (button == null || reactionChoiceCursor == null || !button.gameObject.activeInHierarchy)
+        {
+            return;
+        }
+
+        reactionChoiceCursorTarget = button.GetComponent<RectTransform>();
+        UpdateReactionChoiceCursorPosition();
+    }
+
+    private void UpdateReactionChoiceCursorPosition()
+    {
+        if (reactionChoiceCursor == null || reactionChoiceCursorTarget == null)
+        {
+            return;
+        }
+
+        reactionChoiceCursor.SetParent(reactionChoiceCursorTarget.parent, false);
+        reactionChoiceCursor.anchorMin = reactionChoiceCursorTarget.anchorMin;
+        reactionChoiceCursor.anchorMax = reactionChoiceCursorTarget.anchorMax;
+        reactionChoiceCursor.pivot = reactionChoiceCursorTarget.pivot;
+        reactionChoiceCursor.anchoredPosition = reactionChoiceCursorTarget.anchoredPosition;
+        reactionChoiceCursor.sizeDelta = reactionChoiceCursorTarget.sizeDelta;
+        // Le curseur doit rester au premier plan : les Image des choix auteurs
+        // sont opaques et le masqueraient sinon. Ses raycasts sont desactives
+        // dans ConfigureReactionChoiceCursor, il ne peut donc pas bloquer le bouton.
+        reactionChoiceCursor.SetSiblingIndex(reactionChoiceCursorTarget.GetSiblingIndex() + 1);
+        if (!reactionChoiceCursor.gameObject.activeSelf)
+        {
+            reactionChoiceCursor.gameObject.SetActive(true);
         }
     }
 
@@ -2186,13 +2483,26 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
             return;
         }
 
-        Button button = CreateChoiceButton(closeChoiceText, reactionChoiceContentRoot);
+        Button button = GetNextSceneReactionChoiceButton();
+        if (button == null)
+        {
+            button = CreateChoiceButton(closeChoiceText, reactionChoiceContentRoot);
+            if (button != null)
+            {
+                runtimeReactionChoiceButtons.Add(button);
+            }
+        }
+
         if (button == null)
         {
             return;
         }
 
-        button.onClick.AddListener(CloseReactionChoiceUi);
+        ConfigureChoiceButton(button, closeChoiceText);
+        EnsureReactionChoiceCursorTarget(button);
+        UnityAction listener = CloseReactionChoiceUi;
+        button.onClick.AddListener(listener);
+        reactionChoiceButtonListeners[button] = listener;
         reactionChoiceButtons.Add(button);
     }
 
@@ -2236,6 +2546,69 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         return button;
     }
 
+    private static Transform FindSceneTransformByName(string targetName)
+    {
+        if (string.IsNullOrWhiteSpace(targetName))
+        {
+            return null;
+        }
+
+        Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            Transform candidate = transforms[i];
+            if (candidate != null && candidate.gameObject.scene.IsValid() && candidate.name == targetName)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static Transform FindDescendantByName(Transform root, string targetName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(targetName))
+        {
+            return null;
+        }
+
+        Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            if (transforms[i] != null && transforms[i].name == targetName)
+            {
+                return transforms[i];
+            }
+        }
+
+        return null;
+    }
+
+    private void SetReactionChoicePanelVisibility(GameObject panel, bool visible)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        if (!panel.activeSelf)
+        {
+            panel.SetActive(true);
+        }
+
+        reactionChoiceCanvasGroup = EnsureReactionChoiceCanvasGroup(panel);
+        reactionChoiceCanvasGroup.alpha = visible ? 1f : 0f;
+        reactionChoiceCanvasGroup.interactable = visible;
+        reactionChoiceCanvasGroup.blocksRaycasts = visible;
+    }
+
+    private static CanvasGroup EnsureReactionChoiceCanvasGroup(GameObject panel)
+    {
+        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+        return canvasGroup != null ? canvasGroup : panel.AddComponent<CanvasGroup>();
+    }
+
     private void CloseReactionChoiceUi()
     {
         if (reactionChoiceInputRearmRoutine != null)
@@ -2245,36 +2618,66 @@ public class GhostController : MonoBehaviour, ICharacterDetectedInteractable, IL
         }
 
         reactionChoiceAwaitingFreshInteract = false;
+        reactionChoiceNextNavigateTime = 0f;
         if (reactionChoicePanelInstance == null)
         {
             InputFocusStack.Pop(this);
             return;
         }
 
-        for (int i = 0; i < reactionChoiceButtons.Count; i++)
+        foreach (KeyValuePair<Button, UnityAction> pair in reactionChoiceButtonListeners)
         {
-            if (reactionChoiceButtons[i] != null)
+            if (pair.Key != null)
             {
-                reactionChoiceButtons[i].onClick.RemoveAllListeners();
+                pair.Key.onClick.RemoveListener(pair.Value);
             }
         }
 
+        reactionChoiceButtonListeners.Clear();
         reactionChoiceButtons.Clear();
         reactionByChoiceButton.Clear();
         choiceReactionBuffer.Clear();
         defaultChoiceReaction = null;
         reactionChoiceShownFrame = -1;
 
-        GameObject root = reactionChoicePanelInstance;
-        Canvas panelCanvas = root.GetComponentInParent<Canvas>();
-        if (reactionChoiceParent == null && panelCanvas != null)
+        if (reactionChoicePanelIsSceneOwned)
         {
-            root = panelCanvas.gameObject;
+            for (int i = 0; i < runtimeReactionChoiceButtons.Count; i++)
+            {
+                if (runtimeReactionChoiceButtons[i] != null)
+                {
+                    Destroy(runtimeReactionChoiceButtons[i].gameObject);
+                }
+            }
+
+            for (int i = 0; i < sceneReactionChoiceButtons.Count; i++)
+            {
+                if (sceneReactionChoiceButtons[i] != null)
+                {
+                    sceneReactionChoiceButtons[i].gameObject.SetActive(false);
+                }
+            }
+
+            SetReactionChoicePanelVisibility(reactionChoicePanelInstance, false);
+        }
+        else
+        {
+            Destroy(reactionChoicePanelInstance);
         }
 
-        Destroy(root);
         reactionChoicePanelInstance = null;
         reactionChoiceContentRoot = null;
+        reactionChoiceCanvasGroup = null;
+        if (reactionChoiceCursor != null)
+        {
+            reactionChoiceCursor.gameObject.SetActive(false);
+        }
+
+        reactionChoiceCursor = null;
+        reactionChoiceCursorTarget = null;
+        reactionChoicePanelIsSceneOwned = false;
+        sceneReactionChoiceButtons.Clear();
+        runtimeReactionChoiceButtons.Clear();
         InputFocusStack.Pop(this);
     }
 

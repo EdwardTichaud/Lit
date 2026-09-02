@@ -15,10 +15,10 @@ MonoBehaviour:
   skillName: Eclair
   description: 
   icon: {fileID: 21300000, guid: 2d089513ae4adfc48a683c362ad9992c, type: 3}
-  animationClip: {fileID: 7400000, guid: 17651a47717f666458106120728c7c07, type: 2}
-  animatorState: Base Layer.AnimationClip_Skill_Eclair
+  animationClip: {fileID: 7400000, guid: b3c788eedd4bc2946823dd734fdefb9a, type: 2}
+  animatorState: Base Layer.AnimationClip_Skill_1_Eclair
   damages: 10
-  lightChargeOnHit: 1
+  clarityGainOnHit: 1
   presentation:
     entryBlendSeconds: 0.06
     chainNormalizedTime: 1
@@ -26,6 +26,16 @@ MonoBehaviour:
     mobilityCancelNormalizedTime: 0.7
     recoveryNormalizedTime: 0.88
     exitBlendSeconds: 0.1
+    handoff:
+      minimumContactSeconds: 0
+      animationExitNormalizedTime: 0.82
+      planarSettledSpeed: 0.18
+      verticalSettledSpeed: 0.25
+      planarDampingPerSecond: 0
+      maximumSettleSeconds: 0.2
+      locomotionBlendSeconds: 0.08
+      preLandingProbeDistance: 1.2
+      preLandingLeadSeconds: 0.14
     rootMotionMode: 1
     allowAirborneRootMotion: 0
     facingMode: 1
@@ -33,7 +43,7 @@ MonoBehaviour:
     allowDodgeAfterRecovery: 1
     allowMobilityCancel: 1
   minimumHitDistance: 0
-  maximumHitDistance: 5
+  maximumHitDistance: 10
   requireValidRangeToStart: 0
   cinematic:
     timeline: {fileID: 0}
@@ -98,6 +108,18 @@ MonoBehaviour:
     maximumInputLockSeconds: 3.5
     airborneInertiaSeconds: 0
     airborneInertiaEndSpeedMultiplier: 0.3
+  targetLunge:
+    enabled: 1
+    approachDurationSeconds: 0.18
+    maximumApproachSpeed: 42
+    stoppingDistance: 0.85
+    contactTolerance: 0.18
+    reboundHorizontalImpulse: 16
+    reboundVerticalImpulse: 8
+    minimumInputLockSeconds: 0.1
+    maximumInputLockSeconds: 2.5
+    airborneInertiaSeconds: 0.08
+    airborneInertiaEndSpeedMultiplier: 0.25
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 02000000

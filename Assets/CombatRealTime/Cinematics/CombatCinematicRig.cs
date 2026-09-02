@@ -35,6 +35,12 @@ public sealed class CombatCinematicFramingReference
     public float cameraFieldOfView;
 }
 
+public enum CombatCinematicTimeMode
+{
+    Unscaled,
+    GlobalScaled
+}
+
 /// <summary>Immutable runtime data supplied to a pooled combat cinematic rig.</summary>
 public sealed class CombatCinematicContext
 {
@@ -48,13 +54,21 @@ public sealed class CombatCinematicContext
     public Action ResolveImpact { get; }
     public CombatCinematicCasterRole CasterRole { get; }
     public RealTimeCombatEnemy CasterEnemy { get; }
+    public bool AllowGameplayCameraFallback { get; }
+    public bool TransferTimelineRootMotion { get; }
+    public bool AllowMissingTimelineBindings { get; }
+    public CombatCinematicTimeMode TimeMode { get; }
 
     public CombatCinematicContext(
         RealTimeCombatManager manager,
         UnityEngine.Object definition,
         Action resolveImpact = null,
         CombatCinematicCasterRole casterRole = CombatCinematicCasterRole.Player,
-        RealTimeCombatEnemy casterEnemy = null)
+        RealTimeCombatEnemy casterEnemy = null,
+        bool allowGameplayCameraFallback = false,
+        bool transferTimelineRootMotion = true,
+        bool allowMissingTimelineBindings = false,
+        CombatCinematicTimeMode timeMode = CombatCinematicTimeMode.Unscaled)
     {
         CombatManager = manager;
         Definition = definition;
@@ -66,6 +80,10 @@ public sealed class CombatCinematicContext
         ResolveImpact = resolveImpact;
         CasterRole = casterRole;
         CasterEnemy = casterEnemy;
+        AllowGameplayCameraFallback = allowGameplayCameraFallback;
+        TransferTimelineRootMotion = transferTimelineRootMotion;
+        AllowMissingTimelineBindings = allowMissingTimelineBindings;
+        TimeMode = timeMode;
     }
 }
 
@@ -177,8 +195,13 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private bool timelineOwnsStagedActorTransforms;
     private int nextFramingReferenceIndex;
     private CombatCinematicEndReason? requestedEndReason;
+    private float localPlaybackScale = 1f;
+    private bool localPlaybackManualClock;
 
-    public PlayableDirector Director => director;
+    // Prefab assets do not execute Awake while displayed in an Inspector. Keep
+    // this accessor lazy so authoring validation observes the same baked
+    // PlayableDirector that runtime playback resolves in Awake.
+    public PlayableDirector Director => director != null ? director : GetComponent<PlayableDirector>();
     public SignalReceiver SignalReceiver => signalReceiver;
     public IReadOnlyList<CombatCinematicCameraBinding> CameraBindings => cameraBindings;
     public IReadOnlyList<CombatCinematicTrackBinding> TrackBindings => trackBindings;
@@ -186,6 +209,15 @@ public sealed class CombatCinematicRig : MonoBehaviour
                                            playerStageAnchor != null && enemyStageAnchor != null;
     public CombatCinematicEndReason LastEndReason { get; private set; } = CombatCinematicEndReason.Interrupted;
     public event Action<CombatCinematicRig> Stopped;
+
+    /// <summary>Applies a local presentation rate without changing global time.</summary>
+    public void SetLocalPlaybackScale(float scale)
+    {
+        localPlaybackScale = Mathf.Clamp(scale, 0.01f, 1f);
+        ApplyLocalPlaybackScale();
+        TracePlacement("Echelle Timeline locale=" + localPlaybackScale.ToString("F2") +
+                       " | mode=" + (localPlaybackManualClock ? "Manual" : "normal") + ".");
+    }
 
     public void ConfigureFramingReferences(IEnumerable<CombatCinematicFramingReference> references)
     {
@@ -370,6 +402,11 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return;
         }
 
+        if (!context.TransferTimelineRootMotion)
+        {
+            return;
+        }
+
         AdvancePlayerRootFromTimelineMotion();
         AdvanceEnemyRootFromTimelineMotion();
     }
@@ -444,7 +481,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
         // transfers it to ActorRoot. Staged LightSkills and the new in-place
         // SkillSO path therefore disable the normal relay to avoid a double
         // application. CounterSkill keeps its established path unchanged.
-        if (placement.HasValue || playbackContext.Definition is SkillSO)
+        if (placement.HasValue || playbackContext.Definition is SkillSO || !playbackContext.TransferTimelineRootMotion)
         {
             BeginContractCinematicMotion();
             SetContractRootMotionRelayEnabled(false);
@@ -474,17 +511,25 @@ public sealed class CombatCinematicRig : MonoBehaviour
         TracePlacement("Bindings Timeline acceptes | playerTrack='" + playerAnimatorTrack + "' | enemyTrack='" + enemyAnimatorTrack + "'.");
         TraceActorTrackAuthority(timeline, playerAnimatorTrack, enemyAnimatorTrack);
 
+        CinemachineCamera expectedOpeningCamera = ResolveOpeningCamera();
+        bool useGameplayCameraFallback = expectedOpeningCamera == null && context.AllowGameplayCameraFallback;
         LitTimelineCinemachineBridge cameraBridge = GetComponent<LitTimelineCinemachineBridge>();
-        if (cameraBridge == null || !cameraBridge.BeginCameraControlNow(gameplayBrain))
+        if (!useGameplayCameraFallback && (cameraBridge == null || !cameraBridge.BeginCameraControlNow(gameplayBrain)))
         {
             error = "Impossible de donner le controle de la camera gameplay explicite a la Timeline.";
             AbortStart("Camera gameplay invalide");
             return false;
         }
 
+        if (useGameplayCameraFallback)
+        {
+            TraceCamera("Camera cinematique absente : lecture maintenue sur la camera gameplay", false);
+        }
+
         // The rig is the single owner of all Timeline bindings and graph setup.
         // The bridge only hands the gameplay camera to Cinemachine.
         director.RebuildGraph();
+        ApplyLocalPlaybackScale();
         TraceCamera("Bind Timeline -> Brain -> controle Timeline -> RebuildGraph", false);
         director.time = 0d;
         CaptureActorAnimatorRestPoses();
@@ -504,16 +549,15 @@ public sealed class CombatCinematicRig : MonoBehaviour
         }
         skipFirstPlayerRootMotionDelta = true;
         skipFirstEnemyRootMotionDelta = true;
-        if (!cameraBridge.UpdateTimelineCameraNow())
+        if (!useGameplayCameraFallback && !cameraBridge.UpdateTimelineCameraNow())
         {
             error = "La Brain Cinemachine gameplay n'a pas pu evaluer le pre-roll.";
             AbortStart("Pre-roll Brain indisponible");
             return false;
         }
 
-        CinemachineCamera expectedOpeningCamera = ResolveOpeningCamera();
         CinemachineCamera activeCamera = gameplayBrain.ActiveVirtualCamera as CinemachineCamera;
-        if (expectedOpeningCamera == null || activeCamera != expectedOpeningCamera)
+        if (!useGameplayCameraFallback && (expectedOpeningCamera == null || activeCamera != expectedOpeningCamera))
         {
             error = "Pre-roll Cinemachine invalide : attendue='" +
                     (expectedOpeningCamera != null ? expectedOpeningCamera.name : "None") +
@@ -522,7 +566,9 @@ public sealed class CombatCinematicRig : MonoBehaviour
             return false;
         }
 
-        TracePlacement("Pre-roll Cinemachine valide | camera='" + activeCamera.name + "'.");
+        TracePlacement(useGameplayCameraFallback
+            ? "Pre-roll Timeline valide | camera gameplay conservee."
+            : "Pre-roll Cinemachine valide | camera='" + activeCamera.name + "'.");
         CaptureReachedFramingReferences();
         director.Play();
         return true;
@@ -545,6 +591,8 @@ public sealed class CombatCinematicRig : MonoBehaviour
 
     public void ResetForPool()
     {
+        localPlaybackScale = 1f;
+        localPlaybackManualClock = false;
         RequestEnd(CombatCinematicEndReason.Interrupted, false);
         EndCameraSession("Remise en pool", CombatCinematicEndReason.Interrupted);
         ClearTimelineBindings();
@@ -555,6 +603,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             director.playableAsset = bakedTimeline;
             NormalizeRuntimeDirector();
             director.RebuildGraph();
+            ApplyLocalPlaybackScale();
         }
         context = null;
         gameplayBrain = null;
@@ -594,44 +643,86 @@ public sealed class CombatCinematicRig : MonoBehaviour
     private bool TryBindTimeline(PlayableAsset timeline, string playerTrack, string enemyTrack, out string error)
     {
         error = null;
+        bool allowPartialBindings = context != null && context.AllowMissingTimelineBindings;
         gameplayBrain = ResolveGameplayBrain();
-        if (gameplayBrain == null)
+        if (gameplayBrain == null && !allowPartialBindings)
         {
             error = "CinemachineBrain de la camera de jeu introuvable.";
             return false;
+        }
+
+        if (gameplayBrain == null)
+        {
+            TracePlacement("Binding Cinemachine ignore : Brain gameplay absente | fallback partiel autorise.");
         }
 
         bool playerBound = false;
         bool enemyBound = false;
         bool cameraTrackBound = false;
         bool signalBound = false;
+        List<string> skippedBindings = allowPartialBindings ? new List<string>() : null;
         foreach (PlayableBinding output in timeline.outputs)
         {
             if (output.sourceObject == null) continue;
             if (output.sourceObject is AnimationTrack && output.streamName == playerTrack)
             {
-                director.SetGenericBinding(output.sourceObject, context.PlayerAnimator);
-                playerBound = true;
+                if (context.PlayerAnimator != null)
+                {
+                    director.SetGenericBinding(output.sourceObject, context.PlayerAnimator);
+                    playerBound = true;
+                    TracePlacement("Binding Timeline | piste='" + output.streamName + "' | Animator='" + context.PlayerAnimator.name + "'.");
+                }
+                else if (allowPartialBindings)
+                {
+                    skippedBindings.Add("Player.Animator (Animator runtime absent)");
+                }
             }
             else if (output.sourceObject is AnimationTrack && output.streamName == enemyTrack)
             {
-                director.SetGenericBinding(output.sourceObject, context.TargetAnimator);
-                enemyBound = true;
+                if (context.TargetAnimator != null)
+                {
+                    director.SetGenericBinding(output.sourceObject, context.TargetAnimator);
+                    enemyBound = true;
+                    TracePlacement("Binding Timeline | piste='" + output.streamName + "' | Animator='" + context.TargetAnimator.name + "'.");
+                }
+                else if (allowPartialBindings)
+                {
+                    skippedBindings.Add("Enemy.Animator (Animator runtime absent)");
+                }
             }
             else if (output.sourceObject is SignalTrack)
             {
-                director.SetGenericBinding(output.sourceObject, signalReceiver);
-                signalBound = true;
+                if (signalReceiver != null)
+                {
+                    director.SetGenericBinding(output.sourceObject, signalReceiver);
+                    signalBound = true;
+                }
+                else if (allowPartialBindings)
+                {
+                    skippedBindings.Add("Signals (SignalReceiver runtime absent)");
+                }
             }
             else if (output.sourceObject is CinemachineTrack cameraTrack)
             {
-                director.SetGenericBinding(output.sourceObject, gameplayBrain);
+                if (gameplayBrain != null)
+                {
+                    director.SetGenericBinding(output.sourceObject, gameplayBrain);
+                }
+                else if (allowPartialBindings)
+                {
+                    skippedBindings.Add("Cinemachine (Brain gameplay absente)");
+                }
                 foreach (TimelineClip clip in cameraTrack.GetClips())
                 {
                     if (!(clip.asset is CinemachineShot shot)) continue;
                     CinemachineCamera camera = ResolveCamera(shot.VirtualCamera.exposedName.ToString());
                     if (camera == null)
                     {
+                        if (context != null && context.AllowGameplayCameraFallback)
+                        {
+                            TracePlacement("Binding Cinemachine absent | cle='" + shot.VirtualCamera.exposedName + "' | fallback camera gameplay.");
+                            continue;
+                        }
                         error = "Camera introuvable pour la cle Timeline '" + shot.VirtualCamera.exposedName + "'.";
                         return false;
                     }
@@ -647,7 +738,7 @@ public sealed class CombatCinematicRig : MonoBehaviour
             }
         }
 
-        if (!playerBound || !enemyBound || !cameraTrackBound || !signalBound)
+        if (!allowPartialBindings && (!playerBound || !enemyBound || !cameraTrackBound || !signalBound))
         {
             error = "Pistes requises manquantes :" +
                     (!playerBound ? " Player.Animator" : string.Empty) +
@@ -655,6 +746,17 @@ public sealed class CombatCinematicRig : MonoBehaviour
                     (!cameraTrackBound ? " Cinemachine" : string.Empty) +
                     (!signalBound ? " Signals" : string.Empty);
             return false;
+        }
+
+        if (allowPartialBindings)
+        {
+            if (!playerBound && !string.IsNullOrWhiteSpace(playerTrack)) skippedBindings.Add("Player.Animator (piste absente)");
+            if (!enemyBound && !string.IsNullOrWhiteSpace(enemyTrack)) skippedBindings.Add("Enemy.Animator (piste absente)");
+            if (!cameraTrackBound) skippedBindings.Add("Cinemachine (piste absente)");
+            if (!signalBound) skippedBindings.Add("Signals (piste absente)");
+            TracePlacement(skippedBindings.Count == 0
+                ? "Bindings Timeline partiels : toutes les pistes presentes ont ete liees."
+                : "Bindings Timeline partiels ignores : " + string.Join(" | ", skippedBindings) + ".");
         }
         return true;
     }
@@ -1106,16 +1208,55 @@ public sealed class CombatCinematicRig : MonoBehaviour
     {
         if (director == null) return;
         director.playOnAwake = false;
-        director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
+        director.timeUpdateMode = context != null && context.TimeMode == CombatCinematicTimeMode.GlobalScaled
+            ? DirectorUpdateMode.GameTime
+            : DirectorUpdateMode.UnscaledGameTime;
         director.extrapolationMode = DirectorWrapMode.None;
+    }
+
+    private void ApplyLocalPlaybackScale()
+    {
+        if (director == null) return;
+
+        localPlaybackManualClock = localPlaybackScale < 0.999f;
+        if (localPlaybackManualClock)
+        {
+            director.timeUpdateMode = DirectorUpdateMode.Manual;
+            return;
+        }
+
+        NormalizeRuntimeDirector();
     }
 
     private void Update()
     {
         if (sessionActive && director != null && director.state == PlayState.Playing)
         {
+            if (localPlaybackManualClock)
+            {
+                AdvanceLocalPlaybackClock();
+            }
+
             TraceCamera("Verification runtime", true);
             CaptureReachedFramingReferences();
+        }
+    }
+
+    private void AdvanceLocalPlaybackClock()
+    {
+        if (director.playableAsset == null) return;
+
+        double nextTime = director.time + Time.unscaledDeltaTime * localPlaybackScale;
+        double duration = director.playableAsset.duration;
+        bool reachedEnd = duration > 0d && nextTime >= duration;
+        director.time = reachedEnd ? duration : nextTime;
+        director.Evaluate();
+
+        LitTimelineCinemachineBridge bridge = GetComponent<LitTimelineCinemachineBridge>();
+        bridge?.UpdateTimelineCameraNow();
+        if (reachedEnd)
+        {
+            director.Stop();
         }
     }
 

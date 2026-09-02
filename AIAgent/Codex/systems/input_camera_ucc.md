@@ -27,6 +27,15 @@ du combat.
 
 ## Flux principaux
 
+Les QTE de palier combat utilisent l'`InputMode.CombatQTE` uniquement pendant
+la fenêtre ouverte par l'événement d'animation `QTE(...)`. Leur Timeline peut
+reposer sur les Signals auteur pour les impacts et VFX : le bake ne force pas
+un événement `ResolveCinematicSkillImpact`, réservé aux compétences
+cinématiques classiques.
+La pose des QTE de palier ne dépend pas d'un unique collider enfant : elle
+résout la capsule Unity ou le `CharacterController` UCC, puis possède un volume
+de secours pour les frames d'initialisation différée.
+
 ## Contrat exploration UCC
 
 En exploration, UCC est l'unique propriétaire de la position, rotation
@@ -57,6 +66,25 @@ son propre lissage, indépendant et hors de ce contrat exploration.
 La liberté de pivot horizontal native d'Adventure est à zéro : la caméra reste
 sur son épaule configurée au lieu de franchir un seuil latéral dont le signe
 peut alterner autour du personnage et créer une vibration directionnelle.
+
+Les contours Runtime des fantômes ne sont pas pilotés par la caméra : leur gate
+de visibilité utilise la même portée de détection que l'interaction, afin que le
+retour visuel ne disparaisse pas avant que le joueur puisse interagir.
+
+Les feedbacks courts du monde (ramassage, dépôt et erreur d'interaction) sont
+des toasts sans focus. Les textes de stèle utilisent la présentation du
+DialoguePanel mais restent eux aussi dans le mode `Exploration`; seul un vrai
+dialogue ou un panneau de décision peut suspendre la locomotion. Ces retours
+automatiques durent deux secondes et ne demandent jamais `Interact` pour se fermer.
+Après chacun de ces messages, `LocalPlayerInput` relit au frame suivant l'axe
+de déplacement réellement maintenu : un ancien reset d'ActionMap ne peut plus
+laisser le mouvement à zéro jusqu'à un saut ou une nouvelle pression.
+
+Le panneau de décision des fantômes est une UI authorisée de `UI_Overlay`, pas
+un canvas de secours créé par un contrôleur de monde. `GhostController` le
+résout même lorsqu'il est inactif, le renseigne, puis le masque sans le détruire
+à la fermeture. Son `CanvasGroup` porte l'alpha, les raycasts et
+l'interactivité : le layout reste donc stable entre deux ouvertures.
 
 Dans l'Inspector du bridge, **Locomotion Diagnostics** active en même temps le
 relevé locomotion et le buffer de caméra. Les logs ne sont construits qu'au
@@ -278,6 +306,26 @@ sur le plan perpendiculaire à l'axe réel de l'échelle.
 
 ## Pièges observés
 
+Une notification de connaissance ne doit jamais forcer une state Animator sur
+le personnage. `KnowledgeManager` laisse donc desactivee l'animation legacy
+`Knowledge_Unlock`: UCC et `LitOpsiveLocomotionBridge` restent seuls ecrivains
+de la locomotion. Les items et stabs utilisent la meme voie de connaissance;
+un CrossFade ici peut bloquer la marche jusqu'a ce qu'une ability UCC, telle que
+le saut, remplace l'etat anime.
+
+Le choix de reaction d'un fantome bloque volontairement l'input de gameplay
+uniquement tant que `GhostReactionChoicePanel` est visible et detient le focus.
+Son `CanvasGroup` porte a la fois l'alpha, l'interaction et les raycasts; la
+fermeture les remet tous a zero avant de rendre le focus a l'exploration.
+Le curseur visuel des choix suit egalement le `OnSelect` EventSystem, afin que
+le choix manette et le survol souris presentent le meme etat sans modifier les
+ActionMaps.
+`GhostController` consomme `UI/Navigate` comme `IInputModeHandler`: le focus UI
+ne laisse donc pas la navigation stick/croix se perdre dans le coordinateur.
+La navigation reste disponible pendant le court rearmement de validation apres
+l'ouverture; seul `Submit` est bloque. Cela evite que le choix haut soit saute
+alors que seul `Reculer` etait provisoirement interactif.
+
 ## Orchestration des ActionMaps
 
 `InputModeCoordinator` est l'unique proprietaire runtime des ActionMaps de
@@ -307,3 +355,7 @@ automatiquement hors cinematique.
   à chaque session Play.
 - Les cinématiques utilisent des verrous externes UCC; toujours restaurer le
   contrôle lors d’un abort ou `OnDisable`.
+
+# Echelles de temps et restitution UCC
+
+`TimeManager` est la seule autorite du temps global. Un `CombatTimeDomain` sur l'ActorRoot ralentit localement l'intention UCC, les impulsions, le facing et l'Animator. Un QTE ouvre `CombatLocalTimeField` autour du joueur local : aucun autre joueur ni son input ne recoit ce ralentissement. Les overlays et les inputs QTE utilisent le temps reel non scale et ne doivent jamais dependre de `Time.deltaTime`.

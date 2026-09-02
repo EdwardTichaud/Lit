@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Plays the presentation associated with a confirmed player impact. The time
-/// scale is always restored in unscaled time, including when this object dies.
+/// Plays the presentation associated with a confirmed player impact. Time is
+/// requested from TimeManager; this component never owns Unity time directly.
 /// </summary>
 [DefaultExecutionOrder(520)]
 [DisallowMultipleComponent]
@@ -13,10 +13,8 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
     [SerializeField] private CombatLockOnCameraController lockCamera;
     [SerializeField] private ScreenWaveController screenWave;
 
-    private bool hitStopActive;
-    private int externalPauseCount;
-    private float timeScaleBeforeHitStop = 1f;
-    private float hitStopReleaseTime;
+    private readonly System.Collections.Generic.Stack<TimeManager.TimeRequestHandle> externalPauseHandles =
+        new System.Collections.Generic.Stack<TimeManager.TimeRequestHandle>();
 
     public static CombatImpactFeedbackController EnsureInstance()
     {
@@ -40,32 +38,16 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
         ResolveDependencies();
     }
 
-    private void Update()
-    {
-        if (hitStopActive && externalPauseCount == 0 && Time.unscaledTime >= hitStopReleaseTime)
-        {
-            RestoreTimeScale();
-        }
-    }
-
     private void OnDisable()
     {
-        if (externalPauseCount > 0)
-        {
-            Time.timeScale = timeScaleBeforeHitStop;
-            externalPauseCount = 0;
-        }
-        RestoreTimeScale();
+        TimeManager.Instance?.ReleaseOwner(this);
+        externalPauseHandles.Clear();
     }
 
     private void OnDestroy()
     {
-        if (externalPauseCount > 0)
-        {
-            Time.timeScale = timeScaleBeforeHitStop;
-            externalPauseCount = 0;
-        }
-        RestoreTimeScale();
+        TimeManager.Instance?.ReleaseOwner(this);
+        externalPauseHandles.Clear();
         if (Instance == this)
         {
             Instance = null;
@@ -105,83 +87,25 @@ public sealed class CombatImpactFeedbackController : MonoBehaviour
 
     public void PushExternalPause()
     {
-        if (externalPauseCount == 0 && !hitStopActive)
-        {
-            timeScaleBeforeHitStop = Time.timeScale;
-        }
-
-        externalPauseCount++;
-        Time.timeScale = 0f;
+        TimeManager manager = TimeManager.EnsureInstance();
+        if (manager != null) externalPauseHandles.Push(manager.AcquireGlobalPause(this));
     }
 
     public void PlayReactionSlowMotion(float timeScale, float durationSeconds)
     {
-        if (externalPauseCount > 0 || durationSeconds <= 0f)
-        {
-            return;
-        }
-
-        if (!hitStopActive)
-        {
-            timeScaleBeforeHitStop = Time.timeScale;
-            hitStopActive = true;
-        }
-
-        Time.timeScale = Mathf.Min(Time.timeScale, timeScaleBeforeHitStop * Mathf.Clamp01(timeScale));
-        hitStopReleaseTime = Mathf.Max(hitStopReleaseTime, Time.unscaledTime + durationSeconds);
+        if (durationSeconds > 0f) TimeManager.EnsureInstance()?.AcquireGlobal(timeScale, this, durationSeconds);
     }
 
     public void PopExternalPause()
     {
-        if (externalPauseCount <= 0)
-        {
-            return;
-        }
-
-        externalPauseCount--;
-        if (externalPauseCount == 0)
-        {
-            if (hitStopActive && Time.unscaledTime < hitStopReleaseTime)
-            {
-                return;
-            }
-
-            RestoreTimeScale();
-            if (!hitStopActive)
-            {
-                Time.timeScale = timeScaleBeforeHitStop;
-            }
-        }
+        if (externalPauseHandles.Count > 0)
+            TimeManager.Instance?.Release(externalPauseHandles.Pop());
     }
 
     private void StartHitStop(CombatImpactFeedbackProfile profile)
     {
-        if (externalPauseCount > 0 || !profile.useHitStop || profile.hitStopSeconds <= 0f)
-        {
-            return;
-        }
-
-        if (!hitStopActive)
-        {
-            timeScaleBeforeHitStop = Time.timeScale;
-            hitStopActive = true;
-        }
-
-        float slowedTimeScale = timeScaleBeforeHitStop * Mathf.Clamp01(profile.hitStopTimeScale);
-        Time.timeScale = Mathf.Min(Time.timeScale, slowedTimeScale);
-        hitStopReleaseTime = Mathf.Max(hitStopReleaseTime, Time.unscaledTime + profile.hitStopSeconds);
-    }
-
-    private void RestoreTimeScale()
-    {
-        if (!hitStopActive)
-        {
-            return;
-        }
-
-        Time.timeScale = timeScaleBeforeHitStop;
-        hitStopActive = false;
-        hitStopReleaseTime = 0f;
+        if (profile.useHitStop && profile.hitStopSeconds > 0f)
+            TimeManager.EnsureInstance()?.AcquireGlobal(profile.hitStopTimeScale, this, profile.hitStopSeconds);
     }
 
     private void ResolveDependencies()

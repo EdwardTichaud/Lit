@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d2c77a6e4a145d593dbb9f0eb493c32, type: 3}
+  m_Name: Juggernaut_Threshold_60
+  m_EditorClassIdentifier: Assembly-CSharp::ThresholdSequence
+  playerQteAnimationClip: {fileID: 7400000, guid: f98e497d5d1af764ea096c79c29d0198, type: 2}
+  playerQteAnimatorState: 
+  playerQteEntryBlendSeconds: 0.08
+  failureIdleBlendSeconds: 0.1
+  successPlayerAnimationClip: {fileID: 7400000, guid: 77b61fbd1349b2a4f968cc7a23f0271f, type: 3}
+  successPlayerAnimatorState: 
+  successEntryBlendSeconds: 0.08
+  successResolutionDelaySeconds: 0.5
+  successResult: 0
+  failureResult: 1
+  failureRetaliationSkill: {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}

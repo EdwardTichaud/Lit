@@ -130,7 +130,17 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     public int ReceiveDamage(int amount, bool canPrepareRetaliation = false)
     {
-        int applied = health != null ? health.ApplyDamage(amount) : Mathf.Max(0, amount);
+        CombatHealthThresholdController thresholds = CombatHealthThresholdController.Instance;
+        if (thresholds != null && thresholds.BlocksEnemyActions(this))
+        {
+            return 0;
+        }
+        int allowedDamage = amount;
+        bool thresholdReached = thresholds != null &&
+                                thresholds.TryPrepareDamage(this, amount, out allowedDamage);
+        int applied = health != null
+            ? health.ApplyDamage(thresholdReached ? allowedDamage : amount)
+            : Mathf.Max(0, thresholdReached ? allowedDamage : amount);
         if (applied <= 0)
         {
             return 0;
@@ -143,6 +153,12 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             storedMaximumLightDamage = 0;
             CompleteRetaliation();
             PlayDeathAnimation();
+            return applied;
+        }
+
+        if (thresholdReached)
+        {
+            thresholds.NotifyThresholdDamageApplied(this);
             return applied;
         }
 
@@ -166,8 +182,33 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
         return applied;
     }
 
+    /// <summary>Used only by a successful authored health-threshold QTE.</summary>
+    public bool ForceDefeatFromThreshold()
+    {
+        if (health == null)
+        {
+            return false;
+        }
+
+        if (!health.IsDead)
+        {
+            health.ForceDefeat();
+        }
+        storedMaximumLightDamage = 0;
+        engagementMaximumLightDamage = 0;
+        CompleteRetaliation();
+        PlayDeathAnimation();
+        return health.IsDead;
+    }
+
     public bool TryStartRetaliation(float meleePreference = 0.5f)
     {
+        if (CombatHealthThresholdController.Instance != null &&
+            CombatHealthThresholdController.Instance.BlocksEnemyActions(this))
+        {
+            return false;
+        }
+
         if (!IsRetaliationReady)
         {
             return false;
@@ -211,6 +252,39 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             committedRetaliationDamage = 0;
             storedMaximumLightDamage = engagementMaximumLightDamage;
             retaliationReadyAt = Time.time + retaliationDelaySeconds;
+            return false;
+        }
+
+        RetaliationStarted?.Invoke(activeSkill, committedRetaliationDamage);
+        return true;
+    }
+
+    /// <summary>
+    /// Starts the authored retaliation used after a failed health-threshold
+    /// QTE. It intentionally preserves the encounter ledger so the regular AI
+    /// can rearm after this one-off response has completed.
+    /// </summary>
+    public bool TryStartThresholdFailureRetaliation(SkillSO skill)
+    {
+        if (skill == null || activeSkill != null || enemySkills == null ||
+            !enemySkills.SetActiveSkill(skill))
+        {
+            return false;
+        }
+
+        if (physicsMotor != null && !physicsMotor.IsOperational)
+        {
+            return false;
+        }
+
+        activeSkill = skill;
+        plannedRetaliationSkill = null;
+        committedRetaliationDamage = Mathf.Max(0, Mathf.RoundToInt(skill.Damages));
+        physicsMotor?.BeginEnemyAction(skill);
+        if (!enemySkills.PlayActiveSkill())
+        {
+            activeSkill = null;
+            committedRetaliationDamage = 0;
             return false;
         }
 

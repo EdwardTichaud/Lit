@@ -1,5 +1,44 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
+
+public enum CombatHealthThresholdSuccessResult
+{
+    KillEnemy,
+    ResumeCombat
+}
+
+/// <summary>Buttons that an authored health-threshold sequence may request.</summary>
+public enum CombatThresholdQteInput
+{
+    Y,
+    B,
+    A,
+    X
+}
+
+/// <summary>
+/// Authored health breakpoint for a real-time enemy.
+/// </summary>
+[System.Serializable]
+public sealed class CombatHealthThresholdStage
+{
+    [Range(1, 99), Tooltip("Pourcentage de PV auquel la scenette s'arrete.")]
+    public int healthPercent = 50;
+    [Tooltip("Sequence autonome qui pilote les animations de Lucian, le QTE et ses resultats.")]
+    public ThresholdSequence sequence;
+
+    // Serialized only to migrate existing CharacterData assets. Runtime never
+    // reads these values; the editor migration transfers them to a sequence.
+    [FormerlySerializedAs("cinematicRig"), HideInInspector]
+    public CombatCinematicRig legacyCinematicRig;
+    [FormerlySerializedAs("successResult"), HideInInspector]
+    public CombatHealthThresholdSuccessResult legacySuccessResult = CombatHealthThresholdSuccessResult.ResumeCombat;
+    [FormerlySerializedAs("failureRetaliationSkill"), HideInInspector]
+    public SkillSO legacyFailureRetaliationSkill;
+
+    public bool IsComplete => sequence != null && sequence.IsComplete;
+}
 
 // Role: ScriptableObject de donnees pour personnages joueurs et ennemis.
 // Usage: reference par les prefabs de personnages, la squad, le combat, les voice lines et l'inventaire de depart.
@@ -63,6 +102,11 @@ public class CharacterData : ScriptableObject
     /// <summary>Indique si cette donnee represente un ennemi.</summary>
     [Tooltip("Indique que ce CharacterData represente un ennemi.")]
     public bool isEnemy;
+
+    [Tooltip("Active les paliers de PV cinematiques pour cet ennemi. Laisse false pour un combat normal.")]
+    public bool enableCombatHealthThresholds;
+    [Tooltip("Paliers declenches du plus haut pourcentage au plus bas.")]
+    public List<CombatHealthThresholdStage> combatHealthThresholdStages = new List<CombatHealthThresholdStage>();
 
     [Header("Voice Lines")]
     /// <summary>Voice lines disponibles pour ce personnage.</summary>

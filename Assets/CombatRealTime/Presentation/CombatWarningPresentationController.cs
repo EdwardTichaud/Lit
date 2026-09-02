@@ -110,8 +110,9 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         lockCamera?.BeginAttackWarning(enemy.LockPoint, profile);
         if (profile.useSlowMotion && profile.slowMotionSeconds > 0f)
         {
-            CombatImpactFeedbackController.EnsureInstance()?.PlayReactionSlowMotion(
+            TimeManager.EnsureInstance()?.AcquireGlobal(
                 profile.slowMotionTimeScale,
+                this,
                 profile.slowMotionSeconds);
         }
         if (profile.warningAudio != null)
@@ -133,6 +134,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
 
     public void ClearImmediate()
     {
+        TimeManager.Instance?.ReleaseOwner(this);
         requested = false;
         blend = 0f;
         elapsed = 0f;

@@ -41,6 +41,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
     [SerializeField] private NavMeshAgent navigationAgent;
     [SerializeField] private CombatActorAnimationRoot animationContract;
     [SerializeField] private RealTimeCombatEnemyBehaviour combatBehaviour;
+    [SerializeField] private CombatTimeDomain timeDomain;
     [SerializeField] private TacticalProfile profile = new TacticalProfile();
     [SerializeField] private bool logDiagnostics;
 
@@ -48,6 +49,9 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
     private float stateEndsAt;
     private float nextGuardAt;
     private float nextDodgeAt;
+
+    private float LocalTime => timeDomain != null ? timeDomain.LocalTime : Time.time;
+    private float LocalDeltaTime => timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
     private Vector3 dodgeDirection;
     private RealTimeCombatManager manager;
 
@@ -106,7 +110,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
 
         KeepReactionPresentation();
 
-        if (Time.time >= stateEndsAt || enemy == null || enemy.ActiveSkill != null ||
+        if (LocalTime >= stateEndsAt || enemy == null || enemy.ActiveSkill != null ||
             (enemy.Health != null && enemy.Health.IsDead))
         {
             ClearReaction();
@@ -144,15 +148,15 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         }
 
         float roll = UnityEngine.Random.value;
-        if (roll < profile.guardChance && Time.time >= nextGuardAt && TryStartGuard())
+        if (roll < profile.guardChance && LocalTime >= nextGuardAt && TryStartGuard())
         {
-            nextGuardAt = Time.time + profile.guardCooldownSeconds;
+            nextGuardAt = LocalTime + profile.guardCooldownSeconds;
             return;
         }
 
-        if (roll < profile.guardChance + profile.dodgeChance && Time.time >= nextDodgeAt && TryStartDodge())
+        if (roll < profile.guardChance + profile.dodgeChance && LocalTime >= nextDodgeAt && TryStartDodge())
         {
-            nextDodgeAt = Time.time + profile.dodgeCooldownSeconds;
+            nextDodgeAt = LocalTime + profile.dodgeCooldownSeconds;
         }
     }
 
@@ -190,7 +194,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         }
 
         state = TacticalState.Guarding;
-        stateEndsAt = Time.time + profile.guardDurationSeconds;
+        stateEndsAt = LocalTime + profile.guardDurationSeconds;
         locomotion?.StopNavigation();
         Trace("garde");
         return true;
@@ -210,7 +214,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         dodgeDirection = (UnityEngine.Random.value < .5f ? side : -side);
         dodgeDirection.y = 0f;
         state = TacticalState.Dodging;
-        stateEndsAt = Time.time + profile.dodgeDurationSeconds;
+        stateEndsAt = LocalTime + profile.dodgeDurationSeconds;
         locomotion?.StopNavigation();
         Trace("esquive");
         return true;
@@ -225,7 +229,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
 
         navigationAgent.isStopped = false;
         float speed = profile.dodgeDistance / Mathf.Max(.01f, profile.dodgeDurationSeconds);
-        navigationAgent.Move(dodgeDirection * speed * Time.deltaTime);
+        navigationAgent.Move(dodgeDirection * speed * LocalDeltaTime);
     }
 
     private void KeepReactionPresentation()
@@ -311,6 +315,7 @@ public sealed class EnemyTacticalResponseController : MonoBehaviour
         navigationAgent ??= GetComponent<NavMeshAgent>();
         animationContract ??= GetComponent<CombatActorAnimationRoot>();
         combatBehaviour ??= GetComponent<RealTimeCombatEnemyBehaviour>();
+        timeDomain ??= GetComponent<CombatTimeDomain>();
     }
 
     private bool IsRuntimeReady()

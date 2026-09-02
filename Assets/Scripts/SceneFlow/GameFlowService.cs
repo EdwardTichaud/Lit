@@ -98,6 +98,10 @@ public sealed class GameFlowService : MonoBehaviour
 
         GameObject root = new GameObject("ApplicationRoot");
         root.AddComponent<ApplicationRoot>();
+        if (root.GetComponent<TimeManager>() == null)
+        {
+            root.AddComponent<TimeManager>();
+        }
         root.AddComponent<GameFlowService>();
     }
 

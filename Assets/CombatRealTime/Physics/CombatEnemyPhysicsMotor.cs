@@ -29,6 +29,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     [SerializeField] private NavMeshAgent navigationAgent;
     [SerializeField] private Rigidbody body;
     [SerializeField] private CapsuleCollider bodyCollider;
+    [SerializeField] private CombatTimeDomain timeDomain;
     [Header("Grounding")]
     [SerializeField, Min(0.01f)] private float groundSkin = 0.03f;
     [SerializeField, Min(0.05f)] private float groundProbeStartHeight = 0.35f;
@@ -85,6 +86,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     public bool IsAirborne => State == CombatEnemyPhysicsState.AirborneAction || State == CombatEnemyPhysicsState.Recovering;
     public bool IsOperational => enabled && body != null && bodyCollider != null &&
                                  body.gameObject.activeInHierarchy && bodyCollider.enabled && !bodyCollider.isTrigger;
+    private float LocalTime => timeDomain != null ? timeDomain.LocalTime : Time.time;
+    private float LocalFixedDeltaTime => timeDomain != null ? timeDomain.FixedDeltaTime : Time.fixedDeltaTime;
 
     private void Reset()
     {
@@ -182,7 +185,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         verticalVelocity = activeMotionProfile.initialUpwardSpeed;
-        airborneStartedAt = Time.time;
+        airborneStartedAt = LocalTime;
         landingRequested = false;
         landingRequestedAt = -1f;
         SetState(CombatEnemyPhysicsState.AirborneAction, "debut aerien");
@@ -196,7 +199,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         landingRequested = true;
-        landingRequestedAt = Time.time;
+        landingRequestedAt = LocalTime;
         verticalVelocity = Mathf.Min(verticalVelocity, -Mathf.Max(0.1f, activeMotionProfile.minimumLandingSpeed));
         SetState(CombatEnemyPhysicsState.Recovering, "atterrissage demande");
     }
@@ -403,7 +406,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         float gravity = activeMotionProfile != null ? activeMotionProfile.gravity : 32f;
         verticalVelocity = Mathf.Max(
-            verticalVelocity - gravity * Time.fixedDeltaTime,
+            verticalVelocity - gravity * LocalFixedDeltaTime,
             -(activeMotionProfile != null ? activeMotionProfile.maximumFallSpeed : 28f));
 
         if (rushActive)
@@ -413,9 +416,9 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         planarDelta = ClampPlanarMotionToObstacles(position, planarDelta);
 
-        Vector3 nextPosition = position + planarDelta + Vector3.up * (verticalVelocity * Time.fixedDeltaTime);
+        Vector3 nextPosition = position + planarDelta + Vector3.up * (verticalVelocity * LocalFixedDeltaTime);
         bool forceLanding = landingRequested ||
-            (activeMotionProfile != null && Time.time - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds);
+            (activeMotionProfile != null && LocalTime - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds);
         if (TryGetGroundY(nextPosition, out float nextGroundY) &&
             nextPosition.y <= nextGroundY + groundSkin && verticalVelocity <= 0f)
         {
@@ -454,8 +457,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         // interrupted aerial action fall forever because one probe missed: use
         // the last physically confirmed floor height, preserving the current X/Z.
         bool airborneTimedOut = activeMotionProfile != null &&
-                            Time.time - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds;
-        bool emergencyLandingDue = (landingRequested && Time.time - landingRequestedAt >= emergencyLandingDelay) ||
+                            LocalTime - airborneStartedAt >= activeMotionProfile.maximumAirborneSeconds;
+        bool emergencyLandingDue = (landingRequested && LocalTime - landingRequestedAt >= emergencyLandingDelay) ||
                                    airborneTimedOut;
         if (emergencyLandingDue && hasLastConfirmedGroundY)
         {
@@ -558,7 +561,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         direction.y = 0f;
         float distance = direction.magnitude;
         float stopDistance = Mathf.Max(0f, activeMotionProfile.rushStoppingDistance);
-        float deltaTime = Time.fixedDeltaTime;
+        float deltaTime = LocalFixedDeltaTime;
 
         if (distance <= stopDistance)
         {
@@ -776,6 +779,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         body = GetComponent<Rigidbody>();
         bodyCollider = GetComponent<CapsuleCollider>();
         animationContract = GetComponent<CombatActorAnimationRoot>();
+        timeDomain = GetComponent<CombatTimeDomain>();
     }
 
     private void ConfigureBody()

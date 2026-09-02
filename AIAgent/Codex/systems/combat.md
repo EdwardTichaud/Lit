@@ -933,3 +933,24 @@ toute attaque physique.
 - Tester victoire, défaite, déconnexion et destruction pendant une transition.
 - Les approches d'attaque doivent toujours restaurer la position de combat en
   fin d'action ou lors d'un abort/despawn.
+# Paliers de vie cinematographiques
+
+Les paliers optionnels sont definis par ennemi dans `CharacterData`. Un coup qui franchit un palier est plafonne au seuil. Chaque palier reference un `ThresholdSequence` autonome : avant son lancement, `CombatHealthThresholdController` cherche a exactement 2 m devant l'ennemi, puis a +/-15, +/-30 et +/-45 degres, une pose UCC au sol sans decor bloquant. Lucian est pose sur cette position et l'ennemi pivote vers lui; si les sept poses sont bloquees, le palier attend sans rearmer l'ennemi. Les paliers n'utilisent ni `CombatCinematicRig`, ni Timeline, ni pool cinematographique.
+
+Une `ThresholdSequence` lance un clip InPlace de Lucian contenant un ou plusieurs Animation Events `QTE(string input)`, dans leur ordre auteur. Le clip assigne est prioritaire et resout l'etat Animator du meme nom; un nom d'etat reste disponible comme fallback. Chaque reussite ferme son overlay, laisse le clip continuer vers l'evenement suivant et n'active l'animation de succes qu'apres le dernier QTE valide. Un echec coupe la chaine par un fondu vers `CombatIdle`, puis applique le resultat d'echec de la sequence. Les valeurs sont `Y`, `B`, `A` et `X`; l'evenement ouvre la map isolee `CombatQTE` pendant la duree reelle configuree dans `CombatHealthThresholdController` (0,5 s par defaut; `Y/B/A/X` manette, fleches haut/droite/bas/gauche clavier). Pendant cette fenetre, `CombatLocalTimeField` ouvre autour du joueur concerne une sphere de 10 m a `0,4`: Lucian et tout `CombatTimeDomain` qui y entre ralentissent localement. Le temps global et les autres clients restent intacts. Une touche tenue avant l'ouverture est ignoree.
+
+Une reussite lance immediatement l'etat Animator de succes, puis applique `KillEnemy` ou `ResumeCombat` apres le delai configure dans la sequence. `KillEnemy` force les PV a zero et la mort de l'ennemi, puis utilise `CompleteThresholdKill`: combat, lock et HUD se ferment sans declencher le panneau de victoire standard. Un echec reprend le combat ou lance le Skill ennemi configure; son impact normal est route vers `ResolveThresholdFailureImpact()` et demande un recul UCC de trois metres, interrompu par les collisions. Une sequence ou une riposte invalide ne bloque jamais le combat.
+
+`QTEPanelController` est la presentation unique de scene : il trouve `QTE_Zone`, affiche `QTE_Circle_Slider` a une position aleatoire sure, associe le sprite `A/B/X/Y` et vide son anneau radial. `CombatHealthThresholdController` conserve seul le timer, les inputs et le resultat gameplay; il resout le panneau actif y compris lorsqu'il demarre desactive et journalise les CanvasGroups parents si l'overlay ne peut pas etre vu.
+
+# Skill target lunge
+
+Un `SkillSO` peut activer `Player Target Lunge`. Au lancement du skill, son animation est forcee en `InPlace`; `PlayerActionPresentationController` pilote une approche UCC tres rapide vers `EnemyLockPoint`, sans ecriture directe de Transform ni root motion. A la distance d'arret configuree, il relache le mouvement plan et applique une impulsion UCC arriere et verticale jusqu'a l'atterrissage. Une collision ou une cible non atteinte annule le rebond au lieu de traverser le decor.
+
+# Temps de combat
+
+`TimeManager`, porte par `ApplicationRoot`, est l'unique autorite de `Time.timeScale` et `Time.fixedDeltaTime`. Les systemes demandent un handle global ou local par owner; la pause gagne, sinon l'echelle la plus lente gagne. Toute duree de handle est calculee en temps reel non scale afin qu'un ralentissement ne se prolonge pas artificiellement.
+
+`CombatTimeDomain` complete ce contrat pour Lucian et chaque ennemi : il compose son echelle locale avec le temps global et alimente Animator, locomotion, navigation, IA, physique et rusees. Les deltas root motion ne sont pas remultiplies dans le relay car `Animator.speed` a deja applique l'echelle locale.
+
+Les Timelines LightSkill, CounterSkill et Skill restent `Unscaled` pour preserver leur montage. Les paliers n'utilisent pas de Timeline; leur overlay et leur fenetre de 0,5 s restent non scales.

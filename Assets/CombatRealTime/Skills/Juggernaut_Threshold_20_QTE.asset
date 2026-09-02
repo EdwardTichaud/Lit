@@ -1,0 +1,173 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
+  m_Name: Juggernaut_Threshold_20_QTE
+  m_EditorClassIdentifier: Assembly-CSharp::SkillSO
+  skillName: Juggernaut_Threshold_20
+  description: Lucian prend appui sur sa cible et se projette puissamment en arriere.
+  icon: {fileID: 21300000, guid: 2d089513ae4adfc48a683c362ad9992c, type: 3}
+  animationClip: {fileID: 0}
+  animatorState: 
+  damages: 15
+  clarityGainOnHit: 1
+  presentation:
+    entryBlendSeconds: 0.05
+    chainNormalizedTime: 1
+    chainTransitionNormalizedTime: 1
+    mobilityCancelNormalizedTime: 0.7
+    recoveryNormalizedTime: 0.96
+    exitBlendSeconds: 0.1
+    handoff:
+      minimumContactSeconds: 0
+      animationExitNormalizedTime: 0.82
+      planarSettledSpeed: 0.18
+      verticalSettledSpeed: 0.25
+      planarDampingPerSecond: 0
+      maximumSettleSeconds: 0.2
+      locomotionBlendSeconds: 0.08
+      preLandingProbeDistance: 1.2
+      preLandingLeadSeconds: 0.14
+    rootMotionMode: 2
+    allowAirborneRootMotion: 0
+    facingMode: 1
+    allowMoveAfterRecovery: 1
+    allowDodgeAfterRecovery: 1
+    allowMobilityCancel: 1
+  minimumHitDistance: 0
+  maximumHitDistance: 3.25
+  requireValidRangeToStart: 1
+  cinematic:
+    timeline: {fileID: 11400000, guid: 1e1f71dc93b1c274f827fde42fe4ed66, type: 2}
+    combatCinematicRigPrefab: {fileID: 5595167266840441467, guid: bef5008969aa317468d44a69ac1ee5a2, type: 3}
+    playerAnimatorTrackName: Player.Animator
+    enemyAnimatorTrackName: Enemy.Animator
+    cinemachineTrackName: Cinemachine
+    postTimelinePlayerState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
+    postTimelineEnemyState:
+      animatorStateName: 
+      transitionSeconds: 0.08
+      normalizedStartTime: 0
+  vfxCues:
+  - displayName: Light Impact
+    prefab: {fileID: 385144991248866690, guid: 75918b807bcc63640a75c87a8de23749, type: 3}
+    audioClip: {fileID: 11400000, guid: a1000000000000000000000000000004, type: 2}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+  - displayName: Rupture Shockwave
+    prefab: {fileID: 4661101323380994401, guid: 97bc7e82f9324d77b5f11dc3a91bc4bd, type: 3}
+    audioClip: {fileID: 11400000, guid: bb12751d245f4aeea695bc5ea43a7d1e, type: 2}
+    delivery: 0
+    holdAtCasterSeconds: 0
+    travelDurationSeconds: 0.25
+  impactFeedback:
+    enabled: 1
+    useHitStop: 1
+    hitStopTimeScale: 0.03
+    hitStopSeconds: 0.1
+    camera:
+      lookOffsetKick: {x: 0, y: 0.07, z: 0.42}
+      fieldOfViewKick: -2.8
+      recoverySharpness: 14
+    screenWave:
+      enabled: 1
+      settings:
+        origin: {x: 0.5, y: 0.5}
+        direction: {x: 0, y: 0}
+        reverse: 0
+        frequency: 18
+        propagationSpeed: 2.2
+        amplitude: 0.2
+        duration: 0.38
+        falloff: 6
+        fadeOutDuration: 0.2
+        highlightIntensity: 1.1
+        edgeContrast: 3.2
+        highlightColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+    additionalImpactVfx: {fileID: 0}
+    additionalImpactAudio: {fileID: 0}
+  retreatImpulse:
+    enabled: 1
+    horizontalImpulse: 24
+    verticalImpulse: 8
+    maximumHorizontalImpulse: 24
+    maximumVerticalImpulse: 8
+    minimumInputLockSeconds: 0.12
+    maximumInputLockSeconds: 3.5
+    airborneInertiaSeconds: 0.6
+    airborneInertiaEndSpeedMultiplier: 0.35
+  targetLunge:
+    enabled: 0
+    approachDurationSeconds: 0.18
+    maximumApproachSpeed: 42
+    stoppingDistance: 0.85
+    contactTolerance: 0.18
+    reboundHorizontalImpulse: 16
+    reboundVerticalImpulse: 8
+    minimumInputLockSeconds: 0.1
+    maximumInputLockSeconds: 2.5
+    airborneInertiaSeconds: 0.08
+    airborneInertiaEndSpeedMultiplier: 0.25
+  enemyRange: 0
+  enemyDamageMultiplier: 1
+  acceptedEnemyReactions: 02000000
+  requireAllEnemyReactions: 0
+  playerAttackSfx: {fileID: 11400000, guid: d97b66c20f2140bfa449b56b1a29afd1, type: 2}
+  enemyAttackSfx: {fileID: 11400000, guid: d97b66c20f2140bfa449b56b1a29afd1, type: 2}
+  enemyActionMotion:
+    movementMode: 0
+    initialUpwardSpeed: 12
+    gravity: 32
+    maximumFallSpeed: 28
+    minimumLandingSpeed: 4
+    maximumAirborneSeconds: 2.5
+    enableHomingRush: 0
+    rushMaximumSpeed: 14
+    rushAcceleration: 46
+    rushDeceleration: 62
+    rushStoppingDistance: 1.25
+    rushCollisionSkin: 0.04
+    rushBlockingMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  reactionTelegraph:
+    enabled: 1
+    alertPrefab: {fileID: 0}
+    threatColor: {r: 0.85, g: 0.08, b: 0.4, a: 1}
+    perfectWindowColor: {r: 0.72, g: 0.94, b: 1, a: 1}
+    heightOffset: 1.1
+    fadeSeconds: 0.12
+    anticipationAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
+    perfectWindowAudio: {fileID: 11400000, guid: 0438d71856ebb2343ad2e5a5508b6b87, type: 2}
+    successfulReactionAudio: {fileID: 11400000, guid: 4851eb51eca50fb4594e1d7418bfaf41, type: 2}
+    usePerfectWindowSlowMotion: 1
+    perfectWindowTimeScale: 0.85
+    perfectWindowSlowMotionSeconds: 0.15
+  combatWarning:
+    enabled: 1
+    color: {r: 1, g: 0.1, b: 0.42, a: 1}
+    intensity: 0.8
+    pulseFrequency: 2.5
+    vignette: 0.26
+    chromaticAberration: 0.012
+    enemyFocusBias: 0.9
+    recenterDegreesPerSecond: 280
+    focusSharpness: 28
+    fieldOfViewOffset: -2
+    fadeOutSeconds: 0.16
+    warningAudio: {fileID: 11400000, guid: 5299d74191c176d44a9bef879d084ea6, type: 2}
+    useSlowMotion: 0
+    slowMotionTimeScale: 0.85
+    slowMotionSeconds: 0.15

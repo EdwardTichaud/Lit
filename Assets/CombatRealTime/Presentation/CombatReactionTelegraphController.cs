@@ -72,6 +72,7 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
 
     public void Clear()
     {
+        TimeManager.Instance?.ReleaseOwner(this);
         prompt?.Clear();
         for (int i = activeAlerts.Count - 1; i >= 0; i--)
         {
@@ -102,7 +103,10 @@ public sealed class CombatReactionTelegraphController : MonoBehaviour
         if (profile.perfectWindowAudio != null) AudioManager.PlayClipAtPoint(profile.perfectWindowAudio, window.Enemy.position);
         if (profile.usePerfectWindowSlowMotion)
         {
-            impactFeedback?.PlayReactionSlowMotion(profile.perfectWindowTimeScale, profile.perfectWindowSlowMotionSeconds);
+            TimeManager.EnsureInstance()?.AcquireGlobal(
+                profile.perfectWindowTimeScale,
+                this,
+                profile.perfectWindowSlowMotionSeconds);
         }
     }
 

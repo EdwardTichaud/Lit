@@ -1700,7 +1700,7 @@ public class InventoryPanelController : MonoBehaviour
         {
             KnowledgeReveal.Reveal(item.knowledgeUnlockedOnRead, revealer, "stab");
             string text = item.GetParchmentText().Trim();
-            return !string.IsNullOrWhiteSpace(text) && DialoguePanelUI.TryShow($"« {text} »");
+            return !string.IsNullOrWhiteSpace(text) && DialoguePanelUI.TryShowNonBlocking($"« {text} »", 2f);
         }
 
         OpenReadableItem(item, revealer);

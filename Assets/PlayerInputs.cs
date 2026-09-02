@@ -1154,6 +1154,138 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             ]
         },
         {
+            ""name"": ""CombatQTE"",
+            ""id"": ""c59f16cc-8cf4-4327-af80-0005b1234567"",
+            ""actions"": [
+                {
+                    ""name"": ""Y"",
+                    ""type"": ""Button"",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000001"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""B"",
+                    ""type"": ""Button"",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000002"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""A"",
+                    ""type"": ""Button"",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000003"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""X"",
+                    ""type"": ""Button"",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000004"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000011"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Y"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000012"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Y"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000013"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""B"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000014"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""B"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000015"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""A"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000016"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""A"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000017"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""X"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c59f16cc-8cf4-4327-af80-000000000018"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""X"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
             ""name"": ""Combat"",
             ""id"": ""e3f4bcd7-4a72-46de-b122-a5006f9b6e04"",
             ""actions"": [
@@ -1643,6 +1775,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         m_RealTimeCombat_ConfirmPalette = m_RealTimeCombat.FindAction("ConfirmPalette", throwIfNotFound: true);
         m_RealTimeCombat_SwitchEnemyLock = m_RealTimeCombat.FindAction("SwitchEnemyLock", throwIfNotFound: true);
         m_RealTimeCombat_LightSkill = m_RealTimeCombat.FindAction("LightSkill", throwIfNotFound: true);
+        // CombatQTE
+        m_CombatQTE = asset.FindActionMap("CombatQTE", throwIfNotFound: true);
+        m_CombatQTE_Y = m_CombatQTE.FindAction("Y", throwIfNotFound: true);
+        m_CombatQTE_B = m_CombatQTE.FindAction("B", throwIfNotFound: true);
+        m_CombatQTE_A = m_CombatQTE.FindAction("A", throwIfNotFound: true);
+        m_CombatQTE_X = m_CombatQTE.FindAction("X", throwIfNotFound: true);
         // Combat
         m_Combat = asset.FindActionMap("Combat", throwIfNotFound: true);
         m_Combat_UseItem1 = m_Combat.FindAction("UseItem1", throwIfNotFound: true);
@@ -1679,6 +1817,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Camera.enabled, "This will cause a leak and performance issues, PlayerInputs.Camera.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Falling.enabled, "This will cause a leak and performance issues, PlayerInputs.Falling.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_RealTimeCombat.enabled, "This will cause a leak and performance issues, PlayerInputs.RealTimeCombat.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_CombatQTE.enabled, "This will cause a leak and performance issues, PlayerInputs.CombatQTE.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Combat.enabled, "This will cause a leak and performance issues, PlayerInputs.Combat.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Dialogue.enabled, "This will cause a leak and performance issues, PlayerInputs.Dialogue.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, PlayerInputs.UI.Disable() has not been called.");
@@ -2525,6 +2664,135 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="RealTimeCombatActions" /> instance referencing this action map.
     /// </summary>
     public RealTimeCombatActions @RealTimeCombat => new RealTimeCombatActions(this);
+
+    // CombatQTE
+    private readonly InputActionMap m_CombatQTE;
+    private List<ICombatQTEActions> m_CombatQTEActionsCallbackInterfaces = new List<ICombatQTEActions>();
+    private readonly InputAction m_CombatQTE_Y;
+    private readonly InputAction m_CombatQTE_B;
+    private readonly InputAction m_CombatQTE_A;
+    private readonly InputAction m_CombatQTE_X;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "CombatQTE".
+    /// </summary>
+    public struct CombatQTEActions
+    {
+        private @PlayerInputs m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public CombatQTEActions(@PlayerInputs wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "CombatQTE/Y".
+        /// </summary>
+        public InputAction @Y => m_Wrapper.m_CombatQTE_Y;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatQTE/B".
+        /// </summary>
+        public InputAction @B => m_Wrapper.m_CombatQTE_B;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatQTE/A".
+        /// </summary>
+        public InputAction @A => m_Wrapper.m_CombatQTE_A;
+        /// <summary>
+        /// Provides access to the underlying input action "CombatQTE/X".
+        /// </summary>
+        public InputAction @X => m_Wrapper.m_CombatQTE_X;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_CombatQTE; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="CombatQTEActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(CombatQTEActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="CombatQTEActions" />
+        public void AddCallbacks(ICombatQTEActions instance)
+        {
+            if (instance == null || m_Wrapper.m_CombatQTEActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_CombatQTEActionsCallbackInterfaces.Add(instance);
+            @Y.started += instance.OnY;
+            @Y.performed += instance.OnY;
+            @Y.canceled += instance.OnY;
+            @B.started += instance.OnB;
+            @B.performed += instance.OnB;
+            @B.canceled += instance.OnB;
+            @A.started += instance.OnA;
+            @A.performed += instance.OnA;
+            @A.canceled += instance.OnA;
+            @X.started += instance.OnX;
+            @X.performed += instance.OnX;
+            @X.canceled += instance.OnX;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="CombatQTEActions" />
+        private void UnregisterCallbacks(ICombatQTEActions instance)
+        {
+            @Y.started -= instance.OnY;
+            @Y.performed -= instance.OnY;
+            @Y.canceled -= instance.OnY;
+            @B.started -= instance.OnB;
+            @B.performed -= instance.OnB;
+            @B.canceled -= instance.OnB;
+            @A.started -= instance.OnA;
+            @A.performed -= instance.OnA;
+            @A.canceled -= instance.OnA;
+            @X.started -= instance.OnX;
+            @X.performed -= instance.OnX;
+            @X.canceled -= instance.OnX;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="CombatQTEActions.UnregisterCallbacks(ICombatQTEActions)" />.
+        /// </summary>
+        /// <seealso cref="CombatQTEActions.UnregisterCallbacks(ICombatQTEActions)" />
+        public void RemoveCallbacks(ICombatQTEActions instance)
+        {
+            if (m_Wrapper.m_CombatQTEActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="CombatQTEActions.AddCallbacks(ICombatQTEActions)" />
+        /// <seealso cref="CombatQTEActions.RemoveCallbacks(ICombatQTEActions)" />
+        /// <seealso cref="CombatQTEActions.UnregisterCallbacks(ICombatQTEActions)" />
+        public void SetCallbacks(ICombatQTEActions instance)
+        {
+            foreach (var item in m_Wrapper.m_CombatQTEActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_CombatQTEActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="CombatQTEActions" /> instance referencing this action map.
+    /// </summary>
+    public CombatQTEActions @CombatQTE => new CombatQTEActions(this);
 
     // Combat
     private readonly InputActionMap m_Combat;
@@ -3580,6 +3848,42 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLightSkill(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "CombatQTE" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="CombatQTEActions.AddCallbacks(ICombatQTEActions)" />
+    /// <seealso cref="CombatQTEActions.RemoveCallbacks(ICombatQTEActions)" />
+    public interface ICombatQTEActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Y" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnY(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "B" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnB(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "A" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnA(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "X" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnX(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Combat" which allows adding and removing callbacks.

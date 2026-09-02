@@ -1784,7 +1784,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
 
         // Le retour de ramassage est informatif : il ne doit pas retenir le
         // focus d'interface ni interrompre la marche de l'escouade.
-        InfoBoxUI.TryShowToast(message);
+        InfoBoxUI.TryShowToast(message, 2f);
     }
 
     private void InitializeActionBox()
@@ -3810,7 +3810,10 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
             return;
         }
 
-        InfoBoxUI.TryShow(message);
+        // World-action feedback (pickup, deposit, lock feedback) must remain a
+        // toast. A modal InfoBox disables the Player ActionMap and can leave
+        // locomotion apparently stuck after a simple pickup.
+        InfoBoxUI.TryShowToast(message, 2f);
     }
 
     private void PlayActionAudio(ActionAudioCue cue)

@@ -1068,6 +1068,26 @@
             ]
         },
         {
+            "name": "CombatQTE",
+            "id": "c59f16cc-8cf4-4327-af80-0005b1234567",
+            "actions": [
+                { "name": "Y", "type": "Button", "id": "c59f16cc-8cf4-4327-af80-000000000001", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "B", "type": "Button", "id": "c59f16cc-8cf4-4327-af80-000000000002", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "A", "type": "Button", "id": "c59f16cc-8cf4-4327-af80-000000000003", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "X", "type": "Button", "id": "c59f16cc-8cf4-4327-af80-000000000004", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+            ],
+            "bindings": [
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000011", "path": "<Gamepad>/buttonNorth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "Y", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000012", "path": "<Keyboard>/upArrow", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "Y", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000013", "path": "<Gamepad>/buttonEast", "interactions": "", "processors": "", "groups": "Gamepad", "action": "B", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000014", "path": "<Keyboard>/rightArrow", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "B", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000015", "path": "<Gamepad>/buttonSouth", "interactions": "", "processors": "", "groups": "Gamepad", "action": "A", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000016", "path": "<Keyboard>/downArrow", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "A", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000017", "path": "<Gamepad>/buttonWest", "interactions": "", "processors": "", "groups": "Gamepad", "action": "X", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "c59f16cc-8cf4-4327-af80-000000000018", "path": "<Keyboard>/leftArrow", "interactions": "", "processors": "", "groups": "Keyboard&Mouse", "action": "X", "isComposite": false, "isPartOfComposite": false }
+            ]
+        },
+        {
             "name": "Combat",
             "id": "e3f4bcd7-4a72-46de-b122-a5006f9b6e04",
             "actions": [

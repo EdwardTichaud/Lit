@@ -7,6 +7,7 @@ public sealed class CombatActorRootMotionRelay : MonoBehaviour
     [SerializeField] private CombatActorAnimationRoot actor;
 
     private Animator animator;
+    private CombatTimeDomain timeDomain;
 
     private void Awake()
     {
@@ -15,6 +16,7 @@ public sealed class CombatActorRootMotionRelay : MonoBehaviour
         {
             actor = GetComponentInParent<CombatActorAnimationRoot>();
         }
+        timeDomain = actor != null ? actor.TimeDomain : null;
 
         LogDevelopmentContractDiagnostic();
     }
@@ -34,6 +36,10 @@ public sealed class CombatActorRootMotionRelay : MonoBehaviour
             return;
         }
 
+        timeDomain ??= actor.TimeDomain;
+
+        // CombatTimeDomain already scales Animator.speed. Its evaluated deltas are
+        // therefore local-time aware; scaling them here again would slow root motion twice.
         actor.ApplyAnimationDelta(animator.deltaPosition, animator.deltaRotation);
     }
 

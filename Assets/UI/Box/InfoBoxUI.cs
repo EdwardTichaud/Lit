@@ -160,7 +160,16 @@ public class InfoBoxUI : MonoBehaviour
             ui = runner.AddComponent<InfoBoxUI>();
         }
 
-        return ui.ShowMessageInternal(message, duration, null, blocksGameplayInput: false);
+        bool shown = ui.ShowMessageInternal(message, duration, null, blocksGameplayInput: false);
+        if (shown)
+        {
+            // A previous modal can have reset Player/Move to zero. This toast
+            // does not own focus, so restore the held stick/keys on the next
+            // frame rather than waiting for the player to jump or re-press.
+            LocalPlayerInput.RequestHeldLocomotionReconciliation("InfoBox toast");
+        }
+
+        return shown;
     }
 
     public static bool TryShowTopLeft(string message, float duration = 0f)

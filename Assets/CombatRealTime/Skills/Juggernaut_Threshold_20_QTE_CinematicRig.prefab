@@ -1,0 +1,112 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3868595981992069583
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2815949366203293421}
+  - component: {fileID: 6598156925913615375}
+  - component: {fileID: 8706624491121353433}
+  - component: {fileID: 263208921379701329}
+  - component: {fileID: 5595167266840441467}
+  m_Layer: 0
+  m_Name: Juggernaut_Threshold_20_QTE_CinematicRig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2815949366203293421
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3868595981992069583}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!320 &6598156925913615375
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3868595981992069583}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: b42549f1cbc54c8489a464409b251c79, type: 2}
+  m_InitialState: 0
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 2
+  m_InitialTime: 0
+  m_SceneBindings: []
+  m_ExposedReferences:
+    m_References: []
+--- !u!114 &8706624491121353433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3868595981992069583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
+  m_Events:
+    m_Signals: []
+    m_Events: []
+--- !u!114 &263208921379701329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3868595981992069583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8eb8132753894d729635255ca6a7ceaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LitTimelineCinemachineBridge
+  director: {fileID: 6598156925913615375}
+--- !u!114 &5595167266840441467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3868595981992069583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1742c221fbbe9294f8ef031055a02eb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatCinematicRig
+  director: {fileID: 6598156925913615375}
+  signalReceiver: {fileID: 8706624491121353433}
+  cameraBindings: []
+  trackBindings: []
+  framingReferences: []
+  playerStageAnchor: {fileID: 0}
+  enemyStageAnchor: {fileID: 0}
+  authoringPlayerLocalPosition: {x: 0, y: 0, z: 0}
+  authoringPlayerLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  authoringStageWorldRotation: {x: 0, y: 0, z: 0, w: 1}
+  authoringEnemyLocalPosition: {x: 0, y: 0, z: 0}
+  authoringEnemyLocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  authoringFormationCenter: {x: 0, y: 0, z: 0}
+  authoringFormationForward: {x: 0, y: 0, z: 1}
+  authoringStageLayoutVersion: 0
+  drivePlayerRootMotionFromTimeline: 1
+  logCameraDiagnostics: 1
+  logPlacementDiagnostics: 1

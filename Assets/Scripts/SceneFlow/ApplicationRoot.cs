@@ -10,5 +10,9 @@ public sealed class ApplicationRoot : MonoBehaviour
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
+        if (GetComponent<TimeManager>() == null)
+        {
+            gameObject.AddComponent<TimeManager>();
+        }
     }
 }

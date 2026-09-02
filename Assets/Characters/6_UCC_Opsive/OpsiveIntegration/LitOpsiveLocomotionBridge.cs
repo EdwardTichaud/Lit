@@ -32,6 +32,7 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private AnimatorMonitor animatorMonitor;
     [SerializeField] private PlayerScriptedJumpController scriptedJumpController;
+    [SerializeField] private CombatTimeDomain timeDomain;
 
     [Header("Scripted Traversal Diagnostics")]
     [SerializeField, Tooltip("Logs the requested and observed UCC pose while a scripted traversal is active. Development aid only.")]
@@ -606,7 +607,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             return;
         }
 
-        float deltaSpeed = Mathf.Min(speed, decelerationPerSecond * Time.deltaTime);
+        float deltaTime = timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
+        float deltaSpeed = Mathf.Min(speed, decelerationPerSecond * deltaTime);
         locomotion.AddForce(-planarVelocity.normalized * deltaSpeed, 1, false);
     }
 
@@ -1669,7 +1671,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
         }
         else
         {
-            float maximumRadians = combatFacingSpeedDegreesPerSecond * Mathf.Deg2Rad * Time.unscaledDeltaTime;
+            float deltaTime = timeDomain != null ? timeDomain.DeltaTime : Time.unscaledDeltaTime;
+            float maximumRadians = combatFacingSpeedDegreesPerSecond * Mathf.Deg2Rad * deltaTime;
             smoothedCombatFacingDirection = Vector3.RotateTowards(
                 smoothedCombatFacingDirection,
                 targetDirection,
@@ -2098,6 +2101,11 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             scriptedJumpController = GetComponent<PlayerScriptedJumpController>();
         }
 
+        if (timeDomain == null)
+        {
+            timeDomain = GetComponent<CombatTimeDomain>();
+        }
+
         if (rb == null)
         {
             rb = GetComponent<Rigidbody>();
@@ -2190,7 +2198,8 @@ public partial class LitOpsiveLocomotionBridge : MonoBehaviour
             ApplyCombatMovementType();
         }
 
-        Vector2 targetWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f);
+        float localScale = timeDomain != null ? timeDomain.Scale : 1f;
+        Vector2 targetWorldMoveInput = Vector2.ClampMagnitude(worldInput, 1f) * localScale;
         float targetMagnitude = targetWorldMoveInput.magnitude;
         if (targetMagnitude <= movementDeadZone)
         {

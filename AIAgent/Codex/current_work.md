@@ -44,6 +44,36 @@ fait qu'après une vitesse verticale négative et n'active aucun système de chu
 libre. Le menu
 `Lit/UCC/Create Exploration Test Course` génère le parcours de validation.
 
+Les contours d'interaction des fantômes suivent au minimum leur portée
+d'interaction effective, collider et ancre compris. Un `RuntimeOutlineTarget`
+correctement posé sur leur modèle est donc visible dès que le fantôme devient une
+cible interactive valide.
+
+Les confirmations de ramassage sont des toasts non bloquants. De même, une
+stèle affiche son texte entre guillemets dans le DialoguePanel sans quitter le
+mode Exploration : ces deux messages disparaissent automatiquement après deux
+secondes et ne doivent jamais immobiliser le personnage.
+Ils déclenchent aussi la relecture immédiate du stick ou des touches maintenus,
+pour qu'aucun saut ou nouvel appui ne soit requis après une interaction.
+
+Les choix de réaction des fantômes utilisent exclusivement le
+`GhostReactionChoicePanel` authored dans `ApplicationRoot/UI_Overlay` : nom du
+fantôme, question, conteneur `Options` et boutons `Choice_1` / `Choice_2` sont
+réemployés. Le panneau ou son canvas ne sont jamais créés en runtime; seuls les
+boutons supplémentaires indispensables à une liste plus longue le sont. Sa
+visibilité passe uniquement par le `CanvasGroup` (alpha, raycasts et
+interactivité), pas par l'activation de son GameObject.
+
+Le bake des `CombatSkillTimelineAuthoringRig` valide les pistes, les bindings
+et les caméras de prévisualisation, mais n'impose plus l'Animation Event
+`ResolveCinematicSkillImpact`. Les paliers QTE sont exclus de ce flux : ils
+utilisent un `ThresholdSequence` Animator-driven et ne créent aucun rig ni
+Timeline runtime.
+La pose préalable des paliers QTE résout maintenant le volume réel du joueur
+depuis un `CapsuleCollider`, puis un `CharacterController`; si UCC diffère la
+création de ces composants, un volume de secours conservateur permet de tenter
+la pose, dont le test d'obstacle reste obligatoire.
+
 Le prototype de chute libre est archive dans `Assets/FallingPhase_Legacy/` avec
 sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plus
 partie des scenes de build; l'ActionMap partagee `Falling` est conservee afin que
@@ -791,8 +821,48 @@ facteur de 2,5 à leur `startSize` et restaure les valeurs auteurs à sa désact
 
 ## Prochaine utilisation
 
+Le deblocage d'une `KnowledgeSO` n'interrompt plus le personnage par un
+`CrossFade` force vers `Knowledge_Unlock`. Ce comportement legacy, partage par
+les objets recuperables et les stabs, ecrasait des parametres Animator de
+locomotion et pouvait immobiliser Lucian jusqu'au saut suivant. Le feedback
+reste porte par l'UI, le son et le VFX; l'option legacy est desactivee par
+defaut sur `KnowledgeManager`.
+
+`GhostReactionChoicePanel` est le panneau auteur unique de `UI_Overlay`.
+`GhostController` exige ses enfants `Ghost_Name`, `Ghost_Question` et `Options`;
+il reutilise les choix enfants existants, leur ajoute au besoin le composant
+`Button` et leur hauteur de layout sans instancier un second panneau. Les
+listeners ajoutes pour une ouverture sont retires selectivement a la fermeture,
+ce qui preserve les actions configurees par l'auteur sur les boutons.
+`GhostChoiceCursor`, enfant de `Options`, est decoratif (sans raycast et hors
+layout) et se cale au premier plan sur le choix survole ou selectionne par
+l'EventSystem; il reste ainsi visible au-dessus des fonds opaques des boutons.
+Il est aussi positionne explicitement sur le choix par defaut a l'ouverture :
+son affichage ne depend donc pas de la presence d'un `EventSystem` runtime.
+Les choix implementent `IInputModeHandler`: la map `UI/Navigate` transmet le
+stick gauche et la croix directionnelle a `GhostController`, qui deplace le
+curseur haut/bas entre reponse et `Reculer`. Valider sur `Reculer` ferme le
+panneau sans declencher la reponse par defaut. La validation utilise le bouton
+vise par le curseur comme source de verite, et non une selection EventSystem
+eventuellement restee sur le choix precedent.
+
 Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 `[TACHE]`, puis fournir le prompt a Codex depuis le contexte `AIAgent`.
 # Juggernaut combat
 
 - Added the real-time tactical reaction and attack-recovery safety contract for the Juggernaut.
+# Combat realtime - paliers de vie
+
+- Les ennemis peuvent activer `enableCombatHealthThresholds` dans leur `CharacterData`.
+- Chaque palier plafonne le coup au pourcentage configure et reference un `ThresholdSequence`. Lucian est pose a 2 m devant l'ennemi (fallbacks angulaires de +/-15, +/-30 et +/-45 degres), puis les deux acteurs se font face. Aucun palier n'utilise de Timeline baked, de bindings ou de pool cinematographique.
+- Une sequence lance un clip InPlace de Lucian, qui contient un ou plusieurs `QTE("Y"|"B"|"A"|"X")` ordonnes. Le clip selectionne resout prioritairement l'etat Animator du meme nom; un string d'etat reste un fallback. Chaque reussite laisse le clip continuer vers le QTE suivant; seule la derniere declenche l'animation de succes. Un echec effectue un fondu vers `CombatIdle` avant la reprise ou la riposte. La fenetre dure 0,5 s non-scale, utilise uniquement la map `CombatQTE` et ouvre une bulle locale de 10 m a `0,4` autour du joueur concerne.
+- Une reussite lance immediatement son etat Animator de succes puis tue l'ennemi ou reprend le combat apres le delai configure. Un echec reprend immediatement ou lance le `SkillSO` ennemi configure; son impact est route vers `ResolveThresholdFailureImpact()` avant le recul UCC collision-aware.
+- `KillEnemy` met les PV de l'ennemi a zero, joue sa mort puis appelle la fin de combat dediee au palier : le HUD de combat se ferme sans ouvrir un second ecran de victoire.
+- `QTEPanelController` pilote l'overlay de scene : position aleatoire sure de `QTE_Circle_Slider`, sprite du bouton attendu, anneau radial et fermeture sur succes, echec ou interruption. Il est resolu explicitement ou parmi les objets de scene inactifs, avec diagnostic de CanvasGroup lors d'une ouverture.
+- `SkillSO > Player Target Lunge` permet une approche UCC rapide vers l'ennemi suivie d'un rebond arriere/vertical. L'animation reste InPlace; UCC est l'unique proprietaire du mouvement, des collisions et de l'atterrissage.
+
+# Temps global et local
+
+- `ApplicationRoot` cree et conserve le `TimeManager` unique. Il est le seul ecrivain de `Time.timeScale` et `Time.fixedDeltaTime`; pauses, hit-stop, warnings, contres et QTE passent par des handles idempotents.
+- `CombatTimeDomain` est automatiquement present sur chaque `ActorRoot` de combat. Il ralentit localement Animator, locomotion, IA, NavMesh, physique et actions sans ecrire le temps global.
+- Les QTE gardent leur fenetre et leur overlay en temps reel non scale. Leur bulle locale ralentit Lucian et les acteurs de combat proches, sans modifier le temps global ni les autres clients. Les autres Timelines cinematographiques restent en lecture non scale.

@@ -8514,6 +8514,7 @@ MonoBehaviour:
   animator: {fileID: 963045829911085934}
   animatorMonitor: {fileID: 0}
   scriptedJumpController: {fileID: 0}
+  timeDomain: {fileID: 0}
   logScriptedTraversalDiagnostics: 0
   scriptedTraversalDiagnosticTickInterval: 8
   scriptedTraversalExternalCorrectionDistance: 0.02

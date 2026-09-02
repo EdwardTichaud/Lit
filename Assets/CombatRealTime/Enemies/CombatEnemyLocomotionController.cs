@@ -35,6 +35,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     [SerializeField] private NavMeshAgent navigationAgent;
     [SerializeField] private CombatActorAnimationRoot animationContract;
     [SerializeField] private CombatEnemyPhysicsMotor physicsMotor;
+    [SerializeField] private CombatTimeDomain timeDomain;
     [SerializeField] private CombatPositioningProfile positioning = new CombatPositioningProfile();
     [SerializeField, Min(0f)] private float facingSpeedDegreesPerSecond = 540f;
     [SerializeField, Min(0.01f)] private float animatorDampTime = 0.08f;
@@ -56,6 +57,13 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private Animator cachedAnimator;
     private int lastReportedAnimatorStateHash;
     private bool wasMovingVisually;
+    private bool baseNavigationCaptured;
+    private float baseNavigationSpeed;
+    private float baseNavigationAcceleration;
+    private float baseNavigationAngularSpeed;
+
+    private float LocalTime => timeDomain != null ? timeDomain.LocalTime : Time.time;
+    private float LocalDeltaTime => timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
 
     public CombatPositioningProfile Positioning => positioning;
     public bool IsNavigating => navigationRequested && navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh && !navigationAgent.isStopped;
@@ -71,8 +79,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        CaptureNavigationDefaults();
         strafeSide = Random.value < 0.5f ? -1f : 1f;
-        nextSideChangeAt = Time.time + positioning.strafeSideHoldSeconds;
+        nextSideChangeAt = LocalTime + positioning.strafeSideHoldSeconds;
     }
 
     private void OnDisable()
@@ -95,6 +104,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     private void Update()
     {
+        ApplyLocalNavigationScale();
         UpdateAnimatorPresentation();
     }
 
@@ -146,10 +156,10 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         }
         else
         {
-            if (Time.time >= nextSideChangeAt)
+            if (LocalTime >= nextSideChangeAt)
             {
                 strafeSide *= -1f;
-                nextSideChangeAt = Time.time + Mathf.Max(0.1f, positioning.strafeSideHoldSeconds);
+                nextSideChangeAt = LocalTime + Mathf.Max(0.1f, positioning.strafeSideHoldSeconds);
             }
 
             Vector3 side = Vector3.Cross(Vector3.up, away) * strafeSide;
@@ -216,7 +226,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         }
 
         transform.rotation = Quaternion.RotateTowards(transform.rotation,
-            Quaternion.LookRotation(direction.normalized, Vector3.up), facingSpeedDegreesPerSecond * Time.deltaTime);
+            Quaternion.LookRotation(direction.normalized, Vector3.up), facingSpeedDegreesPerSecond * LocalDeltaTime);
     }
 
     private void UpdateAnimatorPresentation()
@@ -266,9 +276,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
         if (actionOwnsAnimation)
         {
-            animator.SetFloat(CombatMoveX, 0f, animatorDampTime, Time.deltaTime);
-            animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, Time.deltaTime);
-            animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, Time.deltaTime);
+            animator.SetFloat(CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
             wasMovingVisually = false;
             return;
         }
@@ -276,9 +286,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         if (speed > 0.03f)
         {
             Vector3 localVelocity = transform.InverseTransformDirection(velocity / speed);
-            animator.SetFloat(CombatMoveX, Mathf.Clamp(localVelocity.x, -1f, 1f), animatorDampTime, Time.deltaTime);
-            animator.SetFloat(CombatMoveZ, Mathf.Clamp(localVelocity.z, -1f, 1f), animatorDampTime, Time.deltaTime);
-            animator.SetFloat(CombatMoveSpeed, speed, animatorDampTime, Time.deltaTime);
+            animator.SetFloat(CombatMoveX, Mathf.Clamp(localVelocity.x, -1f, 1f), animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(CombatMoveZ, Mathf.Clamp(localVelocity.z, -1f, 1f), animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(CombatMoveSpeed, speed, animatorDampTime, LocalDeltaTime);
             if (animator.HasState(0, CombatLocomotion))
             {
                 AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
@@ -291,9 +301,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         }
         else
         {
-            animator.SetFloat(CombatMoveX, 0f, animatorDampTime, Time.deltaTime);
-            animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, Time.deltaTime);
-            animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, Time.deltaTime);
+            animator.SetFloat(CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
             if (wasMovingVisually)
             {
                 ForceIdlePresentation();
@@ -332,6 +342,26 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         navigationAgent ??= GetComponent<NavMeshAgent>();
         animationContract ??= GetComponent<CombatActorAnimationRoot>();
         physicsMotor ??= GetComponent<CombatEnemyPhysicsMotor>();
+        timeDomain ??= GetComponent<CombatTimeDomain>();
+    }
+
+    private void CaptureNavigationDefaults()
+    {
+        if (baseNavigationCaptured || navigationAgent == null) return;
+        baseNavigationCaptured = true;
+        baseNavigationSpeed = navigationAgent.speed;
+        baseNavigationAcceleration = navigationAgent.acceleration;
+        baseNavigationAngularSpeed = navigationAgent.angularSpeed;
+    }
+
+    private void ApplyLocalNavigationScale()
+    {
+        if (navigationAgent == null) return;
+        CaptureNavigationDefaults();
+        float scale = timeDomain != null ? timeDomain.Scale : 1f;
+        navigationAgent.speed = baseNavigationSpeed * scale;
+        navigationAgent.acceleration = baseNavigationAcceleration * scale;
+        navigationAgent.angularSpeed = baseNavigationAngularSpeed * scale;
     }
 
     private Vector3 ResolveClearDestination(Vector3 requestedDestination)

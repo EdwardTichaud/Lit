@@ -43,6 +43,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private Animator guardAnimator;
     private bool usingPooledRig;
     private bool abortingPooledRig;
+    private TimeManager.TimeRequestHandle counterPauseHandle;
 
     public bool IsCinematicPlaying => cinematicPlaying;
     public bool IsGuardHeld => guardHeld;
@@ -115,10 +116,11 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         CombatWarningPresentationController.Instance?.ClearImmediate();
         combatManager.CancelPlayerActionForCinematic();
         playerLockHeld = combatManager.TryLockPlayerForCinematic();
-        impactFeedback?.PushExternalPause();
+        TimeManager manager = TimeManager.EnsureInstance();
+        counterPauseHandle = manager != null ? manager.AcquireGlobalPause(this) : default;
         if (!StartCounterSkill(skill))
         {
-            impactFeedback?.PopExternalPause();
+            ReleaseCounterPause();
             combatManager.CancelCounterCinematic();
             UnlockPlayer();
         }
@@ -228,7 +230,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (finishing) return;
         finishing = true;
         cinematicPlaying = false;
-        impactFeedback?.PopExternalPause();
+        ReleaseCounterPause();
         combatManager?.CompleteCounterAttack();
         UnlockPlayer();
         combatManager?.ResolveDeferredCombatOutcome();
@@ -251,7 +253,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         bool hadCounterState = cinematicPlaying;
         cinematicPlaying = false;
         if (director != null && director.state == PlayState.Playing) director.Stop();
-        impactFeedback?.PopExternalPause();
+        ReleaseCounterPause();
         if (hadCounterState) combatManager?.CancelCounterCinematic();
         UnlockPlayer();
         activeSkill = null;
@@ -265,6 +267,13 @@ public sealed class CounterSkillCombatController : MonoBehaviour
         if (!playerLockHeld) return;
         combatManager?.UnlockPlayerAfterCinematic();
         playerLockHeld = false;
+    }
+
+    private void ReleaseCounterPause()
+    {
+        if (!counterPauseHandle.IsValid) return;
+        TimeManager.Instance?.Release(counterPauseHandle);
+        counterPauseHandle = default;
     }
 
     private void PlayGuardStartFeedback()
@@ -360,7 +369,7 @@ public sealed class CounterSkillCombatController : MonoBehaviour
     private void FinishAbortedPooledCinematic()
     {
         cinematicPlaying = false;
-        impactFeedback?.PopExternalPause();
+        ReleaseCounterPause();
         combatManager?.CancelCounterCinematic();
         UnlockPlayer();
         activeSkill = null;

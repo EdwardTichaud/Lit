@@ -15,12 +15,14 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
 
     private CombatActorRootMotionRelay rootMotionRelay;
     private CombatEnemyPhysicsMotor enemyPhysicsMotor;
+    private CombatTimeDomain timeDomain;
     private int cinematicSessionToken = -1;
 
     public Transform ActorRoot => transform;
     public Transform AnimationRoot => animationRoot;
     public Animator Animator => animator;
     public Transform LockPoint => lockPoint;
+    public CombatTimeDomain TimeDomain => timeDomain;
     public CombatActorAnimatorContractMode AnimatorContractMode => animator != null && animator.transform == transform
         ? CombatActorAnimatorContractMode.RootAnimator
         : CombatActorAnimatorContractMode.LegacyChildAnimator;
@@ -39,6 +41,10 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        if (timeDomain == null)
+        {
+            timeDomain = gameObject.AddComponent<CombatTimeDomain>();
+        }
         LogDevelopmentContractDiagnostic();
     }
 
@@ -263,6 +269,8 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
         {
             rootMotionRelay = animator.GetComponent<CombatActorRootMotionRelay>();
         }
+
+        timeDomain ??= GetComponent<CombatTimeDomain>();
 
         enemyPhysicsMotor ??= GetComponent<CombatEnemyPhysicsMotor>();
     }

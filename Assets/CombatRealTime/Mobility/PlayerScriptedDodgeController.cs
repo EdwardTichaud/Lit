@@ -21,6 +21,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
 
     private Coroutine activeDodgeRoutine;
     private LitOpsiveLocomotionBridge activeBridge;
+    private CombatTimeDomain activeTimeDomain;
 
     public bool IsActive => activeDodgeRoutine != null;
 
@@ -42,6 +43,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
 
         CancelDodge();
         activeBridge = bridge;
+        activeTimeDomain = bridge.GetComponent<CombatTimeDomain>();
         bool alignToTravel = ShouldAlignToTravel(bridge, profile.statePath);
         bridge.BeginDodgeDirectionFacing(direction, alignToTravel);
         if (!bridge.BeginScriptedPlanarMotion())
@@ -53,7 +55,8 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         // This is intentionally a single velocity-change. The captured
         // direction cannot be steered afterwards; UCC owns collision, gravity
         // and the resulting inertial deceleration.
-        if (!bridge.ApplyScriptedPlanarImpulse(direction * impulseSpeed))
+        float localScale = activeTimeDomain != null ? activeTimeDomain.Scale : 1f;
+        if (!bridge.ApplyScriptedPlanarImpulse(direction * impulseSpeed * localScale))
         {
             EndDodge();
             return false;
@@ -85,7 +88,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
         while (actionPresentation != null && actionPresentation.IsActionActive && elapsed < maximumDuration)
         {
             yield return new WaitForFixedUpdate();
-            elapsed += Time.fixedDeltaTime;
+            elapsed += activeTimeDomain != null ? activeTimeDomain.FixedDeltaTime : Time.fixedDeltaTime;
         }
 
         activeDodgeRoutine = null;
@@ -104,6 +107,7 @@ public sealed class PlayerScriptedDodgeController : MonoBehaviour
 
         activeBridge.EndDodgeDirectionFacing();
         activeBridge = null;
+        activeTimeDomain = null;
     }
 
     private bool ShouldAlignToTravel(LitOpsiveLocomotionBridge bridge, string statePath)

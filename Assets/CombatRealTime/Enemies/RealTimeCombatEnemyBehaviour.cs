@@ -8,6 +8,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 {
     [SerializeField] private RealTimeCombatEnemy enemy;
     [SerializeField] private NavMeshAgent navigationAgent;
+    [SerializeField] private CombatTimeDomain timeDomain;
     [SerializeField, Min(0.05f), Tooltip("Distance de recherche pour recaler l'agent sur le NavMesh avant activation.")]
     private float navMeshSampleDistance = 1.5f;
     [SerializeField, Min(0f), Tooltip("Ecart maximal autorise pour raccrocher l'agent au NavMesh sans deplacer l'ActorRoot.")]
@@ -76,6 +77,9 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private float normalVisionDistance;
     private float nextNavMeshRetryTime;
     private float nextNavMeshRebuildRequestTime;
+
+    private float LocalTime => timeDomain != null ? timeDomain.LocalTime : Time.time;
+    private float LocalDeltaTime => timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
     private Vector3 lastKnownPlayerPosition;
     private float nextAttackDecisionAt;
     private EnemyCombatPhase combatPhase;
@@ -121,7 +125,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     /// <summary>Called only when the authored attack has reached a valid ground recovery.</summary>
     public void NotifyAttackCompleted()
     {
-        nextAttackDecisionAt = Time.time + UnityEngine.Random.Range(
+        nextAttackDecisionAt = LocalTime + UnityEngine.Random.Range(
             Mathf.Min(minimumObserveSeconds, maximumObserveSeconds),
             Mathf.Max(minimumObserveSeconds, maximumObserveSeconds));
         SetCombatPhase(EnemyCombatPhase.Recovery, "attaque terminee");
@@ -131,13 +135,14 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     {
         enemy = GetComponent<RealTimeCombatEnemy>();
         navigationAgent = GetComponent<NavMeshAgent>();
+        timeDomain = GetComponent<CombatTimeDomain>();
     }
 
     private void Awake()
     {
         initialPatrolPosition = transform.position;
         initialPatrolRotation = transform.rotation;
-        lastAttackStartedAt = Time.time;
+        lastAttackStartedAt = LocalTime;
         combatPhase = EnemyCombatPhase.Idle;
 
         if (enemy == null)
@@ -154,6 +159,11 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         if (navigationAgent == null)
         {
             navigationAgent = GetComponent<NavMeshAgent>();
+        }
+
+        if (timeDomain == null)
+        {
+            timeDomain = GetComponent<CombatTimeDomain>();
         }
 
         physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
@@ -352,7 +362,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
         // A readable enemy positions itself briefly in range before committing.
         // The locomotion controller uses this period to orbit, approach or retreat.
-        if (Time.time < nextAttackDecisionAt)
+        if (LocalTime < nextAttackDecisionAt)
         {
             SetCombatPhase(EnemyCombatPhase.Observe, "fenetre de decision");
             if (canPursuePlayer)
@@ -369,8 +379,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         if (hasCombatTarget && enemy.TryStartRetaliation(meleeAttackPreferencePercent * 0.01f))
         {
             StopMovement();
-            lastAttackStartedAt = Time.time;
-            nextAttackDecisionAt = Time.time + UnityEngine.Random.Range(
+            lastAttackStartedAt = LocalTime;
+            nextAttackDecisionAt = LocalTime + UnityEngine.Random.Range(
                 Mathf.Min(minimumRecoverySeconds, maximumRecoverySeconds),
                 Mathf.Max(minimumRecoverySeconds, maximumRecoverySeconds));
             SetCombatPhase(EnemyCombatPhase.Attack, "attaque lancee");
@@ -484,7 +494,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         provokedByPlayer = true;
         EnterAlert();
         SetAttackMode(true);
-        nextAttackDecisionAt = Time.time + UnityEngine.Random.Range(
+        nextAttackDecisionAt = LocalTime + UnityEngine.Random.Range(
             Mathf.Min(minimumObserveSeconds, maximumObserveSeconds),
             Mathf.Max(minimumObserveSeconds, maximumObserveSeconds));
         SetCombatPhase(EnemyCombatPhase.Observe, "provocation lumineuse");
@@ -494,7 +504,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     private void EnterAlert()
     {
         alerted = true;
-        lastSeenPlayerAt = Time.time;
+        lastSeenPlayerAt = LocalTime;
 
         if (visionField != null)
         {
@@ -506,7 +516,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     {
         // Once Lucian has damaged this enemy, the pursuit zone, rather than
         // the short visual-memory timer, is the only automatic disengagement.
-        if (!alerted || provokedByPlayer || Time.time - lastSeenPlayerAt < alertMemorySeconds)
+        if (!alerted || provokedByPlayer || LocalTime - lastSeenPlayerAt < alertMemorySeconds)
         {
             return;
         }
@@ -568,7 +578,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
                 return true;
             case PursuitDisengageState.Pause:
                 StopMovement();
-                if (Time.time >= searchEndsAt)
+                if (LocalTime >= searchEndsAt)
                 {
                     pursuitDisengageState = PursuitDisengageState.Returning;
                 }
@@ -588,7 +598,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
     private void BeginPursuitDisengagePause()
     {
-        searchEndsAt = Time.time + disengagePauseSeconds;
+        searchEndsAt = LocalTime + disengagePauseSeconds;
         ExitAlert();
         SetAttackMode(false);
     }
@@ -622,7 +632,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         if (!searchingLastKnownPosition && !searchCompletedForCurrentAlert && hasLastKnownPlayerPosition)
         {
             searchingLastKnownPosition = searchLastKnownPositionSeconds > 0f;
-            searchEndsAt = Time.time + searchLastKnownPositionSeconds;
+            searchEndsAt = LocalTime + searchLastKnownPositionSeconds;
         }
 
         if (!searchingLastKnownPosition)
@@ -630,7 +640,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return false;
         }
 
-        if (Time.time >= searchEndsAt ||
+        if (LocalTime >= searchEndsAt ||
             HorizontalDistance(transform.position, lastKnownPlayerPosition) <= searchArrivalDistance)
         {
             searchingLastKnownPosition = false;
@@ -656,7 +666,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
                 transform.rotation = Quaternion.RotateTowards(
                     transform.rotation,
                     initialPatrolRotation,
-                    turnSpeedDegreesPerSecond * Time.deltaTime);
+                    turnSpeedDegreesPerSecond * LocalDeltaTime);
             }
 
             return;
@@ -718,7 +728,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             return true;
         }
 
-        if (Time.time < nextNavMeshRetryTime)
+        if (LocalTime < nextNavMeshRetryTime)
         {
             ReportNavigationFailure("attente prochaine tentative NavMesh");
             return false;
@@ -733,7 +743,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
                 navigationAgent.enabled = false;
             }
 
-            nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+            nextNavMeshRetryTime = LocalTime + Mathf.Max(0.02f, navMeshRetryInterval);
             RequestLocalNavMeshRebuild();
             ReportNavigationFailure("aucune projection NavMesh locale");
             return false;
@@ -765,19 +775,19 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
 
         physicsMotor?.AuditPose("NavMesh:desactive, projection trop eloignee=" + hit.position);
         navigationAgent.enabled = false;
-        nextNavMeshRetryTime = Time.time + Mathf.Max(0.02f, navMeshRetryInterval);
+        nextNavMeshRetryTime = LocalTime + Mathf.Max(0.02f, navMeshRetryInterval);
         ReportNavigationFailure("projection NavMesh trop eloignee: " + hit.position);
         return false;
     }
 
     private void RequestLocalNavMeshRebuild()
     {
-        if (Time.time < nextNavMeshRebuildRequestTime)
+        if (LocalTime < nextNavMeshRebuildRequestTime)
         {
             return;
         }
 
-        nextNavMeshRebuildRequestTime = Time.time + Mathf.Max(0.1f, navMeshRebuildRequestInterval);
+        nextNavMeshRebuildRequestTime = LocalTime + Mathf.Max(0.1f, navMeshRebuildRequestInterval);
         SquadAIManager manager = FindFirstObjectByType<SquadAIManager>();
         if (manager == null)
         {
@@ -825,7 +835,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         transform.rotation = Quaternion.RotateTowards(
             transform.rotation,
             targetRotation,
-            turnSpeedDegreesPerSecond * Time.deltaTime);
+            turnSpeedDegreesPerSecond * LocalDeltaTime);
     }
 
     private void SetAttackMode(bool value)
@@ -838,7 +848,7 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
         attackMode = value;
         if (attackMode)
         {
-            lastAttackStartedAt = Time.time;
+            lastAttackStartedAt = LocalTime;
         }
 
         AttackModeChanged?.Invoke(value);

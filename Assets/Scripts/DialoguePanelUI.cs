@@ -92,6 +92,31 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
         return ui.ShowMessage(message, duration, onHidden);
     }
 
+    /// <summary>
+    /// Shows short world-reading text in the dialogue presentation without
+    /// changing the active gameplay ActionMap. This is for inspectable props,
+    /// not conversations that require the player to choose a response.
+    /// </summary>
+    public static bool TryShowNonBlocking(string message, float duration)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        DialoguePanelUI ui = GetOrCreate();
+        bool shown = ui.ShowMessageInternal(message, duration, null, blocksGameplayInput: false);
+        if (shown)
+        {
+            // Inspectable world text deliberately keeps Exploration active.
+            // Re-read held movement after the interaction so no jump/re-press
+            // is needed when an earlier modal reset the input vector.
+            LocalPlayerInput.RequestHeldLocomotionReconciliation("Non-blocking dialogue");
+        }
+
+        return shown;
+    }
+
     public static DialoguePanelUI GetOrCreate()
     {
         DialoguePanelUI ui = Instance;
@@ -114,6 +139,11 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
     }
 
     public bool ShowMessage(string message, float duration, Action onHidden)
+    {
+        return ShowMessageInternal(message, duration, onHidden, blocksGameplayInput: true);
+    }
+
+    private bool ShowMessageInternal(string message, float duration, Action onHidden, bool blocksGameplayInput)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -144,9 +174,13 @@ public class DialoguePanelUI : MonoBehaviour, IInputModeHandler
 
         isShowing = true;
         shownFrame = Time.frameCount;
-        InputFocusStack.PushDialogue(this);
+        InputFocusStack.Pop(this);
+        if (blocksGameplayInput)
+        {
+            InputFocusStack.PushDialogue(this);
+        }
 
-        if (requireInteractToClose)
+        if (blocksGameplayInput && requireInteractToClose)
         {
             hideRoutine = StartCoroutine(ShowUntilManualDismissRoutine());
         }

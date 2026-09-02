@@ -40,6 +40,30 @@ public sealed class SkillRetreatImpulse
     [Range(0f, 1f)] public float airborneInertiaEndSpeedMultiplier = 0.3f;
 }
 
+/// <summary>
+/// Optional player-only movement authored with a SkillSO. The animation stays
+/// in place: UCC owns the rapid approach and the rebound from the target.
+/// </summary>
+[Serializable]
+public sealed class PlayerTargetLungeProfile
+{
+    public bool enabled;
+    [Min(0.01f), Tooltip("Duree maximale de l'approche rapide vers la cible.")]
+    public float approachDurationSeconds = 0.18f;
+    [Min(0.1f), Tooltip("Vitesse maximale UCC pendant l'approche.")]
+    public float maximumApproachSpeed = 42f;
+    [Min(0f), Tooltip("Distance horizontale conservee devant l'ennemi avant le rebond.")]
+    public float stoppingDistance = 0.85f;
+    [Min(0f), Tooltip("Distance supplementaire acceptee pour considerer l'ennemi atteint.")]
+    public float contactTolerance = 0.18f;
+    [Min(0f)] public float reboundHorizontalImpulse = 16f;
+    [Min(0f)] public float reboundVerticalImpulse = 8f;
+    [Min(0f)] public float minimumInputLockSeconds = 0.1f;
+    [Min(0.1f)] public float maximumInputLockSeconds = 2.5f;
+    [Min(0f)] public float airborneInertiaSeconds = 0.08f;
+    [Range(0f, 1f)] public float airborneInertiaEndSpeedMultiplier = 0.25f;
+}
+
 [Serializable]
 public sealed class CombatCameraImpactProfile
 {
@@ -242,6 +266,9 @@ public class SkillSO : ScriptableObject
     [Header("Impact Presentation")]
     public CombatImpactFeedbackProfile impactFeedback = new CombatImpactFeedbackProfile();
     public SkillRetreatImpulse retreatImpulse = new SkillRetreatImpulse();
+    [Header("Player Target Lunge")]
+    [Tooltip("Approche UCC rapide vers l'ennemi, puis rebond arriere et vertical. L'animation du skill reste InPlace.")]
+    public PlayerTargetLungeProfile targetLunge = new PlayerTargetLungeProfile();
 
     [Header("Enemy Retaliation")]
     public RealTimeCombatRange enemyRange = RealTimeCombatRange.Melee;
@@ -275,6 +302,7 @@ public class SkillSO : ScriptableObject
     public IReadOnlyList<SkillVfxCue> VfxCues => vfxCues;
     public CombatImpactFeedbackProfile ImpactFeedback => impactFeedback ?? (impactFeedback = new CombatImpactFeedbackProfile());
     public SkillRetreatImpulse RetreatImpulse => retreatImpulse ?? (retreatImpulse = new SkillRetreatImpulse());
+    public PlayerTargetLungeProfile TargetLunge => targetLunge ?? (targetLunge = new PlayerTargetLungeProfile());
     public RealTimeCombatRange EnemyRange => enemyRange;
     public float EnemyDamageMultiplier => enemyDamageMultiplier;
     public IReadOnlyList<RealTimeCombatReaction> AcceptedEnemyReactions => acceptedEnemyReactions;

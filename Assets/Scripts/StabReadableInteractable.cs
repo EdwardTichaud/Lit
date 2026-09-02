@@ -70,7 +70,7 @@ public sealed class StabReadableInteractable : MonoBehaviour, ICharacterDetected
 
         KnowledgeReveal.Reveal(readableItem.knowledgeUnlockedOnRead, detectedCharacter, "stab");
         string text = readableItem.GetParchmentText().Trim();
-        return !string.IsNullOrWhiteSpace(text) && DialoguePanelUI.TryShow($"« {text} »");
+        return !string.IsNullOrWhiteSpace(text) && DialoguePanelUI.TryShowNonBlocking($"« {text} »", 2f);
     }
 
     private Collider ResolveInteractionCollider()

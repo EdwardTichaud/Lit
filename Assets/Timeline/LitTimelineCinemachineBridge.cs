@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.Playables;
 
 /// <summary>
-/// Switches camera authority for the lifetime of this PlayableDirector. It
-/// deliberately does not select a virtual camera: the Cinemachine Track does.
+/// Switches camera authority only when the owning runtime rig explicitly
+/// requests it. A PlayableDirector may also drive actor-only Timelines, so a
+/// plain Play must never alter the gameplay camera by itself.
 /// </summary>
 [DefaultExecutionOrder(-450)]
 [DisallowMultipleComponent]
@@ -40,44 +41,22 @@ public sealed class LitTimelineCinemachineBridge : MonoBehaviour
             return;
         }
 
-        director.played += OnPlayed;
         director.stopped += OnStopped;
-        if (Application.isPlaying && director.state == PlayState.Playing)
-        {
-            BeginCameraControl();
-        }
     }
 
     private void OnDisable()
     {
         if (director != null)
         {
-            director.played -= OnPlayed;
             director.stopped -= OnStopped;
         }
 
         EndCameraControl();
     }
 
-    private void OnPlayed(PlayableDirector playableDirector)
-    {
-        BeginCameraControl();
-    }
-
     private void OnStopped(PlayableDirector playableDirector)
     {
         EndCameraControl();
-    }
-
-    private void BeginCameraControl()
-    {
-        if (explicitBrain != null)
-        {
-            BeginCameraControlNow(explicitBrain);
-            return;
-        }
-
-        BeginCameraControlNow();
     }
 
     /// <summary>

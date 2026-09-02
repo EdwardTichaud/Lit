@@ -105,6 +105,11 @@ public static class CombatActorAnimationContractEditor
             Transform lockPoint = root.transform.Find("EnemyLockPoint");
             contract.Configure(animationRoot, animator, lockPoint);
 
+            if (root.GetComponent<CombatTimeDomain>() == null)
+            {
+                root.AddComponent<CombatTimeDomain>();
+            }
+
             if (animator.GetComponent<CombatActorRootMotionRelay>() == null)
             {
                 animator.gameObject.AddComponent<CombatActorRootMotionRelay>();

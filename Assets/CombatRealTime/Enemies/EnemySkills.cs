@@ -9,6 +9,7 @@ public sealed class EnemySkills : MonoBehaviour
     [SerializeField] private RealTimeCombatEnemy enemy;
     [SerializeField] private CombatActorAnimationRoot animationContract;
     [SerializeField] private Animator animator;
+    [SerializeField] private CombatTimeDomain timeDomain;
     [SerializeField, Tooltip("Point de depart des VFX ennemi. La racine est utilisee si vide.")]
     private Transform casterVfxPoint;
     [SerializeField] private List<SkillSO> skills = new List<SkillSO>();
@@ -213,7 +214,8 @@ public sealed class EnemySkills : MonoBehaviour
         GameObject projectile = Instantiate(cue.prefab, caster.position, caster.rotation, caster);
         if (cue.holdAtCasterSeconds > 0f)
         {
-            yield return new WaitForSeconds(cue.holdAtCasterSeconds);
+            if (timeDomain != null) yield return timeDomain.WaitForLocalSeconds(cue.holdAtCasterSeconds);
+            else yield return new WaitForSeconds(cue.holdAtCasterSeconds);
         }
 
         if (projectile == null || target == null)
@@ -240,7 +242,7 @@ public sealed class EnemySkills : MonoBehaviour
         float elapsed = 0f;
         while (projectile != null && target != null && elapsed < duration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
             Vector3 destination = target.position;
             Vector3 direction = destination - projectile.transform.position;
             if (direction.sqrMagnitude > 0.0001f)
@@ -271,6 +273,8 @@ public sealed class EnemySkills : MonoBehaviour
         {
             animationContract = GetComponent<CombatActorAnimationRoot>();
         }
+
+        timeDomain ??= GetComponent<CombatTimeDomain>();
 
         if (animationContract != null && animationContract.ValidateContract(out _))
         {
