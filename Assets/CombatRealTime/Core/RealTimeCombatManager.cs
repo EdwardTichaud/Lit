@@ -897,19 +897,32 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// distinct from a normal victory: the threshold cinematic already carries
     /// the payoff, so the combat HUD closes without opening a second result UI.
     /// </summary>
-    public bool CompleteThresholdKill(RealTimeCombatEnemy enemy)
+    public bool CompleteThresholdKill(RealTimeCombatEnemy enemy, bool endCombatImmediately = true)
     {
         if (enemy == null || !enemy.ForceDefeatFromThreshold())
         {
             return false;
         }
 
-        if (engagedEnemy == enemy || lockedEnemy == enemy)
+        if (endCombatImmediately && (engagedEnemy == enemy || lockedEnemy == enemy))
         {
             EndCombat();
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Closes combat after a threshold success presentation has finished. The
+    /// enemy may already be dead; keeping this separate preserves Lucian's
+    /// authored success clip until its visual payoff is complete.
+    /// </summary>
+    public void FinishThresholdKillPresentation(RealTimeCombatEnemy enemy)
+    {
+        if (enemy != null && (engagedEnemy == enemy || lockedEnemy == enemy))
+        {
+            EndCombat();
+        }
     }
 
     public void CancelPlayerActionForCinematic()
@@ -966,10 +979,10 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         SetCinematicSequenceActive(false);
     }
 
-    public bool TryLockPlayerForCinematic()
+    public bool TryLockPlayerForCinematic(bool disableGameplayInput = true)
     {
         return playerController != null && playerController.TryBeginUccExternalLock(
-            disableGameplayInput: true,
+            disableGameplayInput: disableGameplayInput,
             stopActiveAbilities: true);
     }
 

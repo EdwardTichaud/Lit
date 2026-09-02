@@ -16,7 +16,7 @@ MonoBehaviour:
   playerQteAnimatorState: 
   playerQteEntryBlendSeconds: 0.08
   failureIdleBlendSeconds: 0.1
-  successPlayerAnimationClip: {fileID: 7400000, guid: 77b61fbd1349b2a4f968cc7a23f0271f, type: 3}
+  successPlayerAnimationClip: {fileID: 7400000, guid: 5f4f5086b8fe3bc47a2ee9b35abfcff6, type: 3}
   successPlayerAnimatorState: 
   successEntryBlendSeconds: 0.08
   successResolutionDelaySeconds: 0.5

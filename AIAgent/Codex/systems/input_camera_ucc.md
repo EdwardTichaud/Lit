@@ -27,11 +27,12 @@ du combat.
 
 ## Flux principaux
 
-Les QTE de palier combat utilisent l'`InputMode.CombatQTE` uniquement pendant
-la fenêtre ouverte par l'événement d'animation `QTE(...)`. Leur Timeline peut
-reposer sur les Signals auteur pour les impacts et VFX : le bake ne force pas
-un événement `ResolveCinematicSkillImpact`, réservé aux compétences
-cinématiques classiques.
+Les QTE de palier combat utilisent l'`InputMode.ThresholdSequence` hors
+fenêtre puis l'`InputMode.CombatQTE` pendant la fenêtre ouverte par
+l'événement d'animation `QTE(...)`. Ces deux modes gardent la map `Camera`
+active : les paliers sont InPlace et ne possèdent aucune caméra cinématique;
+seuls mouvement et actions restent verrouillés. Les QTE de palier ne reposent
+ni sur une Timeline ni sur des Signals auteur.
 La pose des QTE de palier ne dépend pas d'un unique collider enfant : elle
 résout la capsule Unity ou le `CharacterController` UCC, puis possède un volume
 de secours pour les frames d'initialisation différée.

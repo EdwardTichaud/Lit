@@ -14,6 +14,7 @@ public enum InputMode
     UserInterface,
     Placement,
     Combat,
+    ThresholdSequence,
     CombatQTE,
     CombatWheel,
     Cinematic,
@@ -92,7 +93,9 @@ public sealed class InputModeCoordinator : MonoBehaviour
     }
 
     public static bool IsGameplayBlocked => CurrentMode != InputMode.Exploration;
-    public static bool IsCameraAllowed => CurrentMode == InputMode.Exploration || CurrentMode == InputMode.Dialogue || CurrentMode == InputMode.Placement;
+    public static bool IsCameraAllowed => CurrentMode == InputMode.Exploration || CurrentMode == InputMode.Dialogue ||
+                                          CurrentMode == InputMode.Placement || CurrentMode == InputMode.Combat ||
+                                          CurrentMode == InputMode.ThresholdSequence || CurrentMode == InputMode.CombatQTE;
 
     private void OnDestroy()
     {
@@ -197,8 +200,16 @@ public sealed class InputModeCoordinator : MonoBehaviour
                 yield return "Camera";
                 yield return "RealTimeCombat";
                 yield break;
+            // Les paliers n'ont pas de camera cinematographique. La vue reste
+            // libre pendant que locomotion et actions demeurent bloquees.
+            case InputMode.ThresholdSequence:
+                yield return "Camera";
+                yield break;
             case InputMode.CombatWheel: yield return "CombatWheel"; yield break;
-            case InputMode.CombatQTE: yield return "CombatQTE"; yield break;
+            case InputMode.CombatQTE:
+                yield return "Camera";
+                yield return "CombatQTE";
+                yield break;
             case InputMode.Cinematic:
             case InputMode.Disabled: yield break;
         }

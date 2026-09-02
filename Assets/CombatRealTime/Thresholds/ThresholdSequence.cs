@@ -14,10 +14,13 @@ public enum ThresholdSequenceFailureResult
 [CreateAssetMenu(fileName = "ThresholdSequence", menuName = "Scriptable Objects/Combat/Threshold Sequence")]
 public sealed class ThresholdSequence : ScriptableObject
 {
+    public const string DefaultQteAnimatorState = "ThresholdSequence_QTE";
+    public const string DefaultSuccessAnimatorState = "Threshold_Succes";
+
     [Header("QTE Presentation")]
-    [Tooltip("Clip QTE de Lucian. L'etat Animator du meme nom est resolu automatiquement et doit utiliser ce clip.")]
+    [Tooltip("Clip QTE injecte temporairement dans l'etat generique ThresholdSequence_QTE. Laissez vide pour utiliser son clip par defaut.")]
     public AnimationClip playerQteAnimationClip;
-    [Tooltip("Fallback lorsque le nom de l'etat Animator differe du nom du clip QTE.")]
+    [HideInInspector]
     public string playerQteAnimatorState;
     [Range(0f, 0.25f)] public float playerQteEntryBlendSeconds = 0.08f;
 
@@ -25,11 +28,13 @@ public sealed class ThresholdSequence : ScriptableObject
     [Range(0.02f, 0.25f)] public float failureIdleBlendSeconds = 0.10f;
 
     [Header("Success")]
-    [Tooltip("Clip de reussite de Lucian. L'etat Animator du meme nom est resolu automatiquement et doit utiliser ce clip.")]
+    [Tooltip("Clip de reussite injecte temporairement dans l'etat generique Threshold_Succes.")]
     public AnimationClip successPlayerAnimationClip;
-    [Tooltip("Fallback lorsque le nom de l'etat Animator differe du nom du clip de reussite.")]
+    [HideInInspector]
     public string successPlayerAnimatorState;
     [Range(0f, 0.25f)] public float successEntryBlendSeconds = 0.08f;
+    [Tooltip("Fondu vers CombatIdle une fois le clip de succes termine, avant la restitution du combat.")]
+    [Range(0.02f, 0.35f)] public float successExitBlendSeconds = 0.16f;
     [Min(0f), Tooltip("Delai depuis le debut de l'animation de reussite avant de resoudre le palier.")]
     public float successResolutionDelaySeconds = 0.5f;
     public CombatHealthThresholdSuccessResult successResult = CombatHealthThresholdSuccessResult.ResumeCombat;
@@ -39,19 +44,15 @@ public sealed class ThresholdSequence : ScriptableObject
     [Tooltip("Skill ennemi joue seulement lorsque Failure Result vaut Enemy Skill.")]
     public SkillSO failureRetaliationSkill;
 
-    public string PlayerQteStateName => playerQteAnimationClip != null
-        ? playerQteAnimationClip.name
-        : playerQteAnimatorState;
+    public string PlayerQteStateName => DefaultQteAnimatorState;
 
-    public string SuccessPlayerStateName => successPlayerAnimationClip != null
-        ? successPlayerAnimationClip.name
-        : successPlayerAnimatorState;
+    public string SuccessPlayerStateName => DefaultSuccessAnimatorState;
 
     public bool HasValidRuntimeStates =>
         !string.IsNullOrWhiteSpace(PlayerQteStateName) &&
         !string.IsNullOrWhiteSpace(SuccessPlayerStateName);
 
-    public bool IsComplete => HasValidRuntimeStates &&
+    public bool IsComplete => HasValidRuntimeStates && successPlayerAnimationClip != null &&
                               (failureResult != ThresholdSequenceFailureResult.EnemySkill || failureRetaliationSkill != null);
 
     /// <summary>

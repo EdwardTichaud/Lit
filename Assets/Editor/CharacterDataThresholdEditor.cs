@@ -72,8 +72,7 @@ public sealed class CharacterDataThresholdEditor : Editor
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(sequence.PlayerQteStateName)) issues.Add(prefix + "clip ou etat Animator QTE de Lucian requis.");
-        if (string.IsNullOrWhiteSpace(sequence.SuccessPlayerStateName)) issues.Add(prefix + "clip ou etat Animator de reussite de Lucian requis.");
+        if (sequence.successPlayerAnimationClip == null) issues.Add(prefix + "clip de reussite de Lucian requis.");
         if (sequence.successResolutionDelaySeconds < 0f) issues.Add(prefix + "delai de reussite negatif.");
         if (sequence.failureResult == ThresholdSequenceFailureResult.EnemySkill && sequence.failureRetaliationSkill == null)
         {
@@ -108,14 +107,13 @@ public sealed class CharacterDataThresholdEditor : Editor
             issues.Add(prefix + "etat de reussite introuvable dans Player_Model.controller : '" + sequence.SuccessPlayerStateName + "'.");
         }
 
-        if (sequence.playerQteAnimationClip != null && state.motion != sequence.playerQteAnimationClip)
+        if (!(state.motion is AnimationClip))
         {
-            issues.Add(prefix + "l'etat QTE doit utiliser le clip QTE assigne.");
+            issues.Add(prefix + "l'etat QTE generique doit contenir un AnimationClip placeholder pour permettre le binding runtime.");
         }
-        if (sequence.successPlayerAnimationClip != null && successState != null &&
-            successState.motion != sequence.successPlayerAnimationClip)
+        if (successState != null && !(successState.motion is AnimationClip))
         {
-            issues.Add(prefix + "l'etat de reussite doit utiliser le clip de reussite assigne.");
+            issues.Add(prefix + "l'etat de reussite generique doit contenir un AnimationClip placeholder pour permettre le binding runtime.");
         }
 
         AnimationClip clip = sequence.playerQteAnimationClip != null
