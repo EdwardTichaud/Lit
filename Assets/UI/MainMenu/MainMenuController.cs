@@ -4567,7 +4567,7 @@ public class MainMenuController : MonoBehaviour
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            NetworkManager.Singleton.Shutdown();
+            NetcodeBootstrap.ShutdownActiveNetworkManager();
         }
 
         if (!GameFlowService.StartOrLoadGame())
@@ -4846,7 +4846,7 @@ public class MainMenuController : MonoBehaviour
 
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            NetworkManager.Singleton.Shutdown();
+            NetcodeBootstrap.ShutdownActiveNetworkManager();
         }
 
         HideLoadingScreen();

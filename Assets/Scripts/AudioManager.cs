@@ -637,6 +637,27 @@ public class AudioManager : MonoBehaviour
         return source;
     }
 
+    /// <summary>Plays a non-spatial SFX once, independently of the clip loop setting.</summary>
+    public AudioSource PlayUiOneShotClip(AudioClipSO clip)
+    {
+        if (clip == null || clip.audioClip == null)
+        {
+            return null;
+        }
+
+        AudioSource source = CreateSource("UiOneShot_" + clip.name);
+        ConfigureOneShotSource(source);
+        source.spatialBlend = 0f;
+        source.clip = clip.audioClip;
+        source.loop = false;
+        ApplyClipPitch(source, clip);
+        source.volume = GetSfxSourceVolume(clip);
+        source.Play();
+        RegisterSfxSource(source, clip);
+        StartCoroutine(DestroyAfterPlay(source));
+        return source;
+    }
+
     public AudioSource PlayActionCue(ActionAudioCue cue, Vector3 position)
     {
         AudioClipSO clip = ResolveActionAudioClip(cue);
@@ -1018,7 +1039,7 @@ public class AudioManager : MonoBehaviour
             return safeBasePitch;
         }
 
-        return Mathf.Clamp(safeBasePitch * Mathf.Max(0f, Time.timeScale), 0f, 3f);
+        return Mathf.Clamp(safeBasePitch * Mathf.Max(0f, TimeManager.CurrentGlobalScale), 0f, 3f);
     }
 
     public static void ApplyClipPitch(AudioSource source, AudioClipSO clip, float basePitch = 1f)
@@ -1039,7 +1060,7 @@ public class AudioManager : MonoBehaviour
             return basePitch;
         }
 
-        return Mathf.Clamp(basePitch * Mathf.Max(0f, Time.timeScale), 0f, 3f);
+        return Mathf.Clamp(basePitch * Mathf.Max(0f, TimeManager.CurrentGlobalScale), 0f, 3f);
     }
 
     private void RefreshTimeScaledPitches()

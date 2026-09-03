@@ -1,30 +1,40 @@
 # Lit — Lore canonique
 
-Ce document est la source de vérité narrative du projet. Il intègre le résumé
-canonique fourni le 18 juin 2026.
+Ce document est la source de vérité narrative du projet.
+
+## Le Monde des Rêves
+
+Le château existe dans le Monde des Rêves. Cette dimension existe réellement,
+mais n'est physiquement reliée ni au monde Réel ni aux Enfers. Elle a été créée
+par Azazel, un ange déchu qui souhaitait créer des mondes sans en connaître la
+perfection. Le Monde des Rêves est donc imparfait, instable et traversé
+d'incohérences.
+
+Azazel n'a pas créé le château. Celui-ci a toujours existé dans le Monde des
+Rêves.
 
 ## Principe fondamental
 
-`Lit` raconte l'histoire d'un peuple qui a vécu enfermé dans un immense château
-pendant 666 ans.
+`Lit` raconte l'histoire d'un peuple qui a vécu enfermé pendant 666 ans dans un
+immense château du Monde des Rêves.
 
 Ce peuple ignore la véritable raison de son existence. Le joueur découvre
-progressivement que toute la société du château a été créée dans un but unique :
-préserver un sang particulier jusqu'à l'an 666 afin de permettre
-l'accomplissement d'un rituel.
+progressivement que sa société a été créée pour préserver la lignée d'âmes
+captives jusqu'à l'an 666 afin d'accomplir un rituel.
 
 Le château est donc une civilisation entière construite autour d'un objectif
 oublié.
 
 ## Implantation et statue centrale
 
-Le château est construit sur un promontoire rocheux isolé au-dessus de la mer.
+Le château est construit sur un promontoire rocheux isolé au-dessus de la mer du
+Monde des Rêves.
 Une statue gigantesque existait déjà au cœur du site avant son édification.
 
-Les fondateurs bâtissent autour de cette statue parce qu'elle est liée au rituel.
-Au fil des siècles, sa fonction réelle disparaît derrière des interprétations
-religieuses. Les Espérants y voient une protection, les Fatalistes un passage et
-les Médiateurs une image capable de maintenir un récit commun.
+La statue représente la déesse des Enfers adorée par les fondateurs et sert
+d'ancre au rituel. Au fil des siècles, sa fonction réelle disparaît. Les
+Espérants y voient une protection, les Fatalistes un signe de jugement et les
+Médiateurs une image capable de maintenir un récit commun.
 
 La statue structure l'architecture du château :
 
@@ -39,22 +49,26 @@ la catastrophe annoncée.
 
 ## Les fondateurs
 
-Avant le début de l'histoire connue du château, des fondateurs capturent ou
-recueillent des individus possédant un sang particulier. L'origine exacte de ce
-sang est inconnue.
+Avant le début de l'histoire connue du château, une secte vénérant une déesse des
+Enfers y amène des âmes captives arrachées aux Enfers. Les fondateurs les
+retiennent prisonnières et organisent leur descendance pendant des générations.
 
-Les fondateurs savent qu'ils auront besoin de ce sang 666 ans plus tard. Aucun
-être humain ne pouvant surveiller directement un projet pendant une telle durée,
-ils créent une société capable de le perpétuer elle-même.
+Les fondateurs savent qu'ils auront besoin de cette lignée 666 ans plus tard pour
+amener leur déesse dans le Monde des Rêves. Aucun être ne pouvant surveiller
+directement un projet pendant une telle durée, ils créent une société capable de
+le perpétuer elle-même.
 
 Ils ne transmettent pas seulement des ordres. Ils conçoivent un système social
-qui transforme la continuité du projet en mode de vie.
+qui transforme la continuité du projet en mode de vie. La secte disparaît avant
+les événements connus du château ; la cause de cette disparition n'est pas
+établie.
 
 ## Le château
 
-Le château n'est pas une prison. Le château n'est pas un sanctuaire. C'est une
-immense machine sociale destinée à préserver des lignées pendant plusieurs
-siècles.
+Le château fut d'abord une prison pour les âmes captives. Il devient ensuite une
+immense machine sociale destinée à préserver leurs lignées pendant plusieurs
+siècles, puis une civilisation sincèrement vécue par des habitants qui ignorent
+son origine.
 
 Pour y parvenir, les fondateurs construisent et organisent :
 
@@ -70,19 +84,19 @@ Tout est conçu pour garantir la survie de la population et des lignées nécess
 jusqu'à l'an 666. Au fil du temps, ces outils deviennent une culture complète,
 sincèrement vécue par les habitants.
 
-## Le grand mensonge
+## La tradition oubliée
 
-La population n'est jamais informée de la véritable raison de son existence. Une
-histoire officielle lui est transmise à la place.
+La population n'est jamais informée de la véritable raison de son existence. Les
+religions tardives ne cachent pas cette réalité : elles l'ignorent. Elles
+perpétuent des traditions dont l'intention s'est effacée avec la secte.
 
-Cette histoire affirme qu'une catastrophe aura lieu le premier jour du premier mois
-de l'an 666. Pour l'éviter, les habitants doivent perpétuer les Veillées et les
-prières.
+Ces traditions annoncent qu'une catastrophe aura lieu le premier jour du premier
+mois de l'an 666. Elles prescrivent les prières, les Veillées et les gestes qui
+conduiront finalement les habitants au rituel.
 
-Au fil des siècles, ce récit devient une vérité absolue. Même les descendants de
-ceux qui connaissaient la réalité finissent par oublier. Le système ne dépend
-donc pas d'une cabale demeurée omnisciente pendant 666 ans : il survit parce que
-les institutions, les familles et les habitudes se transmettent.
+Au fil des siècles, ce récit devient une vérité absolue. Le système ne dépend pas
+d'une cabale demeurée omnisciente pendant 666 ans : il survit parce que les
+institutions, les familles et les habitudes se transmettent.
 
 ## Les trois courants
 
@@ -91,8 +105,7 @@ système et tous prient, mais ils ne donnent pas le même sens à leurs prières
 
 ### Les Espérants
 
-Les Espérants croient qu'une déesse viendra sauver le peuple lors de la
-catastrophe.
+Les Espérants croient que la statue les sauvera du cataclysme lors de l'an 666.
 
 Ils représentent l'espoir et voient les Veillées comme une promesse de salut.
 Leur symbole est la lune. La plupart vivent dans le Quartier de la Lune.
@@ -103,15 +116,15 @@ système dont ils ignorent la fonction.
 
 ### Les Fatalistes
 
-Les Fatalistes pensent que la catastrophe est inévitable. Ils ne croient pas au
-salut matériel.
+Les Fatalistes pensent que la catastrophe est inévitable. Ils sont persuadés
+qu'elle est liée à des péchés passés dont ils ont perdu la nature exacte.
 
-Pour eux, les prières préparent l'âme à ce qui viendra. Ils représentent
-l'acceptation du destin. Leurs rites peuvent être liés aux Veillées, au deuil, à
-la préparation et à la dignité face à la fin annoncée.
+Pour eux, les prières doivent expier ces fautes oubliées et préserver leur âme de
+l'Enfer. Leurs rites sont liés aux Veillées, au deuil, à la culpabilité, à la
+préparation et à la dignité face à la fin annoncée.
 
-Ils ne sont pas les gardiens conscients de la vérité. Ils interprètent le même
-mensonge fondateur d'une manière différente.
+Ils ne sont pas les gardiens conscients de la vérité. Ils interprètent des
+traditions dont l'origine leur est inconnue.
 
 ### Les Médiateurs ou Archivistes
 
@@ -131,16 +144,15 @@ système de durer jusqu'à l'an 666.
 
 ## Les Chanteurs
 
-Les descendants des prisonniers originels dont le sang est nécessaire au rituel
-deviennent progressivement les Chanteurs.
+Les descendants des âmes captives originelles deviennent progressivement les
+Chanteurs. Leur lignée est nécessaire au rituel.
 
 Leur voix, leur présence et leur lignée sont indispensables à l'accomplissement
-du rite. Ils grandissent cependant dans la même histoire officielle que les
-autres habitants :
+du rite. Ils grandissent cependant dans les mêmes traditions que les autres
+habitants :
 
 - ils ignorent l'origine de leur sang ;
-- ils ignorent qu'ils descendent des individus capturés ou recueillis par les
-  fondateurs ;
+- ils ignorent qu'ils descendent d'âmes arrachées aux Enfers par les fondateurs ;
 - ils pensent que leurs chants servent les Veillées et protègent ou préparent le
   peuple ;
 - ils ne savent pas que leur réunion à l'an 666 est une condition du rituel.
@@ -268,14 +280,14 @@ religion.
 
 ## Le rituel
 
-Le rituel est la raison véritable de l'existence du château. Il nécessite que le
-sang des prisonniers originels — plus largement, des individus capturés ou
-recueillis au début du projet — ait survécu jusqu'à l'an 666.
+Le rituel est la raison véritable de l'existence du château. Il exige que la
+lignée des âmes captives originelles ait survécu jusqu'à l'an 666. Son but est
+d'amener la déesse des Enfers dans le Monde des Rêves.
 
 Toute la société existe pour rendre cela possible. Les habitants ignorent cette
 vérité et les institutions qui perpétuent le système l'ont elles-mêmes oubliée.
 
-Le rite utilise la présence, le sang et le chant des Chanteurs. Les salles
+Le rite utilise la présence, la lignée et le chant des Chanteurs. Les salles
 inférieures, les cordes, les roues, les conduits, les portes, les Ancient Flames
 et les protocoles transmis pendant des siècles préparent son accomplissement. Les
 Ancient Flames sont donc des mécanismes du rituel interrompu. Les habitants
@@ -284,9 +296,8 @@ comprendre l'ensemble.
 
 Les détails suivants restent ouverts :
 
-- l'origine du sang ;
-- son bénéficiaire ;
-- la forme exacte de l'apocalypse qu'il doit produire ;
+- le nom de la déesse ;
+- la nature précise des corps et de la descendance des âmes captives ;
 - le fonctionnement précis de chaque mécanisme.
 
 ## L'an 666 et le siège
@@ -294,12 +305,12 @@ Les détails suivants restent ouverts :
 Le premier jour du premier mois de l'an 666, une armée atteint le château.
 
 Pour les habitants, cette arrivée confirme la prophétie. Les Espérants attendent
-le salut de la Déesse. Les Fatalistes se préparent à la mort et au passage. Les
+le salut de la statue. Les Fatalistes se préparent à la mort et au jugement. Les
 Médiateurs cherchent à préserver l'ordre et à maintenir un récit commun. Les
 Chanteurs sont conduits vers les lieux prévus par les anciennes procédures.
 
 L'armée n'est pourtant pas venue provoquer la catastrophe. Elle connaît au moins
-une partie du danger et cherche à empêcher le rituel.
+une partie du danger et cherche à empêcher le rituel. Son origine reste inconnue.
 
 Le siège devient tragiquement l'une des conditions de son déclenchement :
 
@@ -316,9 +327,10 @@ les montrer comme l'armée de la Mort alors qu'ils tentent d'arrêter le rite.
 
 Le rituel commence mais n'est pas mené à son terme. L'intervention de l'armée
 l'interrompt trop tard pour éviter la catastrophe, mais assez tôt pour empêcher
-l'apocalypse complète.
+l'arrivée complète de la déesse.
 
-Cette interruption provoque :
+Le château reste alors bloqué entre le Monde des Rêves et les Enfers. Cette
+interruption provoque :
 
 - la disparition de la vie organique stable dans le château ;
 - la superposition de strates temporelles ;
@@ -339,9 +351,9 @@ canon.
 
 ## Les Explorateurs
 
-Les Explorateurs constituent le point de vue du joueur. Ils appartiennent à une
-organisation ancienne spécialisée dans l'étude des phénomènes anormaux et des
-civilisations oubliées.
+Les Explorateurs constituent le point de vue du joueur. Ce sont de véritables
+entités du Monde des Rêves ; ils appartiennent à une organisation ancienne
+spécialisée dans l'étude des phénomènes anormaux et des civilisations oubliées.
 
 Les membres de cette organisation sont des demi-dieux. Chacun incarne une notion
 abstraite ou concrète qui définit profondément sa nature, sa manière de percevoir
@@ -367,7 +379,8 @@ deviennent réellement importants que progressivement.
 
 ### Lucian — l'Espoir
 
-Lucian est le demi-dieu qui incarne l'Espoir.
+Lucian est le demi-dieu qui incarne l'Espoir. Il est la réincarnation du frère
+décédé de Munin. Le Monde des Rêves l'a divinisé sans effacer cette origine.
 
 Il est toujours optimiste, y compris face à l'inconnu et aux situations qui
 semblent sans issue. Son optimisme n'est pas une naïveté : il perçoit et transmet
@@ -380,6 +393,18 @@ jeunesse apparente et sa nature demi-divine doit lui donner une présence à la 
 familière et intemporelle. Son apparence, son attitude et ses paroles doivent
 évoquer la confiance et l'avenir.
 
+### Munin et le sacrifice de Lucian
+
+Dans le monde Réel, Munin est un petit garçon dont une erreur d'enfant est
+indirectement liée à la mort de son frère. Accablé de tristesse et de culpabilité,
+il reste chez lui, dort longuement et rêve de Lucian. Son écho onirique accompagne
+Lucian dans le château : Munin est une même âme présente à la fois dans le Réel et
+dans les Rêves.
+
+Vers la fin de la quête, Lucian comprend que Munin doit oublier son frère pour se
+libérer de son deuil. Munin s'y refuse. Lucian choisit alors de se sacrifier : il
+cesse d'exister dans le Monde des Rêves afin de libérer son frère.
+
 ## Thème principal
 
 Le thème central de `Lit` n'est ni la religion, ni la catastrophe, ni même le
@@ -387,7 +412,8 @@ rituel.
 
 La question principale est :
 
-> Comment transmettre quelque chose pendant 666 ans sans perdre son sens ?
+> Comment vivre après une perte sans transformer l'espoir en déni ni la
+> culpabilité en enfermement ?
 
 Les fondateurs ont réussi à transmettre :
 
@@ -397,7 +423,9 @@ Les fondateurs ont réussi à transmettre :
 - des lignées.
 
 Ils n'ont pas réussi à transmettre leur intention. Le château devient ainsi une
-immense civilisation organisée autour d'un objectif oublié.
+immense civilisation organisée autour d'un objectif oublié. Son histoire reflète
+celle de Munin : le refus de laisser partir un être aimé enferme autant que la
+culpabilité d'une faute impossible à réparer.
 
 ## Principes d'écriture
 
@@ -406,12 +434,15 @@ immense civilisation organisée autour d'un objectif oublié.
 - Révéler une famille par plusieurs traces plutôt que par une biographie unique.
 - Faire des registres des outils d'enquête, pas des encyclopédies.
 - Garder les trois courants sincères, incomplets et humains.
+- Ne jamais attribuer aux religions tardives une connaissance consciente du
+  rituel, de la déesse ou de la secte.
 - Traiter les Chanteurs comme des personnes et des familles, pas comme de simples
   composants du rituel.
 - Présenter le siège d'abord à travers le récit officiel avant d'en révéler le
   véritable objectif.
 - Utiliser les traces bleues comme contradictions anonymes, jamais comme une
   quatrième religion publique.
+- Ne pas révéler l'origine de l'armée ni la cause de la disparition de la secte.
 - Ne pas introduire un gardien omniscient qui expliquerait comment le projet a été
   contrôlé pendant 666 ans.
 - Maintenir l'histoire personnelle des Explorateurs derrière celle du peuple.

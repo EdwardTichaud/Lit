@@ -430,7 +430,7 @@ public class PausePanelController : MonoBehaviour
     {
         if (shutdownNetworkOnQuit && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            NetworkManager.Singleton.Shutdown();
+            NetcodeBootstrap.ShutdownActiveNetworkManager();
         }
 
         if (string.IsNullOrWhiteSpace(mainMenuSceneName))

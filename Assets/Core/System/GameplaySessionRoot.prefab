@@ -220,6 +220,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 383103919083899251}
+  - component: {fileID: 8115866548192480964}
   m_Layer: 0
   m_Name: TimeManager
   m_TagString: Untagged
@@ -235,13 +236,51 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 682870281867579096}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 82.45272, y: -98.05269, z: -75.11045}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9037320159994210700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8115866548192480964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 682870281867579096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a64e799a59f4b3e9107dfcccf44f5e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeManager
+  baseGlobalScale: 1
+  logDiagnostics: 0
+  slowMotionPresentation:
+    enabled: 1
+    cameraEffectsEnabled: 0
+    screenWave: {fileID: 6119416266814459275}
+    entryScreenWave:
+      origin: {x: 0.5, y: 0.5}
+      direction: {x: 0, y: 0}
+      reverse: 0
+      frequency: 0.8
+      propagationSpeed: 0.3
+      amplitude: 0.25
+      duration: 1.35
+      falloff: 0.45
+      fadeOutDuration: 0.5
+      highlightIntensity: 0
+      edgeContrast: 1
+      highlightColor: {r: 1, g: 1, b: 1, a: 1}
+    cameraEnterBlendSeconds: 0.08
+    cameraExitBlendSeconds: 0.14
+    vignetteIntensity: 0.2
+    vignetteSmoothness: 0.7
+    chromaticAberrationIntensity: 0.18
+    enterSfx: {fileID: 0}
+    exitSfx: {fileID: 0}
 --- !u!1 &832734352767664094
 GameObject:
   m_ObjectHideFlags: 0
@@ -1907,23 +1946,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14c16264ee6e6b8428b89e0500662619, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealthThresholdController
-  combatManager: {fileID: 0}
-  combatInput: {fileID: 0}
-  qtePanel: {fileID: 0}
-  qteLocalTimeField: {fileID: 0}
-  failureRetaliationGraceSeconds: 1.5
-  stageDistance: 2
-  stageGroundMask:
-    serializedVersion: 2
-    m_Bits: 2080440315
-  stageBlockingMask:
-    serializedVersion: 2
-    m_Bits: 2080440315
-  stageRetrySeconds: 0.15
-  stageClearance: 0.03
-  logDiagnostics: 1
-  qteDurationSeconds: 1
-  qteEventTimeoutSeconds: 3
 --- !u!1 &3356031388750873972
 GameObject:
   m_ObjectHideFlags: 0

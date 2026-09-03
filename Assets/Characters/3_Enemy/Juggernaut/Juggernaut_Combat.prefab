@@ -7551,7 +7551,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95818c943a004c47a64b9f42e568f020, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatAnimationEvents
   enemy: {fileID: 0}
   enemySkills: {fileID: 0}
@@ -7781,6 +7781,7 @@ MonoBehaviour:
   enemy: {fileID: 0}
   animationContract: {fileID: 0}
   animator: {fileID: 4280753887478595955}
+  timeDomain: {fileID: 0}
   casterVfxPoint: {fileID: 0}
   skills:
   - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
@@ -7798,9 +7799,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemyBehaviour
   enemy: {fileID: 0}
   navigationAgent: {fileID: 0}
+  timeDomain: {fileID: 0}
   navMeshSampleDistance: 1.5
   navMeshReattachTolerance: 0.15
   navMeshRetryInterval: 0.25
+  navMeshRebuildRequestInterval: 1
   patrolPoint: {fileID: 0}
   meleeAttackDistance: 2.6
   rangedAttackDistance: 8
@@ -7836,6 +7839,7 @@ MonoBehaviour:
   navigationAgent: {fileID: 0}
   body: {fileID: 0}
   bodyCollider: {fileID: 0}
+  timeDomain: {fileID: 0}
   groundSkin: 0.03
   groundProbeStartHeight: 0.35
   groundProbeDistance: 4
@@ -7867,6 +7871,7 @@ MonoBehaviour:
   navigationAgent: {fileID: 0}
   animationContract: {fileID: 4532544328156619208}
   physicsMotor: {fileID: 707000000000000003}
+  timeDomain: {fileID: 0}
   positioning:
     preferredDistance: 2.6
     minimumRetreatDistance: 1.2
@@ -7897,6 +7902,8 @@ MonoBehaviour:
   locomotion: {fileID: 3353001312763717800}
   navigationAgent: {fileID: 900000000000000015}
   animationContract: {fileID: 4532544328156619208}
+  combatBehaviour: {fileID: 0}
+  timeDomain: {fileID: 0}
   profile:
     guardChance: 0.12
     dodgeChance: 0.08

@@ -21,7 +21,7 @@ public sealed class CharacterDataThresholdEditor : Editor
                 : string.Join("\n", issues),
             issues.Count == 0 ? MessageType.Info : MessageType.Error);
 
-        if (GUILayout.Button("Migrate Health Threshold Sequences"))
+        if (GUILayout.Button("Validate All Threshold Sequences"))
         {
             ThresholdSequenceMigrationUtility.MigrateAllCharacterData();
         }
@@ -41,6 +41,17 @@ public sealed class CharacterDataThresholdEditor : Editor
         {
             issues.Add("Ajoutez au moins un palier ou desactivez cette option.");
             return issues;
+        }
+        CombatHealthThresholdStageSettings stageSettings = data.combatHealthThresholdStageSettings;
+        if (stageSettings == null)
+        {
+            issues.Add("Les reglages de pose des paliers sont absents.");
+        }
+        else
+        {
+            if (stageSettings.stageDistance < 0.1f) issues.Add("Distance de pose inferieure a 0,1 m.");
+            if (stageSettings.stageRetrySeconds < 0.01f) issues.Add("Retry de pose inferieur a 0,01 s.");
+            if (stageSettings.stageClearance < 0f) issues.Add("Clearance de pose negative.");
         }
 
         HashSet<int> percents = new HashSet<int>();
@@ -72,20 +83,22 @@ public sealed class CharacterDataThresholdEditor : Editor
             return;
         }
 
-        if (sequence.successPlayerAnimationClip == null) issues.Add(prefix + "clip de reussite de Lucian requis.");
-        if (sequence.successResolutionDelaySeconds < 0f) issues.Add(prefix + "delai de reussite negatif.");
-        if (sequence.failureResult == ThresholdSequenceFailureResult.EnemySkill && sequence.failureRetaliationSkill == null)
+        if (!sequence.TryGetStepValidationIssue(out string sequenceIssue))
         {
-            issues.Add(prefix + "SkillSO de riposte requis lorsque Failure Result vaut Enemy Skill.");
+            issues.Add(prefix + sequenceIssue + ".");
+            return;
         }
-        else if (sequence.failureResult == ThresholdSequenceFailureResult.EnemySkill)
+
+        for (int stepIndex = 0; stepIndex < sequence.StepCount; stepIndex++)
         {
+            ThresholdSequenceStep step = sequence.steps[stepIndex];
+            if (step.failureResult != ThresholdSequenceFailureResult.EnemySkill) continue;
             EnemySkills enemySkills = data.worldPrefab != null
                 ? data.worldPrefab.GetComponent<EnemySkills>() ?? data.worldPrefab.GetComponentInChildren<EnemySkills>(true)
                 : null;
-            if (enemySkills == null || !enemySkills.Skills.Contains(sequence.failureRetaliationSkill))
+            if (enemySkills == null || !enemySkills.Skills.Contains(step.failureRetaliationSkill))
             {
-                issues.Add(prefix + "la riposte doit appartenir a EnemySkills du WorldPrefab ennemi.");
+                issues.Add(prefix + "step " + (stepIndex + 1) + " : la riposte doit appartenir a EnemySkills du WorldPrefab ennemi.");
             }
         }
 
@@ -116,42 +129,6 @@ public sealed class CharacterDataThresholdEditor : Editor
             issues.Add(prefix + "l'etat de reussite generique doit contenir un AnimationClip placeholder pour permettre le binding runtime.");
         }
 
-        AnimationClip clip = sequence.playerQteAnimationClip != null
-            ? sequence.playerQteAnimationClip
-            : state.motion as AnimationClip;
-        if (clip == null)
-        {
-            issues.Add(prefix + "le clip QTE doit etre assigne ou l'etat QTE doit utiliser un AnimationClip direct.");
-            return;
-        }
-
-        List<float> qteTimes = new List<float>();
-        AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
-        for (int i = 0; i < events.Length; i++)
-        {
-            if (events[i].functionName != "QTE") continue;
-            string value = (events[i].stringParameter ?? string.Empty).Trim().ToUpperInvariant();
-            if (value != "A" && value != "B" && value != "X" && value != "Y")
-            {
-                issues.Add(prefix + "QTE invalide '" + events[i].stringParameter + "' : utilisez A, B, X ou Y.");
-            }
-            qteTimes.Add(events[i].time);
-        }
-        if (qteTimes.Count == 0)
-        {
-            issues.Add(prefix + "l'etat QTE doit contenir au moins un Animation Event QTE(input).");
-            return;
-        }
-
-        qteTimes.Sort();
-        for (int i = 1; i < qteTimes.Count; i++)
-        {
-            if (qteTimes[i] - qteTimes[i - 1] <= 0.001f)
-            {
-                issues.Add(prefix + "deux Animation Events QTE(input) ont le meme instant. Espacez les pour conserver une chaine lisible.");
-                break;
-            }
-        }
     }
 
     private static AnimatorController FindPlayerController()

@@ -12,14 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2c77a6e4a145d593dbb9f0eb493c32, type: 3}
   m_Name: Juggernaut_Threshold_60
   m_EditorClassIdentifier: Assembly-CSharp::ThresholdSequence
-  playerQteAnimationClip: {fileID: 7400000, guid: f98e497d5d1af764ea096c79c29d0198, type: 2}
-  playerQteAnimatorState: 
-  playerQteEntryBlendSeconds: 0.08
-  failureIdleBlendSeconds: 0.1
-  successPlayerAnimationClip: {fileID: 7400000, guid: 5f4f5086b8fe3bc47a2ee9b35abfcff6, type: 3}
-  successPlayerAnimatorState: 
-  successEntryBlendSeconds: 0.08
-  successResolutionDelaySeconds: 0.5
-  successResult: 0
-  failureResult: 1
-  failureRetaliationSkill: {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+  steps:
+  - qtePresentationClip: {fileID: 7400000, guid: f98e497d5d1af764ea096c79c29d0198, type: 2}
+    playerQteEntryBlendSeconds: 0.08
+    successPlayerAnimationClip: {fileID: 7400000, guid: 5f4f5086b8fe3bc47a2ee9b35abfcff6, type: 3}
+    successEntryBlendSeconds: 0.08
+    successExitBlendSeconds: 0.16
+    successResolutionDelaySeconds: 0.5
+    successResult: 0
+    failureIdleBlendSeconds: 0.1
+    failureResult: 1
+    failureRetaliationSkill: {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+    failureRetaliationGraceSeconds: 1.5
+    qteDurationSeconds: 1
+    qteGlobalTimeScale: 0.1
+    qteEventTimeoutSeconds: 3

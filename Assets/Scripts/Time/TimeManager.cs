@@ -31,15 +31,20 @@ public sealed class TimeManager : MonoBehaviour
 
     [SerializeField, Range(0.01f, 2f)] private float baseGlobalScale = 1f;
     [SerializeField] private bool logDiagnostics;
+    [Header("Slow Motion Presentation")]
+    [SerializeField] private TimeSlowMotionPresentationSettings slowMotionPresentation = new TimeSlowMotionPresentationSettings();
 
     private readonly Dictionary<int, Request> requests = new Dictionary<int, Request>();
     private readonly HashSet<CombatTimeDomain> registeredDomains = new HashSet<CombatTimeDomain>();
     private int nextRequestId = 1;
     private float initialFixedDeltaTime;
     private float effectiveGlobalScale = 1f;
+    private TimeSlowMotionPresentationController slowMotionPresentationController;
 
     public float GlobalScale => effectiveGlobalScale;
     public float BaseGlobalScale => baseGlobalScale;
+    /// <summary>Read-only global scale for presentation systems such as audio.</summary>
+    public static float CurrentGlobalScale => Instance != null ? Instance.effectiveGlobalScale : 1f;
 
     public static TimeManager EnsureInstance()
     {
@@ -63,6 +68,11 @@ public sealed class TimeManager : MonoBehaviour
 
         Instance = this;
         initialFixedDeltaTime = Time.fixedDeltaTime;
+        slowMotionPresentationController = GetComponent<TimeSlowMotionPresentationController>();
+        if (slowMotionPresentationController == null)
+        {
+            slowMotionPresentationController = gameObject.AddComponent<TimeSlowMotionPresentationController>();
+        }
         CombatTimeDomain[] existingDomains = FindObjectsByType<CombatTimeDomain>(FindObjectsInactive.Include);
         for (int i = 0; i < existingDomains.Length; i++)
         {
@@ -101,6 +111,7 @@ public sealed class TimeManager : MonoBehaviour
 
         Time.timeScale = 1f;
         if (initialFixedDeltaTime > 0f) Time.fixedDeltaTime = initialFixedDeltaTime;
+        slowMotionPresentationController?.ClearImmediate();
         Instance = null;
     }
 
@@ -205,6 +216,7 @@ public sealed class TimeManager : MonoBehaviour
         effectiveGlobalScale = globalPause ? 0f : Mathf.Clamp(globalScale, 0f, 2f);
         Time.timeScale = effectiveGlobalScale;
         Time.fixedDeltaTime = initialFixedDeltaTime * effectiveGlobalScale;
+        slowMotionPresentationController?.SetGlobalScale(effectiveGlobalScale, slowMotionPresentation, Application.isPlaying);
         RecomputeDomains();
 
         if (logDiagnostics)

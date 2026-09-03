@@ -40,6 +40,17 @@ public sealed class CombatHealthThresholdStage
     public bool IsComplete => sequence != null && sequence.IsComplete;
 }
 
+/// <summary>Authoring settings for staging this enemy's health-threshold QTEs.</summary>
+[System.Serializable]
+public sealed class CombatHealthThresholdStageSettings
+{
+    [Min(0.1f)] public float stageDistance = 2f;
+    public LayerMask stageGroundMask = Physics.DefaultRaycastLayers;
+    public LayerMask stageBlockingMask = Physics.DefaultRaycastLayers;
+    [Min(0.01f)] public float stageRetrySeconds = 0.15f;
+    [Min(0f)] public float stageClearance = 0.03f;
+}
+
 // Role: ScriptableObject de donnees pour personnages joueurs et ennemis.
 // Usage: reference par les prefabs de personnages, la squad, le combat, les voice lines et l'inventaire de depart.
 // Responsibilities: stocker identite, apparence, stats, competences et inventaire de depart.
@@ -107,6 +118,8 @@ public class CharacterData : ScriptableObject
     public bool enableCombatHealthThresholds;
     [Tooltip("Paliers declenches du plus haut pourcentage au plus bas.")]
     public List<CombatHealthThresholdStage> combatHealthThresholdStages = new List<CombatHealthThresholdStage>();
+    [Tooltip("Pose face-a-face utilisee avant les sequences de paliers de cet ennemi.")]
+    public CombatHealthThresholdStageSettings combatHealthThresholdStageSettings = new CombatHealthThresholdStageSettings();
 
     [Header("Voice Lines")]
     /// <summary>Voice lines disponibles pour ce personnage.</summary>

@@ -69,10 +69,42 @@ et les caméras de prévisualisation, mais n'impose plus l'Animation Event
 `ResolveCinematicSkillImpact`. Les paliers QTE sont exclus de ce flux : ils
 utilisent un `ThresholdSequence` Animator-driven et ne créent aucun rig ni
 Timeline runtime.
+Une `ThresholdSequence` est strictement composee de `steps` complets : chaque
+step possede son clip QTE (un unique Animation Event `QTE(Y/B/A/X)`), duree,
+ralenti, watchdog, fondus, clip de succes, resultat et politique d'echec. Les
+succes intermediaires enchainent automatiquement le step suivant; seul le
+resultat du dernier step resout le palier. Il n'existe plus de montage legacy.
+La pose prealable est authorisee par ennemi dans `CharacterData`; le
+`CombatHealthThresholdController` ne contient que l'orchestration runtime.
 La pose préalable des paliers QTE résout maintenant le volume réel du joueur
 depuis un `CapsuleCollider`, puis un `CharacterController`; si UCC diffère la
 création de ces composants, un volume de secours conservateur permet de tenter
 la pose, dont le test d'obstacle reste obligatoire.
+
+`TimeManager` est l'unique ecrivain de `Time.timeScale` et
+`Time.fixedDeltaTime`; l'audit `Lit/Time/Audit Global Time Authority` et les
+builds refusent toute ecriture ailleurs. Les QTE de palier demandent un handle
+global de `0,4` uniquement durant la saisie, alors que leur compte a rebours et
+l'UI restent en temps reel. Le pitch audio dependant du temps lit le scale
+publie par `TimeManager`, jamais Unity directement.
+Le meme `TimeManager` pilote aussi la presentation du ralenti : au premier
+passage sous la vitesse normale (hors pause a zero), il declenche une onde
+ecran et un SFX d'entree; un volume HDRP temporaire applique vignette et
+aberration chromatique pendant le ralenti, puis un second SFX joue au retour a
+la normale. Les clips et les intensites se reglent dans la section **Slow
+Motion Presentation** du composant `TimeManager` sur `ApplicationRoot`.
+Cette onde de ralenti est volontairement une unique deformation large et lente,
+sans liseré lumineux; elle est distincte des ondes courtes, rapides et
+localisees configurees dans chaque `SkillSO` d'impact. Elle est provisoirement
+desactivee par `cameraEffectsEnabled` dans le prefab; les SFX de transition
+restent actifs.
+
+Netcode for GameObjects 2.11.2 est embarqué dans `Packages/` pour rendre son
+teardown idempotent. Un `NetworkManager` arrêté, ou jamais démarré, ne relance
+plus le nettoyage de ses services Spawn/Scene déjà libérés à la fermeture de
+Play Mode ou de l'application. Le système de temps réseau mémorise aussi son
+abonnement au tick : il ne relit plus un `ConnectionManager` déjà nettoyé à la
+fermeture et sa référence est libérée après l'arrêt.
 
 Le prototype de chute libre est archive dans `Assets/FallingPhase_Legacy/` avec
 sa scene, son Animator, son grappin, ses scripts et son manifest. Il ne fait plus
@@ -855,7 +887,7 @@ Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 
 - Les ennemis peuvent activer `enableCombatHealthThresholds` dans leur `CharacterData`.
 - Chaque palier plafonne le coup au pourcentage configure et reference un `ThresholdSequence`. Lucian est pose a 2 m devant l'ennemi (fallbacks angulaires de +/-15, +/-30 et +/-45 degres), puis les deux acteurs se font face. Aucun palier n'utilise de Timeline baked, de bindings ou de pool cinematographique.
-- Une sequence lance un clip InPlace de Lucian, qui contient un ou plusieurs `QTE("Y"|"B"|"A"|"X")` ordonnes. Un override runtime lie les clips de la sequence aux deux etats generiques `ThresholdSequence_QTE` et `Threshold_Succes`, puis restaure le controller de Lucian a la fin. Sans clip QTE specifique, l'etat generique conserve son clip par defaut. Chaque reussite laisse le clip continuer vers le QTE suivant; seule la derniere declenche l'animation de succes. Le delai de mort tue l'ennemi sans couper le clip; a sa fin, Lucian fond vers `CombatIdle` avec `successExitBlendSeconds` avant la reprise ou la fermeture de combat. Un echec effectue un fondu vers `CombatIdle` avant la reprise ou la riposte. La fenetre dure 0,5 s non-scale, utilise uniquement la map `CombatQTE` et ouvre une bulle locale de 10 m a `0,4` autour du joueur concerne.
+- Une sequence lance un clip InPlace de Lucian, qui contient un ou plusieurs `QTE("Y"|"B"|"A"|"X")` ordonnes. Un override runtime lie les clips de la sequence aux deux etats generiques `ThresholdSequence_QTE` et `Threshold_Succes`, puis restaure le controller de Lucian a la fin. Sans clip QTE specifique, l'etat generique conserve son clip par defaut. Chaque reussite laisse le clip continuer vers le QTE suivant; seule la derniere declenche l'animation de succes. Le delai de mort tue l'ennemi sans couper le clip; a sa fin, Lucian fond vers `CombatIdle` avec `successExitBlendSeconds` avant la reprise ou la fermeture de combat. Un echec effectue un fondu vers `CombatIdle` avant la reprise ou la riposte. La fenetre dure 0,5 s non-scale, utilise uniquement la map `CombatQTE` et demande un ralentissement global a `0,4` pendant son ouverture.
 - Une reussite lance immediatement son etat Animator de succes puis tue l'ennemi ou reprend le combat apres le delai configure. Un echec reprend immediatement ou lance le `SkillSO` ennemi configure; son impact est route vers `ResolveThresholdFailureImpact()` avant le recul UCC collision-aware.
 - `KillEnemy` met les PV de l'ennemi a zero, joue sa mort puis appelle la fin de combat dediee au palier : le HUD de combat se ferme sans ouvrir un second ecran de victoire.
 - `QTEPanelController` pilote l'overlay de scene : position aleatoire sure de `QTE_Circle_Slider`, sprite du bouton attendu, anneau radial et fermeture sur succes, echec ou interruption. Il est resolu explicitement ou parmi les objets de scene inactifs, avec diagnostic de CanvasGroup lors d'une ouverture.
@@ -865,4 +897,4 @@ Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 
 - `ApplicationRoot` cree et conserve le `TimeManager` unique. Il est le seul ecrivain de `Time.timeScale` et `Time.fixedDeltaTime`; pauses, hit-stop, warnings, contres et QTE passent par des handles idempotents.
 - `CombatTimeDomain` est automatiquement present sur chaque `ActorRoot` de combat. Il ralentit localement Animator, locomotion, IA, NavMesh, physique et actions sans ecrire le temps global.
-- Les QTE gardent leur fenetre et leur overlay en temps reel non scale. Leur bulle locale ralentit Lucian et les acteurs de combat proches, sans modifier le temps global ni les autres clients. Les autres Timelines cinematographiques restent en lecture non scale.
+- Les QTE gardent leur fenetre et leur overlay en temps reel non scale. Ils demandent temporairement une echelle globale au `TimeManager`; la fenetre reste donc exactement de la duree configuree. Les autres Timelines cinematographiques restent en lecture non scale.

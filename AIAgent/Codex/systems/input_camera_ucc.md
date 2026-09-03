@@ -33,9 +33,40 @@ l'événement d'animation `QTE(...)`. Ces deux modes gardent la map `Camera`
 active : les paliers sont InPlace et ne possèdent aucune caméra cinématique;
 seuls mouvement et actions restent verrouillés. Les QTE de palier ne reposent
 ni sur une Timeline ni sur des Signals auteur.
+Une `ThresholdSequence` contient exclusivement des `steps` complets. Chaque
+step impose un unique event `QTE(Y/B/A/X)` dans son clip de presentation et
+porte ses propres duree, ralenti, watchdog, fondus, succes et echec. Le succes
+joue le clip du step, attend sa fin en temps gameplay, puis injecte et lance le
+clip QTE suivant. Les succes intermediaires restent visuels; seul le dernier
+step resout le palier. Il n'existe aucun chemin legacy a clip multi-events.
+La pose face-a-face est authorisee dans `CharacterData` pour chaque ennemi;
+`CombatHealthThresholdController` ne porte aucun tuning dans son Inspector.
 La pose des QTE de palier ne dépend pas d'un unique collider enfant : elle
 résout la capsule Unity ou le `CharacterController` UCC, puis possède un volume
 de secours pour les frames d'initialisation différée.
+
+`TimeManager` arbitre toutes les ecritures de temps global et compose les
+demandes par le scale le plus restrictif. Un QTE de palier obtient son handle
+uniquement pendant la fenetre `CombatQTE`; ses input, UI et watchdogs utilisent
+le temps reel et restent donc repondants a `0,4`. Les domaines acteur et le
+pitch audio consomment le scale publie par cette autorite. La presentation de
+ralenti est egalement un observateur exclusif de cette autorite :
+`TimeSlowMotionPresentationController` ne peut ni demander ni modifier le
+temps. Il joue une onde ecran et le SFX d'entree une fois lors de l'entree en
+ralenti, maintient une vignette et une aberration chromatique HDRP en temps
+reel, puis joue le SFX de sortie une fois au retour a la vitesse normale. Une
+pause globale (`scale = 0`) ne declenche pas ces retours de ralenti. Son onde
+est une deformation tres ample a basse frequence sans surbrillance; les impacts
+restent des ondes locales, rapides et de haute frequence, authorisees dans les
+profils des skills. `cameraEffectsEnabled` peut desactiver temporairement la
+camera du ralenti tout en conservant ses SFX; il est actuellement desactive.
+
+Le retour au menu et le quit emploient `NetcodeBootstrap.ShutdownActiveNetworkManager`
+comme point de sortie réseau unique. Le package NGO embarqué protège ensuite le
+second `OnDestroy` Unity : il ne réutilise pas un SpawnManager ou un
+NetworkSceneManager déjà détruit. `NetworkTimeSystem` conserve son propre état
+d'abonnement au tick puis est remis à `null` par `NetworkManager`; son arrêt ne
+dépend donc jamais d'un client déjà réinitialisé.
 
 ## Contrat exploration UCC
 
@@ -359,4 +390,4 @@ automatiquement hors cinematique.
 
 # Echelles de temps et restitution UCC
 
-`TimeManager` est la seule autorite du temps global. Un `CombatTimeDomain` sur l'ActorRoot ralentit localement l'intention UCC, les impulsions, le facing et l'Animator. Un QTE ouvre `CombatLocalTimeField` autour du joueur local : aucun autre joueur ni son input ne recoit ce ralentissement. Les overlays et les inputs QTE utilisent le temps reel non scale et ne doivent jamais dependre de `Time.deltaTime`.
+`TimeManager` est la seule autorite du temps global. Un `CombatTimeDomain` sur l'ActorRoot ralentit localement l'intention UCC, les impulsions, le facing et l'Animator. Les QTE de palier demandent actuellement un ralentissement global via un handle `TimeManager`; les overlays et les inputs QTE utilisent le temps reel non scale et ne doivent jamais dependre de `Time.deltaTime`.

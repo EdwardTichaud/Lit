@@ -21,30 +21,20 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         public string source;
     }
 
-    [SerializeField] private RealTimeCombatManager combatManager;
-    [SerializeField] private RealTimeCombatInput combatInput;
-    [SerializeField] private QTEPanelController qtePanel;
-    [SerializeField] private CombatLocalTimeField qteLocalTimeField;
-    [SerializeField, Min(0.25f)] private float failureRetaliationGraceSeconds = 1.5f;
-    [Header("Threshold Stage Pose")]
-    [SerializeField, Min(0.1f)] private float stageDistance = 2f;
-    [SerializeField] private LayerMask stageGroundMask = Physics.DefaultRaycastLayers;
-    [SerializeField] private LayerMask stageBlockingMask = Physics.DefaultRaycastLayers;
-    [SerializeField, Min(0.01f)] private float stageRetrySeconds = 0.15f;
-    [SerializeField, Min(0f)] private float stageClearance = 0.03f;
-    [SerializeField] private bool logDiagnostics = true;
+    // Runtime services are resolved from GameplaySessionRoot and the active UI.
+    // Gameplay tuning belongs exclusively to CharacterData and ThresholdSequence.
+    private RealTimeCombatManager combatManager;
+    private RealTimeCombatInput combatInput;
+    private QTEPanelController qtePanel;
 
     private readonly Dictionary<RealTimeCombatEnemy, HashSet<CombatHealthThresholdStage>> resolvedStages =
         new Dictionary<RealTimeCombatEnemy, HashSet<CombatHealthThresholdStage>>();
     private readonly List<RealTimeCombatEnemyBehaviour> suspendedEnemies = new List<RealTimeCombatEnemyBehaviour>();
     private readonly HashSet<CharacterData> invalidDataReported = new HashSet<CharacterData>();
 
-    [Header("QTE")]
-    [Min(0.01f), Tooltip("Duree reelle disponible pour chaque QTE, independamment du ralentissement local.")]
-    public float qteDurationSeconds = 0.5f;
-    [SerializeField, Min(0.1f), Tooltip("Securite auteur : temps reel maximal avant que l'etat QTE emette son Animation Event QTE(input).")]
-    private float qteEventTimeoutSeconds = 3f;
+    private const bool LogDiagnostics = true;
     private static readonly float[] StageAngles = { 0f, 15f, -15f, 30f, -30f, 45f, -45f };
+    private static readonly CombatHealthThresholdStageSettings DefaultStageSettings = new CombatHealthThresholdStageSettings();
 
     private InputActionMap qteMap;
     private InputAction qteYAction;
@@ -59,6 +49,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
     private int expectedQteCount;
     private int openedQteCount;
     private int completedQteCount;
+    private int currentStepIndex = -1;
     private bool fallbackStageCapsuleLogged;
     private CombatThresholdQteInput expectedQteInput;
     private bool waitingForExpectedRelease;
@@ -75,6 +66,9 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
     private RuntimeAnimatorController playerRuntimeControllerBeforeSequence;
     private AnimatorOverrideController playerThresholdOverrideController;
     private AnimationClip boundQteClip;
+    private AnimationClip qtePlaceholderClip;
+    private AnimationClip successPlaceholderClip;
+    private TimeManager.TimeRequestHandle qteSlowMotionHandle;
 
     public static CombatHealthThresholdController Instance { get; private set; }
     public bool IsSequenceActive => state == SequenceState.Pending ||
@@ -175,8 +169,9 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        int applied = combatManager != null
-            ? combatManager.ApplyEnemySkillDamageToPlayer(enemy, activeSequence.failureRetaliationSkill)
+        ThresholdSequenceStep step = GetCurrentStep();
+        int applied = combatManager != null && step != null
+            ? combatManager.ApplyEnemySkillDamageToPlayer(enemy, step.failureRetaliationSkill)
             : 0;
         if (applied > 0)
         {
@@ -261,7 +256,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
                 Trace("Palier en attente de pose face-a-face | " + poseIssue);
             }
 
-            yield return new WaitForSecondsRealtime(stageRetrySeconds);
+            yield return new WaitForSecondsRealtime(GetStageSettings().stageRetrySeconds);
         }
     }
 
@@ -301,13 +296,14 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
             return true;
         }
 
+        currentStepIndex = 0;
         if (!BindSequenceAnimationClips(playerAnimator, out string bindingIssue))
         {
             AbortActiveSequence("binding clips de palier impossible : " + bindingIssue);
             return true;
         }
 
-        expectedQteCount = CountQteEvents(boundQteClip);
+        expectedQteCount = activeSequence.TotalQteCount;
         if (expectedQteCount == 0)
         {
             AbortActiveSequence("le clip QTE lie ne contient aucun Animation Event QTE(input)");
@@ -320,9 +316,9 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         InputModeCoordinator.Enter(this, InputMode.ThresholdSequence);
         combatInput?.SetCinematicInputSuspended(true);
         PreparePlayerThresholdVisualState();
-        playerAnimator.CrossFade(qteStateHash, activeSequence.playerQteEntryBlendSeconds, 0, 0f);
+        playerAnimator.CrossFade(qteStateHash, GetCurrentStep().playerQteEntryBlendSeconds, 0, 0f);
         qteEventWatchdogRoutine = StartCoroutine(WatchForQteEvent(token, 1));
-        Trace("Sequence palier lancee | enemy='" + activeEnemy.name + "' | stage=" + activeStage.healthPercent + "% | state='" + qteStateName + "' | qtes=" + expectedQteCount + ".");
+        Trace("Sequence palier lancee | enemy='" + activeEnemy.name + "' | stage=" + activeStage.healthPercent + "% | state='" + qteStateName + "' | qtes=" + expectedQteCount + " | steps=" + activeSequence.StepCount + ".");
         return true;
     }
 
@@ -349,12 +345,14 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
     private IEnumerator WatchForQteEvent(int token, int expectedEventIndex)
     {
-        yield return new WaitForSecondsRealtime(qteEventTimeoutSeconds);
+        ThresholdSequenceStep step = GetCurrentStep();
+        float timeout = step != null ? step.qteEventTimeoutSeconds : 3f;
+        yield return new WaitForSecondsRealtime(timeout);
         if (token == sessionToken && state == SequenceState.PlayingSequence && !qteOpen &&
             openedQteCount < expectedEventIndex)
         {
             AbortActiveSequence("Animation Event QTE(input) " + expectedEventIndex + "/" + expectedQteCount +
-                                " absent apres " + qteEventTimeoutSeconds.ToString("F2") + "s");
+                                " absent apres " + timeout.ToString("F2") + "s");
         }
     }
 
@@ -408,7 +406,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         AcquireQteSlowMotion();
         qtePanel?.Show(parsed);
         if (qteRoutine != null) StopCoroutine(qteRoutine);
-        float duration = Mathf.Max(0.01f, qteDurationSeconds);
+        float duration = GetCurrentQteDuration();
         qteRoutine = StartCoroutine(ExpireQte(sessionToken, duration));
         Trace("QTE ouvert | step=" + openedQteCount + "/" + expectedQteCount + " | input=" + parsed +
               " | duration=" + duration.ToString("F2") + "s | releaseRequired=" + waitingForExpectedRelease + ".");
@@ -436,14 +434,15 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         TransitionPlayerToThresholdIdle();
         RestoreCombatOwnership();
 
-        if (activeSequence.failureResult == ThresholdSequenceFailureResult.ResumeCombat)
+        ThresholdSequenceStep failedStep = GetCurrentStep();
+        if (failedStep == null || failedStep.failureResult == ThresholdSequenceFailureResult.ResumeCombat)
         {
             Trace("QTE echoue | reason=" + reason + " | reprise immediate.");
             FinishFailureRetaliation();
             return;
         }
 
-        SkillSO skill = activeSequence.failureRetaliationSkill;
+        SkillSO skill = failedStep.failureRetaliationSkill;
         bool started = skill != null && activeEnemy.TryStartThresholdFailureRetaliation(skill);
         if (!started)
         {
@@ -455,12 +454,12 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
         Trace("QTE echoue | reason=" + reason + " | riposte='" + skill.SkillName + "'.");
         if (successRoutine != null) StopCoroutine(successRoutine);
-        successRoutine = StartCoroutine(WatchFailureRetaliation(sessionToken, skill.AnimationClip));
+        successRoutine = StartCoroutine(WatchFailureRetaliation(sessionToken, skill.AnimationClip, failedStep.failureRetaliationGraceSeconds));
     }
 
-    private IEnumerator WatchFailureRetaliation(int token, AnimationClip clip)
+    private IEnumerator WatchFailureRetaliation(int token, AnimationClip clip, float graceSeconds)
     {
-        yield return new WaitForSecondsRealtime(Mathf.Max(1f, clip != null ? clip.length : 0f) + failureRetaliationGraceSeconds);
+        yield return new WaitForSecondsRealtime(Mathf.Max(1f, clip != null ? clip.length : 0f) + graceSeconds);
         if (token == sessionToken && state == SequenceState.FailureRetaliation && activeEnemy != null)
         {
             Trace("Fin de riposte absente : recuperation forcee.");
@@ -517,17 +516,17 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         }
 
         state = SequenceState.SuccessPresentation;
-        animator.CrossFade(stateHash, activeSequence.successEntryBlendSeconds, 0, 0f);
+        animator.CrossFade(stateHash, GetCurrentStep().successEntryBlendSeconds, 0, 0f);
         StartSuccessResolutionDelay();
         Trace("QTE reussi | animation='" + successStateName + "' | resolution=" +
-              activeSequence.successResolutionDelaySeconds.ToString("F2") + "s.");
+              GetCurrentStep().successResolutionDelaySeconds.ToString("F2") + "s.");
     }
 
     private void StartSuccessResolutionDelay()
     {
         state = SequenceState.SuccessPresentation;
         if (successRoutine != null) StopCoroutine(successRoutine);
-        successRoutine = StartCoroutine(CompleteSuccessAfterDelay(sessionToken, activeSequence.successResolutionDelaySeconds));
+        successRoutine = StartCoroutine(CompleteSuccessAfterDelay(sessionToken, GetCurrentStep().successResolutionDelaySeconds));
     }
 
     private IEnumerator CompleteSuccessAfterDelay(int token, float delay)
@@ -537,9 +536,8 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         {
             ResolveSuccessResultAtDelay();
 
-            float clipLength = activeSequence != null && activeSequence.successPlayerAnimationClip != null
-                ? activeSequence.successPlayerAnimationClip.length
-                : 0f;
+            AnimationClip successClip = GetCurrentSuccessClip();
+            float clipLength = successClip != null ? successClip.length : 0f;
             float remainingVisualSeconds = Mathf.Max(0f, clipLength - Mathf.Max(0f, delay));
             if (remainingVisualSeconds > 0f) yield return new WaitForSeconds(remainingVisualSeconds);
 
@@ -555,13 +553,71 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         }
     }
 
+    private void BeginIntermediateStepSuccessPresentation()
+    {
+        Animator animator = combatManager != null ? combatManager.PlayerAnimator : null;
+        AnimationClip successClip = GetCurrentSuccessClip();
+        int successStateHash = Animator.StringToHash(activeSequence.SuccessPlayerStateName);
+        if (animator == null || successClip == null || !animator.HasState(0, successStateHash))
+        {
+            AbortActiveSequence("etape " + (currentStepIndex + 1) + " sans animation de succes jouable");
+            return;
+        }
+
+        state = SequenceState.SuccessPresentation;
+        animator.CrossFade(successStateHash, GetCurrentStep().successEntryBlendSeconds, 0, 0f);
+        if (successRoutine != null) StopCoroutine(successRoutine);
+        successRoutine = StartCoroutine(AdvanceAfterIntermediateStepSuccess(sessionToken, successClip.length));
+        Trace("QTE reussi | etape=" + (currentStepIndex + 1) + "/" + activeSequence.StepCount +
+              " | animation intermediaire='" + successClip.name + "'.");
+    }
+
+    private IEnumerator AdvanceAfterIntermediateStepSuccess(int token, float successClipLength)
+    {
+        if (successClipLength > 0f) yield return new WaitForSeconds(successClipLength);
+        if (token != sessionToken || state != SequenceState.SuccessPresentation || activeSequence == null)
+        {
+            yield break;
+        }
+
+        currentStepIndex++;
+        if (currentStepIndex >= activeSequence.StepCount)
+        {
+            AbortActiveSequence("index d'etape QTE hors limites");
+            yield break;
+        }
+
+        if (!ApplyCurrentStepAnimationClips(out string issue))
+        {
+            AbortActiveSequence("binding de l'etape " + (currentStepIndex + 1) + " impossible : " + issue);
+            yield break;
+        }
+
+        Animator animator = boundPlayerAnimator != null
+            ? boundPlayerAnimator
+            : (combatManager != null ? combatManager.PlayerAnimator : null);
+        int qteStateHash = Animator.StringToHash(activeSequence.PlayerQteStateName);
+        if (animator == null || !animator.HasState(0, qteStateHash))
+        {
+            AbortActiveSequence("etat QTE introuvable pour l'etape " + (currentStepIndex + 1));
+            yield break;
+        }
+
+        state = SequenceState.PlayingSequence;
+        animator.CrossFade(qteStateHash, GetCurrentStep().playerQteEntryBlendSeconds, 0, 0f);
+        qteEventWatchdogRoutine = StartCoroutine(WatchForQteEvent(token, openedQteCount + 1));
+        Trace("Etape suivante lancee | step=" + (currentStepIndex + 1) + "/" + activeSequence.StepCount +
+              " | qte='" + boundQteClip.name + "'.");
+    }
+
     private IEnumerator BlendOutSuccessPresentation(int token)
     {
         Animator animator = boundPlayerAnimator != null
             ? boundPlayerAnimator
             : (combatManager != null ? combatManager.PlayerAnimator : null);
         int combatIdleHash = Animator.StringToHash("CombatIdle");
-        float blend = activeSequence != null ? activeSequence.successExitBlendSeconds : 0.16f;
+        ThresholdSequenceStep step = GetCurrentStep();
+        float blend = step != null ? step.successExitBlendSeconds : 0.16f;
         if (animator == null || !animator.HasState(0, combatIdleHash))
         {
             yield break;
@@ -578,7 +634,8 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
         successResultResolved = true;
         MarkActiveStageResolved();
-        if (activeSequence.successResult != CombatHealthThresholdSuccessResult.KillEnemy)
+        ThresholdSequenceStep finalStep = GetCurrentStep();
+        if (finalStep == null || finalStep.successResult != CombatHealthThresholdSuccessResult.KillEnemy)
         {
             return;
         }
@@ -606,7 +663,10 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         }
 
         ResolveSuccessResultAtDelay();
-        CombatHealthThresholdSuccessResult result = activeSequence.successResult;
+        ThresholdSequenceStep finalStep = GetCurrentStep();
+        CombatHealthThresholdSuccessResult result = finalStep != null
+            ? finalStep.successResult
+            : CombatHealthThresholdSuccessResult.ResumeCombat;
         RealTimeCombatEnemy enemy = activeEnemy;
         bool killApplied = thresholdKillApplied;
         ClearPlayerThresholdVisualState();
@@ -720,6 +780,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         expectedQteCount = 0;
         openedQteCount = 0;
         completedQteCount = 0;
+        currentStepIndex = -1;
         waitingForExpectedRelease = false;
         failureCompletionRequested = false;
         successResultResolved = false;
@@ -813,7 +874,7 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         for (int i = 0; i < StageAngles.Length; i++)
         {
             Vector3 direction = Quaternion.AngleAxis(StageAngles[i], Vector3.up) * forward;
-            Vector3 horizontalCandidate = enemyPosition + direction * stageDistance;
+            Vector3 horizontalCandidate = enemyPosition + direction * GetStageSettings().stageDistance;
             if (!TryFindGroundedCapsulePose(playerRoot, capsule, horizontalCandidate, out Vector3 candidate, out string candidateIssue))
             {
                 issue = candidateIssue;
@@ -831,6 +892,14 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
         issue = string.IsNullOrEmpty(issue) ? "aucun candidat libre a 2 m" : issue;
         return false;
+    }
+
+    private CombatHealthThresholdStageSettings GetStageSettings()
+    {
+        CharacterData data = activeEnemy != null ? ResolveCharacterData(activeEnemy) : null;
+        return data != null && data.combatHealthThresholdStageSettings != null
+            ? data.combatHealthThresholdStageSettings
+            : DefaultStageSettings;
     }
 
     private bool TryResolveStageCapsule(Transform playerRoot, out StageCapsule shape)
@@ -923,18 +992,19 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         issue = "sol introuvable";
         float rayStart = Mathf.Max(activeEnemy.transform.position.y, playerRoot.position.y) + 4f;
         if (!Physics.Raycast(new Vector3(horizontalCandidate.x, rayStart, horizontalCandidate.z), Vector3.down,
-                out RaycastHit groundHit, 12f, stageGroundMask, QueryTriggerInteraction.Ignore))
+                out RaycastHit groundHit, 12f, GetStageSettings().stageGroundMask, QueryTriggerInteraction.Ignore))
         {
             return false;
         }
 
         float bottomFromRoot = capsule.localCenter.y - (capsule.height * 0.5f);
-        rootPosition = groundHit.point - Vector3.up * bottomFromRoot + Vector3.up * stageClearance;
-        float radius = Mathf.Max(0.01f, capsule.radius - stageClearance);
-        float height = Mathf.Max(radius * 2f, capsule.height - stageClearance * 2f);
+        CombatHealthThresholdStageSettings settings = GetStageSettings();
+        rootPosition = groundHit.point - Vector3.up * bottomFromRoot + Vector3.up * settings.stageClearance;
+        float radius = Mathf.Max(0.01f, capsule.radius - settings.stageClearance);
+        float height = Mathf.Max(radius * 2f, capsule.height - settings.stageClearance * 2f);
         Vector3 center = rootPosition + playerRoot.rotation * capsule.localCenter;
         Vector3 halfAxis = Vector3.up * Mathf.Max(0f, height * 0.5f - radius);
-        Collider[] blockers = Physics.OverlapCapsule(center - halfAxis, center + halfAxis, radius, stageBlockingMask, QueryTriggerInteraction.Ignore);
+        Collider[] blockers = Physics.OverlapCapsule(center - halfAxis, center + halfAxis, radius, settings.stageBlockingMask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < blockers.Length; i++)
         {
             Collider blocker = blockers[i];
@@ -1009,6 +1079,20 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         qtePanel?.ResolveSuccess();
         InputModeCoordinator.Enter(this, InputMode.ThresholdSequence);
         completedQteCount++;
+        if (HasRemainingQtesInCurrentStep())
+        {
+            qteEventWatchdogRoutine = StartCoroutine(WatchForQteEvent(sessionToken, openedQteCount + 1));
+            Trace("QTE reussi | event=" + completedQteCount + "/" + expectedQteCount +
+                  " | animation QTE continue vers l'evenement suivant du meme clip.");
+            return;
+        }
+
+        if (activeSequence != null && currentStepIndex < activeSequence.StepCount - 1)
+        {
+            BeginIntermediateStepSuccessPresentation();
+            return;
+        }
+
         if (completedQteCount < expectedQteCount)
         {
             qteEventWatchdogRoutine = StartCoroutine(WatchForQteEvent(sessionToken, openedQteCount + 1));
@@ -1079,24 +1163,45 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
 
     private void AcquireQteSlowMotion()
     {
-        ResolveReferences();
-        if (qteLocalTimeField == null)
+        ReleaseQteSlowMotion();
+        TimeManager manager = TimeManager.EnsureInstance();
+        if (manager == null)
         {
-            qteLocalTimeField = GetComponent<CombatLocalTimeField>();
-            if (qteLocalTimeField == null) qteLocalTimeField = gameObject.AddComponent<CombatLocalTimeField>();
+            Debug.LogWarning("[CombatThreshold] TimeManager absent : ralentissement QTE global indisponible.", this);
+            return;
         }
 
-        Transform player = combatManager != null ? combatManager.PlayerRoot : null;
-        qteLocalTimeField.Begin(player, null, 0.4f);
-        Trace("Ralentissement QTE local acquis | centre='" + (player != null ? player.name : "None") + "' | radius=10.0 | scale=0.40 | actors=" + qteLocalTimeField.AffectedActorCount + ".");
+        ThresholdSequenceStep step = GetCurrentStep();
+        if (step == null)
+        {
+            Debug.LogError("[CombatThreshold] Step QTE actif absent : ralentissement annule.", this);
+            return;
+        }
+        float scale = Mathf.Clamp(step.qteGlobalTimeScale, 0.01f, 1f);
+        qteSlowMotionHandle = manager.AcquireGlobal(scale, this);
+        if (!qteSlowMotionHandle.IsValid)
+        {
+            Debug.LogError("[CombatThreshold] Ralentissement QTE refuse par TimeManager.", this);
+            return;
+        }
+
+        float effectiveScale = manager.GlobalScale;
+        Trace("Ralentissement QTE global acquis | demande=" + scale.ToString("F2") +
+              " | effectif=" + effectiveScale.ToString("F2") +
+              (effectiveScale < scale ? " | une demande concurrente est plus restrictive." : "."));
     }
 
     private void ReleaseQteSlowMotion()
     {
-        if (qteLocalTimeField == null || !qteLocalTimeField.IsActive) return;
+        if (!qteSlowMotionHandle.IsValid) return;
 
-        qteLocalTimeField.End();
-        Trace("Ralentissement QTE local libere.");
+        TimeManager manager = TimeManager.Instance;
+        if (manager != null)
+        {
+            manager.Release(qteSlowMotionHandle);
+            Trace("Ralentissement QTE global libere | effectif=" + manager.GlobalScale.ToString("F2") + ".");
+        }
+        qteSlowMotionHandle = default;
     }
 
     private void PreparePlayerThresholdVisualState()
@@ -1136,40 +1241,98 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
             return false;
         }
 
-        AnimatorOverrideController overrideController = new AnimatorOverrideController(sourceController);
-        List<KeyValuePair<AnimationClip, AnimationClip>> overrides =
-            new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
-        overrideController.GetOverrides(overrides);
+        boundPlayerAnimator = animator;
+        playerRuntimeControllerBeforeSequence = sourceController;
+        qtePlaceholderClip = qtePlaceholder;
+        successPlaceholderClip = successPlaceholder;
+        playerThresholdOverrideController = new AnimatorOverrideController(sourceController);
+        animator.runtimeAnimatorController = playerThresholdOverrideController;
+        if (ApplyCurrentStepAnimationClips(out issue)) return true;
 
-        if (!TrySetClipOverride(overrides, qtePlaceholder, activeSequence.playerQteAnimationClip ?? qtePlaceholder) ||
-            !TrySetClipOverride(overrides, successPlaceholder, activeSequence.successPlayerAnimationClip))
+        RestorePlayerThresholdAnimationBindings();
+        return false;
+    }
+
+    private bool ApplyCurrentStepAnimationClips(out string issue)
+    {
+        issue = null;
+        if (playerThresholdOverrideController == null || qtePlaceholderClip == null || successPlaceholderClip == null)
         {
-            issue = "placeholder absent de la table AnimatorOverrideController";
-            Destroy(overrideController);
+            issue = "AnimatorOverrideController ou placeholders absents";
             return false;
         }
 
-        overrideController.ApplyOverrides(overrides);
-        boundPlayerAnimator = animator;
-        playerRuntimeControllerBeforeSequence = sourceController;
-        playerThresholdOverrideController = overrideController;
-        boundQteClip = activeSequence.playerQteAnimationClip ?? qtePlaceholder;
-        animator.runtimeAnimatorController = overrideController;
-        Trace("Clips de palier lies | qte='" + (activeSequence.playerQteAnimationClip != null
-                  ? activeSequence.playerQteAnimationClip.name : qtePlaceholder.name) + "' | success='" +
-              activeSequence.successPlayerAnimationClip.name + "'.");
+        AnimationClip qteClip = GetCurrentQteClip();
+        AnimationClip successClip = GetCurrentSuccessClip();
+        if (qteClip == null || successClip == null)
+        {
+            issue = "clips QTE ou succes absents";
+            return false;
+        }
+
+        List<KeyValuePair<AnimationClip, AnimationClip>> overrides =
+            new List<KeyValuePair<AnimationClip, AnimationClip>>(playerThresholdOverrideController.overridesCount);
+        playerThresholdOverrideController.GetOverrides(overrides);
+        if (!TrySetClipOverride(overrides, qtePlaceholderClip, qteClip) ||
+            !TrySetClipOverride(overrides, successPlaceholderClip, successClip))
+        {
+            issue = "placeholder absent de la table AnimatorOverrideController";
+            return false;
+        }
+
+        playerThresholdOverrideController.ApplyOverrides(overrides);
+        boundQteClip = qteClip;
+        Trace("Clips de palier lies | qte='" + qteClip.name + "' | success='" + successClip.name +
+              "' | etape=" + (currentStepIndex + 1) + ".");
         return true;
     }
 
-    private static int CountQteEvents(AnimationClip clip)
+    private ThresholdSequenceStep GetCurrentStep()
     {
-        if (clip == null) return 0;
-
-        AnimationEvent[] events = clip.events;
-        int count = 0;
-        for (int i = 0; i < events.Length; i++)
+        if (activeSequence == null || currentStepIndex < 0 ||
+            currentStepIndex >= activeSequence.StepCount)
         {
-            if (events[i].functionName == "QTE") count++;
+            return null;
+        }
+
+        return activeSequence.steps[currentStepIndex];
+    }
+
+    private AnimationClip GetCurrentQteClip()
+    {
+        ThresholdSequenceStep step = GetCurrentStep();
+        return step != null ? step.qtePresentationClip : null;
+    }
+
+    private AnimationClip GetCurrentSuccessClip()
+    {
+        ThresholdSequenceStep step = GetCurrentStep();
+        return step != null ? step.successPlayerAnimationClip : null;
+    }
+
+    private float GetCurrentQteDuration()
+    {
+        ThresholdSequenceStep step = GetCurrentStep();
+        return step != null ? Mathf.Max(0.01f, step.qteDurationSeconds) : 0.01f;
+    }
+
+    private bool HasRemainingQtesInCurrentStep()
+    {
+        int currentStepQteCount = ThresholdSequence.CountQteEvents(GetCurrentQteClip());
+        int completedInCurrentStep = completedQteCount - GetCompletedQteCountBeforeCurrentStep();
+        return completedInCurrentStep < currentStepQteCount;
+    }
+
+    private int GetCompletedQteCountBeforeCurrentStep()
+    {
+        if (activeSequence == null || activeSequence.steps == null) return 0;
+
+        int count = 0;
+        int upperBound = Mathf.Min(currentStepIndex, activeSequence.steps.Count);
+        for (int index = 0; index < upperBound; index++)
+        {
+            ThresholdSequenceStep step = activeSequence.steps[index];
+            count += ThresholdSequence.CountQteEvents(step != null ? step.qtePresentationClip : null);
         }
 
         return count;
@@ -1217,6 +1380,8 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
         playerRuntimeControllerBeforeSequence = null;
         boundPlayerAnimator = null;
         boundQteClip = null;
+        qtePlaceholderClip = null;
+        successPlaceholderClip = null;
     }
 
     private void TransitionPlayerToThresholdIdle()
@@ -1229,13 +1394,14 @@ public sealed class CombatHealthThresholdController : MonoBehaviour
             return;
         }
 
-        float blend = activeSequence != null ? activeSequence.failureIdleBlendSeconds : 0.10f;
+        ThresholdSequenceStep step = GetCurrentStep();
+        float blend = step != null ? step.failureIdleBlendSeconds : 0.10f;
         animator.CrossFade(combatIdleHash, blend, 0, 0f);
         Trace("QTE echoue | transition fluide vers CombatIdle | blend=" + blend.ToString("F2") + "s.");
     }
 
     private void Trace(string message)
     {
-        if (logDiagnostics) Debug.Log("[CombatThreshold] " + message, this);
+        if (LogDiagnostics) Debug.Log("[CombatThreshold] " + message, this);
     }
 }

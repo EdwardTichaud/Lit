@@ -44,5 +44,15 @@ MonoBehaviour:
     legacyCinematicRig: {fileID: 0}
     legacySuccessResult: 0
     legacyFailureRetaliationSkill: {fileID: 0}
+  combatHealthThresholdStageSettings:
+    stageDistance: 2
+    stageGroundMask:
+      serializedVersion: 2
+      m_Bits: 2080440315
+    stageBlockingMask:
+      serializedVersion: 2
+      m_Bits: 2080440315
+    stageRetrySeconds: 0.15
+    stageClearance: 0.03
   voiceLines: []
   maisonWaitingPoint: 0
