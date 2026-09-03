@@ -39,11 +39,6 @@ MonoBehaviour:
     legacyCinematicRig: {fileID: 0}
     legacySuccessResult: 0
     legacyFailureRetaliationSkill: {fileID: 0}
-  - healthPercent: 40
-    sequence: {fileID: 11400000, guid: a1ce4c1dd5f9423299b45f3f2a44d0f1, type: 2}
-    legacyCinematicRig: {fileID: 0}
-    legacySuccessResult: 0
-    legacyFailureRetaliationSkill: {fileID: 0}
   combatHealthThresholdStageSettings:
     stageDistance: 2
     stageGroundMask:

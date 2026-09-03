@@ -15,6 +15,23 @@ MonoBehaviour:
   steps:
   - qtePresentationClip: {fileID: 7400000, guid: f98e497d5d1af764ea096c79c29d0198, type: 2}
     playerQteEntryBlendSeconds: 0.08
+    qteDurationSeconds: 1
+    qteGlobalTimeScale: 0.1
+    qteEventTimeoutSeconds: 3
+    successPlayerAnimationClip: {fileID: 7400000, guid: 5f4f5086b8fe3bc47a2ee9b35abfcff6, type: 3}
+    successEntryBlendSeconds: 0.08
+    successExitBlendSeconds: 0.16
+    successResolutionDelaySeconds: 0.5
+    successResult: 1
+    failureIdleBlendSeconds: 0.1
+    failureResult: 1
+    failureRetaliationSkill: {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
+    failureRetaliationGraceSeconds: 1.5
+  - qtePresentationClip: {fileID: 7400000, guid: f98e497d5d1af764ea096c79c29d0198, type: 2}
+    playerQteEntryBlendSeconds: 0.08
+    qteDurationSeconds: 1
+    qteGlobalTimeScale: 0.1
+    qteEventTimeoutSeconds: 3
     successPlayerAnimationClip: {fileID: 7400000, guid: 5f4f5086b8fe3bc47a2ee9b35abfcff6, type: 3}
     successEntryBlendSeconds: 0.08
     successExitBlendSeconds: 0.16
@@ -24,6 +41,3 @@ MonoBehaviour:
     failureResult: 1
     failureRetaliationSkill: {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
     failureRetaliationGraceSeconds: 1.5
-    qteDurationSeconds: 1
-    qteGlobalTimeScale: 0.1
-    qteEventTimeoutSeconds: 3
