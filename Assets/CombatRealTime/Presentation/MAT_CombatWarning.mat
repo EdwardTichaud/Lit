@@ -27,11 +27,11 @@ Material:
     m_Floats:
     - _WarningChromatic: 0
     - _WarningIntensity: 0
-    - _WarningPulse: 0.5466817
+    - _WarningPulse: 0.9993729
     - _WarningVignette: 0
     m_Colors:
     - _WarningColor: {r: 1, g: 0.08, b: 0.36, a: 1}
-    - _WarningDirection: {r: 0.040012453, g: -0.9991992, b: 0, a: 0}
-    - _WarningOrigin: {r: 0.519641, g: 0.009521365, b: 0, a: 0}
+    - _WarningDirection: {r: -0.23800713, g: -0.9712634, b: 0, a: 0}
+    - _WarningOrigin: {r: 0.46627042, g: 0.36235577, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

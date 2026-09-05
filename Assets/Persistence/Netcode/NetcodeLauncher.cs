@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -156,7 +157,7 @@ public class NetcodeLauncher : MonoBehaviour
     /// Cree une allocation Relay et demarre le host. Cette voie ne configure
     /// jamais l'endpoint IP direct utilise uniquement par les raccourcis dev.
     /// </summary>
-    public async Task<NetcodeRelayResult> StartRelayHostAsync()
+    public async Task<NetcodeRelayResult> StartRelayHostAsync(CancellationToken cancellationToken = default)
     {
         NetworkManager manager = NetworkManager.Singleton;
         if (manager == null)
@@ -172,6 +173,7 @@ public class NetcodeLauncher : MonoBehaviour
         try
         {
             await EnsureUnityServicesSignedInAsync();
+            cancellationToken.ThrowIfCancellationRequested();
             NetcodePrefabRegistry.EnsureInitialized();
             NetcodeSceneObjectInstaller.PrepareActiveScene();
             TryRestoreHostWorldBeforeStart();
@@ -181,10 +183,12 @@ public class NetcodeLauncher : MonoBehaviour
             int connections = Mathf.Max(1, relayMaxJoiningPlayers);
             Unity.Services.Relay.Models.Allocation allocation =
                 await RelayService.Instance.CreateAllocationAsync(connections);
+            cancellationToken.ThrowIfCancellationRequested();
             UnityTransport transport = manager.GetComponent<UnityTransport>();
             transport.SetRelayServerData(allocation.ToRelayServerData(ResolveRelayConnectionType()));
 
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            cancellationToken.ThrowIfCancellationRequested();
             if (!manager.StartHost())
             {
                 return NetcodeRelayResult.Failure("Le host Relay n'a pas pu demarrer.");
@@ -206,14 +210,14 @@ public class NetcodeLauncher : MonoBehaviour
         catch (Exception exception)
         {
             Debug.LogWarning($"[NetcodeRelay] host start failed: {exception.Message}", this);
-            return NetcodeRelayResult.Failure(ToRelayErrorMessage(exception));
+            return ToRelayFailure(exception);
         }
     }
 
     /// <summary>
     /// Rejoint une allocation Relay existante et demarre le client NGO.
     /// </summary>
-    public async Task<NetcodeRelayResult> StartRelayClientAsync(string joinCode)
+    public async Task<NetcodeRelayResult> StartRelayClientAsync(string joinCode, CancellationToken cancellationToken = default)
     {
         string normalizedCode = NetcodeRelayCode.Normalize(joinCode);
         if (!NetcodeRelayCode.IsValid(normalizedCode))
@@ -235,6 +239,7 @@ public class NetcodeLauncher : MonoBehaviour
         try
         {
             await EnsureUnityServicesSignedInAsync();
+            cancellationToken.ThrowIfCancellationRequested();
             NetcodePrefabRegistry.EnsureInitialized();
             NetcodeSceneObjectInstaller.PrepareActiveScene();
             ApplyConnectionPayload(manager);
@@ -242,6 +247,7 @@ public class NetcodeLauncher : MonoBehaviour
 
             Unity.Services.Relay.Models.JoinAllocation allocation =
                 await RelayService.Instance.JoinAllocationAsync(normalizedCode);
+            cancellationToken.ThrowIfCancellationRequested();
             UnityTransport transport = manager.GetComponent<UnityTransport>();
             transport.SetRelayServerData(allocation.ToRelayServerData(ResolveRelayConnectionType()));
 
@@ -266,7 +272,7 @@ public class NetcodeLauncher : MonoBehaviour
         catch (Exception exception)
         {
             Debug.LogWarning($"[NetcodeRelay] join failed: {exception.Message}", this);
-            return NetcodeRelayResult.Failure(ToRelayErrorMessage(exception));
+            return ToRelayFailure(exception);
         }
     }
 
@@ -279,6 +285,9 @@ public class NetcodeLauncher : MonoBehaviour
 
         if (!AuthenticationService.Instance.IsSignedIn)
         {
+            foreach (string argument in Environment.GetCommandLineArgs())
+                if (argument.StartsWith("-lit-profile=", StringComparison.Ordinal))
+                    AuthenticationService.Instance.SwitchProfile(argument.Substring("-lit-profile=".Length));
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
         }
     }
@@ -289,12 +298,14 @@ public class NetcodeLauncher : MonoBehaviour
         return value == "udp" || value == "dtls" || value == "wss" ? value : "dtls";
     }
 
-    private static string ToRelayErrorMessage(Exception exception)
+    private static NetcodeRelayResult ToRelayFailure(Exception exception)
     {
-        string details = exception != null && !string.IsNullOrWhiteSpace(exception.Message)
-            ? exception.Message
-            : "erreur inconnue";
-        return $"Connexion Relay impossible : {details}";
+        if (exception is OperationCanceledException)
+            return NetcodeRelayResult.Failure("Connexion annulée.", PrivateSessionError.Cancelled);
+        if (exception is RelayServiceException relay &&
+            (relay.Reason == RelayExceptionReason.JoinCodeNotFound || relay.Reason == RelayExceptionReason.AllocationNotFound))
+            return NetcodeRelayResult.Failure("Ce code d’invitation est introuvable ou expiré. Demandez un nouveau code à l’hôte.", PrivateSessionError.CodeExpired);
+        return NetcodeRelayResult.Failure("Le service de connexion est indisponible. Vérifiez votre accès Internet puis réessayez.");
     }
 
     public bool StartHostWithConnection(string address, ushort port, string listenOverride = null)

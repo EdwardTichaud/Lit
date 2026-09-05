@@ -7,6 +7,38 @@ Codex efficaces et economes en tokens.
 
 ## Etat actuel
 
+Juggernaut InPlace : mode ScriptedOnly, clips dedies neutralises, avancees
+scriptes Frappe/Followup et preference approche melee. Les composants
+RealTimeCombatEnemyBehaviour et EnemyTacticalResponseController sont retires
+du prefab par l'installateur unique. L'ancien installateur automatique et ses
+branches de reactions sont supprimes ; les menus historiques deleguent au
+nouvel installateur. Validation assets stricte, y compris legacy desactive.
+Les classes partagees restent disponibles pour les autres ennemis.
+Compilation C# avec references Unity reussie ; combat District 1 reste a valider.
+
+Poursuite animee : portee evaluee avant observation, approche/recul dedies selon
+SkillSO, suivi cible 0.15 s/0.5 m, course a 8 m et marche a 6 m. Chemins incomplets
+refuses ; cooldown/orientation a portee ne declenchent plus une avance. Tests
+Editor etendus pour les marges de portee et l'hysteresis des allures.
+
+Correction aggro Juggernaut : attente au spawn distincte du retour, retour termine
+rearmant la vision, agent deja rattache accepte avant le delai de retry, skills
+resolus avant reservation et aucun ajout de reaction legacy par le manager pour
+un acteur avec EnemyCombatBrain. Vision 30 m, poursuite Juggernaut 35 m ; sols
+Default inclus de nouveau. Compilation C# Roslyn avec references Unity reussie.
+Tests Editor EnemyAggroRegressionTests ajoutes, execution Unity et combat District 1
+restent a valider.
+
+MainMenu dispose maintenant d'un salon coopératif privé Relay/NGO, de réservations
+serveur de personnages, d'une navigation directionnelle clavier/manette et de
+réglages persistants. La manette sélectionne les boutons avec un highlight,
+sans curseur ; le pointeur reste réservé à la souris. La reprise solo passe
+uniquement par Charger, sans bouton Continuer. OK ferme le clavier virtuel
+et sélectionne Confirmer avant un second appui de validation. Les échecs réseau reviennent au menu, les écritures de
+métadonnées sont atomiques et les miniatures sont mises en cache. La compilation
+C# et les tests indépendants des règles passent ; les parcours visuels et Relay
+avec plusieurs joueurs restent à valider dans Unity. Voir `systems/runtime_session.md`.
+
 `AIStudio_Legacy` a ete supprime. `AIAgent` contient un dossier `Codex/` avec
 les regles de travail, l'etat courant et les fiches systeme utiles. Les anciennes
 fiches systeme Markdown ont ete migrees depuis `AIStudio_Legacy/docs/systems/`.
@@ -53,8 +85,31 @@ Les confirmations de ramassage sont des toasts non bloquants. De même, une
 stèle affiche son texte entre guillemets dans le DialoguePanel sans quitter le
 mode Exploration : ces deux messages disparaissent automatiquement après deux
 secondes et ne doivent jamais immobiliser le personnage.
+Un objet interactif qui exige une influence de Flamme mais se trouve hors de
+toute zone allumee (uniquement un `InteractableItem` de categorie `RecoverableItem` ou un document `Stab`) demande au `VFXManager` de
+`GameplaySessionRoot` un signal visuel commun. Le manager maintient une seule
+instance de VFX boucle par objet, sans cadence ni recreation. Quand une Flame
+s'allume, toutes les emissions de ses `ParticleSystem` enfants fondent vers
+zero; quand elle s'eteint, elles reviennent depuis zero a leur valeur initiale.
+Le root du VFX est echelle depuis la plus grande dimension visuelle de l'objet,
+sans jamais inclure le VFX lui-meme dans ce calcul.
 Ils déclenchent aussi la relecture immédiate du stick ou des touches maintenus,
 pour qu'aucun saut ou nouvel appui ne soit requis après une interaction.
+
+Le Juggernaut utilise maintenant des patterns ordonnes de SkillSO depuis le
+profil de son CharacterData : frappe, combo, balayage et Assomoir. Il engage
+apres degat, conserve le maximum lumineux recu, verrouille la direction des
+coups et attend la recuperation physique avant de reprendre. Juggernaut_Model
+est une copie specialisee de Player_Model. Les QTE suspendent cette boucle via
+EnemyCinematicState. La validation des assets et le premier cycle Assomoir
+passent ; la boucle repetee a expose une destination NavMesh nulle apres la
+reprise. Le controleur preserve maintenant une projection voisine distincte du
+point courant ; le test repetitif doit etre rejoue apres la prochaine
+compilation Unity. Les parcours district, QTE complet et host/client restent a valider.
+Le diagnostic runtime a ensuite montre que le district a `Y=-94` etait exclu
+des bounds NavMesh par des colliders persistants hors gameplay. `SquadAIManager`
+ignore maintenant les scenes `DontDestroyOnLoad`, `Bootstrap` et `MainMenu`
+lors du calcul des bounds, et l'agent du prefab Juggernaut est active par defaut.
 
 Les choix de réaction des fantômes utilisent exclusivement le
 `GhostReactionChoicePanel` authored dans `ApplicationRoot/UI_Overlay` : nom du
@@ -883,6 +938,10 @@ Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 # Juggernaut combat
 
 - Added the real-time tactical reaction and attack-recovery safety contract for the Juggernaut.
+- Le Juggernaut normal utilise maintenant `EnemyCombatBrain` comme seul decideur offensif. Son ancien comportement reste disponible pour les APIs de pose cinematographique, mais sa boucle IA est desactivee quand un profil moderne est assigne.
+- `EnemyNavigationController` est le proprietaire de l'attachement NavMesh : il attend le bake de monde, redemande un rebuild de maniere debouncee, ne rattache l'agent que si la projection est tres proche et ne deplace jamais le transform en fallback. Le cerveau reste dans `WaitingForNavMesh` tant que ce contrat n'est pas valide.
+- `Juggernaut_CombatProfile` contient provisoirement trois definitions Assomoir (proximite, pression, charge). Elles servent a valider le deck, les cooldowns, la selection de distance et l'enchainement avant l'ajout de clips visuellement distincts. Avec une seule definition, le cerveau autorise sa reutilisation apres cooldown : l'anti-repetition ne peut plus bloquer un combat.
+- Les impacts autonomes utilisent une hitbox auteurisee non alloc (sphere, capsule ou arc), dedoublent chaque joueur par fenetre et respectent l'invulnerabilite d'esquive. `EndEnemyAttack` et le watchdog notifient tous deux le cerveau, qui libere alors l'action et restitue la recuperation.
 # Combat realtime - paliers de vie
 
 - Les ennemis peuvent activer `enableCombatHealthThresholds` dans leur `CharacterData`.
@@ -898,3 +957,19 @@ Pour une nouvelle tache, partir du modele `prompts/codex_task.md`, remplacer
 - `ApplicationRoot` cree et conserve le `TimeManager` unique. Il est le seul ecrivain de `Time.timeScale` et `Time.fixedDeltaTime`; pauses, hit-stop, warnings, contres et QTE passent par des handles idempotents.
 - `CombatTimeDomain` est automatiquement present sur chaque `ActorRoot` de combat. Il ralentit localement Animator, locomotion, IA, NavMesh, physique et actions sans ecrire le temps global.
 - Les QTE gardent leur fenetre et leur overlay en temps reel non scale. Ils demandent temporairement une echelle globale au `TimeManager`; la fenetre reste donc exactement de la duree configuree. Les autres Timelines cinematographiques restent en lecture non scale.
+# Navigation centralisee
+
+Le cycle NavMesh est centralise dans `NavMeshWorldService` sur `GameplaySessionRoot`. Les zones peuvent fournir un `NavMeshData` pre-bake dans leur `ZoneManifest`; sinon un bake runtime controle est execute apres chargement complet. Les markers et agents attendent l'etat `Ready`.
+
+La surface de build runtime est maintenant independante de l'offset monde de
+`GameplaySessionRoot`: elle est creee a l'origine monde pour correspondre au
+repere du `NavMeshData` pre-bake. Cela corrige le decalage observe entre le
+marker a `Y=-94` et le polygone recharge a `Y=-97,56`.
+
+Le flux normal est maintenant pilote exclusivement par `GameFlowService`: le service
+ne lance plus de bake concurrent au reveil pendant un chargement additif. Avant le
+bake, le nombre de scenes du manifest est compare au nombre de scenes effectivement
+chargees. Un agent n'est rattache que si sa projection locale respecte 0,15 m en
+horizontal et en vertical; un polygone sur un autre niveau est refuse et aucun Warp
+n'est effectue. Les traces de validation indiquent la position attendue, le point
+NavMesh trouve, le delta, l'etat de l'agent et la destination de locomotion.

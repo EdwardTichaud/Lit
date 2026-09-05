@@ -95,6 +95,7 @@ public class CharacterData : ScriptableObject
 
     /// <summary>Competences de combat temps reel connues par le personnage.</summary>
     public List<SkillSO> combatSkills = new List<SkillSO>();
+    public EnemyCombatProfileSO enemyCombatProfile;
 
     [Header("Basic Skills")]
     [Tooltip("Combo d'attaques basiques disponible au sol. L'ordre definit l'enchainement.")]

@@ -1,5 +1,74 @@
 # Combat
 
+## Juggernaut sans IA concurrente
+
+JuggernautPatternSetup est l'unique installateur du Juggernaut. Il retire
+RealTimeCombatEnemyBehaviour et EnemyTacticalResponseController du prefab,
+au lieu de les desactiver. Les anciens menus deleguent a cet installateur :
+aucune auto-installation de reactions legacy au rechargement de scripts.
+La validation refuse ces composants meme desactives. Les classes partagees
+ne sont pas supprimees tant que les autres ennemis en dependent.
+
+ScriptedOnly ignore les deltas Animator hors cinematographique. NavMesh
+deplace la navigation ; CombatEnemyPhysicsMotor gere saut, ruee et avancees.
+BeginEnemyAdvance/EndEnemyAdvance encadrent une progression collisionnee
+(Frappe 0.4 m/0.18 s, Followup 0.5 m/0.2 s). Toute interruption les annule.
+Approche melee privilegiee ; alternative aerienne tiree une fois par approche.
+
+## Poursuite animee
+
+EnemyCombatBrain evalue les portees des premiers skills des patterns avant
+l'observation. Hors portee : Chase (approche) ou Position (recul si trop pres),
+avec destination radiale via ApproachTarget. La marge d'entree est 0.2 m,
+plafonnee a la moitie de l'intervalle minimum/maximum. Les patterns disponibles
+sont prioritaires pour l'approche ; a portee, cooldown ou orientation ne
+provoquent pas une avance supplementaire. Sortir de portee annule l'observation.
+
+ApproachTarget actualise le chemin toutes les 0.15 s locales ou apres 0.5 m de
+deplacement cible. Projection locale et chemin complet du type d'agent requis ;
+echec = arret avec motif, sans teleportation. Marche 1.8 m/s, course 3.6 m/s,
+entree course a 8 m, retour marche a 6 m. Animator suit la velocite NavMesh.
+
+## Correctif aggro et retour (2026-09-05)
+
+L'attente initiale au spawn ne declenche plus le mode retour. L'arrivee au spawn
+libere `returning`, qui bloquait jusque-la toute acquisition visuelle suivante.
+EnemyNavigationController accepte un agent deja rattache apres validation de
+disponibilite du monde, avant le delai de retry. EnemySkills relit CharacterData
+avant enumeration et reservation. Le manager ne rajoute plus de reactions legacy
+aux acteurs possedant EnemyCombatBrain et recoit le Transform du personnage,
+jamais son ancetre de scene via transform.root.
+
+Juggernaut : vision 30 m, poursuite 35 m autour du spawn pour eviter une sortie
+immediate a l'acquisition. Le masque physique inclut Default, Ground, Stairs,
+CameraObstruction, Obstacle, XRayEnvironment et MovingPlatform ; le filtre des
+colliders et la tolerance de hauteur restent appliques. Les tests Editor couvrent
+l'attente initiale, la fin du retour et la reservation avant initialisation.
+
+## Juggernaut : patterns de skills
+
+Le Juggernaut utilise `EnemyCombatBrain` et le profil reference par son
+`CharacterData`. La liste `combatSkills` est la source des skills equipes pour
+`EnemySkills`. Les patterns ordonnent ces skills avec observation, cooldown et
+recuperation : frappe, combo de deux coups, balayage et Assomoir. La vue seule
+ne provoque pas d'attaque ; un degat avec son acteur source engage la cible.
+Le maximum lumineux recu persiste jusqu'au desengagement et chaque coup
+verrouille ce maximum multiplie par le coefficient du SkillSO.
+
+Les nouveaux impacts utilisent la forme spatiale du SkillSO, une fenetre
+auteur et un balayage entre deux echantillons. Une cible n'est touchee qu'une
+fois par fenetre. La direction se verrouille au depart du coup ; Assomoir
+memorise la destination de sa ruee. La navigation ne reprend qu'apres contact
+sol et fin du clip. Le rayon de poursuite vaut 20 m autour du spawn ; la fuite
+termine le coup courant puis impose 1 s de pause avant le retour.
+
+`EnemyCinematicState` suspend le cerveau et invalide l'attaque avant les QTE
+et cinematiques. L'ancien comportement reste un adaptateur de placement,
+desactive sur le prefab ; les reactions tactiques autonomes sont retirees.
+Les seuils et leur ralentissement global conservent leur fonctionnement.
+`Lit/Combat/Install Juggernaut Patterns` migre les assets ;
+`Lit/Combat/Validate Juggernaut Patterns` verifie skills, etats et evenements.
+
 ## Rôle
 
 Gérer le combat temps réel continu dans le monde, sa présentation, ses réactions
@@ -954,3 +1023,11 @@ Un `SkillSO` peut activer `Player Target Lunge`. Au lancement du skill, son anim
 `CombatTimeDomain` complete ce contrat pour Lucian et chaque ennemi : il compose son echelle locale avec le temps global et alimente Animator, locomotion, navigation, IA, physique et rusees. Les deltas root motion ne sont pas remultiplies dans le relay car `Animator.speed` a deja applique l'echelle locale.
 
 Les Timelines LightSkill, CounterSkill et Skill restent `Unscaled` pour preserver leur montage. Les paliers n'utilisent pas de Timeline; leur overlay et leur fenetre de 0,5 s restent non scales.
+# Navigation et combat
+
+Les ennemis de combat utilisent `NavMeshWorldService` pour valider leur monde avant toute poursuite ou attaque. Un `EnemyNavigationController` hors monde valide reste inactif et ne compense jamais une projection lointaine.
+
+Le Juggernaut distingue maintenant les phases `Walk` et `Run`: il marche pour
+les repositionnements proches et court au-dela de 8 m. La vitesse NavMesh et
+`LocomotionTier` sont synchronises avec les seuils reels du controller commun,
+afin que la course franchisse bien le seuil Animator de 2,5.

@@ -130,6 +130,7 @@ public class CursorController : MonoBehaviour
     private bool cursorInitialized;
     private float lastMoveSfxTime = -999f;
     private bool cursorVisualVisible;
+    private bool menuGraphicSuppressed;
     private bool cursorParticleRestartPending;
     private RectTransform lastParticleTarget;
     private void Awake()
@@ -201,6 +202,12 @@ public class CursorController : MonoBehaviour
 
     private void LateUpdate()
     {
+        bool suppress = MainMenuNavigation.Active && MainMenuNavigation.UsingGamepad;
+        if (suppress != menuGraphicSuppressed)
+        {
+            menuGraphicSuppressed = suppress;
+            SetCursorGraphicsActive(cursorVisualVisible);
+        }
         if (cursorDirty)
         {
             UpdateCursorVisual();
@@ -918,6 +925,7 @@ public class CursorController : MonoBehaviour
 
     private void SetCursorGraphicsActive(bool visible)
     {
+        visible &= !(MainMenuNavigation.Active && MainMenuNavigation.UsingGamepad);
         if (cursor == null)
         {
             return;

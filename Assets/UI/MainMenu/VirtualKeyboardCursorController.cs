@@ -219,6 +219,7 @@ public class VirtualKeyboardCursorController : MonoBehaviour
 
     private bool CanProcessInput()
     {
+        if (MainMenuNavigation.Active) return false;
         if (!isActiveAndEnabled || cursor == null)
         {
             return false;

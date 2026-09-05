@@ -107,7 +107,9 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         requested = true;
         elapsed = 0f;
         SetPassEnabled(true);
-        lockCamera?.BeginAttackWarning(enemy.LockPoint, profile);
+        // Enemy attacks must remain readable. The warning is deliberately
+        // limited to the screen-space telegraph/custom pass; it must not
+        // recenter, orbit, change FOV, or otherwise steer the gameplay camera.
         if (profile.useSlowMotion && profile.slowMotionSeconds > 0f)
         {
             TimeManager.EnsureInstance()?.AcquireGlobal(
@@ -129,7 +131,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         }
 
         requested = false;
-        lockCamera?.EndAttackWarning(activeEnemy != null ? activeEnemy.LockPoint : null);
+        lockCamera?.EndAttackWarning(null);
     }
 
     public void ClearImmediate()
@@ -138,7 +140,7 @@ public sealed class CombatWarningPresentationController : MonoBehaviour
         requested = false;
         blend = 0f;
         elapsed = 0f;
-        lockCamera?.EndAttackWarning(activeEnemy != null ? activeEnemy.LockPoint : null);
+        lockCamera?.EndAttackWarning(null);
         SetPassEnabled(false);
         activeEnemy = null;
         activeProfile = null;

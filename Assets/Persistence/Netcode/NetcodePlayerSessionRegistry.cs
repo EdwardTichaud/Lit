@@ -5,6 +5,16 @@ public static class NetcodePlayerSessionRegistry
 {
     private static readonly Dictionary<ulong, string> clientToPlayer = new Dictionary<ulong, string>();
 
+    public static int Count => clientToPlayer.Count;
+
+    public static bool ContainsPlayer(string playerId)
+    {
+        return clientToPlayer.ContainsValue(playerId);
+    }
+
+    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntime() => Clear();
+
     public static void Register(ulong clientId, string playerId)
     {
         if (string.IsNullOrWhiteSpace(playerId))

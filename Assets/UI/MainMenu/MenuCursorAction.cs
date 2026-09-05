@@ -86,8 +86,14 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
         action = menuAction;
     }
 
+    private int lastExecutionFrame = -1;
     private void Execute()
     {
+        if (lastExecutionFrame == Time.frameCount) return;
+        if (controller != null && controller.OperationBusy) return;
+        foreach (CanvasGroup group in GetComponentsInParent<CanvasGroup>())
+            if (!group.interactable || group.alpha <= .01f) return;
+        lastExecutionFrame = Time.frameCount;
         if (!isActiveAndEnabled)
         {
             return;
@@ -248,14 +254,16 @@ public class MenuCursorAction : MonoBehaviour, IMenuCursorHandler, IPointerEnter
 
     private static bool IsSpaceLabel(string label)
     {
-        return string.Equals(label, "Space", System.StringComparison.OrdinalIgnoreCase)
+        return label == "_"
+            || string.Equals(label, "Space", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "Espace", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "Blank", System.StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsBackspaceLabel(string label)
     {
-        return string.Equals(label, "Backspace", System.StringComparison.OrdinalIgnoreCase)
+        return string.Equals(label, "Erase", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(label, "Backspace", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "Retour", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "Delete", System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(label, "Del", System.StringComparison.OrdinalIgnoreCase);

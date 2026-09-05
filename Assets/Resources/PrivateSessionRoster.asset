@@ -1,0 +1,12 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf04f6348a5f4e6586d31133b20e7b9e, type: 3}
+  m_Name: PrivateSessionRoster
+  characters:
+  - {fileID: 11400000, guid: 0f3452bd8cf87c440ab2208e8ebc72ce, type: 2}
+  - {fileID: 11400000, guid: 93fcbfad59b9a584da708ffad022343d, type: 2}
+  - {fileID: 11400000, guid: b98f0eec9408fc04193d3bfa674c682b, type: 2}
+  - {fileID: 11400000, guid: 184d2552eaaa1ad449b3511a64063c47, type: 2}

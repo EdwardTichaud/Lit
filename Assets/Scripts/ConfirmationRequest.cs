@@ -16,6 +16,7 @@ public sealed class ConfirmationRequest
     /// fenetre sans executer le second choix.
     /// </summary>
     public bool DismissOnReturn;
+    public bool PreferCancel;
 
     public ConfirmationRequest()
     {

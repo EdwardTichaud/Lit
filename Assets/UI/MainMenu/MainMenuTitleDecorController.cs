@@ -40,6 +40,7 @@ public class MainMenuTitleDecorController : MonoBehaviour
     private readonly List<SaveCandidate> saveCandidates = new List<SaveCandidate>();
     private MaterialPropertyBlock propertyBlock;
     private float nextRefreshTime;
+    private bool hasAppliedSnapshot;
     private string lastAppliedSaveDirectory;
     private long lastAppliedSaveTicks;
 
@@ -48,33 +49,28 @@ public class MainMenuTitleDecorController : MonoBehaviour
         RefreshDecor();
     }
 
+    private SaveSessionManager catalog;
     private void Update()
     {
-        if (!Application.isPlaying)
-        {
-            return;
-        }
-
-        if (Time.unscaledTime < nextRefreshTime)
-        {
-            return;
-        }
-
-        nextRefreshTime = Time.unscaledTime + Mathf.Max(0.25f, runtimeRefreshInterval);
-        RefreshDecor();
+        if (!Application.isPlaying || catalog == SaveSessionManager.Instance) return;
+        if (catalog != null) catalog.CatalogChanged -= RefreshDecor;
+        catalog = SaveSessionManager.Instance;
+        if (catalog != null) { catalog.CatalogChanged += RefreshDecor; RefreshDecor(); }
     }
+    private void OnDisable() { if (catalog != null) catalog.CatalogChanged -= RefreshDecor; catalog = null; }
 
     [ContextMenu("Refresh Decor")]
     public void RefreshDecor()
     {
         DecorSnapshot snapshot = LoadLatestSnapshot();
-        if (Application.isPlaying &&
+        if (Application.isPlaying && hasAppliedSnapshot &&
             string.Equals(snapshot.saveDirectory, lastAppliedSaveDirectory, StringComparison.Ordinal) &&
             snapshot.savedAtUtcTicks == lastAppliedSaveTicks)
         {
             return;
         }
 
+        hasAppliedSnapshot = true;
         lastAppliedSaveDirectory = snapshot.saveDirectory;
         lastAppliedSaveTicks = snapshot.savedAtUtcTicks;
         ApplySnapshot(snapshot);
@@ -118,44 +114,18 @@ public class MainMenuTitleDecorController : MonoBehaviour
 
     private SaveCandidate FindLatestSave()
     {
-        saveCandidates.Clear();
-
-        string savesRoot = GetSavesRoot();
-        if (string.IsNullOrWhiteSpace(savesRoot) || !Directory.Exists(savesRoot))
+        SaveSlotInfo latest = null;
+        if (SaveSessionManager.Instance != null)
+            foreach (SaveSessionInfo session in SaveSessionManager.Instance.Sessions)
+                foreach (SaveSlotInfo save in session.saves)
+                    if (latest == null || save.savedAtUtcTicks > latest.savedAtUtcTicks) latest = save;
+        if (latest == null) return SaveCandidate.None;
+        return new SaveCandidate
         {
-            return SaveCandidate.None;
-        }
-
-        try
-        {
-            string[] sessionDirectories = Directory.GetDirectories(savesRoot);
-            for (int i = 0; i < sessionDirectories.Length; i++)
-            {
-                string sessionDirectory = sessionDirectories[i];
-                if (string.IsNullOrWhiteSpace(sessionDirectory))
-                {
-                    continue;
-                }
-
-                string[] saveDirectories = Directory.GetDirectories(sessionDirectory);
-                for (int j = 0; j < saveDirectories.Length; j++)
-                {
-                    AddSaveCandidate(saveDirectories[j]);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogWarning($"MainMenuTitleDecorController: lecture sauvegardes impossible. {ex.Message}", this);
-        }
-
-        if (saveCandidates.Count == 0)
-        {
-            return SaveCandidate.None;
-        }
-
-        saveCandidates.Sort((a, b) => b.savedAtUtcTicks.CompareTo(a.savedAtUtcTicks));
-        return saveCandidates[0];
+            hasSave = true, directory = latest.directoryPath, savedAtUtcTicks = latest.savedAtUtcTicks,
+            meta = new SaveMeta { sessionName = latest.sessionName, saveName = latest.saveName,
+                sceneName = latest.sceneName, playTimeSeconds = latest.playTimeSeconds }
+        };
     }
 
     private void AddSaveCandidate(string saveDirectory)

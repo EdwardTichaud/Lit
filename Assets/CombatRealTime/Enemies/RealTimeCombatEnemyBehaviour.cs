@@ -304,13 +304,25 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
             FacePlayer();
         }
 
-        // Voir Lucian rend l'ennemi alerte, mais seule une attaque de lumiere
-        // recue le fait poursuivre pour convertir son ledger en riposte.
         if (!provokedByPlayer)
         {
-            SetCombatPhase(EnemyCombatPhase.Alert, "pas encore provoque");
-            StopMovement();
-            return;
+            // Keep the legacy executor consistent with EnemyCombatBrain:
+            // line of sight starts the encounter, while the damage ledger is
+            // only used to scale later attacks.
+            provokedByPlayer = enemy.CanSeePlayer;
+            if (!provokedByPlayer)
+            {
+                SetCombatPhase(EnemyCombatPhase.Alert, "joueur hors de vue");
+                StopMovement();
+                return;
+            }
+
+            EnterAlert();
+            SetAttackMode(true);
+            nextAttackDecisionAt = LocalTime + UnityEngine.Random.Range(
+                Mathf.Min(minimumObserveSeconds, maximumObserveSeconds),
+                Mathf.Max(minimumObserveSeconds, maximumObserveSeconds));
+            RealTimeCombatManager.Instance?.SetEnemyAttackMode(enemy, true);
         }
 
         if (!canRetaliate)
@@ -408,6 +420,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     public void SetCinematicSuspended(bool suspended)
     {
         cinematicSuspended = suspended;
+        EnemyCinematicState service = GetComponent<EnemyCinematicState>();
+        if (service != null) { service.SetSuspended(suspended); return; }
         if (suspended)
         {
             physicsMotor?.EnterCinematic();
@@ -433,6 +447,8 @@ public sealed class RealTimeCombatEnemyBehaviour : MonoBehaviour
     /// <summary>Places the enemy directly for a LightSkill and keeps its AI suspended for the Timeline.</summary>
     public bool PlaceForCinematic(Vector3 position, Quaternion rotation)
     {
+        EnemyCinematicState service = GetComponent<EnemyCinematicState>();
+        if (service != null) { cinematicSuspended = true; return service.Place(position, rotation); }
         if (logCinematicPlacementDiagnostics)
         {
             Debug.Log("[LightSkill Debug] Enemy '" + name + "' placement | avant=" + transform.position +

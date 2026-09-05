@@ -17,6 +17,12 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         [Min(0f)] public float minimumRetreatDistance = 1.2f;
         [Min(0f)] public float strafeRadius = 1.1f;
         [Min(0.1f)] public float strafeSideHoldSeconds = 1.35f;
+        [Min(0.1f)] public float walkSpeed = 1.8f;
+        [Min(0.1f)] public float runSpeed = 3.6f;
+        [Min(0.1f)] public float runDistance = 8f;
+        [Min(0f)] public float walkResumeDistance = 6f;
+        [Min(0.02f)] public float pursuitRefreshSeconds = 0.15f;
+        [Min(0.01f)] public float pursuitTargetMoveDistance = 0.5f;
         [Min(0f)] public float walkSpeedThreshold = 1.2f;
         [Min(0f)] public float runSpeedThreshold = 3.4f;
     }
@@ -24,6 +30,11 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private static readonly int CombatMoveX = Animator.StringToHash("CombatMoveX");
     private static readonly int CombatMoveZ = Animator.StringToHash("CombatMoveZ");
     private static readonly int CombatMoveSpeed = Animator.StringToHash("CombatMoveSpeed");
+    private static readonly int CommonX = Animator.StringToHash("HorizontalMovement");
+    private static readonly int CommonZ = Animator.StringToHash("ForwardMovement");
+    private static readonly int CommonMagnitude = Animator.StringToHash("CombatMoveMagnitude");
+    private bool UsesCommonAnimator => GetComponent<EnemyCombatBrain>()?.HasProfile == true;
+    public void SetFacingSpeed(float speed) => facingSpeedDegreesPerSecond = speed;
     // Animator.HasState/CrossFade with an int expects the full state path.
     // A short-name hash silently prevented the enemy combat blend tree from
     // ever taking over, leaving NavMesh movement visually in Idle.
@@ -57,10 +68,18 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private Animator cachedAnimator;
     private int lastReportedAnimatorStateHash;
     private bool wasMovingVisually;
+    private bool attackFacingLocked;
     private bool baseNavigationCaptured;
     private float baseNavigationSpeed;
     private float baseNavigationAcceleration;
     private float baseNavigationAngularSpeed;
+    private float requestedNavigationSpeed;
+    private bool runPhase;
+    private NavMeshPath pursuitPath;
+    private float nextPursuitUpdate;
+    private Vector3 lastPursuitTarget;
+    private float lastPursuitRange = -1f;
+    public string PursuitFailure { get; private set; }
 
     private float LocalTime => timeDomain != null ? timeDomain.LocalTime : Time.time;
     private float LocalDeltaTime => timeDomain != null ? timeDomain.DeltaTime : Time.deltaTime;
@@ -113,7 +132,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         // Le root motion peut ecrire la rotation apres l'IA. On conserve donc
         // l'ennemi face a sa cible a la fin de l'image, sauf si une Timeline
         // cinematographique est explicitement proprietaire de sa pose.
-        if (combatTarget != null && (animationContract == null || !animationContract.IsCinematicMotionActive))
+        if (GetComponent<EnemyCinematicState>()?.IsSuspended != true && !attackFacingLocked && combatTarget != null && (animationContract == null || !animationContract.IsCinematicMotionActive))
         {
             FaceTarget(combatTarget.position);
         }
@@ -121,6 +140,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     public void SetCombatTarget(Transform target)
     {
+        if (combatTarget != target) lastPursuitRange = -1f;
         combatTarget = target;
         ResolveReferences();
         // NavMesh continues to own translation, but its automatic yaw fights
@@ -130,6 +150,64 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         {
             navigationAgent.updateRotation = target == null;
         }
+    }
+
+    /// <summary>
+    /// Wind-up may still track the target. Once an authored event commits an
+    /// attack, this prevents LateUpdate from silently turning the hit toward a
+    /// player who has already dodged away.
+    /// </summary>
+    public void SetAttackFacingLocked(bool value)
+    {
+        attackFacingLocked = value;
+    }
+
+    public bool ApproachTarget(float attackDistance)
+    {
+        ResolveReferences();
+        string blockReason = combatTarget == null ? "cible absente" :
+            navigationAgent == null ? "agent absent" :
+            !navigationAgent.isActiveAndEnabled ? "agent desactive" :
+            !navigationAgent.isOnNavMesh ? "agent hors NavMesh" :
+            GetComponent<EnemyCinematicState>()?.IsSuspended == true ? "suspension cinematique" :
+            physicsMotor != null && physicsMotor.IsDrivingActionRootMotion ? "moteur physique: " + physicsMotor.State : null;
+        if (blockReason != null)
+        {
+            PursuitFailure = blockReason;
+            StopNavigation();
+            return false;
+        }
+
+        Vector3 away = transform.position - combatTarget.position;
+        away.y = 0f;
+        SetMovementPace(away.magnitude);
+        if (LocalTime < nextPursuitUpdate && Mathf.Abs(lastPursuitRange - attackDistance) < .01f &&
+            (lastPursuitTarget - combatTarget.position).sqrMagnitude <
+            positioning.pursuitTargetMoveDistance * positioning.pursuitTargetMoveDistance)
+            return PursuitFailure == null;
+
+        nextPursuitUpdate = LocalTime + positioning.pursuitRefreshSeconds;
+        lastPursuitTarget = combatTarget.position;
+        lastPursuitRange = attackDistance;
+        Vector3 radial = away.sqrMagnitude > .0001f ? away.normalized : -transform.forward;
+        Vector3 destination = combatTarget.position + radial * attackDistance;
+        pursuitPath ??= new NavMeshPath();
+        var filter = new NavMeshQueryFilter { agentTypeID = navigationAgent.agentTypeID, areaMask = navigationAgent.areaMask };
+        if (!NavMesh.SamplePosition(destination, out NavMeshHit hit, .35f, filter) ||
+            !navigationAgent.CalculatePath(hit.position, pursuitPath) || pursuitPath.status != NavMeshPathStatus.PathComplete)
+        {
+            PursuitFailure = "destination locale ou chemin complet introuvable";
+            StopNavigation();
+            return false;
+        }
+
+        navigationAgent.stoppingDistance = .05f;
+        navigationAgent.isStopped = false;
+        bool accepted = navigationAgent.SetPath(pursuitPath);
+        PursuitFailure = accepted ? null : "chemin refuse par agent";
+        if (!accepted) { StopNavigation(); return false; }
+        navigationRequested = wasNavigating = true;
+        return true;
     }
 
     public void NavigateTowardsTarget(float stoppingDistance)
@@ -148,14 +226,17 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
         if (distance > stoppingDistance + 0.18f)
         {
-            destination = combatTarget.position - away * Mathf.Max(0f, stoppingDistance - positioning.strafeRadius * 0.35f);
+            SetMovementPace(distance);
+            destination = combatTarget.position + away * stoppingDistance;
         }
         else if (distance < positioning.minimumRetreatDistance)
         {
+            SetMovementPace(0f);
             destination = combatTarget.position + away * Mathf.Max(positioning.minimumRetreatDistance, stoppingDistance);
         }
         else
         {
+            SetMovementPace(0f);
             if (LocalTime >= nextSideChangeAt)
             {
                 strafeSide *= -1f;
@@ -166,8 +247,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             destination = combatTarget.position + away * stoppingDistance + side * positioning.strafeRadius;
         }
 
-        NavigateTo(destination, stoppingDistance);
-        FaceTarget(combatTarget.position);
+        NavigateTo(destination, .15f);
     }
 
     public void NavigateTo(Vector3 destination, float stoppingDistance)
@@ -187,11 +267,61 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             return;
         }
 
-        destination = ResolveClearDestination(destination);
+        Vector3 requestedDestination = destination;
+        int navigationAreaMask = navigationAgent.areaMask == 0 ? NavMesh.AllAreas : navigationAgent.areaMask;
+        // Prefer the exact projected point. Clearance heuristics are only a
+        // fallback: on a freshly built runtime mesh they can otherwise select
+        // the current polygon and silently turn a valid reposition into a
+        // zero-length path.
+        if (!NavMesh.SamplePosition(requestedDestination, out NavMeshHit exactHit, .75f, navigationAreaMask))
+        {
+            destination = ResolveClearDestination(requestedDestination);
+        }
+        else
+        {
+            destination = exactHit.position;
+        }
+        // A clearance probe must never collapse a valid lateral reposition onto
+        // the actor's current point. This can happen on a narrow or freshly
+        // built runtime NavMesh when FindClosestEdge reports the current polygon
+        // as the only safe candidate. Preserve the requested point when Unity
+        // can project it locally; otherwise the brain would remain in Chase
+        // with a completed path and zero velocity forever.
+        if ((destination - transform.position).sqrMagnitude < 0.04f &&
+            (requestedDestination - transform.position).sqrMagnitude > 0.25f &&
+            NavMesh.SamplePosition(requestedDestination, out NavMeshHit directHit, clearanceSearchRadius,
+                navigationAreaMask))
+        {
+            destination = directHit.position;
+        }
+        else if ((destination - transform.position).sqrMagnitude < 0.04f &&
+                 (requestedDestination - transform.position).sqrMagnitude > 0.25f)
+        {
+            Vector3 alternative = FindNearbyProjectedDestination(requestedDestination, navigationAreaMask);
+            if ((alternative - transform.position).sqrMagnitude > 0.04f)
+            {
+                destination = alternative;
+            }
+            else
+            {
+                Debug.LogWarning("[CombatEnemyLocomotion] Destination non projetable | requested=" + requestedDestination +
+                                 " | resolved=" + destination + " | current=" + transform.position +
+                                 " | areaMask=" + navigationAgent.areaMask, this);
+            }
+        }
         navigationAgent.isStopped = false;
         navigationAgent.stoppingDistance = Mathf.Max(0f, stoppingDistance);
-        navigationAgent.SetDestination(destination);
+        bool accepted = navigationAgent.SetDestination(destination);
         navigationRequested = true;
+        if (logDiagnostics)
+        {
+            Debug.Log("[CombatEnemyLocomotion] " + name + " destination=" + destination +
+                      " accepted=" + accepted + " path=" + navigationAgent.pathStatus +
+                      " pending=" + navigationAgent.pathPending +
+                      " remaining=" + navigationAgent.remainingDistance.ToString("F2") +
+                      " velocity=" + navigationAgent.velocity +
+                      " onNavMesh=" + navigationAgent.isOnNavMesh, this);
+        }
         if (logDiagnostics && !wasNavigating)
         {
             Debug.Log("[CombatEnemyLocomotion] " + name + " navigation active | stop=" + navigationAgent.stoppingDistance.ToString("F2"), this);
@@ -218,6 +348,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     public void FaceTarget(Vector3 worldPosition)
     {
+        if (attackFacingLocked || GetComponent<EnemyCinematicState>()?.IsSuspended == true) return;
         Vector3 direction = worldPosition - transform.position;
         direction.y = 0f;
         if (direction.sqrMagnitude <= 0.0001f)
@@ -240,7 +371,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         if (cachedAnimator != animator)
         {
             cachedAnimator = animator;
-            hasAnimatorParameters = HasCombatLocomotionParameters(animator);
+            hasAnimatorParameters = UsesCommonAnimator || HasCombatLocomotionParameters(animator);
             if (!hasAnimatorParameters)
             {
                 Debug.LogWarning("[CombatEnemyLocomotion] Animator '" + animator.name + "' ne possede pas encore les parametres CombatMoveX/Z/Speed. " +
@@ -267,18 +398,26 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         // A pending retaliation can include its anticipation while the enemy is
         // still navigating. Only the physics motor marks the committed portion
         // of an action that must own the Animator presentation.
-        bool actionOwnsAnimation = physicsMotor != null && physicsMotor.IsDrivingActionRootMotion;
+        bool actionOwnsAnimation = (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion) ||
+            GetComponent<EnemyCombatBrain>()?.OwnsPresentation == true || enemy.IsHitRecovering;
         Vector3 velocity = navigationAgent != null && navigationAgent.isActiveAndEnabled && navigationAgent.isOnNavMesh && !navigationAgent.isStopped
             ? navigationAgent.velocity
             : Vector3.zero;
         velocity.y = 0f;
         float speed = velocity.magnitude;
+        if (UsesCommonAnimator)
+        {
+            // The shared controller uses 1.1 for walk and 3.25 for run. The
+            // previous 1/2 values never crossed its >2.5 run transitions.
+            animator.SetFloat("LocomotionTier", runPhase ? 3.25f : 1.1f);
+            animator.SetBool("CombatStrafeActive", true);
+        }
 
         if (actionOwnsAnimation)
         {
-            animator.SetFloat(CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
-            animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
-            animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonZ : CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonMagnitude : CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
             wasMovingVisually = false;
             return;
         }
@@ -286,13 +425,14 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         if (speed > 0.03f)
         {
             Vector3 localVelocity = transform.InverseTransformDirection(velocity / speed);
-            animator.SetFloat(CombatMoveX, Mathf.Clamp(localVelocity.x, -1f, 1f), animatorDampTime, LocalDeltaTime);
-            animator.SetFloat(CombatMoveZ, Mathf.Clamp(localVelocity.z, -1f, 1f), animatorDampTime, LocalDeltaTime);
-            animator.SetFloat(CombatMoveSpeed, speed, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, Mathf.Clamp(localVelocity.x, -1f, 1f), animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonZ : CombatMoveZ, Mathf.Clamp(localVelocity.z, -1f, 1f), animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonMagnitude : CombatMoveSpeed, UsesCommonAnimator ? 1f : speed, animatorDampTime, LocalDeltaTime);
             if (animator.HasState(0, CombatLocomotion))
             {
                 AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-                if (state.fullPathHash != CombatLocomotion)
+                if (state.fullPathHash != CombatLocomotion &&
+                    (!animator.IsInTransition(0) || animator.GetNextAnimatorStateInfo(0).fullPathHash != CombatLocomotion))
                 {
                     animator.CrossFade(CombatLocomotion, 0.08f, 0);
                 }
@@ -301,9 +441,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         }
         else
         {
-            animator.SetFloat(CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
-            animator.SetFloat(CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
-            animator.SetFloat(CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonZ : CombatMoveZ, 0f, animatorDampTime, LocalDeltaTime);
+            animator.SetFloat(UsesCommonAnimator ? CommonMagnitude : CombatMoveSpeed, 0f, animatorDampTime, LocalDeltaTime);
             if (wasMovingVisually)
             {
                 ForceIdlePresentation();
@@ -313,6 +453,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
 
     private void ForceIdlePresentation()
     {
+        if (GetComponent<EnemyCombatBrain>()?.OwnsPresentation == true || enemy != null && enemy.IsHitRecovering) return;
         if (physicsMotor != null && physicsMotor.IsDrivingActionRootMotion)
         {
             return;
@@ -324,13 +465,14 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
             return;
         }
 
-        animator.SetFloat(CombatMoveX, 0f);
-        animator.SetFloat(CombatMoveZ, 0f);
-        animator.SetFloat(CombatMoveSpeed, 0f);
+        animator.SetFloat(UsesCommonAnimator ? CommonX : CombatMoveX, 0f);
+        animator.SetFloat(UsesCommonAnimator ? CommonZ : CombatMoveZ, 0f);
+        animator.SetFloat(UsesCommonAnimator ? CommonMagnitude : CombatMoveSpeed, 0f);
         wasMovingVisually = false;
         AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
         int idleState = animator.HasState(0, CombatIdle) ? CombatIdle : Idle;
-        if (animator.HasState(0, idleState) && currentState.fullPathHash == CombatLocomotion)
+        if (animator.HasState(0, idleState) && currentState.fullPathHash == CombatLocomotion &&
+            (!animator.IsInTransition(0) || animator.GetNextAnimatorStateInfo(0).fullPathHash != idleState))
         {
             animator.CrossFade(idleState, 0.08f, 0);
         }
@@ -339,9 +481,9 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
     private void ResolveReferences()
     {
         enemy ??= GetComponent<RealTimeCombatEnemy>();
-        navigationAgent ??= GetComponent<NavMeshAgent>();
+        navigationAgent = GetComponent<NavMeshAgent>();
         animationContract ??= GetComponent<CombatActorAnimationRoot>();
-        physicsMotor ??= GetComponent<CombatEnemyPhysicsMotor>();
+        physicsMotor = GetComponent<CombatEnemyPhysicsMotor>();
         timeDomain ??= GetComponent<CombatTimeDomain>();
     }
 
@@ -352,6 +494,7 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         baseNavigationSpeed = navigationAgent.speed;
         baseNavigationAcceleration = navigationAgent.acceleration;
         baseNavigationAngularSpeed = navigationAgent.angularSpeed;
+        requestedNavigationSpeed = baseNavigationSpeed;
     }
 
     private void ApplyLocalNavigationScale()
@@ -359,9 +502,36 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         if (navigationAgent == null) return;
         CaptureNavigationDefaults();
         float scale = timeDomain != null ? timeDomain.Scale : 1f;
-        navigationAgent.speed = baseNavigationSpeed * scale;
+        navigationAgent.speed = Mathf.Max(0.01f, requestedNavigationSpeed) * scale;
         navigationAgent.acceleration = baseNavigationAcceleration * scale;
         navigationAgent.angularSpeed = baseNavigationAngularSpeed * scale;
+    }
+
+    private void SetMovementPace(float distanceToTarget)
+    {
+        if (navigationAgent == null) return;
+        CaptureNavigationDefaults();
+
+        bool nextRunPhase = runPhase
+            ? distanceToTarget > Mathf.Min(positioning.walkResumeDistance, positioning.runDistance)
+            : distanceToTarget >= Mathf.Max(0.1f, positioning.runDistance);
+        float nextSpeed = nextRunPhase
+            ? Mathf.Max(positioning.walkSpeed, positioning.runSpeed)
+            : Mathf.Max(0.1f, positioning.walkSpeed);
+
+        if (runPhase == nextRunPhase && Mathf.Abs(requestedNavigationSpeed - nextSpeed) < 0.01f)
+        {
+            return;
+        }
+
+        runPhase = nextRunPhase;
+        requestedNavigationSpeed = nextSpeed;
+        if (logDiagnostics)
+        {
+            Debug.Log("[CombatEnemyLocomotion] " + name + " phase=" +
+                      (runPhase ? "Run" : "Walk") + " | distance=" + distanceToTarget.ToString("F2") +
+                      " | speed=" + requestedNavigationSpeed.ToString("F2"), this);
+        }
     }
 
     private Vector3 ResolveClearDestination(Vector3 requestedDestination)
@@ -425,6 +595,36 @@ public sealed class CombatEnemyLocomotionController : MonoBehaviour
         // enemy on the widest available NavMesh point instead of steering it
         // deliberately into the closest wall.
         return bestPosition;
+    }
+
+    private Vector3 FindNearbyProjectedDestination(Vector3 requestedDestination, int areaMask)
+    {
+        Vector3 best = transform.position;
+        float bestScore = float.PositiveInfinity;
+        int samples = Mathf.Max(8, clearanceSearchSamples);
+        for (int ring = 1; ring <= 3; ring++)
+        {
+            float radius = Mathf.Max(0.5f, clearanceSearchRadius) * ring / 3f;
+            for (int index = 0; index < samples; index++)
+            {
+                float angle = index * Mathf.PI * 2f / samples;
+                Vector3 probe = requestedDestination + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                if (!NavMesh.SamplePosition(probe, out NavMeshHit hit, 0.5f, areaMask) ||
+                    (hit.position - transform.position).sqrMagnitude <= 0.04f)
+                {
+                    continue;
+                }
+
+                float score = (hit.position - requestedDestination).sqrMagnitude;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = hit.position;
+                }
+            }
+        }
+
+        return best;
     }
 
     private float GetNavMeshEdgeClearance(Vector3 position)

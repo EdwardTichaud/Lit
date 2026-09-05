@@ -50,21 +50,22 @@ public class NetcodeConnectionApproval : MonoBehaviour
 
     private void OnConnectionApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
-        string playerId;
-        if (!NetcodeClientIdentity.TryGetPlayerId(request.Payload, out playerId))
-        {
-            playerId = $"client-{request.ClientNetworkId}";
-        }
-
-        NetcodePlayerSessionRegistry.Register(request.ClientNetworkId, playerId);
-
-        int currentConnections = NetworkManager.Singleton != null
-            ? NetworkManager.Singleton.ConnectedClientsIds.Count
-            : 0;
-
-        response.Approved = maxPlayers <= 0 || currentConnections < maxPlayers;
+        response.Approved = false;
         response.CreatePlayerObject = false;
         response.Pending = false;
-        response.Reason = response.Approved ? string.Empty : "Serveur plein.";
+        if (!NetcodeClientIdentity.TryGetPlayerId(request.Payload, out string playerId))
+        { response.Reason = "Version du jeu incompatible ou identité invalide."; return; }
+        if (NetcodePlayerSessionRegistry.ContainsPlayer(playerId))
+        { response.Reason = "Ce joueur est déjà connecté."; return; }
+        NetworkManager manager = NetworkManager.Singleton;
+        int reserved = PrivateSessionService.Instance != null && PrivateSessionService.Instance.IsActive
+            ? PrivateSessionService.Instance.Lobby.characterIds.Length : 4;
+        int capacity = Mathf.Min(Mathf.Clamp(maxPlayers, 1, 4), reserved);
+        // The registry includes approvals not yet reflected in ConnectedClientsIds.
+        if (NetcodePlayerSessionRegistry.Count >= capacity)
+        { response.Reason = "Partie complète : aucun personnage disponible."; return; }
+        NetcodePlayerSessionRegistry.Register(request.ClientNetworkId, playerId);
+        response.Approved = true;
+        response.Reason = string.Empty;
     }
 }

@@ -1,12 +1,14 @@
 public readonly struct NetcodeRelayResult
 {
-    public NetcodeRelayResult(bool succeeded, string joinCode, string error)
+    public NetcodeRelayResult(bool succeeded, string joinCode, string error, PrivateSessionError errorKind = PrivateSessionError.Unavailable)
     {
         Succeeded = succeeded;
+        ErrorKind = succeeded ? PrivateSessionError.None : errorKind;
         JoinCode = joinCode ?? string.Empty;
         Error = error ?? string.Empty;
     }
 
+    public PrivateSessionError ErrorKind { get; }
     public bool Succeeded { get; }
     public string JoinCode { get; }
     public string Error { get; }
@@ -16,8 +18,8 @@ public readonly struct NetcodeRelayResult
         return new NetcodeRelayResult(true, joinCode, string.Empty);
     }
 
-    public static NetcodeRelayResult Failure(string error)
+    public static NetcodeRelayResult Failure(string error, PrivateSessionError errorKind = PrivateSessionError.Unavailable)
     {
-        return new NetcodeRelayResult(false, string.Empty, error);
+        return new NetcodeRelayResult(false, string.Empty, error, errorKind);
     }
 }

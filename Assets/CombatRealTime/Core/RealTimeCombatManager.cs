@@ -49,6 +49,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private readonly HashSet<RealTimeCombatReaction> receivedReactions = new HashSet<RealTimeCombatReaction>();
     private readonly HashSet<RealTimeCombatEnemy> attackModeEnemies = new HashSet<RealTimeCombatEnemy>();
     private bool combatActive;
+    private bool enemyAggroAnnounced;
     private bool reactionWindowOpen;
     private bool reactionSucceeded;
     private int reactionWindowToken;
@@ -71,6 +72,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     public event Action<int> PlayerDamaged;
     public event Action<bool> CombatResolved;
     public event Action<bool> CombatStateChanged;
+    /// <summary>Raised once when an enemy genuinely acquires the player as an active threat.</summary>
+    public event Action<RealTimeCombatEnemy> EnemyAggroStarted;
 
     public bool IsCombatActive => combatActive;
     public bool IsCinematicSequenceActive { get; private set; }
@@ -274,6 +277,49 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         RefreshCombatMusicOverride();
     }
 
+    /// <summary>
+    /// Starts the combat state from an enemy sighting or a received hit without
+    /// forcing a manual camera lock. The event is idempotent for the current
+    /// engaged enemy and is the only source for the combat-entry threat banner.
+    /// </summary>
+    public bool BeginEnemyAggro(Transform player, RealTimeCombatEnemy enemy)
+    {
+        if (player == null || enemy == null ||
+            (enemy.Health != null && enemy.Health.IsDead))
+        {
+            return false;
+        }
+
+        bool newAggro = !enemyAggroAnnounced || !combatActive || engagedEnemy != enemy;
+        if (!combatActive)
+        {
+            playerRoot = player;
+            ResolvePlayerReferences();
+            combatActive = true;
+            stopPlayerWhenMovementReleased = false;
+            clarity = 0f;
+            cooldowns.Clear();
+            playerController?.HideLocalInteractionPresentation();
+            SetEngagedEnemy(enemy);
+            combatInput?.SetInputActive(true);
+            ClarityChanged?.Invoke(clarity, ClarityRank);
+            CombatStateChanged?.Invoke(true);
+        }
+        else if (engagedEnemy != enemy)
+        {
+            SetEngagedEnemy(enemy);
+        }
+
+        SetEnemyAttackMode(enemy, true);
+        if (newAggro)
+        {
+            enemyAggroAnnounced = true;
+            EnemyAggroStarted?.Invoke(enemy);
+        }
+
+        return true;
+    }
+
     public bool BeginCombat(Transform player, RealTimeCombatEnemy enemy)
     {
         if (player == null || enemy == null)
@@ -301,6 +347,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     {
         combatHealthThresholdController?.AbortActiveSequence("fin de combat");
         combatActive = false;
+        enemyAggroAnnounced = false;
         IsCinematicSequenceActive = false;
         CloseReactionWindow(notify: false);
         if (engagedEnemy != null)
@@ -365,7 +412,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         SetEnemyAttackMode(enemy, true);
-        int applied = enemy.ReceiveLightDamage(Mathf.Max(0, Mathf.RoundToInt(openingDamage)));
+        int applied = enemy.ReceiveLightDamage(Mathf.Max(0, Mathf.RoundToInt(openingDamage)), playerController);
         if (applied > 0)
         {
             EvaluateCombatOutcome();
@@ -595,7 +642,8 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     private void SetEngagedEnemy(RealTimeCombatEnemy enemy)
     {
         engagedEnemy = enemy;
-        if (engagedEnemy != null && engagedEnemy.GetComponent<EnemyTacticalResponseController>() == null)
+        if (engagedEnemy != null && engagedEnemy.GetComponent<EnemyCombatBrain>() == null &&
+            engagedEnemy.GetComponent<EnemyTacticalResponseController>() == null)
         {
             engagedEnemy.gameObject.AddComponent<EnemyTacticalResponseController>();
         }
@@ -632,7 +680,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
         }
 
         int lightDamage = Mathf.Max(1, Mathf.RoundToInt(attack.LightDamage * ResolveKnowledgeModifier().lightDamageMultiplier));
-        int applied = lockedEnemy.ReceiveLightDamage(lightDamage);
+        int applied = lockedEnemy.ReceiveLightDamage(lightDamage, playerController);
         if (applied <= 0)
         {
             return false;
@@ -825,7 +873,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int applied = lockedEnemy.ReceiveLightDamage(resolvedDamage);
+        int applied = lockedEnemy.ReceiveLightDamage(resolvedDamage, playerController);
         if (applied <= 0)
         {
             return 0;
@@ -851,7 +899,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int applied = engagedEnemy.ReceiveLightDamage(Mathf.Max(0, skill.Damage));
+        int applied = engagedEnemy.ReceiveLightDamage(Mathf.Max(0, skill.Damage), playerController);
         if (applied <= 0)
         {
             return 0;
@@ -873,7 +921,7 @@ public sealed class RealTimeCombatManager : MonoBehaviour
             return 0;
         }
 
-        int applied = engagedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false);
+        int applied = engagedEnemy.ReceiveDamage(Mathf.Max(0, skill.Damage), canPrepareRetaliation: false, source: playerController);
         if (applied <= 0)
         {
             return 0;
@@ -1117,6 +1165,35 @@ public sealed class RealTimeCombatManager : MonoBehaviour
     /// <summary>
     /// Applique un impact de SkillSO ennemi declenche par un Animation Event.
     /// </summary>
+    /// <summary>Single authoritative damage path for spatial pattern impacts.</summary>
+    public int ResolveEnemyPatternImpact(RealTimeCombatEnemy attacker, SquadCharacterController victim,
+                                         SkillSO skill, int actionId, int windowId)
+    {
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network != null && network.IsListening && !network.IsServer) return 0;
+        EnemyCombatBrain brain = attacker != null ? attacker.GetComponent<EnemyCombatBrain>() : null;
+        if (victim == null || victim.CurrentHp <= 0 || brain == null || !brain.IsAutonomousActionActive ||
+            brain.ActionId != actionId || attacker.ActiveSkill != skill ||
+            attacker.Health != null && attacker.Health.IsDead || IsCinematicSequenceActive) return 0;
+
+        if (victim == playerController)
+        {
+            bool avoided = attacker == engagedEnemy && reactionSucceeded;
+            if (attacker == engagedEnemy) CloseReactionWindow(notify: true);
+            int damage = CounterSkillCombatController.ModifyGuardDamage(attacker.CommittedRetaliationDamage);
+            int applied = avoided ? 0 : ApplyPlayerDamage(damage);
+            ReactionImpactResolved?.Invoke(skill, avoided);
+            if (applied > 0) { PlayerDamaged?.Invoke(applied); EvaluateCombatOutcome(); }
+            return applied;
+        }
+        // Remote actors use their own damage entry point, never the local HUD's health.
+        var mobility = victim.GetComponentInChildren<CombatMobilityController>(true);
+        if (mobility != null && mobility.IsDamageInvulnerable) return 0;
+        int remoteApplied = victim.ApplyDamage(attacker.CommittedRetaliationDamage, "EnemyPattern");
+        CombatDamageWorldFeedback.Show(victim.transform, remoteApplied, new Color(1f, .48f, .48f), 2.05f);
+        return remoteApplied;
+    }
+
     public int ApplyEnemySkillDamageToPlayer(RealTimeCombatEnemy caster, SkillSO skill)
     {
         if (!combatActive || caster == null || caster != engagedEnemy || skill == null ||

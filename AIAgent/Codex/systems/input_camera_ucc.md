@@ -1,5 +1,21 @@
 # Input, UCC et caméra
 
+## Controller du Juggernaut
+
+Les clips gameplay sont des copies InPlace dediees au Juggernaut. Le mode
+ScriptedOnly interdit translation/yaw extraits hors cinematique ; UCC Lucian
+reste inchange. L'allure demandee pilote LocomotionTier, la vitesse NavMesh
+reelle pilote l'activite. Les CrossFade consultent l'etat courant et suivant.
+L'ancien installateur ne peut plus restaurer le controller ou les reactions legacy.
+
+`Juggernaut_Model` est une copie specialisee de `Player_Model`, sans ses
+transitions d'exploration. Il utilise HorizontalMovement, ForwardMovement,
+CombatMoveMagnitude et LocomotionTier pour ses blend trees InPlace. Les skills
+possedent leurs etats et leurs clips auteur ; les phases d'action, de reaction
+et de suspension interdisent a la locomotion de remplacer leur presentation.
+Lucian conserve son controller. Les paliers QTE continuent d'utiliser leurs
+overrides de clips sur Lucian et ne prennent pas possession de la camera.
+
 ## Rôle
 
 Centraliser les actions locales, les transmettre au bon personnage et adapter
@@ -108,6 +124,19 @@ des toasts sans focus. Les textes de stèle utilisent la présentation du
 DialoguePanel mais restent eux aussi dans le mode `Exploration`; seul un vrai
 dialogue ou un panneau de décision peut suspendre la locomotion. Ces retours
 automatiques durent deux secondes et ne demandent jamais `Interact` pour se fermer.
+Un `InteractableItem` bloque par
+`requireLitInfluenceForInteraction` reste un objet de monde lisible : il
+enregistre un signal aupres du `VFXManager` global tant qu'aucune Flame allumee
+ne l'influence. Le manager maintient une unique instance de VFX boucle a
+l'ancre de l'objet, sans la cadencer. L'entree dans une zone de Flame fond
+toutes les emissions a zero; la sortie restaure progressivement leurs valeurs
+initiales. Le root du VFX est echelle selon la taille du monde de l'objet. Ce
+feedback n'ouvre aucune UI et ne modifie aucun InputMode. Les containers, portes et recompenses Munin n'enregistrent jamais ce signal; parmi les documents fixes, seul un `Stab` est eligible.
+
+Le combat ennemi autonome ne modifie pas la camera ni l'InputMode. Il conserve
+NavMesh pour les deplacements ordinaires et le `CombatEnemyPhysicsMotor` pour
+le root motion d'action; les impacts sont des hitboxes monde declenchees par
+Animation Events, jamais une ecriture directe de pose ou de camera.
 Après chacun de ces messages, `LocalPlayerInput` relit au frame suivant l'axe
 de déplacement réellement maintenu : un ancien reset d'ActionMap ne peut plus
 laisser le mouvement à zéro jusqu'à un saut ou une nouvelle pression.
@@ -391,3 +420,9 @@ automatiquement hors cinematique.
 # Echelles de temps et restitution UCC
 
 `TimeManager` est la seule autorite du temps global. Un `CombatTimeDomain` sur l'ActorRoot ralentit localement l'intention UCC, les impulsions, le facing et l'Animator. Les QTE de palier demandent actuellement un ralentissement global via un handle `TimeManager`; les overlays et les inputs QTE utilisent le temps reel non scale et ne doivent jamais dependre de `Time.deltaTime`.
+
+# Combat ennemi et navigation
+
+Le deplacement ennemi ordinaire appartient exclusivement au `NavMeshAgent`, pilote par `CombatEnemyLocomotionController`; aucune IA ne doit faire de fallback par `Transform`. `EnemyNavigationController` attend que `SquadAIManager` ait bake le monde actif, demande un rebuild controle si aucune projection locale n'est disponible et n'autorise un Warp que lorsque la projection est pratiquement confondue avec l'acteur. Le serveur/hote est le seul a appeler le cerveau et cette preparation; les clients ne doivent pas choisir de cible, destination ou impact.
+
+`EnemyCombatBrain` choisit les attaques et maintient une cible/menace, tandis que `CombatEnemyLocomotionController` gere translation NavMesh et presentation Animator. Le suivi de rotation reste ouvert pendant le wind-up mais est bloque par l'Animation Event `LockEnemyAttackDirection` avant la phase engagee : un joueur qui esquive ne peut donc pas etre suivi magiquement par la rotation de fin d'attaque. `EndEnemyAttack` reste l'autorite normale de fin; `EnemyAttackRecoverySafety` est seulement le filet de securite qui libere aussi le cerveau si un clip est mal auteurise.

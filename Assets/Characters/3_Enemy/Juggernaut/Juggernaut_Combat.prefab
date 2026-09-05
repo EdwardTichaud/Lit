@@ -7359,7 +7359,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6620271873036543090}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7545615, y: 0.08327811, z: 0.6496128, w: -0.041289695}
+  m_LocalRotation: {x: 0.75456154, y: 0.08327812, z: 0.64961284, w: -0.0412897}
   m_LocalPosition: {x: -0.055161893, y: 0.013148296, z: 0.014278725}
   m_LocalScale: {x: 0.9999996, y: 1, z: 0.9999999}
   m_ConstrainProportionsScale: 0
@@ -7489,12 +7489,14 @@ GameObject:
   - component: {fileID: 900000000000000002}
   - component: {fileID: 4532544328156619208}
   - component: {fileID: 900000000000000017}
-  - component: {fileID: 900000000000000016}
   - component: {fileID: 707000000000000003}
   - component: {fileID: 3353001312763717800}
-  - component: {fileID: 1749280591439705950}
   - component: {fileID: 908605419744601082}
   - component: {fileID: 7678586944222797535}
+  - component: {fileID: 7685876646123518452}
+  - component: {fileID: 5010101010101010101}
+  - component: {fileID: 5010101010101010102}
+  - component: {fileID: 805147153153357774}
   m_Layer: 0
   m_Name: Juggernaut_Combat
   m_TagString: Untagged
@@ -7529,10 +7531,10 @@ Animator:
   m_GameObject: {fileID: 6700739663857040827}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 68d2336e63afe7d44963d301b4a25d5d, type: 3}
-  m_Controller: {fileID: 9100000, guid: 0e4efc510b6b0c94cb63cd144318ac50, type: 2}
+  m_Controller: {fileID: 9100000, guid: 16953135bd952ee4b84667029bec18b3, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -7715,7 +7717,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VisionField
   origin: {fileID: 0}
-  maximumDistance: 10
+  maximumDistance: 30
   fieldOfViewDegrees: 100
   eyeHeight: 1.5
   targetHeight: 1
@@ -7744,7 +7746,7 @@ MonoBehaviour:
   lockIndicator: {fileID: 0}
   hitAnimatorState: Hit
   hitAnimationTransitionSeconds: 0.06
-  idleAnimatorState: Idle
+  idleAnimatorState: CombatIdle
   hitRecoveryNormalizedTime: 0.9
   hitRecoveryTransitionSeconds: 0.1
   deathAnimatorState: Death
@@ -7783,46 +7785,6 @@ MonoBehaviour:
   animator: {fileID: 4280753887478595955}
   timeDomain: {fileID: 0}
   casterVfxPoint: {fileID: 0}
-  skills:
-  - {fileID: 11400000, guid: a182c503e933adb42ad6608ded0f8702, type: 2}
---- !u!114 &900000000000000016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6700739663857040827}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21b7ec7933b64c51b172ca8f8e4d9431, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RealTimeCombatEnemyBehaviour
-  enemy: {fileID: 0}
-  navigationAgent: {fileID: 0}
-  timeDomain: {fileID: 0}
-  navMeshSampleDistance: 1.5
-  navMeshReattachTolerance: 0.15
-  navMeshRetryInterval: 0.25
-  navMeshRebuildRequestInterval: 1
-  patrolPoint: {fileID: 0}
-  meleeAttackDistance: 2.6
-  rangedAttackDistance: 8
-  pursuitRadius: 20
-  disengagePauseSeconds: 1
-  canPursuePlayer: 1
-  alertedVisionDistance: 24
-  alertMemorySeconds: 12
-  searchLastKnownPositionSeconds: 3
-  searchArrivalDistance: 0.65
-  meleeAttackPreferencePercent: 70
-  minimumObserveSeconds: 0.18
-  maximumObserveSeconds: 0.48
-  minimumRecoverySeconds: 0.3
-  maximumRecoverySeconds: 0.65
-  logCombatDiagnostics: 0
-  patrolArrivalDistance: 0.15
-  turnSpeedDegreesPerSecond: 540
-  logCinematicPlacementDiagnostics: 1
 --- !u!114 &707000000000000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7848,13 +7810,14 @@ MonoBehaviour:
   minimumGroundNormal: 0.45
   groundMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 134228617
   logStateChanges: 0
   logPoseAudit: 1
   poseJumpDiagnosticDistance: 0.5
   maximumRootMotionDeltaPerFrame: 0.5
   maximumRootMotionDistancePerFixedUpdate: 0.75
   actionRepositionDiagnosticDistance: 1
+  animationMovementMode: 1
 --- !u!114 &3353001312763717800
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7868,7 +7831,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatEnemyLocomotionController
   enemy: {fileID: 900000000000000002}
-  navigationAgent: {fileID: 0}
+  navigationAgent: {fileID: 900000000000000015}
   animationContract: {fileID: 4532544328156619208}
   physicsMotor: {fileID: 707000000000000003}
   timeDomain: {fileID: 0}
@@ -7877,6 +7840,12 @@ MonoBehaviour:
     minimumRetreatDistance: 1.2
     strafeRadius: 1.1
     strafeSideHoldSeconds: 1.35
+    walkSpeed: 1.8
+    runSpeed: 3.6
+    runDistance: 8
+    walkResumeDistance: 6
+    pursuitRefreshSeconds: 0.15
+    pursuitTargetMoveDistance: 0.5
     walkSpeedThreshold: 1.2
     runSpeedThreshold: 3.4
   facingSpeedDegreesPerSecond: 540
@@ -7884,40 +7853,6 @@ MonoBehaviour:
   navMeshEdgeClearance: 0.45
   clearanceSearchRadius: 2
   clearanceSearchSamples: 12
-  logDiagnostics: 0
---- !u!114 &1749280591439705950
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6700739663857040827}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1aafb55d998795d4b8543500c0fce24f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyTacticalResponseController
-  enemy: {fileID: 900000000000000002}
-  physicsMotor: {fileID: 707000000000000003}
-  locomotion: {fileID: 3353001312763717800}
-  navigationAgent: {fileID: 900000000000000015}
-  animationContract: {fileID: 4532544328156619208}
-  combatBehaviour: {fileID: 0}
-  timeDomain: {fileID: 0}
-  profile:
-    guardChance: 0.12
-    dodgeChance: 0.08
-    reactionMaximumDistance: 3.5
-    reactionMaximumAngle: 110
-    guardCooldownSeconds: 4
-    dodgeCooldownSeconds: 5
-    guardDurationSeconds: 0.58
-    dodgeDurationSeconds: 0.38
-    guardedDamageMultiplier: 0.45
-    dodgeDistance: 1.35
-    guardAnimatorState: Guard
-    dodgeAnimatorState: Dodge
-    transitionSeconds: 0.08
   logDiagnostics: 0
 --- !u!114 &908605419744601082
 MonoBehaviour:
@@ -7955,8 +7890,78 @@ MonoBehaviour:
   rigidbodyComponent: {fileID: 707000000000000001}
   capsuleCollider: {fileID: 707000000000000002}
   navigationAgent: {fileID: 900000000000000015}
+  navigation: {fileID: 0}
   animator: {fileID: 4280753887478595955}
   logDiagnostics: 1
+--- !u!114 &7685876646123518452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 99444493
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &5010101010101010101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d03, type: 3}
+  m_Name: EnemyCombatBrain
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatBrain
+  ShowTopMostFoldoutHeaderGroup: 1
+  logDecisions: 1
+--- !u!114 &5010101010101010102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNavigationController
+  navigationAgent: {fileID: 900000000000000015}
+  sampleDistance: 1.5
+  reattachTolerance: 0.15
+  retryInterval: 0.25
+  rebuildRequestInterval: 1
+  logDiagnostics: 1
+--- !u!114 &805147153153357774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6700739663857040827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30d933bdc5164d34d8c6c4c9084276eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCinematicState
 --- !u!1 &6708470238108833500
 GameObject:
   m_ObjectHideFlags: 0

@@ -149,6 +149,7 @@ public class SquadAIManager : MonoBehaviour
     private float nextNavMeshUpdateTime;
     private bool navMeshDirty;
     private bool explicitNavMeshRebuildRequested;
+    private bool serviceOwnedNavMeshBuild;
     private Coroutine sceneNavMeshRebuildRoutine;
     private readonly HashSet<Mesh> warnedUnreadableMeshes = new HashSet<Mesh>();
 
@@ -157,7 +158,10 @@ public class SquadAIManager : MonoBehaviour
     /// world. Scene markers use this to avoid spawning agents onto a NavMesh
     /// that still belongs to the zone being unloaded.
     /// </summary>
-    public bool IsNavMeshReady { get; private set; }
+    private bool legacyNavMeshReady;
+    public bool IsNavMeshReady => NavMeshWorldService.Instance != null
+        ? NavMeshWorldService.Instance.IsReady
+        : legacyNavMeshReady;
 
     /// <summary>Raised after every explicit or automatic NavMesh bake attempt.</summary>
     public event Action<NavMeshBuildReport> NavMeshRebuildCompleted;
@@ -214,6 +218,13 @@ public class SquadAIManager : MonoBehaviour
             squadManager.EnsureGroups();
         }
 
+        // NavMeshWorldService owns the world lifecycle. This component keeps
+        // the legacy builder only for direct-scene compatibility.
+        if (NavMeshWorldService.Instance != null)
+        {
+            return;
+        }
+
         if (buildNavMeshOnStart)
         {
             // GameplaySessionRoot is created before the additive zone scenes.
@@ -232,6 +243,10 @@ public class SquadAIManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode _)
     {
+        if (NavMeshWorldService.Instance != null)
+        {
+            return;
+        }
         // A zone is an additive group. Do not bake once per sub-scene: at this
         // point floors, colliders and enemy markers do not necessarily belong
         // to the same world yet. GameFlowService requests the single bake once
@@ -344,6 +359,12 @@ public class SquadAIManager : MonoBehaviour
     [ContextMenu("Rebuild NavMesh Now")]
     public void DebugRebuildNavMesh()
     {
+        if (NavMeshWorldService.Instance != null)
+        {
+            NavMeshWorldService.Instance.RequestRebuild("commande debug");
+            return;
+        }
+
         BuildNavMesh();
         navMeshDirty = false;
         explicitNavMeshRebuildRequested = false;
@@ -351,6 +372,12 @@ public class SquadAIManager : MonoBehaviour
 
     public void RequestNavMeshRebuild(string reason = null)
     {
+        if (NavMeshWorldService.Instance != null)
+        {
+            NavMeshWorldService.Instance.RequestRebuild(reason);
+            return;
+        }
+
         if (IsGameplayWorldBeingPrepared())
         {
             // Keep the request as an intention, but never execute it against
@@ -374,6 +401,11 @@ public class SquadAIManager : MonoBehaviour
 
     private void ProcessNavMeshRebuildRequests()
     {
+        if (NavMeshWorldService.Instance != null)
+        {
+            return;
+        }
+
         if (IsGameplayWorldBeingPrepared())
         {
             return;
@@ -381,6 +413,11 @@ public class SquadAIManager : MonoBehaviour
 
         if (rebuildNavMeshNow || explicitNavMeshRebuildRequested)
         {
+            if (Time.time < nextNavMeshUpdateTime)
+            {
+                return;
+            }
+
             rebuildNavMeshNow = false;
             explicitNavMeshRebuildRequested = false;
             BuildNavMesh();
@@ -397,6 +434,14 @@ public class SquadAIManager : MonoBehaviour
 
     private bool BuildNavMesh()
     {
+        legacyNavMeshReady = false;
+        if (IsGameplayWorldBeingPrepared() && !serviceOwnedNavMeshBuild)
+        {
+            navMeshDirty = true;
+            explicitNavMeshRebuildRequested = true;
+            return false;
+        }
+
         NavMeshSurface surface = EnsureNavMeshSurface();
         if (surface == null)
         {
@@ -429,7 +474,22 @@ public class SquadAIManager : MonoBehaviour
     /// </summary>
     public bool RebuildNavMeshForLoadedWorld(string reason = null)
     {
-        bool built = BuildNavMesh();
+        if (NavMeshWorldService.Instance != null &&
+            !NavMeshWorldService.Instance.IsRuntimeBuildInProgress)
+        {
+            return NavMeshWorldService.Instance.RebuildRuntimeNow(reason);
+        }
+
+        serviceOwnedNavMeshBuild = NavMeshWorldService.Instance != null;
+        bool built;
+        try
+        {
+            built = BuildNavMesh();
+        }
+        finally
+        {
+            serviceOwnedNavMeshBuild = false;
+        }
         navMeshDirty = false;
         explicitNavMeshRebuildRequested = false;
         rebuildNavMeshNow = false;
@@ -446,7 +506,13 @@ public class SquadAIManager : MonoBehaviour
     /// <summary>Invalidates stale data before an additive zone transition.</summary>
     public void InvalidateNavMeshForSceneTransition()
     {
-        IsNavMeshReady = false;
+        if (NavMeshWorldService.Instance != null)
+        {
+            NavMeshWorldService.Instance.InvalidateWorld("transition de scene");
+            return;
+        }
+
+        legacyNavMeshReady = false;
         NavMeshSurface surface = EnsureNavMeshSurface();
         if (surface == null)
         {
@@ -487,6 +553,20 @@ public class SquadAIManager : MonoBehaviour
                 continue;
             }
 
+            // Runtime UI, bootstrap services and pooled objects live in
+            // DontDestroyOnLoad. Including their colliders in the automatic
+            // volume can stretch the bounds by kilometres and exclude the
+            // actual district floor from the resulting NavMesh. Only loaded
+            // gameplay scenes are valid navigation geometry.
+            Scene colliderScene = col.gameObject.scene;
+            if (!colliderScene.IsValid() || !colliderScene.isLoaded ||
+                colliderScene.name == "DontDestroyOnLoad" ||
+                colliderScene.name == "Bootstrap" ||
+                colliderScene.name == "MainMenu")
+            {
+                continue;
+            }
+
             if ((mask & (1 << col.gameObject.layer)) == 0)
             {
                 continue;
@@ -511,11 +591,91 @@ public class SquadAIManager : MonoBehaviour
         }
 
         bounds.Expand(navMeshBoundsPadding);
+        ClampNavMeshBoundsToGameplayMarkers(ref bounds);
         return bounds;
+    }
+
+    private static void ClampNavMeshBoundsToGameplayMarkers(ref Bounds bounds)
+    {
+        SceneMarker[] markers = UnityEngine.Object.FindObjectsByType<SceneMarker>(FindObjectsInactive.Exclude);
+        bool hasGameplayMarker = false;
+        float markerMinY = float.PositiveInfinity;
+        float markerMaxY = float.NegativeInfinity;
+
+        for (int i = 0; i < markers.Length; i++)
+        {
+            SceneMarker marker = markers[i];
+            if (marker == null || !marker.isActiveAndEnabled ||
+                !marker.gameObject.scene.IsValid() || !marker.gameObject.scene.isLoaded ||
+                marker.gameObject.scene.name == "DontDestroyOnLoad" ||
+                marker.gameObject.scene.name == "Bootstrap" ||
+                marker.gameObject.scene.name == "MainMenu")
+            {
+                continue;
+            }
+
+            if (!marker.UsesCharacter && !marker.UsesItem)
+            {
+                continue;
+            }
+
+            hasGameplayMarker = true;
+            markerMinY = Mathf.Min(markerMinY, marker.transform.position.y);
+            markerMaxY = Mathf.Max(markerMaxY, marker.transform.position.y);
+        }
+
+        // During an additive scene transition the marker can be enabled one
+        // frame after the navigation rebuild request. Runtime enemies are a
+        // valid fallback anchor in that window and prevent the volume from
+        // being centered on unrelated persistent colliders.
+        RealTimeCombatEnemy[] enemies = UnityEngine.Object.FindObjectsByType<RealTimeCombatEnemy>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            RealTimeCombatEnemy enemy = enemies[i];
+            if (enemy == null || !enemy.gameObject.scene.IsValid() || !enemy.gameObject.scene.isLoaded ||
+                enemy.gameObject.scene.name == "DontDestroyOnLoad" ||
+                enemy.gameObject.scene.name == "Bootstrap" ||
+                enemy.gameObject.scene.name == "MainMenu")
+            {
+                continue;
+            }
+
+            hasGameplayMarker = true;
+            markerMinY = Mathf.Min(markerMinY, enemy.transform.position.y);
+            markerMaxY = Mathf.Max(markerMaxY, enemy.transform.position.y);
+        }
+
+        if (!hasGameplayMarker)
+        {
+            return;
+        }
+
+        // A persistent service or an unloaded additive scene can contribute a
+        // very distant collider vertically. That makes the volume enormous
+        // and, more importantly, can place its lower edge above a valid
+        // district floor. Gameplay markers are the authoritative vertical
+        // reference for the currently loaded world.
+        const float markerVerticalPadding = 12f;
+        float minimumY = markerMinY - markerVerticalPadding;
+        float maximumY = markerMaxY + markerVerticalPadding;
+        if (bounds.min.y < minimumY || bounds.max.y > maximumY)
+        {
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+            min.y = minimumY;
+            max.y = maximumY;
+            bounds.SetMinMax(min, max);
+        }
     }
 
     private NavMeshSurface EnsureNavMeshSurface()
     {
+        if (NavMeshWorldService.Instance != null && NavMeshWorldService.Instance.Surface != null)
+        {
+            navMeshSurface = NavMeshWorldService.Instance.Surface;
+            return navMeshSurface;
+        }
+
         if (navMeshSurface == null)
         {
             navMeshSurface = GetComponent<NavMeshSurface>();
@@ -555,6 +715,7 @@ public class SquadAIManager : MonoBehaviour
             return false;
         }
 
+        NavMeshData previousData = surface.navMeshData;
         List<NavMeshBuildSource> sources = CollectSources(surface);
         FilterUnreadableMeshSources(sources);
 
@@ -566,9 +727,8 @@ public class SquadAIManager : MonoBehaviour
 
         if (sources.Count == 0)
         {
-            IsNavMeshReady = false;
-            surface.RemoveData();
-            surface.navMeshData = null;
+            RestoreNavMeshData(surface, previousData);
+            legacyNavMeshReady = previousData != null;
             string reason = "aucune source NavMesh collectee";
             if (logNavMeshBuildDiagnostics)
             {
@@ -589,7 +749,7 @@ public class SquadAIManager : MonoBehaviour
 
         if (data == null)
         {
-            IsNavMeshReady = false;
+            legacyNavMeshReady = previousData != null;
             Debug.LogWarning("[SquadAIManager] Bake NavMesh ignore : aucune donnee produite | sources=" +
                              sources.Count + " | bounds=" + surfaceBounds + ".", this);
             PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, sources.Count,
@@ -605,18 +765,222 @@ public class SquadAIManager : MonoBehaviour
             surface.AddData();
         }
 
-        IsNavMeshReady = true;
+        // A non-null NavMeshData is not sufficient: Unity can accept the
+        // source list while producing no usable polygon (for example when a
+        // streamed floor is outside the build volume or has no walkable
+        // triangle for this agent type). Capture the actual runtime result so
+        // the waiting enemies never get a false "ready" state.
+        int triangulatedVertexCount = 0;
+        try
+        {
+            triangulatedVertexCount = NavMesh.CalculateTriangulation().vertices.Length;
+        }
+        catch (Exception exception)
+        {
+            if (logNavMeshBuildDiagnostics)
+            {
+                Debug.LogWarning("[SquadAIManager] Lecture de la triangulation NavMesh impossible : " + exception.Message, this);
+            }
+        }
+
+        if (!ValidateGameplayCoverage(surface, out string coverageError))
+        {
+            legacyNavMeshReady = false;
+            surface.RemoveData();
+            surface.navMeshData = null;
+
+            // Some streamed districts expose their walkable floor through a
+            // renderer mesh while the runtime physics collider is generated
+            // later (or is not a NavMesh-compatible collider). Try that
+            // representation once, in the exact same volume, before keeping
+            // the world blocked. The result is still validated against the
+            // gameplay anchors; this is not a permissive fallback or a warp.
+            if (surface.useGeometry == NavMeshCollectGeometry.PhysicsColliders)
+            {
+                NavMeshCollectGeometry originalGeometry = surface.useGeometry;
+                surface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
+                List<NavMeshBuildSource> renderSources = CollectSources(surface);
+                FilterUnreadableMeshSources(renderSources);
+                NavMeshData renderData = NavMeshBuilder.BuildNavMeshData(
+                    surface.GetBuildSettings(),
+                    renderSources,
+                    surfaceBounds,
+                    surface.transform.position,
+                    surface.transform.rotation);
+
+                if (renderData != null)
+                {
+                    renderData.name = surface.gameObject.name + "_RenderFallback";
+                    surface.navMeshData = renderData;
+                    if (surface.isActiveAndEnabled)
+                    {
+                        surface.AddData();
+                    }
+
+                    if (ValidateGameplayCoverage(surface, out string renderCoverageError))
+                    {
+                        legacyNavMeshReady = true;
+                        if (logNavMeshBuildDiagnostics)
+                        {
+                            Debug.LogWarning("[SquadAIManager] NavMesh physique sans couverture, fallback RenderMeshes valide | " +
+                                             "sources=" + renderSources.Count + " | scene=" + gameObject.scene.name + ".", this);
+                        }
+
+                        surface.useGeometry = originalGeometry;
+                        PublishNavMeshBuildReport(true, totalColliderCount, includedColliderCount,
+                            renderSources.Count, surfaceBounds, "fallback RenderMeshes");
+                        return true;
+                    }
+
+                    surface.RemoveData();
+                    surface.navMeshData = null;
+                    coverageError += " | fallback RenderMeshes invalide: " + renderCoverageError +
+                                     " | sourcesFallback=" + renderSources.Count;
+                }
+                else
+                {
+                    coverageError += " | fallback RenderMeshes sans donnee";
+                }
+
+                surface.useGeometry = originalGeometry;
+            }
+
+            RestoreNavMeshData(surface, previousData);
+            legacyNavMeshReady = previousData != null;
+
+            Debug.LogWarning("[SquadAIManager] Bake NavMesh invalide apres construction : " + coverageError +
+                             " | sources=" + sources.Count + " | vertices=" + triangulatedVertexCount +
+                             " | bounds=" + surfaceBounds + ".", this);
+            PublishNavMeshBuildReport(false, totalColliderCount, includedColliderCount, sources.Count,
+                surfaceBounds, coverageError);
+            return false;
+        }
+
+        legacyNavMeshReady = true;
 
         if (logNavMeshBuildDiagnostics)
         {
             Debug.Log("[SquadAIManager] NavMesh reconstruit | sources=" + sources.Count +
                       " | colliders=" + totalColliderCount + " | retenusLayer=" + includedColliderCount +
+                      " | vertices=" + triangulatedVertexCount +
                       " | bounds=" + surfaceBounds + " | scene=" + gameObject.scene.name + ".", this);
         }
 
         PublishNavMeshBuildReport(true, totalColliderCount, includedColliderCount, sources.Count,
             surfaceBounds, null);
         return true;
+    }
+
+    private bool ValidateGameplayCoverage(NavMeshSurface surface, out string error)
+    {
+        error = null;
+        int areaMask = NavMesh.AllAreas;
+        bool foundAnchor = false;
+        bool coveredAnchor = false;
+        Vector3 firstAnchor = Vector3.zero;
+
+        SceneMarker[] markers = UnityEngine.Object.FindObjectsByType<SceneMarker>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < markers.Length; i++)
+        {
+            SceneMarker marker = markers[i];
+            if (marker == null || !marker.isActiveAndEnabled || !IsLoadedGameplayScene(marker.gameObject.scene) ||
+                (!marker.UsesCharacter && !marker.UsesItem))
+            {
+                continue;
+            }
+
+            if (!foundAnchor) firstAnchor = marker.transform.position;
+            foundAnchor = true;
+            if (NavMesh.SamplePosition(marker.transform.position, out _, 1.5f, areaMask))
+            {
+                coveredAnchor = true;
+                break;
+            }
+        }
+
+        if (!foundAnchor)
+        {
+            RealTimeCombatEnemy[] enemies = UnityEngine.Object.FindObjectsByType<RealTimeCombatEnemy>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                RealTimeCombatEnemy enemy = enemies[i];
+                if (enemy == null || !IsLoadedGameplayScene(enemy.gameObject.scene)) continue;
+                if (!foundAnchor) firstAnchor = enemy.transform.position;
+                foundAnchor = true;
+                if (NavMesh.SamplePosition(enemy.transform.position, out _, 1.5f, areaMask))
+                {
+                    coveredAnchor = true;
+                    break;
+                }
+            }
+        }
+
+        if (!foundAnchor)
+        {
+            // A gameplay scene can legitimately be loaded before its actors.
+            // The next explicit scene/actor request will validate the surface.
+            return true;
+        }
+
+        if (!coveredAnchor)
+        {
+            string nearest = "aucun polygone dans 128m";
+            if (NavMesh.SamplePosition(firstAnchor, out NavMeshHit nearestHit, 128f, NavMesh.AllAreas))
+            {
+                nearest = "polygone_proche=" + nearestHit.position +
+                          " | delta=" + (nearestHit.position - firstAnchor);
+            }
+
+            error = "aucun ancrage gameplay couvert | premier=" + firstAnchor + " | " + nearest +
+                    " | collidersProches=" + DescribeNearbyColliders(firstAnchor) +
+                    " | sceneSurface=" + (surface != null ? surface.gameObject.scene.name : "inconnue") +
+                    " | surfaceWorld=" + (surface != null ? surface.transform.position.ToString() : "inconnue");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string DescribeNearbyColliders(Vector3 position)
+    {
+        Collider[] colliders = Physics.OverlapSphere(position, 3f, ~0, QueryTriggerInteraction.Ignore);
+        if (colliders == null || colliders.Length == 0)
+        {
+            return "aucun";
+        }
+
+        List<string> descriptions = new List<string>(Mathf.Min(colliders.Length, 6));
+        for (int i = 0; i < colliders.Length && descriptions.Count < 6; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null) continue;
+            descriptions.Add(collider.name + "@" + collider.bounds.center +
+                             "/y=" + collider.bounds.min.y.ToString("F2") + ".." + collider.bounds.max.y.ToString("F2") +
+                             "/layer=" + LayerMask.LayerToName(collider.gameObject.layer));
+        }
+
+        return descriptions.Count == 0 ? "aucun" : string.Join(", ", descriptions);
+    }
+
+    private static void RestoreNavMeshData(NavMeshSurface surface, NavMeshData previousData)
+    {
+        if (surface == null || previousData == null)
+        {
+            return;
+        }
+
+        surface.RemoveData();
+        surface.navMeshData = previousData;
+        if (surface.isActiveAndEnabled)
+        {
+            surface.AddData();
+        }
+    }
+
+    private static bool IsLoadedGameplayScene(Scene scene)
+    {
+        return scene.IsValid() && scene.isLoaded && scene.name != "DontDestroyOnLoad" &&
+               scene.name != "Bootstrap" && scene.name != "MainMenu";
     }
 
     private void PublishNavMeshBuildReport(

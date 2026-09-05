@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.AI;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -41,6 +42,14 @@ public sealed class ZoneManifest : ScriptableObject
     [SerializeField, HideInInspector] private List<string> postLoadingSceneNames = new List<string>();
     [SerializeField, HideInInspector] private bool editorSceneReferencesMigrated;
 
+    [Header("Navigation")]
+    [SerializeField, Tooltip("NavMeshData pre-bake pour cette zone. Si vide, le service construit le NavMesh au runtime.")]
+    private NavMeshData bakedNavMeshData;
+    [SerializeField, Tooltip("Identifiant de generation du NavMesh pre-bake.")]
+    private string bakedNavMeshVersion;
+    [SerializeField, Tooltip("Agent type utilise par le NavMesh pre-bake. -1 signifie non renseigne.")]
+    private int bakedNavMeshAgentTypeId = -1;
+
     public string PrimarySceneName => primarySceneName;
     public string LoadingMessage => loadingMessage;
     public VolumeProfile VolumeProfile => volumeProfile;
@@ -51,6 +60,9 @@ public sealed class ZoneManifest : ScriptableObject
     public IReadOnlyList<string> LoadingSceneNames => loadingSceneNames;
     /// <summary>Scenes chargees apres le retour du joueur en jeu.</summary>
     public IReadOnlyList<string> PostLoadingSceneNames => postLoadingSceneNames;
+    public NavMeshData BakedNavMeshData => bakedNavMeshData;
+    public string BakedNavMeshVersion => bakedNavMeshVersion;
+    public int BakedNavMeshAgentTypeId => bakedNavMeshAgentTypeId;
 
     public bool IsValid => !string.IsNullOrWhiteSpace(primarySceneName);
 

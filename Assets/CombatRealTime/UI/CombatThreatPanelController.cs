@@ -1,9 +1,10 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
 /// Owns the existing scene-authored "EN GARDE !" panel. It deliberately uses
-/// the reaction window, rather than CombatStateChanged, so exploration/alert
-/// and enemy positioning never look like an immediate attack.
+/// the explicit enemy-aggro event. Attack telegraphs and reaction windows do
+/// not reopen this entry banner.
 /// </summary>
 [DefaultExecutionOrder(800)]
 [DisallowMultipleComponent]
@@ -13,9 +14,11 @@ public sealed class CombatThreatPanelController : MonoBehaviour
     [SerializeField] private CanvasGroup threatPanel;
     [SerializeField] private Animator threatAnimator;
     [SerializeField] private string triggerName = "CombatEngagedPanel_Trigger";
+    [SerializeField, Min(0f)] private float fallbackVisibleSeconds = 1f;
     [SerializeField] private bool findScenePanelWhenUnassigned = true;
 
     private bool visible;
+    private Coroutine hideRoutine;
 
     private void Awake()
     {
@@ -34,6 +37,11 @@ public sealed class CombatThreatPanelController : MonoBehaviour
     private void OnDisable()
     {
         Bind(null);
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+        }
         SetVisible(false);
     }
 
@@ -53,17 +61,61 @@ public sealed class CombatThreatPanelController : MonoBehaviour
         }
     }
 
-    private void OnReactionWindowChanged(RealTimeCombatReactionWindow window)
+    private void OnEnemyAggroStarted(RealTimeCombatEnemy enemy)
     {
-        SetVisible(window.IsOpen && window.Enemy != null && window.Skill != null);
+        if (enemy != null)
+        {
+            ShowAggro();
+        }
     }
 
     private void OnCombatStateChanged(bool active)
     {
         if (!active)
         {
+            if (hideRoutine != null)
+            {
+                StopCoroutine(hideRoutine);
+                hideRoutine = null;
+            }
             SetVisible(false);
         }
+    }
+
+    private void ShowAggro()
+    {
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+        }
+
+        SetVisible(true);
+        hideRoutine = StartCoroutine(HideAfterIntro());
+    }
+
+    private IEnumerator HideAfterIntro()
+    {
+        yield return null;
+        float duration = fallbackVisibleSeconds;
+        if (threatAnimator != null)
+        {
+            AnimatorClipInfo[] clips = threatAnimator.GetCurrentAnimatorClipInfo(0);
+            for (int i = 0; i < clips.Length; i++)
+            {
+                if (clips[i].clip != null)
+                {
+                    duration = Mathf.Max(duration, clips[i].clip.length / Mathf.Max(0.01f, threatAnimator.speed));
+                }
+            }
+        }
+
+        if (duration > 0f)
+        {
+            yield return new WaitForSecondsRealtime(duration);
+        }
+
+        hideRoutine = null;
+        SetVisible(false);
     }
 
     private void Bind(RealTimeCombatManager next)
@@ -75,14 +127,14 @@ public sealed class CombatThreatPanelController : MonoBehaviour
 
         if (combatManager != null)
         {
-            combatManager.ReactionWindowChanged -= OnReactionWindowChanged;
+            combatManager.EnemyAggroStarted -= OnEnemyAggroStarted;
             combatManager.CombatStateChanged -= OnCombatStateChanged;
         }
 
         combatManager = next;
         if (combatManager != null)
         {
-            combatManager.ReactionWindowChanged += OnReactionWindowChanged;
+            combatManager.EnemyAggroStarted += OnEnemyAggroStarted;
             combatManager.CombatStateChanged += OnCombatStateChanged;
         }
     }

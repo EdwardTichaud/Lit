@@ -139,10 +139,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
     private System.Collections.IEnumerator SpawnConnectedClientsWhenGameplaySceneIsReady()
     {
-        const float timeoutSeconds = 15f;
-        float timeoutAt = Time.unscaledTime + timeoutSeconds;
-
-        while (Time.unscaledTime < timeoutAt)
+        while (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             if (IsGameplayRosterReady())
             {
@@ -192,6 +189,8 @@ public class NetcodePlayerSpawner : MonoBehaviour
 
     private void SpawnForClient(ulong clientId)
     {
+        PrivateSessionService session = PrivateSessionService.Instance;
+        if (session != null && session.IsActive && !session.EnsureReservation(clientId)) return;
         NetcodePrefabRegistry.EnsureInitialized();
         PruneAssignments();
         if (assignments.ContainsKey(clientId))
@@ -406,6 +405,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         }
 
         assignments[clientId] = target;
+        PrivateSessionService.Instance?.CharacterAssigned(clientId, target.characterId);
         int index = GetRosterIndex(target, GetRoster());
         if (index >= 0)
         {
@@ -544,7 +544,12 @@ public class NetcodePlayerSpawner : MonoBehaviour
             return null;
         }
 
-        CharacterData preferred = ResolvePreferredCharacter(clientId, roster);
+        string reservedId = PrivateSessionService.Instance?.ReservedCharacter(clientId);
+        CharacterData preferred = !string.IsNullOrEmpty(reservedId)
+            ? roster.Find(c => c != null && c.characterId == reservedId)
+            : ResolvePreferredCharacter(clientId, roster);
+        if (!string.IsNullOrEmpty(reservedId) && (preferred == null || assignments.ContainsValue(preferred)))
+            return null;
         if (preferred != null && !assignments.ContainsValue(preferred))
         {
             int preferredIndex = roster.IndexOf(preferred);
@@ -559,7 +564,7 @@ public class NetcodePlayerSpawner : MonoBehaviour
         int index = GetNextRosterIndex(roster.Count);
         if (index < 0 || index >= roster.Count)
         {
-            index = 0;
+            return null;
         }
 
         CharacterData character = roster[index];

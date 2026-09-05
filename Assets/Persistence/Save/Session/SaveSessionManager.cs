@@ -15,6 +15,9 @@ public class SaveSessionManager : MonoBehaviour
     [SerializeField] private string sessionMetaFileName = "session.json";
     [SerializeField] private string saveMetaFileName = "meta.json";
 
+    public event Action CatalogChanged;
+    public string LastError { get; private set; }
+
     public string CurrentSessionId { get; private set; }
     public string CurrentSessionName { get; private set; }
     public string CurrentSaveId { get; private set; }
@@ -137,7 +140,9 @@ public class SaveSessionManager : MonoBehaviour
 
     public void ReloadSessions()
     {
-        sessionsCache = LoadSessions();
+        try { sessionsCache = LoadSessions(); LastError = string.Empty; }
+        catch (Exception ex) { LastError = "Impossible de lire les sauvegardes."; Debug.LogWarning(ex.Message, this); }
+        CatalogChanged?.Invoke();
     }
 
     public void SetCurrentSessionType(SaveSessionType sessionType)
@@ -187,6 +192,7 @@ public class SaveSessionManager : MonoBehaviour
             ClearActiveSave();
         }
 
+        CatalogChanged?.Invoke();
         return true;
     }
 
@@ -209,7 +215,13 @@ public class SaveSessionManager : MonoBehaviour
             createdAtUtcTicks = DateTime.UtcNow.Ticks,
             sessionType = sessionType
         };
-        WriteJson(GetSessionMetaPath(sessionId), meta);
+        try { WriteJson(GetSessionMetaPath(sessionId), meta); }
+        catch
+        {
+            if (Directory.Exists(sessionPath) && Directory.GetFileSystemEntries(sessionPath).Length == 0)
+                Directory.Delete(sessionPath);
+            throw;
+        }
 
         SaveSessionInfo info = new SaveSessionInfo
         {
@@ -221,6 +233,7 @@ public class SaveSessionManager : MonoBehaviour
         };
 
         sessionsCache.Insert(0, info);
+        CatalogChanged?.Invoke();
         return info;
     }
 
@@ -245,11 +258,17 @@ public class SaveSessionManager : MonoBehaviour
             saveId = saveId,
             saveName = name,
             savedAtUtcTicks = DateTime.UtcNow.Ticks,
-            playTimeSeconds = CurrentPlaytimeSeconds,
+            playTimeSeconds = CurrentSessionId == sessionId ? CurrentPlaytimeSeconds : 0f,
             sceneName = SceneManager.GetActiveScene().name,
             completedStorySequenceIds = CopyActiveStorySequenceCompletions(sessionId)
         };
-        WriteJson(GetSaveMetaPath(sessionId, saveId), meta);
+        try { WriteJson(GetSaveMetaPath(sessionId, saveId), meta); }
+        catch
+        {
+            if (Directory.Exists(savePath) && Directory.GetFileSystemEntries(savePath).Length == 0)
+                Directory.Delete(savePath);
+            throw;
+        }
 
         SaveSlotInfo slot = new SaveSlotInfo
         {
@@ -270,6 +289,7 @@ public class SaveSessionManager : MonoBehaviour
             session.saves.Insert(0, slot);
         }
 
+        CatalogChanged?.Invoke();
         return slot;
     }
 
@@ -507,10 +527,11 @@ public class SaveSessionManager : MonoBehaviour
             ClearActiveSave();
         }
 
+        CatalogChanged?.Invoke();
         return true;
     }
 
-    private void ClearActiveSave()
+    public void ClearActiveSave()
     {
         CurrentSessionId = null;
         CurrentSessionName = null;
@@ -655,6 +676,7 @@ public class SaveSessionManager : MonoBehaviour
                 string savePath = saveDirs[j];
                 string saveId = Path.GetFileName(savePath);
                 SaveMeta saveMeta = ReadJson<SaveMeta>(GetSaveMetaPath(sessionId, saveId));
+                bool validMetadata = saveMeta != null && saveMeta.sessionId == sessionId && saveMeta.saveId == saveId;
                 if (saveMeta == null)
                 {
                     DateTime fallbackTime = Directory.GetLastWriteTimeUtc(savePath);
@@ -678,10 +700,11 @@ public class SaveSessionManager : MonoBehaviour
                     sessionType = session.sessionType,
                     saveId = saveId,
                     saveName = saveMeta.saveName,
-                    savedAtUtcTicks = saveMeta.savedAtUtcTicks,
-                    playTimeSeconds = saveMeta.playTimeSeconds,
+                    savedAtUtcTicks = Math.Max(0, Math.Min(DateTime.MaxValue.Ticks, saveMeta.savedAtUtcTicks)),
+                    playTimeSeconds = float.IsNaN(saveMeta.playTimeSeconds) || float.IsInfinity(saveMeta.playTimeSeconds) ? 0 : Mathf.Clamp(saveMeta.playTimeSeconds, 0, 3155760000f),
                     sceneName = saveMeta.sceneName,
-                    directoryPath = savePath
+                    directoryPath = savePath,
+                    validMetadata = validMetadata
                 };
                 session.saves.Add(slot);
             }
@@ -740,18 +763,30 @@ public class SaveSessionManager : MonoBehaviour
 
     private static void WriteJson<T>(string path, T data) where T : class
     {
-        if (string.IsNullOrWhiteSpace(path) || data == null)
-        {
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(path) || data == null) throw new ArgumentException("MÃÆ’©tadonnÃÆ’©es manquantes.");
+        SaveMetadataWriter.WriteAtomic(path, JsonUtility.ToJson(data, true));
+    }
 
+    public bool TryCreateNewGame(string name, SaveSessionType type, string initialName, out SaveSlotInfo save, out string error)
+    {
+        save = null;
+        error = string.Empty;
+        SaveSessionInfo session = null;
         try
         {
-            string json = JsonUtility.ToJson(data, true);
-            File.WriteAllText(path, json);
+            session = CreateSession(name, type);
+            save = CreateSave(session.sessionId, initialName);
+            if (save == null) throw new IOException("Emplacement initial indisponible.");
+            return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            if (session != null) DeleteSessionInternal(session.sessionId);
+            error = "Impossible d’enregistrer cette partie. VÃÆ’©rifiez l’espace disque et les droits du dossier de sauvegarde.";
+            LastError = error;
+            Debug.LogWarning("SaveSessionManager: " + ex.Message, this);
+            save = null;
+            return false;
         }
     }
 
@@ -803,6 +838,7 @@ public class SaveSlotInfo
     public float playTimeSeconds;
     public string sceneName;
     public string directoryPath;
+    public bool validMetadata = true;
 }
 
 [System.Serializable]

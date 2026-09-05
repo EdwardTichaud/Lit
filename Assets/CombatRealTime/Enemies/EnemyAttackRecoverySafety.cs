@@ -98,8 +98,15 @@ public sealed class EnemyAttackRecoverySafety : MonoBehaviour
             return;
         }
 
+        EnemyCombatBrain brain = GetComponent<EnemyCombatBrain>();
+        if (brain != null && brain.IsAutonomousActionActive)
+        {
+            brain.ResolveAttackSafetyTimeout();
+            return;
+        }
         RealTimeCombatManager.Instance?.CompleteEnemyAttack(enemy);
         GetComponent<RealTimeCombatEnemyBehaviour>()?.NotifyAttackCompleted();
+        GetComponent<EnemyCombatBrain>()?.ResolveAttackSafetyTimeout();
         enemySkills?.ReturnToIdle();
         if (logDiagnostics)
         {

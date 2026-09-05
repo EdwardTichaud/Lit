@@ -89,3 +89,10 @@ le monde → restaure son personnage local → envoie `client_ready`.
   runtime doivent être ignorées hors Play Mode.
 - Les PV de bouclier sont propres au personnage. Ne pas les placer dans l'asset
   `Item`, sinon tous les personnages partageraient la meme usure.
+
+Le parcours MainMenu écrit les métadonnées via SaveMetadataWriter (temporaire,
+flush, remplacement atomique) et remonte les erreurs. Les entrées dont les
+métadonnées sont invalides restent supprimables mais ne sont pas chargeables.
+JoinSyncSystem borne à deux les nouvelles tentatives après un premier transfert
+échoué ; PrivateSessionService assure le délai global d'entrée réseau et le
+retour au menu. Le salon ne déclenche pas de demande de snapshot de gameplay.

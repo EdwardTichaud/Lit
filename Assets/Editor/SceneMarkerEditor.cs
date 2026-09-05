@@ -182,9 +182,32 @@ public sealed class SceneMarkerEditor : Editor
         }
 
         GameObject root = marker.gameObject;
-        if (marker.BakedCharacterInstance != null)
+        GameObject previousInstance = marker.BakedCharacterInstance;
+        if (previousInstance == null || previousInstance.transform.parent != root.transform)
         {
-            Undo.DestroyObjectImmediate(marker.BakedCharacterInstance);
+            // Recover from a stale serialized reference without touching an
+            // instance owned by another marker.
+            for (int i = 0; i < root.transform.childCount; i++)
+            {
+                Transform child = root.transform.GetChild(i);
+                CharacterInfo info = child.GetComponent<CharacterInfo>();
+                if (info != null && info.CharacterData == characterData)
+                {
+                    previousInstance = child.gameObject;
+                    break;
+                }
+            }
+        }
+
+        if (previousInstance != null &&
+            previousInstance.transform.parent == root.transform)
+        {
+            Undo.DestroyObjectImmediate(previousInstance);
+        }
+        else if (marker.BakedCharacterInstance != null)
+        {
+            Debug.LogWarning("[SceneMarker] Ancienne reference baked ignoree pour '" + marker.name +
+                             "' car elle n'est pas un enfant de ce marker. Aucun autre marker ne sera detruit.", marker);
         }
 
         GameObject instance = PrefabUtility.InstantiatePrefab(prefab, root.scene) as GameObject;

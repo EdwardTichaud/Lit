@@ -26,6 +26,10 @@ public class ConfirmationManager : MonoBehaviour
 
     private static ConfirmationManager instance;
 
+    public static GameObject CurrentSelection => IsVisible && instance.confirmationBox != null &&
+        instance.confirmationBox.CursorController != null && instance.confirmationBox.CursorController.CurrentItem != null
+        ? instance.confirmationBox.CursorController.CurrentItem.gameObject : null;
+
     public static bool IsVisible => instance != null && instance.activeRequest != null;
 
     private void Awake()
@@ -656,7 +660,8 @@ public class ConfirmationManager : MonoBehaviour
         cursor.allowInput = true;
         cursor.Refresh();
 
-        bool selected = confirmationBox.ConfirmTarget != null && cursor.TrySetCurrentItem(confirmationBox.ConfirmTarget, true);
+        RectTransform initialTarget = activeRequest != null && activeRequest.PreferCancel ? confirmationBox.CancelTarget : confirmationBox.ConfirmTarget;
+        bool selected = initialTarget != null && cursor.TrySetCurrentItem(initialTarget, true);
         if (!selected)
         {
             cursor.SelectFirst();

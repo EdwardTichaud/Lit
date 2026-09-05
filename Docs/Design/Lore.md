@@ -402,8 +402,11 @@ Lucian dans le château : Munin est une même âme présente à la fois dans le 
 dans les Rêves.
 
 Vers la fin de la quête, Lucian comprend que Munin doit oublier son frère pour se
-libérer de son deuil. Munin s'y refuse. Lucian choisit alors de se sacrifier : il
-cesse d'exister dans le Monde des Rêves afin de libérer son frère.
+libérer de son deuil. Munin s'y refuse. Lucian comprend alors qu'il ne survivra
+pas et perd l'espoir qui définissait son existence. Les autres protagonistes et
+le joueur doivent percevoir cette rupture : celui qui incarne l'Espoir ne voit
+plus d'issue pour lui-même. Lucian choisit alors de se sacrifier : il cesse
+d'exister dans le Monde des Rêves afin de libérer son frère.
 
 ## Thème principal
 

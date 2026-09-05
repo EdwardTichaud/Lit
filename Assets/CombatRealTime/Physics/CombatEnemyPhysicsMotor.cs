@@ -67,6 +67,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private bool landingRequested;
     private bool rushActive;
     private Transform rushTarget;
+    private Vector3 rushDestination;
     private float rushSpeed;
     private bool navigationSuppressed;
     private bool hasObservedPose;
@@ -80,6 +81,37 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     private Transform lastObservedParent;
 
     public CombatEnemyPhysicsState State { get; private set; } = CombatEnemyPhysicsState.Navigation;
+    public enum AnimationMovementMode { AuthoredRootMotion, ScriptedOnly }
+    [SerializeField] private AnimationMovementMode animationMovementMode;
+    public bool ScriptedOnly => animationMovementMode == AnimationMovementMode.ScriptedOnly;
+    private bool advanceActive;
+    private float advanceStartedAt, advanceProgress;
+    private Vector3 advanceDirection;
+
+    public void BeginEnemyAdvance()
+    {
+        if (advanceActive || State != CombatEnemyPhysicsState.GroundedAction ||
+            enemy == null || enemy.ActiveSkill == null || activeMotionProfile == null || !activeMotionProfile.enableAdvance) return;
+        advanceActive = true;
+        advanceStartedAt = LocalTime;
+        advanceProgress = 0f;
+        advanceDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+    }
+
+    public void EndEnemyAdvance() => advanceActive = false;
+
+    private Vector3 AdvanceDelta(Vector3 position)
+    {
+        if (!advanceActive || activeMotionProfile == null) return Vector3.zero;
+        float t = Mathf.Clamp01((LocalTime - advanceStartedAt) / Mathf.Max(.01f, activeMotionProfile.advanceDuration));
+        float progress = t >= 1f ? 1f : Mathf.Clamp01(activeMotionProfile.advanceProgress?.Evaluate(t) ?? t);
+        progress = Mathf.Max(advanceProgress, progress);
+        Vector3 requested = advanceDirection * ((progress - advanceProgress) * activeMotionProfile.advanceDistance);
+        advanceProgress = progress;
+        Vector3 allowed = ClampPlanarMotionToObstacles(position, requested);
+        if (t >= 1f || allowed.sqrMagnitude + .000001f < requested.sqrMagnitude) EndEnemyAdvance();
+        return allowed;
+    }
     public bool IsDrivingActionRootMotion => State == CombatEnemyPhysicsState.GroundedAction ||
                                                State == CombatEnemyPhysicsState.AirborneAction ||
                                                State == CombatEnemyPhysicsState.Recovering;
@@ -143,6 +175,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     private void OnDisable()
     {
+        EndEnemyAdvance();
         pendingCompletion = null;
         pendingPlanarRootMotion = Vector3.zero;
         pendingRootRotation = Quaternion.identity;
@@ -150,6 +183,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void BeginEnemyAction(SkillSO skill)
     {
+        EndEnemyAdvance();
         ResolveReferences();
         if (!IsOperational)
         {
@@ -184,6 +218,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return;
         }
 
+        EndEnemyAdvance();
         verticalVelocity = activeMotionProfile.initialUpwardSpeed;
         airborneStartedAt = LocalTime;
         landingRequested = false;
@@ -214,6 +249,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         rushActive = true;
         rushTarget = target;
+        rushDestination = target.position;
         rushSpeed = 0f;
         AuditPose("ruée:debut");
     }
@@ -233,6 +269,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void CompleteEnemyAction(Action completion)
     {
+        EndEnemyAdvance();
         AuditPose("attaque:fin demandee");
         pendingCompletion = completion;
         if (State == CombatEnemyPhysicsState.GroundedAction || State == CombatEnemyPhysicsState.Navigation)
@@ -247,6 +284,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void InterruptEnemyAction(Action completion)
     {
+        EndEnemyAdvance();
         AuditPose("attaque:interrompue");
         pendingCompletion = completion;
         if (IsAirborne)
@@ -266,11 +304,18 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
     /// </summary>
     public void ForceCompleteEnemyAction(Action completion, string reason)
     {
+        EndEnemyAdvance();
         ResolveReferences();
         pendingCompletion = completion;
         pendingPlanarRootMotion = Vector3.zero;
         pendingRootRotation = Quaternion.identity;
         EndEnemyRush();
+
+        if (IsAirborne)
+        {
+            RequestEnemyLanding();
+            return;
+        }
 
         if (body != null)
         {
@@ -282,6 +327,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void EnterCinematic()
     {
+        EndEnemyAdvance();
         pendingCompletion = null;
         pendingPlanarRootMotion = Vector3.zero;
         pendingRootRotation = Quaternion.identity;
@@ -306,6 +352,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
     public void ApplyActionRootMotion(Vector3 worldDeltaPosition, Quaternion deltaRotation)
     {
+        if (ScriptedOnly) return;
         if (!IsDrivingActionRootMotion)
         {
             return;
@@ -313,7 +360,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         // A homing rush is the only planar action owner during that phase. The
         // clip may still contribute visual rotation, never translation.
-        Vector3 planarDelta = rushActive ? Vector3.zero : Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
+        Vector3 planarDelta = rushActive || activeMotionProfile != null && activeMotionProfile.IsAirborne
+            ? Vector3.zero : Vector3.ProjectOnPlane(worldDeltaPosition, Vector3.up);
         float maximumDistance = Mathf.Max(0.01f, maximumRootMotionDeltaPerFrame);
         if (planarDelta.sqrMagnitude > maximumDistance * maximumDistance)
         {
@@ -325,7 +373,8 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         }
 
         pendingPlanarRootMotion += planarDelta;
-        pendingRootRotation = deltaRotation * pendingRootRotation;
+        if (GetComponent<EnemyCombatBrain>()?.HasProfile != true)
+            pendingRootRotation = deltaRotation * pendingRootRotation;
     }
 
     /// <summary>
@@ -393,6 +442,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
 
         if (State == CombatEnemyPhysicsState.GroundedAction)
         {
+            planarDelta += AdvanceDelta(position);
             if (TryGetGroundY(position, out float groundY))
             {
                 position.y = groundY;
@@ -481,6 +531,11 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
         landingRequested = false;
         landingRequestedAt = -1f;
         EndEnemyRush();
+        if (completion == null && GetComponent<RealTimeCombatEnemy>()?.ActiveSkill != null)
+        {
+            SetState(CombatEnemyPhysicsState.GroundedAction, "atterri, attente fin du clip");
+            return;
+        }
         activeMotionProfile = null;
         ResumeNavigation();
         SetState(CombatEnemyPhysicsState.Navigation, reason);
@@ -556,7 +611,7 @@ public sealed class CombatEnemyPhysicsMotor : MonoBehaviour
             return Vector3.zero;
         }
 
-        Vector3 targetPosition = rushTarget.position;
+        Vector3 targetPosition = activeMotionProfile.lockRushDestination ? rushDestination : rushTarget.position;
         Vector3 direction = targetPosition - position;
         direction.y = 0f;
         float distance = direction.magnitude;

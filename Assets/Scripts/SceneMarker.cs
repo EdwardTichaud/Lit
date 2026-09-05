@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -33,6 +34,7 @@ public sealed class SceneMarker : MonoBehaviour
     private static readonly Dictionary<string, SceneMarker> markersById = new Dictionary<string, SceneMarker>();
 
     private GameObject runtimeInstance;
+    private Coroutine navigationValidationRoutine;
     public CharacterData CharacterData => characterData;
     public Item Item => item;
     public GhostData Ghost => ghost;
@@ -53,7 +55,13 @@ public sealed class SceneMarker : MonoBehaviour
 
         RegisterMarker(this);
         EnsurePersistentState();
-        runtimeInstance = bakedCharacterInstance;
+        runtimeInstance = ResolveBakedCharacterInstance();
+        if (runtimeInstance != bakedCharacterInstance && bakedCharacterInstance != null)
+        {
+            Debug.LogWarning("[SceneMarker] Reference bakedCharacterInstance corrigee pour '" + name +
+                             "' : la reference serialisee ne correspondait pas a son CharacterData.", this);
+        }
+        ScheduleBakedEnemyNavigationValidation();
     }
 
     private void OnDestroy()
@@ -64,6 +72,15 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         UnregisterMarker(this);
+    }
+
+    private void OnDisable()
+    {
+        if (navigationValidationRoutine != null)
+        {
+            StopCoroutine(navigationValidationRoutine);
+            navigationValidationRoutine = null;
+        }
     }
 
     public void SetCharacterData(CharacterData data)
@@ -102,6 +119,45 @@ public sealed class SceneMarker : MonoBehaviour
         }
 
         return characterData != null ? characterData.ResolveWorldPrefab() : null;
+    }
+
+    private GameObject ResolveBakedCharacterInstance()
+    {
+        if (IsValidBakedCharacterInstance(bakedCharacterInstance))
+        {
+            return bakedCharacterInstance;
+        }
+
+        if (characterData == null)
+        {
+            return null;
+        }
+
+        // Scene files can retain a stale hidden reference after two markers
+        // have been rebaked. Resolve the actual direct child by its authored
+        // CharacterData instead of trusting that reference blindly.
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            CharacterInfo info = child.GetComponent<CharacterInfo>();
+            if (info != null && info.CharacterData == characterData)
+            {
+                return child.gameObject;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsValidBakedCharacterInstance(GameObject instance)
+    {
+        if (instance == null || instance.transform.parent != transform)
+        {
+            return false;
+        }
+
+        CharacterInfo info = instance.GetComponent<CharacterInfo>();
+        return info != null && info.CharacterData == characterData;
     }
 
     public static bool TryGetRegisteredMarker(string id, out SceneMarker marker)
@@ -231,6 +287,53 @@ public sealed class SceneMarker : MonoBehaviour
         runtimeInstance = instance;
         AuditEnemyRuntimePose("clone configure");
         ValidateSpawnedEnemyNavigation(runtimeInstance);
+        ScheduleBakedEnemyNavigationValidation();
+    }
+
+    private void ScheduleBakedEnemyNavigationValidation()
+    {
+        if (navigationValidationRoutine != null)
+        {
+            StopCoroutine(navigationValidationRoutine);
+        }
+
+        if (runtimeInstance != null && characterData != null && characterData.isEnemy && isActiveAndEnabled)
+        {
+            navigationValidationRoutine = StartCoroutine(ValidateEnemyNavigationAfterWorldBake());
+        }
+    }
+
+    private IEnumerator ValidateEnemyNavigationAfterWorldBake()
+    {
+        NavMeshWorldService world = FindAnyObjectByType<NavMeshWorldService>();
+        SquadAIManager navigation = SquadAIManager.Instance;
+        while (world != null && !world.IsReady && world.State != NavMeshWorldState.Failed)
+        {
+            yield return null;
+        }
+
+        navigationValidationRoutine = null;
+        if (world != null)
+        {
+            if (!world.IsReady)
+            {
+                Debug.LogWarning("[SceneMarker] Validation NavMesh en attente pour l'ennemi '" + name +
+                                 "' : NavMeshWorldService a refuse le monde courant. Aucun repositionnement automatique.", this);
+                yield break;
+            }
+
+            ValidateSpawnedEnemyNavigation(runtimeInstance);
+            yield break;
+        }
+
+        if (navigation == null || !navigation.IsNavMeshReady)
+        {
+            Debug.LogWarning("[SceneMarker] Validation NavMesh en attente pour l'ennemi '" + name +
+                             "' : aucun service NavMesh pret. Aucun repositionnement automatique.", this);
+            yield break;
+        }
+
+        ValidateSpawnedEnemyNavigation(runtimeInstance);
     }
 
     private void AuditEnemyRuntimePose(string phase)
@@ -274,7 +377,18 @@ public sealed class SceneMarker : MonoBehaviour
                              "' | marker=" + transform.position + " | instance=" + instance.transform.position + ".", this);
         }
 
+        NavMeshWorldService world = FindAnyObjectByType<NavMeshWorldService>();
         int areaMask = agent.areaMask == 0 ? NavMesh.AllAreas : agent.areaMask;
+        if (world != null)
+        {
+            if (!world.TryValidatePosition(instance.transform.position, areaMask, out _))
+            {
+                Debug.LogError("[SceneMarker] NavMeshWorldService refuse la projection locale de '" + name +
+                                "' | actor=" + instance.transform.position + ". Aucun repositionnement automatique.", this);
+            }
+            return;
+        }
+
         if (!NavMesh.SamplePosition(instance.transform.position, out NavMeshHit hit, 1.5f, areaMask))
         {
             Debug.LogError("[SceneMarker] Ennemi '" + name + "' hors NavMesh a son spawn: " +

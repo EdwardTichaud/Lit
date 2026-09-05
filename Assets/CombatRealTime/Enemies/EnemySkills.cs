@@ -12,11 +12,18 @@ public sealed class EnemySkills : MonoBehaviour
     [SerializeField] private CombatTimeDomain timeDomain;
     [SerializeField, Tooltip("Point de depart des VFX ennemi. La racine est utilisee si vide.")]
     private Transform casterVfxPoint;
-    [SerializeField] private List<SkillSO> skills = new List<SkillSO>();
+    private List<SkillSO> skills = new List<SkillSO>();
 
     private SkillSO activeSkill;
 
-    public IReadOnlyList<SkillSO> Skills => skills;
+    public IReadOnlyList<SkillSO> Skills
+    {
+        get
+        {
+            ResolveReferences();
+            return skills;
+        }
+    }
     public SkillSO ActiveSkill => activeSkill;
     public Animator Animator => animator;
 
@@ -34,6 +41,7 @@ public sealed class EnemySkills : MonoBehaviour
 
     public bool SetActiveSkill(int skillIndex)
     {
+        ResolveReferences();
         if (skillIndex < 0 || skillIndex >= skills.Count || skills[skillIndex] == null)
         {
             return false;
@@ -84,6 +92,7 @@ public sealed class EnemySkills : MonoBehaviour
 
     public bool SetActiveSkill(SkillSO skill)
     {
+        ResolveReferences();
         if (skill == null || !skills.Contains(skill))
         {
             return false;
@@ -128,7 +137,7 @@ public sealed class EnemySkills : MonoBehaviour
             }
         }
 
-        animator.CrossFade(stateHash, 0.08f, 0);
+        animator.CrossFadeInFixedTime(stateHash, 0.08f, 0, 0f);
         return true;
     }
 
@@ -264,6 +273,8 @@ public sealed class EnemySkills : MonoBehaviour
 
     private void ResolveReferences()
     {
+        CharacterData data = GetComponent<CharacterInfo>()?.CharacterData;
+        if (data != null) skills = data.combatSkills;
         if (enemy == null)
         {
             enemy = GetComponent<RealTimeCombatEnemy>();

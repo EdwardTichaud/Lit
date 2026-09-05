@@ -169,6 +169,11 @@ public enum EnemyActionMovementMode
 [Serializable]
 public sealed class EnemyActionMotionProfile
 {
+    [Header("Scripted Advance")]
+    public bool enableAdvance;
+    [Min(0f)] public float advanceDistance = .4f;
+    [Min(.01f)] public float advanceDuration = .18f;
+    public AnimationCurve advanceProgress = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     public EnemyActionMovementMode movementMode = EnemyActionMovementMode.Grounded;
     [Min(0f), Tooltip("Vitesse verticale initiale appliquee par BeginEnemyAirborne.")]
     public float initialUpwardSpeed = 12f;
@@ -181,6 +186,7 @@ public sealed class EnemyActionMotionProfile
     [Header("Scripted Rush")]
     [Tooltip("Autorise BeginEnemyRush a piloter le plan horizontal. La verticale reste exclusivement physique.")]
     public bool enableHomingRush;
+    public bool lockRushDestination;
     [Min(0.1f)] public float rushMaximumSpeed = 14f;
     [Min(0.1f)] public float rushAcceleration = 46f;
     [Min(0.1f)] public float rushDeceleration = 62f;
@@ -195,6 +201,15 @@ public sealed class EnemyActionMotionProfile
     public bool HasHomingRush => enableHomingRush;
 
     public static EnemyActionMotionProfile GroundedDefault => new EnemyActionMotionProfile();
+}
+
+[Serializable]
+public sealed class EnemySkillImpactShape
+{
+    public Vector3 offset = new Vector3(0f, 1f, 1.3f);
+    [Min(.05f)] public float radius = 1.4f;
+    [Range(1f, 360f)] public float arcDegrees = 110f;
+    public LayerMask targetMask = ~0;
 }
 
 [Serializable]
@@ -233,6 +248,7 @@ public sealed class PlayerActionPresentationProfile
 [CreateAssetMenu(fileName = "SkillSO", menuName = "Scriptable Objects/Combat/Skill SO")]
 public class SkillSO : ScriptableObject
 {
+    public EnemySkillImpactShape enemyImpact = new EnemySkillImpactShape();
     [Header("Identity")]
     public string skillName;
     [TextArea] public string description;

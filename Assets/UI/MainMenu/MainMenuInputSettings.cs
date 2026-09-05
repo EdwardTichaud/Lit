@@ -32,18 +32,19 @@ public static class MainMenuInputSettings
 
     public static InputMode GetSavedMode()
     {
-        return InputMode.Gamepad;
+        int value = PlayerPrefs.GetInt(InputModePrefKey, (int)InputMode.Automatic);
+        return Enum.IsDefined(typeof(InputMode), value) ? (InputMode)value : InputMode.Automatic;
     }
 
     public static bool SetMode(InputMode mode)
     {
         EnsureInitialized();
-        if (currentMode == InputMode.Gamepad)
+        if (!Enum.IsDefined(typeof(InputMode), mode) || currentMode == mode)
         {
             return false;
         }
 
-        currentMode = InputMode.Gamepad;
+        currentMode = mode;
         SaveCurrentMode();
         ModeChanged?.Invoke(currentMode);
         return true;
@@ -77,12 +78,19 @@ public static class MainMenuInputSettings
 
     public static bool AllowsKeyboardMouse()
     {
-        return false;
+        return GetCurrentMode() != InputMode.Gamepad;
     }
 
     public static bool AllowsGamepad()
     {
-        return true;
+        return GetCurrentMode() != InputMode.KeyboardMouse;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRuntime()
+    {
+        initialized = false;
+        ModeChanged = null;
     }
 
     private static void EnsureInitialized()

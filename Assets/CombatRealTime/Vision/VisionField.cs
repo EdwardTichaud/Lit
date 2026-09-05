@@ -12,6 +12,54 @@ public sealed class VisionField : MonoBehaviour
 
     public float MaximumDistance => maximumDistance;
 
+    public bool TryEvaluate(Transform target, out float distance, out float angle, out string reason)
+    {
+        distance = 0f;
+        angle = 0f;
+        reason = "cible absente";
+        if (target == null || !target.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        Transform source = origin != null ? origin : transform;
+        Vector3 eyePosition = source.position + Vector3.up * eyeHeight;
+        Vector3 targetPosition = target.position + Vector3.up * targetHeight;
+        Vector3 direction = targetPosition - eyePosition;
+        distance = direction.magnitude;
+        if (distance <= Mathf.Epsilon)
+        {
+            reason = "distance nulle";
+            return false;
+        }
+
+        angle = Vector3.Angle(source.forward, direction);
+        if (distance > maximumDistance)
+        {
+            reason = "hors portee";
+            return false;
+        }
+
+        if (angle > fieldOfViewDegrees * 0.5f)
+        {
+            reason = "hors angle";
+            return false;
+        }
+
+        if (Physics.Raycast(eyePosition, direction / distance, out RaycastHit hit, distance, obstructionMask, QueryTriggerInteraction.Ignore))
+        {
+            Transform hitTransform = hit.transform;
+            if (hitTransform != target && !hitTransform.IsChildOf(target))
+            {
+                reason = "obstrue par " + hitTransform.name;
+                return false;
+            }
+        }
+
+        reason = "visible";
+        return true;
+    }
+
     /// <summary>
     /// Permet a un comportement d'alerte de modifier temporairement la portee
     /// sans dupliquer les controles de champ de vision et d'obstruction.
@@ -23,33 +71,7 @@ public sealed class VisionField : MonoBehaviour
 
     public bool CanSee(Transform target)
     {
-        if (target == null || !target.gameObject.activeInHierarchy)
-        {
-            return false;
-        }
-
-        Transform source = origin != null ? origin : transform;
-        Vector3 eyePosition = source.position + Vector3.up * eyeHeight;
-        Vector3 targetPosition = target.position + Vector3.up * targetHeight;
-        Vector3 direction = targetPosition - eyePosition;
-        float distance = direction.magnitude;
-        if (distance > maximumDistance || distance <= Mathf.Epsilon)
-        {
-            return false;
-        }
-
-        if (Vector3.Angle(source.forward, direction) > fieldOfViewDegrees * 0.5f)
-        {
-            return false;
-        }
-
-        if (Physics.Raycast(eyePosition, direction / distance, out RaycastHit hit, distance, obstructionMask, QueryTriggerInteraction.Ignore))
-        {
-            Transform hitTransform = hit.transform;
-            return hitTransform == target || hitTransform.IsChildOf(target);
-        }
-
-        return true;
+        return TryEvaluate(target, out _, out _, out _);
     }
 
     private void Reset()

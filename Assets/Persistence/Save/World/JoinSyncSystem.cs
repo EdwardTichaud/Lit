@@ -93,6 +93,8 @@ public class JoinSyncSystem : MonoBehaviour
         }
     }
 
+    private int menuSyncRetries;
+
     private void Update()
     {
         TryHookNetworkManager();
@@ -100,6 +102,7 @@ public class JoinSyncSystem : MonoBehaviour
         TryHookWorldSaveAdapter();
         SyncLocalGameplayBlock();
         SyncVisualGate();
+        if (PrivateSessionService.Instance?.Phase == PrivateSessionPhase.Lobby) return;
         HandleSnapshotTimeouts();
         TryCompletePendingTransfer();
 
@@ -111,6 +114,7 @@ public class JoinSyncSystem : MonoBehaviour
 
     public void ResetRuntimeState(string reason = null)
     {
+        menuSyncRetries = 0;
         pendingTransfer = null;
         readyClients.Clear();
         pendingServerTransfers.Clear();
@@ -613,6 +617,7 @@ public class JoinSyncSystem : MonoBehaviour
         }
 
         IsLocalWorldReady = ready;
+        if (ready) menuSyncRetries = 0;
         if (!ready)
         {
             LocalWorldSyncStarted?.Invoke();
@@ -1221,14 +1226,14 @@ public class JoinSyncSystem : MonoBehaviour
                 PersistentWorldDebug.Error(
                     $"snapshot apply readiness timed out transferId={pendingTransfer.TransferId} expectedChunks={pendingTransfer.TotalChunks} receivedChunks={pendingTransfer.Chunks.Count} reason='{pendingTransfer.WaitReason}'",
                     this);
-                ScheduleSnapshotRequest("snapshot apply readiness timeout");
+                RetrySnapshotFromMenu("snapshot apply readiness timeout");
                 return;
             }
 
             PersistentWorldDebug.Error(
                 $"snapshot transfer timed out transferId={pendingTransfer.TransferId} expectedChunks={pendingTransfer.TotalChunks} receivedChunks={pendingTransfer.Chunks.Count}",
                 this);
-            ScheduleSnapshotRequest("snapshot transfer timeout");
+            RetrySnapshotFromMenu("snapshot transfer timeout");
             return;
         }
 
@@ -1238,7 +1243,18 @@ public class JoinSyncSystem : MonoBehaviour
         }
 
         PersistentWorldDebug.Error("snapshot request timed out before transfer start", this);
-        ScheduleSnapshotRequest("snapshot request timeout");
+        RetrySnapshotFromMenu("snapshot request timeout");
+    }
+
+    private void RetrySnapshotFromMenu(string reason)
+    {
+        if (++menuSyncRetries > 2)
+        {
+            FailLocalSync("Synchronisation interrompue après trois tentatives.");
+            PrivateSessionService.Instance?.ReportSyncFailure("Impossible de synchroniser la partie. Rejoignez à nouveau l’hôte.");
+            return;
+        }
+        ScheduleSnapshotRequest(reason);
     }
 
     private void HandleServerTransferTimeouts()
@@ -1277,6 +1293,8 @@ public class JoinSyncSystem : MonoBehaviour
         }
 
         bool shouldShow =
+            !(PrivateSessionService.Instance?.IsBusy ?? false) &&
+            PrivateSessionService.Instance?.Phase != PrivateSessionPhase.Lobby &&
             hookedManager != null &&
             hookedManager.IsClient &&
             !hookedManager.IsServer &&

@@ -146,6 +146,14 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         TraceEnemyEvent(nameof(ResolveEnemyAttackImpact));
         RealTimeCombatEnemy enemy = ResolveEnemy();
 
+        EnemyCombatBrain brain = enemy != null ? enemy.GetComponent<EnemyCombatBrain>() : null;
+        if (brain != null && brain.IsAutonomousActionActive)
+        {
+            brain.OpenHitbox();
+            brain.CloseHitbox();
+            return;
+        }
+
         // A threshold retaliation can reuse any authored enemy attack. Its
         // ordinary impact event becomes the threshold-specific hit while that
         // one-off response owns the encounter.
@@ -155,6 +163,27 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
 
         RealTimeCombatManager.Instance?.ResolveEnemyAttackImpact(enemy);
+    }
+
+    /// <summary>Enemy Animation Event: opens the current autonomous attack's server-side spatial hitbox.</summary>
+    public void OpenEnemyAttackHitbox()
+    {
+        TraceEnemyEvent(nameof(OpenEnemyAttackHitbox));
+        ResolveEnemy()?.GetComponent<EnemyCombatBrain>()?.OpenHitbox();
+    }
+
+    /// <summary>Enemy Animation Event: closes the current autonomous attack's spatial hitbox.</summary>
+    public void CloseEnemyAttackHitbox()
+    {
+        TraceEnemyEvent(nameof(CloseEnemyAttackHitbox));
+        ResolveEnemy()?.GetComponent<EnemyCombatBrain>()?.CloseHitbox();
+    }
+
+    /// <summary>Enemy Animation Event: locks the autonomous attack facing before its committed impact.</summary>
+    public void LockEnemyAttackDirection()
+    {
+        TraceEnemyEvent(nameof(LockEnemyAttackDirection));
+        ResolveEnemy()?.GetComponent<EnemyCombatBrain>()?.LockAttackDirection();
     }
 
     /// <summary>
@@ -187,6 +216,12 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         }
 
         ClearEnemyDashInitialPosition();
+        EnemyCombatBrain brain = currentEnemy.GetComponent<EnemyCombatBrain>();
+        if (brain != null && brain.IsAutonomousActionActive)
+        {
+            brain.ResolveAnimationAttackEnded();
+            return;
+        }
         if (CombatHealthThresholdController.Instance?.TryCompleteFailureRetaliation(currentEnemy) == true)
         {
             return;
@@ -195,9 +230,13 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
         {
             RealTimeCombatManager.Instance?.CompleteEnemyAttack(currentEnemy);
             currentEnemy.GetComponent<RealTimeCombatEnemyBehaviour>()?.NotifyAttackCompleted();
+            currentEnemy.GetComponent<EnemyCombatBrain>()?.ResolveAnimationAttackEnded();
             ResolveEnemySkills()?.ReturnToIdle();
         });
     }
+
+    public void BeginEnemyAdvance() => ResolveEnemy()?.GetComponent<CombatEnemyPhysicsMotor>()?.BeginEnemyAdvance();
+    public void EndEnemyAdvance() => ResolveEnemy()?.GetComponent<CombatEnemyPhysicsMotor>()?.EndEnemyAdvance();
 
     /// <summary>Enemy Animation Event: starts the authored ballistic phase.</summary>
     public void BeginEnemyAirborne()
@@ -788,6 +827,8 @@ public sealed class RealTimeCombatAnimationEvents : MonoBehaviour
 
     private Transform ResolveEnemyDashTarget()
     {
+        EnemyCombatBrain brain = ResolveEnemy()?.GetComponent<EnemyCombatBrain>();
+        if (brain != null && brain.HasProfile) return brain.Target != null ? brain.Target.transform : null;
         Transform player = LocalPlayerContext.LocalCharacterRoot;
         if (player != null)
         {

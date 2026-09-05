@@ -12,13 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c2d2bf9544f47d38b56604b587597b9, type: 3}
   m_Name: Skill_Juggernaut_Assomoir
   m_EditorClassIdentifier: Assembly-CSharp::SkillSO
+  enemyImpact:
+    offset: {x: 0, y: 1, z: 1.3}
+    radius: 1.4
+    arcDegrees: 110
+    targetMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   skillName: Assomoir
   description: 
   icon: {fileID: 0}
   animationClip: {fileID: 7400000, guid: 39aa5681d3ef38d4c91d6b7760d13249, type: 2}
-  animatorState: Assomoir
+  animatorState: Juggernaut_Assomoir
   damages: 20
-  lightChargeOnHit: 1
+  clarityGainOnHit: 1
   presentation:
     entryBlendSeconds: 0.06
     chainNormalizedTime: 0.7
@@ -26,6 +33,16 @@ MonoBehaviour:
     mobilityCancelNormalizedTime: 0.7
     recoveryNormalizedTime: 0.88
     exitBlendSeconds: 0.1
+    handoff:
+      minimumContactSeconds: 0
+      animationExitNormalizedTime: 0.82
+      planarSettledSpeed: 0.18
+      verticalSettledSpeed: 0.25
+      planarDampingPerSecond: 0
+      maximumSettleSeconds: 0.2
+      locomotionBlendSeconds: 0.08
+      preLandingProbeDistance: 1.2
+      preLandingLeadSeconds: 0.14
     rootMotionMode: 1
     allowAirborneRootMotion: 0
     facingMode: 1
@@ -33,7 +50,7 @@ MonoBehaviour:
     allowDodgeAfterRecovery: 1
     allowMobilityCancel: 1
   minimumHitDistance: 0
-  maximumHitDistance: 5
+  maximumHitDistance: 6
   requireValidRangeToStart: 0
   cinematic:
     timeline: {fileID: 0}
@@ -98,6 +115,18 @@ MonoBehaviour:
     maximumInputLockSeconds: 3.5
     airborneInertiaSeconds: 0
     airborneInertiaEndSpeedMultiplier: 0.3
+  targetLunge:
+    enabled: 0
+    approachDurationSeconds: 0.18
+    maximumApproachSpeed: 42
+    stoppingDistance: 0.85
+    contactTolerance: 0.18
+    reboundHorizontalImpulse: 16
+    reboundVerticalImpulse: 8
+    minimumInputLockSeconds: 0.1
+    maximumInputLockSeconds: 2.5
+    airborneInertiaSeconds: 0.08
+    airborneInertiaEndSpeedMultiplier: 0.25
   enemyRange: 0
   enemyDamageMultiplier: 1
   acceptedEnemyReactions: 0100000002000000
@@ -105,13 +134,41 @@ MonoBehaviour:
   playerAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
   enemyAttackSfx: {fileID: 11400000, guid: a1000000000000000000000000000001, type: 2}
   enemyActionMotion:
+    enableAdvance: 0
+    advanceDistance: 0.4
+    advanceDuration: 0.18
+    advanceProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
     movementMode: 1
     initialUpwardSpeed: 10.5
-    gravity: 28
+    gravity: 14.246947
     maximumFallSpeed: 25
     minimumLandingSpeed: 5
     maximumAirborneSeconds: 2.5
     enableHomingRush: 1
+    lockRushDestination: 1
     rushMaximumSpeed: 15
     rushAcceleration: 46
     rushDeceleration: 62
@@ -119,7 +176,7 @@ MonoBehaviour:
     rushCollisionSkin: 0.04
     rushBlockingMask:
       serializedVersion: 2
-      m_Bits: 4294967295
+      m_Bits: 134228617
   reactionTelegraph:
     enabled: 1
     alertPrefab: {fileID: 8308307468002539944, guid: 48c20040a51d067459f0722c16084fbf, type: 3}

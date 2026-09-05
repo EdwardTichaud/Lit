@@ -204,6 +204,7 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
 
     public void ApplyAnimationDelta(Vector3 worldDeltaPosition, Quaternion deltaRotation)
     {
+        if (!IsCinematicMotionActive && enemyPhysicsMotor != null && enemyPhysicsMotor.ScriptedOnly) return;
         if (enemyPhysicsMotor != null && enemyPhysicsMotor.IsDrivingActionRootMotion)
         {
             enemyPhysicsMotor.ApplyActionRootMotion(worldDeltaPosition, deltaRotation);
@@ -298,7 +299,13 @@ public sealed class CombatActorAnimationRoot : MonoBehaviour
 
     private void ValidateRequiredEnemyStates()
     {
-        ValidateAnimatorState("Idle");
+        // The unified combat controller uses CombatIdle. Keep Idle as a
+        // fallback for older enemy controllers, but do not report a false
+        // contract failure when the new explicit combat state is present.
+        string idleState = animator.HasState(0, Animator.StringToHash("Base Layer.CombatIdle"))
+            ? "CombatIdle"
+            : "Idle";
+        ValidateAnimatorState(idleState);
         ValidateAnimatorState("Hit");
         ValidateAnimatorState("Death");
 

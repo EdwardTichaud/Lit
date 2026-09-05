@@ -58,8 +58,12 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
     }
     public Transform LockPoint => ResolveLockPoint();
     public bool CanSeePlayer { get; private set; }
+    public float PlayerVisibilityDistance { get; private set; }
+    public float PlayerVisibilityAngle { get; private set; }
+    public string PlayerVisibilityReason { get; private set; } = "non evalue";
     public int StoredMaximumLightDamage => storedMaximumLightDamage;
     public int EngagementMaximumLightDamage => engagementMaximumLightDamage;
+    public bool IsHitRecovering => hitRecoveryRoutine != null;
     public int CommittedRetaliationDamage => committedRetaliationDamage;
     public SkillSO ActiveSkill => activeSkill;
     public bool HasRetaliationPending => activeSkill != null;
@@ -114,22 +118,58 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
     private void Update()
     {
+        RefreshPlayerVisibility();
+    }
+
+    /// <summary>
+    /// Refreshes visibility on demand so the AI never makes a decision from
+    /// the previous frame's value. This is intentionally kept here as the
+    /// single visibility authority for both the modern and legacy executors.
+    /// </summary>
+    public bool RefreshPlayerVisibility()
+    {
         if (visionField == null)
         {
             visionField = GetComponent<VisionField>();
         }
 
         Transform player = LocalPlayerContext.LocalCharacterRoot;
-        CanSeePlayer = visionField != null && player != null && visionField.CanSee(player);
+        if (player == null)
+        {
+            player = RealTimeCombatManager.Instance != null
+                ? RealTimeCombatManager.Instance.PlayerRoot
+                : null;
+        }
+
+        if (visionField == null)
+        {
+            CanSeePlayer = false;
+            PlayerVisibilityReason = "VisionField absent";
+            PlayerVisibilityDistance = 0f;
+            PlayerVisibilityAngle = 0f;
+            return false;
+        }
+
+        CanSeePlayer = visionField.TryEvaluate(
+            player,
+            out float distance,
+            out float angle,
+            out string reason);
+        PlayerVisibilityDistance = distance;
+        PlayerVisibilityAngle = angle;
+        PlayerVisibilityReason = player == null ? "joueur absent" : reason;
+        return CanSeePlayer;
     }
 
-    public int ReceiveLightDamage(int amount)
+    public int ReceiveLightDamage(int amount, SquadCharacterController source = null)
     {
-        return ReceiveDamage(amount, true);
+        return ReceiveDamage(amount, true, source);
     }
 
-    public int ReceiveDamage(int amount, bool canPrepareRetaliation = false)
+    public int ReceiveDamage(int amount, bool canPrepareRetaliation = false, SquadCharacterController source = null)
     {
+        EnemyCombatBrain brain = GetComponent<EnemyCombatBrain>();
+        if (brain != null && brain.HasProfile) amount = brain.ResolveGuardDamage(amount);
         CombatHealthThresholdController thresholds = CombatHealthThresholdController.Instance;
         if (thresholds != null && thresholds.BlocksEnemyActions(this))
         {
@@ -154,6 +194,12 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
             CompleteRetaliation();
             PlayDeathAnimation();
             return applied;
+        }
+
+        if (canPrepareRetaliation)
+        {
+            engagementMaximumLightDamage = Mathf.Max(engagementMaximumLightDamage, applied);
+            brain?.RegisterThreat(source, applied);
         }
 
         if (thresholdReached)
@@ -290,6 +336,53 @@ public sealed class RealTimeCombatEnemy : MonoBehaviour
 
         RetaliationStarted?.Invoke(activeSkill, committedRetaliationDamage);
         return true;
+    }
+
+    /// <summary>Starts an autonomous attack chosen by EnemyCombatBrain. It deliberately bypasses the legacy retaliation ledger.</summary>
+    public bool TryStartAutonomousAttack(SkillSO skill)
+    {
+        if (skill == null || activeSkill != null || enemySkills == null || !enemySkills.SetActiveSkill(skill) ||
+            health != null && health.IsDead)
+        {
+            return false;
+        }
+
+        if (physicsMotor == null || !physicsMotor.IsOperational ||
+            physicsMotor.State != CombatEnemyPhysicsState.Navigation)
+        {
+            return false;
+        }
+
+        activeSkill = skill;
+        plannedRetaliationSkill = null;
+        // A visible player is enough to start an encounter. Before the first
+        // player hit there is no light-damage ledger, so use the skill's
+        // authored damage as the neutral attack basis. Once a hit is received,
+        // engagementMaximumLightDamage takes over and remains persistent.
+        float damageBasis = engagementMaximumLightDamage > 0
+            ? engagementMaximumLightDamage
+            : Mathf.Max(0f, skill.Damages);
+        committedRetaliationDamage = Mathf.Max(1, Mathf.CeilToInt(
+            damageBasis * Mathf.Max(0f, skill.EnemyDamageMultiplier)));
+        physicsMotor?.BeginEnemyAction(skill);
+        if (!enemySkills.PlayActiveSkill())
+        {
+            activeSkill = null;
+            committedRetaliationDamage = 0;
+            physicsMotor.InterruptEnemyAction(null);
+            return false;
+        }
+
+        RetaliationStarted?.Invoke(skill, committedRetaliationDamage);
+        return true;
+    }
+
+    /// <summary>Completes an autonomous action without rearming legacy retaliation damage.</summary>
+    public void CompleteAutonomousAttack()
+    {
+        activeSkill = null;
+        plannedRetaliationSkill = null;
+        committedRetaliationDamage = 0;
     }
 
     public SkillSO PeekRetaliationSkill(float meleePreference = 0.5f)

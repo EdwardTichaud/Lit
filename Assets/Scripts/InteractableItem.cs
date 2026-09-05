@@ -286,6 +286,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         LocalInputRouter.TakeAll += OnTakeAllPerformed;
         LocalInputRouter.Return += OnReturnPerformed;
         LocalInputRouter.TriggerMunin += OnTriggerMuninPerformed;
+        UpdateInactiveFlameGatedItemVfx();
     }
 
     private void OnDisable()
@@ -305,6 +306,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         unlockAttemptInProgress = false;
         ConfirmationManager.Dismiss(this);
         activeLitInfluenceSourceIds.Clear();
+        VFXManager.Instance?.SetInactiveFlameGatedItemVfx(this, transform, false);
     }
 
     public void OnLitInfluenceEnter(LitInfluenceInfo info)
@@ -315,6 +317,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         activeLitInfluenceSourceIds.Add(info.SourceId);
+        UpdateInactiveFlameGatedItemVfx();
     }
 
     public void OnLitInfluenceStay(LitInfluenceInfo info)
@@ -325,6 +328,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         }
 
         activeLitInfluenceSourceIds.Add(info.SourceId);
+        UpdateInactiveFlameGatedItemVfx();
     }
 
     public void OnLitInfluenceExit(LitInfluenceInfo info)
@@ -338,6 +342,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
         {
             HandleLitInfluenceLostForInteraction();
         }
+        UpdateInactiveFlameGatedItemVfx();
     }
 
     public override void OnNetworkSpawn()
@@ -371,6 +376,7 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private void LateUpdate()
     {
         UpdateCurrentCharacter();
+        UpdateInactiveFlameGatedItemVfx();
 
         if (suppressLootSubmitUntilInteractReleased && !IsInteractControlPressed())
         {
@@ -997,6 +1003,25 @@ public class InteractableItem : NetworkBehaviour, ICharacterDetectedInteractable
     private bool CanInteractInCurrentInfluence()
     {
         return !requireLitInfluenceForInteraction || activeLitInfluenceSourceIds.Count > 0;
+    }
+
+    private void UpdateInactiveFlameGatedItemVfx()
+    {
+        VFXManager manager = VFXManager.Instance;
+        if (manager == null) return;
+
+        bool inactiveBecauseOfFlame = isActiveAndEnabled &&
+                                      SupportsInactiveFlameVfx() &&
+                                      requireLitInfluenceForInteraction &&
+                                      !CanInteractInCurrentInfluence();
+        manager.SetInactiveFlameGatedItemVfx(this, GetInteractionAnchor(), inactiveBecauseOfFlame);
+    }
+
+    private bool SupportsInactiveFlameVfx()
+    {
+        return interactableCategory == InteractableCategory.RecoverableItem ||
+               interactableCategory == InteractableCategory.ReadableItem &&
+               representedItem != null && representedItem.IsReadableStab();
     }
 
     private bool ShouldReactToLitInfluence(LitInfluenceInfo info)

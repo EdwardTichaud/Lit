@@ -59,6 +59,7 @@ public sealed class GameFlowService : MonoBehaviour
     private readonly List<string> loadedZoneSceneNames = new List<string>();
     private GameplaySessionRoot gameplaySessionRoot;
     private Coroutine transitionRoutine;
+    private readonly List<AsyncOperation> pendingSceneOperations = new List<AsyncOperation>();
     private Coroutine postLoadingRoutine;
     private ProximitySceneStreamingController proximityStreaming;
     private ZoneRuntimeContext activeZoneRuntimeContext;
@@ -209,6 +210,22 @@ public sealed class GameFlowService : MonoBehaviour
         return Instance != null && Instance.BeginReturnToHub(spawnId);
     }
 
+    // Called only after transport shutdown. Unity loads already submitted must finish;
+    // the gameplay coroutine must no longer continue spawning into a cancelled session.
+    public IEnumerator FinishCancelledSessionTransition()
+    {
+        if (transitionRoutine != null) { StopCoroutine(transitionRoutine); transitionRoutine = null; }
+        StopPostLoadingRoutine();
+        foreach (AsyncOperation operation in pendingSceneOperations)
+        {
+            if (operation == null || operation.isDone) continue;
+            operation.allowSceneActivation = true;
+            while (!operation.isDone) yield return null;
+        }
+        pendingSceneOperations.Clear();
+        IsPreparingGameplayScene = false;
+    }
+
     public static bool OpenMainMenu()
     {
         return Instance != null && Instance.BeginReturnToMenu();
@@ -297,7 +314,7 @@ public sealed class GameFlowService : MonoBehaviour
             yield return LoadManifestLoadingScenes(manifest, loadingMessage);
         }
 
-        yield return RebuildNavigationForLoadedWorldRoutine("demarrage " + sceneName);
+        yield return RebuildNavigationForLoadedWorldRoutine("demarrage " + sceneName, manifest);
 
         activeGameplaySceneName = sceneName;
         IsPreparingGameplayScene = false;
@@ -370,7 +387,7 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark($"Sous-scene precedente dechargee ({previousScenes[i]})");
         }
 
-        yield return RebuildNavigationForLoadedWorldRoutine("arrivee " + destination.PrimarySceneName);
+        yield return RebuildNavigationForLoadedWorldRoutine("arrivee " + destination.PrimarySceneName, destination);
 
         activeGameplaySceneName = destination.PrimarySceneName;
         // Une transition de zone ferme le contexte de jeu precedent. Sans
@@ -429,7 +446,7 @@ public sealed class GameFlowService : MonoBehaviour
             SceneTransitionProfiler.Mark($"Sous-scene dechargee ({previousScenes[i]})");
         }
 
-        yield return RebuildNavigationForLoadedWorldRoutine("retour " + hubScene);
+        yield return RebuildNavigationForLoadedWorldRoutine("retour " + hubScene, hubManifest);
 
         activeGameplaySceneName = hubScene;
         yield return PlaceSquadAtSpawnRoutine(spawnId);
@@ -480,7 +497,7 @@ public sealed class GameFlowService : MonoBehaviour
     /// under the opaque loading overlay: baking a world NavMesh is not a
     /// per-sub-scene operation.
     /// </summary>
-    private static IEnumerator RebuildNavigationForLoadedWorldRoutine(string reason)
+    private static IEnumerator RebuildNavigationForLoadedWorldRoutine(string reason, ZoneManifest manifest)
     {
         // Let newly activated colliders register with Physics before source
         // collection. A fixed frame also makes this reliable in direct editor
@@ -488,6 +505,37 @@ public sealed class GameFlowService : MonoBehaviour
         Physics.SyncTransforms();
         yield return new WaitForFixedUpdate();
         Physics.SyncTransforms();
+
+        if (manifest != null && !ValidateManifestScenesLoaded(manifest, out string sceneReport))
+        {
+            Debug.LogError("[GameFlow] NavMesh build annule : " + sceneReport);
+            yield break;
+        }
+
+        if (manifest != null)
+        {
+            Debug.Log("[GameFlow] NavMesh build autorise | zone=" + manifest.PrimarySceneName +
+                      " | scenes attendues=" + manifest.LoadingSceneNames.Count +
+                      " | scenes chargees=" + CountLoadedManifestScenes(manifest));
+        }
+
+        NavMeshWorldService world = NavMeshWorldService.Instance;
+        if (world != null)
+        {
+            string zoneId = manifest != null && manifest.IsValid ? manifest.PrimarySceneName : reason;
+            world.BeginWorld(zoneId, manifest);
+            while (world.State == NavMeshWorldState.Loading ||
+                   world.State == NavMeshWorldState.Building ||
+                   world.State == NavMeshWorldState.Validating)
+            {
+                yield return null;
+            }
+
+            SceneTransitionProfiler.Mark(world.IsReady
+                ? "NavMesh destination pret"
+                : "NavMesh destination indisponible");
+            yield break;
+        }
 
         SquadAIManager navigation = SquadAIManager.Instance;
         if (navigation == null)
@@ -499,6 +547,47 @@ public sealed class GameFlowService : MonoBehaviour
         SceneTransitionProfiler.Mark(success
             ? "NavMesh destination pret"
             : "NavMesh destination indisponible");
+    }
+
+    private static bool ValidateManifestScenesLoaded(ZoneManifest manifest, out string report)
+    {
+        int expected = manifest.LoadingSceneNames.Count;
+        int loaded = 0;
+        List<string> missing = new List<string>();
+        for (int i = 0; i < expected; i++)
+        {
+            string sceneName = manifest.LoadingSceneNames[i];
+            Scene scene = string.IsNullOrWhiteSpace(sceneName) ? default : SceneManager.GetSceneByName(sceneName);
+            if (scene.IsValid() && scene.isLoaded)
+            {
+                loaded++;
+            }
+            else if (!string.IsNullOrWhiteSpace(sceneName))
+            {
+                missing.Add(sceneName);
+            }
+        }
+
+        if (loaded == expected)
+        {
+            report = null;
+            return true;
+        }
+
+        report = "zone=" + manifest.PrimarySceneName + " | attendues=" + expected +
+                 " | chargees=" + loaded + " | manquantes=" + string.Join(", ", missing);
+        return false;
+    }
+
+    private static int CountLoadedManifestScenes(ZoneManifest manifest)
+    {
+        int count = 0;
+        for (int i = 0; i < manifest.LoadingSceneNames.Count; i++)
+        {
+            Scene scene = SceneManager.GetSceneByName(manifest.LoadingSceneNames[i]);
+            if (scene.IsValid() && scene.isLoaded) count++;
+        }
+        return count;
     }
 
     private void StartProximityStreaming(string primarySceneName)
@@ -941,9 +1030,16 @@ public sealed class GameFlowService : MonoBehaviour
         for (int i = 0; i < manifest.LoadingSceneNames.Count; i++)
         {
             string additionalScene = manifest.LoadingSceneNames[i];
-            if (string.IsNullOrWhiteSpace(additionalScene) || !CanLoad(additionalScene))
+            if (string.IsNullOrWhiteSpace(additionalScene))
             {
                 continue;
+            }
+
+            if (!CanLoad(additionalScene))
+            {
+                Debug.LogError("[GameFlow] Scene obligatoire absente des Build Settings ou introuvable : " +
+                               additionalScene + ". Le bake NavMesh est annule pour eviter un monde incomplet.", this);
+                yield break;
             }
 
             // Cette attente est volontaire : LoadingScenes est une file et non
@@ -1152,7 +1248,13 @@ public sealed class GameFlowService : MonoBehaviour
             return null;
         }
 
-        return SceneManager.LoadSceneAsync(sceneName, mode);
+        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, mode);
+        if (Instance != null && operation != null)
+        {
+            Instance.pendingSceneOperations.RemoveAll(op => op == null || op.isDone);
+            Instance.pendingSceneOperations.Add(operation);
+        }
+        return operation;
     }
 
     private static AsyncOperation UnloadScene(Scene scene)

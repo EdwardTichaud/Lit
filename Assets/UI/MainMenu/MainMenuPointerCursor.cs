@@ -6,7 +6,7 @@ using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-// Pointeur visible du MainMenu. La souris et la manette pilotent la meme position.
+// Pointeur souris du MainMenu. La navigation manette utilise les highlights de boutons.
 [DisallowMultipleComponent]
 public class MainMenuPointerCursor : MonoBehaviour
 {
@@ -117,6 +117,8 @@ public class MainMenuPointerCursor : MonoBehaviour
     private bool hasFlamePose;
     private bool inputLocked;
     private bool cursorVisible = true;
+    private bool deviceVisualSuppressed;
+    private bool cursorWasActive;
     private Graphic cursorGraphic;
 
     public bool InputLocked => inputLocked;
@@ -209,7 +211,19 @@ public class MainMenuPointerCursor : MonoBehaviour
     private void Update()
     {
         ResolveReferences();
-        if (!cursorVisible)
+        bool suppressed = MainMenuNavigation.Active && MainMenuNavigation.UsingGamepad;
+        if (cursorGraphic != null) cursorGraphic.enabled = cursorVisible && !suppressed;
+        if (flameLight != null) flameLight.enabled = cursorVisible && !suppressed;
+        if (deviceVisualSuppressed != suppressed)
+        {
+            if (cursorVisual != null && cursorVisual != transform && !transform.IsChildOf(cursorVisual))
+            {
+                if (suppressed) { cursorWasActive = cursorVisual.gameObject.activeSelf; cursorVisual.gameObject.SetActive(false); }
+                else cursorVisual.gameObject.SetActive(cursorWasActive);
+            }
+            deviceVisualSuppressed = suppressed;
+        }
+        if (!cursorVisible || suppressed)
         {
             ClearSyntheticUiHover();
             SetWorldHover(null);
@@ -363,7 +377,7 @@ public class MainMenuPointerCursor : MonoBehaviour
         if (gamepadMove.sqrMagnitude > 0f)
         {
             float deltaTime = Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : Time.deltaTime;
-            screenPosition += gamepadMove * (gamepadSpeed * cursorSensitivityMultiplier * Mathf.Max(0f, deltaTime));
+            screenPosition += gamepadMove * (gamepadSpeed * MainMenuPreferences.PointerSensitivity * cursorSensitivityMultiplier * Mathf.Max(0f, deltaTime));
             screenPosition = ClampToScreen(screenPosition);
             activeSource = PointerSource.Gamepad;
             WarpHardwareMouseIfNeeded();
@@ -379,7 +393,7 @@ public class MainMenuPointerCursor : MonoBehaviour
     private static bool TryReadMouseActivity(out Vector2 mousePosition)
     {
         mousePosition = Vector2.zero;
-        if (Mouse.current == null)
+        if (Mouse.current == null || !MainMenuInputSettings.AllowsKeyboardMouse())
         {
             return false;
         }
@@ -394,29 +408,8 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private Vector2 ReadGamepadPointerMove()
     {
-        Gamepad gamepad = Gamepad.current;
-        if (gamepad == null)
-        {
-            return Vector2.zero;
-        }
-
-        Vector2 move = gamepad.leftStick.ReadValue();
-        if (move.sqrMagnitude < gamepadDeadzone * gamepadDeadzone)
-        {
-            move = gamepad.rightStick.ReadValue();
-        }
-
-        if (move.sqrMagnitude < gamepadDeadzone * gamepadDeadzone)
-        {
-            move = gamepad.dpad.ReadValue();
-        }
-
-        if (move.sqrMagnitude < gamepadDeadzone * gamepadDeadzone)
-        {
-            return Vector2.zero;
-        }
-
-        return Vector2.ClampMagnitude(move, 1f);
+        // Gamepads select buttons through MainMenuNavigation, never move a pointer.
+        return Vector2.zero;
     }
 
     private void WarpHardwareMouseIfNeeded()
@@ -1373,7 +1366,7 @@ public class MainMenuPointerCursor : MonoBehaviour
 
     private void UpdateSyntheticUiHoverAndClick()
     {
-        bool processGamepad = synthesizeGamepadUiEvents && activeSource == PointerSource.Gamepad;
+        bool processGamepad = !MainMenuNavigation.Directional && synthesizeGamepadUiEvents && activeSource == PointerSource.Gamepad;
         bool processMouse = synthesizeMouseUiEventsWhenInputModuleUnavailable &&
                             Mouse.current != null &&
                             (activeSource == PointerSource.Mouse || Mouse.current.leftButton.wasPressedThisFrame) &&
@@ -1424,11 +1417,7 @@ public class MainMenuPointerCursor : MonoBehaviour
         }
     }
 
-    private static bool WasGamepadSubmitPressed()
-    {
-        Gamepad gamepad = Gamepad.current;
-        return gamepad != null && gamepad.buttonSouth.wasPressedThisFrame;
-    }
+    private static bool WasGamepadSubmitPressed() => false;
 
     private GameObject RaycastUi(Vector2 position)
     {
