@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a17e1e5b3a44a14a2d1f8b4c11a6d02, type: 3}
+  m_Name: MadScientist_CombatProfile
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatProfileSO
+  patterns:
+  - minimumStartDistance: 0
+    name: Slash
+    skills:
+    - {fileID: 11400000, guid: 7a006ffc54983974bb8741dc6e2fd909, type: 2}
+    weight: 1
+    cooldownSeconds: 1.35
+    recoverySeconds: 0.65
+    maximumConsecutiveUses: 1
+    maximumStartAngle: 40
+  preferMeleeApproach: 1
+  airborneAlternativeChance: 0.25
+  preferredCombatDistance: 1.8
+  pursuitRadius: 18
+  disengagePauseSeconds: 1.25
+  returnReengageDistance: 5
+  observationSeconds: {x: 0.25, y: 0.45}
+  guardChance: 0
+  guardCooldownSeconds: 4
+  guardDurationSeconds: 0.6
+  guardedDamageMultiplier: 0.45
+  trackingDegreesPerSecond: 360

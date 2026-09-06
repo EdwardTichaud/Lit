@@ -18,8 +18,9 @@ MonoBehaviour:
   portrait: {fileID: 0}
   worldPrefab: {fileID: 7005787142804927576, guid: 1d3131202e8f03943b57e9c1195f4644, type: 3}
   skills: []
-  combatSkills: []
-  enemyCombatProfile: {fileID: 0}
+  combatSkills:
+  - {fileID: 11400000, guid: 7a006ffc54983974bb8741dc6e2fd909, type: 2}
+  enemyCombatProfile: {fileID: 11400000, guid: 9c02bcb39a360484db5992e599e4ad89, type: 2}
   groundBasicSkills: []
   airBasicSkills: []
   stats:
@@ -30,7 +31,7 @@ MonoBehaviour:
     wisdom: 10
     charisma: 10
   starterItemsWithQuantity: []
-  hp: 10
+  hp: 60
   isEnemy: 1
   enableCombatHealthThresholds: 0
   combatHealthThresholdStages: []

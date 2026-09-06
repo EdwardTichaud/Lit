@@ -15,7 +15,7 @@ MonoBehaviour:
   cycleId: district1.nina
   existence: {fileID: 11400000, guid: c5df294c93ed1724692a1b16d61f311d, type: 2}
   dilemma: {fileID: 11400000, guid: e45994b22ba98e948830e4f460222de7, type: 2}
-  cicatrice: {fileID: 0}
+  cicatrice: {fileID: 11400000, guid: eca322da99dd7bf40b06c5ebae562eb4, type: 2}
   deathDelay: 3
   dialogueSeconds: 4
   idleLine: "\xC9... douard ? Tu reviendras ? Je ne veux pas rester seule..."
